@@ -1,0 +1,30 @@
+[package]
+name = "input-tester"
+version = "0.1.0"
+authors = ["fuzzing@microsoft.com"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+anyhow = "1.0"
+atexit = { path = "../atexit" }
+coverage = { path = "../coverage" }
+debugger = { path = "../debugger" }
+fnv = "1.0"
+log = "0.4"
+num_cpus = "1.13"
+rayon = "1.3"
+sha-1 = "0.9"
+uuid = { version = "0.8", features = ["serde", "v4"] }
+win-util = { path = "../win-util" }
+
+[dependencies.winapi]
+version = "0.3"
+features = [
+    "debugapi",
+    "handleapi",
+    "memoryapi",
+    "processthreadsapi",
+    "werapi",
+    "winbase",
+]

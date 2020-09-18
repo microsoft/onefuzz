@@ -1,0 +1,38 @@
+{
+  "version": "2.0",
+  "extensionBundle": {
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "version": "[1.*, 2.0.0)"
+  },
+  "logging": {
+    "default": "Information",
+    "Host.Results": "Information",
+    "Function": "Information",
+    "Host.Aggregator": "Information",
+    "console": {
+      "default": "Information",
+      "Host.Results": "Information",
+      "Function": "Information",
+      "Host.Aggregator": "Information"
+    },
+    "logLevel": {
+      "default": "Information",
+      "Host.Results": "Information",
+      "Function": "Information",
+      "Function.FunctionA": "Information",
+      "Host.Aggregator": "Information"
+    },
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": false
+      }
+    }
+  },
+  "extensions": {
+    "queues": {
+      "maxPollingInterval": "00:00:02",
+      "batchSize": 32,
+      "maxDequeueCount": 5
+    }
+  }
+}

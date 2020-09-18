@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "atexit",
+    "debugger",
+    "input-tester",
+    "onefuzz",
+    "onefuzz-agent",
+    "onefuzz-supervisor",
+    "storage-queue",
+    "win-util",
+]
+
+[profile.release]
+lto = "thin"

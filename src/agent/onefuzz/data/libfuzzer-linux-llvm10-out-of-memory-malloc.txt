@@ -1,0 +1,25 @@
+INFO: Seed: 3452367435
+INFO: Loaded 1 modules   (12 inline 8-bit counters): 12 [0x7a1eb0, 0x7a1ebc),
+INFO: Loaded 1 PC tables (12 PCs): 12 [0x566fd8,0x567098),
+./fuzz.exe: Running 1 inputs 1 time(s) each.
+Running: good.txt
+==25300== ERROR: libFuzzer: out-of-memory (malloc(100000000))
+   To change the out-of-memory limit use -rss_limit_mb=<N>
+
+    #0 0x526011 in __sanitizer_print_stack_trace (/home/user/src/onefuzz/src/agent/fuzz.exe+0x526011)
+    #1 0x471168 in fuzzer::PrintStackTrace() (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471168)
+    #2 0x455495 in fuzzer::Fuzzer::HandleMalloc(unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x455495)
+    #3 0x4553aa in fuzzer::MallocHook(void const volatile*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4553aa)
+    #4 0x52c337 in __sanitizer::RunMallocHooks(void const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x52c337)
+    #5 0x4a69f1 in __asan::Allocator::Allocate(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType, bool) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4a69f1)
+    #6 0x4a61c3 in __asan::asan_malloc(unsigned long, __sanitizer::BufferedStackTrace*) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4a61c3)
+    #7 0x51d53b in malloc (/home/user/src/onefuzz/src/agent/fuzz.exe+0x51d53b)
+    #8 0x54cc24 in LLVMFuzzerTestOneInput /home/user/src/onefuzz/src/agent/fuzz.c:9:18
+    #9 0x457971 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x457971)
+    #10 0x4430e2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4430e2)
+    #11 0x448b96 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x448b96)
+    #12 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)
+    #13 0x7f6b3d630b96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310
+    #14 0x41d7a9 in _start (/home/user/src/onefuzz/src/agent/fuzz.exe+0x41d7a9)
+
+SUMMARY: libFuzzer: out-of-memory

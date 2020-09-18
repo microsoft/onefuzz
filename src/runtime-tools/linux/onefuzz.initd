@@ -1,0 +1,50 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:		onefuzz
+# Required-Start:	$remote_fs $syslog
+# Required-Stop:	$remote_fs $syslog
+# Default-Start:	2 3 4 5
+# Default-Stop:		
+# Short-Description:	OneFuzz
+### END INIT INFO
+
+set -e
+
+# /etc/init.d/onefuzz: start and stop the OneFuzz agent
+
+. /lib/lsb/init-functions
+
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+
+case "$1" in
+  start)
+	nohup /onefuzz/tools/linux/run.sh > /onefuzz/logs/onefuzz.initd.stdout 2>/onefuzz/logs/onefuzz.initd.stderr
+	;;
+
+  stop)
+	echo "unable to $1"
+	;;
+
+  reload|force-reload)
+	echo "unable to $1"
+	;;
+
+  restart)
+	echo "unable to $1"
+	;;
+
+  try-restart)
+	echo "unable to $1"
+	;;
+
+  status)
+	echo "unable to $1"
+	;;
+
+  *)
+	log_action_msg "Usage: /etc/init.d/onefuzz start" || true
+	exit 1
+esac
+
+exit 0

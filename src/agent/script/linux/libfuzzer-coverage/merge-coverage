@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+
+def main():
+    total_coverage_path = sys.argv[1]
+    new_coverage_path = sys.argv[2]
+
+    with open(total_coverage_path, 'rb') as f:
+        total_coverage = f.read()
+
+    with open(new_coverage_path, 'rb') as f:
+        new_coverage = f.read()
+
+    updated_total_coverage = bytes(max(a, b) for a, b in zip(total_coverage, new_coverage))
+
+    with open(total_coverage_path, 'wb') as f:
+        f.write(updated_total_coverage)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,36 @@
+[package]
+name = "win-util"
+version = "0.1.0"
+authors = ["fuzzing@microsoft.com"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+anyhow = "1.0"
+atexit = { path = "../atexit" }
+log = "0.4"
+os_pipe = "0.9"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.7"
+
+[dependencies.winapi]
+version = "0.3"
+features = [
+    "debugapi",
+    "errhandlingapi",
+    "handleapi",
+    "jobapi2",
+    "memoryapi",
+    "ioapiset",
+    "processthreadsapi",
+    "psapi",
+    "securitybaseapi",
+    "shellapi",
+    "std",
+    "unknwnbase",
+    "werapi",
+    "winbase",
+    "winerror",
+    "wow64apiset"
+]

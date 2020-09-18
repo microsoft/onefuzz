@@ -1,0 +1,150 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+#![allow(clippy::large_enum_variant)]
+use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, report};
+use anyhow::Result;
+use onefuzz::{
+    blob::BlobContainerUrl,
+    machine_id::get_machine_id,
+    telemetry::{self, Event::task_start, EventData},
+};
+use reqwest::Url;
+use serde::{self, Deserialize};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use uuid::Uuid;
+
+#[derive(Debug, Deserialize, PartialEq, Clone)]
+pub enum ContainerType {
+    #[serde(alias = "inputs")]
+    Inputs,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct CommonConfig {
+    pub job_id: Uuid,
+
+    pub task_id: Uuid,
+
+    pub instrumentation_key: Option<Uuid>,
+
+    pub heartbeat_queue: Option<Url>,
+
+    pub telemetry_key: Option<Uuid>,
+}
+
+impl CommonConfig {
+    pub fn init_heartbeat(&self) -> Option<HeartbeatClient> {
+        self.heartbeat_queue
+            .clone()
+            .map(|url| HeartbeatClient::init(url, self.task_id))
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "task_type")]
+pub enum Config {
+    #[serde(alias = "libfuzzer_fuzz")]
+    LibFuzzerFuzz(fuzz::libfuzzer_fuzz::Config),
+
+    #[serde(alias = "libfuzzer_crash_report")]
+    LibFuzzerReport(report::libfuzzer_report::Config),
+
+    #[serde(alias = "libfuzzer_merge")]
+    LibFuzzerMerge(merge::libfuzzer_merge::Config),
+
+    #[serde(alias = "libfuzzer_coverage")]
+    LibFuzzerCoverage(coverage::libfuzzer_coverage::Config),
+
+    #[serde(alias = "generic_analysis")]
+    GenericAnalysis(analysis::generic::Config),
+
+    #[serde(alias = "generic_generator")]
+    GenericGenerator(fuzz::generator::GeneratorConfig),
+
+    #[serde(alias = "generic_supervisor")]
+    GenericSupervisor(fuzz::supervisor::SupervisorConfig),
+
+    #[serde(alias = "generic_merge")]
+    GenericMerge(merge::generic::Config),
+
+    #[serde(alias = "generic_crash_report")]
+    GenericReport(report::generic::Config),
+}
+
+impl Config {
+    pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
+        let json = std::fs::read_to_string(path)?;
+        Ok(serde_json::from_str(&json)?)
+    }
+
+    pub fn common(&self) -> &CommonConfig {
+        match self {
+            Config::LibFuzzerFuzz(c) => &c.common,
+            Config::LibFuzzerMerge(c) => &c.common,
+            Config::LibFuzzerReport(c) => &c.common,
+            Config::LibFuzzerCoverage(c) => &c.common,
+            Config::GenericAnalysis(c) => &c.common,
+            Config::GenericMerge(c) => &c.common,
+            Config::GenericReport(c) => &c.common,
+            Config::GenericSupervisor(c) => &c.common,
+            Config::GenericGenerator(c) => &c.common,
+        }
+    }
+
+    pub fn report_event(&self) {
+        let event_type = match self {
+            Config::LibFuzzerFuzz(_) => "libfuzzer_fuzz",
+            Config::LibFuzzerMerge(_) => "libfuzzer_merge",
+            Config::LibFuzzerReport(_) => "libfuzzer_crash_report",
+            Config::LibFuzzerCoverage(_) => "libfuzzer_coverage",
+            Config::GenericAnalysis(_) => "generic_analysis",
+            Config::GenericMerge(_) => "generic_merge",
+            Config::GenericReport(_) => "generic_crash_report",
+            Config::GenericSupervisor(_) => "generic_supervisor",
+            Config::GenericGenerator(_) => "generic_generator",
+        };
+
+        event!(task_start; EventData::Type = event_type);
+    }
+
+    pub async fn run(self) -> Result<()> {
+        telemetry::set_property(EventData::JobId(self.common().job_id));
+        telemetry::set_property(EventData::TaskId(self.common().task_id));
+        telemetry::set_property(EventData::MachineId(get_machine_id().await?));
+
+        info!("agent ready, dispatching task");
+        self.report_event();
+
+        match self {
+            Config::LibFuzzerFuzz(config) => {
+                fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
+                    .start()
+                    .await
+            }
+            Config::LibFuzzerReport(config) => {
+                report::libfuzzer_report::ReportTask::new(config)
+                    .run()
+                    .await
+            }
+            Config::LibFuzzerCoverage(config) => {
+                coverage::libfuzzer_coverage::CoverageTask::new(Arc::new(config))
+                    .run()
+                    .await
+            }
+            Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
+            Config::GenericAnalysis(config) => analysis::generic::spawn(config).await,
+            Config::GenericGenerator(config) => fuzz::generator::spawn(Arc::new(config)).await,
+            Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
+            Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
+            Config::GenericReport(config) => report::generic::ReportTask::new(&config).run().await,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub struct SyncedDir {
+    pub path: PathBuf,
+    pub url: BlobContainerUrl,
+}

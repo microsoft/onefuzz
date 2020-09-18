@@ -1,0 +1,26 @@
+{
+    "call_stack_sha256": "972a371a291ed5668a77576368ead0c46c2bac9f9a16b7fa7c0b48aec5b059b1",
+    "input_url": "https://fuzzxkbh6uhuuke4m.blob.core.windows.net/oft-asan-crashes/crash",
+    "executable": "setup/fuzz.exe",
+    "crash_type": "double-free",
+    "crash_site": "double-free (/onefuzz/setup/fuzz.exe+0x4f72e2)",
+    "call_stack": [
+        "#0 0x4f72e2  (/onefuzz/setup/fuzz.exe+0x4f72e2)",
+        "#1 0x5273f0  (/onefuzz/setup/fuzz.exe+0x5273f0)",
+        "#2 0x42fb3a  (/onefuzz/setup/fuzz.exe+0x42fb3a)",
+        "#3 0x41ef87  (/onefuzz/setup/fuzz.exe+0x41ef87)",
+        "#4 0x424ba1  (/onefuzz/setup/fuzz.exe+0x424ba1)",
+        "#5 0x44bd72  (/onefuzz/setup/fuzz.exe+0x44bd72)",
+        "#6 0x7ffff6a9bb96  (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)",
+        "#7 0x41d879  (/onefuzz/setup/fuzz.exe+0x41d879)"
+    ],
+    "asan_log": "INFO: Seed: 1720627312\nINFO: Loaded 1 modules   (21 inline 8-bit counters): 21 [0x766ef0, 0x766f05), \nINFO: Loaded 1 PC tables (21 PCs): 21 [0x542fd0,0x543120), \nsetup/fuzz.exe: Running 1 inputs 1 time(s) each.\nRunning: ./tmp/crash-66e9fe527ddb160d75f8c2cc373479e841f7999c\n=================================================================\n==16771==ERROR: AddressSanitizer: attempting double-free on 0x602000000050 in thread T0:\n==16771==WARNING: invalid path to external symbolizer!\n==16771==WARNING: Failed to use and restart external symbolizer!\n    #0 0x4f72e2  (/onefuzz/setup/fuzz.exe+0x4f72e2)\n    #1 0x5273f0  (/onefuzz/setup/fuzz.exe+0x5273f0)\n    #2 0x42fb3a  (/onefuzz/setup/fuzz.exe+0x42fb3a)\n    #3 0x41ef87  (/onefuzz/setup/fuzz.exe+0x41ef87)\n    #4 0x424ba1  (/onefuzz/setup/fuzz.exe+0x424ba1)\n    #5 0x44bd72  (/onefuzz/setup/fuzz.exe+0x44bd72)\n    #6 0x7ffff6a9bb96  (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)\n    #7 0x41d879  (/onefuzz/setup/fuzz.exe+0x41d879)\n\n0x602000000050 is located 0 bytes inside of 4-byte region [0x602000000050,0x602000000054)\nfreed by thread T0 here:\n    #0 0x4f72e2  (/onefuzz/setup/fuzz.exe+0x4f72e2)\n    #1 0x5273e1  (/onefuzz/setup/fuzz.exe+0x5273e1)\n    #2 0x42fb3a  (/onefuzz/setup/fuzz.exe+0x42fb3a)\n    #3 0x41ef87  (/onefuzz/setup/fuzz.exe+0x41ef87)\n    #4 0x424ba1  (/onefuzz/setup/fuzz.exe+0x424ba1)\n    #5 0x44bd72  (/onefuzz/setup/fuzz.exe+0x44bd72)\n    #6 0x7ffff6a9bb96  (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)\n\npreviously allocated by thread T0 here:\n    #0 0x4f7663  (/onefuzz/setup/fuzz.exe+0x4f7663)\n    #1 0x5273cb  (/onefuzz/setup/fuzz.exe+0x5273cb)\n    #2 0x42fb3a  (/onefuzz/setup/fuzz.exe+0x42fb3a)\n    #3 0x41ef87  (/onefuzz/setup/fuzz.exe+0x41ef87)\n    #4 0x424ba1  (/onefuzz/setup/fuzz.exe+0x424ba1)\n    #5 0x44bd72  (/onefuzz/setup/fuzz.exe+0x44bd72)\n    #6 0x7ffff6a9bb96  (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)\n\nSUMMARY: AddressSanitizer: double-free (/onefuzz/setup/fuzz.exe+0x4f72e2) \n==16771==ABORTING\n",
+    "task_id": "218e1cdb-529a-45dd-b45b-1966d42b652c",
+    "job_id": "218e1cdb-529a-45dd-b45b-1966d42b652c",
+    "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "input_blob": {
+        "account": "fuzzxkbh6uhuuke4m",
+        "container": "oft-asn-crashes",
+        "name": "crash"
+    }
+}

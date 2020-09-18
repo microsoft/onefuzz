@@ -1,0 +1,14 @@
+msal~=1.4.3
+pyjwt~=1.7.1
+requests~=2.24.0
+jmespath~=0.10.0
+semver~=2.10.2
+signalrcore~=0.8.7
+asciimatics~=1.11.0
+dataclasses~=0.6
+pydantic~=1.6.1 --no-binary=pydantic
+memoization~=0.3.1
+azure-storage-blob~=12.3
+tenacity==6.2.0
+# onefuzztypes version is set during build
+onefuzztypes==0.0.0

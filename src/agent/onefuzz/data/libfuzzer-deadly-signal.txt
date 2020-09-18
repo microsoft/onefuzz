@@ -1,0 +1,24 @@
+INFO: Seed: 1417742161
+INFO: Loaded 2 modules   (16763 inline 8-bit counters): 14323 [0x7f1ee459ce50, 0x7f1ee45a0643), 2440 [0x56512aac5ae0, 0x56512aac6468), 
+INFO: Loaded 2 PC tables (16763 PCs): 14323 [0x7f1ee45a0648,0x7f1ee45d8578), 2440 [0x56512aac6468,0x56512aacfce8), 
+../linux_x64_asan_libfuzz_release/jsoncpp_fuzzer: Running 1 inputs 1 time(s) each.
+Running: ./crash-975f93376ba7c1af9f1f2fd891f9e5714f06e69c
+==23788== ERROR: libFuzzer: deadly signal
+    #0 0x56512a9c1418 in __sanitizer_print_stack_trace /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_stack.cpp:86:3
+    #1 0x56512aaaa42d in fuzzer::PrintStackTrace() third_party/libFuzzer/src/FuzzerUtil.cpp:205:5
+    #2 0x56512aa6a85e in fuzzer::Fuzzer::CrashCallback() third_party/libFuzzer/src/FuzzerLoop.cpp:232:3
+    #3 0x56512aa6a7df in fuzzer::Fuzzer::StaticCrashSignalCallback() third_party/libFuzzer/src/FuzzerLoop.cpp:203:6
+    #4 0x56512aaab948 in fuzzer::CrashHandler(int, siginfo_t*, void*) third_party/libFuzzer/src/FuzzerUtilPosix.cpp:46:3
+    #5 0x7f1ee3f0188f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1288f)
+    #6 0x56512a9e5aa1 in Json::OurReader::parse(char const*, char const*, Json::Value&, bool) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1062:10
+    #7 0x56512a9eedb4 in Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1899:23
+    #8 0x56512a9e03a3 in LLVMFuzzerTestOneInput third_party/jsoncpp/fuzzers/json_fuzzer.cc:39:24
+    #9 0x56512aa6d0cf in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:556:15
+    #10 0x56512aa3b7da in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:292:6
+    #11 0x56512aa4108a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:774:9
+    #12 0x56512aa821ac in main third_party/libFuzzer/src/FuzzerMain.cpp:19:10
+    #13 0x7f1ee3361b96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310
+
+NOTE: libFuzzer has rudimentary signal handlers.
+      Combine libFuzzer with AddressSanitizer or similar for better crash reports.
+SUMMARY: libFuzzer: deadly signal

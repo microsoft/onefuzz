@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+import os
+from subprocess import run, DEVNULL
+import sys
+
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+GDB_COVERAGE_SCRIPT = os.path.join(SCRIPT_DIR, 'coverage_cmd.py')
+
+
+def main():
+    exe = sys.argv[1]
+    test_input = sys.argv[2]
+    out_dir = sys.argv[3]
+
+    script_cmd = 'coverage {} {} {}'.format(exe, test_input, out_dir)
+    args = ['gdb', '-nh', '-batch', '-x', GDB_COVERAGE_SCRIPT, '-ex', script_cmd]
+    run(args, check=True, stdout=DEVNULL, stderr=DEVNULL)
+
+
+if __name__ == '__main__':
+    main()

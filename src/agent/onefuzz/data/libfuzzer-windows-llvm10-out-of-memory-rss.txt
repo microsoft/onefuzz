@@ -1,0 +1,9 @@
+INFO: Seed: 3655625785
+INFO: Loaded 1 modules   (12 inline 8-bit counters): 12 [00007FF7C1F46088, 00007FF7C1F46094),
+INFO: Loaded 1 PC tables (12 PCs): 12 [00007FF7C1EF8720,00007FF7C1EF87E0),
+X:\fuzz\fuzz.exe: Running 1 inputs 1 time(s) each.
+Running: .\good.txt
+==12788== ERROR: libFuzzer: out-of-memory (used: 178Mb; limit: 1Mb)
+   To change the out-of-memory limit use -rss_limit_mb=<N>
+
+SUMMARY: libFuzzer: out-of-memory

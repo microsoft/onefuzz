@@ -1,0 +1,21 @@
+[package]
+name = "onefuzz-proxy-manager"
+version = "0.0.1"
+authors = ["fuzzing@microsoft.com"]
+edition = "2018"
+publish = false
+license = "MIT"
+
+[dependencies]
+anyhow = "1.0"
+clap = "2.33"
+env_logger = "0.7"
+futures = "0.3"
+log = "0.4"
+reqwest = { version = "0.10", features = ["json", "stream"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+storage-queue = { path = "../agent/storage-queue" }
+thiserror = "1.0"
+tokio = { version = "0.2", features = ["macros", "rt-threaded", "fs", "process"] }
+url = { version = "2.1", features = ["serde"] }

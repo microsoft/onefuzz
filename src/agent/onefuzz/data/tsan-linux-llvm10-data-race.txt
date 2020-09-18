@@ -1,0 +1,17 @@
+==================
+WARNING: ThreadSanitizer: data race (pid=4659)
+  Write of size 4 at 0x000001109278 by thread T1:
+    #0 Thread1 /home/user/fuzz-targets/tiny_race.c:4:10 (tiny_race.exe+0x4ac607)
+
+  Previous write of size 4 at 0x000001109278 by main thread:
+    #0 main /home/user/fuzz-targets/tiny_race.c:10:10 (tiny_race.exe+0x4ac64e)
+
+  Location is global 'Global' of size 4 at 0x000001109278 (tiny_race.exe+0x000001109278)
+
+  Thread T1 (tid=4661, running) created by main thread at:
+    #0 pthread_create <null> (tiny_race.exe+0x422fe5)
+    #1 main /home/user/fuzz-targets/tiny_race.c:9:3 (tiny_race.exe+0x4ac644)
+
+SUMMARY: ThreadSanitizer: data race /home/user/fuzz-targets/tiny_race.c:4:10 in Thread1
+==================
+ThreadSanitizer: reported 1 warnings

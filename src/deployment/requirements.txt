@@ -1,0 +1,12 @@
+azure-mgmt-storage~=11.0
+azure-storage-queue~=12.1
+azure-storage-blob~=12.3
+azure-core~=1.6
+azure-graphrbac~=0.61.1
+azure-mgmt-eventgrid~=2.2
+azure-mgmt-web~=0.45
+azure-mgmt-resource~=9.0
+azure-mgmt-servicebus~=0.6.0
+azure-cli-core~=2.7
+azure-cli~=2.10.1
+pyfunctional~=1.4.1

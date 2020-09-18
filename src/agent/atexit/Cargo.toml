@@ -1,0 +1,11 @@
+[package]
+name = "atexit"
+version = "0.1.0"
+license = "MIT"
+authors = ["fuzzing@microsoft.com"]
+edition = "2018"
+
+[dependencies]
+ctrlc = "3.1"
+lazy_static = "1.4"
+log = "0.4"

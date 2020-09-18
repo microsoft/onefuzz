@@ -1,0 +1,69 @@
+INFO: Seed: 2746158486
+INFO: Loaded 1 modules   (21 inline 8-bit counters): 21 [0x766ef0, 0x766f05), 
+INFO: Loaded 1 PC tables (21 PCs): 21 [0x542fd0,0x543120), 
+./fuzz.exe: Running 1 inputs 1 time(s) each.
+Running: crash-cbe07cd3ebaba15610ecd968c4e4a04c6643e534
+=================================================================
+==17066==ERROR: AddressSanitizer: heap-use-after-free on address 0x602000000050 at pc 0x000000527476 bp 0x7ffeb9b631d0 sp 0x7ffeb9b631c8
+WRITE of size 4 at 0x602000000050 thread T0
+    #0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51
+    #1 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)
+    #2 0x41ef87 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41ef87)
+    #3 0x424ba1 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x424ba1)
+    #4 0x44bd72 in main (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x44bd72)
+    #5 0x7fbf0729bb96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310
+    #6 0x41d879 in _start (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41d879)
+
+0x602000000050 is located 0 bytes inside of 4-byte region [0x602000000050,0x602000000054)
+freed by thread T0 here:
+    #0 0x4f72e2 in free (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x4f72e2)
+    #1 0x52742f in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:39
+    #2 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)
+    #3 0x41ef87 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41ef87)
+    #4 0x424ba1 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x424ba1)
+    #5 0x44bd72 in main (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x44bd72)
+    #6 0x7fbf0729bb96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310
+
+previously allocated by thread T0 here:
+    #0 0x4f7663 in __interceptor_malloc (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x4f7663)
+    #1 0x527419 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:18
+    #2 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)
+    #3 0x41ef87 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41ef87)
+    #4 0x424ba1 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x424ba1)
+    #5 0x44bd72 in main (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x44bd72)
+    #6 0x7fbf0729bb96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310
+
+SUMMARY: AddressSanitizer: heap-use-after-free /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51 in LLVMFuzzerTestOneInput
+Shadow bytes around the buggy address:
+  0x0c047fff7fb0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff7fc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff7fd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c047fff8000: fa fa 04 fa fa fa 04 fa fa fa[fd]fa fa fa fa fa
+  0x0c047fff8010: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8020: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8030: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8040: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==17066==ABORTING
