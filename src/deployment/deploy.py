@@ -14,9 +14,11 @@ import tempfile
 import uuid
 import zipfile
 from datetime import datetime, timedelta
+from data_migration import migrate
 
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
+from azure.cosmosdb.table.tableservice import TableService
 from azure.core.exceptions import ResourceExistsError
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
@@ -98,6 +100,7 @@ class Client:
         arm_template,
         workbook_data,
         create_registration,
+        migrations,
     ):
         self.resource_group = resource_group
         self.arm_template = arm_template
@@ -117,6 +120,7 @@ class Client:
             "client_id": ONEFUZZ_CLI_APP,
             "authority": ONEFUZZ_CLI_AUTHORITY,
         }
+        self.migrations = migrations
 
         if os.name == "nt":
             self.azcopy = os.path.join(self.tools, "win64", "azcopy.exe")
@@ -325,6 +329,13 @@ class Client:
             sys.exit(1)
         self.results["deploy"] = result.properties.outputs
 
+    def apply_migrations(self):
+        self.results["deploy"]["func-storage"]["value"]
+        name = self.results["deploy"]["func-name"]["value"]
+        key = self.results["deploy"]["func-key"]["value"]
+        table_service = TableService(account_name=name, account_key=key)
+        migrate(table_service, self.migrations)
+
     def create_queues(self):
         logger.info("creating eventgrid destination queue")
 
@@ -525,6 +536,7 @@ def main():
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
+        ("apply_migrations", Client.apply_migrations),
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
         ("tools", Client.upload_tools),
@@ -592,6 +604,13 @@ def main():
         help="Create an application registration and/or generate a "
         "password for the pool agent (default: False)",
     )
+    parser.add_argument(
+        "--apply_migrations",
+        type=str,
+        nargs="+",
+        default=[],
+        help="list of migration to apply to the azure table",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -612,6 +631,7 @@ def main():
         args.arm_template,
         args.workbook_data,
         args.create_pool_registration,
+        args.apply_migrations,
     )
     if args.verbose:
         level = logging.DEBUG
