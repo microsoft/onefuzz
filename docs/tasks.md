@@ -56,7 +56,7 @@ include:
 * supervisor_env: User specified environment variables for the supervisor
 * supervisor_options: User specified command line options for the supervisor
 * supervisor_input_marker: Marker to specify the path to the filename for
-  supervisors (Example: for AFL, this should be '@@')
+  supervisors (Example: for AFL and AFL++, this should be '@@')
 * stats_file: Path to the fuzzer's stats file
 * stats_format: Format of the fuzzer's stats file
 * input_queue_from_container: Container name to monitor for new changes.
