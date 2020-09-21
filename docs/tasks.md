@@ -67,3 +67,7 @@ include:
 
 See [task definitions](../src/api-service/__app__/onefuzzlib/tasks/defs.py) for
 implementation level details on the types of tasks available.
+
+
+## Environment Variables
+* `ONEFUZZ_TASK_SETUP_PATH`: An environment variable set prior to launching task-specific setup scripts.
