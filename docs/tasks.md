@@ -70,4 +70,4 @@ implementation level details on the types of tasks available.
 
 
 ## Environment Variables
-* `ONEFUZZ_TASK_SETUP_PATH`: An environment variable set prior to launching task-specific setup scripts.
+* `ONEFUZZ_TASK_SETUP_PATH`: An environment variable set prior to launching task-specific setup scripts that defines the path to the setup container.
