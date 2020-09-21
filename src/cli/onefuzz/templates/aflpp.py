@@ -14,8 +14,8 @@ from onefuzz.api import Command
 from . import JobHelper
 
 
-class AFL(Command):
-    """ Pre-defined AFL job """
+class AFLplusplus(Command):
+    """ Pre-defined AFLplusplus job """
 
     def basic(
         self,
@@ -52,7 +52,7 @@ class AFL(Command):
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
     ) -> None:
-        """ Basic AFL job """
+        """ Basic AFLplusplus job """
 
         if existing_inputs:
             self.onefuzz.containers.get(existing_inputs)
