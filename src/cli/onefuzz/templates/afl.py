@@ -47,7 +47,7 @@ class AFL(Command):
         tags: Optional[Dict[str, str]] = None,
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
-        afl_version: Optional[Container] = None,
+        afl_container: Optional[Container] = None,
         existing_inputs: Optional[Container] = None,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
@@ -55,7 +55,7 @@ class AFL(Command):
         """
         Basic AFL job
 
-        :param Container afl_version: Specify the AFL container to use in the job
+        :param Container afl_container: Specify the AFL container to use in the job
         """
 
         if existing_inputs:
@@ -110,16 +110,16 @@ class AFL(Command):
 
         target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
 
-        if afl_version is None:
-            afl_version = Container(
+        if afl_container is None:
+            afl_container = Container(
                 "afl-linux" if helper.platform == OS.linux else "afl-windows"
             )
 
         # verify the AFL container exists
-        self.onefuzz.containers.get(afl_version)
+        self.onefuzz.containers.get(afl_container)
 
         containers = [
-            (ContainerType.tools, afl_version),
+            (ContainerType.tools, afl_container),
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.crashes, helper.containers[ContainerType.crashes]),
             (ContainerType.inputs, helper.containers[ContainerType.inputs]),
