@@ -9,6 +9,8 @@ apt-get install -y llvm llvm-dev clang
 
 git clone https://github.com/AFLplusplus/AFLplusplus
 cd AFLplusplus
+# checkout v2.68c
+git checkout ee206da3897fd2d9f72206c3c5ea0e3fab109001
 make
 (test -d llvm_mode && cd llvm_mode && make)
 #(test -d gcc_plugin && cd gcc_plugin && make)
