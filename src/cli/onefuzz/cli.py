@@ -30,6 +30,7 @@ from typing import (
 from uuid import UUID
 
 import jmespath
+from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
 from onefuzztypes.primitives import Container, Directory, File
 from pydantic import BaseModel, ValidationError
@@ -183,25 +184,31 @@ class Builder:
         self.parse_nested_instances(self.main_parser, api)
 
     def get_help(self, obj: Any) -> str:
-        return (obj.__doc__ or "").strip()
+        return (parse_docstring(obj.__doc__).short_description or "").strip()
 
     def parse_function(self, func: Callable, parser: argparse.ArgumentParser) -> None:
         sig = inspect.signature(func)
+
+        arg_docs = {}
+        docs = parse_docstring(func.__doc__)
+        for opt in docs.params:
+            if opt.description:
+                arg_docs[opt.arg_name] = opt.description
         for arg in sig.parameters:
             if arg == "self":
                 continue
-
-            args, kwargs = self.parse_param(arg, sig.parameters[arg])
+            help_doc = arg_docs.get(arg)
+            args, kwargs = self.parse_param(arg, sig.parameters[arg], help_doc=help_doc)
             parser.add_argument(*args, **kwargs)
 
     def parse_param(
-        self, name: str, param: inspect.Parameter
+        self, name: str, param: inspect.Parameter, help_doc: Optional[str] = None
     ) -> Tuple[List[str], Dict[str, Any]]:
         """ Parse a single parameter """
 
         default = param.default
         annotation = param.annotation
-        kwargs = self.parse_annotation(name, annotation, default)
+        kwargs = self.parse_annotation(name, annotation, default, help_doc=help_doc)
         if not (
             isinstance(default, bool) or default in [None, inspect.Parameter.empty]
         ):
@@ -276,22 +283,32 @@ class Builder:
         return None
 
     def parse_annotation(
-        self, name: str, annotation: Any, default: Any
+        self,
+        name: str,
+        annotation: Any,
+        default: Any,
+        help_doc: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Parse a single type annotation and get a signature appropriate
         for argparse.add_argument
         """
+
+        result: Dict[str, Any] = {}
+        if help_doc:
+            result["help"] = help_doc
+
         if annotation in self.type_parsers:
-            return self.type_parsers[annotation].copy()
+            result.update(self.type_parsers[annotation].copy())
+            return result
 
         if is_optional(annotation):
-            result = self.parse_annotation(name, get_arg(annotation, 0), default)
+            result.update(self.parse_annotation(name, get_arg(annotation, 0), default))
             result["optional"] = True
             return result
 
         if is_a(annotation, (list, List), count=1):
-            result = self.parse_annotation(name, get_arg(annotation, 0), default)
+            result.update(self.parse_annotation(name, get_arg(annotation, 0), default))
             result["nargs"] = "*"
             return result
 
@@ -305,17 +322,20 @@ class Builder:
                 return tuple([x(y) for (x, y) in zip(types, split)])
 
             parse_tuple.__name__ = "=".join([x.__name__ for x in types])
-            result = {
-                "metavar": parse_tuple.__name__,
-                "help": tuple_help(types),
-                "type": parse_tuple,
-            }
+            result.update(
+                {
+                    "metavar": parse_tuple.__name__,
+                    "help": tuple_help(types),
+                    "type": parse_tuple,
+                }
+            )
             return result
 
         if inspect.isclass(annotation):
             class_result = self.parse_annotation_class(name, annotation, default)
             if class_result is not None:
-                return class_result
+                result.update(class_result)
+                return result
 
         # isinstance type signatures doesn't support TypeVar
         if hasattr(annotation, "__class__") and annotation.__class__ == TypeVar:
@@ -328,11 +348,14 @@ class Builder:
                         pass
                 raise argparse.ArgumentTypeError("Error parsing: %s" % data)
 
-            return {
-                "metavar": name,
-                "help": annotation.__name__,
-                "type": parse_typevar,
-            }
+            result.update(
+                {
+                    "metavar": name,
+                    "help": annotation.__name__,
+                    "type": parse_typevar,
+                }
+            )
+            return result
 
         raise Exception("unsupported annotation: %s - %s" % (name, annotation))
 
