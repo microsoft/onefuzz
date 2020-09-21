@@ -30,5 +30,3 @@
    of Azure Functions was not available yet. This race condition is solved by
    ARM reporting the deployment is finished too early. Retry the deployment and
    the error should be corrected automatically.
-
-   Work item: #122629

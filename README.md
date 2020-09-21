@@ -36,7 +36,7 @@ For information, check out some of our guides:
 * [Supported Platforms](docs/supported-platforms.md)
 * [More documentation](docs)
 
-Are you a Microsoft employee an interested in fuzzing?  Join us on Teams at [Fuzzing @ Microsoft](https://aka.ms/fuzzingatmicrosoft).
+Are you a Microsoft employee interested in fuzzing?  Join us on Teams at [Fuzzing @ Microsoft](https://aka.ms/fuzzingatmicrosoft).
 
 ## Contributing
 
