@@ -33,7 +33,7 @@ These are currently used in the following tasks:
 * libfuzzer_fuzz: `target_exe`, `target_options`, `input_corpus`, `crashes`
 * libfuzzer_crash_report: `target_exe`, `target_options`, `input`
 * libfuzzer_merge: `target_exe`, `target_options`, `input_corpus`
-* libfuzzer_coverage: NONE (see work item #129626)
+* libfuzzer_coverage: None
 * generic_analysis: `input`, `target_exe`, `target_options`, `analyzer_exe`,
   `anayzer_options`, `output_dir`, `tools_dir`
 * generic_generator: `generated_inputs`, `input_corpus`, `tools_dir`,
