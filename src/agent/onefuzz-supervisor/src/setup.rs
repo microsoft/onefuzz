@@ -13,6 +13,8 @@ use tokio::process::Command;
 
 use crate::work::*;
 
+const SETUP_PATH_ENV: &str = "ONEFUZZ_TASK_SETUP_PATH";
+
 #[async_trait]
 pub trait ISetupRunner: Downcast {
     async fn run(&mut self, work_set: &WorkSet) -> Result<bool>;
@@ -150,15 +152,20 @@ const SETUP_SCRIPT: &str = "setup.ps1";
 const SETUP_SCRIPT: &str = "setup.sh";
 
 pub struct SetupScript {
+    setup_dir: PathBuf,
     script_path: PathBuf,
 }
 
 impl SetupScript {
     pub async fn new(setup_dir: impl AsRef<Path>) -> Result<Option<Self>> {
-        let script_path = setup_dir.as_ref().join(SETUP_SCRIPT);
+        let setup_dir = setup_dir.as_ref().to_path_buf();
+        let script_path = setup_dir.join(SETUP_SCRIPT);
 
         let script = if onefuzz::fs::exists(&script_path).await? {
-            Some(Self { script_path })
+            Some(Self {
+                setup_dir,
+                script_path,
+            })
         } else {
             None
         };
@@ -178,6 +185,7 @@ impl SetupScript {
     fn setup_command(&self) -> Command {
         let mut cmd = Command::new("powershell.exe");
 
+        cmd.env(SETUP_PATH_ENV, &self.setup_dir);
         cmd.arg("-ExecutionPolicy");
         cmd.arg("Unrestricted");
         cmd.arg("-File");
@@ -192,6 +200,7 @@ impl SetupScript {
     fn setup_command(&self) -> Command {
         let mut cmd = Command::new("bash");
 
+        cmd.env(SETUP_PATH_ENV, &self.setup_dir);
         cmd.arg(&self.script_path);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
