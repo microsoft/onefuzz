@@ -5,7 +5,7 @@
 
 mkdir -p artifacts/third-party/aflpp-linux
 
-apt-get install -y llvm llvm-dev clang
+sudo apt-get install -y llvm llvm-dev clang
 
 git clone https://github.com/AFLplusplus/AFLplusplus
 cd AFLplusplus
