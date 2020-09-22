@@ -11,8 +11,8 @@ use onefuzz::blob::BlobContainerUrl;
 use tokio::fs;
 use tokio::process::Command;
 
+use crate::process::Output;
 use crate::work::*;
-use crate::worker::Output;
 
 const SETUP_PATH_ENV: &str = "ONEFUZZ_TARGET_SETUP_PATH";
 
