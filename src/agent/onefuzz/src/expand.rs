@@ -86,7 +86,7 @@ impl<'a> Expand<'a> {
 
     fn extract_file_name_no_ext(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
         match self.values.get(&PlaceHolder::Input.get_string()) {
-            Some(ExpandedValue::Path(fp)) | Some(ExpandedValue::Scalar(fp)) => {
+            Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
                 let stem = file.file_stem()?;
                 let name_as_str = String::from(stem.to_str()?);
@@ -98,7 +98,7 @@ impl<'a> Expand<'a> {
 
     fn extract_file_name(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
         match self.values.get(&PlaceHolder::Input.get_string()) {
-            Some(ExpandedValue::Path(fp)) | Some(ExpandedValue::Scalar(fp)) => {
+            Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
                 let name = file.file_name()?;
                 let name_as_str = String::from(name.to_str()?);
