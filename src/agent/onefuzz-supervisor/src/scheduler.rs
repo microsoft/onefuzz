@@ -6,8 +6,8 @@ use std::fmt;
 use anyhow::Result;
 
 use crate::coordinator::NodeCommand;
-use crate::reboot::RebootContext;
 use crate::process::Output;
+use crate::reboot::RebootContext;
 use crate::setup::ISetupRunner;
 use crate::work::*;
 use crate::worker::*;
@@ -165,7 +165,7 @@ impl State<SettingUp> {
                 let ctx = Done { cause };
                 return Ok(SetupDone::Done(ctx.into()));
             }
-            _ => {},
+            _ => {}
         }
 
         let done = if work_set.reboot {
@@ -215,7 +215,9 @@ impl State<Busy> {
         }
 
         let updated = if self.all_workers_done() {
-            let done = Done { cause: DoneCause::WorkersDone };
+            let done = Done {
+                cause: DoneCause::WorkersDone,
+            };
             Updated::Done(done.into())
         } else {
             Updated::Busy(self)

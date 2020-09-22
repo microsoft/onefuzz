@@ -57,13 +57,17 @@ pub struct NodeEventEnvelope {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case", untagged)]
 pub enum NodeEvent {
-    StateUpdate { state: NodeState },
-    WorkerEvent { event: WorkerEvent },
+    StateUpdate {
+        state: NodeState,
+    },
+    WorkerEvent {
+        event: WorkerEvent,
+    },
     Done {
         state: NodeState,
         error: Option<String>,
         script_output: Option<Output>,
-    }
+    },
 }
 
 impl From<NodeState> for NodeEvent {

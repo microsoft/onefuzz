@@ -190,20 +190,19 @@ impl Agent {
         verbose!("agent done");
 
         let event = match state.cause() {
-            DoneCause::WorkersDone => {
-                NodeEvent::Done {
-                    state: NodeState::Done,
-                    error: None,
-                    script_output: None,
-                }
-            }
-            DoneCause::SetupError { error, script_output } => {
-                NodeEvent::Done {
-                    state: NodeState::Done,
-                    error: Some(error),
-                    script_output,
-                }
-            }
+            DoneCause::WorkersDone => NodeEvent::Done {
+                state: NodeState::Done,
+                error: None,
+                script_output: None,
+            },
+            DoneCause::SetupError {
+                error,
+                script_output,
+            } => NodeEvent::Done {
+                state: NodeState::Done,
+                error: Some(error),
+                script_output,
+            },
         };
 
         self.coordinator.emit_event(event).await?;
