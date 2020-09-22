@@ -31,6 +31,16 @@ pub struct Output {
     pub stdout: String,
 }
 
+impl From<std::process::Output> for Output {
+    fn from(output: std::process::Output) -> Self {
+        let exit_status = output.status.into();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+
+        Self { exit_status, stderr, stdout }
+    }
+}
+
 /// Serializable representation of a worker exit status.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct ExitStatus {
