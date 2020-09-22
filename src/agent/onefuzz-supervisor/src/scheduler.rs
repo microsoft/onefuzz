@@ -138,6 +138,7 @@ impl State<Free> {
 pub enum SetupDone {
     Ready(State<Ready>),
     PendingReboot(State<PendingReboot>),
+    Done(State<Done>),
 }
 
 impl State<SettingUp> {

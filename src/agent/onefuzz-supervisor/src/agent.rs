@@ -143,6 +143,7 @@ impl Agent {
         let scheduler = match state.finish(self.setup_runner.as_mut()).await? {
             SetupDone::Ready(s) => s.into(),
             SetupDone::PendingReboot(s) => s.into(),
+            SetupDone::Done(s) => s.into(),
         };
 
         Ok(scheduler)
