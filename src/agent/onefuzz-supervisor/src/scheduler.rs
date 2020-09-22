@@ -131,9 +131,9 @@ impl State<SettingUp> {
     pub async fn finish(self, runner: &mut dyn ISetupRunner) -> Result<SetupDone> {
         let work_set = self.ctx.work_set;
 
-        let reboot = runner.run(&work_set).await?;
+        runner.run(&work_set).await?;
 
-        let done = if reboot {
+        let done = if work_set.reboot {
             let ctx = PendingReboot { work_set };
             SetupDone::PendingReboot(ctx.into())
         } else {
