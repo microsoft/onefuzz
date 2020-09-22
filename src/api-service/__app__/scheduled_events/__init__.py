@@ -24,14 +24,6 @@ from ..onefuzzlib.tasks.main import Task
 
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
-    scalesets = Scaleset.search()
-    scalesets_needs_work = ScalesetState.needs_work()
-    for scaleset in scalesets:
-        logging.info("queueing scaleset updates: %s", scaleset.scaleset_id)
-        scaleset.queue(method=scaleset.update_configs)
-        if scaleset.state in scalesets_needs_work:
-            scaleset.queue()
-
     proxies = Proxy.search_states(states=VmState.needs_work())
     for proxy in proxies:
         logging.info("requeueing update proxy vm: %s", proxy.region)

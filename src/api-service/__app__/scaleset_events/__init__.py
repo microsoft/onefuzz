@@ -30,8 +30,6 @@ def process_scaleset(scaleset: Scaleset) -> None:
         getattr(scaleset, scaleset.state.name)()
         return
 
-    scaleset.update_configs()
-
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
     scalesets = Scaleset.search()
