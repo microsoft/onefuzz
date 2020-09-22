@@ -20,7 +20,7 @@ impl ICoordinator for CoordinatorDouble {
         Ok(())
     }
 
-    async fn can_schedule(&mut self, work: &WorkSet) -> Result<bool> {
+    async fn can_schedule(&mut self, _work: &WorkSet) -> Result<bool> {
         Ok(true)
     }
 }
