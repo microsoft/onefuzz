@@ -143,12 +143,28 @@ impl State<SettingUp> {
     pub async fn finish(self, runner: &mut dyn ISetupRunner) -> Result<SetupDone> {
         let work_set = self.ctx.work_set;
 
-        let output = runner.run(&work_set).await?;
+        let output = runner.run(&work_set).await;
 
-        if let Some(output) = output {
-            if !output.exit_status.success {
-                anyhow::bail!("setup script failed: {:?}", output);
+        match output {
+            Ok(Some(output)) => {
+                if !output.exit_status.success {
+                    let cause = DoneCause::SetupError {
+                        error: "error running target setup script".to_owned(),
+                        script_output: Some(output),
+                    };
+                    let ctx = Done { cause };
+                    return Ok(SetupDone::Done(ctx.into()));
+                }
             }
+            Err(err) => {
+                let cause = DoneCause::SetupError {
+                    error: err.to_string(),
+                    script_output: None,
+                };
+                let ctx = Done { cause };
+                return Ok(SetupDone::Done(ctx.into()));
+            }
+            _ => {},
         }
 
         let done = if work_set.reboot {
