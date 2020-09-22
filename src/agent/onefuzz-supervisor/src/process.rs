@@ -12,7 +12,11 @@ impl From<std::process::Output> for Output {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
 
-        Self { exit_status, stderr, stdout }
+        Self {
+            exit_status,
+            stderr,
+            stdout,
+        }
     }
 }
 

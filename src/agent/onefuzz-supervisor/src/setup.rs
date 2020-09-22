@@ -93,8 +93,7 @@ impl SetupRunner {
             } else {
                 error!(
                     "setup script failed:\nstdout = {}\nstderr = {}",
-                    &output.stdout,
-                    &output.stderr,
+                    &output.stdout, &output.stderr,
                 );
             }
 
