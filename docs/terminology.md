@@ -63,22 +63,22 @@ are used in a specific context.
 
 ## Pool
 
-A pool is a group of nodes to run [Tasks](#Task).  Pools enable users to
-specify which group of [nodes](#Node) their task should run on.
+A pool is a group of nodes to run [Tasks](#task).  Pools enable users to
+specify which group of [nodes](#node) their task should run on.
 
 Pools are defined by:
 * `name`: the Name of the pool
 * `os`: The operating system of the node (`linux` or `windows`)
 3. `arch`: The CPU architecture of the nodes (only `x86_64` for now)
-4. `managed`: Is the pool made up of Onefuzz managed [scalsets](#Scaleset)
+4. `managed`: Is the pool made up of OneFuzz managed [scalsets](#scaleset)
 
 ## Scaleset
 
 A scaleset is an [Azure Virtual Machine
 Scaleset](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview),
-of which the entire lifecycle is managed by Onefuzz.  All of the VMs in the
-scaleset are automatically setup to connect to the Onefuzz instance as a
-[Node](#Node).
+of which the entire lifecycle is managed by OneFuzz.  All of the VMs in the
+scaleset are automatically setup to connect to the OneFuzz instance as a
+[Node](#node).
 
 Scalesets can run on almost any [Azure VM
 Image](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-findimage)
@@ -87,5 +87,5 @@ Image](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cli-ps-find
 ## Node
 
 A single compute host to run tasks.  Right now, these are only VMs in a
-[scaleset](#Scaleset), though support for on-prem or third-party cloud hosted
+[scaleset](#scaleset), though support for on-prem or third-party cloud-hosted
 nodes will be available in the future.
