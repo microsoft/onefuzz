@@ -97,7 +97,7 @@ impl SetupRunner {
                 );
             }
 
-            Some(output.into())
+            Some(output)
         } else {
             info!("no setup script to run");
 
