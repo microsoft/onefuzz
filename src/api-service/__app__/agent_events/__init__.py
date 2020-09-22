@@ -10,6 +10,7 @@ import azure.functions as func
 from onefuzztypes.enums import ErrorCode, NodeState, NodeTaskState, TaskState
 from onefuzztypes.models import (
     Error,
+    NodeDoneEvent,
     NodeEventEnvelope,
     NodeStateUpdate,
     WorkerDoneEvent,
@@ -40,6 +41,24 @@ def get_node_checked(machine_id: UUID) -> Node:
         err = Error(code=ErrorCode.INVALID_NODE, errors=["unable to find node"])
         raise RequestException(err)
     return node
+
+
+def on_node_done_event(machine_id: UUID, state: NodeState) -> func.HttpResponse:
+    node = get_node_checked(machine_id)
+
+    if state != NodeState.done:
+        err = Error(
+            code=ErrorCode.INVALID_REQUEST,
+            errors=["invalid node state for event"],
+        )
+        return not_ok(err, context=ERROR_CONTEXT)
+
+    # TODO: ensure tasks will be failed.
+
+    node.state = state
+    node.save()
+
+    return ok(BoolResult(result=True))
 
 
 def on_state_update(machine_id: UUID, state: NodeState) -> func.HttpResponse:
@@ -120,7 +139,9 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         envelope.event,
     )
 
-    if isinstance(envelope.event, NodeStateUpdate):
+    if isinstance(envelope.event, NodeDoneEvent):
+        return on_node_done_event(envelope.machine_id, envelope.event.state)
+    elif isinstance(envelope.event, NodeStateUpdate):
         return on_state_update(envelope.machine_id, envelope.event.state)
     elif isinstance(envelope.event, WorkerEvent):
         return on_worker_event(envelope.machine_id, envelope.event)

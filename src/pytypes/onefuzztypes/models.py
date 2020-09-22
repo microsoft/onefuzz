@@ -465,6 +465,12 @@ class ExitStatus(BaseModel):
     success: bool
 
 
+class ProcessOutput(BaseModel):
+    exit_status: ExitStatus
+    stderr: str
+    stdout: str
+
+
 class WorkerRunningEvent(BaseModel):
     task_id: UUID
 
@@ -484,7 +490,13 @@ class NodeStateUpdate(BaseModel):
     state: NodeState
 
 
-NodeEvent = Union[WorkerEvent, NodeStateUpdate]
+class NodeDoneEvent(BaseModel):
+    state: NodeState
+    error: Option[str]
+    script_output: Option[ProcessOutput]
+
+
+NodeEvent = Union[WorkerEvent, NodeStateUpdate, NodeDoneEvent]
 
 
 class NodeEventEnvelope(BaseModel):
