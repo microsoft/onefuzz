@@ -13,7 +13,7 @@ use tokio::process::Command;
 
 use crate::work::*;
 
-const SETUP_PATH_ENV: &str = "ONEFUZZ_TASK_SETUP_PATH";
+const SETUP_PATH_ENV: &str = "ONEFUZZ_TARGET_SETUP_PATH";
 
 #[async_trait]
 pub trait ISetupRunner: Downcast {
