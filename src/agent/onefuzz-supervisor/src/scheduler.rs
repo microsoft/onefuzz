@@ -7,7 +7,8 @@ use anyhow::Result;
 
 use crate::coordinator::NodeCommand;
 use crate::reboot::RebootContext;
-use crate::setup::{ISetupRunner, SetupOutput};
+use crate::process::Output;
+use crate::setup::ISetupRunner;
 use crate::work::*;
 use crate::worker::*;
 
@@ -81,11 +82,12 @@ pub struct Done {
     cause: DoneCause,
 }
 
+#[derive(Clone, Debug)]
 pub enum DoneCause {
     WorkersDone,
     SetupError {
         error: String,
-        script_output: SetupOutput,
+        script_output: Option<Output>,
     },
 }
 
@@ -258,7 +260,11 @@ impl From<Updated> for Scheduler {
     }
 }
 
-impl State<Done> {}
+impl State<Done> {
+    pub fn cause(&self) -> DoneCause {
+        self.ctx.cause.clone()
+    }
+}
 
 impl From<Option<RebootContext>> for Scheduler {
     fn from(ctx: Option<RebootContext>) -> Self {

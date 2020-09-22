@@ -189,7 +189,24 @@ impl Agent {
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
         verbose!("agent done");
 
-        self.coordinator.emit_event(NodeState::Done.into()).await?;
+        let event = match state.cause() {
+            DoneCause::WorkersDone => {
+                NodeEvent::Done {
+                    state: NodeState::Done,
+                    error: None,
+                    script_output: None,
+                }
+            }
+            DoneCause::SetupError { error, script_output } => {
+                NodeEvent::Done {
+                    state: NodeState::Done,
+                    error: Some(error),
+                    script_output,
+                }
+            }
+        };
+
+        self.coordinator.emit_event(event).await?;
 
         // `Done` is a final state.
         Ok(state.into())

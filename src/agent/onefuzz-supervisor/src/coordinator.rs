@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use crate::auth::AccessToken;
 use crate::config::Registration;
+use crate::process::Output;
 use crate::work::{TaskId, WorkSet};
 use crate::worker::WorkerEvent;
 
@@ -58,6 +59,11 @@ pub struct NodeEventEnvelope {
 pub enum NodeEvent {
     StateUpdate { state: NodeState },
     WorkerEvent { event: WorkerEvent },
+    Done {
+        state: NodeState,
+        error: Option<String>,
+        script_output: Option<Output>,
+    }
 }
 
 impl From<NodeState> for NodeEvent {
