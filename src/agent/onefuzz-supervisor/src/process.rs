@@ -1,4 +1,4 @@
-/// Serializable representation of a worker process output.
+/// Serializable representation of a process output.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Output {
     pub exit_status: ExitStatus,
@@ -20,7 +20,7 @@ impl From<std::process::Output> for Output {
     }
 }
 
-/// Serializable representation of a worker exit status.
+/// Serializable representation of a process exit status.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct ExitStatus {
     pub code: Option<i32>,
