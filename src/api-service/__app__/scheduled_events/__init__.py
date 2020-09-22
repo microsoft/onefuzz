@@ -6,18 +6,11 @@
 import logging
 
 import azure.functions as func
-from onefuzztypes.enums import (
-    JobState,
-    NodeState,
-    PoolState,
-    ScalesetState,
-    TaskState,
-    VmState,
-)
+from onefuzztypes.enums import JobState, NodeState, PoolState, TaskState, VmState
 
 from ..onefuzzlib.dashboard import get_event
 from ..onefuzzlib.jobs import Job
-from ..onefuzzlib.pools import Node, Pool, Scaleset
+from ..onefuzzlib.pools import Node, Pool
 from ..onefuzzlib.proxy import Proxy
 from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.tasks.main import Task
