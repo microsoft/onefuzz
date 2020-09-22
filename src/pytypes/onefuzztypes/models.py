@@ -492,8 +492,8 @@ class NodeStateUpdate(BaseModel):
 
 class NodeDoneEvent(BaseModel):
     state: NodeState
-    error: Option[str]
-    script_output: Option[ProcessOutput]
+    error: Optional[str]
+    script_output: Optional[ProcessOutput]
 
 
 NodeEvent = Union[WorkerEvent, NodeStateUpdate, NodeDoneEvent]
