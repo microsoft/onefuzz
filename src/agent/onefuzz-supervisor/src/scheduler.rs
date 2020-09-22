@@ -6,6 +6,7 @@ use std::fmt;
 use anyhow::Result;
 
 use crate::coordinator::NodeCommand;
+use crate::process::Output;
 use crate::reboot::RebootContext;
 use crate::setup::ISetupRunner;
 use crate::work::*;
@@ -77,7 +78,19 @@ pub struct Busy {
     workers: Vec<Option<Worker>>,
 }
 
-pub struct Done;
+pub struct Done {
+    cause: DoneCause,
+}
+
+pub enum DoneCause {
+    WorkersDone,
+    SetupError {
+        error: String,
+    },
+    SetupScriptError {
+        output: Output,
+    },
+}
 
 pub trait Context {}
 
@@ -186,7 +199,8 @@ impl State<Busy> {
         }
 
         let updated = if self.all_workers_done() {
-            Updated::Done(Done.into())
+            let done = Done { cause: DoneCause::WorkersDone };
+            Updated::Done(done.into())
         } else {
             Updated::Busy(self)
         };
