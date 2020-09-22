@@ -6,7 +6,6 @@ use std::fmt;
 use anyhow::Result;
 
 use crate::coordinator::NodeCommand;
-use crate::process::Output;
 use crate::reboot::RebootContext;
 use crate::setup::{ISetupRunner, SetupOutput};
 use crate::work::*;
