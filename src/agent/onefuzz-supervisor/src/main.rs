@@ -83,14 +83,13 @@ fn run(opt: RunOpt) -> Result<()> {
     let mut rt = tokio::runtime::Runtime::new()?;
     let result = rt.block_on(run_agent(config));
 
-    if let Err(err) = result {
+    if let Err(err) = &result {
         error!("error running supervisor agent: {}", err);
-        return Err(err);
     }
 
     onefuzz::telemetry::try_flush_and_close();
 
-    Ok(())
+    result
 }
 
 fn load_config(opt: RunOpt) -> Result<StaticConfig> {
