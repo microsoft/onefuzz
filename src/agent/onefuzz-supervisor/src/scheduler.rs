@@ -8,7 +8,7 @@ use anyhow::Result;
 use crate::coordinator::NodeCommand;
 use crate::process::Output;
 use crate::reboot::RebootContext;
-use crate::setup::ISetupRunner;
+use crate::setup::{ISetupRunner, SetupOutput};
 use crate::work::*;
 use crate::worker::*;
 
@@ -86,9 +86,7 @@ pub enum DoneCause {
     WorkersDone,
     SetupError {
         error: String,
-    },
-    SetupScriptError {
-        output: Output,
+        script_output: SetupOutput,
     },
 }
 
