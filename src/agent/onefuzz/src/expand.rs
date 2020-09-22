@@ -8,6 +8,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 pub enum ExpandedValue<'a> {
+    Path(String),
     Scalar(String),
     List(&'a [String]),
     Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Option<ExpandedValue<'a>>>),
@@ -85,7 +86,7 @@ impl<'a> Expand<'a> {
 
     fn extract_file_name_no_ext(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
         match self.values.get(&PlaceHolder::Input.get_string()) {
-            Some(ExpandedValue::Scalar(fp)) => {
+            Some(ExpandedValue::Path(fp)) | Some(ExpandedValue::Scalar(fp)) => {
                 let file = PathBuf::from(fp);
                 let stem = file.file_stem()?;
                 let name_as_str = String::from(stem.to_str()?);
@@ -97,7 +98,7 @@ impl<'a> Expand<'a> {
 
     fn extract_file_name(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
         match self.values.get(&PlaceHolder::Input.get_string()) {
-            Some(ExpandedValue::Scalar(fp)) => {
+            Some(ExpandedValue::Path(fp)) | Some(ExpandedValue::Scalar(fp)) => {
                 let file = PathBuf::from(fp);
                 let name = file.file_name()?;
                 let name_as_str = String::from(name.to_str()?);
@@ -115,35 +116,35 @@ impl<'a> Expand<'a> {
     pub fn generated_inputs(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::GeneratedInputs, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::GeneratedInputs, ExpandedValue::Path(path));
         self
     }
 
     pub fn crashes(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::Crashes, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::Crashes, ExpandedValue::Path(path));
         self
     }
 
     pub fn input(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::Input, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::Input, ExpandedValue::Path(path));
         self
     }
 
     pub fn input_corpus(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::InputCorpus, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::InputCorpus, ExpandedValue::Path(path));
         self
     }
 
     pub fn generator_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::GeneratorExe, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::GeneratorExe, ExpandedValue::Path(path));
         self
     }
 
@@ -155,7 +156,7 @@ impl<'a> Expand<'a> {
     pub fn target_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::TargetExe, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::TargetExe, ExpandedValue::Path(path));
         self
     }
 
@@ -167,7 +168,7 @@ impl<'a> Expand<'a> {
     pub fn analyzer_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::AnalyzerExe, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::AnalyzerExe, ExpandedValue::Path(path));
         self
     }
 
@@ -179,7 +180,7 @@ impl<'a> Expand<'a> {
     pub fn supervisor_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::SupervisorExe, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::SupervisorExe, ExpandedValue::Path(path));
         self
     }
 
@@ -191,21 +192,21 @@ impl<'a> Expand<'a> {
     pub fn output_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::OutputDir, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::OutputDir, ExpandedValue::Path(path));
         self
     }
 
     pub fn tools_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::ToolsDir, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::ToolsDir, ExpandedValue::Path(path));
         self
     }
 
     pub fn runtime_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::RuntimeDir, ExpandedValue::Scalar(path));
+        self.set_value(PlaceHolder::RuntimeDir, ExpandedValue::Path(path));
         self
     }
 
@@ -216,6 +217,11 @@ impl<'a> Expand<'a> {
         ev: &ExpandedValue<'a>,
     ) -> Result<String> {
         match ev {
+            ExpandedValue::Path(v) => {
+                let path = String::from(dunce::canonicalize(v)?.to_string_lossy());
+                arg = arg.replace(fmtstr, &path);
+                Ok(arg)
+            }
             ExpandedValue::Scalar(v) => {
                 arg = arg.replace(fmtstr, &v);
                 Ok(arg)
@@ -272,10 +278,16 @@ mod tests {
 
     #[test]
     fn test_expand() -> Result<()> {
-        let my_options: Vec<_> = vec!["inner", "{input_corpus}", "then", "{generated_inputs}"]
-            .iter()
-            .map(|p| p.to_string())
-            .collect();
+        let my_options: Vec<_> = vec![
+            "inner",
+            "{input_corpus}",
+            "then",
+            "{generated_inputs}",
+            "{input}",
+        ]
+        .iter()
+        .map(|p| p.to_string())
+        .collect();
 
         let my_args = vec![
             "a",
@@ -286,26 +298,46 @@ mod tests {
             "{target_options}",
             "d",
             "{input_file_name_no_ext}",
+            "{input}",
+            "{input}",
         ];
 
+        // The paths need to exist for canonicalization.
+        let input_path = "data/libfuzzer-asan-log.txt";
+        let input_corpus_dir = "data";
+        let generated_inputs_dir = "src";
+
         let result = Expand::new()
-            .input_corpus(Path::new("hi"))
-            .generated_inputs(Path::new("mom"))
+            .input_corpus(Path::new(input_corpus_dir))
+            .generated_inputs(Path::new(generated_inputs_dir))
             .target_options(&my_options)
-            .input("test_dir/test_fileName.txt")
+            .input(input_path)
             .evaluate(&my_args)?;
+
+        let input_corpus_path = dunce::canonicalize(input_corpus_dir)?;
+        let expected_input_corpus = input_corpus_path.to_string_lossy();
+        let generated_inputs_path = dunce::canonicalize(generated_inputs_dir)?;
+        let expected_generated_inputs = generated_inputs_path.to_string_lossy();
+        let input_full_path = dunce::canonicalize(input_path)?;
+        let expected_input = input_full_path.to_string_lossy();
+        let expected_options = format!(
+            "inner {} then {} {}",
+            expected_input_corpus, expected_generated_inputs, expected_input
+        );
 
         assert_eq!(
             result,
             vec![
                 "a",
-                "hi",
+                &expected_input_corpus,
                 "b",
-                "mom",
+                &expected_generated_inputs,
                 "c",
-                "inner hi then mom",
+                &expected_options,
                 "d",
-                "test_fileName"
+                "libfuzzer-asan-log",
+                &expected_input,
+                &expected_input
             ]
         );
 
