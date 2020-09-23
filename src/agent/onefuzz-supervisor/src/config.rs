@@ -24,6 +24,8 @@ pub struct StaticConfig {
     pub instrumentation_key: Option<Uuid>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub heartbeat_queue: Option<Url>,
 }
 
 // Temporary shim type to bridge the current service-provided config.
@@ -38,6 +40,8 @@ struct RawStaticConfig {
     pub instrumentation_key: Option<Uuid>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub heartbeat_queue: Option<Url>,
 }
 
 impl StaticConfig {
@@ -63,6 +67,7 @@ impl StaticConfig {
             onefuzz_url: config.onefuzz_url,
             instrumentation_key: config.instrumentation_key,
             telemetry_key: config.telemetry_key,
+            heartbeat_queue: config.heartbeat_queue,
         };
 
         Ok(config)

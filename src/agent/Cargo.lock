@@ -1211,6 +1211,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "appinsights",
+ "async-trait",
  "base64",
  "bytes",
  "cpp_demangle",
@@ -1233,6 +1234,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sha2",
+ "storage-queue",
  "strum",
  "strum_macros",
  "sysinfo",

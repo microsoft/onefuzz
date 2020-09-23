@@ -71,7 +71,7 @@ impl LibFuzzerFuzzTask {
 
         self.init_directories().await?;
         self.sync_all_corpuses().await?;
-        let hb_client = self.config.common.init_heartbeat();
+        let hb_client = self.config.common.init_heartbeat().await?;
 
         // To be scheduled.
         let resync = self.resync_all_corpuses();
@@ -343,7 +343,7 @@ impl Timer {
 async fn report_runtime_stats(
     workers: usize,
     mut stats_channel: mpsc::UnboundedReceiver<RuntimeStats>,
-    heartbeat_sender: impl HeartbeatSender,
+    heartbeat_client: impl HeartbeatSender,
 ) -> Result<()> {
     // Cache the last-reported stats for a given worker.
     //
@@ -357,7 +357,7 @@ async fn report_runtime_stats(
     loop {
         tokio::select! {
             Some(stats) = stats_channel.next() => {
-                heartbeat_sender.alive();
+                heartbeat_client.alive();
                 stats.report();
 
                 let idx = stats.worker_id as usize;

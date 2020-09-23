@@ -14,6 +14,7 @@ from onefuzztypes.primitives import Extension, Region
 from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
 from .azure.creds import get_func_storage, get_instance_name
 from .azure.monitor import get_monitor_settings
+from .azure.queue import get_queue_sas
 from .reports import get_report
 
 # TODO: figure out how to create VM specific SSH keys for Windows.
@@ -93,6 +94,9 @@ def build_pool_config(pool_name: str) -> str:
         pool_name=pool_name,
         onefuzz_url="https://%s.azurewebsites.net" % get_instance_name(),
         instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+        heartbeat_queue=get_queue_sas(
+            "heartbeat", account_id=os.environ["ONEFUZZ_FUNC_STORAGE"], add=True,
+        ),
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
     )
 

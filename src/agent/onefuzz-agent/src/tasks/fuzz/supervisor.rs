@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+
 #![allow(clippy::too_many_arguments)]
 use crate::tasks::{
     config::{CommonConfig, ContainerType, SyncedDir},
@@ -105,7 +106,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     let stopped = Notify::new();
     let monitor_process = monitor_process(process, &stopped);
-    let hb = config.common.init_heartbeat();
+    let hb = config.common.init_heartbeat().await?;
 
     let heartbeat_process = heartbeat_process(&stopped, hb);
 
@@ -135,7 +136,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
 async fn heartbeat_process(
     stopped: &Notify,
-    heartbeat_client: Option<HeartbeatClient>,
+    heartbeat_client: Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     while !stopped.is_notified(HEARTBEAT_PERIOD).await {
         heartbeat_client.alive();

@@ -9,6 +9,7 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 appinsights = "0.1.4"
+async-trait = "0.1"
 base64 = "0.12"
 bytes = "0.5"
 dunce = "1.0.1"
@@ -29,6 +30,7 @@ tokio-util = { version = "0.3", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 urlparse = "0.7"
 ring = "0.16"
+storage-queue = { path = "../storage-queue" }
 strum = "0.19"
 strum_macros = "0.19"
 tempfile = "3.1"

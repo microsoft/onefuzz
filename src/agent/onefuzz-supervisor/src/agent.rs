@@ -5,6 +5,7 @@ use anyhow::{Error, Result};
 use tokio::time;
 
 use crate::coordinator::*;
+use crate::heartbeat::AgentHeartbeatClient;
 use crate::reboot::*;
 use crate::scheduler::*;
 use crate::setup::*;
@@ -18,6 +19,7 @@ pub struct Agent {
     setup_runner: Box<dyn ISetupRunner>,
     work_queue: Box<dyn IWorkQueue>,
     worker_runner: Box<dyn IWorkerRunner>,
+    _heartbeat: Option<AgentHeartbeatClient>,
 }
 
 impl Agent {
@@ -28,6 +30,7 @@ impl Agent {
         setup_runner: Box<dyn ISetupRunner>,
         work_queue: Box<dyn IWorkQueue>,
         worker_runner: Box<dyn IWorkerRunner>,
+        heartbeat: Option<AgentHeartbeatClient>,
     ) -> Self {
         let scheduler = Some(scheduler);
 
@@ -38,6 +41,7 @@ impl Agent {
             setup_runner,
             work_queue,
             worker_runner,
+            _heartbeat: heartbeat,
         }
     }
 
