@@ -495,8 +495,8 @@ class WorkerDoneEvent(BaseModel):
 
 
 class WorkerEvent(EnumModel):
-    done: WorkerDoneEvent
-    running: WorkerRunningEvent
+    done: Optional[WorkerDoneEvent]
+    running: Optional[WorkerRunningEvent]
 
 
 class NodeStateUpdate(BaseModel):
