@@ -4,10 +4,10 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -30,6 +30,24 @@ from .enums import (
     VmState,
 )
 from .primitives import Container, PoolName, Region
+
+
+class EnumModel(BaseModel):
+    @root_validator(pre=True)
+    def exactly_one(cls: Any, values: Any) -> Any:
+        some = []
+
+        for field, val in values.items():
+            if val is not None:
+                some.append(field)
+
+        if not some:
+            raise ValueError('no variant set for enum')
+
+        if len(some) > 1:
+            raise ValueError('multiple values set for enum: %s' % some)
+
+        return values
 
 
 class Error(BaseModel):
@@ -476,15 +494,18 @@ class WorkerDoneEvent(BaseModel):
     stdout: str
 
 
-class WorkerEvent(BaseModel):
-    event: Union[WorkerDoneEvent, WorkerRunningEvent]
+class WorkerEvent(EnumModel):
+    done: WorkerDoneEvent
+    running: WorkerRunningEvent
 
 
 class NodeStateUpdate(BaseModel):
     state: NodeState
 
 
-NodeEvent = Union[WorkerEvent, NodeStateUpdate]
+class NodeEvent(EnumModel):
+    worker_event: Optional[WorkerEvent]
+    state_update: Optional[NodeStateUpdate]
 
 
 class NodeEventEnvelope(BaseModel):
@@ -496,7 +517,8 @@ class NodeCommandStopTask(BaseModel):
     task_id: UUID
 
 
-NodeCommand = Union[NodeCommandStopTask]
+class NodeCommand(EnumModel):
+    stop_task: NodeCommandStopTask
 
 
 class NodeCommandEnvelope(BaseModel):
