@@ -68,10 +68,10 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
         node_task.save()
         task.on_start()
     elif event.done:
-        # only record exit status if the task isn't already shutting down.
+        # Only record exit status if the task isn't already shutting down.
         #
-        # the agent failing because resources vanish out from underneath it during
-        # deletion is OK
+        # It's ok for the agent to fail because resources vanish out from underneath
+        # it during deletion.
         if task.state not in TaskState.shutting_down():
             exit_status = event.done.exit_status
 
