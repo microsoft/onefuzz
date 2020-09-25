@@ -18,10 +18,10 @@ pub struct StopTask {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(tag = "command_type")]
+#[serde(rename_all = "snake_case")]
 pub enum NodeCommand {
-    #[serde(alias = "stop")]
     StopTask(StopTask),
+    Stop {},
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
