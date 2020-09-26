@@ -26,6 +26,7 @@ from onefuzztypes.models import Scaleset as BASE_SCALESET
 from onefuzztypes.models import (
     ScalesetNodeState,
     ScalesetSummary,
+    StopNodeCommand,
     WorkSet,
     WorkSetSummary,
     WorkUnitSummary,
@@ -55,6 +56,7 @@ from .azure.vmss import (
 )
 from .extension import fuzz_extensions
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
+from .versions import versions
 
 # Future work:
 #
@@ -79,6 +81,29 @@ class Node(BASE_NODE, ORMMixin):
         if pool_name:
             query["pool_name"] = [pool_name]
         return cls.search(query=query)
+
+    @classmethod
+    def search_outdated(
+        cls,
+        version: str,
+        *,
+        scaleset_id: Optional[UUID] = None,
+        states: Optional[List[NodeState]] = None,
+        pool_name: Optional[str] = None,
+    ) -> List["Node"]:
+        query: QueryFilter = {}
+        if scaleset_id:
+            query["scaleset_id"] = [scaleset_id]
+        if states:
+            query["state"] = states
+        if pool_name:
+            query["pool_name"] = [pool_name]
+
+        # azure table query always return false when the column does not exist
+        # We write the query this way to allow us to get the nodes where the
+        # version is not defined as well as the nodes with a mismatched version
+        version_query = "not (version ne '%s')" % version
+        return cls.search(query=query, raw_unchecked_filter=version_query)
 
     @classmethod
     def get_by_machine_id(cls, machine_id: UUID) -> Optional["Node"]:
@@ -132,9 +157,7 @@ class Node(BASE_NODE, ORMMixin):
         for node in nodes:
             if node.state not in NodeState.ready_for_reset():
                 logging.info(
-                    "stopping task %s on machine_id:%s",
-                    task_id,
-                    node.machine_id,
+                    "stopping task %s on machine_id:%s", task_id, node.machine_id,
                 )
                 node.state = NodeState.done
                 node.save()
@@ -569,12 +592,30 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         nodes = Node.search_states(
             scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
         )
-        if not nodes:
+
+        version = versions()
+        outdated = Node.search_outdated(
+            version=version["onefuzz"].version,
+            scaleset_id=self.scaleset_id,
+            states=[NodeState.free],
+        )
+
+        if not (nodes or outdated):
             logging.debug("scaleset node gc done (no nodes) %s", self.scaleset_id)
             return False
 
         to_delete = []
         to_reimage = []
+
+        for node in outdated:
+            if node.version == "1.0.0":
+                to_reimage.append(node)
+            else:
+                stop_message = NodeMessage(
+                    agent_id=node.machine_id,
+                    message=NodeCommand(stop=StopNodeCommand()),
+                )
+                stop_message.save()
 
         for node in nodes:
             # delete nodes that are not waiting on the scaleset GC
@@ -779,8 +820,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     break
             if not node_state:
                 node_state = ScalesetNodeState(
-                    machine_id=machine_id,
-                    instance_id=instance_id,
+                    machine_id=machine_id, instance_id=instance_id,
                 )
             self.nodes.append(node_state)
 
