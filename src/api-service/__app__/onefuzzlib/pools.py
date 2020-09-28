@@ -56,7 +56,6 @@ from .azure.vmss import (
 )
 from .extension import fuzz_extensions
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
-from .versions import versions
 
 # Future work:
 #
@@ -85,7 +84,6 @@ class Node(BASE_NODE, ORMMixin):
     @classmethod
     def search_outdated(
         cls,
-        version: str,
         *,
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
@@ -102,7 +100,7 @@ class Node(BASE_NODE, ORMMixin):
         # azure table query always return false when the column does not exist
         # We write the query this way to allow us to get the nodes where the
         # version is not defined as well as the nodes with a mismatched version
-        version_query = "not (version ne '%s')" % version
+        version_query = "not (version ne '%s')" % __version__
         return cls.search(query=query, raw_unchecked_filter=version_query)
 
     @classmethod
@@ -593,9 +591,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
         )
 
-        version = versions()
         outdated = Node.search_outdated(
-            version=version["onefuzz"].version,
             scaleset_id=self.scaleset_id,
             states=[NodeState.free],
         )
