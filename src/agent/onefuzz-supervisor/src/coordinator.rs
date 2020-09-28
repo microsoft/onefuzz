@@ -291,7 +291,7 @@ impl Coordinator {
         let version = env!("ONEFUZZ_VERSION").to_owned();
         let can_schedule = CanScheduleRequest { task_id, version };
 
-        verbose!("getting task info for task ID = {}", task_id);
+        verbose!("checking if able to schedule task ID = {}", task_id);
 
         let mut url = self.registration.config.onefuzz_url.clone();
         url.set_path("/api/can_schedule");
