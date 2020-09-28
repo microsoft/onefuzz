@@ -126,7 +126,7 @@ impl Registration {
             let response = reqwest::Client::new()
                 .post(url.clone())
                 .header("Content-Length", "0")
-                .bearer_auth(token.secret().expose())
+                .bearer_auth(&*token.secret())
                 .body("")
                 .send()
                 .await?
@@ -174,7 +174,7 @@ impl Registration {
 
         let response = reqwest::Client::new()
             .get(url)
-            .bearer_auth(token.secret().expose())
+            .bearer_auth(&*token.secret())
             .send()
             .await?
             .error_for_status()?;
