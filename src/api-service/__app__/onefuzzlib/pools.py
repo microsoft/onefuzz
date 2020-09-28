@@ -8,6 +8,7 @@ import logging
 from typing import Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
+from .__version__ import __version__
 from onefuzztypes.enums import (
     OS,
     Architecture,
@@ -138,6 +139,9 @@ class Node(BASE_NODE, ORMMixin):
                 node.state = NodeState.done
                 node.save()
 
+    def is_outdated(self) -> bool:
+        return self.version != __version__
+
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
@@ -178,7 +182,7 @@ class NodeMessage(ORMMixin):
 
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
-        return ("agent_id", "create_date")
+        return ("agent_id", "message_id")
 
     @classmethod
     def get_messages(
