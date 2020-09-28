@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use std::path::{Path, PathBuf};
-use std::process::{Output, Stdio};
+use std::process::Stdio;
 
 use anyhow::Result;
 use downcast_rs::Downcast;
@@ -11,18 +11,23 @@ use onefuzz::blob::BlobContainerUrl;
 use tokio::fs;
 use tokio::process::Command;
 
+use crate::process::Output;
 use crate::work::*;
+
+const SETUP_PATH_ENV: &str = "ONEFUZZ_TARGET_SETUP_PATH";
+
+pub type SetupOutput = Option<Output>;
 
 #[async_trait]
 pub trait ISetupRunner: Downcast {
-    async fn run(&mut self, work_set: &WorkSet) -> Result<bool>;
+    async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput>;
 }
 
 impl_downcast!(ISetupRunner);
 
 #[async_trait]
 impl ISetupRunner for SetupRunner {
-    async fn run(&mut self, work_set: &WorkSet) -> Result<bool> {
+    async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput> {
         self.run(work_set).await
     }
 }
@@ -31,7 +36,7 @@ impl ISetupRunner for SetupRunner {
 pub struct SetupRunner;
 
 impl SetupRunner {
-    pub async fn run(&mut self, work_set: &WorkSet) -> Result<bool> {
+    pub async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput> {
         info!("running setup for work set");
 
         // Download the setup container.
@@ -64,7 +69,7 @@ impl SetupRunner {
         // Run setup script, if any.
         let setup_script = SetupScript::new(setup_dir).await?;
 
-        if let Some(setup_script) = setup_script {
+        let output = if let Some(setup_script) = setup_script {
             info!(
                 "running setup script from {}",
                 setup_script.path().display()
@@ -73,31 +78,33 @@ impl SetupRunner {
             let output = setup_script.invoke().await?;
 
             info!(
-                "setup script run; status = {}, path = {}",
-                output.status,
+                "setup script run; exit_status = {:?}, path = {}",
+                output.exit_status,
                 setup_script.path().display(),
             );
 
-            if output.status.success() {
+            if output.exit_status.success {
                 verbose!(
                     "setup script succeeded:\nstdout = {}\nstderr = {}",
-                    String::from_utf8_lossy(&output.stdout),
-                    String::from_utf8_lossy(&output.stderr),
+                    &output.stdout,
+                    &output.stderr,
                 );
                 info!("setup script succeeded");
             } else {
                 error!(
                     "setup script failed:\nstdout = {}\nstderr = {}",
-                    String::from_utf8_lossy(&output.stdout),
-                    String::from_utf8_lossy(&output.stderr),
+                    &output.stdout, &output.stderr,
                 );
-                anyhow::bail!("setup script failed:\nstdout = {}\nstderr = {}");
             }
+
+            Some(output)
         } else {
             info!("no setup script to run");
-        }
 
-        Ok(work_set.reboot)
+            None
+        };
+
+        Ok(output)
     }
 }
 
@@ -150,15 +157,20 @@ const SETUP_SCRIPT: &str = "setup.ps1";
 const SETUP_SCRIPT: &str = "setup.sh";
 
 pub struct SetupScript {
+    setup_dir: PathBuf,
     script_path: PathBuf,
 }
 
 impl SetupScript {
     pub async fn new(setup_dir: impl AsRef<Path>) -> Result<Option<Self>> {
-        let script_path = setup_dir.as_ref().join(SETUP_SCRIPT);
+        let setup_dir = setup_dir.as_ref().to_path_buf();
+        let script_path = setup_dir.join(SETUP_SCRIPT);
 
         let script = if onefuzz::fs::exists(&script_path).await? {
-            Some(Self { script_path })
+            Some(Self {
+                setup_dir,
+                script_path,
+            })
         } else {
             None
         };
@@ -171,13 +183,14 @@ impl SetupScript {
     }
 
     pub async fn invoke(&self) -> Result<Output> {
-        Ok(self.setup_command().output().await?)
+        Ok(self.setup_command().output().await?.into())
     }
 
     #[cfg(target_os = "windows")]
     fn setup_command(&self) -> Command {
         let mut cmd = Command::new("powershell.exe");
 
+        cmd.env(SETUP_PATH_ENV, &self.setup_dir);
         cmd.arg("-ExecutionPolicy");
         cmd.arg("Unrestricted");
         cmd.arg("-File");
@@ -192,6 +205,7 @@ impl SetupScript {
     fn setup_command(&self) -> Command {
         let mut cmd = Command::new("bash");
 
+        cmd.env(SETUP_PATH_ENV, &self.setup_dir);
         cmd.arg(&self.script_path);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
