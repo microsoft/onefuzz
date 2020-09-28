@@ -242,7 +242,7 @@ impl Coordinator {
         let request = self
             .client
             .get(url)
-            .bearer_auth(&*self.token.secret())
+            .bearer_auth(self.token.secret().expose_ref())
             .json(&request)
             .build()?;
 
@@ -259,7 +259,7 @@ impl Coordinator {
         let request = self
             .client
             .delete(url)
-            .bearer_auth(&*self.token.secret())
+            .bearer_auth(self.token.secret().expose_ref())
             .json(&request)
             .build()?;
 
@@ -271,7 +271,7 @@ impl Coordinator {
         let request = self
             .client
             .post(url)
-            .bearer_auth(&*self.token.secret())
+            .bearer_auth(self.token.secret().expose_ref())
             .json(event)
             .build()?;
 
@@ -294,7 +294,7 @@ impl Coordinator {
         let request = self
             .client
             .get(url)
-            .bearer_auth(&*self.token.secret())
+            .bearer_auth(self.token.secret().expose_ref())
             .json(&task_search)
             .build()?;
 
