@@ -8,7 +8,6 @@ import logging
 from typing import Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
-from .__version__ import __version__
 from onefuzztypes.enums import (
     OS,
     Architecture,
@@ -34,6 +33,7 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import PoolName, Region
 from pydantic import Field
 
+from .__version__ import __version__
 from .azure.auth import build_auth
 from .azure.creds import get_fuzz_storage
 from .azure.image import get_os

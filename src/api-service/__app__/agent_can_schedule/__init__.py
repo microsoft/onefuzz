@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
+
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.models import Error, NodeCommand, StopNodeCommand
