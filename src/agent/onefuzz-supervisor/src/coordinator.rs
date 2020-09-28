@@ -304,10 +304,10 @@ impl Coordinator {
         verbose!("checking if able to schedule task ID = {}", task_id);
 
         let mut url = self.registration.config.onefuzz_url.clone();
-        url.set_path("/api/can_schedule");
+        url.set_path("/api/agents/can_schedule");
         let request = self
             .client
-            .get(url)
+            .post(url)
             .bearer_auth(self.token.secret().expose_ref())
             .json(&can_schedule)
             .build()?;
