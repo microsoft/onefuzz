@@ -97,7 +97,7 @@ pub enum TaskState {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CanScheduleRequest {
-    version: String,
+    machine_id: Uuid,
     task_id: Uuid,
 }
 
@@ -288,8 +288,10 @@ impl Coordinator {
         // need to make sure that other the work units in the set have their states
         // updated if necessary.
         let task_id = work_set.work_units[0].task_id;
-        let version = env!("ONEFUZZ_VERSION").to_owned();
-        let can_schedule = CanScheduleRequest { task_id, version };
+        let can_schedule = CanScheduleRequest {
+            machine_id: self.registration.machine_id,
+            task_id,
+        };
 
         verbose!("checking if able to schedule task ID = {}", task_id);
 
