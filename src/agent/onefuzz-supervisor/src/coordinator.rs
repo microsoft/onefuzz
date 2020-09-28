@@ -103,7 +103,15 @@ pub struct CanScheduleRequest {
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CanSchedule {
+    /// If true, then the receiving node can schedule the work.
+    /// Otherwise, the receiver should inspect `work_stopped`.
     pub allowed: bool,
+
+    /// If `true`, then the work was stopped after being scheduled to the pool's
+    /// work queue, but before being claimed by a node.
+    ///
+    /// No node in the pool may schedule the work, so the receiving node should
+    /// claim (delete) and drop the work set.
     pub work_stopped: bool,
 }
 
