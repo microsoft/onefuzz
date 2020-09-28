@@ -47,6 +47,10 @@ impl Scheduler {
                     state.stop(stop_task.task_id)?;
                 }
             }
+            NodeCommand::Stop {} => {
+                let state = State { ctx: Done {} };
+                *self = state.into();
+            }
         }
 
         Ok(())

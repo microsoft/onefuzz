@@ -5,7 +5,7 @@ use std::fmt;
 
 use anyhow::Result;
 use reqwest::Url;
-use serde::de;
+use serde::{de, Serialize, Serializer};
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct BlobUrl {
@@ -217,6 +217,16 @@ fn possible_blob_storage_url(url: &Url, container: bool) -> bool {
 
 fn possible_blob_container_url(url: &Url) -> bool {
     possible_blob_storage_url(url, true)
+}
+
+impl Serialize for BlobContainerUrl {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let url = self.url.to_string();
+        serializer.serialize_str(&url)
+    }
 }
 
 impl<'de> de::Deserialize<'de> for BlobContainerUrl {
