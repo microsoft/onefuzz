@@ -8,7 +8,13 @@ from uuid import UUID
 
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode, NodeState, NodeTaskState, TaskState
-from onefuzztypes.models import Error, NodeEvent, NodeEventEnvelope, NodeStateUpdate, WorkerEvent
+from onefuzztypes.models import (
+    Error,
+    NodeEvent,
+    NodeEventEnvelope,
+    NodeStateUpdate,
+    WorkerEvent,
+)
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.agent_authorization import verify_token
