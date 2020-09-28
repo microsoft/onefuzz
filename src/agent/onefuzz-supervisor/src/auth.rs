@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::{fmt, ops};
+use std::fmt;
 
 use anyhow::Result;
 use url::Url;
@@ -9,6 +9,20 @@ use uuid::Uuid;
 
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Secret<T>(T);
+
+impl<T> Secret<T> {
+    pub fn expose(self) -> T {
+        self.0
+    }
+
+    pub fn expose_ref(&self) -> &T {
+        &self.0
+    }
+
+    pub fn expose_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
 
 impl<T> From<T> for Secret<T> {
     fn from(data: T) -> Self {
@@ -25,20 +39,6 @@ impl<T> fmt::Debug for Secret<T> {
 impl<T> fmt::Display for Secret<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "<REDACTED>")
-    }
-}
-
-impl<T> ops::Deref for Secret<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> ops::DerefMut for Secret<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 
