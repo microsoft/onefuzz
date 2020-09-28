@@ -44,7 +44,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     task = Task.get_by_task_id(request.task_id)
 
-    work_stopped = isinstance(task, Error) or (task.state == TaskState.scheduled)
+    work_stopped = isinstance(task, Error) or (task.state != TaskState.scheduled)
     return ok(CanSchedule(allowed=allowed, work_stopped=work_stopped))
 
 
