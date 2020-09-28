@@ -211,7 +211,7 @@ class VM(BaseModel):
     auth: Authentication
 
     def is_deleted(self) -> bool:
-        return has_components(str(self.name))
+        return not has_components(str(self.name))
 
     def exists(self) -> bool:
         return self.get() is not None
