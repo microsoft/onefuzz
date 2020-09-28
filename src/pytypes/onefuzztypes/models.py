@@ -513,12 +513,17 @@ class NodeEventEnvelope(BaseModel):
     event: NodeEvent
 
 
-class NodeCommandStopTask(BaseModel):
+class StopNodeCommand(BaseModel):
+    pass
+
+
+class StopTaskNodeCommand(BaseModel):
     task_id: UUID
 
 
 class NodeCommand(EnumModel):
-    stop_task: NodeCommandStopTask
+    stop: Optional[StopNodeCommand]
+    stop_task: Optional[StopTaskNodeCommand]
 
 
 class NodeCommandEnvelope(BaseModel):
