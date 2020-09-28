@@ -9,6 +9,7 @@ use url::Url;
 use uuid::Uuid;
 
 use crate::coordinator::*;
+use crate::process::*;
 use crate::work::*;
 use crate::worker::*;
 

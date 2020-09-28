@@ -4,10 +4,10 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -30,6 +30,24 @@ from .enums import (
     VmState,
 )
 from .primitives import Container, PoolName, Region
+
+
+class EnumModel(BaseModel):
+    @root_validator(pre=True)
+    def exactly_one(cls: Any, values: Any) -> Any:
+        some = []
+
+        for field, val in values.items():
+            if val is not None:
+                some.append(field)
+
+        if not some:
+            raise ValueError('no variant set for enum')
+
+        if len(some) > 1:
+            raise ValueError('multiple values set for enum: %s' % some)
+
+        return values
 
 
 class Error(BaseModel):
@@ -492,11 +510,17 @@ class NodeEventEnvelope(BaseModel):
     event: NodeEvent
 
 
-class NodeCommandStopTask(BaseModel):
+class StopNodeCommand(BaseModel):
+    pass
+
+
+class StopTaskNodeCommand(BaseModel):
     task_id: UUID
 
 
-NodeCommand = Union[NodeCommandStopTask]
+class NodeCommand(EnumModel):
+    stop: Optional[StopNodeCommand]
+    stop_task: Optional[StopTaskNodeCommand]
 
 
 class NodeCommandEnvelope(BaseModel):

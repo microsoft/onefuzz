@@ -46,6 +46,10 @@ impl Scheduler {
                     state.stop(stop_task.task_id)?;
                 }
             }
+            NodeCommand::Stop {} => {
+                let state = State { ctx: Done {} };
+                *self = state.into();
+            }
         }
 
         Ok(())
@@ -131,9 +135,15 @@ impl State<SettingUp> {
     pub async fn finish(self, runner: &mut dyn ISetupRunner) -> Result<SetupDone> {
         let work_set = self.ctx.work_set;
 
-        let reboot = runner.run(&work_set).await?;
+        let output = runner.run(&work_set).await?;
 
-        let done = if reboot {
+        if let Some(output) = output {
+            if !output.exit_status.success {
+                anyhow::bail!("setup script failed: {:?}", output);
+            }
+        }
+
+        let done = if work_set.reboot {
             let ctx = PendingReboot { work_set };
             SetupDone::PendingReboot(ctx.into())
         } else {

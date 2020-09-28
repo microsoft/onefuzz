@@ -84,7 +84,7 @@ impl<'a> Tester<'a> {
                 .map(|f| f.to_string())
                 .collect();
 
-            let crash_site = if let Some(frame) = call_stack.iter().next() {
+            let crash_site = if let Some(frame) = call_stack.get(0) {
                 frame.to_string()
             } else {
                 CRASH_SITE_UNAVAILABLE.to_owned()
