@@ -73,7 +73,7 @@ impl Fixture {
     }
 
     pub fn work_unit(&self) -> WorkUnit {
-        let config = r#"{ "hello": "world" }"#.into();
+        let config = r#"{ "hello": "world" }"#.to_owned().into();
 
         WorkUnit {
             job_id: self.job_id(),

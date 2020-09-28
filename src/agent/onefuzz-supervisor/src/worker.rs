@@ -199,7 +199,7 @@ impl IWorkerRunner for WorkerRunner {
 
         let config_path = work.config_path()?;
 
-        fs::write(&config_path, &work.config).await?;
+        fs::write(&config_path, &*work.config).await?;
 
         verbose!(
             "wrote worker config to config_path = {}",

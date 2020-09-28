@@ -9,6 +9,7 @@ use storage_queue::QueueClient;
 use url::Url;
 use uuid::Uuid;
 
+use crate::auth::Secret;
 use crate::config::Registration;
 
 pub type JobId = Uuid;
@@ -32,7 +33,7 @@ pub struct WorkUnit {
     pub task_id: TaskId,
 
     /// JSON-serialized task config.
-    pub config: String,
+    pub config: Secret<String>,
 }
 
 impl WorkUnit {

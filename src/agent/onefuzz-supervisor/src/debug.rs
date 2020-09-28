@@ -136,7 +136,7 @@ fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
     };
 
     let work_unit = WorkUnit {
-        config,
+        config: config.into(),
         job_id: Uuid::new_v4(),
         task_id,
     };
