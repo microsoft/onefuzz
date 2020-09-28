@@ -48,7 +48,8 @@ impl Scheduler {
                 }
             }
             NodeCommand::Stop {} => {
-                let state = State { ctx: Done {} };
+                let cause = DoneCause::Stopped;
+                let state = State { ctx: Done { cause } };
                 *self = state.into();
             }
         }
@@ -88,11 +89,12 @@ pub struct Done {
 
 #[derive(Clone, Debug)]
 pub enum DoneCause {
-    WorkersDone,
     SetupError {
         error: String,
         script_output: Option<Output>,
     },
+    Stopped,
+    WorkersDone,
 }
 
 pub trait Context {}
