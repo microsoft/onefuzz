@@ -5,8 +5,8 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use downcast_rs::Downcast;
+use onefuzz::blob::BlobContainerUrl;
 use storage_queue::QueueClient;
-use url::Url;
 use uuid::Uuid;
 
 use crate::auth::Secret;
@@ -19,7 +19,7 @@ pub type TaskId = Uuid;
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WorkSet {
     pub reboot: bool,
-    pub setup_url: Url,
+    pub setup_url: BlobContainerUrl,
     pub script: bool,
     pub work_units: Vec<WorkUnit>,
 }

@@ -7,7 +7,6 @@ use std::process::Stdio;
 use anyhow::Result;
 use downcast_rs::Downcast;
 use onefuzz::az_copy;
-use onefuzz::blob::BlobContainerUrl;
 use tokio::fs;
 use tokio::process::Command;
 
@@ -40,10 +39,8 @@ impl SetupRunner {
         info!("running setup for work set");
 
         // Download the setup container.
-        let setup_url = work_set.setup_url.clone();
-        let setup_url = BlobContainerUrl::new(setup_url)?;
-
-        let setup_dir = setup_url.container();
+        let setup_url = work_set.setup_url.url();
+        let setup_dir = work_set.setup_url.container();
         let setup_dir = onefuzz::fs::onefuzz_root()?
             .join("blob-containers")
             .join(setup_dir);

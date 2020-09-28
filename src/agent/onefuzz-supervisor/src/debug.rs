@@ -4,6 +4,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use onefuzz::blob::BlobContainerUrl;
 use structopt::StructOpt;
 use url::Url;
 use uuid::Uuid;
@@ -142,7 +143,7 @@ fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
     };
     let work_set = WorkSet {
         reboot: false,
-        setup_url: opt.setup_url,
+        setup_url: BlobContainerUrl::new(opt.setup_url)?,
         script: opt.script,
         work_units: vec![work_unit],
     };
