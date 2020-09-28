@@ -28,6 +28,12 @@ impl<T> fmt::Debug for Secret<T> {
     }
 }
 
+impl<T> fmt::Display for Secret<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "<REDACTED>")
+    }
+}
+
 #[derive(Clone, Deserialize, Eq, PartialEq)]
 pub struct AccessToken {
     secret: Secret<String>,
