@@ -138,12 +138,17 @@ impl Agent {
                     if let Err(err) = self.work_queue.claim(msg.receipt).await {
                         error!("unable to drop stopped work: {}", err);
                     }
-                } else {
-                    // The work was not stopped, but we should not pick it up. Our version is probably
-                    // out of date. Do nothing, so another node can see it.
-                }
 
-                state.into()
+                    // Stay in `Free` state.
+                    state.into()
+                } else {
+                    // The work was not stopped, but we should not pick it up. Our agent version is
+                    // out of date. Do nothing, so another node can see the work, and stop.
+                    //
+                    // Transition to `Done` state.
+                    let state = state.stop();
+                    state.into()
+                }
             }
         } else {
             self.sleep().await;
