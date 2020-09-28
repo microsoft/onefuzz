@@ -8,7 +8,7 @@ from uuid import UUID
 
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode, NodeState, NodeTaskState, TaskState
-from onefuzztypes.models import Error, NodeEventEnvelope, WorkerEvent
+from onefuzztypes.models import Error, NodeEvent, NodeEventEnvelope, NodeStateUpdate, WorkerEvent
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.agent_authorization import verify_token
@@ -118,10 +118,20 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         envelope.event,
     )
 
-    if envelope.event.state_update:
-        return on_state_update(envelope.machine_id, envelope.event.state_update.state)
-    elif envelope.event.worker_event:
-        return on_worker_event(envelope.machine_id, envelope.event.worker_event)
+    if isinstance(envelope.event, NodeEvent):
+        event = envelope.event
+    elif isinstance(envelope.event, NodeStateUpdate):
+        event = NodeEvent(state_update=envelope.event)
+    elif isinstance(envelope.event, WorkerEvent):
+        event = NodeEvent(worker_event=envelope.event)
+    else:
+        err = Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid node event"])
+        return not_ok(err, context=ERROR_CONTEXT)
+
+    if event.state_update:
+        return on_state_update(envelope.machine_id, event.state_update.state)
+    elif event.worker_event:
+        return on_worker_event(envelope.machine_id, event.worker_event)
     else:
         err = Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid node event"])
         return not_ok(err, context=ERROR_CONTEXT)
