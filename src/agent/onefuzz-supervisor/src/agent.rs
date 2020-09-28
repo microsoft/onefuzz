@@ -101,29 +101,49 @@ impl Agent {
         let next = if let Some(msg) = msg {
             verbose!("received work set message: {:?}", msg);
 
-            let claim = self.work_queue.claim(msg.receipt).await;
+            let can_schedule = self.coordinator.can_schedule(&msg.work_set).await?;
 
-            if let Err(err) = claim {
-                error!("unable to claim work set: {}", err);
+            if can_schedule.allowed {
+                info!("claiming work set: {:?}", msg.work_set);
 
-                // Stay in `Free` state.
-                state.into()
-            } else {
-                info!("claimed work set: {:?}", msg.work_set);
+                let claim = self.work_queue.claim(msg.receipt).await;
 
-                if self.coordinator.can_schedule(&msg.work_set).await? {
-                    info!("scheduling work set: {:?}", msg.work_set);
+                if let Err(err) = claim {
+                    error!("unable to claim work set: {}", err);
 
+                    // We were unable to claim the work set, so it will reappear in the pool's
+                    // work queue when the visibility timeout expires. Don't execute the work,
+                    // or else another node will pick it up, and it will be double-scheduled.
+                    //
+                    // Stay in the `Free` state.
+                    state.into()
+                } else {
+                    info!("claimed work set: {:?}", msg.work_set);
+
+                    // We are allowed to schedule this work, and we have claimed it, so no other
+                    // node will see it.
+                    //
                     // Transition to `SettingUp` state.
                     let state = state.schedule(msg.work_set.clone());
                     state.into()
-                } else {
-                    // We have claimed the work set, so it is no longer in the work queue.
-                    // But since the work has been stopped, we will not execute it. Drop the
-                    // work set message and stay in the `Free` state.
-                    warn!("unable to schedule work set: {:?}", msg.work_set);
-                    state.into()
                 }
+            } else {
+                // We cannot schedule the work set. Depending on why, we want to either drop the work
+                // (because it is no longer valid for anyone) or do nothing (because we are invalid,
+                // and we want another node to pick it up).
+                warn!("unable to schedule work set: {:?}", msg.work_set);
+
+                if can_schedule.work_stopped {
+                    // The work was stopped, so it isn't valid for any node, and we must drop it.
+                    if let Err(err) = self.work_queue.claim(msg.receipt).await {
+                        error!("unable to drop stopped work: {}", err);
+                    }
+                } else {
+                    // The work was not stopped, but we should not pick it up. Our version is probably
+                    // out of date. Do nothing, so another node can see it.
+                }
+
+                state.into()
             }
         } else {
             self.sleep().await;
