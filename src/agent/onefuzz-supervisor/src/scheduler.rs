@@ -49,7 +49,9 @@ impl Scheduler {
             }
             NodeCommand::Stop {} => {
                 let cause = DoneCause::Stopped;
-                let state = State { ctx: Done { cause } };
+                let state = State {
+                    ctx: Done { cause },
+                };
                 *self = state.into();
             }
         }
