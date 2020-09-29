@@ -31,7 +31,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     allowed = True
     work_stopped = False
-    if node.is_outdated:
+    if node.is_outdated():
         logging.info(
             "received can_schedule request from outdated node '%s' version '%s'",
             node.machine_id,
