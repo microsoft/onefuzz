@@ -47,7 +47,7 @@ pub struct ClaimNodeCommandRequest {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case", tag = "state", content = "data")]
+#[serde(rename_all = "snake_case")]
 pub enum NodeState {
     Init,
     Free,
