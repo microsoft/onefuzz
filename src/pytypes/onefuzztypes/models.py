@@ -550,6 +550,12 @@ class TaskEventSummary(BaseModel):
     event_type: str
 
 
+class NodeAssignment(BaseModel):
+    node_id: UUID
+    scaleset_id: Optional[UUID]
+    state: NodeTaskState
+
+
 class Task(BaseModel):
     job_id: UUID
     task_id: UUID = Field(default_factory=uuid4)
@@ -561,3 +567,4 @@ class Task(BaseModel):
     heartbeats: Optional[List[HeartbeatSummary]]
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
+    nodes: Optional[List[NodeAssignment]]
