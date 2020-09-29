@@ -4,15 +4,18 @@
 # Licensed under the MIT License.
 
 import logging
+from typing import cast
 from uuid import UUID
 
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode, NodeState, NodeTaskState, TaskState
 from onefuzztypes.models import (
     Error,
+    NodeDoneEventData,
     NodeEvent,
     NodeEventEnvelope,
     NodeStateUpdate,
+    SettingUpEventData,
     WorkerEvent,
 )
 from onefuzztypes.responses import BoolResult
@@ -57,7 +60,9 @@ def on_state_update(
                 # This field will be required in the future.
                 # For now, it is optional for back compat.
                 if state_update.data:
-                    for task_id in state_update.data.tasks:
+                    setting_up_data = cast(SettingUpEventData, state_update.data)
+
+                    for task_id in setting_up_data.tasks:
                         task = get_task_checked(task_id)
                         task.state = TaskState.setting_up
 
@@ -72,6 +77,17 @@ def on_state_update(
                             state=NodeTaskState.setting_up,
                         )
                         node_task.save()
+            elif state == NodeState.done:
+                done_data = cast(NodeDoneEventData, state_update.data)
+
+                if done_data.error:
+                    logging.error(
+                        "node done with error disposition: machine_id = %s, data = %s",
+                        machine_id,
+                        done_data,
+                    )
+                    # TODO: update task states linked to node.
+
     else:
         logging.info("ignoring state updates from the node: %s: %s", machine_id, state)
 

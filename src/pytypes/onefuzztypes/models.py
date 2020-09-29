@@ -515,9 +515,12 @@ class NodeDoneEventData(BaseModel):
     script_output: Optional[ProcessOutput]
 
 
+NodeStateData = Union[SettingUpEventData, NodeDoneEventData]
+
+
 class NodeStateUpdate(BaseModel):
     state: NodeState
-    data: Optional[SettingUpEventData]
+    data: Optional[NodeStateData]
 
     @validator("data")
     def check_data(cls, data: Optional[SettingUpEventData], values: Any) -> Optional[SettingUpEventData]:
