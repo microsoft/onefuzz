@@ -129,21 +129,20 @@ impl Agent {
                 }
             } else {
                 // We cannot schedule the work set. Depending on why, we want to either drop the work
-                // (because it is no longer valid for anyone) or do nothing (because our version is out,
+                // (because it is no longer valid for anyone) or do nothing (because our version is out
                 // of date, and we want another node to pick it up).
                 warn!("unable to schedule work set: {:?}", msg.work_set);
 
                 // If `work_stopped`, the work set is not valid for any node, and we should drop it for the
                 // entire pool by claiming but not executing it.
-                //
-                // Otherwise, the work was not stopped, but we should still execute it. This is likely
-                // our because agent version is out of date. Do nothing, so another node can see the work.
-                // The service will eventually send us a stop command and reimage our node.
                 if can_schedule.work_stopped {
                     if let Err(err) = self.work_queue.claim(msg.receipt).await {
                         error!("unable to drop stopped work: {}", err);
                     }
                 }
+                // Otherwise, the work was not stopped, but we still should not execute it. This is likely
+                // our because agent version is out of date. Do nothing, so another node can see the work.
+                // The service will eventually send us a stop command and reimage our node, if appropriate.
 
                 // Stay in `Free` state.
                 state.into()
