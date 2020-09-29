@@ -10,11 +10,10 @@ import azure.functions as func
 from onefuzztypes.enums import ErrorCode, NodeState, NodeTaskState, TaskState
 from onefuzztypes.models import (
     Error,
+    NodeEvent,
     NodeEventEnvelope,
     NodeStateUpdate,
-    WorkerDoneEvent,
     WorkerEvent,
-    WorkerRunningEvent,
 )
 from onefuzztypes.responses import BoolResult
 
@@ -55,28 +54,33 @@ def on_state_update(machine_id: UUID, state: NodeState) -> func.HttpResponse:
     return ok(BoolResult(result=True))
 
 
-def on_worker_event(machine_id: UUID, worker_event: WorkerEvent) -> func.HttpResponse:
-    task_id = worker_event.event.task_id
+def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
+    if event.running:
+        task_id = event.running.task_id
+    elif event.done:
+        task_id = event.done.task_id
+
     task = get_task_checked(task_id)
     node = get_node_checked(machine_id)
     node_task = NodeTasks(
         machine_id=machine_id, task_id=task_id, state=NodeTaskState.running
     )
 
-    if isinstance(worker_event.event, WorkerRunningEvent):
+    if event.running:
         if task.state not in TaskState.shutting_down():
             task.state = TaskState.running
         if node.state not in NodeState.ready_for_reset():
             node.state = NodeState.busy
         node_task.save()
         task.on_start()
-    elif isinstance(worker_event.event, WorkerDoneEvent):
-        # only record exit status if the task isn't already shutting down.
+    elif event.done:
+        # Only record exit status if the task isn't already shutting down.
         #
-        # the agent failing because resources vanish out from underneath it during
-        # deletion is OK
+        # It's ok for the agent to fail because resources vanish out from underneath
+        # it during deletion.
         if task.state not in TaskState.shutting_down():
-            exit_status = worker_event.event.exit_status
+            exit_status = event.done.exit_status
+
             if not exit_status.success:
                 logging.error("task failed: status = %s", exit_status)
 
@@ -84,8 +88,8 @@ def on_worker_event(machine_id: UUID, worker_event: WorkerEvent) -> func.HttpRes
                     code=ErrorCode.TASK_FAILED,
                     errors=[
                         "task failed. exit_status = %s" % exit_status,
-                        worker_event.event.stdout,
-                        worker_event.event.stderr,
+                        event.done.stdout,
+                        event.done.stderr,
                     ],
                 )
 
@@ -103,7 +107,7 @@ def on_worker_event(machine_id: UUID, worker_event: WorkerEvent) -> func.HttpRes
     task.save()
     node.save()
     task_event = TaskEvent(
-        task_id=task_id, machine_id=machine_id, event_data=worker_event
+        task_id=task_id, machine_id=machine_id, event_data=event
     )
     task_event.save()
     return ok(BoolResult(result=True))
@@ -120,10 +124,20 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         envelope.event,
     )
 
-    if isinstance(envelope.event, NodeStateUpdate):
-        return on_state_update(envelope.machine_id, envelope.event.state)
+    if isinstance(envelope.event, NodeEvent):
+        event = envelope.event
+    elif isinstance(envelope.event, NodeStateUpdate):
+        event = NodeEvent(state_update=envelope.event)
     elif isinstance(envelope.event, WorkerEvent):
-        return on_worker_event(envelope.machine_id, envelope.event)
+        event = NodeEvent(worker_event=envelope.event)
+    else:
+        err = Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid node event"])
+        return not_ok(err, context=ERROR_CONTEXT)
+
+    if event.state_update:
+        return on_state_update(envelope.machine_id, event.state_update.state)
+    elif event.worker_event:
+        return on_worker_event(envelope.machine_id, event.worker_event)
     else:
         err = Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid node event"])
         return not_ok(err, context=ERROR_CONTEXT)
