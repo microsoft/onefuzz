@@ -417,6 +417,10 @@ class Pool(BaseModel):
     pool_id: UUID = Field(default_factory=uuid4)
     os: OS
     managed: bool
+    min_size: int
+    max_size: int
+    vm_sku: str
+    image: str
     arch: Architecture
     state: PoolState = Field(default=PoolState.init)
     client_id: Optional[UUID]
