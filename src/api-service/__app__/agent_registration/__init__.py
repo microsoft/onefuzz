@@ -14,7 +14,7 @@ from onefuzztypes.responses import AgentRegistration
 from ..onefuzzlib.agent_authorization import verify_token
 from ..onefuzzlib.azure.creds import get_fuzz_storage, get_instance_name
 from ..onefuzzlib.azure.queue import get_queue_sas
-from ..onefuzzlib.pools import Node, Pool
+from ..onefuzzlib.pools import Node, NodeMessage, Pool
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 
@@ -99,6 +99,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         )
         agent_node.save()
     elif agent_node.version.lower != registration_request.version:
+        NodeMessage.clear_messages(agent_node.machine_id)
         agent_node.version = registration_request.version
         agent_node.save()
 

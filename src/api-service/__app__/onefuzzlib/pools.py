@@ -224,6 +224,12 @@ class NodeMessage(ORMMixin):
 
         client.commit_batch(cls.table_name(), batch)
 
+    @classmethod
+    def clear_messages(cls, agent_id: UUID) -> None:
+        messages = cls.get_messages(agent_id)
+        message_ids = [m.message_id for m in messages]
+        cls.delete_messages(agent_id, message_ids)
+
 
 class Pool(BASE_POOL, ORMMixin):
     @classmethod
