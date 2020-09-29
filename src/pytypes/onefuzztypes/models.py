@@ -509,7 +509,7 @@ class NodeEvent(EnumModel):
     state_update: Optional[NodeStateUpdate]
 
 
-# Union type to support hot upgrade of 1.0.0 nodes.
+# Temporary shim type to support hot upgrade of 1.0.0 nodes.
 #
 # We want future variants to use an externally-tagged repr.
 NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
