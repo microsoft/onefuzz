@@ -95,7 +95,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             pool_name=registration_request.pool_name,
             machine_id=registration_request.machine_id,
             scaleset_id=registration_request.scaleset_id,
-            version=registration_request.version
+            version=registration_request.version,
         )
         agent_node.save()
     elif agent_node.version.lower != registration_request.version:
