@@ -112,14 +112,16 @@ class TestOnefuzz:
         pool_size: int,
         os_list: List[OS],
         targets: List[str],
+        skip_cleanup: bool,
     ) -> None:
         self.of = onefuzz
         self.logger = logger
         self.pools: Dict[OS, Pool] = {}
-        self.project = str(uuid4()).split("-")[0]
+        self.project = "test-" + str(uuid4()).split("-")[0]
         self.pool_size = pool_size
         self.os = os_list
         self.targets = targets
+        self.skip_cleanup = skip_cleanup
 
         # job_id -> Job
         self.jobs: Dict[UUID, Job] = {}
@@ -439,16 +441,23 @@ class TestOnefuzz:
     def stop_template(self, target: str, delete_containers: bool = True) -> None:
         """ stop a specific template """
 
-        self.of.template.stop(
-            self.project,
-            target,
-            BUILD,
-            delete_containers=delete_containers,
-            stop_notifications=True,
-        )
+        if self.skip_cleanup:
+            self.logger.warn("not cleaning up target: %s", target)
+        else:
+            self.of.template.stop(
+                self.project,
+                target,
+                BUILD,
+                delete_containers=delete_containers,
+                stop_notifications=True,
+            )
 
     def cleanup(self, *, user_pools: Optional[Dict[str, str]] = None) -> bool:
         """ cleanup all of the integration pools & jobs """
+
+        if self.skip_cleanup:
+            self.logger.warn("not cleaning up")
+            return True
 
         self.logger.info("cleaning up")
         errors: List[Exception] = []
@@ -500,6 +509,7 @@ class Run(Command):
         os_list: List[OS] = [OS.linux, OS.windows],
         targets: List[str] = list(TARGETS.keys()),
         skip_repro: bool = False,
+        skip_cleanup: bool = False,
     ) -> None:
         tester = TestOnefuzz(
             self.onefuzz,
@@ -507,6 +517,7 @@ class Run(Command):
             pool_size=pool_size,
             os_list=os_list,
             targets=targets,
+            skip_cleanup=skip_cleanup,
         )
         success = True
 
