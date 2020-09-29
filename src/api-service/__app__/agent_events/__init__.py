@@ -60,6 +60,10 @@ def on_state_update(
                     for task_id in state_update.data.tasks:
                         task = get_task_checked(task_id)
                         task.state = TaskState.setting_up
+
+                        # We don't yet call `on_start()` for the task.
+                        # This will happen once we see a worker event that
+                        # reports it as `running`.
                         task.save()
 
                         node_task = NodeTasks(
