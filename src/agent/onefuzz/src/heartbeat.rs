@@ -11,8 +11,9 @@ use std::{
 };
 use storage_queue::QueueClient;
 use tokio::{sync::Notify, task, task::JoinHandle};
-
 use futures::Future;
+
+const DEFAULT_HEARTBEAT_PERIOD: Duration = Duration::from_secs(60 * 5);
 
 pub struct HeartbeatContext<TContext, T> {
     pub state: TContext,
@@ -25,8 +26,6 @@ pub struct HeartbeatClient<TContext, T>
 where
     T: Clone + Send + Sync,
 {
-    // pub cancelled: Arc<Notify>,
-    // pub messages: Arc<Mutex<HashSet<T>>>,
     pub context: Arc<HeartbeatContext<TContext, T>>,
     pub heartbeat_process: JoinHandle<Result<()>>,
 }
@@ -74,7 +73,7 @@ where
     pub fn init_heartbeat<F, Fut>(
         context: TContext,
         queue_url: Url,
-        heartbeat_period: Duration,
+        heartbeat_period: Option<Duration>,
         flush: F,
     ) -> HeartbeatClient<TContext, T>
     where
@@ -83,6 +82,7 @@ where
         T: 'static,
         TContext: Send + Sync + 'static,
     {
+        let heartbeat_period = heartbeat_period.unwrap_or(DEFAULT_HEARTBEAT_PERIOD);
         let context = Arc::new(HeartbeatContext {
             state: context,
             queue_client: QueueClient::new(queue_url),

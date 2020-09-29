@@ -6,10 +6,8 @@ use crate::onefuzz::machine_id::{get_machine_id, get_machine_name};
 use anyhow::Result;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
-use std::time::Duration;
 use uuid::Uuid;
 
-const DEFAULT_HEARTBEAT_PERIOD: Duration = Duration::from_secs(60 * 5);
 #[derive(Debug, Deserialize, Serialize, Hash, Eq, PartialEq, Clone)]
 #[serde(tag = "type")]
 pub enum HeartbeatData {
@@ -44,7 +42,7 @@ pub async fn init_task_heartbeat(queue_url: Url, task_id: Uuid) -> Result<TaskHe
             machine_name,
         },
         queue_url,
-        DEFAULT_HEARTBEAT_PERIOD,
+        None,
         |context| async move {
             let task_id = context.state.task_id;
             let machine_id = context.state.machine_id;
