@@ -3,6 +3,7 @@
 
 use crate::utils::CheckNotify;
 use anyhow::Result;
+use futures::Future;
 use reqwest::Url;
 use std::{
     collections::HashSet,
@@ -11,7 +12,6 @@ use std::{
 };
 use storage_queue::QueueClient;
 use tokio::{sync::Notify, task, task::JoinHandle};
-use futures::Future;
 
 const DEFAULT_HEARTBEAT_PERIOD: Duration = Duration::from_secs(60 * 5);
 
