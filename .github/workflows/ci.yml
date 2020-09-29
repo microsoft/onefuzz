@@ -11,19 +11,30 @@ jobs:
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/cache@v2
-      env:
-        cache-name: cache-rust-target
+    - name: Rust Prereq Cache
+      uses: actions/cache@v2
+      id: cache-rust-prereqs
+      with:
+        path: |
+          sccache
+          ~/.cargo/registry
+          ~/.cargo/git
+          ~/.cargo/bin
+        key: rust-${{ runner.os }}-2020-09
+        restore-keys: |
+           rust-${{ runner.os }}
+    - name: Install Rust Prereqs
+      if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
+      shell: bash 
+      run: src/ci/rust-prereqs.sh
+    - name: Rust Compile Cache
+      uses: actions/cache@v2
       with:
         path: |
           sccache
           src/agent/target
-          ~/.cargo/registry
-          ~/.cargo/git
-          ~/.cargo/bin
-        key: agent-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-sccache
+        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}
         restore-keys: |
-           agent-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
            agent-${{ runner.os }}
     - name: Linux Prereqs
       run: |
@@ -113,19 +124,30 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/cache@v2
-      env:
-        cache-name: cache-rust-proxy
+    - name: Rust Prereq Cache
+      uses: actions/cache@v2
+      id: cache-rust-prereqs
+      with:
+        path: |
+          sccache
+          ~/.cargo/registry
+          ~/.cargo/git
+          ~/.cargo/bin
+        key: rust-${{ runner.os }}-2020-09
+        restore-keys: |
+           rust-${{ runner.os }}
+    - name: Install Rust Prereqs
+      if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
+      shell: bash 
+      run: src/ci/rust-prereqs.sh
+    - name: Rust Compile Cache
+      uses: actions/cache@v2
       with:
         path: |
           sccache
           src/proxy-manager/target
-          ~/.cargo/registry
-          ~/.cargo/git
-          ~/.cargo/bin
-        key: proxy-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-sccache
+        key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}
         restore-keys: |
-           proxy-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
            proxy-${{ runner.os }}
     - run: src/ci/proxy.sh
     - uses: actions/upload-artifact@v2.1.4
