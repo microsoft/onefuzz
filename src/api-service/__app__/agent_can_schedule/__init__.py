@@ -39,7 +39,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         )
         allowed = False
         stop_message = NodeMessage(
-            agent_id=node.machine_id, message=NodeCommand(stop=StopNodeCommand()),
+            agent_id=node.machine_id,
+            message=NodeCommand(stop=StopNodeCommand()),
         )
         stop_message.save()
 
