@@ -82,6 +82,7 @@ class AgentRegistrationPost(BaseRequest):
     pool_name: PoolName
     scaleset_id: Optional[UUID]
     machine_id: UUID
+    version: str
 
 
 class PoolCreate(BaseRequest):
