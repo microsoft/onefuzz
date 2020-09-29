@@ -60,12 +60,12 @@ def on_state_update(
                     for task_id in state_update.data.tasks:
                         task = get_task_checked(task_id)
 
-                        # The task state may be `running`, because it has `vm_count` > 1,
-                        # and another node is concurrently executing the task. If so, leave
+                        # The task state may be `running` if it has `vm_count` > 1, and
+                        # another node is concurrently executing the task. If so, leave
                         # the state as-is, to represent the max progress made.
                         #
-                        # Other states we would want to preserve are excluded by the outermost
-                        # conditional check.
+                        # Other states we would want to preserve are excluded by the
+                        # outermost conditional check.
                         if task.state != TaskState.running:
                             task.state = TaskState.setting_up
 
@@ -74,8 +74,8 @@ def on_state_update(
                         # reports it as `running`.
                         task.save()
 
-                        # Note: we set the node task state to `setting_up`, even though the
-                        # task itself may be `running`.
+                        # Note: we set the node task state to `setting_up`, even though
+                        # the task itself may be `running`.
                         node_task = NodeTasks(
                             machine_id=machine_id,
                             task_id=task_id,
