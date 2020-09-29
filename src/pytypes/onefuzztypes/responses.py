@@ -58,3 +58,8 @@ class AgentRegistration(BaseResponse):
 
 class PendingNodeCommand(BaseResponse):
     envelope: Optional[NodeCommandEnvelope]
+
+
+class CanSchedule(BaseResponse):
+    allowed: bool
+    work_stopped: bool
