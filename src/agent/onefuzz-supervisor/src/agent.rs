@@ -171,7 +171,6 @@ impl Agent {
         let event = StateUpdateEvent::SettingUp { tasks };
         self.coordinator.emit_event(event.into()).await?;
 
-
         let scheduler = match state.finish(self.setup_runner.as_mut()).await? {
             SetupDone::Ready(s) => s.into(),
             SetupDone::PendingReboot(s) => s.into(),
