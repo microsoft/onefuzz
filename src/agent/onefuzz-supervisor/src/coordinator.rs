@@ -95,22 +95,6 @@ impl From<StateUpdateEvent> for NodeEvent {
     }
 }
 
-impl From<NodeState> for NodeEvent {
-    fn from(state: NodeState) -> Self {
-        let event = match state {
-            NodeState::Init => StateUpdateEvent::Init,
-            NodeState::Free => StateUpdateEvent::Free,
-            NodeState::SettingUp => StateUpdateEvent::SettingUp,
-            NodeState::Rebooting => StateUpdateEvent::Rebooting,
-            NodeState::Ready => StateUpdateEvent::Ready,
-            NodeState::Busy => StateUpdateEvent::Busy,
-            NodeState::Done => StateUpdateEvent::Done,
-        };
-
-        event.into()
-    }
-}
-
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TaskState {

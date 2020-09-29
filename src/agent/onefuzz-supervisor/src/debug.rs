@@ -50,7 +50,23 @@ fn debug_node_event(opt: NodeEventOpt) -> Result<()> {
 }
 
 fn debug_node_event_state_update(state: NodeState) -> Result<()> {
-    let event = state.into();
+    let event = match state {
+        NodeState::Init => StateUpdateEvent::Init,
+        NodeState::Free => StateUpdateEvent::Free,
+        NodeState::SettingUp => {
+            let tasks = vec![
+                Uuid::new_v4(),
+                Uuid::new_v4(),
+                Uuid::new_v4(),
+            ];
+            StateUpdateEvent::SettingUp { tasks }
+        },
+        NodeState::Rebooting => StateUpdateEvent::Rebooting,
+        NodeState::Ready => StateUpdateEvent::Ready,
+        NodeState::Busy => StateUpdateEvent::Busy,
+        NodeState::Done => StateUpdateEvent::Done,
+    };
+    let event = event.into();
     print_json(into_envelope(event))
 }
 
