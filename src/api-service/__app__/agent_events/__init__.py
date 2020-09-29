@@ -106,9 +106,7 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
 
     task.save()
     node.save()
-    task_event = TaskEvent(
-        task_id=task_id, machine_id=machine_id, event_data=event
-    )
+    task_event = TaskEvent(task_id=task_id, machine_id=machine_id, event_data=event)
     task_event.save()
     return ok(BoolResult(result=True))
 

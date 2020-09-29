@@ -19,7 +19,7 @@ from onefuzztypes.enums import (
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Node as BASE_NODE
-from onefuzztypes.models import NodeCommand
+from onefuzztypes.models import NodeAssignment, NodeCommand
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Pool as BASE_POOL
 from onefuzztypes.models import Scaleset as BASE_SCALESET
@@ -155,7 +155,9 @@ class Node(BASE_NODE, ORMMixin):
         for node in nodes:
             if node.state not in NodeState.ready_for_reset():
                 logging.info(
-                    "stopping task %s on machine_id:%s", task_id, node.machine_id,
+                    "stopping task %s on machine_id:%s",
+                    task_id,
+                    node.machine_id,
                 )
                 node.state = NodeState.done
                 node.save()
@@ -183,6 +185,21 @@ class NodeTasks(BASE_NODE_TASK, ORMMixin):
             node = Node.get_by_machine_id(entry.machine_id)
             if node:
                 result.append(node)
+        return result
+
+    @classmethod
+    def get_node_assignments(cls, task_id: UUID) -> List[NodeAssignment]:
+        result = []
+        for entry in cls.search(query={"task_id": [task_id]}):
+            node = Node.get_by_machine_id(entry.machine_id)
+            if node:
+                node_assignment = NodeAssignment(
+                    node_id=node.machine_id,
+                    scaleset_id=node.scaleset_id,
+                    state=entry.state,
+                )
+                result.append(node_assignment)
+
         return result
 
     @classmethod
@@ -822,7 +839,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     break
             if not node_state:
                 node_state = ScalesetNodeState(
-                    machine_id=machine_id, instance_id=instance_id,
+                    machine_id=machine_id,
+                    instance_id=instance_id,
                 )
             self.nodes.append(node_state)
 
