@@ -515,7 +515,7 @@ class NodeStateUpdate(BaseModel):
             if state and state != NodeState.setting_up:
                 raise ValueError("data for node state update event does not match state = %s" % state)
 
-        data
+        return data
 
 
 class NodeEvent(EnumModel):
