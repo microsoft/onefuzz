@@ -33,6 +33,7 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import PoolName, Region
 from pydantic import Field
 
+from .__version__ import __version__
 from .azure.auth import build_auth
 from .azure.creds import get_fuzz_storage
 from .azure.image import get_os
@@ -138,6 +139,9 @@ class Node(BASE_NODE, ORMMixin):
                 node.state = NodeState.done
                 node.save()
 
+    def is_outdated(self) -> bool:
+        return self.version != __version__
+
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
@@ -178,7 +182,7 @@ class NodeMessage(ORMMixin):
 
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
-        return ("agent_id", "create_date")
+        return ("agent_id", "message_id")
 
     @classmethod
     def get_messages(
