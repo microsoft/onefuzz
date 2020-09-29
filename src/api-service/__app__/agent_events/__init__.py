@@ -42,8 +42,8 @@ def get_node_checked(machine_id: UUID) -> Node:
 
 
 def on_state_update(
-        machine_id: UUID,
-        state_update: NodeStateUpdate,
+    machine_id: UUID,
+    state_update: NodeStateUpdate,
 ) -> func.HttpResponse:
     state = state_update.state
     node = get_node_checked(machine_id)
@@ -130,9 +130,7 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
 
     task.save()
     node.save()
-    task_event = TaskEvent(
-        task_id=task_id, machine_id=machine_id, event_data=event
-    )
+    task_event = TaskEvent(task_id=task_id, machine_id=machine_id, event_data=event)
     task_event.save()
     return ok(BoolResult(result=True))
 

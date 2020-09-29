@@ -42,10 +42,10 @@ class EnumModel(BaseModel):
                 some.append(field)
 
         if not some:
-            raise ValueError('no variant set for enum')
+            raise ValueError("no variant set for enum")
 
         if len(some) > 1:
-            raise ValueError('multiple values set for enum: %s' % some)
+            raise ValueError("multiple values set for enum: %s" % some)
 
         return values
 
@@ -510,9 +510,9 @@ class NodeStateUpdate(BaseModel):
 
     @validator("data")
     def check_data(
-            cls,
-            data: Optional[SettingUpEventData],
-            values: Any,
+        cls,
+        data: Optional[SettingUpEventData],
+        values: Any,
     ) -> Optional[SettingUpEventData]:
         if data:
             state = values.get("state")
