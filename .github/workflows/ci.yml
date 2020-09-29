@@ -3,6 +3,8 @@ on: [push, pull_request]
 
 env:
   CARGO_TERM_COLOR: always
+  SCCACHE_DIR: ${{github.workspace}}/sccache/
+  SCCACHE_CACHE_SIZE: 1G
 
 jobs:
   agent:
@@ -14,12 +16,12 @@ jobs:
         cache-name: cache-rust-target
       with:
         path: |
+          sccache
           src/agent/target
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-          ~/.cache/sccache
-        key: agent-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        key: agent-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-sccache
         restore-keys: |
            agent-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
            agent-${{ runner.os }}
@@ -116,12 +118,12 @@ jobs:
         cache-name: cache-rust-proxy
       with:
         path: |
+          sccache
           src/proxy-manager/target
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-          ~/.cache/sccache
-        key: proxy-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        key: proxy-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-sccache
         restore-keys: |
            proxy-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
            proxy-${{ runner.os }}
