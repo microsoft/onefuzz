@@ -197,7 +197,7 @@ class TopCache:
                 pool.name,
                 pool.os,
                 pool.state,
-                nodes,
+                nodes or "None",
             ]
             results.append(entry)
         return results
