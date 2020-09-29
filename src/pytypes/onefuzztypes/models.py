@@ -398,6 +398,7 @@ class Node(BaseModel):
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    version: str = Field(default="1.0.0")
 
 
 class ScalesetSummary(BaseModel):
@@ -522,7 +523,7 @@ class NodeEvent(EnumModel):
     worker_event: Optional[WorkerEvent]
 
 
-# Union type to support hot upgrade of 1.0.0 nodes.
+# Temporary shim type to support hot upgrade of 1.0.0 nodes.
 #
 # We want future variants to use an externally-tagged repr.
 NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]

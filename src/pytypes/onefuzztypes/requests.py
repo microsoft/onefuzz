@@ -82,6 +82,7 @@ class AgentRegistrationPost(BaseRequest):
     pool_name: PoolName
     scaleset_id: Optional[UUID]
     machine_id: UUID
+    version: str
 
 
 class PoolCreate(BaseRequest):
@@ -197,3 +198,8 @@ class ReproGet(BaseRequest):
 
 class ProxyReset(BaseRequest):
     region: Region
+
+
+class CanScheduleRequest(BaseRequest):
+    machine_id: UUID
+    task_id: UUID
