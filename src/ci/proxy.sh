@@ -5,15 +5,12 @@
 
 set -ex
 
+export RUSTC_WRAPPER=$(which sccache)
+
 mkdir -p artifacts/proxy
 
 cd src/proxy-manager
-cargo install sccache || echo 'already installed?'
-export RUSTC_WRAPPER=$(which sccache)
-cargo install cargo-audit
-cargo install cargo-license || echo 'already installed'
 cargo fmt -- --check
-rustup component add clippy
 cargo clippy --release -- -D warnings
 # RUSTSEC-2020-0016: a dependency net2 (pulled in from tokio) is deprecated
 cargo audit -D --ignore RUSTSEC-2020-0016

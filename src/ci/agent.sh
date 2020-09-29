@@ -5,16 +5,12 @@
 
 set -ex
 
+export RUSTC_WRAPPER=$(which sccache)
+
 mkdir -p artifacts/agent
 
 cd src/agent
-cargo install sccache || echo 'already installed?'
-export RUSTC_WRAPPER=$(which sccache)
-cargo install cargo-audit
-cargo install cargo-license || echo 'already installed?'
 cargo fmt -- --check
-rustup component add clippy
-cargo clippy --release -- -D warnings
 # RUSTSEC-2019-0031: a dependency spin (pulled in from ring) is not actively maintained
 # RUSTSEC-2020-0016: a dependency net2 (pulled in from tokio) is deprecated
 # RUSTSEC-2020-0036: a dependency failure (pulled from proc-maps) is deprecated
