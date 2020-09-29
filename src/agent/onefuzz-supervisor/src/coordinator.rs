@@ -47,7 +47,7 @@ pub struct ClaimNodeCommandRequest {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case", tag = "state", content = "data")]
 pub enum NodeState {
     Init,
     Free,
@@ -78,11 +78,11 @@ impl From<WorkerEvent> for NodeEvent {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case", tag = "state")]
+#[serde(rename_all = "snake_case")]
 pub enum StateUpdateEvent {
     Init,
     Free,
-    SettingUp,
+    SettingUp { tasks: Vec<TaskId> },
     Rebooting,
     Ready,
     Busy,
@@ -117,6 +117,7 @@ pub enum TaskState {
     Init,
     Waiting,
     Scheduled,
+    SettingUp,
     Running,
     Stopping,
     Stopped,
