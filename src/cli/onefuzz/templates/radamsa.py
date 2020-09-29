@@ -6,7 +6,7 @@
 from typing import Dict, List, Optional
 
 from onefuzztypes.enums import OS, ContainerType, TaskType
-from onefuzztypes.models import NotificationConfig
+from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
 from onefuzz.api import Command
@@ -47,14 +47,14 @@ class Radamsa(Command):
         disable_check_debugger: bool = False,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
-    ) -> None:
+    ) -> Optional[Job]:
         """ Basic radamsa job """
 
         if inputs is None and existing_inputs is None:
             raise Exception("radamsa requires inputs")
 
         if dryrun:
-            return
+            return None
 
         self.logger.info("creating radamsa from template")
 
@@ -234,3 +234,4 @@ class Radamsa(Command):
 
         self.logger.info("done creating tasks")
         helper.wait()
+        return helper.job
