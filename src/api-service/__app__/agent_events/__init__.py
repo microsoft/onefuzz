@@ -41,7 +41,8 @@ def get_node_checked(machine_id: UUID) -> Node:
     return node
 
 
-def on_state_update(machine_id: UUID, state: NodeState) -> func.HttpResponse:
+def on_state_update(machine_id: UUID, state_update: NodeStateUpdate) -> func.HttpResponse:
+    state = state_update.state
     node = get_node_checked(machine_id)
 
     if state == NodeState.init or node.state not in NodeState.ready_for_reset():
@@ -135,7 +136,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(err, context=ERROR_CONTEXT)
 
     if event.state_update:
-        return on_state_update(envelope.machine_id, event.state_update.state)
+        return on_state_update(envelope.machine_id, event.state_update)
     elif event.worker_event:
         return on_worker_event(envelope.machine_id, event.worker_event)
     else:
