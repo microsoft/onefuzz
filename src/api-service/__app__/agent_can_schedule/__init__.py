@@ -13,12 +13,12 @@ from onefuzztypes.responses import CanSchedule
 
 from ..onefuzzlib.agent_authorization import verify_token
 from ..onefuzzlib.pools import Node, NodeMessage
-from ..onefuzzlib.request import not_ok, ok, parse_uri
+from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.tasks.main import Task
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_uri(CanScheduleRequest, req)
+    request = parse_request(CanScheduleRequest, req)
     if isinstance(request, Error):
         return not_ok(request, context="CanScheduleRequest")
 
