@@ -499,6 +499,7 @@ class Run(Command):
         region: Optional[str] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         targets: List[str] = list(TARGETS.keys()),
+        skip_repro: bool = False,
     ) -> None:
         tester = TestOnefuzz(
             self.onefuzz,
@@ -514,8 +515,11 @@ class Run(Command):
             tester.setup(region=region, user_pools=user_pools)
             tester.launch(samples)
             tester.check_jobs()
-            tester.launch_repro()
-            tester.check_repro()
+            if skip_repro:
+                self.logger.warn("not testing crash repro")
+            else:
+                tester.launch_repro()
+                tester.check_repro()
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))
             error = e
