@@ -500,20 +500,29 @@ class WorkerDoneEvent(BaseModel):
     stdout: str
 
 
-class WorkerEvent(BaseModel):
-    event: Union[WorkerDoneEvent, WorkerRunningEvent]
+class WorkerEvent(EnumModel):
+    done: Optional[WorkerDoneEvent]
+    running: Optional[WorkerRunningEvent]
 
 
 class NodeStateUpdate(BaseModel):
     state: NodeState
 
 
-NodeEvent = Union[WorkerEvent, NodeStateUpdate]
+class NodeEvent(EnumModel):
+    worker_event: Optional[WorkerEvent]
+    state_update: Optional[NodeStateUpdate]
+
+
+# Temporary shim type to support hot upgrade of 1.0.0 nodes.
+#
+# We want future variants to use an externally-tagged repr.
+NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
 
 
 class NodeEventEnvelope(BaseModel):
     machine_id: UUID
-    event: NodeEvent
+    event: NodeEventShim
 
 
 class StopNodeCommand(BaseModel):
