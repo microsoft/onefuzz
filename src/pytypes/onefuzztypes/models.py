@@ -509,18 +509,31 @@ class SettingUpEventData(BaseModel):
     tasks: List[UUID]
 
 
+class NodeDoneEventData(BaseModel):
+    state: NodeState
+    error: Optional[str]
+    script_output: Optional[ProcessOutput]
+
+
 class NodeStateUpdate(BaseModel):
     state: NodeState
     data: Optional[SettingUpEventData]
 
     @validator("data")
     def check_data(cls, data: Optional[SettingUpEventData], values: Any) -> Optional[SettingUpEventData]:
-        if data:
-            state = values.get("state")
-            if state and state != NodeState.setting_up:
-                raise ValueError("data for node state update event does not match state = %s" % state)
+        state = values.get("state")
 
-        data
+        err = ValueError("data for node state update event does not match state = %s" % state)
+
+        if state == NodeState.setting_up:
+            if not data or not isinstance(data, SettingUpEventData):
+                raise err
+
+        if state == NodeState.done:
+            if not data or not isinstance(data, NodeDoneEventData):
+                raise err
+
+        return data
 
 
 class NodeEvent(EnumModel):
