@@ -138,11 +138,15 @@ impl Agent {
                 if can_schedule.work_stopped {
                     if let Err(err) = self.work_queue.claim(msg.receipt).await {
                         error!("unable to drop stopped work: {}", err);
+                    } else {
+                        info!("dropped stopped work set: {:?}", msg.work_set);
                     }
+                } else {
+                    // Otherwise, the work was not stopped, but we still should not execute it. This is likely
+                    // our because agent version is out of date. Do nothing, so another node can see the work.
+                    // The service will eventually send us a stop command and reimage our node, if appropriate.
+                    verbose!("not scheduling active work set, not dropping: {:?}", msg.work_set);
                 }
-                // Otherwise, the work was not stopped, but we still should not execute it. This is likely
-                // our because agent version is out of date. Do nothing, so another node can see the work.
-                // The service will eventually send us a stop command and reimage our node, if appropriate.
 
                 // Stay in `Free` state.
                 state.into()
