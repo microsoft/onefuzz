@@ -13,12 +13,12 @@ from onefuzztypes.responses import CanSchedule
 
 from ..onefuzzlib.agent_authorization import verify_token
 from ..onefuzzlib.pools import Node, NodeMessage
-from ..onefuzzlib.request import not_ok, ok, parse_uri
+from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.tasks.main import Task
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_uri(CanScheduleRequest, req)
+    request = parse_request(CanScheduleRequest, req)
     if isinstance(request, Error):
         return not_ok(request, context="CanScheduleRequest")
 
@@ -31,7 +31,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     allowed = True
     work_stopped = False
-    if node.is_outdated:
+    if node.is_outdated():
         logging.info(
             "received can_schedule request from outdated node '%s' version '%s'",
             node.machine_id,
@@ -46,6 +46,10 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     task = Task.get_by_task_id(request.task_id)
 
     work_stopped = isinstance(task, Error) or (task.state != TaskState.scheduled)
+
+    if work_stopped:
+        allowed = False
+
     return ok(CanSchedule(allowed=allowed, work_stopped=work_stopped))
 
 

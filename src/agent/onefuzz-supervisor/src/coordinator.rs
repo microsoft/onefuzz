@@ -95,9 +95,24 @@ pub enum TaskState {
     WaitJob,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct TaskSearch {
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct CanScheduleRequest {
+    machine_id: Uuid,
     task_id: Uuid,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct CanSchedule {
+    /// If true, then the receiving node can schedule the work.
+    /// Otherwise, the receiver should inspect `work_stopped`.
+    pub allowed: bool,
+
+    /// If `true`, then the work was stopped after being scheduled to the pool's
+    /// work queue, but before being claimed by a node.
+    ///
+    /// No node in the pool may schedule the work, so the receiving node should
+    /// claim (delete) and drop the work set.
+    pub work_stopped: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -113,7 +128,7 @@ pub trait ICoordinator: Downcast {
 
     async fn emit_event(&mut self, event: NodeEvent) -> Result<()>;
 
-    async fn can_schedule(&mut self, work: &WorkSet) -> Result<bool>;
+    async fn can_schedule(&mut self, work: &WorkSet) -> Result<CanSchedule>;
 }
 
 impl_downcast!(ICoordinator);
@@ -128,7 +143,7 @@ impl ICoordinator for Coordinator {
         self.emit_event(event).await
     }
 
-    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<bool> {
+    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
         self.can_schedule(work_set).await
     }
 }
@@ -181,15 +196,11 @@ impl Coordinator {
         Ok(())
     }
 
-    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<bool> {
+    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
         let request = RequestType::CanSchedule(work_set);
         let response = self.send_with_auth_retry(request).await?;
 
-        let task_info: TaskInfo = response.json().await?;
-
-        verbose!("task_info = {:?}", task_info);
-
-        let can_schedule = task_info.state == TaskState::Scheduled;
+        let can_schedule: CanSchedule = response.json().await?;
 
         Ok(can_schedule)
     }
@@ -285,17 +296,20 @@ impl Coordinator {
         // need to make sure that other the work units in the set have their states
         // updated if necessary.
         let task_id = work_set.work_units[0].task_id;
-        let task_search = TaskSearch { task_id };
+        let can_schedule = CanScheduleRequest {
+            machine_id: self.registration.machine_id,
+            task_id,
+        };
 
-        verbose!("getting task info for task ID = {}", task_id);
+        verbose!("checking if able to schedule task ID = {}", task_id);
 
         let mut url = self.registration.config.onefuzz_url.clone();
-        url.set_path("/api/tasks");
+        url.set_path("/api/agents/can_schedule");
         let request = self
             .client
-            .get(url)
+            .post(url)
             .bearer_auth(self.token.secret().expose_ref())
-            .json(&task_search)
+            .json(&can_schedule)
             .build()?;
 
         Ok(request)
