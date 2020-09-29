@@ -4,3 +4,4 @@ flake8
 mypy
 isort
 vulture
+black
