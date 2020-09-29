@@ -398,6 +398,7 @@ class Node(BaseModel):
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    version: str = Field(default="1.0.0")
 
 
 class ScalesetSummary(BaseModel):

@@ -211,7 +211,9 @@ class VM(BaseModel):
     auth: Authentication
 
     def is_deleted(self) -> bool:
-        return has_components(str(self.name))
+        # A VM is considered deleted once all of it's resources including disks,
+        # NICs, IPs, as well as the VM are deleted
+        return not has_components(str(self.name))
 
     def exists(self) -> bool:
         return self.get() is not None
