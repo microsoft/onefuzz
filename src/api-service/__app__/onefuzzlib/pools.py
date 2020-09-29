@@ -155,7 +155,9 @@ class Node(BASE_NODE, ORMMixin):
         for node in nodes:
             if node.state not in NodeState.ready_for_reset():
                 logging.info(
-                    "stopping task %s on machine_id:%s", task_id, node.machine_id,
+                    "stopping task %s on machine_id:%s",
+                    task_id,
+                    node.machine_id,
                 )
                 node.state = NodeState.done
                 node.save()
@@ -822,7 +824,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     break
             if not node_state:
                 node_state = ScalesetNodeState(
-                    machine_id=machine_id, instance_id=instance_id,
+                    machine_id=machine_id,
+                    instance_id=instance_id,
                 )
             self.nodes.append(node_state)
 
