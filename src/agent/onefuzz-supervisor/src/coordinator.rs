@@ -18,10 +18,10 @@ pub struct StopTask {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(tag = "command_type")]
+#[serde(rename_all = "snake_case")]
 pub enum NodeCommand {
-    #[serde(alias = "stop")]
     StopTask(StopTask),
+    Stop {},
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -33,6 +33,17 @@ pub struct NodeCommandEnvelope {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct PendingNodeCommand {
     envelope: Option<NodeCommandEnvelope>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct PollCommandsRequest {
+    machine_id: Uuid,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct ClaimNodeCommandRequest {
+    machine_id: Uuid,
+    message_id: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -150,7 +161,9 @@ impl Coordinator {
         let pending: PendingNodeCommand = serde_json::from_slice(&data)?;
 
         if let Some(envelope) = pending.envelope {
-            // TODO: DELETE dequeued command via `message_id`.
+            let request = RequestType::ClaimCommand(envelope.message_id);
+            self.send_with_auth_retry(request).await?;
+
             Ok(Some(envelope.command))
         } else {
             Ok(None)
@@ -188,7 +201,7 @@ impl Coordinator {
         &mut self,
         request_type: RequestType<'a>,
     ) -> Result<Response> {
-        let request = self.build_request(request_type)?;
+        let request = self.build_request(request_type.clone())?;
         let mut response = self.client.execute(request).await?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
@@ -214,17 +227,40 @@ impl Coordinator {
     fn build_request<'a>(&self, request_type: RequestType<'a>) -> Result<Request> {
         match request_type {
             RequestType::PollCommands => self.poll_commands_request(),
+            RequestType::ClaimCommand(message_id) => self.claim_command_request(message_id),
             RequestType::EmitEvent(event) => self.emit_event_request(event),
             RequestType::CanSchedule(work_set) => self.can_schedule_request(work_set),
         }
     }
 
     fn poll_commands_request(&self) -> Result<Request> {
+        let request = PollCommandsRequest {
+            machine_id: self.registration.machine_id,
+        };
+
         let url = self.registration.dynamic_config.commands_url.clone();
         let request = self
             .client
             .get(url)
-            .bearer_auth(self.token.secret().expose())
+            .bearer_auth(self.token.secret().expose_ref())
+            .json(&request)
+            .build()?;
+
+        Ok(request)
+    }
+
+    fn claim_command_request(&self, message_id: String) -> Result<Request> {
+        let request = ClaimNodeCommandRequest {
+            machine_id: self.registration.machine_id,
+            message_id,
+        };
+
+        let url = self.registration.dynamic_config.commands_url.clone();
+        let request = self
+            .client
+            .delete(url)
+            .bearer_auth(self.token.secret().expose_ref())
+            .json(&request)
             .build()?;
 
         Ok(request)
@@ -235,7 +271,7 @@ impl Coordinator {
         let request = self
             .client
             .post(url)
-            .bearer_auth(self.token.secret().expose())
+            .bearer_auth(self.token.secret().expose_ref())
             .json(event)
             .build()?;
 
@@ -258,7 +294,7 @@ impl Coordinator {
         let request = self
             .client
             .get(url)
-            .bearer_auth(self.token.secret().expose())
+            .bearer_auth(self.token.secret().expose_ref())
             .json(&task_search)
             .build()?;
 
@@ -271,9 +307,10 @@ impl Coordinator {
 // The upstream `Request` type is not `Clone`, so we can't retry a request
 // without rebuilding it. We use this enum to dispatch to a private method,
 // avoiding borrowck conflicts that occur when capturing `self`.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 enum RequestType<'a> {
     PollCommands,
+    ClaimCommand(String),
     EmitEvent(&'a NodeEventEnvelope),
     CanSchedule(&'a WorkSet),
 }

@@ -115,7 +115,9 @@ impl Registration {
 
         if managed {
             let scaleset = onefuzz::machine_id::get_scaleset_name().await?;
-            url.query_pairs_mut().append_pair("scaleset_id", &scaleset);
+            url.query_pairs_mut()
+                .append_pair("scaleset_id", &scaleset)
+                .append_pair("version", env!("ONEFUZZ_VERSION"));
         }
         // The registration can fail because this call is made before the virtual machine scaleset is done provisioning
         // The authentication layer of the service will reject this request when that happens
@@ -126,7 +128,7 @@ impl Registration {
             let response = reqwest::Client::new()
                 .post(url.clone())
                 .header("Content-Length", "0")
-                .bearer_auth(token.secret().expose())
+                .bearer_auth(token.secret().expose_ref())
                 .body("")
                 .send()
                 .await?
@@ -174,7 +176,7 @@ impl Registration {
 
         let response = reqwest::Client::new()
             .get(url)
-            .bearer_auth(token.secret().expose())
+            .bearer_auth(token.secret().expose_ref())
             .send()
             .await?
             .error_for_status()?;
