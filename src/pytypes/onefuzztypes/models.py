@@ -500,26 +500,43 @@ class WorkerDoneEvent(BaseModel):
     stdout: str
 
 
-class WorkerEvent(BaseModel):
-    event: Union[WorkerDoneEvent, WorkerRunningEvent]
+class WorkerEvent(EnumModel):
+    done: Optional[WorkerDoneEvent]
+    running: Optional[WorkerRunningEvent]
+
+
+class SettingUpEventData(BaseModel):
+    tasks: List[UUID]
 
 
 class NodeStateUpdate(BaseModel):
     state: NodeState
+    data: Optional[SettingUpEventData]
+
+    @validator("data")
+    def check_data(cls, data: Optional[SettingUpEventData], values: Any) -> Optional[SettingUpEventData]:
+        if data:
+            state = values.get("state")
+            if state and state != NodeState.setting_up:
+                raise ValueError("data for node state update event does not match state = %s" % state)
+
+        data
 
 
-class NodeDoneEvent(BaseModel):
-    state: NodeState
-    error: Optional[str]
-    script_output: Optional[ProcessOutput]
+class NodeEvent(EnumModel):
+    state_update: Optional[NodeStateUpdate]
+    worker_event: Optional[WorkerEvent]
 
 
-NodeEvent = Union[WorkerEvent, NodeStateUpdate, NodeDoneEvent]
+# Union type to support hot upgrade of 1.0.0 nodes.
+#
+# We want future variants to use an externally-tagged repr.
+NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
 
 
 class NodeEventEnvelope(BaseModel):
     machine_id: UUID
-    event: NodeEvent
+    event: NodeEventShim
 
 
 class StopNodeCommand(BaseModel):

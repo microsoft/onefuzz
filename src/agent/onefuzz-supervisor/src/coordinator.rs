@@ -48,7 +48,7 @@ pub struct ClaimNodeCommandRequest {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case", tag = "state", content = "data")]
 pub enum NodeState {
     Init,
     Free,
@@ -66,30 +66,49 @@ pub struct NodeEventEnvelope {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case", untagged)]
+#[serde(rename_all = "snake_case")]
 pub enum NodeEvent {
-    StateUpdate {
-        state: NodeState,
-    },
-    WorkerEvent {
-        event: WorkerEvent,
-    },
-    Done {
-        state: NodeState,
-        error: Option<String>,
-        script_output: Option<Output>,
-    },
-}
-
-impl From<NodeState> for NodeEvent {
-    fn from(state: NodeState) -> Self {
-        NodeEvent::StateUpdate { state }
-    }
+    StateUpdate(StateUpdateEvent),
+    WorkerEvent(WorkerEvent),
 }
 
 impl From<WorkerEvent> for NodeEvent {
     fn from(event: WorkerEvent) -> Self {
-        NodeEvent::WorkerEvent { event }
+        NodeEvent::WorkerEvent(event)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StateUpdateEvent {
+    Init,
+    Free,
+    SettingUp { tasks: Vec<TaskId> },
+    Rebooting,
+    Ready,
+    Busy,
+    Done,
+}
+
+impl From<StateUpdateEvent> for NodeEvent {
+    fn from(event: StateUpdateEvent) -> Self {
+        NodeEvent::StateUpdate(event)
+    }
+}
+
+impl From<NodeState> for NodeEvent {
+    fn from(state: NodeState) -> Self {
+        let event = match state {
+            NodeState::Init => StateUpdateEvent::Init,
+            NodeState::Free => StateUpdateEvent::Free,
+            NodeState::SettingUp => StateUpdateEvent::SettingUp,
+            NodeState::Rebooting => StateUpdateEvent::Rebooting,
+            NodeState::Ready => StateUpdateEvent::Ready,
+            NodeState::Busy => StateUpdateEvent::Busy,
+            NodeState::Done => StateUpdateEvent::Done,
+        };
+
+        event.into()
     }
 }
 
@@ -99,6 +118,7 @@ pub enum TaskState {
     Init,
     Waiting,
     Scheduled,
+    SettingUp,
     Running,
     Stopping,
     Stopped,

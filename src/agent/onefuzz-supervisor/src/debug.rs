@@ -50,7 +50,7 @@ fn debug_node_event(opt: NodeEventOpt) -> Result<()> {
 }
 
 fn debug_node_event_state_update(state: NodeState) -> Result<()> {
-    let event = NodeEvent::StateUpdate { state };
+    let event = state.into();
     print_json(into_envelope(event))
 }
 
@@ -95,7 +95,7 @@ fn debug_node_event_worker_event(opt: WorkerEventOpt) -> Result<()> {
             }
         }
     };
-    let event = NodeEvent::WorkerEvent { event };
+    let event = NodeEvent::WorkerEvent(event);
 
     print_json(into_envelope(event))
 }
