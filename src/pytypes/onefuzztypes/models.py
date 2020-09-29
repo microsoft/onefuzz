@@ -509,11 +509,17 @@ class NodeStateUpdate(BaseModel):
     data: Optional[SettingUpEventData]
 
     @validator("data")
-    def check_data(cls, data: Optional[SettingUpEventData], values: Any) -> Optional[SettingUpEventData]:
+    def check_data(
+            cls,
+            data: Optional[SettingUpEventData],
+            values: Any,
+    ) -> Optional[SettingUpEventData]:
         if data:
             state = values.get("state")
             if state and state != NodeState.setting_up:
-                raise ValueError("data for node state update event does not match state = %s" % state)
+                raise ValueError(
+                    "data for node state update event does not match state = %s" % state
+                )
 
         return data
 
