@@ -145,7 +145,10 @@ impl Agent {
                     // Otherwise, the work was not stopped, but we still should not execute it. This is likely
                     // our because agent version is out of date. Do nothing, so another node can see the work.
                     // The service will eventually send us a stop command and reimage our node, if appropriate.
-                    verbose!("not scheduling active work set, not dropping: {:?}", msg.work_set);
+                    verbose!(
+                        "not scheduling active work set, not dropping: {:?}",
+                        msg.work_set
+                    );
                 }
 
                 // Stay in `Free` state.
