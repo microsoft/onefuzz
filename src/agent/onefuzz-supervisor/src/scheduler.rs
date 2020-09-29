@@ -124,11 +124,6 @@ impl State<Free> {
         let ctx = SettingUp { work_set };
         ctx.into()
     }
-
-    pub fn stop(self) -> State<Done> {
-        let ctx = Done {};
-        ctx.into()
-    }
 }
 
 pub enum SetupDone {
