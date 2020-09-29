@@ -197,3 +197,8 @@ class ReproGet(BaseRequest):
 
 class ProxyReset(BaseRequest):
     region: Region
+
+
+class CanScheduleRequest(BaseRequest):
+    machine_id: UUID
+    task_id: UUID
