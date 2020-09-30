@@ -98,7 +98,6 @@ def on_state_update(
                         machine_id,
                         done_data,
                     )
-                    # TODO: update task states linked to node.
     else:
         logging.info("ignoring state updates from the node: %s: %s", machine_id, state)
 
