@@ -10,7 +10,7 @@ BASE_VERSION=$(cat ${SCRIPT_DIR}/../../CURRENT_VERSION)
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 GIT_HASH=$(git rev-parse HEAD)
 
-if [ '${CI}' == 'true' ]; then
+if [ "${GITHUB_REF}" != "" ]; then
     TAG_VERSION=${GITHUB_REF#refs/tags/}
     
     # this isn't a tag
