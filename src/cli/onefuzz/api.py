@@ -811,6 +811,11 @@ class Pool(Endpoint):
         *,
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
+        max_size: int,
+        vm_sku: str,
+        image: str,
+        spot_instances: bool = False,
+        region: str,
     ) -> models.Pool:
         self.logger.debug("create worker pool")
         managed = not unmanaged
@@ -823,6 +828,11 @@ class Pool(Endpoint):
                 "arch": arch,
                 "managed": managed,
                 "client_id": client_id,
+                "max_size": max_size,
+                "vm_sku": vm_sku,
+                "image": image,
+                "region": region,
+                "spot_instances": spot_instances,
             },
         )
 

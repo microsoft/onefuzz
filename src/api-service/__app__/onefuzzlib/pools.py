@@ -155,7 +155,9 @@ class Node(BASE_NODE, ORMMixin):
         for node in nodes:
             if node.state not in NodeState.ready_for_reset():
                 logging.info(
-                    "stopping task %s on machine_id:%s", task_id, node.machine_id,
+                    "stopping task %s on machine_id:%s",
+                    task_id,
+                    node.machine_id,
                 )
                 node.state = NodeState.done
                 node.save()
@@ -241,6 +243,11 @@ class Pool(BASE_POOL, ORMMixin):
         arch: Architecture,
         managed: bool,
         client_id: Optional[UUID],
+        max_size: int,
+        vm_sku: str,
+        image: str,
+        spot_instances: bool,
+        region: Region,
     ) -> "Pool":
         return cls(
             name=name,
@@ -249,6 +256,11 @@ class Pool(BASE_POOL, ORMMixin):
             managed=managed,
             client_id=client_id,
             config=None,
+            max_size=max_size,
+            vm_sku=vm_sku,
+            image=image,
+            spot_instances=spot_instances,
+            region=region,
         )
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:
@@ -783,13 +795,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             delete_vmss(self.scaleset_id)
             self.save()
 
-    def max_size(self) -> int:
+    @classmethod
+    def scaleset_max_size(cls, image: str) -> int:
         # https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/
         #   virtual-machine-scale-sets-placement-groups#checklist-for-using-large-scale-sets
-        if self.image.startswith("/"):
+        if image.startswith("/"):
             return 600
         else:
             return 1000
+
+    def max_size(self) -> int:
+        return Scaleset.scaleset_max_size(self.image)
 
     @classmethod
     def search_states(
@@ -822,7 +838,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     break
             if not node_state:
                 node_state = ScalesetNodeState(
-                    machine_id=machine_id, instance_id=instance_id,
+                    machine_id=machine_id,
+                    instance_id=instance_id,
                 )
             self.nodes.append(node_state)
 

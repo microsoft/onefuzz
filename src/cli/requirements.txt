@@ -12,4 +12,5 @@ azure-storage-blob~=12.3
 tenacity==6.2.0
 docstring_parser==0.7.3
 # onefuzztypes version is set during build
-onefuzztypes==0.0.0
+D:\onefuzztypes\onefuzz\src\pytypes\dist\onefuzztypes-0.0.0-py3-none-any.whl
+#onefuzztypes==0.0.0

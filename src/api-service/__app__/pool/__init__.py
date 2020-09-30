@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import logging
 import os
 
 import azure.functions as func
@@ -65,12 +66,18 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             context=repr(request),
         )
 
+    logging.info(request)
     pool = Pool.create(
         name=request.name,
         os=request.os,
         arch=request.arch,
         managed=request.managed,
         client_id=request.client_id,
+        max_size=request.max_size,
+        vm_sku=request.vm_sku,
+        image=request.image,
+        region=request.region,
+        spot_instances=request.spot_instances,
     )
     pool.save()
     return ok(set_config(pool))
