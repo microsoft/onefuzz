@@ -14,8 +14,8 @@ from onefuzztypes.models import (
     NodeDoneEventData,
     NodeEvent,
     NodeEventEnvelope,
+    NodeSettingUpEventData,
     NodeStateUpdate,
-    SettingUpEventData,
     WorkerEvent,
 )
 from onefuzztypes.responses import BoolResult
@@ -61,7 +61,7 @@ def on_state_update(
                 # For now, it is optional for back compat.
                 if state_update.data:
                     # Model-validated.
-                    setting_up_data = cast(SettingUpEventData, state_update.data)
+                    setting_up_data = cast(NodeSettingUpEventData, state_update.data)
 
                     for task_id in setting_up_data.tasks:
                         task = get_task_checked(task_id)

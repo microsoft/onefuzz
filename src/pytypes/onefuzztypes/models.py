@@ -506,7 +506,7 @@ class WorkerEvent(EnumModel):
     running: Optional[WorkerRunningEvent]
 
 
-class SettingUpEventData(BaseModel):
+class NodeSettingUpEventData(BaseModel):
     tasks: List[UUID]
 
 
@@ -515,7 +515,7 @@ class NodeDoneEventData(BaseModel):
     script_output: Optional[ProcessOutput]
 
 
-NodeStateData = Union[SettingUpEventData, NodeDoneEventData]
+NodeStateData = Union[NodeSettingUpEventData, NodeDoneEventData]
 
 
 class NodeStateUpdate(BaseModel):
@@ -525,9 +525,9 @@ class NodeStateUpdate(BaseModel):
     @validator("data")
     def check_data(
         cls,
-        data: Optional[SettingUpEventData],
+        data: Optional[NodeSettingUpEventData],
         values: Any,
-    ) -> Optional[SettingUpEventData]:
+    ) -> Optional[NodeSettingUpEventData]:
         if data:
             state = values.get("state")
             if state and state != NodeState.setting_up:
