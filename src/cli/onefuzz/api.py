@@ -812,10 +812,10 @@ class Pool(Endpoint):
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
         max_size: int,
-        vm_sku: str,
+        vm_sku: Optional[str] = "Standard_D2s_v3",
+        region: Optional[str] = None,
         image: str,
         spot_instances: bool = False,
-        region: str,
     ) -> models.Pool:
         self.logger.debug("create worker pool")
         managed = not unmanaged
