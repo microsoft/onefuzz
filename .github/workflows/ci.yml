@@ -251,11 +251,11 @@ jobs:
           cp -r src/agent/script/win64/libfuzzer-coverage src/deployment/tools/win64/libfuzzer-coverage
           echo $GITHUB_RUN_ID | tee src/deployment/.build.id
           echo $GITHUB_SHA | tee src/deployment/.sha
-          cp CURRENT_VERSION src/deployment/VERSION
+          ./src/ci/get-version.sh > src/deployment/VERSION
           (cd src/deployment ; zip -r onefuzz-deployment-$(cat VERSION).zip . )
           cp src/deployment/onefuzz-deployment*zip release-artifacts
           cp -r artifacts/sdk release-artifacts
-          cp -r artifacts/windows-cli/onefuzz.exe release-artifacts/onefuzz-cli-$(cat CURRENT_VERSION).exe
+          cp -r artifacts/windows-cli/onefuzz.exe release-artifacts/onefuzz-cli-$(./src/ci/get-version.sh).exe
     - uses: actions/upload-artifact@v2.1.4
       with:
         name: release-artifacts
