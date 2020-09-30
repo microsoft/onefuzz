@@ -505,13 +505,33 @@ class WorkerEvent(EnumModel):
     running: Optional[WorkerRunningEvent]
 
 
+class SettingUpEventData(BaseModel):
+    tasks: List[UUID]
+
+
 class NodeStateUpdate(BaseModel):
     state: NodeState
+    data: Optional[SettingUpEventData]
+
+    @validator("data")
+    def check_data(
+        cls,
+        data: Optional[SettingUpEventData],
+        values: Any,
+    ) -> Optional[SettingUpEventData]:
+        if data:
+            state = values.get("state")
+            if state and state != NodeState.setting_up:
+                raise ValueError(
+                    "data for node state update event does not match state = %s" % state
+                )
+
+        return data
 
 
 class NodeEvent(EnumModel):
-    worker_event: Optional[WorkerEvent]
     state_update: Optional[NodeStateUpdate]
+    worker_event: Optional[WorkerEvent]
 
 
 # Temporary shim type to support hot upgrade of 1.0.0 nodes.
