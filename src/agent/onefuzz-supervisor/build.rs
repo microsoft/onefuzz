@@ -30,7 +30,7 @@ fn print_version(include_sha: bool) -> Result<(), Box<dyn Error>> {
         version.push('-');
         version.push_str(&sha);
 
-        // if we're a non-release buil, check to see if git has
+        // if we're a non-release build, check to see if git has
         // unstaged changes
         if run_cmd(&["git", "diff", "--quiet"]).is_err() {
             version.push('.');
@@ -47,13 +47,10 @@ fn print_version(include_sha: bool) -> Result<(), Box<dyn Error>> {
 fn main() -> Result<(), Box<dyn Error>> {
     // If we're built off of a tag, we accept CURRENT_VERSION as is.  Otherwise
     // modify it to indicate local build
-    if let Ok(val) = env::var("GITHUB_REF") {
-        if val.starts_with("refs/tags/") {
-            print_version(false)
-        } else {
-            print_version(true)
-        }
+    let include_sha = if let Ok(val) = env::var("GITHUB_REF") {
+        !val.starts_with("refs/tags/")
     } else {
-        print_version(true)
-    }
+        true
+    };
+    print_version(include_sha)
 }
