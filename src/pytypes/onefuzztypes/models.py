@@ -42,10 +42,10 @@ class EnumModel(BaseModel):
                 some.append(field)
 
         if not some:
-            raise ValueError('no variant set for enum')
+            raise ValueError("no variant set for enum")
 
         if len(some) > 1:
-            raise ValueError('multiple values set for enum: %s' % some)
+            raise ValueError("multiple values set for enum: %s" % some)
 
         return values
 
@@ -398,6 +398,7 @@ class Node(BaseModel):
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    version: str = Field(default="1.0.0")
 
 
 class ScalesetSummary(BaseModel):
@@ -510,7 +511,6 @@ class SettingUpEventData(BaseModel):
 
 
 class NodeDoneEventData(BaseModel):
-    state: NodeState
     error: Optional[str]
     script_output: Optional[ProcessOutput]
 
@@ -523,18 +523,17 @@ class NodeStateUpdate(BaseModel):
     data: Optional[NodeStateData]
 
     @validator("data")
-    def check_data(cls, data: Optional[SettingUpEventData], values: Any) -> Optional[SettingUpEventData]:
-        state = values.get("state")
-
-        err = ValueError("data for node state update event does not match state = %s" % state)
-
-        if state == NodeState.setting_up:
-            if not data or not isinstance(data, SettingUpEventData):
-                raise err
-
-        if state == NodeState.done:
-            if not data or not isinstance(data, NodeDoneEventData):
-                raise err
+    def check_data(
+        cls,
+        data: Optional[SettingUpEventData],
+        values: Any,
+    ) -> Optional[SettingUpEventData]:
+        if data:
+            state = values.get("state")
+            if state and state != NodeState.setting_up:
+                raise ValueError(
+                    "data for node state update event does not match state = %s" % state
+                )
 
         return data
 
@@ -544,7 +543,7 @@ class NodeEvent(EnumModel):
     worker_event: Optional[WorkerEvent]
 
 
-# Union type to support hot upgrade of 1.0.0 nodes.
+# Temporary shim type to support hot upgrade of 1.0.0 nodes.
 #
 # We want future variants to use an externally-tagged repr.
 NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
@@ -585,6 +584,12 @@ class TaskEventSummary(BaseModel):
     event_type: str
 
 
+class NodeAssignment(BaseModel):
+    node_id: UUID
+    scaleset_id: Optional[UUID]
+    state: NodeTaskState
+
+
 class Task(BaseModel):
     job_id: UUID
     task_id: UUID = Field(default_factory=uuid4)
@@ -596,3 +601,4 @@ class Task(BaseModel):
     heartbeats: Optional[List[HeartbeatSummary]]
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
+    nodes: Optional[List[NodeAssignment]]

@@ -19,13 +19,14 @@ from onefuzztypes.enums import (
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Node as BASE_NODE
-from onefuzztypes.models import NodeCommand
+from onefuzztypes.models import NodeAssignment, NodeCommand
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Pool as BASE_POOL
 from onefuzztypes.models import Scaleset as BASE_SCALESET
 from onefuzztypes.models import (
     ScalesetNodeState,
     ScalesetSummary,
+    StopNodeCommand,
     WorkSet,
     WorkSetSummary,
     WorkUnitSummary,
@@ -33,6 +34,7 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import PoolName, Region
 from pydantic import Field
 
+from .__version__ import __version__
 from .azure.auth import build_auth
 from .azure.creds import get_fuzz_storage
 from .azure.image import get_os
@@ -78,6 +80,28 @@ class Node(BASE_NODE, ORMMixin):
         if pool_name:
             query["pool_name"] = [pool_name]
         return cls.search(query=query)
+
+    @classmethod
+    def search_outdated(
+        cls,
+        *,
+        scaleset_id: Optional[UUID] = None,
+        states: Optional[List[NodeState]] = None,
+        pool_name: Optional[str] = None,
+    ) -> List["Node"]:
+        query: QueryFilter = {}
+        if scaleset_id:
+            query["scaleset_id"] = [scaleset_id]
+        if states:
+            query["state"] = states
+        if pool_name:
+            query["pool_name"] = [pool_name]
+
+        # azure table query always return false when the column does not exist
+        # We write the query this way to allow us to get the nodes where the
+        # version is not defined as well as the nodes with a mismatched version
+        version_query = "not (version ne '%s')" % __version__
+        return cls.search(query=query, raw_unchecked_filter=version_query)
 
     @classmethod
     def get_by_machine_id(cls, machine_id: UUID) -> Optional["Node"]:
@@ -138,6 +162,9 @@ class Node(BASE_NODE, ORMMixin):
                 node.state = NodeState.done
                 node.save()
 
+    def is_outdated(self) -> bool:
+        return self.version != __version__
+
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
@@ -161,6 +188,21 @@ class NodeTasks(BASE_NODE_TASK, ORMMixin):
         return result
 
     @classmethod
+    def get_node_assignments(cls, task_id: UUID) -> List[NodeAssignment]:
+        result = []
+        for entry in cls.search(query={"task_id": [task_id]}):
+            node = Node.get_by_machine_id(entry.machine_id)
+            if node:
+                node_assignment = NodeAssignment(
+                    node_id=node.machine_id,
+                    scaleset_id=node.scaleset_id,
+                    state=entry.state,
+                )
+                result.append(node_assignment)
+
+        return result
+
+    @classmethod
     def get_by_machine_id(cls, machine_id: UUID) -> List["NodeTasks"]:
         return cls.search(query={"machine_id": [machine_id]})
 
@@ -178,7 +220,7 @@ class NodeMessage(ORMMixin):
 
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
-        return ("agent_id", "create_date")
+        return ("agent_id", "message_id")
 
     @classmethod
     def get_messages(
@@ -198,6 +240,12 @@ class NodeMessage(ORMMixin):
             batch.delete_entity(agent_id, message_id)
 
         client.commit_batch(cls.table_name(), batch)
+
+    @classmethod
+    def clear_messages(cls, agent_id: UUID) -> None:
+        messages = cls.get_messages(agent_id)
+        message_ids = [m.message_id for m in messages]
+        cls.delete_messages(agent_id, message_ids)
 
 
 class Pool(BASE_POOL, ORMMixin):
@@ -565,12 +613,28 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         nodes = Node.search_states(
             scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
         )
-        if not nodes:
+
+        outdated = Node.search_outdated(
+            scaleset_id=self.scaleset_id,
+            states=[NodeState.free],
+        )
+
+        if not (nodes or outdated):
             logging.debug("scaleset node gc done (no nodes) %s", self.scaleset_id)
             return False
 
         to_delete = []
         to_reimage = []
+
+        for node in outdated:
+            if node.version == "1.0.0":
+                to_reimage.append(node)
+            else:
+                stop_message = NodeMessage(
+                    agent_id=node.machine_id,
+                    message=NodeCommand(stop=StopNodeCommand()),
+                )
+                stop_message.save()
 
         for node in nodes:
             # delete nodes that are not waiting on the scaleset GC

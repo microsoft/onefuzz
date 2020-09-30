@@ -186,6 +186,10 @@ impl State<SettingUp> {
 
         Ok(done)
     }
+
+    pub fn work_set(&self) -> &WorkSet {
+        &self.ctx.work_set
+    }
 }
 
 impl State<PendingReboot> {

@@ -141,7 +141,7 @@ class Libfuzzer(Command):
         existing_inputs: Optional[Container] = None,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
-    ) -> None:
+    ) -> Optional[Job]:
         """ Basic libfuzzer job """
 
         # verify containers exist
@@ -149,7 +149,7 @@ class Libfuzzer(Command):
             self.onefuzz.containers.get(existing_inputs)
 
         if dryrun:
-            return
+            return None
 
         self.logger.info("creating libfuzzer from template")
 
@@ -211,3 +211,4 @@ class Libfuzzer(Command):
 
         self.logger.info("done creating tasks")
         helper.wait()
+        return helper.job

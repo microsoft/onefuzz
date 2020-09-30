@@ -4,3 +4,4 @@ pytest
 isort
 pydantic
 vulture
+black

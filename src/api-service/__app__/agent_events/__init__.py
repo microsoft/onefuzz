@@ -45,8 +45,8 @@ def get_node_checked(machine_id: UUID) -> Node:
 
 
 def on_state_update(
-        machine_id: UUID,
-        state_update: NodeStateUpdate,
+    machine_id: UUID,
+    state_update: NodeStateUpdate,
 ) -> func.HttpResponse:
     state = state_update.state
     node = get_node_checked(machine_id)
@@ -60,17 +60,25 @@ def on_state_update(
                 # This field will be required in the future.
                 # For now, it is optional for back compat.
                 if state_update.data:
-                    setting_up_data = cast(SettingUpEventData, state_update.data)
-
-                    for task_id in setting_up_data.tasks:
+                    for task_id in state_update.data.tasks:
                         task = get_task_checked(task_id)
-                        task.state = TaskState.setting_up
+
+                        # The task state may be `running` if it has `vm_count` > 1, and
+                        # another node is concurrently executing the task. If so, leave
+                        # the state as-is, to represent the max progress made.
+                        #
+                        # Other states we would want to preserve are excluded by the
+                        # outermost conditional check.
+                        if task.state != TaskState.running:
+                            task.state = TaskState.setting_up
 
                         # We don't yet call `on_start()` for the task.
                         # This will happen once we see a worker event that
                         # reports it as `running`.
                         task.save()
 
+                        # Note: we set the node task state to `setting_up`, even though
+                        # the task itself may be `running`.
                         node_task = NodeTasks(
                             machine_id=machine_id,
                             task_id=task_id,
@@ -87,7 +95,6 @@ def on_state_update(
                         done_data,
                     )
                     # TODO: update task states linked to node.
-
     else:
         logging.info("ignoring state updates from the node: %s: %s", machine_id, state)
 
@@ -146,9 +153,8 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
 
     task.save()
     node.save()
-    task_event = TaskEvent(
-        task_id=task_id, machine_id=machine_id, event_data=event
-    )
+
+    task_event = TaskEvent(task_id=task_id, machine_id=machine_id, event_data=event)
     task_event.save()
     return ok(BoolResult(result=True))
 
