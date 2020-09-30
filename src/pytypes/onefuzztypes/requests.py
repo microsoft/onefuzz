@@ -95,7 +95,7 @@ class PoolCreate(BaseRequest):
     vm_sku: str
     image: str
     spot_instances: bool
-    region: Region
+    region: Optional[Region]
 
 
 class PoolSearch(BaseRequest):
