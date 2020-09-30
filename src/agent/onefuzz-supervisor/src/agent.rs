@@ -54,7 +54,8 @@ impl Agent {
         // `Free`. If it has started up after a work set-requested reboot, the
         // state will be `Ready`.
         if let Some(Scheduler::Free(..)) = &self.scheduler {
-            self.coordinator.emit_event(NodeState::Init.into()).await?;
+            let event = StateUpdateEvent::Init.into();
+            self.coordinator.emit_event(event).await?;
         }
 
         loop {
@@ -94,7 +95,8 @@ impl Agent {
     }
 
     async fn free(&mut self, state: State<Free>) -> Result<Scheduler> {
-        self.coordinator.emit_event(NodeState::Free.into()).await?;
+        let event = StateUpdateEvent::Free.into();
+        self.coordinator.emit_event(event).await?;
 
         let msg = self.work_queue.poll().await?;
 
@@ -165,9 +167,9 @@ impl Agent {
     async fn setting_up(&mut self, state: State<SettingUp>) -> Result<Scheduler> {
         verbose!("agent setting up");
 
-        self.coordinator
-            .emit_event(NodeState::SettingUp.into())
-            .await?;
+        let tasks = state.work_set().task_ids();
+        let event = StateUpdateEvent::SettingUp { tasks };
+        self.coordinator.emit_event(event.into()).await?;
 
         let scheduler = match state.finish(self.setup_runner.as_mut()).await? {
             SetupDone::Ready(s) => s.into(),
@@ -180,9 +182,8 @@ impl Agent {
     async fn pending_reboot(&mut self, state: State<PendingReboot>) -> Result<Scheduler> {
         verbose!("agent pending reboot");
 
-        self.coordinator
-            .emit_event(NodeState::Rebooting.into())
-            .await?;
+        let event = StateUpdateEvent::Rebooting.into();
+        self.coordinator.emit_event(event).await?;
 
         let ctx = state.reboot_context();
         self.reboot.save_context(ctx).await?;
@@ -194,13 +195,15 @@ impl Agent {
     async fn ready(&mut self, state: State<Ready>) -> Result<Scheduler> {
         verbose!("agent ready");
 
-        self.coordinator.emit_event(NodeState::Ready.into()).await?;
+        let event = StateUpdateEvent::Ready.into();
+        self.coordinator.emit_event(event).await?;
 
         Ok(state.run().await?.into())
     }
 
     async fn busy(&mut self, state: State<Busy>) -> Result<Scheduler> {
-        self.coordinator.emit_event(NodeState::Busy.into()).await?;
+        let event = StateUpdateEvent::Busy.into();
+        self.coordinator.emit_event(event).await?;
 
         let mut events = vec![];
         let updated = state
@@ -217,7 +220,8 @@ impl Agent {
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
         verbose!("agent done");
 
-        self.coordinator.emit_event(NodeState::Done.into()).await?;
+        let event = StateUpdateEvent::Done.into();
+        self.coordinator.emit_event(event).await?;
 
         // `Done` is a final state.
         Ok(state.into())
