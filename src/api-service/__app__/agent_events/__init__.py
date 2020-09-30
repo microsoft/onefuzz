@@ -60,7 +60,10 @@ def on_state_update(
                 # This field will be required in the future.
                 # For now, it is optional for back compat.
                 if state_update.data:
-                    for task_id in state_update.data.tasks:
+                    # Model-validated.
+                    setting_up_data = cast(SettingUpEventData, state_update.data)
+
+                    for task_id in setting_up_data.tasks:
                         task = get_task_checked(task_id)
 
                         # The task state may be `running` if it has `vm_count` > 1, and
@@ -86,6 +89,7 @@ def on_state_update(
                         )
                         node_task.save()
             elif state == NodeState.done:
+                # Model-validated.
                 done_data = cast(NodeDoneEventData, state_update.data)
 
                 if done_data.error:
