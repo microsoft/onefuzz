@@ -522,20 +522,27 @@ class NodeStateUpdate(BaseModel):
     state: NodeState
     data: Optional[NodeStateData]
 
-    @validator("data")
-    def check_data(
-        cls,
-        data: Optional[NodeSettingUpEventData],
-        values: Any,
-    ) -> Optional[NodeSettingUpEventData]:
-        if data:
-            state = values.get("state")
-            if state and state != NodeState.setting_up:
-                raise ValueError(
-                    "data for node state update event does not match state = %s" % state
-                )
+    @root_validator(pre=False, skip_on_failure=True)
+    def check_data(cls, values: Any) -> Any:
+        data = values.get("data")
 
-        return data
+        if data:
+            state = values["state"]
+
+            if state == NodeState.setting_up:
+                if isinstance(data, NodeSettingUpEventData):
+                    return values
+
+            if state == NodeState.done:
+                if isinstance(data, NodeDoneEventData):
+                    return values
+
+            raise ValueError(
+                "data for node state update event does not match state = %s" % state
+            )
+        else:
+            # For now, `data` is always optional.
+            return values
 
 
 class NodeEvent(EnumModel):
