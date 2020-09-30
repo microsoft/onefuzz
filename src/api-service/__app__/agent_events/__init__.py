@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import cast
+from typing import Optional, cast
 from uuid import UUID
 
 import azure.functions as func
@@ -57,12 +57,16 @@ def on_state_update(
             node.save()
 
             if state == NodeState.setting_up:
+                # Model-validated.
+                #
                 # This field will be required in the future.
                 # For now, it is optional for back compat.
-                if state_update.data:
-                    # Model-validated.
-                    setting_up_data = cast(NodeSettingUpEventData, state_update.data)
+                setting_up_data = cast(
+                    Optional[NodeSettingUpEventData],
+                    state_update.data,
+                )
 
+                if setting_up_data:
                     for task_id in setting_up_data.tasks:
                         task = get_task_checked(task_id)
 
@@ -90,14 +94,18 @@ def on_state_update(
                         node_task.save()
             elif state == NodeState.done:
                 # Model-validated.
-                done_data = cast(NodeDoneEventData, state_update.data)
+                #
+                # This field will be required in the future.
+                # For now, it is optional for back compat.
+                done_data = cast(Optional[NodeDoneEventData], state_update.data)
 
-                if done_data.error:
-                    logging.error(
-                        "node done with error disposition: machine_id = %s, data = %s",
-                        machine_id,
-                        done_data,
-                    )
+                if done_data:
+                    if done_data.error:
+                        logging.error(
+                            "node `done` with error: machine_id = %s, data = %s",
+                            machine_id,
+                            done_data,
+                        )
     else:
         logging.info("ignoring state updates from the node: %s: %s", machine_id, state)
 
