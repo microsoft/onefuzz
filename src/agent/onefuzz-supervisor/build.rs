@@ -1,8 +1,8 @@
+use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::process::Command;
-use std::env;
 
 fn run_cmd(args: &[&str]) -> Result<String, Box<dyn Error>> {
     let cmd = Command::new(args[0]).args(&args[1..]).output()?;
@@ -38,9 +38,9 @@ fn print_version(include_sha: bool) -> Result<(), Box<dyn Error>> {
         }
     }
 
-    println!("cargo:rustc-env=GIT_VERSION={}", sha);    
+    println!("cargo:rustc-env=GIT_VERSION={}", sha);
     println!("cargo:rustc-env=ONEFUZZ_VERSION={}", version);
- 
+
     Ok(())
 }
 
@@ -48,7 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // If we're built off of a tag, we accept CURRENT_VERSION as is.  Otherwise
     // modify it to indicate local build
     if let Ok(val) = env::var("GITHUB_REF") {
-        if val.starts_with("refs/tags/") { 
+        if val.starts_with("refs/tags/") {
             print_version(false)
         } else {
             print_version(true)
