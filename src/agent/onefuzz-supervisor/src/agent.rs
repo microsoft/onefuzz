@@ -226,12 +226,10 @@ impl Agent {
                 error,
                 script_output,
             } => StateUpdateEvent::Done {
-                state: NodeState::Done,
                 error: Some(error),
                 script_output,
             },
             DoneCause::Stopped | DoneCause::WorkersDone => StateUpdateEvent::Done {
-                state: NodeState::Done,
                 error: None,
                 script_output: None,
             },

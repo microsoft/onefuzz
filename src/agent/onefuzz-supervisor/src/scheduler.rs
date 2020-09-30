@@ -165,6 +165,9 @@ impl State<SettingUp> {
                     return Ok(SetupDone::Done(ctx.into()));
                 }
             }
+            Ok(None) => {
+                // No script was executed.
+            }
             Err(err) => {
                 let cause = DoneCause::SetupError {
                     error: err.to_string(),
@@ -173,7 +176,6 @@ impl State<SettingUp> {
                 let ctx = Done { cause };
                 return Ok(SetupDone::Done(ctx.into()));
             }
-            _ => {}
         }
 
         let done = if work_set.reboot {
