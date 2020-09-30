@@ -417,15 +417,16 @@ class Pool(BaseModel):
     pool_id: UUID = Field(default_factory=uuid4)
     os: OS
     managed: bool
-    min_size: int
     max_size: int
     vm_sku: str
     image: str
+    spot_instances: bool
     arch: Architecture
     state: PoolState = Field(default=PoolState.init)
     client_id: Optional[UUID]
     nodes: Optional[List[Node]]
     config: Optional[AgentConfig]
+    Region: Region
 
     # work_queue is explicitly not saved to Tables (see save_exclude).  This is
     # intended to be used to pass the information to the CLI when the CLI asks

@@ -91,6 +91,11 @@ class PoolCreate(BaseRequest):
     arch: Architecture
     managed: bool
     client_id: Optional[UUID]
+    max_size: int
+    vm_sku: str
+    image: str
+    spot_instances: bool
+    region: Region
 
 
 class PoolSearch(BaseRequest):
