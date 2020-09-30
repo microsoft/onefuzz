@@ -74,7 +74,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         if request.region not in get_regions():
             return not_ok(
                 Error(code=ErrorCode.UNABLE_TO_CREATE, errors=["invalid region"]),
-                context="scalesetcreate",
+                context="poolcreate",
             )
 
         region = request.region
