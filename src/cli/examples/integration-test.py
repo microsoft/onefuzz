@@ -422,7 +422,7 @@ class TestOnefuzz:
                     self.failed_jobs.add(job_id)
                     done.add(job_id)
             else:
-                info.append("%s:%s" % (self.target_jobs[job_id], repro.state))
+                info.append("%s:%s" % (self.target_jobs[job_id], repro.state.name))
 
         for job_id in done:
             self.of.repro.delete(self.repros[job_id].vm_id)
