@@ -30,15 +30,19 @@ def scale_up(pool, scalesets, nodes_needed):
 
     if nodes_needed > 0:
         for _ in range(
-            math.ceil(nodes_needed / max(Scaleset.max_size(pool.image), pool.max_size))
+            math.ceil(
+                nodes_needed
+                / max(Scaleset.scaleset_max_size(pool.image), pool.max_size)
+            )
         ):
-            scaleset.create(
+            Scaleset.create(
                 pool_name=pool.name,
                 vm_sku=pool.vm_sku,
                 image=pool.image,
                 region=pool.region,
                 size=nodes_needed,
                 spot_instances=pool.spot_instances,
+                tags={"pool": pool.pool_name},
             )
 
 
@@ -59,19 +63,11 @@ def scale_down(scalesets):
 def get_vm_count(tasks):
     count = 0
     for task in tasks:
-        count += task.config.vm.count
+        count += task.config.pool.count
     return count
 
 
 def main(mytimer: func.TimerRequest) -> None:
-    utc_timestamp = (
-        datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
-    )
-
-    if mytimer.past_due:
-        logging.info("The timer is past due!")
-
-    logging.info("Python timer trigger function ran at %s", utc_timestamp)
 
     pools = Pool.search_states(states=[PoolState.init, PoolState.running])
     for pool in pools:
@@ -79,7 +75,9 @@ def main(mytimer: func.TimerRequest) -> None:
         num_of_tasks = 0
         # get all the tasks (count not stopped) for the pool
         if not tasks:
-            num_of_tasks = get_vm_count(tasks)
+            continue
+
+        num_of_tasks = get_vm_count(tasks)
         # do scaleset logic match with pool
         # get all the scalesets for the pool
         scalesets = Scaleset.search_by_pool(pool.name)
@@ -94,8 +92,7 @@ def main(mytimer: func.TimerRequest) -> None:
             continue
 
         if num_of_tasks > 0:
+            # resizing scaleset or creating new scaleset.
             scale_up(pool, scalesets, num_of_tasks)
         elif num_of_tasks < 0:
             scale_down(scalesets)
-
-        # resizing scaleset or creating new scaleset.

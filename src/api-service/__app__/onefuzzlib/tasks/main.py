@@ -156,7 +156,16 @@ class Task(BASE_TASK, ORMMixin):
 
     @classmethod
     def get_tasks_by_pool_name(cls, pool_name: str) -> List["Task"]:
-        return cls.search(query={"pool_name": [pool_name]})
+        tasks = cls.search()
+        pool_tasks = []
+        if not tasks:
+            return None
+
+        for task in tasks:
+            if pool_name == task.config.pool.pool_name:
+                pool_tasks.append(task)
+
+        return pool_tasks
 
     def get_pool(self) -> Optional[Pool]:
         if self.config.pool:
