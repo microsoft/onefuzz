@@ -4,14 +4,17 @@
 # Licensed under the MIT License.
 
 import logging
+from typing import Optional, cast
 from uuid import UUID
 
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode, NodeState, NodeTaskState, TaskState
 from onefuzztypes.models import (
     Error,
+    NodeDoneEventData,
     NodeEvent,
     NodeEventEnvelope,
+    NodeSettingUpEventData,
     NodeStateUpdate,
     WorkerEvent,
 )
@@ -54,10 +57,17 @@ def on_state_update(
             node.save()
 
             if state == NodeState.setting_up:
+                # Model-validated.
+                #
                 # This field will be required in the future.
                 # For now, it is optional for back compat.
-                if state_update.data:
-                    for task_id in state_update.data.tasks:
+                setting_up_data = cast(
+                    Optional[NodeSettingUpEventData],
+                    state_update.data,
+                )
+
+                if setting_up_data:
+                    for task_id in setting_up_data.tasks:
                         task = get_task_checked(task_id)
 
                         # The task state may be `running` if it has `vm_count` > 1, and
@@ -82,6 +92,20 @@ def on_state_update(
                             state=NodeTaskState.setting_up,
                         )
                         node_task.save()
+            elif state == NodeState.done:
+                # Model-validated.
+                #
+                # This field will be required in the future.
+                # For now, it is optional for back compat.
+                done_data = cast(Optional[NodeDoneEventData], state_update.data)
+
+                if done_data:
+                    if done_data.error:
+                        logging.error(
+                            "node `done` with error: machine_id = %s, data = %s",
+                            machine_id,
+                            done_data,
+                        )
     else:
         logging.info("ignoring state updates from the node: %s: %s", machine_id, state)
 
@@ -140,6 +164,7 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
 
     task.save()
     node.save()
+
     task_event = TaskEvent(task_id=task_id, machine_id=machine_id, event_data=event)
     task_event.save()
     return ok(BoolResult(result=True))
