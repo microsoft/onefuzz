@@ -10,6 +10,8 @@ from onefuzztypes.enums import NodeState, PoolState, ScalesetState
 
 
 def scale_up(pool, scalesets, nodes_needed):
+    logging.info(f"Nodes needed: {nodes_needed}")
+
     for scaleset in scalesets:
         if scaleset.state in ScalesetState.available():
 
@@ -32,18 +34,26 @@ def scale_up(pool, scalesets, nodes_needed):
         for _ in range(
             math.ceil(
                 nodes_needed
-                / max(Scaleset.scaleset_max_size(pool.image), pool.max_size)
+                / min(Scaleset.scaleset_max_size(pool.image), pool.max_size)
             )
         ):
-            Scaleset.create(
+            logging.info(f"Creating Scaleset for Pool {pool.name}")
+            max_nodes_scaleset = min(
+                Scaleset.scaleset_max_size(pool.image), pool.max_size, nodes_needed
+            )
+            scaleset = Scaleset.create(
                 pool_name=pool.name,
                 vm_sku=pool.vm_sku,
                 image=pool.image,
                 region=pool.region,
-                size=nodes_needed,
+                size=max_nodes_scaleset,
                 spot_instances=pool.spot_instances,
-                tags={"pool": pool.pool_name},
+                tags={"pool": pool.name},
             )
+            scaleset.save()
+            # don't return auths during create, only 'get' with include_auth
+            scaleset.auth = None
+            nodes_needed -= max_nodes_scaleset
 
 
 def scale_down(scalesets):

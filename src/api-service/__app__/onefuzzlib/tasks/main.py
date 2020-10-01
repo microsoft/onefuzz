@@ -162,7 +162,10 @@ class Task(BASE_TASK, ORMMixin):
             return None
 
         for task in tasks:
-            if pool_name == task.config.pool.pool_name:
+            if (
+                pool_name == task.config.pool.pool_name
+                and task.state in TaskState.available()
+            ):
                 pool_tasks.append(task)
 
         return pool_tasks
