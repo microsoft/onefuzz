@@ -78,6 +78,8 @@ def execute_update(update: Update) -> None:
     if update.update_type == UpdateType.Scaleset:
         return
 
+    logging.info("performing queued update: %s", update)
+
     if update.update_type in update_objects:
         if update.PartitionKey is None or update.RowKey is None:
             raise Exception("unsupported update: %s" % update)
@@ -103,8 +105,3 @@ def execute_update(update: Update) -> None:
         return
 
     raise NotImplementedError("unimplemented update type: %s" % update.update_type.name)
-
-
-def perform_update(update: Update) -> None:
-    logging.info("performing queued update: %s", update)
-    execute_update(update)
