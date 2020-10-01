@@ -79,7 +79,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
         region = request.region
 
-    logging.info(f"Region: {region}")
     pool = Pool.create(
         name=request.name,
         os=request.os,
@@ -89,8 +88,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         max_size=request.max_size,
         vm_sku=request.vm_sku,
         image=request.image,
-        region=region,
         spot_instances=request.spot_instances,
+        region=region,
     )
     pool.save()
     return ok(set_config(pool))

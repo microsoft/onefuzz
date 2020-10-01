@@ -249,6 +249,7 @@ class Pool(BASE_POOL, ORMMixin):
         spot_instances: bool,
         region: Region,
     ) -> "Pool":
+        logging.info(f"2Region: {region}")
         return cls(
             name=name,
             os=os,
