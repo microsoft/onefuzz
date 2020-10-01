@@ -197,6 +197,14 @@ class ADO:
 def notify_ado(
     config: ADOTemplate, container: str, filename: str, report: Report
 ) -> None:
+    logging.info(
+        "notify ado: job_id:%s task_id:%s container:%s filename:%s",
+        report.job_id,
+        report.task_id,
+        container,
+        filename,
+    )
+
     try:
         ado = ADO(container, filename, config, report)
         ado.process()
