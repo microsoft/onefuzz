@@ -234,12 +234,9 @@ class NodeMessage(ORMMixin):
     @classmethod
     def delete_messages(cls, agent_id: UUID, message_ids: List[str]) -> None:
         client = get_client(table=cls.table_name())
-        batch = client.batch(table_name=cls.table_name())
-
-        for message_id in message_ids:
-            batch.delete_entity(agent_id, message_id)
-
-        client.commit_batch(cls.table_name(), batch)
+        with client.batch(table_name=cls.table_name()) as batch:
+            for message_id in message_ids:
+                batch.delete_entity(agent_id, message_id)
 
     @classmethod
     def clear_messages(cls, agent_id: UUID) -> None:
