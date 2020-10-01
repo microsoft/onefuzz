@@ -7,6 +7,7 @@ import inspect
 import logging
 
 WORKERS_DONE = False
+REDUCE_LOGGING = False
 
 
 def allow_more_workers() -> None:
@@ -22,3 +23,32 @@ def allow_more_workers() -> None:
                 entry.frame.f_locals["self"]._sync_call_tp._max_workers = 50
 
     WORKERS_DONE = True
+
+
+# TODO: Replace this with a better method for filtering out logging
+# See https://github.com/Azure/azure-functions-python-worker/issues/743
+def reduce_logging() -> None:
+    global REDUCE_LOGGING
+    if REDUCE_LOGGING:
+        return
+
+    to_quiet = [
+        "azure",
+        "cli",
+        "grpc",
+        "concurrent",
+        "oauthlib",
+        "msrest",
+        "opencensus",
+        "urllib3",
+        "requests",
+        "aiohttp",
+        "asyncio",
+        "adal-python",
+    ]
+
+    for name in logging.Logger.manager.loggerDict:  # type: ignore
+        logger = logging.getLogger(name)
+        for prefix in to_quiet:
+            if logger.name.startswith(prefix):
+                logger.level = logging.WARN
