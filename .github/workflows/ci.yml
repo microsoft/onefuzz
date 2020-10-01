@@ -86,7 +86,7 @@ jobs:
         python setup.py sdist bdist_wheel
         pip install -r ./requirements.txt ../../artifacts/sdk/*.whl
         pip install six
-        pyinstaller onefuzz/__main__.py --onefile --name onefuzz --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow
+        pyinstaller onefuzz/__main__.py --onefile --name onefuzz --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean
         ./dist/onefuzz.exe --version
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/windows-cli/
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/sdk/
