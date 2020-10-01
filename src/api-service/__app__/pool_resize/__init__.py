@@ -52,7 +52,7 @@ def scale_up(pool, scalesets, nodes_needed):
             )
             scaleset.save()
             # don't return auths during create, only 'get' with include_auth
-            scaleset.auth = None
+            # scaleset.auth = None
             nodes_needed -= max_nodes_scaleset
 
 
