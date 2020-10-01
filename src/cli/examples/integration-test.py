@@ -442,7 +442,7 @@ class TestOnefuzz:
         """ stop a specific template """
 
         if self.skip_cleanup:
-            self.logger.warn("not cleaning up target: %s", target)
+            self.logger.warning("not cleaning up target: %s", target)
         else:
             self.of.template.stop(
                 self.project,
@@ -456,7 +456,7 @@ class TestOnefuzz:
         """ cleanup all of the integration pools & jobs """
 
         if self.skip_cleanup:
-            self.logger.warn("not cleaning up")
+            self.logger.warning("not cleaning up")
             return True
 
         self.logger.info("cleaning up")
@@ -527,7 +527,7 @@ class Run(Command):
             tester.launch(samples)
             tester.check_jobs()
             if skip_repro:
-                self.logger.warn("not testing crash repro")
+                self.logger.warning("not testing crash repro")
             else:
                 tester.launch_repro()
                 tester.check_repro()
