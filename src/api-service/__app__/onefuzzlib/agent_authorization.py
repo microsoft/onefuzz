@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import logging
 from typing import Callable, Union
 from uuid import UUID
 
@@ -66,6 +67,7 @@ def verify_token(
         return not_ok(token, status_code=401, context="token verification")
 
     if not is_authorized(token):
+        logging.error("rejecting token - %s - %s", req.url, token)
         return not_ok(
             Error(code=ErrorCode.UNAUTHORIZED, errors=["Unrecognized agent"]),
             status_code=401,
