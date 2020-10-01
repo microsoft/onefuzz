@@ -537,7 +537,7 @@ class NodeEvent(EnumModel):
 # Temporary shim type to support hot upgrade of 1.0.0 nodes.
 #
 # We want future variants to use an externally-tagged repr.
-NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
+NodeEventShim = Union[NodeStateUpdate, NodeEvent, WorkerEvent]
 
 
 class NodeEventEnvelope(BaseModel):
