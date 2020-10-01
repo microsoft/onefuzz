@@ -147,6 +147,7 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
     envelope = parse_request(NodeEventEnvelope, req)
+    logging.info(f"envelope: {req.get_json()}")
     if isinstance(envelope, Error):
         return not_ok(envelope, context=ERROR_CONTEXT)
 
