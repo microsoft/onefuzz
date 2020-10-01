@@ -79,6 +79,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
         region = request.region
 
+    logging.info(f"Region: {region}")
     pool = Pool.create(
         name=request.name,
         os=request.os,
