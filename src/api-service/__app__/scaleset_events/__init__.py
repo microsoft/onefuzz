@@ -23,7 +23,7 @@ def process_scaleset(scaleset: Scaleset) -> None:
 
     if scaleset.state in ScalesetState.needs_work():
         logging.info(
-            "executing scaleset state: %s - %s",
+            "exec scaleset state: %s - %s",
             scaleset.scaleset_id,
             scaleset.state.name,
         )

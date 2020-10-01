@@ -201,7 +201,7 @@ class Versions(Endpoint):
                 and api.patch >= cli.patch
             )
             if cli_str == "0.0.0" and not result:
-                self.logger.warn(
+                self.logger.warning(
                     "ignoring compatibility check as the CLI was installed "
                     "from git.  api: %s cli: %s",
                     api_str,
