@@ -426,7 +426,7 @@ class Pool(BaseModel):
     client_id: Optional[UUID]
     nodes: Optional[List[Node]]
     config: Optional[AgentConfig]
-    Region: Optional[Region]
+    Region: Region
 
     # work_queue is explicitly not saved to Tables (see save_exclude).  This is
     # intended to be used to pass the information to the CLI when the CLI asks
