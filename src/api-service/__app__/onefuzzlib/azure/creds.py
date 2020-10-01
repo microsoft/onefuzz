@@ -58,7 +58,7 @@ def get_storage_account_name_key(account_id: Optional[str] = None) -> Tuple[str,
 
 @cached(ttl=60)
 def get_blob_service(account_id: Optional[str] = None) -> BlockBlobService:
-    logging.info("getting blob container (account_id: %s)", account_id)
+    logging.debug("getting blob container (account_id: %s)", account_id)
     name, key = get_storage_account_name_key(account_id)
     service = BlockBlobService(account_name=name, account_key=key)
     return service
