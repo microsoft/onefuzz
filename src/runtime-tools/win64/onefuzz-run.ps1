@@ -33,5 +33,6 @@ while ($true) {
             exit 1
         }
     }
-    log "onefuzz unexpectedly exited, restarting"
+    log "onefuzz unexpectedly exited, restarting after delay"
+    Start-Sleep -Seconds 30
 }
