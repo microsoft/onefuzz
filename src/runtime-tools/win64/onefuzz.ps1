@@ -44,8 +44,8 @@ function Optimize-VM {
   Get-AppxPackage Microsoft.549981C3F5F10 | Remove-AppxPackage
 
   log "disable Windows Search"
-  sc stop "WSearch"
-  sc config "WSearch" start= disabled
+  sc.exe stop "WSearch"
+  sc.exe config "WSearch" start= disabled
 }
 
 function Set-SetSSHACL {
