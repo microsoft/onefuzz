@@ -197,7 +197,7 @@ class Task(BASE_TASK, ORMMixin):
                 else:
                     return pool
 
-        logging.warn(
+        logging.warning(
             "unable to find a scaleset that matches the task prereqs: %s",
             self.task_id,
         )
