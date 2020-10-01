@@ -19,7 +19,7 @@ from memoization import cached
 from msrestazure.azure_active_directory import MSIAuthentication
 from msrestazure.tools import parse_resource_id
 
-from .monkeypatch import allow_more_workers
+from .monkeypatch import allow_more_workers, reduce_logging
 
 
 @cached(ttl=60)
@@ -30,6 +30,7 @@ def get_msi() -> MSIAuthentication:
 @cached(ttl=60)
 def mgmt_client_factory(client_class: Any) -> Any:
     allow_more_workers()
+    reduce_logging()
     try:
         return get_client_from_cli_profile(client_class)
     except CLIError:
