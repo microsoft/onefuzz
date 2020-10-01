@@ -201,6 +201,16 @@ def notify_ado(
         ado = ADO(container, filename, config, report)
         ado.process()
     except AzureDevOpsServiceError as err:
-        logging.error("ADO report failed: %s", err)
+        logging.error(
+            "ADO report failed: job_id:%s task_id:%s err:%s",
+            report.job_id,
+            report.task_id,
+            err,
+        )
     except ValueError as err:
-        logging.error("ADO report value error: %s", err)
+        logging.error(
+            "ADO report value error: job_id:%s task_id:%s err:%s",
+            report.job_id,
+            report.task_id,
+            err,
+        )
