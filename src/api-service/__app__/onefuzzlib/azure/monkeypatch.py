@@ -52,3 +52,5 @@ def reduce_logging() -> None:
         for prefix in to_quiet:
             if logger.name.startswith(prefix):
                 logger.level = logging.WARN
+
+    REDUCE_LOGGING = True
