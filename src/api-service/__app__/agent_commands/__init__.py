@@ -35,7 +35,9 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="NodeCommandDelete")
 
-    NodeMessage.delete_messages(request.machine_id, [request.message_id])
+    message = NodeMessage.get(request.machine_id, request.message_id)
+    if message:
+        message.delete()
     return ok(BoolResult(result=True))
 
 
