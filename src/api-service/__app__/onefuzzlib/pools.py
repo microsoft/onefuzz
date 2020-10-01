@@ -40,7 +40,6 @@ from .azure.creds import get_fuzz_storage
 from .azure.image import get_os
 from .azure.network import Network
 from .azure.queue import create_queue, delete_queue, peek_queue, queue_object
-from .azure.table import get_client
 from .azure.vmss import (
     UnableToUpdate,
     create_vmss,
@@ -232,20 +231,10 @@ class NodeMessage(ORMMixin):
         return entries
 
     @classmethod
-    def delete_messages(cls, agent_id: UUID, message_ids: List[str]) -> None:
-        client = get_client(table=cls.table_name())
-        batch = client.batch(table_name=cls.table_name())
-
-        for message_id in message_ids:
-            batch.delete_entity(agent_id, message_id)
-
-        client.commit_batch(cls.table_name(), batch)
-
-    @classmethod
     def clear_messages(cls, agent_id: UUID) -> None:
         messages = cls.get_messages(agent_id)
-        message_ids = [m.message_id for m in messages]
-        cls.delete_messages(agent_id, message_ids)
+        for message in messages:
+            message.delete()
 
 
 class Pool(BASE_POOL, ORMMixin):
