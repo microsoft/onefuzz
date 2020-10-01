@@ -102,7 +102,9 @@ def execute_update(update: Update) -> None:
                     "no function to implement state: %s - %s", update, state.name
                 )
                 return
-            logging.info("performing queued update for state: %s", update, state.name)
+            logging.info(
+                "performing queued update for state: %s - %s", update, state.name
+            )
             func()
         return
 
