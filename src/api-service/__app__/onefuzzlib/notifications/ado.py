@@ -9,10 +9,10 @@ from typing import Iterator, List, Optional
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
 from azure.devops.exceptions import (
-    AzureDevOpsServiceError,
     AzureDevOpsAuthenticationError,
-    AzureDevOpsClientRequestError,
     AzureDevOpsClientError,
+    AzureDevOpsClientRequestError,
+    AzureDevOpsServiceError,
 )
 from azure.devops.v6_0.work_item_tracking.models import (
     CommentCreate,
