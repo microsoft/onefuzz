@@ -15,6 +15,10 @@ extern crate clap;
 use std::path::PathBuf;
 
 use anyhow::Result;
+use onefuzz::{
+    machine_id::get_machine_id,
+    telemetry::{self, EventData},
+};
 use structopt::StructOpt;
 
 pub mod agent;
@@ -88,7 +92,7 @@ fn run(opt: RunOpt) -> Result<()> {
         error!("error running supervisor agent: {}", err);
     }
 
-    onefuzz::telemetry::try_flush_and_close();
+    telemetry::try_flush_and_close();
 
     result
 }
@@ -106,6 +110,8 @@ fn load_config(opt: RunOpt) -> Result<StaticConfig> {
 }
 
 async fn run_agent(config: StaticConfig) -> Result<()> {
+    telemetry::set_property(EventData::MachineId(get_machine_id().await?));
+
     let registration = config::Registration::create_managed(config.clone()).await?;
     verbose!("created managed registration: {:?}", registration);
 
@@ -146,5 +152,5 @@ fn init_telemetry(config: &StaticConfig) {
         .map(|k| k.to_string())
         .unwrap_or_else(String::default);
 
-    onefuzz::telemetry::set_appinsights_clients(inst_key, tele_key);
+    telemetry::set_appinsights_clients(inst_key, tele_key);
 }
