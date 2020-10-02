@@ -668,6 +668,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     # result = 'did I modify the scaleset in azure'
     def cleanup_nodes(self) -> bool:
         if self.state == ScalesetState.halt:
+            logging.info("halting scaleset: %s", self.scaleset_id)
             self.halt()
             return True
 
@@ -689,6 +690,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         nodes = Node.search_states(
             scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
         )
+
+        if not outdated or not nodes:
+            return False
 
         for node in nodes:
             if node.delete_requested:

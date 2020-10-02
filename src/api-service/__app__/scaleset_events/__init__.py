@@ -13,19 +13,16 @@ from ..onefuzzlib.pools import Scaleset
 
 
 def process_scaleset(scaleset: Scaleset) -> None:
-    if scaleset.state == ScalesetState.halt:
-        scaleset.halt()
-        return
-
     # if the scaleset is touched during cleanup, don't continue to process it
     if scaleset.cleanup_nodes():
+        logging.debug("scaleset needed cleanup: %s", scaleset.scaleset_id)
         return
 
     if scaleset.state in ScalesetState.needs_work():
         logging.info(
             "exec scaleset state: %s - %s",
             scaleset.scaleset_id,
-            scaleset.state.name,
+            scaleset.state,
         )
         getattr(scaleset, scaleset.state.name)()
         return
