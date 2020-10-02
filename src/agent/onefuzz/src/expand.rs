@@ -316,7 +316,7 @@ mod tests {
             .input_corpus(Path::new(input_corpus_dir))
             .generated_inputs(Path::new(generated_inputs_dir))
             .target_options(&my_options)
-            .input(input_path)
+            .input_path(input_path)
             .evaluate(&my_args)?;
 
         let input_corpus_path = dunce::canonicalize(input_corpus_dir)?;
