@@ -6,7 +6,7 @@
 import datetime
 import logging
 from typing import Dict, List, Optional, Tuple, Union
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from onefuzztypes.enums import (
     OS,
@@ -15,7 +15,6 @@ from onefuzztypes.enums import (
     NodeState,
     PoolState,
     ScalesetState,
-    TaskState,
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Node as BASE_NODE
@@ -32,14 +31,21 @@ from onefuzztypes.models import (
     WorkUnitSummary,
 )
 from onefuzztypes.primitives import PoolName, Region
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from .__version__ import __version__
 from .azure.auth import build_auth
-from .azure.creds import get_fuzz_storage
+from .azure.creds import get_func_storage, get_fuzz_storage
 from .azure.image import get_os
 from .azure.network import Network
-from .azure.queue import create_queue, delete_queue, peek_queue, queue_object
+from .azure.queue import (
+    clear_queue,
+    create_queue,
+    delete_queue,
+    get_queue,
+    peek_queue,
+    queue_object,
+)
 from .azure.vmss import (
     UnableToUpdate,
     create_vmss,
@@ -154,15 +160,86 @@ class Node(BASE_NODE, ORMMixin):
         for node in nodes:
             if node.state not in NodeState.ready_for_reset():
                 logging.info(
-                    "stopping task %s on machine_id:%s",
-                    task_id,
+                    "stopping machine_id:%s running task:%s",
                     node.machine_id,
+                    task_id,
                 )
-                node.state = NodeState.done
-                node.save()
+                node.stop()
+
+    def mark_tasks_stopped_early(self) -> None:
+        from .tasks.main import Task
+
+        for entry in NodeTasks.get_by_machine_id(self.machine_id):
+            task = Task.get_by_task_id(entry.task_id)
+            if isinstance(task, Task):
+                task.mark_failed(
+                    Error(
+                        code=ErrorCode.TASK_FAILED,
+                        errors=["node reimaged during task execution"],
+                    )
+                )
+            entry.delete()
+
+    def can_process_new_work(self) -> bool:
+        if not self.is_outdated():
+            logging.info(
+                "can_schedule old version machine_id:%s version:%s",
+                self.machine_id,
+                self.version,
+            )
+            self.stop()
+            return False
+
+        if self.delete_requested or self.reimage_requested:
+            logging.info(
+                "can_schedule should be recycled.  machine_id:%s", self.machine_id
+            )
+            self.stop()
+            return False
+
+        if self.scaleset_id is not None:
+
+            if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
+                self.halt()
+                logging.info(
+                    "node scheduled to shrink.  machine_id:%s", self.machine_id
+                )
+                return False
+
+        return True
 
     def is_outdated(self) -> bool:
         return self.version != __version__
+
+    def send_message(self, message: NodeCommand) -> None:
+        stop_message = NodeMessage(
+            agent_id=self.machine_id,
+            message=message,
+        )
+        stop_message.save()
+
+    def to_reimage(self, done: bool = False) -> None:
+        if done:
+            if self.state not in NodeState.ready_for_reset():
+                self.state = NodeState.done
+
+        if not self.reimage_requested and not self.delete_requested:
+            self.reimage_requested = True
+        self.save()
+
+    def stop(self) -> None:
+        self.to_reimage()
+        self.send_message(NodeCommand(stop=StopNodeCommand()))
+
+    def shutdown(self) -> None:
+        # don't give out more work to the node, but let it finish existing work
+        self.delete_requested = True
+        self.save()
+
+    def halt(self) -> None:
+        """ Tell the node to stop everything. """
+        self.shutdown()
+        self.stop()
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
@@ -384,8 +461,7 @@ class Pool(BASE_POOL, ORMMixin):
             scaleset.save()
 
         for node in nodes:
-            node.state = NodeState.shutdown
-            node.save()
+            node.shutdown()
 
         self.save()
 
@@ -405,13 +481,7 @@ class Pool(BASE_POOL, ORMMixin):
             scaleset.save()
 
         for node in nodes:
-            logging.info(
-                "deleting node from pool: %s (%s) - machine_id:%s",
-                self.pool_id,
-                self.name,
-                node.machine_id,
-            )
-            node.delete()
+            node.halt()
 
         self.save()
 
@@ -599,37 +669,29 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.halt()
             return True
 
+        to_reimage = []
+        to_delete = []
+
+        outdated = Node.search_outdated(scaleset_id=self.scaleset_id)
+        for node in outdated:
+            if node.version == "1.0.0":
+                node.state = NodeState.done
+                to_reimage.append(node)
+            else:
+                if not node.reimage_requested or node.delete_requested:
+                    logging.info(
+                        "request shutdown of out-of-date node: %s", node.machine_id
+                    )
+                    node.shutdown()
+
         nodes = Node.search_states(
             scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
         )
 
-        outdated = Node.search_outdated(
-            scaleset_id=self.scaleset_id,
-            states=[NodeState.free],
-        )
-
-        if not (nodes or outdated):
-            logging.debug("scaleset node gc done (no nodes) %s", self.scaleset_id)
-            return False
-
-        to_delete = []
-        to_reimage = []
-
-        for node in outdated:
-            if node.version == "1.0.0":
-                to_reimage.append(node)
-            else:
-                stop_message = NodeMessage(
-                    agent_id=node.machine_id,
-                    message=NodeCommand(stop=StopNodeCommand()),
-                )
-                stop_message.save()
-
         for node in nodes:
-            # delete nodes that are not waiting on the scaleset GC
-            if not node.scaleset_node_exists():
-                node.delete()
-            elif node.state in [NodeState.shutdown, NodeState.halt]:
+            if node.delete_requested:
+                if not node.scaleset_node_exists():
+                    node.delete()
                 to_delete.append(node)
             else:
                 to_reimage.append(node)
@@ -648,13 +710,57 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.info("scaleset update already in progress: %s", self.scaleset_id)
         return True
 
+    def _resize_equal(self) -> None:
+        # NOTE: this is the only place we reset to the 'running' state.
+        # This ensures that our idea of scaleset size agrees with Azure
+        node_count = len(Node.search_states(scaleset_id=self.scaleset_id))
+        if node_count == self.size:
+            logging.info("resize finished: %s", self.scaleset_id)
+            self.new_size = None
+            self.state = ScalesetState.running
+            self.save()
+            return
+        else:
+            logging.info(
+                "resize is finished, waiting for nodes to check in: "
+                "%s (%d of %d nodes checked in)",
+                self.scaleset_id,
+                node_count,
+                self.size,
+            )
+            return
+
+    def _resize_grow(self) -> None:
+        if not self.new_size:
+            return
+
+        try:
+            resize_vmss(self.scaleset_id, self.new_size)
+        except UnableToUpdate:
+            logging.info("scaleset is mid-operation already")
+        return
+
+    def _resize_shrink(self, to_remove: int) -> None:
+        if not self.new_size:
+            return
+
+        # nodes = Node.search_states(
+        #     scaleset_id=self.scaleset_id, states=[NodeState.init, NodeState.free]
+        # )
+        # for node in nodes:
+        #     if size > self.new_size:
+        #         node.state = NodeState.halt
+        #         node.save()
+        #         size -= 1
+        #     else:
+        #         break
+        # self.save()
+        pass
+
     def resize(self) -> None:
-        logging.info(
-            "scaleset resize: %s - current: %s new: %s",
-            self.scaleset_id,
-            self.size,
-            self.new_size,
-        )
+        # no longer needing to resize
+        if self.state != ScalesetState.resize:
+            return
 
         # no work needed to resize
         if self.new_size is None:
@@ -662,53 +768,28 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.save()
             return
 
+        logging.info(
+            "scaleset resize: %s - current: %s new: %s",
+            self.scaleset_id,
+            self.size,
+            self.new_size,
+        )
+
         # just in case, always ensure size is within max capacity
         self.new_size = min(self.new_size, self.max_size())
 
         # Treat Azure knowledge of the size of the scaleset as "ground truth"
         size = get_vmss_size(self.scaleset_id)
         if size is None:
-            logging.info("scaleset is unavailable.  Re-queuing")
-            self.save()
+            logging.info("scaleset is unavailable: %s", self.scaleset_id)
             return
 
         if size == self.new_size:
-            # NOTE: this is the only place we reset to the 'running' state.
-            # This ensures that our idea of scaleset size agrees with Azure
-            node_count = len(Node.search_states(scaleset_id=self.scaleset_id))
-            if node_count == self.size:
-                logging.info("resize finished: %s", self.scaleset_id)
-                self.new_size = None
-                self.state = ScalesetState.running
-            else:
-                logging.info(
-                    "resize is finished, waiting for nodes to check in: "
-                    "%s (%d of %d nodes checked in)",
-                    self.scaleset_id,
-                    node_count,
-                    self.size,
-                )
-        # When adding capacity, call the resize API directly
+            self._resize_equal()
         elif self.new_size > self.size:
-            try:
-                resize_vmss(self.scaleset_id, self.new_size)
-            except UnableToUpdate:
-                logging.info("scaleset is mid-operation already")
-        # Shut down any nodes without work.  Otherwise, rely on Scaleset.reimage_node
-        # to pick up that the scaleset is too big upon task completion
+            self._resize_grow()
         else:
-            nodes = Node.search_states(
-                scaleset_id=self.scaleset_id, states=[NodeState.init, NodeState.free]
-            )
-            for node in nodes:
-                if size > self.new_size:
-                    node.state = NodeState.halt
-                    node.save()
-                    size -= 1
-                else:
-                    break
-
-        self.save()
+            self._resize_shrink(self.size - self.new_size)
 
     def delete_nodes(self, nodes: List[Node]) -> None:
         if not nodes:
@@ -727,26 +808,22 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         self.save()
 
     def reimage_nodes(self, nodes: List[Node]) -> None:
-        from .tasks.main import Task
-
         if not nodes:
             logging.debug("no nodes to reimage")
             return
 
-        for node in nodes:
-            for entry in NodeTasks.get_by_machine_id(node.machine_id):
-                task = Task.get_by_task_id(entry.task_id)
-                if isinstance(task, Task):
-                    if task.state in [TaskState.stopping, TaskState.stopped]:
-                        continue
-
-                    task.mark_failed(
-                        Error(
-                            code=ErrorCode.TASK_FAILED,
-                            errors=["node reimaged during task execution"],
-                        )
-                    )
-                entry.delete()
+        # TODO - find out what happens with Stop on existing work
+        # for node in nodes:
+        #     for entry in NodeTasks.get_by_machine_id(node.machine_id):
+        #         task = Task.get_by_task_id(entry.task_id)
+        #         if isinstance(task, Task):
+        #             task.mark_failed(
+        #                 Error(
+        #                     code=ErrorCode.TASK_FAILED,
+        #                     errors=["node reimaged during task execution"],
+        #                 )
+        #             )
+        #         entry.delete()
 
         if self.state == ScalesetState.shutdown:
             self.delete_nodes(nodes)
@@ -858,3 +935,37 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
         return ("pool_name", "scaleset_id")
+
+
+class ShrinkEntry(BaseModel):
+    shrink_id: UUID = Field(default_factory=uuid4)
+
+
+class ScalesetShrinkQueue:
+    def __init__(self, scaleset_id: UUID):
+        self.scaleset_id = scaleset_id
+
+    def queue_name(self) -> str:
+        return "to-shrink-%s" % self.scaleset_id.hex
+
+    def clear(self) -> None:
+        clear_queue(self.queue_name(), account_id=get_func_storage())
+
+    def create(self) -> None:
+        create_queue(self.queue_name(), account_id=get_func_storage())
+
+    def delete(self) -> None:
+        delete_queue(self.queue_name(), account_id=get_func_storage())
+
+    def add_entry(self) -> None:
+        queue_object(self.queue_name(), ShrinkEntry(), account_id=get_func_storage())
+
+    def should_shrink(self) -> bool:
+        queue = get_queue(self.queue_name(), account_id=get_func_storage())
+        if queue:
+            # this returns an iterator
+            messages = queue.receive_messages()
+            for message in messages:
+                queue.delete_message(message)
+                return True
+        return False

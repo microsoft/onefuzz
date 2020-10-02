@@ -88,6 +88,12 @@ def get_queue(name: QueueNameType, *, account_id: str) -> Optional[QueueServiceC
         return None
 
 
+def clear_queue(name: QueueNameType, *, account_id: str) -> None:
+    queue = get_queue(name, account_id=account_id)
+    if queue:
+        queue.clear_messages()
+
+
 def send_message(
     name: QueueNameType,
     message: bytes,
