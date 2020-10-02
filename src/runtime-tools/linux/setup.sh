@@ -6,7 +6,7 @@
 find .
 set -x
 
-INSTANCE_SETUP="/onefuzz/instance-specific-setup/setup.sh"
+INSTANCE_SETUP="/onefuzz/instance-specific-setup/linux/setup.sh"
 USER_SETUP="/onefuzz/setup/setup.sh"
 TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
