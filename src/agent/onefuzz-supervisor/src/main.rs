@@ -26,13 +26,13 @@ pub mod auth;
 pub mod config;
 pub mod coordinator;
 pub mod debug;
+pub mod done;
 pub mod process;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
 pub mod work;
 pub mod worker;
-pub mod done;
 
 use config::StaticConfig;
 
@@ -79,7 +79,7 @@ fn run(opt: RunOpt) -> Result<()> {
 
     if done::is_agent_done()? {
         verbose!("agent is done, remove lock to continue");
-        return Ok(())
+        return Ok(());
     }
 
     // We can't send telemetry if this fails.

@@ -5,12 +5,12 @@ use anyhow::{Error, Result};
 use tokio::time;
 
 use crate::coordinator::*;
+use crate::done::set_done_lock;
 use crate::reboot::*;
 use crate::scheduler::*;
 use crate::setup::*;
 use crate::work::IWorkQueue;
 use crate::worker::IWorkerRunner;
-use crate::done::set_done_lock;
 
 pub struct Agent {
     coordinator: Box<dyn ICoordinator>,
