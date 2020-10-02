@@ -78,8 +78,6 @@ def execute_update(update: Update) -> None:
     if update.update_type == UpdateType.Scaleset:
         return
 
-    logging.info("performing queued update: %s", update)
-
     if update.update_type in update_objects:
         if update.PartitionKey is None or update.RowKey is None:
             raise Exception("unsupported update: %s" % update)
@@ -90,6 +88,7 @@ def execute_update(update: Update) -> None:
             return
 
         if update.method and hasattr(obj, update.method):
+            logging.info("performing queued update: %s", update)
             getattr(obj, update.method)()
             return
         else:
@@ -99,8 +98,13 @@ def execute_update(update: Update) -> None:
                 return
             func = getattr(obj, state.name, None)
             if func is None:
-                logging.info("no function to implement state: %s", update)
+                logging.debug(
+                    "no function to implement state: %s - %s", update, state.name
+                )
                 return
+            logging.info(
+                "performing queued update for state: %s - %s", update, state.name
+            )
             func()
         return
 
