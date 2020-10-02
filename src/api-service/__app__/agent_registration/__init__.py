@@ -101,10 +101,22 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             version=registration_request.version,
         )
         agent_node.save()
+
+        scaleset = Scaleset.get_by_id(scaleset_id=registration_request.scaleset_id)
+        if isinstance(scaleset, Error):
+            return not_ok(
+                Error(
+                    code=ErrorCode.INVALID_REQUEST,
+                    errors=[
+                        "unable to find scaleset '%s'"
+                        % registration_request.scaleset_id
+                    ],
+                ),
+                context="agent registration",
+            )
         node_count = len(
             Node.search_states(scaleset_id=registration_request.scaleset_id)
         )
-        scaleset = Scaleset.get_by_id(registration_request.scaleset_id)
         if node_count > scaleset.size:
             scaleset.size += 1
             scaleset.save()
