@@ -127,10 +127,15 @@ impl<'a> Expand<'a> {
         self
     }
 
-    pub fn input(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn input_path(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
         self.set_value(PlaceHolder::Input, ExpandedValue::Path(path));
+        self
+    }
+
+    pub fn input_marker(&mut self, arg: &str) -> &mut Self {
+        self.set_value(PlaceHolder::Input, ExpandedValue::Scalar(String::from(arg)));
         self
     }
 
@@ -311,7 +316,7 @@ mod tests {
             .input_corpus(Path::new(input_corpus_dir))
             .generated_inputs(Path::new(generated_inputs_dir))
             .target_options(&my_options)
-            .input(input_path)
+            .input_path(input_path)
             .evaluate(&my_args)?;
 
         let input_corpus_path = dunce::canonicalize(input_corpus_dir)?;
