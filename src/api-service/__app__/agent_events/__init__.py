@@ -91,6 +91,8 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
         task_id = event.running.task_id
     elif event.done:
         task_id = event.done.task_id
+    else:
+        raise NotImplementedError
 
     task = get_task_checked(task_id)
     node = get_node_checked(machine_id)
