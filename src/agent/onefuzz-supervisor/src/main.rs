@@ -32,6 +32,7 @@ pub mod scheduler;
 pub mod setup;
 pub mod work;
 pub mod worker;
+pub mod done;
 
 use config::StaticConfig;
 
@@ -76,6 +77,11 @@ fn run(opt: RunOpt) -> Result<()> {
         env!("GIT_VERSION")
     );
 
+    if done::is_agent_done()? {
+        verbose!("agent is done, remove lock to continue");
+        return Ok(())
+    }
+
     // We can't send telemetry if this fails.
     let config = load_config(opt);
 
@@ -111,7 +117,6 @@ fn load_config(opt: RunOpt) -> Result<StaticConfig> {
 
 async fn run_agent(config: StaticConfig) -> Result<()> {
     telemetry::set_property(EventData::MachineId(get_machine_id().await?));
-
     let registration = config::Registration::create_managed(config.clone()).await?;
     verbose!("created managed registration: {:?}", registration);
 

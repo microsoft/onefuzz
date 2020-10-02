@@ -10,6 +10,7 @@ use crate::scheduler::*;
 use crate::setup::*;
 use crate::work::IWorkQueue;
 use crate::worker::IWorkerRunner;
+use crate::done::set_done_lock;
 
 pub struct Agent {
     coordinator: Box<dyn ICoordinator>,
@@ -220,6 +221,7 @@ impl Agent {
 
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
         verbose!("agent done");
+        set_done_lock().await?;
 
         let event = match state.cause() {
             DoneCause::SetupError {
