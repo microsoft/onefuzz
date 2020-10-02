@@ -127,10 +127,15 @@ impl<'a> Expand<'a> {
         self
     }
 
-    pub fn input(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn input_path(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
         self.set_value(PlaceHolder::Input, ExpandedValue::Path(path));
+        self
+    }
+
+    pub fn input_marker(&mut self, arg: &str) -> &mut Self {
+        self.set_value(PlaceHolder::Input, ExpandedValue::Scalar(String::from(arg)));
         self
     }
 
