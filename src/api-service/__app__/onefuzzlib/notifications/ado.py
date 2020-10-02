@@ -19,7 +19,7 @@ from azure.devops.v6_0.work_item_tracking.work_item_tracking_client import (
     WorkItemTrackingClient,
 )
 from memoization import cached
-from onefuzztypes.enums import ErrorCode, TaskState
+from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import ADOTemplate, Error, Report
 
 from ..tasks.main import Task
