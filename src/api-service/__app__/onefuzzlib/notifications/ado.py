@@ -8,7 +8,12 @@ from typing import Iterator, List, Optional
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
-from azure.devops.exceptions import AzureDevOpsServiceError
+from azure.devops.exceptions import (
+    AzureDevOpsServiceError,
+    AzureDevOpsAuthenticationError,
+    AzureDevOpsClientRequestError,
+    AzureDevOpsClientError,
+)
 from azure.devops.v6_0.work_item_tracking.models import (
     CommentCreate,
     JsonPatchOperation,
@@ -225,6 +230,12 @@ def notify_ado(
     try:
         ado = ADO(container, filename, config, report)
         ado.process()
+    except AzureDevOpsAuthenticationError as err:
+        fail_task(report, err)
+    except AzureDevOpsClientError as err:
+        fail_task(report, err)
+    except AzureDevOpsClientRequestError as err:
+        fail_task(report, err)
     except AzureDevOpsServiceError as err:
         fail_task(report, err)
     except ValueError as err:
