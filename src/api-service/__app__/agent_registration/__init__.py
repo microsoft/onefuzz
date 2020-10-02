@@ -20,8 +20,8 @@ from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 def create_registration_response(machine_id: UUID, pool: Pool) -> func.HttpResponse:
     base_address = "https://%s.azurewebsites.net" % get_instance_name()
-    events_url = "%s/api/agents/events?machine_id=%s" % (base_address, machine_id)
-    commands_url = "%s/api/agents/commands?machine_id=%s" % (base_address, machine_id)
+    events_url = "%s/api/agents/events" % base_address
+    commands_url = "%s/api/agents/commands" % base_address
     work_queue = get_queue_sas(
         pool.get_pool_queue(),
         account_id=get_fuzz_storage(),
