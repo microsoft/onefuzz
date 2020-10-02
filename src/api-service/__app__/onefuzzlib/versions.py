@@ -17,7 +17,7 @@ def read_local_file(filename: str) -> str:
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)), filename)
     if os.path.exists(path):
         with open(path, "rb") as handle:
-            return handle.read().strip()
+            return handle.read().strip().decode("utf-16")
     else:
         return "UNKNOWN"
 
@@ -25,7 +25,7 @@ def read_local_file(filename: str) -> str:
 def versions() -> Dict[str, Version]:
     entry = Version(
         git=read_local_file("git.version"),
-        build=read_local_file("build.id").decode("utf-16"),
+        build=read_local_file("build.id"),
         version=__version__,
     )
     return {"onefuzz": entry}
