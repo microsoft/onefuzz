@@ -206,9 +206,9 @@ def fail_task(report: Report, error: Exception) -> None:
 
     task = Task.get(report.job_id, report.task_id)
     if task:
-        task.error = Error(code=ErrorCode.NOTIFICATION_FAILURE, errors=[str(error)])
-        task.state = TaskState.stopping
-        task.save()
+        task.mark_failed(
+            Error(code=ErrorCode.NOTIFICATION_FAILURE, errors=[str(error)])
+        )
 
 
 def notify_ado(

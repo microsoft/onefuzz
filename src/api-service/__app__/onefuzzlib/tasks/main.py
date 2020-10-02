@@ -154,6 +154,17 @@ class Task(BASE_TASK, ORMMixin):
         task = tasks[0]
         return task
 
+    def mark_failed(self, error: Error) -> None:
+        if self.state in [TaskState.stopped, TaskState.stopping]:
+            logging.debug(
+                "ignoring post-task stop failures for %s:%s", self.job_id, self.task_id
+            )
+            return
+
+        self.error = error
+        self.state = TaskState.stopping
+        self.save()
+
     def get_pool(self) -> Optional[Pool]:
         if self.config.pool:
             pool = Pool.get_by_name(self.config.pool.pool_name)
