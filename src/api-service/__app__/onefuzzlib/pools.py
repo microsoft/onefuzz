@@ -200,7 +200,7 @@ class Node(BASE_NODE, ORMMixin):
         if self.scaleset_id is not None:
 
             if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
-                self.halt()
+                self.set_halt()
                 logging.info(
                     "node scheduled to shrink.  machine_id:%s", self.machine_id
                 )
@@ -224,6 +224,7 @@ class Node(BASE_NODE, ORMMixin):
                 self.state = NodeState.done
 
         if not self.reimage_requested and not self.delete_requested:
+            logging.info("setting reimage_requested: %s", self.machine_id)
             self.reimage_requested = True
         self.save()
 
@@ -231,14 +232,15 @@ class Node(BASE_NODE, ORMMixin):
         self.to_reimage()
         self.send_message(NodeCommand(stop=StopNodeCommand()))
 
-    def shutdown(self) -> None:
+    def set_shutdown(self) -> None:
         # don't give out more work to the node, but let it finish existing work
+        logging.info("setting delete_requested: %s", self.machine_id)
         self.delete_requested = True
         self.save()
 
-    def halt(self) -> None:
+    def set_halt(self) -> None:
         """ Tell the node to stop everything. """
-        self.shutdown()
+        self.set_shutdown()
         self.stop()
 
 
@@ -461,7 +463,7 @@ class Pool(BASE_POOL, ORMMixin):
             scaleset.save()
 
         for node in nodes:
-            node.shutdown()
+            node.set_shutdown()
 
         self.save()
 
@@ -481,7 +483,7 @@ class Pool(BASE_POOL, ORMMixin):
             scaleset.save()
 
         for node in nodes:
-            node.halt()
+            node.set_halt()
 
         self.save()
 
@@ -685,7 +687,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     logging.info(
                         "request shutdown of out-of-date node: %s", node.machine_id
                     )
-                    node.shutdown()
+                    node.set_shutdown()
 
         nodes = Node.search_states(
             scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
@@ -707,6 +709,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             if to_delete:
                 self.delete_nodes(to_delete)
                 for node in to_delete:
+                    node.set_halt()
                     node.state = NodeState.halt
                     node.save()
 

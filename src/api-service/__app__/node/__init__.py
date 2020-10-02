@@ -54,7 +54,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
             context=request.machine_id,
         )
 
-    node.halt()
+    node.set_halt()
 
     return ok(BoolResult(result=True))
 
