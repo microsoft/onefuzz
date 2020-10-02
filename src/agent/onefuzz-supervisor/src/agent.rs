@@ -174,6 +174,7 @@ impl Agent {
         let scheduler = match state.finish(self.setup_runner.as_mut()).await? {
             SetupDone::Ready(s) => s.into(),
             SetupDone::PendingReboot(s) => s.into(),
+            SetupDone::Done(s) => s.into(),
         };
 
         Ok(scheduler)
@@ -220,7 +221,21 @@ impl Agent {
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
         verbose!("agent done");
 
-        let event = StateUpdateEvent::Done.into();
+        let event = match state.cause() {
+            DoneCause::SetupError {
+                error,
+                script_output,
+            } => StateUpdateEvent::Done {
+                error: Some(error),
+                script_output,
+            },
+            DoneCause::Stopped | DoneCause::WorkersDone => StateUpdateEvent::Done {
+                error: None,
+                script_output: None,
+            },
+        };
+
+        let event = event.into();
         self.coordinator.emit_event(event).await?;
 
         // `Done` is a final state.
