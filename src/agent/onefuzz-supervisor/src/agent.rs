@@ -5,6 +5,7 @@ use anyhow::{Error, Result};
 use tokio::time;
 
 use crate::coordinator::*;
+use crate::done::set_done_lock;
 use crate::reboot::*;
 use crate::scheduler::*;
 use crate::setup::*;
@@ -220,6 +221,7 @@ impl Agent {
 
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
         verbose!("agent done");
+        set_done_lock().await?;
 
         let event = match state.cause() {
             DoneCause::SetupError {
