@@ -181,7 +181,7 @@ class Node(BASE_NODE, ORMMixin):
             entry.delete()
 
     def can_process_new_work(self) -> bool:
-        if not self.is_outdated():
+        if self.is_outdated():
             logging.info(
                 "can_schedule old version machine_id:%s version:%s",
                 self.machine_id,
