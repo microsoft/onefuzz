@@ -56,7 +56,13 @@ def on_state_update(
         node.stop()
         return
 
-    if state == NodeState.init or node.state not in NodeState.ready_for_reset():
+    if state == NodeState.init:
+        if node.delete_requested:
+            node.stop()
+            return
+        node.reimage_requested = False
+        node.save()
+    elif node.state not in NodeState.ready_for_reset():
         if node.state != state:
             node.state = state
             node.save()
