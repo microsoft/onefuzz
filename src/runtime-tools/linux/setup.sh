@@ -22,6 +22,7 @@ mkdir -p /onefuzz/logs
 mkdir -p /onefuzz/setup
 mkdir -p /onefuzz/tools
 mkdir -p /onefuzz/etc
+mkdir -p /onefuzz/instance-specific-setup
 
 echo $1 > /onefuzz/etc/mode
 export PATH=$PATH:/onefuzz/bin:/onefuzz/tools/linux:/onefuzz/tools/linux/afl:/onefuzz/tools/linux/radamsa
