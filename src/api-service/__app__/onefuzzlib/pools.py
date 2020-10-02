@@ -42,9 +42,9 @@ from .azure.queue import (
     clear_queue,
     create_queue,
     delete_queue,
-    get_queue,
     peek_queue,
     queue_object,
+    remove_first_message,
 )
 from .azure.vmss import (
     UnableToUpdate,
@@ -945,11 +945,4 @@ class ScalesetShrinkQueue:
         queue_object(self.queue_name(), ShrinkEntry(), account_id=get_func_storage())
 
     def should_shrink(self) -> bool:
-        queue = get_queue(self.queue_name(), account_id=get_func_storage())
-        if queue:
-            # this returns an iterator
-            messages = queue.receive_messages()
-            for message in messages:
-                queue.delete_message(message)
-                return True
-        return False
+        return remove_first_message(self.queue_name(), account_id=get_func_storage())

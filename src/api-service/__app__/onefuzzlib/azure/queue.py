@@ -91,7 +91,10 @@ def get_queue(name: QueueNameType, *, account_id: str) -> Optional[QueueServiceC
 def clear_queue(name: QueueNameType, *, account_id: str) -> None:
     queue = get_queue(name, account_id=account_id)
     if queue:
-        queue.clear_messages()
+        try:
+            queue.clear_messages()
+        except ResourceNotFoundError:
+            return None
 
 
 def send_message(
@@ -106,6 +109,19 @@ def send_message(
             queue.send_message(base64.b64encode(message).decode())
         except ResourceNotFoundError:
             pass
+
+
+def remove_first_message(name: QueueNameType, *, account_id: str) -> bool:
+    create_queue(name, account_id=account_id)
+    queue = get_queue(name, account_id=account_id)
+    if queue:
+        try:
+            for message in queue.receive_messages():
+                queue.delete_message(message)
+                return True
+        except ResourceNotFoundError:
+            return False
+    return False
 
 
 A = TypeVar("A", bound=BaseModel)
