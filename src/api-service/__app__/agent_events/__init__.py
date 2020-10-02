@@ -69,9 +69,7 @@ def on_state_update(
                         if task.state != TaskState.running:
                             task.state = TaskState.setting_up
 
-                        # We don't yet call `on_start()` for the task.
-                        # This will happen once we see a worker event that
-                        # reports it as `running`.
+                        task.on_start()
                         task.save()
 
                         # Note: we set the node task state to `setting_up`, even though
@@ -106,6 +104,9 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
         if node.state not in NodeState.ready_for_reset():
             node.state = NodeState.busy
         node_task.save()
+
+        # Start the clock for the task if it wasn't started already
+        # (as happens in 1.0.0 agents)
         task.on_start()
     elif event.done:
         # Only record exit status if the task isn't already shutting down.
