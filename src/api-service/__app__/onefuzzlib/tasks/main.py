@@ -108,7 +108,6 @@ class Task(BASE_TASK, ORMMixin):
         self.save()
 
     def stopping(self) -> None:
-        # TODO: we need to tell every node currently working on this task to stop
         # TODO: we need to 'unschedule' this task from the existing pools
 
         self.state = TaskState.stopping

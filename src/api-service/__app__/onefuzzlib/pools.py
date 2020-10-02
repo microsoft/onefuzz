@@ -812,19 +812,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.debug("no nodes to reimage")
             return
 
-        # TODO - find out what happens with Stop on existing work
-        # for node in nodes:
-        #     for entry in NodeTasks.get_by_machine_id(node.machine_id):
-        #         task = Task.get_by_task_id(entry.task_id)
-        #         if isinstance(task, Task):
-        #             task.mark_failed(
-        #                 Error(
-        #                     code=ErrorCode.TASK_FAILED,
-        #                     errors=["node reimaged during task execution"],
-        #                 )
-        #             )
-        #         entry.delete()
-
         if self.state == ScalesetState.shutdown:
             self.delete_nodes(nodes)
             return
