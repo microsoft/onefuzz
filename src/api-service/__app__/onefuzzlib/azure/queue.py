@@ -26,7 +26,7 @@ QueueNameType = Union[str, UUID]
 
 @cached(ttl=60)
 def get_queue_client(account_id: str) -> QueueServiceClient:
-    logging.info("getting blob container (account_id: %s)", account_id)
+    logging.debug("getting blob container (account_id: %s)", account_id)
     name, key = get_storage_account_name_key(account_id)
     account_url = "https://%s.queue.core.windows.net" % name
     client = QueueServiceClient(
@@ -36,6 +36,7 @@ def get_queue_client(account_id: str) -> QueueServiceClient:
     return client
 
 
+@cached(ttl=60)
 def get_queue_sas(
     queue: QueueNameType,
     *,
@@ -45,7 +46,7 @@ def get_queue_sas(
     update: bool = False,
     process: bool = False,
 ) -> str:
-    logging.info("getting queue sas %s (account_id: %s)", queue, account_id)
+    logging.debug("getting queue sas %s (account_id: %s)", queue, account_id)
     name, key = get_storage_account_name_key(account_id)
     expiry = datetime.datetime.utcnow() + datetime.timedelta(days=30)
 
