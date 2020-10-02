@@ -484,6 +484,12 @@ class ExitStatus(BaseModel):
     success: bool
 
 
+class ProcessOutput(BaseModel):
+    exit_status: ExitStatus
+    stderr: str
+    stdout: str
+
+
 class WorkerRunningEvent(BaseModel):
     task_id: UUID
 
@@ -500,28 +506,43 @@ class WorkerEvent(EnumModel):
     running: Optional[WorkerRunningEvent]
 
 
-class SettingUpEventData(BaseModel):
+class NodeSettingUpEventData(BaseModel):
     tasks: List[UUID]
+
+
+class NodeDoneEventData(BaseModel):
+    error: Optional[str]
+    script_output: Optional[ProcessOutput]
+
+
+NodeStateData = Union[NodeSettingUpEventData, NodeDoneEventData]
 
 
 class NodeStateUpdate(BaseModel):
     state: NodeState
-    data: Optional[SettingUpEventData]
+    data: Optional[NodeStateData]
 
-    @validator("data")
-    def check_data(
-        cls,
-        data: Optional[SettingUpEventData],
-        values: Any,
-    ) -> Optional[SettingUpEventData]:
+    @root_validator(pre=False, skip_on_failure=True)
+    def check_data(cls, values: Any) -> Any:
+        data = values.get("data")
+
         if data:
-            state = values.get("state")
-            if state and state != NodeState.setting_up:
-                raise ValueError(
-                    "data for node state update event does not match state = %s" % state
-                )
+            state = values["state"]
 
-        return data
+            if state == NodeState.setting_up:
+                if isinstance(data, NodeSettingUpEventData):
+                    return values
+
+            if state == NodeState.done:
+                if isinstance(data, NodeDoneEventData):
+                    return values
+
+            raise ValueError(
+                "data for node state update event does not match state = %s" % state
+            )
+        else:
+            # For now, `data` is always optional.
+            return values
 
 
 class NodeEvent(EnumModel):

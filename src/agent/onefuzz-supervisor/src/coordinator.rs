@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use crate::auth::AccessToken;
 use crate::config::Registration;
+use crate::process::Output;
 use crate::work::{TaskId, WorkSet};
 use crate::worker::WorkerEvent;
 
@@ -82,11 +83,16 @@ impl From<WorkerEvent> for NodeEvent {
 pub enum StateUpdateEvent {
     Init,
     Free,
-    SettingUp { tasks: Vec<TaskId> },
+    SettingUp {
+        tasks: Vec<TaskId>,
+    },
     Rebooting,
     Ready,
     Busy,
-    Done,
+    Done {
+        error: Option<String>,
+        script_output: Option<Output>,
+    },
 }
 
 impl From<StateUpdateEvent> for NodeEvent {
