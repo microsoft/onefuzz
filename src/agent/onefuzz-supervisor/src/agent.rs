@@ -254,7 +254,7 @@ impl Agent {
     }
 
     async fn sleep(&mut self) {
-        let delay = time::Duration::from_secs(2);
+        let delay = time::Duration::from_secs(30);
         time::delay_for(delay).await;
     }
 
