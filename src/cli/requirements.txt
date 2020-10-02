@@ -1,4 +1,4 @@
-﻿msal~=1.4.3
+msal~=1.4.3
 pyjwt~=1.7.1
 requests~=2.24.0
 jmespath~=0.10.0
