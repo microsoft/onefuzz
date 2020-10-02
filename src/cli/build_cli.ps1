@@ -13,6 +13,7 @@ try {
     pyinstaller $app_dir/onefuzz/__main__.py --onefile --name onefuzz --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean
     (Get-Content -path "requirements.txt") -replace './onefuzztypes-0.0.0-py3-none-any.whl', 'onefuzztypes==0.0.0' | Out-File -FilePath "requirements.txt" -Encoding "utf8"
     Remove-Item 'onefuzztypes-0.0.0-py3-none-any.whl'
+    Write-Host "exe is available at dist\onefuzz.exe"
 } 
 finally {
     Pop-Location
