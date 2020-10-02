@@ -17,6 +17,6 @@ pub fn is_agent_done() -> Result<bool> {
     Ok(metadata(done_path()?).is_ok())
 }
 
-fn done_path() -> Result<PathBuf> {
+pub fn done_path() -> Result<PathBuf> {
     Ok(onefuzz_root()?.join("supervisor-is-done"))
 }

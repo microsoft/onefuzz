@@ -78,7 +78,10 @@ fn run(opt: RunOpt) -> Result<()> {
     );
 
     if done::is_agent_done()? {
-        verbose!("agent is done, remove lock to continue");
+        verbose!(
+            "agent is done, remove lock ({}) to continue",
+            done::done_path()?.display()
+        );
         return Ok(());
     }
 
