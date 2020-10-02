@@ -566,6 +566,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def init(self) -> None:
         logging.info("scaleset init: %s", self.scaleset_id)
 
+        ScalesetShrinkQueue(self.scaleset_id).create()
+
         # Handle the race condition between a pool being deleted and a
         # scaleset being added to the pool.
         pool = Pool.get_by_name(self.pool_name)
@@ -744,18 +746,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if not self.new_size:
             return
 
-        # nodes = Node.search_states(
-        #     scaleset_id=self.scaleset_id, states=[NodeState.init, NodeState.free]
-        # )
-        # for node in nodes:
-        #     if size > self.new_size:
-        #         node.state = NodeState.halt
-        #         node.save()
-        #         size -= 1
-        #     else:
-        #         break
-        # self.save()
-        pass
+        queue = ScalesetShrinkQueue(self.scaleset_id)
+        for _ in range(to_remove):
+            queue.add_entry()
 
     def resize(self) -> None:
         # no longer needing to resize
@@ -839,6 +832,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         self.save()
 
     def halt(self) -> None:
+        ScalesetShrinkQueue(self.scaleset_id).delete()
+
         for node in Node.search_states(scaleset_id=self.scaleset_id):
             logging.info("deleting node %s:%s", self.scaleset_id, node.machine_id)
             node.delete()
