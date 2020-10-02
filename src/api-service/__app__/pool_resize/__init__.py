@@ -13,7 +13,6 @@ def scale_up(pool, scalesets, nodes_needed):
     logging.info(f"Nodes needed: {nodes_needed}")
 
     for scaleset in scalesets:
-        logging.info(f"State: {scaleset.state}")
         if scaleset.state == ScalesetState.running:
 
             max_size = min(scaleset.max_size(), pool.max_size)
@@ -22,7 +21,7 @@ def scale_up(pool, scalesets, nodes_needed):
                 current_size = scaleset.size
                 if nodes_needed <= max_size - current_size:
                     scaleset.new_size = current_size + nodes_needed
-                    return
+                    nodes_needed = 0
                 else:
                     scaleset.new_size = max_size
                     nodes_needed = nodes_needed - (max_size - current_size)
@@ -32,8 +31,8 @@ def scale_up(pool, scalesets, nodes_needed):
             else:
                 continue
 
-    if nodes_needed <= 0:
-        return
+            if nodes_needed == 0:
+                return
 
     for _ in range(
         math.ceil(
@@ -67,7 +66,7 @@ def scale_down(scalesets, nodes_to_remove):
         if nodes and nodes_to_remove > 0:
             max_nodes_remove = min(len(nodes), nodes_to_remove)
             if max_nodes_remove >= scaleset.size and len(nodes) == scaleset.size:
-                scaleset.state = ScalesetState.shutdown
+                scaleset.state = ScalesetState.halt
                 nodes_to_remove = nodes_to_remove - scaleset.size
                 scaleset.save()
                 continue

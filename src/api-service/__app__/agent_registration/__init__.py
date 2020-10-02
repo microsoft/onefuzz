@@ -15,7 +15,7 @@ from onefuzztypes.responses import AgentRegistration
 from ..onefuzzlib.agent_authorization import verify_token
 from ..onefuzzlib.azure.creds import get_fuzz_storage, get_instance_name
 from ..onefuzzlib.azure.queue import get_queue_sas
-from ..onefuzzlib.pools import Node, NodeMessage, Pool
+from ..onefuzzlib.pools import Node, NodeMessage, Pool, Scaleset
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 
@@ -101,6 +101,13 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             version=registration_request.version,
         )
         agent_node.save()
+        node_count = len(
+            Node.search_states(scaleset_id=registration_request.scaleset_id)
+        )
+        scaleset = Scaleset.get_by_id(registration_request.scaleset_id)
+        if node_count > scaleset.size:
+            scaleset.size += 1
+            scaleset.save()
     elif agent_node.version.lower != registration_request.version:
         NodeMessage.clear_messages(agent_node.machine_id)
         agent_node.version = registration_request.version
