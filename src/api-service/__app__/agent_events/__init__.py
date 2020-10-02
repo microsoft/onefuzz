@@ -145,13 +145,15 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> func.HttpResponse:
             if not exit_status.success:
                 logging.error("task failed: status = %s", exit_status)
 
-                task.error = Error(
-                    code=ErrorCode.TASK_FAILED,
-                    errors=[
-                        "task failed. exit_status = %s" % exit_status,
-                        event.done.stdout,
-                        event.done.stderr,
-                    ],
+                task.mark_failed(
+                    Error(
+                        code=ErrorCode.TASK_FAILED,
+                        errors=[
+                            "task failed. exit_status = %s" % exit_status,
+                            event.done.stdout,
+                            event.done.stderr,
+                        ],
+                    )
                 )
 
             task.state = TaskState.stopping

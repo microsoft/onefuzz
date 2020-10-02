@@ -24,7 +24,7 @@ from azure.devops.v6_0.work_item_tracking.work_item_tracking_client import (
     WorkItemTrackingClient,
 )
 from memoization import cached
-from onefuzztypes.enums import ErrorCode, TaskState
+from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import ADOTemplate, Error, Report
 
 from ..tasks.main import Task
@@ -211,9 +211,9 @@ def fail_task(report: Report, error: Exception) -> None:
 
     task = Task.get(report.job_id, report.task_id)
     if task:
-        task.error = Error(code=ErrorCode.NOTIFICATION_FAILURE, errors=[str(error)])
-        task.state = TaskState.stopping
-        task.save()
+        task.mark_failed(
+            Error(code=ErrorCode.NOTIFICATION_FAILURE, errors=[str(error)])
+        )
 
 
 def notify_ado(

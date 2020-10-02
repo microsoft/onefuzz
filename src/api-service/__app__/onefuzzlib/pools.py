@@ -740,12 +740,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     if task.state in [TaskState.stopping, TaskState.stopped]:
                         continue
 
-                    task.error = Error(
-                        code=ErrorCode.TASK_FAILED,
-                        errors=["node reimaged during task execution"],
+                    task.mark_failed(
+                        Error(
+                            code=ErrorCode.TASK_FAILED,
+                            errors=["node reimaged during task execution"],
+                        )
                     )
-                    task.state = TaskState.stopping
-                    task.save()
                 entry.delete()
 
         if self.state == ScalesetState.shutdown:
