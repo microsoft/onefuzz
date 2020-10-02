@@ -738,6 +738,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         try:
             resize_vmss(self.scaleset_id, self.new_size)
+            self.size = self.new_size
+            self.save()
         except UnableToUpdate:
             logging.info("scaleset is mid-operation already")
         return
