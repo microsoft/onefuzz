@@ -13,61 +13,69 @@ def scale_up(pool, scalesets, nodes_needed):
     logging.info(f"Nodes needed: {nodes_needed}")
 
     for scaleset in scalesets:
-        if scaleset.state in ScalesetState.available():
+        logging.info(f"State: {scaleset.state}")
+        if scaleset.state == ScalesetState.running:
 
-            if scaleset.size < pool.max_size and scaleset.size < scaleset.max_size():
-
-                max_size = min(scaleset.max_size, pool.max_size)
+            max_size = min(scaleset.max_size(), pool.max_size)
+            logging.info(f"Scaleset size: {scaleset.size}, max_size: {max_size}")
+            if scaleset.size < max_size:
                 current_size = scaleset.size
-                if nodes_needed <= max_size:
+                if nodes_needed <= max_size - current_size:
                     scaleset.new_size = current_size + nodes_needed
                     return
                 else:
                     scaleset.new_size = max_size
                     nodes_needed = nodes_needed - (max_size - current_size)
-                scaleset.resize()
+                scaleset.state = ScalesetState.resize
+                scaleset.save()
 
             else:
                 continue
 
-    if nodes_needed > 0:
-        for _ in range(
-            math.ceil(
-                nodes_needed
-                / min(Scaleset.scaleset_max_size(pool.image), pool.max_size)
-            )
-        ):
-            logging.info(f"Creating Scaleset for Pool {pool.name}")
-            max_nodes_scaleset = min(
-                Scaleset.scaleset_max_size(pool.image), pool.max_size, nodes_needed
-            )
-            scaleset = Scaleset.create(
-                pool_name=pool.name,
-                vm_sku=pool.vm_sku,
-                image=pool.image,
-                region=pool.region,
-                size=max_nodes_scaleset,
-                spot_instances=pool.spot_instances,
-                tags={"pool": pool.name},
-            )
-            scaleset.save()
-            # don't return auths during create, only 'get' with include_auth
-            # scaleset.auth = None
-            nodes_needed -= max_nodes_scaleset
+    if nodes_needed <= 0:
+        return
+
+    for _ in range(
+        math.ceil(
+            nodes_needed / min(Scaleset.scaleset_max_size(pool.image), pool.max_size)
+        )
+    ):
+        logging.info(f"Creating Scaleset for Pool {pool.name}")
+        max_nodes_scaleset = min(
+            Scaleset.scaleset_max_size(pool.image), pool.max_size, nodes_needed
+        )
+        scaleset = Scaleset.create(
+            pool_name=pool.name,
+            vm_sku=pool.vm_sku,
+            image=pool.image,
+            region=pool.region,
+            size=max_nodes_scaleset,
+            spot_instances=pool.spot_instances,
+            tags={"pool": pool.name},
+        )
+        scaleset.save()
+        # don't return auths during create, only 'get' with include_auth
+        # scaleset.auth = None
+        nodes_needed -= max_nodes_scaleset
 
 
-def scale_down(scalesets):
+def scale_down(scalesets, nodes_to_remove):
     for scaleset in scalesets:
         nodes = Node.search_states(
             scaleset_id=scaleset.scaleset_id, states=[NodeState.free]
         )
-        if not nodes:
-            scaleset.new_size = scaleset.size - len(nodes)
-            if scaleset.new_size <= 0:
-                scaleset.shutdown()
+        if nodes and nodes_to_remove > 0:
+            max_nodes_remove = min(len(nodes), nodes_to_remove)
+            if max_nodes_remove >= scaleset.size and len(nodes) == scaleset.size:
+                scaleset.state = ScalesetState.shutdown
+                nodes_to_remove = nodes_to_remove - scaleset.size
+                scaleset.save()
                 continue
 
-            scaleset.resize()
+            scaleset.new_size = scaleset.size - max_nodes_remove
+            nodes_to_remove = nodes_to_remove - max_nodes_remove
+            scaleset.state = ScalesetState.resize
+            scaleset.save()
 
 
 def get_vm_count(tasks):
@@ -93,7 +101,7 @@ def main(mytimer: func.TimerRequest) -> None:
         scalesets = Scaleset.search_by_pool(pool.name)
         pool_resize = False
         for scaleset in scalesets:
-            if scaleset.state == ScalesetState.resize:
+            if scaleset.state in ScalesetState.is_resizing():
                 pool_resize = True
                 break
             num_of_tasks = num_of_tasks - scaleset.size
@@ -105,4 +113,4 @@ def main(mytimer: func.TimerRequest) -> None:
             # resizing scaleset or creating new scaleset.
             scale_up(pool, scalesets, num_of_tasks)
         elif num_of_tasks < 0:
-            scale_down(scalesets)
+            scale_down(scalesets, abs(num_of_tasks))
