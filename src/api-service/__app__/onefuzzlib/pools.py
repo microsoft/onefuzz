@@ -105,7 +105,8 @@ class Node(BASE_NODE, ORMMixin):
         # azure table query always return false when the column does not exist
         # We write the query this way to allow us to get the nodes where the
         # version is not defined as well as the nodes with a mismatched version
-        version_query = "not (version ne '%s')" % __version__
+        version_query = "not (version eq '%s')" % __version__
+        print(version_query)
         return cls.search(query=query, raw_unchecked_filter=version_query)
 
     @classmethod
@@ -680,7 +681,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         outdated = Node.search_outdated(scaleset_id=self.scaleset_id)
         for node in outdated:
             logging.info(
-                "node is oudated: %s - node_version:%s api_version:%s",
+                "node is outdated: %s - node_version:%s api_version:%s",
                 node.machine_id,
                 node.version,
                 __version__,
