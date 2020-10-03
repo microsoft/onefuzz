@@ -109,6 +109,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         scaleset.state = ScalesetState.halt
     else:
         scaleset.state = ScalesetState.shutdown
+
     scaleset.save()
     scaleset.auth = None
     return ok(scaleset)

@@ -24,7 +24,9 @@ def process_scaleset(scaleset: Scaleset) -> None:
             scaleset.scaleset_id,
             scaleset.state,
         )
-        getattr(scaleset, scaleset.state.name)()
+
+        if hasattr(scaleset, scaleset.state.name):
+            getattr(scaleset, scaleset.state.name)()
         return
 
 

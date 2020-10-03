@@ -679,15 +679,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         outdated = Node.search_outdated(scaleset_id=self.scaleset_id)
         for node in outdated:
+            logging.info(
+                "node is oudated: %s - node_version:%s api_version:%s",
+                node.machine_id,
+                node.version,
+                __version__,
+            )
             if node.version == "1.0.0":
                 node.state = NodeState.done
                 to_reimage.append(node)
             else:
-                if not node.reimage_requested or node.delete_requested:
-                    logging.info(
-                        "request shutdown of out-of-date node: %s", node.machine_id
-                    )
-                    node.set_shutdown()
+                node.to_reimage()
 
         nodes = Node.search_states(
             scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
@@ -696,8 +698,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if not outdated or not nodes:
             return False
 
+        # ground truth of existing nodes
+        azure_nodes = list_instance_ids(self.scaleset_id)
+
         for node in nodes:
-            if node.delete_requested:
+            if node.machine_id not in azure_nodes:
+                logging.info(
+                    "no longer in scaleset: %s:%s", self.scaleset_id, node.machine_id
+                )
+                node.delete()
+            elif node.delete_requested:
                 if not node.scaleset_node_exists():
                     node.delete()
                 to_delete.append(node)
@@ -725,7 +735,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         node_count = len(Node.search_states(scaleset_id=self.scaleset_id))
         if node_count == self.size:
             logging.info("resize finished: %s", self.scaleset_id)
-            self.new_size = None
             self.state = ScalesetState.running
             self.save()
             return
@@ -740,21 +749,13 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             return
 
     def _resize_grow(self) -> None:
-        if not self.new_size:
-            return
-
         try:
-            resize_vmss(self.scaleset_id, self.new_size)
-            self.size = self.new_size
-            self.save()
+            resize_vmss(self.scaleset_id, self.size)
         except UnableToUpdate:
             logging.info("scaleset is mid-operation already")
         return
 
     def _resize_shrink(self, to_remove: int) -> None:
-        if not self.new_size:
-            return
-
         queue = ScalesetShrinkQueue(self.scaleset_id)
         for _ in range(to_remove):
             queue.add_entry()
@@ -764,21 +765,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if self.state != ScalesetState.resize:
             return
 
-        # no work needed to resize
-        if self.new_size is None:
-            self.state = ScalesetState.running
-            self.save()
-            return
-
         logging.info(
             "scaleset resize: %s - current: %s new: %s",
             self.scaleset_id,
             self.size,
-            self.new_size,
         )
 
+        # reset the node delete queue
+        ScalesetShrinkQueue(self.scaleset_id).clear()
+
         # just in case, always ensure size is within max capacity
-        self.new_size = min(self.new_size, self.max_size())
+        self.size = min(self.size, self.max_size())
 
         # Treat Azure knowledge of the size of the scaleset as "ground truth"
         size = get_vmss_size(self.scaleset_id)
@@ -786,12 +783,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.info("scaleset is unavailable: %s", self.scaleset_id)
             return
 
-        if size == self.new_size:
+        if size == self.size:
             self._resize_equal()
-        elif self.new_size > self.size:
+        elif self.size > size:
             self._resize_grow()
         else:
-            self._resize_shrink(self.size - self.new_size)
+            self._resize_shrink(size - self.size)
 
     def delete_nodes(self, nodes: List[Node]) -> None:
         if not nodes:
@@ -806,8 +803,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         logging.info("deleting %s:%s", self.scaleset_id, machine_ids)
         delete_vmss_nodes(self.scaleset_id, machine_ids)
-        self.size -= len(machine_ids)
-        self.save()
 
     def reimage_nodes(self, nodes: List[Node]) -> None:
         if not nodes:
@@ -832,15 +827,13 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
 
     def shutdown(self) -> None:
-        logging.info("scaleset shutdown: %s", self.scaleset_id)
         size = get_vmss_size(self.scaleset_id)
+        logging.info("scaleset shutdown: %s (current size: %s)", self.scaleset_id, size)
         if size is None or size == 0:
-            self.state = ScalesetState.halt
             self.halt()
-            return
-        self.save()
 
     def halt(self) -> None:
+        self.state = ScalesetState.halt
         ScalesetShrinkQueue(self.scaleset_id).delete()
 
         for node in Node.search_states(scaleset_id=self.scaleset_id):
@@ -848,14 +841,14 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             node.delete()
 
         vmss = get_vmss(self.scaleset_id)
-        if vmss is None:
-            logging.info("scaleset deleted: %s", self.scaleset_id)
-            self.state = ScalesetState.halt
-            self.delete()
-        else:
+        if vmss:
             logging.info("scaleset deleting: %s", self.scaleset_id)
             delete_vmss(self.scaleset_id)
             self.save()
+        else:
+            logging.info("scaleset deleted: %s", self.scaleset_id)
+            self.state = ScalesetState.halt
+            self.delete()
 
     def max_size(self) -> int:
         # https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/
