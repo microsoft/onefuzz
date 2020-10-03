@@ -78,7 +78,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     registration_request = parse_uri(AgentRegistrationPost, req)
     if isinstance(registration_request, Error):
         return not_ok(registration_request, context="agent registration")
-    node = Node.get_by_machine_id(registration_request.machine_id)
 
     pool = Pool.get_by_name(registration_request.pool_name)
     if isinstance(pool, Error):
@@ -90,17 +89,20 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             context="agent registration",
         )
 
-    if node is None:
+    node = Node.get_by_machine_id(registration_request.machine_id)
+    if node:
+        if node.version != registration_request.version:
+            NodeMessage.clear_messages(node.machine_id)
+        node.version = registration_request.version
+        node.reimage_requested = False
+        node.state = NodeState.init
+    else:
         node = Node(
             pool_name=registration_request.pool_name,
             machine_id=registration_request.machine_id,
             scaleset_id=registration_request.scaleset_id,
             version=registration_request.version,
         )
-    elif node.version.lower != registration_request.version:
-        NodeMessage.clear_messages(node.machine_id)
-        node.version = registration_request.version
-    node.state = NodeState.init
     node.save()
 
     return create_registration_response(node.machine_id, pool)
