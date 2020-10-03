@@ -449,7 +449,6 @@ class Scaleset(BaseModel):
     image: str
     region: Region
     size: int
-    new_size: Optional[int]
     spot_instances: bool
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]
