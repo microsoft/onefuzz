@@ -31,5 +31,5 @@ pydantic~=1.6.1
 PyJWT~=1.7.1
 requests~=2.24.0
 memoization~=0.3.1
-# onefuzztypes version is set during build
+# onefuzz types version is set during build
 onefuzztypes==0.0.0

@@ -108,7 +108,6 @@ class Task(BASE_TASK, ORMMixin):
         self.save()
 
     def stopping(self) -> None:
-        # TODO: we need to tell every node currently working on this task to stop
         # TODO: we need to 'unschedule' this task from the existing pools
 
         self.state = TaskState.stopping
@@ -153,6 +152,11 @@ class Task(BASE_TASK, ORMMixin):
             )
         task = tasks[0]
         return task
+
+    def mark_stopping(self) -> None:
+        if self.state not in [TaskState.stopped, TaskState.stopping]:
+            self.state = TaskState.stopping
+            self.save()
 
     def mark_failed(self, error: Error) -> None:
         if self.state in [TaskState.stopped, TaskState.stopping]:

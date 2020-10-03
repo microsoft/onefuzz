@@ -6,7 +6,7 @@
 from uuid import UUID
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode
+from onefuzztypes.enums import ErrorCode, NodeState
 from onefuzztypes.models import Error
 from onefuzztypes.requests import AgentRegistrationGet, AgentRegistrationPost
 from onefuzztypes.responses import AgentRegistration
@@ -78,7 +78,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     registration_request = parse_uri(AgentRegistrationPost, req)
     if isinstance(registration_request, Error):
         return not_ok(registration_request, context="agent registration")
-    agent_node = Node.get_by_machine_id(registration_request.machine_id)
 
     pool = Pool.get_by_name(registration_request.pool_name)
     if isinstance(pool, Error):
@@ -90,20 +89,23 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             context="agent registration",
         )
 
-    if agent_node is None:
-        agent_node = Node(
+    node = Node.get_by_machine_id(registration_request.machine_id)
+    if node:
+        if node.version != registration_request.version:
+            NodeMessage.clear_messages(node.machine_id)
+        node.version = registration_request.version
+        node.reimage_requested = False
+        node.state = NodeState.init
+    else:
+        node = Node(
             pool_name=registration_request.pool_name,
             machine_id=registration_request.machine_id,
             scaleset_id=registration_request.scaleset_id,
             version=registration_request.version,
         )
-        agent_node.save()
-    elif agent_node.version.lower != registration_request.version:
-        NodeMessage.clear_messages(agent_node.machine_id)
-        agent_node.version = registration_request.version
-        agent_node.save()
+    node.save()
 
-    return create_registration_response(agent_node.machine_id, pool)
+    return create_registration_response(node.machine_id, pool)
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:

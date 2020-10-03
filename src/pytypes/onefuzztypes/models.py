@@ -399,6 +399,8 @@ class Node(BaseModel):
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
     version: str = Field(default="1.0.0")
+    reimage_requested: bool = Field(default=False)
+    delete_requested: bool = Field(default=False)
 
 
 class ScalesetSummary(BaseModel):
@@ -447,7 +449,6 @@ class Scaleset(BaseModel):
     image: str
     region: Region
     size: int
-    new_size: Optional[int]
     spot_instances: bool
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]
