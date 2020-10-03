@@ -11,7 +11,7 @@ use crate::process::*;
 use crate::work::*;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case", untagged)]
+#[serde(rename_all = "snake_case")]
 pub enum WorkerEvent {
     Running {
         task_id: TaskId,

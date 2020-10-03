@@ -186,7 +186,7 @@ impl<'a> Tester<'a> {
         let (argv, env) = {
             let mut expand = Expand::new();
             expand
-                .input(input_file)
+                .input_path(input_file)
                 .target_exe(&self.exe_path)
                 .target_options(&self.arguments);
 

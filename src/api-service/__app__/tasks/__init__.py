@@ -12,6 +12,7 @@ from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.heartbeat import Heartbeat
 from ..onefuzzlib.jobs import Job
+from ..onefuzzlib.pools import NodeTasks
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.task_event import TaskEvent
 from ..onefuzzlib.tasks.config import TaskConfigError, check_config
@@ -71,9 +72,8 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
         task = Task.get_by_task_id(request.task_id)
         if isinstance(task, Error):
             return not_ok(task, context=request.task_id)
-        summary = Heartbeat.get_heartbeats(task.task_id)
-        task.heartbeats = summary
-
+        task.heartbeats = Heartbeat.get_heartbeats(task.task_id)
+        task.nodes = NodeTasks.get_node_assignments(request.task_id)
         task.events = TaskEvent.get_summary(request.task_id)
         return ok(task)
 

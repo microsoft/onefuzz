@@ -5,6 +5,7 @@ use anyhow::{Error, Result};
 use tokio::time;
 
 use crate::coordinator::*;
+use crate::done::set_done_lock;
 use crate::reboot::*;
 use crate::scheduler::*;
 use crate::setup::*;
@@ -54,7 +55,8 @@ impl Agent {
         // `Free`. If it has started up after a work set-requested reboot, the
         // state will be `Ready`.
         if let Some(Scheduler::Free(..)) = &self.scheduler {
-            self.coordinator.emit_event(NodeState::Init.into()).await?;
+            let event = StateUpdateEvent::Init.into();
+            self.coordinator.emit_event(event).await?;
         }
 
         loop {
@@ -94,36 +96,66 @@ impl Agent {
     }
 
     async fn free(&mut self, state: State<Free>) -> Result<Scheduler> {
-        self.coordinator.emit_event(NodeState::Free.into()).await?;
+        let event = StateUpdateEvent::Free.into();
+        self.coordinator.emit_event(event).await?;
 
         let msg = self.work_queue.poll().await?;
 
         let next = if let Some(msg) = msg {
             verbose!("received work set message: {:?}", msg);
 
-            let claim = self.work_queue.claim(msg.receipt).await;
+            let can_schedule = self.coordinator.can_schedule(&msg.work_set).await?;
 
-            if let Err(err) = claim {
-                error!("unable to claim work set: {}", err);
+            if can_schedule.allowed {
+                info!("claiming work set: {:?}", msg.work_set);
 
-                // Stay in `Free` state.
-                state.into()
-            } else {
-                info!("claimed work set: {:?}", msg.work_set);
+                let claim = self.work_queue.claim(msg.receipt).await;
 
-                if self.coordinator.can_schedule(&msg.work_set).await? {
-                    info!("scheduling work set: {:?}", msg.work_set);
+                if let Err(err) = claim {
+                    error!("unable to claim work set: {}", err);
 
+                    // We were unable to claim the work set, so it will reappear in the pool's
+                    // work queue when the visibility timeout expires. Don't execute the work,
+                    // or else another node will pick it up, and it will be double-scheduled.
+                    //
+                    // Stay in the `Free` state.
+                    state.into()
+                } else {
+                    info!("claimed work set: {:?}", msg.work_set);
+
+                    // We are allowed to schedule this work, and we have claimed it, so no other
+                    // node will see it.
+                    //
                     // Transition to `SettingUp` state.
                     let state = state.schedule(msg.work_set.clone());
                     state.into()
-                } else {
-                    // We have claimed the work set, so it is no longer in the work queue.
-                    // But since the work has been stopped, we will not execute it. Drop the
-                    // work set message and stay in the `Free` state.
-                    warn!("unable to schedule work set: {:?}", msg.work_set);
-                    state.into()
                 }
+            } else {
+                // We cannot schedule the work set. Depending on why, we want to either drop the work
+                // (because it is no longer valid for anyone) or do nothing (because our version is out
+                // of date, and we want another node to pick it up).
+                warn!("unable to schedule work set: {:?}", msg.work_set);
+
+                // If `work_stopped`, the work set is not valid for any node, and we should drop it for the
+                // entire pool by claiming but not executing it.
+                if can_schedule.work_stopped {
+                    if let Err(err) = self.work_queue.claim(msg.receipt).await {
+                        error!("unable to drop stopped work: {}", err);
+                    } else {
+                        info!("dropped stopped work set: {:?}", msg.work_set);
+                    }
+                } else {
+                    // Otherwise, the work was not stopped, but we still should not execute it. This is likely
+                    // our because agent version is out of date. Do nothing, so another node can see the work.
+                    // The service will eventually send us a stop command and reimage our node, if appropriate.
+                    verbose!(
+                        "not scheduling active work set, not dropping: {:?}",
+                        msg.work_set
+                    );
+                }
+
+                // Stay in `Free` state.
+                state.into()
             }
         } else {
             self.sleep().await;
@@ -136,13 +168,14 @@ impl Agent {
     async fn setting_up(&mut self, state: State<SettingUp>) -> Result<Scheduler> {
         verbose!("agent setting up");
 
-        self.coordinator
-            .emit_event(NodeState::SettingUp.into())
-            .await?;
+        let tasks = state.work_set().task_ids();
+        let event = StateUpdateEvent::SettingUp { tasks };
+        self.coordinator.emit_event(event.into()).await?;
 
         let scheduler = match state.finish(self.setup_runner.as_mut()).await? {
             SetupDone::Ready(s) => s.into(),
             SetupDone::PendingReboot(s) => s.into(),
+            SetupDone::Done(s) => s.into(),
         };
 
         Ok(scheduler)
@@ -151,9 +184,8 @@ impl Agent {
     async fn pending_reboot(&mut self, state: State<PendingReboot>) -> Result<Scheduler> {
         verbose!("agent pending reboot");
 
-        self.coordinator
-            .emit_event(NodeState::Rebooting.into())
-            .await?;
+        let event = StateUpdateEvent::Rebooting.into();
+        self.coordinator.emit_event(event).await?;
 
         let ctx = state.reboot_context();
         self.reboot.save_context(ctx).await?;
@@ -165,13 +197,15 @@ impl Agent {
     async fn ready(&mut self, state: State<Ready>) -> Result<Scheduler> {
         verbose!("agent ready");
 
-        self.coordinator.emit_event(NodeState::Ready.into()).await?;
+        let event = StateUpdateEvent::Ready.into();
+        self.coordinator.emit_event(event).await?;
 
         Ok(state.run().await?.into())
     }
 
     async fn busy(&mut self, state: State<Busy>) -> Result<Scheduler> {
-        self.coordinator.emit_event(NodeState::Busy.into()).await?;
+        let event = StateUpdateEvent::Busy.into();
+        self.coordinator.emit_event(event).await?;
 
         let mut events = vec![];
         let updated = state
@@ -187,8 +221,24 @@ impl Agent {
 
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
         verbose!("agent done");
+        set_done_lock().await?;
 
-        self.coordinator.emit_event(NodeState::Done.into()).await?;
+        let event = match state.cause() {
+            DoneCause::SetupError {
+                error,
+                script_output,
+            } => StateUpdateEvent::Done {
+                error: Some(error),
+                script_output,
+            },
+            DoneCause::Stopped | DoneCause::WorkersDone => StateUpdateEvent::Done {
+                error: None,
+                script_output: None,
+            },
+        };
+
+        let event = event.into();
+        self.coordinator.emit_event(event).await?;
 
         // `Done` is a final state.
         Ok(state.into())
@@ -206,7 +256,7 @@ impl Agent {
     }
 
     async fn sleep(&mut self) {
-        let delay = time::Duration::from_secs(2);
+        let delay = time::Duration::from_secs(30);
         time::delay_for(delay).await;
     }
 
