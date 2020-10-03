@@ -100,7 +100,7 @@ impl EventData {
 
     pub fn can_share(&self) -> bool {
         match self {
-            // TODO: Request CELA review of Version, as having this for central stats 
+            // TODO: Request CELA review of Version, as having this for central stats
             //       would be useful to track uptake of new releases
             Self::Version(_) => false,
             Self::TaskId(_) => true,
