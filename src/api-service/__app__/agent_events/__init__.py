@@ -51,10 +51,16 @@ def on_state_update(
     state = state_update.state
     node = get_node_checked(machine_id)
 
-    if state == NodeState.free and (node.reimage_requested or node.delete_requested):
-        logging.info("stopping free node with reset flags: %s", node.machine_id)
-        node.stop()
-        return
+    if state == NodeState.free:
+        if node.reimage_requested or node.delete_requested:
+            logging.info("stopping free node with reset flags: %s", node.machine_id)
+            node.stop()
+            return
+
+        if node.could_shrink_scaleset():
+            logging.info("stopping free node to resize scaleset: %s", node.machine_id)
+            node.set_halt()
+            return
 
     if state == NodeState.init:
         if node.delete_requested:

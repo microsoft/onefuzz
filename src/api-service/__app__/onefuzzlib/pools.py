@@ -180,6 +180,11 @@ class Node(BASE_NODE, ORMMixin):
                 )
             entry.delete()
 
+    def could_shrink_scaleset(self) -> bool:
+        if self.scaleset_id and ScalesetShrinkQueue(self.scaleset_id).should_shrink():
+            return True
+        return False
+
     def can_process_new_work(self) -> bool:
         if self.is_outdated():
             logging.info(
@@ -197,14 +202,10 @@ class Node(BASE_NODE, ORMMixin):
             self.stop()
             return False
 
-        if self.scaleset_id is not None:
-
-            if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
-                self.set_halt()
-                logging.info(
-                    "node scheduled to shrink.  machine_id:%s", self.machine_id
-                )
-                return False
+        if self.could_shrink_scaleset():
+            self.set_halt()
+            logging.info("node scheduled to shrink.  machine_id:%s", self.machine_id)
+            return False
 
         return True
 
@@ -721,9 +722,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         try:
             if to_delete:
                 logging.info(
-                    "deleting nodes: %s - %s",
-                    self.scaleset_id,
-                    [x.machine_id for x in to_delete],
+                    "deleting nodes: %s - count: %d", self.scaleset_id, len(to_delete)
                 )
                 self.delete_nodes(to_delete)
                 for node in to_delete:
