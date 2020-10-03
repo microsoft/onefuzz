@@ -695,7 +695,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
         )
 
-        if not outdated or not nodes:
+        if not outdated and not nodes:
+            logging.info("no nodes need updating: %s", self.scaleset_id)
             return False
 
         # ground truth of existing nodes
@@ -708,8 +709,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 )
                 node.delete()
             elif node.delete_requested:
-                if not node.scaleset_node_exists():
-                    node.delete()
                 to_delete.append(node)
             else:
                 to_reimage.append(node)
@@ -717,6 +716,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         # Perform operations until they fail due to scaleset getting locked
         try:
             if to_delete:
+                logging.info("deleting nodes: %s - %s", self.scaleset)
                 self.delete_nodes(to_delete)
                 for node in to_delete:
                     node.set_halt()
@@ -727,6 +727,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.reimage_nodes(to_reimage)
         except UnableToUpdate:
             logging.info("scaleset update already in progress: %s", self.scaleset_id)
+
         return True
 
     def _resize_equal(self) -> None:
