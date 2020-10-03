@@ -113,6 +113,7 @@ impl Config {
         telemetry::set_property(EventData::JobId(self.common().job_id));
         telemetry::set_property(EventData::TaskId(self.common().task_id));
         telemetry::set_property(EventData::MachineId(get_machine_id().await?));
+        telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
 
         info!("agent ready, dispatching task");
         self.report_event();

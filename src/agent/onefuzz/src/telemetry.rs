@@ -40,6 +40,7 @@ pub enum EventData {
     JobId(Uuid),
     TaskId(Uuid),
     MachineId(Uuid),
+    Version(String),
     CommandLine(String),
     Type(String),
     Mode(String),
@@ -67,6 +68,7 @@ pub enum EventData {
 impl EventData {
     pub fn as_values(&self) -> (&str, String) {
         match self {
+            Self::Version(x) => ("version", x.to_string()),
             Self::JobId(x) => ("job_id", x.to_string()),
             Self::TaskId(x) => ("task_id", x.to_string()),
             Self::MachineId(x) => ("machine_id", x.to_string()),
@@ -98,6 +100,9 @@ impl EventData {
 
     pub fn can_share(&self) -> bool {
         match self {
+            // TODO: Request CELA review of Version, as having this for central stats 
+            //       would be useful to track uptake of new releases
+            Self::Version(_) => false,
             Self::TaskId(_) => true,
             Self::JobId(_) => true,
             Self::MachineId(_) => true,
