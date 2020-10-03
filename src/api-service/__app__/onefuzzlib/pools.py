@@ -720,7 +720,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         # Perform operations until they fail due to scaleset getting locked
         try:
             if to_delete:
-                logging.info("deleting nodes: %s - %s", self.scaleset_id)
+                logging.info(
+                    "deleting nodes: %s - %s",
+                    self.scaleset_id,
+                    [x.machine_id for x in to_delete],
+                )
                 self.delete_nodes(to_delete)
                 for node in to_delete:
                     node.set_halt()
