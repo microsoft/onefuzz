@@ -711,7 +711,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             elif node.delete_requested:
                 to_delete.append(node)
             else:
-                to_reimage.append(node)
+                if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
+                    node.set_halt()
+                    to_delete.append(node)
+                else:
+                    to_reimage.append(node)
 
         # Perform operations until they fail due to scaleset getting locked
         try:
@@ -766,11 +770,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if self.state != ScalesetState.resize:
             return
 
-        logging.info(
-            "scaleset resize: %s - current: %s new: %s",
-            self.scaleset_id,
-            self.size,
-        )
+        logging.info("scaleset resize: %s - %s", self.scaleset_id, self.size)
 
         # reset the node delete queue
         ScalesetShrinkQueue(self.scaleset_id).clear()
