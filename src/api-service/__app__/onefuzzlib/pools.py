@@ -106,7 +106,6 @@ class Node(BASE_NODE, ORMMixin):
         # We write the query this way to allow us to get the nodes where the
         # version is not defined as well as the nodes with a mismatched version
         version_query = "not (version eq '%s')" % __version__
-        print(version_query)
         return cls.search(query=query, raw_unchecked_filter=version_query)
 
     @classmethod
