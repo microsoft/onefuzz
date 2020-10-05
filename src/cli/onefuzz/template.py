@@ -54,6 +54,9 @@ class Template(Command):
         containers = [x.name for x in self.onefuzz.containers.list()]
         jobs = self.onefuzz.jobs.list()
         for job in jobs:
+            if job.config.project != project:
+                continue
+
             if job.config.name != name:
                 continue
 

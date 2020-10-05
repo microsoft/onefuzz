@@ -227,6 +227,7 @@ class ErrorCode(Enum):
     UNABLE_TO_FIND = 467
     TASK_FAILED = 468
     INVALID_NODE = 469
+    NOTIFICATION_FAILURE = 470
 
 
 class HeartbeatType(Enum):

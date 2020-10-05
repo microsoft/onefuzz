@@ -74,22 +74,16 @@ impl SetupRunner {
 
             let output = setup_script.invoke().await?;
 
-            info!(
-                "setup script run; exit_status = {:?}, path = {}",
-                output.exit_status,
-                setup_script.path().display(),
-            );
-
             if output.exit_status.success {
                 verbose!(
-                    "setup script succeeded:\nstdout = {}\nstderr = {}",
+                    "setup script succeeded. stdout:{:?} stderr:{:?}",
                     &output.stdout,
                     &output.stderr,
                 );
                 info!("setup script succeeded");
             } else {
                 error!(
-                    "setup script failed:\nstdout = {}\nstderr = {}",
+                    "setup script failed.  stdout:{:?} stderr:{:?}",
                     &output.stdout, &output.stderr,
                 );
             }

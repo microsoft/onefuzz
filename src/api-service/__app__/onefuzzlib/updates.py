@@ -88,6 +88,7 @@ def execute_update(update: Update) -> None:
             return
 
         if update.method and hasattr(obj, update.method):
+            logging.info("performing queued update: %s", update)
             getattr(obj, update.method)()
             return
         else:
@@ -97,14 +98,14 @@ def execute_update(update: Update) -> None:
                 return
             func = getattr(obj, state.name, None)
             if func is None:
-                logging.info("no function to implement state: %s", update)
+                logging.debug(
+                    "no function to implement state: %s - %s", update, state.name
+                )
                 return
+            logging.info(
+                "performing queued update for state: %s - %s", update, state.name
+            )
             func()
         return
 
     raise NotImplementedError("unimplemented update type: %s" % update.update_type.name)
-
-
-def perform_update(update: Update) -> None:
-    logging.info("performing queued update: %s", update)
-    execute_update(update)

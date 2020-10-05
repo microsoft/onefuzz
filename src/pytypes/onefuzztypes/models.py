@@ -399,6 +399,8 @@ class Node(BaseModel):
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
     version: str = Field(default="1.0.0")
+    reimage_requested: bool = Field(default=False)
+    delete_requested: bool = Field(default=False)
 
 
 class ScalesetSummary(BaseModel):
@@ -452,7 +454,6 @@ class Scaleset(BaseModel):
     image: str
     region: Region
     size: int
-    new_size: Optional[int]
     spot_instances: bool
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]
@@ -489,6 +490,12 @@ class ExitStatus(BaseModel):
     success: bool
 
 
+class ProcessOutput(BaseModel):
+    exit_status: ExitStatus
+    stderr: str
+    stdout: str
+
+
 class WorkerRunningEvent(BaseModel):
     task_id: UUID
 
@@ -505,29 +512,43 @@ class WorkerEvent(EnumModel):
     running: Optional[WorkerRunningEvent]
 
 
-class SettingUpEventData(BaseModel):
+class NodeSettingUpEventData(BaseModel):
     tasks: List[UUID]
+
+
+class NodeDoneEventData(BaseModel):
+    error: Optional[str]
+    script_output: Optional[ProcessOutput]
+
+
+NodeStateData = Union[NodeSettingUpEventData, NodeDoneEventData]
 
 
 class NodeStateUpdate(BaseModel):
     state: NodeState
     data: Optional[SettingUpEventData]
 
-    @validator("data")
-    def check_data(
-        cls,
-        data: Optional[SettingUpEventData],
-        values: Any,
-    ) -> Optional[SettingUpEventData]:
+    @root_validator(pre=False, skip_on_failure=True)
+    def check_data(cls, values: Any) -> Any:
+        data = values.get("data")
+
         if data:
-            state = values.get("state")
-            if state and state != NodeState.setting_up:
-                raise ValueError(
-                    "data for node state update event does not match state = %s" % state
-                )
+            state = values["state"]
 
-        return data
+            if state == NodeState.setting_up:
+                if isinstance(data, NodeSettingUpEventData):
+                    return values
 
+            if state == NodeState.done:
+                if isinstance(data, NodeDoneEventData):
+                    return values
+
+            raise ValueError(
+                "data for node state update event does not match state = %s" % state
+            )
+        else:
+            # For now, `data` is always optional.
+            return values
 
 class NodeEvent(EnumModel):
     state_update: Optional[NodeStateUpdate]
@@ -537,7 +558,8 @@ class NodeEvent(EnumModel):
 # Temporary shim type to support hot upgrade of 1.0.0 nodes.
 #
 # We want future variants to use an externally-tagged repr.
-NodeEventShim = Union[NodeStateUpdate, NodeEvent, WorkerEvent]
+
+NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
 
 
 class NodeEventEnvelope(BaseModel):
