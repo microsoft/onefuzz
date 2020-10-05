@@ -442,7 +442,7 @@ class Client:
                 to_delete.append(entry.export_id)
 
         for export_id in to_delete:
-            logger.info("deleting existing export: %s", export_id)
+            logger.info("replacing existing export: %s", export_id)
             app_insight_client.export_configurations.delete(
                 self.resource_group, self.application_name, export_id
             )
@@ -612,6 +612,7 @@ def main():
         ("instance-specific-setup", Client.upload_instance_setup),
         ("third-party", Client.upload_third_party),
         ("api", Client.deploy_app),
+        ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
     ]
 
@@ -682,7 +683,7 @@ def main():
     )
     parser.add_argument(
         "--export_appinsights",
-        type=bool,
+        action="store_true",
         help="enable appinsight log export",
     )
     args = parser.parse_args()
