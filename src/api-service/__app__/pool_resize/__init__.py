@@ -9,6 +9,9 @@ import math
 import azure.functions as func
 from onefuzztypes.enums import NodeState, PoolState, ScalesetState
 
+from onefuzztypes.models import Error
+from typing import List, Union
+
 from ..onefuzzlib.pools import Node, Pool, Scaleset
 from ..onefuzzlib.tasks.main import Task
 
@@ -84,6 +87,8 @@ def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
 def get_vm_count(tasks: List[Task]) -> int:
     count = 0
     for task in tasks:
+        if not task.config.pool:
+            continue
         count += task.config.pool.count
     return count
 
@@ -96,6 +101,9 @@ def main(mytimer: func.TimerRequest) -> None:
         num_of_tasks = 0
         # get all the tasks (count not stopped) for the pool
         if not tasks:
+            continue
+
+        if isinstance(tasks, Error):
             continue
 
         num_of_tasks = get_vm_count(tasks)
