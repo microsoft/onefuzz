@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use anyhow::Result;
-use dunce;
 use async_trait::async_trait;
+use dunce;
 use futures::{future::Future, stream::StreamExt};
 use onefuzz::{
     az_copy,
