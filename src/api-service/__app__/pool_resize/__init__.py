@@ -7,10 +7,10 @@ import logging
 import math
 
 import azure.functions as func
+from onefuzztypes.enums import NodeState, PoolState, ScalesetState
 
 from ..onefuzzlib.pools import Node, Pool, Scaleset
 from ..onefuzzlib.tasks.main import Task
-from onefuzztypes.enums import NodeState, PoolState, ScalesetState
 
 
 def scale_up(pool, scalesets, nodes_needed):
