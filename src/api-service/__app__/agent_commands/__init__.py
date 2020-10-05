@@ -16,7 +16,11 @@ from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info(f"request: {req}")
+    logging.info(f"request params: {req.params}")
+    logging.info(f"request body: {req.get_body()}")
     request = parse_request(NodeCommandGet, req)
+
     if isinstance(request, Error):
         return not_ok(request, context="NodeCommandGet")
 

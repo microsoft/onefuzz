@@ -526,9 +526,9 @@ NodeStateData = Union[NodeSettingUpEventData, NodeDoneEventData]
 
 class NodeStateUpdate(BaseModel):
     state: NodeState
-    data: Optional[SettingUpEventData]
+    data: Optional[NodeStateData]
 
-    @root_validator(pre=False, skip_on_failure=True)
+    @root_validator(pre=False, allow_reuse=True, skip_on_failure=True)
     def check_data(cls, values: Any) -> Any:
         data = values.get("data")
 
@@ -550,6 +550,7 @@ class NodeStateUpdate(BaseModel):
             # For now, `data` is always optional.
             return values
 
+
 class NodeEvent(EnumModel):
     state_update: Optional[NodeStateUpdate]
     worker_event: Optional[WorkerEvent]
@@ -559,7 +560,7 @@ class NodeEvent(EnumModel):
 #
 # We want future variants to use an externally-tagged repr.
 
-NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
+NodeEventShim = Union[NodeStateUpdate, NodeEvent, WorkerEvent]
 
 
 class NodeEventEnvelope(BaseModel):

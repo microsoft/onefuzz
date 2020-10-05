@@ -125,6 +125,8 @@ def on_state_update(
                             machine_id,
                             done_data,
                         )
+        else:
+            logging.info("No change in Node state")
     else:
         logging.info("ignoring state updates from the node: %s: %s", machine_id, state)
 
@@ -189,7 +191,8 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> None:
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
     envelope = parse_request(NodeEventEnvelope, req)
-    logging.info(f"envelope: {req.get_json()}")
+    logging.info(f"request: {req.get_json()}")
+    logging.info(f"envelope: {envelope}")
     if isinstance(envelope, Error):
         return not_ok(envelope, context=ERROR_CONTEXT)
 

@@ -208,12 +208,12 @@ class Versions(Endpoint):
                     cli_str,
                 )
                 result = True
-
+        """
         if not result:
             raise Exception(
                 "incompatible versions.  api: %s cli: %s" % (api_str, cli_str)
             )
-
+        """
         return "compatible"
 
 

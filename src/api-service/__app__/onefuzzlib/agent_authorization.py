@@ -64,7 +64,6 @@ def verify_token(
 
     if isinstance(token, Error):
         return not_ok(token, status_code=401, context="token verification")
-    logging.info(f"token: {token}")
 
     if not is_authorized(token):
         return not_ok(

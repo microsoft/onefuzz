@@ -20,10 +20,10 @@ def scale_up(pool, scalesets, nodes_needed):
             if scaleset.size < max_size:
                 current_size = scaleset.size
                 if nodes_needed <= max_size - current_size:
-                    scaleset.new_size = current_size + nodes_needed
+                    scaleset.size = current_size + nodes_needed
                     nodes_needed = 0
                 else:
-                    scaleset.new_size = max_size
+                    scaleset.size = max_size
                     nodes_needed = nodes_needed - (max_size - current_size)
                 scaleset.state = ScalesetState.resize
                 scaleset.save()
@@ -54,7 +54,7 @@ def scale_up(pool, scalesets, nodes_needed):
         )
         scaleset.save()
         # don't return auths during create, only 'get' with include_auth
-        # scaleset.auth = None
+        scaleset.auth = None
         nodes_needed -= max_nodes_scaleset
 
 
@@ -71,7 +71,7 @@ def scale_down(scalesets, nodes_to_remove):
                 scaleset.save()
                 continue
 
-            scaleset.new_size = scaleset.size - max_nodes_remove
+            scaleset.size = scaleset.size - max_nodes_remove
             nodes_to_remove = nodes_to_remove - max_nodes_remove
             scaleset.state = ScalesetState.resize
             scaleset.save()
