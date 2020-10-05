@@ -10,7 +10,7 @@ import azure.functions as func
 from onefuzztypes.enums import NodeState, PoolState, ScalesetState
 
 from onefuzztypes.models import Error
-from typing import List, Union
+from typing import List
 
 from ..onefuzzlib.pools import Node, Pool, Scaleset
 from ..onefuzzlib.tasks.main import Task
