@@ -13,7 +13,7 @@ from ..onefuzzlib.pools import Node, Pool, Scaleset
 from ..onefuzzlib.tasks.main import Task
 
 
-def scale_up(pool, scalesets, nodes_needed):
+def scale_up(pool, scalesets, nodes_needed) -> None:
     logging.info(f"Nodes needed: {nodes_needed}")
 
     for scaleset in scalesets:
@@ -62,7 +62,7 @@ def scale_up(pool, scalesets, nodes_needed):
         nodes_needed -= max_nodes_scaleset
 
 
-def scale_down(scalesets, nodes_to_remove):
+def scale_down(scalesets, nodes_to_remove) -> None:
     for scaleset in scalesets:
         nodes = Node.search_states(
             scaleset_id=scaleset.scaleset_id, states=[NodeState.free]
@@ -81,7 +81,7 @@ def scale_down(scalesets, nodes_to_remove):
             scaleset.save()
 
 
-def get_vm_count(tasks):
+def get_vm_count(tasks) -> int:
     count = 0
     for task in tasks:
         count += task.config.pool.count

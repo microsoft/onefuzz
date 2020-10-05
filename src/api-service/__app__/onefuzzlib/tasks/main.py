@@ -154,13 +154,18 @@ class Task(BASE_TASK, ORMMixin):
         return task
 
     @classmethod
-    def get_tasks_by_pool_name(cls, pool_name: str) -> List["Task"]:
+    def get_tasks_by_pool_name(cls, pool_name: str) -> Optional[List["Task"]]:
         tasks = cls.search()
+        if not tasks:
+            return Error(code=ErrorCode.INVALID_REQUEST, errors=["unable to find task"])
+
         pool_tasks = []
         if not tasks:
-            return None
+            return []
 
         for task in tasks:
+            if not task.config.pool:
+                continue
             if pool_name == task.config.pool.pool_name and task.state not in [
                 TaskState.stopped,
                 TaskState.stopping,
