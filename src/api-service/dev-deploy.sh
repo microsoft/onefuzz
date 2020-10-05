@@ -14,12 +14,32 @@ fi
 set -ex
 
 TARGET=${1}
-cd ${APP_DIR}
-(cd ../pytypes && python setup.py sdist bdist_wheel && cp dist/*.whl ../api-service/__app__)
-cd __app__
+pushd ${APP_DIR}
+VERSION=$(../ci/get-version.sh)
+../ci/set-versions.sh
+
+# clean up any previously built onefuzztypes packages
+rm -f __app__/onefuzztypes*.whl
+
+# build a local copy of onefuzztypes
+rm -rf local-pytypes
+cp -r ../pytypes local-pytypes
+pushd local-pytypes
+rm -f dist/*
+python setup.py sdist bdist_wheel
+cp dist/*.whl ../__app__
+popd
+rm -r local-pytypes
+
+# deploy a the instance with the locally built onefuzztypes
+pushd __app__
 uuidgen > onefuzzlib/build.id
-sed -i s,onefuzztypes==0.0.0,./onefuzztypes-0.0.0-py3-none-any.whl, requirements.txt
+TYPELIB=$(ls onefuzztypes*.whl)
+sed -i s,.*onefuzztypes.*,./${TYPELIB}, requirements.txt
 func azure functionapp publish ${TARGET} --python
-sed -i s,./onefuzztypes-0.0.0-py3-none-any.whl,onefuzztypes==0.0.0, requirements.txt
-rm 'onefuzztypes-0.0.0-py3-none-any.whl'
-cat onefuzzlib/build.id
+sed -i s,./onefuzztypes.*,onefuzztypes==0.0.0, requirements.txt
+rm -f onefuzztypes*.whl
+popd
+
+../ci/unset-versions.sh
+cat __app__/onefuzzlib/build.id

@@ -110,6 +110,7 @@ class TaskState(Enum):
     init = "init"
     waiting = "waiting"
     scheduled = "scheduled"
+    setting_up = "setting_up"
     running = "running"
     stopping = "stopping"
     stopped = "stopped"
@@ -226,6 +227,7 @@ class ErrorCode(Enum):
     UNABLE_TO_FIND = 467
     TASK_FAILED = 468
     INVALID_NODE = 469
+    NOTIFICATION_FAILURE = 470
 
 
 class HeartbeatType(Enum):
@@ -286,6 +288,7 @@ class Architecture(Enum):
 
 class NodeTaskState(Enum):
     init = "init"
+    setting_up = "setting_up"
     running = "running"
 
 

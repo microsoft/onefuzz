@@ -8,13 +8,13 @@ import json
 import azure.functions as func
 
 from ..onefuzzlib.dashboard import get_event
-from ..onefuzzlib.updates import Update, perform_update
+from ..onefuzzlib.updates import Update, execute_update
 
 
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
     body = msg.get_body()
     update = Update.parse_obj(json.loads(body))
-    perform_update(update)
+    execute_update(update)
 
     event = get_event()
     if event:

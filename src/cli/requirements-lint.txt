@@ -3,3 +3,4 @@ mypy
 pytest
 isort
 vulture
+black

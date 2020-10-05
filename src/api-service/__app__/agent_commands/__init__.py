@@ -10,11 +10,11 @@ from onefuzztypes.responses import BoolResult, PendingNodeCommand
 
 from ..onefuzzlib.agent_authorization import verify_token
 from ..onefuzzlib.pools import NodeMessage
-from ..onefuzzlib.request import not_ok, ok, parse_uri
+from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_uri(NodeCommandGet, req)
+    request = parse_request(NodeCommandGet, req)
     if isinstance(request, Error):
         return not_ok(request, context="NodeCommandGet")
 
@@ -31,11 +31,13 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def delete(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_uri(NodeCommandDelete, req)
+    request = parse_request(NodeCommandDelete, req)
     if isinstance(request, Error):
         return not_ok(request, context="NodeCommandDelete")
 
-    NodeMessage.delete_messages(request.machine_id, [request.message_id])
+    message = NodeMessage.get(request.machine_id, request.message_id)
+    if message:
+        message.delete()
     return ok(BoolResult(result=True))
 
 

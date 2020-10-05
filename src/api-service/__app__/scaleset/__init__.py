@@ -109,6 +109,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         scaleset.state = ScalesetState.halt
     else:
         scaleset.state = ScalesetState.shutdown
+
     scaleset.save()
     scaleset.auth = None
     return ok(scaleset)
@@ -133,7 +134,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     if request.size is not None:
-        scaleset.new_size = request.size
+        scaleset.size = request.size
         scaleset.state = ScalesetState.resize
 
     scaleset.save()
