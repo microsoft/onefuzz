@@ -404,7 +404,7 @@ class Client:
         if container_name not in [x["name"] for x in client.list_containers()]:
             client.create_container(container_name)
 
-        expiry = datetime.utcnow() + timedelta(months=2 * 365)
+        expiry = datetime.utcnow() + timedelta(days=2 * 365)
 
         sas = generate_container_sas(
             account_name,
