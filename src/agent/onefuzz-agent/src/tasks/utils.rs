@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use anyhow::Result;
+use dunce;
 use async_trait::async_trait;
 use futures::{future::Future, stream::StreamExt};
 use onefuzz::{
@@ -156,7 +157,9 @@ pub fn file_uploader_monitor(synced_dir: SyncedDir) -> Result<impl Future> {
 /// The intent of this is to support use cases where we usually want a directory
 /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
 /// a directory, and may reset it.
-pub async fn monitor_result_dir(synced_dir: SyncedDir) -> Result<()> {
+pub async fn monitor_result_dir(mut synced_dir: SyncedDir) -> Result<()> {
+    synced_dir.path = dunce::canonicalize(&synced_dir.path)?;
+
     loop {
         verbose!("waiting to monitor {}", synced_dir.path.display());
 
