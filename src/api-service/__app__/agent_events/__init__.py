@@ -11,7 +11,7 @@ import azure.functions as func
 from onefuzztypes.enums import ErrorCode, NodeState, NodeTaskState, TaskState
 from onefuzztypes.models import (
     Error,
-    NodeDoneEventData
+    NodeDoneEventData,
     NodeEvent,
     NodeEventEnvelope,
     NodeSettingUpEventData,
