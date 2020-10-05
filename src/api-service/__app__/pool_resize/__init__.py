@@ -92,7 +92,7 @@ def get_vm_count(tasks: List[Task]) -> int:
     return count
 
 
-def main(mytimer: func.TimerRequest) -> None:
+def main() -> None:
 
     pools = Pool.search_states(states=[PoolState.init, PoolState.running])
     for pool in pools:
