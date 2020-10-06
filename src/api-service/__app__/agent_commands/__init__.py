@@ -3,8 +3,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import logging
-
 import azure.functions as func
 from onefuzztypes.models import Error, NodeCommandEnvelope
 from onefuzztypes.requests import NodeCommandDelete, NodeCommandGet
@@ -16,8 +14,6 @@ from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info(f"request: {req}")
-    logging.info(f"request params: {req.params}")
     request = parse_request(NodeCommandGet, req)
 
     if isinstance(request, Error):

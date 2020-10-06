@@ -327,13 +327,12 @@ class Pool(BASE_POOL, ORMMixin):
         arch: Architecture,
         managed: bool,
         client_id: Optional[UUID],
-        max_size: int,
+        max_size: int,  # scaleset max size
         vm_sku: str,
         image: str,
         spot_instances: bool,
         region: Region,
     ) -> "Pool":
-        logging.info(f"2Region: {region}")
         return cls(
             name=name,
             os=os,
