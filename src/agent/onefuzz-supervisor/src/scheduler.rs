@@ -4,9 +4,9 @@
 use std::fmt;
 
 use anyhow::Result;
+use onefuzz::process::Output;
 
 use crate::coordinator::NodeCommand;
-use crate::process::Output;
 use crate::reboot::RebootContext;
 use crate::setup::ISetupRunner;
 use crate::work::*;

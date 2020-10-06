@@ -27,7 +27,6 @@ pub mod config;
 pub mod coordinator;
 pub mod debug;
 pub mod done;
-pub mod process;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
