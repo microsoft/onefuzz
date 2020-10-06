@@ -55,7 +55,7 @@ def schedule_tasks() -> None:
             save_blob(
                 "task-configs",
                 "%s/config.json" % task.task_id,
-                agent_config.json(),
+                agent_config.json(exclude_none=True),
                 account_id=get_func_storage(),
             )
             reboot = False

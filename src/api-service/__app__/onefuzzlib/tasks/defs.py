@@ -212,6 +212,7 @@ TASK_DEFINITIONS = {
             TaskFeature.supervisor_options,
             TaskFeature.supervisor_input_marker,
             TaskFeature.wait_for_files,
+            TaskFeature.stats_file,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
