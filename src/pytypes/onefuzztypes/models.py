@@ -17,6 +17,8 @@ from .enums import (
     ContainerPermission,
     ContainerType,
     ErrorCode,
+    GithubIssueSearchMatch,
+    GithubIssueState,
     HeartbeatType,
     JobState,
     NodeState,
@@ -368,7 +370,37 @@ class WorkSetSummary(BaseModel):
     work_units: List[WorkUnitSummary]
 
 
-NotificationTemplate = Union[ADOTemplate, TeamsTemplate]
+class GithubIssueDuplicate(BaseModel):
+    comment: Optional[str]
+    labels: List[str]
+    reopen: bool
+
+
+class GithubIssueSearch(BaseModel):
+    author: Optional[str]
+    state: Optional[GithubIssueState]
+    field_match: List[GithubIssueSearchMatch]
+    string: str
+
+
+class GithubAuth(BaseModel):
+    user: str
+    personal_access_token: str
+
+
+class GithubIssueTemplate(BaseModel):
+    auth: GithubAuth
+    organization: str
+    repository: str
+    title: str
+    body: str
+    unique_search: GithubIssueSearch
+    assignees: List[str]
+    labels: List[str]
+    on_duplicate: GithubIssueDuplicate
+
+
+NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
 
 
 class Notification(BaseModel):
