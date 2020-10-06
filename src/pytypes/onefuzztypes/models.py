@@ -419,11 +419,16 @@ class Pool(BaseModel):
     pool_id: UUID = Field(default_factory=uuid4)
     os: OS
     managed: bool
+    max_size: int
+    vm_sku: str
+    image: str
+    spot_instances: bool
     arch: Architecture
     state: PoolState = Field(default=PoolState.init)
     client_id: Optional[UUID]
     nodes: Optional[List[Node]]
     config: Optional[AgentConfig]
+    region: Region
 
     # work_queue is explicitly not saved to Tables (see save_exclude).  This is
     # intended to be used to pass the information to the CLI when the CLI asks
@@ -554,7 +559,7 @@ class NodeEvent(EnumModel):
 # Temporary shim type to support hot upgrade of 1.0.0 nodes.
 #
 # We want future variants to use an externally-tagged repr.
-NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
+NodeEventShim = Union[NodeStateUpdate, NodeEvent, WorkerEvent]
 
 
 class NodeEventEnvelope(BaseModel):

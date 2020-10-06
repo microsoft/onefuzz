@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import logging
 import os
 
 import azure.functions as func
@@ -10,7 +11,7 @@ from onefuzztypes.enums import ErrorCode, PoolState
 from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 
-from ..onefuzzlib.azure.creds import get_instance_name
+from ..onefuzzlib.azure.creds import get_base_region, get_instance_name, get_regions
 from ..onefuzzlib.pools import Pool
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -65,12 +66,30 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             context=repr(request),
         )
 
+    logging.info(request)
+
+    if request.region is None:
+        region = get_base_region()
+    else:
+        if request.region not in get_regions():
+            return not_ok(
+                Error(code=ErrorCode.UNABLE_TO_CREATE, errors=["invalid region"]),
+                context="poolcreate",
+            )
+
+        region = request.region
+
     pool = Pool.create(
         name=request.name,
         os=request.os,
         arch=request.arch,
         managed=request.managed,
         client_id=request.client_id,
+        max_size=request.max_size,
+        vm_sku=request.vm_sku,
+        image=request.image,
+        spot_instances=request.spot_instances,
+        region=region,
     )
     pool.save()
     return ok(set_config(pool))

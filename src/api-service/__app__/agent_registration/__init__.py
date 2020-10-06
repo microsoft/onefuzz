@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import logging
 from uuid import UUID
 
 import azure.functions as func
@@ -76,6 +77,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
     registration_request = parse_uri(AgentRegistrationPost, req)
+    logging.info(f"request: {registration_request}")
     if isinstance(registration_request, Error):
         return not_ok(registration_request, context="agent registration")
 
