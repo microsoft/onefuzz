@@ -528,7 +528,7 @@ class NodeStateUpdate(BaseModel):
     state: NodeState
     data: Optional[NodeStateData]
 
-    @root_validator(pre=False, allow_reuse=True, skip_on_failure=True)
+    @root_validator(pre=False, skip_on_failure=True)
     def check_data(cls, values: Any) -> Any:
         data = values.get("data")
 
@@ -559,7 +559,6 @@ class NodeEvent(EnumModel):
 # Temporary shim type to support hot upgrade of 1.0.0 nodes.
 #
 # We want future variants to use an externally-tagged repr.
-
 NodeEventShim = Union[NodeStateUpdate, NodeEvent, WorkerEvent]
 
 
