@@ -162,8 +162,6 @@ class Task(BASE_TASK, ORMMixin):
             return Error(code=ErrorCode.INVALID_REQUEST, errors=["unable to find task"])
 
         pool_tasks = []
-        if not tasks:
-            return []
 
         for task in tasks:
             if not task.config.pool:

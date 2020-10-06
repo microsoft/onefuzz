@@ -92,21 +92,17 @@ def get_vm_count(tasks: List[Task]) -> int:
     return count
 
 
-def main(mytimer: func.TimerRequest) -> None:
-    logging.info(f"Timer: {mytimer}")
-
+def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     pools = Pool.search_states(states=[PoolState.init, PoolState.running])
     for pool in pools:
         tasks = Task.get_tasks_by_pool_name(pool.name)
         num_of_tasks = 0
         # get all the tasks (count not stopped) for the pool
-        if not tasks:
-            continue
-
-        if isinstance(tasks, Error):
+        if not tasks or isinstance(tasks, Error):
             continue
 
         num_of_tasks = get_vm_count(tasks)
+        logging.info(f"#Tasks: {num_of_tasks}")
         # do scaleset logic match with pool
         # get all the scalesets for the pool
         scalesets = Scaleset.search_by_pool(pool.name)
