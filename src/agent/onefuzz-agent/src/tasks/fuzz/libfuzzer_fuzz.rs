@@ -39,7 +39,7 @@ const RESYNC_PERIOD: Duration = Duration::from_secs(30);
 const PROC_INFO_COLLECTION_DELAY: Duration = Duration::from_secs(1);
 
 // Period of reporting proc info about running processes.
-const PROC_INFO_PERIOD: Duration = Duration::from_secs(10);
+const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
@@ -146,7 +146,6 @@ impl LibFuzzerFuzzTask {
         let mut libfuzzer_output = Vec::new();
         let mut lines = stderr.lines();
         while let Some(line) = lines.next_line().await? {
-            // let stats_sender = stats_sender
             if let Some(stats_sender) = stats_sender {
                 if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, &line) {
                     error!("could not parse fuzzing interation update: {}", err);
