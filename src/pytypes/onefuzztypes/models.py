@@ -215,9 +215,15 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
+    def redact(self) -> None:
+        self.auth_token = "***"
+
 
 class TeamsTemplate(BaseModel):
     url: str
+
+    def redact(self) -> None:
+        self.url = "***"
 
 
 class ContainerDefinition(BaseModel):
@@ -398,6 +404,10 @@ class GithubIssueTemplate(BaseModel):
     assignees: List[str]
     labels: List[str]
     on_duplicate: GithubIssueDuplicate
+
+    def redact(self) -> None:
+        self.auth.user = "***"
+        self.auth.personal_access_token = "***"
 
 
 NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
