@@ -5,12 +5,12 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use onefuzz::blob::BlobContainerUrl;
+use onefuzz::process::ExitStatus;
 use structopt::StructOpt;
 use url::Url;
 use uuid::Uuid;
 
 use crate::coordinator::*;
-use crate::process::*;
 use crate::work::*;
 use crate::worker::*;
 
