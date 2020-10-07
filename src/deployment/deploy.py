@@ -406,6 +406,8 @@ class Client:
 
         expiry = datetime.utcnow() + timedelta(days=2 * 365)
 
+        # NOTE: as this is a long-lived SAS url, it should not be logged and only
+        # used in the the later-on export_configurations.create() call
         sas = generate_container_sas(
             account_name,
             container_name,
