@@ -1,7 +1,7 @@
 # Notifications via Github Issues
 
-Onefuzz can create or update [Github Issues](https://guides.github.com/features/issues/) 
-upon creation of crash reports in Onefuzz managed [containers](../containers.md).
+OneFuzz can create or update [Github Issues](https://guides.github.com/features/issues/) 
+upon creation of crash reports in OneFuzz managed [containers](../containers.md).
 
 Nearly every field can be customized using [jinja2](https://jinja.palletsprojects.com/)
 templates.   There are multiple python objects provided via the template engine that
@@ -65,7 +65,7 @@ For full documentation on the syntax, see [GithubIssueTemplate](../../src/pytype
 
 1. Create a [Personal access token](https://github.com/settings/tokens).
 2. Update your config to specify your user and personal access token.
-1. Add a notification to your Onefuzz instance.
+1. Add a notification to your OneFuzz instance.
 
     ```
     onefuzz notifications create <CONTAINER> @./config.json
@@ -74,6 +74,6 @@ For full documentation on the syntax, see [GithubIssueTemplate](../../src/pytype
 Until the integration is deleted, when a crash report is written to the indicated container, 
 issues will be created and updated based on the reports.
 
-The Onefuzz SDK provides an example tool [fake-report.py](../../src/cli/examples/fake-report.py),
+The OneFuzz SDK provides an example tool [fake-report.py](../../src/cli/examples/fake-report.py),
 which can be used to generate a synthetic crash report to verify the integration
 is functional.

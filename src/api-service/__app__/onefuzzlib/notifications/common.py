@@ -18,7 +18,7 @@ from ..tasks.main import Task
 
 def fail_task(report: Report, error: Exception) -> None:
     logging.error(
-        "ADO report failed: job_id:%s task_id:%s err:%s",
+        "notification failed: job_id:%s task_id:%s err:%s",
         report.job_id,
         report.task_id,
         error,
