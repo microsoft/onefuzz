@@ -12,7 +12,7 @@ from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, Task
 from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
 
 from ..azure.containers import blob_exists, get_container_sas_url, get_containers
-from ..azure.creds import get_fuzz_storage, get_instance_name
+from ..azure.creds import get_fuzz_storage, get_instance_url
 from ..azure.queue import get_queue_sas
 from .defs import TASK_DEFINITIONS
 
@@ -184,8 +184,7 @@ def build_task_config(
             account_id=os.environ["ONEFUZZ_FUNC_STORAGE"],
             add=True,
         ),
-        back_channel_address="https://%s.azurewebsites.net/api/back_channel"
-        % (get_instance_name()),
+        back_channel_address="https://%s/api/back_channel" % (get_instance_url()),
     )
 
     if definition.monitor_queue:

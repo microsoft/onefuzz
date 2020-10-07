@@ -11,6 +11,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, Report
 
 from ..azure.containers import auth_download_url
+from ..azure.creds import get_instance_url
 from ..jobs import Job
 from ..tasks.config import get_setup_container
 from ..tasks.main import Task
@@ -72,7 +73,7 @@ class Render:
                 "target_url": self.target_url,
                 "report_container": self.container,
                 "report_filename": self.filename,
-                "repro_cmd": "onefuzz repro create_and_connect %s %s"
-                % (self.container, self.filename),
+                "repro_cmd": "onefuzz --endpoint %s repro create_and_connect %s %s"
+                % (get_instance_url(), self.container, self.filename),
             }
         )
