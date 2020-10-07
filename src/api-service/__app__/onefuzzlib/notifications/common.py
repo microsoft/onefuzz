@@ -8,8 +8,8 @@ from typing import Optional
 from jinja2.sandbox import SandboxedEnvironment
 from onefuzztypes.models import Report
 
-from ..azure.creds import get_instance_url
 from ..azure.containers import auth_download_url
+from ..azure.creds import get_instance_url
 from ..jobs import Job
 from ..tasks.config import get_setup_container
 from ..tasks.main import Task
