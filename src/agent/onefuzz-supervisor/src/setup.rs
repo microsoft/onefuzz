@@ -7,10 +7,10 @@ use std::process::Stdio;
 use anyhow::Result;
 use downcast_rs::Downcast;
 use onefuzz::az_copy;
+use onefuzz::process::Output;
 use tokio::fs;
 use tokio::process::Command;
 
-use crate::process::Output;
 use crate::work::*;
 
 const SETUP_PATH_ENV: &str = "ONEFUZZ_TARGET_SETUP_PATH";

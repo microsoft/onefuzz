@@ -3,13 +3,13 @@
 
 use anyhow::Result;
 use downcast_rs::Downcast;
+use onefuzz::process::Output;
 use reqwest::{Client, Request, Response, StatusCode};
 use serde::Serialize;
 use uuid::Uuid;
 
 use crate::auth::AccessToken;
 use crate::config::Registration;
-use crate::process::Output;
 use crate::work::{TaskId, WorkSet};
 use crate::worker::WorkerEvent;
 

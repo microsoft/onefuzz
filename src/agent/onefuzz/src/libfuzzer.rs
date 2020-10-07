@@ -179,10 +179,10 @@ impl LibFuzzerLine {
         }
     }
 
-    pub fn parse(line: String) -> Result<Option<Self>> {
+    pub fn parse(line: &str) -> Result<Option<Self>> {
         let re = regex::Regex::new(r"#(\d+)\s*(?:pulse|INITED|NEW|REDUCE).*exec/s: (\d+)")?;
 
-        let caps = match re.captures(&line) {
+        let caps = match re.captures(line) {
             Some(caps) => caps,
             None => return Ok(None),
         };
@@ -190,7 +190,7 @@ impl LibFuzzerLine {
         let iters = caps[1].parse()?;
         let execs_sec = caps[2].parse()?;
 
-        Ok(Some(Self::new(line, iters, execs_sec)))
+        Ok(Some(Self::new(line.to_string(), iters, execs_sec)))
     }
 
     pub fn iters(&self) -> u64 {
