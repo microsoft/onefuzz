@@ -39,3 +39,4 @@ JSON via a string, such as `'{"config":{...}}'`
 
 * [Microsoft Teams](notifications/teams.md)
 * [Azure Devops Work Items](notifications/ado.md)
+* [Github Issues](notifications/github.md)
