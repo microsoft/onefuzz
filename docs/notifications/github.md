@@ -38,7 +38,7 @@ There are additional values that can be used in any template:
    "config": {
       "auth": {
          "user": "INSERT_YOUR_USERNAME_HERE",
-         "personal_access_token": "INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE",
+         "personal_access_token": "INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE"
       },
       "organization": "contoso",
       "repository": "sample-project",

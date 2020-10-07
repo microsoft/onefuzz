@@ -59,12 +59,12 @@ class GithubIssue:
     def update(self, issue: Issue) -> None:
         logging.info("updating issue: %s", issue)
         if self.config.on_duplicate.comment:
-            issue.create_comment(self.render(self.config.on_duplicate.comment))
+            issue.issue.create_comment(self.render(self.config.on_duplicate.comment))
         if self.config.on_duplicate.labels:
             labels = [self.render(x) for x in self.config.on_duplicate.labels]
-            issue.edit(labels=labels)
+            issue.issue.edit(labels=labels)
         if self.config.on_duplicate.reopen and issue.state != "open":
-            issue.edit(state="open")
+            issue.issue.edit(state="open")
 
     def create(self) -> None:
         logging.info("creating issue")
