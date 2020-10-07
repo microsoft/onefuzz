@@ -24,11 +24,9 @@ from azure.devops.v6_0.work_item_tracking.work_item_tracking_client import (
     WorkItemTrackingClient,
 )
 from memoization import cached
-from onefuzztypes.enums import ErrorCode
-from onefuzztypes.models import ADOTemplate, Error, Report
+from onefuzztypes.models import ADOTemplate, Report
 
-from ..tasks.main import Task
-from .common import Render
+from .common import Render, fail_task
 
 
 @cached(ttl=60)
@@ -199,21 +197,6 @@ class ADO:
 
         if not seen:
             self.create_new()
-
-
-def fail_task(report: Report, error: Exception) -> None:
-    logging.error(
-        "ADO report failed: job_id:%s task_id:%s err:%s",
-        report.job_id,
-        report.task_id,
-        error,
-    )
-
-    task = Task.get(report.job_id, report.task_id)
-    if task:
-        task.mark_failed(
-            Error(code=ErrorCode.NOTIFICATION_FAILURE, errors=[str(error)])
-        )
 
 
 def notify_ado(
