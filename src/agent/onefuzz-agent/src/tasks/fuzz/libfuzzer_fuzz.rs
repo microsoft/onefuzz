@@ -9,8 +9,10 @@ use crate::tasks::{
 use anyhow::Result;
 use futures::{future::try_join_all, stream::StreamExt};
 use onefuzz::{
+    fs::list_files,
     libfuzzer::{LibFuzzer, LibFuzzerLine},
     monitor::DirectoryMonitor,
+    process::ExitStatus,
     system,
     telemetry::{
         Event::{new_coverage, new_result, process_stats, runtime_stats},
@@ -19,9 +21,11 @@ use onefuzz::{
     uploader::BlobUploader,
 };
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf, process::ExitStatus};
+use std::{collections::HashMap, path::PathBuf};
+use tempfile::tempdir;
 use tokio::{
-    io,
+    fs::rename,
+    io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
     task,
     time::{self, Duration},
@@ -82,7 +86,7 @@ impl LibFuzzerFuzzTask {
         let report_stats = report_runtime_stats(workers as usize, stats_receiver, hb_client);
 
         let fuzzers: Vec<_> = (0..workers)
-            .map(|id| self.start_fuzzer_monitor(id, stats_sender.clone()))
+            .map(|id| self.start_fuzzer_monitor(id, Some(&stats_sender)))
             .collect();
 
         let fuzzers = try_join_all(fuzzers);
@@ -96,22 +100,21 @@ impl LibFuzzerFuzzTask {
     //
     // A run is one session of continuous fuzzing, terminated by a fuzzing error
     // or discovered fault. The monitor restarts the libFuzzer when it exits.
-    async fn start_fuzzer_monitor(&self, worker_id: u64, stats_sender: StatsSender) -> Result<()> {
+    pub async fn start_fuzzer_monitor(
+        &self,
+        worker_id: u64,
+        stats_sender: Option<&StatsSender>,
+    ) -> Result<()> {
         loop {
-            let run = self.run_fuzzer(worker_id, stats_sender.clone());
-
-            if let Err(err) = run.await {
-                error!("Fuzzer run failed: {}", err);
-            }
+            self.run_fuzzer(worker_id, stats_sender).await?;
         }
     }
 
     // Fuzz with a libFuzzer until it exits.
     //
     // While it runs, parse stderr for progress metrics, and report them.
-    async fn run_fuzzer(&self, worker_id: u64, stats_sender: StatsSender) -> Result<ExitStatus> {
-        use io::AsyncBufReadExt;
-
+    async fn run_fuzzer(&self, worker_id: u64, stats_sender: Option<&StatsSender>) -> Result<()> {
+        let crash_dir = tempdir()?;
         let run_id = Uuid::new_v4();
 
         info!("starting fuzzer run, run_id = {}", run_id);
@@ -129,8 +132,7 @@ impl LibFuzzerFuzzTask {
             &self.config.target_options,
             &self.config.target_env,
         );
-        let mut running =
-            fuzzer.fuzz(&self.config.crashes.path, &self.config.inputs.path, &inputs)?;
+        let mut running = fuzzer.fuzz(crash_dir.path(), &self.config.inputs.path, &inputs)?;
 
         let sys_info = task::spawn(report_fuzzer_sys_info(worker_id, run_id, running.id()));
 
@@ -139,27 +141,42 @@ impl LibFuzzerFuzzTask {
             .stderr
             .as_mut()
             .ok_or_else(|| format_err!("stderr not captured"))?;
-        let stderr = io::BufReader::new(stderr);
+        let stderr = BufReader::new(stderr);
 
-        stderr
-            .lines()
-            .for_each(|line| {
-                let stats_sender = stats_sender.clone();
-
-                async move {
-                    let line = line.map_err(|e| e.into());
-
-                    if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, line)
-                    {
-                        error!("could not parse fuzzing iteration update: {}", err);
-                    }
+        let mut libfuzzer_output = Vec::new();
+        let mut lines = stderr.lines();
+        while let Some(line) = lines.next_line().await? {
+            if let Some(stats_sender) = stats_sender {
+                if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, &line) {
+                    error!("could not parse fuzzing interation update: {}", err);
                 }
-            })
-            .await;
+            }
+            libfuzzer_output.push(line);
+        }
 
         let (exit_status, _) = tokio::join!(running, sys_info);
+        let exit_status: ExitStatus = exit_status?.into();
 
-        Ok(exit_status?)
+        let files = list_files(crash_dir.path()).await?;
+
+        // ignore libfuzzer exiting cleanly without crashing, which could happen via
+        // -runs=N
+        if !exit_status.success && files.is_empty() {
+            bail!(
+                "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
+                serde_json::to_string(&exit_status)?,
+                libfuzzer_output.join("\n")
+            );
+        }
+
+        for file in &files {
+            if let Some(filename) = file.file_name() {
+                let dest = self.config.crashes.path.join(filename);
+                rename(file, dest).await?;
+            }
+        }
+
+        Ok(())
     }
 
     async fn init_directories(&self) -> Result<()> {
@@ -195,9 +212,7 @@ impl LibFuzzerFuzzTask {
 
     async fn monitor_new_corpus(&self) -> Result<()> {
         let url = self.config.inputs.url.url();
-        let dir = self.config.inputs.path.clone();
-
-        let mut monitor = DirectoryMonitor::new(dir);
+        let mut monitor = DirectoryMonitor::new(&self.config.inputs.path);
         monitor.start()?;
 
         monitor
@@ -247,15 +262,12 @@ impl LibFuzzerFuzzTask {
 }
 
 fn try_report_iter_update(
-    stats_sender: StatsSender,
+    stats_sender: &StatsSender,
     worker_id: u64,
     run_id: Uuid,
-    line: Result<String>,
+    line: &str,
 ) -> Result<()> {
-    let line = line?;
-    let line = LibFuzzerLine::parse(line)?;
-
-    if let Some(line) = line {
+    if let Some(line) = LibFuzzerLine::parse(line)? {
         stats_sender.send(RuntimeStats {
             worker_id,
             run_id,
