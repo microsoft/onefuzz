@@ -5,9 +5,9 @@ use std::process::{Child, Command, Stdio};
 
 use anyhow::Result;
 use downcast_rs::Downcast;
+use onefuzz::process::{ExitStatus, Output};
 use tokio::fs;
 
-use crate::process::*;
 use crate::work::*;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
