@@ -12,7 +12,7 @@
 use std::{
     collections::HashMap,
     fs,
-    io::{Read, Write},
+    io::Write,
     path::{Path, PathBuf},
     sync::Arc,
     time::Duration,
@@ -23,7 +23,7 @@ use coverage::AppCoverageBlocks;
 use log::{error, info, trace, warn};
 use num_cpus;
 use rayon::{prelude::*, ThreadPoolBuilder};
-use sha1::{Digest, Sha1};
+use sha2::{Digest, Sha256};
 
 use crate::{
     appverifier::{self, AppVerifierController, AppVerifierState},
@@ -450,18 +450,12 @@ fn most_serious_exception(result: &DebuggerResult) -> &Exception {
     a_throw.unwrap_or(&result.exceptions[0])
 }
 
-/// Read the file and hash the file contents using sha1.
-/// We don't have security concerns, so a collision attack is a non-issue. Also, both git and
-/// libfuzzer use sha1, so it's still a reasonable choice.
-///
+/// Read the file and hash the file contents using sha2.
 /// Returns the digest of the hash as a string in lowercase hex.
 fn hash_file_contents(file: impl AsRef<Path>) -> Result<String> {
-    let mut file = fs::File::open(file.as_ref())
-        .with_context(|| format!("opening {} to hash", file.as_ref().display()))?;
-    let mut data = Vec::new();
-    file.read_to_end(&mut data)?;
-    let digest = Sha1::digest(&data);
-    Ok(format!("{:040x}", &digest))
+    let data = fs::read(file.as_ref())?;
+    let digest = Sha256::digest(&data);
+    Ok(hex::encode(&digest[..]))
 }
 
 /// Copy file to directory, but hash the file contents to use as the filename
