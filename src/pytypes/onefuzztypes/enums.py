@@ -286,7 +286,7 @@ class ScalesetState(Enum):
         """ set of states that indicate scaleset is resizing """
         return [
             cls.halt,
-            cls.resize,
+            cls.init,
             cls.setup,
         ]
 
