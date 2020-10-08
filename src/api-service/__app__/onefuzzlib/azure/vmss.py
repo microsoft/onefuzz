@@ -9,7 +9,10 @@ from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
 from azure.mgmt.compute import ComputeManagementClient
-from azure.mgmt.compute.models import ResourceSku, ResourceSkuRestrictionsType
+from azure.mgmt.compute.models import (
+    ResourceSku,
+    ResourceSkuRestrictionsType,
+)
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode

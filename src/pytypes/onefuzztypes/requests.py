@@ -18,7 +18,7 @@ from .enums import (
     ScalesetState,
     TaskState,
 )
-from .models import NotificationConfig
+from .models import NotificationConfig, AutoScaleConfig
 from .primitives import Container, PoolName, Region
 
 
@@ -91,11 +91,7 @@ class PoolCreate(BaseRequest):
     arch: Architecture
     managed: bool
     client_id: Optional[UUID]
-    max_size: int
-    vm_sku: str
-    image: str
-    spot_instances: bool
-    region: Optional[Region]
+    autoscale: Optional[AutoScaleConfig]
 
 
 class PoolSearch(BaseRequest):

@@ -282,12 +282,12 @@ class ScalesetState(Enum):
         return [x for x in cls if x not in unavailable]
 
     @classmethod
-    def is_resizing(cls) -> List["ScalesetState"]:
+    def modifying(cls) -> List["ScalesetState"]:
         """ set of states that indicate scaleset is resizing """
         return [
             cls.halt,
             cls.resize,
-            cls.shutdown,
+            cls.setup,
         ]
 
 

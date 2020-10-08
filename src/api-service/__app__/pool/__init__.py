@@ -12,6 +12,7 @@ from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 
 from ..onefuzzlib.azure.creds import get_base_region, get_instance_name, get_regions
+from ..onefuzzlib.azure.vmss import list_available_skus
 from ..onefuzzlib.pools import Pool
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -68,16 +69,52 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info(request)
 
-    if request.region is None:
-        region = get_base_region()
-    else:
-        if request.region not in get_regions():
+    if request.autoscale:
+        if request.autoscale.region is None:
+            request.autoscale.region = get_base_region()
+        else:
+            if request.autoscale.region not in get_regions():
+                return not_ok(
+                    Error(code=ErrorCode.UNABLE_TO_CREATE, errors=["invalid region"]),
+                    context="poolcreate",
+                )
+
+        region = request.autoscale.region
+
+        if request.autoscale.vm_sku not in list_available_skus(region):
             return not_ok(
-                Error(code=ErrorCode.UNABLE_TO_CREATE, errors=["invalid region"]),
+                Error(
+                    code=ErrorCode.UNABLE_TO_CREATE,
+                    errors=[
+                        "The specified vm_sku '%s' is not available in the location '%s'"
+                        % (request.autoscale.vm_sku, region)
+                    ],
+                ),
                 context="poolcreate",
             )
 
-        region = request.region
+        if request.autoscale.max_size:
+            if request.autoscale.min_size > request.autoscale.max_size:
+                return not_ok(
+                    Error(
+                        code=ErrorCode.UNABLE_TO_CREATE,
+                        errors=["The specified pool min_size is greater than max_size"],
+                    ),
+                    context="poolcreate",
+                )
+
+            if (
+                request.autoscale.min_size < 0
+                or request.autoscale.max_size < 1
+                or request.autoscale.scaleset_size < 1
+            ):
+                return not_ok(
+                    Error(
+                        code=ErrorCode.UNABLE_TO_CREATE,
+                        errors=["Autoscale sizes are not defined properly"],
+                    ),
+                    context="poolcreate",
+                )
 
     pool = Pool.create(
         name=request.name,
@@ -85,11 +122,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         arch=request.arch,
         managed=request.managed,
         client_id=request.client_id,
-        max_size=request.max_size,
-        vm_sku=request.vm_sku,
-        image=request.image,
-        spot_instances=request.spot_instances,
-        region=region,
+        autoscale=request.autoscale,
     )
     pool.save()
     return ok(set_config(pool))

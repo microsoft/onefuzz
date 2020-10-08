@@ -16,7 +16,7 @@ from onefuzztypes.enums import (
     PoolState,
     ScalesetState,
 )
-from onefuzztypes.models import Error
+from onefuzztypes.models import AutoScaleConfig, Error
 from onefuzztypes.models import Node as BASE_NODE
 from onefuzztypes.models import NodeAssignment, NodeCommand
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
@@ -327,11 +327,7 @@ class Pool(BASE_POOL, ORMMixin):
         arch: Architecture,
         managed: bool,
         client_id: Optional[UUID],
-        max_size: int,  # scaleset max size
-        vm_sku: str,
-        image: str,
-        spot_instances: bool,
-        region: Region,
+        autoscale: Optional[AutoScaleConfig],
     ) -> "Pool":
         return cls(
             name=name,
@@ -340,11 +336,7 @@ class Pool(BASE_POOL, ORMMixin):
             managed=managed,
             client_id=client_id,
             config=None,
-            max_size=max_size,
-            vm_sku=vm_sku,
-            image=image,
-            spot_instances=spot_instances,
-            region=region,
+            autoscale=autoscale,
         )
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:

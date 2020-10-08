@@ -16,12 +16,13 @@ from ..onefuzzlib.tasks.main import Task
 
 
 def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
-    logging.info(f"Nodes needed: {nodes_needed}")
+    logging.info("Scaling up")
+    autoscale_config = pool.autoscale
 
     for scaleset in scalesets:
         if scaleset.state == ScalesetState.running:
 
-            max_size = min(scaleset.max_size(), pool.max_size)
+            max_size = min(scaleset.max_size(), autoscale_config.scaleset_size)
             logging.info(f"Scaleset size: {scaleset.size}, max_size: {max_size}")
             if scaleset.size < max_size:
                 current_size = scaleset.size
@@ -42,29 +43,34 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
 
     for _ in range(
         math.ceil(
-            nodes_needed / min(Scaleset.scaleset_max_size(pool.image), pool.max_size)
+            nodes_needed
+            / min(
+                Scaleset.scaleset_max_size(autoscale_config.image),
+                autoscale_config.scaleset_size,
+            )
         )
     ):
         logging.info(f"Creating Scaleset for Pool {pool.name}")
         max_nodes_scaleset = min(
-            Scaleset.scaleset_max_size(pool.image), pool.max_size, nodes_needed
+            Scaleset.scaleset_max_size(autoscale_config.image),
+            autoscale_config.scaleset_size,
+            nodes_needed,
         )
         scaleset = Scaleset.create(
             pool_name=pool.name,
-            vm_sku=pool.vm_sku,
-            image=pool.image,
-            region=pool.region,
+            vm_sku=autoscale_config.vm_sku,
+            image=autoscale_config.image,
+            region=autoscale_config.region,
             size=max_nodes_scaleset,
-            spot_instances=pool.spot_instances,
+            spot_instances=autoscale_config.spot_instances,
             tags={"pool": pool.name},
         )
         scaleset.save()
-        # don't return auths during create, only 'get' with include_auth
-        scaleset.auth = None
         nodes_needed -= max_nodes_scaleset
 
 
 def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
+    logging.info("Scaling down")
     for scaleset in scalesets:
         nodes = Node.search_states(
             scaleset_id=scaleset.scaleset_id, states=[NodeState.free]
@@ -72,9 +78,11 @@ def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
         if nodes and nodes_to_remove > 0:
             max_nodes_remove = min(len(nodes), nodes_to_remove)
             if max_nodes_remove >= scaleset.size and len(nodes) == scaleset.size:
-                scaleset.state = ScalesetState.halt
+                scaleset.state = ScalesetState.shutdown
                 nodes_to_remove = nodes_to_remove - scaleset.size
                 scaleset.save()
+                for node in nodes:
+                    node.set_shutdown()
                 continue
 
             scaleset.size = scaleset.size - max_nodes_remove
@@ -86,38 +94,46 @@ def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
 def get_vm_count(tasks: List[Task]) -> int:
     count = 0
     for task in tasks:
-        if not task.config.pool:
+        task_pool = task.get_pool()
+        if not task_pool:
             continue
         count += task.config.pool.count
     return count
 
 
 def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
-    pools = Pool.search_states(states=[PoolState.init, PoolState.running])
+    pools = Pool.search_states(states=PoolState.available())
     for pool in pools:
-        tasks = Task.get_tasks_by_pool_name(pool.name)
-        num_of_tasks = 0
-        # get all the tasks (count not stopped) for the pool
-        if not tasks or isinstance(tasks, Error):
+        logging.info(f"autoscale: {pool.autoscale}")
+        if not pool.autoscale:
             continue
 
+        tasks = Task.get_tasks_by_pool_name(pool.name)
+        # get all the tasks (count not stopped) for the pool
+        if not tasks or isinstance(tasks, Error):
+            tasks = []
+
         num_of_tasks = get_vm_count(tasks)
-        logging.info(f"#Tasks: {num_of_tasks}")
+        nodes_needed = max(num_of_tasks, pool.autoscale.min_size)
+        if pool.autoscale.max_size:
+            nodes_needed = min(nodes_needed, pool.autoscale.max_size)
+
         # do scaleset logic match with pool
         # get all the scalesets for the pool
         scalesets = Scaleset.search_by_pool(pool.name)
         pool_resize = False
         for scaleset in scalesets:
-            if scaleset.state in ScalesetState.is_resizing():
+            if scaleset.state in ScalesetState.modifying():
                 pool_resize = True
                 break
-            num_of_tasks = num_of_tasks - scaleset.size
+            nodes_needed = nodes_needed - scaleset.size
 
         if pool_resize:
             continue
 
-        if num_of_tasks > 0:
+        logging.info(f"#Nodes Needed: {nodes_needed}")
+        if nodes_needed > 0:
             # resizing scaleset or creating new scaleset.
-            scale_up(pool, scalesets, num_of_tasks)
-        elif num_of_tasks < 0:
-            scale_down(scalesets, abs(num_of_tasks))
+            scale_up(pool, scalesets, nodes_needed)
+        elif nodes_needed < 0:
+            scale_down(scalesets, abs(nodes_needed))

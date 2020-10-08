@@ -414,21 +414,27 @@ class NodeTasks(BaseModel):
     state: NodeTaskState = Field(default=NodeTaskState.init)
 
 
+class AutoScaleConfig(BaseModel):
+    image: str
+    max_size: Optional[int]  # max size of pool
+    min_size: int = Field(default=0)  # min size of pool
+    region: Optional[Region]
+    scaleset_size: int  # Individual scaleset size
+    spot_instances: bool = Field(default=False)
+    vm_sku: str
+
+
 class Pool(BaseModel):
     name: PoolName
     pool_id: UUID = Field(default_factory=uuid4)
     os: OS
     managed: bool
-    max_size: int
-    vm_sku: str
-    image: str
-    spot_instances: bool
+    autoscale: Optional[AutoScaleConfig]
     arch: Architecture
     state: PoolState = Field(default=PoolState.init)
     client_id: Optional[UUID]
     nodes: Optional[List[Node]]
     config: Optional[AgentConfig]
-    region: Region
 
     # work_queue is explicitly not saved to Tables (see save_exclude).  This is
     # intended to be used to pass the information to the CLI when the CLI asks
