@@ -3,6 +3,8 @@
 There are many ways to contribute to the OneFuzz project: logging bugs,
 submitting pull requests, reporting issues, and creating suggestions.
 
+Please read our [project values](docs/values.md).
+
 ## Reporting Security Issues
 
 **Please do not report security vulnerabilities through public GitHub issues.**
@@ -130,6 +132,15 @@ start development:
 1. Create & push a feature branch
 1. Create a [Draft Pull Request (PR)](https://github.blog/2019-02-14-introducing-draft-pull-requests/)
 1. Work on your changes
+1. Try to follow the existing style of the related code as closely as possible.
+
+#### Python Specific
+
+1. Provide as much context in typing variables as possible.  Example:
+   `Dict[UUID, int]` is better than `Any`.
+1. For a complex set of data, consider using objects (such as
+   [pydantic](https://pydantic-docs.helpmanual.io/) typed data classes) rather
+   than nested Dicts, Tuples, or Lists.
 
 ### Local Build Prerequisites
 
@@ -166,11 +177,11 @@ git pull https://github.com/microsoft/onefuzz.git main
 
 Manage any merge conflicts, commit them, and then push them to your fork.
 
-**Note**: The `microsoft/onefuzz` repository contains GitHub Actions that
-automatically build OneFuzz as well as triage components during our
-development. As you may not want these running on your fork, you can disable
-Actions for your fork by via `https://github.com/<<Your
-Username>>/onefuzz/settings/actions`.
+> 👉 The `microsoft/onefuzz` repository contains GitHub Actions that
+> automatically build OneFuzz as well as triage components during our
+> development. As you may not want these running on your fork, you can disable
+> Actions for your fork by via 
+> `https://github.com/YOUR_USERNAME/onefuzz/settings/actions`.
 
 ### Deploying from a build
 
