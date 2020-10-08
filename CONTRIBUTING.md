@@ -3,7 +3,7 @@
 There are many ways to contribute to the OneFuzz project: logging bugs,
 submitting pull requests, reporting issues, and creating suggestions.
 
-Read our [project values](docs/values.md).
+Please read our [project values](docs/values.md).
 
 ## Reporting Security Issues
 
