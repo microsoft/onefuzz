@@ -256,6 +256,7 @@ def create_vmss(
             },
             "extension_profile": {"extensions": extensions},
         },
+        "single_placement_group": False,
     }
 
     image_os = get_os(location, image)
