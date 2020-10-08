@@ -154,7 +154,7 @@ class Task(BASE_TASK, ORMMixin):
         return task
 
     @classmethod
-    def get_tasks_by_pool_name(cls, pool_name: str) -> List["Task"]:
+    def get_tasks_by_pool_name(cls, pool_name: str) -> Union[Error, List["Task"]]:
         tasks = cls.search_states(states=TaskState.available())
         if not tasks:
             return Error(code=ErrorCode.INVALID_REQUEST, errors=["unable to find task"])

@@ -9,7 +9,7 @@ from typing import List
 
 import azure.functions as func
 from onefuzztypes.enums import NodeState, PoolState, ScalesetState
-from onefuzztypes.models import Error
+from onefuzztypes.models import AutoScaleConfig, Error, TaskPool
 
 from ..onefuzzlib.pools import Node, Pool, Scaleset
 from ..onefuzzlib.tasks.main import Task
@@ -18,6 +18,8 @@ from ..onefuzzlib.tasks.main import Task
 def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
     logging.info("Scaling up")
     autoscale_config = pool.autoscale
+    if not isinstance(autoscale_config, AutoScaleConfig):
+        return
 
     for scaleset in scalesets:
         if scaleset.state == ScalesetState.running:
@@ -56,6 +58,10 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
             autoscale_config.scaleset_size,
             nodes_needed,
         )
+
+        if not autoscale_config.region:
+            raise Exception("Region is missing")
+
         scaleset = Scaleset.create(
             pool_name=pool.name,
             vm_sku=autoscale_config.vm_sku,
@@ -95,7 +101,7 @@ def get_vm_count(tasks: List[Task]) -> int:
     count = 0
     for task in tasks:
         task_pool = task.get_pool()
-        if not task_pool:
+        if not task_pool or not isinstance(task_pool, TaskPool):
             continue
         count += task.config.pool.count
     return count

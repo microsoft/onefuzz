@@ -11,7 +11,7 @@ from onefuzztypes.enums import ErrorCode, PoolState
 from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 
-from ..onefuzzlib.azure.creds import get_base_region, get_instance_name, get_instance_url, get_regions
+from ..onefuzzlib.azure.creds import get_base_region, get_instance_url, get_regions
 from ..onefuzzlib.azure.vmss import list_available_skus
 from ..onefuzzlib.pools import Pool
 from ..onefuzzlib.request import not_ok, ok, parse_request
@@ -86,7 +86,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
                 Error(
                     code=ErrorCode.UNABLE_TO_CREATE,
                     errors=[
-                        "The specified vm_sku '%s' is not available in the location '%s'"
+                        "vm_sku '%s' is not available in the location '%s'"
                         % (request.autoscale.vm_sku, region)
                     ],
                 ),
