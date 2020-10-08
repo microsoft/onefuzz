@@ -223,10 +223,10 @@ pub fn get_stack(
 
     let mut stack = vec![];
 
-    dbghlp.stackwalk_ex(process_handle, thread_handle, |frame, inline_context| {
+    dbghlp.stackwalk_ex(process_handle, thread_handle, |frame_context, frame| {
         // The program counter is the return address, potentially outside of the function
         // performing the call. We subtract 1 to ensure the address is within the call.
-        let program_counter = frame.program_counter().saturating_sub(1);
+        let program_counter = frame_context.program_counter().saturating_sub(1);
 
         let debug_stack_frame = if resolve_symbols {
             if let Ok(module_info) = dbghlp.sym_get_module_info(process_handle, program_counter) {
@@ -235,7 +235,7 @@ pub fn get_stack(
                     &module_info,
                     process_handle,
                     program_counter,
-                    inline_context,
+                    frame.InlineFrameContext,
                 )
             } else {
                 // We ignore the error from sym_get_module_info because corrupt stacks in the
@@ -254,6 +254,9 @@ pub fn get_stack(
         {
             stack.push(debug_stack_frame);
         };
+
+        // We want all frames, so continue walking.
+        true
     })?;
 
     Ok(DebugStack::new(stack))

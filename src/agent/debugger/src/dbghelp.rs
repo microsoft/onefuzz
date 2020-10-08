@@ -303,82 +303,74 @@ impl FrameContext {
         Ok(())
     }
 
-    /*
-    pub fn get_register_u64<R: Into<xed_sys::xed_reg_enum_t>>(&self, reg: R) -> u64 {
-        use xed_reg_enum_t::*;
+    pub fn get_register_u64<R: Into<iced_x86::Register>>(&self, reg: R) -> u64 {
+        use iced_x86::Register::*;
 
         let reg = reg.into();
         let full_register_value = match self {
-            FrameContext::X64(cr) => match reg {
-                XED_REG_RIP => cr.0.Rip,
-                XED_REG_RAX | XED_REG_EAX | XED_REG_AX | XED_REG_AL | XED_REG_AH => {
-                    cr.0.Rax
-                },
-                XED_REG_RBX | XED_REG_EBX | XED_REG_BX | XED_REG_BL | XED_REG_BH => {
-                    cr.0.Rbx
-                },
-                XED_REG_RCX | XED_REG_ECX | XED_REG_CX | XED_REG_CL | XED_REG_CH => {
-                    cr.0.Rcx
-                },
-                XED_REG_RDX | XED_REG_EDX | XED_REG_DX | XED_REG_DL | XED_REG_DH => {
-                    cr.0.Rdx
-                },
-                XED_REG_R8 | XED_REG_R8D | XED_REG_R8W | XED_REG_R8B => cr.0.R8,
-                XED_REG_R9 | XED_REG_R9D | XED_REG_R9W | XED_REG_R9B => cr.0.R9,
-                XED_REG_R10 | XED_REG_R10D | XED_REG_R10W | XED_REG_R10B => cr.0.R10,
-                XED_REG_R11 | XED_REG_R11D | XED_REG_R11W | XED_REG_R11B => cr.0.R11,
-                XED_REG_R12 | XED_REG_R12D | XED_REG_R12W | XED_REG_R12B => cr.0.R12,
-                XED_REG_R13 | XED_REG_R13D | XED_REG_R13W | XED_REG_R13B => cr.0.R13,
-                XED_REG_R14 | XED_REG_R14D | XED_REG_R14W | XED_REG_R14B => cr.0.R14,
-                XED_REG_R15 | XED_REG_R15D | XED_REG_R15W | XED_REG_R15B => cr.0.R15,
-                XED_REG_RDI | XED_REG_EDI | XED_REG_DI | XED_REG_DIL => cr.0.Rdi,
-                XED_REG_RSI | XED_REG_ESI | XED_REG_SI | XED_REG_SIL => cr.0.Rsi,
-                XED_REG_RBP | XED_REG_EBP | XED_REG_BP | XED_REG_BPL => cr.0.Rbx,
-                XED_REG_RSP | XED_REG_ESP | XED_REG_SP | XED_REG_SPL => cr.0.Rsp,
-                XED_REG_EFLAGS => cr.0.EFlags as u64,
-                XED_REG_GS => cr.0.SegGs as u64,
+            FrameContext::X64(cr) => match reg.full_register() {
+                RIP => cr.0.Rip,
+                RAX => cr.0.Rax,
+                RBX => cr.0.Rbx,
+                RCX => cr.0.Rcx,
+                RDX => cr.0.Rdx,
+                R8 => cr.0.R8,
+                R9 => cr.0.R9,
+                R10 => cr.0.R10,
+                R11 => cr.0.R11,
+                R12 => cr.0.R12,
+                R13 => cr.0.R13,
+                R14 => cr.0.R14,
+                R15 => cr.0.R15,
+                RDI => cr.0.Rdi,
+                RSI => cr.0.Rsi,
+                RBP => cr.0.Rbx,
+                RSP => cr.0.Rsp,
+                CS | DS | ES | FS | SS => 0u64,
+                // GS points to the TEB in 64b but there is no official documented way
+                // to return GS.
+                // Unofficially: https://www.geoffchappell.com/studies/windows/win32/ntdll/structs/teb/index.htm
+                // But for now, return 0.
+                GS => 0u64,
                 _ => unimplemented!("Register read {:?}", reg),
             },
 
             FrameContext::X86(cr) => match reg {
-                XED_REG_EIP => cr.Eip as u64,
-                XED_REG_EAX | XED_REG_AX | XED_REG_AL | XED_REG_AH => cr.Eax as u64,
-                XED_REG_EBX | XED_REG_BX | XED_REG_BL | XED_REG_BH => cr.Ebx as u64,
-                XED_REG_ECX | XED_REG_CX | XED_REG_CL | XED_REG_CH => cr.Ecx as u64,
-                XED_REG_EDX | XED_REG_DX | XED_REG_DL | XED_REG_DH => cr.Edx as u64,
-                XED_REG_EDI | XED_REG_DI | XED_REG_DIL => cr.Edi as u64,
-                XED_REG_ESI | XED_REG_SI | XED_REG_SIL => cr.Esi as u64,
-                XED_REG_EBP | XED_REG_BP | XED_REG_BPL => cr.Ebx as u64,
-                XED_REG_ESP | XED_REG_SP | XED_REG_SPL => cr.Esp as u64,
-                XED_REG_EFLAGS => cr.EFlags as u64,
+                EIP => cr.Eip as u64,
+                EAX => cr.Eax as u64,
+                EBX => cr.Ebx as u64,
+                ECX => cr.Ecx as u64,
+                EDX => cr.Edx as u64,
+                EDI => cr.Edi as u64,
+                ESI => cr.Esi as u64,
+                EBP => cr.Ebx as u64,
+                ESP => cr.Esp as u64,
                 _ => unimplemented!("Register read {:?}", reg),
             },
         };
 
         match reg {
-            XED_REG_EAX | XED_REG_EBX | XED_REG_ECX | XED_REG_EDX | XED_REG_R8D |
-            XED_REG_R9D | XED_REG_R10D | XED_REG_R11D | XED_REG_R12D | XED_REG_R13D |
-            XED_REG_R14D | XED_REG_R15D | XED_REG_EDI | XED_REG_ESI | XED_REG_EBP |
-            XED_REG_ESP => full_register_value & 0x0000_0000_ffff_ffff,
+            EAX | EBX | ECX | EDX | R8D | R9D | R10D | R11D | R12D | R13D | R14D | R15D | EDI
+            | ESI | EBP | ESP => full_register_value & 0x0000_0000_ffff_ffff,
 
-            XED_REG_AX | XED_REG_BX | XED_REG_CX | XED_REG_DX | XED_REG_R8W |
-            XED_REG_R9W | XED_REG_R10W | XED_REG_R11W | XED_REG_R12W | XED_REG_R13W |
-            XED_REG_R14W | XED_REG_R15W | XED_REG_DI | XED_REG_SI | XED_REG_BP |
-            XED_REG_SP => full_register_value & 0x0000_0000_0000_ffff,
+            AX | BX | CX | DX | R8W | R9W | R10W | R11W | R12W | R13W | R14W | R15W | DI | SI
+            | BP | SP => full_register_value & 0x0000_0000_0000_ffff,
 
-            XED_REG_AL | XED_REG_BL | XED_REG_CL | XED_REG_DL | XED_REG_R8B |
-            XED_REG_R9B | XED_REG_R10B | XED_REG_R11B | XED_REG_R12B | XED_REG_R13B |
-            XED_REG_R14B | XED_REG_R15B | XED_REG_DIL | XED_REG_SIL | XED_REG_BPL |
-            XED_REG_SPL => full_register_value & 0x0000_0000_0000_00ff,
+            AL | BL | CL | DL | R8L | R9L | R10L | R11L | R12L | R13L | R14L | R15L | DIL | SIL
+            | BPL | SPL => full_register_value & 0x0000_0000_0000_00ff,
 
-            XED_REG_AH | XED_REG_BH | XED_REG_CH | XED_REG_DH => {
-                (full_register_value & 0x0000_ff00) >> 8
-            },
+            AH | BH | CH | DH => (full_register_value & 0x0000_ff00) >> 8,
 
             _ => full_register_value as u64,
         }
     }
-    */
+
+    pub fn get_flags(&self) -> u32 {
+        match self {
+            FrameContext::X64(cr) => cr.0.EFlags,
+            FrameContext::X86(cr) => cr.EFlags,
+        }
+    }
 }
 
 pub fn get_thread_frame(process_handle: HANDLE, thread_handle: HANDLE) -> Result<FrameContext> {
@@ -522,7 +514,7 @@ impl DebugHelpGuard {
         }
     }
 
-    pub fn stackwalk_ex<F: FnMut(&FrameContext, DWORD)>(
+    pub fn stackwalk_ex<F: FnMut(&FrameContext, &STACKFRAME_EX) -> bool>(
         &self,
         process_handle: HANDLE,
         thread_handle: HANDLE,
@@ -538,8 +530,8 @@ impl DebugHelpGuard {
         frame.AddrFrame.Offset = frame_context.frame_pointer();
         frame.AddrFrame.Mode = AddrModeFlat;
 
-        while TRUE
-            == unsafe {
+        loop {
+            let success = unsafe {
                 StackWalkEx(
                     frame_context.machine_type().into(),
                     process_handle,
@@ -552,9 +544,15 @@ impl DebugHelpGuard {
                     None,
                     SYM_STKWALK_DEFAULT,
                 )
+            };
+
+            if success != TRUE {
+                break;
             }
-        {
-            f(&frame_context, frame.InlineFrameContext);
+
+            if !f(&frame_context, &frame) {
+                break;
+            }
         }
 
         Ok(())

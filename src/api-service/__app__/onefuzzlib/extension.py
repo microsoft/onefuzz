@@ -12,7 +12,7 @@ from onefuzztypes.models import AgentConfig, ReproConfig
 from onefuzztypes.primitives import Extension, Region
 
 from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
-from .azure.creds import get_func_storage, get_instance_name
+from .azure.creds import get_func_storage, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .reports import get_report
 
@@ -91,7 +91,7 @@ def dependency_extension(region: Region, os: OS) -> Optional[Extension]:
 def build_pool_config(pool_name: str) -> str:
     agent_config = AgentConfig(
         pool_name=pool_name,
-        onefuzz_url="https://%s.azurewebsites.net" % get_instance_name(),
+        onefuzz_url=get_instance_url(),
         instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
     )

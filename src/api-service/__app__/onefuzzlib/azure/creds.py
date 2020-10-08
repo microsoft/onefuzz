@@ -96,6 +96,11 @@ def get_instance_name() -> str:
     return os.environ["ONEFUZZ_INSTANCE_NAME"]
 
 
+@cached
+def get_instance_url() -> str:
+    return "https://%s.azurewebsites.net" % get_instance_name()
+
+
 @cached(ttl=60)
 def get_regions() -> List[str]:
     client = mgmt_client_factory(SubscriptionClient)

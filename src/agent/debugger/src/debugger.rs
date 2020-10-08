@@ -21,9 +21,14 @@ use anyhow::{Context, Result};
 use log::{error, trace};
 use win_util::{check_winapi, file, last_os_error, process};
 use winapi::{
-    shared::minwindef::{DWORD, FALSE, LPCVOID, LPVOID, TRUE},
+    shared::{
+        minwindef::{DWORD, FALSE, LPCVOID, LPVOID, TRUE},
+        winerror::ERROR_SEM_TIMEOUT,
+    },
     um::{
+        dbghelp::ADDRESS64,
         debugapi::{ContinueDebugEvent, WaitForDebugEvent},
+        errhandlingapi::GetLastError,
         handleapi::CloseHandle,
         minwinbase::{
             CREATE_PROCESS_DEBUG_INFO, CREATE_THREAD_DEBUG_INFO, EXCEPTION_BREAKPOINT,
@@ -43,7 +48,6 @@ use crate::{
     debug_event::{DebugEvent, DebugEventInfo},
     stack,
 };
-use winapi::{shared::winerror::ERROR_SEM_TIMEOUT, um::errhandlingapi::GetLastError};
 
 // When debugging a WoW64 process, we see STATUS_WX86_BREAKPOINT in addition to EXCEPTION_BREAKPOINT
 const STATUS_WX86_BREAKPOINT: u32 = ::winapi::shared::ntstatus::STATUS_WX86_BREAKPOINT as u32;
@@ -62,6 +66,7 @@ enum StepState {
 pub enum BreakpointType {
     Counter,
     OneTime,
+    StepOut { rsp: u64 },
 }
 
 struct ModuleBreakpoint {
@@ -89,12 +94,34 @@ struct Breakpoint {
     /// Currently active?
     enabled: bool,
 
-    /// When the breakpoint is active, holds the original byte at the location
+    /// Holds the original byte at the location.
     original_byte: Option<u8>,
 
     hit_count: usize,
 
     id: BreakpointId,
+}
+
+pub struct StackFrame {
+    return_address: u64,
+    stack_pointer: u64,
+}
+
+impl StackFrame {
+    pub fn new(return_address: u64, stack_pointer: u64) -> Self {
+        StackFrame {
+            return_address,
+            stack_pointer,
+        }
+    }
+
+    pub fn return_address(&self) -> u64 {
+        self.return_address
+    }
+
+    pub fn stack_pointer(&self) -> u64 {
+        self.stack_pointer
+    }
 }
 
 struct Module {
@@ -308,6 +335,36 @@ impl Target {
         }
     }
 
+    fn apply_absolute_breakpoint(
+        &mut self,
+        address: u64,
+        kind: BreakpointType,
+        id: BreakpointId,
+    ) -> Result<()> {
+        let original_byte: u8 = process::read_memory(self.process_handle, address as LPVOID)?;
+
+        self.breakpoints
+            .entry(address)
+            .and_modify(|e| {
+                e.kind = kind;
+                e.enabled = true;
+                e.original_byte = Some(original_byte);
+                e.id = id;
+            })
+            .or_insert(Breakpoint {
+                ip: address,
+                kind,
+                enabled: true,
+                original_byte: Some(original_byte),
+                hit_count: 0,
+                id,
+            });
+
+        write_instruction_byte(self.process_handle, address, 0xcc)?;
+
+        Ok(())
+    }
+
     fn apply_module_breakpoints(
         &mut self,
         base_address: u64,
@@ -362,7 +419,6 @@ impl Target {
         }
 
         process::write_memory_slice(self.process_handle, remote_address, &buffer[..])?;
-
         process::flush_instruction_cache(self.process_handle, remote_address, region_size)?;
 
         Ok(())
@@ -405,42 +461,75 @@ impl Target {
         Ok(self.current_context.as_mut().unwrap())
     }
 
-    /// Check the exception for any breakpoints or other breakpoint related exceptions.
-    /// If it is a breakpoint:
-    ///   * If we set it, handle it appropriately, return true.
-    ///   * If not, return false so it is passed on to the program and can be reported as a crash.
-    fn handle_breakpoint(&mut self, pc: u64) -> Result<BreakpointId> {
-        let (bp_id, single_step) = {
+    fn read_register_u64(&mut self, reg: iced_x86::Register) -> Result<u64> {
+        let current_context = self.get_current_context()?;
+        Ok(current_context.get_register_u64(reg))
+    }
+
+    fn read_flags_register(&mut self) -> Result<u32> {
+        let current_context = self.get_current_context()?;
+        Ok(current_context.get_flags())
+    }
+
+    /// Handle a breakpoint that we set (as opposed to a breakpoint in user code, e.g.
+    /// assertion.)
+    ///
+    /// Return the breakpoint id if it should be reported to the client.
+    fn handle_breakpoint(&mut self, pc: u64) -> Result<Option<BreakpointId>> {
+        enum HandleBreakpoint {
+            User(BreakpointId, bool),
+            StepOut(u64),
+        }
+
+        let handle_breakpoint = {
             let bp = self.breakpoints.get_mut(&pc).unwrap();
 
             bp.hit_count += 1;
 
             write_instruction_byte(self.process_handle, bp.ip, bp.original_byte.unwrap())?;
 
-            let single_step = if let BreakpointType::OneTime = bp.kind {
-                bp.enabled = false;
-                bp.original_byte = None;
+            match bp.kind {
+                BreakpointType::OneTime => {
+                    bp.enabled = false;
+                    bp.original_byte = None;
 
-                // We are clearing the breakpoint after hitting it, so we do not need
-                // to single step.
-                false
-            } else {
-                // Single step so we can restore the breakpoint after stepping.
-                true
-            };
+                    // We are clearing the breakpoint after hitting it, so we do not need
+                    // to single step.
+                    HandleBreakpoint::User(bp.id, false)
+                }
 
-            (bp.id, single_step)
+                BreakpointType::Counter => {
+                    // Single step so we can restore the breakpoint after stepping.
+                    HandleBreakpoint::User(bp.id, true)
+                }
+
+                BreakpointType::StepOut { rsp } => HandleBreakpoint::StepOut(rsp),
+            }
         };
 
         let context = self.get_current_context_mut()?;
         context.set_program_counter(pc);
+
+        // We need to single step if we need to restore the breakpoint.
+        let single_step = match handle_breakpoint {
+            HandleBreakpoint::User(_, single_step) => single_step,
+
+            // Single step only when in a recursive call, which is inferred when the current
+            // stack pointer (from context) is less then at the target to step out from (rsp).
+            // Note this only works if the stack grows down.
+            HandleBreakpoint::StepOut(rsp) => rsp > context.stack_pointer(),
+        };
+
         if single_step {
             context.set_single_step(true);
             self.single_step
                 .insert(self.current_thread_handle, StepState::Breakpoint { pc });
         }
 
-        Ok(bp_id)
+        Ok(match handle_breakpoint {
+            HandleBreakpoint::User(id, _) => Some(id),
+            HandleBreakpoint::StepOut(_) => None,
+        })
     }
 
     fn handle_single_step(&mut self, step_state: StepState) -> Result<()> {
@@ -626,6 +715,19 @@ impl Debugger {
 
         module_breakpoints.push(ModuleBreakpoint { rva, kind, id });
         id
+    }
+
+    pub fn register_absolute_breakpoint(
+        &mut self,
+        address: u64,
+        kind: BreakpointType,
+    ) -> Result<BreakpointId> {
+        let id = self.next_breakpoint_id();
+
+        self.target.apply_absolute_breakpoint(address, kind, id)?;
+        // TODO: find module the address belongs to and add to registered_breakpoints
+
+        Ok(id)
     }
 
     /// Return true if an event was process, false if timing out, or an error.
@@ -838,8 +940,9 @@ impl Debugger {
             }
             Some(DebuggerNotification::Clr) => Ok(DBG_CONTINUE),
             Some(DebuggerNotification::Breakpoint(pc)) => {
-                let bp_id = self.target.handle_breakpoint(pc)?;
-                callbacks.on_breakpoint(self, bp_id);
+                if let Some(bp_id) = self.target.handle_breakpoint(pc)? {
+                    callbacks.on_breakpoint(self, bp_id);
+                }
                 Ok(DBG_CONTINUE)
             }
             Some(DebuggerNotification::SingleStep(step_state)) => {
@@ -926,12 +1029,12 @@ impl Debugger {
         self.target.current_thread_handle as u64
     }
 
-    pub fn get_current_context(&mut self) -> Result<&FrameContext> {
-        self.target.get_current_context()
+    pub fn read_register_u64(&mut self, reg: iced_x86::Register) -> Result<u64> {
+        self.target.read_register_u64(reg)
     }
 
-    pub fn get_current_context_mut(&mut self) -> Result<&mut FrameContext> {
-        self.target.get_current_context_mut()
+    pub fn read_flags_register(&mut self) -> Result<u32> {
+        self.target.read_flags_register()
     }
 
     pub fn get_current_target_memory<T: Copy>(
@@ -943,10 +1046,49 @@ impl Debugger {
         Ok(())
     }
 
+    pub fn get_current_frame(&self) -> Result<StackFrame> {
+        let dbghlp = dbghelp::lock()?;
+
+        let mut return_address = ADDRESS64::default();
+        let mut stack_pointer = ADDRESS64::default();
+        dbghlp.stackwalk_ex(
+            self.target.process_handle,
+            self.target.current_thread_handle,
+            |_frame_context, frame| {
+                return_address = frame.AddrReturn;
+                stack_pointer = frame.AddrStack;
+
+                // We only want the top frame, so stop walking.
+                false
+            },
+        )?;
+
+        Ok(StackFrame::new(return_address.Offset, stack_pointer.Offset))
+    }
+
     pub fn step(&mut self) -> Result<bool> {
         self.target.prepare_to_step()?;
         self.continue_debugging()?;
         Ok(true)
+    }
+
+    /// Find the return address (and stack pointer to cover recursion), set a breakpoint
+    /// (internal, not reported to the client) that gets cleared after stepping out.
+    ///
+    /// The return address and stack pointer are returned so the caller can check
+    /// that the step out is complete regardless of other debug events that may happen before
+    /// hitting the breakpoint at the return address.
+    pub fn prepare_to_step_out(&mut self) -> Result<StackFrame> {
+        let stack_frame = self.get_current_frame()?;
+        let address = stack_frame.return_address();
+        self.register_absolute_breakpoint(
+            address,
+            BreakpointType::StepOut {
+                rsp: stack_frame.stack_pointer(),
+            },
+        )?;
+
+        Ok(stack_frame)
     }
 }
 
