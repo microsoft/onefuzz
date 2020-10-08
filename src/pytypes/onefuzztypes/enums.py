@@ -327,3 +327,13 @@ class NodeState(Enum):
         # If Node is in one of these states, ignore updates
         # from the agent.
         return [cls.done, cls.shutdown, cls.halt]
+
+
+class GithubIssueState(Enum):
+    open = "open"
+    closed = "closed"
+
+
+class GithubIssueSearchMatch(Enum):
+    title = "title"
+    body = "body"

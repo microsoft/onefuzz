@@ -16,8 +16,8 @@ from .__version__ import __version__
 def read_local_file(filename: str) -> str:
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)), filename)
     if os.path.exists(path):
-        with open(path, "rb") as handle:
-            return handle.read().strip().decode("utf-16")
+        with open(path, "r") as handle:
+            return handle.read().strip()
     else:
         return "UNKNOWN"
 
