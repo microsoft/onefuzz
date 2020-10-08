@@ -315,6 +315,7 @@ dependencies = [
  "anyhow",
  "fnv",
  "goblin",
+ "iced-x86",
  "log",
  "memmap",
  "serde",
