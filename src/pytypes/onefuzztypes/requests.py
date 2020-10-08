@@ -18,7 +18,7 @@ from .enums import (
     ScalesetState,
     TaskState,
 )
-from .models import NotificationConfig, AutoScaleConfig
+from .models import AutoScaleConfig, NotificationConfig
 from .primitives import Container, PoolName, Region
 
 
