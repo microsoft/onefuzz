@@ -341,25 +341,26 @@ macro_rules! event {
 #[macro_export]
 macro_rules! log {
     ($level: expr, $msg: expr) => {{
-        use appinsights::telemetry::SeverityLevel;
-        use SeverityLevel::*;
+        use appinsights::telemetry::SeverityLevel::{
+            Critical, Error, Information, Verbose, Warning,
+        };
 
-        {
-            let log_level = match $level {
-                SeverityLevel::Verbose => log::Level::Debug,
-                SeverityLevel::Information => log::Level::Info,
-                SeverityLevel::Warning => log::Level::Warn,
-                SeverityLevel::Error => log::Level::Error,
-                SeverityLevel::Critical => log::Level::Error,
-            };
+        let log_level = match $level {
+            Verbose => log::Level::Debug,
+            Information => log::Level::Info,
+            Warning => log::Level::Warn,
+            Error => log::Level::Error,
+            Critical => log::Level::Error,
+        };
 
-            let log_msg = $msg.to_string();
+        let log_msg = $msg.to_string();
 
-            log::log!(log_level, "{}", log_msg)
-        }
-
-        if let Some(client) = $crate::telemetry::client($crate::telemetry::ClientType::Instance) {
-            client.track_trace($msg, $level);
+        log::log!(log_level, "{}", log_msg);
+        if log_level <= log::max_level() {
+            if let Some(client) = $crate::telemetry::client($crate::telemetry::ClientType::Instance)
+            {
+                client.track_trace($msg, $level);
+            }
         }
     }};
 }
