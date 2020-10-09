@@ -13,10 +13,19 @@ from .orm import ORMMixin
 
 
 class TaskEvent(BASE_TASK_EVENT, ORMMixin):
+    # handle sorting TaskEvents even if one or more of Timestamps are not set yet
+    def __lt__(self, other: "TaskEvent") -> bool:
+        if self.Timestamp is None:
+            return False
+        elif other.Timestamp is None:
+            return True
+        else:
+            return self.Timestamp < other.Timestamp
+
     @classmethod
     def get_summary(cls, task_id: UUID) -> List[TaskEventSummary]:
         events = cls.search(query={"task_id": [task_id]})
-        events.sort(key=lambda e: e.Timestamp)
+        events.sort()
 
         return [
             TaskEventSummary(
