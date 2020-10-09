@@ -82,7 +82,7 @@ impl From<process_control::ExitStatus> for ExitStatus {
             success: status.success(),
         }
     }
-    
+
     #[cfg(target_os = "linux")]
     fn from(status: process_control::ExitStatus) -> Self {
         Self {
