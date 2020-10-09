@@ -131,6 +131,20 @@ pub fn add_asan_log_env<S: BuildHasher>(env: &mut HashMap<String, String, S>, as
     }
 }
 
+pub async fn check_asan_string(mut data: String) -> Result<Option<AsanLog>> {
+    let asan = AsanLog::parse(data.clone());
+    if asan.is_some() {
+        return Ok(asan);
+    } else {
+        if data.len() > 1024 {
+            data.truncate(1024);
+            data.push_str("...<truncated>");
+        }
+        warn!("unable to parse asan log from string: {:?}", data);
+        Ok(None)
+    }
+}
+
 pub async fn check_asan_path(asan_dir: &Path) -> Result<Option<AsanLog>> {
     let mut entries = fs::read_dir(asan_dir).await?;
     while let Some(file) = entries.next().await {
