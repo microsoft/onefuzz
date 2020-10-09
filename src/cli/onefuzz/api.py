@@ -820,6 +820,18 @@ class Pool(Endpoint):
         image: Optional[str] = None,
         spot_instances: bool = False,
     ) -> models.Pool:
+        """
+        Create a worker pool
+
+        :param str name: Name of the worker-pool
+        :param Optional[int] min_size: Specify the minimum instance size of the pool
+        (when autoscaled)
+        :param Optional[int] max_size: Specify the maximum instance size of the pool
+        (when autoscaled)
+        :param Optional[int] scaleset_size: Specify the maximum size of the scaleset
+        (when autoscaled)
+        :param bool autoscale: To autoscale pool, scalesets and instances
+        """
         self.logger.debug("create worker pool")
         managed = not unmanaged
 

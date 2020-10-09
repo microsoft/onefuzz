@@ -127,7 +127,7 @@ def on_state_update(
                             done_data,
                         )
         else:
-            logging.info("No change in Node state")
+            logging.debug("No change in Node state")
     else:
         logging.info("ignoring state updates from the node: %s: %s", machine_id, state)
 

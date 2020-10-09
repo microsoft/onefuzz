@@ -77,7 +77,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
     registration_request = parse_uri(AgentRegistrationPost, req)
-    logging.info(f"request: {registration_request}")
+    logging.info("Registration request: %s", (registration_request))
     if isinstance(registration_request, Error):
         return not_ok(registration_request, context="agent registration")
 

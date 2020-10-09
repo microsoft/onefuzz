@@ -25,7 +25,10 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
         if scaleset.state == ScalesetState.running:
 
             max_size = min(scaleset.max_size(), autoscale_config.scaleset_size)
-            logging.info(f"Scaleset size: {scaleset.size}, max_size: {max_size}")
+            logging.info(
+                "Sacleset id: %s, Scaleset size: %d, max_size: %d"
+                % (scaleset.scaleset_id, scaleset.size, max_size)
+            )
             if scaleset.size < max_size:
                 current_size = scaleset.size
                 if nodes_needed <= max_size - current_size:
@@ -52,7 +55,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
             )
         )
     ):
-        logging.info(f"Creating Scaleset for Pool {pool.name}")
+        logging.info("Creating Scaleset for Pool %s" % (pool.name))
         max_nodes_scaleset = min(
             Scaleset.scaleset_max_size(autoscale_config.image),
             autoscale_config.scaleset_size,
@@ -101,7 +104,7 @@ def get_vm_count(tasks: List[Task]) -> int:
     count = 0
     for task in tasks:
         task_pool = task.get_pool()
-        if not task_pool or not isinstance(task_pool, TaskPool):
+        if not task_pool or not isinstance(task_pool, Pool):
             continue
         count += task.config.pool.count
     return count
@@ -110,14 +113,13 @@ def get_vm_count(tasks: List[Task]) -> int:
 def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     pools = Pool.search_states(states=PoolState.available())
     for pool in pools:
-        logging.info(f"autoscale: {pool.autoscale}")
+        logging.info("autoscale: %s" % (pool.autoscale))
         if not pool.autoscale:
             continue
 
-        tasks = Task.get_tasks_by_pool_name(pool.name)
         # get all the tasks (count not stopped) for the pool
-        if not tasks or isinstance(tasks, Error):
-            tasks = []
+        tasks = Task.get_tasks_by_pool_name(pool.name)
+        logging.info("Pool: %s, #Tasks %d" % (pool.name, len(tasks)))
 
         num_of_tasks = get_vm_count(tasks)
         nodes_needed = max(num_of_tasks, pool.autoscale.min_size)
@@ -137,7 +139,7 @@ def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
         if pool_resize:
             continue
 
-        logging.info(f"#Nodes Needed: {nodes_needed}")
+        logging.info("Pool: %s, #Nodes Needed: %d" % (pool.name, nodes_needed))
         if nodes_needed > 0:
             # resizing scaleset or creating new scaleset.
             scale_up(pool, scalesets, nodes_needed)

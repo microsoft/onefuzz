@@ -93,29 +93,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
                 context="poolcreate",
             )
 
-        if request.autoscale.max_size:
-            if request.autoscale.min_size > request.autoscale.max_size:
-                return not_ok(
-                    Error(
-                        code=ErrorCode.UNABLE_TO_CREATE,
-                        errors=["The specified pool min_size is greater than max_size"],
-                    ),
-                    context="poolcreate",
-                )
-
-            if (
-                request.autoscale.min_size < 0
-                or request.autoscale.max_size < 1
-                or request.autoscale.scaleset_size < 1
-            ):
-                return not_ok(
-                    Error(
-                        code=ErrorCode.UNABLE_TO_CREATE,
-                        errors=["Autoscale sizes are not defined properly"],
-                    ),
-                    context="poolcreate",
-                )
-
     pool = Pool.create(
         name=request.name,
         os=request.os,
