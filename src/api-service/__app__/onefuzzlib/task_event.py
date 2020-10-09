@@ -17,6 +17,7 @@ class TaskEvent(BASE_TASK_EVENT, ORMMixin):
     @classmethod
     def get_summary(cls, task_id: UUID) -> List[TaskEventSummary]:
         events = cls.search(query={"task_id": [task_id]})
+        # handle None case of Optional[e.Timestamp], which shouldn't happen
         events.sort(key=lambda e: e.Timestamp or datetime.datetime.max)
 
         return [
