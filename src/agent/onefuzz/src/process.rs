@@ -74,6 +74,16 @@ impl From<std::process::ExitStatus> for ExitStatus {
 }
 
 impl From<process_control::ExitStatus> for ExitStatus {
+    #[cfg(target_os = "windows")]
+    fn from(status: std::process::ExitStatus) -> Self {
+        Self {
+            code: status.code(),
+            signal: None,
+            success: status.success(),
+        }
+    }
+    
+    #[cfg(target_os = "linux")]
     fn from(status: process_control::ExitStatus) -> Self {
         Self {
             code: status.code().map(|s| s as i32),
