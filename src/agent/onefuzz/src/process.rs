@@ -77,7 +77,7 @@ impl From<process_control::ExitStatus> for ExitStatus {
     #[cfg(target_os = "windows")]
     fn from(status: process_control::ExitStatus) -> Self {
         Self {
-            code: status.code(),
+            code: status.code().map(|s| s as i32),
             signal: None,
             success: status.success(),
         }
