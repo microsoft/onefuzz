@@ -482,7 +482,7 @@ class AutoScaleConfig(BaseModel):
         return values
 
     @validator("max_size", allow_reuse=True)
-    def check_max_size(cls, value: Optional[int]) -> int:
+    def check_max_size(cls, value: Optional[int]) -> Optional[int]:
         if value and value < 1:
             raise ValueError("Autoscale sizes are not defined properly")
         return value
