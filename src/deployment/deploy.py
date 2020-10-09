@@ -7,6 +7,7 @@ import argparse
 import json
 import logging
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -74,6 +75,10 @@ TELEMETRY_NOTICE = (
     "To disable, delete the ONEFUZZ_TELEMETRY application setting in the "
     "Azure Functions instance"
 )
+AZCOPY_MISSING_ERROR = (
+    "azcopy is not installed and unable to use the built-in version. "
+    "Installation instructions are available at https://aka.ms/azcopy"
+)
 FUNC_TOOLS_ERROR = (
     "azure-functions-core-tools is not installed, "
     "install v3 using instructions: "
@@ -127,11 +132,21 @@ class Client:
         self.migrations = migrations
         self.export_appinsights = export_appinsights
 
-        if os.name == "nt":
-            self.azcopy = os.path.join(self.tools, "win64", "azcopy.exe")
-        else:
+        machine = platform.machine()
+        system = platform.system()
+
+        if system == "Linux" and machine == "x86_64":
             self.azcopy = os.path.join(self.tools, "linux", "azcopy")
             subprocess.check_output(["chmod", "+x", self.azcopy])
+        elif system == "Windows" and machine == "AMD64":
+            self.azcopy = os.path.join(self.tools, "win64", "azcopy.exe")
+        else:
+            azcopy = shutil.which("azcopy")
+            if not azcopy:
+                raise Exception(AZCOPY_MISSING_ERROR)
+            else:
+                logger.warn("unable to use built-in azcopy, using system install")
+                self.azcopy = azcopy
 
         with open(workbook_data) as f:
             self.workbook_data = json.load(f)
