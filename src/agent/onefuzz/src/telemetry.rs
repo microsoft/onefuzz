@@ -353,10 +353,10 @@ macro_rules! log {
             Critical => log::Level::Error,
         };
 
-        let log_msg = $msg.to_string();
-
-        log::log!(log_level, "{}", log_msg);
+        // while log::log will filter based on log level, the telemetry
+        // client does *not*.
         if log_level <= log::max_level() {
+            log::log!(log_level, "{}", $msg.to_string());
             if let Some(client) = $crate::telemetry::client($crate::telemetry::ClientType::Instance)
             {
                 client.track_trace($msg, $level);
