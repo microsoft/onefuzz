@@ -27,7 +27,4 @@ pub mod sha256;
 pub mod system;
 #[cfg(target_os = "linux")]
 pub mod triage;
-
 pub mod uploader;
-
-pub mod cmd;
