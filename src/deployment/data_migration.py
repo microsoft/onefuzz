@@ -1,8 +1,13 @@
-from azure.cosmosdb.table.tableservice import TableService
-from azure.cosmosdb.table.models import Entity
-from azure.cosmosdb.table.tablebatch import TableBatch
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import json
-from typing import Optional, Callable, Dict, List
+from typing import Callable, Dict, List
+
+from azure.cosmosdb.table.tablebatch import TableBatch
+from azure.cosmosdb.table.tableservice import TableService
 
 
 def migrate_task_os(table_service: TableService) -> None:

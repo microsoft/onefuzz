@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple, NamedTuple, Optional
+from typing import Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
 from azure.cli.core import get_default_cli  # type: ignore
@@ -22,7 +22,6 @@ from azure.graphrbac.models import (
 )
 from functional import seq
 from msrest.serialization import TZ_UTC
-
 
 logger = logging.getLogger("deploy")
 
@@ -120,7 +119,8 @@ def create_application_registration(
         required_resource_access=(
             [
                 RequiredResourceAccess(
-                    resource_access=resource_access, resource_app_id=app.app_id,
+                    resource_access=resource_access,
+                    resource_app_id=app.app_id,
                 )
             ]
             if len(resource_access) > 0
@@ -268,7 +268,10 @@ def main():
     formatter = argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(
         formatter_class=formatter,
-        description="Create an application registration and/or generate a password for the pool agent",
+        description=(
+            "Create an application registration and/or "
+            "generate a password for the pool agent"
+        ),
     )
     parser.add_argument("application_name")
     parser.add_argument("-v", "--verbose", action="store_true")
