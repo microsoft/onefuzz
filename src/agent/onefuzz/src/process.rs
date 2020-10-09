@@ -75,7 +75,7 @@ impl From<std::process::ExitStatus> for ExitStatus {
 
 impl From<process_control::ExitStatus> for ExitStatus {
     #[cfg(target_os = "windows")]
-    fn from(status: std::process::ExitStatus) -> Self {
+    fn from(status: process_control::ExitStatus) -> Self {
         Self {
             code: status.code(),
             signal: None,
