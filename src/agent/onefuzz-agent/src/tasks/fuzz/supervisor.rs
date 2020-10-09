@@ -9,7 +9,6 @@ use crate::tasks::{
     utils::{self, CheckNotify},
 };
 use anyhow::{Error, Result};
-use appinsights::telemetry::SeverityLevel;
 use onefuzz::{
     expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
