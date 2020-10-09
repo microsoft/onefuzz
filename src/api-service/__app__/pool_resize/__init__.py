@@ -9,7 +9,7 @@ from typing import List
 
 import azure.functions as func
 from onefuzztypes.enums import NodeState, PoolState, ScalesetState
-from onefuzztypes.models import AutoScaleConfig, Error, TaskPool
+from onefuzztypes.models import AutoScaleConfig, TaskPool
 
 from ..onefuzzlib.pools import Node, Pool, Scaleset
 from ..onefuzzlib.tasks.main import Task
@@ -104,7 +104,11 @@ def get_vm_count(tasks: List[Task]) -> int:
     count = 0
     for task in tasks:
         task_pool = task.get_pool()
-        if not task_pool or not isinstance(task_pool, Pool):
+        if (
+            not task_pool
+            or not isinstance(task_pool, Pool)
+            or not isinstance(task.config.pool, TaskPool)
+        ):
             continue
         count += task.config.pool.count
     return count
