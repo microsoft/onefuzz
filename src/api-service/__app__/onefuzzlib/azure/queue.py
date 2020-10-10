@@ -26,7 +26,7 @@ QueueNameType = Union[str, UUID]
 
 @cached(ttl=60)
 def get_queue_client(account_id: str) -> QueueServiceClient:
-    logging.info("getting blob container (account_id: %s)", account_id)
+    logging.debug("getting blob container (account_id: %s)", account_id)
     name, key = get_storage_account_name_key(account_id)
     account_url = "https://%s.queue.core.windows.net" % name
     client = QueueServiceClient(
@@ -36,6 +36,7 @@ def get_queue_client(account_id: str) -> QueueServiceClient:
     return client
 
 
+@cached(ttl=60)
 def get_queue_sas(
     queue: QueueNameType,
     *,
@@ -45,7 +46,7 @@ def get_queue_sas(
     update: bool = False,
     process: bool = False,
 ) -> str:
-    logging.info("getting queue sas %s (account_id: %s)", queue, account_id)
+    logging.debug("getting queue sas %s (account_id: %s)", queue, account_id)
     name, key = get_storage_account_name_key(account_id)
     expiry = datetime.datetime.utcnow() + datetime.timedelta(days=30)
 
@@ -87,6 +88,15 @@ def get_queue(name: QueueNameType, *, account_id: str) -> Optional[QueueServiceC
         return None
 
 
+def clear_queue(name: QueueNameType, *, account_id: str) -> None:
+    queue = get_queue(name, account_id=account_id)
+    if queue:
+        try:
+            queue.clear_messages()
+        except ResourceNotFoundError:
+            return None
+
+
 def send_message(
     name: QueueNameType,
     message: bytes,
@@ -99,6 +109,19 @@ def send_message(
             queue.send_message(base64.b64encode(message).decode())
         except ResourceNotFoundError:
             pass
+
+
+def remove_first_message(name: QueueNameType, *, account_id: str) -> bool:
+    create_queue(name, account_id=account_id)
+    queue = get_queue(name, account_id=account_id)
+    if queue:
+        try:
+            for message in queue.receive_messages():
+                queue.delete_message(message)
+                return True
+        except ResourceNotFoundError:
+            return False
+    return False
 
 
 A = TypeVar("A", bound=BaseModel)

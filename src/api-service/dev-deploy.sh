@@ -19,7 +19,7 @@ VERSION=$(../ci/get-version.sh)
 ../ci/set-versions.sh
 
 # clean up any previously built onefuzztypes packages
-rm __app__/onefuzztypes*.whl
+rm -f __app__/onefuzztypes*.whl
 
 # build a local copy of onefuzztypes
 rm -rf local-pytypes
@@ -38,7 +38,7 @@ TYPELIB=$(ls onefuzztypes*.whl)
 sed -i s,.*onefuzztypes.*,./${TYPELIB}, requirements.txt
 func azure functionapp publish ${TARGET} --python
 sed -i s,./onefuzztypes.*,onefuzztypes==0.0.0, requirements.txt
-rm onefuzztypes*.whl
+rm -f onefuzztypes*.whl
 popd
 
 ../ci/unset-versions.sh

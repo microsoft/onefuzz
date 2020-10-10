@@ -227,6 +227,7 @@ class ErrorCode(Enum):
     UNABLE_TO_FIND = 467
     TASK_FAILED = 468
     INVALID_NODE = 469
+    NOTIFICATION_FAILURE = 470
 
 
 class HeartbeatType(Enum):
@@ -317,3 +318,13 @@ class NodeState(Enum):
         # If Node is in one of these states, ignore updates
         # from the agent.
         return [cls.done, cls.shutdown, cls.halt]
+
+
+class GithubIssueState(Enum):
+    open = "open"
+    closed = "closed"
+
+
+class GithubIssueSearchMatch(Enum):
+    title = "title"
+    body = "body"

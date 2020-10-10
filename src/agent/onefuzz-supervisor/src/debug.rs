@@ -5,12 +5,12 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use onefuzz::blob::BlobContainerUrl;
+use onefuzz::process::ExitStatus;
 use structopt::StructOpt;
 use url::Url;
 use uuid::Uuid;
 
 use crate::coordinator::*;
-use crate::process::*;
 use crate::work::*;
 use crate::worker::*;
 
@@ -60,7 +60,10 @@ fn debug_node_event_state_update(state: NodeState) -> Result<()> {
         NodeState::Rebooting => StateUpdateEvent::Rebooting,
         NodeState::Ready => StateUpdateEvent::Ready,
         NodeState::Busy => StateUpdateEvent::Busy,
-        NodeState::Done => StateUpdateEvent::Done,
+        NodeState::Done => StateUpdateEvent::Done {
+            error: None,
+            script_output: None,
+        },
     };
     let event = event.into();
     print_json(into_envelope(event))

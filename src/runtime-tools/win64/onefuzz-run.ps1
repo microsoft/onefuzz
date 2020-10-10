@@ -18,17 +18,21 @@ Set-Location C:\onefuzz
 Enable-SSH
 $config = Get-OnefuzzConfig
 
-switch ($config.mode) {
-    "fuzz" {
-        log "onefuzz: fuzzing"
-        Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList "run --config config.json" -WindowStyle Hidden
+while ($true) {
+    switch ($config.mode) {
+        "fuzz" {
+            log "onefuzz: fuzzing"
+            Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList "run --config config.json" -WindowStyle Hidden -Wait
+        }
+        "repro" {
+            log "onefuzz: starting repro"
+            Start-Process "powershell.exe" -ArgumentList "-ExecutionPolicy Unrestricted -File repro.ps1" -WindowStyle Hidden -Wait
+        }
+        default {
+            log "invalid mode"
+            exit 1
+        }
     }
-    "repro" {
-        log "onefuzz: starting repro"
-        Start-Process "powershell.exe" -ArgumentList "-ExecutionPolicy Unrestricted -File repro.ps1" -WindowStyle Hidden
-    }
-    default {
-        log "invalid mode"
-        exit 1
-    }
+    log "onefuzz unexpectedly exited, restarting after delay"
+    Start-Sleep -Seconds 30
 }

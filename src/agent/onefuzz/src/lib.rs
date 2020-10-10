@@ -8,6 +8,9 @@ extern crate anyhow;
 extern crate lazy_static;
 
 #[macro_use]
+extern crate serde;
+
+#[macro_use]
 pub mod telemetry;
 
 pub mod asan;
@@ -19,12 +22,9 @@ pub mod input_tester;
 pub mod libfuzzer;
 pub mod machine_id;
 pub mod monitor;
+pub mod process;
 pub mod sha256;
 pub mod system;
-
 #[cfg(target_os = "linux")]
 pub mod triage;
-
 pub mod uploader;
-
-pub mod cmd;

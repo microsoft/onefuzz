@@ -7,10 +7,10 @@ use std::process::Stdio;
 use anyhow::Result;
 use downcast_rs::Downcast;
 use onefuzz::az_copy;
+use onefuzz::process::Output;
 use tokio::fs;
 use tokio::process::Command;
 
-use crate::process::Output;
 use crate::work::*;
 
 const SETUP_PATH_ENV: &str = "ONEFUZZ_TARGET_SETUP_PATH";
@@ -74,22 +74,16 @@ impl SetupRunner {
 
             let output = setup_script.invoke().await?;
 
-            info!(
-                "setup script run; exit_status = {:?}, path = {}",
-                output.exit_status,
-                setup_script.path().display(),
-            );
-
             if output.exit_status.success {
                 verbose!(
-                    "setup script succeeded:\nstdout = {}\nstderr = {}",
+                    "setup script succeeded. stdout:{:?} stderr:{:?}",
                     &output.stdout,
                     &output.stderr,
                 );
                 info!("setup script succeeded");
             } else {
                 error!(
-                    "setup script failed:\nstdout = {}\nstderr = {}",
+                    "setup script failed.  stdout:{:?} stderr:{:?}",
                     &output.stdout, &output.stderr,
                 );
             }

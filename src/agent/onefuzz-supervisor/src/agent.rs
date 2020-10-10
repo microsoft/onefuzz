@@ -5,6 +5,7 @@ use anyhow::{Error, Result};
 use tokio::time;
 
 use crate::coordinator::*;
+use crate::done::set_done_lock;
 use crate::reboot::*;
 use crate::scheduler::*;
 use crate::setup::*;
@@ -174,6 +175,7 @@ impl Agent {
         let scheduler = match state.finish(self.setup_runner.as_mut()).await? {
             SetupDone::Ready(s) => s.into(),
             SetupDone::PendingReboot(s) => s.into(),
+            SetupDone::Done(s) => s.into(),
         };
 
         Ok(scheduler)
@@ -219,8 +221,23 @@ impl Agent {
 
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
         verbose!("agent done");
+        set_done_lock().await?;
 
-        let event = StateUpdateEvent::Done.into();
+        let event = match state.cause() {
+            DoneCause::SetupError {
+                error,
+                script_output,
+            } => StateUpdateEvent::Done {
+                error: Some(error),
+                script_output,
+            },
+            DoneCause::Stopped | DoneCause::WorkersDone => StateUpdateEvent::Done {
+                error: None,
+                script_output: None,
+            },
+        };
+
+        let event = event.into();
         self.coordinator.emit_event(event).await?;
 
         // `Done` is a final state.
@@ -239,7 +256,7 @@ impl Agent {
     }
 
     async fn sleep(&mut self) {
-        let delay = time::Duration::from_secs(2);
+        let delay = time::Duration::from_secs(30);
         time::delay_for(delay).await;
     }
 

@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use downcast_rs::Downcast;
+use onefuzz::process::Output;
 use reqwest::{Client, Request, Response, StatusCode};
 use serde::Serialize;
 use uuid::Uuid;
@@ -82,11 +83,16 @@ impl From<WorkerEvent> for NodeEvent {
 pub enum StateUpdateEvent {
     Init,
     Free,
-    SettingUp { tasks: Vec<TaskId> },
+    SettingUp {
+        tasks: Vec<TaskId>,
+    },
     Rebooting,
     Ready,
     Busy,
-    Done,
+    Done {
+        error: Option<String>,
+        script_output: Option<Output>,
+    },
 }
 
 impl From<StateUpdateEvent> for NodeEvent {

@@ -15,6 +15,10 @@ extern crate clap;
 use std::path::PathBuf;
 
 use anyhow::Result;
+use onefuzz::{
+    machine_id::{get_machine_id, get_scaleset_name},
+    telemetry::{self, EventData},
+};
 use structopt::StructOpt;
 
 pub mod agent;
@@ -22,7 +26,7 @@ pub mod auth;
 pub mod config;
 pub mod coordinator;
 pub mod debug;
-pub mod process;
+pub mod done;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
@@ -72,6 +76,14 @@ fn run(opt: RunOpt) -> Result<()> {
         env!("GIT_VERSION")
     );
 
+    if done::is_agent_done()? {
+        verbose!(
+            "agent is done, remove lock ({}) to continue",
+            done::done_path()?.display()
+        );
+        return Ok(());
+    }
+
     // We can't send telemetry if this fails.
     let config = load_config(opt);
 
@@ -88,7 +100,7 @@ fn run(opt: RunOpt) -> Result<()> {
         error!("error running supervisor agent: {}", err);
     }
 
-    onefuzz::telemetry::try_flush_and_close();
+    telemetry::try_flush_and_close();
 
     result
 }
@@ -106,6 +118,12 @@ fn load_config(opt: RunOpt) -> Result<StaticConfig> {
 }
 
 async fn run_agent(config: StaticConfig) -> Result<()> {
+    telemetry::set_property(EventData::MachineId(get_machine_id().await?));
+    telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
+    if let Ok(scaleset) = get_scaleset_name().await {
+        telemetry::set_property(EventData::ScalesetId(scaleset));
+    }
+
     let registration = config::Registration::create_managed(config.clone()).await?;
     verbose!("created managed registration: {:?}", registration);
 
@@ -146,5 +164,5 @@ fn init_telemetry(config: &StaticConfig) {
         .map(|k| k.to_string())
         .unwrap_or_else(String::default);
 
-    onefuzz::telemetry::set_appinsights_clients(inst_key, tele_key);
+    telemetry::set_appinsights_clients(inst_key, tele_key);
 }

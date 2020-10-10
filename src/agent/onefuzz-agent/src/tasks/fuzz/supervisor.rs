@@ -9,7 +9,6 @@ use crate::tasks::{
     utils::{self, CheckNotify},
 };
 use anyhow::{Error, Result};
-use appinsights::telemetry::SeverityLevel;
 use onefuzz::{
     expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
@@ -192,7 +191,7 @@ async fn start_supervisor(
         .input_corpus(inputs_dir);
 
     if let Some(input_marker) = supervisor_input_marker {
-        expand.input(input_marker);
+        expand.input_marker(input_marker);
     }
 
     let args = expand.evaluate(supervisor_options)?;
