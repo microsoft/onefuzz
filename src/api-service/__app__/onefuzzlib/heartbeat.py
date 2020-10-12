@@ -86,7 +86,8 @@ class NodeHeartbeat(BASE_NODE_HEARTBEAT, ORMMixin):
         for entry in entries:
             result.append(
                 NodeHeartbeatSummary(
-                    timestamp=entry.Timestamp, type=entry.heartbeat_type,
+                    timestamp=entry.Timestamp,
+                    type=entry.heartbeat_type,
                 )
             )
         return result

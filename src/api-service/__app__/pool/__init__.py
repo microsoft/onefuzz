@@ -23,8 +23,11 @@ def set_config(pool: Pool) -> Pool:
         instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
-            "heartbeat", account_id=os.environ["ONEFUZZ_FUNC_STORAGE"], add=True,
-        ))
+            "heartbeat",
+            account_id=os.environ["ONEFUZZ_FUNC_STORAGE"],
+            add=True,
+        ),
+    )
     return pool
 
 
