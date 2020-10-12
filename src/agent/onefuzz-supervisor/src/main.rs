@@ -45,7 +45,7 @@ enum Opt {
 #[derive(StructOpt, Debug)]
 struct RunOpt {
     #[structopt(short, long = "--config", parse(from_os_str))]
-    config_path: PathBuf,
+    config_path: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -108,9 +108,10 @@ fn run(opt: RunOpt) -> Result<()> {
 fn load_config(opt: RunOpt) -> Result<StaticConfig> {
     info!("loading supervisor agent config");
 
-    let data = std::fs::read(&opt.config_path)?;
-    let config = StaticConfig::new(&data)?;
-    verbose!("loaded static config from: {}", opt.config_path.display());
+    let config = match &opt.config_path {
+        Some(config_path) => StaticConfig::from_file(config_path)?,
+        None => StaticConfig::from_env()?,
+    };
 
     init_telemetry(&config);
 
