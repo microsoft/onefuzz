@@ -6,7 +6,7 @@
 from typing import Dict, List, Optional
 
 from onefuzztypes.enums import OS, ContainerType, StatsFormat, TaskType
-from onefuzztypes.models import NotificationConfig
+from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
 from onefuzz.api import Command
@@ -51,7 +51,7 @@ class AFL(Command):
         existing_inputs: Optional[Container] = None,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
-    ) -> None:
+    ) -> Optional[Job]:
         """
         Basic AFL job
 
@@ -62,7 +62,7 @@ class AFL(Command):
             self.onefuzz.containers.get(existing_inputs)
 
         if dryrun:
-            return
+            return None
 
         self.logger.info("creating afl from template")
 
@@ -174,3 +174,4 @@ class AFL(Command):
 
         self.logger.info("done creating tasks")
         helper.wait()
+        return helper.job

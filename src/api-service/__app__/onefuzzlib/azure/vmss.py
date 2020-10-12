@@ -76,7 +76,7 @@ def get_vmss_size(name: UUID) -> Optional[int]:
 
 
 def list_instance_ids(name: UUID) -> Dict[UUID, str]:
-    logging.info("get instance IDs for scaleset: %s", name)
+    logging.debug("get instance IDs for scaleset: %s", name)
     resource_group = get_base_resource_group()
     compute_client = mgmt_client_factory(ComputeManagementClient)
 
@@ -256,6 +256,7 @@ def create_vmss(
             },
             "extension_profile": {"extensions": extensions},
         },
+        "single_placement_group": False,
     }
 
     image_os = get_os(location, image)

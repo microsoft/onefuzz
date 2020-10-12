@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, NodeState
+from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import NodeGet, NodeSearch
 from onefuzztypes.responses import BoolResult
@@ -56,8 +56,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
             context=request.machine_id,
         )
 
-    node.state = NodeState.halt
-    node.save()
+    node.set_halt()
 
     return ok(BoolResult(result=True))
 
@@ -74,9 +73,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
             context=request.machine_id,
         )
 
-    node.state = NodeState.done
-    node.save()
-
+    node.stop()
     return ok(BoolResult(result=True))
 
 

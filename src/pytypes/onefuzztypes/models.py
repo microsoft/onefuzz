@@ -17,6 +17,8 @@ from .enums import (
     ContainerPermission,
     ContainerType,
     ErrorCode,
+    GithubIssueSearchMatch,
+    GithubIssueState,
     HeartbeatType,
     JobState,
     NodeState,
@@ -42,10 +44,10 @@ class EnumModel(BaseModel):
                 some.append(field)
 
         if not some:
-            raise ValueError('no variant set for enum')
+            raise ValueError("no variant set for enum")
 
         if len(some) > 1:
-            raise ValueError('multiple values set for enum: %s' % some)
+            raise ValueError("multiple values set for enum: %s" % some)
 
         return values
 
@@ -213,9 +215,15 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
+    def redact(self) -> None:
+        self.auth_token = "***"
+
 
 class TeamsTemplate(BaseModel):
     url: str
+
+    def redact(self) -> None:
+        self.url = "***"
 
 
 class ContainerDefinition(BaseModel):
@@ -357,7 +365,41 @@ class WorkSetSummary(BaseModel):
     work_units: List[WorkUnitSummary]
 
 
-NotificationTemplate = Union[ADOTemplate, TeamsTemplate]
+class GithubIssueDuplicate(BaseModel):
+    comment: Optional[str]
+    labels: List[str]
+    reopen: bool
+
+
+class GithubIssueSearch(BaseModel):
+    author: Optional[str]
+    state: Optional[GithubIssueState]
+    field_match: List[GithubIssueSearchMatch]
+    string: str
+
+
+class GithubAuth(BaseModel):
+    user: str
+    personal_access_token: str
+
+
+class GithubIssueTemplate(BaseModel):
+    auth: GithubAuth
+    organization: str
+    repository: str
+    title: str
+    body: str
+    unique_search: GithubIssueSearch
+    assignees: List[str]
+    labels: List[str]
+    on_duplicate: GithubIssueDuplicate
+
+    def redact(self) -> None:
+        self.auth.user = "***"
+        self.auth.personal_access_token = "***"
+
+
+NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
 
 
 class Notification(BaseModel):
@@ -424,6 +466,8 @@ class Node(BaseModel):
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
     heartbeats: Optional[List[NodeHeartbeatSummary]]
     version: str = Field(default="1.0.0")
+    reimage_requested: bool = Field(default=False)
+    delete_requested: bool = Field(default=False)
 
 
 class ScalesetSummary(BaseModel):
@@ -472,7 +516,6 @@ class Scaleset(BaseModel):
     image: str
     region: Region
     size: int
-    new_size: Optional[int]
     spot_instances: bool
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]
@@ -502,6 +545,12 @@ class ExitStatus(BaseModel):
     success: bool
 
 
+class ProcessOutput(BaseModel):
+    exit_status: ExitStatus
+    stderr: str
+    stdout: str
+
+
 class WorkerRunningEvent(BaseModel):
     task_id: UUID
 
@@ -513,20 +562,64 @@ class WorkerDoneEvent(BaseModel):
     stdout: str
 
 
-class WorkerEvent(BaseModel):
-    event: Union[WorkerDoneEvent, WorkerRunningEvent]
+class WorkerEvent(EnumModel):
+    done: Optional[WorkerDoneEvent]
+    running: Optional[WorkerRunningEvent]
+
+
+class NodeSettingUpEventData(BaseModel):
+    tasks: List[UUID]
+
+
+class NodeDoneEventData(BaseModel):
+    error: Optional[str]
+    script_output: Optional[ProcessOutput]
+
+
+NodeStateData = Union[NodeSettingUpEventData, NodeDoneEventData]
 
 
 class NodeStateUpdate(BaseModel):
     state: NodeState
+    data: Optional[NodeStateData]
+
+    @root_validator(pre=False, skip_on_failure=True)
+    def check_data(cls, values: Any) -> Any:
+        data = values.get("data")
+
+        if data:
+            state = values["state"]
+
+            if state == NodeState.setting_up:
+                if isinstance(data, NodeSettingUpEventData):
+                    return values
+
+            if state == NodeState.done:
+                if isinstance(data, NodeDoneEventData):
+                    return values
+
+            raise ValueError(
+                "data for node state update event does not match state = %s" % state
+            )
+        else:
+            # For now, `data` is always optional.
+            return values
 
 
-NodeEvent = Union[WorkerEvent, NodeStateUpdate]
+class NodeEvent(EnumModel):
+    state_update: Optional[NodeStateUpdate]
+    worker_event: Optional[WorkerEvent]
+
+
+# Temporary shim type to support hot upgrade of 1.0.0 nodes.
+#
+# We want future variants to use an externally-tagged repr.
+NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
 
 
 class NodeEventEnvelope(BaseModel):
     machine_id: UUID
-    event: NodeEvent
+    event: NodeEventShim
 
 
 class StopNodeCommand(BaseModel):
@@ -559,6 +652,12 @@ class TaskEventSummary(BaseModel):
     event_type: str
 
 
+class NodeAssignment(BaseModel):
+    node_id: UUID
+    scaleset_id: Optional[UUID]
+    state: NodeTaskState
+
+
 class Task(BaseModel):
     job_id: UUID
     task_id: UUID = Field(default_factory=uuid4)
@@ -570,3 +669,4 @@ class Task(BaseModel):
     heartbeats: Optional[List[TaskHeartbeatSummary]]
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
+    nodes: Optional[List[NodeAssignment]]

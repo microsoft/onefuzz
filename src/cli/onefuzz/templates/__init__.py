@@ -9,7 +9,7 @@ import tempfile
 import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 
-from onefuzztypes.enums import OS, ContainerType
+from onefuzztypes.enums import OS, ContainerType, TaskState
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
@@ -239,9 +239,9 @@ class JobHelper:
     def get_waiting(self) -> List[str]:
         tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
         waiting = [
-            "%s (%s)" % (x.config.task.type, x.state)
+            "%s:%s" % (x.config.task.type.name, x.state.name)
             for x in tasks
-            if x.state in ["init", "setup", "create_vmss"]
+            if x.state not in TaskState.has_started()
         ]
         return waiting
 

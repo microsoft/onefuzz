@@ -8,7 +8,12 @@ from typing import Iterator, List, Optional
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
-from azure.devops.exceptions import AzureDevOpsServiceError
+from azure.devops.exceptions import (
+    AzureDevOpsAuthenticationError,
+    AzureDevOpsClientError,
+    AzureDevOpsClientRequestError,
+    AzureDevOpsServiceError,
+)
 from azure.devops.v6_0.work_item_tracking.models import (
     CommentCreate,
     JsonPatchOperation,
@@ -21,7 +26,7 @@ from azure.devops.v6_0.work_item_tracking.work_item_tracking_client import (
 from memoization import cached
 from onefuzztypes.models import ADOTemplate, Report
 
-from .common import Render
+from .common import Render, fail_task
 
 
 @cached(ttl=60)
@@ -197,10 +202,24 @@ class ADO:
 def notify_ado(
     config: ADOTemplate, container: str, filename: str, report: Report
 ) -> None:
+    logging.info(
+        "notify ado: job_id:%s task_id:%s container:%s filename:%s",
+        report.job_id,
+        report.task_id,
+        container,
+        filename,
+    )
+
     try:
         ado = ADO(container, filename, config, report)
         ado.process()
+    except AzureDevOpsAuthenticationError as err:
+        fail_task(report, err)
+    except AzureDevOpsClientError as err:
+        fail_task(report, err)
+    except AzureDevOpsClientRequestError as err:
+        fail_task(report, err)
     except AzureDevOpsServiceError as err:
-        logging.error("ADO report failed: %s", err)
+        fail_task(report, err)
     except ValueError as err:
-        logging.error("ADO report value error: %s", err)
+        fail_task(report, err)

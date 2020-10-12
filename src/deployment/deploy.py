@@ -7,6 +7,7 @@ import argparse
 import json
 import logging
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -14,12 +15,11 @@ import tempfile
 import uuid
 import zipfile
 from datetime import datetime, timedelta
-from data_migration import migrate
 
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
-from azure.cosmosdb.table.tableservice import TableService
 from azure.core.exceptions import ResourceExistsError
+from azure.cosmosdb.table.tableservice import TableService
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
     ApplicationCreateParameters,
@@ -29,6 +29,10 @@ from azure.graphrbac.models import (
     RequiredResourceAccess,
     ResourceAccess,
     ServicePrincipalCreateParameters,
+)
+from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
+from azure.mgmt.applicationinsights.models import (
+    ApplicationInsightsComponentExportRequest,
 )
 from azure.mgmt.eventgrid import EventGridManagementClient
 from azure.mgmt.eventgrid.models import (
@@ -51,14 +55,14 @@ from azure.storage.blob import (
 )
 from azure.storage.queue import QueueServiceClient
 from msrest.serialization import TZ_UTC
-from urllib3.util.retry import Retry
 
+from data_migration import migrate
 from register_pool_application import (
     add_application_password,
     authorize_application,
-    update_registration,
     get_application,
     register_application,
+    update_registration,
 )
 
 USER_IMPERSONATION = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
@@ -70,6 +74,10 @@ TELEMETRY_NOTICE = (
     "Telemetry collection on stats and OneFuzz failures are sent to Microsoft. "
     "To disable, delete the ONEFUZZ_TELEMETRY application setting in the "
     "Azure Functions instance"
+)
+AZCOPY_MISSING_ERROR = (
+    "azcopy is not installed and unable to use the built-in version. "
+    "Installation instructions are available at https://aka.ms/azcopy"
 )
 FUNC_TOOLS_ERROR = (
     "azure-functions-core-tools is not installed, "
@@ -101,6 +109,7 @@ class Client:
         workbook_data,
         create_registration,
         migrations,
+        export_appinsights: bool,
     ):
         self.resource_group = resource_group
         self.arm_template = arm_template
@@ -121,12 +130,23 @@ class Client:
             "authority": ONEFUZZ_CLI_AUTHORITY,
         }
         self.migrations = migrations
+        self.export_appinsights = export_appinsights
 
-        if os.name == "nt":
-            self.azcopy = os.path.join(self.tools, "win64", "azcopy.exe")
-        else:
+        machine = platform.machine()
+        system = platform.system()
+
+        if system == "Linux" and machine == "x86_64":
             self.azcopy = os.path.join(self.tools, "linux", "azcopy")
             subprocess.check_output(["chmod", "+x", self.azcopy])
+        elif system == "Windows" and machine == "AMD64":
+            self.azcopy = os.path.join(self.tools, "win64", "azcopy.exe")
+        else:
+            azcopy = shutil.which("azcopy")
+            if not azcopy:
+                raise Exception(AZCOPY_MISSING_ERROR)
+            else:
+                logger.warn("unable to use built-in azcopy, using system install")
+                self.azcopy = azcopy
 
         with open(workbook_data) as f:
             self.workbook_data = json.load(f)
@@ -274,7 +294,8 @@ class Client:
 
         if cli_app is None:
             logger.info(
-                "Could not find the default CLI application under the current subscription, creating a new one"
+                "Could not find the default CLI application under the current "
+                "subscription, creating a new one"
             )
             app_info = register_application("onefuzz-cli", self.application_name)
             self.cli_config = {
@@ -382,6 +403,70 @@ class Client:
                 "eventgrid subscription failed: %s"
                 % json.dumps(result.as_dict(), indent=4, sort_keys=True),
             )
+
+    def add_log_export(self):
+        if not self.export_appinsights:
+            logger.info("not exporting appinsights")
+            return
+
+        container_name = "app-insights"
+
+        logger.info("adding appinsight log export")
+        account_name = self.results["deploy"]["func-name"]["value"]
+        key = self.results["deploy"]["func-key"]["value"]
+        account_url = "https://%s.blob.core.windows.net" % account_name
+        client = BlobServiceClient(account_url, credential=key)
+        if container_name not in [x["name"] for x in client.list_containers()]:
+            client.create_container(container_name)
+
+        expiry = datetime.utcnow() + timedelta(days=2 * 365)
+
+        # NOTE: as this is a long-lived SAS url, it should not be logged and only
+        # used in the the later-on export_configurations.create() call
+        sas = generate_container_sas(
+            account_name,
+            container_name,
+            account_key=key,
+            permission=ContainerSasPermissions(write=True),
+            expiry=expiry,
+        )
+        url = "%s/%s?%s" % (account_url, container_name, sas)
+
+        record_types = (
+            "Requests, Event, Exceptions, Metrics, PageViews, "
+            "PageViewPerformance, Rdd, PerformanceCounters, Availability"
+        )
+
+        req = ApplicationInsightsComponentExportRequest(
+            record_types=record_types,
+            destination_type="Blob",
+            is_enabled="true",
+            destination_address=url,
+        )
+
+        app_insight_client = get_client_from_cli_profile(
+            ApplicationInsightsManagementClient
+        )
+
+        to_delete = []
+        for entry in app_insight_client.export_configurations.list(
+            self.resource_group, self.application_name
+        ):
+            if (
+                entry.storage_name == account_name
+                and entry.container_name == container_name
+            ):
+                to_delete.append(entry.export_id)
+
+        for export_id in to_delete:
+            logger.info("replacing existing export: %s", export_id)
+            app_insight_client.export_configurations.delete(
+                self.resource_group, self.application_name, export_id
+            )
+
+        app_insight_client.export_configurations.create(
+            self.resource_group, self.application_name, req
+        )
 
     def upload_tools(self):
         logger.info("uploading tools from %s", self.tools)
@@ -511,7 +596,8 @@ class Client:
             else ""
         )
         logger.info(
-            "Update your CLI config via: onefuzz config --endpoint https://%s.azurewebsites.net --authority %s --client_id %s %s",
+            "Update your CLI config via: onefuzz config --endpoint "
+            "https://%s.azurewebsites.net --authority %s --client_id %s %s",
             self.application_name,
             self.cli_config["authority"],
             self.cli_config["client_id"],
@@ -543,6 +629,7 @@ def main():
         ("instance-specific-setup", Client.upload_instance_setup),
         ("third-party", Client.upload_third_party),
         ("api", Client.deploy_app),
+        ("export_appinsights", Client.add_log_export),
         ("update_registration", Client.update_registration),
     ]
 
@@ -611,6 +698,11 @@ def main():
         default=[],
         help="list of migration to apply to the azure table",
     )
+    parser.add_argument(
+        "--export_appinsights",
+        action="store_true",
+        help="enable appinsight log export",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -632,6 +724,7 @@ def main():
         args.workbook_data,
         args.create_pool_registration,
         args.apply_migrations,
+        args.export_appinsights,
     )
     if args.verbose:
         level = logging.DEBUG

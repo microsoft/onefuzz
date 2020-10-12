@@ -315,6 +315,7 @@ dependencies = [
  "anyhow",
  "fnv",
  "goblin",
+ "iced-x86",
  "log",
  "memmap",
  "serde",
@@ -856,11 +857,11 @@ dependencies = [
  "coverage",
  "debugger",
  "fnv",
+ "hex",
  "log",
  "num_cpus",
  "rayon",
- "sha-1",
- "uuid",
+ "sha2",
  "win-util",
  "winapi 0.3.9",
 ]
@@ -1862,19 +1863,6 @@ dependencies = [
  "itoa",
  "serde",
  "url",
-]
-
-[[package]]
-name = "sha-1"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "170a36ea86c864a3f16dd2687712dd6646f7019f301e57537c7f4dc9f5916770"
-dependencies = [
- "block-buffer",
- "cfg-if",
- "cpuid-bool",
- "digest",
- "opaque-debug",
 ]
 
 [[package]]

@@ -21,13 +21,19 @@ HOURS = 60 * 60
 def schedule_tasks() -> None:
     to_schedule: Dict[UUID, List[Task]] = {}
 
+    not_ready_count = 0
+
     for task in Task.search_states(states=[TaskState.waiting]):
         if not task.ready_to_schedule():
+            not_ready_count += 1
             continue
 
         if task.job_id not in to_schedule:
             to_schedule[task.job_id] = []
         to_schedule[task.job_id].append(task)
+
+    if not to_schedule and not_ready_count > 0:
+        logging.info("tasks not ready: %d", not_ready_count)
 
     for tasks in to_schedule.values():
         # TODO: for now, we're only scheduling one task per VM.
@@ -49,7 +55,7 @@ def schedule_tasks() -> None:
             save_blob(
                 "task-configs",
                 "%s/config.json" % task.task_id,
-                agent_config.json(),
+                agent_config.json(exclude_none=True),
                 account_id=get_func_storage(),
             )
             reboot = False

@@ -10,7 +10,13 @@ from uuid import UUID
 from memoization import cached
 from onefuzztypes import models
 from onefuzztypes.enums import ErrorCode, TaskState
-from onefuzztypes.models import ADOTemplate, Error, NotificationTemplate, TeamsTemplate
+from onefuzztypes.models import (
+    ADOTemplate,
+    Error,
+    GithubIssueTemplate,
+    NotificationTemplate,
+    TeamsTemplate,
+)
 from onefuzztypes.primitives import Container, Event
 
 from ..azure.containers import get_container_metadata, get_file_sas_url
@@ -22,6 +28,7 @@ from ..reports import get_report
 from ..tasks.config import get_input_container_queues
 from ..tasks.main import Task
 from .ado import notify_ado
+from .github_issues import github_issue
 from .teams import notify_teams
 
 
@@ -110,6 +117,9 @@ def new_files(container: Container, filename: str) -> None:
 
             if isinstance(notification.config, ADOTemplate):
                 notify_ado(notification.config, container, filename, report)
+
+            if isinstance(notification.config, GithubIssueTemplate):
+                github_issue(notification.config, container, filename, report)
 
     for (task, containers) in get_queue_tasks():
         if container in containers:

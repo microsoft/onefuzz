@@ -6,7 +6,7 @@ use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, report};
 use anyhow::Result;
 use onefuzz::{
     blob::BlobContainerUrl,
-    machine_id::get_machine_id,
+    machine_id::{get_machine_id, get_scaleset_name},
     telemetry::{self, Event::task_start, EventData},
 };
 use reqwest::Url;
@@ -117,6 +117,10 @@ impl Config {
         telemetry::set_property(EventData::JobId(self.common().job_id));
         telemetry::set_property(EventData::TaskId(self.common().task_id));
         telemetry::set_property(EventData::MachineId(get_machine_id().await?));
+        telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
+        if let Ok(scaleset) = get_scaleset_name().await {
+            telemetry::set_property(EventData::ScalesetId(scaleset));
+        }
 
         info!("agent ready, dispatching task");
         self.report_event();

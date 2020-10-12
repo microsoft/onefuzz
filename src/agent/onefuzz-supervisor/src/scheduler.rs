@@ -4,6 +4,7 @@
 use std::fmt;
 
 use anyhow::Result;
+use onefuzz::process::Output;
 
 use crate::coordinator::NodeCommand;
 use crate::reboot::RebootContext;
@@ -47,7 +48,10 @@ impl Scheduler {
                 }
             }
             NodeCommand::Stop {} => {
-                let state = State { ctx: Done {} };
+                let cause = DoneCause::Stopped;
+                let state = State {
+                    ctx: Done { cause },
+                };
                 *self = state.into();
             }
         }
@@ -81,7 +85,19 @@ pub struct Busy {
     workers: Vec<Option<Worker>>,
 }
 
-pub struct Done;
+pub struct Done {
+    cause: DoneCause,
+}
+
+#[derive(Clone, Debug)]
+pub enum DoneCause {
+    SetupError {
+        error: String,
+        script_output: Option<Output>,
+    },
+    Stopped,
+    WorkersDone,
+}
 
 pub trait Context {}
 
@@ -129,17 +145,36 @@ impl State<Free> {
 pub enum SetupDone {
     Ready(State<Ready>),
     PendingReboot(State<PendingReboot>),
+    Done(State<Done>),
 }
 
 impl State<SettingUp> {
     pub async fn finish(self, runner: &mut dyn ISetupRunner) -> Result<SetupDone> {
         let work_set = self.ctx.work_set;
 
-        let output = runner.run(&work_set).await?;
+        let output = runner.run(&work_set).await;
 
-        if let Some(output) = output {
-            if !output.exit_status.success {
-                anyhow::bail!("setup script failed: {:?}", output);
+        match output {
+            Ok(Some(output)) => {
+                if !output.exit_status.success {
+                    let cause = DoneCause::SetupError {
+                        error: "error running target setup script".to_owned(),
+                        script_output: Some(output),
+                    };
+                    let ctx = Done { cause };
+                    return Ok(SetupDone::Done(ctx.into()));
+                }
+            }
+            Ok(None) => {
+                // No script was executed.
+            }
+            Err(err) => {
+                let cause = DoneCause::SetupError {
+                    error: err.to_string(),
+                    script_output: None,
+                };
+                let ctx = Done { cause };
+                return Ok(SetupDone::Done(ctx.into()));
             }
         }
 
@@ -152,6 +187,10 @@ impl State<SettingUp> {
         };
 
         Ok(done)
+    }
+
+    pub fn work_set(&self) -> &WorkSet {
+        &self.ctx.work_set
     }
 }
 
@@ -190,7 +229,10 @@ impl State<Busy> {
         }
 
         let updated = if self.all_workers_done() {
-            Updated::Done(Done.into())
+            let done = Done {
+                cause: DoneCause::WorkersDone,
+            };
+            Updated::Done(done.into())
         } else {
             Updated::Busy(self)
         };
@@ -234,7 +276,11 @@ impl From<Updated> for Scheduler {
     }
 }
 
-impl State<Done> {}
+impl State<Done> {
+    pub fn cause(&self) -> DoneCause {
+        self.ctx.cause.clone()
+    }
+}
 
 impl From<Option<RebootContext>> for Scheduler {
     fn from(ctx: Option<RebootContext>) -> Self {

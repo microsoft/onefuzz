@@ -12,6 +12,7 @@ from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 
 from ..onefuzzlib.azure.creds import get_instance_name
 from ..onefuzzlib.azure.queue import get_queue_sas
+from ..onefuzzlib.azure.creds import get_instance_url
 from ..onefuzzlib.pools import Pool
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -19,13 +20,12 @@ from ..onefuzzlib.request import not_ok, ok, parse_request
 def set_config(pool: Pool) -> Pool:
     pool.config = AgentConfig(
         pool_name=pool.name,
-        onefuzz_url="https://%s.azurewebsites.net" % get_instance_name(),
-        heartbeat_queue=get_queue_sas(
-            "heartbeat", account_id=os.environ["ONEFUZZ_FUNC_STORAGE"], add=True,
-        ),
+        onefuzz_url=get_instance_url(),
         instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
-    )
+        heartbeat_queue=get_queue_sas(
+            "heartbeat", account_id=os.environ["ONEFUZZ_FUNC_STORAGE"], add=True,
+        ))
     return pool
 
 

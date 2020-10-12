@@ -24,6 +24,12 @@ pub struct WorkSet {
     pub work_units: Vec<WorkUnit>,
 }
 
+impl WorkSet {
+    pub fn task_ids(&self) -> Vec<TaskId> {
+        self.work_units.iter().map(|w| w.task_id).collect()
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WorkUnit {
     /// Job that the work is part of.

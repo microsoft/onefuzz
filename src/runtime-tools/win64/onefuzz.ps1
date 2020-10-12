@@ -5,6 +5,7 @@ $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\;C:\onefuzz\
 $env:ONEFUZZ_ROOT = "C:\onefuzz"
 $env:ONEFUZZ_TOOLS = "C:\onefuzz\tools"
 $env:ASAN_SYMBOLIZER_PATH = "llvm-symbolizer"
+$env:RUST_LOG = "info"
 
 $logFile = "C:\onefuzz.log"
 function log ($message) {
@@ -44,8 +45,8 @@ function Optimize-VM {
   Get-AppxPackage Microsoft.549981C3F5F10 | Remove-AppxPackage
 
   log "disable Windows Search"
-  sc stop "WSearch"
-  sc config "WSearch" start= disabled
+  sc.exe stop "WSearch"
+  sc.exe config "WSearch" start= disabled
 }
 
 function Set-SetSSHACL {

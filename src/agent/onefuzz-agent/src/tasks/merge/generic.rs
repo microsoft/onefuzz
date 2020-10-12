@@ -132,7 +132,7 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     let mut supervisor_args = Expand::new();
 
     supervisor_args
-        .input(&config.supervisor_input_marker)
+        .input_marker(&config.supervisor_input_marker)
         .input_corpus(&config.unique_inputs.path)
         .target_options(&config.target_options)
         .supervisor_exe(&config.supervisor_exe)

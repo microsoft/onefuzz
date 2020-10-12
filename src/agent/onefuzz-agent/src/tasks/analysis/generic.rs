@@ -120,7 +120,7 @@ pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
     let mut tool_args = Expand::new();
 
     tool_args
-        .input(&input)
+        .input_path(&input)
         .target_exe(&config.target_exe)
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)

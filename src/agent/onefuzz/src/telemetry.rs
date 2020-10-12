@@ -39,7 +39,9 @@ pub enum EventData {
     WorkerId(u64),
     JobId(Uuid),
     TaskId(Uuid),
+    ScalesetId(String),
     MachineId(Uuid),
+    Version(String),
     CommandLine(String),
     Type(String),
     Mode(String),
@@ -67,8 +69,10 @@ pub enum EventData {
 impl EventData {
     pub fn as_values(&self) -> (&str, String) {
         match self {
+            Self::Version(x) => ("version", x.to_string()),
             Self::JobId(x) => ("job_id", x.to_string()),
             Self::TaskId(x) => ("task_id", x.to_string()),
+            Self::ScalesetId(x) => ("scaleset_id", x.to_string()),
             Self::MachineId(x) => ("machine_id", x.to_string()),
             Self::CommandLine(x) => ("command_line", x.to_owned()),
             Self::Type(x) => ("event_type", x.to_owned()),
@@ -98,9 +102,13 @@ impl EventData {
 
     pub fn can_share(&self) -> bool {
         match self {
+            // TODO: Request CELA review of Version, as having this for central stats
+            //       would be useful to track uptake of new releases
+            Self::Version(_) => false,
             Self::TaskId(_) => true,
             Self::JobId(_) => true,
             Self::MachineId(_) => true,
+            Self::ScalesetId(_) => false,
             Self::CommandLine(_) => false,
             Self::Path(_) => false,
             Self::Type(_) => true,
@@ -333,25 +341,26 @@ macro_rules! event {
 #[macro_export]
 macro_rules! log {
     ($level: expr, $msg: expr) => {{
-        use appinsights::telemetry::SeverityLevel;
-        use SeverityLevel::*;
+        use appinsights::telemetry::SeverityLevel::{
+            Critical, Error, Information, Verbose, Warning,
+        };
 
-        {
-            let log_level = match $level {
-                SeverityLevel::Verbose => log::Level::Debug,
-                SeverityLevel::Information => log::Level::Info,
-                SeverityLevel::Warning => log::Level::Warn,
-                SeverityLevel::Error => log::Level::Error,
-                SeverityLevel::Critical => log::Level::Error,
-            };
+        let log_level = match $level {
+            Verbose => log::Level::Debug,
+            Information => log::Level::Info,
+            Warning => log::Level::Warn,
+            Error => log::Level::Error,
+            Critical => log::Level::Error,
+        };
 
-            let log_msg = $msg.to_string();
-
-            log::log!(log_level, "{}", log_msg)
-        }
-
-        if let Some(client) = $crate::telemetry::client($crate::telemetry::ClientType::Instance) {
-            client.track_trace($msg, $level);
+        // while log::log will filter based on log level, the telemetry
+        // client does *not*.
+        if log_level <= log::max_level() {
+            log::log!(log_level, "{}", $msg.to_string());
+            if let Some(client) = $crate::telemetry::client($crate::telemetry::ClientType::Instance)
+            {
+                client.track_trace($msg, $level);
+            }
         }
     }};
 }
