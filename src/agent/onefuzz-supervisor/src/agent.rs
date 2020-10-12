@@ -5,8 +5,8 @@ use anyhow::{Error, Result};
 use tokio::time;
 
 use crate::coordinator::*;
-use crate::heartbeat::AgentHeartbeatClient;
 use crate::done::set_done_lock;
+use crate::heartbeat::AgentHeartbeatClient;
 use crate::reboot::*;
 use crate::scheduler::*;
 use crate::setup::*;

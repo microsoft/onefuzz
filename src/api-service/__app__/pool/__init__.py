@@ -10,9 +10,8 @@ from onefuzztypes.enums import ErrorCode, PoolState
 from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 
-from ..onefuzzlib.azure.creds import get_instance_name
-from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.creds import get_instance_url
+from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.pools import Pool
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
