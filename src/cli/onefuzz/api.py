@@ -811,44 +811,15 @@ class Pool(Endpoint):
         *,
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
-        min_size: Optional[int] = 0,  # min size of pool
-        max_size: Optional[int],  # max size of pool
-        scaleset_size: Optional[int],  # Individual scaleset size
-        autoscale: bool = False,  # Automatic resizing capability
-        vm_sku: Optional[str] = "Standard_D2s_v3",
-        region: Optional[str] = None,
-        image: Optional[str] = None,
-        spot_instances: bool = False,
     ) -> models.Pool:
         """
         Create a worker pool
 
         :param str name: Name of the worker-pool
-        :param Optional[int] min_size: Specify the minimum instance size of the pool
-        (when autoscaled)
-        :param Optional[int] max_size: Specify the maximum instance size of the pool
-        (when autoscaled)
-        :param Optional[int] scaleset_size: Specify the maximum size of the scaleset
-        (when autoscaled)
-        :param bool autoscale: To autoscale pool, scalesets and instances
         """
         self.logger.debug("create worker pool")
         managed = not unmanaged
 
-        if autoscale and not scaleset_size:
-            raise Exception("Autoscaling requires max_size and scaleset size")
-
-        autoscale_json = None
-        if autoscale:
-            autoscale_json = {
-                "image": image,
-                "max_size": max_size,
-                "min_size": min_size,
-                "region": region,
-                "scaleset_size": scaleset_size,
-                "spot_instances": spot_instances,
-                "vm_sku": vm_sku,
-            }
         return self._req_model(
             "POST",
             models.Pool,
@@ -858,7 +829,7 @@ class Pool(Endpoint):
                 "arch": arch,
                 "managed": managed,
                 "client_id": client_id,
-                "autoscale": autoscale_json,
+                "autoscale": None,
             },
         )
 
