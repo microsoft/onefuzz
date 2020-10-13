@@ -40,6 +40,7 @@ enum Opt {
     Run(RunOpt),
     Debug(debug::DebugOpt),
     Licenses,
+    Version,
 }
 
 #[derive(StructOpt, Debug)]
@@ -57,8 +58,19 @@ fn main() -> Result<()> {
         Opt::Run(opt) => run(opt)?,
         Opt::Debug(opt) => debug::debug(opt)?,
         Opt::Licenses => licenses()?,
+        Opt::Version => versions()?,
     };
 
+    Ok(())
+}
+
+fn versions() -> Result<()> {
+    println!(
+        "{} onefuzz:{} git:{}",
+        crate_version!(),
+        env!("ONEFUZZ_VERSION"),
+        env!("GIT_VERSION")
+    );
     Ok(())
 }
 
@@ -69,13 +81,6 @@ fn licenses() -> Result<()> {
 }
 
 fn run(opt: RunOpt) -> Result<()> {
-    info!(
-        "{} onefuzz:{} git:{}",
-        crate_version!(),
-        env!("ONEFUZZ_VERSION"),
-        env!("GIT_VERSION")
-    );
-
     if done::is_agent_done()? {
         verbose!(
             "agent is done, remove lock ({}) to continue",
