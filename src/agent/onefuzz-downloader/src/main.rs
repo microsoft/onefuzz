@@ -36,6 +36,9 @@ struct RunOpt {
     #[structopt(short, long = "--config", parse(from_os_str))]
     config_path: Option<PathBuf>,
 
+    #[structopt(short, long = "--onefuzz_path", parse(from_os_str))]
+    onefuzz_path: Option<PathBuf>,
+
     #[structopt(short, long)]
     start_supervisor: bool,
 }
@@ -108,7 +111,7 @@ async fn run_downloader(config: StaticConfig, opt: &RunOpt) -> Result<()> {
     telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
 
     let setup_inst = setup::Setup { config };
-    setup_inst.run().await?;
+    setup_inst.run(&opt.onefuzz_path).await?;
 
     if opt.start_supervisor {
         setup_inst.launch_supervisor(&opt.config_path).await?;

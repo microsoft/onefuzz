@@ -5,8 +5,7 @@ use crate::config::StaticConfig;
 use anyhow::Result;
 use onefuzz::az_copy;
 use onefuzz::process::Output;
-use std::path::PathBuf;
-use std::process::Stdio;
+use std::{env, path::PathBuf, process::Stdio};
 use tokio::fs;
 use tokio::process::Command;
 use url::Url;
@@ -21,9 +20,16 @@ pub struct DownloadConfig {
 }
 
 impl Setup {
-    pub async fn run(&self) -> Result<()> {
+    pub async fn run(&self, onefuzz_path: &Option<PathBuf>) -> Result<()> {
         let download_config = self.get_download_config().await?;
-        let tools_dir = onefuzz::fs::onefuzz_root()?.join("tools");
+
+        let tools_dir = if let Some(onefuzz_path) = onefuzz_path {
+            onefuzz_path.join("tools")
+        } else {
+            onefuzz::fs::onefuzz_root()?.join("tools")
+        };
+
+        self.add_tools_path(&tools_dir)?;
 
         fs::create_dir_all(&tools_dir).await?;
         az_copy::sync(download_config.tools.to_string(), &tools_dir).await?;
@@ -43,6 +49,17 @@ impl Setup {
             );
         }
 
+        Ok(())
+    }
+
+    fn add_tools_path(&self, path: &PathBuf) -> Result<()> {
+        let path_env = env::var("PATH")?;
+        let os_path = match env::consts::OS {
+            "linux" => format!("{}:{}", path_env, path.join("linux").to_string_lossy()),
+            "windows" => format!("{};{}", path_env, path.join("win64").to_string_lossy()),
+            _ => unimplemented!("unsupported OS"),
+        };
+        env::set_var("PATH", os_path);
         Ok(())
     }
 
