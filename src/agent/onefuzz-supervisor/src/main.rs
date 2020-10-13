@@ -145,7 +145,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         Box::new(worker::WorkerRunner),
     );
 
-    info!("running supervisor agent");
+    info!("running agent");
 
     agent.run().await?;
 
@@ -155,14 +155,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 }
 
 fn init_telemetry(config: &StaticConfig) {
-    let inst_key = config
-        .instrumentation_key
-        .map(|k| k.to_string())
-        .unwrap_or_else(String::default);
-    let tele_key = config
-        .telemetry_key
-        .map(|k| k.to_string())
-        .unwrap_or_else(String::default);
-
+    let inst_key = config.instrumentation_key;
+    let tele_key = config.telemetry_key;
     telemetry::set_appinsights_clients(inst_key, tele_key);
 }
