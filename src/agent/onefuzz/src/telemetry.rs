@@ -160,7 +160,7 @@ mod global {
 
     static STATE: AtomicUsize = AtomicUsize::new(UNSET);
 
-    pub fn set_clients(instance: TelemetryClient, shared: TelemetryClient) {
+    pub fn set_clients(instance: Option<TelemetryClient>, shared: Option<TelemetryClient>) {
         use Ordering::SeqCst;
 
         let last_state = STATE.compare_and_swap(UNSET, SETTING, SeqCst);
@@ -176,9 +176,9 @@ mod global {
         assert_eq!(last_state, UNSET, "unexpected telemetry client state");
 
         unsafe {
-            CLIENTS.instance = Some(RwLock::new(instance));
-            CLIENTS.shared = Some(RwLock::new(shared));
-        };
+            CLIENTS.instance = instance.map(|s| RwLock::new(s));
+            CLIENTS.shared = shared.map(|s| RwLock::new(s));
+        }
 
         STATE.store(SET, SeqCst);
     }
@@ -224,10 +224,9 @@ mod global {
     }
 }
 
-pub fn set_appinsights_clients(ikey: impl Into<String>, tkey: impl Into<String>) {
-    let instance_client = TelemetryClient::new(ikey.into());
-    let shared_client = TelemetryClient::new(tkey.into());
-
+pub fn set_appinsights_clients(ikey: Option<Uuid>, tkey: Option<Uuid>) {
+    let instance_client = ikey.map(|k| TelemetryClient::new(k.to_string()));
+    let shared_client = tkey.map(|k| TelemetryClient::new(k.to_string()));
     global::set_clients(instance_client, shared_client);
 }
 
@@ -272,7 +271,7 @@ pub fn try_client_mut(
 pub fn property(client_type: ClientType, key: impl AsRef<str>) -> Option<String> {
     let key = key.as_ref();
 
-    let client = client(client_type).expect("telemetry client called internally when unset");
+    let client = client(client_type).expect("telemetry client called internally when unset AA");
 
     Some(client.context().properties().get(key)?.to_owned())
 }
@@ -281,20 +280,20 @@ pub fn set_property(entry: EventData) {
     let (key, value) = entry.as_values();
 
     if entry.can_share() {
-        let mut client =
-            client_mut(ClientType::Shared).expect("telemetry client called internally when unset");
+        if let Some(mut client) = client_mut(ClientType::Shared) {
+            client
+                .context_mut()
+                .properties_mut()
+                .insert(key.to_owned(), value.to_owned());
+        }
+    }
+
+    if let Some(mut client) = client_mut(ClientType::Instance) {
         client
             .context_mut()
             .properties_mut()
-            .insert(key.to_owned(), value.to_owned());
+            .insert(key.to_owned(), value);
     }
-
-    let mut client =
-        client_mut(ClientType::Instance).expect("telemetry client called internally when unset");
-    client
-        .context_mut()
-        .properties_mut()
-        .insert(key.to_owned(), value);
 }
 
 pub fn track_event(event: Event, properties: Vec<EventData>) {
