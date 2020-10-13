@@ -23,17 +23,23 @@ impl Setup {
     pub async fn run(&self, onefuzz_path: &Option<PathBuf>) -> Result<()> {
         let download_config = self.get_download_config().await?;
 
-        let tools_dir = if let Some(onefuzz_path) = onefuzz_path {
-            onefuzz_path.join("tools")
-        } else {
-            onefuzz::fs::onefuzz_root()?.join("tools")
+        let onefuzz_path = match onefuzz_path {
+            Some(x) => x.to_owned(),
+            None => onefuzz::fs::onefuzz_root()?,
         };
 
+        let tools_dir = onefuzz_path.join("tools");
         self.add_tools_path(&tools_dir)?;
 
         fs::create_dir_all(&tools_dir).await?;
+        env::set_current_dir(&onefuzz_path)?;
+
         az_copy::sync(download_config.tools.to_string(), &tools_dir).await?;
-        let output: Output = self.setup_command(tools_dir).output().await?.into();
+        let output: Output = self
+            .setup_command(&onefuzz_path, tools_dir)
+            .output()
+            .await?
+            .into();
 
         if output.exit_status.success {
             verbose!(
@@ -89,7 +95,7 @@ impl Setup {
     }
 
     #[cfg(target_os = "windows")]
-    fn setup_command(&self, mut path: PathBuf) -> Command {
+    fn setup_command(&self, onefuzz_path: &PathBuf, mut path: PathBuf) -> Command {
         path.push("win64");
         path.push("setup-download.ps1");
 
@@ -98,6 +104,7 @@ impl Setup {
         cmd.arg("Unrestricted");
         cmd.arg("-File");
         cmd.arg(path);
+        cmd.env("ONEFUZZ_ROOT", onefuzz_path);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
@@ -105,11 +112,12 @@ impl Setup {
     }
 
     #[cfg(target_os = "linux")]
-    fn setup_command(&self, mut path: PathBuf) -> Command {
+    fn setup_command(&self, onefuzz_path: &PathBuf, mut path: PathBuf) -> Command {
         path.push("linux");
         path.push("setup-download.sh");
         let mut cmd = Command::new("bash");
         cmd.arg(path);
+        cmd.env("ONEFUZZ_ROOT", onefuzz_path);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
