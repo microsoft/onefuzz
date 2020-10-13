@@ -14,9 +14,9 @@ logger "onefuzz: starting up onefuzz"
 echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
 
 # use core files, not external crash handler
-echo core | sudo tee /proc/sys/kernel/core_pattern
-echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
-echo 1 | sudo tee /proc/sys/fs/suid_dumpable
+echo core | sudo tee /proc/sys/kernel/core_pattern || echo unable to set core pattern
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space || echo unable to disable ASLR 
+echo 1 | sudo tee /proc/sys/fs/suid_dumpable || echo unable to set suid_dumpable
 
 if type apt > /dev/null 2> /dev/null; then
     sudo apt update
