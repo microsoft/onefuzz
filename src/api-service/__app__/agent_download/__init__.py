@@ -8,12 +8,10 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import DownloadConfigRequest
 from onefuzztypes.responses import DownloadConfig
 
+from ..onefuzzlib.agent_authorization import verify_token
 from ..onefuzzlib.azure.containers import get_container_sas_url
 from ..onefuzzlib.azure.creds import get_func_storage
-from ..onefuzzlib.agent_authorization import verify_token
-from ..onefuzzlib.pools import Node
 from ..onefuzzlib.request import not_ok, ok, parse_request
-from ..onefuzzlib.tasks.main import Task
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
