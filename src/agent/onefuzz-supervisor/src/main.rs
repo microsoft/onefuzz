@@ -153,7 +153,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         Box::new(worker::WorkerRunner),
     );
 
-    info!("running supervisor agent");
+    info!("running agent");
 
     agent.run().await?;
 
