@@ -244,8 +244,10 @@ jobs:
           cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
           cp artifacts/agent/onefuzz-supervisor.exe src/deployment/tools/win64/
           cp artifacts/agent/onefuzz-agent.exe src/deployment/tools/win64/
+          cp artifacts/agent/onefuzz-downloader.exe src/deployment/tools/win64/
           cp artifacts/agent/onefuzz-supervisor src/deployment/tools/linux/
           cp artifacts/agent/onefuzz-agent src/deployment/tools/linux/
+          cp artifacts/agent/onefuzz-downloader src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
           cp -r artifacts/third-party src/deployment

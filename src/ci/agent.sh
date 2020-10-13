@@ -26,3 +26,4 @@ cargo test --release --manifest-path ./onefuzz/Cargo.toml
 
 cp target/release/onefuzz-agent* ../../artifacts/agent
 cp target/release/onefuzz-supervisor* ../../artifacts/agent
+cp target/release/onefuzz-downloader* ../../artifacts/agent
