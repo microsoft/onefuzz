@@ -456,11 +456,50 @@ class NodeTasks(BaseModel):
     state: NodeTaskState = Field(default=NodeTaskState.init)
 
 
+class AutoScaleConfig(BaseModel):
+    image: str
+    max_size: Optional[int]  # max size of pool
+    min_size: int = Field(default=0)  # min size of pool
+    region: Optional[Region]
+    scaleset_size: int  # Individual scaleset size
+    spot_instances: bool = Field(default=False)
+    vm_sku: str
+
+    @validator("scaleset_size", allow_reuse=True)
+    def check_scaleset_size(cls, value: int) -> int:
+        if value < 1 or value > 1000:
+            raise ValueError("invalid scaleset size")
+        return value
+
+    @root_validator()
+    def check_data(cls, values: Any) -> Any:
+        if (
+            "max_size" in values
+            and values.get("max_size")
+            and values.get("min_size") > values.get("max_size")
+        ):
+            raise ValueError("The pool min_size is greater than max_size")
+        return values
+
+    @validator("max_size", allow_reuse=True)
+    def check_max_size(cls, value: Optional[int]) -> Optional[int]:
+        if value and value < 1:
+            raise ValueError("Autoscale sizes are not defined properly")
+        return value
+
+    @validator("min_size", allow_reuse=True)
+    def check_min_size(cls, value: int) -> int:
+        if value < 0 or value > 1000:
+            raise ValueError("Invalid pool min_size")
+        return value
+
+
 class Pool(BaseModel):
     name: PoolName
     pool_id: UUID = Field(default_factory=uuid4)
     os: OS
     managed: bool
+    autoscale: Optional[AutoScaleConfig]
     arch: Architecture
     state: PoolState = Field(default=PoolState.init)
     client_id: Optional[UUID]
@@ -596,7 +635,7 @@ class NodeEvent(EnumModel):
 # Temporary shim type to support hot upgrade of 1.0.0 nodes.
 #
 # We want future variants to use an externally-tagged repr.
-NodeEventShim = Union[NodeEvent, WorkerEvent, NodeStateUpdate]
+NodeEventShim = Union[NodeStateUpdate, NodeEvent, WorkerEvent]
 
 
 class NodeEventEnvelope(BaseModel):
