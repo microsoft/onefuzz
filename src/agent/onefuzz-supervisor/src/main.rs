@@ -129,7 +129,6 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         config::Registration::create_unmanaged(config.clone()).await?
     };
 
-
     verbose!("created managed registration: {:?}", registration);
 
     let coordinator = coordinator::Coordinator::new(registration.clone()).await?;
