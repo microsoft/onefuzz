@@ -77,11 +77,10 @@ impl Setup {
         path.push("setup-download.ps1");
 
         let mut cmd = Command::new("powershell.exe");
-        cmd.env(SETUP_PATH_ENV, setup_script);
         cmd.arg("-ExecutionPolicy");
         cmd.arg("Unrestricted");
         cmd.arg("-File");
-        cmd.arg(&self.script_path);
+        cmd.arg(path);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
