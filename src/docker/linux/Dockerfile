@@ -18,4 +18,4 @@ ENV PATH=/onefuzz/bin:/onefuzz/tools/linux:$PATH
 COPY tools /onefuzz/tools
 
 WORKDIR /onefuzz
-ENTRYPOINT ["onefuzz-supervisor", "run"]
+ENTRYPOINT ["onefuzz-downloader", "run", "--start-supervisor"]

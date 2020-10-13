@@ -63,3 +63,7 @@ class PendingNodeCommand(BaseResponse):
 class CanSchedule(BaseResponse):
     allowed: bool
     work_stopped: bool
+
+
+class DownloadConfig(BaseResponse):
+    tools: str

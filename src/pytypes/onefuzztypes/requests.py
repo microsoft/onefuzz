@@ -203,3 +203,9 @@ class ProxyReset(BaseRequest):
 class CanScheduleRequest(BaseRequest):
     machine_id: UUID
     task_id: UUID
+
+
+class DownloadConfigRequest(BaseRequest):
+    machine_id: UUID
+    pool_name: str
+    version: str

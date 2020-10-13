@@ -1273,6 +1273,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "onefuzz-downloader"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "appinsights",
+ "async-trait",
+ "clap",
+ "downcast-rs",
+ "env_logger",
+ "futures",
+ "log",
+ "onefuzz",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "storage-queue",
+ "structopt",
+ "tokio",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "onefuzz-supervisor"
 version = "0.1.0"
 dependencies = [

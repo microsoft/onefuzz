@@ -5,6 +5,7 @@ members = [
     "input-tester",
     "onefuzz",
     "onefuzz-agent",
+    "onefuzz-downloader",
     "onefuzz-supervisor",
     "storage-queue",
     "win-util",
