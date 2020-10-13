@@ -5,7 +5,7 @@ LABEL ABOUT="OneFuzz fuzzing container"
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
 	&& apt-get upgrade -y \
-	&& apt-get install -y gdb gdbserver llvm-10 wget unzip libssl1.0.0 libunwind-dev \
+	&& apt-get install -y gdb gdbserver llvm-10 wget unzip libssl1.0.0 libunwind-dev sudo \
 	&& apt-get clean
 
 RUN mkdir -p /onefuzz/bin /onefuzz/etc

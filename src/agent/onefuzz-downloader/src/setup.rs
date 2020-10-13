@@ -77,19 +77,9 @@ impl Setup {
             cmd.arg(path);
         }
 
-        let output: Output = cmd.output().await?.into();
-        if output.exit_status.success {
-            verbose!(
-                "supervisor succeeded.  stdout:{:?}, stderr:{:?}",
-                output.stdout,
-                output.stderr
-            );
-        } else {
-            bail!(
-                "supervisor failed.  stdout:{:?}, stderr:{:?}",
-                output.stdout,
-                output.stderr
-            );
+        let output = cmd.status().await?;
+        if !output.success() {
+            bail!("supervisor failed: {:?}", output.code());
         }
         Ok(())
     }
