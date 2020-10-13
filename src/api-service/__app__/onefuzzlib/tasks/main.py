@@ -153,6 +153,23 @@ class Task(BASE_TASK, ORMMixin):
         task = tasks[0]
         return task
 
+    @classmethod
+    def get_tasks_by_pool_name(cls, pool_name: str) -> List["Task"]:
+        tasks = cls.search_states(states=TaskState.available())
+        if not tasks:
+            return []
+
+        pool_tasks = []
+
+        for task in tasks:
+            task_pool = task.get_pool()
+            if not task_pool:
+                continue
+            if pool_name == task_pool.name and task.state in TaskState.available():
+                pool_tasks.append(task)
+
+        return pool_tasks
+
     def mark_stopping(self) -> None:
         if self.state not in [TaskState.stopped, TaskState.stopping]:
             self.state = TaskState.stopping
