@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Callable, Union, Optional
+from typing import Callable, Optional, Union
 from uuid import UUID
 
 import azure.functions as func
@@ -50,7 +50,7 @@ def try_get_token_auth_header(request: func.HttpRequest) -> Union[Error, TokenDa
     # This token has already been verified by the azure authentication layer
     token = jwt.decode(parts[1], verify=False)
 
-    application_id = UUID("appid") if "appid" in token else None
+    application_id = UUID(token["appid"])
     object_id = UUID(token["oid"]) if "oid" in token else None
     return TokenData(application_id=application_id, object_id=object_id)
 
