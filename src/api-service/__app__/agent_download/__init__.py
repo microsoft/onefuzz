@@ -11,11 +11,11 @@ from onefuzztypes.responses import DownloadConfig
 from ..onefuzzlib.agent_authorization import verify_token
 from ..onefuzzlib.azure.containers import get_container_sas_url
 from ..onefuzzlib.azure.creds import get_func_storage
-from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_request(DownloadConfigRequest, req)
+    request = parse_uri(DownloadConfigRequest, req)
     if isinstance(request, Error):
         return not_ok(request, context="DownloadConfigRequest")
 
