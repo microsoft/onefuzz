@@ -70,6 +70,7 @@ pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
         &config.target_env,
         &config.target_timeout,
         config.check_asan_log,
+        false,
         config.check_debugger,
         config.check_retry_count,
     );

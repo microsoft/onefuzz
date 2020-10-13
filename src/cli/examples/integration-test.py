@@ -70,6 +70,12 @@ TARGETS: Dict[str, Integration] = {
         inputs="seeds",
         wait_for_files=[ContainerType.unique_reports],
     ),
+    "linux-libfuzzer-rust": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.linux,
+        target_exe="fuzz_target_1",
+        wait_for_files=[ContainerType.unique_reports],
+    ),
     "linux-trivial-crash": Integration(
         template=TemplateType.radamsa,
         os=OS.linux,

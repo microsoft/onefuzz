@@ -104,7 +104,9 @@ impl<'a> LibFuzzer<'a> {
         let mut options = self.options.to_owned();
         options.push("{input}".to_string());
 
-        let tester = Tester::new(&self.exe, &options, &self.env, &timeout, true, false, retry);
+        let tester = Tester::new(
+            &self.exe, &options, &self.env, &timeout, false, true, false, retry,
+        );
         tester.test_input(test_input.as_ref()).await
     }
 
