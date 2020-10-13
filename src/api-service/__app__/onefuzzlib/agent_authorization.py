@@ -14,7 +14,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from pydantic import BaseModel
 
-from .pools import Scaleset
+from .pools import Scaleset, Pool
 from .request import not_ok
 
 
@@ -61,8 +61,8 @@ def is_authorized(token_data: TokenData) -> bool:
         scalesets = Scaleset.get_by_object_id(token_data.object_id)
         return len(scalesets) > 0
 
-    scalesets = Scaleset.get_by_object_id(token_data.application_id)
-    return len(scalesets) > 0
+    pools = Pool.search(query={"client_id", token_data.application_id})
+    return len(pools) > 0
 
 
 def verify_token(
