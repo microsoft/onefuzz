@@ -5,11 +5,13 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use downcast_rs::Downcast;
-use onefuzz::blob::BlobContainerUrl;
+use onefuzz::{
+    blob::BlobContainerUrl,
+    auth::Secret,
+};
 use storage_queue::QueueClient;
 use uuid::Uuid;
 
-use crate::auth::Secret;
 use crate::config::Registration;
 
 pub type JobId = Uuid;

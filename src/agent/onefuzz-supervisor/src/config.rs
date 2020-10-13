@@ -1,17 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use reqwest::StatusCode;
 use std::{
     path::Path,
     time::{Duration, Instant},
 };
 
 use anyhow::Result;
+use onefuzz::auth::{ClientCredentials, Credentials, ManagedIdentityCredentials};
+use reqwest::StatusCode;
 use url::Url;
 use uuid::Uuid;
-
-use crate::auth::{ClientCredentials, Credentials, ManagedIdentityCredentials};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct StaticConfig {

@@ -14,6 +14,7 @@ extern crate serde;
 pub mod telemetry;
 
 pub mod asan;
+pub mod auth;
 pub mod az_copy;
 pub mod blob;
 pub mod expand;
