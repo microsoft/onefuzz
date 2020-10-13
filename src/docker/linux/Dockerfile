@@ -13,7 +13,7 @@ ENV ASAN_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 RUN ln -f -s $(which llvm-symbolizer-10) $ASAN_SYMBOLIZER_PATH
 
 ENV RUST_BACKTRACE=full
-ENV RUST_LOG=debug
+ENV RUST_LOG=info
 ENV PATH=/onefuzz/bin:/onefuzz/tools/linux:$PATH
 COPY tools /onefuzz/tools
 

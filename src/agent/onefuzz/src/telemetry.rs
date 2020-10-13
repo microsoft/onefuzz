@@ -269,11 +269,12 @@ pub fn try_client_mut(
 }
 
 pub fn property(client_type: ClientType, key: impl AsRef<str>) -> Option<String> {
-    let key = key.as_ref();
-
-    let client = client(client_type).expect("telemetry client called internally when unset AA");
-
-    Some(client.context().properties().get(key)?.to_owned())
+    client(client_type).map(|c| {
+        c.context()
+            .properties()
+            .get(key.as_ref())
+            .map(|s| s.to_owned())
+    })?
 }
 
 pub fn set_property(entry: EventData) {
