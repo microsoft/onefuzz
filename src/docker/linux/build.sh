@@ -1,5 +1,7 @@
 #!/bin/bash 
 
+set -ex
+
 BUILD_DIR=$(dirname $(realpath $0))
 cd ${BUILD_DIR}
 

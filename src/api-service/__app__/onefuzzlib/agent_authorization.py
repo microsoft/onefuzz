@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Callable, Union
+from typing import Callable, Union, Optional
 from uuid import UUID
 
 import azure.functions as func
@@ -20,7 +20,7 @@ from .request import not_ok
 
 class TokenData(BaseModel):
     application_id: UUID
-    object_id: UUID
+    object_id: Optional[UUID]
 
 
 def try_get_token_auth_header(request: func.HttpRequest) -> Union[Error, TokenData]:
@@ -49,12 +49,19 @@ def try_get_token_auth_header(request: func.HttpRequest) -> Union[Error, TokenDa
 
     # This token has already been verified by the azure authentication layer
     token = jwt.decode(parts[1], verify=False)
-    return TokenData(application_id=UUID(token["appid"]), object_id=UUID(token["oid"]))
+
+    application_id = UUID("appid") if "appid" in token else None
+    object_id = UUID(token["oid"]) if "oid" in token else None
+    return TokenData(application_id=application_id, object_id=object_id)
 
 
 @cached(ttl=60)
 def is_authorized(token_data: TokenData) -> bool:
-    scalesets = Scaleset.get_by_object_id(token_data.object_id)
+    if token_data.object_id:
+        scalesets = Scaleset.get_by_object_id(token_data.object_id)
+        return len(scalesets) > 0
+
+    scalesets = Scaleset.get_by_object_id(token_data.application_id)
     return len(scalesets) > 0
 
 

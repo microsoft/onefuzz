@@ -121,11 +121,15 @@ fn load_config(opt: RunOpt) -> Result<StaticConfig> {
 async fn run_agent(config: StaticConfig) -> Result<()> {
     telemetry::set_property(EventData::MachineId(get_machine_id().await?));
     telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
-    if let Ok(scaleset) = get_scaleset_name().await {
-        telemetry::set_property(EventData::ScalesetId(scaleset));
-    }
 
-    let registration = config::Registration::create_managed(config.clone()).await?;
+    let registration = if let Ok(scaleset) = get_scaleset_name().await {
+        telemetry::set_property(EventData::ScalesetId(scaleset));
+        config::Registration::create_managed(config.clone()).await?
+    } else {
+        config::Registration::create_unmanaged(config.clone()).await?
+    };
+
+
     verbose!("created managed registration: {:?}", registration);
 
     let coordinator = coordinator::Coordinator::new(registration.clone()).await?;
