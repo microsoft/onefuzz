@@ -5,10 +5,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use downcast_rs::Downcast;
-use onefuzz::{
-    blob::BlobContainerUrl,
-    auth::Secret,
-};
+use onefuzz::{auth::Secret, blob::BlobContainerUrl};
 use storage_queue::QueueClient;
 use uuid::Uuid;
 

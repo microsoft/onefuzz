@@ -3,10 +3,7 @@
 
 use anyhow::Result;
 use downcast_rs::Downcast;
-use onefuzz::{
-    process::Output,
-    auth::AccessToken,
-};
+use onefuzz::{auth::AccessToken, process::Output};
 use reqwest::{Client, Request, Response, StatusCode};
 use serde::Serialize;
 use uuid::Uuid;
