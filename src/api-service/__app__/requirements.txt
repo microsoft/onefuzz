@@ -1,4 +1,4 @@
-﻿azure-cli-core~=2.10.0
+azure-cli-core~=2.10.0
 azure-cli-nspkg==3.0.4
 azure-common~=1.1.25
 azure-core~=1.7.0
