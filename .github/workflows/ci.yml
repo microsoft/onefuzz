@@ -222,6 +222,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: src/ci/radamsa-windows.ps1
+    - run: |
+        uname -a
+        find c:/cygwin
+      shell: bash 
     - uses: actions/upload-artifact@v2.1.4
       with:
         name: build-artifacts

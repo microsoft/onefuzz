@@ -21,8 +21,8 @@ libuuid1,login,make,man-db,mintty,ncurses,openssl,p11-kit,p11-kit-trust,publicsu
 rebase,run,sed,tar,terminfo,terminfo-extra,tzcode,tzdata,util-linux,vim-minimal,w32api-headers,`
 w32api-runtime,wget,which,windows-default-manifest,xz,zlib0") -Wait -NoNewWindow;
 
-git clone https://gitlab.com/akihe/radamsa
-cd radamsa
-git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
-c:\cygwin\bin\bash.exe -c "make --debug=v"
-copy $installRoot\bin\cygwin1.dll bin\cygwin1.dll
+# git clone https://gitlab.com/akihe/radamsa
+# cd radamsa
+# git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
+# c:\cygwin\bin\bash.exe -c "make --debug=v"
+# copy $installRoot\bin\cygwin1.dll bin\cygwin1.dll
