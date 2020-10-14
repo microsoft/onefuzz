@@ -812,8 +812,14 @@ class Pool(Endpoint):
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
     ) -> models.Pool:
+        """
+        Create a worker pool
+
+        :param str name: Name of the worker-pool
+        """
         self.logger.debug("create worker pool")
         managed = not unmanaged
+
         return self._req_model(
             "POST",
             models.Pool,
@@ -823,6 +829,7 @@ class Pool(Endpoint):
                 "arch": arch,
                 "managed": managed,
                 "client_id": client_id,
+                "autoscale": None,
             },
         )
 

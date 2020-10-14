@@ -15,6 +15,7 @@ from ..onefuzzlib.request import not_ok, ok, parse_request
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(NodeCommandGet, req)
+
     if isinstance(request, Error):
         return not_ok(request, context="NodeCommandGet")
 

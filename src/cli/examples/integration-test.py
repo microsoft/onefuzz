@@ -70,6 +70,12 @@ TARGETS: Dict[str, Integration] = {
         inputs="seeds",
         wait_for_files=[ContainerType.unique_reports],
     ),
+    "linux-libfuzzer-rust": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.linux,
+        target_exe="fuzz_target_1",
+        wait_for_files=[ContainerType.unique_reports],
+    ),
     "linux-trivial-crash": Integration(
         template=TemplateType.radamsa,
         os=OS.linux,
@@ -503,6 +509,7 @@ class Run(Command):
         self,
         samples: Directory,
         *,
+        endpoint: Optional[str] = None,
         user_pools: Optional[Dict[str, str]] = None,
         pool_size: int = 10,
         region: Optional[str] = None,
@@ -511,6 +518,7 @@ class Run(Command):
         skip_repro: bool = False,
         skip_cleanup: bool = False,
     ) -> None:
+        self.onefuzz.__setup__(endpoint=endpoint)
         tester = TestOnefuzz(
             self.onefuzz,
             self.logger,
