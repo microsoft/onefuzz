@@ -11,6 +11,7 @@ from uuid import UUID
 
 from onefuzztypes.enums import ContainerType, JobState, NodeState, PoolState, TaskState
 from onefuzztypes.models import Job, Node, Pool, Task
+from pydantic import BaseModel
 
 MESSAGE = Tuple[datetime, str, str]
 
@@ -64,29 +65,34 @@ def fmt(data: Any) -> Any:
     raise NotImplementedError(type(data))
 
 
-class TopCache:
-    JOB_FIELDS = (["Updated", "State", "Job", "Name", "Files"], [1, 1, 1, 1, "100%"])
-    TASK_FIELDS = (
-        [
-            "Updated",
-            "State",
-            "Job",
-            "Task",
-            "Type",
-            "Name",
-            "Files",
-            "Pool",
-            "Time left",
-        ],
-        [1, 1, 1, 1, 1, 1, 1, 1, "100%"],
-    )
-    POOL_FIELDS = (
-        ["Updated", "Pool", "Name", "OS", "State", "Nodes"],
-        [1, 1, 1, 1, 1, "100%"],
-    )
+class JobFilter(BaseModel):
+    job_id: Optional[List[UUID]]
+    project: Optional[List[str]]
+    name: Optional[List[str]]
 
-    def __init__(self, onefuzz: "Onefuzz"):
+
+class TopCache:
+    JOB_FIELDS = ["Updated", "State", "Job", "Name", "Files"]
+    TASK_FIELDS = [
+        "Updated",
+        "State",
+        "Job",
+        "Task",
+        "Type",
+        "Name",
+        "Files",
+        "Pool",
+        "Time left",
+    ]
+    POOL_FIELDS = ["Updated", "Pool", "Name", "OS", "State", "Nodes"]
+
+    def __init__(
+        self,
+        onefuzz: "Onefuzz",
+        job_filters: JobFilter,
+    ):
         self.onefuzz = onefuzz
+        self.job_filters = job_filters
         self.tasks: Dict[UUID, Tuple[datetime, Task]] = {}
         self.jobs: Dict[UUID, Tuple[datetime, Job]] = {}
         self.files: Dict[str, Tuple[Optional[datetime], Set[str]]] = {}
@@ -222,6 +228,7 @@ class TopCache:
             try:
                 if task is None:
                     task = self.onefuzz.tasks.get(task_id)
+                self.add_job_if_missing(task.job_id)
                 self.tasks[task.task_id] = (datetime.now(), task)
                 if add_files:
                     for container in task.config.containers:
@@ -232,6 +239,12 @@ class TopCache:
     def render_tasks(self) -> List:
         results = []
         for (timestamp, task) in sorted(self.tasks.values(), key=lambda x: x[0]):
+            job_entry = self.jobs.get(task.job_id)
+            if job_entry:
+                (_, job) = job_entry
+                if not self.should_render_job(job):
+                    continue
+
             timestamps, files = self.get_file_counts([task])
             timestamps += [timestamp]
 
@@ -253,6 +266,12 @@ class TopCache:
             results.append(entry)
         return results
 
+    def add_job_if_missing(self, job_id: UUID) -> None:
+        if job_id in self.jobs:
+            return
+        job = self.onefuzz.jobs.get(job_id)
+        self.add_job(job_id, job.state, job)
+
     def add_job(self, job_id: UUID, state: JobState, job: Optional[Job] = None) -> None:
         if state in [JobState.stopping, JobState.stopped]:
             if job_id in self.jobs:
@@ -271,10 +290,31 @@ class TopCache:
             except Exception:
                 logging.debug("unable to find job: %s", job_id)
 
+    def should_render_job(self, job: Job) -> bool:
+        if self.job_filters.job_id is not None:
+            if job.job_id not in self.job_filters.job_id:
+                logging.info("skipping:%s", job)
+                return False
+
+        if self.job_filters.project is not None:
+            if job.config.project not in self.job_filters.project:
+                logging.info("skipping:%s", job)
+                return False
+
+        if self.job_filters.name is not None:
+            if job.config.name not in self.job_filters.name:
+                logging.info("skipping:%s", job)
+                return False
+
+        return True
+
     def render_jobs(self) -> List[Tuple]:
         results: List[Tuple] = []
 
         for (timestamp, job) in sorted(self.jobs.values(), key=lambda x: x[0]):
+            if not self.should_render_job(job):
+                continue
+
             timestamps, files = self.get_file_counts(
                 self.get_tasks(job.job_id), merge_inputs=True
             )
