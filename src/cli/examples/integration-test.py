@@ -509,6 +509,7 @@ class Run(Command):
         self,
         samples: Directory,
         *,
+        endpoint: Optional[str] = None,
         user_pools: Optional[Dict[str, str]] = None,
         pool_size: int = 10,
         region: Optional[str] = None,
@@ -517,6 +518,7 @@ class Run(Command):
         skip_repro: bool = False,
         skip_cleanup: bool = False,
     ) -> None:
+        self.onefuzz.__setup__(endpoint=endpoint)
         tester = TestOnefuzz(
             self.onefuzz,
             self.logger,

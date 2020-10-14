@@ -35,10 +35,14 @@ pub struct CommonConfig {
 }
 
 impl CommonConfig {
-    pub fn init_heartbeat(&self) -> Option<HeartbeatClient> {
-        self.heartbeat_queue
-            .clone()
-            .map(|url| HeartbeatClient::init(url, self.task_id))
+    pub async fn init_heartbeat(&self) -> Result<Option<TaskHeartbeatClient>> {
+        match &self.heartbeat_queue {
+            Some(url) => {
+                let hb = init_task_heartbeat(url.clone(), self.task_id).await?;
+                Ok(Some(hb))
+            }
+            None => Ok(None),
+        }
     }
 }
 

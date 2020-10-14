@@ -50,7 +50,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     set_executable(&config.tools.path).await?;
 
     utils::init_dir(&config.unique_inputs.path).await?;
-    let hb_client = config.common.init_heartbeat();
+    let hb_client = config.common.init_heartbeat().await?;
     loop {
         hb_client.alive();
         let tmp_dir = PathBuf::from("./tmp");
