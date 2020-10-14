@@ -38,7 +38,7 @@ pub struct Config {
 }
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
-    let hb_client = config.common.init_heartbeat();
+    let hb_client = config.common.init_heartbeat().await?;
     utils::init_dir(&config.unique_inputs.path).await?;
     loop {
         hb_client.alive();

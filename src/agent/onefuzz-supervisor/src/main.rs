@@ -12,6 +12,7 @@ extern crate serde;
 #[macro_use]
 extern crate clap;
 
+use crate::heartbeat::*;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -27,6 +28,7 @@ pub mod config;
 pub mod coordinator;
 pub mod debug;
 pub mod done;
+pub mod heartbeat;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
@@ -136,6 +138,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 
     let work_queue = work::WorkQueue::new(registration.clone());
 
+    let agent_heartbeat = match config.heartbeat_queue {
+        Some(url) => Some(init_agent_heartbeat(url).await?),
+        None => None,
+    };
     let mut agent = agent::Agent::new(
         Box::new(coordinator),
         Box::new(reboot),
@@ -143,9 +149,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         Box::new(setup::SetupRunner),
         Box::new(work_queue),
         Box::new(worker::WorkerRunner),
+        agent_heartbeat,
     );
 
-    info!("running supervisor agent");
+    info!("running agent");
 
     agent.run().await?;
 
@@ -155,14 +162,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 }
 
 fn init_telemetry(config: &StaticConfig) {
-    let inst_key = config
-        .instrumentation_key
-        .map(|k| k.to_string())
-        .unwrap_or_else(String::default);
-    let tele_key = config
-        .telemetry_key
-        .map(|k| k.to_string())
-        .unwrap_or_else(String::default);
-
+    let inst_key = config.instrumentation_key;
+    let tele_key = config.telemetry_key;
     telemetry::set_appinsights_clients(inst_key, tele_key);
 }

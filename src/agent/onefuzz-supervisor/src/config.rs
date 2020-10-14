@@ -24,6 +24,8 @@ pub struct StaticConfig {
     pub instrumentation_key: Option<Uuid>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub heartbeat_queue: Option<Url>,
 }
 
 // Temporary shim type to bridge the current service-provided config.
@@ -38,6 +40,8 @@ struct RawStaticConfig {
     pub instrumentation_key: Option<Uuid>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub heartbeat_queue: Option<Url>,
 }
 
 impl StaticConfig {
@@ -63,6 +67,7 @@ impl StaticConfig {
             onefuzz_url: config.onefuzz_url,
             instrumentation_key: config.instrumentation_key,
             telemetry_key: config.telemetry_key,
+            heartbeat_queue: config.heartbeat_queue,
         };
 
         Ok(config)
@@ -111,13 +116,12 @@ impl Registration {
         let mut url = config.register_url();
         url.query_pairs_mut()
             .append_pair("machine_id", &machine_id.to_string())
-            .append_pair("pool_name", &config.pool_name);
+            .append_pair("pool_name", &config.pool_name)
+            .append_pair("version", env!("ONEFUZZ_VERSION"));
 
         if managed {
             let scaleset = onefuzz::machine_id::get_scaleset_name().await?;
-            url.query_pairs_mut()
-                .append_pair("scaleset_id", &scaleset)
-                .append_pair("version", env!("ONEFUZZ_VERSION"));
+            url.query_pairs_mut().append_pair("scaleset_id", &scaleset);
         }
         // The registration can fail because this call is made before the virtual machine scaleset is done provisioning
         // The authentication layer of the service will reject this request when that happens
