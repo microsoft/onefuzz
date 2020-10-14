@@ -17,8 +17,11 @@ libquadmath0,libreadline7,libsigsegv2,libsmartcols1,libssl1.1,libstdc++6,libtasn
 libuuid1,login,make,man-db,mintty,ncurses,openssl,p11-kit,p11-kit-trust,publicsuffix-list-dafsa,`
 rebase,run,sed,tar,terminfo,terminfo-extra,tzcode,tzdata,util-linux,vim-minimal,w32api-headers,`
 w32api-runtime,wget,which,windows-default-manifest,xz,zlib0,wget"
+write-host "installing wget"
+Start-Process -wait -FilePath $exe -ArgumentList "-q -n -s $mirror -R $dest -P wget,curl"
 git clone https://gitlab.com/akihe/radamsa
 cd radamsa
 git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
-c:\cygwin\bin\bash.exe -c "alias cc=gcc; make --debug=v"
+c:\cygwin\bin\bash.exe -c "curl -L -o ol.c.gz https://gitlab.com/owl-lisp/owl/uploads/92375620fb4d570ee997bc47e2f6ddb7/ol-0.1.21.c.gz"
+c:\cygwin\bin\bash.exe -c "gunzip ol.c.gz; gcc -o bin/ol ol.c; make --debug=v"
 copy c:\cygwin\bin\cygwin1.dll bin\cygwin1.dll
