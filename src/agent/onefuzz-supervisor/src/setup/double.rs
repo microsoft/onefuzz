@@ -6,13 +6,13 @@ use super::*;
 #[derive(Clone, Debug, Default)]
 pub struct SetupRunnerDouble {
     pub ran: Vec<WorkSet>,
-    pub script: bool,
+    pub script: SetupOutput,
 }
 
 #[async_trait]
 impl ISetupRunner for SetupRunnerDouble {
-    async fn run(&mut self, work_set: &WorkSet) -> Result<bool> {
+    async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput> {
         self.ran.push(work_set.clone());
-        Ok(self.script)
+        Ok(self.script.clone())
     }
 }

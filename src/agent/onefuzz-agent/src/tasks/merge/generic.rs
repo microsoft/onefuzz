@@ -50,7 +50,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     set_executable(&config.tools.path).await?;
 
     utils::init_dir(&config.unique_inputs.path).await?;
-    let hb_client = config.common.init_heartbeat();
+    let hb_client = config.common.init_heartbeat().await?;
     loop {
         hb_client.alive();
         let tmp_dir = PathBuf::from("./tmp");
@@ -132,7 +132,7 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     let mut supervisor_args = Expand::new();
 
     supervisor_args
-        .input(&config.supervisor_input_marker)
+        .input_marker(&config.supervisor_input_marker)
         .input_corpus(&config.unique_inputs.path)
         .target_options(&config.target_options)
         .supervisor_exe(&config.supervisor_exe)

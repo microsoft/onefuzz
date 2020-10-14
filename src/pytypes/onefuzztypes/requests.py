@@ -18,7 +18,7 @@ from .enums import (
     ScalesetState,
     TaskState,
 )
-from .models import NotificationConfig
+from .models import AutoScaleConfig, NotificationConfig
 from .primitives import Container, PoolName, Region
 
 
@@ -82,6 +82,7 @@ class AgentRegistrationPost(BaseRequest):
     pool_name: PoolName
     scaleset_id: Optional[UUID]
     machine_id: UUID
+    version: str = Field(default="1.0.0")
 
 
 class PoolCreate(BaseRequest):
@@ -90,6 +91,7 @@ class PoolCreate(BaseRequest):
     arch: Architecture
     managed: bool
     client_id: Optional[UUID]
+    autoscale: Optional[AutoScaleConfig]
 
 
 class PoolSearch(BaseRequest):
@@ -197,3 +199,8 @@ class ReproGet(BaseRequest):
 
 class ProxyReset(BaseRequest):
     region: Region
+
+
+class CanScheduleRequest(BaseRequest):
+    machine_id: UUID
+    task_id: UUID

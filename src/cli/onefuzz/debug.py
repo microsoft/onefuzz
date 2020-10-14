@@ -8,12 +8,12 @@ import os
 import shutil
 import subprocess  # nosec
 import tempfile
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from urllib.parse import urlparse
 from uuid import UUID
 
 from onefuzztypes.enums import ContainerType, TaskType
-from onefuzztypes.models import BlobRef, Report, Task
+from onefuzztypes.models import BlobRef, NodeAssignment, Report, Task
 from onefuzztypes.primitives import Directory
 
 from onefuzz.api import UUID_EXPANSION, Command
@@ -26,7 +26,7 @@ EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 
 
-class Repro(Command):
+class DebugRepro(Command):
     """ Debug repro instances """
 
     def _disambiguate(self, vm_id: UUID_EXPANSION) -> str:
@@ -66,7 +66,7 @@ class Repro(Command):
             return
 
 
-class ManagedScaleset(Command):
+class DebugScaleset(Command):
     """ Debug tasks """
 
     def _get_proxy_setup(
@@ -142,11 +142,97 @@ class ManagedScaleset(Command):
         ):
             return
 
-        raise Exception("no public IPs")
+
+class DebugTask(Command):
+    """ Debug a specific job """
+
+    def list_nodes(self, task_id: UUID_EXPANSION) -> Optional[List[NodeAssignment]]:
+        task = self.onefuzz.tasks.get(task_id)
+        return task.nodes
+
+    def _get_node(
+        self, task_id: UUID_EXPANSION, node_id: Optional[UUID]
+    ) -> Tuple[UUID, UUID]:
+        nodes = self.list_nodes(task_id)
+        if not nodes:
+            raise Exception("task is not currently executing on nodes")
+
+        if node_id is not None:
+            for node in nodes:
+                if node.node_id == node_id and node.scaleset_id is not None:
+                    return (node.scaleset_id, node.node_id)
+            raise Exception("unable to find scaleset with node_id")
+
+        for node in nodes:
+            if node.scaleset_id:
+                return (node.scaleset_id, node.node_id)
+
+        raise Exception("unable to find scaleset node running on task")
+
+    def ssh(
+        self,
+        task_id: UUID_EXPANSION,
+        *,
+        node_id: Optional[UUID] = None,
+        duration: Optional[int] = 1,
+    ) -> None:
+        scaleset_id, node_id = self._get_node(task_id, node_id)
+        return self.onefuzz.debug.scalesets.ssh(scaleset_id, node_id, duration=duration)
+
+    def rdp(
+        self,
+        task_id: UUID_EXPANSION,
+        *,
+        node_id: Optional[UUID] = None,
+        duration: Optional[int] = 1,
+    ) -> None:
+        scaleset_id, node_id = self._get_node(task_id, node_id)
+        return self.onefuzz.debug.scalesets.rdp(scaleset_id, node_id, duration=duration)
 
 
-class Job(Command):
+class DebugJobTask(Command):
+    """ Debug a task for a specific job """
+
+    def _get_task(self, job_id: UUID_EXPANSION, task_type: TaskType) -> UUID:
+        for task in self.onefuzz.tasks.list(job_id=job_id):
+            if task.config.task.type == task_type:
+                return task.task_id
+
+        raise Exception(
+            "unable to find task type %s for job:%s" % (task_type.name, job_id)
+        )
+
+    def ssh(
+        self,
+        job_id: UUID_EXPANSION,
+        task_type: TaskType,
+        *,
+        duration: Optional[int] = 1,
+    ) -> None:
+        """ SSH into the first node running the specified task type in the job """
+        return self.onefuzz.debug.task.ssh(
+            self._get_task(job_id, task_type), duration=duration
+        )
+
+    def rdp(
+        self,
+        job_id: UUID_EXPANSION,
+        task_type: TaskType,
+        *,
+        duration: Optional[int] = 1,
+    ) -> None:
+        """ RDP into the first node running the specified task type in the job """
+        return self.onefuzz.debug.task.rdp(
+            self._get_task(job_id, task_type), duration=duration
+        )
+
+
+class DebugJob(Command):
     """ Debug a specific Job """
+
+    def __init__(self, onefuzz: Any, logger: logging.Logger):
+        super().__init__(onefuzz, logger)
+        self.task = DebugJobTask(onefuzz, logger)
 
     def download_files(self, job_id: UUID_EXPANSION, output: Directory) -> None:
         """ Download the containers by container type for each task in the specified job """
@@ -176,7 +262,7 @@ class Job(Command):
             subprocess.check_output([azcopy, "sync", to_download[name], outdir])
 
 
-class Notification(Command):
+class DebugNotification(Command):
     """ Debug notification integrations """
 
     def _get_container(
@@ -275,7 +361,8 @@ class Debug(Command):
 
     def __init__(self, onefuzz: Any, logger: logging.Logger):
         super().__init__(onefuzz, logger)
-        self.scalesets = ManagedScaleset(onefuzz, logger)
-        self.repro = Repro(onefuzz, logger)
-        self.job = Job(onefuzz, logger)
-        self.notification = Notification(onefuzz, logger)
+        self.scalesets = DebugScaleset(onefuzz, logger)
+        self.repro = DebugRepro(onefuzz, logger)
+        self.job = DebugJob(onefuzz, logger)
+        self.notification = DebugNotification(onefuzz, logger)
+        self.task = DebugTask(onefuzz, logger)

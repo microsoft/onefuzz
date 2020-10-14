@@ -52,7 +52,7 @@ pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
     utils::init_dir(&config.tools.path).await?;
     utils::sync_remote_dir(&config.tools, utils::SyncOperation::Pull).await?;
     set_executable(&config.tools.path).await?;
-    let hb_client = config.common.init_heartbeat();
+    let hb_client = config.common.init_heartbeat().await?;
 
     for sync_dir in &config.readonly_inputs {
         utils::init_dir(&sync_dir.path).await?;
@@ -70,6 +70,7 @@ pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
         &config.target_env,
         &config.target_timeout,
         config.check_asan_log,
+        false,
         config.check_debugger,
         config.check_retry_count,
     );
@@ -128,14 +129,14 @@ async fn start_fuzzing<'a>(
     config: &GeneratorConfig,
     corpus_dirs: Vec<impl AsRef<Path>>,
     tester: Tester<'a>,
-    heartbeat_sender: Option<HeartbeatClient>,
+    heartbeat_client: Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     let generator_tmp = "generator_tmp";
 
     info!("Starting generator fuzzing loop");
 
     loop {
-        heartbeat_sender.alive();
+        heartbeat_client.alive();
 
         for corpus_dir in &corpus_dirs {
             let corpus_dir = corpus_dir.as_ref();

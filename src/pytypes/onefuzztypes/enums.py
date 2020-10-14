@@ -110,6 +110,7 @@ class TaskState(Enum):
     init = "init"
     waiting = "waiting"
     scheduled = "scheduled"
+    setting_up = "setting_up"
     running = "running"
     stopping = "stopping"
     stopped = "stopped"
@@ -226,6 +227,7 @@ class ErrorCode(Enum):
     UNABLE_TO_FIND = 467
     TASK_FAILED = 468
     INVALID_NODE = 469
+    NOTIFICATION_FAILURE = 470
 
 
 class HeartbeatType(Enum):
@@ -279,6 +281,15 @@ class ScalesetState(Enum):
         unavailable = [cls.shutdown, cls.halt, cls.creation_failed]
         return [x for x in cls if x not in unavailable]
 
+    @classmethod
+    def modifying(cls) -> List["ScalesetState"]:
+        """ set of states that indicate scaleset is resizing """
+        return [
+            cls.halt,
+            cls.init,
+            cls.setup,
+        ]
+
 
 class Architecture(Enum):
     x86_64 = "x86_64"
@@ -286,6 +297,7 @@ class Architecture(Enum):
 
 class NodeTaskState(Enum):
     init = "init"
+    setting_up = "setting_up"
     running = "running"
 
 
@@ -315,3 +327,13 @@ class NodeState(Enum):
         # If Node is in one of these states, ignore updates
         # from the agent.
         return [cls.done, cls.shutdown, cls.halt]
+
+
+class GithubIssueState(Enum):
+    open = "open"
+    closed = "closed"
+
+
+class GithubIssueSearchMatch(Enum):
+    title = "title"
+    body = "body"

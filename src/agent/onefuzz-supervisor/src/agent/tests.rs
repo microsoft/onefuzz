@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use url::Url;
+use onefuzz::blob::BlobContainerUrl;
 use uuid::Uuid;
 
 use crate::coordinator::double::*;
@@ -32,6 +32,7 @@ impl Fixture {
             setup_runner,
             work_queue,
             worker_runner,
+            None,
         )
     }
 
@@ -68,12 +69,13 @@ impl Fixture {
         }
     }
 
-    pub fn setup_url(&self) -> Url {
-        "https://contoso.com/my-setup-container".parse().unwrap()
+    pub fn setup_url(&self) -> BlobContainerUrl {
+        let url = "https://contoso.com/my-setup-container";
+        BlobContainerUrl::parse(&url).unwrap()
     }
 
     pub fn work_unit(&self) -> WorkUnit {
-        let config = r#"{ "hello": "world" }"#.into();
+        let config = r#"{ "hello": "world" }"#.to_owned().into();
 
         WorkUnit {
             job_id: self.job_id(),

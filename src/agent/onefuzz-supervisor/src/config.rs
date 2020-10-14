@@ -24,6 +24,8 @@ pub struct StaticConfig {
     pub instrumentation_key: Option<Uuid>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub heartbeat_queue: Option<Url>,
 }
 
 // Temporary shim type to bridge the current service-provided config.
@@ -38,6 +40,8 @@ struct RawStaticConfig {
     pub instrumentation_key: Option<Uuid>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub heartbeat_queue: Option<Url>,
 }
 
 impl StaticConfig {
@@ -63,6 +67,7 @@ impl StaticConfig {
             onefuzz_url: config.onefuzz_url,
             instrumentation_key: config.instrumentation_key,
             telemetry_key: config.telemetry_key,
+            heartbeat_queue: config.heartbeat_queue,
         };
 
         Ok(config)
@@ -111,7 +116,8 @@ impl Registration {
         let mut url = config.register_url();
         url.query_pairs_mut()
             .append_pair("machine_id", &machine_id.to_string())
-            .append_pair("pool_name", &config.pool_name);
+            .append_pair("pool_name", &config.pool_name)
+            .append_pair("version", env!("ONEFUZZ_VERSION"));
 
         if managed {
             let scaleset = onefuzz::machine_id::get_scaleset_name().await?;
@@ -126,7 +132,7 @@ impl Registration {
             let response = reqwest::Client::new()
                 .post(url.clone())
                 .header("Content-Length", "0")
-                .bearer_auth(token.secret().expose())
+                .bearer_auth(token.secret().expose_ref())
                 .body("")
                 .send()
                 .await?
@@ -174,7 +180,7 @@ impl Registration {
 
         let response = reqwest::Client::new()
             .get(url)
-            .bearer_auth(token.secret().expose())
+            .bearer_auth(token.secret().expose_ref())
             .send()
             .await?
             .error_for_status()?;

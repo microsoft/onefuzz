@@ -6,7 +6,7 @@ use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, report};
 use anyhow::Result;
 use onefuzz::{
     blob::BlobContainerUrl,
-    machine_id::get_machine_id,
+    machine_id::{get_machine_id, get_scaleset_name},
     telemetry::{self, Event::task_start, EventData},
 };
 use reqwest::Url;
@@ -35,10 +35,14 @@ pub struct CommonConfig {
 }
 
 impl CommonConfig {
-    pub fn init_heartbeat(&self) -> Option<HeartbeatClient> {
-        self.heartbeat_queue
-            .clone()
-            .map(|url| HeartbeatClient::init(url, self.task_id))
+    pub async fn init_heartbeat(&self) -> Result<Option<TaskHeartbeatClient>> {
+        match &self.heartbeat_queue {
+            Some(url) => {
+                let hb = init_task_heartbeat(url.clone(), self.task_id).await?;
+                Ok(Some(hb))
+            }
+            None => Ok(None),
+        }
     }
 }
 
@@ -113,6 +117,10 @@ impl Config {
         telemetry::set_property(EventData::JobId(self.common().job_id));
         telemetry::set_property(EventData::TaskId(self.common().task_id));
         telemetry::set_property(EventData::MachineId(get_machine_id().await?));
+        telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
+        if let Ok(scaleset) = get_scaleset_name().await {
+            telemetry::set_property(EventData::ScalesetId(scaleset));
+        }
 
         info!("agent ready, dispatching task");
         self.report_event();

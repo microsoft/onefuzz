@@ -4,10 +4,10 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -17,6 +17,8 @@ from .enums import (
     ContainerPermission,
     ContainerType,
     ErrorCode,
+    GithubIssueSearchMatch,
+    GithubIssueState,
     HeartbeatType,
     JobState,
     NodeState,
@@ -30,6 +32,24 @@ from .enums import (
     VmState,
 )
 from .primitives import Container, PoolName, Region
+
+
+class EnumModel(BaseModel):
+    @root_validator(pre=True)
+    def exactly_one(cls: Any, values: Any) -> Any:
+        some = []
+
+        for field, val in values.items():
+            if val is not None:
+                some.append(field)
+
+        if not some:
+            raise ValueError("no variant set for enum")
+
+        if len(some) > 1:
+            raise ValueError("multiple values set for enum: %s" % some)
+
+        return values
 
 
 class Error(BaseModel):
@@ -195,9 +215,15 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
+    def redact(self) -> None:
+        self.auth_token = "***"
+
 
 class TeamsTemplate(BaseModel):
     url: str
+
+    def redact(self) -> None:
+        self.url = "***"
 
 
 class ContainerDefinition(BaseModel):
@@ -219,18 +245,6 @@ class TaskDefinition(BaseModel):
     vm: VmDefinition
 
 
-class HeartbeatEntry(BaseModel):
-    task_id: UUID
-    machine_id: UUID
-    data: List[Dict[str, HeartbeatType]]
-
-
-class HeartbeatSummary(BaseModel):
-    machine_id: UUID
-    timestamp: Optional[datetime]
-    type: HeartbeatType
-
-
 # TODO: service shouldn't pass SyncedDir, but just the url and let the agent
 # come up with paths
 class SyncedDir(BaseModel):
@@ -250,6 +264,7 @@ class AgentConfig(BaseModel):
     client_credentials: Optional[ClientCredentials]
     onefuzz_url: str
     pool_name: str
+    heartbeat_queue: Optional[str]
     instrumentation_key: Optional[str]
     telemetry_key: Optional[str]
 
@@ -350,7 +365,41 @@ class WorkSetSummary(BaseModel):
     work_units: List[WorkUnitSummary]
 
 
-NotificationTemplate = Union[ADOTemplate, TeamsTemplate]
+class GithubIssueDuplicate(BaseModel):
+    comment: Optional[str]
+    labels: List[str]
+    reopen: bool
+
+
+class GithubIssueSearch(BaseModel):
+    author: Optional[str]
+    state: Optional[GithubIssueState]
+    field_match: List[GithubIssueSearchMatch]
+    string: str
+
+
+class GithubAuth(BaseModel):
+    user: str
+    personal_access_token: str
+
+
+class GithubIssueTemplate(BaseModel):
+    auth: GithubAuth
+    organization: str
+    repository: str
+    title: str
+    body: str
+    unique_search: GithubIssueSearch
+    assignees: List[str]
+    labels: List[str]
+    on_duplicate: GithubIssueDuplicate
+
+    def redact(self) -> None:
+        self.auth.user = "***"
+        self.auth.personal_access_token = "***"
+
+
+NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
 
 
 class Notification(BaseModel):
@@ -374,12 +423,51 @@ class Job(BaseModel):
     task_info: Optional[List[JobTaskInfo]]
 
 
+class TaskHeartbeatEntry(BaseModel):
+    task_id: UUID
+    machine_id: UUID
+    data: List[Dict[str, HeartbeatType]]
+
+
+class TaskHeartbeatSummary(BaseModel):
+    machine_id: UUID
+    timestamp: Optional[datetime]
+    type: HeartbeatType
+
+
+class TaskHeartbeat(BaseModel):
+    task_id: UUID
+    heartbeat_id: str
+    machine_id: UUID
+    heartbeat_type: HeartbeatType
+
+
+class NodeHeartbeatEntry(BaseModel):
+    node_id: UUID
+    data: List[Dict[str, HeartbeatType]]
+
+
+class NodeHeartbeatSummary(BaseModel):
+    timestamp: Optional[datetime]
+    type: HeartbeatType
+
+
+class NodeHeartbeat(BaseModel):
+    heartbeat_id: str
+    node_id: UUID
+    heartbeat_type: HeartbeatType
+
+
 class Node(BaseModel):
     pool_name: PoolName
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    heartbeats: Optional[List[NodeHeartbeatSummary]]
+    version: str = Field(default="1.0.0")
+    reimage_requested: bool = Field(default=False)
+    delete_requested: bool = Field(default=False)
 
 
 class ScalesetSummary(BaseModel):
@@ -393,11 +481,50 @@ class NodeTasks(BaseModel):
     state: NodeTaskState = Field(default=NodeTaskState.init)
 
 
+class AutoScaleConfig(BaseModel):
+    image: str
+    max_size: Optional[int]  # max size of pool
+    min_size: int = Field(default=0)  # min size of pool
+    region: Optional[Region]
+    scaleset_size: int  # Individual scaleset size
+    spot_instances: bool = Field(default=False)
+    vm_sku: str
+
+    @validator("scaleset_size", allow_reuse=True)
+    def check_scaleset_size(cls, value: int) -> int:
+        if value < 1 or value > 1000:
+            raise ValueError("invalid scaleset size")
+        return value
+
+    @root_validator()
+    def check_data(cls, values: Any) -> Any:
+        if (
+            "max_size" in values
+            and values.get("max_size")
+            and values.get("min_size") > values.get("max_size")
+        ):
+            raise ValueError("The pool min_size is greater than max_size")
+        return values
+
+    @validator("max_size", allow_reuse=True)
+    def check_max_size(cls, value: Optional[int]) -> Optional[int]:
+        if value and value < 1:
+            raise ValueError("Autoscale sizes are not defined properly")
+        return value
+
+    @validator("min_size", allow_reuse=True)
+    def check_min_size(cls, value: int) -> int:
+        if value < 0 or value > 1000:
+            raise ValueError("Invalid pool min_size")
+        return value
+
+
 class Pool(BaseModel):
     name: PoolName
     pool_id: UUID = Field(default_factory=uuid4)
     os: OS
     managed: bool
+    autoscale: Optional[AutoScaleConfig]
     arch: Architecture
     state: PoolState = Field(default=PoolState.init)
     client_id: Optional[UUID]
@@ -428,7 +555,6 @@ class Scaleset(BaseModel):
     image: str
     region: Region
     size: int
-    new_size: Optional[int]
     spot_instances: bool
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]
@@ -439,13 +565,6 @@ class Scaleset(BaseModel):
 
 class NotificationConfig(BaseModel):
     config: NotificationTemplate
-
-
-class Heartbeat(BaseModel):
-    task_id: UUID
-    heartbeat_id: str
-    machine_id: UUID
-    heartbeat_type: HeartbeatType
 
 
 class Repro(BaseModel):
@@ -465,6 +584,12 @@ class ExitStatus(BaseModel):
     success: bool
 
 
+class ProcessOutput(BaseModel):
+    exit_status: ExitStatus
+    stderr: str
+    stdout: str
+
+
 class WorkerRunningEvent(BaseModel):
     task_id: UUID
 
@@ -476,27 +601,77 @@ class WorkerDoneEvent(BaseModel):
     stdout: str
 
 
-class WorkerEvent(BaseModel):
-    event: Union[WorkerDoneEvent, WorkerRunningEvent]
+class WorkerEvent(EnumModel):
+    done: Optional[WorkerDoneEvent]
+    running: Optional[WorkerRunningEvent]
+
+
+class NodeSettingUpEventData(BaseModel):
+    tasks: List[UUID]
+
+
+class NodeDoneEventData(BaseModel):
+    error: Optional[str]
+    script_output: Optional[ProcessOutput]
+
+
+NodeStateData = Union[NodeSettingUpEventData, NodeDoneEventData]
 
 
 class NodeStateUpdate(BaseModel):
     state: NodeState
+    data: Optional[NodeStateData]
+
+    @root_validator(pre=False, skip_on_failure=True)
+    def check_data(cls, values: Any) -> Any:
+        data = values.get("data")
+
+        if data:
+            state = values["state"]
+
+            if state == NodeState.setting_up:
+                if isinstance(data, NodeSettingUpEventData):
+                    return values
+
+            if state == NodeState.done:
+                if isinstance(data, NodeDoneEventData):
+                    return values
+
+            raise ValueError(
+                "data for node state update event does not match state = %s" % state
+            )
+        else:
+            # For now, `data` is always optional.
+            return values
 
 
-NodeEvent = Union[WorkerEvent, NodeStateUpdate]
+class NodeEvent(EnumModel):
+    state_update: Optional[NodeStateUpdate]
+    worker_event: Optional[WorkerEvent]
+
+
+# Temporary shim type to support hot upgrade of 1.0.0 nodes.
+#
+# We want future variants to use an externally-tagged repr.
+NodeEventShim = Union[NodeStateUpdate, NodeEvent, WorkerEvent]
 
 
 class NodeEventEnvelope(BaseModel):
     machine_id: UUID
-    event: NodeEvent
+    event: NodeEventShim
 
 
-class NodeCommandStopTask(BaseModel):
+class StopNodeCommand(BaseModel):
+    pass
+
+
+class StopTaskNodeCommand(BaseModel):
     task_id: UUID
 
 
-NodeCommand = Union[NodeCommandStopTask]
+class NodeCommand(EnumModel):
+    stop: Optional[StopNodeCommand]
+    stop_task: Optional[StopTaskNodeCommand]
 
 
 class NodeCommandEnvelope(BaseModel):
@@ -516,6 +691,12 @@ class TaskEventSummary(BaseModel):
     event_type: str
 
 
+class NodeAssignment(BaseModel):
+    node_id: UUID
+    scaleset_id: Optional[UUID]
+    state: NodeTaskState
+
+
 class Task(BaseModel):
     job_id: UUID
     task_id: UUID = Field(default_factory=uuid4)
@@ -524,6 +705,7 @@ class Task(BaseModel):
     config: TaskConfig
     error: Optional[Error]
     auth: Optional[Authentication]
-    heartbeats: Optional[List[HeartbeatSummary]]
+    heartbeats: Optional[List[TaskHeartbeatSummary]]
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
+    nodes: Optional[List[NodeAssignment]]

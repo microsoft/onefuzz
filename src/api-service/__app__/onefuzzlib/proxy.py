@@ -225,9 +225,10 @@ class Proxy(ORMMixin):
         proxy = Proxy.get(region)
         if proxy is not None:
             if proxy.version != __version__:
-                # If the proxy is out-of-date, delete and re-create it
-                proxy.state = VmState.stopping
-                proxy.save()
+                if proxy.state != VmState.stopping:
+                    # If the proxy is out-of-date, delete and re-create it
+                    proxy.state = VmState.stopping
+                    proxy.save()
                 return None
             return proxy
 

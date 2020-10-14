@@ -11,8 +11,16 @@ use uuid::Uuid;
 pub struct Secret<T>(T);
 
 impl<T> Secret<T> {
-    pub fn expose(&self) -> &T {
+    pub fn expose(self) -> T {
+        self.0
+    }
+
+    pub fn expose_ref(&self) -> &T {
         &self.0
+    }
+
+    pub fn expose_mut(&mut self) -> &mut T {
+        &mut self.0
     }
 }
 
@@ -25,6 +33,12 @@ impl<T> From<T> for Secret<T> {
 impl<T> fmt::Debug for Secret<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Secret(<REDACTED>)")
+    }
+}
+
+impl<T> fmt::Display for Secret<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "<REDACTED>")
     }
 }
 

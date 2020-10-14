@@ -4,9 +4,9 @@
 #![allow(clippy::len_zero)]
 
 use crate::{
-    asan::{add_asan_log_env, check_asan_path, AsanLog},
-    cmd::run_cmd,
+    asan::{add_asan_log_env, check_asan_path, check_asan_string, AsanLog},
     expand::Expand,
+    process::run_cmd,
 };
 use anyhow::{Error, Result};
 use std::{collections::HashMap, path::Path, time::Duration};
@@ -21,6 +21,7 @@ pub struct Tester<'a> {
     environ: &'a HashMap<String, String>,
     timeout: Duration,
     check_asan_log: bool,
+    check_asan_stderr: bool,
     check_debugger: bool,
     check_retry_count: u64,
 }
@@ -46,6 +47,7 @@ impl<'a> Tester<'a> {
         environ: &'a HashMap<String, String>,
         timeout: &'a Option<u64>,
         check_asan_log: bool,
+        check_asan_stderr: bool,
         check_debugger: bool,
         check_retry_count: u64,
     ) -> Self {
@@ -56,6 +58,7 @@ impl<'a> Tester<'a> {
             environ,
             timeout,
             check_asan_log,
+            check_asan_stderr,
             check_debugger,
             check_retry_count,
         }
@@ -84,7 +87,7 @@ impl<'a> Tester<'a> {
                 .map(|f| f.to_string())
                 .collect();
 
-            let crash_site = if let Some(frame) = call_stack.iter().next() {
+            let crash_site = if let Some(frame) = call_stack.get(0) {
                 frame.to_string()
             } else {
                 CRASH_SITE_UNAVAILABLE.to_owned()
@@ -186,7 +189,7 @@ impl<'a> Tester<'a> {
         let (argv, env) = {
             let mut expand = Expand::new();
             expand
-                .input(input_file)
+                .input_path(input_file)
                 .target_exe(&self.exe_path)
                 .target_options(&self.arguments);
 
@@ -211,24 +214,31 @@ impl<'a> Tester<'a> {
         for _ in 0..attempts {
             let result = if self.check_debugger {
                 match self.test_input_debugger(argv.clone(), env.clone()).await {
-                    Ok(crash) => (crash, None),
-                    Err(error) => (None, Some(error)),
+                    Ok(crash) => (crash, None, None),
+                    Err(error) => (None, Some(error), None),
                 }
             } else {
                 match run_cmd(self.exe_path, argv.clone(), &env, self.timeout).await {
-                    Ok(_) => (None, None),
-                    Err(error) => (None, Some(error)),
+                    Ok(output) => (None, None, Some(output)),
+                    Err(error) => (None, Some(error), None),
                 }
             };
 
             crash = result.0;
             error = result.1;
+            let output = result.2;
 
             asan_log = if let Some(asan_dir) = &asan_dir {
                 check_asan_path(asan_dir.path()).await?
             } else {
                 None
             };
+
+            if asan_log.is_none() && self.check_asan_stderr {
+                if let Some(output) = output {
+                    asan_log = check_asan_string(output.stderr).await?;
+                }
+            }
 
             if crash.is_some() || asan_log.is_some() {
                 break;

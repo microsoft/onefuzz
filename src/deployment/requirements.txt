@@ -1,3 +1,4 @@
+azure-cosmosdb-table~=1.0.6
 azure-mgmt-storage~=11.0
 azure-storage-queue~=12.1
 azure-storage-blob~=12.3

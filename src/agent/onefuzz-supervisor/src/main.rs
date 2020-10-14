@@ -12,9 +12,14 @@ extern crate serde;
 #[macro_use]
 extern crate clap;
 
+use crate::heartbeat::*;
 use std::path::PathBuf;
 
 use anyhow::Result;
+use onefuzz::{
+    machine_id::{get_machine_id, get_scaleset_name},
+    telemetry::{self, EventData},
+};
 use structopt::StructOpt;
 
 pub mod agent;
@@ -22,6 +27,8 @@ pub mod auth;
 pub mod config;
 pub mod coordinator;
 pub mod debug;
+pub mod done;
+pub mod heartbeat;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
@@ -71,6 +78,14 @@ fn run(opt: RunOpt) -> Result<()> {
         env!("GIT_VERSION")
     );
 
+    if done::is_agent_done()? {
+        verbose!(
+            "agent is done, remove lock ({}) to continue",
+            done::done_path()?.display()
+        );
+        return Ok(());
+    }
+
     // We can't send telemetry if this fails.
     let config = load_config(opt);
 
@@ -83,14 +98,13 @@ fn run(opt: RunOpt) -> Result<()> {
     let mut rt = tokio::runtime::Runtime::new()?;
     let result = rt.block_on(run_agent(config));
 
-    if let Err(err) = result {
+    if let Err(err) = &result {
         error!("error running supervisor agent: {}", err);
-        return Err(err);
     }
 
-    onefuzz::telemetry::try_flush_and_close();
+    telemetry::try_flush_and_close();
 
-    Ok(())
+    result
 }
 
 fn load_config(opt: RunOpt) -> Result<StaticConfig> {
@@ -106,6 +120,12 @@ fn load_config(opt: RunOpt) -> Result<StaticConfig> {
 }
 
 async fn run_agent(config: StaticConfig) -> Result<()> {
+    telemetry::set_property(EventData::MachineId(get_machine_id().await?));
+    telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
+    if let Ok(scaleset) = get_scaleset_name().await {
+        telemetry::set_property(EventData::ScalesetId(scaleset));
+    }
+
     let registration = config::Registration::create_managed(config.clone()).await?;
     verbose!("created managed registration: {:?}", registration);
 
@@ -118,6 +138,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 
     let work_queue = work::WorkQueue::new(registration.clone());
 
+    let agent_heartbeat = match config.heartbeat_queue {
+        Some(url) => Some(init_agent_heartbeat(url).await?),
+        None => None,
+    };
     let mut agent = agent::Agent::new(
         Box::new(coordinator),
         Box::new(reboot),
@@ -125,9 +149,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         Box::new(setup::SetupRunner),
         Box::new(work_queue),
         Box::new(worker::WorkerRunner),
+        agent_heartbeat,
     );
 
-    info!("running supervisor agent");
+    info!("running agent");
 
     agent.run().await?;
 
@@ -137,14 +162,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 }
 
 fn init_telemetry(config: &StaticConfig) {
-    let inst_key = config
-        .instrumentation_key
-        .map(|k| k.to_string())
-        .unwrap_or_else(String::default);
-    let tele_key = config
-        .telemetry_key
-        .map(|k| k.to_string())
-        .unwrap_or_else(String::default);
-
-    onefuzz::telemetry::set_appinsights_clients(inst_key, tele_key);
+    let inst_key = config.instrumentation_key;
+    let tele_key = config.telemetry_key;
+    telemetry::set_appinsights_clients(inst_key, tele_key);
 }

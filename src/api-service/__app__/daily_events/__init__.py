@@ -8,6 +8,7 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import VmState
 
+from ..onefuzzlib.pools import Scaleset
 from ..onefuzzlib.proxy import Proxy
 
 
@@ -17,3 +18,8 @@ def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
             logging.info("stopping proxy")
             proxy.state = VmState.stopping
             proxy.save()
+
+    scalesets = Scaleset.search()
+    for scaleset in scalesets:
+        logging.info("updating scaleset configs: %s", scaleset.scaleset_id)
+        scaleset.update_configs()

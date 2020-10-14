@@ -65,7 +65,8 @@ impl<'a> ReportTask<'a> {
 
     pub async fn run(&mut self) -> Result<()> {
         info!("Starting generic crash report task");
-        let mut processor = GenericReportProcessor::new(&self.config);
+        let heartbeat_client = self.config.common.init_heartbeat().await?;
+        let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
 
         if let Some(crashes) = &self.config.crashes {
             self.poller.batch_process(&mut processor, &crashes).await?;
@@ -82,18 +83,18 @@ impl<'a> ReportTask<'a> {
 pub struct GenericReportProcessor<'a> {
     config: &'a Config,
     tester: Tester<'a>,
-    heartbeat_client: Option<HeartbeatClient>,
+    heartbeat_client: Option<TaskHeartbeatClient>,
 }
 
 impl<'a> GenericReportProcessor<'a> {
-    pub fn new(config: &'a Config) -> Self {
-        let heartbeat_client = config.common.init_heartbeat();
+    pub fn new(config: &'a Config, heartbeat_client: Option<TaskHeartbeatClient>) -> Self {
         let tester = Tester::new(
             &config.target_exe,
             &config.target_options,
             &config.target_env,
             &config.target_timeout,
             config.check_asan_log,
+            false,
             config.check_debugger,
             config.check_retry_count,
         );

@@ -5,7 +5,10 @@
 
 set -ex
 
-VERSION=$(cat CURRENT_VERSION)
+SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
+GET_VERSION=${SCRIPT_DIR}/get-version.sh
+VERSION=$(${GET_VERSION})
+cd ${SCRIPT_DIR}/../../
 
 SET_VERSIONS="src/pytypes/onefuzztypes/__version__.py src/api-service/__app__/onefuzzlib/__version__.py src/cli/onefuzz/__version__.py"
 SET_REQS="src/cli/requirements.txt src/api-service/__app__/requirements.txt"

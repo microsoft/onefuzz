@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use downcast_rs::Downcast;
+use onefuzz::process::Output;
 use reqwest::{Client, Request, Response, StatusCode};
 use serde::Serialize;
 use uuid::Uuid;
@@ -18,10 +19,10 @@ pub struct StopTask {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(tag = "command_type")]
+#[serde(rename_all = "snake_case")]
 pub enum NodeCommand {
-    #[serde(alias = "stop")]
     StopTask(StopTask),
+    Stop {},
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -33,6 +34,17 @@ pub struct NodeCommandEnvelope {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct PendingNodeCommand {
     envelope: Option<NodeCommandEnvelope>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct PollCommandsRequest {
+    machine_id: Uuid,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct ClaimNodeCommandRequest {
+    machine_id: Uuid,
+    message_id: String,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -54,21 +66,38 @@ pub struct NodeEventEnvelope {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case", untagged)]
+#[serde(rename_all = "snake_case")]
 pub enum NodeEvent {
-    StateUpdate { state: NodeState },
-    WorkerEvent { event: WorkerEvent },
-}
-
-impl From<NodeState> for NodeEvent {
-    fn from(state: NodeState) -> Self {
-        NodeEvent::StateUpdate { state }
-    }
+    StateUpdate(StateUpdateEvent),
+    WorkerEvent(WorkerEvent),
 }
 
 impl From<WorkerEvent> for NodeEvent {
     fn from(event: WorkerEvent) -> Self {
-        NodeEvent::WorkerEvent { event }
+        NodeEvent::WorkerEvent(event)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case", tag = "state", content = "data")]
+pub enum StateUpdateEvent {
+    Init,
+    Free,
+    SettingUp {
+        tasks: Vec<TaskId>,
+    },
+    Rebooting,
+    Ready,
+    Busy,
+    Done {
+        error: Option<String>,
+        script_output: Option<Output>,
+    },
+}
+
+impl From<StateUpdateEvent> for NodeEvent {
+    fn from(event: StateUpdateEvent) -> Self {
+        NodeEvent::StateUpdate(event)
     }
 }
 
@@ -78,15 +107,31 @@ pub enum TaskState {
     Init,
     Waiting,
     Scheduled,
+    SettingUp,
     Running,
     Stopping,
     Stopped,
     WaitJob,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct TaskSearch {
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct CanScheduleRequest {
+    machine_id: Uuid,
     task_id: Uuid,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct CanSchedule {
+    /// If true, then the receiving node can schedule the work.
+    /// Otherwise, the receiver should inspect `work_stopped`.
+    pub allowed: bool,
+
+    /// If `true`, then the work was stopped after being scheduled to the pool's
+    /// work queue, but before being claimed by a node.
+    ///
+    /// No node in the pool may schedule the work, so the receiving node should
+    /// claim (delete) and drop the work set.
+    pub work_stopped: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -102,7 +147,7 @@ pub trait ICoordinator: Downcast {
 
     async fn emit_event(&mut self, event: NodeEvent) -> Result<()>;
 
-    async fn can_schedule(&mut self, work: &WorkSet) -> Result<bool>;
+    async fn can_schedule(&mut self, work: &WorkSet) -> Result<CanSchedule>;
 }
 
 impl_downcast!(ICoordinator);
@@ -117,7 +162,7 @@ impl ICoordinator for Coordinator {
         self.emit_event(event).await
     }
 
-    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<bool> {
+    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
         self.can_schedule(work_set).await
     }
 }
@@ -150,7 +195,9 @@ impl Coordinator {
         let pending: PendingNodeCommand = serde_json::from_slice(&data)?;
 
         if let Some(envelope) = pending.envelope {
-            // TODO: DELETE dequeued command via `message_id`.
+            let request = RequestType::ClaimCommand(envelope.message_id);
+            self.send_with_auth_retry(request).await?;
+
             Ok(Some(envelope.command))
         } else {
             Ok(None)
@@ -168,15 +215,11 @@ impl Coordinator {
         Ok(())
     }
 
-    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<bool> {
+    async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
         let request = RequestType::CanSchedule(work_set);
         let response = self.send_with_auth_retry(request).await?;
 
-        let task_info: TaskInfo = response.json().await?;
-
-        verbose!("task_info = {:?}", task_info);
-
-        let can_schedule = task_info.state == TaskState::Scheduled;
+        let can_schedule: CanSchedule = response.json().await?;
 
         Ok(can_schedule)
     }
@@ -188,7 +231,7 @@ impl Coordinator {
         &mut self,
         request_type: RequestType<'a>,
     ) -> Result<Response> {
-        let request = self.build_request(request_type)?;
+        let request = self.build_request(request_type.clone())?;
         let mut response = self.client.execute(request).await?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
@@ -214,17 +257,40 @@ impl Coordinator {
     fn build_request<'a>(&self, request_type: RequestType<'a>) -> Result<Request> {
         match request_type {
             RequestType::PollCommands => self.poll_commands_request(),
+            RequestType::ClaimCommand(message_id) => self.claim_command_request(message_id),
             RequestType::EmitEvent(event) => self.emit_event_request(event),
             RequestType::CanSchedule(work_set) => self.can_schedule_request(work_set),
         }
     }
 
     fn poll_commands_request(&self) -> Result<Request> {
+        let request = PollCommandsRequest {
+            machine_id: self.registration.machine_id,
+        };
+
         let url = self.registration.dynamic_config.commands_url.clone();
         let request = self
             .client
             .get(url)
-            .bearer_auth(self.token.secret().expose())
+            .bearer_auth(self.token.secret().expose_ref())
+            .json(&request)
+            .build()?;
+
+        Ok(request)
+    }
+
+    fn claim_command_request(&self, message_id: String) -> Result<Request> {
+        let request = ClaimNodeCommandRequest {
+            machine_id: self.registration.machine_id,
+            message_id,
+        };
+
+        let url = self.registration.dynamic_config.commands_url.clone();
+        let request = self
+            .client
+            .delete(url)
+            .bearer_auth(self.token.secret().expose_ref())
+            .json(&request)
             .build()?;
 
         Ok(request)
@@ -235,7 +301,7 @@ impl Coordinator {
         let request = self
             .client
             .post(url)
-            .bearer_auth(self.token.secret().expose())
+            .bearer_auth(self.token.secret().expose_ref())
             .json(event)
             .build()?;
 
@@ -249,17 +315,20 @@ impl Coordinator {
         // need to make sure that other the work units in the set have their states
         // updated if necessary.
         let task_id = work_set.work_units[0].task_id;
-        let task_search = TaskSearch { task_id };
+        let can_schedule = CanScheduleRequest {
+            machine_id: self.registration.machine_id,
+            task_id,
+        };
 
-        verbose!("getting task info for task ID = {}", task_id);
+        verbose!("checking if able to schedule task ID = {}", task_id);
 
         let mut url = self.registration.config.onefuzz_url.clone();
-        url.set_path("/api/tasks");
+        url.set_path("/api/agents/can_schedule");
         let request = self
             .client
-            .get(url)
-            .bearer_auth(self.token.secret().expose())
-            .json(&task_search)
+            .post(url)
+            .bearer_auth(self.token.secret().expose_ref())
+            .json(&can_schedule)
             .build()?;
 
         Ok(request)
@@ -271,9 +340,10 @@ impl Coordinator {
 // The upstream `Request` type is not `Clone`, so we can't retry a request
 // without rebuilding it. We use this enum to dispatch to a private method,
 // avoiding borrowck conflicts that occur when capturing `self`.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 enum RequestType<'a> {
     PollCommands,
+    ClaimCommand(String),
     EmitEvent(&'a NodeEventEnvelope),
     CanSchedule(&'a WorkSet),
 }

@@ -315,6 +315,7 @@ dependencies = [
  "anyhow",
  "fnv",
  "goblin",
+ "iced-x86",
  "log",
  "memmap",
  "serde",
@@ -348,6 +349,12 @@ name = "dtoa"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "134951f4028bdadb9b84baf4232681efbf277da25144b9b0ad65df75946c422b"
+
+[[package]]
+name = "dunce"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2641c4a7c0c4101df53ea572bffdc561c146f6c2eb09e4df02bc4811e3feeb4"
 
 [[package]]
 name = "either"
@@ -850,11 +857,11 @@ dependencies = [
  "coverage",
  "debugger",
  "fnv",
+ "hex",
  "log",
  "num_cpus",
  "rayon",
- "sha-1",
- "uuid",
+ "sha2",
  "win-util",
  "winapi 0.3.9",
 ]
@@ -1205,9 +1212,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "appinsights",
+ "async-trait",
  "base64",
  "bytes",
  "cpp_demangle",
+ "dunce",
  "futures",
  "hex",
  "input-tester",
@@ -1226,12 +1235,14 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sha2",
+ "storage-queue",
  "strum",
  "strum_macros",
  "sysinfo",
  "tempfile",
  "tokio",
  "tokio-util",
+ "url",
  "urlparse",
  "uuid",
  "winreg",
@@ -1853,19 +1864,6 @@ dependencies = [
  "itoa",
  "serde",
  "url",
-]
-
-[[package]]
-name = "sha-1"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "170a36ea86c864a3f16dd2687712dd6646f7019f301e57537c7f4dc9f5916770"
-dependencies = [
- "block-buffer",
- "cfg-if",
- "cpuid-bool",
- "digest",
- "opaque-debug",
 ]
 
 [[package]]

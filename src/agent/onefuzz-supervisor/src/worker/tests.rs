@@ -11,7 +11,7 @@ impl Fixture {
     fn work(&self) -> WorkUnit {
         let job_id = "d4e6cb4a-917e-4826-8a44-7646938c80a8".parse().unwrap();
         let task_id = "1cfcdfe6-df10-42a5-aab7-1a45db0d0e48".parse().unwrap();
-        let config = r#"{ "some": "config" }"#.to_owned();
+        let config = r#"{ "some": "config" }"#.to_owned().into();
 
         WorkUnit {
             job_id,

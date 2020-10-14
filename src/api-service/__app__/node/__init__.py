@@ -4,11 +4,12 @@
 # Licensed under the MIT License.
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, NodeState
+from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import NodeGet, NodeSearch
 from onefuzztypes.responses import BoolResult
 
+from ..onefuzzlib.heartbeat import NodeHeartbeat
 from ..onefuzzlib.pools import Node, NodeTasks
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -31,6 +32,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
         node_tasks = NodeTasks.get_by_machine_id(request.machine_id)
         node.tasks = [(t.task_id, t.state) for t in node_tasks]
+        node.heartbeats = NodeHeartbeat.get_heartbeats(request.machine_id)
 
         return ok(node)
 
@@ -54,8 +56,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
             context=request.machine_id,
         )
 
-    node.state = NodeState.halt
-    node.save()
+    node.set_halt()
 
     return ok(BoolResult(result=True))
 
@@ -72,9 +73,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
             context=request.machine_id,
         )
 
-    node.state = NodeState.done
-    node.save()
-
+    node.stop()
     return ok(BoolResult(result=True))
 
 

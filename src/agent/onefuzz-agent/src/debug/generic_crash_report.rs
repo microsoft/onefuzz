@@ -20,7 +20,8 @@ use uuid::Uuid;
 async fn run_impl(input: String, config: Config) -> Result<()> {
     let input_path = Path::new(&input);
     let test_url = Url::parse("https://contoso.com/sample-container/blob.txt")?;
-    let processor = GenericReportProcessor::new(&config);
+    let heartbeat_client = config.common.init_heartbeat().await?;
+    let processor = GenericReportProcessor::new(&config, heartbeat_client);
     let result = processor.test_input(test_url, input_path).await?;
     println!("{:#?}", result);
     Ok(())

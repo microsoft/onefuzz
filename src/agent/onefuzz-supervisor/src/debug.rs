@@ -4,6 +4,8 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use onefuzz::blob::BlobContainerUrl;
+use onefuzz::process::ExitStatus;
 use structopt::StructOpt;
 use url::Url;
 use uuid::Uuid;
@@ -48,7 +50,22 @@ fn debug_node_event(opt: NodeEventOpt) -> Result<()> {
 }
 
 fn debug_node_event_state_update(state: NodeState) -> Result<()> {
-    let event = NodeEvent::StateUpdate { state };
+    let event = match state {
+        NodeState::Init => StateUpdateEvent::Init,
+        NodeState::Free => StateUpdateEvent::Free,
+        NodeState::SettingUp => {
+            let tasks = vec![Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4()];
+            StateUpdateEvent::SettingUp { tasks }
+        }
+        NodeState::Rebooting => StateUpdateEvent::Rebooting,
+        NodeState::Ready => StateUpdateEvent::Ready,
+        NodeState::Busy => StateUpdateEvent::Busy,
+        NodeState::Done => StateUpdateEvent::Done {
+            error: None,
+            script_output: None,
+        },
+    };
+    let event = event.into();
     print_json(into_envelope(event))
 }
 
@@ -93,7 +110,7 @@ fn debug_node_event_worker_event(opt: WorkerEventOpt) -> Result<()> {
             }
         }
     };
-    let event = NodeEvent::WorkerEvent { event };
+    let event = NodeEvent::WorkerEvent(event);
 
     print_json(into_envelope(event))
 }
@@ -135,13 +152,13 @@ fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
     };
 
     let work_unit = WorkUnit {
-        config,
+        config: config.into(),
         job_id: Uuid::new_v4(),
         task_id,
     };
     let work_set = WorkSet {
         reboot: false,
-        setup_url: opt.setup_url,
+        setup_url: BlobContainerUrl::new(opt.setup_url)?,
         script: opt.script,
         work_units: vec![work_unit],
     };

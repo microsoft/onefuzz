@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+
 #![allow(clippy::too_many_arguments)]
 use crate::tasks::{
     config::{CommonConfig, ContainerType, SyncedDir},
@@ -9,7 +10,6 @@ use crate::tasks::{
     utils::{self, CheckNotify},
 };
 use anyhow::{Error, Result};
-use appinsights::telemetry::SeverityLevel;
 use onefuzz::{
     expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
@@ -105,7 +105,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     let stopped = Notify::new();
     let monitor_process = monitor_process(process, &stopped);
-    let hb = config.common.init_heartbeat();
+    let hb = config.common.init_heartbeat().await?;
 
     let heartbeat_process = heartbeat_process(&stopped, hb);
 
@@ -135,7 +135,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
 async fn heartbeat_process(
     stopped: &Notify,
-    heartbeat_client: Option<HeartbeatClient>,
+    heartbeat_client: Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     while !stopped.is_notified(HEARTBEAT_PERIOD).await {
         heartbeat_client.alive();
@@ -192,7 +192,7 @@ async fn start_supervisor(
         .input_corpus(inputs_dir);
 
     if let Some(input_marker) = supervisor_input_marker {
-        expand.input(input_marker);
+        expand.input_marker(input_marker);
     }
 
     let args = expand.evaluate(supervisor_options)?;

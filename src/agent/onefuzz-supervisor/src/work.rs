@@ -5,10 +5,11 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use downcast_rs::Downcast;
+use onefuzz::blob::BlobContainerUrl;
 use storage_queue::QueueClient;
-use url::Url;
 use uuid::Uuid;
 
+use crate::auth::Secret;
 use crate::config::Registration;
 
 pub type JobId = Uuid;
@@ -18,9 +19,15 @@ pub type TaskId = Uuid;
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WorkSet {
     pub reboot: bool,
-    pub setup_url: Url,
+    pub setup_url: BlobContainerUrl,
     pub script: bool,
     pub work_units: Vec<WorkUnit>,
+}
+
+impl WorkSet {
+    pub fn task_ids(&self) -> Vec<TaskId> {
+        self.work_units.iter().map(|w| w.task_id).collect()
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -32,7 +39,7 @@ pub struct WorkUnit {
     pub task_id: TaskId,
 
     /// JSON-serialized task config.
-    pub config: String,
+    pub config: Secret<String>,
 }
 
 impl WorkUnit {
