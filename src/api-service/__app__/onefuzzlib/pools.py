@@ -664,6 +664,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 logging.info("creating scaleset: %s", self.scaleset_id)
         elif vmss.provisioning_state == "Creating":
             logging.info("Waiting on scaleset creation: %s", self.scaleset_id)
+            if vmss.identity and vmss.identity.principal_id:
+                self.client_object_id = vmss.identity.principal_id
         else:
             logging.info("scaleset running: %s", self.scaleset_id)
             self.state = ScalesetState.running
