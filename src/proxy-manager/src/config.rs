@@ -85,7 +85,7 @@ impl Config {
         if let Some(etag) = &self.etag {
             request = request.header(reqwest::header::IF_NONE_MATCH, etag);
         }
-        let response = request.send().await?;
+        let response = request.send_retry_default().await?;
         let status = response.status();
 
         if status == reqwest::StatusCode::NOT_MODIFIED {

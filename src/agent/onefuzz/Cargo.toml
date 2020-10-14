@@ -33,6 +33,7 @@ strum = "0.19"
 strum_macros = "0.19"
 tempfile = "3.1"
 process_control = "2.0"
+utils = { path = "../utils"}
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winreg = "0.7"

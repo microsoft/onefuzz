@@ -18,6 +18,8 @@ use std::{
 };
 use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
 use tokio::process::Command;
+extern crate utils as ut;
+use ut::SendRetry;
 
 #[derive(Debug, Deserialize)]
 struct QueueMessage {
@@ -119,7 +121,7 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
     let http_client = reqwest::Client::new();
     match http_client
         .delete(input_url)
-        .send()
+        .send_retry_default()
         .await?
         .error_for_status()
     {

@@ -9,6 +9,7 @@ use reqwest as r;
 use serde::Serialize;
 use tokio::{fs, io};
 use tokio_util::codec;
+use utils::SendRetry;
 
 #[derive(Clone)]
 pub struct BlobUploader {
@@ -47,7 +48,7 @@ impl BlobUploader {
         };
 
         // Check if the file already exists before uploading
-        let head = self.client.head(url.clone()).send().await?;
+        let head = self.client.head(url.clone()).send_retry_default().await?;
         if head.status() == reqwest::StatusCode::OK {
             return Ok(head);
         }
@@ -60,7 +61,7 @@ impl BlobUploader {
             .header("Content-Length", &content_length)
             .header("x-ms-blob-type", "BlockBlob")
             .body(body)
-            .send()
+            .send_retry_default()
             .await?;
 
         Ok(resp)
@@ -84,7 +85,7 @@ impl BlobUploader {
             .put(url)
             .header("x-ms-blob-type", "BlockBlob")
             .json(&data)
-            .send()
+            .send_retry_default()
             .await?;
 
         Ok(resp)

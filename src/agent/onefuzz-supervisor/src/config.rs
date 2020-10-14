@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::Result;
 use url::Url;
+use utils::SendRetry;
 use uuid::Uuid;
 
 use crate::auth::{ClientCredentials, Credentials, ManagedIdentityCredentials};
@@ -130,7 +131,7 @@ impl Registration {
                 .header("Content-Length", "0")
                 .bearer_auth(token.secret().expose_ref())
                 .body("")
-                .send()
+                .send_retry_default()
                 .await?
                 .error_for_status();
 
@@ -177,7 +178,7 @@ impl Registration {
         let response = reqwest::Client::new()
             .get(url)
             .bearer_auth(token.secret().expose_ref())
-            .send()
+            .send_retry_default()
             .await?
             .error_for_status()?;
 

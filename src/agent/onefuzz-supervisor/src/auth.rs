@@ -5,6 +5,7 @@ use std::fmt;
 
 use anyhow::Result;
 use url::Url;
+use utils::SendRetry;
 use uuid::Uuid;
 
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
@@ -111,7 +112,7 @@ impl ClientCredentials {
             .post(url)
             .header("Content-Length", "0")
             .form(&self.form_data())
-            .send()
+            .send_retry_default()
             .await?
             .error_for_status()?;
 
@@ -181,7 +182,7 @@ impl ManagedIdentityCredentials {
         let response = reqwest::Client::new()
             .get(self.url())
             .header("Metadata", "true")
-            .send()
+            .send_retry_default()
             .await?
             .error_for_status()?;
 
