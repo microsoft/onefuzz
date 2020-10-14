@@ -10,7 +10,7 @@ import azure.functions as func
 from onefuzztypes.enums import ErrorCode, PoolState
 from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
-from ..onefuzzlib.azure.creds import get_instance_url
+
 from ..onefuzzlib.azure.creds import get_base_region, get_instance_url, get_regions
 from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.vmss import list_available_skus
