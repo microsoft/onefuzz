@@ -126,8 +126,11 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         telemetry::set_property(EventData::ScalesetId(scaleset));
     }
 
-    let registration = config::Registration::create_managed(config.clone()).await?;
-    verbose!("created managed registration: {:?}", registration);
+    let registration = match config::Registration::load_existing(config.clone()).await {
+        Ok(registration) => registration,
+        Err(_) => config::Registration::create_managed(config.clone()).await?,
+    };
+    verbose!("current registration: {:?}", registration);
 
     let coordinator = coordinator::Coordinator::new(registration.clone()).await?;
     verbose!("initialized coordinator");

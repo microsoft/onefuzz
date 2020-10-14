@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use anyhow::Result;
 use reqwest::StatusCode;
 use std::{
-    path::Path,
+    path::{Path, PathBuf},
     time::{Duration, Instant},
 };
-
-use anyhow::Result;
+use tokio::fs;
 use url::Url;
 use uuid::Uuid;
 
@@ -85,7 +85,7 @@ impl StaticConfig {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DynamicConfig {
     /// Queried to get pending commands for the machine.
     pub commands_url: Url,
@@ -95,6 +95,30 @@ pub struct DynamicConfig {
 
     /// Work queue to poll, as an Azure Storage Queue SAS URL.
     pub work_queue: Url,
+}
+
+impl DynamicConfig {
+    pub async fn save(&self) -> Result<()> {
+        let path = Self::save_path()?;
+        let data = serde_json::to_vec(&self)?;
+        fs::write(&path, &data).await?;
+        info!("saved dynamic-config: {}", path.display());
+        Ok(())
+    }
+
+    pub async fn load() -> Result<Self> {
+        let path = Self::save_path()?;
+        let data = fs::read(&path).await?;
+        let ctx: Self = serde_json::from_slice(&data)?;
+        info!("loaded dynamic-config: {}", path.display());
+        Ok(ctx)
+    }
+
+    fn save_path() -> Result<PathBuf> {
+        Ok(onefuzz::fs::onefuzz_root()?
+            .join("etc")
+            .join("dynamic-config.json"))
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -140,7 +164,8 @@ impl Registration {
 
             match response {
                 Ok(response) => {
-                    let dynamic_config = response.json().await?;
+                    let dynamic_config: DynamicConfig = response.json().await?;
+                    dynamic_config.save().await?;
                     return Ok(Self {
                         config,
                         dynamic_config,
@@ -160,6 +185,18 @@ impl Registration {
         }
 
         anyhow::bail!("Unable to register agent")
+    }
+
+    pub async fn load_existing(config: StaticConfig) -> Result<Self> {
+        let dynamic_config = DynamicConfig::load().await?;
+        let machine_id = onefuzz::machine_id::get_machine_id().await?;
+        let mut registration = Self {
+            config,
+            dynamic_config,
+            machine_id,
+        };
+        registration.renew().await?;
+        Ok(registration)
     }
 
     pub async fn create_managed(config: StaticConfig) -> Result<Self> {
@@ -186,6 +223,7 @@ impl Registration {
             .error_for_status()?;
 
         self.dynamic_config = response.json().await?;
+        self.dynamic_config.save().await?;
 
         Ok(())
     }
