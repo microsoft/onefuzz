@@ -21,4 +21,4 @@ git clone https://gitlab.com/akihe/radamsa
 cd radamsa
 git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
 c:\cygwin\bin\bash.exe -c "make --debug=v"
-copy $installRoot\bin\cygwin1.dll bin\cygwin1.dll
+copy c:\cygwin\bin\cygwin1.dll bin\cygwin1.dll
