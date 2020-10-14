@@ -1,5 +1,5 @@
 $exe = "setup.exe"
-$url = "https://cygwin.com/setup.exe"
+$url = "https://cygwin.com/setup-x86_64.exe"
 $mirror = "http://cygwin.mirror.constant.com"
 $dest = "c:\cygwin"
 (New-Object Net.WebClient).DownloadFile($url, $exe)
