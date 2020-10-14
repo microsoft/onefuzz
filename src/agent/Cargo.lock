@@ -1240,6 +1240,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-util",
+ "url",
  "urlparse",
  "uuid",
  "winreg",
