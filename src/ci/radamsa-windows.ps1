@@ -6,8 +6,10 @@ $exe = "C:\cygwin\setup-x86_64.exe"
 $url = "https://cygwin.com/setup-x86_64.exe"
 (New-Object Net.WebClient).DownloadFile($url, $exe)
 Start-Process $exe -ArgumentList @("-q", "-L", "-l", "$installRoot", `
+"--site", "http://cygwin.mirror.constant.com", `
+"--no-shortcuts", `
+"--no-desktop", `
 "--root", "$installRoot", `
-"--verbose", `
 "--packages", "_autorebase,alternatives,base-cygwin,base-files,bash,binutils,bzip2,ca-certificates,coreutils,`
 crypto-policies,cygutils,cygwin,cygwin-devel,dash,diffutils,editrights,file,findutils,gawk,`
 gcc-core,gcc-g++,getent,grep,groff,gzip,hostname,info,ipc-utils,less,libargp,libatomic1,libattr1,`
