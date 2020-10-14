@@ -2,7 +2,7 @@ $exe = "setup.exe"
 $url = "https://cygwin.com/setup-x86_64.exe"
 $mirror = "http://cygwin.mirror.constant.com"
 $dest = "c:\cygwin"
-(New-Object Net.WebClient).DownloadFile($url, $exe)
+Invoke-WebRequest $url -OutFile $exe
 Start-Process -wait -FilePath $exe -ArgumentList "-q -n -s $mirror -R $dest"
 Start-Process -wait -FilePath $exe -ArgumentList "-q -n -s $mirror -R $dest -P _autorebase,alternatives,base-cygwin,base-files,bash,binutils,bzip2,ca-certificates,coreutils,`
 crypto-policies,cygutils,cygwin,cygwin-devel,dash,diffutils,editrights,file,findutils,gawk,`
