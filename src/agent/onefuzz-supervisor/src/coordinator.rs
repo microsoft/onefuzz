@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 use downcast_rs::Downcast;
-use onefuzz::process::Output;
+use onefuzz::{http::ResponseExt, process::Output};
 use reqwest::{Client, Request, Response, StatusCode};
 use serde::Serialize;
 use uuid::Uuid;
@@ -249,7 +249,7 @@ impl Coordinator {
 
         // We've retried if we got a `401 Unauthorized`. If it happens again, we
         // really want to bail this time.
-        let response = response.error_for_status()?;
+        let response = response.error_for_status_with_body().await?;
 
         Ok(response)
     }
