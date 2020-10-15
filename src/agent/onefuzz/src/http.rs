@@ -6,7 +6,7 @@ use reqwest::Response;
 #[async_trait]
 pub trait ResponseExt: Sized {
     /// Alternative to `Response::error_for_status()` which includes the text of
-    /// the response body.
+    /// the response body, if it can be decoded.
     async fn error_for_status_with_body(self) -> Result<Self>;
 }
 
