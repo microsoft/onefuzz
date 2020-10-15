@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
+use onefuzz::http::ResponseExt;
 use reqwest::StatusCode;
 use std::{
     path::{Path, PathBuf},
@@ -220,7 +221,8 @@ impl Registration {
             .bearer_auth(token.secret().expose_ref())
             .send()
             .await?
-            .error_for_status()?;
+            .error_for_status_with_body()
+            .await?;
 
         self.dynamic_config = response.json().await?;
         self.dynamic_config.save().await?;
