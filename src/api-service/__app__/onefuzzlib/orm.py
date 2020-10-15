@@ -7,6 +7,7 @@ import inspect
 import json
 from datetime import datetime
 from enum import Enum
+from typing_extensions import Protocol
 from typing import (
     Any,
     Callable,
@@ -14,7 +15,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Protocol,
     Tuple,
     Type,
     TypeVar,
