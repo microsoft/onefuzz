@@ -63,6 +63,8 @@ from .extension import fuzz_extensions
 from .heartbeat import NodeHeartbeat
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 
+NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
+
 # Future work:
 #
 # Enabling autoscaling for the scalesets based on the pool work queues.
@@ -727,11 +729,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 else:
                     to_reimage.append(node)
 
-        idle_nodes_ids = NodeHeartbeat.get_dead_nodes(
-            [node_id for node_id in azure_nodes.keys()], datetime.timedelta(hours=1)
+        dead_nodes_ids = NodeHeartbeat.get_dead_nodes(
+            [node_id for node_id in azure_nodes.keys()], NODE_EXPIRATION_TIME
         )
-        idle_nodes = Node.get_by_machine_ids(idle_nodes_ids)
-        for node in idle_nodes:
+        dead_nodes = Node.get_by_machine_ids(dead_nodes_ids)
+        for node in dead_nodes:
             to_reimage.append(node)
 
         # Perform operations until they fail due to scaleset getting locked
