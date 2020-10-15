@@ -14,6 +14,7 @@ git checkout ee206da3897fd2d9f72206c3c5ea0e3fab109001
 make
 (test -d llvm_mode && cd llvm_mode && make)
 #(test -d gcc_plugin && cd gcc_plugin && make)
-(cd examples/libdislocator && make)
+(cd libdislocator && make)
+(cd examples/aflpp_driver && make)
 
-cp -rf afl-* *.so *.a *.o dictionaries examples/libdislocator/libdislocator.so LICENSE ../artifacts/third-party/aflpp-linux
+cp -rf afl-* *.so *.a *.o dictionaries LICENSE ../artifacts/third-party/aflpp-linux
