@@ -7,7 +7,6 @@ import inspect
 import json
 from datetime import datetime
 from enum import Enum
-from typing_extensions import Protocol
 from typing import (
     Any,
     Callable,
@@ -37,6 +36,7 @@ from onefuzztypes.enums import (
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
+from typing_extensions import Protocol
 
 from .azure.table import get_client
 from .dashboard import add_event
