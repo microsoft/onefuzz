@@ -14,7 +14,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
         return
 
     for scaleset in scalesets:
-        if scaleset.state == ScalesetState.running:
+        if scaleset.state == [ScalesetState.running, ScalesetState.resize]:
 
             max_size = min(scaleset.max_size(), autoscale_config.scaleset_size)
             logging.info(
