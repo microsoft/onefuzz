@@ -1300,36 +1300,36 @@ class Onefuzz:
             return False
         return True
 
-    def _delete_jobs(self):
+    def _delete_jobs(self) -> None:
         for job in self.jobs.list():
             self.logger.info("stopping job %s", job.job_id)
             self.jobs.delete(job.job_id)
 
-    def _delete_tasks(self):
+    def _delete_tasks(self) -> None:
         for task in self.tasks.list():
             self.logger.info("stopping task %s", task.task_id)
             self.tasks.delete(task.task_id)
 
-    def _delete_notifications(self):
+    def _delete_notifications(self) -> None:
         for notification in self.notifications.list():
             self.logger.info("stopping notification %s", notification.notification_id)
             self.notifications.delete(notification.notification_id)
 
-    def _delete_repros(self):
+    def _delete_repros(self) -> None:
         for vm in self.repro.list():
             self.repro.delete(str(vm.vm_id))
 
-    def _delete_pools(self):
+    def _delete_pools(self) -> None:
         for pool in self.pools.list():
             self.logger.info("stopping pool: %s", pool.name)
             self.pools.shutdown(pool.name, now=True)
 
-    def _delete_scalesets(self):
+    def _delete_scalesets(self) -> None:
         for scaleset in self.scalesets.list():
             self.logger.info("stopping scaleset: %s", scaleset.scaleset_id)
             self.scalesets.shutdown(scaleset.scaleset_id, now=True)
 
-    def _delete_containers(self):
+    def _delete_containers(self) -> None:
         for container in self.containers.list():
             if (
                 container.metadata
@@ -1350,20 +1350,19 @@ class Onefuzz:
                 self.logger.info("removing container: %s", container.name)
                 self.containers.delete(container.name)
 
-    def _delete_all_running_jobs(self):
+    def _delete_all_running_jobs(self) -> None:
         self._delete_jobs()
         self._delete_tasks()
         self._delete_notifications()
         self._delete_repros()
 
-    def _delete_fuzzing_data(self):
+    def _delete_fuzzing_data(self) -> None:
         self._delete_scalesets()
         self._delete_pools()
         self._delete_containers()
 
     def reset(
         self,
-        *,
         containers: bool = False,
         everything: bool = False,
         jobs: bool = False,
