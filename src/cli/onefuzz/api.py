@@ -1418,7 +1418,7 @@ class Onefuzz:
             return
 
         to_delete = []
-        arguments = {
+        argument_str = {
             "jobs",
             "tasks",
             "notifications",
@@ -1428,7 +1428,7 @@ class Onefuzz:
             "containers",
         }
         for k, v in locals().items():
-            if k in arguments and v:
+            if k in argument_str and v:
                 to_delete.append(k)
         message = ["Confirm stopping %s " % (", ".join(to_delete))]
         message += ["(specify y or n): "]
