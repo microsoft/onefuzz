@@ -60,6 +60,7 @@ from .azure.vmss import (
     update_extensions,
 )
 from .extension import fuzz_extensions
+from .heartbeat import NodeHeartbeat
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 
 # Future work:
@@ -721,6 +722,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     to_delete.append(node)
                 else:
                     to_reimage.append(node)
+
+        idle_nodes = NodeHeartbeat.get_dead_nodes(azure_nodes)
+        for node in idle_nodes:
+            to_reimage.append(node)
 
         # Perform operations until they fail due to scaleset getting locked
         try:

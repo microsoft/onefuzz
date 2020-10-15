@@ -3,9 +3,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
 from uuid import UUID
 
+from onefuzztypes.enums import HeartbeatType
 from onefuzztypes.models import NodeHeartbeat as BASE_NODE_HEARTBEAT
 from onefuzztypes.models import NodeHeartbeatEntry, NodeHeartbeatSummary
 from onefuzztypes.models import TaskHeartbeat as BASE_TASK_HEARTBEAT
@@ -59,9 +61,13 @@ class TaskHeartbeat(BASE_TASK_HEARTBEAT, ORMMixin):
 
 class NodeHeartbeat(BASE_NODE_HEARTBEAT, ORMMixin):
     @classmethod
+    def get_heartbeat_id(cls, node_id: UUID, heartbeat_type: HeartbeatType):
+        return "-".join([str(node_id), heartbeat_type.name])
+
+    @classmethod
     def add(cls, entry: NodeHeartbeatEntry) -> None:
         for value in entry.data:
-            heartbeat_id = "-".join([str(entry.node_id), value["type"].name])
+            heartbeat_id = cls.get_heartbeat_id(entry.node_id, value["type"].name)
             heartbeat = cls(
                 heartbeat_id=heartbeat_id,
                 node_id=entry.node_id,
@@ -91,6 +97,24 @@ class NodeHeartbeat(BASE_NODE_HEARTBEAT, ORMMixin):
                 )
             )
         return result
+
+    @classmethod
+    def get_dead_nodes(
+        cls, node_ids: List[UUID], expiration_period: timedelta
+    ) -> List[UUID]:
+        time_filter = "Timestamp lt datetime'%s'" % (
+            datetime.utcnow().isoformat() - expiration_period
+        )
+        entries = cls.search(
+            query={
+                "heartbeat_id": [
+                    cls.get_heartbeat_id(n, HeartbeatType.MachineAlive)
+                    for n in node_ids
+                ]
+            },
+            raw_unchecked_filter=time_filter,
+        )
+        return [e.node_id for e in entries]
 
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
