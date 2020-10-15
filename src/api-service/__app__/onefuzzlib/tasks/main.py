@@ -162,7 +162,7 @@ class Task(BASE_TASK, ORMMixin):
             task_pool = task.get_pool()
             if not task_pool:
                 continue
-            if pool_name == task_pool.name and task.state in TaskState.available():
+            if pool_name == task_pool.name:
                 pool_tasks.append(task)
 
         return pool_tasks
