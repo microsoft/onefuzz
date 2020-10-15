@@ -77,10 +77,6 @@ impl ModuleCoverageBlocks {
         Path::new(&self.module)
     }
 
-    pub fn module_name(&self) -> &Path {
-        Path::new(&self.module)
-    }
-
     pub fn blocks(&self) -> &[Block] {
         &self.blocks
     }
