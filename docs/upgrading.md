@@ -22,6 +22,7 @@ Users should take care over the following items:
       * radamsa-linux
       * radamsa-windows
       * afl-linux
+      * aflpp-linux
 1. Any jobs deployed during the upgrade process may temporarily fail to be
    submitted.
    The CLI will automatic retry to submit jobs that fail due error codes known
