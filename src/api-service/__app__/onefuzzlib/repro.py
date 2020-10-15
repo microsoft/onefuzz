@@ -5,6 +5,7 @@
 
 import logging
 from typing import List, Optional, Tuple, Union
+from datetime import datetime, timedelta
 
 from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import OS, ContainerType, ErrorCode, VmState
@@ -205,9 +206,6 @@ class Repro(BASE_REPRO, ORMMixin):
         logging.info("saved repro script")
         return None
 
-    def queue_stop(self, count: int) -> None:
-        self.queue(method=self.stopping, visibility_timeout=count * HOURS)
-
     @classmethod
     def search_states(cls, *, states: Optional[List[VmState]] = None) -> List["Repro"]:
         query: QueryFilter = {}
@@ -228,9 +226,17 @@ class Repro(BASE_REPRO, ORMMixin):
             return task
 
         vm = cls(config=config, task_id=task.task_id, os=task.os, auth=build_auth())
+        if vm.end_time is None:
+            vm.end_time = datetime.utcnow() + timedelta(hours=config.duration)
         vm.save()
-        vm.queue_stop(config.duration)
+
         return vm
+
+    @classmethod
+    def search_expired(cls) -> List["Repro"]:
+        # unlike jobs/tasks, the entry is deleted from the backing table upon stop
+        time_filter = "end_time lt datetime'%s'" % datetime.utcnow().isoformat()
+        return cls.search(raw_unchecked_filter=time_filter)
 
     @classmethod
     def key_fields(cls) -> Tuple[str, Optional[str]]:

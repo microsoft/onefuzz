@@ -14,10 +14,19 @@ from ..onefuzzlib.repro import Repro
 
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
-    vms = Repro.search_states(states=VmState.needs_work())
-    for vm in vms:
-        logging.info("update vm: %s", vm.vm_id)
-        process_update(vm)
+    expired = Repro.search_expired()
+    for repro in expired:
+        logging.info("stopping repro: %s", repro.vm_id)
+        repro.stopping()
+
+    expired_vm_ids = [x.vm_id for x in expired]
+
+    for repro in Repro.search_states(states=VmState.needs_work()):
+        if repro.vm_id in expired_vm_ids:
+            # this VM already got processed during the expired phase
+            continue
+        logging.info("update repro: %s", repro.vm_id)
+        process_update(repro)
 
     event = get_event()
     if event:
