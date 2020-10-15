@@ -5,7 +5,7 @@
 			"name": "msg",
 			"type": "queueTrigger",
 			"direction": "in",
-			"queueName": "heartbeat",
+			"queueName": "node-heartbeat",
 			"connection": "AzureWebJobsStorage"
 		},
 		{
