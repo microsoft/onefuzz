@@ -210,9 +210,6 @@ class Proxy(ORMMixin):
             account_id=os.environ["ONEFUZZ_FUNC_STORAGE"],
         )
 
-    def queue_stop(self, count: int) -> None:
-        self.queue(method=self.stopping, visibility_timeout=count * HOURS)
-
     @classmethod
     def search_states(cls, *, states: Optional[List[VmState]] = None) -> List["Proxy"]:
         query: QueryFilter = {}
