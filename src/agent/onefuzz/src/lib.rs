@@ -18,6 +18,7 @@ pub mod az_copy;
 pub mod blob;
 pub mod expand;
 pub mod fs;
+pub mod heartbeat;
 pub mod input_tester;
 pub mod libfuzzer;
 pub mod machine_id;
@@ -25,6 +26,8 @@ pub mod monitor;
 pub mod process;
 pub mod sha256;
 pub mod system;
+pub mod utils;
+
 #[cfg(target_os = "linux")]
 pub mod triage;
 pub mod uploader;
