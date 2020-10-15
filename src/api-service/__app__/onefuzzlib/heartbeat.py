@@ -61,13 +61,13 @@ class TaskHeartbeat(BASE_TASK_HEARTBEAT, ORMMixin):
 
 class NodeHeartbeat(BASE_NODE_HEARTBEAT, ORMMixin):
     @classmethod
-    def get_heartbeat_id(cls, node_id: UUID, heartbeat_type: HeartbeatType):
+    def get_heartbeat_id(cls, node_id: UUID, heartbeat_type: HeartbeatType) -> str:
         return "-".join([str(node_id), heartbeat_type.name])
 
     @classmethod
     def add(cls, entry: NodeHeartbeatEntry) -> None:
         for value in entry.data:
-            heartbeat_id = cls.get_heartbeat_id(entry.node_id, value["type"].name)
+            heartbeat_id = cls.get_heartbeat_id(entry.node_id, value["type"])
             heartbeat = cls(
                 heartbeat_id=heartbeat_id,
                 node_id=entry.node_id,
@@ -103,7 +103,7 @@ class NodeHeartbeat(BASE_NODE_HEARTBEAT, ORMMixin):
         cls, node_ids: List[UUID], expiration_period: timedelta
     ) -> List[UUID]:
         time_filter = "Timestamp lt datetime'%s'" % (
-            datetime.utcnow().isoformat() - expiration_period
+            (datetime.utcnow() - expiration_period).isoformat()
         )
         entries = cls.search(
             query={

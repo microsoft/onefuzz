@@ -110,8 +110,12 @@ class Node(BASE_NODE, ORMMixin):
         return cls.search(query=query, raw_unchecked_filter=version_query)
 
     @classmethod
+    def get_by_machine_ids(cls, machine_id: List[UUID]) -> List["Node"]:
+        return cls.search(query={"machine_id": machine_id})
+
+    @classmethod
     def get_by_machine_id(cls, machine_id: UUID) -> Optional["Node"]:
-        nodes = cls.search(query={"machine_id": [machine_id]})
+        nodes = cls.get_by_machine_ids([machine_id])
         if not nodes:
             return None
 
@@ -723,7 +727,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 else:
                     to_reimage.append(node)
 
-        idle_nodes = NodeHeartbeat.get_dead_nodes(azure_nodes)
+        idle_nodes_ids = NodeHeartbeat.get_dead_nodes(
+            [node_id for node_id in azure_nodes.keys()], datetime.timedelta(hours=1)
+        )
+        idle_nodes = Node.get_by_machine_ids(idle_nodes_ids)
         for node in idle_nodes:
             to_reimage.append(node)
 
