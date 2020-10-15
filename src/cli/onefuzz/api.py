@@ -1290,7 +1290,7 @@ class Onefuzz:
 
         return data
 
-    def _user_confirmation(self, message: str) -> bool:
+    def _user_confirmation(self, message: List[str]) -> bool:
         answer: Optional[str] = None
         while answer not in ["y", "n"]:
             answer = input(" ".join(message)).strip()
@@ -1422,7 +1422,6 @@ class Onefuzz:
         for k, _ in locals().items():
             if k in delete_options:
                 to_delete.append(k)
-        print(to_delete)
         message = ["Confirm stopping %s running jobs" % (", ".join(to_delete))]
         message += ["(specify y or n): "]
         if not yes and not self._user_confirmation(message):
