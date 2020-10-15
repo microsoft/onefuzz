@@ -55,7 +55,7 @@ impl ReportTask {
 
     pub async fn run(&mut self) -> Result<()> {
         info!("Starting libFuzzer crash report task");
-        let mut processor = AsanProcessor::new(self.config.clone());
+        let mut processor = AsanProcessor::new(self.config.clone()).await?;
 
         if let Some(crashes) = &self.config.crashes {
             self.poller.batch_process(&mut processor, crashes).await?;
@@ -71,17 +71,17 @@ impl ReportTask {
 
 pub struct AsanProcessor {
     config: Arc<Config>,
-    heartbeat_client: Option<HeartbeatClient>,
+    heartbeat_client: Option<TaskHeartbeatClient>,
 }
 
 impl AsanProcessor {
-    pub fn new(config: Arc<Config>) -> Self {
-        let heartbeat_client = config.common.init_heartbeat();
+    pub async fn new(config: Arc<Config>) -> Result<Self> {
+        let heartbeat_client = config.common.init_heartbeat().await?;
 
-        Self {
+        Ok(Self {
             config,
             heartbeat_client,
-        }
+        })
     }
 
     pub async fn test_input(&self, input_url: Url, input: &Path) -> Result<CrashTestResult> {
