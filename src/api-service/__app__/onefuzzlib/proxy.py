@@ -27,7 +27,7 @@ from .azure.ip import get_public_ip
 from .azure.queue import get_queue_sas
 from .azure.vm import VM
 from .extension import proxy_manager_extensions
-from .orm import HOURS, MappingIntStrAny, ORMMixin, QueryFilter
+from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 from .proxy_forward import ProxyForward
 
 PROXY_SKU = "Standard_B2s"

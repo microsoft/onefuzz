@@ -4,8 +4,8 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import List, Optional, Tuple, Union
 from datetime import datetime, timedelta
+from typing import List, Optional, Tuple, Union
 
 from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import OS, ContainerType, ErrorCode, VmState
@@ -19,7 +19,7 @@ from .azure.creds import get_base_region, get_func_storage
 from .azure.ip import get_public_ip
 from .azure.vm import VM
 from .extension import repro_extensions
-from .orm import HOURS, ORMMixin, QueryFilter
+from .orm import ORMMixin, QueryFilter
 from .reports import get_report
 from .tasks.main import Task
 

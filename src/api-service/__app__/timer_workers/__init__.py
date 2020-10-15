@@ -6,12 +6,12 @@
 import logging
 
 import azure.functions as func
-from onefuzztypes.enums import NodeState, PoolState, ScalesetState
+from onefuzztypes.enums import NodeState, PoolState
 
+from ..onefuzzlib.autoscale import autoscale_pool
 from ..onefuzzlib.dashboard import get_event
 from ..onefuzzlib.orm import process_update
 from ..onefuzzlib.pools import Node, Pool, Scaleset
-from ..onefuzzlib.autoscale import autoscale_pool
 
 
 def process_scaleset(scaleset: Scaleset) -> None:

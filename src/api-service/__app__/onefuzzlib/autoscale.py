@@ -1,9 +1,11 @@
 import logging
-from typing import List
-from .pools import Pool, Node, Scaleset
-from onefuzztypes.models import AutoScaleConfig, TaskPool
-from onefuzztypes.enums import ScalesetState, PoolState, NodeState
 import math
+from typing import List
+
+from onefuzztypes.enums import NodeState, ScalesetState
+from onefuzztypes.models import AutoScaleConfig, TaskPool
+
+from .pools import Node, Pool, Scaleset
 from .tasks.main import Task
 
 
