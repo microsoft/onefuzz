@@ -1418,10 +1418,19 @@ class Onefuzz:
             return
 
         to_delete = []
-        for k, _ in locals().items():
-            if k in delete_options:
+        arguments = {
+            "jobs",
+            "tasks",
+            "notifications",
+            "pools",
+            "scalesets",
+            "repros",
+            "containers",
+        }
+        for k, v in locals().items():
+            if k in arguments and v:
                 to_delete.append(k)
-        message = ["Confirm stopping %s running jobs" % (", ".join(to_delete))]
+        message = ["Confirm stopping %s " % (", ".join(to_delete))]
         message += ["(specify y or n): "]
         if not yes and not self._user_confirmation(message):
             return
