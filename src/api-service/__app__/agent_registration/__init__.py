@@ -107,6 +107,9 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         )
     node.save()
 
+    # if any tasks were running during an earlier instance of this node, clear them out
+    node.mark_tasks_stopped_early()
+
     return create_registration_response(node.machine_id, pool)
 
 
