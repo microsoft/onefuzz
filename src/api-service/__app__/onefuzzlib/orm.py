@@ -14,6 +14,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Protocol,
     Tuple,
     Type,
     TypeVar,
@@ -64,6 +65,26 @@ SAFE_STRINGS = (UUID, Container, Region, PoolName)
 KEY = Union[int, str, UUID, Enum]
 
 HOURS = 60 * 60
+
+
+class HasState(Protocol):
+    # TODO: this should be bound tighter than Any
+    state: Any
+
+
+def process_update(obj: HasState) -> None:
+    """ process through the state machine for an object """
+
+    # process the state machine up to 5 times unless it's stopped changing
+    for _ in range(0, 5):
+        state = obj.state
+        func = getattr(obj, state.name, None)
+        if func is None:
+            return
+        func()
+        new_state = obj.state
+        if new_state == state:
+            break
 
 
 def resolve(key: KEY) -> str:
