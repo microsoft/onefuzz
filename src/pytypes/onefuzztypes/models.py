@@ -429,10 +429,14 @@ class TaskHeartbeatEntry(BaseModel):
     data: List[Dict[str, HeartbeatType]]
 
 
-class TaskHeartbeatSummary(BaseModel):
+class TaskHeartbeat(BaseModel):
     machine_id: UUID
     timestamp: Optional[datetime]
     type: HeartbeatType
+
+
+# class TaskHeartbeatSummary(BaseModel):
+#     summary: 
 
 
 class TaskHeartbeat(BaseModel):
@@ -449,6 +453,7 @@ class NodeHeartbeatEntry(BaseModel):
 
 class NodeHeartbeatSummary(BaseModel):
     timestamp: Optional[datetime]
+    node_id: UUID
     type: HeartbeatType
 
 
@@ -711,7 +716,7 @@ class Task(BaseModel):
     config: TaskConfig
     error: Optional[Error]
     auth: Optional[Authentication]
-    heartbeats: Optional[List[TaskHeartbeatSummary]]
+    heartbeats: Optional[Dict[Tuple[UUID, HeartbeatType], TaskHeartbeat]]
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]

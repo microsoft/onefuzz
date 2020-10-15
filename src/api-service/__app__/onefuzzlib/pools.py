@@ -244,6 +244,16 @@ class Node(BASE_NODE, ORMMixin):
         self.set_shutdown()
         self.stop()
 
+    @classmethod
+    def try_add_heartbeat(cls, raw: Dict) -> bool:
+        return True
+        # try:
+        #     entry = NodeHeartbeatEntry.parse_obj(raw)
+        #     cls.add(entry)
+        #     return True
+        # except ValidationError:
+        #     return False
+
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod

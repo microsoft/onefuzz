@@ -9,7 +9,7 @@ import logging
 import azure.functions as func
 
 from ..onefuzzlib.dashboard import get_event
-from ..onefuzzlib.heartbeat import NodeHeartbeat
+from ..onefuzzlib.pools import Node
 
 
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
@@ -18,7 +18,7 @@ def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
 
     raw = json.loads(body)
 
-    NodeHeartbeat.try_add(raw)
+    Node.try_add_heartbeat(raw)
 
     event = get_event()
     if event:

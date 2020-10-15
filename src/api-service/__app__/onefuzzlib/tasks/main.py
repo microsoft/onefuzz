@@ -5,13 +5,18 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
-from onefuzztypes.models import TaskConfig, TaskVm
+from onefuzztypes.models import (
+    TaskConfig,
+    TaskVm,
+    TaskHeartbeatEntry,
+    TaskHeartbeat
+)
 
 from ..azure.creds import get_fuzz_storage
 from ..azure.image import get_os
@@ -19,6 +24,8 @@ from ..azure.queue import create_queue, delete_queue
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
+
+from pydantic import ValidationError
 
 
 class Task(BASE_TASK, ORMMixin):
@@ -141,6 +148,13 @@ class Task(BASE_TASK, ORMMixin):
         )
 
     @classmethod
+    def try_get_by_task_id(cls, task_id: UUID) -> Optional["Task"]:
+        tasks = cls.search(query={"task_id": [task_id]})
+        if not tasks:
+            return None
+        return tasks[0]
+
+    @classmethod
     def get_by_task_id(cls, task_id: UUID) -> Union[Error, "Task"]:
         tasks = cls.search(query={"task_id": [task_id]})
         if not tasks:
@@ -261,3 +275,39 @@ class Task(BASE_TASK, ORMMixin):
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
         return ("job_id", "task_id")
+
+    @classmethod
+    def try_add_heartbeat(cls, raw: Dict) -> bool:
+        now = datetime.utcnow()
+
+# class TaskHeartbeatEntry(BaseModel):
+#     task_id: UUID
+#     machine_id: UUID
+#     data: List[Dict[str, HeartbeatType]]
+
+# class TaskHeartbeatSummary(BaseModel):
+#     machine_id: UUID
+#     timestamp: Optional[datetime]
+
+        try:
+            entry = TaskHeartbeatEntry.parse_obj(raw)
+            task = cls.try_get_by_task_id(entry.task_id)
+            # heartbeats: Optional[Dict[UUID, List[TaskHeartbeatSummary]]]
+            if task:
+                
+                if not task.heartbeats:
+                    task.heartbeats = {}
+                summary = task.heartbeats
+                for hb in entry.data:
+                    for key in hb:
+                        hb_type = hb[key]
+                        
+                        summary[entry.machine_id, hb_type] = TaskHeartbeat(
+                            machine_id=entry.machine_id, timestamp=now, type=hb_type
+                        )
+
+                task.save()
+            # cls.add(entry)P
+            return True
+        except ValidationError:
+            return False
