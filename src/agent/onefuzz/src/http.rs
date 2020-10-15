@@ -1,7 +1,9 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 use reqwest::Response;
-
 
 #[async_trait]
 pub trait ResponseExt: Sized {
@@ -22,7 +24,6 @@ impl ResponseExt for Response {
             if let Ok(text) = text {
                 bail!("{}: {}", status, text);
             } else {
-                // Couldn't decode HTTP response body.
                 bail!("{}: <could not decode response body>", status);
             }
         }
