@@ -274,7 +274,6 @@ class Task(BASE_TASK, ORMMixin):
     def try_add_heartbeat(cls, raw: Dict) -> bool:
         now = datetime.utcnow()
 
-
         try:
             entry = TaskHeartbeatEntry.parse_obj(raw)
             task = cls.try_get_by_task_id(entry.task_id)
