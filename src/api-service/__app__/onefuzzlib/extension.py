@@ -95,7 +95,7 @@ def build_pool_config(pool_name: str) -> str:
         onefuzz_url=get_instance_url(),
         instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         heartbeat_queue=get_queue_sas(
-            "heartbeat",
+            "node-heartbeat",
             account_id=os.environ["ONEFUZZ_FUNC_STORAGE"],
             add=True,
         ),
