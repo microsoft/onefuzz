@@ -54,7 +54,7 @@ pub async fn copy(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, recursive: boo
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!(
-            "sync failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?}",
+            "copy failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?}",
             src.as_ref(),
             dst.as_ref(),
             stdout,
