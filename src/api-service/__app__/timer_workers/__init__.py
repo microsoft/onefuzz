@@ -10,7 +10,7 @@ from onefuzztypes.enums import NodeState, PoolState
 
 from ..onefuzzlib.autoscale import autoscale_pool
 from ..onefuzzlib.dashboard import get_event
-from ..onefuzzlib.orm import process_update
+from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.pools import Node, Pool, Scaleset
 
 
@@ -22,7 +22,7 @@ def process_scaleset(scaleset: Scaleset) -> None:
         logging.debug("scaleset needed cleanup: %s", scaleset.scaleset_id)
         return
 
-    process_update(scaleset)
+    process_state_updates(scaleset)
 
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
@@ -30,7 +30,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     nodes = Node.search_states(states=NodeState.needs_work())
     for node in nodes:
         logging.info("update node: %s", node.machine_id)
-        process_update(node)
+        process_state_updates(node)
 
     scalesets = Scaleset.search()
     for scaleset in scalesets:
@@ -40,7 +40,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     for pool in pools:
         if pool.state in PoolState.needs_work():
             logging.info("update pool: %s (%s)", pool.pool_id, pool.name)
-            process_update(pool)
+            process_state_updates(pool)
         elif pool.state in PoolState.available() and pool.autoscale:
             autoscale_pool(pool)
 

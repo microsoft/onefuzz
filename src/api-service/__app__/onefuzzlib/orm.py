@@ -74,16 +74,23 @@ class HasState(Protocol):
     state: Any
 
 
-def process_update(obj: HasState) -> None:
+def process_state_update(obj: HasState) -> None:
+    """
+    process a single state update, if the obj
+    implements a function for that state
+    """
+
+    func = getattr(obj, obj.state.name, None)
+    if func is None:
+        return
+
+
+def process_state_updates(obj: HasState, max_updates: int = 5) -> None:
     """ process through the state machine for an object """
 
-    # process the state machine up to 5 times unless it's stopped changing
-    for _ in range(0, 5):
+    for _ in range(max_updates):
         state = obj.state
-        func = getattr(obj, state.name, None)
-        if func is None:
-            return
-        func()
+        process_state_update(obj)
         new_state = obj.state
         if new_state == state:
             break

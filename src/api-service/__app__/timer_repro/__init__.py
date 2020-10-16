@@ -9,7 +9,7 @@ import azure.functions as func
 from onefuzztypes.enums import VmState
 
 from ..onefuzzlib.dashboard import get_event
-from ..onefuzzlib.orm import process_update
+from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.repro import Repro
 
 
@@ -26,7 +26,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             # this VM already got processed during the expired phase
             continue
         logging.info("update repro: %s", repro.vm_id)
-        process_update(repro)
+        process_state_updates(repro)
 
     event = get_event()
     if event:
