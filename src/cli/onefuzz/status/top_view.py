@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, List, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from asciimatics.event import KeyboardEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication
@@ -32,6 +32,17 @@ BASE_LINES = 5
 
 # divider + name + header
 EXTRA_LINES_PER_WIDGET = 3
+
+
+def column_config(fields: Optional[List[str]]) -> List[Union[int, str]]:
+    base: List[Union[int, str]] = []
+    if fields:
+        base += [1] * (len(fields) - 1)
+    else:
+        base += [1]
+
+    base += ["100%"]
+    return base
 
 
 class TopView(Frame):
@@ -78,16 +89,18 @@ class TopView(Frame):
             "tasks": {"height": Widget.FILL_FRAME, "setup": self.cache.TASK_FIELDS},
             "messages": {
                 "height": min(10, max_widget_height),
-                "setup": [["Updated", "Type", "Message"], [1, 1, "100%"]],
+                "setup": ["Updated", "Type", "Message"],
             },
-            "status": {"height": 1, "setup": [None, [1, "100%"]]},
+            "status": {"height": 1},
         }
 
         for name in ["status", "pools", "jobs", "tasks", "messages"]:
             if name == "messages" and not self.show_details:
                 continue
 
-            if dimensions[name]["setup"][0]:
+            titles = dimensions[name].get("setup")
+
+            if titles:
                 title = TextBox(1, as_string=True, name=name + "_title")
                 title.disabled = True
                 title.custom_colour = "label"
@@ -95,13 +108,13 @@ class TopView(Frame):
 
             widget = MultiColumnListBox(
                 dimensions[name]["height"],
-                dimensions[name]["setup"][1],
+                column_config(titles),
                 [],
-                titles=dimensions[name]["setup"][0],
+                titles=titles,
                 name=name,
-                add_scroll_bar=bool(dimensions[name]["setup"][0]),
+                add_scroll_bar=bool(titles),
             )
-            if not dimensions[name]["setup"][0]:
+            if not titles:
                 widget.disabled = True
 
             layout.add_widget(widget)

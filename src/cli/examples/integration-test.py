@@ -384,7 +384,7 @@ class TestOnefuzz:
             OS.linux: ("info reg rip", r"^rip\s+0x[a-f0-9]+\s+0x[a-f0-9]+"),
         }
 
-        info = []
+        info: Dict[str, List[str]] = {}
 
         done: Set[UUID] = set()
         for job_id, repro in self.repros.items():
@@ -428,15 +428,21 @@ class TestOnefuzz:
                     self.failed_jobs.add(job_id)
                     done.add(job_id)
             else:
-                info.append("%s:%s" % (self.target_jobs[job_id], repro.state.name))
+                if repro.state.name not in info:
+                    info[repro.state.name] = []
+                info[repro.state.name].append(self.target_jobs[job_id])
 
         for job_id in done:
             self.of.repro.delete(self.repros[job_id].vm_id)
             del self.repros[job_id]
 
+        logline = []
+        for name in info:
+            logline.append("%s:%s" % (name, ",".join(info[name])))
+
         return (
             not bool(self.repros),
-            "waiting repro: %s" % ",".join(info),
+            "waiting repro: %s" % " ".join(logline),
             bool(self.failed_jobs),
         )
 
