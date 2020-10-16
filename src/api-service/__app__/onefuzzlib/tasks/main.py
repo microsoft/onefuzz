@@ -12,7 +12,7 @@ from uuid import UUID
 from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
-from onefuzztypes.models import TaskConfig, TaskHeartbeat, TaskHeartbeatEntry, TaskVm
+from onefuzztypes.models import TaskConfig, TaskHeartbeatEntry, TaskVm
 from pydantic import ValidationError
 
 from ..azure.creds import get_fuzz_storage
@@ -273,27 +273,12 @@ class Task(BASE_TASK, ORMMixin):
 
     @classmethod
     def try_add_heartbeat(cls, raw: Dict) -> bool:
-        now = datetime.utcnow()
-
         try:
             entry = TaskHeartbeatEntry.parse_obj(raw)
             task = cls.try_get_by_task_id(entry.task_id)
             if task:
-                try:
-                    heartbeats = json.loads(task.heartbeats)
-                except ValueError:
-                    heartbeats = {}
-
-                for hb in entry.data:
-                    for key in hb:
-                        hb_type = hb[key]
-
-                        heartbeats[entry.machine_id, hb_type] = TaskHeartbeat(
-                            machine_id=entry.machine_id, timestamp=now, type=hb_type
-                        )
-                task.heartbeats = json.dumps(heartbeats)
+                task.heartbeat = datetime.utcnow()
                 task.save()
-            # cls.add(entry)P
             return True
         except ValidationError:
             return False

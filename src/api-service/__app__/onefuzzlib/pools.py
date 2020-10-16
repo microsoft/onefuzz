@@ -247,7 +247,6 @@ class Node(BASE_NODE, ORMMixin):
 
     @classmethod
     def try_add_heartbeat(cls, raw: Dict) -> bool:
-        now = datetime.datetime.utcnow()
         try:
             entry = NodeHeartbeatEntry.parse_obj(raw)
             if not entry:
@@ -256,16 +255,7 @@ class Node(BASE_NODE, ORMMixin):
             node = cls.get_by_machine_id(entry.node_id)
             if not node:
                 return False
-
-            try:
-                heartbeats = json.loads(node.heartbeats)
-            except ValueError:
-                heartbeats = {}
-
-            for hb in entry.data:
-                for k in hb:
-                    heartbeats[hb[k]] = now
-            node.heartbeats = json.dumps(heartbeats)
+            node.heartbeat = datetime.datetime.utcnow()
             node.save()
             return True
         except ValidationError:

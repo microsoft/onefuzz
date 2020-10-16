@@ -429,27 +429,9 @@ class TaskHeartbeatEntry(BaseModel):
     data: List[Dict[str, HeartbeatType]]
 
 
-class TaskHeartbeat(BaseModel):
-    machine_id: UUID
-    timestamp: Optional[datetime]
-    type: HeartbeatType
-
-
 class NodeHeartbeatEntry(BaseModel):
     node_id: UUID
     data: List[Dict[str, HeartbeatType]]
-
-
-class NodeHeartbeatSummary(BaseModel):
-    timestamp: Optional[datetime]
-    node_id: UUID
-    type: HeartbeatType
-
-
-class NodeHeartbeat(BaseModel):
-    heartbeat_id: str
-    node_id: UUID
-    heartbeat_type: HeartbeatType
 
 
 class Node(BaseModel):
@@ -458,7 +440,7 @@ class Node(BaseModel):
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
-    heartbeats: str = Field(default="{}")
+    heartbeat: Optional[datetime]
     version: str = Field(default="1.0.0")
     reimage_requested: bool = Field(default=False)
     delete_requested: bool = Field(default=False)
@@ -705,7 +687,7 @@ class Task(BaseModel):
     config: TaskConfig
     error: Optional[Error]
     auth: Optional[Authentication]
-    heartbeats: str = Field(default="{}")
+    heartbeat: Optional[datetime]
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
