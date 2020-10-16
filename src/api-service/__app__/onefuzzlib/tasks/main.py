@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import json
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Union
@@ -278,15 +279,19 @@ class Task(BASE_TASK, ORMMixin):
             entry = TaskHeartbeatEntry.parse_obj(raw)
             task = cls.try_get_by_task_id(entry.task_id)
             if task:
-                summary = task.heartbeats
+                try:
+                    heartbeats = json.loads(task.heartbeats)
+                except ValueError:
+                    heartbeats = {}
+
                 for hb in entry.data:
                     for key in hb:
                         hb_type = hb[key]
 
-                        summary[entry.machine_id, hb_type] = TaskHeartbeat(
+                        heartbeats[entry.machine_id, hb_type] = TaskHeartbeat(
                             machine_id=entry.machine_id, timestamp=now, type=hb_type
                         )
-
+                task.heartbeats = json.dumps(heartbeats)
                 task.save()
             # cls.add(entry)P
             return True

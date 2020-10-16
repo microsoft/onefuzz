@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import datetime
+import json
 import logging
 from typing import Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
@@ -256,9 +257,16 @@ class Node(BASE_NODE, ORMMixin):
             if not node:
                 return False
 
+            try:
+                heartbeats = json.loads(node.heartbeats)
+            except ValueError:
+                heartbeats = {}
+
             for hb in entry.data:
                 for k in hb:
-                    node.heartbeats[hb[k]] = now
+                    heartbeats[hb[k]] = now
+            node.heartbeats = json.dumps(heartbeats)
+            node.save()
             return True
         except ValidationError:
             return False

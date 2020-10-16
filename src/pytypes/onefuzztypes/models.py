@@ -458,7 +458,7 @@ class Node(BaseModel):
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
-    heartbeats: Dict[HeartbeatType, datetime] = Field(default={})
+    heartbeats: str = Field(default="{}")
     version: str = Field(default="1.0.0")
     reimage_requested: bool = Field(default=False)
     delete_requested: bool = Field(default=False)
@@ -705,7 +705,7 @@ class Task(BaseModel):
     config: TaskConfig
     error: Optional[Error]
     auth: Optional[Authentication]
-    heartbeats: Dict[Tuple[UUID, HeartbeatType], TaskHeartbeat] = Field(default={})
+    heartbeats: str = Field(default="{}")
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
