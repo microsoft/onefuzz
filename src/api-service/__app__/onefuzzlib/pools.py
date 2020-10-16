@@ -69,6 +69,10 @@ from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 
 
 class Node(BASE_NODE, ORMMixin):
+    # should only be set by Scaleset.reimage_nodes
+    # should only be unset during agent_registration POST
+    reimage_queued: bool = Field(default=False)
+
     @classmethod
     def search_states(
         cls,
@@ -208,6 +212,12 @@ class Node(BASE_NODE, ORMMixin):
                 self.version,
             )
             self.stop()
+            return False
+
+        if self.state in NodeState.ready_for_reset():
+            logging.info(
+                "can_schedule should be recycled.  machine_id:%s", self.machine_id
+            )
             return False
 
         if self.delete_requested or self.reimage_requested:
@@ -720,7 +730,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
                     node.set_halt()
                     to_delete.append(node)
-                else:
+                elif not node.reimage_queued:
+                    # only add nodes that are not already set to reschedule
                     to_reimage.append(node)
 
         # Perform operations until they fail due to scaleset getting locked
@@ -834,6 +845,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 "unable to reimage nodes: %s:%s - %s"
                 % (self.scaleset_id, machine_ids, result)
             )
+        for node in nodes:
+            node.reimage_queued = True
+            node.save()
 
     def shutdown(self) -> None:
         size = get_vmss_size(self.scaleset_id)
