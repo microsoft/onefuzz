@@ -435,17 +435,6 @@ class TaskHeartbeat(BaseModel):
     type: HeartbeatType
 
 
-# class TaskHeartbeatSummary(BaseModel):
-#     summary:
-
-
-class TaskHeartbeat(BaseModel):
-    task_id: UUID
-    heartbeat_id: str
-    machine_id: UUID
-    heartbeat_type: HeartbeatType
-
-
 class NodeHeartbeatEntry(BaseModel):
     node_id: UUID
     data: List[Dict[str, HeartbeatType]]

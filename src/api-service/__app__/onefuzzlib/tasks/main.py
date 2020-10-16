@@ -11,12 +11,8 @@ from uuid import UUID
 from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
-from onefuzztypes.models import (
-    TaskConfig,
-    TaskVm,
-    TaskHeartbeatEntry,
-    TaskHeartbeat
-)
+from onefuzztypes.models import TaskConfig, TaskHeartbeat, TaskHeartbeatEntry, TaskVm
+from pydantic import ValidationError
 
 from ..azure.creds import get_fuzz_storage
 from ..azure.image import get_os
@@ -24,8 +20,6 @@ from ..azure.queue import create_queue, delete_queue
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
-
-from pydantic import ValidationError
 
 
 class Task(BASE_TASK, ORMMixin):
@@ -280,28 +274,19 @@ class Task(BASE_TASK, ORMMixin):
     def try_add_heartbeat(cls, raw: Dict) -> bool:
         now = datetime.utcnow()
 
-# class TaskHeartbeatEntry(BaseModel):
-#     task_id: UUID
-#     machine_id: UUID
-#     data: List[Dict[str, HeartbeatType]]
-
-# class TaskHeartbeatSummary(BaseModel):
-#     machine_id: UUID
-#     timestamp: Optional[datetime]
 
         try:
             entry = TaskHeartbeatEntry.parse_obj(raw)
             task = cls.try_get_by_task_id(entry.task_id)
-            # heartbeats: Optional[Dict[UUID, List[TaskHeartbeatSummary]]]
             if task:
-                
+
                 if not task.heartbeats:
                     task.heartbeats = {}
                 summary = task.heartbeats
                 for hb in entry.data:
                     for key in hb:
                         hb_type = hb[key]
-                        
+
                         summary[entry.machine_id, hb_type] = TaskHeartbeat(
                             machine_id=entry.machine_id, timestamp=now, type=hb_type
                         )
