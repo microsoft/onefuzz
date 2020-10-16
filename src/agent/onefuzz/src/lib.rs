@@ -19,6 +19,7 @@ pub mod blob;
 pub mod expand;
 pub mod fs;
 pub mod heartbeat;
+pub mod http;
 pub mod input_tester;
 pub mod libfuzzer;
 pub mod machine_id;

@@ -180,7 +180,7 @@ def build_task_config(
         instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
-            "heartbeat",
+            "task-heartbeat",
             account_id=os.environ["ONEFUZZ_FUNC_STORAGE"],
             add=True,
         ),

@@ -367,7 +367,7 @@ class Client:
             account_url=account_url,
             credential={"account_name": name, "account_key": key},
         )
-        for queue in ["file-changes", "heartbeat", "proxy", "update-queue"]:
+        for queue in ["file-changes", "task-heartbeat", "node-heartbeat", "proxy", "update-queue"]:
             try:
                 client.create_queue(queue)
             except ResourceExistsError:
