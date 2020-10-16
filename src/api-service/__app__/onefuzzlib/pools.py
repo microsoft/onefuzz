@@ -113,7 +113,7 @@ class Node(BASE_NODE, ORMMixin):
         return cls.search(query=query, raw_unchecked_filter=version_query)
 
     @classmethod
-    def mark_oudated_nodes(cls) -> None:
+    def mark_outdated_nodes(cls) -> None:
         outdated = cls.search_outdated()
         for node in outdated:
             logging.info(

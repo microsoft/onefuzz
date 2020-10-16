@@ -26,7 +26,7 @@ def process_scaleset(scaleset: Scaleset) -> None:
 
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
-    Node.mark_oudated_nodes()
+    Node.mark_outdated_nodes()
     nodes = Node.search_states(states=NodeState.needs_work())
     for node in nodes:
         logging.info("update node: %s", node.machine_id)
