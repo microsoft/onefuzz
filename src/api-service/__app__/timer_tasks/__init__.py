@@ -18,12 +18,12 @@ from ..onefuzzlib.tasks.scheduler import schedule_tasks
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
     expired_tasks = Task.search_expired()
     for task in expired_tasks:
-        logging.info("stopping task: %s", task.job_id)
+        logging.info("stopping expired task: %s", task.job_id)
         task.stopping()
 
     expired_jobs = Job.search_expired()
     for job in expired_jobs:
-        logging.info("stopping job: %s", job.job_id)
+        logging.info("stopping expired job: %s", job.job_id)
         job.stopping()
 
     jobs = Job.search_states(states=JobState.needs_work())
