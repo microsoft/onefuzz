@@ -69,6 +69,8 @@ HOURS = 60 * 60
 
 class HasState(Protocol):
     # TODO: this should be bound tighter than Any
+    # In the end, we want this to be an Enum.  Specifically, one of
+    # the JobState,TaskState,etc enums.
     state: Any
 
 
