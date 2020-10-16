@@ -83,6 +83,7 @@ def process_state_update(obj: HasState) -> None:
     func = getattr(obj, obj.state.name, None)
     if func is None:
         return
+    func()
 
 
 def process_state_updates(obj: HasState, max_updates: int = 5) -> None:
