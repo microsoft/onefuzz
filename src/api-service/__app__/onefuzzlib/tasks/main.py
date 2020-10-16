@@ -278,9 +278,6 @@ class Task(BASE_TASK, ORMMixin):
             entry = TaskHeartbeatEntry.parse_obj(raw)
             task = cls.try_get_by_task_id(entry.task_id)
             if task:
-
-                if not task.heartbeats:
-                    task.heartbeats = {}
                 summary = task.heartbeats
                 for hb in entry.data:
                     for key in hb:
