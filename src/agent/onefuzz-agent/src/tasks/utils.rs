@@ -6,11 +6,12 @@ use std::time::Duration;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use futures::{future::Future, stream::StreamExt};
+use futures::stream::StreamExt;
 use onefuzz::{
     az_copy,
     monitor::DirectoryMonitor,
-    telemetry::{Event::new_result, EventData},
+    telemetry::{Event, EventData},
+    uploader::BlobUploader,
 };
 use reqwest::Url;
 use tokio::{fs, io};
@@ -113,37 +114,23 @@ impl CheckNotify for tokio::sync::Notify {
 
 const DELAY: Duration = Duration::from_secs(10);
 
-pub fn file_uploader_monitor(synced_dir: SyncedDir) -> Result<impl Future> {
+async fn file_uploader_monitor(synced_dir: SyncedDir, event: Event) -> Result<()> {
+    let url = synced_dir.url.url();
+    let dir = synced_dir.path.clone();
     verbose!("monitoring {}", synced_dir.path.display());
 
-    let dir = synced_dir.path;
-    let url = synced_dir.url;
-
-    let mut monitor = DirectoryMonitor::new(&dir);
+    let mut monitor = DirectoryMonitor::new(dir);
     monitor.start()?;
+    let mut uploader = BlobUploader::new(url);
 
-    let monitor = monitor.for_each(move |item| {
-        verbose!("saw item = {}", item.display());
-
-        let url = url.clone();
-
-        async move {
-            event!(new_result; EventData::Path = item.display().to_string());
-
-            let mut uploader = onefuzz::uploader::BlobUploader::new(url.url());
-            let result = uploader.upload(item.clone()).await;
-
-            if let Err(err) = result {
-                error!("couldn't upload item = {}, error = {}", item.display(), err);
-            } else {
-                verbose!("uploaded item = {}", item.display());
-            }
+    while let Some(item) = monitor.next().await {
+        event!(event.clone(); EventData::Path = item.display().to_string());
+        if let Err(err) = uploader.upload(item.clone()).await {
+            bail!("Couldn't upload file: {}", err);
         }
-    });
+    }
 
-    verbose!("done monitoring {}", dir.display());
-
-    Ok(monitor)
+    Ok(())
 }
 
 /// Monitor a directory for results.
@@ -156,7 +143,7 @@ pub fn file_uploader_monitor(synced_dir: SyncedDir) -> Result<impl Future> {
 /// The intent of this is to support use cases where we usually want a directory
 /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
 /// a directory, and may reset it.
-pub async fn monitor_result_dir(synced_dir: SyncedDir) -> Result<()> {
+pub async fn monitor_result_dir(synced_dir: SyncedDir, event: Event) -> Result<()> {
     loop {
         verbose!("waiting to monitor {}", synced_dir.path.display());
 
@@ -169,7 +156,7 @@ pub async fn monitor_result_dir(synced_dir: SyncedDir) -> Result<()> {
         }
 
         verbose!("starting monitor for {}", synced_dir.path.display());
-        file_uploader_monitor(synced_dir.clone())?.await;
+        file_uploader_monitor(synced_dir.clone(), event.clone()).await?;
     }
 }
 
