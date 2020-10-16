@@ -7,12 +7,12 @@ import logging
 from typing import Dict, List
 from uuid import UUID
 
-from onefuzztypes.enums import OS, TaskState, PoolState
+from onefuzztypes.enums import OS, PoolState, TaskState
 from onefuzztypes.models import WorkSet, WorkUnit
 
-from .pools import Pool
 from ..azure.containers import blob_exists, get_container_sas_url, save_blob
 from ..azure.creds import get_func_storage
+from ..pools import Pool
 from .config import build_task_config, get_setup_container
 from .main import Task
 
