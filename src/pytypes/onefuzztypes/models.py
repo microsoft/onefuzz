@@ -436,7 +436,7 @@ class TaskHeartbeat(BaseModel):
 
 
 # class TaskHeartbeatSummary(BaseModel):
-#     summary: 
+#     summary:
 
 
 class TaskHeartbeat(BaseModel):
