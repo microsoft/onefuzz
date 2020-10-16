@@ -216,13 +216,22 @@ class Node(BASE_NODE, ORMMixin):
 
         if self.state in NodeState.ready_for_reset():
             logging.info(
-                "can_schedule should be recycled.  machine_id:%s", self.machine_id
+                "can_schedule node is set for reset.  machine_id:%s", self.machine_id
             )
             return False
 
-        if self.delete_requested or self.reimage_requested:
+        if self.delete_requested:
             logging.info(
-                "can_schedule should be recycled.  machine_id:%s", self.machine_id
+                "can_schedule is set to be deleted.  machine_id:%s",
+                self.machine_id,
+            )
+            self.stop()
+            return False
+
+        if self.reimage_requested:
+            logging.info(
+                "can_schedule is set to be reimaged.  machine_id:%s",
+                self.machine_id,
             )
             self.stop()
             return False
