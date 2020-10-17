@@ -27,7 +27,7 @@ from .azure.ip import get_public_ip
 from .azure.queue import get_queue_sas
 from .azure.vm import VM
 from .extension import proxy_manager_extensions
-from .orm import HOURS, MappingIntStrAny, ORMMixin, QueryFilter
+from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 from .proxy_forward import ProxyForward
 
 PROXY_SKU = "Standard_B2s"
@@ -209,9 +209,6 @@ class Proxy(ORMMixin):
             proxy_config.json(),
             account_id=os.environ["ONEFUZZ_FUNC_STORAGE"],
         )
-
-    def queue_stop(self, count: int) -> None:
-        self.queue(method=self.stopping, visibility_timeout=count * HOURS)
 
     @classmethod
     def search_states(cls, *, states: Optional[List[VmState]] = None) -> List["Proxy"]:
