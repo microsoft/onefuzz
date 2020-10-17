@@ -12,7 +12,7 @@ from uuid import UUID
 
 from onefuzztypes.enums import JobState, NodeState, PoolState, TaskState
 
-from .cache import TopCache
+from .cache import JobFilter, TopCache
 from .signalr import Stream
 from .top_view import render
 
@@ -35,12 +35,13 @@ class Top:
         onefuzz: "Onefuzz",
         logger: logging.Logger,
         show_details: bool,
+        job_filter: JobFilter,
     ):
         self.onefuzz = onefuzz
         self.logger = logger
         self.show_details = show_details
 
-        self.cache = TopCache(onefuzz)
+        self.cache = TopCache(onefuzz, job_filter)
         self.queue: PriorityQueue = PriorityQueue()
         self.worker = Thread(target=background_task, args=(self.queue,))
         self.worker.start()
@@ -89,6 +90,10 @@ class Top:
 
         for job in jobs:
             self.cache.add_job(job.job_id, job.state, job)
+            # don't add pre-add tasks that we're going to filter out
+            if not self.cache.should_render_job(job):
+                continue
+
             for task in self.onefuzz.tasks.list(job_id=job.job_id):
                 self.cache.add_task(
                     task.task_id, task.state, task=task, add_files=False
