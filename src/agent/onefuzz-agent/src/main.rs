@@ -84,17 +84,7 @@ fn licenses() -> Result<()> {
 }
 
 fn init_telemetry(config: &Config) {
-    let inst_key = config
-        .common()
-        .instrumentation_key
-        .map(|k| k.to_string())
-        .unwrap_or_else(|| "".to_string());
-
-    let tele_key = config
-        .common()
-        .telemetry_key
-        .map(|k| k.to_string())
-        .unwrap_or_else(|| "".to_string());
-
+    let inst_key = config.common().instrumentation_key;
+    let tele_key = config.common().telemetry_key;
     telemetry::set_appinsights_clients(inst_key, tele_key);
 }

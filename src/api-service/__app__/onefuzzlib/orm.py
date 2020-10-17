@@ -63,8 +63,6 @@ QueryFilter = Dict[str, QUERY_VALUE_TYPES]
 SAFE_STRINGS = (UUID, Container, Region, PoolName)
 KEY = Union[int, str, UUID, Enum]
 
-QUEUE_DELAY_STOPPING_SECONDS = 30
-QUEUE_DELAY_CREATE_SECONDS = 5
 HOURS = 60 * 60
 
 
@@ -228,22 +226,6 @@ class ORMMixin(ModelMixin):
     def telemetry(self) -> Any:
         return self.raw(exclude_none=True, include=self.telemetry_include())
 
-    def _queue_as_needed(self) -> None:
-        # Upon ORM save with state, if the object has a state that needs work,
-        # automatically queue it
-        state = getattr(self, "state", None)
-        if state is None:
-            return
-        needs_work = getattr(state, "needs_work", None)
-        if needs_work is None:
-            return
-        if state not in needs_work():
-            return
-        if state.name in ["stopping", "stop", "shutdown"]:
-            self.queue(visibility_timeout=QUEUE_DELAY_STOPPING_SECONDS)
-        else:
-            self.queue(visibility_timeout=QUEUE_DELAY_CREATE_SECONDS)
-
     def _event_as_needed(self) -> None:
         # Upon ORM save, if the object returns event data, we'll send it to the
         # dashboard event subsystem
@@ -306,7 +288,6 @@ class ORMMixin(ModelMixin):
         else:
             self.etag = client.insert_or_replace_entity(self.table_name(), raw)
 
-        self._queue_as_needed()
         if self.table_name() in TelemetryEvent.__members__:
             telem = self.telemetry()
             if telem:

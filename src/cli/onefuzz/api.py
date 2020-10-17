@@ -812,8 +812,14 @@ class Pool(Endpoint):
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
     ) -> models.Pool:
+        """
+        Create a worker pool
+
+        :param str name: Name of the worker-pool
+        """
         self.logger.debug("create worker pool")
         managed = not unmanaged
+
         return self._req_model(
             "POST",
             models.Pool,
@@ -823,6 +829,7 @@ class Pool(Endpoint):
                 "arch": arch,
                 "managed": managed,
                 "client_id": client_id,
+                "autoscale": None,
             },
         )
 
@@ -842,7 +849,7 @@ class Pool(Endpoint):
 
         return config
 
-    def shutdown(self, name: str, *, now: bool = False) -> models.Pool:
+    def shutdown(self, name: str, *, now: bool = False) -> responses.BoolResult:
         expanded_name = self._disambiguate(
             "name", name, lambda x: False, lambda: [x.name for x in self.list()]
         )
@@ -850,7 +857,7 @@ class Pool(Endpoint):
         self.logger.debug("shutdown worker pool: %s (now: %s)", expanded_name, now)
         return self._req_model(
             "DELETE",
-            models.Pool,
+            responses.BoolResult,
             json_data={"name": expanded_name, "now": now},
         )
 
@@ -1012,7 +1019,7 @@ class Scaleset(Endpoint):
 
     def shutdown(
         self, scaleset_id: UUID_EXPANSION, *, now: bool = False
-    ) -> models.Scaleset:
+    ) -> responses.BoolResult:
         scaleset_id_expanded = self._disambiguate_uuid(
             "scaleset_id",
             scaleset_id,
@@ -1022,7 +1029,7 @@ class Scaleset(Endpoint):
         self.logger.debug("shutdown scaleset: %s (now: %s)", scaleset_id_expanded, now)
         return self._req_model(
             "DELETE",
-            models.Scaleset,
+            responses.BoolResult,
             json_data={"scaleset_id": scaleset_id_expanded, "now": now},
         )
 

@@ -107,6 +107,7 @@ def on_state_update(
                             state=NodeTaskState.setting_up,
                         )
                         node_task.save()
+
             elif state == NodeState.done:
                 # if tasks are running on the node when it reports as Done
                 # those are stopped early
@@ -125,6 +126,8 @@ def on_state_update(
                             machine_id,
                             done_data,
                         )
+        else:
+            logging.debug("No change in Node state")
     else:
         logging.info("ignoring state updates from the node: %s: %s", machine_id, state)
 

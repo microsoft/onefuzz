@@ -32,6 +32,7 @@ impl Fixture {
             setup_runner,
             work_queue,
             worker_runner,
+            None,
         )
     }
 

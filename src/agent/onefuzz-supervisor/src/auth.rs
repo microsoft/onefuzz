@@ -4,6 +4,7 @@
 use std::fmt;
 
 use anyhow::Result;
+use onefuzz::http::ResponseExt;
 use url::Url;
 use utils::SendRetry;
 use uuid::Uuid;
@@ -114,7 +115,8 @@ impl ClientCredentials {
             .form(&self.form_data())
             .send_retry_default()
             .await?
-            .error_for_status()?;
+            .error_for_status_with_body()
+            .await?;
 
         let body: ClientAccessTokenBody = response.json().await?;
 
@@ -184,7 +186,8 @@ impl ManagedIdentityCredentials {
             .header("Metadata", "true")
             .send_retry_default()
             .await?
-            .error_for_status()?;
+            .error_for_status_with_body()
+            .await?;
 
         let body: ManagedIdentityAccessTokenBody = response.json().await?;
 

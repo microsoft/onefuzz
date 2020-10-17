@@ -1,13 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use anyhow::Result;
+use onefuzz::http::ResponseExt;
 use reqwest::StatusCode;
 use std::{
-    path::Path,
+    path::{Path, PathBuf},
     time::{Duration, Instant},
 };
-
-use anyhow::Result;
+use tokio::fs;
 use url::Url;
 use utils::SendRetry;
 use uuid::Uuid;
@@ -25,6 +26,8 @@ pub struct StaticConfig {
     pub instrumentation_key: Option<Uuid>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub heartbeat_queue: Option<Url>,
 }
 
 // Temporary shim type to bridge the current service-provided config.
@@ -39,6 +42,8 @@ struct RawStaticConfig {
     pub instrumentation_key: Option<Uuid>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub heartbeat_queue: Option<Url>,
 }
 
 impl StaticConfig {
@@ -64,6 +69,7 @@ impl StaticConfig {
             onefuzz_url: config.onefuzz_url,
             instrumentation_key: config.instrumentation_key,
             telemetry_key: config.telemetry_key,
+            heartbeat_queue: config.heartbeat_queue,
         };
 
         Ok(config)
@@ -81,7 +87,7 @@ impl StaticConfig {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DynamicConfig {
     /// Queried to get pending commands for the machine.
     pub commands_url: Url,
@@ -91,6 +97,30 @@ pub struct DynamicConfig {
 
     /// Work queue to poll, as an Azure Storage Queue SAS URL.
     pub work_queue: Url,
+}
+
+impl DynamicConfig {
+    pub async fn save(&self) -> Result<()> {
+        let path = Self::save_path()?;
+        let data = serde_json::to_vec(&self)?;
+        fs::write(&path, &data).await?;
+        info!("saved dynamic-config: {}", path.display());
+        Ok(())
+    }
+
+    pub async fn load() -> Result<Self> {
+        let path = Self::save_path()?;
+        let data = fs::read(&path).await?;
+        let ctx: Self = serde_json::from_slice(&data)?;
+        info!("loaded dynamic-config: {}", path.display());
+        Ok(ctx)
+    }
+
+    fn save_path() -> Result<PathBuf> {
+        Ok(onefuzz::fs::onefuzz_root()?
+            .join("etc")
+            .join("dynamic-config.json"))
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -112,13 +142,12 @@ impl Registration {
         let mut url = config.register_url();
         url.query_pairs_mut()
             .append_pair("machine_id", &machine_id.to_string())
-            .append_pair("pool_name", &config.pool_name);
+            .append_pair("pool_name", &config.pool_name)
+            .append_pair("version", env!("ONEFUZZ_VERSION"));
 
         if managed {
             let scaleset = onefuzz::machine_id::get_scaleset_name().await?;
-            url.query_pairs_mut()
-                .append_pair("scaleset_id", &scaleset)
-                .append_pair("version", env!("ONEFUZZ_VERSION"));
+            url.query_pairs_mut().append_pair("scaleset_id", &scaleset);
         }
         // The registration can fail because this call is made before the virtual machine scaleset is done provisioning
         // The authentication layer of the service will reject this request when that happens
@@ -137,7 +166,8 @@ impl Registration {
 
             match response {
                 Ok(response) => {
-                    let dynamic_config = response.json().await?;
+                    let dynamic_config: DynamicConfig = response.json().await?;
+                    dynamic_config.save().await?;
                     return Ok(Self {
                         config,
                         dynamic_config,
@@ -157,6 +187,18 @@ impl Registration {
         }
 
         anyhow::bail!("Unable to register agent")
+    }
+
+    pub async fn load_existing(config: StaticConfig) -> Result<Self> {
+        let dynamic_config = DynamicConfig::load().await?;
+        let machine_id = onefuzz::machine_id::get_machine_id().await?;
+        let mut registration = Self {
+            config,
+            dynamic_config,
+            machine_id,
+        };
+        registration.renew().await?;
+        Ok(registration)
     }
 
     pub async fn create_managed(config: StaticConfig) -> Result<Self> {
@@ -180,9 +222,11 @@ impl Registration {
             .bearer_auth(token.secret().expose_ref())
             .send_retry_default()
             .await?
-            .error_for_status()?;
+            .error_for_status_with_body()
+            .await?;
 
         self.dynamic_config = response.json().await?;
+        self.dynamic_config.save().await?;
 
         Ok(())
     }

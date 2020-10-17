@@ -16,7 +16,7 @@ from onefuzztypes.enums import (
     PoolState,
     ScalesetState,
 )
-from onefuzztypes.models import Error
+from onefuzztypes.models import AutoScaleConfig, Error
 from onefuzztypes.models import Node as BASE_NODE
 from onefuzztypes.models import NodeAssignment, NodeCommand
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
@@ -327,6 +327,7 @@ class Pool(BASE_POOL, ORMMixin):
         arch: Architecture,
         managed: bool,
         client_id: Optional[UUID],
+        autoscale: Optional[AutoScaleConfig],
     ) -> "Pool":
         return cls(
             name=name,
@@ -335,6 +336,7 @@ class Pool(BASE_POOL, ORMMixin):
             managed=managed,
             client_id=client_id,
             config=None,
+            autoscale=autoscale,
         )
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:
@@ -662,6 +664,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 logging.info("creating scaleset: %s", self.scaleset_id)
         elif vmss.provisioning_state == "Creating":
             logging.info("Waiting on scaleset creation: %s", self.scaleset_id)
+            if vmss.identity and vmss.identity.principal_id:
+                self.client_object_id = vmss.identity.principal_id
         else:
             logging.info("scaleset running: %s", self.scaleset_id)
             self.state = ScalesetState.running
@@ -854,13 +858,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.state = ScalesetState.halt
             self.delete()
 
-    def max_size(self) -> int:
+    @classmethod
+    def scaleset_max_size(cls, image: str) -> int:
         # https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/
         #   virtual-machine-scale-sets-placement-groups#checklist-for-using-large-scale-sets
-        if self.image.startswith("/"):
+        if image.startswith("/"):
             return 600
         else:
             return 1000
+
+    def max_size(self) -> int:
+        return Scaleset.scaleset_max_size(self.image)
 
     @classmethod
     def search_states(
