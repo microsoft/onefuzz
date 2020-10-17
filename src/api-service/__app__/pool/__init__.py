@@ -10,6 +10,7 @@ import azure.functions as func
 from onefuzztypes.enums import ErrorCode, PoolState
 from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
+from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.azure.creds import get_base_region, get_instance_url, get_regions
 from ..onefuzzlib.azure.queue import get_queue_sas
@@ -124,7 +125,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     else:
         pool.state = PoolState.shutdown
     pool.save()
-    return ok(set_config(pool))
+    return ok(BoolResult(result=True))
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
