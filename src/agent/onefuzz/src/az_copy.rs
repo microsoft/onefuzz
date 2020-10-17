@@ -19,11 +19,13 @@ pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>) -> Result<()> 
 
     let output = cmd.spawn()?.wait_with_output().await?;
     if !output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!(
-            "sync failed '{:?}' ==> '{:?}' : {}",
+            "sync failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?}",
             src.as_ref(),
             dst.as_ref(),
+            stdout,
             stderr
         );
     }
@@ -49,11 +51,13 @@ pub async fn copy(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, recursive: boo
 
     let output = cmd.spawn()?.wait_with_output().await?;
     if !output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!(
-            "copy failed '{:?}' ==> '{:?}' : {}",
+            "copy failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?}",
             src.as_ref(),
             dst.as_ref(),
+            stdout,
             stderr
         );
     }

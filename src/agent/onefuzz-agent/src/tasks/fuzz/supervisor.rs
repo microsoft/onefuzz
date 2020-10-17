@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-
 #![allow(clippy::too_many_arguments)]
 use crate::tasks::{
     config::{CommonConfig, ContainerType, SyncedDir},
@@ -13,6 +12,7 @@ use anyhow::{Error, Result};
 use onefuzz::{
     expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
+    telemetry::Event::new_result,
 };
 use serde::Deserialize;
 use std::{
@@ -64,7 +64,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     };
 
     utils::init_dir(&crashes.path).await?;
-    let monitor_crashes = utils::monitor_result_dir(crashes.clone());
+    let monitor_crashes = utils::monitor_result_dir(crashes.clone(), new_result);
 
     let inputs = SyncedDir {
         path: runtime_dir.path().join("inputs"),
