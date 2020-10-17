@@ -244,7 +244,8 @@ impl Target {
         Ok(())
     }
 
-    /// Register the module loaded at `base_address`, returning the module name.
+    /// Register the module loaded at `base_address`, returning the module name if the module
+    /// is not a native dll in a wow64 process.
     pub fn load_module(
         &mut self,
         module_handle: HANDLE,
@@ -263,13 +264,13 @@ impl Target {
             return Ok(None);
         }
 
-        let module_name = module.name().to_owned();
         if self.sym_initialized {
             if let Err(e) = module.sym_load_module(self.process_handle) {
                 error!("Error loading symbols: {}", e);
             }
         }
 
+        let module_name = module.name().to_owned();
         let base_address = module.base_address;
         if let Some(old_value) = self.modules.insert(base_address, module) {
             error!(

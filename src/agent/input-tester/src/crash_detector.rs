@@ -25,7 +25,7 @@ use win_util::{
 use winapi::{
     shared::minwindef::DWORD,
     um::{
-        minwinbase::{CREATE_PROCESS_DEBUG_INFO, EXCEPTION_DEBUG_INFO},
+        minwinbase::EXCEPTION_DEBUG_INFO,
         winnt::{DBG_EXCEPTION_NOT_HANDLED, HANDLE},
     },
 };
@@ -277,7 +277,12 @@ impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
         DBG_EXCEPTION_NOT_HANDLED
     }
 
-    fn on_create_process(&mut self, debugger: &mut Debugger, _info: &CREATE_PROCESS_DEBUG_INFO) {
+    fn on_create_process(
+        &mut self,
+        debugger: &mut Debugger,
+        _module_name: &Path,
+        _base_address: u64,
+    ) {
         prepare_coverage_breakpoints(debugger, &self.coverage_map);
     }
 
