@@ -7,15 +7,32 @@ import logging
 from typing import Dict, List
 from uuid import UUID
 
-from onefuzztypes.enums import OS, TaskState
+from onefuzztypes.enums import OS, PoolState, TaskState
 from onefuzztypes.models import WorkSet, WorkUnit
 
 from ..azure.containers import blob_exists, get_container_sas_url, save_blob
 from ..azure.creds import get_func_storage
+from ..pools import Pool
 from .config import build_task_config, get_setup_container
 from .main import Task
 
 HOURS = 60 * 60
+
+
+def schedule_workset(workset: WorkSet, pool: Pool, count: int) -> bool:
+    if pool.state not in PoolState.available():
+        logging.info(
+            "pool not available for work: %s state: %s", pool.name, pool.state.name
+        )
+        return False
+
+    for _ in range(count):
+        if not pool.schedule_workset(workset):
+            logging.error(
+                "unable to schedule workset. pool:%s workset:%s", pool.name, workset
+            )
+            return False
+    return True
 
 
 def schedule_tasks() -> None:
@@ -82,7 +99,7 @@ def schedule_tasks() -> None:
             )
 
             # For now, only offer singleton work sets.
-            work_set = WorkSet(
+            workset = WorkSet(
                 reboot=reboot,
                 script=(setup_script is not None),
                 setup_url=setup_url,
@@ -94,7 +111,6 @@ def schedule_tasks() -> None:
                 logging.info("unable to find pool for task: %s", task.task_id)
                 continue
 
-            for _ in range(count):
-                pool.schedule_workset(work_set)
-            task.state = TaskState.scheduled
-            task.save()
+            if schedule_workset(workset, pool, count):
+                task.state = TaskState.scheduled
+                task.save()

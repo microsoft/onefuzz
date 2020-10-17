@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
+from datetime import datetime, timedelta
 from typing import List, Optional, Tuple, Union
 
 from azure.mgmt.compute.models import VirtualMachine
@@ -18,7 +19,7 @@ from .azure.creds import get_base_region, get_func_storage
 from .azure.ip import get_public_ip
 from .azure.vm import VM
 from .extension import repro_extensions
-from .orm import HOURS, ORMMixin, QueryFilter
+from .orm import ORMMixin, QueryFilter
 from .reports import get_report
 from .tasks.main import Task
 
@@ -205,9 +206,6 @@ class Repro(BASE_REPRO, ORMMixin):
         logging.info("saved repro script")
         return None
 
-    def queue_stop(self, count: int) -> None:
-        self.queue(method=self.stopping, visibility_timeout=count * HOURS)
-
     @classmethod
     def search_states(cls, *, states: Optional[List[VmState]] = None) -> List["Repro"]:
         query: QueryFilter = {}
@@ -228,9 +226,17 @@ class Repro(BASE_REPRO, ORMMixin):
             return task
 
         vm = cls(config=config, task_id=task.task_id, os=task.os, auth=build_auth())
+        if vm.end_time is None:
+            vm.end_time = datetime.utcnow() + timedelta(hours=config.duration)
         vm.save()
-        vm.queue_stop(config.duration)
+
         return vm
+
+    @classmethod
+    def search_expired(cls) -> List["Repro"]:
+        # unlike jobs/tasks, the entry is deleted from the backing table upon stop
+        time_filter = "end_time lt datetime'%s'" % datetime.utcnow().isoformat()
+        return cls.search(raw_unchecked_filter=time_filter)
 
     @classmethod
     def key_fields(cls) -> Tuple[str, Optional[str]]:
