@@ -16,6 +16,7 @@ import uuid
 import zipfile
 from datetime import datetime, timedelta
 
+from azure.cli.core import CLIError
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.core.exceptions import ResourceExistsError
@@ -47,6 +48,7 @@ from azure.mgmt.resource.resources.models import (
     DeploymentMode,
     DeploymentProperties,
 )
+import time
 from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import (
     BlobServiceClient,
@@ -213,6 +215,20 @@ class Client:
             print("\n".join(["* " + x for x in unsupported]))
             sys.exit(1)
 
+    def create_password(self, object_id):
+        # Work-around the race condition where the app is created but passwords cannot
+        # be created yet.
+        count = 0
+        while True:
+            time.sleep(5)
+            count += 1
+            try:
+                return add_application_password(object_id)
+            except CLIError as err:
+                if count > 5:
+                    raise err
+            logger.info("creating password failed, trying again")
+
     def setup_rbac(self):
         """
         Setup the client application for the OneFuzz instance.
@@ -288,7 +304,8 @@ class Client:
             creds = list(client.applications.list_password_credentials(app.object_id))
             client.applications.update_password_credentials(app.object_id, creds)
 
-        (password_id, password) = add_application_password(app.object_id)
+        (password_id, password) = self.create_password(app.object_id)
+
         onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
         cli_app = get_application(onefuzz_cli_app_uuid)
 
@@ -367,7 +384,13 @@ class Client:
             account_url=account_url,
             credential={"account_name": name, "account_key": key},
         )
-        for queue in ["file-changes", "task-heartbeat", "node-heartbeat", "proxy", "update-queue"]:
+        for queue in [
+            "file-changes",
+            "task-heartbeat",
+            "node-heartbeat",
+            "proxy",
+            "update-queue",
+        ]:
             try:
                 client.create_queue(queue)
             except ResourceExistsError:

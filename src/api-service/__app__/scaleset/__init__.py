@@ -12,6 +12,7 @@ from onefuzztypes.requests import (
     ScalesetStop,
     ScalesetUpdate,
 )
+from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.azure.creds import get_base_region, get_regions
 from ..onefuzzlib.azure.vmss import list_available_skus
@@ -112,7 +113,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
 
     scaleset.save()
     scaleset.auth = None
-    return ok(scaleset)
+    return ok(BoolResult(result=True))
 
 
 def patch(req: func.HttpRequest) -> func.HttpResponse:
