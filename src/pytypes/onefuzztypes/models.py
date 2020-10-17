@@ -245,18 +245,6 @@ class TaskDefinition(BaseModel):
     vm: VmDefinition
 
 
-class HeartbeatEntry(BaseModel):
-    task_id: UUID
-    machine_id: UUID
-    data: List[Dict[str, HeartbeatType]]
-
-
-class HeartbeatSummary(BaseModel):
-    machine_id: UUID
-    timestamp: Optional[datetime]
-    type: HeartbeatType
-
-
 # TODO: service shouldn't pass SyncedDir, but just the url and let the agent
 # come up with paths
 class SyncedDir(BaseModel):
@@ -276,6 +264,7 @@ class AgentConfig(BaseModel):
     client_credentials: Optional[ClientCredentials]
     onefuzz_url: str
     pool_name: str
+    heartbeat_queue: Optional[str]
     instrumentation_key: Optional[str]
     telemetry_key: Optional[str]
 
@@ -434,12 +423,48 @@ class Job(BaseModel):
     task_info: Optional[List[JobTaskInfo]]
 
 
+class TaskHeartbeatEntry(BaseModel):
+    task_id: UUID
+    machine_id: UUID
+    data: List[Dict[str, HeartbeatType]]
+
+
+class TaskHeartbeatSummary(BaseModel):
+    machine_id: UUID
+    timestamp: Optional[datetime]
+    type: HeartbeatType
+
+
+class TaskHeartbeat(BaseModel):
+    task_id: UUID
+    heartbeat_id: str
+    machine_id: UUID
+    heartbeat_type: HeartbeatType
+
+
+class NodeHeartbeatEntry(BaseModel):
+    node_id: UUID
+    data: List[Dict[str, HeartbeatType]]
+
+
+class NodeHeartbeatSummary(BaseModel):
+    timestamp: Optional[datetime]
+    type: HeartbeatType
+
+
+class NodeHeartbeat(BaseModel):
+    heartbeat_id: str
+    node_id: UUID
+    heartbeat_type: HeartbeatType
+
+
 class Node(BaseModel):
     pool_name: PoolName
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    heartbeats: Optional[List[NodeHeartbeatSummary]]
     version: str = Field(default="1.0.0")
     reimage_requested: bool = Field(default=False)
     delete_requested: bool = Field(default=False)
@@ -537,16 +562,15 @@ class Scaleset(BaseModel):
     client_object_id: Optional[UUID]
     tags: Dict[str, str] = Field(default_factory=lambda: {})
 
+    @validator("size", allow_reuse=True)
+    def check_size(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError("Invalid scaleset size")
+        return value
+
 
 class NotificationConfig(BaseModel):
     config: NotificationTemplate
-
-
-class Heartbeat(BaseModel):
-    task_id: UUID
-    heartbeat_id: str
-    machine_id: UUID
-    heartbeat_type: HeartbeatType
 
 
 class Repro(BaseModel):
@@ -687,7 +711,7 @@ class Task(BaseModel):
     config: TaskConfig
     error: Optional[Error]
     auth: Optional[Authentication]
-    heartbeats: Optional[List[HeartbeatSummary]]
+    heartbeats: Optional[List[TaskHeartbeatSummary]]
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]

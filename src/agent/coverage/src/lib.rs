@@ -6,14 +6,17 @@
 #![allow(clippy::new_without_default)]
 
 mod intel;
-mod pe;
+pub mod pe;
 
-use std::{ffi::OsString, fs::File, path::PathBuf};
+use std::{
+    ffi::OsString,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 use fixedbitset::FixedBitSet;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 pub const COVERAGE_MAP: &str = "coverage-map";
 
@@ -41,26 +44,36 @@ impl Block {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ModuleCoverageBlocks {
     module: OsString,
+    path: PathBuf,
     blocks: Vec<Block>,
 }
 
 impl ModuleCoverageBlocks {
-    pub fn new<S: Into<OsString>>(module: S, rvas_bitset: FixedBitSet) -> Self {
+    pub fn new(
+        path: impl Into<PathBuf>,
+        module: impl Into<OsString>,
+        rvas_bitset: FixedBitSet,
+    ) -> Self {
         let blocks: Vec<_> = rvas_bitset
             .ones()
             .map(|rva| Block::new(rva as u32, false))
             .collect();
 
         ModuleCoverageBlocks {
+            path: path.into(),
             module: module.into(),
             blocks,
         }
     }
 
-    pub fn module_name(&self) -> &Path {
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    pub fn name(&self) -> &Path {
         Path::new(&self.module)
     }
 
@@ -77,7 +90,7 @@ impl ModuleCoverageBlocks {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AppCoverageBlocks {
     modules: Vec<ModuleCoverageBlocks>,
 }
@@ -92,8 +105,10 @@ impl AppCoverageBlocks {
         &self.modules
     }
 
-    pub fn add_module(&mut self, module: ModuleCoverageBlocks) {
+    pub fn add_module(&mut self, module: ModuleCoverageBlocks) -> usize {
+        let idx = self.modules.len();
         self.modules.push(module);
+        idx
     }
 
     pub fn report_block_hit(&mut self, module_index: usize, block_index: usize) {
@@ -120,7 +135,7 @@ pub fn run_init(output_dir: PathBuf, modules: Vec<PathBuf>, function: bool) -> R
             let rvas_bitset = pe::process_image(&module, function)?;
 
             let module_name = module.file_stem().unwrap(); // Unwrap guaranteed by `is_file` test above.
-            let module_rvas = ModuleCoverageBlocks::new(&module_name, rvas_bitset);
+            let module_rvas = ModuleCoverageBlocks::new(module.clone(), &module_name, rvas_bitset);
             result.add_module(module_rvas);
         } else {
             anyhow::bail!("Cannot find file `{}`", module.as_path().display());

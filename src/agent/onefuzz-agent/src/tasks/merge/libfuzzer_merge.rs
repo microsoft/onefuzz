@@ -7,7 +7,10 @@ use crate::tasks::{
     utils,
 };
 use anyhow::Result;
-use onefuzz::libfuzzer::{LibFuzzer, LibFuzzerMergeOutput};
+use onefuzz::{
+    http::ResponseExt,
+    libfuzzer::{LibFuzzer, LibFuzzerMergeOutput},
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -38,7 +41,7 @@ pub struct Config {
 }
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
-    let hb_client = config.common.init_heartbeat();
+    let hb_client = config.common.init_heartbeat().await?;
     utils::init_dir(&config.unique_inputs.path).await?;
     loop {
         hb_client.alive();
@@ -117,7 +120,8 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
         .delete(input_url)
         .send()
         .await?
-        .error_for_status()
+        .error_for_status_with_body()
+        .await
     {
         Ok(_) => Ok(()),
         Err(err) => Err(err.into()),

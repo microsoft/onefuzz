@@ -19,7 +19,7 @@ use url::Url;
 use uuid::Uuid;
 
 async fn run_impl(input: String, config: Config) -> Result<()> {
-    let task = AsanProcessor::new(Arc::new(config));
+    let task = AsanProcessor::new(Arc::new(config)).await?;
 
     let test_url = Url::parse("https://contoso.com/sample-container/blob.txt")?;
     let input_path = Path::new(&input);

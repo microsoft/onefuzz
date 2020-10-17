@@ -12,6 +12,7 @@ use anyhow::{Error, Result};
 use onefuzz::{
     expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
+    telemetry::Event::new_result,
 };
 use serde::Deserialize;
 use std::{
@@ -63,7 +64,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     };
 
     utils::init_dir(&crashes.path).await?;
-    let monitor_crashes = utils::monitor_result_dir(crashes.clone());
+    let monitor_crashes = utils::monitor_result_dir(crashes.clone(), new_result);
 
     let inputs = SyncedDir {
         path: runtime_dir.path().join("inputs"),
@@ -104,7 +105,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     let stopped = Notify::new();
     let monitor_process = monitor_process(process, &stopped);
-    let hb = config.common.init_heartbeat();
+    let hb = config.common.init_heartbeat().await?;
 
     let heartbeat_process = heartbeat_process(&stopped, hb);
 
@@ -134,7 +135,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
 async fn heartbeat_process(
     stopped: &Notify,
-    heartbeat_client: Option<HeartbeatClient>,
+    heartbeat_client: Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     while !stopped.is_notified(HEARTBEAT_PERIOD).await {
         heartbeat_client.alive();
