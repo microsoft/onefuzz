@@ -18,7 +18,7 @@ from onefuzztypes.enums import (
 )
 from onefuzztypes.models import AutoScaleConfig, Error
 from onefuzztypes.models import Node as BASE_NODE
-from onefuzztypes.models import NodeAssignment, NodeCommand, NodeHeartbeatEntry
+from onefuzztypes.models import NodeAssignment, NodeCommand
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Pool as BASE_POOL
 from onefuzztypes.models import Scaleset as BASE_SCALESET
@@ -31,7 +31,7 @@ from onefuzztypes.models import (
     WorkUnitSummary,
 )
 from onefuzztypes.primitives import PoolName, Region
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from .__version__ import __version__
 from .azure.auth import build_auth
@@ -243,22 +243,6 @@ class Node(BASE_NODE, ORMMixin):
         """ Tell the node to stop everything. """
         self.set_shutdown()
         self.stop()
-
-    @classmethod
-    def try_add_heartbeat(cls, raw: Dict) -> bool:
-        try:
-            entry = NodeHeartbeatEntry.parse_obj(raw)
-            if not entry:
-                return False
-
-            node = cls.get_by_machine_id(entry.node_id)
-            if not node:
-                return False
-            node.heartbeat = datetime.datetime.utcnow()
-            node.save()
-            return True
-        except ValidationError:
-            return False
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):

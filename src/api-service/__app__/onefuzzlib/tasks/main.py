@@ -5,14 +5,13 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 from uuid import UUID
 
 from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
-from onefuzztypes.models import TaskConfig, TaskHeartbeatEntry, TaskVm
-from pydantic import ValidationError
+from onefuzztypes.models import TaskConfig, TaskVm
 
 from ..azure.creds import get_fuzz_storage
 from ..azure.image import get_os
@@ -142,13 +141,6 @@ class Task(BASE_TASK, ORMMixin):
         )
 
     @classmethod
-    def try_get_by_task_id(cls, task_id: UUID) -> Optional["Task"]:
-        tasks = cls.search(query={"task_id": [task_id]})
-        if not tasks:
-            return None
-        return tasks[0]
-
-    @classmethod
     def get_by_task_id(cls, task_id: UUID) -> Union[Error, "Task"]:
         tasks = cls.search(query={"task_id": [task_id]})
         if not tasks:
@@ -269,15 +261,3 @@ class Task(BASE_TASK, ORMMixin):
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
         return ("job_id", "task_id")
-
-    @classmethod
-    def try_add_heartbeat(cls, raw: Dict) -> bool:
-        try:
-            entry = TaskHeartbeatEntry.parse_obj(raw)
-            task = cls.try_get_by_task_id(entry.task_id)
-            if task:
-                task.heartbeat = datetime.utcnow()
-                task.save()
-            return True
-        except ValidationError:
-            return False
