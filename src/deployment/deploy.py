@@ -598,9 +598,9 @@ class Client:
                         self.application_name,
                         "--python",
                         "--no-build",
-                        cwd=tmpdirname,
                     ],
                     env=dict(os.environ, CLI_DEBUG="1"),
+                    cwd=tmpdirname,
                 )
 
     def update_registration(self):
