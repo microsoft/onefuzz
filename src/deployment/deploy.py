@@ -586,7 +586,6 @@ class Client:
 
     def deploy_app(self):
         logger.info("deploying function app %s", self.app_zip)
-        current_dir = os.getcwd()
         with tempfile.TemporaryDirectory() as tmpdirname:
             with zipfile.ZipFile(self.app_zip, "r") as zip_ref:
                 zip_ref.extractall(tmpdirname)
