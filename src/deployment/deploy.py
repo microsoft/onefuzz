@@ -590,7 +590,6 @@ class Client:
         with tempfile.TemporaryDirectory() as tmpdirname:
             with zipfile.ZipFile(self.app_zip, "r") as zip_ref:
                 zip_ref.extractall(tmpdirname)
-                os.chdir(tmpdirname)
                 subprocess.check_output(
                     [
                         shutil.which("func"),
@@ -600,11 +599,10 @@ class Client:
                         self.application_name,
                         "--python",
                         "--no-build",
+                        cwd=tmpdirname,
                     ],
                     env=dict(os.environ, CLI_DEBUG="1"),
                 )
-
-            os.chdir(current_dir)
 
     def update_registration(self):
         if not self.create_registration:
