@@ -208,6 +208,15 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
+  aflpp:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: src/ci/aflpp.sh
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
   radamsa-linux:
     runs-on: ubuntu-18.04
     steps:

@@ -98,6 +98,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         node.version = registration_request.version
         node.reimage_requested = False
         node.state = NodeState.init
+        node.reimage_queued = False
     else:
         node = Node(
             pool_name=registration_request.pool_name,
@@ -106,6 +107,9 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             version=registration_request.version,
         )
     node.save()
+
+    # if any tasks were running during an earlier instance of this node, clear them out
+    node.mark_tasks_stopped_early()
 
     return create_registration_response(node.machine_id, pool)
 

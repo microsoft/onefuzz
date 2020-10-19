@@ -8,7 +8,9 @@ use crate::tasks::{
 };
 use anyhow::{Error, Result};
 use futures::stream::StreamExt;
-use onefuzz::{expand::Expand, fs::set_executable, input_tester::Tester, sha256};
+use onefuzz::{
+    expand::Expand, fs::set_executable, input_tester::Tester, sha256, telemetry::Event::new_result,
+};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::{
@@ -52,7 +54,7 @@ pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
     utils::init_dir(&config.tools.path).await?;
     utils::sync_remote_dir(&config.tools, utils::SyncOperation::Pull).await?;
     set_executable(&config.tools.path).await?;
-    let hb_client = config.common.init_heartbeat();
+    let hb_client = config.common.init_heartbeat().await?;
 
     for sync_dir in &config.readonly_inputs {
         utils::init_dir(&sync_dir.path).await?;
@@ -63,7 +65,7 @@ pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
         config.readonly_inputs.clone(),
         std::time::Duration::from_secs(10),
     );
-    let crash_dir_monitor = utils::monitor_result_dir(config.crashes.clone());
+    let crash_dir_monitor = utils::monitor_result_dir(config.crashes.clone(), new_result);
     let tester = Tester::new(
         &config.target_exe,
         &config.target_options,
@@ -129,14 +131,14 @@ async fn start_fuzzing<'a>(
     config: &GeneratorConfig,
     corpus_dirs: Vec<impl AsRef<Path>>,
     tester: Tester<'a>,
-    heartbeat_sender: Option<HeartbeatClient>,
+    heartbeat_client: Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     let generator_tmp = "generator_tmp";
 
     info!("Starting generator fuzzing loop");
 
     loop {
-        heartbeat_sender.alive();
+        heartbeat_client.alive();
 
         for corpus_dir in &corpus_dirs {
             let corpus_dir = corpus_dir.as_ref();

@@ -12,7 +12,7 @@ try {
     Copy-Item dist/*.whl "$app_dir/__app__"
     Set-Location $app_dir
     Set-Location __app__
-    (New-Guid).Guid > onefuzzlib/build.id
+    (New-Guid).Guid | Out-File onefuzzlib/build.id -Encoding ascii
     (Get-Content -path "requirements.txt") -replace 'onefuzztypes==0.0.0', './onefuzztypes-0.0.0-py3-none-any.whl' | Out-File "requirements.txt"
     func azure functionapp publish $target --python
     (Get-Content -path "requirements.txt") -replace './onefuzztypes-0.0.0-py3-none-any.whl', 'onefuzztypes==0.0.0' | Out-File "requirements.txt"

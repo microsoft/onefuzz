@@ -11,14 +11,12 @@ use futures::{future::try_join_all, stream::StreamExt};
 use onefuzz::{
     fs::list_files,
     libfuzzer::{LibFuzzer, LibFuzzerLine},
-    monitor::DirectoryMonitor,
     process::ExitStatus,
     system,
     telemetry::{
         Event::{new_coverage, new_result, process_stats, runtime_stats},
         EventData,
     },
-    uploader::BlobUploader,
 };
 use serde::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
@@ -75,12 +73,12 @@ impl LibFuzzerFuzzTask {
 
         self.init_directories().await?;
         self.sync_all_corpuses().await?;
-        let hb_client = self.config.common.init_heartbeat();
+        let hb_client = self.config.common.init_heartbeat().await?;
 
         // To be scheduled.
         let resync = self.resync_all_corpuses();
-        let new_corpus = self.monitor_new_corpus();
-        let faults = self.monitor_faults();
+        let new_inputs = utils::monitor_result_dir(self.config.inputs.clone(), new_coverage);
+        let new_crashes = utils::monitor_result_dir(self.config.crashes.clone(), new_result);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
         let report_stats = report_runtime_stats(workers as usize, stats_receiver, hb_client);
@@ -91,7 +89,7 @@ impl LibFuzzerFuzzTask {
 
         let fuzzers = try_join_all(fuzzers);
 
-        futures::try_join!(resync, new_corpus, faults, fuzzers, report_stats)?;
+        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
         Ok(())
     }
@@ -209,56 +207,6 @@ impl LibFuzzerFuzzTask {
             self.sync_all_corpuses().await?;
         }
     }
-
-    async fn monitor_new_corpus(&self) -> Result<()> {
-        let url = self.config.inputs.url.url();
-        let mut monitor = DirectoryMonitor::new(&self.config.inputs.path);
-        monitor.start()?;
-
-        monitor
-            .for_each(move |item| {
-                let url = url.clone();
-
-                async move {
-                    event!(new_coverage; EventData::Path = item.display().to_string());
-
-                    let mut uploader = BlobUploader::new(url);
-
-                    if let Err(err) = uploader.upload(item.clone()).await {
-                        error!("Couldn't upload coverage: {}", err);
-                    }
-                }
-            })
-            .await;
-
-        Ok(())
-    }
-
-    async fn monitor_faults(&self) -> Result<()> {
-        let url = self.config.crashes.url.url();
-        let dir = self.config.crashes.path.clone();
-
-        let mut monitor = DirectoryMonitor::new(dir);
-        monitor.start()?;
-
-        monitor
-            .for_each(move |item| {
-                let url = url.clone();
-
-                async move {
-                    event!(new_result; EventData::Path = item.display().to_string());
-
-                    let mut uploader = BlobUploader::new(url);
-
-                    if let Err(err) = uploader.upload(item.clone()).await {
-                        error!("Couldn't upload fault: {}", err);
-                    }
-                }
-            })
-            .await;
-
-        Ok(())
-    }
 }
 
 fn try_report_iter_update(
@@ -355,7 +303,7 @@ impl Timer {
 async fn report_runtime_stats(
     workers: usize,
     mut stats_channel: mpsc::UnboundedReceiver<RuntimeStats>,
-    heartbeat_sender: impl HeartbeatSender,
+    heartbeat_client: impl HeartbeatSender,
 ) -> Result<()> {
     // Cache the last-reported stats for a given worker.
     //
@@ -369,7 +317,7 @@ async fn report_runtime_stats(
     loop {
         tokio::select! {
             Some(stats) = stats_channel.next() => {
-                heartbeat_sender.alive();
+                heartbeat_client.alive();
                 stats.report();
 
                 let idx = stats.worker_id as usize;

@@ -36,6 +36,7 @@ from onefuzztypes.enums import (
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
+from typing_extensions import Protocol
 
 from .azure.table import get_client
 from .dashboard import add_event
@@ -63,9 +64,37 @@ QueryFilter = Dict[str, QUERY_VALUE_TYPES]
 SAFE_STRINGS = (UUID, Container, Region, PoolName)
 KEY = Union[int, str, UUID, Enum]
 
-QUEUE_DELAY_STOPPING_SECONDS = 30
-QUEUE_DELAY_CREATE_SECONDS = 5
 HOURS = 60 * 60
+
+
+class HasState(Protocol):
+    # TODO: this should be bound tighter than Any
+    # In the end, we want this to be an Enum.  Specifically, one of
+    # the JobState,TaskState,etc enums.
+    state: Any
+
+
+def process_state_update(obj: HasState) -> None:
+    """
+    process a single state update, if the obj
+    implements a function for that state
+    """
+
+    func = getattr(obj, obj.state.name, None)
+    if func is None:
+        return
+    func()
+
+
+def process_state_updates(obj: HasState, max_updates: int = 5) -> None:
+    """ process through the state machine for an object """
+
+    for _ in range(max_updates):
+        state = obj.state
+        process_state_update(obj)
+        new_state = obj.state
+        if new_state == state:
+            break
 
 
 def resolve(key: KEY) -> str:
@@ -228,22 +257,6 @@ class ORMMixin(ModelMixin):
     def telemetry(self) -> Any:
         return self.raw(exclude_none=True, include=self.telemetry_include())
 
-    def _queue_as_needed(self) -> None:
-        # Upon ORM save with state, if the object has a state that needs work,
-        # automatically queue it
-        state = getattr(self, "state", None)
-        if state is None:
-            return
-        needs_work = getattr(state, "needs_work", None)
-        if needs_work is None:
-            return
-        if state not in needs_work():
-            return
-        if state.name in ["stopping", "stop", "shutdown"]:
-            self.queue(visibility_timeout=QUEUE_DELAY_STOPPING_SECONDS)
-        else:
-            self.queue(visibility_timeout=QUEUE_DELAY_CREATE_SECONDS)
-
     def _event_as_needed(self) -> None:
         # Upon ORM save, if the object returns event data, we'll send it to the
         # dashboard event subsystem
@@ -306,7 +319,6 @@ class ORMMixin(ModelMixin):
         else:
             self.etag = client.insert_or_replace_entity(self.table_name(), raw)
 
-        self._queue_as_needed()
         if self.table_name() in TelemetryEvent.__members__:
             telem = self.telemetry()
             if telem:

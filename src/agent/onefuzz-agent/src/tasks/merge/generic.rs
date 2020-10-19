@@ -7,7 +7,7 @@ use crate::tasks::{
     utils,
 };
 use anyhow::Result;
-use onefuzz::{expand::Expand, fs::set_executable};
+use onefuzz::{expand::Expand, fs::set_executable, http::ResponseExt};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -50,7 +50,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     set_executable(&config.tools.path).await?;
 
     utils::init_dir(&config.unique_inputs.path).await?;
-    let hb_client = config.common.init_heartbeat();
+    let hb_client = config.common.init_heartbeat().await?;
     loop {
         hb_client.alive();
         let tmp_dir = PathBuf::from("./tmp");
@@ -121,7 +121,8 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
         .delete(input_url)
         .send()
         .await?
-        .error_for_status()
+        .error_for_status_with_body()
+        .await
     {
         Ok(_) => Ok(()),
         Err(err) => Err(err.into()),
