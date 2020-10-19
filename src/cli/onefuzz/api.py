@@ -1352,6 +1352,10 @@ class Onefuzz:
                 True,
             )
 
+        if containers and not (tasks or jobs):
+            print("Use --tasks with containers")
+            return
+
         to_delete = []
         argument_str = {
             "jobs",
