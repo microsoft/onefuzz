@@ -107,10 +107,10 @@ impl Agent {
         match (&event, self.previous_state) {
             (StateUpdateEvent::Free, NodeState::Free)
             | (StateUpdateEvent::Busy, NodeState::Busy)
-            | (StateUpdateEvent::SettingUp{..}, NodeState::SettingUp)
+            | (StateUpdateEvent::SettingUp { .. }, NodeState::SettingUp)
             | (StateUpdateEvent::Rebooting, NodeState::Rebooting)
             | (StateUpdateEvent::Ready, NodeState::Ready)
-            | (StateUpdateEvent::Done{..}, NodeState::Done) => {}
+            | (StateUpdateEvent::Done { .. }, NodeState::Done) => {}
             _ => {
                 self.coordinator.emit_event(event.into()).await?;
             }
