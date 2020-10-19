@@ -7,278 +7,268 @@ env:
   SCCACHE_CACHE_SIZE: 1G
 
 jobs:
-  # agent:
-  #   runs-on: "${{ matrix.os }}"
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - name: Rust Prereq Cache
-  #     uses: actions/cache@v2
-  #     id: cache-rust-prereqs
-  #     with:
-  #       path: |
-  #         sccache
-  #         ~/.cargo/registry
-  #         ~/.cargo/git
-  #         ~/.cargo/bin
-  #       key: rust-${{ runner.os }}-2020-09
-  #       restore-keys: |
-  #          rust-${{ runner.os }}
-  #   - name: Install Rust Prereqs
-  #     if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
-  #     shell: bash 
-  #     run: src/ci/rust-prereqs.sh
-  #   - name: Rust Compile Cache
-  #     uses: actions/cache@v2
-  #     with:
-  #       path: |
-  #         sccache
-  #         src/agent/target
-  #       key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}
-  #       restore-keys: |
-  #          agent-${{ runner.os }}
-  #   - name: Linux Prereqs
-  #     run: |
-  #       sudo apt-get -y update
-  #       sudo apt-get -y install libssl1.0-dev libunwind-dev
-  #     if: "${{ runner.os == 'Linux' }}"
-  #   - run: src/ci/agent.sh
-  #     shell: bash
-  #   - uses: actions/upload-artifact@v2.1.4
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  #   strategy:
-  #     matrix:
-  #       os:
-  #       - ubuntu-18.04
-  #       - windows-2019
-  # azcopy:
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - run: src/ci/azcopy.sh
-  #   - uses: actions/upload-artifact@v2.1.4
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  # cli:
-  #   needs:
-  #   - onefuzztypes
-  #   runs-on: windows-2019
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - run: src/ci/set-versions.sh
-  #   - uses: actions/setup-python@v2
-  #     with:
-  #       python-version: 3.7
-  #   - uses: actions/download-artifact@v2.0.5
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  #   - name: Build
-  #     shell: bash
-  #     run: |
-  #       set -ex
-  #       ls artifacts
-  #       cd src/cli
-  #       pip install -r requirements-dev.txt
-  #       pip-licenses -uf json > onefuzz/data/licenses.json
-  #       python setup.py sdist bdist_wheel
-  #       pip install -r ./requirements.txt ../../artifacts/sdk/*.whl
-  #       pip install six
-  #       pyinstaller onefuzz/__main__.py --onefile --name onefuzz --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean
-  #       ./dist/onefuzz.exe --version
-  #       mkdir -p ${GITHUB_WORKSPACE}/artifacts/windows-cli/
-  #       mkdir -p ${GITHUB_WORKSPACE}/artifacts/sdk/
-  #       cp dist/*.tar.gz dist/*.whl ${GITHUB_WORKSPACE}/artifacts/sdk/
-  #       cp dist/onefuzz.exe ${GITHUB_WORKSPACE}/artifacts/windows-cli/
-  #   - uses: actions/upload-artifact@v2.1.4
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  #   - name: lint
-  #     shell: bash
-  #     run: |
-  #       set -ex
-  #       cd src/cli
-  #       pip install -r requirements-lint.txt
-  #       flake8 .
-  #       black onefuzz examples tests --check
-  #       isort --profile black ./onefuzz ./examples/ ./tests/ --check
-  #       mypy . --ignore-missing-imports
-  #       pytest -v tests
-
-  #       # set a minimum confidence to ignore known false positives
-  #       vulture --min-confidence 61 onefuzz
-  # onefuzztypes:
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - run: src/ci/set-versions.sh
-  #   - uses: actions/setup-python@v2
-  #     with:
-  #       python-version: 3.7
-  #   - run: src/ci/onefuzztypes.sh
-  #   - uses: actions/upload-artifact@v2.1.4
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  # proxy:
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - name: Rust Prereq Cache
-  #     uses: actions/cache@v2
-  #     id: cache-rust-prereqs
-  #     with:
-  #       path: |
-  #         sccache
-  #         ~/.cargo/registry
-  #         ~/.cargo/git
-  #         ~/.cargo/bin
-  #       key: rust-${{ runner.os }}-2020-09
-  #       restore-keys: |
-  #          rust-${{ runner.os }}
-  #   - name: Install Rust Prereqs
-  #     if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
-  #     shell: bash 
-  #     run: src/ci/rust-prereqs.sh
-  #   - name: Rust Compile Cache
-  #     uses: actions/cache@v2
-  #     with:
-  #       path: |
-  #         sccache
-  #         src/proxy-manager/target
-  #       key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}
-  #       restore-keys: |
-  #          proxy-${{ runner.os }}
-  #   - run: src/ci/proxy.sh
-  #   - uses: actions/upload-artifact@v2.1.4
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  # service:
-  #   needs:
-  #   - onefuzztypes
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - run: src/ci/set-versions.sh
-  #   - uses: actions/setup-python@v2
-  #     with:
-  #       python-version: 3.7
-  #   - uses: actions/download-artifact@v2.0.5
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  #   - name: Build Service
-  #     run: |
-  #       cd src/api-service/__app__
-  #       echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
-  #       echo ${GITHUB_SHA} | tee onefuzzlib/git.version
-  #       pip install --target="./.python_packages/lib/site-packages" -r ./requirements.txt ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
-  #       zip -r api-service.zip .
-  #       mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
-  #       cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
-  #   - uses: actions/upload-artifact@v2.1.4
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  #   - name: lint
-  #     run: |
-  #       cd src/api-service
-  #       rm -rf __app__/.python_packages
-  #       pip install ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
-  #       pip install -r __app__/requirements.txt
-  #       pip install -r requirements-dev.txt
-  #       pytest
-  #       flake8 .
-  #       black ./__app__/ ./tests --check
-  #       isort --profile black ./__app__/ ./tests --check
-  #       mypy __app__
-
-  #       # set a minimum confidence to ignore known false positives
-  #       vulture --min-confidence 61 __app__ 
-  # afl:
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - run: src/ci/afl.sh
-  #   - uses: actions/upload-artifact@v2.1.4
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  # radamsa-linux:
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - run: src/ci/radamsa-linux.sh
-  #   - uses: actions/upload-artifact@v2.1.4
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  radamsa-windows:
-    runs-on: windows-2019
+  agent:
+    runs-on: "${{ matrix.os }}"
     steps:
-    # - run: echo "::add-path::C:\msys64\mingw64\bin"
-    # - run: C:\msys64\usr\bin\pacman -S gcc gzip --noconfirm
     - uses: actions/checkout@v2
-    - run: c:\msys64\usr\bin\bash src/ci/radamsa-windows.sh
-    # - run: |
-    #     git clone https://gitlab.com/akihe/radamsa
-    #     cd radamsa
-    #     git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
-    # - run: C:\msys64\usr\bin\bash -c "cd radamsa; export PATH=/usr/bin:$PATH; make"
-    # - run: |
-    #     mkdir artifacts/radamsa-win64
-    #     cp radamsa/bin/* artifacts/radamsa-win64
-    #     cp c:\msys64\usr\bin\msys-2.0.dll artifacts/radamsa-win64
+    - name: Rust Prereq Cache
+      uses: actions/cache@v2
+      id: cache-rust-prereqs
+      with:
+        path: |
+          sccache
+          ~/.cargo/registry
+          ~/.cargo/git
+          ~/.cargo/bin
+        key: rust-${{ runner.os }}-2020-09
+        restore-keys: |
+           rust-${{ runner.os }}
+    - name: Install Rust Prereqs
+      if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
+      shell: bash 
+      run: src/ci/rust-prereqs.sh
+    - name: Rust Compile Cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          sccache
+          src/agent/target
+        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}
+        restore-keys: |
+           agent-${{ runner.os }}
+    - name: Linux Prereqs
+      run: |
+        sudo apt-get -y update
+        sudo apt-get -y install libssl1.0-dev libunwind-dev
+      if: "${{ runner.os == 'Linux' }}"
+    - run: src/ci/agent.sh
+      shell: bash
     - uses: actions/upload-artifact@v2.1.4
       with:
         name: build-artifacts
         path: artifacts
-  # package:
-  #   needs:
-  #   - agent
-  #   - azcopy
-  #   - cli
-  #   - onefuzztypes
-  #   - proxy
-  #   - service
-  #   - afl
-  #   - radamsa-linux
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - uses: actions/download-artifact@v2.0.5
-  #     with:
-  #       name: build-artifacts
-  #       path: artifacts
-  #   - name: Package Onefuzz
-  #     run: |
-  #         set -ex
-  #         find artifacts
-  #         mkdir release-artifacts
-  #         cp -r src/runtime-tools src/deployment/tools
-  #         cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
-  #         cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
-  #         cp artifacts/agent/onefuzz-supervisor.exe src/deployment/tools/win64/
-  #         cp artifacts/agent/onefuzz-agent.exe src/deployment/tools/win64/
-  #         cp artifacts/agent/onefuzz-supervisor src/deployment/tools/linux/
-  #         cp artifacts/agent/onefuzz-agent src/deployment/tools/linux/
-  #         cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
-  #         cp artifacts/service/api-service.zip src/deployment
-  #         cp -r artifacts/third-party src/deployment
-  #         cp -r src/agent/script/linux/libfuzzer-coverage src/deployment/tools/linux/libfuzzer-coverage
-  #         cp -r src/agent/script/win64/libfuzzer-coverage src/deployment/tools/win64/libfuzzer-coverage
-  #         echo $GITHUB_RUN_ID | tee src/deployment/.build.id
-  #         echo $GITHUB_SHA | tee src/deployment/.sha
-  #         ./src/ci/get-version.sh > src/deployment/VERSION
-  #         (cd src/deployment ; zip -r onefuzz-deployment-$(cat VERSION).zip . )
-  #         cp src/deployment/onefuzz-deployment*zip release-artifacts
-  #         cp -r artifacts/sdk release-artifacts
-  #         cp -r artifacts/windows-cli/onefuzz.exe release-artifacts/onefuzz-cli-$(./src/ci/get-version.sh).exe
-  #   - uses: actions/upload-artifact@v2.1.4
-  #     with:
-  #       name: release-artifacts
-  #       path: release-artifacts
+    strategy:
+      matrix:
+        os:
+        - ubuntu-18.04
+        - windows-2019
+  azcopy:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: src/ci/azcopy.sh
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
+  cli:
+    needs:
+    - onefuzztypes
+    runs-on: windows-2019
+    steps:
+    - uses: actions/checkout@v2
+    - run: src/ci/set-versions.sh
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - uses: actions/download-artifact@v2.0.5
+      with:
+        name: build-artifacts
+        path: artifacts
+    - name: Build
+      shell: bash
+      run: |
+        set -ex
+        ls artifacts
+        cd src/cli
+        pip install -r requirements-dev.txt
+        pip-licenses -uf json > onefuzz/data/licenses.json
+        python setup.py sdist bdist_wheel
+        pip install -r ./requirements.txt ../../artifacts/sdk/*.whl
+        pip install six
+        pyinstaller onefuzz/__main__.py --onefile --name onefuzz --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean
+        ./dist/onefuzz.exe --version
+        mkdir -p ${GITHUB_WORKSPACE}/artifacts/windows-cli/
+        mkdir -p ${GITHUB_WORKSPACE}/artifacts/sdk/
+        cp dist/*.tar.gz dist/*.whl ${GITHUB_WORKSPACE}/artifacts/sdk/
+        cp dist/onefuzz.exe ${GITHUB_WORKSPACE}/artifacts/windows-cli/
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
+    - name: lint
+      shell: bash
+      run: |
+        set -ex
+        cd src/cli
+        pip install -r requirements-lint.txt
+        flake8 .
+        black onefuzz examples tests --check
+        isort --profile black ./onefuzz ./examples/ ./tests/ --check
+        mypy . --ignore-missing-imports
+        pytest -v tests
+
+        # set a minimum confidence to ignore known false positives
+        vulture --min-confidence 61 onefuzz
+  onefuzztypes:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: src/ci/set-versions.sh
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - run: src/ci/onefuzztypes.sh
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
+  proxy:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Rust Prereq Cache
+      uses: actions/cache@v2
+      id: cache-rust-prereqs
+      with:
+        path: |
+          sccache
+          ~/.cargo/registry
+          ~/.cargo/git
+          ~/.cargo/bin
+        key: rust-${{ runner.os }}-2020-09
+        restore-keys: |
+           rust-${{ runner.os }}
+    - name: Install Rust Prereqs
+      if: steps.cache-rust-prereqs.outputs.cache-hit != 'true'
+      shell: bash 
+      run: src/ci/rust-prereqs.sh
+    - name: Rust Compile Cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          sccache
+          src/proxy-manager/target
+        key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}
+        restore-keys: |
+           proxy-${{ runner.os }}
+    - run: src/ci/proxy.sh
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
+  service:
+    needs:
+    - onefuzztypes
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: src/ci/set-versions.sh
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - uses: actions/download-artifact@v2.0.5
+      with:
+        name: build-artifacts
+        path: artifacts
+    - name: Build Service
+      run: |
+        cd src/api-service/__app__
+        echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
+        echo ${GITHUB_SHA} | tee onefuzzlib/git.version
+        pip install --target="./.python_packages/lib/site-packages" -r ./requirements.txt ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
+        zip -r api-service.zip .
+        mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
+        cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
+    - name: lint
+      run: |
+        cd src/api-service
+        rm -rf __app__/.python_packages
+        pip install ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
+        pip install -r __app__/requirements.txt
+        pip install -r requirements-dev.txt
+        pytest
+        flake8 .
+        black ./__app__/ ./tests --check
+        isort --profile black ./__app__/ ./tests --check
+        mypy __app__
+
+        # set a minimum confidence to ignore known false positives
+        vulture --min-confidence 61 __app__ 
+  afl:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: src/ci/afl.sh
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
+  radamsa-linux:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: src/ci/radamsa-linux.sh
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
+  radamsa-windows:
+    runs-on: windows-2019
+    steps:
+    - uses: actions/checkout@v2
+    - run: c:\msys64\usr\bin\bash src/ci/radamsa-windows.sh
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
+  package:
+    needs:
+    - agent
+    - azcopy
+    - cli
+    - onefuzztypes
+    - proxy
+    - service
+    - afl
+    - radamsa-linux
+    - radamsa-win64
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@v2.0.5
+      with:
+        name: build-artifacts
+        path: artifacts
+    - name: Package Onefuzz
+      run: |
+          set -ex
+          find artifacts
+          mkdir release-artifacts
+          cp -r src/runtime-tools src/deployment/tools
+          cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
+          cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
+          cp artifacts/agent/onefuzz-supervisor.exe src/deployment/tools/win64/
+          cp artifacts/agent/onefuzz-agent.exe src/deployment/tools/win64/
+          cp artifacts/agent/onefuzz-supervisor src/deployment/tools/linux/
+          cp artifacts/agent/onefuzz-agent src/deployment/tools/linux/
+          cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
+          cp artifacts/service/api-service.zip src/deployment
+          cp -r artifacts/third-party src/deployment
+          cp -r src/agent/script/linux/libfuzzer-coverage src/deployment/tools/linux/libfuzzer-coverage
+          cp -r src/agent/script/win64/libfuzzer-coverage src/deployment/tools/win64/libfuzzer-coverage
+          echo $GITHUB_RUN_ID | tee src/deployment/.build.id
+          echo $GITHUB_SHA | tee src/deployment/.sha
+          ./src/ci/get-version.sh > src/deployment/VERSION
+          (cd src/deployment ; zip -r onefuzz-deployment-$(cat VERSION).zip . )
+          cp src/deployment/onefuzz-deployment*zip release-artifacts
+          cp -r artifacts/sdk release-artifacts
+          cp -r artifacts/windows-cli/onefuzz.exe release-artifacts/onefuzz-cli-$(./src/ci/get-version.sh).exe
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: release-artifacts
+        path: release-artifacts
