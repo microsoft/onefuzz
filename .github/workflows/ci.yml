@@ -229,9 +229,9 @@ jobs:
         git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
     - run: C:\msys64\usr\bin\bash -c "cd radamsa; make"
     - run: |
-      mkdir artifacts/radamsa-win64
-      cp radamsa/bin/* artifacts/radamsa-win64
-      cp c:\msys64\usr\bin\msys-2.0.dll artifacts/radamsa-win64
+        mkdir artifacts/radamsa-win64
+        cp radamsa/bin/* artifacts/radamsa-win64
+        cp c:\msys64\usr\bin\msys-2.0.dll artifacts/radamsa-win64
     - uses: actions/upload-artifact@v2.1.4
       with:
         name: build-artifacts
