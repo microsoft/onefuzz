@@ -168,8 +168,8 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> None:
                     code=ErrorCode.TASK_FAILED,
                     errors=[
                         "task failed. exit_status:%s" % exit_status,
-                        event.done.stdout,
-                        event.done.stderr,
+                        event.done.stdout[-4096:],
+                        event.done.stderr[-4096:],
                     ],
                 )
             )
