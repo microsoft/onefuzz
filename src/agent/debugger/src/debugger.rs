@@ -34,7 +34,7 @@ use winapi::{
     },
 };
 
-use crate::target::Target;
+use crate::target::{Module, Target};
 use crate::{
     dbghelp::{self, ModuleInfo, SymInfo, SymLineInfo},
     debug_event::{DebugEvent, DebugEventInfo},
@@ -201,11 +201,11 @@ pub trait DebugEventHandler {
         // Continue normal exception handling processing
         DBG_EXCEPTION_NOT_HANDLED
     }
-    fn on_create_process(&mut self, _debugger: &mut Debugger, _name: &Path, _base_address: u64 ) {}
+    fn on_create_process(&mut self, _debugger: &mut Debugger, _module: &Module) {}
     fn on_create_thread(&mut self, _debugger: &mut Debugger) {}
     fn on_exit_process(&mut self, _debugger: &mut Debugger, _exit_code: u32) {}
     fn on_exit_thread(&mut self, _debugger: &mut Debugger, _exit_code: u32) {}
-    fn on_load_dll(&mut self, _debugger: &mut Debugger, _name: &Path, _base_address: u64) {}
+    fn on_load_dll(&mut self, _debugger: &mut Debugger, _module: &Module) {}
     fn on_unload_dll(&mut self, _debugger: &mut Debugger, _base_address: u64) {}
     fn on_output_debug_string(&mut self, _debugger: &mut Debugger, _message: String) {}
     fn on_output_debug_os_string(&mut self, _debugger: &mut Debugger, _message: OsString) {}
@@ -261,7 +261,7 @@ impl Debugger {
                 Target::new(de.process_id(), de.thread_id(), info.hProcess, info.hThread);
 
             let base_address = info.lpBaseOfImage as u64;
-            let module_name = target
+            let module = target
                 .load_module(info.hFile, base_address)
                 .context("Loading process module")?
                 .unwrap();
@@ -273,7 +273,7 @@ impl Debugger {
                 symbolic_breakpoints: HashMap::default(),
                 breakpoint_count: 0,
             };
-            callbacks.on_create_process(&mut debugger, &module_name, base_address);
+            callbacks.on_create_process(&mut debugger, &module);
 
             if unsafe { ContinueDebugEvent(de.process_id(), de.thread_id(), DBG_CONTINUE) } == FALSE
             {
@@ -450,17 +450,16 @@ impl Debugger {
             }
 
             DebugEventInfo::LoadDll(info) => {
-                let base_address = info.lpBaseOfDll as u64;
-                match self.target.load_module(info.hFile, base_address) {
-                    Ok(Some(module_name)) => {
-                        callbacks.on_load_dll(self, &module_name, info.lpBaseOfDll as u64);
+                match self.target.load_module(info.hFile, info.lpBaseOfDll as u64) {
+                    Ok(Some(module)) => {
+                        callbacks.on_load_dll(self, &module);
 
                         // We must defer adding any breakpoints until we've seen the initial
                         // breakpoint notification from the OS. Otherwise we may set
                         // breakpoints in startup code before the debugger is properly
                         // initialized.
                         if self.target.saw_initial_bp() {
-                            self.apply_module_breakpoints(module_name, base_address)
+                            self.apply_module_breakpoints(module.name(), module.base_address())
                         }
                     }
                     Ok(None) => {}

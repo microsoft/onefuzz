@@ -15,7 +15,10 @@ use std::{
 
 use anyhow::Result;
 use coverage::AppCoverageBlocks;
-use debugger::debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger};
+use debugger::{
+    debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger},
+    target::Module,
+};
 use fnv::FnvHashMap;
 use log::{debug, error, trace};
 use win_util::{
@@ -277,12 +280,7 @@ impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
         DBG_EXCEPTION_NOT_HANDLED
     }
 
-    fn on_create_process(
-        &mut self,
-        debugger: &mut Debugger,
-        _module_name: &Path,
-        _base_address: u64,
-    ) {
+    fn on_create_process(&mut self, debugger: &mut Debugger, _module: &Module) {
         prepare_coverage_breakpoints(debugger, &self.coverage_map);
     }
 

@@ -69,6 +69,18 @@ impl Module {
         Ok(())
     }
 
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    pub fn base_address(&self) -> u64 {
+        self.base_address
+    }
+
+    pub fn image_size(&self) -> u32 {
+        self.image_size
+    }
+
     pub fn name(&self) -> &Path {
         // Unwrap guaranteed by construction, we always have a filename.
         self.path.file_stem().unwrap().as_ref()
@@ -242,7 +254,7 @@ impl Target {
         &mut self,
         module_handle: HANDLE,
         base_address: u64,
-    ) -> Result<Option<PathBuf>> {
+    ) -> Result<Option<Module>> {
         let mut module = Module::new(module_handle, base_address)?;
 
         trace!(
@@ -262,9 +274,8 @@ impl Target {
             }
         }
 
-        let module_name = module.name().to_owned();
         let base_address = module.base_address;
-        if let Some(old_value) = self.modules.insert(base_address, module) {
+        if let Some(old_value) = self.modules.insert(base_address, module.clone()) {
             error!(
                 "Existing module {} replace at base_address {}",
                 old_value.path.display(),
@@ -272,7 +283,7 @@ impl Target {
             );
         }
 
-        Ok(Some(module_name))
+        Ok(Some(module))
     }
 
     pub fn unload_module(&mut self, base_address: u64) {
