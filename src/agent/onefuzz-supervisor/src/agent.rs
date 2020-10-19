@@ -21,7 +21,7 @@ pub struct Agent {
     work_queue: Box<dyn IWorkQueue>,
     worker_runner: Box<dyn IWorkerRunner>,
     _heartbeat: Option<AgentHeartbeatClient>,
-    previous_state: Option<StateValue>,
+    previous_state: NodeState,
 }
 
 impl Agent {
@@ -35,7 +35,7 @@ impl Agent {
         heartbeat: Option<AgentHeartbeatClient>,
     ) -> Self {
         let scheduler = Some(scheduler);
-        let previous_state = None;
+        let previous_state = NodeState::Init;
 
         Self {
             coordinator,
@@ -95,7 +95,7 @@ impl Agent {
             Scheduler::Done(s) => self.done(s).await?,
         };
 
-        self.previous_state = Some(StateValue::from(&next));
+        self.previous_state = NodeState::from(&next);
         let done = matches!(next, Scheduler::Done(..));
 
         self.scheduler = Some(next);
@@ -103,11 +103,25 @@ impl Agent {
         Ok(done)
     }
 
-    async fn free(&mut self, state: State<Free>) -> Result<Scheduler> {
-        if !matches!(self.previous_state, Some(StateValue::Free)) {
-            let event = StateUpdateEvent::Free.into();
-            self.coordinator.emit_event(event).await?;
+    async fn emit_state_update_if_changed(&mut self, event: StateUpdateEvent) -> Result<()> {
+        match (&event, self.previous_state) {
+            (StateUpdateEvent::Free, NodeState::Free)
+            | (StateUpdateEvent::Busy, NodeState::Busy)
+            | (StateUpdateEvent::SettingUp{..}, NodeState::SettingUp)
+            | (StateUpdateEvent::Rebooting, NodeState::Rebooting)
+            | (StateUpdateEvent::Ready, NodeState::Ready)
+            | (StateUpdateEvent::Done{..}, NodeState::Done) => {}
+            _ => {
+                self.coordinator.emit_event(event.into()).await?;
+            }
         }
+
+        Ok(())
+    }
+
+    async fn free(&mut self, state: State<Free>) -> Result<Scheduler> {
+        self.emit_state_update_if_changed(StateUpdateEvent::Free)
+            .await?;
 
         let msg = self.work_queue.poll().await?;
 
@@ -179,8 +193,8 @@ impl Agent {
         verbose!("agent setting up");
 
         let tasks = state.work_set().task_ids();
-        let event = StateUpdateEvent::SettingUp { tasks };
-        self.coordinator.emit_event(event.into()).await?;
+        self.emit_state_update_if_changed(StateUpdateEvent::SettingUp { tasks })
+            .await?;
 
         let scheduler = match state.finish(self.setup_runner.as_mut()).await? {
             SetupDone::Ready(s) => s.into(),
@@ -193,9 +207,8 @@ impl Agent {
 
     async fn pending_reboot(&mut self, state: State<PendingReboot>) -> Result<Scheduler> {
         verbose!("agent pending reboot");
-
-        let event = StateUpdateEvent::Rebooting.into();
-        self.coordinator.emit_event(event).await?;
+        self.emit_state_update_if_changed(StateUpdateEvent::Rebooting)
+            .await?;
 
         let ctx = state.reboot_context();
         self.reboot.save_context(ctx).await?;
@@ -206,19 +219,14 @@ impl Agent {
 
     async fn ready(&mut self, state: State<Ready>) -> Result<Scheduler> {
         verbose!("agent ready");
-
-        let event = StateUpdateEvent::Ready.into();
-        self.coordinator.emit_event(event).await?;
-
+        self.emit_state_update_if_changed(StateUpdateEvent::Ready)
+            .await?;
         Ok(state.run().await?.into())
     }
 
     async fn busy(&mut self, state: State<Busy>) -> Result<Scheduler> {
-        if !matches!(self.previous_state, Some(StateValue::Busy)) {
-            let event = StateUpdateEvent::Busy.into();
-            self.coordinator.emit_event(event).await?;
-        }
-
+        self.emit_state_update_if_changed(StateUpdateEvent::Busy)
+            .await?;
         let mut events = vec![];
         let updated = state
             .update(&mut events, self.worker_runner.as_mut())
@@ -249,9 +257,7 @@ impl Agent {
             },
         };
 
-        let event = event.into();
-        self.coordinator.emit_event(event).await?;
-
+        self.emit_state_update_if_changed(event).await?;
         // `Done` is a final state.
         Ok(state.into())
     }

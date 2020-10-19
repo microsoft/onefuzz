@@ -6,7 +6,7 @@ use std::fmt;
 use anyhow::Result;
 use onefuzz::process::Output;
 
-use crate::coordinator::NodeCommand;
+use crate::coordinator::{NodeCommand, NodeState};
 use crate::reboot::RebootContext;
 use crate::setup::ISetupRunner;
 use crate::work::*;
@@ -21,6 +21,19 @@ pub enum Scheduler {
     Done(State<Done>),
 }
 
+impl From<&Scheduler> for NodeState {
+    fn from(value: &Scheduler) -> Self {
+        match value {
+            Scheduler::Free(_) => Self::Free,
+            Scheduler::SettingUp(_) => Self::SettingUp,
+            Scheduler::PendingReboot(_) => Self::Rebooting,
+            Scheduler::Ready(_) => Self::Ready,
+            Scheduler::Busy(_) => Self::Busy,
+            Scheduler::Done(_) => Self::Done,
+        }
+    }
+}
+
 impl fmt::Display for Scheduler {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
@@ -32,28 +45,6 @@ impl fmt::Display for Scheduler {
             Self::Done(..) => "Scheduler::Done",
         };
         write!(f, "{}", s)
-    }
-}
-
-pub enum StateValue {
-    Free,
-    SettingUp,
-    PendingReboot,
-    Ready,
-    Busy,
-    Done,
-}
-
-impl From<&Scheduler> for StateValue {
-    fn from(value: &Scheduler) -> Self {
-        match value {
-            Scheduler::Free(_) => Self::Free,
-            Scheduler::SettingUp(_) => Self::SettingUp,
-            Scheduler::PendingReboot(_) => Self::PendingReboot,
-            Scheduler::Ready(_) => Self::Ready,
-            Scheduler::Busy(_) => Self::Busy,
-            Scheduler::Done(_) => Self::Done,
-        }
     }
 }
 
