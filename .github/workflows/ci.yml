@@ -220,7 +220,7 @@ jobs:
   radamsa-windows:
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
+    # - uses: actions/checkout@v2
     - run: |
         set -ex
         git clone https://gitlab.com/akihe/radamsa
@@ -229,6 +229,7 @@ jobs:
         ls /c/
         ls /c/msys64/usr/bin
         export PATH=$PATH:/c/msys64/usr/bin
+        pacman -h 
         pacman -S gcc 
         make
         mkdir artifacts/radamsa-win64
