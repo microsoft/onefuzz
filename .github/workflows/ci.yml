@@ -220,18 +220,19 @@ jobs:
   radamsa-windows:
     runs-on: windows-2019
     steps:
-    - run: echo "::add-path::C:\msys64\mingw64\bin"
-    - run: C:\msys64\usr\bin\pacman -S gcc gzip --noconfirm
+    # - run: echo "::add-path::C:\msys64\mingw64\bin"
+    # - run: C:\msys64\usr\bin\pacman -S gcc gzip --noconfirm
     - uses: actions/checkout@v2
-    - run: |
-        git clone https://gitlab.com/akihe/radamsa
-        cd radamsa
-        git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
-    - run: C:\msys64\usr\bin\bash -c "cd radamsa; export PATH=/usr/bin:$PATH; make"
-    - run: |
-        mkdir artifacts/radamsa-win64
-        cp radamsa/bin/* artifacts/radamsa-win64
-        cp c:\msys64\usr\bin\msys-2.0.dll artifacts/radamsa-win64
+    - run: c:\msys64\usr\bin\bash src/ci/radamsa-windows.sh
+    # - run: |
+    #     git clone https://gitlab.com/akihe/radamsa
+    #     cd radamsa
+    #     git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
+    # - run: C:\msys64\usr\bin\bash -c "cd radamsa; export PATH=/usr/bin:$PATH; make"
+    # - run: |
+    #     mkdir artifacts/radamsa-win64
+    #     cp radamsa/bin/* artifacts/radamsa-win64
+    #     cp c:\msys64\usr\bin\msys-2.0.dll artifacts/radamsa-win64
     - uses: actions/upload-artifact@v2.1.4
       with:
         name: build-artifacts
