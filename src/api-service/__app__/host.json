@@ -6,12 +6,13 @@
   },
   "logging": {
     "logLevel": {
-      "default": "Information",
+      "default": "Warning",
       "Host": "Warning",
       "Function": "Information",
-      "Host.Aggregator": "Information",
+      "Host.Aggregator": "None",
       "logging:logLevel:Worker": "None",
-      "logging:logLevel:Microsoft.Azure.WebJobs.Script.WebHost.Middleware.SystemTraceMiddleware": "None"
+      "logging:logLevel:Microsoft": "None",
+      "AzureFunctionsJobHost:logging:logLevel:Host.Function.Console": "None"
     },
     "applicationInsights": {
       "samplingSettings": {
