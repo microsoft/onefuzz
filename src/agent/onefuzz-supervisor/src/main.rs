@@ -128,8 +128,8 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     telemetry::set_property(EventData::MachineId(get_machine_id().await?));
     telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
     let scaleset = get_scaleset_name().await;
-    if let Ok(scaleset) = scaleset {
-        telemetry::set_property(EventData::ScalesetId(scaleset));
+    if let Ok(scaleset) = &scaleset {
+        telemetry::set_property(EventData::ScalesetId(scaleset.clone()));
     }
 
     let registration = match config::Registration::load_existing(config.clone()).await {

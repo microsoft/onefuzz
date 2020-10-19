@@ -80,6 +80,12 @@ impl StaticConfig {
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
 
+        let heartbeat_queue = if let Ok(key) = std::env::var("ONEFUZZ_HEARTBEAT") {
+            Some(Url::parse(&key)?)
+        } else {
+            None
+        };
+
         let instrumentation_key = if let Ok(key) = std::env::var("ONEFUZZ_INSTRUMENTATION_KEY") {
             Some(Uuid::parse_str(&key)?)
         } else {
@@ -106,6 +112,7 @@ impl StaticConfig {
             onefuzz_url,
             instrumentation_key,
             telemetry_key,
+            heartbeat_queue,
         })
     }
 

@@ -4,9 +4,10 @@
 use std::fmt;
 
 use anyhow::Result;
-use onefuzz::http::ResponseExt;
 use url::Url;
 use uuid::Uuid;
+
+use crate::http::ResponseExt;
 
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Secret<T>(T);
