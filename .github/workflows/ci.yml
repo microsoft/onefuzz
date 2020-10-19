@@ -222,9 +222,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: |
+        set -ex
         git clone https://gitlab.com/akihe/radamsa
         cd radamsa
         git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
+        ls /c/
         pacman -S gcc
         make
         mkdir artifacts/radamsa-win64
