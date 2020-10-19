@@ -1300,67 +1300,6 @@ class Onefuzz:
             return False
         return True
 
-    def _delete_jobs(self) -> None:
-        for job in self.jobs.list():
-            self.logger.info("stopping job %s", job.job_id)
-            self.jobs.delete(job.job_id)
-
-    def _delete_tasks(self) -> None:
-        for task in self.tasks.list():
-            self.logger.info("stopping task %s", task.task_id)
-            self.tasks.delete(task.task_id)
-
-    def _delete_notifications(self) -> None:
-        for notification in self.notifications.list():
-            self.logger.info("stopping notification %s", notification.notification_id)
-            self.notifications.delete(notification.notification_id)
-
-    def _delete_repros(self) -> None:
-        for vm in self.repro.list():
-            self.repro.delete(str(vm.vm_id))
-
-    def _delete_pools(self) -> None:
-        for pool in self.pools.list():
-            self.logger.info("stopping pool: %s", pool.name)
-            self.pools.shutdown(pool.name, now=True)
-
-    def _delete_scalesets(self) -> None:
-        for scaleset in self.scalesets.list():
-            self.logger.info("stopping scaleset: %s", scaleset.scaleset_id)
-            self.scalesets.shutdown(scaleset.scaleset_id, now=True)
-
-    def _delete_containers(self) -> None:
-        for container in self.containers.list():
-            if (
-                container.metadata
-                and "container_type" in container.metadata
-                and container.metadata["container_type"]
-                in [
-                    "analysis",
-                    "coverage",
-                    "crashes",
-                    "inputs",
-                    "no_repro",
-                    "readonly_inputs",
-                    "reports",
-                    "setup",
-                    "unique_reports",
-                ]
-            ):
-                self.logger.info("removing container: %s", container.name)
-                self.containers.delete(container.name)
-
-    def _delete_all_running_jobs(self) -> None:
-        self._delete_jobs()
-        self._delete_tasks()
-        self._delete_notifications()
-        self._delete_repros()
-
-    def _delete_fuzzing_data(self) -> None:
-        self._delete_scalesets()
-        self._delete_pools()
-        self._delete_containers()
-
     def reset(
         self,
         containers: bool = False,
@@ -1380,42 +1319,38 @@ class Onefuzz:
 
         :param bool containers: Delete all the containers.
         :param bool everything: Delete all containers, pools and managed scalesets.
-        :param bool jobs: Delete all jobs.
-        :param bool notifications: Delete all notifications.
+        :param bool jobs: Stop all jobs.
+        :param bool notifications: Stop all notifications.
         :param bool pools: Delete all pools.
         :param bool repros: Delete all repro vms.
         :param bool scalesets: Delete all managed scalesets.
-        :param bool tasks: Delete all tasks.
+        :param bool tasks: Stop all tasks.
         :param bool yes: Ignoring to specify "y" in prompt.
         """
-        message = ["Confirm stopping *all* running jobs"]
-        if everything:
-            message += ["AND deleting *ALL* fuzzing related data"]
-        message += ["(specify y or n): "]
-
         delete_options = [
-            jobs,
-            tasks,
-            notifications,
-            pools,
-            scalesets,
-            repros,
             containers,
+            jobs,
+            pools,
+            notifications,
+            repros,
+            scalesets,
+            tasks,
         ]
         arguments = [everything]
         arguments.extend(delete_options)
         if not any(arguments):
-            if not yes and not self._user_confirmation(message):
-                return
-            self._delete_all_running_jobs()
-            return
+            jobs, notifications, repros, tasks = True, True, True, True
 
         if everything:
-            if not yes and not self._user_confirmation(message):
-                return
-            self._delete_all_running_jobs()
-            self._delete_fuzzing_data()
-            return
+            containers, jobs, pools, notifications, repros, scalesets, tasks = (
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+            )
 
         to_delete = []
         argument_str = {
@@ -1436,25 +1371,56 @@ class Onefuzz:
             return
 
         if jobs:
-            self._delete_jobs()
+            for job in self.jobs.list():
+                self.logger.info("stopping job %s", job.job_id)
+                self.jobs.delete(job.job_id)
 
         if tasks:
-            self._delete_tasks()
+            for task in self.tasks.list():
+                self.logger.info("stopping task %s", task.task_id)
+                self.tasks.delete(task.task_id)
 
         if notifications:
-            self._delete_notifications()
+            for notification in self.notifications.list():
+                self.logger.info(
+                    "stopping notification %s", notification.notification_id
+                )
+                self.notifications.delete(notification.notification_id)
 
         if repros:
-            self._delete_repros()
+            for vm in self.repro.list():
+                self.repro.delete(str(vm.vm_id))
 
         if pools:
-            self._delete_pools()
+            for pool in self.pools.list():
+                self.logger.info("stopping pool: %s", pool.name)
+                self.pools.shutdown(pool.name, now=True)
 
         if scalesets:
-            self._delete_scalesets()
+            for scaleset in self.scalesets.list():
+                self.logger.info("stopping scaleset: %s", scaleset.scaleset_id)
+                self.scalesets.shutdown(scaleset.scaleset_id, now=True)
 
         if containers:
-            self._delete_containers()
+            for container in self.containers.list():
+                if (
+                    container.metadata
+                    and "container_type" in container.metadata
+                    and container.metadata["container_type"]
+                    in [
+                        "analysis",
+                        "coverage",
+                        "crashes",
+                        "inputs",
+                        "no_repro",
+                        "readonly_inputs",
+                        "reports",
+                        "setup",
+                        "unique_reports",
+                    ]
+                ):
+                    self.logger.info("removing container: %s", container.name)
+                    self.containers.delete(container.name)
 
 
 from .debug import Debug  # noqa: E402
