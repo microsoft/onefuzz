@@ -9,13 +9,10 @@ use std::{
 
 use anyhow::Result;
 use log::{error, trace};
-use win_util::{file, process};
+use win_util::{file, handle::Handle, process};
 use winapi::{
     shared::minwindef::{DWORD, LPVOID},
-    um::{
-        handleapi::CloseHandle,
-        winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386},
-    },
+    um::winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386},
 };
 
 use crate::{
@@ -23,9 +20,10 @@ use crate::{
     debugger::{Breakpoint, BreakpointId, BreakpointType, ModuleBreakpoint, StepState},
 };
 
+#[derive(Clone)]
 pub struct Module {
     path: PathBuf,
-    file_handle: HANDLE,
+    file_handle: Handle,
     base_address: u64,
     image_size: u32,
     machine: Machine,
@@ -45,7 +43,7 @@ impl Module {
 
         Ok(Self {
             path,
-            file_handle: module_handle,
+            file_handle: Handle(module_handle),
             base_address,
             image_size: image_details.image_size,
             machine: image_details.machine,
@@ -59,7 +57,7 @@ impl Module {
 
             dbghelp.sym_load_module(
                 process_handle,
-                self.file_handle,
+                self.file_handle.0,
                 &self.path,
                 self.base_address,
                 self.image_size,
@@ -74,12 +72,6 @@ impl Module {
     pub fn name(&self) -> &Path {
         // Unwrap guaranteed by construction, we always have a filename.
         self.path.file_stem().unwrap().as_ref()
-    }
-}
-
-impl Drop for Module {
-    fn drop(&mut self) {
-        unsafe { CloseHandle(self.file_handle) };
     }
 }
 
