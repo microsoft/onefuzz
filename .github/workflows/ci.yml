@@ -226,7 +226,7 @@ jobs:
         git clone https://gitlab.com/akihe/radamsa
         cd radamsa
         git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
-        export PATH=:/c/msys64/usr/bin
+        export PATH=$PATH:/c/msys64/usr/bin
         echo a
         ls /usr/bin
         echo a.1
