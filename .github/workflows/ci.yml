@@ -245,6 +245,7 @@ jobs:
     - proxy
     - service
     - afl
+    - aflpp
     - radamsa-linux
     - radamsa-win64
     runs-on: ubuntu-18.04
