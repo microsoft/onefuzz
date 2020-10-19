@@ -227,6 +227,7 @@ jobs:
         cd radamsa
         git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
         ls /c/
+        ls /c/msys64/usr/bin
         pacman -S gcc
         make
         mkdir artifacts/radamsa-win64
