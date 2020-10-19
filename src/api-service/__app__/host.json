@@ -9,10 +9,10 @@
       "default": "Warning",
       "Host": "Warning",
       "Function": "Information",
-      "Host.Aggregator": "None",
-      "logging:logLevel:Worker": "None",
-      "logging:logLevel:Microsoft": "None",
-      "AzureFunctionsJobHost:logging:logLevel:Host.Function.Console": "None"
+      "Host.Aggregator": "Warning",
+      "logging:logLevel:Worker": "Warning",
+      "logging:logLevel:Microsoft": "Warning",
+      "AzureFunctionsJobHost:logging:logLevel:Host.Function.Console": "Warning"
     },
     "applicationInsights": {
       "samplingSettings": {
