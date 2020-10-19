@@ -586,11 +586,9 @@ class Client:
 
     def deploy_app(self):
         logger.info("deploying function app %s", self.app_zip)
-        current_dir = os.getcwd()
         with tempfile.TemporaryDirectory() as tmpdirname:
             with zipfile.ZipFile(self.app_zip, "r") as zip_ref:
                 zip_ref.extractall(tmpdirname)
-                os.chdir(tmpdirname)
                 subprocess.check_output(
                     [
                         shutil.which("func"),
@@ -602,9 +600,8 @@ class Client:
                         "--no-build",
                     ],
                     env=dict(os.environ, CLI_DEBUG="1"),
+                    cwd=tmpdirname,
                 )
-
-            os.chdir(current_dir)
 
     def update_registration(self):
         if not self.create_registration:
