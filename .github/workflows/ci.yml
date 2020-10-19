@@ -227,7 +227,7 @@ jobs:
         git clone https://gitlab.com/akihe/radamsa
         cd radamsa
         git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
-    - run: C:\msys64\usr\bin\bash -c "cd radamsa; which cc; make"
+    - run: C:\msys64\usr\bin\bash -c "cd radamsa; export PATH=/usr/bin:$PATH; make"
     - run: |
         mkdir artifacts/radamsa-win64
         cp radamsa/bin/* artifacts/radamsa-win64
