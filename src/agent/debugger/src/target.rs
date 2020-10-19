@@ -292,6 +292,30 @@ impl Target {
         }
     }
 
+    pub(crate) fn set_symbolic_breakpoint(
+        &mut self,
+        module_name: &str,
+        func: &str,
+        kind: BreakpointType,
+        id: BreakpointId,
+    ) -> Result<()> {
+        match dbghelp::lock() {
+            Ok(dbghelp) => match dbghelp.sym_from_name(self.process_handle, module_name, func) {
+                Ok(sym) => {
+                    self.apply_absolute_breakpoint(sym.address(), kind, id)?;
+                }
+                Err(_) => {
+                    anyhow::bail!("unknown symbol {}!{}", module_name, func);
+                }
+            },
+            Err(e) => {
+                error!("Can't set symbolic breakpoints: {}", e);
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn apply_absolute_breakpoint(
         &mut self,
         address: u64,

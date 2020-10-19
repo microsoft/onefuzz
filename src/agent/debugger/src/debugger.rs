@@ -17,7 +17,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use log::{error, trace};
+use log::{debug, error, trace};
 use win_util::{check_winapi, last_os_error, process};
 use winapi::{
     shared::{
@@ -300,21 +300,27 @@ impl Debugger {
         let (module, func) = if let Some(split_at) = sym.find('!') {
             (&sym[..split_at], &sym[split_at + 1..])
         } else {
-            ("*", sym)
+            anyhow::bail!("no module name specified for breakpoint {}", sym);
         };
 
         let id = self.next_breakpoint_id();
 
-        let values = self
-            .symbolic_breakpoints
-            .entry(module.into())
-            .or_insert_with(|| Vec::new());
+        if self.target.saw_initial_bp() {
+            self.target
+                .set_symbolic_breakpoint(module, func, kind, id)?;
+        } else {
+            // Defer setting the breakpoint until seeing the initial breakpoint.
+            let values = self
+                .symbolic_breakpoints
+                .entry(module.into())
+                .or_insert_with(|| Vec::new());
 
-        values.push(UnresolvedBreakpoint {
-            kind,
-            id,
-            sym: func.into(),
-        });
+            values.push(UnresolvedBreakpoint {
+                kind,
+                id,
+                sym: func.into(),
+            });
+        }
 
         Ok(id)
     }
@@ -599,7 +605,12 @@ impl Debugger {
                                 });
                             }
                             Err(e) => {
-                                error!("Can't set symbolic breakpoints: {}", e);
+                                debug!(
+                                    "Can't set symbolic breakpoint {}!{}: {}",
+                                    module_name.as_ref().display(),
+                                    bp.sym,
+                                    e
+                                );
                             }
                         }
                     }
