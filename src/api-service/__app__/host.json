@@ -5,26 +5,20 @@
     "version": "[1.*, 2.0.0)"
   },
   "logging": {
-    "default": "Information",
-    "Host.Results": "Information",
-    "Function": "Information",
-    "Host.Aggregator": "Information",
-    "console": {
-      "default": "Information",
-      "Host.Results": "Information",
-      "Function": "Information",
-      "Host.Aggregator": "Information"
-    },
     "logLevel": {
       "default": "Information",
-      "Host.Results": "Information",
+      "Host": "Warning",
       "Function": "Information",
-      "Function.FunctionA": "Information",
-      "Host.Aggregator": "Information"
+      "Host.Aggregator": "Information",
+      "logging:logLevel:Worker": "None",
+      "logging:logLevel:Microsoft.Azure.WebJobs.Script.WebHost.Middleware.SystemTraceMiddleware": "None"
     },
     "applicationInsights": {
       "samplingSettings": {
-        "isEnabled": false
+        "isEnabled": true,
+        "InitialSamplingPercentage": 100,
+        "maxTelemetryItemsPerSecond": 20,
+        "excludedTypes": "Exception"
       }
     }
   },
