@@ -221,20 +221,21 @@ jobs:
     runs-on: windows-2019
     steps:
     - run: C:\msys64\usr\bin\pacman -S gcc --noconfirm
-    # - uses: actions/checkout@v2
-    - run: |
-        set -ex
-        git clone https://gitlab.com/akihe/radamsa
-        cd radamsa
-        git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
-        export PATH=$PATH:/c/msys64/usr/bin
-        make
-        echo d
-        mkdir artifacts/radamsa-win64
-        echo e
-        cp bin/radamsa.exe artifacts/radamsa-win64
-        cp /c/msys64/usr/bin/msys-2.0.dll artifacts/radamsa-win64
-      shell: bash 
+    - uses: actions/checkout@v2
+    - run: C:\msys64\usr\bin\bash --login -eo pipefail src/ci/radamsa-windows.sh
+    # - run: |
+    #     set -ex
+    #     git clone https://gitlab.com/akihe/radamsa
+    #     cd radamsa
+    #     git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
+    #     export PATH=$PATH:/c/msys64/usr/bin
+    #     make
+    #     echo d
+    #     mkdir artifacts/radamsa-win64
+    #     echo e
+    #     cp bin/radamsa.exe artifacts/radamsa-win64
+    #     cp /c/msys64/usr/bin/msys-2.0.dll artifacts/radamsa-win64
+    #   shell: bash 
     - uses: actions/upload-artifact@v2.1.4
       with:
         name: build-artifacts
