@@ -8,7 +8,9 @@ use crate::tasks::{
 };
 use anyhow::{Error, Result};
 use futures::stream::StreamExt;
-use onefuzz::{expand::Expand, fs::set_executable, input_tester::Tester, sha256};
+use onefuzz::{
+    expand::Expand, fs::set_executable, input_tester::Tester, sha256, telemetry::Event::new_result,
+};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::{
@@ -63,7 +65,7 @@ pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
         config.readonly_inputs.clone(),
         std::time::Duration::from_secs(10),
     );
-    let crash_dir_monitor = utils::monitor_result_dir(config.crashes.clone());
+    let crash_dir_monitor = utils::monitor_result_dir(config.crashes.clone(), new_result);
     let tester = Tester::new(
         &config.target_exe,
         &config.target_options,

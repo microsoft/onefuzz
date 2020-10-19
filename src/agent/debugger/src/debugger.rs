@@ -36,7 +36,7 @@ use winapi::{
 
 use crate::target::Target;
 use crate::{
-    dbghelp::{self, SymInfo},
+    dbghelp::{self, ModuleInfo, SymInfo, SymLineInfo},
     debug_event::{DebugEvent, DebugEventInfo},
     stack,
 };
@@ -284,6 +284,10 @@ impl Debugger {
         } else {
             anyhow::bail!("Unexpected event: {}", de)
         }
+    }
+
+    pub fn target(&mut self) -> &mut Target {
+        &mut self.target
     }
 
     fn next_breakpoint_id(&mut self) -> BreakpointId {
@@ -646,9 +650,19 @@ impl Debugger {
         );
     }
 
+    pub fn get_module_info(&self, pc: u64) -> Result<ModuleInfo> {
+        let dbghelp = dbghelp::lock()?;
+        dbghelp.sym_get_module_info(self.target.process_handle(), pc)
+    }
+
     pub fn get_symbol(&self, pc: u64) -> Result<SymInfo> {
         let dbghelp = dbghelp::lock()?;
         dbghelp.sym_from_inline_context(self.target.process_handle(), pc, 0)
+    }
+
+    pub fn get_symbol_line_info(&self, pc: u64) -> Result<SymLineInfo> {
+        let dbghelp = dbghelp::lock()?;
+        dbghelp.sym_get_file_and_line(self.target.process_handle(), pc, 0)
     }
 
     pub fn get_current_thread_id(&self) -> u64 {

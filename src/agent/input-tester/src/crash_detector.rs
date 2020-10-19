@@ -177,7 +177,7 @@ fn prepare_coverage_breakpoints(
     if let Some(coverage_map) = coverage_map {
         let mut id_to_block = fnv::FnvHashMap::default();
         for (m, module) in coverage_map.modules().iter().enumerate() {
-            let name = module.module_name();
+            let name = module.name();
             for (i, block) in module.blocks().iter().enumerate() {
                 // For better performance, we can skip registering breakpoints that have
                 // been hit as we only care about new coverage.

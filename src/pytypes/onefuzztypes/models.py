@@ -562,6 +562,12 @@ class Scaleset(BaseModel):
     client_object_id: Optional[UUID]
     tags: Dict[str, str] = Field(default_factory=lambda: {})
 
+    @validator("size", allow_reuse=True)
+    def check_size(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError("Invalid scaleset size")
+        return value
+
 
 class NotificationConfig(BaseModel):
     config: NotificationTemplate
@@ -576,6 +582,7 @@ class Repro(BaseModel):
     os: OS
     error: Optional[Error]
     ip: Optional[str]
+    end_time: Optional[datetime]
 
 
 class ExitStatus(BaseModel):
