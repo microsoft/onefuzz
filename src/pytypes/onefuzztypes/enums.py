@@ -256,7 +256,7 @@ class PoolState(Enum):
     @classmethod
     def available(cls) -> List["PoolState"]:
         """ set of states that indicate if it's available for work """
-        return [cls.init, cls.running]
+        return [cls.running]
 
 
 class ScalesetState(Enum):
