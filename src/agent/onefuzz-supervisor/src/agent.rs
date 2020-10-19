@@ -21,6 +21,7 @@ pub struct Agent {
     work_queue: Box<dyn IWorkQueue>,
     worker_runner: Box<dyn IWorkerRunner>,
     _heartbeat: Option<AgentHeartbeatClient>,
+    previous_state: Option<StateValue>,
 }
 
 impl Agent {
@@ -34,6 +35,7 @@ impl Agent {
         heartbeat: Option<AgentHeartbeatClient>,
     ) -> Self {
         let scheduler = Some(scheduler);
+        let previous_state = None;
 
         Self {
             coordinator,
@@ -43,6 +45,7 @@ impl Agent {
             work_queue,
             worker_runner,
             _heartbeat: heartbeat,
+            previous_state,
         }
     }
 
@@ -92,6 +95,7 @@ impl Agent {
             Scheduler::Done(s) => self.done(s).await?,
         };
 
+        self.previous_state = Some(StateValue::from(&next));
         let done = matches!(next, Scheduler::Done(..));
 
         self.scheduler = Some(next);
@@ -100,8 +104,10 @@ impl Agent {
     }
 
     async fn free(&mut self, state: State<Free>) -> Result<Scheduler> {
-        let event = StateUpdateEvent::Free.into();
-        self.coordinator.emit_event(event).await?;
+        if !matches!(self.previous_state, Some(StateValue::Free)) {
+            let event = StateUpdateEvent::Free.into();
+            self.coordinator.emit_event(event).await?;
+        }
 
         let msg = self.work_queue.poll().await?;
 
@@ -208,8 +214,10 @@ impl Agent {
     }
 
     async fn busy(&mut self, state: State<Busy>) -> Result<Scheduler> {
-        let event = StateUpdateEvent::Busy.into();
-        self.coordinator.emit_event(event).await?;
+        if !matches!(self.previous_state, Some(StateValue::Busy)) {
+            let event = StateUpdateEvent::Busy.into();
+            self.coordinator.emit_event(event).await?;
+        }
 
         let mut events = vec![];
         let updated = state

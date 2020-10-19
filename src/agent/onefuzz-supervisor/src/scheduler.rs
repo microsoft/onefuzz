@@ -35,6 +35,28 @@ impl fmt::Display for Scheduler {
     }
 }
 
+pub enum StateValue {
+    Free,
+    SettingUp,
+    PendingReboot,
+    Ready,
+    Busy,
+    Done,
+}
+
+impl From<&Scheduler> for StateValue {
+    fn from(value: &Scheduler) -> Self {
+        match value {
+            Scheduler::Free(_) => Self::Free,
+            Scheduler::SettingUp(_) => Self::SettingUp,
+            Scheduler::PendingReboot(_) => Self::PendingReboot,
+            Scheduler::Ready(_) => Self::Ready,
+            Scheduler::Busy(_) => Self::Busy,
+            Scheduler::Done(_) => Self::Done,
+        }
+    }
+}
+
 impl Scheduler {
     pub fn new() -> Self {
         Self::default()
