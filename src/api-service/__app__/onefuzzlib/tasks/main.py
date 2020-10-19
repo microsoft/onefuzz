@@ -118,9 +118,6 @@ class Task(BASE_TASK, ORMMixin):
         self.state = TaskState.stopped
         self.save()
 
-    def queue_stop(self) -> None:
-        self.queue(method=self.stopping)
-
     @classmethod
     def search_states(
         cls, *, job_id: Optional[UUID] = None, states: Optional[List[TaskState]] = None
@@ -165,7 +162,7 @@ class Task(BASE_TASK, ORMMixin):
             task_pool = task.get_pool()
             if not task_pool:
                 continue
-            if pool_name == task_pool.name and task.state in TaskState.available():
+            if pool_name == task_pool.name:
                 pool_tasks.append(task)
 
         return pool_tasks

@@ -36,6 +36,7 @@ from onefuzztypes.enums import (
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
+from typing_extensions import Protocol
 
 from .azure.table import get_client
 from .dashboard import add_event
@@ -64,6 +65,36 @@ SAFE_STRINGS = (UUID, Container, Region, PoolName)
 KEY = Union[int, str, UUID, Enum]
 
 HOURS = 60 * 60
+
+
+class HasState(Protocol):
+    # TODO: this should be bound tighter than Any
+    # In the end, we want this to be an Enum.  Specifically, one of
+    # the JobState,TaskState,etc enums.
+    state: Any
+
+
+def process_state_update(obj: HasState) -> None:
+    """
+    process a single state update, if the obj
+    implements a function for that state
+    """
+
+    func = getattr(obj, obj.state.name, None)
+    if func is None:
+        return
+    func()
+
+
+def process_state_updates(obj: HasState, max_updates: int = 5) -> None:
+    """ process through the state machine for an object """
+
+    for _ in range(max_updates):
+        state = obj.state
+        process_state_update(obj)
+        new_state = obj.state
+        if new_state == state:
+            break
 
 
 def resolve(key: KEY) -> str:

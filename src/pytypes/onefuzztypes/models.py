@@ -582,6 +582,7 @@ class Repro(BaseModel):
     os: OS
     error: Optional[Error]
     ip: Optional[str]
+    end_time: Optional[datetime]
 
 
 class ExitStatus(BaseModel):
