@@ -229,7 +229,7 @@ jobs:
         ls /c/
         ls /c/msys64/usr/bin
         export PATH=$PATH:/c/msys64/usr/bin
-        pacman -S gcc || pacman.exe -S gcc
+        pacman -S gcc 
         make
         mkdir artifacts/radamsa-win64
         cp bin/radamsa.exe artifacts/radamsa-win64
