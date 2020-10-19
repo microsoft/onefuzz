@@ -1,14 +1,18 @@
 param (
     [Parameter()]
-    [string] $app_dir = "$PSScriptRoot"
+    [string] $app_dir = "$PSScriptRoot",
+    [Parameter()]
+    [string] $version = "$null"
 )
 
 try { 
     Push-Location
 
     # Get Version and Replace versions
-    $version = bash .\get-version.sh
-    bash .\set-versions.sh
+    if ($version -eq "$null") {
+        $version = bash .\get-version.sh
+    }
+    bash .\set-versions.sh $version
 
     # Create wheel for onefuzztypes
     Set-Location "$app_dir/../pytypes"
@@ -31,7 +35,7 @@ try {
     (Get-Content -path "requirements.txt") -replace "./onefuzztypes-$_version-py3-none-any.whl", "onefuzztypes==$version" | Out-File -FilePath "requirements.txt" -Encoding "ascii"
     Remove-Item "*.whl"
     Set-Location "$app_dir"
-    bash .\unset-versions.sh
+    bash .\unset-versions.sh $version
     
     Write-Host "OneFuzz exe is available at src\cli\dist\onefuzz.exe"
 } 
