@@ -1,18 +1,12 @@
-#!/usr/bin/env python
-#
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
-
 import logging
 import math
 from typing import List
 
-import azure.functions as func
-from onefuzztypes.enums import NodeState, PoolState, ScalesetState
+from onefuzztypes.enums import NodeState, ScalesetState
 from onefuzztypes.models import AutoScaleConfig, TaskPool
 
-from ..onefuzzlib.pools import Node, Pool, Scaleset
-from ..onefuzzlib.tasks.main import Task
+from .pools import Node, Pool, Scaleset
+from .tasks.main import Task
 
 
 def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
@@ -22,11 +16,11 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
         return
 
     for scaleset in scalesets:
-        if scaleset.state == ScalesetState.running:
+        if scaleset.state in [ScalesetState.running, ScalesetState.resize]:
 
             max_size = min(scaleset.max_size(), autoscale_config.scaleset_size)
             logging.info(
-                "Sacleset id: %s, Scaleset size: %d, max_size: %d"
+                "scaleset:%s size:%d max_size:%d"
                 % (scaleset.scaleset_id, scaleset.size, max_size)
             )
             if scaleset.size < max_size:
@@ -134,44 +128,42 @@ def get_vm_count(tasks: List[Task]) -> int:
     return count
 
 
-def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
-    pools = Pool.search_states(states=PoolState.available())
-    for pool in pools:
-        logging.info("autoscale: %s" % (pool.autoscale))
-        if not pool.autoscale:
-            continue
+def autoscale_pool(pool: Pool) -> None:
+    logging.info("autoscale: %s" % (pool.autoscale))
+    if not pool.autoscale:
+        return
 
-        # get all the tasks (count not stopped) for the pool
-        tasks = Task.get_tasks_by_pool_name(pool.name)
-        logging.info("Pool: %s, #Tasks %d" % (pool.name, len(tasks)))
+    # get all the tasks (count not stopped) for the pool
+    tasks = Task.get_tasks_by_pool_name(pool.name)
+    logging.info("Pool: %s, #Tasks %d" % (pool.name, len(tasks)))
 
-        num_of_tasks = get_vm_count(tasks)
-        nodes_needed = max(num_of_tasks, pool.autoscale.min_size)
-        if pool.autoscale.max_size:
-            nodes_needed = min(nodes_needed, pool.autoscale.max_size)
+    num_of_tasks = get_vm_count(tasks)
+    nodes_needed = max(num_of_tasks, pool.autoscale.min_size)
+    if pool.autoscale.max_size:
+        nodes_needed = min(nodes_needed, pool.autoscale.max_size)
 
-        # do scaleset logic match with pool
-        # get all the scalesets for the pool
-        scalesets = Scaleset.search_by_pool(pool.name)
-        pool_resize = False
+    # do scaleset logic match with pool
+    # get all the scalesets for the pool
+    scalesets = Scaleset.search_by_pool(pool.name)
+    pool_resize = False
+    for scaleset in scalesets:
+        if scaleset.state in ScalesetState.modifying():
+            pool_resize = True
+            break
+        nodes_needed = nodes_needed - scaleset.size
+
+    if pool_resize:
+        return
+
+    logging.info("Pool: %s, #Nodes Needed: %d" % (pool.name, nodes_needed))
+    if nodes_needed > 0:
+        # resizing scaleset or creating new scaleset.
+        scale_up(pool, scalesets, nodes_needed)
+    elif nodes_needed < 0:
         for scaleset in scalesets:
-            if scaleset.state in ScalesetState.modifying():
-                pool_resize = True
-                break
-            nodes_needed = nodes_needed - scaleset.size
-
-        if pool_resize:
-            continue
-
-        logging.info("Pool: %s, #Nodes Needed: %d" % (pool.name, nodes_needed))
-        if nodes_needed > 0:
-            # resizing scaleset or creating new scaleset.
-            scale_up(pool, scalesets, nodes_needed)
-        elif nodes_needed < 0:
-            for scaleset in scalesets:
-                nodes = Node.search_states(scaleset_id=scaleset.scaleset_id)
-                for node in nodes:
-                    if node.delete_requested:
-                        nodes_needed += 1
-        if nodes_needed < 0:
-            scale_down(scalesets, abs(nodes_needed))
+            nodes = Node.search_states(scaleset_id=scaleset.scaleset_id)
+            for node in nodes:
+                if node.delete_requested:
+                    nodes_needed += 1
+    if nodes_needed < 0:
+        scale_down(scalesets, abs(nodes_needed))

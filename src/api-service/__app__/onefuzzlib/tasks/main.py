@@ -118,9 +118,6 @@ class Task(BASE_TASK, ORMMixin):
         self.state = TaskState.stopped
         self.save()
 
-    def queue_stop(self) -> None:
-        self.queue(method=self.stopping)
-
     @classmethod
     def search_states(
         cls, *, job_id: Optional[UUID] = None, states: Optional[List[TaskState]] = None

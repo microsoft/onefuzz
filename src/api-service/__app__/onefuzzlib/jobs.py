@@ -73,9 +73,6 @@ class Job(BASE_JOB, ORMMixin):
             self.state = JobState.stopped
         self.save()
 
-    def queue_stop(self) -> None:
-        self.queue(method=self.stopping)
-
     def on_start(self) -> None:
         # try to keep this effectively idempotent
         if self.end_time is None:
