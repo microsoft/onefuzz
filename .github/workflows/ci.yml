@@ -222,16 +222,20 @@ jobs:
     steps:
     # - uses: actions/checkout@v2
     - run: |
-        # set -ex
+        set -ex
         git clone https://gitlab.com/akihe/radamsa
         cd radamsa
         git checkout 8121b78fb8f87e869cbeca931964df2b32435eb7
         export PATH=:/c/msys64/usr/bin
-        echo 
+        echo a
         /c/msys64/usr/bin/pacman -h 
+        echo b
         /c/msys64/usr/bin/pacman -S gcc 
+        echo c
         make
+        echo d
         mkdir artifacts/radamsa-win64
+        echo e
         cp bin/radamsa.exe artifacts/radamsa-win64
         cp /c/msys64/usr/bin/msys-2.0.dll artifacts/radamsa-win64
       shell: bash 
