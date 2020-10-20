@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 bincode = "1.3"
+debugger = { path = "../debugger" }
 fixedbitset = "0.3"
 goblin = "0.2"
 iced-x86 = { version = "1.1", features = ["decoder", "op_code_info", "instr_info", "masm"] }

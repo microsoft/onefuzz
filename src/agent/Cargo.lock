@@ -380,6 +380,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
+ "debugger",
  "fixedbitset",
  "goblin",
  "iced-x86",

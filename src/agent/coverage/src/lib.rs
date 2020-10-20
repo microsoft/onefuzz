@@ -8,6 +8,8 @@
 mod intel;
 pub mod pe;
 
+pub mod block;
+
 use std::{
     ffi::OsString,
     fs::File,
