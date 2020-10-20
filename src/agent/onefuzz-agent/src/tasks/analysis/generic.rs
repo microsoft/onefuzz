@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::{CommonConfig, SyncedDir},
-    heartbeat::HeartbeatSender,
-    utils,
-};
+use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender};
 use anyhow::Result;
 use futures::stream::StreamExt;
 use onefuzz::{az_copy, blob::url::BlobUrl};
-use onefuzz::{expand::Expand, fs::set_executable, fs::OwnedDir};
+use onefuzz::{
+    expand::Expand,
+    fs::set_executable,
+    fs::OwnedDir,
+    jitter::jitter,
+    syncdir::{SyncOperation::Push, SyncedDir},
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -43,9 +45,9 @@ pub async fn spawn(config: Config) -> Result<()> {
     let tmp = OwnedDir::new(tmp_dir);
     tmp.reset().await?;
 
-    utils::init_dir(&config.analysis.path).await?;
-    utils::init_dir(&config.tools.path).await?;
-    utils::sync_remote_dir(&config.tools, utils::SyncOperation::Pull).await?;
+    config.analysis.init().await?;
+    config.tools.init_pull().await?;
+
     set_executable(&config.tools.path).await?;
     run_existing(&config).await?;
     poll_inputs(&config, tmp).await?;
@@ -54,16 +56,14 @@ pub async fn spawn(config: Config) -> Result<()> {
 
 async fn run_existing(config: &Config) -> Result<()> {
     if let Some(crashes) = &config.crashes {
-        utils::init_dir(&crashes.path).await?;
-        utils::sync_remote_dir(&crashes, utils::SyncOperation::Pull).await?;
-
+        crashes.init_pull().await?;
         let mut read_dir = fs::read_dir(&crashes.path).await?;
         while let Some(file) = read_dir.next().await {
             verbose!("Processing file {:?}", file);
             let file = file?;
             run_tool(file.path(), &config).await?;
         }
-        utils::sync_remote_dir(&config.analysis, utils::SyncOperation::Push).await?;
+        config.analysis.sync(Push).await?;
     }
     Ok(())
 }
@@ -103,12 +103,12 @@ async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
                     az_copy::copy(input_url.url().as_ref(), &destination_path, false).await?;
 
                     run_tool(destination_path, &config).await?;
-                    utils::sync_remote_dir(&config.analysis, utils::SyncOperation::Push).await?;
+                    config.analysis.sync(Push).await?
                 }
                 input_queue.delete(message).await?;
             } else {
                 warn!("no new candidate inputs found, sleeping");
-                tokio::time::delay_for(EMPTY_QUEUE_DELAY).await;
+                tokio::time::delay_for(jitter(EMPTY_QUEUE_DELAY)).await;
             }
         }
     }

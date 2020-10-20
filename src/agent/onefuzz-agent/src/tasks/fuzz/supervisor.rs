@@ -3,15 +3,17 @@
 
 #![allow(clippy::too_many_arguments)]
 use crate::tasks::{
-    config::{CommonConfig, ContainerType, SyncedDir},
+    config::{CommonConfig, ContainerType},
     heartbeat::*,
     stats::common::{monitor_stats, StatsFormat},
-    utils::{self, CheckNotify},
+    utils::CheckNotify,
 };
 use anyhow::{Error, Result};
 use onefuzz::{
     expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
+    jitter::jitter,
+    syncdir::{SyncOperation::Pull, SyncedDir},
     telemetry::Event::new_result,
 };
 use serde::Deserialize;
@@ -50,8 +52,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     let runtime_dir = OwnedDir::new(config.common.task_id.to_string());
     runtime_dir.create_if_missing().await?;
 
-    utils::init_dir(&config.tools.path).await?;
-    utils::sync_remote_dir(&config.tools, utils::SyncOperation::Pull).await?;
+    config.tools.init_pull().await?;
     set_executable(&config.tools.path).await?;
 
     let supervisor_path = Expand::new()
@@ -63,17 +64,14 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         url: config.crashes.url.clone(),
     };
 
-    utils::init_dir(&crashes.path).await?;
-    let monitor_crashes = utils::monitor_result_dir(crashes.clone(), new_result);
+    crashes.init().await?;
+    let monitor_crashes = crashes.monitor_results(new_result);
 
     let inputs = SyncedDir {
         path: runtime_dir.path().join("inputs"),
         url: config.inputs.url.clone(),
     };
-    utils::init_dir(&inputs.path).await?;
-    verbose!("initialized {}", inputs.path.display());
-
-    let sync_inputs = resync_corpus(inputs.clone());
+    inputs.init().await?;
 
     if let Some(context) = &config.wait_for_files {
         let dir = match context {
@@ -82,13 +80,15 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
         let delay = std::time::Duration::from_secs(10);
         loop {
-            utils::sync_remote_dir(dir, utils::SyncOperation::Pull).await?;
+            dir.sync(Pull).await?;
             if has_files(&dir.path).await? {
                 break;
             }
-            tokio::time::delay_for(delay).await;
+            tokio::time::delay_for(jitter(delay)).await;
         }
     }
+
+    let continuous_sync_task = inputs.continuous_sync(Pull, None);
 
     let process = start_supervisor(
         &runtime_dir.path(),
@@ -127,7 +127,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         monitor_process,
         monitor_stats,
         monitor_crashes,
-        sync_inputs,
+        continuous_sync_task,
     )?;
 
     Ok(())
@@ -205,20 +205,6 @@ async fn start_supervisor(
     info!("starting supervisor '{:?}'", cmd);
     let child = cmd.spawn()?;
     Ok(child)
-}
-
-pub async fn resync_corpus(sync_dir: SyncedDir) -> Result<()> {
-    let delay = std::time::Duration::from_secs(10);
-
-    loop {
-        let result = utils::sync_remote_dir(&sync_dir, utils::SyncOperation::Pull).await;
-
-        if result.is_err() {
-            warn!("error syncing dir: {:?}", sync_dir);
-        }
-
-        tokio::time::delay_for(delay).await;
-    }
 }
 
 #[cfg(test)]

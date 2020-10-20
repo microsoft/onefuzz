@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use onefuzz::http::ResponseExt;
+use onefuzz::{http::ResponseExt, jitter::jitter};
 use reqwest::StatusCode;
 use std::{
     path::{Path, PathBuf},
@@ -179,7 +179,7 @@ impl Registration {
                         err,
                         REGISTRATION_RETRY_PERIOD.as_secs()
                     );
-                    tokio::time::delay_for(REGISTRATION_RETRY_PERIOD).await;
+                    tokio::time::delay_for(jitter(REGISTRATION_RETRY_PERIOD)).await;
                 }
                 Err(err) => return Err(err.into()),
             }

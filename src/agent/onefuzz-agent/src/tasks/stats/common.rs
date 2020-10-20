@@ -3,7 +3,10 @@
 
 use super::afl;
 use anyhow::{Error, Result};
-use onefuzz::telemetry::{track_event, Event::runtime_stats};
+use onefuzz::{
+    jitter::jitter,
+    telemetry::{track_event, Event::runtime_stats},
+};
 use serde::Deserialize;
 pub const STATS_DELAY: std::time::Duration = std::time::Duration::from_secs(30);
 
@@ -22,7 +25,7 @@ pub async fn monitor_stats(path: Option<String>, format: Option<StatsFormat>) ->
                 if let Ok(stats) = stats {
                     track_event(runtime_stats, stats);
                 }
-                tokio::time::delay_for(STATS_DELAY).await;
+                tokio::time::delay_for(jitter(STATS_DELAY)).await;
             }
         }
     }

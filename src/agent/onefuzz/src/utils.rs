@@ -1,3 +1,7 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+use crate::jitter::jitter;
 use async_trait::async_trait;
 use std::time::Duration;
 
@@ -11,7 +15,7 @@ impl CheckNotify for tokio::sync::Notify {
     async fn is_notified(&self, delay: Duration) -> bool {
         let notify = self;
         tokio::select! {
-            () = tokio::time::delay_for(delay) => false,
+            () = tokio::time::delay_for(jitter(delay)) => false,
             () = notify.notified() => true,
         }
     }
