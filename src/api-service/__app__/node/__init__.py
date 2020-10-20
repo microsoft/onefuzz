@@ -9,7 +9,6 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import NodeGet, NodeSearch
 from onefuzztypes.responses import BoolResult
 
-from ..onefuzzlib.heartbeat import NodeHeartbeat
 from ..onefuzzlib.pools import Node, NodeTasks
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -32,7 +31,6 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
         node_tasks = NodeTasks.get_by_machine_id(request.machine_id)
         node.tasks = [(t.task_id, t.state) for t in node_tasks]
-        node.heartbeats = NodeHeartbeat.get_heartbeats(request.machine_id)
 
         return ok(node)
 
