@@ -60,7 +60,6 @@ from .azure.vmss import (
     update_extensions,
 )
 from .extension import fuzz_extensions
-from .heartbeat import NodeHeartbeat
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
@@ -132,7 +131,7 @@ class Node(BASE_NODE, ORMMixin):
 
     @classmethod
     def get_by_machine_id(cls, machine_id: UUID) -> Optional["Node"]:
-        nodes = cls.get_by_machine_ids([machine_id])
+        nodes = cls.search(query={"machine_id": [machine_id]})
         if not nodes:
             return None
 
@@ -280,6 +279,18 @@ class Node(BASE_NODE, ORMMixin):
         """ Tell the node to stop everything. """
         self.set_shutdown()
         self.stop()
+
+    @classmethod
+    def get_dead_nodes(
+        cls, scaleset_id: UUID, expiration_period: datetime.timedelta
+    ) -> List["Node"]:
+        time_filter = "heartbeat lt datetime'%s'" % (
+            (datetime.datetime.utcnow() - expiration_period).isoformat()
+        )
+        return cls.search(
+            query={"scaleset_id": [scaleset_id]},
+            raw_unchecked_filter=time_filter,
+        )
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
@@ -746,10 +757,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     # only add nodes that are not already set to reschedule
                     to_reimage.append(node)
 
-        dead_nodes_ids = NodeHeartbeat.get_dead_nodes(
-            [node_id for node_id in azure_nodes.keys()], NODE_EXPIRATION_TIME
-        )
-        dead_nodes = Node.get_by_machine_ids(dead_nodes_ids)
+        dead_nodes = Node.get_dead_nodes(self.scaleset_id, NODE_EXPIRATION_TIME)
         for node in dead_nodes:
             to_reimage.append(node)
 
