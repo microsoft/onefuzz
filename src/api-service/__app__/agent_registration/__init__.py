@@ -98,6 +98,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         node.version = registration_request.version
         node.reimage_requested = False
         node.state = NodeState.init
+        node.reimage_queued = False
     else:
         node = Node(
             pool_name=registration_request.pool_name,

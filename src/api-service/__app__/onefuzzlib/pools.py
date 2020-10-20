@@ -72,6 +72,10 @@ NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 
 
 class Node(BASE_NODE, ORMMixin):
+    # should only be set by Scaleset.reimage_nodes
+    # should only be unset during agent_registration POST
+    reimage_queued: bool = Field(default=False)
+
     @classmethod
     def search_states(
         cls,
@@ -112,8 +116,19 @@ class Node(BASE_NODE, ORMMixin):
         return cls.search(query=query, raw_unchecked_filter=version_query)
 
     @classmethod
-    def get_by_machine_ids(cls, machine_id: List[UUID]) -> List["Node"]:
-        return cls.search(query={"machine_id": machine_id})
+    def mark_outdated_nodes(cls) -> None:
+        outdated = cls.search_outdated()
+        for node in outdated:
+            logging.info(
+                "node is outdated: %s - node_version:%s api_version:%s",
+                node.machine_id,
+                node.version,
+                __version__,
+            )
+            if node.version == "1.0.0":
+                node.to_reimage(done=True)
+            else:
+                node.to_reimage()
 
     @classmethod
     def get_by_machine_id(cls, machine_id: UUID) -> Optional["Node"]:
@@ -202,9 +217,24 @@ class Node(BASE_NODE, ORMMixin):
             self.stop()
             return False
 
-        if self.delete_requested or self.reimage_requested:
+        if self.state in NodeState.ready_for_reset():
             logging.info(
-                "can_schedule should be recycled.  machine_id:%s", self.machine_id
+                "can_schedule node is set for reset.  machine_id:%s", self.machine_id
+            )
+            return False
+
+        if self.delete_requested:
+            logging.info(
+                "can_schedule is set to be deleted.  machine_id:%s",
+                self.machine_id,
+            )
+            self.stop()
+            return False
+
+        if self.reimage_requested:
+            logging.info(
+                "can_schedule is set to be reimaged.  machine_id:%s",
+                self.machine_id,
             )
             self.stop()
             return False
@@ -689,25 +719,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         to_reimage = []
         to_delete = []
 
-        outdated = Node.search_outdated(scaleset_id=self.scaleset_id)
-        for node in outdated:
-            logging.info(
-                "node is outdated: %s - node_version:%s api_version:%s",
-                node.machine_id,
-                node.version,
-                __version__,
-            )
-            if node.version == "1.0.0":
-                node.state = NodeState.done
-                to_reimage.append(node)
-            else:
-                node.to_reimage()
-
         nodes = Node.search_states(
             scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
         )
 
-        if not outdated and not nodes:
+        if not nodes:
             logging.info("no nodes need updating: %s", self.scaleset_id)
             return False
 
@@ -726,7 +742,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
                     node.set_halt()
                     to_delete.append(node)
-                else:
+                elif not node.reimage_queued:
+                    # only add nodes that are not already set to reschedule
                     to_reimage.append(node)
 
         dead_nodes_ids = NodeHeartbeat.get_dead_nodes(
@@ -847,6 +864,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 "unable to reimage nodes: %s:%s - %s"
                 % (self.scaleset_id, machine_ids, result)
             )
+        for node in nodes:
+            node.reimage_queued = True
+            node.save()
 
     def shutdown(self) -> None:
         size = get_vmss_size(self.scaleset_id)
@@ -869,7 +889,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.save()
         else:
             logging.info("scaleset deleted: %s", self.scaleset_id)
-            self.state = ScalesetState.halt
             self.delete()
 
     @classmethod
