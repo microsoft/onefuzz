@@ -226,6 +226,15 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
+  radamsa-win64:
+    runs-on: windows-2019
+    steps:
+    - uses: actions/checkout@v2
+    - run: c:\msys64\usr\bin\bash src/ci/radamsa-windows.sh
+    - uses: actions/upload-artifact@v2.1.4
+      with:
+        name: build-artifacts
+        path: artifacts
   package:
     needs:
     - agent
@@ -235,7 +244,9 @@ jobs:
     - proxy
     - service
     - afl
+    - aflpp
     - radamsa-linux
+    - radamsa-win64
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
