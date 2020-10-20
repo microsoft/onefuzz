@@ -2,14 +2,10 @@
 // Licensed under the MIT License.
 
 use super::crash_report::*;
-use crate::tasks::{
-    config::{CommonConfig, SyncedDir},
-    generic::input_poller::*,
-    heartbeat::*,
-};
+use crate::tasks::{config::CommonConfig, generic::input_poller::*, heartbeat::*};
 use anyhow::Result;
 use async_trait::async_trait;
-use onefuzz::{blob::BlobUrl, libfuzzer::LibFuzzer, sha256};
+use onefuzz::{blob::BlobUrl, libfuzzer::LibFuzzer, sha256, syncdir::SyncedDir};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
