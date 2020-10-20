@@ -45,7 +45,7 @@ use crate::{
 const STATUS_WX86_BREAKPOINT: u32 = ::winapi::shared::ntstatus::STATUS_WX86_BREAKPOINT as u32;
 
 /// Uniquely identify a breakpoint.
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BreakpointId(pub u32);
 
 #[derive(Copy, Clone)]
