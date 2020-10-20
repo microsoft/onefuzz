@@ -1290,51 +1290,58 @@ class Onefuzz:
 
         return data
 
-    def reset(self, everything: bool = False) -> None:
-        """
-        Resets onefuzz.  Stops all jobs, notifications, and repro VMs.
-        Specifying 'everything' will delete all containers, pools, and managed
-        scalesets.
-        """
-        message = ["Confirm stopping *all* running jobs"]
-        if everything:
-            message += ["AND deleting *ALL* fuzzing related data"]
-        message += ["(specify y or n): "]
-
+    def _user_confirmation(self, message: List[str]) -> bool:
         answer: Optional[str] = None
         while answer not in ["y", "n"]:
             answer = input(" ".join(message)).strip()
 
         if answer == "n":
             self.logger.info("not stopping")
-            return
+            return False
+        return True
 
-        self.logger.info("stopping all interactions")
+    def _delete_components(
+        self,
+        containers: bool = False,
+        jobs: bool = False,
+        notifications: bool = False,
+        pools: bool = False,
+        repros: bool = False,
+        scalesets: bool = False,
+        tasks: bool = False,
+    ) -> None:
+        if jobs:
+            for job in self.jobs.list():
+                self.logger.info("stopping job %s", job.job_id)
+                self.jobs.delete(job.job_id)
 
-        for job in self.jobs.list():
-            self.logger.info("stopping job %s", job.job_id)
-            self.jobs.delete(job.job_id)
+        if tasks:
+            for task in self.tasks.list():
+                self.logger.info("stopping task %s", task.task_id)
+                self.tasks.delete(task.task_id)
 
-        for task in self.tasks.list():
-            self.logger.info("stopping task %s", task.task_id)
-            self.tasks.delete(task.task_id)
+        if notifications:
+            for notification in self.notifications.list():
+                self.logger.info(
+                    "stopping notification %s", notification.notification_id
+                )
+                self.notifications.delete(notification.notification_id)
 
-        for notification in self.notifications.list():
-            self.logger.info("stopping notification %s", notification.notification_id)
-            self.notifications.delete(notification.notification_id)
+        if repros:
+            for vm in self.repro.list():
+                self.repro.delete(str(vm.vm_id))
 
-        for vm in self.repro.list():
-            self.repro.delete(str(vm.vm_id))
-
-        if everything:
+        if pools:
             for pool in self.pools.list():
                 self.logger.info("stopping pool: %s", pool.name)
                 self.pools.shutdown(pool.name, now=True)
 
+        if scalesets:
             for scaleset in self.scalesets.list():
                 self.logger.info("stopping scaleset: %s", scaleset.scaleset_id)
                 self.scalesets.shutdown(scaleset.scaleset_id, now=True)
 
+        if containers:
             for container in self.containers.list():
                 if (
                     container.metadata
@@ -1354,6 +1361,84 @@ class Onefuzz:
                 ):
                     self.logger.info("removing container: %s", container.name)
                     self.containers.delete(container.name)
+
+    def reset(
+        self,
+        containers: bool = False,
+        everything: bool = False,
+        jobs: bool = False,
+        notifications: bool = False,
+        pools: bool = False,
+        repros: bool = False,
+        scalesets: bool = False,
+        tasks: bool = False,
+        yes: bool = False,
+    ) -> None:
+        """
+        Resets onefuzz. Stops all jobs, notifications, and repro VMs.
+        Specifying 'everything' will delete all containers, pools, and managed
+        scalesets.
+
+        :param bool containers: Delete all the containers.
+        :param bool everything: Delete all containers, pools and managed scalesets.
+        :param bool jobs: Stop all jobs.
+        :param bool notifications: Stop all notifications.
+        :param bool pools: Delete all pools.
+        :param bool repros: Delete all repro vms.
+        :param bool scalesets: Delete all managed scalesets.
+        :param bool tasks: Stop all tasks.
+        :param bool yes: Ignoring to specify "y" in prompt.
+        """
+        delete_options = [
+            containers,
+            jobs,
+            pools,
+            notifications,
+            repros,
+            scalesets,
+            tasks,
+        ]
+        arguments = [everything]
+        arguments.extend(delete_options)
+        if not any(arguments):
+            jobs, notifications, repros, tasks = True, True, True, True
+
+        if everything:
+            containers, jobs, pools, notifications, repros, scalesets, tasks = (
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+            )
+
+        if containers and not (tasks or jobs):
+            print("Use --jobs or --tasks with containers")
+            return
+
+        to_delete = []
+        argument_str = {
+            "jobs",
+            "tasks",
+            "notifications",
+            "pools",
+            "scalesets",
+            "repros",
+            "containers",
+        }
+        for k, v in locals().items():
+            if k in argument_str and v:
+                to_delete.append(k)
+        message = ["Confirm stopping %s " % (", ".join(to_delete))]
+        message += ["(specify y or n): "]
+        if not yes and not self._user_confirmation(message):
+            return
+
+        self._delete_components(
+            containers, jobs, pools, notifications, repros, scalesets, tasks
+        )
 
 
 from .debug import Debug  # noqa: E402
