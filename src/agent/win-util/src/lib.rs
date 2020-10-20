@@ -12,6 +12,7 @@ pub mod hr;
 mod aedebug;
 pub mod com;
 pub mod file;
+pub mod handle;
 pub mod jobs;
 pub mod memory;
 pub mod pipe_handle;
