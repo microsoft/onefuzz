@@ -4,14 +4,7 @@
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils};
 use anyhow::Result;
 use onefuzz::{
-    expand::Expand,
-    fs::set_executable,
-    http::ResponseExt,
-    jitter::jitter,
-    syncdir::{
-        SyncOperation::{Pull, Push},
-        SyncedDir,
-    },
+    expand::Expand, fs::set_executable, http::ResponseExt, jitter::jitter, syncdir::SyncedDir,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -60,7 +53,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         let tmp_dir = PathBuf::from("./tmp");
         verbose!("tmp dir reset");
         utils::reset_tmp_dir(&tmp_dir).await?;
-        config.unique_inputs.sync(Pull).await?;
+        config.unique_inputs.sync_pull().await?;
         let mut queue = QueueClient::new(config.input_queue.clone());
         if let Some(msg) = queue.pop().await? {
             let input_url = match utils::parse_url_data(msg.data()) {
@@ -112,7 +105,7 @@ async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &PathBuf
                 path: tmp_dir.clone(),
                 url: config.unique_inputs.url.clone(),
             };
-            synced_dir.sync(Push).await?
+            synced_dir.sync_push().await?
         }
         Err(e) => error!("Merge failed : {}", e),
     }

@@ -80,7 +80,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
         let delay = std::time::Duration::from_secs(10);
         loop {
-            dir.sync(Pull).await?;
+            dir.sync_pull().await?;
             if has_files(&dir.path).await? {
                 break;
             }

@@ -7,10 +7,7 @@ use onefuzz::{
     http::ResponseExt,
     jitter::jitter,
     libfuzzer::{LibFuzzer, LibFuzzerMergeOutput},
-    syncdir::{
-        SyncOperation::{Pull, Push},
-        SyncedDir,
-    },
+    syncdir::SyncedDir,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -61,7 +58,7 @@ async fn process_message(config: Arc<Config>) -> Result<()> {
     verbose!("tmp dir reset");
 
     utils::reset_tmp_dir(tmp_dir).await?;
-    config.unique_inputs.sync(Pull).await?;
+    config.unique_inputs.sync_pull().await?;
 
     let mut queue = QueueClient::new(config.input_queue.clone());
 
@@ -89,7 +86,7 @@ async fn process_message(config: Arc<Config>) -> Result<()> {
         {
             Ok(result) if result.added_files_count > 0 => {
                 info!("Added {} new files to the corpus", result.added_files_count);
-                config.unique_inputs.sync(Push).await?;
+                config.unique_inputs.sync_push().await?;
             }
             Ok(_) => info!("No new files added by the merge"),
             Err(e) => error!("Merge failed : {}", e),

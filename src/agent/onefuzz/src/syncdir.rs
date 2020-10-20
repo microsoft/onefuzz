@@ -59,6 +59,14 @@ impl SyncedDir {
         }
     }
 
+    pub async fn sync_pull(&self) -> Result<()> {
+        self.sync(SyncOperation::Pull).await
+    }
+
+    pub async fn sync_push(&self) -> Result<()> {
+        self.sync(SyncOperation::Push).await
+    }
+
     pub async fn continuous_sync(
         &self,
         operation: SyncOperation,

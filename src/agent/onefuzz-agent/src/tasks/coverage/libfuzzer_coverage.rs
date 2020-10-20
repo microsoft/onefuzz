@@ -37,10 +37,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use onefuzz::{
-    fs::list_files,
-    syncdir::{SyncOperation::Push, SyncedDir},
-    telemetry::Event::coverage_data,
-    telemetry::EventData,
+    fs::list_files, syncdir::SyncedDir, telemetry::Event::coverage_data, telemetry::EventData,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -108,7 +105,7 @@ impl CoverageTask {
             self.record_corpus_coverage(&mut processor, dir).await?;
             fs::remove_dir_all(&dir.path).await?;
         }
-        self.config.coverage.sync(Push).await?;
+        self.config.coverage.sync_push().await?;
 
         info!(
             "recorded coverage for {} containers in `readonly_inputs`",
@@ -234,7 +231,7 @@ impl Processor for CoverageProcessor {
         self.heartbeat_client.alive();
         self.test_input(input).await?;
         self.report_total().await?;
-        self.config.coverage.sync(Push).await?;
+        self.config.coverage.sync_push().await?;
         Ok(())
     }
 }

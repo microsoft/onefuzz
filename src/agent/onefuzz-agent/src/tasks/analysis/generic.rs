@@ -6,11 +6,7 @@ use anyhow::Result;
 use futures::stream::StreamExt;
 use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
-    expand::Expand,
-    fs::set_executable,
-    fs::OwnedDir,
-    jitter::jitter,
-    syncdir::{SyncOperation::Push, SyncedDir},
+    expand::Expand, fs::set_executable, fs::OwnedDir, jitter::jitter, syncdir::SyncedDir,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -63,7 +59,7 @@ async fn run_existing(config: &Config) -> Result<()> {
             let file = file?;
             run_tool(file.path(), &config).await?;
         }
-        config.analysis.sync(Push).await?;
+        config.analysis.sync_push().await?;
     }
     Ok(())
 }
@@ -103,7 +99,7 @@ async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
                     az_copy::copy(input_url.url().as_ref(), &destination_path, false).await?;
 
                     run_tool(destination_path, &config).await?;
-                    config.analysis.sync(Push).await?
+                    config.analysis.sync_push().await?
                 }
                 input_queue.delete(message).await?;
             } else {
