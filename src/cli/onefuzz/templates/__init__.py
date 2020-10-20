@@ -73,7 +73,7 @@ class JobHelper:
             self.job = job
 
     def define_containers(self, *types: ContainerType) -> None:
-        """ "
+        """
         Define default container set based on provided types
 
         NOTE: in complex scenarios, containers could be defined elsewhere
