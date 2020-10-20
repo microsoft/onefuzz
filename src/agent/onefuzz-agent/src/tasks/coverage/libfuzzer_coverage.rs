@@ -30,17 +30,15 @@
 //!
 //! Versions in parentheses have been tested.
 
-use crate::tasks::config::SyncedDir;
 use crate::tasks::coverage::{recorder::CoverageRecorder, total::TotalCoverage};
 use crate::tasks::heartbeat::*;
-use crate::tasks::utils::{init_dir, sync_remote_dir, SyncOperation};
 use crate::tasks::{config::CommonConfig, generic::input_poller::*};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use onefuzz::fs::list_files;
-use onefuzz::telemetry::Event::coverage_data;
-use onefuzz::telemetry::EventData;
+use onefuzz::{
+    fs::list_files, syncdir::SyncedDir, telemetry::Event::coverage_data, telemetry::EventData,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -93,19 +91,7 @@ impl CoverageTask {
 
     pub async fn run(&mut self) -> Result<()> {
         info!("starting libFuzzer coverage task");
-
-        init_dir(&self.config.coverage.path).await?;
-        verbose!(
-            "initialized coverage dir, path = {}",
-            self.config.coverage.path.display()
-        );
-
-        sync_remote_dir(&self.config.coverage, SyncOperation::Pull).await?;
-        verbose!(
-            "synced coverage dir, path = {}",
-            self.config.coverage.path.display()
-        );
-
+        self.config.coverage.init_pull().await?;
         self.process().await
     }
 
@@ -115,12 +101,11 @@ impl CoverageTask {
         // Update the total with the coverage from each seed corpus.
         for dir in &self.config.readonly_inputs {
             verbose!("recording coverage for {}", dir.path.display());
-            init_dir(&dir.path).await?;
-            sync_remote_dir(&dir, SyncOperation::Pull).await?;
+            dir.init_pull().await?;
             self.record_corpus_coverage(&mut processor, dir).await?;
             fs::remove_dir_all(&dir.path).await?;
-            sync_remote_dir(&self.config.coverage, SyncOperation::Push).await?;
         }
+        self.config.coverage.sync_push().await?;
 
         info!(
             "recorded coverage for {} containers in `readonly_inputs`",
@@ -246,7 +231,7 @@ impl Processor for CoverageProcessor {
         self.heartbeat_client.alive();
         self.test_input(input).await?;
         self.report_total().await?;
-        sync_remote_dir(&self.config.coverage, SyncOperation::Push).await?;
+        self.config.coverage.sync_push().await?;
         Ok(())
     }
 }
