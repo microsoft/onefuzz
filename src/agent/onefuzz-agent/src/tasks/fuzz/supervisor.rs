@@ -12,7 +12,7 @@ use anyhow::{Error, Result};
 use onefuzz::{
     expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
-    jitter::jitter,
+    jitter::delay_with_jitter,
     syncdir::{SyncOperation::Pull, SyncedDir},
     telemetry::Event::new_result,
 };
@@ -84,7 +84,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
             if has_files(&dir.path).await? {
                 break;
             }
-            tokio::time::delay_for(jitter(delay)).await;
+            delay_with_jitter(delay).await;
         }
     }
 

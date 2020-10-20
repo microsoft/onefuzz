@@ -6,7 +6,7 @@ use anyhow::Result;
 use futures::stream::StreamExt;
 use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
-    expand::Expand, fs::set_executable, fs::OwnedDir, jitter::jitter, syncdir::SyncedDir,
+    expand::Expand, fs::set_executable, fs::OwnedDir, jitter::delay_with_jitter, syncdir::SyncedDir,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -104,7 +104,7 @@ async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
                 input_queue.delete(message).await?;
             } else {
                 warn!("no new candidate inputs found, sleeping");
-                tokio::time::delay_for(jitter(EMPTY_QUEUE_DELAY)).await;
+                delay_with_jitter(EMPTY_QUEUE_DELAY).await;
             }
         }
     }

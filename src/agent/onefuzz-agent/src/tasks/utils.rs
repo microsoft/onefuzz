@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use onefuzz::jitter::jitter;
+use onefuzz::jitter::delay_with_jitter;
 use reqwest::Url;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -65,7 +65,7 @@ impl CheckNotify for tokio::sync::Notify {
     async fn is_notified(&self, delay: Duration) -> bool {
         let notify = self;
         tokio::select! {
-            () = tokio::time::delay_for(jitter(delay)) => false,
+            () = delay_with_jitter(delay) => false,
             () = notify.notified() => true,
         }
     }

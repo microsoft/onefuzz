@@ -4,7 +4,7 @@
 use crate::{
     az_copy,
     blob::BlobContainerUrl,
-    jitter::jitter,
+    jitter::delay_with_jitter,
     monitor::DirectoryMonitor,
     telemetry::{Event, EventData},
     uploader::BlobUploader,
@@ -75,7 +75,7 @@ impl SyncedDir {
         let delay = delay.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY);
         loop {
             self.sync(operation).await?;
-            tokio::time::delay_for(jitter(delay)).await;
+            delay_with_jitter(delay).await;
         }
     }
 
@@ -118,7 +118,7 @@ impl SyncedDir {
 
             while fs::metadata(&self.path).await.is_err() {
                 verbose!("dir {} not ready to monitor, delaying", self.path.display());
-                tokio::time::delay_for(jitter(DELAY)).await;
+                delay_with_jitter(DELAY).await;
             }
 
             verbose!("starting monitor for {}", self.path.display());
@@ -137,6 +137,6 @@ pub async fn continuous_sync(
         for dir in dirs {
             dir.sync(operation).await?;
         }
-        tokio::time::delay_for(jitter(delay)).await;
+        delay_with_jitter(delay).await;
     }
 }

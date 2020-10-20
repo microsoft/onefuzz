@@ -5,7 +5,7 @@ use crate::tasks::{config::CommonConfig, heartbeat::*, utils};
 use anyhow::Result;
 use onefuzz::{
     http::ResponseExt,
-    jitter::jitter,
+    jitter::delay_with_jitter,
     libfuzzer::{LibFuzzer, LibFuzzerMergeOutput},
     syncdir::SyncedDir,
 };
@@ -107,7 +107,7 @@ async fn process_message(config: Arc<Config>) -> Result<()> {
         Ok(())
     } else {
         warn!("no new candidate inputs found, sleeping");
-        tokio::time::delay_for(jitter(EMPTY_QUEUE_DELAY)).await;
+        delay_with_jitter(EMPTY_QUEUE_DELAY).await;
         Ok(())
     }
 }

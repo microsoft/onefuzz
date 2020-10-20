@@ -4,7 +4,8 @@
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils};
 use anyhow::Result;
 use onefuzz::{
-    expand::Expand, fs::set_executable, http::ResponseExt, jitter::jitter, syncdir::SyncedDir,
+    expand::Expand, fs::set_executable, http::ResponseExt, jitter::delay_with_jitter,
+    syncdir::SyncedDir,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -85,7 +86,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             }
         } else {
             warn!("no new candidate inputs found, sleeping");
-            tokio::time::delay_for(jitter(EMPTY_QUEUE_DELAY)).await;
+            delay_with_jitter(EMPTY_QUEUE_DELAY).await;
         }
     }
 }

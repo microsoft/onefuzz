@@ -5,12 +5,9 @@ use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use futures::stream::StreamExt;
-use onefuzz::{blob::BlobUrl, fs::OwnedDir, jitter::jitter, syncdir::SyncedDir};
+use onefuzz::{blob::BlobUrl, fs::OwnedDir, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
-use tokio::{
-    fs,
-    time::{self, Duration},
-};
+use tokio::{fs, time::Duration};
 
 mod callback;
 pub use callback::*;
@@ -175,7 +172,7 @@ impl<M> InputPoller<M> {
             match self.state() {
                 State::Polled(None) => {
                     verbose!("Input queue empty, sleeping");
-                    time::delay_for(jitter(POLL_INTERVAL)).await;
+                    delay_with_jitter(POLL_INTERVAL).await;
                 }
                 State::Downloaded(_msg, _url, input) => {
                     info!("Processing downloaded input: {:?}", input);

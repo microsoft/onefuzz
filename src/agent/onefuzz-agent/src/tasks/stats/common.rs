@@ -4,7 +4,7 @@
 use super::afl;
 use anyhow::{Error, Result};
 use onefuzz::{
-    jitter::jitter,
+    jitter::delay_with_jitter,
     telemetry::{track_event, Event::runtime_stats},
 };
 use serde::Deserialize;
@@ -25,7 +25,7 @@ pub async fn monitor_stats(path: Option<String>, format: Option<StatsFormat>) ->
                 if let Ok(stats) = stats {
                     track_event(runtime_stats, stats);
                 }
-                tokio::time::delay_for(jitter(STATS_DELAY)).await;
+                delay_with_jitter(STATS_DELAY).await;
             }
         }
     }
