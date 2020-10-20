@@ -35,7 +35,7 @@ try {
     (Get-Content -path "requirements.txt") -replace "./onefuzztypes-$_version-py3-none-any.whl", "onefuzztypes==$version" | Out-File -FilePath "requirements.txt" -Encoding "ascii"
     Remove-Item "*.whl"
     Set-Location "$app_dir"
-    bash .\unset-versions.sh $version
+    bash .\unset-versions.sh
     
     Write-Host "OneFuzz exe is available at src\cli\dist\onefuzz.exe"
 } 
