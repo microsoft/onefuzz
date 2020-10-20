@@ -759,6 +759,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         dead_nodes = Node.get_dead_nodes(self.scaleset_id, NODE_EXPIRATION_TIME)
         for node in dead_nodes:
+            node.set_halt()
             to_reimage.append(node)
 
         # Perform operations until they fail due to scaleset getting locked
