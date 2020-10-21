@@ -2,13 +2,13 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{
-    config::{CommonConfig, SyncedDir},
+    config::CommonConfig,
     coverage::libfuzzer_coverage::{Config, CoverageProcessor},
     utils::parse_key_value,
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use onefuzz::blob::BlobContainerUrl;
+use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
