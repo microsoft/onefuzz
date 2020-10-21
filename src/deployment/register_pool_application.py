@@ -14,7 +14,6 @@ from uuid import UUID, uuid4
 
 import requests
 from azure.cli.core import get_default_cli  # type: ignore
-from azure.common.client_factory import get_client_from_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
     Application,
@@ -29,17 +28,7 @@ from msrest.serialization import TZ_UTC
 logger = logging.getLogger("deploy")
 
 
-def az_cli(args):
-    cli = get_default_cli()
-    cli.logging_cls
-    cli.invoke(args, out_file=open(os.devnull, "w"))
-    if cli.result.result:
-        return cli.result.result
-    elif cli.result.error:
-        raise cli.result.error
-
-
-def graph_query(
+def query_microsoft_graph(
     method: str,
     resource: str,
     params: Optional[Dict] = None,
@@ -113,49 +102,33 @@ def register_application(
 def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
     """ Allows the nodes in the scaleset to access the service by assigning their managed identity to the ManagedNode Role """
 
-    onefuzz_service_appId = az_cli(
-        [
-            "rest",
-            "-m",
-            "GET",
-            "-u",
-            "https://graph.microsoft.com/v1.0/applications",
-            "--headers",
-            "--uri-parameters",
-            "$filter=displayName eq '%s'" % onefuzz_instance_name,
-            "$select=appId",
-        ]
+    onefuzz_service_appId = query_microsoft_graph(
+        method="GET",
+        resource="applications",
+        params={
+            "$filter": "displayName eq '%s'" % onefuzz_instance_name,
+            "$select": "appId",
+        },
     )
 
     if len(onefuzz_service_appId["value"] == 0):
         raise Exception("onefuzz app registration not found")
     appId = onefuzz_service_appId["value"][0]["appId"]
 
-    onefuzz_service_principals = az_cli(
-        [
-            "rest",
-            "-m",
-            "GET",
-            "-u",
-            "https://graph.microsoft.com/v1.0/servicePrincipals",
-            "--uri-parameters",
-            "$filter=appId eq '%s'" % appId,
-        ]
+    onefuzz_service_principals = query_microsoft_graph(
+        method="GET",
+        url="servicePrincipals",
+        params={"$filter": "appId eq '%s'" % appId},
     )
+
     if len(onefuzz_service_principals["value"] == 0):
         raise Exception("onefuzz app service principal not found")
     onefuzz_service_principal = onefuzz_service_principals["value"][0]
 
-    scaleset_service_principals = az_cli(
-        [
-            "rest",
-            "-m",
-            "GET",
-            "-u",
-            "https://graph.microsoft.com/v1.0/servicePrincipals",
-            "--uri-parameters",
-            "$filter=displayName eq '%s'" % scaleset_name,
-        ]
+    scaleset_service_principals = query_microsoft_graph(
+        method="GET",
+        resource="servicePrincipals",
+        params={"$filter": "displayName eq '%s'" % scaleset_name},
     )
     if len(scaleset_service_principals["value"] == 0):
         raise Exception("scaleset service principal not found")
@@ -172,23 +145,15 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
             "ManagedNode role not found int the onefuzz application registration. Please redeploy the instance"
         )
 
-    az_cli(
-        [
-            "rest",
-            "-m",
-            "POST",
-            "-u",
-            "https://graph.microsoft.com/v1.0/servicePrincipals/%s/appRoleAssignedTo"
-            % scaleset_service_principal["id"],
-            "--body",
-            json.dumps(
-                {
-                    "principalId": scaleset_service_principal["id"],
-                    "resourceId": onefuzz_service_principal["id"],
-                    "appRoleId": lab_machine_role["id"],
-                }
-            ),
-        ]
+    query_microsoft_graph(
+        method="POST",
+        resource="servicePrincipals/%s/appRoleAssignedTo"
+        % scaleset_service_principal["id"],
+        body={
+            "principalId": scaleset_service_principal["id"],
+            "resourceId": onefuzz_service_principal["id"],
+            "appRoleId": lab_machine_role["id"],
+        },
     )
 
 
@@ -239,25 +204,16 @@ def create_application_registration(
     )
 
     registered_app: Application = client.applications.create(params)
-    body = {
-        "publicClient": {
-            "redirectUris": ["https://%s.azurewebsites.net" % onefuzz_instance_name]
+
+    query_microsoft_graph(
+        method="PATCH",
+        resource="applications/%s" % registered_app.object_id,
+        body={
+            "publicClient": {
+                "redirectUris": ["https://%s.azurewebsites.net" % onefuzz_instance_name]
+            },
+            "isFallbackPublicClient": True,
         },
-        "isFallbackPublicClient": True,
-    }
-    az_cli(
-        [
-            "rest",
-            "-m",
-            "PATCH",
-            "-u",
-            "https://graph.microsoft.com/v1.0/applications/%s"
-            % registered_app.object_id,
-            "--headers",
-            "Content-Type=application/json",
-            "--body",
-            json.dumps(body),
-        ]
     )
     authorize_application(UUID(registered_app.app_id), UUID(app.app_id))
     return registered_app
@@ -277,35 +233,19 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
         }
     }
 
-    password: Dict = az_cli(
-        [
-            "rest",
-            "-m",
-            "POST",
-            "-u",
-            "https://graph.microsoft.com/v1.0/applications/%s/addPassword"
-            % app_object_id,
-            "-b",
-            json.dumps(password_request),
-        ]
+    password: Dict = query_microsoft_graph(
+        method="POST", resource="%s/addPassword" % app_object_id, body=password_request
     )
 
     return (str(key), password["secretText"])
 
 
 def get_application(app_id: UUID) -> Optional[Dict]:
-    apps: Dict = az_cli(
-        [
-            "rest",
-            "-m",
-            "GET",
-            "-u",
-            "https://graph.microsoft.com/v1.0/applications",
-            "--uri-parameters",
-            "$filter=appId eq '%s'" % app_id,
-        ]
+    apps: Dict = query_microsoft_graph(
+        method="GET",
+        resource="applications",
+        params={"$filter": "appId eq '%s'" % app_id},
     )
-
     if len(apps["value"]) == 0:
         return None
 
@@ -344,20 +284,12 @@ def authorize_application(
         .map(lambda data: {"appId": data[0], "delegatedPermissionIds": data[1]})
     )
 
-    body = {"api": {"preAuthorizedApplications": preAuthorizedApplications.to_list()}}
-
-    az_cli(
-        [
-            "rest",
-            "-m",
-            "PATCH",
-            "-u",
-            "https://graph.microsoft.com/v1.0/applications/%s" % onefuzz_app["id"],
-            "--headers",
-            "Content-Type=application/json",
-            "--body",
-            json.dumps(body),
-        ]
+    query_microsoft_graph(
+        method="PATCH",
+        resource="applications/%s" % onefuzz_app["id"],
+        body={
+            "api": {"preAuthorizedApplications": preAuthorizedApplications.to_list()}
+        },
     )
 
 
