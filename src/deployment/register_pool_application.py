@@ -83,7 +83,7 @@ def register_application(
 
 
 def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
-    """ Allows the nodes in the scaleset to access the service by assigning their managed identity to the LabMachine Role """
+    """ Allows the nodes in the scaleset to access the service by assigning their managed identity to the ManagedNode Role """
 
     onefuzz_service_appId = az_cli(
         [
@@ -140,13 +140,13 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
 
     lab_machine_role = (
         seq(onefuzz_service_principal["appRoles"])
-        .filter(lambda x: x["value"] == "LabMachine")
+        .filter(lambda x: x["value"] == "ManagedNode")
         .first()
     )
 
     if not lab_machine_role:
         raise Exception(
-            "LabMachine role not found int the onefuzz application registration. Please redeploy the instance"
+            "ManagedNode role not found int the onefuzz application registration. Please redeploy the instance"
         )
 
     body = {

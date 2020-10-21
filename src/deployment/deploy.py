@@ -23,7 +23,9 @@ from azure.core.exceptions import ResourceExistsError
 from azure.cosmosdb.table.tableservice import TableService
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
+    Application,
     ApplicationCreateParameters,
+    ApplicationUpdateParameters,
     AppRole,
     GraphErrorException,
     OptionalClaims,
@@ -253,6 +255,25 @@ class Client:
             logger.error("unable to query RBAC. Provide client_id and client_secret")
             sys.exit(1)
 
+        app_roles = [
+            AppRole(
+                allowed_member_types=["Application"],
+                display_name="CliClient",
+                id=str(uuid.uuid4()),
+                is_enabled=True,
+                description="Allows access from the CLI.",
+                value="CliClient",
+            ),
+            AppRole(
+                allowed_member_types=["Application"],
+                display_name="ManagedNode",
+                id=str(uuid.uuid4()),
+                is_enabled=True,
+                description="Allow access from a lab machine.",
+                value="ManagedNode",
+            ),
+        ]
+
         if not existing:
             logger.info("creating Application registration")
             url = "https://%s.azurewebsites.net" % self.application_name
@@ -270,24 +291,7 @@ class Client:
                         resource_app_id="00000002-0000-0000-c000-000000000000",
                     )
                 ],
-                app_roles=[
-                    AppRole(
-                        allowed_member_types=["Application"],
-                        display_name="CliClient",
-                        id=str(uuid.uuid4()),
-                        is_enabled=True,
-                        description="Allows access from the CLI.",
-                        value="CliClient",
-                    ),
-                    AppRole(
-                        allowed_member_types=["Application"],
-                        display_name="LabMachine",
-                        id=str(uuid.uuid4()),
-                        is_enabled=True,
-                        description="Allow access from a lab machine.",
-                        value="LabMachine",
-                    ),
-                ],
+                app_roles=app_roles,
             )
             app = client.applications.create(params)
 
@@ -300,7 +304,18 @@ class Client:
             )
             client.service_principals.create(service_principal_params)
         else:
-            app = existing[0]
+            app: Application = existing[0]
+
+            missing_roles = filter(
+                lambda role: role.value
+                not in [app_role.value for app_role in app.app_roles],
+                app_roles,
+            )
+            ApplicationUpdateParameters(app_roles=missing_roles)
+            client.applications.update_by_id(
+                application_id=app.app_id, parameters=ApplicationUpdateParameters
+            )
+
             creds = list(client.applications.list_password_credentials(app.object_id))
             client.applications.update_password_credentials(app.object_id, creds)
 
