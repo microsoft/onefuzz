@@ -305,7 +305,6 @@ class Client:
             client.service_principals.create(service_principal_params)
         else:
             app: Application = existing[0]
-
             missing_roles = filter(
                 lambda role: role.value
                 not in [app_role.value for app_role in app.app_roles],

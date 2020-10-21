@@ -98,11 +98,10 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
             "$select=appId",
         ]
     )
-
     if len(onefuzz_service_appId["value"] == 0):
         raise Exception("onefuzz app registration not found")
-
     appId = onefuzz_service_appId["value"][0]["appId"]
+
     onefuzz_service_principals = az_cli(
         [
             "rest",
@@ -115,10 +114,8 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
             "$filter=appId eq '%s'" % appId,
         ]
     )
-
     if len(onefuzz_service_principals["value"] == 0):
         raise Exception("onefuzz app service principal not found")
-
     onefuzz_service_principal = onefuzz_service_principals["value"][0]
 
     scaleset_service_principals = az_cli(
@@ -132,10 +129,8 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
             "$filter=displayName eq '%s'" % scaleset_name,
         ]
     )
-
     if len(scaleset_service_principals["value"] == 0):
         raise Exception("scaleset service principal not found")
-
     scaleset_service_principal = scaleset_service_principals["value"][0]
 
     lab_machine_role = (
@@ -149,12 +144,6 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
             "ManagedNode role not found int the onefuzz application registration. Please redeploy the instance"
         )
 
-    body = {
-        "principalId": scaleset_service_principal["id"],
-        "resourceId": onefuzz_service_principal["id"],
-        "appRoleId": lab_machine_role["id"],
-    }
-
     az_cli(
         [
             "rest",
@@ -164,7 +153,13 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
             "https://graph.microsoft.com/v1.0/servicePrincipals/%s/appRoleAssignedTo"
             % scaleset_service_principal["id"],
             "--body",
-            json.dumps(body),
+            json.dumps(
+                {
+                    "principalId": scaleset_service_principal["id"],
+                    "resourceId": onefuzz_service_principal["id"],
+                    "appRoleId": lab_machine_role["id"],
+                }
+            ),
         ]
     )
 
