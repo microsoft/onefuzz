@@ -7,10 +7,12 @@ import argparse
 import json
 import logging
 import os
+import urllib.parse
 from datetime import datetime, timedelta
 from typing import Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
+import requests
 from azure.cli.core import get_default_cli  # type: ignore
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
@@ -20,6 +22,7 @@ from azure.graphrbac.models import (
     RequiredResourceAccess,
     ResourceAccess,
 )
+from azure.identity import AzureCliCredential
 from functional import seq
 from msrest.serialization import TZ_UTC
 
@@ -28,11 +31,36 @@ logger = logging.getLogger("deploy")
 
 def az_cli(args):
     cli = get_default_cli()
+    cli.logging_cls
     cli.invoke(args, out_file=open(os.devnull, "w"))
     if cli.result.result:
         return cli.result.result
     elif cli.result.error:
         raise cli.result.error
+
+
+def graph_query(
+    method: str,
+    resource: str,
+    params: Optional[Dict] = None,
+    body: Optional[Dict] = None,
+):
+    access_token = AzureCliCredential().get_token(
+        "https://graph.microsoft.com/.default"
+    )
+    url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
+    headers = {"Authorization": "Bearer %s" % access_token.token}
+    response = requests.request(
+        method="GET", url=url, headers=headers, params=params, json=body
+    )
+
+    response.status_code
+    if response.status_code / 100 != 2:
+        error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
+        raise Exception(
+            "request did not succeed: HTTP %s - %s" % (response.status_code, error_text)
+        )
+    return response.json()
 
 
 class ApplicationInfo(NamedTuple):
@@ -98,6 +126,7 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
             "$select=appId",
         ]
     )
+
     if len(onefuzz_service_appId["value"] == 0):
         raise Exception("onefuzz app registration not found")
     appId = onefuzz_service_appId["value"][0]["appId"]
@@ -109,7 +138,6 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
             "GET",
             "-u",
             "https://graph.microsoft.com/v1.0/servicePrincipals",
-            "--headers",
             "--uri-parameters",
             "$filter=appId eq '%s'" % appId,
         ]
