@@ -1254,6 +1254,7 @@ dependencies = [
  "pete",
  "proc-maps",
  "process_control",
+ "rand",
  "regex",
  "reqwest",
  "ring",
