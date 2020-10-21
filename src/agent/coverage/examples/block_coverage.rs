@@ -14,5 +14,8 @@ fn main() {
 
     let coverage = coverage::block::windows::record(cmd).unwrap();
     let hit = coverage.count_blocks_hit();
-    println!("blocks_hit = {}", hit);
+    let found = coverage.count_blocks();
+    let percent = 100.0 * (hit as f64) / (found as f64);
+
+    println!("block coverage = {}/{} ({:.2}%)", hit, found, percent);
 }

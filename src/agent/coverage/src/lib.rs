@@ -123,6 +123,10 @@ impl AppCoverageBlocks {
         Ok(())
     }
 
+    pub fn count_blocks(&self) -> usize {
+        self.modules().iter().map(|m| m.blocks().len()).sum()
+    }
+
     pub fn count_blocks_hit(&self) -> usize {
         self.modules().iter().map(|m| m.count_blocks_hit()).sum()
     }
