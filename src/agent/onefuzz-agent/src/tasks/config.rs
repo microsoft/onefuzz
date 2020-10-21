@@ -5,13 +5,12 @@
 use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, report};
 use anyhow::Result;
 use onefuzz::{
-    blob::BlobContainerUrl,
     machine_id::{get_machine_id, get_scaleset_name},
     telemetry::{self, Event::task_start, EventData},
 };
 use reqwest::Url;
 use serde::{self, Deserialize};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -149,10 +148,4 @@ impl Config {
             Config::GenericReport(config) => report::generic::ReportTask::new(&config).run().await,
         }
     }
-}
-
-#[derive(Debug, Deserialize, Clone, PartialEq)]
-pub struct SyncedDir {
-    pub path: PathBuf,
-    pub url: BlobContainerUrl,
 }

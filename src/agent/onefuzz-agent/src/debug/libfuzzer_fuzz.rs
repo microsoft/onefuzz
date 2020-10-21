@@ -2,13 +2,13 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{
-    config::{CommonConfig, SyncedDir},
+    config::CommonConfig,
     fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
     utils::parse_key_value,
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use onefuzz::blob::BlobContainerUrl;
+use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir};
 use std::{collections::HashMap, path::PathBuf};
 use tokio::runtime::Runtime;
 use url::Url;
