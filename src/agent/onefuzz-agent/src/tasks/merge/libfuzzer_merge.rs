@@ -1,15 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::{CommonConfig, SyncedDir},
-    heartbeat::*,
-    utils,
-};
+use crate::tasks::{config::CommonConfig, heartbeat::*, utils};
 use anyhow::Result;
 use onefuzz::{
     http::ResponseExt,
+    jitter::delay_with_jitter,
     libfuzzer::{LibFuzzer, LibFuzzerMergeOutput},
+    syncdir::SyncedDir,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -44,7 +42,7 @@ pub struct Config {
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
     let hb_client = config.common.init_heartbeat().await?;
-    utils::init_dir(&config.unique_inputs.path).await?;
+    config.unique_inputs.init().await?;
     loop {
         hb_client.alive();
         if let Err(error) = process_message(config.clone()).await {
@@ -62,7 +60,7 @@ async fn process_message(config: Arc<Config>) -> Result<()> {
     verbose!("tmp dir reset");
 
     utils::reset_tmp_dir(tmp_dir).await?;
-    utils::sync_remote_dir(&config.unique_inputs, utils::SyncOperation::Pull).await?;
+    config.unique_inputs.sync_pull().await?;
 
     let mut queue = QueueClient::new(config.input_queue.clone());
 
@@ -90,7 +88,7 @@ async fn process_message(config: Arc<Config>) -> Result<()> {
         {
             Ok(result) if result.added_files_count > 0 => {
                 info!("Added {} new files to the corpus", result.added_files_count);
-                utils::sync_remote_dir(&config.unique_inputs, utils::SyncOperation::Push).await?;
+                config.unique_inputs.sync_push().await?;
             }
             Ok(_) => info!("No new files added by the merge"),
             Err(e) => error!("Merge failed : {}", e),
@@ -111,7 +109,7 @@ async fn process_message(config: Arc<Config>) -> Result<()> {
         Ok(())
     } else {
         warn!("no new candidate inputs found, sleeping");
-        tokio::time::delay_for(EMPTY_QUEUE_DELAY).await;
+        delay_with_jitter(EMPTY_QUEUE_DELAY).await;
         Ok(())
     }
 }

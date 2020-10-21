@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::{CommonConfig, SyncedDir},
-    heartbeat::HeartbeatSender,
-    utils,
-};
+use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils};
 use anyhow::Result;
-use onefuzz::{expand::Expand, fs::set_executable, http::ResponseExt};
+use onefuzz::{
+    expand::Expand, fs::set_executable, http::ResponseExt, jitter::delay_with_jitter,
+    syncdir::SyncedDir,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -47,18 +46,17 @@ pub struct Config {
 }
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
-    utils::init_dir(&config.tools.path).await?;
-    utils::sync_remote_dir(&config.tools, utils::SyncOperation::Pull).await?;
+    config.tools.init_pull().await?;
     set_executable(&config.tools.path).await?;
 
-    utils::init_dir(&config.unique_inputs.path).await?;
+    config.unique_inputs.init().await?;
     let hb_client = config.common.init_heartbeat().await?;
     loop {
         hb_client.alive();
         let tmp_dir = PathBuf::from("./tmp");
         verbose!("tmp dir reset");
         utils::reset_tmp_dir(&tmp_dir).await?;
-        utils::sync_remote_dir(&config.unique_inputs, utils::SyncOperation::Pull).await?;
+        config.unique_inputs.sync_pull().await?;
         let mut queue = QueueClient::new(config.input_queue.clone());
         if let Some(msg) = queue.pop().await? {
             let input_url = match utils::parse_url_data(msg.data()) {
@@ -90,7 +88,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             }
         } else {
             warn!("no new candidate inputs found, sleeping");
-            tokio::time::delay_for(EMPTY_QUEUE_DELAY).await;
+            delay_with_jitter(EMPTY_QUEUE_DELAY).await;
         }
     }
 }
@@ -110,7 +108,7 @@ async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &PathBuf
                 path: tmp_dir.clone(),
                 url: config.unique_inputs.url.clone(),
             };
-            utils::sync_remote_dir(&synced_dir, utils::SyncOperation::Push).await?;
+            synced_dir.sync_push().await?
         }
         Err(e) => error!("Merge failed : {}", e),
     }

@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::config::SyncedDir;
 use anyhow::Result;
 use onefuzz::{
     asan::AsanLog,
     blob::{BlobClient, BlobContainerUrl, BlobUrl},
+    syncdir::SyncedDir,
 };
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
