@@ -335,6 +335,8 @@ class Builder:
             class_result = self.parse_annotation_class(name, annotation, default)
             if class_result is not None:
                 result.update(class_result)
+                if help_doc and result["help"] != help_doc:
+                    result["help"] = "%s %s" % (help_doc, result["help"])
                 return result
 
         # isinstance type signatures doesn't support TypeVar

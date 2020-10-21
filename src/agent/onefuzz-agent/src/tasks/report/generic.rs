@@ -3,13 +3,13 @@
 
 use super::crash_report::{CrashReport, CrashTestResult, InputBlob, NoCrash};
 use crate::tasks::{
-    config::{CommonConfig, SyncedDir},
+    config::CommonConfig,
     generic::input_poller::{CallbackImpl, InputPoller, Processor},
     heartbeat::*,
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use onefuzz::{blob::BlobUrl, input_tester::Tester, sha256};
+use onefuzz::{blob::BlobUrl, input_tester::Tester, sha256, syncdir::SyncedDir};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{

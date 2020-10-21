@@ -5,15 +5,9 @@ use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use futures::stream::StreamExt;
-use onefuzz::blob::BlobUrl;
-use onefuzz::fs::OwnedDir;
+use onefuzz::{blob::BlobUrl, fs::OwnedDir, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
-use tokio::{
-    fs,
-    time::{self, Duration},
-};
-
-use crate::tasks::{config::SyncedDir, utils};
+use tokio::{fs, time::Duration};
 
 mod callback;
 pub use callback::*;
@@ -115,8 +109,8 @@ impl<M> InputPoller<M> {
         to_process: &SyncedDir,
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
-        utils::init_dir(&to_process.path).await?;
-        utils::sync_remote_dir(&to_process, utils::SyncOperation::Pull).await?;
+        to_process.init_pull().await?;
+
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
             verbose!("Processing batch-downloaded input {:?}", file);
@@ -178,7 +172,7 @@ impl<M> InputPoller<M> {
             match self.state() {
                 State::Polled(None) => {
                     verbose!("Input queue empty, sleeping");
-                    time::delay_for(POLL_INTERVAL).await;
+                    delay_with_jitter(POLL_INTERVAL).await;
                 }
                 State::Downloaded(_msg, _url, input) => {
                     info!("Processing downloaded input: {:?}", input);
