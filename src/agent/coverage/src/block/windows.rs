@@ -92,7 +92,7 @@ impl BlockCoverageHandler {
     }
 
     fn try_on_create_process(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
-        dbg.target().sym_initialize().unwrap();
+        dbg.target().sym_initialize()?;
 
         log::info!("exe loaded: {}, {} bytes",
                  module.path().display(),
