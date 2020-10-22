@@ -4,9 +4,7 @@
 # Licensed under the MIT License.
 
 import argparse
-import json
 import logging
-import os
 import urllib.parse
 from datetime import datetime, timedelta
 from typing import Dict, List, NamedTuple, Optional, Tuple
@@ -245,7 +243,7 @@ def authorize_application(
     )
 
 
-def update_registration(application_name: str):
+def update_pool_registration(application_name: str):
 
     logger.info("Updating application registration")
     application_info = register_application(
@@ -334,13 +332,8 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
 
     subparsers = parser.add_subparsers(title="commands", dest="command")
-    registration_parser = subparsers.add_parser(
-        "register_application", parents=[parent_parser]
-    )
-    registration_parser.add_argument(
-        "--application_type",
-        choices=["scaleset"],
-        help="the type of application to register",
+    subparsers.add_parser(
+        "update_pool_registration", parents=[parent_parser]
     )
     role_assignment_parser = subparsers.add_parser(
         "assign_scaleset_role",
@@ -360,8 +353,8 @@ def main():
     logging.basicConfig(format="%(levelname)s:%(message)s", level=level)
     logging.getLogger("deploy").setLevel(logging.INFO)
 
-    if args.command == "register_application":
-        update_registration(args.onefuzz_instance)
+    if args.command == "update_pool_registration":
+        update_pool_registration(args.onefuzz_instance)
     elif args.command == "args.assign_scaleset_role":
         assign_scaleset_role(args.onefuzz_instance, args.scaleset_name)
     else:

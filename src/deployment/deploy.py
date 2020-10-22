@@ -61,12 +61,12 @@ from azure.storage.queue import QueueServiceClient
 from msrest.serialization import TZ_UTC
 
 from data_migration import migrate
-from register_pool_application import (
+from registration import (
     add_application_password,
     authorize_application,
     get_application,
     register_application,
-    update_registration,
+    update_pool_registration,
 )
 
 USER_IMPERSONATION = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
@@ -620,7 +620,7 @@ class Client:
     def update_registration(self):
         if not self.create_registration:
             return
-        update_registration(self.application_name)
+        update_pool_registration(self.application_name)
 
     def done(self):
         logger.info(TELEMETRY_NOTICE)
