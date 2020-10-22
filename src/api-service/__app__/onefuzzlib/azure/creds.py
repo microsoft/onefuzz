@@ -22,12 +22,12 @@ from msrestazure.tools import parse_resource_id
 from .monkeypatch import allow_more_workers, reduce_logging
 
 
-@cached(ttl=60)
+@cached
 def get_msi() -> MSIAuthentication:
     return MSIAuthentication()
 
 
-@cached(ttl=60)
+@cached
 def mgmt_client_factory(client_class: Any) -> Any:
     allow_more_workers()
     reduce_logging()
@@ -40,7 +40,7 @@ def mgmt_client_factory(client_class: Any) -> Any:
             return client_class(get_msi(), get_subscription())
 
 
-@cached(ttl=60)
+@cached
 def get_storage_account_name_key(account_id: Optional[str] = None) -> Tuple[str, str]:
     db_client = mgmt_client_factory(StorageManagementClient)
     if account_id is None:
@@ -56,7 +56,7 @@ def get_storage_account_name_key(account_id: Optional[str] = None) -> Tuple[str,
     return resource["name"], key
 
 
-@cached(ttl=60)
+@cached
 def get_blob_service(account_id: Optional[str] = None) -> BlockBlobService:
     logging.debug("getting blob container (account_id: %s)", account_id)
     name, key = get_storage_account_name_key(account_id)
@@ -101,7 +101,10 @@ def get_instance_url() -> str:
     return "https://%s.azurewebsites.net" % get_instance_name()
 
 
-@cached(ttl=60)
+DAY_IN_SECONDS = 60 * 60 * 24
+
+
+@cached(ttl=DAY_IN_SECONDS)
 def get_regions() -> List[str]:
     client = mgmt_client_factory(SubscriptionClient)
     subscription = get_subscription()
