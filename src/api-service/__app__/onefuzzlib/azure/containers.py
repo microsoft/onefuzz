@@ -10,8 +10,18 @@ from typing import Any, Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
 from azure.storage.blob import BlobPermissions, ContainerPermissions
+from memoization import cached
 
 from .creds import get_blob_service
+
+
+@cached(ttl=5)
+def container_exists(name: str, account_id: Optional[str] = None) -> bool:
+    try:
+        get_blob_service(account_id).get_container_properties(name)
+        return True
+    except AzureHttpError:
+        return False
 
 
 def get_containers(account_id: Optional[str] = None) -> Dict[str, Dict[str, str]]:

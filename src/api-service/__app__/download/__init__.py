@@ -7,7 +7,11 @@ import azure.functions as func
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, FileEntry
 
-from ..onefuzzlib.azure.containers import blob_exists, get_containers, get_file_sas_url
+from ..onefuzzlib.azure.containers import (
+    blob_exists,
+    container_exists,
+    get_file_sas_url,
+)
 from ..onefuzzlib.request import not_ok, parse_uri, redirect
 
 
@@ -16,7 +20,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="download")
 
-    if request.container not in get_containers():
+    if not container_exists(request.container):
         return not_ok(
             Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
             context=request.container,
