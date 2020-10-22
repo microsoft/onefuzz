@@ -25,7 +25,7 @@ from .ip import create_public_nic, delete_ip, delete_nic, get_ip, get_public_nic
 def get_vm(name: str) -> Optional[VirtualMachine]:
     resource_group = get_base_resource_group()
 
-    logging.debug("getting vm: %s %s - %s", resource_group, name)
+    logging.debug("getting vm: %s", name)
     compute_client = mgmt_client_factory(ComputeManagementClient)
     try:
         return cast(
