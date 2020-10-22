@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 import zipfile
 from datetime import datetime, timedelta
@@ -50,7 +51,6 @@ from azure.mgmt.resource.resources.models import (
     DeploymentMode,
     DeploymentProperties,
 )
-import time
 from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import (
     BlobServiceClient,
@@ -305,15 +305,25 @@ class Client:
             client.service_principals.create(service_principal_params)
         else:
             app: Application = existing[0]
-            missing_roles = filter(
-                lambda role: role.value
-                not in [app_role.value for app_role in app.app_roles],
-                app_roles,
+            existing_role_values = [app_role.value for app_role in app.app_roles]
+            has_missing_roles = any(
+                [role.value not in existing_role_values for role in app_roles]
             )
-            ApplicationUpdateParameters(app_roles=missing_roles)
-            client.applications.update_by_id(
-                application_id=app.app_id, parameters=ApplicationUpdateParameters
-            )
+
+            if has_missing_roles:
+                # disabling the existing app role first to allow the update
+                # this is a requirement to update the application roles
+                for role in app.app_roles:
+                    role.is_enabled = False
+
+                client.applications.patch(
+                    app.object_id, ApplicationUpdateParameters(app_roles=app.app_roles)
+                )
+
+                # overriding the list of app roles
+                client.applications.patch(
+                    app.object_id, ApplicationUpdateParameters(app_roles=app_roles)
+                )
 
             creds = list(client.applications.list_password_credentials(app.object_id))
             client.applications.update_password_credentials(app.object_id, creds)
@@ -768,19 +778,6 @@ def main():
     logging.basicConfig(level=level)
 
     logging.getLogger("deploy").setLevel(logging.INFO)
-
-    # TODO: using az_cli resets logging defaults.  For now, force these
-    # to be WARN level
-    if not args.verbose:
-        for entry in [
-            "adal-python",
-            "msrest.universal_http",
-            "urllib3.connectionpool",
-            "az_command_data_logger",
-            "msrest.service_client",
-            "azure.core.pipeline.policies.http_logging_policy",
-        ]:
-            logging.getLogger(entry).setLevel(logging.WARN)
 
     if args.start_at != states[0][0]:
         logger.warning(
