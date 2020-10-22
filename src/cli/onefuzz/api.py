@@ -316,7 +316,7 @@ class Repro(Endpoint):
     def list(self) -> List[models.Repro]:
         """ List all VMs """
         self.logger.debug("listing repro vms")
-        return self._req_model_list("GET", models.Repro)
+        return self._req_model_list("GET", models.Repro, data=requests.ReproGet())
 
     def _dbg_linux(
         self, repro: models.Repro, debug_command: Optional[str]
