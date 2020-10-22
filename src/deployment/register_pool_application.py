@@ -13,7 +13,7 @@ from typing import Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
 import requests
-from azure.cli.core import get_default_cli  # type: ignore
+from azure.common.client_factory import get_client_from_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
     Application,
@@ -96,64 +96,6 @@ def register_application(
         client_id=app.app_id,
         client_secret=password,
         authority=("https://login.microsoftonline.com/%s" % client.config.tenant_id),
-    )
-
-
-def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
-    """ Allows the nodes in the scaleset to access the service by assigning their managed identity to the ManagedNode Role """
-
-    onefuzz_service_appId = query_microsoft_graph(
-        method="GET",
-        resource="applications",
-        params={
-            "$filter": "displayName eq '%s'" % onefuzz_instance_name,
-            "$select": "appId",
-        },
-    )
-
-    if len(onefuzz_service_appId["value"] == 0):
-        raise Exception("onefuzz app registration not found")
-    appId = onefuzz_service_appId["value"][0]["appId"]
-
-    onefuzz_service_principals = query_microsoft_graph(
-        method="GET",
-        url="servicePrincipals",
-        params={"$filter": "appId eq '%s'" % appId},
-    )
-
-    if len(onefuzz_service_principals["value"] == 0):
-        raise Exception("onefuzz app service principal not found")
-    onefuzz_service_principal = onefuzz_service_principals["value"][0]
-
-    scaleset_service_principals = query_microsoft_graph(
-        method="GET",
-        resource="servicePrincipals",
-        params={"$filter": "displayName eq '%s'" % scaleset_name},
-    )
-    if len(scaleset_service_principals["value"] == 0):
-        raise Exception("scaleset service principal not found")
-    scaleset_service_principal = scaleset_service_principals["value"][0]
-
-    lab_machine_role = (
-        seq(onefuzz_service_principal["appRoles"])
-        .filter(lambda x: x["value"] == "ManagedNode")
-        .first()
-    )
-
-    if not lab_machine_role:
-        raise Exception(
-            "ManagedNode role not found int the onefuzz application registration. Please redeploy the instance"
-        )
-
-    query_microsoft_graph(
-        method="POST",
-        resource="servicePrincipals/%s/appRoleAssignedTo"
-        % scaleset_service_principal["id"],
-        body={
-            "principalId": scaleset_service_principal["id"],
-            "resourceId": onefuzz_service_principal["id"],
-            "appRoleId": lab_machine_role["id"],
-        },
     )
 
 
@@ -306,8 +248,72 @@ def update_registration(application_name: str):
     logger.info("client_secret: %s" % application_info.client_secret)
 
 
+def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
+    """ Allows the nodes in the scaleset to access the service by assigning their managed identity to the ManagedNode Role """
+
+    onefuzz_service_appId = query_microsoft_graph(
+        method="GET",
+        resource="applications",
+        params={
+            "$filter": "displayName eq '%s'" % onefuzz_instance_name,
+            "$select": "appId",
+        },
+    )
+
+    if len(onefuzz_service_appId["value"] == 0):
+        raise Exception("onefuzz app registration not found")
+    appId = onefuzz_service_appId["value"][0]["appId"]
+
+    onefuzz_service_principals = query_microsoft_graph(
+        method="GET",
+        url="servicePrincipals",
+        params={"$filter": "appId eq '%s'" % appId},
+    )
+
+    if len(onefuzz_service_principals["value"] == 0):
+        raise Exception("onefuzz app service principal not found")
+    onefuzz_service_principal = onefuzz_service_principals["value"][0]
+
+    scaleset_service_principals = query_microsoft_graph(
+        method="GET",
+        resource="servicePrincipals",
+        params={"$filter": "displayName eq '%s'" % scaleset_name},
+    )
+    if len(scaleset_service_principals["value"] == 0):
+        raise Exception("scaleset service principal not found")
+    scaleset_service_principal = scaleset_service_principals["value"][0]
+
+    lab_machine_role = (
+        seq(onefuzz_service_principal["appRoles"])
+        .filter(lambda x: x["value"] == "ManagedNode")
+        .first()
+    )
+
+    if not lab_machine_role:
+        raise Exception(
+            "ManagedNode role not found int the onefuzz application registration. Please redeploy the instance"
+        )
+
+    query_microsoft_graph(
+        method="POST",
+        resource="servicePrincipals/%s/appRoleAssignedTo"
+        % scaleset_service_principal["id"],
+        body={
+            "principalId": scaleset_service_principal["id"],
+            "resourceId": onefuzz_service_principal["id"],
+            "appRoleId": lab_machine_role["id"],
+        },
+    )
+
+
 def main():
     formatter = argparse.ArgumentDefaultsHelpFormatter
+
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument(
+        "--onefuzz_instance", help="the name of the onefuzz instance"
+    )
+
     parser = argparse.ArgumentParser(
         formatter_class=formatter,
         description=(
@@ -315,8 +321,27 @@ def main():
             "generate a password for the pool agent"
         ),
     )
-    parser.add_argument("application_name")
     parser.add_argument("-v", "--verbose", action="store_true")
+
+    subparsers = parser.add_subparsers(title="commands")
+    registration_parser = subparsers.add_parser(
+        "register_application",
+        parents=[parent_parser]
+    )
+    registration_parser.add_argument(
+        "--application_type",
+        choices=["scaleset"],
+        help="the type of application to register",
+    )
+    role_assignment_parser = subparsers.add_parser(
+        "assign_scaleset_role",
+        parents=[parent_parser],
+    )
+    role_assignment_parser.add_argument(
+        "--scaleset_name",
+        help="the name of the scaleset",
+    )
+
     args = parser.parse_args()
     if args.verbose:
         level = logging.DEBUG
@@ -326,7 +351,12 @@ def main():
     logging.basicConfig(format="%(levelname)s:%(message)s", level=level)
     logging.getLogger("deploy").setLevel(logging.INFO)
 
-    update_registration(args.application_name)
+    if args.register_application:
+        update_registration(args.application_name)
+    elif args.assign_scaleset_role:
+        assign_scaleset_role(args.application_name, args.scaleset_name)
+    else:
+        raise Exception("invalid arguments")
 
 
 if __name__ == "__main__":
