@@ -319,7 +319,7 @@ def main():
 
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
-        "--onefuzz_instance", help="the name of the onefuzz instance"
+        "onefuzz_instance", help="the name of the onefuzz instance"
     )
 
     parser = argparse.ArgumentParser(
@@ -340,7 +340,7 @@ def main():
         parents=[parent_parser],
     )
     role_assignment_parser.add_argument(
-        "--scaleset_name",
+        "scaleset_name",
         help="the name of the scaleset",
     )
 
