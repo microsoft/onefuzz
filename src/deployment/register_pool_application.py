@@ -38,18 +38,26 @@ def query_microsoft_graph(
         "https://graph.microsoft.com/.default"
     )
     url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
-    headers = {"Authorization": "Bearer %s" % access_token.token}
+    headers = {
+        "Authorization": "Bearer %s" % access_token.token,
+        "Content-Type": "application/json",
+    }
     response = requests.request(
-        method="GET", url=url, headers=headers, params=params, json=body
+        method=method, url=url, headers=headers, params=params, json=body
     )
 
     response.status_code
-    if response.status_code / 100 != 2:
+
+    if 200 <= response.status_code < 300:
+        try:
+            return response.json()
+        except ValueError:
+            return None
+    else:
         error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
         raise Exception(
             "request did not succeed: HTTP %s - %s" % (response.status_code, error_text)
         )
-    return response.json()
 
 
 class ApplicationInfo(NamedTuple):
@@ -176,7 +184,9 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
     }
 
     password: Dict = query_microsoft_graph(
-        method="POST", resource="%s/addPassword" % app_object_id, body=password_request
+        method="POST",
+        resource="applications/%s/addPassword" % app_object_id,
+        body=password_request,
     )
 
     return (str(key), password["secretText"])
@@ -323,10 +333,9 @@ def main():
     )
     parser.add_argument("-v", "--verbose", action="store_true")
 
-    subparsers = parser.add_subparsers(title="commands")
+    subparsers = parser.add_subparsers(title="commands", dest="command")
     registration_parser = subparsers.add_parser(
-        "register_application",
-        parents=[parent_parser]
+        "register_application", parents=[parent_parser]
     )
     registration_parser.add_argument(
         "--application_type",
@@ -351,10 +360,10 @@ def main():
     logging.basicConfig(format="%(levelname)s:%(message)s", level=level)
     logging.getLogger("deploy").setLevel(logging.INFO)
 
-    if args.register_application:
-        update_registration(args.application_name)
-    elif args.assign_scaleset_role:
-        assign_scaleset_role(args.application_name, args.scaleset_name)
+    if args.command == "register_application":
+        update_registration(args.onefuzz_instance)
+    elif args.command == "args.assign_scaleset_role":
+        assign_scaleset_role(args.onefuzz_instance, args.scaleset_name)
     else:
         raise Exception("invalid arguments")
 
