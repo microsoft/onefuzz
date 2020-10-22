@@ -1451,7 +1451,7 @@ class Onefuzz:
             return
 
         self._delete_components(
-            containers, jobs, pools, notifications, repros, scalesets, tasks
+            containers, jobs, notifications, pools, repros, scalesets, tasks
         )
 
 
