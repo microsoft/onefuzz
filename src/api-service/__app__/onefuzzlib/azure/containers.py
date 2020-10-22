@@ -37,8 +37,7 @@ def get_container_metadata(
 ) -> Optional[Dict[str, str]]:
     try:
         result = get_blob_service(account_id).get_container_metadata(name)
-        if result:
-            return cast(Dict[str, str], result)
+        return cast(Dict[str, str], result)
     except AzureHttpError:
         pass
     return None
