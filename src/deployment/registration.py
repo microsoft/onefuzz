@@ -268,17 +268,17 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
         },
     )
 
-    if len(onefuzz_service_appId["value"] == 0):
+    if len(onefuzz_service_appId["value"]) == 0:
         raise Exception("onefuzz app registration not found")
     appId = onefuzz_service_appId["value"][0]["appId"]
 
     onefuzz_service_principals = query_microsoft_graph(
         method="GET",
-        url="servicePrincipals",
+        resource="servicePrincipals",
         params={"$filter": "appId eq '%s'" % appId},
     )
 
-    if len(onefuzz_service_principals["value"] == 0):
+    if len(onefuzz_service_principals["value"]) == 0:
         raise Exception("onefuzz app service principal not found")
     onefuzz_service_principal = onefuzz_service_principals["value"][0]
 
@@ -287,14 +287,14 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
         resource="servicePrincipals",
         params={"$filter": "displayName eq '%s'" % scaleset_name},
     )
-    if len(scaleset_service_principals["value"] == 0):
+    if len(scaleset_service_principals["value"]) == 0:
         raise Exception("scaleset service principal not found")
     scaleset_service_principal = scaleset_service_principals["value"][0]
 
     lab_machine_role = (
         seq(onefuzz_service_principal["appRoles"])
         .filter(lambda x: x["value"] == "ManagedNode")
-        .first()
+        .head_option()
     )
 
     if not lab_machine_role:
@@ -355,7 +355,7 @@ def main():
 
     if args.command == "update_pool_registration":
         update_pool_registration(args.onefuzz_instance)
-    elif args.command == "args.assign_scaleset_role":
+    elif args.command == "assign_scaleset_role":
         assign_scaleset_role(args.onefuzz_instance, args.scaleset_name)
     else:
         raise Exception("invalid arguments")
