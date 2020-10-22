@@ -8,12 +8,11 @@ use std::time::{Duration, Instant};
 use anyhow::Result;
 use debugger::{
     dbghelp::SymInfo,
-    debugger::{BreakpointId, BreakpointType, Debugger, DebugEventHandler},
+    debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger},
     target::Module,
 };
 
 use crate::{AppCoverageBlocks, ModuleCoverageBlocks};
-
 
 pub fn record(cmd: Command) -> Result<AppCoverageBlocks> {
     let mut handler = BlockCoverageHandler::new();
@@ -40,7 +39,13 @@ impl BlockCoverageHandler {
         let max_duration = Duration::from_secs(5);
         let timed_out = false;
 
-        Self { bp_to_block, coverage, max_duration, started, timed_out }
+        Self {
+            bp_to_block,
+            coverage,
+            max_duration,
+            started,
+            timed_out,
+        }
     }
 
     pub fn pc(&self, dbg: &mut Debugger) -> Result<(u64, Option<SymInfo>)> {
@@ -72,11 +77,8 @@ impl BlockCoverageHandler {
         let m = self.coverage.add_module(module_coverage);
         let module_coverage = &self.coverage.modules()[m];
         for (b, block) in module_coverage.blocks().iter().enumerate() {
-            let bp = dbg.register_breakpoint(
-                module.name(),
-                block.rva() as u64,
-                BreakpointType::OneTime,
-            );
+            let bp =
+                dbg.register_breakpoint(module.name(), block.rva() as u64, BreakpointType::OneTime);
             self.bp_to_block.insert(bp, (m, b));
         }
 
@@ -94,9 +96,10 @@ impl BlockCoverageHandler {
     fn try_on_create_process(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
         dbg.target().sym_initialize()?;
 
-        log::info!("exe loaded: {}, {} bytes",
-                 module.path().display(),
-                 module.image_size(),
+        log::info!(
+            "exe loaded: {}, {} bytes",
+            module.path().display(),
+            module.image_size(),
         );
 
         self.add_module(dbg, module);
@@ -105,9 +108,10 @@ impl BlockCoverageHandler {
     }
 
     fn try_on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
-        log::info!("dll loaded: {}, {} bytes",
-                 module.path().display(),
-                 module.image_size(),
+        log::info!(
+            "dll loaded: {}, {} bytes",
+            module.path().display(),
+            module.image_size(),
         );
 
         self.add_module(dbg, module);
