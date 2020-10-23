@@ -275,56 +275,23 @@ class Containers(Endpoint):
         return self._req_model_list("GET", responses.ContainerInfoBase)
 
     def reset(
-        self,
-        analysis: bool = False,
-        coverage: bool = False,
-        crashes: bool = False,
-        inputs: bool = False,
-        no_repro: bool = False,
-        readonly_inputs: bool = False,
-        reports: bool = False,
-        setup: bool = False,
-        unique_reports: bool = False,
+        self, container_types: Optional[List[enums.ContainerType]] = None
     ) -> None:
         """Reset all Conatiners unless specified.
         [Caution]: It can lead to unexpected results.
-
-        :param bool analysis: Delete only analysis containers.
-        :param bool coverage: Delete only coverage containers.
-        :param bool crashes: Delete only crashes containers.
-        :param bool inputs: Delete only inputs containers.
-        :param bool no_repro: Delete only no_repro containers.
-        :param bool readonly_inputs: Delete only readonly_inputs containers.
-        :param bool reports: Delete only reports containers.
-        :param bool setup: Delete only setup containers.
-        :param bool unique_reports: Delete only unique_reports containers.
         """
-        container_types = {
-            "analysis": False,
-            "coverage": False,
-            "crashes": False,
-            "inputs": False,
-            "no_repro": False,
-            "readonly_inputs": False,
-            "reports": False,
-            "setup": False,
-            "unique_reports": False,
-        }
-        for k, v in locals().items():
-            if k in container_types and v:
-                container_types[k] = v
-        if not any(list(container_types.values())):
-            for k, _ in container_types.items():
-                container_types[k] = True
+        if not container_types:
+            container_types = enums.ContainerType.__dict__["_member_map_"].values()
 
-        container_types = dict(filter(lambda x: x[1], container_types.items()))
-        delete_container_types = container_types.keys()
+        if not container_types:
+            raise Exception("Container type is None")
 
         for container in self.list():
             if (
                 container.metadata
                 and "container_type" in container.metadata
-                and container.metadata["container_type"] in delete_container_types
+                and enums.ContainerType(container.metadata["container_type"])
+                in container_types
             ):
                 self.logger.info("removing container: %s", container.name)
                 self.delete(container.name)
