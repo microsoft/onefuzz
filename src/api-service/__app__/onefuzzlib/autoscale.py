@@ -80,12 +80,31 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
 def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
     logging.info("Scaling down")
     for scaleset in scalesets:
-        nodes = Node.search_states(
-            scaleset_id=scaleset.scaleset_id, states=[NodeState.free]
+        num_of_nodes = len(Node.search_states(scaleset_id=scaleset.scaleset_id))
+        if scaleset.size != num_of_nodes and scaleset.state not in [
+            ScalesetState.resize,
+            ScalesetState.shutdown,
+            ScalesetState.halt,
+        ]:
+            scaleset.state = ScalesetState.resize
+            scaleset.save()
+
+        free_nodes = Node.search_states(
+            scaleset_id=scaleset.scaleset_id,
+            states=[NodeState.free],
         )
+        nodes = []
+        for node in free_nodes:
+            if not node.delete_requested:
+                nodes.append(node)
+        logging.info(
+            "Scaleset: %s, #Free Nodes: %s" % (scaleset.scaleset_id, len(nodes))
+        )
+
         if nodes and nodes_to_remove > 0:
             max_nodes_remove = min(len(nodes), nodes_to_remove)
-            if max_nodes_remove >= scaleset.size and len(nodes) == scaleset.size:
+            # All nodes in scaleset are free. Can shutdown VMSS
+            if max_nodes_remove >= scaleset.size and len(nodes) >= scaleset.size:
                 scaleset.state = ScalesetState.shutdown
                 nodes_to_remove = nodes_to_remove - scaleset.size
                 scaleset.save()
@@ -93,6 +112,7 @@ def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
                     node.set_shutdown()
                 continue
 
+            # Resize of VMSS needed
             scaleset.size = scaleset.size - max_nodes_remove
             nodes_to_remove = nodes_to_remove - max_nodes_remove
             scaleset.state = ScalesetState.resize
@@ -145,4 +165,10 @@ def autoscale_pool(pool: Pool) -> None:
         # resizing scaleset or creating new scaleset.
         scale_up(pool, scalesets, nodes_needed)
     elif nodes_needed < 0:
+        for scaleset in scalesets:
+            nodes = Node.search_states(scaleset_id=scaleset.scaleset_id)
+            for node in nodes:
+                if node.delete_requested:
+                    nodes_needed += 1
+    if nodes_needed < 0:
         scale_down(scalesets, abs(nodes_needed))

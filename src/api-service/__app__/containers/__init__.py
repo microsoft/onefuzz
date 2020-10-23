@@ -15,6 +15,7 @@ from onefuzztypes.responses import BoolResult, ContainerInfo, ContainerInfoBase
 from ..onefuzzlib.azure.containers import (
     create_container,
     delete_container,
+    get_container_metadata,
     get_container_sas_url,
     get_containers,
 )
@@ -28,28 +29,29 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
     if isinstance(request, Error):
         return not_ok(request, context="container get")
+    if request is not None:
+        metadata = get_container_metadata(request.name)
+        if metadata is None:
+            return not_ok(
+                Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
+                context=request.name,
+            )
+
+        info = ContainerInfo(
+            name=request.name,
+            sas_url=get_container_sas_url(
+                request.name,
+                read=True,
+                write=True,
+                create=True,
+                delete=True,
+                list=True,
+            ),
+            metadata=metadata,
+        )
+        return ok(info)
 
     containers = get_containers()
-
-    if request is not None:
-        if request.name in containers:
-            info = ContainerInfo(
-                name=request.name,
-                sas_url=get_container_sas_url(
-                    request.name,
-                    read=True,
-                    write=True,
-                    create=True,
-                    delete=True,
-                    list=True,
-                ),
-                metadata=containers[request.name],
-            )
-            return ok(info)
-        return not_ok(
-            Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
-            context=request.name,
-        )
 
     container_info = []
     for name in containers:
