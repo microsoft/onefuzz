@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 use std::env;
 use std::error::Error;
 use std::fs::File;
@@ -22,9 +25,13 @@ fn read_file(filename: &str) -> Result<String, Box<dyn Error>> {
     Ok(contents)
 }
 
-fn print_version(include_sha: bool, include_local: bool) -> Result<(), Box<dyn Error>> {
+fn print_values(version: &str, sha: &str) {
+    println!("cargo:rustc-env=ONEFUZZ_VERSION={}", version);
+    println!("cargo:rustc-env=GIT_VERSION={}", sha);
+}
+
+fn print_version(include_sha: bool, include_local: bool, sha: &str) -> Result<(), Box<dyn Error>> {
     let mut version = read_file("../../../CURRENT_VERSION")?;
-    let sha = run_cmd(&["git", "rev-parse", "HEAD"])?;
 
     if include_sha {
         version.push('-');
@@ -38,13 +45,19 @@ fn print_version(include_sha: bool, include_local: bool) -> Result<(), Box<dyn E
         }
     }
 
-    println!("cargo:rustc-env=GIT_VERSION={}", sha);
-    println!("cargo:rustc-env=ONEFUZZ_VERSION={}", version);
-
+    print_values(&version, sha);
     Ok(())
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let sha = run_cmd(&["git", "rev-parse", "HEAD"])?;
+
+    let hardcode_version = env::var("ONEFUZZ_SET_VERSION");
+    if hardcode_version.is_ok() {
+        print_values(hardcode_version.unwrap().as_ref(), &sha);
+        return Ok(());
+    }
+
     // If we're built off of a tag, we accept CURRENT_VERSION as is.  Otherwise
     // modify it to indicate local build
     let (include_sha, include_local_changes) = if let Ok(val) = env::var("GITHUB_REF") {
@@ -52,5 +65,5 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else {
         (true, true)
     };
-    print_version(include_sha, include_local_changes)
+    print_version(include_sha, include_local_changes, &sha)
 }
