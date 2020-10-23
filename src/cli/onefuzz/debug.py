@@ -11,6 +11,7 @@ import tempfile
 from typing import Any, List, Optional, Tuple
 from urllib.parse import urlparse
 from uuid import UUID
+import time
 
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, NodeAssignment, Report, Task
@@ -168,6 +169,19 @@ class DebugTask(Command):
                 return (node.scaleset_id, node.node_id)
 
         raise Exception("unable to find scaleset node running on task")
+
+    def disable_node_reset(
+        self, task_id: UUID_EXPANSION, *, node_id: Optional[UUID] = None
+    ):
+        while True:
+            try:
+                scaleset_id, node_id = self._get_node(task_id=task_id, node_id=node_id)
+                self.onefuzz.nodes.update(node_id, manual_reset_override=True)
+                break
+            except Exception as err:
+                if "task is not currently executing on nodes" not in str(err):
+                    raise err
+                time.sleep(1)
 
     def ssh(
         self,

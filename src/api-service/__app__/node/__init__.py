@@ -6,7 +6,7 @@
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
-from onefuzztypes.requests import NodeGet, NodeSearch
+from onefuzztypes.requests import NodeGet, NodeSearch, NodeUpdate
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.pools import Node, NodeTasks
@@ -42,6 +42,24 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     return ok(nodes)
 
 
+def post(req: func.HttpRequest) -> func.HttpResponse:
+    request = parse_request(NodeUpdate, req)
+    if isinstance(request, Error):
+        return not_ok(request, context="NodeUpdate")
+
+    node = Node.get_by_machine_id(request.machine_id)
+    if not node:
+        return not_ok(
+            Error(code=ErrorCode.UNABLE_TO_FIND, errors=["unable to find node"]),
+            context=request.machine_id,
+        )
+    if request.reset_override is not None:
+        node.manual_reset_override = request.manual_reset_override
+
+    node.save()
+    return ok(BoolResult(result=True))
+
+
 def delete(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(NodeGet, req)
     if isinstance(request, Error):
@@ -55,6 +73,9 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     node.set_halt()
+    if node.manual_reset_override:
+        node.manual_reset_override = False
+        node.save()
 
     return ok(BoolResult(result=True))
 
@@ -72,6 +93,9 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     node.stop()
+    if node.manual_reset_override:
+        node.manual_reset_override = False
+        node.save()
     return ok(BoolResult(result=True))
 
 

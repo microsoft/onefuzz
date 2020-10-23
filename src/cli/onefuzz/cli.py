@@ -86,6 +86,19 @@ class AsDict(argparse.Action):
         setattr(namespace, self.dest, as_dict)
 
 
+def arg_bool(arg: str) -> bool:
+    acceptable = ["true", "false"]
+    if arg not in acceptable:
+        raise argparse.ArgumentTypeError(
+            "invalid value: %s, must be %s"
+            % (
+                repr(arg),
+                " or ".join(acceptable),
+            )
+        )
+    return arg == "true"
+
+
 def arg_dir(arg: str) -> str:
     if not os.path.isdir(arg):
         raise argparse.ArgumentTypeError("not a directory: %s" % arg)
@@ -241,19 +254,27 @@ class Builder:
             }
             return result
 
-        if issubclass(annotation, bool) and default is False:
-            return {
-                "action": "store_true",
-                "optional": True,
-                "help": "(Default: False.  Sets value to True)",
-            }
-
-        if issubclass(annotation, bool) and default is True:
-            return {
-                "action": "store_false",
-                "optional": True,
-                "help": "(Default: True.  Sets value to False)",
-            }
+        if issubclass(annotation, bool):
+            if default is False:
+                return {
+                    "action": "store_true",
+                    "optional": True,
+                    "help": "(Default: False.  Sets value to True)",
+                }
+            elif default is True:
+                return {
+                    "action": "store_false",
+                    "optional": True,
+                    "help": "(Default: True.  Sets value to False)",
+                }
+            elif default is None:
+                return {
+                    "type": arg_bool,
+                    "optional": True,
+                    "help": "Provide 'true' to set to true and 'false' to set to false",
+                }
+            else:
+                raise Exception("oh no! %s", repr(default))
 
         if issubclass(annotation, BaseModel):
 

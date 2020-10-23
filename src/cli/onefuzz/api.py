@@ -942,6 +942,28 @@ class Node(Endpoint):
             data=requests.NodeGet(machine_id=machine_id_expanded),
         )
 
+    def update(
+        self,
+        *,
+        machine_id: UUID_EXPANSION,
+        manual_reset_override: Optional[bool] = None,
+    ) -> responses.BoolResult:
+        self.logger.debug("update node: %s", machine_id)
+        machine_id_expanded = self._disambiguate_uuid(
+            "machine_id",
+            machine_id,
+            lambda: [str(x.machine_id) for x in self.list()],
+        )
+
+        return self._req_model(
+            "POST",
+            responses.BoolResult,
+            data=requests.NodeUpdate(
+                machine_id=machine_id_expanded,
+                manual_reset_override=manual_reset_override,
+            ),
+        )
+
     def list(
         self,
         *,

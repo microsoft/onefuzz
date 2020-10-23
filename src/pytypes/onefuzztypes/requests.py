@@ -141,6 +141,11 @@ class NodeGet(BaseRequest):
     machine_id: UUID
 
 
+class NodeUpdate(BaseRequest):
+    machine_id: UUID
+    manual_reset_override: Optional[bool]
+
+
 class ScalesetSearch(BaseRequest):
     scaleset_id: Optional[UUID]
     state: Optional[List[ScalesetState]]
