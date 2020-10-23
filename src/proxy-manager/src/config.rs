@@ -3,12 +3,12 @@
 
 use crate::proxy;
 use anyhow::Result;
+use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::PathBuf};
 use storage_queue::QueueClient;
 use thiserror::Error;
 use url::Url;
-use reqwest_retry::SendRetry;
 
 #[derive(Error, Debug)]
 pub enum ProxyError {
