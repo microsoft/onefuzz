@@ -56,7 +56,7 @@ impl SendRetry for reqwest::RequestBuilder {
         let op = || async {
             if (counter.fetch_add(1, Ordering::SeqCst) >= MAX_RETRY_ATTEMPTS) {
                 Result::<Response, backoff::Error<anyhow::Error>>::Err(backoff::Error::Permanent(
-                    anyhow::Error::msg("Maximum number of attemps reached for this request"),
+                    anyhow::Error::msg("Maximum number of attempts reached for this request"),
                 ))
             } else {
                 let response = self

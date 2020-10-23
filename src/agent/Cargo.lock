@@ -1468,6 +1468,7 @@ dependencies = [
  "rand",
  "regex",
  "reqwest",
+ "reqwest-retry",
  "ring",
  "rstack",
  "serde",
@@ -1483,7 +1484,6 @@ dependencies = [
  "tokio-util",
  "url",
  "urlparse",
- "utils",
  "uuid",
  "winreg",
 ]
@@ -1504,6 +1504,7 @@ dependencies = [
  "num_cpus",
  "onefuzz",
  "reqwest",
+ "reqwest-retry",
  "serde",
  "serde_json",
  "storage-queue",
@@ -1511,7 +1512,6 @@ dependencies = [
  "tokio",
  "tokio-util",
  "url",
- "utils",
  "uuid",
 ]
 
@@ -1529,13 +1529,13 @@ dependencies = [
  "log",
  "onefuzz",
  "reqwest",
+ "reqwest-retry",
  "serde",
  "serde_json",
  "storage-queue",
  "structopt",
  "tokio",
  "url",
- "utils",
  "uuid",
 ]
 
@@ -1942,6 +1942,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "reqwest-retry"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "backoff",
+ "log",
+ "reqwest",
+]
+
+[[package]]
 name = "ring"
 version = "0.16.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2209,11 +2220,11 @@ dependencies = [
  "base64",
  "regex",
  "reqwest",
+ "reqwest-retry",
  "serde",
  "serde-xml-rs",
  "serde_derive",
  "serde_json",
- "utils",
  "uuid",
 ]
 
@@ -2586,17 +2597,6 @@ name = "urlparse"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "110352d4e9076c67839003c7788d8604e24dcded13e0b375af3efaa8cf468517"
-
-[[package]]
-name = "utils"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "backoff",
- "log",
- "reqwest",
-]
 
 [[package]]
 name = "uuid"

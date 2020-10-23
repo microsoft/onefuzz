@@ -24,4 +24,4 @@ tokio = { version = "0.2.13", features = ["full"] }
 url = { version = "2.1.1", features = ["serde"] }
 uuid = { version = "0.8.1", features = ["serde", "v4"] }
 clap = "2.33"
-utils = { path = "../utils" }
+reqwest-retry = { path = "../reqwest-retry" }

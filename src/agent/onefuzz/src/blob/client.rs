@@ -6,10 +6,10 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use futures::stream::TryStreamExt;
 use reqwest::{Body, RequestBuilder, Response, Url};
+use reqwest_retry::SendRetry;
 use serde::Serialize;
 use tokio::{fs, io};
 use tokio_util::codec;
-use utils::SendRetry;
 
 #[derive(Clone)]
 pub struct BlobClient {

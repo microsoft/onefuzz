@@ -4,13 +4,13 @@
 use anyhow::Result;
 use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
 use reqwest::StatusCode;
+use reqwest_retry::SendRetry;
 use std::{
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
 use tokio::fs;
 use url::Url;
-use utils::SendRetry;
 use uuid::Uuid;
 
 use crate::auth::{ClientCredentials, Credentials, ManagedIdentityCredentials};

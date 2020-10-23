@@ -10,6 +10,7 @@ use onefuzz::{
     syncdir::SyncedDir,
 };
 use reqwest::Url;
+use reqwest_retry::SendRetry;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
@@ -17,8 +18,6 @@ use std::{
     sync::Arc,
 };
 use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
-extern crate utils as ut;
-use ut::SendRetry;
 
 #[derive(Debug, Deserialize)]
 struct QueueMessage {

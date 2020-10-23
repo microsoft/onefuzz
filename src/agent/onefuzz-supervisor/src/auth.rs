@@ -5,8 +5,8 @@ use std::fmt;
 
 use anyhow::Result;
 use onefuzz::http::ResponseExt;
+use reqwest_retry::SendRetry;
 use url::Url;
-use utils::SendRetry;
 use uuid::Uuid;
 
 #[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]

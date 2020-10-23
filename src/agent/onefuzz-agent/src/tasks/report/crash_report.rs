@@ -7,9 +7,9 @@ use onefuzz::{
     blob::{BlobClient, BlobContainerUrl, BlobUrl},
     syncdir::SyncedDir,
 };
+use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use utils::SendRetry;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]

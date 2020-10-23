@@ -3,9 +3,9 @@
 
 use anyhow::Result;
 use reqwest::{Client, Url};
+use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use utils::SendRetry;
 use uuid::Uuid;
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);

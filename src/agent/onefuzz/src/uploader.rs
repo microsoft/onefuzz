@@ -6,10 +6,10 @@ use std::path::Path;
 use anyhow::Result;
 use futures::stream::TryStreamExt;
 use reqwest as r;
+use reqwest_retry::SendRetry;
 use serde::Serialize;
 use tokio::{fs, io};
 use tokio_util::codec;
-use utils::SendRetry;
 
 #[derive(Clone)]
 pub struct BlobUploader {

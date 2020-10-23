@@ -8,7 +8,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 use storage_queue::QueueClient;
 use thiserror::Error;
 use url::Url;
-use utils::SendRetry;
+use reqwest_retry::SendRetry;
 
 #[derive(Error, Debug)]
 pub enum ProxyError {

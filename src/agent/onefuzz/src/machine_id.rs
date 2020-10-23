@@ -3,9 +3,9 @@
 
 use crate::fs::{onefuzz_etc, write_file};
 use anyhow::Result;
+use reqwest_retry::SendRetry;
 use std::time::Duration;
 use tokio::fs;
-use utils::SendRetry;
 use uuid::Uuid;
 
 // https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#tracking-vm-running-on-azure
