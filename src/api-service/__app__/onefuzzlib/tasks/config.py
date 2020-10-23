@@ -11,7 +11,7 @@ from uuid import UUID
 from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, TaskFeature
 from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
 
-from ..azure.containers import blob_exists, get_container_sas_url, get_containers
+from ..azure.containers import blob_exists, container_exists, get_container_sas_url
 from ..azure.creds import get_fuzz_storage, get_instance_url
 from ..azure.queue import get_queue_sas
 from .defs import TASK_DEFINITIONS
@@ -58,12 +58,14 @@ def check_container(
 
 
 def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
-    all_containers = set(get_containers().keys())
+    checked = set()
 
     containers: Dict[ContainerType, List[str]] = {}
     for container in config.containers:
-        if container.name not in all_containers:
-            raise TaskConfigError("missing container: %s" % container.name)
+        if container.name not in checked:
+            if not container_exists(container.name):
+                raise TaskConfigError("missing container: %s" % container.name)
+            checked.add(container.name)
 
         if container.type not in containers:
             containers[container.type] = []
