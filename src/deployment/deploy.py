@@ -17,7 +17,6 @@ import uuid
 import zipfile
 from datetime import datetime, timedelta
 
-from azure.cli.core import CLIError
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.core.exceptions import ResourceExistsError
@@ -224,12 +223,11 @@ class Client:
         while True:
             time.sleep(5)
             count += 1
-            try:
-                return add_application_password(object_id)
-            except CLIError as err:
-                if count > 5:
-                    raise err
-            logger.info("creating password failed, trying again")
+            password = add_application_password(object_id)
+            if password:
+                return password
+            if count > 5:
+                raise Exception("creating password failed")
 
     def setup_rbac(self):
         """

@@ -26,6 +26,10 @@ from msrest.serialization import TZ_UTC
 logger = logging.getLogger("deploy")
 
 
+class GraphQueryError(Exception):
+    pass
+
+
 def query_microsoft_graph(
     method: str,
     resource: str,
@@ -53,7 +57,7 @@ def query_microsoft_graph(
             return None
     else:
         error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
-        raise Exception(
+        raise GraphQueryError(
             "request did not succeed: HTTP %s - %s" % (response.status_code, error_text)
         )
 
@@ -167,8 +171,7 @@ def create_application_registration(
     return registered_app
 
 
-def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
-
+def add_application_password(app_object_id: UUID) -> Optional[Tuple[str, str]]:
     key = uuid4()
     password_request = {
         "passwordCredential": {
@@ -180,14 +183,17 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
             ),
         }
     }
+    try:
+        password: Dict = query_microsoft_graph(
+            method="POST",
+            resource="applications/%s/addPassword" % app_object_id,
+            body=password_request,
+        )
 
-    password: Dict = query_microsoft_graph(
-        method="POST",
-        resource="applications/%s/addPassword" % app_object_id,
-        body=password_request,
-    )
-
-    return (str(key), password["secretText"])
+        return (str(key), password["secretText"])
+    except GraphQueryError as err:
+        logger.warning("creating password failed : %s" % err)
+        None
 
 
 def get_application(app_id: UUID) -> Optional[Dict]:
@@ -332,9 +338,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
 
     subparsers = parser.add_subparsers(title="commands", dest="command")
-    subparsers.add_parser(
-        "update_pool_registration", parents=[parent_parser]
-    )
+    subparsers.add_parser("update_pool_registration", parents=[parent_parser])
     role_assignment_parser = subparsers.add_parser(
         "assign_scaleset_role",
         parents=[parent_parser],
