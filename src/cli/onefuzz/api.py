@@ -274,6 +274,29 @@ class Containers(Endpoint):
         self.logger.debug("list containers")
         return self._req_model_list("GET", responses.ContainerInfoBase)
 
+    def reset(
+        self, container_types: Optional[List[enums.ContainerType]] = None
+    ) -> None:
+        """Reset containers unless specified.
+        [Caution]: It can lead to unexpected results.
+        The default conatiners are listed ContainerType.reset_defaults
+        """
+        if not container_types:
+            container_types = enums.ContainerType.reset_defaults()
+
+        if not container_types:
+            raise Exception("Container type is None")
+
+        for container in self.list():
+            if (
+                container.metadata
+                and "container_type" in container.metadata
+                and enums.ContainerType(container.metadata["container_type"])
+                in container_types
+            ):
+                self.logger.info("removing container: %s", container.name)
+                self.delete(container.name)
+
 
 class Repro(Endpoint):
     """ Interact with Reproduction VMs """
@@ -1386,25 +1409,7 @@ class Onefuzz:
                 self.scalesets.shutdown(scaleset.scaleset_id, now=True)
 
         if containers:
-            for container in self.containers.list():
-                if (
-                    container.metadata
-                    and "container_type" in container.metadata
-                    and container.metadata["container_type"]
-                    in [
-                        "analysis",
-                        "coverage",
-                        "crashes",
-                        "inputs",
-                        "no_repro",
-                        "readonly_inputs",
-                        "reports",
-                        "setup",
-                        "unique_reports",
-                    ]
-                ):
-                    self.logger.info("removing container: %s", container.name)
-                    self.containers.delete(container.name)
+            self.containers.reset()
 
     def reset(
         self,

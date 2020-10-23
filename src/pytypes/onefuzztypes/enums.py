@@ -189,17 +189,31 @@ class Compare(Enum):
 
 
 class ContainerType(Enum):
-    setup = "setup"
+    analysis = "analysis"
+    coverage = "coverage"
     crashes = "crashes"
     inputs = "inputs"
-    readonly_inputs = "readonly_inputs"
-    unique_inputs = "unique_inputs"
-    coverage = "coverage"
-    reports = "reports"
-    unique_reports = "unique_reports"
     no_repro = "no_repro"
+    readonly_inputs = "readonly_inputs"
+    reports = "reports"
+    setup = "setup"
     tools = "tools"
-    analysis = "analysis"
+    unique_inputs = "unique_inputs"
+    unique_reports = "unique_reports"
+
+    @classmethod
+    def reset_defaults(cls) -> List["ContainerType"]:
+        return [
+            cls.analysis,
+            cls.coverage,
+            cls.crashes,
+            cls.inputs,
+            cls.no_repro,
+            cls.readonly_inputs,
+            cls.reports,
+            cls.setup,
+            cls.unique_reports,
+        ]
 
 
 class StatsFormat(Enum):
