@@ -30,11 +30,9 @@ impl SendRetry for reqwest::RequestBuilder {
         max_elapsed_time: Duration,
     ) -> Result<Response> {
         let op = || async {
-            let cloned = self
-                .try_clone()
-                .ok_or(backoff::Error::Permanent(anyhow::Error::msg(
-                    "this request cannot be cloned",
-                )))?;
+            let cloned = self.try_clone().ok_or_else(|| {
+                backoff::Error::Permanent(anyhow::Error::msg("this request cannot be cloned"))
+            })?;
 
             let response = cloned
                 .send()
