@@ -19,3 +19,4 @@ storage-queue = { path = "../agent/storage-queue" }
 thiserror = "1.0"
 tokio = { version = "0.2", features = ["macros", "rt-threaded", "fs", "process"] }
 url = { version = "2.1", features = ["serde"] }
+utils = { path = "../agent/utils"}
