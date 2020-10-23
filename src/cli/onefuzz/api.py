@@ -944,8 +944,8 @@ class Node(Endpoint):
 
     def update(
         self,
-        *,
         machine_id: UUID_EXPANSION,
+        *,
         manual_reset_override: Optional[bool] = None,
     ) -> responses.BoolResult:
         self.logger.debug("update node: %s", machine_id)

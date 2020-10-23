@@ -53,7 +53,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             Error(code=ErrorCode.UNABLE_TO_FIND, errors=["unable to find node"]),
             context=request.machine_id,
         )
-    if request.reset_override is not None:
+    if request.manual_reset_override is not None:
         node.manual_reset_override = request.manual_reset_override
 
     node.save()
