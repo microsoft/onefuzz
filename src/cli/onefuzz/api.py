@@ -650,11 +650,10 @@ class Tasks(Endpoint):
             prereq_tasks = []
 
         containers_submit = []
-        all_containers = [x.name for x in self.onefuzz.containers.list()]
         for (container_type, container) in containers:
-            if container not in all_containers:
-                raise Exception("invalid container: %s" % container)
-            containers_submit.append({"type": container_type, "name": container})
+            containers_submit.append(
+                models.TaskContainers(name=container, type=container_type)
+            )
 
         config = models.TaskConfig(
             job_id=job_id_expanded,
@@ -687,7 +686,7 @@ class Tasks(Endpoint):
                 check_retry_count=check_retry_count,
             ),
             pool=models.TaskPool(count=vm_count, pool_name=pool_name),
-            containers=containers,
+            containers=containers_submit,
             tags=tags,
         )
 
