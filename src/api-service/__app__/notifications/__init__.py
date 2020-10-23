@@ -10,7 +10,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import NotificationCreate, NotificationGet
 
-from ..onefuzzlib.azure.containers import get_containers
+from ..onefuzzlib.azure.containers import container_exists
 from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -29,8 +29,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="notification create")
 
-    containers = get_containers()
-    if request.container not in containers:
+    if not container_exists(request.container):
         return not_ok(
             Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
             context=request.container,
