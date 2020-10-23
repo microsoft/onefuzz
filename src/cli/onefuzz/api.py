@@ -299,19 +299,6 @@ class Containers(Endpoint):
         :param bool setup: Delete only setup containers.
         :param bool unique_reports: Delete only unique_reports containers.
         """
-        """
-        arguments = [
-            analysis,
-            coverage,
-            crashes,
-            inputs,
-            no_repro,
-            readonly_inputs,
-            reports,
-            setup,
-            unique_reports,
-        ]
-        """
         container_types = {
             "analysis": False,
             "coverage": False,
