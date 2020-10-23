@@ -277,11 +277,12 @@ class Containers(Endpoint):
     def reset(
         self, container_types: Optional[List[enums.ContainerType]] = None
     ) -> None:
-        """Reset all Conatiners unless specified.
+        """Reset containers unless specified.
         [Caution]: It can lead to unexpected results.
+        The default conatiners are listed ContainerType.reset_defaults
         """
         if not container_types:
-            container_types = enums.ContainerType.__dict__["_member_map_"].values()
+            container_types = enums.ContainerType.reset_defaults()
 
         if not container_types:
             raise Exception("Container type is None")
