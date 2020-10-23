@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 use anyhow::Result;
 use async_trait::async_trait;
 use backoff::{self, future::FutureOperation, ExponentialBackoff};
