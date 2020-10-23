@@ -1290,10 +1290,10 @@ class Onefuzz:
 
         return data
 
-    def _user_confirmation(self, message: List[str]) -> bool:
+    def _user_confirmation(self, message: str) -> bool:
         answer: Optional[str] = None
         while answer not in ["y", "n"]:
-            answer = input(" ".join(message)).strip()
+            answer = input(message).strip()
 
         if answer == "n":
             self.logger.info("not stopping")
@@ -1389,19 +1389,6 @@ class Onefuzz:
         :param bool tasks: Stop all tasks.
         :param bool yes: Ignoring to specify "y" in prompt.
         """
-        delete_options = [
-            containers,
-            jobs,
-            pools,
-            notifications,
-            repros,
-            scalesets,
-            tasks,
-        ]
-        arguments = [everything]
-        arguments.extend(delete_options)
-        if not any(arguments):
-            jobs, notifications, repros, tasks = True, True, True, True
 
         if everything:
             containers, jobs, pools, notifications, repros, scalesets, tasks = (
@@ -1413,10 +1400,13 @@ class Onefuzz:
                 True,
                 True,
             )
+        elif not any(
+            [containers, jobs, pools, notifications, repros, scalesets, tasks]
+        ):
+            jobs, notifications, repros, tasks = True, True, True, True
 
         if containers and not (tasks or jobs):
-            print("Use --jobs or --tasks with containers")
-            return
+            raise Exception("Resetting containers requires resetting jobs or tasks")
 
         to_delete = []
         argument_str = {
@@ -1431,13 +1421,14 @@ class Onefuzz:
         for k, v in locals().items():
             if k in argument_str and v:
                 to_delete.append(k)
-        message = ["Confirm stopping %s " % (", ".join(to_delete))]
-        message += ["(specify y or n): "]
+        message = "Confirm stopping %s (specify y or n): " % (
+            ", ".join(sorted(to_delete))
+        )
         if not yes and not self._user_confirmation(message):
             return
 
         self._delete_components(
-            containers, jobs, pools, notifications, repros, scalesets, tasks
+            containers, jobs, notifications, pools, repros, scalesets, tasks
         )
 
 
