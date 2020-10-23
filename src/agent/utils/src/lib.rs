@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use backoff::{self, future::FutureOperation, ExponentialBackoff};
 use reqwest::Response;
 use std::time::Duration;
-use log;
 
 const DEFAULT_RETRY_PERIOD: Duration = Duration::from_millis(500);
 const MAX_ELAPSED_TIME: Duration = Duration::from_secs(60 * 5);
