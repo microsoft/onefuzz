@@ -314,17 +314,17 @@ class Containers(Endpoint):
             if k in container_types and v:
                 container_types[k] = v
         if not any(list(container_types.values())):
-            for k, v in container_types.items():
+            for k, _ in container_types.items():
                 container_types[k] = True
 
         container_types = dict(filter(lambda x: x[1], container_types.items()))
-        container_types = container_types.keys()
+        delete_container_types = container_types.keys()
 
         for container in self.list():
             if (
                 container.metadata
                 and "container_type" in container.metadata
-                and container.metadata["container_type"] in container_types
+                and container.metadata["container_type"] in delete_container_types
             ):
                 self.logger.info("removing container: %s", container.name)
                 self.delete(container.name)
