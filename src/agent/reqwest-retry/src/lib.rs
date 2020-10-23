@@ -10,7 +10,7 @@ use std::{
     time::Duration,
 };
 
-const DEFAULT_RETRY_PERIOD: Duration = Duration::from_millis(500);
+const DEFAULT_RETRY_PERIOD: Duration = Duration::from_secs(2);
 const MAX_ELAPSED_TIME: Duration = Duration::from_secs(30);
 const MAX_RETRY_ATTEMPTS: i32 = 5;
 
@@ -34,6 +34,7 @@ pub trait SendRetry {
         self,
         retry_period: Duration,
         max_elapsed_time: Duration,
+        max_retry: i32,
         error_mapper: F,
     ) -> Result<Response>;
     async fn send_retry_default(self) -> Result<Response>;
@@ -42,19 +43,25 @@ pub trait SendRetry {
 #[async_trait]
 impl SendRetry for reqwest::RequestBuilder {
     async fn send_retry_default(self) -> Result<Response> {
-        self.send_retry(DEFAULT_RETRY_PERIOD, MAX_ELAPSED_TIME, map_to_backoff_error)
-            .await
+        self.send_retry(
+            DEFAULT_RETRY_PERIOD,
+            MAX_ELAPSED_TIME,
+            MAX_RETRY_ATTEMPTS,
+            map_to_backoff_error,
+        )
+        .await
     }
 
     async fn send_retry<F: Fn(reqwest::Error) -> backoff::Error<anyhow::Error> + Send + Sync>(
         self,
         retry_period: Duration,
         max_elapsed_time: Duration,
+        max_retry: i32,
         error_mapper: F,
     ) -> Result<Response> {
         let counter = AtomicI32::new(0);
         let op = || async {
-            if (counter.fetch_add(1, Ordering::SeqCst) >= MAX_RETRY_ATTEMPTS) {
+            if (counter.fetch_add(1, Ordering::SeqCst) >= max_retry) {
                 Result::<Response, backoff::Error<anyhow::Error>>::Err(backoff::Error::Permanent(
                     anyhow::Error::msg("Maximum number of attempts reached for this request"),
                 ))
@@ -63,7 +70,7 @@ impl SendRetry for reqwest::RequestBuilder {
                     .try_clone()
                     .ok_or_else(|| {
                         backoff::Error::Permanent(anyhow::Error::msg(
-                            "this request cannot be cloned",
+                            "This request cannot be retried because it cannot be cloned",
                         ))
                     })?
                     .send()
