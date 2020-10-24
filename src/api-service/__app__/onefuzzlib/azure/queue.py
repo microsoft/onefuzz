@@ -94,7 +94,7 @@ def clear_queue(name: QueueNameType, *, account_id: str) -> None:
         try:
             queue.clear_messages()
         except ResourceNotFoundError:
-            return None
+            pass
 
 
 def send_message(
