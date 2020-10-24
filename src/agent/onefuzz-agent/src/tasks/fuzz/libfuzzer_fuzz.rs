@@ -8,7 +8,7 @@ use onefuzz::{
     fs::list_files,
     libfuzzer::{LibFuzzer, LibFuzzerLine},
     process::ExitStatus,
-    syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
+    syncdir::{SyncOperation::Pull, SyncedDir},
     system,
     telemetry::{
         Event::{new_coverage, new_result, process_stats, runtime_stats},
@@ -69,7 +69,6 @@ impl LibFuzzerFuzzTask {
         let hb_client = self.config.common.init_heartbeat().await?;
 
         // To be scheduled.
-        let resync = self.continuous_sync_inputs();
         let new_inputs = self.config.inputs.monitor_results(new_coverage);
         let new_crashes = self.config.crashes.monitor_results(new_result);
 
@@ -82,7 +81,7 @@ impl LibFuzzerFuzzTask {
 
         let fuzzers = try_join_all(fuzzers);
 
-        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
+        futures::try_join!(new_inputs, new_crashes, fuzzers, report_stats)?;
 
         Ok(())
     }
@@ -96,7 +95,17 @@ impl LibFuzzerFuzzTask {
         worker_id: u64,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
+        let mut input_dirs = vec![self.config.inputs.clone()];
+        if let Some(inputs) = &self.config.readonly_inputs {
+            let inputs = inputs.clone();
+            input_dirs.extend(inputs);
+        }
+
         loop {
+            for dir in &input_dirs {
+                dir.sync(Pull).await?;
+            }
+
             self.run_fuzzer(worker_id, stats_sender).await?;
         }
     }
@@ -179,15 +188,6 @@ impl LibFuzzerFuzzTask {
             }
         }
         Ok(())
-    }
-
-    async fn continuous_sync_inputs(&self) -> Result<()> {
-        let mut dirs = vec![self.config.inputs.clone()];
-        if let Some(inputs) = &self.config.readonly_inputs {
-            let inputs = inputs.clone();
-            dirs.extend(inputs);
-        }
-        continuous_sync(&dirs, Pull, None).await
     }
 }
 
