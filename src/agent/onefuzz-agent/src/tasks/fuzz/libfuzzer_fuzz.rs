@@ -104,7 +104,7 @@ impl LibFuzzerFuzzTask {
             input_dirs.extend(inputs);
         }
         let mut last_sync = Instant::now() - SYNC_DELAY;
-        
+
         loop {
             if Instant::now() - last_sync >= SYNC_DELAY {
                 for dir in &input_dirs {
