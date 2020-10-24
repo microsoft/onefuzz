@@ -23,7 +23,7 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
     task,
-    time::{self, Duration},
+    time::{self, Duration, Instant},
 };
 use uuid::Uuid;
 
@@ -35,6 +35,9 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
+
+// Minimum delay between input corpus sync
+const SYNC_DELAY: Duration = Duration::from_secs(60);
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
@@ -100,12 +103,15 @@ impl LibFuzzerFuzzTask {
             let inputs = inputs.clone();
             input_dirs.extend(inputs);
         }
-
+        let mut last_sync = Instant::now() - SYNC_DELAY;
+        
         loop {
-            for dir in &input_dirs {
-                dir.sync(Pull).await?;
+            if Instant::now() - last_sync >= SYNC_DELAY {
+                for dir in &input_dirs {
+                    dir.sync(Pull).await?;
+                }
+                last_sync = Instant::now() + SYNC_DELAY;
             }
-
             self.run_fuzzer(worker_id, stats_sender).await?;
         }
     }
