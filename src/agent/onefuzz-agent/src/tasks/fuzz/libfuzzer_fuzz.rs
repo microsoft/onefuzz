@@ -110,7 +110,7 @@ impl LibFuzzerFuzzTask {
                 for dir in &input_dirs {
                     dir.sync(Pull).await?;
                 }
-                last_sync = Instant::now() + SYNC_DELAY;
+                last_sync = Instant::now();
             }
             self.run_fuzzer(worker_id, stats_sender).await?;
         }
