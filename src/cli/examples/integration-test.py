@@ -335,10 +335,15 @@ class TestOnefuzz:
                 if job_id in self.containers:
                     del self.containers[job_id]
 
+        msg = "waiting on: %s" % ",".join(
+            sorted(x.config.name for x in self.jobs.values())
+        )
+        if len(msg) > 80:
+            msg = "waiting on %d jobs" % len(self.jobs)
+
         return (
             not bool(self.jobs),
-            "waiting on: %s"
-            % ",".join(sorted(x.config.name for x in self.jobs.values())),
+            msg,
             not bool(self.failed_jobs),
         )
 
@@ -442,9 +447,13 @@ class TestOnefuzz:
         for name in info:
             logline.append("%s:%s" % (name, ",".join(info[name])))
 
+        msg = "waiting repro: %s" % " ".join(logline)
+        if len(logline) > 80:
+            msg = "waiting on %d repros" % len(self.repros)
+
         return (
             not bool(self.repros),
-            "waiting repro: %s" % " ".join(logline),
+            msg,
             bool(self.failed_jobs),
         )
 
