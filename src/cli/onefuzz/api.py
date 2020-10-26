@@ -54,6 +54,16 @@ def wsl_path(path: str) -> str:
     return path
 
 
+def user_confirmation(message: str) -> bool:
+    answer: Optional[str] = None
+    while answer not in ["y", "n"]:
+        answer = input(message).strip()
+
+    if answer == "n":
+        return False
+    return True
+
+
 class Endpoint:
     endpoint: str
 
@@ -273,6 +283,37 @@ class Containers(Endpoint):
         """ Get a list of containers """
         self.logger.debug("list containers")
         return self._req_model_list("GET", responses.ContainerInfoBase)
+
+    def reset(
+        self,
+        *,
+        container_types: Optional[
+            List[enums.ContainerType]
+        ] = enums.ContainerType.reset_defaults(),
+        yes: bool = False,
+    ) -> None:
+        """
+        Reset containers by container type  (NOTE: This may cause unexpected issues with existing fuzzing jobs)
+        """
+        if not container_types:
+            return
+
+        message = "Confirm deleting container types: %s (specify y or n): " % (
+            ",".join(x.name for x in container_types)
+        )
+        if not yes and not user_confirmation(message):
+            self.logger.warning("not deleting containers")
+            return
+
+        for container in self.list():
+            if (
+                container.metadata
+                and "container_type" in container.metadata
+                and enums.ContainerType(container.metadata["container_type"])
+                in container_types
+            ):
+                self.logger.info("removing container: %s", container.name)
+                self.delete(container.name)
 
 
 class Repro(Endpoint):
@@ -1312,16 +1353,6 @@ class Onefuzz:
 
         return data
 
-    def _user_confirmation(self, message: str) -> bool:
-        answer: Optional[str] = None
-        while answer not in ["y", "n"]:
-            answer = input(message).strip()
-
-        if answer == "n":
-            self.logger.info("not stopping")
-            return False
-        return True
-
     def _delete_components(
         self,
         containers: bool = False,
@@ -1364,25 +1395,7 @@ class Onefuzz:
                 self.scalesets.shutdown(scaleset.scaleset_id, now=True)
 
         if containers:
-            for container in self.containers.list():
-                if (
-                    container.metadata
-                    and "container_type" in container.metadata
-                    and container.metadata["container_type"]
-                    in [
-                        "analysis",
-                        "coverage",
-                        "crashes",
-                        "inputs",
-                        "no_repro",
-                        "readonly_inputs",
-                        "reports",
-                        "setup",
-                        "unique_reports",
-                    ]
-                ):
-                    self.logger.info("removing container: %s", container.name)
-                    self.containers.delete(container.name)
+            self.containers.reset(yes=True)
 
     def reset(
         self,
@@ -1446,7 +1459,8 @@ class Onefuzz:
         message = "Confirm stopping %s (specify y or n): " % (
             ", ".join(sorted(to_delete))
         )
-        if not yes and not self._user_confirmation(message):
+        if not yes and not user_confirmation(message):
+            self.logger.warning("not resetting")
             return
 
         self._delete_components(

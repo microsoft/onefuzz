@@ -79,7 +79,7 @@ def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
     for container_type in containers:
         if container_type not in [x.type for x in definition.containers]:
             raise TaskConfigError(
-                "unsupported container type for this task: %s", container_type.name
+                "unsupported container type for this task: %s" % container_type.name
             )
 
     if definition.monitor_queue:

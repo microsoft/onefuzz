@@ -217,9 +217,9 @@ def notify_ado(
         fail_task(report, err)
     except AzureDevOpsClientError as err:
         fail_task(report, err)
-    except AzureDevOpsClientRequestError as err:
-        fail_task(report, err)
     except AzureDevOpsServiceError as err:
+        fail_task(report, err)
+    except AzureDevOpsClientRequestError as err:
         fail_task(report, err)
     except ValueError as err:
         fail_task(report, err)

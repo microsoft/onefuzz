@@ -923,7 +923,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     def update_nodes(self) -> None:
         # Be in at-least 'setup' before checking for the list of VMs
-        if self.state == self.init:
+        if self.state == ScalesetState.init:
             return
 
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
@@ -958,7 +958,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         pool = Pool.get_by_name(self.pool_name)
         if isinstance(pool, Error):
             self.error = pool
-            return self.halt()
+            self.halt()
+            return
 
         logging.debug("updating scaleset configs: %s", self.scaleset_id)
         extensions = fuzz_extensions(self.region, pool.os, self.pool_name)

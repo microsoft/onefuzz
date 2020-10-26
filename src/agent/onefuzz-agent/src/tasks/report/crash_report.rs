@@ -6,7 +6,10 @@ use onefuzz::{
     asan::AsanLog,
     blob::{BlobClient, BlobContainerUrl, BlobUrl},
     syncdir::SyncedDir,
+    telemetry::Event::{new_report, new_unable_to_reproduce, new_unique_report},
 };
+
+use reqwest::StatusCode;
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -59,16 +62,21 @@ async fn upload_deduped(report: &CrashReport, container: &BlobContainerUrl) -> R
     let blob = BlobClient::new();
     let deduped_name = report.unique_blob_name();
     let deduped_url = container.blob(deduped_name).url();
-    blob.put(deduped_url)
+    let result = blob
+        .put(deduped_url)
         .json(report)
         // Conditional PUT, only if-not-exists.
         .header("If-None-Match", "*")
         .send_retry_default()
         .await?;
+    if result.status() != StatusCode::NOT_MODIFIED {
+        event!(new_unique_report;);
+    }
     Ok(())
 }
 
 async fn upload_report(report: &CrashReport, container: &BlobContainerUrl) -> Result<()> {
+    event!(new_report;);
     let blob = BlobClient::new();
     let url = container.blob(report.blob_name()).url();
     blob.put(url).json(report).send_retry_default().await?;
@@ -76,8 +84,8 @@ async fn upload_report(report: &CrashReport, container: &BlobContainerUrl) -> Re
 }
 
 async fn upload_no_repro(report: &NoCrash, container: &BlobContainerUrl) -> Result<()> {
+    event!(new_unable_to_reproduce;);
     let blob = BlobClient::new();
-
     let url = container.blob(report.blob_name()).url();
     blob.put(url).json(report).send_retry_default().await?;
     Ok(())

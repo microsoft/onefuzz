@@ -39,8 +39,7 @@ def delete_subnet(resource_group: str, name: str) -> Union[None, CloudError, Any
                 "subnet delete failed: %s %s : %s", resource_group, name, repr(err)
             )
             return None
-        else:
-            raise err
+        raise err
 
 
 def create_virtual_network(
