@@ -19,6 +19,9 @@ pub enum Event {
     new_coverage,
     runtime_stats,
     process_stats,
+    new_report,
+    new_unique_report,
+    new_unable_to_reproduce,
 }
 
 impl Event {
@@ -30,6 +33,9 @@ impl Event {
             Self::new_result => "new_result",
             Self::runtime_stats => "runtime_stats",
             Self::process_stats => "process_stats",
+            Self::new_report => "new_report",
+            Self::new_unique_report => "new_unique_report",
+            Self::new_unable_to_reproduce => "new_unable_to_reproduce",
         }
     }
 }
@@ -64,6 +70,7 @@ pub enum EventData {
     CoveragePathsFound(u64),
     CoveragePathsImported(u64),
     CoverageMaxDepth(u64),
+    ToolName(String),
 }
 
 impl EventData {
@@ -97,6 +104,7 @@ impl EventData {
             Self::CoveragePathsImported(x) => ("coverage_paths_imported", x.to_string()),
             Self::CoverageMaxDepth(x) => ("coverage_paths_depth", x.to_string()),
             Self::Coverage(x) => ("coverage", x.to_string()),
+            Self::ToolName(x) => ("tool_name", x.to_owned()),
         }
     }
 
@@ -132,6 +140,7 @@ impl EventData {
             Self::CoveragePathsImported(_) => true,
             Self::CoverageMaxDepth(_) => true,
             Self::Coverage(_) => true,
+            Self::ToolName(_) => true,
         }
     }
 }
