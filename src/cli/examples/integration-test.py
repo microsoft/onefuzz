@@ -101,13 +101,13 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.coverage,
         ],
     ),
-    "windows-trivial-crash": Integration(
-        template=TemplateType.radamsa,
-        os=OS.windows,
-        target_exe="fuzz.exe",
-        inputs="seeds",
-        wait_for_files=[ContainerType.unique_reports],
-    ),
+    # "windows-trivial-crash": Integration(
+    #     template=TemplateType.radamsa,
+    #     os=OS.windows,
+    #     target_exe="fuzz.exe",
+    #     inputs="seeds",
+    #     wait_for_files=[ContainerType.unique_reports],
+    # ),
 }
 
 
