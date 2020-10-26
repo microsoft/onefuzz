@@ -46,7 +46,7 @@ class Repro(BASE_REPRO, ORMMixin):
     def get_vm(self) -> VM:
         task = Task.get_by_task_id(self.task_id)
         if isinstance(task, Error):
-            raise Exception("previously existing task missing: %s", self.task_id)
+            raise Exception("previously existing task missing: %s" % self.task_id)
 
         vm_config = task.get_repro_vm_config()
         if vm_config is None:
@@ -78,13 +78,15 @@ class Repro(BASE_REPRO, ORMMixin):
             else:
                 script_result = self.build_repro_script()
                 if isinstance(script_result, Error):
-                    return self.set_error(script_result)
+                    self.set_error(script_result)
+                    return
 
                 self.state = VmState.extensions_launch
         else:
             result = vm.create()
             if isinstance(result, Error):
-                return self.set_error(result)
+                self.set_error(result)
+                return
         self.save()
 
     def set_failed(self, vm_data: VirtualMachine) -> None:
@@ -108,15 +110,17 @@ class Repro(BASE_REPRO, ORMMixin):
         vm = self.get_vm()
         vm_data = vm.get()
         if not vm_data:
-            return self.set_error(
+            self.set_error(
                 Error(
                     code=ErrorCode.VM_CREATE_FAILED,
                     errors=["failed before launching extensions"],
                 )
             )
+            return
 
         if vm_data.provisioning_state == "Failed":
-            return self.set_failed(vm_data)
+            self.set_failed(vm_data)
+            return
 
         if not self.ip:
             self.ip = get_public_ip(vm_data.network_profile.network_interfaces[0].id)
@@ -126,7 +130,8 @@ class Repro(BASE_REPRO, ORMMixin):
         )
         result = vm.add_extensions(extensions)
         if isinstance(result, Error):
-            return self.set_error(result)
+            self.set_error(result)
+            return
         elif result:
             self.state = VmState.running
 

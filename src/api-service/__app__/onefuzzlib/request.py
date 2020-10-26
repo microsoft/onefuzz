@@ -80,8 +80,8 @@ def ok(
 def not_ok(
     error: Error, *, status_code: int = 400, context: Union[str, UUID]
 ) -> HttpResponse:
-    if 400 <= status_code and status_code <= 599:
-        logging.error("request error - %s: %s" % (str(context), error.json()))
+    if 400 <= status_code <= 599:
+        logging.error("request error - %s: %s", str(context), error.json())
 
         return HttpResponse(
             error.json(), status_code=status_code, mimetype="application/json"
