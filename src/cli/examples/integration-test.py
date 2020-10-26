@@ -68,13 +68,13 @@ TARGETS: Dict[str, Integration] = {
         os=OS.linux,
         target_exe="fuzz.exe",
         inputs="seeds",
-        wait_for_files=[ContainerType.unique_reports],
+        wait_for_files=[ContainerType.unique_reports, ContainerType.coverage],
     ),
     "linux-libfuzzer-rust": Integration(
         template=TemplateType.libfuzzer,
         os=OS.linux,
         target_exe="fuzz_target_1",
-        wait_for_files=[ContainerType.unique_reports],
+        wait_for_files=[ContainerType.unique_reports, ContainerType.coverage],
     ),
     "linux-trivial-crash": Integration(
         template=TemplateType.radamsa,
@@ -96,16 +96,18 @@ TARGETS: Dict[str, Integration] = {
         os=OS.windows,
         target_exe="fuzz.exe",
         inputs="seeds",
+        wait_for_files=[
+            ContainerType.unique_reports,
+            ContainerType.coverage,
+        ],
+    ),
+    "windows-trivial-crash": Integration(
+        template=TemplateType.radamsa,
+        os=OS.windows,
+        target_exe="fuzz.exe",
+        inputs="seeds",
         wait_for_files=[ContainerType.unique_reports],
     ),
-    # TODO: include windows build of radamsa
-    # "windows-trivial-crash": Integration(
-    #     template=TemplateType.libfuzzer,
-    #     os=OS.windows,
-    #     target_exe="fuzz.exe",
-    #     inputs="seeds",
-    #     wait_for_files=[ContainerType.unique_reports],
-    # ),
 }
 
 
