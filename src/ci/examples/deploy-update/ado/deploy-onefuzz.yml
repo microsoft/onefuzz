@@ -47,6 +47,7 @@ stages:
           inputs:
             workingDirectory: "${{ variables.onefuzz_dir }}"
             script: |
+              set -ex
               python -m pip install pipenv tox
               pipenv install
               artifact="artifact"
@@ -61,6 +62,7 @@ stages:
           inputs:
             workingDirectory: "${{ variables.onefuzz_dir }}/$(artifact)"
             script: |
+              set -ex
               unzip onefuzz-deployment-$(onefuzz_release.version).zip
               pip install -r requirements.txt
               wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
@@ -73,6 +75,7 @@ stages:
           inputs:
             workingDirectory: "${{ variables.onefuzz_dir }}/$(artifact)"
             script: |
+              set -ex
               az login --service-principal -u $(ONEFUZZ_SERVICE_URL) -p $(AZURE_CLIENT_SECRET) --tenant $(AZURE_TENANT_ID)
               python deploy.py --client_id $(AZURE_CLIENT_ID) --client_secret $(AZURE_CLIENT_SECRET) $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS
               echo "Deployed Onefuzz $(onefuzz_release.version)"
@@ -109,6 +112,7 @@ stages:
           workingDirectory: "$(Pipeline.Workspace)/onefuzz"
           targetType: 'inline'
           script: |
+            set -ex
             sleep 60
             ./onefuzz-cli-$(version).exe config --endpoint $(ONEFUZZ_SERVICE_URL) --client_id "$(AZURE_CLIENT_ID)" --client_secret "$(AZURE_CLIENT_SECRET)"
             ./onefuzz-cli-$(version).exe --version
