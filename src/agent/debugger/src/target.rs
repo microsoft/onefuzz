@@ -491,24 +491,31 @@ impl Target {
             }
         };
 
-        let context = self.get_current_context_mut()?;
-        context.set_program_counter(pc);
+        {
+            let context = self.get_current_context_mut()?;
+            context.set_program_counter(pc);
 
-        // We need to single step if we need to restore the breakpoint.
-        let single_step = match handle_breakpoint {
-            HandleBreakpoint::User(_, single_step) => single_step,
+            // We need to single step if we need to restore the breakpoint.
+            let single_step = match handle_breakpoint {
+                HandleBreakpoint::User(_, single_step) => single_step,
 
-            // Single step only when in a recursive call, which is inferred when the current
-            // stack pointer (from context) is less then at the target to step out from (rsp).
-            // Note this only works if the stack grows down.
-            HandleBreakpoint::StepOut(rsp) => rsp > context.stack_pointer(),
-        };
+                // Single step only when in a recursive call, which is inferred when the current
+                // stack pointer (from context) is less then at the target to step out from (rsp).
+                // Note this only works if the stack grows down.
+                HandleBreakpoint::StepOut(rsp) => rsp > context.stack_pointer(),
+            };
 
-        if single_step {
-            context.set_single_step(true);
-            self.single_step
-                .insert(self.current_thread_handle, StepState::Breakpoint { pc });
+            if single_step {
+                context.set_single_step(true);
+                self.single_step
+                    .insert(self.current_thread_handle, StepState::Breakpoint { pc });
+            }
         }
+
+        let current_thread_handle = self.current_thread_handle;
+        let context = self.get_current_context_mut()?;
+        context.set_thread_context(current_thread_handle)?;
+        self.context_is_modified = false;
 
         Ok(match handle_breakpoint {
             HandleBreakpoint::User(id, _) => Some(id),
