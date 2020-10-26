@@ -334,7 +334,7 @@ class DebugNotification(Command):
 
         if reports is None:
             raise Exception(
-                "task does not have a %s container", report_container_type.name
+                "task does not have a %s container" % report_container_type.name
             )
 
         with tempfile.TemporaryDirectory() as tempdir:
