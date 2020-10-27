@@ -141,6 +141,11 @@ class NodeGet(BaseRequest):
     machine_id: UUID
 
 
+class NodeUpdate(BaseRequest):
+    machine_id: UUID
+    debug_keep_node: Optional[bool]
+
+
 class ScalesetSearch(BaseRequest):
     scaleset_id: Optional[UUID]
     state: Optional[List[ScalesetState]]

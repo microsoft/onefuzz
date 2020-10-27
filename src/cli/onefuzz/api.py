@@ -666,6 +666,7 @@ class Tasks(Endpoint):
         analyzer_env: Optional[Dict[str, str]] = None,
         tags: Optional[Dict[str, str]] = None,
         prereq_tasks: Optional[List[UUID]] = None,
+        debug: Optional[List[enums.TaskDebugFlag]] = None,
     ) -> models.Task:
         """ Create a task """
         self.logger.debug("creating task: %s", task_type)
@@ -729,6 +730,7 @@ class Tasks(Endpoint):
             pool=models.TaskPool(count=vm_count, pool_name=pool_name),
             containers=containers_submit,
             tags=tags,
+            debug=debug,
         )
 
         return self.create_with_config(config)
@@ -981,6 +983,28 @@ class Node(Endpoint):
             "PATCH",
             responses.BoolResult,
             data=requests.NodeGet(machine_id=machine_id_expanded),
+        )
+
+    def update(
+        self,
+        machine_id: UUID_EXPANSION,
+        *,
+        debug_keep_node: Optional[bool] = None,
+    ) -> responses.BoolResult:
+        self.logger.debug("update node: %s", machine_id)
+        machine_id_expanded = self._disambiguate_uuid(
+            "machine_id",
+            machine_id,
+            lambda: [str(x.machine_id) for x in self.list()],
+        )
+
+        return self._req_model(
+            "POST",
+            responses.BoolResult,
+            data=requests.NodeUpdate(
+                machine_id=machine_id_expanded,
+                debug_keep_node=debug_keep_node,
+            ),
         )
 
     def list(
