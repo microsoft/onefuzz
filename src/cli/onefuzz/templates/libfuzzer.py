@@ -5,7 +5,7 @@
 
 from typing import Dict, List, Optional
 
-from onefuzztypes.enums import ContainerType, TaskType, TaskDebugFlag
+from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 

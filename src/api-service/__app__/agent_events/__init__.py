@@ -12,8 +12,8 @@ from onefuzztypes.enums import (
     ErrorCode,
     NodeState,
     NodeTaskState,
-    TaskState,
     TaskDebugFlag,
+    TaskState,
 )
 from onefuzztypes.models import (
     Error,
