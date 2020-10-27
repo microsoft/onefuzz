@@ -28,7 +28,7 @@ trigger: none
 
 variables:
   - name: onefuzz_dir
-    value: "ci/deployment/onefuzz"
+    value: "ci/deployment/onefuzz" # Modify the location to the script location
 
 stages:
 - stage: Deploy
