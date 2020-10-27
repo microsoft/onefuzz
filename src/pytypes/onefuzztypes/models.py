@@ -26,11 +26,11 @@ from .enums import (
     PoolState,
     ScalesetState,
     StatsFormat,
+    TaskDebugFlag,
     TaskFeature,
     TaskState,
     TaskType,
     VmState,
-    TaskDebugFlag,
 )
 from .primitives import Container, PoolName, Region
 

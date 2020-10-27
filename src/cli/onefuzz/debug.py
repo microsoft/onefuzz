@@ -8,7 +8,6 @@ import os
 import shutil
 import subprocess  # nosec
 import tempfile
-import time
 from typing import Any, List, Optional, Tuple
 from urllib.parse import urlparse
 from uuid import UUID
