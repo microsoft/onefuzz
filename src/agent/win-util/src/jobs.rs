@@ -44,10 +44,9 @@ use winapi::{
     },
 };
 
-use crate::{last_os_error, string};
-use winapi::{
-    shared::minwindef::LPHANDLE,
-    um::{handleapi::DuplicateHandle, winnt::DUPLICATE_SAME_ACCESS},
+use crate::{
+    handle::Handle,
+    {last_os_error, string},
 };
 
 #[derive(Clone)]
@@ -537,37 +536,6 @@ impl JobObjectNotification {
         }
     }
 }
-
-struct Handle(HANDLE);
-
-impl Clone for Handle {
-    fn clone(&self) -> Self {
-        let mut duplicate = INVALID_HANDLE_VALUE;
-        unsafe {
-            let current_process = GetCurrentProcess();
-            DuplicateHandle(
-                current_process,
-                self.0,
-                current_process,
-                &mut duplicate as LPHANDLE,
-                0,
-                FALSE,
-                DUPLICATE_SAME_ACCESS,
-            );
-        }
-
-        Self(duplicate)
-    }
-}
-
-impl Drop for Handle {
-    fn drop(&mut self) {
-        unsafe { CloseHandle(self.0) };
-    }
-}
-
-unsafe impl Send for Handle {}
-unsafe impl Sync for Handle {}
 
 fn jobobject_notification_threadproc<F: Fn(JobObjectNotification)>(
     completion_port: Handle,

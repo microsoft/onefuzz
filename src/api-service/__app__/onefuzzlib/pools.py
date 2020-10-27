@@ -62,6 +62,8 @@ from .azure.vmss import (
 from .extension import fuzz_extensions
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 
+NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
+
 # Future work:
 #
 # Enabling autoscaling for the scalesets based on the pool work queues.
@@ -277,6 +279,18 @@ class Node(BASE_NODE, ORMMixin):
         """ Tell the node to stop everything. """
         self.set_shutdown()
         self.stop()
+
+    @classmethod
+    def get_dead_nodes(
+        cls, scaleset_id: UUID, expiration_period: datetime.timedelta
+    ) -> List["Node"]:
+        time_filter = "heartbeat lt datetime'%s'" % (
+            (datetime.datetime.utcnow() - expiration_period).isoformat()
+        )
+        return cls.search(
+            query={"scaleset_id": [scaleset_id]},
+            raw_unchecked_filter=time_filter,
+        )
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
@@ -743,6 +757,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     # only add nodes that are not already set to reschedule
                     to_reimage.append(node)
 
+        dead_nodes = Node.get_dead_nodes(self.scaleset_id, NODE_EXPIRATION_TIME)
+        for node in dead_nodes:
+            node.set_halt()
+            to_reimage.append(node)
+
         # Perform operations until they fail due to scaleset getting locked
         try:
             if to_delete:
@@ -904,7 +923,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     def update_nodes(self) -> None:
         # Be in at-least 'setup' before checking for the list of VMs
-        if self.state == self.init:
+        if self.state == ScalesetState.init:
             return
 
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
@@ -939,7 +958,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         pool = Pool.get_by_name(self.pool_name)
         if isinstance(pool, Error):
             self.error = pool
-            return self.halt()
+            self.halt()
+            return
 
         logging.debug("updating scaleset configs: %s", self.scaleset_id)
         extensions = fuzz_extensions(self.region, pool.os, self.pool_name)
