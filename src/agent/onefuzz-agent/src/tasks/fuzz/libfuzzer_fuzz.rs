@@ -8,7 +8,7 @@ use onefuzz::{
     fs::list_files,
     libfuzzer::{LibFuzzer, LibFuzzerLine},
     process::ExitStatus,
-    syncdir::{SyncOperation::Pull, SyncedDir},
+    syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     system,
     telemetry::{
         Event::{new_coverage, new_result, process_stats, runtime_stats},
@@ -23,7 +23,7 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
     task,
-    time::{self, Duration, Instant},
+    time::{self, Duration},
 };
 use uuid::Uuid;
 
@@ -35,9 +35,6 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
-
-// Minimum delay between input corpus sync
-const SYNC_DELAY: Duration = Duration::from_secs(60);
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
@@ -72,6 +69,7 @@ impl LibFuzzerFuzzTask {
         let hb_client = self.config.common.init_heartbeat().await?;
 
         // To be scheduled.
+        let resync = self.continuous_sync_inputs();
         let new_inputs = self.config.inputs.monitor_results(new_coverage);
         let new_crashes = self.config.crashes.monitor_results(new_result);
 
@@ -84,7 +82,7 @@ impl LibFuzzerFuzzTask {
 
         let fuzzers = try_join_all(fuzzers);
 
-        futures::try_join!(new_inputs, new_crashes, fuzzers, report_stats)?;
+        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
         Ok(())
     }
@@ -98,47 +96,44 @@ impl LibFuzzerFuzzTask {
         worker_id: u64,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
-        let mut input_dirs = vec![self.config.inputs.clone()];
-        if let Some(inputs) = &self.config.readonly_inputs {
-            let inputs = inputs.clone();
-            input_dirs.extend(inputs);
-        }
-        let mut last_sync = Instant::now() - SYNC_DELAY;
-
+        let local_input_dir = tempdir()?;
         loop {
-            if Instant::now() - last_sync >= SYNC_DELAY {
-                for dir in &input_dirs {
-                    dir.sync(Pull).await?;
-                }
-                last_sync = Instant::now();
+            self.run_fuzzer(&local_input_dir.path(), worker_id, stats_sender)
+                .await?;
+
+            let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
+            while let Some(Ok(entry)) = entries.next().await {
+                let destination_path = self.config.inputs.path.clone().join(entry.file_name());
+                tokio::fs::copy(entry.path(), destination_path).await?;
             }
-            self.run_fuzzer(worker_id, stats_sender).await?;
         }
     }
 
     // Fuzz with a libFuzzer until it exits.
     //
     // While it runs, parse stderr for progress metrics, and report them.
-    async fn run_fuzzer(&self, worker_id: u64, stats_sender: Option<&StatsSender>) -> Result<()> {
+    async fn run_fuzzer(
+        &self,
+        local_inputs: impl AsRef<std::path::Path>,
+        worker_id: u64,
+        stats_sender: Option<&StatsSender>,
+    ) -> Result<()> {
         let crash_dir = tempdir()?;
         let run_id = Uuid::new_v4();
 
         info!("starting fuzzer run, run_id = {}", run_id);
 
-        let inputs: Vec<_> = {
-            if let Some(readonly_inputs) = &self.config.readonly_inputs {
-                readonly_inputs.iter().map(|d| &d.path).collect()
-            } else {
-                vec![]
-            }
-        };
+        let mut inputs = vec![&self.config.inputs.path];
+        if let Some(readonly_inputs) = &self.config.readonly_inputs {
+            readonly_inputs.iter().for_each(|d| inputs.push(&d.path));
+        }
 
         let fuzzer = LibFuzzer::new(
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
         );
-        let mut running = fuzzer.fuzz(crash_dir.path(), &self.config.inputs.path, &inputs)?;
+        let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
 
         let sys_info = task::spawn(report_fuzzer_sys_info(worker_id, run_id, running.id()));
 
@@ -194,6 +189,15 @@ impl LibFuzzerFuzzTask {
             }
         }
         Ok(())
+    }
+
+    async fn continuous_sync_inputs(&self) -> Result<()> {
+        let mut dirs = vec![self.config.inputs.clone()];
+        if let Some(inputs) = &self.config.readonly_inputs {
+            let inputs = inputs.clone();
+            dirs.extend(inputs);
+        }
+        continuous_sync(&dirs, Pull, None).await
     }
 }
 
