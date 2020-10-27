@@ -136,6 +136,21 @@ impl CoverageRecorder {
 
         let mut cmd = Command::new("cdb.exe");
 
+        // Unless users explicitly set symbol path, don't perform external symbols 
+        // lookup during sancov extraction
+        if !self.config.target_env.contains_key("_NT_SYMBOL_PATH") {
+            cmd.arg("-sins");
+        }
+
+
+        if let Some(v) = env.get_mut("_NT_SYMBOL_PATH") {
+            let log_path = format!(";cache*{}", self.config.setup.path().display());
+            v.push_str(&log_path);
+        } else {
+            let log_path = format!("cache*{}", self.config.setup.path().display());
+            env.insert("_NT_SYMBOL_PATH".to_string(), log_path);
+        }    
+
         cmd.arg("-c")
             .arg(cdb_cmd)
             .arg(&self.config.target_exe)

@@ -106,6 +106,8 @@ impl CoverageTask {
             fs::remove_dir_all(&dir.path).await?;
         }
         self.config.coverage.sync_push().await?;
+        processor.report_total().await?;
+
 
         info!(
             "recorded coverage for {} containers in `readonly_inputs`",
