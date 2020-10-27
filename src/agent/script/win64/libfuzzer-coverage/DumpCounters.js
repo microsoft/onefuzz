@@ -72,6 +72,10 @@ function writeCounters(data, covFilename) {
 }
 
 function processModule(module, results_dir) {
+    if (!module.Name.startsWith("C:\\onefuzz\\")) {
+        logln(`not processing ${module.Name}`);
+        return false;
+    }
     logln(`processing ${module.Name}`);
     let table = findCounterTable(module);
     if (table == null) {
