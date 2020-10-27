@@ -73,12 +73,11 @@ pub async fn send_retry_reqwest<
                 anyhow::Error::msg("Maximum number of attempts reached for this request"),
             ))
         } else {
-            let request = build_request()?;
+            let request = build_request().map_err(backoff::Error::Permanent)?;
             let response = request.send().await;
             Result::<Response, backoff::Error<anyhow::Error>>::Ok(error_mapper(response)?)
         }
     };
-
     let result = op
         .retry(ExponentialBackoff {
             current_interval: retry_period,
@@ -129,35 +128,18 @@ impl SendRetry for reqwest::RequestBuilder {
         max_retry: i32,
         response_mapper: F,
     ) -> Result<Response> {
-        let counter = AtomicI32::new(0);
-        let op = || async {
-            if (counter.fetch_add(1, Ordering::SeqCst) >= max_retry) {
-                Result::<Response, backoff::Error<anyhow::Error>>::Err(backoff::Error::Permanent(
-                    anyhow::Error::msg("Maximum number of attempts reached for this request"),
-                ))
-            } else {
-                let response = self
-                    .try_clone()
-                    .ok_or_else(|| {
-                        backoff::Error::Permanent(anyhow::Error::msg(
-                            "This request cannot be retried because it cannot be cloned",
-                        ))
-                    })?
-                    .send()
-                    .await;
-                let backoff_response = response_mapper(response)?;
-                Result::<Response, backoff::Error<anyhow::Error>>::Ok(backoff_response)
-            }
-        };
-
-        let result = op
-            .retry(ExponentialBackoff {
-                current_interval: retry_period,
-                initial_interval: retry_period,
-                max_elapsed_time: Some(max_elapsed_time),
-                ..ExponentialBackoff::default()
-            })
-            .await?;
+        let result = send_retry_reqwest(
+            || {
+                self.try_clone().ok_or_else(|| {
+                    anyhow::Error::msg("This request cannot be retried because it cannot be cloned")
+                })
+            },
+            retry_period,
+            max_elapsed_time,
+            max_retry,
+            response_mapper,
+        )
+        .await?;
 
         Ok(result)
     }
