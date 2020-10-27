@@ -9,7 +9,7 @@ import os
 import subprocess  # nosec
 from typing import Dict, List, Optional, Tuple
 
-from onefuzztypes.enums import OS, ContainerType
+from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag
 from onefuzztypes.models import NotificationConfig
 from onefuzztypes.primitives import File
 
@@ -113,6 +113,7 @@ class OssFuzz(Command):
         max_target_count: int = 20,
         sync_inputs: bool = False,
         notification_config: Optional[NotificationConfig] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
     ) -> None:
         """ OssFuzz style libfuzzer jobs """
 
@@ -234,6 +235,7 @@ class OssFuzz(Command):
                 target_options=target_options,
                 target_env=target_env,
                 tags=helper.tags,
+                debug=debug,
             )
             helpers.append(helper)
         base_helper.wait()

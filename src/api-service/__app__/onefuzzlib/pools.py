@@ -847,7 +847,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.debug("scaleset delete will delete node: %s", self.scaleset_id)
             return
 
-        machine_ids = [x.machine_id for x in nodes]
+        machine_ids = []
+        for node in nodes:
+            if node.debug_keep_node:
+                logging.warning(
+                    "delete manually overridden %s:%s",
+                    self.scaleset_id,
+                    node.machine_id,
+                )
+            else:
+                machine_ids.append(node.machine_id)
 
         logging.info("deleting %s:%s", self.scaleset_id, machine_ids)
         delete_vmss_nodes(self.scaleset_id, machine_ids)
@@ -865,7 +874,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.debug("scaleset delete will delete node: %s", self.scaleset_id)
             return
 
-        machine_ids = [x.machine_id for x in nodes]
+        machine_ids = []
+        for node in nodes:
+            if node.debug_keep_node:
+                logging.warning(
+                    "reimage manually overridden %s:%s",
+                    self.scaleset_id,
+                    node.machine_id,
+                )
+            else:
+                machine_ids.append(node.machine_id)
 
         result = reimage_vmss_nodes(self.scaleset_id, machine_ids)
         if isinstance(result, Error):
