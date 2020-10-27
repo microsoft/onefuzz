@@ -72,7 +72,7 @@ function writeCounters(data, covFilename) {
 }
 
 function processModule(module, results_dir) {
-    if (!module.Name.startsWith("C:\\onefuzz\\")) {
+    if (module.Name.toLowerCase("c:\\windows\\")) {
         logln(`not processing ${module.Name}`);
         return false;
     }
