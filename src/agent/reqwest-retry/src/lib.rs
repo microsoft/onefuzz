@@ -19,23 +19,18 @@ fn to_backoff_response(
 ) -> Result<Response, backoff::Error<anyhow::Error>> {
     match result {
         Err(error) => Err(backoff::Error::Permanent(anyhow::Error::from(error))),
-        Ok(response) => response
-            .error_for_status()
-            .map_err(|error| match error.status() {
-                Some(StatusCode::REQUEST_TIMEOUT)
-                | Some(StatusCode::TOO_MANY_REQUESTS)
-                | Some(StatusCode::INTERNAL_SERVER_ERROR)
-                | Some(StatusCode::BAD_GATEWAY)
-                | Some(StatusCode::SERVICE_UNAVAILABLE)
-                | Some(StatusCode::GATEWAY_TIMEOUT) => {
-                    log::warn!("Transient error: {}", error);
-                    backoff::Error::Transient(anyhow::Error::from(error))
-                }
-                _ => {
-                    log::warn!("Permanent error: {}", error);
-                    backoff::Error::Permanent(anyhow::Error::from(error))
-                }
-            }),
+        Ok(response) => match response.status() {
+            status if status.is_success() => Ok(response),
+            StatusCode::REQUEST_TIMEOUT
+            | StatusCode::TOO_MANY_REQUESTS
+            | StatusCode::INTERNAL_SERVER_ERROR
+            | StatusCode::BAD_GATEWAY
+            | StatusCode::SERVICE_UNAVAILABLE
+            | StatusCode::GATEWAY_TIMEOUT => Ok(response
+                .error_for_status()
+                .map_err(|error| backoff::Error::Transient(anyhow::Error::from(error)))?),
+            _ => Ok(response),
+        },
     }
 }
 
