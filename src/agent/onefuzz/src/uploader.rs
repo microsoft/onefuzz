@@ -6,7 +6,7 @@ use std::path::Path;
 use anyhow::Result;
 use futures::stream::TryStreamExt;
 use reqwest as r;
-use reqwest_retry::SendRetry;
+use reqwest_retry::{send_retry_reqwest_default, SendRetry};
 use serde::Serialize;
 use tokio::{fs, io};
 use tokio_util::codec;
@@ -32,13 +32,6 @@ impl BlobUploader {
         let metadata = fs::metadata(file_path).await?;
         let file_len = metadata.len();
 
-        let file = fs::File::open(file_path).await?;
-        let reader = io::BufReader::new(file);
-        let codec = codec::BytesCodec::new();
-        let file_stream = codec::FramedRead::new(reader, codec).map_ok(bytes::BytesMut::freeze);
-
-        let body = r::Body::wrap_stream(file_stream);
-
         let url = {
             let url_path = self.url.path();
             let blob_path = format!("{}/{}", url_path, file_name);
@@ -55,14 +48,22 @@ impl BlobUploader {
 
         let content_length = format!("{}", file_len);
 
-        let resp = self
-            .client
-            .put(url)
-            .header("Content-Length", &content_length)
-            .header("x-ms-blob-type", "BlockBlob")
-            .body(body)
-            .send_retry_default()
-            .await?;
+        let resp = send_retry_reqwest_default(|| {
+            let file = fs::File::from_std(std::fs::File::open(file_path)?);
+            let reader = io::BufReader::new(file);
+            let codec = codec::BytesCodec::new();
+            let file_stream = codec::FramedRead::new(reader, codec).map_ok(bytes::BytesMut::freeze);
+
+            let request_builder = self
+                .client
+                .put(url.clone())
+                .header("Content-Length", &content_length)
+                .header("x-ms-blob-type", "BlockBlob")
+                .body(r::Body::wrap_stream(file_stream));
+
+            Ok(request_builder)
+        })
+        .await?;
 
         Ok(resp)
     }
