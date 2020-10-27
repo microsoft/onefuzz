@@ -72,7 +72,7 @@ function writeCounters(data, covFilename) {
 }
 
 function processModule(module, results_dir) {
-    if (module.Name.toLowerCase("c:\\windows\\")) {
+    if (module.Name.toLowerCase().startsWith("c:\\windows\\")) {
         logln(`not processing ${module.Name}`);
         return false;
     }
