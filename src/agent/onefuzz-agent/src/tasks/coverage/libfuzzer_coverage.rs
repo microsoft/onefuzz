@@ -108,7 +108,6 @@ impl CoverageTask {
         self.config.coverage.sync_push().await?;
         processor.report_total().await?;
 
-
         info!(
             "recorded coverage for {} containers in `readonly_inputs`",
             self.config.readonly_inputs.len(),
