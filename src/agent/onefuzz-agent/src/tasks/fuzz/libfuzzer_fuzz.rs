@@ -104,7 +104,7 @@ impl LibFuzzerFuzzTask {
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
             while let Some(Ok(entry)) = entries.next().await {
                 let destination_path = self.config.inputs.path.clone().join(entry.file_name());
-                tokio::fs::copy(entry.path(), destination_path).await?;
+                tokio::fs::rename(entry.path(), destination_path).await?;
             }
         }
     }
