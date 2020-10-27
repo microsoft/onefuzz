@@ -118,4 +118,3 @@ stages:
             ./onefuzz-cli-$(version).exe --version
             compatible="$(./onefuzz-cli-$(version).exe versions check --exact)"
             if [[ $compatible != *"compatible"* ]]; then exit -1; fi
-            ./onefuzz-cli-$(version).exe reset --pools --scalesets --jobs --tasks --notifications --repros --yes
