@@ -5,7 +5,7 @@
 
 from typing import Dict, List, Optional
 
-from onefuzztypes.enums import OS, ContainerType, TaskType
+from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
@@ -47,6 +47,7 @@ class Radamsa(Command):
         disable_check_debugger: bool = False,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
     ) -> Optional[Job]:
         """ Basic radamsa job """
 
@@ -160,6 +161,7 @@ class Radamsa(Command):
             check_debugger=not disable_check_debugger,
             tags=helper.tags,
             rename_output=rename_output,
+            debug=debug,
         )
 
         report_containers = [
@@ -190,6 +192,7 @@ class Radamsa(Command):
             check_debugger=not disable_check_debugger,
             check_retry_count=check_retry_count,
             prereq_tasks=[fuzzer_task.task_id],
+            debug=debug,
         )
 
         if helper.platform == OS.windows:
@@ -230,6 +233,7 @@ class Radamsa(Command):
                 analyzer_env=analyzer_env,
                 tags=helper.tags,
                 prereq_tasks=[fuzzer_task.task_id],
+                debug=debug,
             )
 
         self.logger.info("done creating tasks")
