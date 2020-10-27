@@ -351,3 +351,8 @@ class GithubIssueState(Enum):
 class GithubIssueSearchMatch(Enum):
     title = "title"
     body = "body"
+
+
+class TaskDebugFlag(Enum):
+    keep_node_on_failure = "keep_node_on_failure"
+    keep_node_on_completion = "keep_node_on_completion"

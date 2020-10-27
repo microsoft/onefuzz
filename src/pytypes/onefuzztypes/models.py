@@ -26,6 +26,7 @@ from .enums import (
     PoolState,
     ScalesetState,
     StatsFormat,
+    TaskDebugFlag,
     TaskFeature,
     TaskState,
     TaskType,
@@ -176,6 +177,7 @@ class TaskConfig(BaseModel):
     pool: Optional[TaskPool]
     containers: List[TaskContainers]
     tags: Dict[str, str]
+    debug: Optional[List[TaskDebugFlag]]
 
 
 class BlobRef(BaseModel):
@@ -444,6 +446,7 @@ class Node(BaseModel):
     version: str = Field(default="1.0.0")
     reimage_requested: bool = Field(default=False)
     delete_requested: bool = Field(default=False)
+    debug_keep_node: bool = Field(default=False)
 
 
 class ScalesetSummary(BaseModel):
