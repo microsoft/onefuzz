@@ -142,12 +142,14 @@ impl CoverageRecorder {
             cmd.arg("-sins");
         }
 
-        if let Some(v) = env.get_mut("_NT_SYMBOL_PATH") {
+        let mut target_env = self.config.target_env.clone();
+
+        if let Some(v) = target_env.get_mut("_NT_SYMBOL_PATH") {
             let log_path = format!(";cache*{}", self.config.setup.path().display());
             v.push_str(&log_path);
         } else {
             let log_path = format!("cache*{}", self.config.setup.path().display());
-            env.insert("_NT_SYMBOL_PATH".to_string(), log_path);
+            target_env.insert("_NT_SYMBOL_PATH".to_string(), log_path);
         }
 
         cmd.arg("-c")
@@ -158,7 +160,7 @@ impl CoverageRecorder {
             .stderr(Stdio::piped())
             .kill_on_drop(true);
 
-        for (k, v) in &self.config.target_env {
+        for (k, v) in &target_env {
             cmd.env(k, v);
         }
 
