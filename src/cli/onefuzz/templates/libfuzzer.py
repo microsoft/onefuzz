@@ -5,7 +5,7 @@
 
 from typing import Dict, List, Optional
 
-from onefuzztypes.enums import ContainerType, TaskType
+from onefuzztypes.enums import ContainerType, TaskType, TaskDebugFlag
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
@@ -46,6 +46,7 @@ class Libfuzzer(Command):
         tags: Optional[Dict[str, str]] = None,
         check_retry_count: Optional[int] = None,
         crash_report_timeout: Optional[int] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
     ) -> None:
 
         fuzzer_containers = [
@@ -67,6 +68,7 @@ class Libfuzzer(Command):
             target_env=target_env,
             target_workers=target_workers,
             tags=tags,
+            debug=debug,
         )
 
         coverage_containers = [
@@ -88,6 +90,7 @@ class Libfuzzer(Command):
             target_env=target_env,
             tags=tags,
             prereq_tasks=[fuzzer_task.task_id],
+            debug=debug,
         )
 
         report_containers = [
@@ -114,6 +117,7 @@ class Libfuzzer(Command):
             prereq_tasks=[fuzzer_task.task_id],
             target_timeout=crash_report_timeout,
             check_retry_count=check_retry_count,
+            debug=debug,
         )
 
     def basic(
@@ -141,6 +145,7 @@ class Libfuzzer(Command):
         existing_inputs: Optional[Container] = None,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
     ) -> Optional[Job]:
         """ Basic libfuzzer job """
 
@@ -207,6 +212,7 @@ class Libfuzzer(Command):
             tags=helper.tags,
             crash_report_timeout=crash_report_timeout,
             check_retry_count=check_retry_count,
+            debug=debug,
         )
 
         self.logger.info("done creating tasks")

@@ -8,7 +8,13 @@ from typing import Optional, cast
 from uuid import UUID
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, NodeState, NodeTaskState, TaskState
+from onefuzztypes.enums import (
+    ErrorCode,
+    NodeState,
+    NodeTaskState,
+    TaskState,
+    TaskDebugFlag,
+)
 from onefuzztypes.models import (
     Error,
     NodeDoneEventData,
@@ -173,8 +179,21 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> None:
                     ],
                 )
             )
+            if task.config.debug and (
+                TaskDebugFlag.keep_node_on_failure in task.config.debug
+                or TaskDebugFlag.keep_node_on_completion in task.config.debug
+            ):
+                node.manual_reset_override = True
+                node.save()
+
         else:
             task.mark_stopping()
+            if (
+                task.config.debug
+                and TaskDebugFlag.keep_node_on_completion in task.config.debug
+            ):
+                node.manual_reset_override = True
+                node.save()
 
         node.to_reimage(done=True)
     else:

@@ -5,7 +5,7 @@
 
 from typing import Dict, List, Optional
 
-from onefuzztypes.enums import OS, ContainerType, StatsFormat, TaskType
+from onefuzztypes.enums import OS, ContainerType, StatsFormat, TaskType, TaskDebugFlag
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
@@ -51,6 +51,7 @@ class AFL(Command):
         existing_inputs: Optional[Container] = None,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
     ) -> Optional[Job]:
         """
         Basic AFL job
@@ -144,6 +145,7 @@ class AFL(Command):
             stats_format=StatsFormat.AFL,
             task_wait_for_files=ContainerType.inputs,
             tags=helper.tags,
+            debug=debug,
         )
 
         report_containers = [
@@ -170,6 +172,7 @@ class AFL(Command):
             check_debugger=True,
             tags=tags,
             prereq_tasks=[fuzzer_task.task_id],
+            debug=debug,
         )
 
         self.logger.info("done creating tasks")

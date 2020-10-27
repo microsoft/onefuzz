@@ -170,19 +170,6 @@ class DebugTask(Command):
 
         raise Exception("unable to find scaleset node running on task")
 
-    def disable_node_reset(
-        self, task_id: UUID_EXPANSION, *, node_id: Optional[UUID] = None
-    ) -> None:
-        while True:
-            try:
-                scaleset_id, node_id = self._get_node(task_id=task_id, node_id=node_id)
-                self.onefuzz.nodes.update(node_id, manual_reset_override=True)
-                break
-            except Exception as err:
-                if "task is not currently executing on nodes" not in str(err):
-                    raise err
-                time.sleep(1)
-
     def ssh(
         self,
         task_id: UUID_EXPANSION,

@@ -666,6 +666,7 @@ class Tasks(Endpoint):
         analyzer_env: Optional[Dict[str, str]] = None,
         tags: Optional[Dict[str, str]] = None,
         prereq_tasks: Optional[List[UUID]] = None,
+        debug: Optional[List[enums.TaskDebugFlag]] = None,
     ) -> models.Task:
         """ Create a task """
         self.logger.debug("creating task: %s", task_type)
@@ -729,6 +730,7 @@ class Tasks(Endpoint):
             pool=models.TaskPool(count=vm_count, pool_name=pool_name),
             containers=containers_submit,
             tags=tags,
+            debug=debug,
         )
 
         return self.create_with_config(config)

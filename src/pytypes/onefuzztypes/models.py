@@ -30,6 +30,7 @@ from .enums import (
     TaskState,
     TaskType,
     VmState,
+    TaskDebugFlag,
 )
 from .primitives import Container, PoolName, Region
 
@@ -176,6 +177,7 @@ class TaskConfig(BaseModel):
     pool: Optional[TaskPool]
     containers: List[TaskContainers]
     tags: Dict[str, str]
+    debug: Optional[List[TaskDebugFlag]]
 
 
 class BlobRef(BaseModel):
