@@ -217,7 +217,7 @@ class Client:
 
     def create_password(self, object_id):
         # Work-around the race condition where the app is created but passwords cannot
-        # be created yet.
+        # be created yet. Timeout after 60 seconds.
         count = 0
         while True:
             time.sleep(5)
@@ -225,7 +225,7 @@ class Client:
             try:
                 return add_application_password(object_id)
             except CLIError as err:
-                if count > 5:
+                if count > 12:
                     raise err
             logger.info("creating password failed, trying again")
 
@@ -305,6 +305,8 @@ class Client:
             client.applications.update_password_credentials(app.object_id, creds)
 
         (password_id, password) = self.create_password(app.object_id)
+
+        logging.info('Service principal password: %s', password)
 
         onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
         cli_app = get_application(onefuzz_cli_app_uuid)
@@ -605,7 +607,10 @@ class Client:
 
     def update_registration(self):
         if not self.create_registration:
+            print('NO POOL REGISTRATION',flush=True)
             return
+        else:
+            print('POOL REGISTRATION!',flush=True)
         update_registration(self.application_name)
 
     def done(self):
@@ -706,10 +711,9 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument(
         "--create_pool_registration",
-        default=False,
-        type=bool,
+        action="store_true",
         help="Create an application registration and/or generate a "
-        "password for the pool agent (default: False)",
+        "password for the pool agent",
     )
     parser.add_argument(
         "--apply_migrations",
