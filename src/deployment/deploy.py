@@ -89,7 +89,6 @@ FUNC_TOOLS_ERROR = (
 
 logger = logging.getLogger("deploy")
 
-
 def gen_guid():
     return str(uuid.uuid4())
 
@@ -112,6 +111,7 @@ class Client:
         create_registration,
         migrations,
         export_appinsights: bool,
+        log_service_principal: bool,
     ):
         self.resource_group = resource_group
         self.arm_template = arm_template
@@ -133,6 +133,7 @@ class Client:
         }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
+        self.log_service_principal = log_service_principal
 
         machine = platform.machine()
         system = platform.system()
@@ -217,15 +218,17 @@ class Client:
 
     def create_password(self, object_id):
         # Work-around the race condition where the app is created but passwords cannot
-        # be created yet. Timeout after 60 seconds.
+        # be created yet.
         count = 0
+        wait = 5
+        timeout_seconds = 60
         while True:
-            time.sleep(5)
+            time.sleep(wait)
             count += 1
             try:
                 return add_application_password(object_id)
             except CLIError as err:
-                if count > 12:
+                if count > timeout_seconds/wait:
                     raise err
             logger.info("creating password failed, trying again")
 
@@ -306,8 +309,6 @@ class Client:
 
         (password_id, password) = self.create_password(app.object_id)
 
-        logger.info('service principal password: %s', password)
-
         onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
         cli_app = get_application(onefuzz_cli_app_uuid)
 
@@ -329,7 +330,10 @@ class Client:
         self.results["client_secret"] = password
 
         # Log `client_secret` for consumption by CI.
-        logger.debug("client_id: %s client_secret: %s", app.app_id, password)
+        if self.log_service_principal:
+            logger.info("client_id: %s client_secret: %s", app.app_id, password)
+        else:
+            logger.debug("client_id: %s client_secret: %s", app.app_id, password)
 
     def deploy_template(self):
         logger.info("deploying arm template: %s", self.arm_template)
@@ -724,6 +728,11 @@ def main():
         action="store_true",
         help="enable appinsight log export",
     )
+    parser.add_argument(
+        "--log_service_principal",
+        action="store_true",
+        help="display service prinipal with info log level",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -746,6 +755,7 @@ def main():
         args.create_pool_registration,
         args.apply_migrations,
         args.export_appinsights,
+        args.log_service_principal,
     )
     if args.verbose:
         level = logging.DEBUG
