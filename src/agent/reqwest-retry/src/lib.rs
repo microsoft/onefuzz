@@ -74,12 +74,12 @@ pub async fn send_retry_reqwest<
         }
     };
     let result = op
-        .retry(ExponentialBackoff {
+        .retry_notify(ExponentialBackoff {
             current_interval: retry_period,
             initial_interval: retry_period,
             max_elapsed_time: Some(max_elapsed_time),
             ..ExponentialBackoff::default()
-        })
+        }, |err, _| log::warn!("Transient error: {}", err))
         .await?;
     Ok(result)
 }
