@@ -88,7 +88,7 @@ function dumpCounters(results_dir, sample_name) {
     execute(".restart");
 
     // Disable FCE from sanitizers.
-    execute("sxi av");
+    execute("sxd av");
 
     // Run to exit break in `ntdll!NtTerminateProcess`.
     execute("g");
