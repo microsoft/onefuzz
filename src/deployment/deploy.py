@@ -607,10 +607,7 @@ class Client:
 
     def update_registration(self):
         if not self.create_registration:
-            print('NO POOL REGISTRATION',flush=True)
             return
-        else:
-            print('POOL REGISTRATION!',flush=True)
         update_registration(self.application_name)
 
     def done(self):
