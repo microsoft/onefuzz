@@ -306,7 +306,7 @@ class Client:
 
         (password_id, password) = self.create_password(app.object_id)
 
-        logging.info('Service principal password: %s', password)
+        logger.info('service principal password: %s', password)
 
         onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
         cli_app = get_application(onefuzz_cli_app_uuid)
