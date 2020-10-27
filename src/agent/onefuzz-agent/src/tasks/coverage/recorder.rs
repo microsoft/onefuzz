@@ -139,11 +139,18 @@ impl CoverageRecorder {
         // Unless users explicitly set symbol path, don't perform external symbols
         // lookup during sancov extraction
         let mut target_env = self.config.target_env.clone();
-        let cache_path = format!("cache*{}", self.config.target_exe.parent().ok()?.display());
+        let cache_path = format!(
+            "cache*{}",
+            self.config
+                .target_exe
+                .parent()
+                .ok_or_else(format_err!("invalid path parent"))?
+                .display()
+        );
         if let Some(v) = target_env.get_mut("_NT_SYMBOL_PATH") {
             v.push(';');
             v.push_str(&cache_path);
-        } else {            
+        } else {
             target_env.insert("_NT_SYMBOL_PATH".to_string(), cache_path);
         }
 
