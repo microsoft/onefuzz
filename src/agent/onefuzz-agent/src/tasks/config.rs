@@ -109,7 +109,17 @@ impl Config {
             Config::GenericGenerator(_) => "generic_generator",
         };
 
-        event!(task_start; EventData::Type = event_type);
+        match self {
+            Config::GenericGenerator(c) => {
+                event!(task_start; EventData::Type = event_type, EventData::ToolName = c.generator_exe.clone());
+            }
+            Config::GenericAnalysis(c) => {
+                event!(task_start; EventData::Type = event_type, EventData::ToolName = c.analyzer_exe.clone());
+            }
+            _ => {
+                event!(task_start; EventData::Type = event_type);
+            }
+        }
     }
 
     pub async fn run(self) -> Result<()> {

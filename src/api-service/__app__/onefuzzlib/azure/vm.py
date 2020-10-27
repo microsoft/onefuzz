@@ -119,7 +119,7 @@ def get_extension(vm_name: str, extension_name: str) -> Optional[Any]:
     resource_group = get_base_resource_group()
 
     logging.debug(
-        "getting extension: %s:%s:%s - %s",
+        "getting extension: %s:%s:%s",
         resource_group,
         vm_name,
         extension_name,

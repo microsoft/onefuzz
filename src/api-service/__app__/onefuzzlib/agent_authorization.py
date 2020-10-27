@@ -59,7 +59,7 @@ def is_authorized(token_data: TokenData) -> bool:
 
 
 def verify_token(
-    req: func.HttpRequest, func: Callable[[func.HttpRequest], func.HttpResponse]
+    req: func.HttpRequest, method: Callable[[func.HttpRequest], func.HttpResponse]
 ) -> func.HttpResponse:
     token = try_get_token_auth_header(req)
 
@@ -79,4 +79,4 @@ def verify_token(
             context="token verification",
         )
 
-    return func(req)
+    return method(req)

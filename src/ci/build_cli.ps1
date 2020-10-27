@@ -8,6 +8,8 @@ param (
 try { 
     Push-Location
 
+    pip uninstall onefuzztypes -y
+
     # Get Version and Replace versions
     if ($version -eq "$null") {
         $version = bash .\get-version.sh
