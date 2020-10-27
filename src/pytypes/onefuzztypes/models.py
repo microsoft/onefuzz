@@ -446,7 +446,7 @@ class Node(BaseModel):
     version: str = Field(default="1.0.0")
     reimage_requested: bool = Field(default=False)
     delete_requested: bool = Field(default=False)
-    manual_reset_override: bool = Field(default=False)
+    debug_keep_node: bool = Field(default=False)
 
 
 class ScalesetSummary(BaseModel):

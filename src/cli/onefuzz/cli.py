@@ -274,7 +274,7 @@ class Builder:
                     "help": "Provide 'true' to set to true and 'false' to set to false",
                 }
             else:
-                raise Exception("oh no! %s", repr(default))
+                raise Exception("Argument parsing error: %s", repr(default))
 
         if issubclass(annotation, BaseModel):
 

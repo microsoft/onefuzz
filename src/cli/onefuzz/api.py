@@ -989,7 +989,7 @@ class Node(Endpoint):
         self,
         machine_id: UUID_EXPANSION,
         *,
-        manual_reset_override: Optional[bool] = None,
+        debug_keep_node: Optional[bool] = None,
     ) -> responses.BoolResult:
         self.logger.debug("update node: %s", machine_id)
         machine_id_expanded = self._disambiguate_uuid(
@@ -1003,7 +1003,7 @@ class Node(Endpoint):
             responses.BoolResult,
             data=requests.NodeUpdate(
                 machine_id=machine_id_expanded,
-                manual_reset_override=manual_reset_override,
+                debug_keep_node=debug_keep_node,
             ),
         )
 

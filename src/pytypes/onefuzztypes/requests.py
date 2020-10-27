@@ -143,7 +143,7 @@ class NodeGet(BaseRequest):
 
 class NodeUpdate(BaseRequest):
     machine_id: UUID
-    manual_reset_override: Optional[bool]
+    debug_keep_node: Optional[bool]
 
 
 class ScalesetSearch(BaseRequest):

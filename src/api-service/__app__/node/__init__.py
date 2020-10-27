@@ -53,8 +53,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             Error(code=ErrorCode.UNABLE_TO_FIND, errors=["unable to find node"]),
             context=request.machine_id,
         )
-    if request.manual_reset_override is not None:
-        node.manual_reset_override = request.manual_reset_override
+    if request.debug_keep_node is not None:
+        node.debug_keep_node = request.debug_keep_node
 
     node.save()
     return ok(BoolResult(result=True))
@@ -73,8 +73,8 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     node.set_halt()
-    if node.manual_reset_override:
-        node.manual_reset_override = False
+    if node.debug_keep_node:
+        node.debug_keep_node = False
         node.save()
 
     return ok(BoolResult(result=True))
@@ -93,8 +93,8 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     node.stop()
-    if node.manual_reset_override:
-        node.manual_reset_override = False
+    if node.debug_keep_node:
+        node.debug_keep_node = False
         node.save()
     return ok(BoolResult(result=True))
 

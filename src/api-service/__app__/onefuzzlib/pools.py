@@ -849,7 +849,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         machine_ids = []
         for node in nodes:
-            if node.manual_reset_override:
+            if node.debug_keep_node:
                 logging.warning(
                     "delete manually overridden %s:%s",
                     self.scaleset_id,
@@ -876,7 +876,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         machine_ids = []
         for node in nodes:
-            if node.manual_reset_override:
+            if node.debug_keep_node:
                 logging.warning(
                     "reimage manually overridden %s:%s",
                     self.scaleset_id,

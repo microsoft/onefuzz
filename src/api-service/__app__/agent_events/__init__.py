@@ -183,7 +183,7 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> None:
                 TaskDebugFlag.keep_node_on_failure in task.config.debug
                 or TaskDebugFlag.keep_node_on_completion in task.config.debug
             ):
-                node.manual_reset_override = True
+                node.debug_keep_node = True
                 node.save()
 
         else:
@@ -192,7 +192,7 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> None:
                 task.config.debug
                 and TaskDebugFlag.keep_node_on_completion in task.config.debug
             ):
-                node.manual_reset_override = True
+                node.debug_keep_node = True
                 node.save()
 
         node.to_reimage(done=True)
