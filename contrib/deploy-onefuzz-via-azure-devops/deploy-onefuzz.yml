@@ -15,6 +15,7 @@
 # |AZURE_CLIENT_SECRET   | Secret created by App registration process                |
 # |AZURE_TENANT_ID       | Tenant ID of the Azure Subscription                       |
 # |CONTACT_EMAIL_ADDRESS | Email address for communication                           |
+# |ONEFUZZ_DEPLOY_LOC    | Deployment Folder location of this script location        |
 # |ONEFUZZ_INSTANCE_NAME | Instance name of Onefuzz Deployement                      |
 # |ONEFUZZ_SERVICE_URL   | OneFuzz service URL. Generally the url defined in App     |
 # |                      | Registration                                              |
@@ -25,10 +26,6 @@
 
 ---
 trigger: none
-
-variables:
-  - name: onefuzz_dir
-    value: "ci/deployment/onefuzz" # Modify the location to the script location
 
 stages:
 - stage: Deploy
@@ -45,7 +42,7 @@ stages:
           name: onefuzz_release
           displayName: "Downloading OneFuzz Artifacts"
           inputs:
-            workingDirectory: "${{ variables.onefuzz_dir }}"
+            workingDirectory: "$(ONEFUZZ_DEPLOY_LOC)"
             script: |
               set -ex
               python -m pip install pipenv tox
@@ -60,7 +57,7 @@ stages:
         - task: CmdLine@2
           displayName: "Installing Dependencies"
           inputs:
-            workingDirectory: "${{ variables.onefuzz_dir }}/$(artifact)"
+            workingDirectory: "$(ONEFUZZ_DEPLOY_LOC)/$(artifact)"
             script: |
               set -ex
               unzip onefuzz-deployment-$(onefuzz_release.version).zip
@@ -73,7 +70,7 @@ stages:
         - task: CmdLine@2
           displayName: "Deploying update to OneFuzz"
           inputs:
-            workingDirectory: "${{ variables.onefuzz_dir }}/$(artifact)"
+            workingDirectory: "$(ONEFUZZ_DEPLOY_LOC)/$(artifact)"
             script: |
               set -ex
               az login --service-principal -u $(ONEFUZZ_SERVICE_URL) -p $(AZURE_CLIENT_SECRET) --tenant $(AZURE_TENANT_ID)
@@ -83,8 +80,9 @@ stages:
         - task: CopyFiles@2
           displayName: "Copying cli to Staging area"
           inputs:
+            SourceFolder: "$(ONEFUZZ_DEPLOY_LOC)/$(artifact)"
             Contents:
-              "${{ variables.onefuzz_dir }}/$(artifact)/onefuzz-cli-$(onefuzz_release.version).exe"
+              "onefuzz-cli-$(onefuzz_release.version).exe"
             TargetFolder: $(Build.ArtifactStagingDirectory)
             flattenFolders: true
 
@@ -108,13 +106,15 @@ stages:
 
       - task: Bash@3
         displayName: Test OneFuzz Deployment version
+        timeoutInMinutes: 1
         inputs:
           workingDirectory: "$(Pipeline.Workspace)/onefuzz"
           targetType: 'inline'
           script: |
             set -ex
-            sleep 60
             ./onefuzz-cli-$(version).exe config --endpoint $(ONEFUZZ_SERVICE_URL) --client_id "$(AZURE_CLIENT_ID)" --client_secret "$(AZURE_CLIENT_SECRET)"
             ./onefuzz-cli-$(version).exe --version
+            until ./onefuzz-cli-$(version).exe versions check --exact; do echo "waiting due to version mismatch"; sleep 1; done
             compatible="$(./onefuzz-cli-$(version).exe versions check --exact)"
             if [[ $compatible != *"compatible"* ]]; then exit -1; fi
+            ./onefuzz-cli-$(version).exe reset --pools --scalesets --jobs --tasks --notifications --repros --yes
