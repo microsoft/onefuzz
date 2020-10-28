@@ -1,0 +1,13 @@
+[package]
+name = "reqwest-retry"
+version = "0.1.0"
+authors = ["fuzzing@microsoft.com"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+anyhow = "1.0"
+async-trait = "0.1.36"
+reqwest = { version = "0.10", features = ["json", "stream"] }
+backoff = { version = "0.2.1", features = ["async-std"] }
+log = "0.4"

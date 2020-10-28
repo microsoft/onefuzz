@@ -105,6 +105,7 @@ impl CoverageTask {
             self.record_corpus_coverage(&mut processor, dir).await?;
             fs::remove_dir_all(&dir.path).await?;
         }
+        processor.report_total().await?;
         self.config.coverage.sync_push().await?;
 
         info!(

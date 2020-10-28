@@ -90,7 +90,6 @@ FUNC_TOOLS_ERROR = (
 
 logger = logging.getLogger("deploy")
 
-
 def gen_guid():
     return str(uuid.uuid4())
 
@@ -113,6 +112,7 @@ class Client:
         create_registration,
         migrations,
         export_appinsights: bool,
+        log_service_principal: bool,
     ):
         self.resource_group = resource_group
         self.arm_template = arm_template
@@ -134,6 +134,7 @@ class Client:
         }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
+        self.log_service_principal = log_service_principal
 
         machine = platform.machine()
         system = platform.system()
@@ -220,14 +221,16 @@ class Client:
         # Work-around the race condition where the app is created but passwords cannot
         # be created yet.
         count = 0
+        wait = 5
+        timeout_seconds = 60
         while True:
-            time.sleep(5)
+            time.sleep(wait)
             count += 1
             password = add_application_password(object_id)
             if password:
                 return password
-            if count > 5:
-                raise Exception("creating password failed")
+            if count > timeout_seconds/wait:
+                raise Exception("creating password failed, trying again")
 
     def setup_rbac(self):
         """
@@ -349,7 +352,10 @@ class Client:
         self.results["client_secret"] = password
 
         # Log `client_secret` for consumption by CI.
-        logger.debug("client_id: %s client_secret: %s", app.app_id, password)
+        if self.log_service_principal:
+            logger.info("client_id: %s client_secret: %s", app.app_id, password)
+        else:
+            logger.debug("client_id: %s client_secret: %s", app.app_id, password)
 
     def deploy_template(self):
         logger.info("deploying arm template: %s", self.arm_template)
@@ -728,10 +734,9 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument(
         "--create_pool_registration",
-        default=False,
-        type=bool,
+        action="store_true",
         help="Create an application registration and/or generate a "
-        "password for the pool agent (default: False)",
+        "password for the pool agent",
     )
     parser.add_argument(
         "--apply_migrations",
@@ -744,6 +749,11 @@ def main():
         "--export_appinsights",
         action="store_true",
         help="enable appinsight log export",
+    )
+    parser.add_argument(
+        "--log_service_principal",
+        action="store_true",
+        help="display service prinipal with info log level",
     )
     args = parser.parse_args()
 
@@ -767,6 +777,7 @@ def main():
         args.create_pool_registration,
         args.apply_migrations,
         args.export_appinsights,
+        args.log_service_principal,
     )
     if args.verbose:
         level = logging.DEBUG
