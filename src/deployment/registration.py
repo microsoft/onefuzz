@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 import requests
 from azure.common.client_factory import get_client_from_cli_profile
+from azure.common.credentials import get_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
     Application,
@@ -19,7 +20,6 @@ from azure.graphrbac.models import (
     RequiredResourceAccess,
     ResourceAccess,
 )
-from azure.identity import AzureCliCredential
 from functional import seq
 from msrest.serialization import TZ_UTC
 
@@ -36,12 +36,13 @@ def query_microsoft_graph(
     params: Optional[Dict] = None,
     body: Optional[Dict] = None,
 ):
-    access_token = AzureCliCredential().get_token(
-        "https://graph.microsoft.com/.default"
+    profile = get_cli_profile()
+    (token_type, access_token, _), _, _ = profile.get_raw_token(
+        resource="https://graph.microsoft.com"
     )
     url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
     headers = {
-        "Authorization": "Bearer %s" % access_token.token,
+        "Authorization": "%s %s" % (token_type, access_token),
         "Content-Type": "application/json",
     }
     response = requests.request(
