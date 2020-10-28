@@ -30,6 +30,7 @@ url = { version = "2.1", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 onefuzz = { path = "../onefuzz" }
 storage-queue = { path = "../storage-queue" }
+reqwest-retry = { path = "../reqwest-retry" }
 
 [dev-dependencies]
 tempfile = "3.1"
