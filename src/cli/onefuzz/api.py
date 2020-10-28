@@ -10,7 +10,7 @@ import re
 import subprocess  # nosec
 import uuid
 from shutil import which
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 import pkg_resources
@@ -166,11 +166,12 @@ class Files(Endpoint):
         client = self._get_client(container)
         client.delete_blob(filename)
 
-    def get(self, container: str, filename: str) -> Any:
+    def get(self, container: str, filename: str) -> bytes:
         """ get a file from a container """
         self.logger.debug("getting file from container: %s:%s", container, filename)
         client = self._get_client(container)
-        return client.download_blob(filename)
+        downloaded = cast(bytes, client.download_blob(filename))
+        return downloaded
 
     def upload_file(
         self, container: str, file_path: str, blob_name: Optional[str] = None
