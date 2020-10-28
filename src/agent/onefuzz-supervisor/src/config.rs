@@ -4,6 +4,7 @@
 use anyhow::Result;
 use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
 use reqwest::StatusCode;
+use reqwest_retry::SendRetry;
 use std::{
     path::{Path, PathBuf},
     time::{Duration, Instant},
@@ -159,7 +160,7 @@ impl Registration {
                 .header("Content-Length", "0")
                 .bearer_auth(token.secret().expose_ref())
                 .body("")
-                .send()
+                .send_retry_default()
                 .await?
                 .error_for_status();
 
@@ -219,7 +220,7 @@ impl Registration {
         let response = reqwest::Client::new()
             .get(url)
             .bearer_auth(token.secret().expose_ref())
-            .send()
+            .send_retry_default()
             .await?
             .error_for_status_with_body()
             .await?;
