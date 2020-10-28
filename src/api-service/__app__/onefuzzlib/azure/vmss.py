@@ -235,10 +235,15 @@ def create_vmss(
     sku = {"name": vm_sku, "tier": "Standard", "capacity": vm_count}
 
     scaleset_id_name = "%s-scalesetid" % get_instance_name()
-    scaleset_id_reosurce_name = (
-        "/subscriptions/%s/resourceGroups/%s/providers" % get_subscription(),
+    resource_group_path = "/subscriptions/%s/resourceGroups/%s/providers" % (
+        get_subscription(),
         get_base_resource_group(),
-    ) + "/Microsoft.ManagedIdentity/userAssignedIdentities/%s" % scaleset_id_name
+    )
+    scaleset_id_reosurce_path = (
+        "%s/Microsoft.ManagedIdentity/userAssignedIdentities/%s"
+        % (resource_group_path, scaleset_id_name)
+    )
+
     params: Dict[str, Any] = {
         "location": location,
         "do_not_run_extensions_on_overprovisioned_vms": True,
@@ -246,7 +251,7 @@ def create_vmss(
         "sku": sku,
         "identity": {
             "type": "userAssigned",
-            "userAssignedIdentities": {scaleset_id_reosurce_name: {}},
+            "userAssignedIdentities": {scaleset_id_reosurce_path: {}},
         },
         "virtual_machine_profile": {
             "priority": "Regular",
