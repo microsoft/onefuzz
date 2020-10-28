@@ -1,0 +1,31 @@
+[MASTER]
+ignore=CVS .git .hg
+init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.append(os.path.dirname(find_pylintrc()))"
+
+[MESSAGES CONTROL]
+# Pointless whinging.
+#   W0613 = Unused argument
+#   R0201 = Method could be a function
+#   R0801 = Similar lines https://github.com/PyCQA/pylint/issues/214
+#   R0901 = Too many ancestors
+#   R0902 = Too many instance attributes
+#   R0903 = Too few public methods
+#   R0904 = Too many public methods
+#   R0911 = Too many return statements
+#   R0913 = Too many arguments
+#   R0914 = Too many local variables
+#
+# Sometimes disabled depending on how bad a module is.
+#   C0111 = Missing docstring
+#   C0112 = Empty docstring
+
+disable=C0111,R0201,R0801,R0901,R0902,R0903,R0904,R0911,R0913,R0914
+
+[FORMAT]
+max-line-length=80
+
+[REPORTS]
+output-format=colorized
+
+[BASIC]
+good-names=i,j,k,_,logger
