@@ -33,7 +33,7 @@ fn to_backoff_response(
                 }
             }
         }
-        return false;
+        false
     }
 
     match result {
