@@ -62,6 +62,7 @@ from msrest.serialization import TZ_UTC
 from data_migration import migrate
 from registration import (
     add_application_password,
+    assign_scaleset_role,
     authorize_application,
     get_application,
     register_application,
@@ -395,7 +396,9 @@ class Client:
             sys.exit(1)
         self.results["deploy"] = result.properties.outputs
 
-        # todo: assign user assigned manged identity to role here
+        assign_scaleset_role(
+            self.application_name, self.results["deploy"]["scaleset-identity"]
+        )
 
     def apply_migrations(self):
         self.results["deploy"]["func-storage"]["value"]

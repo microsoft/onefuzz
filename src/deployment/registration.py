@@ -298,13 +298,13 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
         raise Exception("scaleset service principal not found")
     scaleset_service_principal = scaleset_service_principals["value"][0]
 
-    lab_machine_role = (
+    managed_node_role = (
         seq(onefuzz_service_principal["appRoles"])
         .filter(lambda x: x["value"] == "ManagedNode")
         .head_option()
     )
 
-    if not lab_machine_role:
+    if not managed_node_role:
         raise Exception(
             "ManagedNode role not found int the onefuzz application registration. Please redeploy the instance"
         )
@@ -316,7 +316,7 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
         body={
             "principalId": scaleset_service_principal["id"],
             "resourceId": onefuzz_service_principal["id"],
-            "appRoleId": lab_machine_role["id"],
+            "appRoleId": managed_node_role["id"],
         },
     )
 

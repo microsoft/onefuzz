@@ -647,6 +647,10 @@
         "func-key": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc')), '2019-06-01').keys[0].value]"
+        },
+        "scaleset-identity": {
+            "type": "string",
+            "value": "[variables('scaleset_identity')]"
         }
     }
 }
