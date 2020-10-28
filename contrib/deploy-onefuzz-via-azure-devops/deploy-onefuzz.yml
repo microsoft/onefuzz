@@ -117,4 +117,3 @@ stages:
             until ./onefuzz-cli-$(version).exe versions check --exact; do echo "waiting due to version mismatch"; sleep 1; done
             compatible="$(./onefuzz-cli-$(version).exe versions check --exact)"
             if [[ $compatible != *"compatible"* ]]; then exit -1; fi
-            ./onefuzz-cli-$(version).exe reset --pools --scalesets --jobs --tasks --notifications --repros --yes
