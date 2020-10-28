@@ -9,6 +9,7 @@ import os
 import re
 import subprocess  # nosec
 import uuid
+from memoization import cached
 from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
@@ -146,6 +147,7 @@ class Files(Endpoint):
 
     endpoint = "files"
 
+    @cached
     def _get_client(self, container: str) -> ContainerWrapper:
         sas = self.onefuzz.containers.get(container).sas_url
         return ContainerWrapper(sas)
