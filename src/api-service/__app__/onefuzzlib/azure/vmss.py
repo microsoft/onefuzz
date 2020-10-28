@@ -16,7 +16,12 @@ from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from .creds import get_base_resource_group, get_instance_name, mgmt_client_factory
+from .creds import (
+    get_base_resource_group,
+    get_instance_name,
+    get_subscription,
+    mgmt_client_factory,
+)
 from .image import get_os
 
 
@@ -238,8 +243,8 @@ def create_vmss(
         "identity": {
             "type": "userAssigned",
             "userAssignedIdentities": {
-                "/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s"
-                % (scaleset_id_name): {}
+                "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s"
+                % (get_subscription(), get_base_resource_group(), scaleset_id_name): {}
             },
         },
         "virtual_machine_profile": {
