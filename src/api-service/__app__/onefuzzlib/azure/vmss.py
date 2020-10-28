@@ -238,8 +238,8 @@ def create_vmss(
         "identity": {
             "type": "userAssigned",
             "userAssignedIdentities": {
-                "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/', %s)]"
-                % scaleset_id_name: {}
+                "/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s"
+                % (scaleset_id_name): {}
             },
         },
         "virtual_machine_profile": {

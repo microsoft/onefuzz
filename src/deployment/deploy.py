@@ -397,7 +397,7 @@ class Client:
         self.results["deploy"] = result.properties.outputs
 
         assign_scaleset_role(
-            self.application_name, self.results["deploy"]["scaleset-identity"]
+            self.application_name, self.results["deploy"]["scaleset-identity"]["value"]
         )
 
     def apply_migrations(self):
