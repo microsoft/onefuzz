@@ -145,6 +145,7 @@ impl CoverageRecorder {
                 .target_exe
                 .parent()
                 .ok_or_else(|| format_err!("invalid path parent"))?
+                .join("symbols")
                 .display()
         );
         if let Some(v) = target_env.get_mut("_NT_SYMBOL_PATH") {
