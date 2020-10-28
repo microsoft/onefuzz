@@ -96,34 +96,44 @@ impl LibFuzzerFuzzTask {
         worker_id: u64,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
+        let local_input_dir = tempdir()?;
         loop {
-            self.run_fuzzer(worker_id, stats_sender).await?;
+            self.run_fuzzer(&local_input_dir.path(), worker_id, stats_sender)
+                .await?;
+
+            let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
+            while let Some(Ok(entry)) = entries.next().await {
+                let destination_path = self.config.inputs.path.clone().join(entry.file_name());
+                tokio::fs::rename(entry.path(), destination_path).await?;
+            }
         }
     }
 
     // Fuzz with a libFuzzer until it exits.
     //
     // While it runs, parse stderr for progress metrics, and report them.
-    async fn run_fuzzer(&self, worker_id: u64, stats_sender: Option<&StatsSender>) -> Result<()> {
+    async fn run_fuzzer(
+        &self,
+        local_inputs: impl AsRef<std::path::Path>,
+        worker_id: u64,
+        stats_sender: Option<&StatsSender>,
+    ) -> Result<()> {
         let crash_dir = tempdir()?;
         let run_id = Uuid::new_v4();
 
         info!("starting fuzzer run, run_id = {}", run_id);
 
-        let inputs: Vec<_> = {
-            if let Some(readonly_inputs) = &self.config.readonly_inputs {
-                readonly_inputs.iter().map(|d| &d.path).collect()
-            } else {
-                vec![]
-            }
-        };
+        let mut inputs = vec![&self.config.inputs.path];
+        if let Some(readonly_inputs) = &self.config.readonly_inputs {
+            readonly_inputs.iter().for_each(|d| inputs.push(&d.path));
+        }
 
         let fuzzer = LibFuzzer::new(
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
         );
-        let mut running = fuzzer.fuzz(crash_dir.path(), &self.config.inputs.path, &inputs)?;
+        let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
 
         let sys_info = task::spawn(report_fuzzer_sys_info(worker_id, run_id, running.id()));
 

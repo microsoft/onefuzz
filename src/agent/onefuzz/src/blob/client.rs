@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use futures::stream::TryStreamExt;
 use reqwest::{Body, RequestBuilder, Response, Url};
+use reqwest_retry::SendRetry;
 use serde::Serialize;
 use tokio::{fs, io};
 use tokio_util::codec;
@@ -31,7 +32,12 @@ impl BlobClient {
     pub async fn get(&self, url: &Url) -> Result<Response> {
         let url = url.clone();
 
-        let r = self.client.get(url).send().await?.error_for_status()?;
+        let r = self
+            .client
+            .get(url)
+            .send_retry_default()
+            .await?
+            .error_for_status()?;
 
         Ok(r)
     }
@@ -62,7 +68,7 @@ impl BlobClient {
             .put(url)
             .header("x-ms-blob-type", "BlockBlob")
             .body(data)
-            .send()
+            .send_retry_default()
             .await?;
 
         Ok(r)
@@ -77,7 +83,7 @@ impl BlobClient {
             .put(url)
             .header("x-ms-blob-type", "BlockBlob")
             .json(&item)
-            .send()
+            .send_retry_default()
             .await?;
 
         Ok(r)
@@ -103,7 +109,7 @@ impl BlobClient {
             .header("Content-Length", &content_length)
             .header("x-ms-blob-type", "BlockBlob")
             .body(body)
-            .send()
+            .send_retry_default()
             .await?;
 
         Ok(resp)

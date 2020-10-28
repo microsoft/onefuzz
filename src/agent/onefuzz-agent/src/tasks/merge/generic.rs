@@ -8,6 +8,7 @@ use onefuzz::{
     syncdir::SyncedDir,
 };
 use reqwest::Url;
+use reqwest_retry::SendRetry;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
@@ -117,7 +118,7 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
     let http_client = reqwest::Client::new();
     match http_client
         .delete(input_url)
-        .send()
+        .send_retry_default()
         .await?
         .error_for_status_with_body()
         .await
