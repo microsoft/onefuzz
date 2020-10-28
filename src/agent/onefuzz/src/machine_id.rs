@@ -3,6 +3,7 @@
 
 use crate::fs::{onefuzz_etc, write_file};
 use anyhow::Result;
+use reqwest_retry::SendRetry;
 use std::time::Duration;
 use tokio::fs;
 use uuid::Uuid;
@@ -27,7 +28,7 @@ pub async fn get_ims_id() -> Result<Uuid> {
                 .get(IMS_ID_URL)
                 .timeout(Duration::from_millis(500))
                 .header("Metadata", "true")
-                .send()
+                .send_retry_default()
                 .await?;
             let body = resp.text().await?;
             write_file(path, &body).await?;
@@ -48,7 +49,7 @@ pub async fn get_machine_name() -> Result<String> {
                 .get(VM_NAME_URL)
                 .timeout(Duration::from_millis(500))
                 .header("Metadata", "true")
-                .send()
+                .send_retry_default()
                 .await?;
             let body = resp.text().await?;
             write_file(path, &body).await?;
@@ -68,7 +69,7 @@ pub async fn get_scaleset_name() -> Result<String> {
                 .get(VM_SCALESET_NAME)
                 .timeout(Duration::from_millis(500))
                 .header("Metadata", "true")
-                .send()
+                .send_retry_default()
                 .await?;
             let body = resp.text().await?;
             write_file(path, &body).await?;

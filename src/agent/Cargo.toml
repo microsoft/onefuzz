@@ -6,6 +6,7 @@ members = [
     "onefuzz",
     "onefuzz-agent",
     "onefuzz-supervisor",
+    "reqwest-retry",
     "storage-queue",
     "win-util",
 ]
