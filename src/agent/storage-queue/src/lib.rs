@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use reqwest::{Client, Url};
+use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
@@ -45,7 +46,7 @@ impl QueueClient {
             .http
             .post(self.messages_url())
             .body(body)
-            .send()
+            .send_retry_default()
             .await?;
         let _ = r.error_for_status()?;
         Ok(())
@@ -55,7 +56,7 @@ impl QueueClient {
         let response = self
             .http
             .get(self.messages_url())
-            .send()
+            .send_retry_default()
             .await?
             .error_for_status()?;
         let text = response.text().await?;
@@ -75,7 +76,11 @@ impl QueueClient {
     pub async fn delete(&mut self, receipt: impl Into<Receipt>) -> Result<()> {
         let receipt = receipt.into();
         let url = self.delete_url(receipt);
-        self.http.delete(url).send().await?.error_for_status()?;
+        self.http
+            .delete(url)
+            .send_retry_default()
+            .await?
+            .error_for_status()?;
         Ok(())
     }
 
