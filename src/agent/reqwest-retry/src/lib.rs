@@ -10,6 +10,9 @@ use std::{
     time::Duration,
 };
 
+use std::error::Error as StdError;
+use std::io::ErrorKind;
+
 const DEFAULT_RETRY_PERIOD: Duration = Duration::from_secs(2);
 const MAX_ELAPSED_TIME: Duration = Duration::from_secs(30);
 const MAX_RETRY_ATTEMPTS: i32 = 5;
@@ -17,8 +20,30 @@ const MAX_RETRY_ATTEMPTS: i32 = 5;
 fn to_backoff_response(
     result: Result<Response, reqwest::Error>,
 ) -> Result<Response, backoff::Error<anyhow::Error>> {
+    fn is_transient_socket_error(error: &reqwest::Error) -> bool {
+        let source = error.source();
+        while let Some(err) = source {
+            if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
+                match io_error.kind() {
+                    ErrorKind::ConnectionAborted
+                    | ErrorKind::ConnectionReset
+                    | ErrorKind::TimedOut
+                    | ErrorKind::NotConnected => return true,
+                    _ => (),
+                }
+            }
+        }
+        return false;
+    }
+
     match result {
-        Err(error) => Err(backoff::Error::Permanent(anyhow::Error::from(error))),
+        Err(error) => {
+            if is_transient_socket_error(&error) {
+                Err(backoff::Error::Transient(anyhow::Error::from(error)))
+            } else {
+                Err(backoff::Error::Permanent(anyhow::Error::from(error)))
+            }
+        }
         Ok(response) => match response.status() {
             status if status.is_success() => Ok(response),
             StatusCode::REQUEST_TIMEOUT
@@ -81,7 +106,7 @@ pub async fn send_retry_reqwest<
                 max_elapsed_time: Some(max_elapsed_time),
                 ..ExponentialBackoff::default()
             },
-            |err, _| log::warn!("Transient error: {}", err),
+            |err, _| println!("Transient error: {}", err),
         )
         .await?;
     Ok(result)
@@ -140,5 +165,22 @@ impl SendRetry for reqwest::RequestBuilder {
         .await?;
 
         Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[tokio::test]
+    async fn empty_stack() -> Result<()> {
+        let resp = reqwest::Client::new()
+            .get("http://localhost:5000/api/testGet")
+            .send_retry_default()
+            .await?;
+        println!("{:?}", resp);
+
+        assert!(resp.error_for_status().is_err());
+        Ok(())
     }
 }
