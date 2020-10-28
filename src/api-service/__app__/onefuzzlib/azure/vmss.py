@@ -16,7 +16,7 @@ from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from .creds import get_base_resource_group, mgmt_client_factory
+from .creds import get_base_resource_group, get_instance_name, mgmt_client_factory
 from .image import get_os
 
 
@@ -229,12 +229,19 @@ def create_vmss(
 
     sku = {"name": vm_sku, "tier": "Standard", "capacity": vm_count}
 
+    scaleset_id_name = "%s-scalesetid" % get_instance_name()
     params: Dict[str, Any] = {
         "location": location,
         "do_not_run_extensions_on_overprovisioned_vms": True,
         "upgrade_policy": {"mode": "Manual"},
         "sku": sku,
-        "identity": {"type": "SystemAssigned"},
+        "identity": {
+            "type": "userAssigned",
+            "userAssignedIdentities": {
+                "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/', %s)]"
+                % scaleset_id_name: {}
+            },
+        },
         "virtual_machine_profile": {
             "priority": "Regular",
             "storage_profile": {"image_reference": image_ref},

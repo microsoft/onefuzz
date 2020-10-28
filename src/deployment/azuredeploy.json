@@ -38,6 +38,7 @@
         }
     },
     "variables": {
+        "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
         "telemetry": "d7a73cf4-5a1a-4030-85e1-e5b25867e45a",
         "signalr-name": "[concat('onefuzz-', uniquestring(resourceGroup().id))]",
         "monitorAccountName": "[concat('logs-wb-', uniquestring(resourceGroup().id))]",
@@ -93,6 +94,12 @@
         }
     ],
     "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[variables('scaleset_identity')]",
+            "apiVersion": "2018-11-30",
+            "location": "[resourceGroup().location]"
+        },
         {
             "apiVersion": "2018-11-01",
             "name": "[parameters('name')]",

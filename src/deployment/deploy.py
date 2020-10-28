@@ -395,6 +395,8 @@ class Client:
             sys.exit(1)
         self.results["deploy"] = result.properties.outputs
 
+        # todo: assign user assigned manged identity to role here
+
     def apply_migrations(self):
         self.results["deploy"]["func-storage"]["value"]
         name = self.results["deploy"]["func-name"]["value"]
