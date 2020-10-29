@@ -22,7 +22,7 @@
 # |                      | Registration                                              | Required          |
 # |REGION                | OneFuzz Region (prefer westus2)                           | Required          |
 # |RESOURCE_GROUP_NAME   | Resource group name for OneFuzz deployment                | Required          |
-# |VERSION               | Specify OneFuzz version, defaults to latest               | Optional          |
+# |VERSION               | Specify OneFuzz version. Default is latest.               | Optional          |
 #
 # Note: Make sure to provide the App owners permission to onefuzz resource group
 
