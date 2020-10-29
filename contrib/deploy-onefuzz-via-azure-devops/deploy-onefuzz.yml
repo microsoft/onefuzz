@@ -20,8 +20,9 @@
 # |ONEFUZZ_SERVICE_URL   | OneFuzz service URL. Generally the url defined in App     |
 # |                      | Registration                                              |
 # |REGION                | OneFuzz Region (prefer westus2)                           |
-# |RESOURCE_GROUP_NAME   | Resource group name for OneFuzz deployment                |
-# |VERSION               | Specify OneFuzz version or do not set to get latest       |                      
+# |RESOURCE_GROUP_NAME   | Resource gorup name for OneFuzz deployment                |
+# |VERSION               | Specify OneFuzz version or do not set to get latest       |
+# |DEPLOY_ARGS           | Specify optional OneFuzz deploy.py arguments              |
 #
 # Note: Make sure to provide the App owners permission to onefuzz resource group
 
@@ -81,7 +82,12 @@ stages:
             script: |
               set -ex
               az login --service-principal -u $(ONEFUZZ_SERVICE_URL) -p $(AZURE_CLIENT_SECRET) --tenant $(AZURE_TENANT_ID)
-              python deploy.py --client_id $(AZURE_CLIENT_ID) --client_secret $(AZURE_CLIENT_SECRET) $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS
+              if [ -z ${DEPLOY_ARGS+x} ]
+              then
+                python deploy.py --client_id $(AZURE_CLIENT_ID) --client_secret $(AZURE_CLIENT_SECRET) $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS
+              else
+                python deploy.py --client_id $(AZURE_CLIENT_ID) --client_secret $(AZURE_CLIENT_SECRET) $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS "${DEPLOY_ARGS)"
+              fi
               echo "Deployed Onefuzz $(onefuzz_release.version)"
 
         - task: CopyFiles@2
