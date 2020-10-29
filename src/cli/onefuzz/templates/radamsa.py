@@ -58,6 +58,10 @@ class Radamsa(Command):
         if dryrun:
             return None
 
+        # disable ensemble sync if only one VM is used
+        if ensemble_sync_delay is None and vm_count == 1:
+            ensemble_sync_delay = 0
+
         self.logger.info("creating radamsa from template")
 
         helper = JobHelper(
