@@ -45,6 +45,8 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         url: BlobContainerUrl::new(Url::parse("https://contoso.com/crashes")?)?,
     };
 
+    let ensemble_sync_delay = None;
+
     let config = Config {
         inputs,
         readonly_inputs,
@@ -53,6 +55,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         target_env,
         target_options,
         target_workers,
+        ensemble_sync_delay,
         common: CommonConfig {
             heartbeat_queue: None,
             instrumentation_key: None,

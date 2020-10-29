@@ -47,6 +47,7 @@ class Libfuzzer(Command):
         check_retry_count: Optional[int] = None,
         crash_report_timeout: Optional[int] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> None:
 
         fuzzer_containers = [
@@ -55,6 +56,11 @@ class Libfuzzer(Command):
             (ContainerType.inputs, containers[ContainerType.inputs]),
         ]
         self.logger.info("creating libfuzzer task")
+
+        # disable ensemble sync if only one VM is used
+        if ensemble_sync_delay is None and vm_count == 1:
+            ensemble_sync_delay = 0
+
         fuzzer_task = self.onefuzz.tasks.create(
             job.job_id,
             TaskType.libfuzzer_fuzz,
@@ -69,6 +75,7 @@ class Libfuzzer(Command):
             target_workers=target_workers,
             tags=tags,
             debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
         )
 
         coverage_containers = [
@@ -146,8 +153,14 @@ class Libfuzzer(Command):
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> Optional[Job]:
-        """ Basic libfuzzer job """
+        """
+        Basic libfuzzer job
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
 
         # verify containers exist
         if existing_inputs:
@@ -213,6 +226,7 @@ class Libfuzzer(Command):
             crash_report_timeout=crash_report_timeout,
             check_retry_count=check_retry_count,
             debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
         )
 
         self.logger.info("done creating tasks")

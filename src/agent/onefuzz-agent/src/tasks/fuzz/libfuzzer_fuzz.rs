@@ -45,6 +45,7 @@ pub struct Config {
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
     pub target_workers: Option<u64>,
+    pub ensemble_sync_delay: Option<u64>,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -197,7 +198,7 @@ impl LibFuzzerFuzzTask {
             let inputs = inputs.clone();
             dirs.extend(inputs);
         }
-        continuous_sync(&dirs, Pull, None).await
+        continuous_sync(&dirs, Pull, self.config.ensemble_sync_delay).await
     }
 }
 
