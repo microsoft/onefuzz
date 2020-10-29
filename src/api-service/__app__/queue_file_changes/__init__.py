@@ -5,11 +5,11 @@
 
 import json
 import logging
-import os
 from typing import Dict
 
 import azure.functions as func
 
+from ..onefuzzlib.azure.creds import get_fuzz_storage
 from ..onefuzzlib.dashboard import get_event
 from ..onefuzzlib.notifications.main import new_files
 
@@ -25,7 +25,7 @@ def file_added(event: Dict) -> None:
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
     event = json.loads(msg.get_body())
 
-    if event["topic"] != os.environ["ONEFUZZ_DATA_STORAGE"]:
+    if event["topic"] != get_fuzz_storage():
         return
 
     if event["eventType"] != "Microsoft.Storage.BlobCreated":
