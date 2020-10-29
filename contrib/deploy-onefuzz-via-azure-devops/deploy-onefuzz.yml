@@ -20,7 +20,8 @@
 # |ONEFUZZ_SERVICE_URL   | OneFuzz service URL. Generally the url defined in App     |
 # |                      | Registration                                              |
 # |REGION                | OneFuzz Region (prefer westus2)                           |
-# |RESOURCE_GROUP_NAME   | Resource gorup name for OneFuzz deployment                |                        
+# |RESOURCE_GROUP_NAME   | Resource group name for OneFuzz deployment                |
+# |VERSION               | Specify OneFuzz version or do not set to get latest       |                      
 #
 # Note: Make sure to provide the App owners permission to onefuzz resource group
 
@@ -48,8 +49,14 @@ stages:
               python -m pip install pipenv tox
               pipenv install
               artifact="artifact"
-              pipenv run python get_latest_version.py -path $artifact
-              version="$(pipenv run python get_latest_version.py -version)"
+              if [ -z ${VERSION+x} ]
+              then
+                pipenv run python get_latest_version.py -path $artifact
+                version="$(pipenv run python get_latest_version.py -display_latest_version)"
+              else
+                pipenv run python get_latest_version.py -path $artifact -version $(VERSION)
+                version="$(VERSION)"
+              fi
               echo "Onefuzz version is $version"
               echo "##vso[task.setvariable variable=version;isOutput=true]$version"
               echo "##vso[task.setvariable variable=artifact]$artifact"
