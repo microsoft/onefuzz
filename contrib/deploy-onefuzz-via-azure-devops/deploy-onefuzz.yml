@@ -20,7 +20,7 @@
 # |ONEFUZZ_SERVICE_URL   | OneFuzz service URL. Generally the url defined in App     |
 # |                      | Registration                                              |
 # |REGION                | OneFuzz Region (prefer westus2)                           |
-# |RESOURCE_GROUP_NAME   | Resource gorup name for OneFuzz deployment                |                        
+# |RESOURCE_GROUP_NAME   | Resource group name for OneFuzz deployment                |                        
 #
 # Note: Make sure to provide the App owners permission to onefuzz resource group
 
