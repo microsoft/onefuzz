@@ -61,8 +61,7 @@
             "namespace": "onefuzz",
             "members": {
                 "severitiesAtMostInfo": {
-                    "parameters": [
-                    ],
+                    "parameters": [],
                     "output": {
                         "type": "array",
                         "value": [
@@ -108,7 +107,7 @@
                 "[resourceId('microsoft.insights/components/', parameters('name'))]",
                 "[resourceId('Microsoft.Web/serverFarms', parameters('name'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountNameFunc'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountNameFunc'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountNameCorpus'))]"
             ],
             "identity": {
@@ -206,8 +205,7 @@
                     ],
                     "linuxFxVersion": "Python|3.7",
                     "alwaysOn": true,
-                    "defaultDocuments": [
-                    ],
+                    "defaultDocuments": [],
                     "httpLoggingEnabled": true,
                     "logsDirectorySizeLimit": 100,
                     "detailedErrorLoggingEnabled": true,
@@ -240,8 +238,7 @@
             "type": "Microsoft.Web/serverFarms",
             "location": "[resourceGroup().location]",
             "kind": "linux",
-            "dependsOn": [
-            ],
+            "dependsOn": [],
             "properties": {
                 "name": "[parameters('name')]",
                 "reserved": true
@@ -318,7 +315,6 @@
                     "properties": {
                         "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('monitorAccountName'))]"
                     },
-
                     "plan": {
                         "name": "[concat('VMInsights', '(', variables('monitorAccountName'), ')')]",
                         "publisher": "Microsoft",
@@ -635,20 +631,17 @@
                     {
                         "flag": "ServiceMode",
                         "value": "Serverless",
-                        "properties": {
-                        }
+                        "properties": {}
                     },
                     {
                         "flag": "EnableConnectivityLogs",
                         "value": "True",
-                        "properties": {
-                        }
+                        "properties": {}
                     },
                     {
                         "flag": "EnableMessagingLogs",
                         "value": "False",
-                        "properties": {
-                        }
+                        "properties": {}
                     }
                 ]
             }
