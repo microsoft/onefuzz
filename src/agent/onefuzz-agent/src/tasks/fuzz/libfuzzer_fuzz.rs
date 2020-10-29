@@ -45,6 +45,7 @@ pub struct Config {
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
     pub target_workers: Option<u64>,
+    pub ensemble_sync_delay: Optional<u64>,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -192,13 +193,13 @@ impl LibFuzzerFuzzTask {
     }
 
     async fn continuous_sync_inputs(&self) -> Result<()> {
-        let mut dirs = vec![self.config.inputs.clone()];
-        if let Some(inputs) = &self.config.readonly_inputs {
-            let inputs = inputs.clone();
-            dirs.extend(inputs);
+            let mut dirs = vec![self.config.inputs.clone()];
+            if let Some(inputs) = &self.config.readonly_inputs {
+                let inputs = inputs.clone();
+                dirs.extend(inputs);
+            }
+            continuous_sync(&dirs, Pull, self.config.ensemble_sync_delay).await
         }
-        continuous_sync(&dirs, Pull, None).await
-    }
 }
 
 fn try_report_iter_update(

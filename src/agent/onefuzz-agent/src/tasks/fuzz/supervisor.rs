@@ -42,6 +42,7 @@ pub struct SupervisorConfig {
     pub wait_for_files: Option<ContainerType>,
     pub stats_file: Option<String>,
     pub stats_format: Option<StatsFormat>,
+    pub ensemble_sync_delay: Optional<u64>,
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -88,7 +89,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         }
     }
 
-    let continuous_sync_task = inputs.continuous_sync(Pull, None);
+    let continuous_sync_task = inputs.continuous_sync(Pull, config.ensemble_sync_delay);
 
     let process = start_supervisor(
         &runtime_dir.path(),

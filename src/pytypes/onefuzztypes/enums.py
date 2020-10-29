@@ -73,6 +73,7 @@ class TaskFeature(Enum):
     check_asan_log = "check_asan_log"
     check_debugger = "check_debugger"
     check_retry_count = "check_retry_count"
+    ensemble_sync_delay = "ensemble_sync_delay"
 
 
 # Permissions for an Azure Blob Storage Container.

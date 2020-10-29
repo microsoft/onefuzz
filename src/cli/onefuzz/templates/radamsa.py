@@ -48,6 +48,7 @@ class Radamsa(Command):
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> Optional[Job]:
         """ Basic radamsa job """
 
@@ -162,6 +163,7 @@ class Radamsa(Command):
             tags=helper.tags,
             rename_output=rename_output,
             debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
         )
 
         report_containers = [

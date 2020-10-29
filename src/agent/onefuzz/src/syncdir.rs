@@ -73,6 +73,10 @@ impl SyncedDir {
         delay: Option<Duration>,
     ) -> Result<()> {
         let delay = delay.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY);
+        if delay.as_secs() == 0 {
+            return Ok(());
+        }
+
         loop {
             self.sync(operation).await?;
             delay_with_jitter(delay).await;
@@ -133,6 +137,10 @@ pub async fn continuous_sync(
     delay: Option<Duration>,
 ) -> Result<()> {
     let delay = delay.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY);
+    if delay.as_secs() == 0 {
+        return Ok(());
+    }
+
     loop {
         for dir in dirs {
             dir.sync(operation).await?;

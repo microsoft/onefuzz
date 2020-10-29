@@ -52,6 +52,7 @@ class AFL(Command):
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> Optional[Job]:
         """
         Basic AFL job
@@ -146,6 +147,7 @@ class AFL(Command):
             task_wait_for_files=ContainerType.inputs,
             tags=helper.tags,
             debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
         )
 
         report_containers = [
