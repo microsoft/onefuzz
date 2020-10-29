@@ -316,9 +316,10 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
     )
 
     # check if the role is already assigned
-    if not seq(assignments["value"]).find(
+    role_assigned = seq(assignments["value"]).find(
         lambda assignment: assignment["appRoleId"] == managed_node_role["id"]
-    ):
+    )
+    if not role_assigned:
         query_microsoft_graph(
             method="POST",
             resource="servicePrincipals/%s/appRoleAssignedTo"

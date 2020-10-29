@@ -396,6 +396,7 @@ class Client:
             sys.exit(1)
         self.results["deploy"] = result.properties.outputs
 
+        logger.info("assigning the user managed identity role")
         assign_scaleset_role(
             self.application_name, self.results["deploy"]["scaleset-identity"]["value"]
         )

@@ -18,7 +18,7 @@ from onefuzztypes.primitives import Region
 
 from .creds import (
     get_base_resource_group,
-    get_scaleset_idenity_resource_path,
+    get_scaleset_identity_resource_path,
     mgmt_client_factory,
 )
 from .image import get_os
@@ -240,7 +240,7 @@ def create_vmss(
         "sku": sku,
         "identity": {
             "type": "userAssigned",
-            "userAssignedIdentities": {get_scaleset_idenity_resource_path(): {}},
+            "userAssignedIdentities": {get_scaleset_identity_resource_path(): {}},
         },
         "virtual_machine_profile": {
             "priority": "Regular",

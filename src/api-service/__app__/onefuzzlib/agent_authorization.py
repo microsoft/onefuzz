@@ -55,8 +55,12 @@ def try_get_token_auth_header(request: func.HttpRequest) -> Union[Error, TokenDa
 
 @cached(ttl=60)
 def is_authorized(token_data: TokenData) -> bool:
+    # verify object_id against the user assigned managed identity
     if get_scaleset_principal_id() == token_data.object_id:
         return True
+
+    # backward compatibility case for scalesets deployed before the migration
+    # to user assigned managed id
     scalesets = Scaleset.get_by_object_id(token_data.object_id)
     return len(scalesets) > 0
 
