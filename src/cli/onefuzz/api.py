@@ -672,8 +672,15 @@ class Tasks(Endpoint):
         tags: Optional[Dict[str, str]] = None,
         prereq_tasks: Optional[List[UUID]] = None,
         debug: Optional[List[enums.TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> models.Task:
-        """ Create a task """
+        """
+        Create a task
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
+
         self.logger.debug("creating task: %s", task_type)
 
         job_id_expanded = self._disambiguate_uuid(
@@ -731,6 +738,7 @@ class Tasks(Endpoint):
                 check_asan_log=check_asan_log,
                 check_debugger=check_debugger,
                 check_retry_count=check_retry_count,
+                ensemble_sync_delay=ensemble_sync_delay,
             ),
             pool=models.TaskPool(count=vm_count, pool_name=pool_name),
             containers=containers_submit,

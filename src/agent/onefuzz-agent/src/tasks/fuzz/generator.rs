@@ -46,6 +46,7 @@ pub struct GeneratorConfig {
     #[serde(default)]
     pub check_retry_count: u64,
     pub rename_output: bool,
+    pub ensemble_sync_delay: Option<u64>,
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -61,7 +62,7 @@ pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
         dir.init_pull().await?;
     }
 
-    let sync_task = continuous_sync(&config.readonly_inputs, Pull, None);
+    let sync_task = continuous_sync(&config.readonly_inputs, Pull, config.ensemble_sync_delay);
     let crash_dir_monitor = config.crashes.monitor_results(new_result);
     let tester = Tester::new(
         &config.target_exe,

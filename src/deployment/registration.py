@@ -298,27 +298,38 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
         raise Exception("scaleset service principal not found")
     scaleset_service_principal = scaleset_service_principals["value"][0]
 
-    lab_machine_role = (
+    managed_node_role = (
         seq(onefuzz_service_principal["appRoles"])
         .filter(lambda x: x["value"] == "ManagedNode")
         .head_option()
     )
 
-    if not lab_machine_role:
+    if not managed_node_role:
         raise Exception(
             "ManagedNode role not found int the onefuzz application registration. Please redeploy the instance"
         )
 
-    query_microsoft_graph(
-        method="POST",
-        resource="servicePrincipals/%s/appRoleAssignedTo"
+    assignments = query_microsoft_graph(
+        method="GET",
+        resource="servicePrincipals/%s/appRoleAssignments"
         % scaleset_service_principal["id"],
-        body={
-            "principalId": scaleset_service_principal["id"],
-            "resourceId": onefuzz_service_principal["id"],
-            "appRoleId": lab_machine_role["id"],
-        },
     )
+
+    # check if the role is already assigned
+    role_assigned = seq(assignments["value"]).find(
+        lambda assignment: assignment["appRoleId"] == managed_node_role["id"]
+    )
+    if not role_assigned:
+        query_microsoft_graph(
+            method="POST",
+            resource="servicePrincipals/%s/appRoleAssignedTo"
+            % scaleset_service_principal["id"],
+            body={
+                "principalId": scaleset_service_principal["id"],
+                "resourceId": onefuzz_service_principal["id"],
+                "appRoleId": managed_node_role["id"],
+            },
+        )
 
 
 def main():

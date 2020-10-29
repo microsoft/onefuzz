@@ -314,6 +314,9 @@ def build_task_config(
     if TaskFeature.check_retry_count in definition.features:
         config.check_retry_count = task_config.task.check_retry_count or 0
 
+    if TaskFeature.ensemble_sync_delay in definition.features:
+        config.ensemble_sync_delay = task_config.task.ensemble_sync_delay
+
     return config
 
 

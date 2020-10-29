@@ -16,7 +16,11 @@ from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from .creds import get_base_resource_group, mgmt_client_factory
+from .creds import (
+    get_base_resource_group,
+    get_scaleset_identity_resource_path,
+    mgmt_client_factory,
+)
 from .image import get_os
 
 
@@ -234,7 +238,10 @@ def create_vmss(
         "do_not_run_extensions_on_overprovisioned_vms": True,
         "upgrade_policy": {"mode": "Manual"},
         "sku": sku,
-        "identity": {"type": "SystemAssigned"},
+        "identity": {
+            "type": "userAssigned",
+            "userAssignedIdentities": {get_scaleset_identity_resource_path(): {}},
+        },
         "virtual_machine_profile": {
             "priority": "Regular",
             "storage_profile": {"image_reference": image_ref},
