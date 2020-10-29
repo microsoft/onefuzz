@@ -6,6 +6,7 @@
 import logging
 import os
 from typing import Any, List, Optional, Tuple
+from uuid import UUID
 
 from azure.cli.core import CLIError
 from azure.common.client_factory import get_client_from_cli_profile
@@ -123,3 +124,22 @@ def is_member_of(group_id: str, member_id: str) -> bool:
             CheckGroupMembershipParameters(group_id=group_id, member_id=member_id)
         ).value
     )
+
+
+def get_scaleset_idenity_resource_path() -> str:
+    scaleset_id_name = "%s-scalesetid" % get_instance_name()
+    resource_group_path = "/subscriptions/%s/resourceGroups/%s/providers" % (
+        get_subscription(),
+        get_base_resource_group(),
+    )
+    return "%s/Microsoft.ManagedIdentity/userAssignedIdentities/%s" % (
+        resource_group_path,
+        scaleset_id_name,
+    )
+
+
+@cached
+def get_scaleset_principal_id() -> UUID:
+    client = mgmt_client_factory(ResourceManagementClient)
+    uid = client.resources.get_by_id(get_scaleset_idenity_resource_path())
+    return UUID(uid.properties["principalId"])
