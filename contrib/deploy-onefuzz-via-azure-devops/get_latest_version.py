@@ -11,9 +11,16 @@ BASE_URL = "https://api.github.com/repos/microsoft/onefuzz"
 
 
 class Onefuzz:
-    def get_latest_version(self):
-        latest_releasee = requests.get(f"{BASE_URL}/releases/latest").json()
-        return (latest_releasee["id"], latest_releasee["name"])
+    def get_latest_version_name(self):
+        latest_release = requests.get(f"{BASE_URL}/releases/latest").json()
+        return latest_release["name"]
+
+    def get_release_id_by_name(self, version_name=None):
+        if version_name is None:
+            release = requests.get(f"{BASE_URL}/releases/latest").json()
+        else:
+            release = requests.get(f"{BASE_URL}/releases/tags/{version_name}").json()
+        return release["id"]
 
     def list_assets(self, release_id):
         assets = requests.get(f"{BASE_URL}/releases/{release_id}/assets").json()
@@ -34,8 +41,8 @@ class Onefuzz:
         for artifact in artifacts:
             self.download_artifact(path, artifact["id"], artifact["name"])
 
-    def onefuzz_release_artifacts(self, path):
-        release_id, _ = self.get_latest_version()
+    def onefuzz_release_artifacts(self, path, version):
+        release_id = self.get_release_id_by_name(version)
         artifacts = self.list_assets(release_id)
         self.download_artifacts(path, artifacts)
 
@@ -55,16 +62,22 @@ def main():
     )
     parser.add_argument(
         "-version",
+        type=str,
+        default=None,
+        help="Get specific Onefuzz version",
+    )
+    parser.add_argument(
+        "-display_latest_version",
         action="store_true",
         help="Get Onefuzz latest version",
     )
 
     args = parser.parse_args()
     if args.path:
-        Onefuzz().onefuzz_release_artifacts(args.path)
+        Onefuzz().onefuzz_release_artifacts(args.path, args.version)
 
-    if args.version:
-        print(Onefuzz().get_latest_version()[1])
+    if args.display_latest_version:
+        print(Onefuzz().get_latest_version_name())
 
 
 if __name__ == "__main__":
