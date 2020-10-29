@@ -12,7 +12,12 @@ from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 from onefuzztypes.responses import BoolResult
 
-from ..onefuzzlib.azure.creds import get_base_region, get_instance_url, get_regions
+from ..onefuzzlib.azure.creds import (
+    get_base_region,
+    get_func_storage,
+    get_instance_url,
+    get_regions,
+)
 from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.vmss import list_available_skus
 from ..onefuzzlib.pools import Pool
@@ -27,7 +32,7 @@ def set_config(pool: Pool) -> Pool:
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "node-heartbeat",
-            account_id=os.environ["ONEFUZZ_FUNC_STORAGE"],
+            account_id=get_func_storage(),
             add=True,
         ),
     )
