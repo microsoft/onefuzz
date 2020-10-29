@@ -48,14 +48,24 @@ class Radamsa(Command):
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> Optional[Job]:
-        """ Basic radamsa job """
+        """
+        Basic radamsa job
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
 
         if inputs is None and existing_inputs is None:
             raise Exception("radamsa requires inputs")
 
         if dryrun:
             return None
+
+        # disable ensemble sync if only one VM is used
+        if ensemble_sync_delay is None and vm_count == 1:
+            ensemble_sync_delay = 0
 
         self.logger.info("creating radamsa from template")
 
@@ -162,6 +172,7 @@ class Radamsa(Command):
             tags=helper.tags,
             rename_output=rename_output,
             debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
         )
 
         report_containers = [

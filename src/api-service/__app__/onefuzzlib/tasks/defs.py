@@ -62,6 +62,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_env,
             TaskFeature.target_options,
             TaskFeature.target_workers,
+            TaskFeature.ensemble_sync_delay,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -213,6 +214,7 @@ TASK_DEFINITIONS = {
             TaskFeature.supervisor_input_marker,
             TaskFeature.wait_for_files,
             TaskFeature.stats_file,
+            TaskFeature.ensemble_sync_delay,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -299,6 +301,7 @@ TASK_DEFINITIONS = {
             TaskFeature.check_asan_log,
             TaskFeature.check_debugger,
             TaskFeature.check_retry_count,
+            TaskFeature.ensemble_sync_delay,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
