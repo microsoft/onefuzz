@@ -9,6 +9,7 @@ import urllib.parse
 from datetime import datetime, timedelta
 from typing import Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
+from enum import Enum
 
 import requests
 from azure.common.client_factory import get_client_from_cli_profile
@@ -17,6 +18,7 @@ from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
     Application,
     ApplicationCreateParameters,
+    AppRole,
     RequiredResourceAccess,
     ResourceAccess,
 )
@@ -69,8 +71,13 @@ class ApplicationInfo(NamedTuple):
     authority: str
 
 
+class OnefuzzAppRole(Enum):
+    ManagedNode = "ManagedNode"
+    CliClient = "CliClient"
+
+
 def register_application(
-    registration_name: str, onefuzz_instance_name: str
+    registration_name: str, onefuzz_instance_name: str, approle: OnefuzzAppRole
 ) -> ApplicationInfo:
     logger.debug("retrieving the application registration")
     client = get_client_from_cli_profile(GraphRbacManagementClient)
@@ -80,7 +87,7 @@ def register_application(
 
     if len(apps) == 0:
         logger.debug("No existing registration found. creating a new one")
-        app = create_application_registration(onefuzz_instance_name, registration_name)
+        app = create_application_registration(onefuzz_instance_name, registration_name, approle)
     else:
         app = apps[0]
 
@@ -125,7 +132,7 @@ def create_application_credential(application_name: str) -> str:
 
 
 def create_application_registration(
-    onefuzz_instance_name: str, name: str
+    onefuzz_instance_name: str, name: str, approle: OnefuzzAppRole
 ) -> Application:
     """ Create an application registration """
 
@@ -136,7 +143,9 @@ def create_application_registration(
 
     app = apps[0]
     resource_access = [
-        ResourceAccess(id=role.id, type="Role") for role in app.app_roles
+        ResourceAccess(id=role.id, type="Role")
+        for role in app.app_roles
+        if role.value == approle.value
     ]
 
     params = ApplicationCreateParameters(
@@ -241,6 +250,8 @@ def authorize_application(
         .map(lambda data: {"appId": data[0], "delegatedPermissionIds": data[1]})
     )
 
+    # todo: assign cli role to this application
+
     query_microsoft_graph(
         method="PATCH",
         resource="applications/%s" % onefuzz_app["id"],
@@ -250,12 +261,12 @@ def authorize_application(
     )
 
 
-def update_pool_registration(application_name: str):
-
+def create_and_display_registration(onefuzz_instance_name: str, registration_name: str, approle: OnefuzzAppRole):
     logger.info("Updating application registration")
     application_info = register_application(
-        registration_name=("%s_pool" % application_name),
-        onefuzz_instance_name=application_name,
+        registration_name=registration_name,
+        onefuzz_instance_name=onefuzz_instance_name,
+        approle=approle
     )
     logger.info("Registration complete")
     logger.info("These generated credentials are valid for a year")
@@ -300,7 +311,7 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
 
     managed_node_role = (
         seq(onefuzz_service_principal["appRoles"])
-        .filter(lambda x: x["value"] == "ManagedNode")
+        .filter(lambda x: x["value"] == OnefuzzAppRole.ManagedNode.value)
         .head_option()
     )
 
@@ -359,6 +370,12 @@ def main():
         "scaleset_name",
         help="the name of the scaleset",
     )
+    cli_registration_parser = subparsers.add_parser(
+        "create_cli_registration", parents=[parent_parser]
+    )
+    cli_registration_parser.add_argument(
+        "--registration_name", help="the name of the cli registration"
+    )
 
     args = parser.parse_args()
     if args.verbose:
@@ -369,10 +386,15 @@ def main():
     logging.basicConfig(format="%(levelname)s:%(message)s", level=level)
     logging.getLogger("deploy").setLevel(logging.INFO)
 
+    onefuzz_instance_name = args.onefuzz_instance
     if args.command == "update_pool_registration":
-        update_pool_registration(args.onefuzz_instance)
+        registration_name = "%s_pool" % onefuzz_instance_name
+        create_and_display_registration(onefuzz_instance_name, registration_name, OnefuzzAppRole.ManagedNode)
+    elif args.command == "create_cli_registration":
+        registration_name = onefuzz_instance_name or ("%s_cli" % onefuzz_instance_name)
+        create_and_display_registration(onefuzz_instance_name, registration_name, OnefuzzAppRole.ManagedNode)
     elif args.command == "assign_scaleset_role":
-        assign_scaleset_role(args.onefuzz_instance, args.scaleset_name)
+        assign_scaleset_role(onefuzz_instance_name, args.scaleset_name)
     else:
         raise Exception("invalid arguments")
 
