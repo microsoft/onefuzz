@@ -475,7 +475,7 @@
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountNameCorpus')]",
             "location": "[resourceGroup().location]",
-            "kind": "StorageV2",
+            "kind": "BlockBlobStorage",
             "sku": {
                 "name": "Premium_LRS",
                 "tier": "Premium"
