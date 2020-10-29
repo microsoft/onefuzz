@@ -5,11 +5,12 @@
 
 import argparse
 import logging
+import time
 import urllib.parse
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
-from enum import Enum
 
 import requests
 from azure.common.client_factory import get_client_from_cli_profile
@@ -29,7 +30,13 @@ logger = logging.getLogger("deploy")
 
 
 class GraphQueryError(Exception):
-    pass
+    def __init__(self, message, status_code):
+        super(GraphQueryError, self).__init__(message)
+        self.status_code = status_code
+
+    @property
+    def status_code():
+        return self.status_code
 
 
 def query_microsoft_graph(
@@ -61,7 +68,9 @@ def query_microsoft_graph(
     else:
         error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
         raise GraphQueryError(
-            "request did not succeed: HTTP %s - %s" % (response.status_code, error_text)
+            "request did not succeed: HTTP %s - %s"
+            % (response.status_code, error_text),
+            response.status_code,
         )
 
 
@@ -87,7 +96,9 @@ def register_application(
 
     if len(apps) == 0:
         logger.debug("No existing registration found. creating a new one")
-        app = create_application_registration(onefuzz_instance_name, registration_name, approle)
+        app = create_application_registration(
+            onefuzz_instance_name, registration_name, approle
+        )
     else:
         app = apps[0]
 
@@ -167,16 +178,33 @@ def create_application_registration(
 
     registered_app: Application = client.applications.create(params)
 
-    query_microsoft_graph(
-        method="PATCH",
-        resource="applications/%s" % registered_app.object_id,
-        body={
-            "publicClient": {
-                "redirectUris": ["https://%s.azurewebsites.net" % onefuzz_instance_name]
-            },
-            "isFallbackPublicClient": True,
-        },
-    )
+    atttempts = 5
+    while True:
+        if atttempts < 0:
+            raise Exception(
+                "Unable to create application registration, Please try again"
+            )
+
+        atttempts = atttempts - 1
+        try:
+            time.sleep(5)
+            query_microsoft_graph(
+                method="PATCH",
+                resource="applications/%s" % registered_app.object_id,
+                body={
+                    "publicClient": {
+                        "redirectUris": [
+                            "https://%s.azurewebsites.net" % onefuzz_instance_name
+                        ]
+                    },
+                    "isFallbackPublicClient": True,
+                },
+            )
+            break
+        except GraphQueryError as err:
+            if err.status_code == 404:
+                continue
+
     authorize_application(UUID(registered_app.app_id), UUID(app.app_id))
     return registered_app
 
@@ -250,8 +278,6 @@ def authorize_application(
         .map(lambda data: {"appId": data[0], "delegatedPermissionIds": data[1]})
     )
 
-    # todo: assign cli role to this application
-
     query_microsoft_graph(
         method="PATCH",
         resource="applications/%s" % onefuzz_app["id"],
@@ -261,12 +287,14 @@ def authorize_application(
     )
 
 
-def create_and_display_registration(onefuzz_instance_name: str, registration_name: str, approle: OnefuzzAppRole):
+def create_and_display_registration(
+    onefuzz_instance_name: str, registration_name: str, approle: OnefuzzAppRole
+):
     logger.info("Updating application registration")
     application_info = register_application(
         registration_name=registration_name,
         onefuzz_instance_name=onefuzz_instance_name,
-        approle=approle
+        approle=approle,
     )
     logger.info("Registration complete")
     logger.info("These generated credentials are valid for a year")
@@ -389,10 +417,14 @@ def main():
     onefuzz_instance_name = args.onefuzz_instance
     if args.command == "update_pool_registration":
         registration_name = "%s_pool" % onefuzz_instance_name
-        create_and_display_registration(onefuzz_instance_name, registration_name, OnefuzzAppRole.ManagedNode)
+        create_and_display_registration(
+            onefuzz_instance_name, registration_name, OnefuzzAppRole.ManagedNode
+        )
     elif args.command == "create_cli_registration":
         registration_name = onefuzz_instance_name or ("%s_cli" % onefuzz_instance_name)
-        create_and_display_registration(onefuzz_instance_name, registration_name, OnefuzzAppRole.ManagedNode)
+        create_and_display_registration(
+            onefuzz_instance_name, registration_name, OnefuzzAppRole.ManagedNode
+        )
     elif args.command == "assign_scaleset_role":
         assign_scaleset_role(onefuzz_instance_name, args.scaleset_name)
     else:
@@ -401,3 +433,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# todo: update the internal docs (https://dev.azure.com/msresearch/OneFuzz/_git/OneFuzz?path=%2FREADME.md&_a=preview&version=GBinternal-information) with
+
+# Mandatory role assigment
+# if your org require that you prevent guest access by requiring a role assigment.
+# The default CLI will not be able to access the service.
+# you will need to create a new cli registration by executing the following
+# ```
+# python registration.py create_cli_registration INSTANCENAME [--registration_name REGISTRATIONNAME]
+# ```
