@@ -42,10 +42,7 @@ class Onefuzz:
             self.download_artifact(path, artifact["id"], artifact["name"])
 
     def onefuzz_release_artifacts(self, path, version):
-        if version is not None:
-            release_id = self.get_release_id_by_name(version)
-        else:
-            release_id = self.get_release_id_by_name()
+        release_id = self.get_release_id_by_name(version)
         artifacts = self.list_assets(release_id)
         self.download_artifacts(path, artifacts)
 
