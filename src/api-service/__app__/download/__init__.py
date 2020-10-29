@@ -21,7 +21,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="download")
 
-    if not container_exists(request.container):
+    if not container_exists(request.container, account_id=get_corpus_storage()):
         return not_ok(
             Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
             context=request.container,

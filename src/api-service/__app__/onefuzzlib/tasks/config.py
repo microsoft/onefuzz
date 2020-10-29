@@ -68,7 +68,7 @@ def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
     containers: Dict[ContainerType, List[str]] = {}
     for container in config.containers:
         if container.name not in checked:
-            if not container_exists(container.name):
+            if not container_exists(container.name, account_id=get_corpus_storage()):
                 raise TaskConfigError("missing container: %s" % container.name)
             checked.add(container.name)
 
