@@ -13,5 +13,6 @@
       "hubName": "dashboard"
     }
   ],
-  "scriptFile": "__init__.py"
+  "scriptFile": "__init__.py",
+  "functionTimeout": "00:05:00"
 }
