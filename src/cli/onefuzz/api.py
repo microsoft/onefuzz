@@ -669,7 +669,13 @@ class Tasks(Endpoint):
         debug: Optional[List[enums.TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
     ) -> models.Task:
-        """ Create a task """
+        """
+        Create a task
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
+
         self.logger.debug("creating task: %s", task_type)
 
         job_id_expanded = self._disambiguate_uuid(

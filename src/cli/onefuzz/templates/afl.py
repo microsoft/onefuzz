@@ -58,6 +58,8 @@ class AFL(Command):
         Basic AFL job
 
         :param Container afl_container: Specify the AFL container to use in the job
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
         """
 
         if existing_inputs:

@@ -116,7 +116,12 @@ class OssFuzz(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
     ) -> None:
-        """ OssFuzz style libfuzzer jobs """
+        """
+        OssFuzz style libfuzzer jobs
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
 
         fuzzers = sorted(glob.glob("*fuzzer"))
         if fuzzers:

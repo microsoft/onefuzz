@@ -50,7 +50,12 @@ class Radamsa(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
     ) -> Optional[Job]:
-        """ Basic radamsa job """
+        """
+        Basic radamsa job
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
 
         if inputs is None and existing_inputs is None:
             raise Exception("radamsa requires inputs")
