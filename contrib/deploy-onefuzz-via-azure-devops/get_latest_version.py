@@ -17,7 +17,7 @@ class Onefuzz:
 
     def get_release_id_by_name(self, version_name=None):
         if version_name is None:
-            release = requests.get(f"{BASE_URL}/releases/releases/latest").json()
+            release = requests.get(f"{BASE_URL}/releases/latest").json()
         else:
             release = requests.get(f"{BASE_URL}/releases/tags/{version_name}").json()
         return release["id"]
