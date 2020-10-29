@@ -141,5 +141,5 @@ def get_scaleset_idenity_resource_path() -> str:
 @cached
 def get_scaleset_principal_id() -> UUID:
     client = mgmt_client_factory(ResourceManagementClient)
-    uid = client.resources.get_by_id(get_scaleset_idenity_resource_path())
+    uid = client.resources.get_by_id(get_scaleset_idenity_resource_path(), "2018-11-30")
     return UUID(uid.properties["principalId"])
