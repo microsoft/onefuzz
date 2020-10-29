@@ -9,20 +9,20 @@
 # to deploy OneFuzz on Azure.
 #
 # List of custom variables:
-# | Variable Name        | Comments                                                  |
-# |----------------------|-----------------------------------------------------------|
-# |AZURE_CLIENT_ID       | The appication ID created by you or the deployment script |
-# |AZURE_CLIENT_SECRET   | Secret created by App registration process                |
-# |AZURE_TENANT_ID       | Tenant ID of the Azure Subscription                       |
-# |CONTACT_EMAIL_ADDRESS | Email address for communication                           |
-# |ONEFUZZ_DEPLOY_LOC    | Deployment Folder location of this script location        |
-# |ONEFUZZ_INSTANCE_NAME | Instance name of Onefuzz Deployement                      |
-# |ONEFUZZ_SERVICE_URL   | OneFuzz service URL. Generally the url defined in App     |
-# |                      | Registration                                              |
-# |REGION                | OneFuzz Region (prefer westus2)                           |
-# |RESOURCE_GROUP_NAME   | Resource gorup name for OneFuzz deployment                |
-# |VERSION               | Specify OneFuzz version or do not set to get latest       |
-# |DEPLOY_ARGS           | Specify optional OneFuzz deploy.py arguments              |
+# | Variable Name        | Comments                                                  | Required/Optional |
+# |----------------------|-----------------------------------------------------------|-------------------|
+# |AZURE_CLIENT_ID       | The appication ID created by you or the deployment script | Required          |
+# |AZURE_CLIENT_SECRET   | Secret created by App registration process                | Required          |
+# |AZURE_TENANT_ID       | Tenant ID of the Azure Subscription                       | Required          |
+# |CONTACT_EMAIL_ADDRESS | Email address for communication                           | Required          |
+# |DEPLOY_ARGS           | Specify OneFuzz deploy.py arguments                       | Optional          |
+# |ONEFUZZ_DEPLOY_LOC    | Deployment Folder location of this script location        | Required          |
+# |ONEFUZZ_INSTANCE_NAME | Instance name of Onefuzz Deployement                      | Required          |
+# |ONEFUZZ_SERVICE_URL   | OneFuzz service URL. Generally the url defined in App     | Required          |
+# |                      | Registration                                              | Required          |
+# |REGION                | OneFuzz Region (prefer westus2)                           | Required          |
+# |RESOURCE_GROUP_NAME   | Resource group name for OneFuzz deployment                | Required          |
+# |VERSION               | Specify OneFuzz version, defaults to latest               | Optional          |
 #
 # Note: Make sure to provide the App owners permission to onefuzz resource group
 
