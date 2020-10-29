@@ -15,8 +15,11 @@ class Onefuzz:
         latest_release = requests.get(f"{BASE_URL}/releases/latest").json()
         return latest_release["name"]
 
-    def get_release_id_by_name(self, version_name):
-        release = requests.get(f"{BASE_URL}/releases/tags/{version_name}").json()
+    def get_release_id_by_name(self, version_name=None):
+        if version_name is None:
+            release = requests.get(f"{BASE_URL}/releases/releases/latest").json()
+        else:
+            release = requests.get(f"{BASE_URL}/releases/tags/{version_name}").json()
         return release["id"]
 
     def list_assets(self, release_id):
@@ -42,7 +45,7 @@ class Onefuzz:
         if version is not None:
             release_id = self.get_release_id_by_name(version)
         else:
-            release_id = self.get_release_id_by_name("latest")
+            release_id = self.get_release_id_by_name()
         artifacts = self.list_assets(release_id)
         self.download_artifacts(path, artifacts)
 
