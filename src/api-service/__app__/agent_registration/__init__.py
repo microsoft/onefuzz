@@ -13,7 +13,7 @@ from onefuzztypes.requests import AgentRegistrationGet, AgentRegistrationPost
 from onefuzztypes.responses import AgentRegistration
 
 from ..onefuzzlib.agent_authorization import verify_token
-from ..onefuzzlib.azure.creds import get_fuzz_storage, get_instance_url
+from ..onefuzzlib.azure.creds import get_fuzz_queue_storage, get_instance_url
 from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.pools import Node, NodeMessage, Pool
 from ..onefuzzlib.request import not_ok, ok, parse_uri
@@ -25,7 +25,7 @@ def create_registration_response(machine_id: UUID, pool: Pool) -> func.HttpRespo
     commands_url = "%s/api/agents/commands" % base_address
     work_queue = get_queue_sas(
         pool.get_pool_queue(),
-        account_id=get_fuzz_storage(),
+        account_id=get_fuzz_queue_storage(),
         read=True,
         update=True,
         process=True,

@@ -19,6 +19,7 @@ from ..onefuzzlib.azure.containers import (
     get_container_sas_url,
     get_containers,
 )
+from ..onefuzzlib.azure.creds import get_corpus_storage
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
@@ -30,7 +31,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="container get")
     if request is not None:
-        metadata = get_container_metadata(request.name)
+        metadata = get_container_metadata(request.name, account_id=get_corpus_storage())
         if metadata is None:
             return not_ok(
                 Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
@@ -41,6 +42,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
             name=request.name,
             sas_url=get_container_sas_url(
                 request.name,
+                account_id=get_corpus_storage(),
                 read=True,
                 write=True,
                 create=True,
@@ -51,7 +53,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
         )
         return ok(info)
 
-    containers = get_containers()
+    containers = get_containers(account_id=get_corpus_storage())
 
     container_info = []
     for name in containers:
@@ -66,7 +68,9 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(request, context="container create")
 
     logging.info("container - creating %s", request.name)
-    sas = create_container(request.name, metadata=request.metadata)
+    sas = create_container(
+        request.name, metadata=request.metadata, account_id=get_corpus_storage()
+    )
     if sas:
         return ok(
             ContainerInfo(name=request.name, sas_url=sas, metadata=request.metadata)
@@ -83,7 +87,11 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(request, context="container delete")
 
     logging.info("container - deleting %s", request.name)
-    return ok(BoolResult(result=delete_container(request.name)))
+    return ok(
+        BoolResult(
+            result=delete_container(request.name, account_id=get_corpus_storage())
+        )
+    )
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:

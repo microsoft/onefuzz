@@ -11,7 +11,7 @@ from onefuzztypes.enums import OS, PoolState, TaskState
 from onefuzztypes.models import WorkSet, WorkUnit
 
 from ..azure.containers import blob_exists, get_container_sas_url, save_blob
-from ..azure.creds import get_func_storage
+from ..azure.creds import get_corpus_storage, get_func_storage
 from ..pools import Pool
 from .config import build_task_config, get_setup_container
 from .main import Task
@@ -60,13 +60,19 @@ def schedule_tasks() -> None:
             agent_config = build_task_config(task.job_id, task.task_id, task.config)
 
             setup_container = get_setup_container(task.config)
-            setup_url = get_container_sas_url(setup_container, read=True, list=True)
+            setup_url = get_container_sas_url(
+                setup_container, account_id=get_corpus_storage(), read=True, list=True
+            )
 
             setup_script = None
 
-            if task.os == OS.windows and blob_exists(setup_container, "setup.ps1"):
+            if task.os == OS.windows and blob_exists(
+                setup_container, "setup.ps1", account_id=get_corpus_storage()
+            ):
                 setup_script = "setup.ps1"
-            if task.os == OS.linux and blob_exists(setup_container, "setup.sh"):
+            if task.os == OS.linux and blob_exists(
+                setup_container, "setup.sh", account_id=get_corpus_storage()
+            ):
                 setup_script = "setup.sh"
 
             save_blob(

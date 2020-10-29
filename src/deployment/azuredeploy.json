@@ -43,6 +43,7 @@
         "monitorAccountName": "[concat('logs-wb-', uniquestring(resourceGroup().id))]",
         "storageAccountName": "[concat('fuzz', uniquestring(resourceGroup().id))]",
         "storageAccountNameFunc": "[concat('func', uniquestring(resourceGroup().id))]",
+        "storageAccountNameCorpus": "[concat('corpus', uniquestring(resourceGroup().id))]",
         "Network Contributor": "4d97b98b-1d4f-4787-a291-c67834d212e7",
         "Storage Account Contributor": "17d1049b-9a84-46fb-8f53-869881c3d3ab",
         "Virtual Machine Contributor": "9980e02c-c2be-4d73-94e8-173b1dc7cf3c",
@@ -108,6 +109,7 @@
                 "[resourceId('Microsoft.Web/serverFarms', parameters('name'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountNameFunc'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountNameCorpus'))]"
             ],
             "identity": {
                 "type": "SystemAssigned"
@@ -184,6 +186,10 @@
                         {
                             "name": "ONEFUZZ_DATA_STORAGE",
                             "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                        },
+                        {
+                            "name": "ONEFUZZ_CORPUS_STORAGE",
+                            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameCorpus'))]"
                         },
                         {
                             "name": "ONEFUZZ_FUNC_STORAGE",
@@ -469,6 +475,38 @@
             }
         },
         {
+            "apiVersion": "2019-06-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountNameCorpus')]",
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Premium_LRS",
+                "tier": "Premium"
+            },
+            "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "accessTier": "Hot"
+            },
+            "tags": {
+                "OWNER": "[parameters('owner')]"
+            }
+        },
+        {
+            "name": "[concat(variables('storageAccountNameCorpus'), '/default')]",
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2019-06-01",
+            "properties": {
+                "deleteRetentionPolicy": {
+                    "enabled": true,
+                    "days": 30
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameCorpus'))]"
+            ]
+        },
+        {
             "name": "[concat(variables('storageAccountNameFunc'), '/default')]",
             "type": "Microsoft.Storage/storageAccounts/blobServices",
             "apiVersion": "2019-06-01",
@@ -640,6 +678,18 @@
         "func-key": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc')), '2019-06-01').keys[0].value]"
+        },
+        "corpus-name": {
+            "type": "string",
+            "value": "[variables('storageAccountNameCorpus')]"
+        },
+        "corpus-storage": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameCorpus'))]"
+        },
+        "corpus-key": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameCorpus')), '2019-06-01').keys[0].value]"
         }
     }
 }

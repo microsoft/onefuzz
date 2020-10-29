@@ -35,7 +35,7 @@ from pydantic import BaseModel, Field
 
 from .__version__ import __version__
 from .azure.auth import build_auth
-from .azure.creds import get_func_storage, get_fuzz_storage
+from .azure.creds import get_func_storage, get_fuzz_queue_storage
 from .azure.image import get_os
 from .azure.network import Network
 from .azure.queue import (
@@ -434,7 +434,9 @@ class Pool(BASE_POOL, ORMMixin):
             return
 
         worksets = peek_queue(
-            self.get_pool_queue(), account_id=get_fuzz_storage(), object_type=WorkSet
+            self.get_pool_queue(),
+            account_id=get_fuzz_queue_storage(),
+            object_type=WorkSet,
         )
 
         for workset in worksets:
@@ -452,7 +454,7 @@ class Pool(BASE_POOL, ORMMixin):
         return "pool-%s" % self.pool_id.hex
 
     def init(self) -> None:
-        create_queue(self.get_pool_queue(), account_id=get_fuzz_storage())
+        create_queue(self.get_pool_queue(), account_id=get_fuzz_queue_storage())
         self.state = PoolState.running
         self.save()
 
@@ -462,7 +464,7 @@ class Pool(BASE_POOL, ORMMixin):
             return False
 
         return queue_object(
-            self.get_pool_queue(), work_set, account_id=get_fuzz_storage()
+            self.get_pool_queue(), work_set, account_id=get_fuzz_queue_storage()
         )
 
     @classmethod
@@ -523,7 +525,7 @@ class Pool(BASE_POOL, ORMMixin):
         scalesets = Scaleset.search_by_pool(self.name)
         nodes = Node.search(query={"pool_name": [self.name]})
         if not scalesets and not nodes:
-            delete_queue(self.get_pool_queue(), account_id=get_fuzz_storage())
+            delete_queue(self.get_pool_queue(), account_id=get_fuzz_queue_storage())
             logging.info("pool stopped, deleting: %s", self.name)
             self.state = PoolState.halt
             self.delete()

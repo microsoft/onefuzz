@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 from azure.cli.core import CLIError
 from azure.common.client_factory import get_client_from_cli_profile
@@ -40,8 +40,8 @@ def mgmt_client_factory(client_class: Any) -> Any:
             return client_class(get_msi(), get_subscription())
 
 
-@cached
-def get_storage_account_name_key(account_id: Optional[str] = None) -> Tuple[str, str]:
+# @cached
+def get_storage_account_name_key(account_id: str) -> Tuple[str, str]:
     db_client = mgmt_client_factory(StorageManagementClient)
     if account_id is None:
         account_id = os.environ["ONEFUZZ_DATA_STORAGE"]
@@ -56,8 +56,8 @@ def get_storage_account_name_key(account_id: Optional[str] = None) -> Tuple[str,
     return resource["name"], key
 
 
-@cached
-def get_blob_service(account_id: Optional[str] = None) -> BlockBlobService:
+# @cached
+def get_blob_service(account_id: str) -> BlockBlobService:
     logging.debug("getting blob container (account_id: %s)", account_id)
     name, key = get_storage_account_name_key(account_id)
     service = BlockBlobService(account_name=name, account_key=key)
@@ -82,8 +82,13 @@ def get_subscription() -> Any:  # should be str
 
 
 @cached
-def get_fuzz_storage() -> str:
+def get_fuzz_queue_storage() -> str:
     return os.environ["ONEFUZZ_DATA_STORAGE"]
+
+
+@cached
+def get_corpus_storage() -> str:
+    return os.environ["ONEFUZZ_CORPUS_STORAGE"]
 
 
 @cached

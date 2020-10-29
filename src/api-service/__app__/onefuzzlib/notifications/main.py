@@ -20,7 +20,7 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import Container, Event
 
 from ..azure.containers import get_container_metadata, get_file_sas_url
-from ..azure.creds import get_fuzz_storage
+from ..azure.creds import get_corpus_storage, get_fuzz_queue_storage
 from ..azure.queue import send_message
 from ..dashboard import add_event
 from ..orm import ORMMixin
@@ -81,7 +81,7 @@ def get_queue_tasks() -> Sequence[Tuple[Task, Sequence[str]]]:
 
 @cached(ttl=60)
 def container_metadata(container: Container) -> Optional[Dict[str, str]]:
-    return get_container_metadata(container)
+    return get_container_metadata(container, account_id=get_corpus_storage())
 
 
 def new_files(container: Container, filename: str) -> None:
@@ -124,9 +124,15 @@ def new_files(container: Container, filename: str) -> None:
     for (task, containers) in get_queue_tasks():
         if container in containers:
             logging.info("queuing input %s %s %s", container, filename, task.task_id)
-            url = get_file_sas_url(container, filename, read=True, delete=True)
+            url = get_file_sas_url(
+                container,
+                filename,
+                account_id=get_corpus_storage(),
+                read=True,
+                delete=True,
+            )
             send_message(
-                task.task_id, bytes(url, "utf-8"), account_id=get_fuzz_storage()
+                task.task_id, bytes(url, "utf-8"), account_id=get_fuzz_queue_storage()
             )
 
     add_event("new_file", results)

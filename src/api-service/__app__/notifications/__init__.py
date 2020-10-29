@@ -11,6 +11,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import NotificationCreate, NotificationGet
 
 from ..onefuzzlib.azure.containers import container_exists
+from ..onefuzzlib.azure.creds import get_corpus_storage
 from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -29,7 +30,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="notification create")
 
-    if not container_exists(request.container):
+    if not container_exists(request.container, account_id=get_corpus_storage()):
         return not_ok(
             Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
             context=request.container,

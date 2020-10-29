@@ -12,7 +12,12 @@ from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, Task
 from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
 
 from ..azure.containers import blob_exists, container_exists, get_container_sas_url
-from ..azure.creds import get_func_storage, get_fuzz_storage, get_instance_url
+from ..azure.creds import (
+    get_corpus_storage,
+    get_func_storage,
+    get_fuzz_queue_storage,
+    get_instance_url,
+)
 from ..azure.queue import get_queue_sas
 from .defs import TASK_DEFINITIONS
 
@@ -132,7 +137,9 @@ def check_config(config: TaskConfig) -> None:
 
     if TaskFeature.target_exe in definition.features:
         container = [x for x in config.containers if x.type == ContainerType.setup][0]
-        if not blob_exists(container.name, config.task.target_exe):
+        if not blob_exists(
+            container.name, config.task.target_exe, account_id=get_corpus_storage()
+        ):
             err = "target_exe `%s` does not exist in the setup container `%s`" % (
                 config.task.target_exe,
                 container.name,
@@ -148,7 +155,9 @@ def check_config(config: TaskConfig) -> None:
         for tool_path in tools_paths:
             if config.task.generator_exe.startswith(tool_path):
                 generator = config.task.generator_exe.replace(tool_path, "")
-                if not blob_exists(container.name, generator):
+                if not blob_exists(
+                    container.name, generator, account_id=get_corpus_storage()
+                ):
                     err = (
                         "generator_exe `%s` does not exist in the tools container `%s`"
                         % (
@@ -196,7 +205,7 @@ def build_task_config(
             read=True,
             update=True,
             process=True,
-            account_id=get_fuzz_storage(),
+            account_id=get_fuzz_queue_storage(),
         )
 
     for container_def in definition.containers:
@@ -213,6 +222,7 @@ def build_task_config(
                     "path": "_".join(["task", container_def.type.name, str(i)]),
                     "url": get_container_sas_url(
                         container.name,
+                        account_id=get_corpus_storage(),
                         read=ContainerPermission.Read in container_def.permissions,
                         write=ContainerPermission.Write in container_def.permissions,
                         add=ContainerPermission.Add in container_def.permissions,

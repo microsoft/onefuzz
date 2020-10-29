@@ -13,7 +13,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm
 
-from ..azure.creds import get_fuzz_storage
+from ..azure.creds import get_fuzz_queue_storage
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
@@ -103,7 +103,7 @@ class Task(BASE_TASK, ORMMixin):
         }
 
     def init(self) -> None:
-        create_queue(self.task_id, account_id=get_fuzz_storage())
+        create_queue(self.task_id, account_id=get_fuzz_queue_storage())
         self.state = TaskState.waiting
         self.save()
 
@@ -113,7 +113,7 @@ class Task(BASE_TASK, ORMMixin):
         self.state = TaskState.stopping
         logging.info("stopping task: %s:%s", self.job_id, self.task_id)
         ProxyForward.remove_forward(self.task_id)
-        delete_queue(str(self.task_id), account_id=get_fuzz_storage())
+        delete_queue(str(self.task_id), account_id=get_fuzz_queue_storage())
         Node.stop_task(self.task_id)
         self.state = TaskState.stopped
         self.save()

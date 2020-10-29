@@ -16,7 +16,7 @@ from .creds import get_blob_service
 
 
 @cached(ttl=5)
-def container_exists(name: str, account_id: Optional[str] = None) -> bool:
+def container_exists(name: str, *, account_id: str) -> bool:
     try:
         get_blob_service(account_id).get_container_properties(name)
         return True
@@ -24,7 +24,7 @@ def container_exists(name: str, account_id: Optional[str] = None) -> bool:
         return False
 
 
-def get_containers(account_id: Optional[str] = None) -> Dict[str, Dict[str, str]]:
+def get_containers(*, account_id: str) -> Dict[str, Dict[str, str]]:
     return {
         x.name: x.metadata
         for x in get_blob_service(account_id).list_containers(include_metadata=True)
@@ -32,9 +32,7 @@ def get_containers(account_id: Optional[str] = None) -> Dict[str, Dict[str, str]
     }
 
 
-def get_container_metadata(
-    name: str, account_id: Optional[str] = None
-) -> Optional[Dict[str, str]]:
+def get_container_metadata(name: str, *, account_id: str) -> Optional[Dict[str, str]]:
     try:
         result = get_blob_service(account_id).get_container_metadata(name)
         return cast(Dict[str, str], result)
@@ -44,7 +42,7 @@ def get_container_metadata(
 
 
 def create_container(
-    name: str, metadata: Optional[Dict[str, str]], account_id: Optional[str] = None
+    name: str, *, metadata: Optional[Dict[str, str]], account_id: str
 ) -> Optional[str]:
     try:
         get_blob_service(account_id).create_container(name, metadata=metadata)
@@ -53,11 +51,18 @@ def create_container(
         return None
 
     return get_container_sas_url(
-        name, read=True, add=True, create=True, write=True, delete=True, list=True
+        name,
+        account_id=account_id,
+        read=True,
+        add=True,
+        create=True,
+        write=True,
+        delete=True,
+        list=True,
     )
 
 
-def delete_container(name: str, account_id: Optional[str] = None) -> bool:
+def delete_container(name: str, *, account_id: str) -> bool:
     try:
         return bool(get_blob_service(account_id).delete_container(name))
     except AzureHttpError:
@@ -67,7 +72,8 @@ def delete_container(name: str, account_id: Optional[str] = None) -> bool:
 
 def get_container_sas_url(
     container: str,
-    account_id: Optional[str] = None,
+    *,
+    account_id: str,
     read: bool = False,
     add: bool = False,
     create: bool = False,
@@ -91,7 +97,8 @@ def get_container_sas_url(
 def get_file_sas_url(
     container: str,
     name: str,
-    account_id: Optional[str] = None,
+    *,
+    account_id: str,
     read: bool = False,
     add: bool = False,
     create: bool = False,
@@ -117,7 +124,7 @@ def get_file_sas_url(
 
 
 def save_blob(
-    container: str, name: str, data: Union[str, bytes], account_id: Optional[str] = None
+    container: str, name: str, data: Union[str, bytes], *, account_id: str
 ) -> None:
     service = get_blob_service(account_id)
     service.create_container(container)
@@ -128,7 +135,7 @@ def save_blob(
 
 
 def get_blob(
-    container: str, name: str, account_id: Optional[str] = None
+    container: str, name: str, *, account_id: str
 ) -> Optional[Any]:  # should be bytes
     service = get_blob_service(account_id)
     try:
@@ -138,7 +145,7 @@ def get_blob(
         return None
 
 
-def blob_exists(container: str, name: str, account_id: Optional[str] = None) -> bool:
+def blob_exists(container: str, name: str, *, account_id: str) -> bool:
     service = get_blob_service(account_id)
     try:
         service.get_blob_properties(container, name)
@@ -147,7 +154,7 @@ def blob_exists(container: str, name: str, account_id: Optional[str] = None) -> 
         return False
 
 
-def delete_blob(container: str, name: str, account_id: Optional[str] = None) -> bool:
+def delete_blob(container: str, name: str, *, account_id: str) -> bool:
     service = get_blob_service(account_id)
     try:
         service.delete_blob(container, name)

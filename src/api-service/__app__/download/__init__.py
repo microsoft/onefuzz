@@ -12,6 +12,7 @@ from ..onefuzzlib.azure.containers import (
     container_exists,
     get_file_sas_url,
 )
+from ..onefuzzlib.azure.creds import get_corpus_storage
 from ..onefuzzlib.request import not_ok, parse_uri, redirect
 
 
@@ -26,7 +27,9 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
             context=request.container,
         )
 
-    if not blob_exists(request.container, request.filename):
+    if not blob_exists(
+        request.container, request.filename, account_id=get_corpus_storage()
+    ):
         return not_ok(
             Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid filename"]),
             context=request.filename,
@@ -34,7 +37,12 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
     return redirect(
         get_file_sas_url(
-            request.container, request.filename, read=True, days=0, minutes=5
+            request.container,
+            request.filename,
+            account_id=get_corpus_storage(),
+            read=True,
+            days=0,
+            minutes=5,
         )
     )
 

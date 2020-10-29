@@ -11,6 +11,7 @@ from onefuzztypes.models import Report
 from pydantic import ValidationError
 
 from .azure.containers import get_blob
+from .azure.creds import get_corpus_storage
 
 
 def parse_report(content: str, metadata: Optional[str] = None) -> Optional[Report]:
@@ -48,7 +49,7 @@ def get_report(container: str, filename: str) -> Optional[Report]:
         logging.error("get_report invalid extension: %s", metadata)
         return None
 
-    blob = get_blob(container, filename)
+    blob = get_blob(container, filename, account_id=get_corpus_storage())
     if blob is None:
         logging.error("get_report invalid blob: %s", metadata)
         return None

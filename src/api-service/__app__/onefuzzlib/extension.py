@@ -12,7 +12,7 @@ from onefuzztypes.models import AgentConfig, ReproConfig
 from onefuzztypes.primitives import Extension, Region
 
 from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
-from .azure.creds import get_func_storage, get_instance_url
+from .azure.creds import get_corpus_storage, get_func_storage, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
 from .reports import get_report
@@ -262,13 +262,28 @@ def repro_extensions(
     if setup_container:
         commands += [
             "azcopy sync '%s' ./setup"
-            % (get_container_sas_url(setup_container, read=True, list=True)),
+            % (
+                get_container_sas_url(
+                    setup_container,
+                    account_id=get_corpus_storage(),
+                    read=True,
+                    list=True,
+                )
+            ),
         ]
 
     urls = [
-        get_file_sas_url(repro_config.container, repro_config.path, read=True),
         get_file_sas_url(
-            report.input_blob.container, report.input_blob.name, read=True
+            repro_config.container,
+            repro_config.path,
+            account_id=get_corpus_storage(),
+            read=True,
+        ),
+        get_file_sas_url(
+            report.input_blob.container,
+            report.input_blob.name,
+            account_id=get_corpus_storage(),
+            read=True,
         ),
     ]
 

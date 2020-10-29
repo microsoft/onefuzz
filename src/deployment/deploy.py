@@ -90,6 +90,7 @@ FUNC_TOOLS_ERROR = (
 
 logger = logging.getLogger("deploy")
 
+
 def gen_guid():
     return str(uuid.uuid4())
 
@@ -229,7 +230,7 @@ class Client:
             password = add_application_password(object_id)
             if password:
                 return password
-            if count > timeout_seconds/wait:
+            if count > timeout_seconds / wait:
                 raise Exception("creating password failed, trying again")
 
     def setup_rbac(self):
@@ -426,7 +427,9 @@ class Client:
 
     def create_eventgrid(self):
         logger.info("creating eventgrid subscription")
-        src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
+        func_src = self.results["deploy"]["fuzz-storage"]["value"]
+        corpus_src = self.results["deploy"]["corpus-storage"]["value"]
+
         dst_resource_id = self.results["deploy"]["func-storage"]["value"]
         client = get_client_from_cli_profile(StorageManagementClient)
         event_subscription_info = EventSubscription(
@@ -446,8 +449,18 @@ class Client:
         )
 
         client = get_client_from_cli_profile(EventGridManagementClient)
+
         result = client.event_subscriptions.create_or_update(
-            src_resource_id, "onefuzz1", event_subscription_info
+            func_src, "onefuzz1", event_subscription_info
+        ).result()
+        if result.provisioning_state != "Succeeded":
+            raise Exception(
+                "eventgrid subscription failed: %s"
+                % json.dumps(result.as_dict(), indent=4, sort_keys=True),
+            )
+
+        result = client.event_subscriptions.create_or_update(
+            corpus_src, "onefuzz2", event_subscription_info
         ).result()
         if result.provisioning_state != "Succeeded":
             raise Exception(
