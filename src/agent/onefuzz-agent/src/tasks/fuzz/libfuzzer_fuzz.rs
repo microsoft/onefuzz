@@ -193,13 +193,13 @@ impl LibFuzzerFuzzTask {
     }
 
     async fn continuous_sync_inputs(&self) -> Result<()> {
-            let mut dirs = vec![self.config.inputs.clone()];
-            if let Some(inputs) = &self.config.readonly_inputs {
-                let inputs = inputs.clone();
-                dirs.extend(inputs);
-            }
-            continuous_sync(&dirs, Pull, self.config.ensemble_sync_delay).await
+        let mut dirs = vec![self.config.inputs.clone()];
+        if let Some(inputs) = &self.config.readonly_inputs {
+            let inputs = inputs.clone();
+            dirs.extend(inputs);
         }
+        continuous_sync(&dirs, Pull, self.config.ensemble_sync_delay).await
+    }
 }
 
 fn try_report_iter_update(

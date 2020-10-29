@@ -46,7 +46,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     };
 
     let ensemble_sync_delay = None;
-    
+
     let config = Config {
         inputs,
         readonly_inputs,

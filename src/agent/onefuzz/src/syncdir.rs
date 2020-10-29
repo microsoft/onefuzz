@@ -77,7 +77,7 @@ impl SyncedDir {
             return Ok(());
         }
         let delay = Duration::from_secs(delay_seconds);
-    
+
         loop {
             self.sync(operation).await?;
             delay_with_jitter(delay).await;
@@ -143,7 +143,6 @@ pub async fn continuous_sync(
     }
 
     let delay = Duration::from_secs(delay_seconds);
-
 
     loop {
         for dir in dirs {
