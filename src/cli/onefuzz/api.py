@@ -10,11 +10,12 @@ import re
 import subprocess  # nosec
 import uuid
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 import pkg_resources
 import semver
+from memoization import cached
 from onefuzztypes import enums, models, primitives, requests, responses
 from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
@@ -32,6 +33,8 @@ DEFAULT = {
 
 # This was generated randomly and should be preserved moving forwards
 ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
+
+ONE_HOUR_IN_SECONDS = 3600
 
 DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
 DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:rs5-pro:latest"
@@ -146,6 +149,7 @@ class Files(Endpoint):
 
     endpoint = "files"
 
+    @cached(ttl=ONE_HOUR_IN_SECONDS)
     def _get_client(self, container: str) -> ContainerWrapper:
         sas = self.onefuzz.containers.get(container).sas_url
         return ContainerWrapper(sas)
@@ -166,7 +170,8 @@ class Files(Endpoint):
         """ get a file from a container """
         self.logger.debug("getting file from container: %s:%s", container, filename)
         client = self._get_client(container)
-        return client.download_blob(filename)
+        downloaded = cast(bytes, client.download_blob(filename))
+        return downloaded
 
     def upload_file(
         self, container: str, file_path: str, blob_name: Optional[str] = None
