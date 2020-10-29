@@ -42,7 +42,7 @@ pub struct SupervisorConfig {
     pub wait_for_files: Option<ContainerType>,
     pub stats_file: Option<String>,
     pub stats_format: Option<StatsFormat>,
-    pub ensemble_sync_delay: Optional<u64>,
+    pub ensemble_sync_delay: Option<u64>,
     #[serde(flatten)]
     pub common: CommonConfig,
 }

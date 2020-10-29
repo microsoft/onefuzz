@@ -21,7 +21,7 @@ pub enum SyncOperation {
 }
 
 const DELAY: Duration = Duration::from_secs(10);
-const DEFAULT_CONTINUOUS_SYNC_DELAY: Duration = Duration::from_secs(60);
+const DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS: u64 = 60;
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct SyncedDir {
@@ -70,13 +70,14 @@ impl SyncedDir {
     pub async fn continuous_sync(
         &self,
         operation: SyncOperation,
-        delay: Option<Duration>,
+        delay_seconds: Option<u64>,
     ) -> Result<()> {
-        let delay = delay.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY);
-        if delay.as_secs() == 0 {
+        let delay_seconds = delay_seconds.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS);
+        if delay_seconds == 0 {
             return Ok(());
         }
-
+        let delay = Duration::from_secs(delay_seconds);
+    
         loop {
             self.sync(operation).await?;
             delay_with_jitter(delay).await;
@@ -134,12 +135,15 @@ impl SyncedDir {
 pub async fn continuous_sync(
     dirs: &[SyncedDir],
     operation: SyncOperation,
-    delay: Option<Duration>,
+    delay_seconds: Option<u64>,
 ) -> Result<()> {
-    let delay = delay.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY);
-    if delay.as_secs() == 0 {
+    let delay_seconds = delay_seconds.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS);
+    if delay_seconds == 0 {
         return Ok(());
     }
+
+    let delay = Duration::from_secs(delay_seconds);
+
 
     loop {
         for dir in dirs {

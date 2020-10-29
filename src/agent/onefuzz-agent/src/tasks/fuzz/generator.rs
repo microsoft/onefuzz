@@ -46,7 +46,7 @@ pub struct GeneratorConfig {
     #[serde(default)]
     pub check_retry_count: u64,
     pub rename_output: bool,
-    pub ensemble_sync_delay: Optional<u64>,
+    pub ensemble_sync_delay: Option<u64>,
     #[serde(flatten)]
     pub common: CommonConfig,
 }
