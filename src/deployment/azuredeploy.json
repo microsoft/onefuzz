@@ -44,10 +44,10 @@
         "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
         "signalr-name": "[concat('onefuzz-', uniquestring(resourceGroup().id))]",
         "storage_account_sas": {
-            "signedServices": "bfqt",
-            "signedPermission": "rwdlacup",
             "signedExpiry": "[parameters('signedExpiry')]",
-            "signedResourceTypes": "sco"
+            "signedPermission": "rwdlacup",
+            "signedResourceTypes": "sco",
+            "signedServices": "bfqt"
         },
         "storageAccountName": "[concat('fuzz', uniquestring(resourceGroup().id))]",
         "storageAccountNameFunc": "[concat('func', uniquestring(resourceGroup().id))]",
