@@ -11,5 +11,6 @@ memoization~=0.3.1
 azure-storage-blob~=12.3
 tenacity==6.2.0
 docstring_parser==0.7.3
+jsonpatch==1.26
 # onefuzztypes version is set during build
 onefuzztypes==0.0.0
