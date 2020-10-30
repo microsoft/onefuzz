@@ -88,7 +88,7 @@ class OnefuzzAppRole(Enum):
 def register_application(
     registration_name: str, onefuzz_instance_name: str, approle: OnefuzzAppRole
 ) -> ApplicationInfo:
-    logger.debug("retrieving the application registration")
+    logger.debug("retrieving the application registration %s" % registration_name)
     client = get_client_from_cli_profile(GraphRbacManagementClient)
     apps: List[Application] = list(
         client.applications.list(filter="displayName eq '%s'" % registration_name)
@@ -421,9 +421,9 @@ def main():
             onefuzz_instance_name, registration_name, OnefuzzAppRole.ManagedNode
         )
     elif args.command == "create_cli_registration":
-        registration_name = onefuzz_instance_name or ("%s_cli" % onefuzz_instance_name)
+        registration_name = args.registration_name or ("%s_cli" % onefuzz_instance_name)
         create_and_display_registration(
-            onefuzz_instance_name, registration_name, OnefuzzAppRole.ManagedNode
+            onefuzz_instance_name, registration_name, OnefuzzAppRole.CliClient
         )
     elif args.command == "assign_scaleset_role":
         assign_scaleset_role(onefuzz_instance_name, args.scaleset_name)
