@@ -37,27 +37,27 @@
             }
         }
     },
-  "variables": {
-    "autoscale_name": "[concat('onefuzz-autoscale-', uniquestring(resourceGroup().id))]",
-    "diagnosticsLogsRetentionInDays": 90,
-    "monitorAccountName": "[concat('logs-wb-', uniquestring(resourceGroup().id))]",
-    "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
-    "signalr-name": "[concat('onefuzz-', uniquestring(resourceGroup().id))]",
-    "storage_account_sas": {
-        "signedExpiry": "[parameters('signedExpiry')]",
-        "signedPermission": "rwdlacup",
-        "signedResourceTypes": "sco",
-        "signedServices": "bfqt"
+    "variables": {
+        "autoscale_name": "[concat('onefuzz-autoscale-', uniquestring(resourceGroup().id))]",
+        "diagnosticsLogsRetentionInDays": 90,
+        "monitorAccountName": "[concat('logs-wb-', uniquestring(resourceGroup().id))]",
+        "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
+        "signalr-name": "[concat('onefuzz-', uniquestring(resourceGroup().id))]",
+        "storage_account_sas": {
+            "signedServices": "bfqt",
+            "signedPermission": "rwdlacup",
+            "signedExpiry": "[parameters('signedExpiry')]",
+            "signedResourceTypes": "sco"
+        },
+        "storageAccountName": "[concat('fuzz', uniquestring(resourceGroup().id))]",
+        "storageAccountNameFunc": "[concat('func', uniquestring(resourceGroup().id))]",
+        "telemetry": "d7a73cf4-5a1a-4030-85e1-e5b25867e45a",
+        "Log Analytics Contributor": "92aaf0da-9dab-42b6-94a3-d43ce8d16293",
+        "Managed Identity Operator": "f1a07417-d97a-45cb-824c-7a7467783830",
+        "Network Contributor": "4d97b98b-1d4f-4787-a291-c67834d212e7",
+        "Storage Account Contributor": "17d1049b-9a84-46fb-8f53-869881c3d3ab",
+        "Virtual Machine Contributor": "9980e02c-c2be-4d73-94e8-173b1dc7cf3c"
     },
-    "storageAccountName": "[concat('fuzz', uniquestring(resourceGroup().id))]",
-    "storageAccountNameFunc": "[concat('func', uniquestring(resourceGroup().id))]",
-    "telemetry": "d7a73cf4-5a1a-4030-85e1-e5b25867e45a",
-    "Log Analytics Contributor": "92aaf0da-9dab-42b6-94a3-d43ce8d16293",
-    "Managed Identity Operator": "f1a07417-d97a-45cb-824c-7a7467783830",
-    "Network Contributor": "4d97b98b-1d4f-4787-a291-c67834d212e7",
-    "Storage Account Contributor": "17d1049b-9a84-46fb-8f53-869881c3d3ab",
-    "Virtual Machine Contributor": "9980e02c-c2be-4d73-94e8-173b1dc7cf3c"
-  },
     "functions": [
         {
             "namespace": "onefuzz",
@@ -96,6 +96,12 @@
         }
     ],
     "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[variables('scaleset_identity')]",
+            "apiVersion": "2018-11-30",
+            "location": "[resourceGroup().location]"
+        },
         {
             "apiVersion": "2018-11-01",
             "name": "[parameters('name')]",
@@ -657,6 +663,21 @@
             }
         },
         {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2017-09-01",
+            "name": "[guid(concat(resourceGroup().id, '-user_managed_idenity'))]",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Managed Identity Operator'))]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
+            },
+            "DependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+            ],
+            "tags": {
+                "OWNER": "[parameters('owner')]"
+            }
+        },
+        {
             "type": "Microsoft.SignalRService/SignalR",
             "apiVersion": "2018-10-01",
             "name": "[variables('signalr-name')]",
@@ -716,6 +737,10 @@
         "func-key": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc')), '2019-06-01').keys[0].value]"
+        },
+        "scaleset-identity": {
+            "type": "string",
+            "value": "[variables('scaleset_identity')]"
         }
     }
 }
