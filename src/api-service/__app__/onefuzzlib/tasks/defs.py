@@ -195,8 +195,9 @@ TASK_DEFINITIONS = {
                 value=1,
                 permissions=[
                     ContainerPermission.Create,
-                    ContainerPermission.Read,
                     ContainerPermission.List,
+                    ContainerPermission.Read,
+                    ContainerPermission.Write,
                 ],
             ),
             ContainerDefinition(
