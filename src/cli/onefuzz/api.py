@@ -10,11 +10,12 @@ import re
 import subprocess  # nosec
 import uuid
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 import pkg_resources
 import semver
+from memoization import cached
 from onefuzztypes import enums, models, primitives, requests, responses
 from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
@@ -32,6 +33,8 @@ DEFAULT = {
 
 # This was generated randomly and should be preserved moving forwards
 ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
+
+ONE_HOUR_IN_SECONDS = 3600
 
 DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
 DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:rs5-pro:latest"
@@ -52,6 +55,16 @@ def wsl_path(path: str) -> str:
     if which("wslpath"):
         return subprocess.check_output(["wslpath", "-w", path]).decode().strip()
     return path
+
+
+def user_confirmation(message: str) -> bool:
+    answer: Optional[str] = None
+    while answer not in ["y", "n"]:
+        answer = input(message).strip()
+
+    if answer == "n":
+        return False
+    return True
 
 
 class Endpoint:
@@ -136,6 +149,7 @@ class Files(Endpoint):
 
     endpoint = "files"
 
+    @cached(ttl=ONE_HOUR_IN_SECONDS)
     def _get_client(self, container: str) -> ContainerWrapper:
         sas = self.onefuzz.containers.get(container).sas_url
         return ContainerWrapper(sas)
@@ -156,7 +170,8 @@ class Files(Endpoint):
         """ get a file from a container """
         self.logger.debug("getting file from container: %s:%s", container, filename)
         client = self._get_client(container)
-        return client.download_blob(filename)
+        downloaded = cast(bytes, client.download_blob(filename))
+        return downloaded
 
     def upload_file(
         self, container: str, file_path: str, blob_name: Optional[str] = None
@@ -273,6 +288,37 @@ class Containers(Endpoint):
         """ Get a list of containers """
         self.logger.debug("list containers")
         return self._req_model_list("GET", responses.ContainerInfoBase)
+
+    def reset(
+        self,
+        *,
+        container_types: Optional[
+            List[enums.ContainerType]
+        ] = enums.ContainerType.reset_defaults(),
+        yes: bool = False,
+    ) -> None:
+        """
+        Reset containers by container type  (NOTE: This may cause unexpected issues with existing fuzzing jobs)
+        """
+        if not container_types:
+            return
+
+        message = "Confirm deleting container types: %s (specify y or n): " % (
+            ",".join(x.name for x in container_types)
+        )
+        if not yes and not user_confirmation(message):
+            self.logger.warning("not deleting containers")
+            return
+
+        for container in self.list():
+            if (
+                container.metadata
+                and "container_type" in container.metadata
+                and enums.ContainerType(container.metadata["container_type"])
+                in container_types
+            ):
+                self.logger.info("removing container: %s", container.name)
+                self.delete(container.name)
 
 
 class Repro(Endpoint):
@@ -625,8 +671,16 @@ class Tasks(Endpoint):
         analyzer_env: Optional[Dict[str, str]] = None,
         tags: Optional[Dict[str, str]] = None,
         prereq_tasks: Optional[List[UUID]] = None,
+        debug: Optional[List[enums.TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> models.Task:
-        """ Create a task """
+        """
+        Create a task
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
+
         self.logger.debug("creating task: %s", task_type)
 
         job_id_expanded = self._disambiguate_uuid(
@@ -684,10 +738,12 @@ class Tasks(Endpoint):
                 check_asan_log=check_asan_log,
                 check_debugger=check_debugger,
                 check_retry_count=check_retry_count,
+                ensemble_sync_delay=ensemble_sync_delay,
             ),
             pool=models.TaskPool(count=vm_count, pool_name=pool_name),
             containers=containers_submit,
             tags=tags,
+            debug=debug,
         )
 
         return self.create_with_config(config)
@@ -940,6 +996,28 @@ class Node(Endpoint):
             "PATCH",
             responses.BoolResult,
             data=requests.NodeGet(machine_id=machine_id_expanded),
+        )
+
+    def update(
+        self,
+        machine_id: UUID_EXPANSION,
+        *,
+        debug_keep_node: Optional[bool] = None,
+    ) -> responses.BoolResult:
+        self.logger.debug("update node: %s", machine_id)
+        machine_id_expanded = self._disambiguate_uuid(
+            "machine_id",
+            machine_id,
+            lambda: [str(x.machine_id) for x in self.list()],
+        )
+
+        return self._req_model(
+            "POST",
+            responses.BoolResult,
+            data=requests.NodeUpdate(
+                machine_id=machine_id_expanded,
+                debug_keep_node=debug_keep_node,
+            ),
         )
 
     def list(
@@ -1312,16 +1390,6 @@ class Onefuzz:
 
         return data
 
-    def _user_confirmation(self, message: str) -> bool:
-        answer: Optional[str] = None
-        while answer not in ["y", "n"]:
-            answer = input(message).strip()
-
-        if answer == "n":
-            self.logger.info("not stopping")
-            return False
-        return True
-
     def _delete_components(
         self,
         containers: bool = False,
@@ -1364,25 +1432,7 @@ class Onefuzz:
                 self.scalesets.shutdown(scaleset.scaleset_id, now=True)
 
         if containers:
-            for container in self.containers.list():
-                if (
-                    container.metadata
-                    and "container_type" in container.metadata
-                    and container.metadata["container_type"]
-                    in [
-                        "analysis",
-                        "coverage",
-                        "crashes",
-                        "inputs",
-                        "no_repro",
-                        "readonly_inputs",
-                        "reports",
-                        "setup",
-                        "unique_reports",
-                    ]
-                ):
-                    self.logger.info("removing container: %s", container.name)
-                    self.containers.delete(container.name)
+            self.containers.reset(yes=True)
 
     def reset(
         self,
@@ -1446,7 +1496,8 @@ class Onefuzz:
         message = "Confirm stopping %s (specify y or n): " % (
             ", ".join(sorted(to_delete))
         )
-        if not yes and not self._user_confirmation(message):
+        if not yes and not user_confirmation(message):
+            self.logger.warning("not resetting")
             return
 
         self._delete_components(

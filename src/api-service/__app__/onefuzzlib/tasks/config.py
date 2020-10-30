@@ -12,7 +12,7 @@ from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, Task
 from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
 
 from ..azure.containers import blob_exists, container_exists, get_container_sas_url
-from ..azure.creds import get_fuzz_storage, get_instance_url
+from ..azure.creds import get_func_storage, get_fuzz_storage, get_instance_url
 from ..azure.queue import get_queue_sas
 from .defs import TASK_DEFINITIONS
 
@@ -79,7 +79,7 @@ def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
     for container_type in containers:
         if container_type not in [x.type for x in definition.containers]:
             raise TaskConfigError(
-                "unsupported container type for this task: %s", container_type.name
+                "unsupported container type for this task: %s" % container_type.name
             )
 
     if definition.monitor_queue:
@@ -183,7 +183,7 @@ def build_task_config(
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "task-heartbeat",
-            account_id=os.environ["ONEFUZZ_FUNC_STORAGE"],
+            account_id=get_func_storage(),
             add=True,
         ),
         back_channel_address="https://%s/api/back_channel" % (get_instance_url()),
@@ -303,6 +303,9 @@ def build_task_config(
 
     if TaskFeature.check_retry_count in definition.features:
         config.check_retry_count = task_config.task.check_retry_count or 0
+
+    if TaskFeature.ensemble_sync_delay in definition.features:
+        config.ensemble_sync_delay = task_config.task.ensemble_sync_delay
 
     return config
 

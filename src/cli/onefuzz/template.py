@@ -82,11 +82,11 @@ class Template(Command):
                             self.logger.info("not removing: %s", container)
                             continue
                         to_remove.append(container.name)
-                    for name in to_remove:
-                        if name in containers:
-                            self.logger.info("removing container: %s", name)
-                            self.onefuzz.containers.delete(name)
-                            containers.remove(name)
+                    for container_name in to_remove:
+                        if container_name in containers:
+                            self.logger.info("removing container: %s", container_name)
+                            self.onefuzz.containers.delete(container_name)
+                            containers.remove(container_name)
 
                 if stop_notifications:
                     notifications = self.onefuzz.notifications.list()

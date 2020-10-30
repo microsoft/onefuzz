@@ -847,7 +847,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.debug("scaleset delete will delete node: %s", self.scaleset_id)
             return
 
-        machine_ids = [x.machine_id for x in nodes]
+        machine_ids = []
+        for node in nodes:
+            if node.debug_keep_node:
+                logging.warning(
+                    "delete manually overridden %s:%s",
+                    self.scaleset_id,
+                    node.machine_id,
+                )
+            else:
+                machine_ids.append(node.machine_id)
 
         logging.info("deleting %s:%s", self.scaleset_id, machine_ids)
         delete_vmss_nodes(self.scaleset_id, machine_ids)
@@ -865,7 +874,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.debug("scaleset delete will delete node: %s", self.scaleset_id)
             return
 
-        machine_ids = [x.machine_id for x in nodes]
+        machine_ids = []
+        for node in nodes:
+            if node.debug_keep_node:
+                logging.warning(
+                    "reimage manually overridden %s:%s",
+                    self.scaleset_id,
+                    node.machine_id,
+                )
+            else:
+                machine_ids.append(node.machine_id)
 
         result = reimage_vmss_nodes(self.scaleset_id, machine_ids)
         if isinstance(result, Error):
@@ -923,7 +941,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     def update_nodes(self) -> None:
         # Be in at-least 'setup' before checking for the list of VMs
-        if self.state == self.init:
+        if self.state == ScalesetState.init:
             return
 
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
@@ -958,7 +976,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         pool = Pool.get_by_name(self.pool_name)
         if isinstance(pool, Error):
             self.error = pool
-            return self.halt()
+            self.halt()
+            return
 
         logging.debug("updating scaleset configs: %s", self.scaleset_id)
         extensions = fuzz_extensions(self.region, pool.os, self.pool_name)

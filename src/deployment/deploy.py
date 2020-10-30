@@ -12,18 +12,20 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 import zipfile
 from datetime import datetime, timedelta
 
-from azure.cli.core import CLIError
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.core.exceptions import ResourceExistsError
 from azure.cosmosdb.table.tableservice import TableService
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
+    Application,
     ApplicationCreateParameters,
+    ApplicationUpdateParameters,
     AppRole,
     GraphErrorException,
     OptionalClaims,
@@ -48,7 +50,6 @@ from azure.mgmt.resource.resources.models import (
     DeploymentMode,
     DeploymentProperties,
 )
-import time
 from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import (
     BlobServiceClient,
@@ -59,12 +60,13 @@ from azure.storage.queue import QueueServiceClient
 from msrest.serialization import TZ_UTC
 
 from data_migration import migrate
-from register_pool_application import (
+from registration import (
     add_application_password,
+    assign_scaleset_role,
     authorize_application,
     get_application,
     register_application,
-    update_registration,
+    update_pool_registration,
 )
 
 USER_IMPERSONATION = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
@@ -89,7 +91,6 @@ FUNC_TOOLS_ERROR = (
 
 logger = logging.getLogger("deploy")
 
-
 def gen_guid():
     return str(uuid.uuid4())
 
@@ -112,6 +113,7 @@ class Client:
         create_registration,
         migrations,
         export_appinsights: bool,
+        log_service_principal: bool,
     ):
         self.resource_group = resource_group
         self.arm_template = arm_template
@@ -133,6 +135,7 @@ class Client:
         }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
+        self.log_service_principal = log_service_principal
 
         machine = platform.machine()
         system = platform.system()
@@ -219,15 +222,16 @@ class Client:
         # Work-around the race condition where the app is created but passwords cannot
         # be created yet.
         count = 0
+        wait = 5
+        timeout_seconds = 60
         while True:
-            time.sleep(5)
+            time.sleep(wait)
             count += 1
-            try:
-                return add_application_password(object_id)
-            except CLIError as err:
-                if count > 5:
-                    raise err
-            logger.info("creating password failed, trying again")
+            password = add_application_password(object_id)
+            if password:
+                return password
+            if count > timeout_seconds/wait:
+                raise Exception("creating password failed, trying again")
 
     def setup_rbac(self):
         """
@@ -253,6 +257,25 @@ class Client:
             logger.error("unable to query RBAC. Provide client_id and client_secret")
             sys.exit(1)
 
+        app_roles = [
+            AppRole(
+                allowed_member_types=["Application"],
+                display_name="CliClient",
+                id=str(uuid.uuid4()),
+                is_enabled=True,
+                description="Allows access from the CLI.",
+                value="CliClient",
+            ),
+            AppRole(
+                allowed_member_types=["Application"],
+                display_name="ManagedNode",
+                id=str(uuid.uuid4()),
+                is_enabled=True,
+                description="Allow access from a lab machine.",
+                value="ManagedNode",
+            ),
+        ]
+
         if not existing:
             logger.info("creating Application registration")
             url = "https://%s.azurewebsites.net" % self.application_name
@@ -270,24 +293,7 @@ class Client:
                         resource_app_id="00000002-0000-0000-c000-000000000000",
                     )
                 ],
-                app_roles=[
-                    AppRole(
-                        allowed_member_types=["Application"],
-                        display_name="CliClient",
-                        id=str(uuid.uuid4()),
-                        is_enabled=True,
-                        description="Allows access from the CLI.",
-                        value="CliClient",
-                    ),
-                    AppRole(
-                        allowed_member_types=["Application"],
-                        display_name="LabMachine",
-                        id=str(uuid.uuid4()),
-                        is_enabled=True,
-                        description="Allow access from a lab machine.",
-                        value="LabMachine",
-                    ),
-                ],
+                app_roles=app_roles,
             )
             app = client.applications.create(params)
 
@@ -300,7 +306,27 @@ class Client:
             )
             client.service_principals.create(service_principal_params)
         else:
-            app = existing[0]
+            app: Application = existing[0]
+            existing_role_values = [app_role.value for app_role in app.app_roles]
+            has_missing_roles = any(
+                [role.value not in existing_role_values for role in app_roles]
+            )
+
+            if has_missing_roles:
+                # disabling the existing app role first to allow the update
+                # this is a requirement to update the application roles
+                for role in app.app_roles:
+                    role.is_enabled = False
+
+                client.applications.patch(
+                    app.object_id, ApplicationUpdateParameters(app_roles=app.app_roles)
+                )
+
+                # overriding the list of app roles
+                client.applications.patch(
+                    app.object_id, ApplicationUpdateParameters(app_roles=app_roles)
+                )
+
             creds = list(client.applications.list_password_credentials(app.object_id))
             client.applications.update_password_credentials(app.object_id, creds)
 
@@ -327,7 +353,10 @@ class Client:
         self.results["client_secret"] = password
 
         # Log `client_secret` for consumption by CI.
-        logger.debug("client_id: %s client_secret: %s", app.app_id, password)
+        if self.log_service_principal:
+            logger.info("client_id: %s client_secret: %s", app.app_id, password)
+        else:
+            logger.debug("client_id: %s client_secret: %s", app.app_id, password)
 
     def deploy_template(self):
         logger.info("deploying arm template: %s", self.arm_template)
@@ -366,6 +395,11 @@ class Client:
             )
             sys.exit(1)
         self.results["deploy"] = result.properties.outputs
+
+        logger.info("assigning the user managed identity role")
+        assign_scaleset_role(
+            self.application_name, self.results["deploy"]["scaleset-identity"]["value"]
+        )
 
     def apply_migrations(self):
         self.results["deploy"]["func-storage"]["value"]
@@ -606,7 +640,7 @@ class Client:
     def update_registration(self):
         if not self.create_registration:
             return
-        update_registration(self.application_name)
+        update_pool_registration(self.application_name)
 
     def done(self):
         logger.info(TELEMETRY_NOTICE)
@@ -706,10 +740,9 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument(
         "--create_pool_registration",
-        default=False,
-        type=bool,
+        action="store_true",
         help="Create an application registration and/or generate a "
-        "password for the pool agent (default: False)",
+        "password for the pool agent",
     )
     parser.add_argument(
         "--apply_migrations",
@@ -722,6 +755,11 @@ def main():
         "--export_appinsights",
         action="store_true",
         help="enable appinsight log export",
+    )
+    parser.add_argument(
+        "--log_service_principal",
+        action="store_true",
+        help="display service prinipal with info log level",
     )
     args = parser.parse_args()
 
@@ -745,6 +783,7 @@ def main():
         args.create_pool_registration,
         args.apply_migrations,
         args.export_appinsights,
+        args.log_service_principal,
     )
     if args.verbose:
         level = logging.DEBUG
@@ -754,19 +793,6 @@ def main():
     logging.basicConfig(level=level)
 
     logging.getLogger("deploy").setLevel(logging.INFO)
-
-    # TODO: using az_cli resets logging defaults.  For now, force these
-    # to be WARN level
-    if not args.verbose:
-        for entry in [
-            "adal-python",
-            "msrest.universal_http",
-            "urllib3.connectionpool",
-            "az_command_data_logger",
-            "msrest.service_client",
-            "azure.core.pipeline.policies.http_logging_policy",
-        ]:
-            logging.getLogger(entry).setLevel(logging.WARN)
 
     if args.start_at != states[0][0]:
         logger.warning(

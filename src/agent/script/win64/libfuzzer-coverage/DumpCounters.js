@@ -83,19 +83,26 @@ function processModule(module, results_dir) {
     return true;
 }
 
-function dumpCounters(results_dir, sample_name) {
+function dumpCounters(results_dir, should_disable_sympath) {
+    if (should_disable_sympath == true) {
+        logln(`disabling sympath`);
+        execute('.sympath ""');
+    } else {
+        logln(`not disabling sympath`);
+    }
+
     // Reset to initial break in `ntdll!LdrpDoDebuggerBreak`.
     execute(".restart");
 
     // Disable FCE from sanitizers.
-    execute("sxi av");
+    execute("sxd av");
 
     // Run to exit break in `ntdll!NtTerminateProcess`.
     execute("g");
 
     let found = false;
     host.currentProcess.Modules.All(function (module) {
-        let result = processModule(module, results_dir, sample_name);
+        let result = processModule(module, results_dir);
         if (result) {
             found = true;
         }

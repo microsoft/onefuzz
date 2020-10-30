@@ -9,7 +9,7 @@ import os
 import subprocess  # nosec
 from typing import Dict, List, Optional, Tuple
 
-from onefuzztypes.enums import OS, ContainerType
+from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag
 from onefuzztypes.models import NotificationConfig
 from onefuzztypes.primitives import File
 
@@ -113,8 +113,15 @@ class OssFuzz(Command):
         max_target_count: int = 20,
         sync_inputs: bool = False,
         notification_config: Optional[NotificationConfig] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> None:
-        """ OssFuzz style libfuzzer jobs """
+        """
+        OssFuzz style libfuzzer jobs
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
 
         fuzzers = sorted(glob.glob("*fuzzer"))
         if fuzzers:
@@ -234,6 +241,8 @@ class OssFuzz(Command):
                 target_options=target_options,
                 target_env=target_env,
                 tags=helper.tags,
+                debug=debug,
+                ensemble_sync_delay=ensemble_sync_delay,
             )
             helpers.append(helper)
         base_helper.wait()
