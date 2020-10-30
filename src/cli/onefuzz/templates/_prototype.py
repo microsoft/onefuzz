@@ -9,42 +9,79 @@
 # from onefuzztypes.primitives import Container, Directory, File
 
 from inspect import Parameter, signature
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
+from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.models import (
     OnefuzzTemplate,
     OnefuzzTemplateConfig,
     OnefuzzTemplateRequest,
+    TaskContainers,
 )
-from onefuzztypes.primitives import File
+from onefuzztypes.primitives import Directory, File
 
 from onefuzz.api import Command
 
+from . import _build_container_name
 from ._render_template import build_input_config
 from ._usertemplates import TEMPLATES
 
 # from . import JobHelper
 
 
+def container_type_name(container_type: ContainerType) -> str:
+    return container_type.name + "_dir"
+
+
 class Prototype(Command):
     """ Pre-defined Prototype job """
 
-    # def _execute_
+    def _parse_container_args(
+        self, config: OnefuzzTemplateConfig, args: Any
+    ) -> List[TaskContainers]:
+        containers = []
+        for container_type in config.containers:
+            if container_type in args["container_names"]:
+                container_name = args["container_names"][container_type]
+            else:
+                container_name = _build_container_name(
+                    self.onefuzz,
+                    container_type,
+                    args["project"],
+                    args["name"],
+                    args["build"],
+                    OS.linux,
+                )
+            containers.append(TaskContainers(name=container_name, type=container_type))
+        return containers
 
     def _parse_args(
         self, name: str, config: OnefuzzTemplateConfig, args: Any
     ) -> OnefuzzTemplateRequest:
-        self.logger.warning("convert args into a Request here")
-        for arg in args:
-            pass
+        """ convert arguments from argparse into a OnefuzzTemplateRequest """
+        user_fields = {}
+        for field in config.user_fields:
+            if field.name not in args:
+                raise Exception("missing field: %s" % field.name)
+            value = args[field.name]
+            if value is not None:
+                user_fields[field.name] = value
+
+        containers = self._parse_container_args(config, args)
+        for container in containers:
+            container_name = container_type_name(container.type)
+            if container_name in args and args[container_name] is not None:
+                print("upload %s to %s" % (args[container_name], container.name))
 
         request = OnefuzzTemplateRequest(
-            template_name=name, user_fields={}, containers=[]
+            template_name=name, user_fields=user_fields, containers=containers
         )
         return request
 
     def _submit_request(self, request: OnefuzzTemplateRequest) -> int:
-        self.logger.warning("do something with the request here...")
+        self.logger.warning(
+            "do something with the request here... %s", request.json(indent=4)
+        )
         return 3
 
     def _execute(
@@ -53,10 +90,7 @@ class Prototype(Command):
         config: OnefuzzTemplateConfig,
         args: Any,
     ) -> int:
-        self.logger.warning("building: %s", name)
-        self.logger.warning("config: %s", config)
-        self.logger.warning("args: %s", args)
-
+        self.logger.debug("building: %s", name)
         request = self._parse_args(name, config, args)
         result = self._submit_request(request)
         return result
@@ -78,6 +112,27 @@ def config_to_params(config: OnefuzzTemplateConfig) -> List[Parameter]:
             Parameter.KEYWORD_ONLY,
             annotation=annotation,
             default=default,
+        )
+        params.append(param)
+
+    for container in config.containers:
+        if container not in ContainerType.user_config():
+            continue
+
+        param = Parameter(
+            container_type_name(container),
+            Parameter.KEYWORD_ONLY,
+            annotation=Optional[Directory],
+            default=Parameter.empty,
+        )
+        params.append(param)
+
+    if config.containers:
+        param = Parameter(
+            "container_names",
+            Parameter.KEYWORD_ONLY,
+            annotation=Optional[Dict[ContainerType, str]],
+            default=None,
         )
         params.append(param)
 

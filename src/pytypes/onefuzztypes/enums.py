@@ -216,6 +216,10 @@ class ContainerType(Enum):
             cls.unique_reports,
         ]
 
+    @classmethod
+    def user_config(cls) -> List["ContainerType"]:
+        return [cls.setup, cls.inputs, cls.readonly_inputs]
+
 
 class StatsFormat(Enum):
     AFL = "AFL"
