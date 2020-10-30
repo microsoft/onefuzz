@@ -307,6 +307,14 @@ def create_and_display_registration(
     logger.info("client_secret: %s" % application_info.client_secret)
 
 
+def update_pool_registration(onefuzz_instance_name: str):
+    create_and_display_registration(
+        onefuzz_instance_name,
+        "%s_pool" % onefuzz_instance_name,
+        OnefuzzAppRole.ManagedNode,
+    )
+
+
 def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
     """ Allows the nodes in the scaleset to access the service by assigning their managed identity to the ManagedNode Role """
 
@@ -421,10 +429,7 @@ def main():
 
     onefuzz_instance_name = args.onefuzz_instance
     if args.command == "update_pool_registration":
-        registration_name = "%s_pool" % onefuzz_instance_name
-        create_and_display_registration(
-            onefuzz_instance_name, registration_name, OnefuzzAppRole.ManagedNode
-        )
+        update_pool_registration(onefuzz_instance_name)
     elif args.command == "create_cli_registration":
         registration_name = args.registration_name or ("%s_cli" % onefuzz_instance_name)
         create_and_display_registration(
