@@ -263,7 +263,7 @@
         {
             "apiVersion": "2014-04-01",
             "name": "[variables('autoscale_name')]",
-            "type": "Microsoft.Insights/autoscaleSettings",
+            "type": "microsoft.insights/autoscalesettings",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverFarms', parameters('name'))]"
@@ -274,7 +274,7 @@
                 "targetResourceUri": "[resourceId('Microsoft.Web/serverFarms/', parameters('name'))]",
                 "profiles": [
                     {
-                        "name": "Auto created scale condition",
+                        "name": "Auto scale condition",
                         "capacity": {
                             "minimum": 1,
                             "maximum": 20,
