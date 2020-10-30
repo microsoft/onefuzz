@@ -193,7 +193,11 @@ TASK_DEFINITIONS = {
                 type=ContainerType.unique_inputs,
                 compare=Compare.AtLeast,
                 value=1,
-                permissions=[ContainerPermission.Create, ContainerPermission.Read, ContainerPermission.List],
+                permissions=[
+                    ContainerPermission.Create,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
             ),
             ContainerDefinition(
                 type=ContainerType.inputs,
