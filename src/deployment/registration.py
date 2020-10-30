@@ -438,13 +438,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# todo: update the internal docs (https://dev.azure.com/msresearch/OneFuzz/_git/OneFuzz?path=%2FREADME.md&_a=preview&version=GBinternal-information) with
-
-# Mandatory role assigment
-# if your org require that you prevent guest access by requiring a role assigment.
-# The default CLI will not be able to access the service.
-# you will need to create a new cli registration by executing the following
-# ```
-# python registration.py create_cli_registration INSTANCENAME [--registration_name REGISTRATIONNAME]
-# ```
