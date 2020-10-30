@@ -4,15 +4,15 @@ import json
 from typing import Dict, List
 
 from jsonpatch import apply_patch
-from onefuzztypes.enums import UserFieldType, ContainerType
+from onefuzztypes.enums import ContainerType, UserFieldType
 from onefuzztypes.models import (
-    TemplateUserData,
+    TEMPLATE_BASE_FIELDS,
     OnefuzzTemplate,
     OnefuzzTemplateConfig,
     OnefuzzTemplateField,
     OnefuzzTemplateRequest,
+    TemplateUserData,
     UserField,
-    TEMPLATE_BASE_FIELDS,
 )
 
 
@@ -22,7 +22,9 @@ def template_container_types(template: OnefuzzTemplate) -> List[ContainerType]:
 
 def build_input_config(template: OnefuzzTemplate) -> OnefuzzTemplateConfig:
     user_fields = [
-        OnefuzzTemplateField(name=x.name, type=x.type, required=x.required)
+        OnefuzzTemplateField(
+            name=x.name, type=x.type, required=x.required, default=x.default
+        )
         for x in TEMPLATE_BASE_FIELDS + template.user_fields
     ]
     containers = template_container_types(template)

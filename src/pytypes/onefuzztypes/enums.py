@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from enum import Enum
-from typing import List
+from typing import Dict, List
 
 
 class OS(Enum):
@@ -365,8 +365,8 @@ class UserFieldOperation(Enum):
 
 
 class UserFieldType(Enum):
-    Bool = "Bool"
-    Int = "Int"
-    Str = "Str"
-    DictStr = "DictStr"
-    ListStr = "ListStr"
+    Bool = bool
+    Int = int
+    Str = str
+    DictStr = Dict[str, str]
+    ListStr = List[str]

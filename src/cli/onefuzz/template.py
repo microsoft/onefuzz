@@ -9,11 +9,11 @@ from typing import Optional
 from onefuzztypes.enums import ContainerType
 
 from .api import Command, Onefuzz
+from .templates._prototype import Prototype
 from .templates.afl import AFL
 from .templates.libfuzzer import Libfuzzer
 from .templates.ossfuzz import OssFuzz
 from .templates.radamsa import Radamsa
-from .templates._prototype import Prototype
 
 
 class Template(Command):

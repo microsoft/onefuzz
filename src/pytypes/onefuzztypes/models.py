@@ -30,11 +30,11 @@ from .enums import (
     TaskFeature,
     TaskState,
     TaskType,
-    VmState,
     UserFieldOperation,
     UserFieldType,
+    VmState,
 )
-from .primitives import Container, PoolName, Region
+from .primitives import Container, File, PoolName, Region
 
 
 class EnumModel(BaseModel):
@@ -706,11 +706,15 @@ class UserFieldLocation(BaseModel):
     path: str
 
 
+TemplateUserData = Union[bool, int, str, Dict[str, str], List[str], File]
+
+
 class UserField(BaseModel):
     name: str
     type: UserFieldType
     locations: List[UserFieldLocation]
     required: bool = Field(default=False)
+    default: Optional[TemplateUserData]
 
     @validator("locations", allow_reuse=True)
     def check_locations(cls, value: List) -> List:
@@ -763,9 +767,6 @@ class OnefuzzTemplate(BaseModel):
         return data
 
 
-TemplateUserData = Union[bool, int, str, Dict[str, str], List[str]]
-
-
 class OnefuzzTemplateRequest(BaseModel):
     template_name: str
     user_fields: Dict[str, TemplateUserData]
@@ -776,6 +777,7 @@ class OnefuzzTemplateField(BaseModel):
     name: str
     type: UserFieldType
     required: bool
+    default: Optional[TemplateUserData]
 
 
 class OnefuzzTemplateConfig(BaseModel):
@@ -787,6 +789,7 @@ TEMPLATE_BASE_FIELDS = [
     UserField(
         name="project",
         type=UserFieldType.Str,
+        required=True,
         locations=[
             UserFieldLocation(
                 op=UserFieldOperation.replace,
@@ -797,6 +800,7 @@ TEMPLATE_BASE_FIELDS = [
     UserField(
         name="name",
         type=UserFieldType.Str,
+        required=True,
         locations=[
             UserFieldLocation(
                 op=UserFieldOperation.replace,
@@ -807,6 +811,7 @@ TEMPLATE_BASE_FIELDS = [
     UserField(
         name="build",
         type=UserFieldType.Str,
+        required=True,
         locations=[
             UserFieldLocation(
                 op=UserFieldOperation.replace,

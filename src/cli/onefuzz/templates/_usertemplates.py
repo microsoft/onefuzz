@@ -9,11 +9,11 @@ from onefuzztypes.enums import (
 )
 from onefuzztypes.models import (
     JobConfig,
+    OnefuzzTemplate,
     TaskConfig,
     TaskContainers,
     TaskDetails,
     TaskPool,
-    OnefuzzTemplate,
     UserField,
     UserFieldLocation,
 )
@@ -30,22 +30,13 @@ TEMPLATES = {
                     target_exe="fuzz.exe",
                     target_env={},
                     target_options=[],
-                    supervisor_exe="{tools_dir}/afl-fuzz",
-                    supervisor_options=[
-                        "-d",
-                        "-i",
-                        "{input_corpus}",
-                        "-o",
-                        "{runtime_dir}",
-                        "--",
-                        "{target_exe}",
-                        "{target_options}",
-                    ],
-                    supervisor_input_marker="@@",
+                    supervisor_exe="",
+                    supervisor_options=[],
+                    supervisor_input_marker="",
                 ),
                 pool=TaskPool(count=1, pool_name=""),
                 containers=[
-                    TaskContainers(name="afl-linux", type=ContainerType.tools),
+                    TaskContainers(name="afl-container-name", type=ContainerType.tools),
                     TaskContainers(name="", type=ContainerType.setup),
                     TaskContainers(name="", type=ContainerType.crashes),
                     TaskContainers(name="", type=ContainerType.inputs),
@@ -94,6 +85,7 @@ TEMPLATES = {
             UserField(
                 name="duration",
                 type=UserFieldType.Int,
+                default=24,
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -111,7 +103,7 @@ TEMPLATES = {
             UserField(
                 name="target_exe",
                 type=UserFieldType.Str,
-                required=False,
+                default="fuzz.exe",
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -126,7 +118,6 @@ TEMPLATES = {
             UserField(
                 name="target_options",
                 type=UserFieldType.ListStr,
-                required=True,
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -141,7 +132,7 @@ TEMPLATES = {
             UserField(
                 name="supervisor_exe",
                 type=UserFieldType.Str,
-                required=True,
+                default="{tools_dir}/afl-fuzz",
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -152,7 +143,8 @@ TEMPLATES = {
             UserField(
                 name="supervisor_input_marker",
                 type=UserFieldType.Str,
-                required=True,
+                required=False,
+                default="@@",
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -163,7 +155,16 @@ TEMPLATES = {
             UserField(
                 name="supervisor_options",
                 type=UserFieldType.ListStr,
-                required=True,
+                default=[
+                    "-d",
+                    "-i",
+                    "{input_corpus}",
+                    "-o",
+                    "{runtime_dir}",
+                    "--",
+                    "{target_exe}",
+                    "{target_options}",
+                ],
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -174,7 +175,6 @@ TEMPLATES = {
             UserField(
                 name="supervisor_env",
                 type=UserFieldType.DictStr,
-                required=True,
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -185,6 +185,7 @@ TEMPLATES = {
             UserField(
                 name="vm_count",
                 type=UserFieldType.Int,
+                default=2,
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -205,6 +206,7 @@ TEMPLATES = {
             UserField(
                 name="afl_container",
                 type=UserFieldType.Str,
+                default="afl-linux",
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -215,6 +217,7 @@ TEMPLATES = {
             UserField(
                 name="reboot_after_setup",
                 type=UserFieldType.Bool,
+                default=False,
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -325,6 +328,7 @@ TEMPLATES = {
             UserField(
                 name="target_exe",
                 type=UserFieldType.Str,
+                default="fuzz.exe",
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -343,6 +347,7 @@ TEMPLATES = {
             UserField(
                 name="duration",
                 type=UserFieldType.Int,
+                default=24,
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -374,6 +379,7 @@ TEMPLATES = {
             UserField(
                 name="vm_count",
                 type=UserFieldType.Int,
+                default=2,
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
@@ -420,6 +426,7 @@ TEMPLATES = {
             UserField(
                 name="reboot_after_setup",
                 type=UserFieldType.Bool,
+                default=False,
                 locations=[
                     UserFieldLocation(
                         op=UserFieldOperation.replace,
