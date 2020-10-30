@@ -88,19 +88,23 @@ class OnefuzzAppRole(Enum):
 def register_application(
     registration_name: str, onefuzz_instance_name: str, approle: OnefuzzAppRole
 ) -> ApplicationInfo:
-    logger.debug("retrieving the application registration %s" % registration_name)
+    logger.info("retrieving the application registration %s" % registration_name)
     client = get_client_from_cli_profile(GraphRbacManagementClient)
     apps: List[Application] = list(
         client.applications.list(filter="displayName eq '%s'" % registration_name)
     )
 
     if len(apps) == 0:
-        logger.debug("No existing registration found. creating a new one")
+        logger.info("No existing registration found. creating a new one")
         app = create_application_registration(
             onefuzz_instance_name, registration_name, approle
         )
     else:
         app = apps[0]
+        logger.info(
+            "Found existing application objectId '%s' - appid '%s"
+            % (app.object_id, app.app_id)
+        )
 
     onefuzz_apps: List[Application] = list(
         client.applications.list(filter="displayName eq '%s'" % onefuzz_instance_name)
@@ -131,6 +135,7 @@ def register_application(
 def create_application_credential(application_name: str) -> str:
     """ Add a new password to the application registration """
 
+    logger.info("creating application credential for '%s'" % application_name)
     client = get_client_from_cli_profile(GraphRbacManagementClient)
     apps: List[Application] = list(
         client.applications.list(filter="displayName eq '%s'" % application_name)
