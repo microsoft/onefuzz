@@ -9,18 +9,20 @@
 # to deploy OneFuzz on Azure.
 #
 # List of custom variables:
-# | Variable Name        | Comments                                                  |
-# |----------------------|-----------------------------------------------------------|
-# |AZURE_CLIENT_ID       | The appication ID created by you or the deployment script |
-# |AZURE_CLIENT_SECRET   | Secret created by App registration process                |
-# |AZURE_TENANT_ID       | Tenant ID of the Azure Subscription                       |
-# |CONTACT_EMAIL_ADDRESS | Email address for communication                           |
-# |ONEFUZZ_DEPLOY_LOC    | Deployment Folder location of this script location        |
-# |ONEFUZZ_INSTANCE_NAME | Instance name of Onefuzz Deployement                      |
-# |ONEFUZZ_SERVICE_URL   | OneFuzz service URL. Generally the url defined in App     |
-# |                      | Registration                                              |
-# |REGION                | OneFuzz Region (prefer westus2)                           |
-# |RESOURCE_GROUP_NAME   | Resource gorup name for OneFuzz deployment                |                        
+# | Variable Name        | Comments                                                  | Required/Optional |
+# |----------------------|-----------------------------------------------------------|-------------------|
+# |AZURE_CLIENT_ID       | The appication ID created by you or the deployment script | Required          |
+# |AZURE_CLIENT_SECRET   | Secret created by App registration process                | Required          |
+# |AZURE_TENANT_ID       | Tenant ID of the Azure Subscription                       | Required          |
+# |CONTACT_EMAIL_ADDRESS | Email address for communication                           | Required          |
+# |DEPLOY_ARGS           | Specify OneFuzz deploy.py arguments                       | Optional          |
+# |ONEFUZZ_DEPLOY_LOC    | Deployment Folder location of this script location        | Required          |
+# |ONEFUZZ_INSTANCE_NAME | Instance name of Onefuzz Deployement                      | Required          |
+# |ONEFUZZ_SERVICE_URL   | OneFuzz service URL. Generally the url defined in App     | Required          |
+# |                      | Registration                                              | Required          |
+# |REGION                | OneFuzz Region (prefer westus2)                           | Required          |
+# |RESOURCE_GROUP_NAME   | Resource group name for OneFuzz deployment                | Required          |
+# |VERSION               | Specify OneFuzz version, defaults to latest               | Optional          |
 #
 # Note: Make sure to provide the App owners permission to onefuzz resource group
 
@@ -48,8 +50,14 @@ stages:
               python -m pip install pipenv tox
               pipenv install
               artifact="artifact"
-              pipenv run python get_latest_version.py -path $artifact
-              version="$(pipenv run python get_latest_version.py -version)"
+              if [ -z $(VERSION) ]
+              then
+                pipenv run python get_latest_version.py -path $artifact
+                version="$(pipenv run python get_latest_version.py -display_latest_version)"
+              else
+                pipenv run python get_latest_version.py -path $artifact -version $(VERSION)
+                version="$(VERSION)"
+              fi
               echo "Onefuzz version is $version"
               echo "##vso[task.setvariable variable=version;isOutput=true]$version"
               echo "##vso[task.setvariable variable=artifact]$artifact"
@@ -74,7 +82,7 @@ stages:
             script: |
               set -ex
               az login --service-principal -u $(ONEFUZZ_SERVICE_URL) -p $(AZURE_CLIENT_SECRET) --tenant $(AZURE_TENANT_ID)
-              python deploy.py --client_id $(AZURE_CLIENT_ID) --client_secret $(AZURE_CLIENT_SECRET) $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS
+              python deploy.py --client_id $(AZURE_CLIENT_ID) --client_secret $(AZURE_CLIENT_SECRET) $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS $DEPLOY_ARGS
               echo "Deployed Onefuzz $(onefuzz_release.version)"
 
         - task: CopyFiles@2
