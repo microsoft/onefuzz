@@ -48,6 +48,7 @@ class Libfuzzer(Command):
         crash_report_timeout: Optional[int] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        merge: bool = False,
     ) -> None:
 
         fuzzer_containers = [
@@ -127,30 +128,31 @@ class Libfuzzer(Command):
             debug=debug,
         )
 
-        merge_containers = [
-            (ContainerType.setup, containers[ContainerType.setup]),
-            (ContainerType.unique_inputs, containers[ContainerType.unique_inputs]),
-            (ContainerType.inputs, containers[ContainerType.inputs]),
-        ]
+        if merge:
+            merge_containers = [
+                (ContainerType.setup, containers[ContainerType.setup]),
+                (ContainerType.unique_inputs, containers[ContainerType.unique_inputs]),
+                (ContainerType.inputs, containers[ContainerType.inputs]),
+            ]
 
-        self.logger.info("creating libfuzzer_merge task")
-        self.onefuzz.tasks.create(
-            job.job_id,
-            TaskType.libfuzzer_merge,
-            target_exe,
-            merge_containers,
-            pool_name=pool_name,
-            duration=duration,
-            vm_count=1,
-            reboot_after_setup=reboot_after_setup,
-            target_options=target_options,
-            target_env=target_env,
-            tags=tags,
-            prereq_tasks=[fuzzer_task.task_id],
-            target_timeout=crash_report_timeout,
-            check_retry_count=check_retry_count,
-            debug=debug,
-        )
+            self.logger.info("creating libfuzzer_merge task")
+            self.onefuzz.tasks.create(
+                job.job_id,
+                TaskType.libfuzzer_merge,
+                target_exe,
+                merge_containers,
+                pool_name=pool_name,
+                duration=duration,
+                vm_count=1,
+                reboot_after_setup=reboot_after_setup,
+                target_options=target_options,
+                target_env=target_env,
+                tags=tags,
+                prereq_tasks=[fuzzer_task.task_id],
+                target_timeout=crash_report_timeout,
+                check_retry_count=check_retry_count,
+                debug=debug,
+            )
 
     def basic(
         self,
@@ -179,6 +181,7 @@ class Libfuzzer(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        merge: bool = False,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -218,7 +221,7 @@ class Libfuzzer(Command):
             ContainerType.unique_reports,
             ContainerType.no_repro,
             ContainerType.coverage,
-            ContainerType.unique_inputs
+            ContainerType.unique_inputs,
         )
 
         if existing_inputs:
@@ -253,6 +256,7 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+            merge=merge,
         )
 
         self.logger.info("done creating tasks")
