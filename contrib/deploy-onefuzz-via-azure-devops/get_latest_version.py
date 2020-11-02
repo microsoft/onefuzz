@@ -31,9 +31,7 @@ class Onefuzz:
 
     def download_artifact(self, path, asset_id, asset_name):
         headers = {"Accept": "application/octet-stream"}
-        asset = requests.get(
-            f"{BASE_URL}/releases/assets/{asset_id}", headers=headers
-        )
+        asset = requests.get(f"{BASE_URL}/releases/assets/{asset_id}", headers=headers)
         with open(os.path.join(path, asset_name), "wb") as artifact:
             artifact.write(asset.content)
 
