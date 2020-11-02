@@ -61,7 +61,7 @@ class Prototype(Command):
         """ convert arguments from argparse into a OnefuzzTemplateRequest """
         user_fields = {}
         for field in config.user_fields:
-            if field.name not in args:
+            if field.name not in args and field.required:
                 raise Exception("missing field: %s" % field.name)
             value = args[field.name]
             if value is not None:
