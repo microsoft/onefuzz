@@ -29,7 +29,7 @@ class TestModelsVerify(unittest.TestCase):
 
 
 class TestScaleset(unittest.TestCase):
-    def test_scaleset_lt_0(self) -> None:
+    def test_scaleset_size_lt_0(self) -> None:
         self.assertRaises(
             ValueError,
             Scaleset,
@@ -41,7 +41,7 @@ class TestScaleset(unittest.TestCase):
             spot_instances=False,
         )
 
-    def test_scaleset_eq_0(self) -> None:
+    def test_scaleset_size_eq_0(self) -> None:
         scaleset = Scaleset(
             pool_name="test_pool",
             vm_sku="Standard_D2ds_v4",
@@ -52,7 +52,7 @@ class TestScaleset(unittest.TestCase):
         )
         self.assertEqual(scaleset.size, 0)
 
-    def test_scaleset_gt_0(self) -> None:
+    def test_scaleset_size_gt_0(self) -> None:
         scaleset = Scaleset(
             pool_name="test_pool",
             vm_sku="Standard_D2ds_v4",
