@@ -28,6 +28,8 @@ pub struct StaticConfig {
     pub telemetry_key: Option<Uuid>,
 
     pub heartbeat_queue: Option<Url>,
+
+    pub instance_id: Uuid,
 }
 
 // Temporary shim type to bridge the current service-provided config.
@@ -44,6 +46,8 @@ struct RawStaticConfig {
     pub telemetry_key: Option<Uuid>,
 
     pub heartbeat_queue: Option<Url>,
+
+    pub instance_id: Uuid,
 }
 
 impl StaticConfig {
@@ -70,6 +74,7 @@ impl StaticConfig {
             instrumentation_key: config.instrumentation_key,
             telemetry_key: config.telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
+            instance_id: config.instance_id,
         };
 
         Ok(config)
