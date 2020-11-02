@@ -110,6 +110,19 @@ jobs:
 
         # set a minimum confidence to ignore known false positives
         vulture --min-confidence 61 onefuzz
+  deploy-onefuzz-via-azure-devops:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: lint
+      shell: bash
+      run: |
+        cd contrib/deploy-onefuzz-via-azure-devops
+        python -m pip install tox pipenv
+        tox
   onefuzztypes:
     runs-on: ubuntu-18.04
     steps:
