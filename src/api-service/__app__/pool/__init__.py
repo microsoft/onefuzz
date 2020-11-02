@@ -15,6 +15,7 @@ from onefuzztypes.responses import BoolResult
 from ..onefuzzlib.azure.creds import (
     get_base_region,
     get_func_storage,
+    get_instance_id,
     get_instance_url,
     get_regions,
 )
@@ -35,6 +36,7 @@ def set_config(pool: Pool) -> Pool:
             account_id=get_func_storage(),
             add=True,
         ),
+        instance_id=get_instance_id(),
     )
     return pool
 

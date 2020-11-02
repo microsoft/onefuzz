@@ -26,6 +26,8 @@ pub struct CommonConfig {
 
     pub task_id: Uuid,
 
+    pub instance_id: Uuid,
+
     pub instrumentation_key: Option<Uuid>,
 
     pub heartbeat_queue: Option<Url>,
@@ -127,6 +129,7 @@ impl Config {
         telemetry::set_property(EventData::TaskId(self.common().task_id));
         telemetry::set_property(EventData::MachineId(get_machine_id().await?));
         telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
+        telemetry::set_property(EventData::InstanceId(self.common().instance_id));
         if let Ok(scaleset) = get_scaleset_name().await {
             telemetry::set_property(EventData::ScalesetId(scaleset));
         }
