@@ -5,7 +5,7 @@
 
 import datetime
 import logging
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
 from onefuzztypes.enums import (
@@ -712,13 +712,29 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 logging.info("creating scaleset: %s", self.scaleset_id)
         elif vmss.provisioning_state == "Creating":
             logging.info("Waiting on scaleset creation: %s", self.scaleset_id)
-            if vmss.identity and vmss.identity.principal_id:
-                self.client_object_id = vmss.identity.principal_id
+            self.set_identity(vmss)
         else:
             logging.info("scaleset running: %s", self.scaleset_id)
+            self.set_identity(vmss)
             self.state = ScalesetState.running
-            self.client_object_id = vmss.identity.principal_id
         self.save()
+
+    def set_identity(self, vmss: Any) -> None:
+        if (
+            vmss.identity
+            and vmss.user_assigned_identities
+            and (len(vmss.identity.user_assigned_identities) != 1)
+        ):
+            self.error = Error(
+                code=ErrorCode.VM_CREATE_FAILED,
+                errors=[
+                    "The scaleset is expected to have exactly 1 user assigned identity"
+                ],
+            )
+            self.state = ScalesetState.creation_failed
+
+        self.client_object_id = list(vmss.identity.user_assigned_identities.values())[0]
+        return None
 
     # result = 'did I modify the scaleset in azure'
     def cleanup_nodes(self) -> bool:
