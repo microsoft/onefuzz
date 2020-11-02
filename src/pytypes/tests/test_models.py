@@ -30,16 +30,15 @@ class TestModelsVerify(unittest.TestCase):
 
 class TestScaleset(unittest.TestCase):
     def test_scaleset_size_lt_0(self) -> None:
-        self.assertRaises(
-            ValueError,
-            Scaleset,
-            pool_name="test_pool",
-            vm_sku="Standard_D2ds_v4",
-            image="Canonical:UbuntuServer:18.04-LTS:latest",
-            region="westus2",
-            size=-1,
-            spot_instances=False,
-        )
+        with self.assertRaises(ValueError):
+            scaleset = Scaleset(
+                pool_name="test_pool",
+                vm_sku="Standard_D2ds_v4",
+                image="Canonical:UbuntuServer:18.04-LTS:latest",
+                region="westus2",
+                size=-1,
+                spot_instances=False,
+            )
 
     def test_scaleset_size_eq_0(self) -> None:
         scaleset = Scaleset(
