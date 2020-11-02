@@ -106,7 +106,7 @@ def get_instance_url() -> str:
 def get_instance_id() -> UUID:
     from .containers import get_blob
 
-    blob = get_blob("base-config", "instance-id", account_id=get_func_storage())
+    blob = get_blob("base-config", "instance_id", account_id=get_func_storage())
     if blob is None:
         raise Exception("missing instance_id")
     return UUID(blob.decode())
