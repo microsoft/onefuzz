@@ -65,6 +65,7 @@ from registration import (
     assign_scaleset_role,
     authorize_application,
     get_application,
+    OnefuzzAppRole,
     register_application,
     update_pool_registration,
 )
@@ -261,19 +262,19 @@ class Client:
         app_roles = [
             AppRole(
                 allowed_member_types=["Application"],
-                display_name="CliClient",
+                display_name=OnefuzzAppRole.CliClient.value,
                 id=str(uuid.uuid4()),
                 is_enabled=True,
                 description="Allows access from the CLI.",
-                value="CliClient",
+                value=OnefuzzAppRole.CliClient.value,
             ),
             AppRole(
                 allowed_member_types=["Application"],
-                display_name="ManagedNode",
+                display_name=OnefuzzAppRole.ManagedNode.value,
                 id=str(uuid.uuid4()),
                 is_enabled=True,
                 description="Allow access from a lab machine.",
-                value="ManagedNode",
+                value=OnefuzzAppRole.ManagedNode.value,
             ),
         ]
 
@@ -341,7 +342,9 @@ class Client:
                 "Could not find the default CLI application under the current "
                 "subscription, creating a new one"
             )
-            app_info = register_application("onefuzz-cli", self.application_name)
+            app_info = register_application(
+                "onefuzz-cli", self.application_name, OnefuzzAppRole.CliClient
+            )
             self.cli_config = {
                 "client_id": app_info.client_id,
                 "authority": app_info.authority,
