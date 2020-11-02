@@ -734,7 +734,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.state = ScalesetState.creation_failed
 
         user_assinged_identities = list(vmss.identity.user_assigned_identities.values())
-        self.client_object_id = user_assinged_identities[0].principal_id
+        if user_assinged_identities[0].principal_id:
+            self.client_object_id = user_assinged_identities[0].principal_id
         return None
 
     # result = 'did I modify the scaleset in azure'
