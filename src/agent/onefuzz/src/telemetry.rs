@@ -43,6 +43,7 @@ impl Event {
 #[derive(Clone, Debug, PartialEq)]
 pub enum EventData {
     WorkerId(u64),
+    InstanceId(Uuid),
     JobId(Uuid),
     TaskId(Uuid),
     ScalesetId(String),
@@ -77,6 +78,7 @@ impl EventData {
     pub fn as_values(&self) -> (&str, String) {
         match self {
             Self::Version(x) => ("version", x.to_string()),
+            Self::InstanceId(x) => ("instance_id", x.to_string()),
             Self::JobId(x) => ("job_id", x.to_string()),
             Self::TaskId(x) => ("task_id", x.to_string()),
             Self::ScalesetId(x) => ("scaleset_id", x.to_string()),
@@ -113,6 +115,7 @@ impl EventData {
             // TODO: Request CELA review of Version, as having this for central stats
             //       would be useful to track uptake of new releases
             Self::Version(_) => false,
+            Self::InstanceId(_) => true,
             Self::TaskId(_) => true,
             Self::JobId(_) => true,
             Self::MachineId(_) => true,

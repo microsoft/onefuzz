@@ -16,5 +16,6 @@ black ./onefuzztypes --check
 flake8 ./onefuzztypes
 isort --profile black ./onefuzztypes --check
 mypy ./onefuzztypes --ignore-missing-imports
+pytest -v tests
 
 cp dist/*.* ../../artifacts/sdk

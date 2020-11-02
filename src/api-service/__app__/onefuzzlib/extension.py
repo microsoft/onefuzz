@@ -12,7 +12,7 @@ from onefuzztypes.models import AgentConfig, ReproConfig
 from onefuzztypes.primitives import Extension, Region
 
 from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
-from .azure.creds import get_func_storage, get_instance_url
+from .azure.creds import get_func_storage, get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
 from .reports import get_report
@@ -100,6 +100,7 @@ def build_pool_config(pool_name: str) -> str:
             add=True,
         ),
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+        instance_id=get_instance_id(),
     )
 
     save_blob(

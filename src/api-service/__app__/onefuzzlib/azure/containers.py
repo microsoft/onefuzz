@@ -6,7 +6,7 @@
 import datetime
 import os
 import urllib.parse
-from typing import Any, Dict, Optional, Union, cast
+from typing import Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
 from azure.storage.blob import BlobPermissions, ContainerPermissions
@@ -129,11 +129,11 @@ def save_blob(
 
 def get_blob(
     container: str, name: str, account_id: Optional[str] = None
-) -> Optional[Any]:  # should be bytes
+) -> Optional[bytes]:
     service = get_blob_service(account_id)
     try:
         blob = service.get_blob_to_bytes(container, name).content
-        return blob
+        return cast(bytes, blob)
     except AzureMissingResourceHttpError:
         return None
 

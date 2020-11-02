@@ -584,7 +584,9 @@ class Run(Command):
 
 
 def main() -> int:
-    return execute_api(Run(Onefuzz(), logging.getLogger("ossfuzz")), [Command], "0.0.1")
+    return execute_api(
+        Run(Onefuzz(), logging.getLogger("integration")), [Command], "0.0.1"
+    )
 
 
 if __name__ == "__main__":

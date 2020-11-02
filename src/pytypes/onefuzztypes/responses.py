@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 from typing import Dict, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -35,6 +36,7 @@ class Info(BaseResponse):
     region: Region
     subscription: str
     versions: Dict[str, Version]
+    instance_id: Optional[UUID]
 
 
 class ContainerInfoBase(BaseResponse):
