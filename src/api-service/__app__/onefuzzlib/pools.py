@@ -722,7 +722,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def set_identity(self, vmss: Any) -> None:
         if (
             vmss.identity
-            and vmss.user_assigned_identities
+            and vmss.identity.user_assigned_identities
             and (len(vmss.identity.user_assigned_identities) != 1)
         ):
             self.error = Error(
