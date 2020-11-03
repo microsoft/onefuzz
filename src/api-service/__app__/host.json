@@ -29,5 +29,6 @@
       "batchSize": 32,
       "maxDequeueCount": 5
     }
-  }
+  },
+  "functionTimeout": "00:05:00"
 }

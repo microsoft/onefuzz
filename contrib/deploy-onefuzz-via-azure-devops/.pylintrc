@@ -16,10 +16,11 @@ init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.app
 #   R0914 = Too many local variables
 #
 # Sometimes disabled depending on how bad a module is.
+#   C0103 = Module name doesn't conform to snake_case naming style
 #   C0111 = Missing docstring
 #   C0112 = Empty docstring
 
-disable=C0111,R0201,R0801,R0901,R0902,R0903,R0904,R0911,R0913,R0914
+disable=C0103,C0111,R0201,R0801,R0901,R0902,R0903,R0904,R0911,R0913,R0914
 
 [FORMAT]
 max-line-length=80
