@@ -102,6 +102,16 @@ def get_instance_url() -> str:
     return "https://%s.azurewebsites.net" % get_instance_name()
 
 
+@cached
+def get_instance_id() -> UUID:
+    from .containers import get_blob
+
+    blob = get_blob("base-config", "instance_id", account_id=get_func_storage())
+    if blob is None:
+        raise Exception("missing instance_id")
+    return UUID(blob.decode())
+
+
 DAY_IN_SECONDS = 60 * 60 * 24
 
 

@@ -34,10 +34,6 @@ class GraphQueryError(Exception):
         super(GraphQueryError, self).__init__(message)
         self.status_code = status_code
 
-    @property
-    def status_code():
-        return self.status_code
-
 
 def query_microsoft_graph(
     method: str,

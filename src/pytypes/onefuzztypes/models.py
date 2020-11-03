@@ -270,9 +270,11 @@ class AgentConfig(BaseModel):
     heartbeat_queue: Optional[str]
     instrumentation_key: Optional[str]
     telemetry_key: Optional[str]
+    instance_id: UUID
 
 
 class TaskUnitConfig(BaseModel):
+    instance_id: UUID
     job_id: UUID
     task_id: UUID
     task_type: TaskType

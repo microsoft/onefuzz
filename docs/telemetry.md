@@ -66,6 +66,7 @@ The following describes the information sent to Microsoft if telemetry is enable
 
 The following are common data types used in multiple locations:
 
+* Instance ID - A randomly generated GUID used to uniquely identify an instance of OneFuzz
 * Task ID - A randomly generated GUID used to uniquely identify a fuzzing task.
 * Job ID - A randomly generated GUID used to uniquely identify a job.
 * Machine ID - A GUID used to identify the machine running the task. When run in
