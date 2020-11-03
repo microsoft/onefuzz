@@ -62,7 +62,8 @@ def is_authorized(token_data: TokenData) -> bool:
         return True
 
     # verify object_id against the user assigned managed identity
-    return get_scaleset_principal_id() == token_data.object_id
+    principal_id: UUID = get_scaleset_principal_id()
+    return principal_id == token_data.object_id
 
 
 def verify_token(
