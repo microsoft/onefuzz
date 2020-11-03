@@ -65,6 +65,7 @@ from registration import (
     assign_scaleset_role,
     authorize_application,
     get_application,
+    OnefuzzAppRole,
     register_application,
     update_pool_registration,
 )
@@ -90,6 +91,7 @@ FUNC_TOOLS_ERROR = (
 )
 
 logger = logging.getLogger("deploy")
+
 
 def gen_guid():
     return str(uuid.uuid4())
@@ -230,7 +232,7 @@ class Client:
             password = add_application_password(object_id)
             if password:
                 return password
-            if count > timeout_seconds/wait:
+            if count > timeout_seconds / wait:
                 raise Exception("creating password failed, trying again")
 
     def setup_rbac(self):
@@ -260,19 +262,19 @@ class Client:
         app_roles = [
             AppRole(
                 allowed_member_types=["Application"],
-                display_name="CliClient",
+                display_name=OnefuzzAppRole.CliClient.value,
                 id=str(uuid.uuid4()),
                 is_enabled=True,
                 description="Allows access from the CLI.",
-                value="CliClient",
+                value=OnefuzzAppRole.CliClient.value,
             ),
             AppRole(
                 allowed_member_types=["Application"],
-                display_name="ManagedNode",
+                display_name=OnefuzzAppRole.ManagedNode.value,
                 id=str(uuid.uuid4()),
                 is_enabled=True,
                 description="Allow access from a lab machine.",
-                value="ManagedNode",
+                value=OnefuzzAppRole.ManagedNode.value,
             ),
         ]
 
@@ -340,7 +342,9 @@ class Client:
                 "Could not find the default CLI application under the current "
                 "subscription, creating a new one"
             )
-            app_info = register_application("onefuzz-cli", self.application_name)
+            app_info = register_application(
+                "onefuzz-cli", self.application_name, OnefuzzAppRole.CliClient
+            )
             self.cli_config = {
                 "client_id": app_info.client_id,
                 "authority": app_info.authority,
@@ -460,6 +464,29 @@ class Client:
                 "eventgrid subscription failed: %s"
                 % json.dumps(result.as_dict(), indent=4, sort_keys=True),
             )
+
+    def add_instance_id(self):
+        logger.info("setting instance_id log export")
+
+        container_name = "base-config"
+        blob_name = "instance_id"
+        account_name = self.results["deploy"]["func-name"]["value"]
+        key = self.results["deploy"]["func-key"]["value"]
+        account_url = "https://%s.blob.core.windows.net" % account_name
+        client = BlobServiceClient(account_url, credential=key)
+        if container_name not in [x["name"] for x in client.list_containers()]:
+            client.create_container(container_name)
+
+        blob_client = client.get_blob_client(container_name, blob_name)
+        if blob_client.exists():
+            logger.debug("instance_id already exists")
+            instance_id = uuid.UUID(blob_client.download_blob().readall().decode())
+        else:
+            logger.debug("creating new instance_id")
+            instance_id = uuid.uuid4()
+            blob_client.upload_blob(str(instance_id))
+
+        logger.info("instance_id: %s", instance_id)
 
     def add_log_export(self):
         if not self.export_appinsights:
@@ -680,6 +707,7 @@ def main():
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
         ("tools", Client.upload_tools),
+        ("add_instance_id", Client.add_instance_id),
         ("instance-specific-setup", Client.upload_instance_setup),
         ("third-party", Client.upload_third_party),
         ("api", Client.deploy_app),

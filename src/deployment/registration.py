@@ -5,8 +5,10 @@
 
 import argparse
 import logging
+import time
 import urllib.parse
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
@@ -17,6 +19,7 @@ from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
     Application,
     ApplicationCreateParameters,
+    AppRole,
     RequiredResourceAccess,
     ResourceAccess,
 )
@@ -27,7 +30,9 @@ logger = logging.getLogger("deploy")
 
 
 class GraphQueryError(Exception):
-    pass
+    def __init__(self, message, status_code):
+        super(GraphQueryError, self).__init__(message)
+        self.status_code = status_code
 
 
 def query_microsoft_graph(
@@ -59,7 +64,9 @@ def query_microsoft_graph(
     else:
         error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
         raise GraphQueryError(
-            "request did not succeed: HTTP %s - %s" % (response.status_code, error_text)
+            "request did not succeed: HTTP %s - %s"
+            % (response.status_code, error_text),
+            response.status_code,
         )
 
 
@@ -69,20 +76,31 @@ class ApplicationInfo(NamedTuple):
     authority: str
 
 
+class OnefuzzAppRole(Enum):
+    ManagedNode = "ManagedNode"
+    CliClient = "CliClient"
+
+
 def register_application(
-    registration_name: str, onefuzz_instance_name: str
+    registration_name: str, onefuzz_instance_name: str, approle: OnefuzzAppRole
 ) -> ApplicationInfo:
-    logger.debug("retrieving the application registration")
+    logger.info("retrieving the application registration %s" % registration_name)
     client = get_client_from_cli_profile(GraphRbacManagementClient)
     apps: List[Application] = list(
         client.applications.list(filter="displayName eq '%s'" % registration_name)
     )
 
     if len(apps) == 0:
-        logger.debug("No existing registration found. creating a new one")
-        app = create_application_registration(onefuzz_instance_name, registration_name)
+        logger.info("No existing registration found. creating a new one")
+        app = create_application_registration(
+            onefuzz_instance_name, registration_name, approle
+        )
     else:
         app = apps[0]
+        logger.info(
+            "Found existing application objectId '%s' - appid '%s"
+            % (app.object_id, app.app_id)
+        )
 
     onefuzz_apps: List[Application] = list(
         client.applications.list(filter="displayName eq '%s'" % onefuzz_instance_name)
@@ -113,6 +131,7 @@ def register_application(
 def create_application_credential(application_name: str) -> str:
     """ Add a new password to the application registration """
 
+    logger.info("creating application credential for '%s'" % application_name)
     client = get_client_from_cli_profile(GraphRbacManagementClient)
     apps: List[Application] = list(
         client.applications.list(filter="displayName eq '%s'" % application_name)
@@ -125,7 +144,7 @@ def create_application_credential(application_name: str) -> str:
 
 
 def create_application_registration(
-    onefuzz_instance_name: str, name: str
+    onefuzz_instance_name: str, name: str, approle: OnefuzzAppRole
 ) -> Application:
     """ Create an application registration """
 
@@ -136,7 +155,9 @@ def create_application_registration(
 
     app = apps[0]
     resource_access = [
-        ResourceAccess(id=role.id, type="Role") for role in app.app_roles
+        ResourceAccess(id=role.id, type="Role")
+        for role in app.app_roles
+        if role.value == approle.value
     ]
 
     params = ApplicationCreateParameters(
@@ -158,16 +179,33 @@ def create_application_registration(
 
     registered_app: Application = client.applications.create(params)
 
-    query_microsoft_graph(
-        method="PATCH",
-        resource="applications/%s" % registered_app.object_id,
-        body={
-            "publicClient": {
-                "redirectUris": ["https://%s.azurewebsites.net" % onefuzz_instance_name]
-            },
-            "isFallbackPublicClient": True,
-        },
-    )
+    atttempts = 5
+    while True:
+        if atttempts < 0:
+            raise Exception(
+                "Unable to create application registration, Please try again"
+            )
+
+        atttempts = atttempts - 1
+        try:
+            time.sleep(5)
+            query_microsoft_graph(
+                method="PATCH",
+                resource="applications/%s" % registered_app.object_id,
+                body={
+                    "publicClient": {
+                        "redirectUris": [
+                            "https://%s.azurewebsites.net" % onefuzz_instance_name
+                        ]
+                    },
+                    "isFallbackPublicClient": True,
+                },
+            )
+            break
+        except GraphQueryError as err:
+            if err.status_code == 404:
+                continue
+
     authorize_application(UUID(registered_app.app_id), UUID(app.app_id))
     return registered_app
 
@@ -250,17 +288,27 @@ def authorize_application(
     )
 
 
-def update_pool_registration(application_name: str):
-
+def create_and_display_registration(
+    onefuzz_instance_name: str, registration_name: str, approle: OnefuzzAppRole
+):
     logger.info("Updating application registration")
     application_info = register_application(
-        registration_name=("%s_pool" % application_name),
-        onefuzz_instance_name=application_name,
+        registration_name=registration_name,
+        onefuzz_instance_name=onefuzz_instance_name,
+        approle=approle,
     )
     logger.info("Registration complete")
     logger.info("These generated credentials are valid for a year")
     logger.info("client_id: %s" % application_info.client_id)
     logger.info("client_secret: %s" % application_info.client_secret)
+
+
+def update_pool_registration(onefuzz_instance_name: str):
+    create_and_display_registration(
+        onefuzz_instance_name,
+        "%s_pool" % onefuzz_instance_name,
+        OnefuzzAppRole.ManagedNode,
+    )
 
 
 def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
@@ -300,7 +348,7 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str):
 
     managed_node_role = (
         seq(onefuzz_service_principal["appRoles"])
-        .filter(lambda x: x["value"] == "ManagedNode")
+        .filter(lambda x: x["value"] == OnefuzzAppRole.ManagedNode.value)
         .head_option()
     )
 
@@ -359,6 +407,12 @@ def main():
         "scaleset_name",
         help="the name of the scaleset",
     )
+    cli_registration_parser = subparsers.add_parser(
+        "create_cli_registration", parents=[parent_parser]
+    )
+    cli_registration_parser.add_argument(
+        "--registration_name", help="the name of the cli registration"
+    )
 
     args = parser.parse_args()
     if args.verbose:
@@ -369,10 +423,16 @@ def main():
     logging.basicConfig(format="%(levelname)s:%(message)s", level=level)
     logging.getLogger("deploy").setLevel(logging.INFO)
 
+    onefuzz_instance_name = args.onefuzz_instance
     if args.command == "update_pool_registration":
-        update_pool_registration(args.onefuzz_instance)
+        update_pool_registration(onefuzz_instance_name)
+    elif args.command == "create_cli_registration":
+        registration_name = args.registration_name or ("%s_cli" % onefuzz_instance_name)
+        create_and_display_registration(
+            onefuzz_instance_name, registration_name, OnefuzzAppRole.CliClient
+        )
     elif args.command == "assign_scaleset_role":
-        assign_scaleset_role(args.onefuzz_instance, args.scaleset_name)
+        assign_scaleset_role(onefuzz_instance_name, args.scaleset_name)
     else:
         raise Exception("invalid arguments")
 
