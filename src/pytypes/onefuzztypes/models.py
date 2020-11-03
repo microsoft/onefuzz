@@ -764,6 +764,9 @@ class OnefuzzTemplate(BaseModel):
                     raise Exception(f"duplicate path found: {location.path}")
                 seen_path.add(location.path)
 
+            if entry.name in ["platform"]:
+                raise Exception(f"reserved field name: {entry.name}")
+
         return data
 
 
