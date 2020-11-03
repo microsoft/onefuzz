@@ -98,7 +98,7 @@ def register_application(
     else:
         app = apps[0]
         logger.info(
-            "Found existing application objectId '%s' - appid '%s"
+            "Found existing application objectId '%s' - appid '%s'"
             % (app.object_id, app.app_id)
         )
 
