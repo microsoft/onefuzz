@@ -23,6 +23,8 @@ from .creds import get_storage_account_name_key
 
 QueueNameType = Union[str, UUID]
 
+DEFAULT_TTL = -1
+
 
 @cached(ttl=60)
 def get_queue_client(account_id: str) -> QueueServiceClient:
@@ -103,7 +105,7 @@ def send_message(
     *,
     account_id: str,
     visibility_timeout: Optional[int] = None,
-    time_to_live: int = -1,
+    time_to_live: int = DEFAULT_TTL,
 ) -> None:
     queue = get_queue(name, account_id=account_id)
     if queue:
@@ -169,7 +171,7 @@ def queue_object(
     *,
     account_id: str,
     visibility_timeout: Optional[int] = None,
-    time_to_live: int = -1,
+    time_to_live: int = DEFAULT_TTL,
 ) -> bool:
     queue = get_queue(name, account_id=account_id)
     if not queue:
