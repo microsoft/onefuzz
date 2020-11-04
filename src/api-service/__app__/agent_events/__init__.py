@@ -57,6 +57,9 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     result = process(envelope)
     if isinstance(result, Error):
+        logging.error(
+            "unable to process agent event. envelope:%s error:%s", envelope, result
+        )
         return not_ok(result, context="node event")
 
     return ok(BoolResult(result=True))
