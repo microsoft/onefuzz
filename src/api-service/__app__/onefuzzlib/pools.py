@@ -715,11 +715,13 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.set_identity(vmss)
         else:
             logging.info("scaleset running: %s", self.scaleset_id)
-            self.set_identity(vmss)
             self.state = ScalesetState.running
+            self.set_identity(vmss)
         self.save()
 
     def set_identity(self, vmss: Any) -> None:
+        if self.client_object_id:
+            return
         if (
             vmss.identity
             and vmss.identity.user_assigned_identities
