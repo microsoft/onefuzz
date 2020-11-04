@@ -357,3 +357,16 @@ class GithubIssueSearchMatch(Enum):
 class TaskDebugFlag(Enum):
     keep_node_on_failure = "keep_node_on_failure"
     keep_node_on_completion = "keep_node_on_completion"
+
+
+class WebhookEvent(Enum):
+    task_created = "task_created"
+    # job_created = "job_created"
+    # task_failed = "task_failed"
+
+
+class WebhookSendStatus(Enum):
+    queued = "queued"
+    retrying = "retrying"
+    succeeded = "succeeded"
+    failed = "failed"

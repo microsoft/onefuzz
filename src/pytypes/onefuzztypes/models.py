@@ -31,6 +31,8 @@ from .enums import (
     TaskState,
     TaskType,
     VmState,
+    WebhookEvent,
+    WebhookSendStatus,
 )
 from .primitives import Container, PoolName, Region
 
@@ -699,3 +701,26 @@ class Task(BaseModel):
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
+
+
+class Webhook(BaseModel):
+    webhook_id: UUID
+    url: str
+    events: List[WebhookEvent]
+
+
+class WebhookEventTaskCreated(BaseModel):
+    event_id: UUID
+    job_id: UUID
+    task_id: UUID
+    task_config: TaskConfig
+
+
+WebhookData = Union[WebhookEventTaskCreated]
+
+
+class WebhookStatus(BaseModel):
+    webhook_id: UUID
+    event_id: UUID
+    send_status: WebhookSendStatus
+    data: WebhookData
