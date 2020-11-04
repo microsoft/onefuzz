@@ -24,7 +24,7 @@
 # |RESOURCE_GROUP_NAME   | Resource group name for OneFuzz deployment                | Required          |
 # |VERSION               | Specify OneFuzz version, defaults to latest               | Optional          |
 #
-# Note: Make sure to provide the App owners permission to onefuzz resource group
+# Note: Make sure to add ONEFUZZ_INSTANCE_NAME as owner in RESOURCE_GROUP_NAME role assignment
 
 ---
 trigger: none
