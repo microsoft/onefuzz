@@ -102,11 +102,17 @@ def send_message(
     message: bytes,
     *,
     account_id: str,
+    visibility_timeout: Optional[int] = None,
+    time_to_live: int = -1,
 ) -> None:
     queue = get_queue(name, account_id=account_id)
     if queue:
         try:
-            queue.send_message(base64.b64encode(message).decode())
+            queue.send_message(
+                base64.b64encode(message).decode(),
+                visibility_timeout=visibility_timeout,
+                time_to_live=time_to_live,
+            )
         except ResourceNotFoundError:
             pass
 
@@ -163,6 +169,7 @@ def queue_object(
     *,
     account_id: str,
     visibility_timeout: Optional[int] = None,
+    time_to_live: int = -1,
 ) -> bool:
     queue = get_queue(name, account_id=account_id)
     if not queue:
@@ -170,7 +177,9 @@ def queue_object(
 
     encoded = base64.b64encode(message.json(exclude_none=True).encode()).decode()
     try:
-        queue.send_message(encoded, visibility_timeout=visibility_timeout)
+        queue.send_message(
+            encoded, visibility_timeout=visibility_timeout, time_to_live=time_to_live
+        )
         return True
     except ResourceNotFoundError:
         return False
