@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Optional, cast, Union
+from typing import Optional, Union, cast
 from uuid import UUID
 
 from onefuzztypes.enums import (
@@ -19,8 +19,8 @@ from onefuzztypes.models import (
     NodeDoneEventData,
     NodeSettingUpEventData,
     NodeStateUpdate,
-    WorkerEvent,
     WorkerDoneEvent,
+    WorkerEvent,
     WorkerRunningEvent,
 )
 
@@ -49,22 +49,22 @@ def on_state_update(
         if node.reimage_requested or node.delete_requested:
             logging.info("stopping free node with reset flags: %s", node.machine_id)
             node.stop()
-            return
+            return None
 
         if node.could_shrink_scaleset():
             logging.info("stopping free node to resize scaleset: %s", node.machine_id)
             node.set_halt()
-            return
+            return None
 
     if state == NodeState.init:
         if node.delete_requested:
             logging.info("stopping node (init and delete_requested): %s", machine_id)
             node.stop()
-            return
+            return None
         node.reimage_requested = False
         node.state = state
         node.save()
-        return
+        return None
 
     logging.info("node state update: %s from:%s to:%s", machine_id, node.state, state)
     node.state = state
@@ -128,6 +128,7 @@ def on_state_update(
                     machine_id,
                     done_data,
                 )
+    return None
 
 
 def on_worker_event_running(
@@ -154,6 +155,8 @@ def on_worker_event_running(
     # (as happens in 1.0.0 agents)
     task.on_start()
 
+    return None
+
 
 def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Optional[Error]:
     task = Task.get_by_task_id(event.task_id)
@@ -169,7 +172,7 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Optional[E
     )
     node_task.delete()
 
-    exit_status = event.done.exit_status
+    exit_status = event.exit_status
     if not exit_status.success:
         logging.error(
             "task failed. %s:%s status:%s", task.job_id, task.task_id, exit_status
@@ -179,8 +182,8 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Optional[E
                 code=ErrorCode.TASK_FAILED,
                 errors=[
                     "task failed. exit_status:%s" % exit_status,
-                    event.done.stdout[-4096:],
-                    event.done.stderr[-4096:],
+                    event.stdout[-4096:],
+                    event.stderr[-4096:],
                 ],
             )
         )
@@ -206,7 +209,7 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Optional[E
 
     node.to_reimage(done=True)
     task_event = TaskEvent(
-        task_id=task.task_id, machine_id=machine_id, event_data=event
+        task_id=task.task_id, machine_id=machine_id, event_data=WorkerEvent(done=event)
     )
     task_event.save()
     return None

@@ -17,9 +17,8 @@ from onefuzztypes.models import (
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.agent_authorization import verify_token
-from ..onefuzzlib.request import not_ok, ok, parse_request
-
 from ..onefuzzlib.agent_events import on_state_update, on_worker_event
+from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
 def process(envelope: NodeEventEnvelope) -> Optional[Error]:
@@ -58,7 +57,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     result = process(envelope)
     if isinstance(result, Error):
-        return not_ok(envelope, context="node event")
+        return not_ok(result, context="node event")
 
     return ok(BoolResult(result=True))
 
