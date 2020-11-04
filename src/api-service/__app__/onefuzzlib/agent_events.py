@@ -42,7 +42,7 @@ def on_state_update(
 ) -> Optional[Error]:
     state = state_update.state
     node = get_node(machine_id)
-    if not isinstance(node, Node):
+    if isinstance(node, Error):
         return node
 
     if state == NodeState.free:
@@ -86,7 +86,7 @@ def on_state_update(
 
             for task_id in setting_up_data.tasks:
                 task = Task.get_by_task_id(task_id)
-                if not isinstance(task, Task):
+                if isinstance(task, Error):
                     return task
 
                 # The task state may be `running` if it has `vm_count` > 1, and
@@ -135,11 +135,11 @@ def on_worker_event_running(
     machine_id: UUID, event: WorkerRunningEvent
 ) -> Optional[Error]:
     task = Task.get_by_task_id(event.task_id)
-    if not isinstance(task, Task):
+    if isinstance(task, Error):
         return task
 
     node = get_node(machine_id)
-    if not isinstance(node, Node):
+    if isinstance(node, Error):
         return node
 
     node_task = NodeTasks(
@@ -147,9 +147,24 @@ def on_worker_event_running(
     )
     node_task.save()
 
-    if task.state not in TaskState.shutting_down():
-        task.state = TaskState.running
-        task.save()
+    if task.state in TaskState.shutting_down():
+        logging.info(
+            "ignoring task start from node.  machine_id:%s %s:%s (state: %s)",
+            machine_id,
+            task.job_id,
+            task.task_id,
+            task.state,
+        )
+        return None
+
+    logging.info(
+        "task started on node.  machine_id:%s %s:%s",
+        machine_id,
+        task.job_id,
+        task.task_id,
+    )
+    task.state = TaskState.running
+    task.save()
 
     # Start the clock for the task if it wasn't started already
     # (as happens in 1.0.0 agents)
@@ -160,11 +175,11 @@ def on_worker_event_running(
 
 def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Optional[Error]:
     task = Task.get_by_task_id(event.task_id)
-    if not isinstance(task, Task):
+    if isinstance(task, Error):
         return task
 
     node = get_node(machine_id)
-    if not isinstance(node, Node):
+    if isinstance(node, Error):
         return node
 
     node_task = NodeTasks(
