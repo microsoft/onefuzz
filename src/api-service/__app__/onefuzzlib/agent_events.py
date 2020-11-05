@@ -62,6 +62,10 @@ def on_state_update(
             logging.info("stopping node (init and delete_requested): %s", machine_id)
             node.stop()
             return None
+
+        # not checking reimage_requested, as nodes only send 'init' state once.  If
+        # they send 'init' with reimage_requested, it's because the node was reimaged
+        # successfully.
         node.reimage_requested = False
         node.state = state
         node.save()
