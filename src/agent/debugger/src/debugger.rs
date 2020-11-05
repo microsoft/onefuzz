@@ -669,7 +669,7 @@ impl Debugger {
     }
 
     pub fn get_current_thread_id(&self) -> u64 {
-        self.target.current_thread_handle() as u64
+        self.target.current_thread_id() as u64
     }
 
     pub fn read_register_u64(&mut self, reg: iced_x86::Register) -> Result<u64> {
