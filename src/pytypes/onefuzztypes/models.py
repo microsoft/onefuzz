@@ -58,8 +58,8 @@ class Error(BaseModel):
     errors: List[str]
 
 
-ErrType = TypeVar("ErrType")
-Result = Union[ErrType, Error]
+OkType = TypeVar("OkType")
+Result = Union[OkType, Error]
 
 
 class FileEntry(BaseModel):
