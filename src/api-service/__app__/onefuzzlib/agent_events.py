@@ -87,7 +87,10 @@ def on_state_update(
 
         if setting_up_data:
             if not setting_up_data.tasks:
-                raise Exception("setup without tasks.  machine_id: %s", machine_id)
+                return Error(
+                    code=ErrorCode.INVALID_REQUEST,
+                    errors=["setup without tasks.  machine_id: %s", str(machine_id)],
+                )
 
             for task_id in setting_up_data.tasks:
                 task = Task.get_by_task_id(task_id)
