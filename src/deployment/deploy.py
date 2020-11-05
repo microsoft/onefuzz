@@ -403,7 +403,7 @@ class Client:
         self.results["deploy"] = result.properties.outputs
 
     def assign_scaleset_identity_role(self):
-        if self.assign_scaleset_role:
+        if self.skip_scaleset_role_assignment:
             logger.info("skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
