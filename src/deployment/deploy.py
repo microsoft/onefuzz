@@ -116,6 +116,7 @@ class Client:
         migrations,
         export_appinsights: bool,
         log_service_principal: bool,
+        skip_scaleset_role_assignment: bool,
     ):
         self.resource_group = resource_group
         self.arm_template = arm_template
@@ -127,6 +128,7 @@ class Client:
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
+        self.skip_scaleset_role_assignment = skip_scaleset_role_assignment
         self.results = {
             "client_id": client_id,
             "client_secret": client_secret,
@@ -400,9 +402,14 @@ class Client:
             sys.exit(1)
         self.results["deploy"] = result.properties.outputs
 
+    def assign_scaleset_identity_role(self):
+        if self.assign_scaleset_role:
+            logger.info("skipping assignment of the managed identity role")
+            return
         logger.info("assigning the user managed identity role")
         assign_scaleset_role(
-            self.application_name, self.results["deploy"]["scaleset-identity"]["value"]
+            self.application_name,
+            self.results["deploy"]["scaleset-identity"]["value"],
         )
 
     def apply_migrations(self):
@@ -703,6 +710,7 @@ def main():
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
+        ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
         ("apply_migrations", Client.apply_migrations),
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
@@ -773,6 +781,11 @@ def main():
         "password for the pool agent",
     )
     parser.add_argument(
+        "--skip_scaleset_role_assignment",
+        action="store_true",
+        help="skips the managed identity role assignment",
+    )
+    parser.add_argument(
         "--apply_migrations",
         type=str,
         nargs="+",
@@ -812,6 +825,7 @@ def main():
         args.apply_migrations,
         args.export_appinsights,
         args.log_service_principal,
+        args.skip_scaleset_role_assignment,
     )
     if args.verbose:
         level = logging.DEBUG
