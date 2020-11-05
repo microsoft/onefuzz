@@ -927,6 +927,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def shutdown(self) -> None:
         size = get_vmss_size(self.scaleset_id)
         logging.info("scaleset shutdown: %s (current size: %s)", self.scaleset_id, size)
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
+        for node in nodes:
+            node.set_shutdown()
         if size is None or size == 0:
             self.halt()
 
