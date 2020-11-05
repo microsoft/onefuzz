@@ -116,7 +116,7 @@ class Client:
         migrations,
         export_appinsights: bool,
         log_service_principal: bool,
-        skip_scaleset_role_assignment: bool,
+        upgrade: bool,
     ):
         self.resource_group = resource_group
         self.arm_template = arm_template
@@ -128,7 +128,7 @@ class Client:
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
-        self.skip_scaleset_role_assignment = skip_scaleset_role_assignment
+        self.upgrade = upgrade
         self.results = {
             "client_id": client_id,
             "client_secret": client_secret,
@@ -403,8 +403,8 @@ class Client:
         self.results["deploy"] = result.properties.outputs
 
     def assign_scaleset_identity_role(self):
-        if self.skip_scaleset_role_assignment:
-            logger.info("skipping assignment of the managed identity role")
+        if self.upgrade:
+            logger.info("Upgrading: skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
         assign_scaleset_role(
@@ -781,9 +781,9 @@ def main():
         "password for the pool agent",
     )
     parser.add_argument(
-        "--skip_scaleset_role_assignment",
+        "--upgrade",
         action="store_true",
-        help="skips the managed identity role assignment",
+        help="Indicates that the instance is being upgraded",
     )
     parser.add_argument(
         "--apply_migrations",
@@ -825,7 +825,7 @@ def main():
         args.apply_migrations,
         args.export_appinsights,
         args.log_service_principal,
-        args.skip_scaleset_role_assignment,
+        args.upgrade,
     )
     if args.verbose:
         level = logging.DEBUG
