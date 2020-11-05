@@ -9,16 +9,73 @@ use std::{
 
 use anyhow::Result;
 use log::{error, trace};
-use win_util::{file, handle::Handle, process};
+use win_util::{file, handle::Handle, last_os_error, process};
 use winapi::{
     shared::minwindef::{DWORD, LPVOID},
-    um::winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386},
+    um::{
+        processthreadsapi::{ResumeThread, SuspendThread},
+        winbase::Wow64SuspendThread,
+        winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386},
+    },
 };
 
 use crate::{
     dbghelp::{self, FrameContext},
     debugger::{Breakpoint, BreakpointId, BreakpointType, ModuleBreakpoint, StepState},
 };
+
+struct ThreadInfo {
+    id: u32,
+    handle: HANDLE,
+    suspended: bool,
+    wow64: bool,
+}
+
+impl ThreadInfo {
+    fn new(id: u32, handle: HANDLE, wow64: bool) -> Self {
+        ThreadInfo {
+            id,
+            handle,
+            wow64,
+            suspended: false,
+        }
+    }
+
+    fn resume_thread(&mut self) -> Result<()> {
+        if !self.suspended {
+            return Ok(());
+        }
+
+        let suspend_count = unsafe { ResumeThread(self.handle) };
+        if suspend_count == (-1i32 as DWORD) {
+            Err(last_os_error())
+        } else {
+            self.suspended = false;
+            trace!("Resume {:x} - suspend_count: {}", self.id, suspend_count);
+            Ok(())
+        }
+    }
+
+    fn suspend_thread(&mut self) -> Result<()> {
+        if self.suspended {
+            return Ok(());
+        }
+
+        let suspend_count = if self.wow64 {
+            unsafe { Wow64SuspendThread(self.handle) }
+        } else {
+            unsafe { SuspendThread(self.handle) }
+        };
+
+        if suspend_count == (-1i32 as DWORD) {
+            Err(last_os_error())
+        } else {
+            self.suspended = true;
+            trace!("Suspend {:x} - suspend_count: {}", self.id, suspend_count);
+            Ok(())
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct Module {
@@ -91,15 +148,17 @@ pub struct Target {
     process_id: DWORD,
     process_handle: HANDLE,
     current_thread_handle: HANDLE,
+    current_thread_id: DWORD,
     saw_initial_bp: bool,
     saw_initial_wow64_bp: bool,
+    wow64: bool,
 
     // Track if we need to call SymInitialize for the process and if we need to notify
     // dbghelp about loaded/unloaded dlls.
     sym_initialized: bool,
     exited: bool,
 
-    thread_handles: fnv::FnvHashMap<DWORD, HANDLE>,
+    thread_info: fnv::FnvHashMap<DWORD, ThreadInfo>,
 
     // We cache the current thread context for possible repeated queries and modifications.
     // We want to call GetThreadContext once, then call SetThreadContext (if necessary) before
@@ -127,17 +186,20 @@ impl Target {
         thread_handle: HANDLE,
     ) -> Self {
         let mut thread_handles = fnv::FnvHashMap::default();
-        thread_handles.insert(thread_id, thread_handle);
+        let wow64 = process::is_wow64_process(process_handle);
+        thread_handles.insert(thread_id, ThreadInfo::new(thread_id, thread_handle, wow64));
 
         Self {
             process_id,
             current_thread_handle: thread_handle,
+            current_thread_id: thread_id,
             process_handle,
             saw_initial_bp: false,
             saw_initial_wow64_bp: false,
+            wow64,
             sym_initialized: false,
             exited: false,
-            thread_handles,
+            thread_info: thread_handles,
             current_context: None,
             context_is_modified: false,
             modules: fnv::FnvHashMap::default(),
@@ -150,17 +212,24 @@ impl Target {
         self.current_thread_handle
     }
 
+    pub fn current_thread_id(&self) -> DWORD {
+        self.current_thread_id
+    }
+
     pub fn create_new_thread(&mut self, thread_handle: HANDLE, thread_id: DWORD) {
         self.current_thread_handle = thread_handle;
-        self.thread_handles.insert(thread_id, thread_handle);
+        self.thread_info.insert(
+            thread_id,
+            ThreadInfo::new(thread_id, thread_handle, self.wow64),
+        );
     }
 
     pub fn set_current_thread(&mut self, thread_id: DWORD) {
-        self.current_thread_handle = *self.thread_handles.get(&thread_id).unwrap();
+        self.current_thread_handle = self.thread_info.get(&thread_id).unwrap().handle;
     }
 
     pub fn exit_thread(&mut self, thread_id: DWORD) {
-        self.thread_handles.remove(&thread_id);
+        self.thread_info.remove(&thread_id);
     }
 
     pub fn process_handle(&self) -> HANDLE {
@@ -491,7 +560,7 @@ impl Target {
             }
         };
 
-        {
+        let single_step = {
             let context = self.get_current_context_mut()?;
             context.set_program_counter(pc);
 
@@ -510,12 +579,32 @@ impl Target {
                 self.single_step
                     .insert(self.current_thread_handle, StepState::Breakpoint { pc });
             }
-        }
+
+            single_step
+        };
 
         let current_thread_handle = self.current_thread_handle;
         let context = self.get_current_context_mut()?;
         context.set_thread_context(current_thread_handle)?;
         self.context_is_modified = false;
+
+        if single_step {
+            for thread_info in self.thread_info.values_mut() {
+                // Don't suspend any thread that we are single stepping. Typically
+                // this is only the current thread/breakpoint, but debug events can be hit
+                // on multiple threads at roughly the same time, so e.g. we may see a second
+                // breakpoint from the OS before our scheduled single step exception.
+                //
+                // We must resume at least 1 thread when we are single stepping, but we can
+                // safely resume all threads that are single stepping because we won't miss
+                // any breakpoints as they are executing a single instruction.
+                if self.single_step.contains_key(&thread_info.handle) {
+                    thread_info.resume_thread()?;
+                } else {
+                    thread_info.suspend_thread()?;
+                };
+            }
+        }
 
         Ok(match handle_breakpoint {
             HandleBreakpoint::User(id, _) => Some(id),
@@ -524,14 +613,22 @@ impl Target {
     }
 
     pub(crate) fn handle_single_step(&mut self, step_state: StepState) -> Result<()> {
+        self.single_step.remove(&self.current_thread_handle);
+
         match step_state {
             StepState::Breakpoint { pc } => {
                 write_instruction_byte(self.process_handle, pc, 0xcc)?;
+
+                // Resume all threads if we aren't waiting for any threads to single step.
+                if self.single_step.is_empty() {
+                    for thread_info in self.thread_info.values_mut() {
+                        thread_info.resume_thread()?;
+                    }
+                }
             }
             _ => {}
         }
 
-        self.single_step.remove(&self.current_thread_handle);
         Ok(())
     }
 
