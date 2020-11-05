@@ -34,10 +34,6 @@ class GraphQueryError(Exception):
         super(GraphQueryError, self).__init__(message)
         self.status_code = status_code
 
-    @property
-    def status_code():
-        return self.status_code
-
 
 def query_microsoft_graph(
     method: str,
@@ -102,7 +98,7 @@ def register_application(
     else:
         app = apps[0]
         logger.info(
-            "Found existing application objectId '%s' - appid '%s"
+            "Found existing application objectId '%s' - appid '%s'"
             % (app.object_id, app.app_id)
         )
 

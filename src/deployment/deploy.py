@@ -487,7 +487,7 @@ class Client:
         blob_client = client.get_blob_client(container_name, blob_name)
         if blob_client.exists():
             logger.debug("instance_id already exists")
-            instance_id = uuid.UUID(blob_client.download_blob().readall())
+            instance_id = uuid.UUID(blob_client.download_blob().readall().decode())
         else:
             logger.debug("creating new instance_id")
             instance_id = uuid.uuid4()
