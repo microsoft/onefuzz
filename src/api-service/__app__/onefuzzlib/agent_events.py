@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Optional, Union, cast
+from typing import Optional, cast
 from uuid import UUID
 
 from onefuzztypes.enums import (
@@ -19,6 +19,7 @@ from onefuzztypes.models import (
     NodeDoneEventData,
     NodeSettingUpEventData,
     NodeStateUpdate,
+    Result,
     WorkerDoneEvent,
     WorkerEvent,
     WorkerRunningEvent,
@@ -29,7 +30,7 @@ from ..onefuzzlib.task_event import TaskEvent
 from ..onefuzzlib.tasks.main import Task
 
 
-def get_node(machine_id: UUID) -> Union[Node, Error]:
+def get_node(machine_id: UUID) -> Result[Node]:
     node = Node.get_by_machine_id(machine_id)
     if not node:
         return Error(code=ErrorCode.INVALID_NODE, errors=["unable to find node"])
@@ -39,7 +40,7 @@ def get_node(machine_id: UUID) -> Union[Node, Error]:
 def on_state_update(
     machine_id: UUID,
     state_update: NodeStateUpdate,
-) -> Optional[Error]:
+) -> Result[None]:
     state = state_update.state
     node = get_node(machine_id)
     if isinstance(node, Error):
@@ -133,7 +134,7 @@ def on_state_update(
 
 def on_worker_event_running(
     machine_id: UUID, event: WorkerRunningEvent
-) -> Optional[Error]:
+) -> Result[None]:
     task = Task.get_by_task_id(event.task_id)
     if isinstance(task, Error):
         return task
@@ -173,7 +174,7 @@ def on_worker_event_running(
     return None
 
 
-def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Optional[Error]:
+def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[None]:
     task = Task.get_by_task_id(event.task_id)
     if isinstance(task, Error):
         return task
@@ -230,7 +231,7 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Optional[E
     return None
 
 
-def on_worker_event(machine_id: UUID, event: WorkerEvent) -> Optional[Error]:
+def on_worker_event(machine_id: UUID, event: WorkerEvent) -> Result[None]:
     if event.running:
         return on_worker_event_running(machine_id, event.running)
     elif event.done:

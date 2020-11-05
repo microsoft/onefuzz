@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Optional
 
 import azure.functions as func
 from onefuzztypes.models import (
@@ -12,6 +11,7 @@ from onefuzztypes.models import (
     NodeEvent,
     NodeEventEnvelope,
     NodeStateUpdate,
+    Result,
     WorkerEvent,
 )
 from onefuzztypes.responses import BoolResult
@@ -21,7 +21,7 @@ from ..onefuzzlib.agent_events import on_state_update, on_worker_event
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
-def process(envelope: NodeEventEnvelope) -> Optional[Error]:
+def process(envelope: NodeEventEnvelope) -> Result[None]:
     logging.info(
         "node event: machine_id: %s event: %s",
         envelope.machine_id,
