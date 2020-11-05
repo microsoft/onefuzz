@@ -193,6 +193,7 @@ class Libfuzzer(Command):
             ContainerType.unique_reports,
             ContainerType.no_repro,
             ContainerType.coverage,
+            ContainerType.unique_inputs,
         )
 
         if existing_inputs:
