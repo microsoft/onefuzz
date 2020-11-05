@@ -192,16 +192,26 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
     )
     node_task.delete()
 
-    exit_status = event.exit_status
-    if not exit_status.success:
+    if event.exit_status.success:
+        logging.info(
+            "task done. %s:%s status:%s", task.job_id, task.task_id, event.exit_status
+        )
+        task.mark_stopping()
+        if (
+            task.config.debug
+            and TaskDebugFlag.keep_node_on_completion in task.config.debug
+        ):
+            node.debug_keep_node = True
+            node.save()
+    else:
         logging.error(
-            "task failed. %s:%s status:%s", task.job_id, task.task_id, exit_status
+            "task failed. %s:%s status:%s", task.job_id, task.task_id, event.exit_status
         )
         task.mark_failed(
             Error(
                 code=ErrorCode.TASK_FAILED,
                 errors=[
-                    "task failed. exit_status:%s" % exit_status,
+                    "task failed. exit_status:%s" % event.exit_status,
                     event.stdout[-4096:],
                     event.stderr[-4096:],
                 ],
@@ -211,18 +221,6 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
         if task.config.debug and (
             TaskDebugFlag.keep_node_on_failure in task.config.debug
             or TaskDebugFlag.keep_node_on_completion in task.config.debug
-        ):
-            node.debug_keep_node = True
-            node.save()
-
-    else:
-        logging.error(
-            "task done. %s:%s status:%s", task.job_id, task.task_id, exit_status
-        )
-        task.mark_stopping()
-        if (
-            task.config.debug
-            and TaskDebugFlag.keep_node_on_completion in task.config.debug
         ):
             node.debug_keep_node = True
             node.save()
