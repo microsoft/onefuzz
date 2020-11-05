@@ -46,7 +46,7 @@ const STATUS_WX86_BREAKPOINT: u32 = ::winapi::shared::ntstatus::STATUS_WX86_BREA
 
 /// Uniquely identify a breakpoint.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub struct BreakpointId(pub u32);
+pub struct BreakpointId(pub u64);
 
 #[derive(Copy, Clone)]
 pub(crate) enum StepState {
@@ -68,6 +68,10 @@ pub(crate) struct ModuleBreakpoint {
 }
 
 impl ModuleBreakpoint {
+    pub fn new(rva: u64, kind: BreakpointType, id: BreakpointId) -> Self {
+        ModuleBreakpoint { rva, kind, id }
+    }
+
     pub fn rva(&self) -> u64 {
         self.rva
     }
@@ -226,7 +230,7 @@ pub struct Debugger {
     continue_args: Option<ContinueDebugEventArguments>,
     registered_breakpoints: HashMap<PathBuf, Vec<ModuleBreakpoint>>,
     symbolic_breakpoints: HashMap<PathBuf, Vec<UnresolvedBreakpoint>>,
-    breakpoint_count: u32,
+    breakpoint_count: u64,
 }
 
 impl Debugger {
@@ -342,7 +346,7 @@ impl Debugger {
             .entry(module.into())
             .or_insert_with(|| vec![]);
 
-        module_breakpoints.push(ModuleBreakpoint { rva, kind, id });
+        module_breakpoints.push(ModuleBreakpoint::new(rva, kind, id));
         id
     }
 
@@ -601,11 +605,11 @@ impl Debugger {
                             &bp.sym,
                         ) {
                             Ok(sym) => {
-                                rva_breakpoints.push(ModuleBreakpoint {
-                                    rva: sym.address() - base_address,
-                                    kind: bp.kind,
-                                    id: bp.id,
-                                });
+                                rva_breakpoints.push(ModuleBreakpoint::new(
+                                    sym.address() - base_address,
+                                    bp.kind,
+                                    bp.id,
+                                ));
                             }
                             Err(e) => {
                                 debug!(
