@@ -255,7 +255,7 @@ impl Debugger {
         let de = unsafe { de.assume_init() };
         let de = DebugEvent::new(&de);
         if let DebugEventInfo::CreateProcess(info) = de.info() {
-            trace!("DebugEvent: {}", de);
+            trace!("{}", de);
 
             let mut target =
                 Target::new(de.process_id(), de.thread_id(), info.hProcess, info.hThread);
@@ -369,7 +369,7 @@ impl Debugger {
         if unsafe { WaitForDebugEvent(de.as_mut_ptr(), timeout_ms) } == TRUE {
             let de = unsafe { de.assume_init() };
             let de = DebugEvent::new(&de);
-            trace!("DebugEvent: {}", de);
+            trace!("{}", de);
 
             let continue_status = self.dispatch_event(&de, callbacks);
             self.continue_args = Some(ContinueDebugEventArguments {
