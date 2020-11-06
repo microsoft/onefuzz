@@ -207,7 +207,7 @@ TASK_DEFINITIONS = {
                 permissions=[ContainerPermission.Create, ContainerPermission.List],
             ),
         ],
-        monitor_queue=ContainerType.inputs,
+        monitor_queue=None,
     ),
     TaskType.generic_supervisor: TaskDefinition(
         features=[

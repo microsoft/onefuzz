@@ -31,7 +31,7 @@ pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
-    pub input_queue: Url,
+    pub input_queue: Option<Url>,
     pub inputs: SyncedDir,
     pub unique_inputs: SyncedDir,
 
@@ -40,30 +40,35 @@ pub struct Config {
 }
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
-    let hb_client = config.common.init_heartbeat().await?;
     config.unique_inputs.init().await?;
-    loop {
-        hb_client.alive();
-        if let Err(error) = process_message(config.clone()).await {
-            error!(
-                "failed to process latest message from notification queue: {}",
-                error
-            );
+    if let Some(url) = config.input_queue.clone() {
+        loop {
+            let queue = QueueClient::new(url.clone());
+            if let Err(error) = process_message(config.clone(), queue).await {
+                error!(
+                    "failed to process latest message from notification queue: {}",
+                    error
+                );
+            }
         }
+    } else {
+        let tmp_dir = "./tmp";
+        verbose!("tmp dir reset");
+        utils::reset_tmp_dir(tmp_dir).await?;
+        config.inputs.sync_pull().await?;
+        merge_inputs(config.clone(), tmp_dir).await?;
+        Ok(())
     }
 }
 
-async fn process_message(config: Arc<Config>) -> Result<()> {
+async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> Result<()> {
+    let hb_client = config.common.init_heartbeat().await?;
+    hb_client.alive();
     let tmp_dir = "./tmp";
-
     verbose!("tmp dir reset");
-
     utils::reset_tmp_dir(tmp_dir).await?;
-    config.unique_inputs.sync_pull().await?;
 
-    let mut queue = QueueClient::new(config.input_queue.clone());
-
-    if let Some(msg) = queue.pop().await? {
+    if let Some(msg) = input_queue.pop().await? {
         let input_url = match utils::parse_url_data(msg.data()) {
             Ok(url) => url,
             Err(err) => {
@@ -74,28 +79,11 @@ async fn process_message(config: Arc<Config>) -> Result<()> {
 
         let input_path = utils::download_input(input_url.clone(), tmp_dir).await?;
         info!("downloaded input to {}", input_path.display());
-
-        info!("Merging corpus");
-        match merge(
-            &config.target_exe,
-            &config.target_options,
-            &config.target_env,
-            &config.unique_inputs.path,
-            &tmp_dir,
-        )
-        .await
-        {
-            Ok(result) if result.added_files_count > 0 => {
-                info!("Added {} new files to the corpus", result.added_files_count);
-                config.unique_inputs.sync_push().await?;
-            }
-            Ok(_) => info!("No new files added by the merge"),
-            Err(e) => error!("Merge failed : {}", e),
-        }
+        merge_inputs(config.clone(), tmp_dir).await?;
 
         verbose!("will delete popped message with id = {}", msg.id());
 
-        queue.delete(msg).await?;
+        input_queue.delete(msg).await?;
 
         verbose!(
             "Attempting to delete {} from the candidate container",
@@ -113,6 +101,37 @@ async fn process_message(config: Arc<Config>) -> Result<()> {
     }
 }
 
+async fn merge_inputs(
+    config: Arc<Config>,
+    tmp_dir: impl AsRef<Path>,
+) -> Result<LibFuzzerMergeOutput> {
+    info!("Merging corpus");
+    let merger = LibFuzzer::new(
+        &config.target_exe,
+        &config.target_options,
+        &config.target_env,
+    );
+    let candidates = vec![&tmp_dir];
+    config.unique_inputs.sync_pull().await?;
+    let merge_result = merger.merge(&config.unique_inputs.path, &candidates).await;
+    match merge_result {
+        Ok(result) => {
+            if result.added_files_count > 0 {
+                info!("Added {} new files to the corpus", result.added_files_count);
+                config.unique_inputs.sync_push().await?;
+            } else {
+                info!("No new files added by the merge")
+            }
+            Ok(result)
+        }
+
+        Err(e) => {
+            error!("Merge failed : {}", e);
+            Err(e)
+        }
+    }
+}
+
 async fn try_delete_blob(input_url: Url) -> Result<()> {
     let http_client = reqwest::Client::new();
     match http_client
@@ -125,16 +144,4 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
         Ok(_) => Ok(()),
         Err(err) => Err(err.into()),
     }
-}
-
-async fn merge(
-    target_exe: &Path,
-    target_options: &[String],
-    target_env: &HashMap<String, String>,
-    corpus_dir: &Path,
-    candidate_dir: impl AsRef<Path>,
-) -> Result<LibFuzzerMergeOutput> {
-    let merger = LibFuzzer::new(target_exe, target_options, target_env);
-    let candidates = vec![candidate_dir];
-    merger.merge(&corpus_dir, &candidates).await
 }
