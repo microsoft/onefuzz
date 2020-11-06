@@ -23,7 +23,11 @@ def template_container_types(template: OnefuzzTemplate) -> List[ContainerType]:
 def build_input_config(template: OnefuzzTemplate) -> OnefuzzTemplateConfig:
     user_fields = [
         OnefuzzTemplateField(
-            name=x.name, type=x.type, required=x.required, default=x.default
+            name=x.name,
+            type=x.type,
+            required=x.required,
+            default=x.default,
+            help=x.help,
         )
         for x in TEMPLATE_BASE_FIELDS + template.user_fields
     ]

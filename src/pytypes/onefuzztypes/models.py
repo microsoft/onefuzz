@@ -717,6 +717,7 @@ class UserField(BaseModel):
     locations: List[UserFieldLocation]
     required: bool = Field(default=False)
     default: Optional[TemplateUserData]
+    help: str
 
     @validator("locations", allow_reuse=True)
     def check_locations(cls, value: List) -> List:
@@ -780,6 +781,7 @@ class OnefuzzTemplateRequest(BaseModel):
 
 class OnefuzzTemplateField(BaseModel):
     name: str
+    help: str
     type: UserFieldType
     required: bool
     default: Optional[TemplateUserData]
@@ -793,6 +795,7 @@ class OnefuzzTemplateConfig(BaseModel):
 TEMPLATE_BASE_FIELDS = [
     UserField(
         name="project",
+        help="Name of the Project",
         type=UserFieldType.Str,
         required=True,
         locations=[
@@ -804,6 +807,7 @@ TEMPLATE_BASE_FIELDS = [
     ),
     UserField(
         name="name",
+        help="Name of the Target",
         type=UserFieldType.Str,
         required=True,
         locations=[
@@ -815,6 +819,7 @@ TEMPLATE_BASE_FIELDS = [
     ),
     UserField(
         name="build",
+        help="Name of the Target",
         type=UserFieldType.Str,
         required=True,
         locations=[

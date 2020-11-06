@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional
 from onefuzztypes.enums import OS, ContainerType, UserFieldType
 from onefuzztypes.models import (
     Job,
-    OnefuzzTemplate,
     OnefuzzTemplateConfig,
     OnefuzzTemplateRequest,
     Task,
@@ -165,16 +164,25 @@ class Prototype(Command):
         return result
 
 
+TYPES = {
+    UserFieldType.Str: str,
+    UserFieldType.Int: int,
+    UserFieldType.ListStr: List[str],
+    UserFieldType.DictStr: Dict[str, str],
+    UserFieldType.Bool: bool,
+}
+
+NAMES = {
+    UserFieldType.Str: "str",
+    UserFieldType.Int: "int",
+    UserFieldType.ListStr: "list",
+    UserFieldType.DictStr: "dict",
+    UserFieldType.Bool: "bool",
+}
+
+
 def config_to_params(config: OnefuzzTemplateConfig) -> List[Parameter]:
     params: List[Parameter] = []
-
-    types = {
-        UserFieldType.Str: str,
-        UserFieldType.Int: int,
-        UserFieldType.ListStr: List[str],
-        UserFieldType.DictStr: Dict[str, str],
-        UserFieldType.Bool: bool,
-    }
 
     for entry in config.user_fields:
         is_optional = entry.default is None and entry.required is False
@@ -182,7 +190,7 @@ def config_to_params(config: OnefuzzTemplateConfig) -> List[Parameter]:
             annotation = Optional[File] if is_optional else File
         else:
             annotation = (
-                Optional[types[entry.type]] if is_optional else types[entry.type]
+                Optional[TYPES[entry.type]] if is_optional else TYPES[entry.type]
             )
 
         default = entry.default if entry.default is not None else Parameter.empty
@@ -218,9 +226,31 @@ def config_to_params(config: OnefuzzTemplateConfig) -> List[Parameter]:
     return params
 
 
-def build_template_func(name: str, template: OnefuzzTemplate) -> Any:
-    config = build_input_config(template)
+def build_template_doc(name: str, config: OnefuzzTemplateConfig) -> str:
+    docs = [
+        f"Launch a pre-defined {name} job",
+        "",
+        ":param Platform platform: Specify the OS to use in the job.",
+    ]
 
+    for entry in config.user_fields:
+        line = f":param {NAMES[entry.type]} {entry.name}: {entry.help}"
+        docs.append(line)
+
+    for container in config.containers:
+        if container not in ContainerType.user_config():
+            continue
+        line = f":param Directory {container_type_name(container)}: Local path to the {container.name} directory"
+        docs.append(line)
+
+    if config.containers:
+        line = ":param dict container_names: custom container names (eg: setup=my-setup-container)"
+        docs.append(line)
+
+    return "\n".join(docs)
+
+
+def build_template_func(name: str, config: OnefuzzTemplateConfig) -> Any:
     def func(self: Prototype, platform: OS, **kwargs: Any) -> Job:
         return self._execute(name, config, platform, kwargs)
 
@@ -231,8 +261,13 @@ def build_template_func(name: str, template: OnefuzzTemplate) -> Any:
     sig = sig.replace(parameters=tuple(params))
     func.__signature__ = sig  # type: ignore
 
+    func.__doc__ = build_template_doc(name, config)
+
     return func
 
 
+# For now, these come from a local python file.  Eventually, we would expect these
+# to come from a server API, with local caching
 for name, template in TEMPLATES.items():
-    setattr(Prototype, name, build_template_func(name, template))
+    config = build_input_config(template)
+    setattr(Prototype, name, build_template_func(name, config))

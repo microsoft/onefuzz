@@ -18,6 +18,15 @@ from onefuzztypes.models import (
     UserFieldLocation,
 )
 
+POOL_HELP = "Execute the task on the specified pool"
+DURATION_HELP = "Number of hours to execute the task"
+TARGET_EXE_HELP = "Path to the target executable"
+TARGET_OPTIONS_HELP = "Command line options for the target"
+VM_COUNT_HELP = "Number of VMs to use for fuzzing"
+RETRY_COUNT_HELP = "Number of times to retry a crash to verify reproducability"
+REBOOT_HELP = "After executing the setup script, reboot the VM"
+TAGS_HELP = "User provided metadata for the tasks"
+
 TEMPLATES = {
     "afl_basic": OnefuzzTemplate(
         job=JobConfig(project="", name="", build="", duration=1),
@@ -32,7 +41,7 @@ TEMPLATES = {
                     target_options=[],
                     supervisor_exe="",
                     supervisor_options=[],
-                    supervisor_input_marker="",
+                    supervisor_input_marker="@@",
                 ),
                 pool=TaskPool(count=1, pool_name=""),
                 containers=[
@@ -69,6 +78,7 @@ TEMPLATES = {
         user_fields=[
             UserField(
                 name="pool_name",
+                help="Execute the task on the specified pool",
                 type=UserFieldType.Str,
                 required=True,
                 locations=[
@@ -84,6 +94,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="duration",
+                help=DURATION_HELP,
                 type=UserFieldType.Int,
                 default=24,
                 locations=[
@@ -102,6 +113,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="target_exe",
+                help=TARGET_EXE_HELP,
                 type=UserFieldType.Str,
                 default="fuzz.exe",
                 locations=[
@@ -117,6 +129,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="target_options",
+                help=TARGET_OPTIONS_HELP,
                 type=UserFieldType.ListStr,
                 locations=[
                     UserFieldLocation(
@@ -131,6 +144,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="supervisor_exe",
+                help="Path to the AFL executable",
                 type=UserFieldType.Str,
                 default="{tools_dir}/afl-fuzz",
                 locations=[
@@ -141,19 +155,8 @@ TEMPLATES = {
                 ],
             ),
             UserField(
-                name="supervisor_input_marker",
-                type=UserFieldType.Str,
-                required=False,
-                default="@@",
-                locations=[
-                    UserFieldLocation(
-                        op=UserFieldOperation.replace,
-                        path="/tasks/0/task/supervisor_input_marker",
-                    ),
-                ],
-            ),
-            UserField(
                 name="supervisor_options",
+                help="AFL command line options",
                 type=UserFieldType.ListStr,
                 default=[
                     "-d",
@@ -174,6 +177,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="supervisor_env",
+                help="Enviornment variables for AFL",
                 type=UserFieldType.DictStr,
                 locations=[
                     UserFieldLocation(
@@ -184,6 +188,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="vm_count",
+                help=VM_COUNT_HELP,
                 type=UserFieldType.Int,
                 default=2,
                 locations=[
@@ -195,6 +200,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="check_retry_count",
+                help=RETRY_COUNT_HELP,
                 type=UserFieldType.Int,
                 locations=[
                     UserFieldLocation(
@@ -205,6 +211,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="afl_container",
+                help="Name of the AFL storage container (use this to specify alternate builds of AFL)",
                 type=UserFieldType.Str,
                 default="afl-linux",
                 locations=[
@@ -216,6 +223,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="reboot_after_setup",
+                help=REBOOT_HELP,
                 type=UserFieldType.Bool,
                 default=False,
                 locations=[
@@ -231,6 +239,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="tags",
+                help=TAGS_HELP,
                 type=UserFieldType.DictStr,
                 locations=[
                     UserFieldLocation(
@@ -308,6 +317,7 @@ TEMPLATES = {
         user_fields=[
             UserField(
                 name="pool_name",
+                help=POOL_HELP,
                 type=UserFieldType.Str,
                 required=True,
                 locations=[
@@ -327,6 +337,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="target_exe",
+                help=TARGET_EXE_HELP,
                 type=UserFieldType.Str,
                 default="fuzz.exe",
                 locations=[
@@ -346,6 +357,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="duration",
+                help=DURATION_HELP,
                 type=UserFieldType.Int,
                 default=24,
                 locations=[
@@ -368,6 +380,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="target_workers",
+                help="Number of instances of the libfuzzer target on each VM",
                 type=UserFieldType.Int,
                 locations=[
                     UserFieldLocation(
@@ -378,6 +391,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="vm_count",
+                help=VM_COUNT_HELP,
                 type=UserFieldType.Int,
                 default=2,
                 locations=[
@@ -389,6 +403,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="target_options",
+                help=TARGET_OPTIONS_HELP,
                 type=UserFieldType.ListStr,
                 locations=[
                     UserFieldLocation(
@@ -407,6 +422,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="target_env",
+                help="Environment variables for the target",
                 type=UserFieldType.DictStr,
                 locations=[
                     UserFieldLocation(
@@ -425,6 +441,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="reboot_after_setup",
+                help=REBOOT_HELP,
                 type=UserFieldType.Bool,
                 default=False,
                 locations=[
@@ -444,6 +461,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="check_retry_count",
+                help=RETRY_COUNT_HELP,
                 type=UserFieldType.Int,
                 locations=[
                     UserFieldLocation(
@@ -454,6 +472,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="target_timeout",
+                help="Number of seconds to timeout during reproduction",
                 type=UserFieldType.Int,
                 locations=[
                     UserFieldLocation(
@@ -464,6 +483,7 @@ TEMPLATES = {
             ),
             UserField(
                 name="tags",
+                help=TAGS_HELP,
                 type=UserFieldType.DictStr,
                 locations=[
                     UserFieldLocation(
