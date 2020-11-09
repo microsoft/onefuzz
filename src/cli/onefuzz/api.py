@@ -639,10 +639,10 @@ class Tasks(Endpoint):
 
     def create(
         self,
-        containers: List[Tuple[enums.ContainerType, primitives.Container]],
-        job_id: UUID_EXPANSION,        
-        target_exe: str,
+        job_id: UUID_EXPANSION,
         task_type: enums.TaskType,
+        target_exe: str,
+        containers: List[Tuple[enums.ContainerType, primitives.Container]],
         *,
         analyzer_env: Optional[Dict[str, str]] = None,
         analyzer_exe: Optional[str] = None,
