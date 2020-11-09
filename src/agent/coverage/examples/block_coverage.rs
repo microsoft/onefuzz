@@ -1,7 +1,8 @@
-use std::env;
-use std::process::Command;
-
+#[cfg(target_os = "windows")]
 fn main() {
+    use std::env;
+    use std::process::Command;
+
     env_logger::init();
 
     let mut args = env::args().skip(1);
@@ -18,3 +19,6 @@ fn main() {
 
     println!("block coverage = {}/{} ({:.2}%)", hit, found, percent);
 }
+
+#[cfg(target_os = "linux")]
+fn main() {}
