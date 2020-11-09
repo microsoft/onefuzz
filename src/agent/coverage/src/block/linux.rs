@@ -10,7 +10,7 @@ use anyhow::Result;
 use object::endian::LittleEndian as LE;
 use object::read::elf;
 use pete::{Command, Ptracer, Restart, Signal, Stop, Tracee};
-use procfs::process::{MemoryMap, MMapPath, Process};
+use procfs::process::{MMapPath, MemoryMap, Process};
 
 use crate::block::ModuleCov;
 
@@ -65,21 +65,19 @@ impl Recorder {
 
         while let Some(mut tracee) = ptracer.wait()? {
             match tracee.stop {
-                Stop::SyscallEnterStop(..) => {
-                    log::trace!("syscall-enter: {:?}", tracee.stop)
-                },
+                Stop::SyscallEnterStop(..) => log::trace!("syscall-enter: {:?}", tracee.stop),
                 Stop::SyscallExitStop(..) => {
                     self.update_images(&mut tracee)?;
-                },
+                }
                 Stop::SignalDeliveryStop(_pid, Signal::SIGTRAP) => {
                     self.on_breakpoint(&mut tracee)?;
-                },
+                }
                 Stop::Clone(pid, tid) => {
                     log::info!("new thread: {} -> {}", pid, tid);
-                },
+                }
                 _ => {
                     log::debug!("stop: {:?}", tracee.stop);
-                },
+                }
             }
 
             if let Err(err) = ptracer.restart(tracee, Restart::Syscall) {
@@ -103,7 +101,7 @@ impl Recorder {
     fn on_breakpoint(&mut self, tracee: &mut Tracee) -> Result<()> {
         let mut regs = tracee.registers()?;
 
-        log::trace!("hit breakpoint: {:x} (~{})", regs.rip-1, tracee.pid);
+        log::trace!("hit breakpoint: {:x} (~{})", regs.rip - 1, tracee.pid);
 
         // Adjust for synthetic `int3`.
         let pc = regs.rip - 1;
@@ -311,8 +309,7 @@ impl LoadEvents {
         let loaded: Vec<_> = new
             .iter()
             .filter(|(nva, n)| {
-                 old
-                    .iter()
+                old.iter()
                     .find(|(iva, i)| nva == iva && n.path() == i.path())
                     .is_none()
             })
@@ -320,10 +317,10 @@ impl LoadEvents {
             .collect();
 
         // Old not in new.
-        let unloaded: Vec<_> = old.iter()
+        let unloaded: Vec<_> = old
+            .iter()
             .filter(|(iva, i)| {
-                new
-                    .iter()
+                new.iter()
                     .find(|(nva, n)| nva == iva && n.path() == i.path())
                     .is_none()
             })
@@ -465,8 +462,8 @@ pub fn find_symbol_blocks(section: ElfSection, sym: ElfSymbol) -> Result<Vec<Blo
 
 /// Compute the basic block leaders of a function as virtual addresses.
 fn find_function_leaders(data: &[u8], sym: ElfSymbol) -> BTreeSet<u64> {
-    use object::ObjectSymbol;
     use iced_x86::*;
+    use object::ObjectSymbol;
 
     let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
     decoder.set_ip(sym.address());
@@ -502,10 +499,9 @@ fn branch_target(inst: &iced_x86::Instruction) -> Option<u64> {
     use iced_x86::FlowControl;
 
     match inst.flow_control() {
-        FlowControl::ConditionalBranch |
-        FlowControl::UnconditionalBranch =>
-            Some(inst.near_branch_target()),
-        _ =>
-            None,
+        FlowControl::ConditionalBranch | FlowControl::UnconditionalBranch => {
+            Some(inst.near_branch_target())
+        }
+        _ => None,
     }
 }

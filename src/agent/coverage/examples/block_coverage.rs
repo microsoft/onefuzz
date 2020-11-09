@@ -52,11 +52,7 @@ fn main() -> Result<()> {
                 hit += 1;
             };
 
-            let marker = if b.count == 0 {
-                " "
-            } else {
-                "x"
-            };
+            let marker = if b.count == 0 { " " } else { "x" };
 
             log::debug!("  [{}] {}+{:x} ({} bytes)", marker, name, b.offset, b.size);
         }
