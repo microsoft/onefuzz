@@ -49,6 +49,9 @@ impl Recorder {
         }
 
         // Do not follow forks.
+        //
+        // After this, we assume that any new tracee is a thread in the same
+        // group as the root tracee.
         let mut options = Options::all();
         options.remove(Options::PTRACE_O_TRACEFORK);
         options.remove(Options::PTRACE_O_TRACEVFORK);
@@ -60,12 +63,10 @@ impl Recorder {
 
         ptracer.restart(tracee, Restart::Syscall)?;
 
-        // let pgids: BTreeMap<Pid, Pid> = BTreeMap::new();
-
         while let Some(mut tracee) = ptracer.wait()? {
             match tracee.stop {
                 Stop::SyscallEnterStop(..) => {
-                    log::debug!("{:?}", tracee.stop)
+                    log::trace!("syscall-enter: {:?}", tracee.stop)
                 },
                 Stop::SyscallExitStop(..) => {
                     self.update_images(&mut tracee)?;
@@ -77,7 +78,7 @@ impl Recorder {
                     log::info!("new thread: {} -> {}", pid, tid);
                 },
                 _ => {
-                    log::info!("stop: {:?}", tracee.stop);
+                    log::debug!("stop: {:?}", tracee.stop);
                 },
             }
 
@@ -116,8 +117,12 @@ impl Recorder {
             regs.rip = pc;
             tracee.set_registers(regs)?;
         } else {
-            // assume race
-            log::warn!("didn't clear breakpoint at {:x}", pc);
+            // Assume the tracee concurrently executed an `int3` that we restored
+            // in another handler.
+            //
+            // We could improve on this by not removing breakpoints metadata when
+            // clearing, but making their value a state.
+            log::debug!("no breakpoint at {:x}, assuming race", pc);
             regs.rip = pc;
             tracee.set_registers(regs)?;
         }
@@ -132,9 +137,9 @@ impl Recorder {
 
         log::debug!("found {} blocks", blocks.len());
 
-        // if blocks.is_empty() || image.path().display().to_string().contains("pthread") {
         if blocks.is_empty() {
-            log::warn!("not setting breakpoints");
+            // This almost certainly means the binary was stripped of symbols.
+            log::warn!("no blocks for module, not setting breakpoints");
             return Ok(());
         }
 
@@ -152,6 +157,9 @@ impl Recorder {
     }
 }
 
+/// Block coverage for a command invocation.
+///
+/// Organized by module, and includes the size of the disassembled blocks.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CommandBlockCov {
     pub modules: BTreeMap<PathBuf, ModuleCov>,
@@ -234,7 +242,7 @@ impl Images {
     }
 }
 
-// A `MemoryMap` that is known to be file-backed and executable.
+/// A `MemoryMap` that is known to be file-backed and executable.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ModuleImage {
     map: MemoryMap,
@@ -374,7 +382,6 @@ type ElfSection<'a> = elf::ElfSection64<'a, 'a, LE>;
 pub fn find_module_blocks(module: &Path) -> Result<Vec<Block>> {
     use object::*;
 
-    // let session = object.debug_session().compat()?;
     let data = std::fs::read(module)?;
     let elf = ElfFile::parse(&data)?;
 
@@ -443,7 +450,7 @@ pub fn find_symbol_blocks(section: ElfSection, sym: ElfSymbol) -> Result<Vec<Blo
             offset = current;
         }
 
-        // Note: for a 1-instruction block, `leader && end`.
+        // Note: for a 1-instruction block, `is_leader && end`.
         if end {
             blocks.push(Block { offset, size });
 
