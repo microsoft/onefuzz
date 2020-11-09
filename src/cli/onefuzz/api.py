@@ -715,6 +715,7 @@ class Tasks(Endpoint):
             job_id=job_id_expanded,
             pool=models.TaskPool(count=vm_count, pool_name=pool_name),
             prereq_tasks=prereq_tasks,
+            tags=tags,
             task=models.TaskDetails(
                 analyzer_env=analyzer_env,
                 analyzer_exe=analyzer_exe,
@@ -743,7 +744,6 @@ class Tasks(Endpoint):
                 type=task_type,
                 wait_for_files=task_wait_for_files,
             ),
-            tags=tags,
         )
 
         return self.create_with_config(config)
