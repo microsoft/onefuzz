@@ -17,9 +17,11 @@ memmap = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 uuid = { version = "0.8", features = ["guid"] }
 
-[target.'cfg(windows)'.dependencies]
+[target.'cfg(target_os = "windows")'.dependencies]
 pdb = "0.6"
 winapi = "0.3"
 
-[dev-dependencies]
-env_logger = "0.8"
+[target.'cfg(target_os = "linux")'.dependencies]
+object = "0.22"
+pete = "0.3"
+procfs = "0.8"
