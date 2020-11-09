@@ -4,11 +4,9 @@
 # Licensed under the MIT License.
 
 import unittest
-
-from onefuzztypes.enums import OS
 from unittest.mock import patch
 
-from onefuzztypes.enums import Architecture, TaskType
+from onefuzztypes.enums import OS, Architecture, TaskType
 from onefuzztypes.models import (
     ContainerType,
     TaskConfig,
