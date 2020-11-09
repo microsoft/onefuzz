@@ -502,9 +502,10 @@ fn branch_target(inst: &iced_x86::Instruction) -> Option<u64> {
     use iced_x86::FlowControl;
 
     match inst.flow_control() {
-        FlowControl::ConditionalBranch
-        | FlowControl::UnconditionalBranch
-        | FlowControl::IndirectBranch => Some(inst.near_branch_target()),
-        _ => None,
+        FlowControl::ConditionalBranch |
+        FlowControl::UnconditionalBranch =>
+            Some(inst.near_branch_target()),
+        _ =>
+            None,
     }
 }
