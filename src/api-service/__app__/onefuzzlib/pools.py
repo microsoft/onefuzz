@@ -5,7 +5,7 @@
 
 import datetime
 import logging
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
 from onefuzztypes.enums import (
@@ -712,13 +712,42 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 logging.info("creating scaleset: %s", self.scaleset_id)
         elif vmss.provisioning_state == "Creating":
             logging.info("Waiting on scaleset creation: %s", self.scaleset_id)
-            if vmss.identity and vmss.identity.principal_id:
-                self.client_object_id = vmss.identity.principal_id
+            self.try_set_identity(vmss)
         else:
             logging.info("scaleset running: %s", self.scaleset_id)
-            self.state = ScalesetState.running
-            self.client_object_id = vmss.identity.principal_id
+            error = self.try_set_identity(vmss)
+            if error:
+                self.state = ScalesetState.creation_failed
+                self.error = error
+            else:
+                self.state = ScalesetState.running
         self.save()
+
+    def try_set_identity(self, vmss: Any) -> Optional[Error]:
+        def get_error() -> Error:
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED,
+                errors=[
+                    "The scaleset is expected to have exactly 1 user assigned identity"
+                ],
+            )
+
+        if self.client_object_id:
+            return None
+        if (
+            vmss.identity
+            and vmss.identity.user_assigned_identities
+            and (len(vmss.identity.user_assigned_identities) != 1)
+        ):
+            return get_error()
+
+        user_assinged_identities = list(vmss.identity.user_assigned_identities.values())
+
+        if user_assinged_identities[0].principal_id:
+            self.client_object_id = user_assinged_identities[0].principal_id
+            return None
+        else:
+            return get_error()
 
     # result = 'did I modify the scaleset in azure'
     def cleanup_nodes(self) -> bool:

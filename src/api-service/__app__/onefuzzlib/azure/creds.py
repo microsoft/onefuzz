@@ -151,7 +151,7 @@ def get_scaleset_identity_resource_path() -> str:
 
 @cached
 def get_scaleset_principal_id() -> UUID:
-    api_version = "2018-11-30"  # matches the apiversion in the deplyoment template
+    api_version = "2018-11-30"  # matches the apiversion in the deployment template
     client = mgmt_client_factory(ResourceManagementClient)
     uid = client.resources.get_by_id(get_scaleset_identity_resource_path(), api_version)
     return UUID(uid.properties["principalId"])
