@@ -15,7 +15,7 @@ from onefuzztypes.responses import AgentRegistration
 from ..onefuzzlib.agent_authorization import verify_token
 from ..onefuzzlib.azure.creds import get_fuzz_storage, get_instance_url
 from ..onefuzzlib.azure.queue import get_queue_sas
-from ..onefuzzlib.pools import Node, NodeMessage, Pool, NodeTasks
+from ..onefuzzlib.pools import Node, NodeMessage, NodeTasks, Pool
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 

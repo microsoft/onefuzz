@@ -291,7 +291,7 @@ class Node(BASE_NODE, ORMMixin):
             raw_unchecked_filter=time_filter,
         )
 
-    def delete(self):
+    def delete(self) -> None:
         NodeTasks.clear_by_machine_id(self.machine_id)
         super().delete()
 
