@@ -15,7 +15,7 @@ from onefuzztypes.responses import AgentRegistration
 from ..onefuzzlib.agent_authorization import verify_token
 from ..onefuzzlib.azure.creds import get_fuzz_storage, get_instance_url
 from ..onefuzzlib.azure.queue import get_queue_sas
-from ..onefuzzlib.pools import Node, NodeMessage, Pool
+from ..onefuzzlib.pools import Node, NodeMessage, NodeTasks, Pool
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 
@@ -110,6 +110,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     # if any tasks were running during an earlier instance of this node, clear them out
     node.mark_tasks_stopped_early()
+    NodeTasks.clear_by_machine_id(node.machine_id)
 
     return create_registration_response(node.machine_id, pool)
 
