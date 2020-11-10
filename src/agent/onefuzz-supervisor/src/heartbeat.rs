@@ -54,7 +54,6 @@ pub async fn init_agent_heartbeat(queue_url: Url) -> Result<AgentHeartbeatClient
     Ok(hb)
 }
 
-
 pub trait HeartbeatSender {
     fn send(&self, data: HeartbeatData) -> Result<()>;
 
