@@ -3,9 +3,6 @@
 #![allow(clippy::as_conversions)]
 #![allow(clippy::new_without_default)]
 
-#[macro_use]
-extern crate serde;
-
 #[cfg(target_os = "windows")]
 mod intel;
 

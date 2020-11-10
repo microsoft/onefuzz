@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use serde::{Deserialize, Serialize};
+
 #[cfg(target_os = "linux")]
 pub mod linux;
 

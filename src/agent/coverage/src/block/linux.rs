@@ -11,6 +11,7 @@ use object::endian::LittleEndian as LE;
 use object::{read::elf, Object, ObjectSection, ObjectSegment, ObjectSymbol};
 use pete::{Command, Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
+use serde::{Deserialize, Serialize};
 
 use crate::block::ModuleCov;
 
