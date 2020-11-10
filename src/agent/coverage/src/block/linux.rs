@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
-use anyhow::Result;
+use anyhow::{format_err, Result};
 use iced_x86::{Decoder, DecoderOptions, Instruction};
 use object::endian::LittleEndian as LE;
 use object::{read::elf, Object, ObjectSection, ObjectSegment, ObjectSymbol};
@@ -89,7 +89,11 @@ impl Recorder {
     }
 
     fn update_images(&mut self, tracee: &mut Tracee) -> Result<()> {
-        let events = self.images.as_mut().unwrap().update()?;
+        let images = self
+            .images
+            .as_mut()
+            .ok_or_else(|| format_err!("internal error: recorder images not initialized"))?;
+        let events = images.update()?;
 
         for (_base, image) in &events.loaded {
             self.on_module_load(tracee, image)?;
@@ -107,7 +111,13 @@ impl Recorder {
         let pc = regs.rip - 1;
 
         if self.breakpoints.clear(tracee, pc)? {
-            let image = self.images.as_ref().unwrap().find_va_image(pc).unwrap();
+            let images = self
+                .images
+                .as_ref()
+                .ok_or_else(|| format_err!("internal error: recorder images not initialized"))?;
+            let image = images
+                .find_va_image(pc)
+                .ok_or_else(|| format_err!("unable to find image for va = {:x}", pc))?;
 
             self.coverage.increment(&image, pc)?;
 
@@ -380,7 +390,10 @@ pub fn find_module_blocks(module: &Path) -> Result<Vec<Block>> {
     let data = std::fs::read(module)?;
     let elf = ElfFile::parse(&data)?;
 
-    let load_va = elf.segments().map(|s| s.address()).min().unwrap();
+    let load_va =
+        elf.segments().map(|s| s.address()).min().ok_or_else(|| {
+            format_err!("no loadable segments for ELF object ({})", module.display())
+        })?;
 
     let mut blocks = vec![];
 
