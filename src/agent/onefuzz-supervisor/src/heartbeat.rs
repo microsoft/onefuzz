@@ -40,8 +40,7 @@ pub async fn init_agent_heartbeat(queue_url: Url) -> Result<AgentHeartbeatClient
         queue_url,
         None,
         |context| async move {
-            let mut data = HeartbeatClient::drain_current_messages(context.clone());
-            data.push(HeartbeatData::MachineAlive);
+            let data = HeartbeatClient::drain_current_messages(context.clone());
             let _ = context
                 .queue_client
                 .enqueue(Heartbeat {
@@ -53,4 +52,30 @@ pub async fn init_agent_heartbeat(queue_url: Url) -> Result<AgentHeartbeatClient
         },
     );
     Ok(hb)
+}
+
+
+pub trait HeartbeatSender {
+    fn send(&self, data: HeartbeatData) -> Result<()>;
+
+    fn alive(&self) {
+        self.send(HeartbeatData::MachineAlive).unwrap()
+    }
+}
+
+impl HeartbeatSender for AgentHeartbeatClient {
+    fn send(&self, data: HeartbeatData) -> Result<()> {
+        let mut messages_lock = self.context.pending_messages.lock().unwrap();
+        messages_lock.insert(data);
+        Ok(())
+    }
+}
+
+impl HeartbeatSender for Option<AgentHeartbeatClient> {
+    fn send(&self, data: HeartbeatData) -> Result<()> {
+        match self {
+            Some(client) => client.send(data),
+            None => Ok(()),
+        }
+    }
 }
