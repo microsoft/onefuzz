@@ -209,7 +209,7 @@ jobs:
         flake8 .
         black ./__app__/ ./tests --check
         isort --profile black ./__app__/ ./tests --check
-        mypy __app__
+        mypy __app__ ./tests
 
         # set a minimum confidence to ignore known false positives
         vulture --min-confidence 61 __app__ 
