@@ -6,9 +6,9 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
-
+use iced_x86::{Decoder, DecoderOptions, Instruction};
 use object::endian::LittleEndian as LE;
-use object::read::elf;
+use object::{read::elf, Object, ObjectSection, ObjectSegment, ObjectSymbol};
 use pete::{Command, Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
 
@@ -377,8 +377,6 @@ type ElfSymbol<'a> = elf::ElfSymbol64<'a, 'a, LE>;
 type ElfSection<'a> = elf::ElfSection64<'a, 'a, LE>;
 
 pub fn find_module_blocks(module: &Path) -> Result<Vec<Block>> {
-    use object::*;
-
     let data = std::fs::read(module)?;
     let elf = ElfFile::parse(&data)?;
 
@@ -404,9 +402,6 @@ pub fn find_module_blocks(module: &Path) -> Result<Vec<Block>> {
 }
 
 pub fn find_symbol_blocks(section: ElfSection, sym: ElfSymbol) -> Result<Vec<Block>> {
-    use iced_x86::*;
-    use object::*;
-
     // Slice symbol's data within section.
     let lo = (sym.address() - section.address()) as usize;
     let hi = lo + (sym.size() as usize);
@@ -462,9 +457,6 @@ pub fn find_symbol_blocks(section: ElfSection, sym: ElfSymbol) -> Result<Vec<Blo
 
 /// Compute the basic block leaders of a function as virtual addresses.
 fn find_function_leaders(data: &[u8], sym: ElfSymbol) -> BTreeSet<u64> {
-    use iced_x86::*;
-    use object::ObjectSymbol;
-
     let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
     decoder.set_ip(sym.address());
 
