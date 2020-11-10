@@ -10,7 +10,7 @@ pydantic~=1.6.1 --no-binary=pydantic
 memoization~=0.3.1
 azure-storage-blob~=12.3
 azure-applicationinsights==0.1.0
-azure-common~=1.1.25
+adal~=1.2.5
 tenacity==6.2.0
 docstring_parser==0.7.3
 # onefuzztypes version is set during build
