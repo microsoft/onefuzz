@@ -47,6 +47,14 @@ pub struct BlockCov {
 
     /// Number of times a block was seen to be executed, relative to some input
     /// or corpus.
+    ///
+    /// Right now, we only set one-shot breakpoints, so the max `count` for a
+    /// single input is 1. In this usage, if we measure corpus block coverage
+    /// with `sum()` as the aggregation function, then `count` / `corpus.len()`
+    /// tells us the proportion of corpus inputs that cover a block.
+    ///
+    /// If we reset breakpoints and recorded multiple block hits per input, then
+    /// the corpus semantics would depend on the aggregation function.
     pub count: u32,
 }
 
