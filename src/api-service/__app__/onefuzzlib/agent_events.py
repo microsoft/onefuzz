@@ -194,11 +194,6 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
     if isinstance(node, Error):
         return node
 
-    node_task = NodeTasks(
-        machine_id=machine_id, task_id=event.task_id, state=NodeTaskState.running
-    )
-    node_task.delete()
-
     if event.exit_status.success:
         logging.info(
             "task done. %s:%s status:%s", task.job_id, task.task_id, event.exit_status
