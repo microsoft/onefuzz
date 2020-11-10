@@ -49,8 +49,9 @@ impl BlockCoverageHandler {
     }
 
     pub fn pc(&self, dbg: &mut Debugger) -> Result<(u64, Option<SymInfo>)> {
-        let rip = iced_x86::Register::RIP;
-        let pc = dbg.read_register_u64(rip)?;
+        use iced_x86::Register::RIP;
+
+        let pc = dbg.read_register_u64(RIP)?;
         let sym = dbg.get_symbol(pc).ok();
 
         Ok((pc, sym))
