@@ -116,6 +116,7 @@ class Client:
         migrations,
         export_appinsights: bool,
         log_service_principal: bool,
+        upgrade: bool,
     ):
         self.resource_group = resource_group
         self.arm_template = arm_template
@@ -127,6 +128,7 @@ class Client:
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
+        self.upgrade = upgrade
         self.results = {
             "client_id": client_id,
             "client_secret": client_secret,
@@ -400,9 +402,14 @@ class Client:
             sys.exit(1)
         self.results["deploy"] = result.properties.outputs
 
+    def assign_scaleset_identity_role(self):
+        if self.upgrade:
+            logger.info("Upgrading: skipping assignment of the managed identity role")
+            return
         logger.info("assigning the user managed identity role")
         assign_scaleset_role(
-            self.application_name, self.results["deploy"]["scaleset-identity"]["value"]
+            self.application_name,
+            self.results["deploy"]["scaleset-identity"]["value"],
         )
 
     def apply_migrations(self):
@@ -703,6 +710,7 @@ def main():
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
+        ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
         ("apply_migrations", Client.apply_migrations),
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
@@ -773,6 +781,11 @@ def main():
         "password for the pool agent",
     )
     parser.add_argument(
+        "--upgrade",
+        action="store_true",
+        help="Indicates that the instance is being upgraded",
+    )
+    parser.add_argument(
         "--apply_migrations",
         type=str,
         nargs="+",
@@ -812,6 +825,7 @@ def main():
         args.apply_migrations,
         args.export_appinsights,
         args.log_service_principal,
+        args.upgrade,
     )
     if args.verbose:
         level = logging.DEBUG
