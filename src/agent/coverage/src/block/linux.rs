@@ -484,16 +484,18 @@ fn find_function_leaders(data: &[u8], sym: ElfSymbol) -> BTreeSet<u64> {
     while decoder.can_decode() {
         decoder.decode_out(&mut inst);
 
-        if let Some(target) = branch_target(&inst) {
+        if let Some((target, conditional)) = branch_target(&inst) {
             // The branch target is a leader.
             leaders.insert(target);
 
-            // The next instruction is a leader, if it exists.
-            if decoder.can_decode() {
-                // We decoded the current instruction, so the decoder offset is
-                // set to the next instruction.
-                let next = decoder.ip() as u64;
-                leaders.insert(next);
+            if conditional {
+                // The next instruction is a leader, if it exists.
+                if decoder.can_decode() {
+                    // We decoded the current instruction, so the decoder offset is
+                    // set to the next instruction.
+                    let next = decoder.ip() as u64;
+                    leaders.insert(next);
+                }
             }
         }
     }
@@ -501,13 +503,14 @@ fn find_function_leaders(data: &[u8], sym: ElfSymbol) -> BTreeSet<u64> {
     leaders
 }
 
-fn branch_target(inst: &iced_x86::Instruction) -> Option<u64> {
+// Returns the virtual address of a branch target, if present, with a flag that
+// is true when the branch is conditional.
+fn branch_target(inst: &iced_x86::Instruction) -> Option<(u64, bool)> {
     use iced_x86::FlowControl;
 
     match inst.flow_control() {
-        FlowControl::ConditionalBranch | FlowControl::UnconditionalBranch => {
-            Some(inst.near_branch_target())
-        }
+        FlowControl::ConditionalBranch => Some((inst.near_branch_target(), true)),
+        FlowControl::UnconditionalBranch => Some((inst.near_branch_target(), false)),
         FlowControl::Call
         | FlowControl::Exception
         | FlowControl::IndirectBranch
