@@ -48,9 +48,8 @@ pub async fn init_task_heartbeat(queue_url: Url, task_id: Uuid) -> Result<TaskHe
             let machine_id = context.state.machine_id;
             let machine_name = context.state.machine_name.clone();
 
-            let mut data =
+            let data =
                 HeartbeatClient::<TaskContext, _>::drain_current_messages(context.clone());
-            data.push(HeartbeatData::MachineAlive);
             let _ = context
                 .queue_client
                 .enqueue(Heartbeat {
