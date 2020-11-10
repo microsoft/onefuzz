@@ -59,20 +59,20 @@ impl BlockCoverageHandler {
 
     fn add_module(&mut self, dbg: &mut Debugger, module: &Module) {
         let bitset = crate::pe::process_image(module.path(), false);
+        let bitset = match bitset {
+            Ok(bitset) => bitset,
+            Err(err) => {
+                // If we can't add the module, continue debugging.
+                // We don't expect to have symbols for every module.
+                log::warn!(
+                    "cannot record coverage for module = {}, err = {}",
+                    module.path().display(),
+                    err,
+                );
+                return;
+            }
+        };
 
-        // If we can't add the module, continue debugging.
-        // We don't expect to have symbols for every module.
-        if let Err(err) = bitset {
-            log::warn!(
-                "cannot record coverage for module = {}, err = {}",
-                module.path().display(),
-                err,
-            );
-            return;
-        }
-
-        // Won't panic, due to above check.
-        let bitset = bitset.unwrap();
         let module_coverage = ModuleCoverageBlocks::new(module.path(), module.name(), bitset);
 
         let m = self.coverage.add_module(module_coverage);
