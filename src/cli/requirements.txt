@@ -8,6 +8,7 @@ asciimatics~=1.11.0
 dataclasses~=0.6
 pydantic~=1.6.1 --no-binary=pydantic
 memoization~=0.3.1
+msrestazure==0.6.4
 azure-storage-blob~=12.3
 azure-applicationinsights==0.1.0
 adal~=1.2.5
