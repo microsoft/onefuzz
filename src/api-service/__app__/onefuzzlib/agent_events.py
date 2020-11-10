@@ -150,6 +150,10 @@ def on_worker_event_running(
     if isinstance(node, Error):
         return node
 
+    if node.state not in NodeState.ready_for_reset():
+        node.state = NodeState.busy
+        node.save()
+
     node_task = NodeTasks(
         machine_id=machine_id, task_id=event.task_id, state=NodeTaskState.running
     )
