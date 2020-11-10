@@ -508,6 +508,13 @@ fn branch_target(inst: &iced_x86::Instruction) -> Option<u64> {
         FlowControl::ConditionalBranch | FlowControl::UnconditionalBranch => {
             Some(inst.near_branch_target())
         }
-        _ => None,
+        FlowControl::Call
+        | FlowControl::Exception
+        | FlowControl::IndirectBranch
+        | FlowControl::IndirectCall
+        | FlowControl::Interrupt
+        | FlowControl::Next
+        | FlowControl::Return
+        | FlowControl::XbeginXabortXend => None,
     }
 }
