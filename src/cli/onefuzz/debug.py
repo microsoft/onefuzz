@@ -299,8 +299,12 @@ class DebugLog(Command):
             resource="https://api.applicationinsights.io"
         )
         client = ApplicationInsightsDataClient(creds)
+
+        app_id = self.onefuzz.info.get().insights_appid
+        if app_id is None:
+            raise Exception("instance does not have an insights_appid")
         raw_data = client.query.execute(
-            os.environ["APP_ID"], body=QueryBody(query=log_query, timespan=timespan)
+            app_id, body=QueryBody(query=log_query, timespan=timespan)
         )
         if "error" in raw_data.additional_properties:
             raise Exception(
