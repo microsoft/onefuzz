@@ -6,10 +6,9 @@
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
-from onefuzztypes.requests import NodeGet, NodeSearch
+from onefuzztypes.requests import NodeGet, NodeSearch, NodeUpdate
 from onefuzztypes.responses import BoolResult
 
-from ..onefuzzlib.heartbeat import NodeHeartbeat
 from ..onefuzzlib.pools import Node, NodeTasks
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -32,7 +31,6 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
         node_tasks = NodeTasks.get_by_machine_id(request.machine_id)
         node.tasks = [(t.task_id, t.state) for t in node_tasks]
-        node.heartbeats = NodeHeartbeat.get_heartbeats(request.machine_id)
 
         return ok(node)
 
@@ -42,6 +40,24 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
         scaleset_id=request.scaleset_id,
     )
     return ok(nodes)
+
+
+def post(req: func.HttpRequest) -> func.HttpResponse:
+    request = parse_request(NodeUpdate, req)
+    if isinstance(request, Error):
+        return not_ok(request, context="NodeUpdate")
+
+    node = Node.get_by_machine_id(request.machine_id)
+    if not node:
+        return not_ok(
+            Error(code=ErrorCode.UNABLE_TO_FIND, errors=["unable to find node"]),
+            context=request.machine_id,
+        )
+    if request.debug_keep_node is not None:
+        node.debug_keep_node = request.debug_keep_node
+
+    node.save()
+    return ok(BoolResult(result=True))
 
 
 def delete(req: func.HttpRequest) -> func.HttpResponse:
@@ -57,6 +73,9 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     node.set_halt()
+    if node.debug_keep_node:
+        node.debug_keep_node = False
+        node.save()
 
     return ok(BoolResult(result=True))
 
@@ -74,6 +93,9 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     node.stop()
+    if node.debug_keep_node:
+        node.debug_keep_node = False
+        node.save()
     return ok(BoolResult(result=True))
 
 

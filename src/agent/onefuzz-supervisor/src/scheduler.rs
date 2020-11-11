@@ -6,7 +6,7 @@ use std::fmt;
 use anyhow::Result;
 use onefuzz::process::Output;
 
-use crate::coordinator::NodeCommand;
+use crate::coordinator::{NodeCommand, NodeState};
 use crate::reboot::RebootContext;
 use crate::setup::ISetupRunner;
 use crate::work::*;
@@ -19,6 +19,19 @@ pub enum Scheduler {
     Ready(State<Ready>),
     Busy(State<Busy>),
     Done(State<Done>),
+}
+
+impl From<&Scheduler> for NodeState {
+    fn from(value: &Scheduler) -> Self {
+        match value {
+            Scheduler::Free(_) => Self::Free,
+            Scheduler::SettingUp(_) => Self::SettingUp,
+            Scheduler::PendingReboot(_) => Self::Rebooting,
+            Scheduler::Ready(_) => Self::Ready,
+            Scheduler::Busy(_) => Self::Busy,
+            Scheduler::Done(_) => Self::Done,
+        }
+    }
 }
 
 impl fmt::Display for Scheduler {

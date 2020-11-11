@@ -19,6 +19,9 @@ pub enum Event {
     new_coverage,
     runtime_stats,
     process_stats,
+    new_report,
+    new_unique_report,
+    new_unable_to_reproduce,
 }
 
 impl Event {
@@ -30,6 +33,9 @@ impl Event {
             Self::new_result => "new_result",
             Self::runtime_stats => "runtime_stats",
             Self::process_stats => "process_stats",
+            Self::new_report => "new_report",
+            Self::new_unique_report => "new_unique_report",
+            Self::new_unable_to_reproduce => "new_unable_to_reproduce",
         }
     }
 }
@@ -37,6 +43,7 @@ impl Event {
 #[derive(Clone, Debug, PartialEq)]
 pub enum EventData {
     WorkerId(u64),
+    InstanceId(Uuid),
     JobId(Uuid),
     TaskId(Uuid),
     ScalesetId(String),
@@ -64,12 +71,14 @@ pub enum EventData {
     CoveragePathsFound(u64),
     CoveragePathsImported(u64),
     CoverageMaxDepth(u64),
+    ToolName(String),
 }
 
 impl EventData {
     pub fn as_values(&self) -> (&str, String) {
         match self {
             Self::Version(x) => ("version", x.to_string()),
+            Self::InstanceId(x) => ("instance_id", x.to_string()),
             Self::JobId(x) => ("job_id", x.to_string()),
             Self::TaskId(x) => ("task_id", x.to_string()),
             Self::ScalesetId(x) => ("scaleset_id", x.to_string()),
@@ -97,6 +106,7 @@ impl EventData {
             Self::CoveragePathsImported(x) => ("coverage_paths_imported", x.to_string()),
             Self::CoverageMaxDepth(x) => ("coverage_paths_depth", x.to_string()),
             Self::Coverage(x) => ("coverage", x.to_string()),
+            Self::ToolName(x) => ("tool_name", x.to_owned()),
         }
     }
 
@@ -105,6 +115,7 @@ impl EventData {
             // TODO: Request CELA review of Version, as having this for central stats
             //       would be useful to track uptake of new releases
             Self::Version(_) => false,
+            Self::InstanceId(_) => true,
             Self::TaskId(_) => true,
             Self::JobId(_) => true,
             Self::MachineId(_) => true,
@@ -132,6 +143,7 @@ impl EventData {
             Self::CoveragePathsImported(_) => true,
             Self::CoverageMaxDepth(_) => true,
             Self::Coverage(_) => true,
+            Self::ToolName(_) => true,
         }
     }
 }

@@ -1,17 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::{CommonConfig, SyncedDir},
-    heartbeat::HeartbeatSender,
-    utils,
-};
+use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender};
 use anyhow::Result;
 use futures::{future::try_join_all, stream::StreamExt};
 use onefuzz::{
     fs::list_files,
     libfuzzer::{LibFuzzer, LibFuzzerLine},
     process::ExitStatus,
+    syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     system,
     telemetry::{
         Event::{new_coverage, new_result, process_stats, runtime_stats},
@@ -29,9 +26,6 @@ use tokio::{
     time::{self, Duration},
 };
 use uuid::Uuid;
-
-// Time between resync of all corpus container directories.
-const RESYNC_PERIOD: Duration = Duration::from_secs(30);
 
 // Delay to allow for observation of CPU usage when reporting proc info.
 const PROC_INFO_COLLECTION_DELAY: Duration = Duration::from_secs(1);
@@ -51,6 +45,7 @@ pub struct Config {
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
     pub target_workers: Option<u64>,
+    pub ensemble_sync_delay: Option<u64>,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -72,13 +67,12 @@ impl LibFuzzerFuzzTask {
         });
 
         self.init_directories().await?;
-        self.sync_all_corpuses().await?;
         let hb_client = self.config.common.init_heartbeat().await?;
 
         // To be scheduled.
-        let resync = self.resync_all_corpuses();
-        let new_inputs = utils::monitor_result_dir(self.config.inputs.clone(), new_coverage);
-        let new_crashes = utils::monitor_result_dir(self.config.crashes.clone(), new_result);
+        let resync = self.continuous_sync_inputs();
+        let new_inputs = self.config.inputs.monitor_results(new_coverage);
+        let new_crashes = self.config.crashes.monitor_results(new_result);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
         let report_stats = report_runtime_stats(workers as usize, stats_receiver, hb_client);
@@ -103,34 +97,44 @@ impl LibFuzzerFuzzTask {
         worker_id: u64,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
+        let local_input_dir = tempdir()?;
         loop {
-            self.run_fuzzer(worker_id, stats_sender).await?;
+            self.run_fuzzer(&local_input_dir.path(), worker_id, stats_sender)
+                .await?;
+
+            let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
+            while let Some(Ok(entry)) = entries.next().await {
+                let destination_path = self.config.inputs.path.clone().join(entry.file_name());
+                tokio::fs::rename(entry.path(), destination_path).await?;
+            }
         }
     }
 
     // Fuzz with a libFuzzer until it exits.
     //
     // While it runs, parse stderr for progress metrics, and report them.
-    async fn run_fuzzer(&self, worker_id: u64, stats_sender: Option<&StatsSender>) -> Result<()> {
+    async fn run_fuzzer(
+        &self,
+        local_inputs: impl AsRef<std::path::Path>,
+        worker_id: u64,
+        stats_sender: Option<&StatsSender>,
+    ) -> Result<()> {
         let crash_dir = tempdir()?;
         let run_id = Uuid::new_v4();
 
         info!("starting fuzzer run, run_id = {}", run_id);
 
-        let inputs: Vec<_> = {
-            if let Some(readonly_inputs) = &self.config.readonly_inputs {
-                readonly_inputs.iter().map(|d| &d.path).collect()
-            } else {
-                vec![]
-            }
-        };
+        let mut inputs = vec![&self.config.inputs.path];
+        if let Some(readonly_inputs) = &self.config.readonly_inputs {
+            readonly_inputs.iter().for_each(|d| inputs.push(&d.path));
+        }
 
         let fuzzer = LibFuzzer::new(
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
         );
-        let mut running = fuzzer.fuzz(crash_dir.path(), &self.config.inputs.path, &inputs)?;
+        let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
 
         let sys_info = task::spawn(report_fuzzer_sys_info(worker_id, run_id, running.id()));
 
@@ -178,34 +182,23 @@ impl LibFuzzerFuzzTask {
     }
 
     async fn init_directories(&self) -> Result<()> {
-        utils::init_dir(&self.config.inputs.path).await?;
-        utils::init_dir(&self.config.crashes.path).await?;
+        self.config.inputs.init().await?;
+        self.config.crashes.init().await?;
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
             for dir in readonly_inputs {
-                utils::init_dir(&dir.path).await?;
+                dir.init().await?;
             }
         }
         Ok(())
     }
 
-    async fn sync_all_corpuses(&self) -> Result<()> {
-        utils::sync_remote_dir(&self.config.inputs, utils::SyncOperation::Pull).await?;
-
-        if let Some(readonly_inputs) = &self.config.readonly_inputs {
-            for corpus in readonly_inputs {
-                utils::sync_remote_dir(corpus, utils::SyncOperation::Pull).await?;
-            }
+    async fn continuous_sync_inputs(&self) -> Result<()> {
+        let mut dirs = vec![self.config.inputs.clone()];
+        if let Some(inputs) = &self.config.readonly_inputs {
+            let inputs = inputs.clone();
+            dirs.extend(inputs);
         }
-
-        Ok(())
-    }
-
-    async fn resync_all_corpuses(&self) -> Result<()> {
-        loop {
-            time::delay_for(RESYNC_PERIOD).await;
-
-            self.sync_all_corpuses().await?;
-        }
+        continuous_sync(&dirs, Pull, self.config.ensemble_sync_delay).await
     }
 }
 

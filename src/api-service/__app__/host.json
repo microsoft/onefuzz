@@ -5,26 +5,21 @@
     "version": "[1.*, 2.0.0)"
   },
   "logging": {
-    "default": "Information",
-    "Host.Results": "Information",
-    "Function": "Information",
-    "Host.Aggregator": "Information",
-    "console": {
-      "default": "Information",
-      "Host.Results": "Information",
-      "Function": "Information",
-      "Host.Aggregator": "Information"
-    },
     "logLevel": {
-      "default": "Information",
-      "Host.Results": "Information",
+      "default": "Warning",
+      "Host": "Warning",
       "Function": "Information",
-      "Function.FunctionA": "Information",
-      "Host.Aggregator": "Information"
+      "Host.Aggregator": "Warning",
+      "logging:logLevel:Worker": "Warning",
+      "logging:logLevel:Microsoft": "Warning",
+      "AzureFunctionsJobHost:logging:logLevel:Host.Function.Console": "Warning"
     },
     "applicationInsights": {
       "samplingSettings": {
-        "isEnabled": false
+        "isEnabled": true,
+        "InitialSamplingPercentage": 100,
+        "maxTelemetryItemsPerSecond": 20,
+        "excludedTypes": "Exception"
       }
     }
   },
@@ -34,5 +29,6 @@
       "batchSize": 32,
       "maxDequeueCount": 5
     }
-  }
+  },
+  "functionTimeout": "00:05:00"
 }

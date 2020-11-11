@@ -1,12 +1,14 @@
 [workspace]
 members = [
     "atexit",
+    "coverage",
     "debugger",
     "input-tester",
     "onefuzz",
     "onefuzz-agent",
     "onefuzz-downloader",
     "onefuzz-supervisor",
+    "reqwest-retry",
     "storage-queue",
     "win-util",
 ]

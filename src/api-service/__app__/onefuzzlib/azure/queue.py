@@ -23,6 +23,8 @@ from .creds import get_storage_account_name_key
 
 QueueNameType = Union[str, UUID]
 
+DEFAULT_TTL = -1
+
 
 @cached(ttl=60)
 def get_queue_client(account_id: str) -> QueueServiceClient:
@@ -94,7 +96,7 @@ def clear_queue(name: QueueNameType, *, account_id: str) -> None:
         try:
             queue.clear_messages()
         except ResourceNotFoundError:
-            return None
+            pass
 
 
 def send_message(
@@ -102,11 +104,17 @@ def send_message(
     message: bytes,
     *,
     account_id: str,
+    visibility_timeout: Optional[int] = None,
+    time_to_live: int = DEFAULT_TTL,
 ) -> None:
     queue = get_queue(name, account_id=account_id)
     if queue:
         try:
-            queue.send_message(base64.b64encode(message).decode())
+            queue.send_message(
+                base64.b64encode(message).decode(),
+                visibility_timeout=visibility_timeout,
+                time_to_live=time_to_live,
+            )
         except ResourceNotFoundError:
             pass
 
@@ -163,6 +171,7 @@ def queue_object(
     *,
     account_id: str,
     visibility_timeout: Optional[int] = None,
+    time_to_live: int = DEFAULT_TTL,
 ) -> bool:
     queue = get_queue(name, account_id=account_id)
     if not queue:
@@ -170,7 +179,9 @@ def queue_object(
 
     encoded = base64.b64encode(message.json(exclude_none=True).encode()).decode()
     try:
-        queue.send_message(encoded, visibility_timeout=visibility_timeout)
+        queue.send_message(
+            encoded, visibility_timeout=visibility_timeout, time_to_live=time_to_live
+        )
         return True
     except ResourceNotFoundError:
         return False

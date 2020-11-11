@@ -19,7 +19,7 @@ from .top_view import render
 
 def background_task(queue: PriorityQueue) -> None:
     while True:
-        (priority, entry) = queue.get(block=True)
+        (_, entry) = queue.get(block=True)
         if entry is None:
             queue.task_done()
             return

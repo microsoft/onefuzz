@@ -14,6 +14,8 @@ use std::{
 };
 use tokio::process::{Child, Command};
 
+const DEFAULT_MAX_TOTAL_SECONDS: i32 = 10 * 60;
+
 pub struct LibFuzzerMergeOutput {
     pub added_files_count: i32,
     pub added_feature_count: i32,
@@ -68,6 +70,15 @@ impl<'a> LibFuzzer<'a> {
         // Pass custom option arguments.
         for o in expand.evaluate(self.options)? {
             cmd.arg(o);
+        }
+
+        // check if a max_time is already set
+        if let None = self
+            .options
+            .iter()
+            .find(|o| o.starts_with("-max_total_time"))
+        {
+            cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
         }
 
         // When writing a new faulting input, the libFuzzer runtime _exactly_

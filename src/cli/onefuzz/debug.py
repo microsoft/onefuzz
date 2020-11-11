@@ -3,15 +3,19 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import json
 import logging
 import os
 import shutil
 import subprocess  # nosec
 import tempfile
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 from uuid import UUID
 
+from azure.applicationinsights import ApplicationInsightsDataClient
+from azure.applicationinsights.models import QueryBody
+from azure.common.client_factory import get_azure_cli_credentials
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, NodeAssignment, Report, Task
 from onefuzztypes.primitives import Directory
@@ -262,6 +266,94 @@ class DebugJob(Command):
             subprocess.check_output([azcopy, "sync", to_download[name], outdir])
 
 
+class DebugLog(Command):
+    def _convert(self, raw_data: Any) -> Dict[str, List[Dict[str, Any]]]:
+        results = {}
+        for table in raw_data.tables:
+            result = []
+            for row in table.rows:
+                converted = {
+                    table.columns[x].name: y
+                    for (x, y) in enumerate(row)
+                    if y not in [None, ""]
+                }
+                if "customDimensions" in converted:
+                    converted["customDimensions"] = json.loads(
+                        converted["customDimensions"]
+                    )
+                result.append(converted)
+            results[table.name] = result
+        return results
+
+    def query(
+        self, log_query: str, *, timespan: str = "PT24H", raw: bool = False
+    ) -> Any:
+        """
+        Perform an Application Insights query
+
+        Queries should be well formed Kusto Queries.
+        Ref https://docs.microsoft.com/en-us/azure/data-explorer/kql-quick-reference
+
+        :param str log_query: Query to send to Application Insights
+        :param str timespan: ISO 8601 duration format
+        :param bool raw: Do not simplify the data result
+        """
+        creds, _ = get_azure_cli_credentials(
+            resource="https://api.applicationinsights.io"
+        )
+        client = ApplicationInsightsDataClient(creds)
+
+        app_id = self.onefuzz.info.get().insights_appid
+        if app_id is None:
+            raise Exception("instance does not have an insights_appid")
+        raw_data = client.query.execute(
+            app_id, body=QueryBody(query=log_query, timespan=timespan)
+        )
+        if "error" in raw_data.additional_properties:
+            raise Exception(
+                "Error performing query: %s" % raw_data.additional_properties["error"]
+            )
+        if raw:
+            return raw_data
+        return self._convert(raw_data)
+
+    def keyword(
+        self,
+        value: str,
+        *,
+        timespan: str = "PT24H",
+        limit: Optional[int] = None,
+        raw: bool = False,
+    ) -> Any:
+        """
+        Perform an Application Insights keyword query akin to "Transaction Search"
+
+        :param str value: Keyword to query Application Insights
+        :param str timespan: ISO 8601 duration format
+        :param int limit: Limit the number of records returned
+        :param bool raw: Do not simplify the data result
+        """
+
+        # See https://docs.microsoft.com/en-us/azure/data-explorer/kql-quick-reference
+
+        components = ["union isfuzzy=true exceptions, traces, customEvents"]
+
+        value = value.strip()
+        keywords = ['* has "%s"' % (x.replace('"', '\\"')) for x in value.split(" ")]
+        if keywords:
+            components.append("where " + " and ".join(keywords))
+
+        components.append("order by timestamp desc")
+
+        if limit is not None:
+            components.append(f"take {limit}")
+
+        log_query = " | ".join(components)
+        self.logger.debug("query: %s", log_query)
+
+        return self.query(log_query, timespan=timespan)
+
+
 class DebugNotification(Command):
     """ Debug notification integrations """
 
@@ -320,7 +412,7 @@ class DebugNotification(Command):
 
         if reports is None:
             raise Exception(
-                "task does not have a %s container", report_container_type.name
+                "task does not have a %s container" % report_container_type.name
             )
 
         with tempfile.TemporaryDirectory() as tempdir:
@@ -366,3 +458,4 @@ class Debug(Command):
         self.job = DebugJob(onefuzz, logger)
         self.notification = DebugNotification(onefuzz, logger)
         self.task = DebugTask(onefuzz, logger)
+        self.logs = DebugLog(onefuzz, logger)

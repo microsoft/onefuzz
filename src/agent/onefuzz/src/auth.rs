@@ -4,6 +4,8 @@
 use std::fmt;
 
 use anyhow::Result;
+use onefuzz::http::ResponseExt;
+use reqwest_retry::SendRetry;
 use url::Url;
 use uuid::Uuid;
 
@@ -117,7 +119,8 @@ impl ClientCredentials {
                 ("tenant", self.tenant.clone()),
                 ("scope", format!("{}.default", self.resource)),
             ])
-            .send()
+            .header("Content-Length", "0")
+            .send_retry_default()
             .await?
             .error_for_status_with_body()
             .await?;
@@ -167,7 +170,7 @@ impl ManagedIdentityCredentials {
         let response = reqwest::Client::new()
             .get(self.url())
             .header("Metadata", "true")
-            .send()
+            .send_retry_default()
             .await?
             .error_for_status_with_body()
             .await?;

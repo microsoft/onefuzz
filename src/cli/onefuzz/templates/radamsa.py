@@ -5,7 +5,7 @@
 
 from typing import Dict, List, Optional
 
-from onefuzztypes.enums import OS, ContainerType, TaskType
+from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
@@ -47,14 +47,25 @@ class Radamsa(Command):
         disable_check_debugger: bool = False,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> Optional[Job]:
-        """ Basic radamsa job """
+        """
+        Basic radamsa job
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
 
         if inputs is None and existing_inputs is None:
             raise Exception("radamsa requires inputs")
 
         if dryrun:
             return None
+
+        # disable ensemble sync if only one VM is used
+        if ensemble_sync_delay is None and vm_count == 1:
+            ensemble_sync_delay = 0
 
         self.logger.info("creating radamsa from template")
 
@@ -160,6 +171,8 @@ class Radamsa(Command):
             check_debugger=not disable_check_debugger,
             tags=helper.tags,
             rename_output=rename_output,
+            debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
         )
 
         report_containers = [
@@ -190,6 +203,7 @@ class Radamsa(Command):
             check_debugger=not disable_check_debugger,
             check_retry_count=check_retry_count,
             prereq_tasks=[fuzzer_task.task_id],
+            debug=debug,
         )
 
         if helper.platform == OS.windows:
@@ -230,6 +244,7 @@ class Radamsa(Command):
                 analyzer_env=analyzer_env,
                 tags=helper.tags,
                 prereq_tasks=[fuzzer_task.task_id],
+                debug=debug,
             )
 
         self.logger.info("done creating tasks")

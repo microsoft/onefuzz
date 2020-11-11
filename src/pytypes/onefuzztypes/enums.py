@@ -73,6 +73,7 @@ class TaskFeature(Enum):
     check_asan_log = "check_asan_log"
     check_debugger = "check_debugger"
     check_retry_count = "check_retry_count"
+    ensemble_sync_delay = "ensemble_sync_delay"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -189,17 +190,31 @@ class Compare(Enum):
 
 
 class ContainerType(Enum):
-    setup = "setup"
+    analysis = "analysis"
+    coverage = "coverage"
     crashes = "crashes"
     inputs = "inputs"
-    readonly_inputs = "readonly_inputs"
-    unique_inputs = "unique_inputs"
-    coverage = "coverage"
-    reports = "reports"
-    unique_reports = "unique_reports"
     no_repro = "no_repro"
+    readonly_inputs = "readonly_inputs"
+    reports = "reports"
+    setup = "setup"
     tools = "tools"
-    analysis = "analysis"
+    unique_inputs = "unique_inputs"
+    unique_reports = "unique_reports"
+
+    @classmethod
+    def reset_defaults(cls) -> List["ContainerType"]:
+        return [
+            cls.analysis,
+            cls.coverage,
+            cls.crashes,
+            cls.inputs,
+            cls.no_repro,
+            cls.readonly_inputs,
+            cls.reports,
+            cls.setup,
+            cls.unique_reports,
+        ]
 
 
 class StatsFormat(Enum):
@@ -337,3 +352,8 @@ class GithubIssueState(Enum):
 class GithubIssueSearchMatch(Enum):
     title = "title"
     body = "body"
+
+
+class TaskDebugFlag(Enum):
+    keep_node_on_failure = "keep_node_on_failure"
+    keep_node_on_completion = "keep_node_on_completion"

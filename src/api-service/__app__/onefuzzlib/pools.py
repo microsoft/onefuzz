@@ -5,7 +5,7 @@
 
 import datetime
 import logging
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
 from onefuzztypes.enums import (
@@ -61,6 +61,8 @@ from .azure.vmss import (
 )
 from .extension import fuzz_extensions
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
+
+NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 
 # Future work:
 #
@@ -197,7 +199,6 @@ class Node(BASE_NODE, ORMMixin):
                         errors=["node reimaged during task execution"],
                     )
                 )
-            entry.delete()
 
     def could_shrink_scaleset(self) -> bool:
         if self.scaleset_id and ScalesetShrinkQueue(self.scaleset_id).should_shrink():
@@ -278,6 +279,22 @@ class Node(BASE_NODE, ORMMixin):
         self.set_shutdown()
         self.stop()
 
+    @classmethod
+    def get_dead_nodes(
+        cls, scaleset_id: UUID, expiration_period: datetime.timedelta
+    ) -> List["Node"]:
+        time_filter = "heartbeat lt datetime'%s'" % (
+            (datetime.datetime.utcnow() - expiration_period).isoformat()
+        )
+        return cls.search(
+            query={"scaleset_id": [scaleset_id]},
+            raw_unchecked_filter=time_filter,
+        )
+
+    def delete(self) -> None:
+        NodeTasks.clear_by_machine_id(self.machine_id)
+        super().delete()
+
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
@@ -322,6 +339,11 @@ class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
     def get_by_task_id(cls, task_id: UUID) -> List["NodeTasks"]:
         return cls.search(query={"task_id": [task_id]})
+
+    @classmethod
+    def clear_by_machine_id(cls, machine_id: UUID) -> None:
+        for entry in cls.get_by_machine_id(machine_id):
+            entry.delete()
 
 
 # this isn't anticipated to be needed by the client, hence it not
@@ -698,13 +720,42 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 logging.info("creating scaleset: %s", self.scaleset_id)
         elif vmss.provisioning_state == "Creating":
             logging.info("Waiting on scaleset creation: %s", self.scaleset_id)
-            if vmss.identity and vmss.identity.principal_id:
-                self.client_object_id = vmss.identity.principal_id
+            self.try_set_identity(vmss)
         else:
             logging.info("scaleset running: %s", self.scaleset_id)
-            self.state = ScalesetState.running
-            self.client_object_id = vmss.identity.principal_id
+            error = self.try_set_identity(vmss)
+            if error:
+                self.state = ScalesetState.creation_failed
+                self.error = error
+            else:
+                self.state = ScalesetState.running
         self.save()
+
+    def try_set_identity(self, vmss: Any) -> Optional[Error]:
+        def get_error() -> Error:
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED,
+                errors=[
+                    "The scaleset is expected to have exactly 1 user assigned identity"
+                ],
+            )
+
+        if self.client_object_id:
+            return None
+        if (
+            vmss.identity
+            and vmss.identity.user_assigned_identities
+            and (len(vmss.identity.user_assigned_identities) != 1)
+        ):
+            return get_error()
+
+        user_assinged_identities = list(vmss.identity.user_assigned_identities.values())
+
+        if user_assinged_identities[0].principal_id:
+            self.client_object_id = user_assinged_identities[0].principal_id
+            return None
+        else:
+            return get_error()
 
     # result = 'did I modify the scaleset in azure'
     def cleanup_nodes(self) -> bool:
@@ -742,6 +793,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 elif not node.reimage_queued:
                     # only add nodes that are not already set to reschedule
                     to_reimage.append(node)
+
+        dead_nodes = Node.get_dead_nodes(self.scaleset_id, NODE_EXPIRATION_TIME)
+        for node in dead_nodes:
+            node.set_halt()
+            to_reimage.append(node)
 
         # Perform operations until they fail due to scaleset getting locked
         try:
@@ -828,7 +884,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.debug("scaleset delete will delete node: %s", self.scaleset_id)
             return
 
-        machine_ids = [x.machine_id for x in nodes]
+        machine_ids = []
+        for node in nodes:
+            if node.debug_keep_node:
+                logging.warning(
+                    "delete manually overridden %s:%s",
+                    self.scaleset_id,
+                    node.machine_id,
+                )
+            else:
+                machine_ids.append(node.machine_id)
 
         logging.info("deleting %s:%s", self.scaleset_id, machine_ids)
         delete_vmss_nodes(self.scaleset_id, machine_ids)
@@ -846,7 +911,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.debug("scaleset delete will delete node: %s", self.scaleset_id)
             return
 
-        machine_ids = [x.machine_id for x in nodes]
+        machine_ids = []
+        for node in nodes:
+            if node.debug_keep_node:
+                logging.warning(
+                    "reimage manually overridden %s:%s",
+                    self.scaleset_id,
+                    node.machine_id,
+                )
+            else:
+                machine_ids.append(node.machine_id)
 
         result = reimage_vmss_nodes(self.scaleset_id, machine_ids)
         if isinstance(result, Error):
@@ -861,6 +935,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def shutdown(self) -> None:
         size = get_vmss_size(self.scaleset_id)
         logging.info("scaleset shutdown: %s (current size: %s)", self.scaleset_id, size)
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
+        for node in nodes:
+            node.set_shutdown()
         if size is None or size == 0:
             self.halt()
 
@@ -904,7 +981,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     def update_nodes(self) -> None:
         # Be in at-least 'setup' before checking for the list of VMs
-        if self.state == self.init:
+        if self.state == ScalesetState.init:
             return
 
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
@@ -939,7 +1016,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         pool = Pool.get_by_name(self.pool_name)
         if isinstance(pool, Error):
             self.error = pool
-            return self.halt()
+            self.halt()
+            return
 
         logging.debug("updating scaleset configs: %s", self.scaleset_id)
         extensions = fuzz_extensions(self.region, pool.os, self.pool_name)

@@ -1,15 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::{CommonConfig, SyncedDir},
-    heartbeat::*,
-    utils,
-};
+use crate::tasks::{config::CommonConfig, heartbeat::*, utils};
 use anyhow::{Error, Result};
 use futures::stream::StreamExt;
 use onefuzz::{
-    expand::Expand, fs::set_executable, input_tester::Tester, sha256, telemetry::Event::new_result,
+    expand::Expand,
+    fs::set_executable,
+    input_tester::Tester,
+    sha256,
+    syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
+    telemetry::Event::new_result,
 };
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -45,27 +46,24 @@ pub struct GeneratorConfig {
     #[serde(default)]
     pub check_retry_count: u64,
     pub rename_output: bool,
+    pub ensemble_sync_delay: Option<u64>,
     #[serde(flatten)]
     pub common: CommonConfig,
 }
 
 pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
-    utils::init_dir(&config.crashes.path).await?;
-    utils::init_dir(&config.tools.path).await?;
-    utils::sync_remote_dir(&config.tools, utils::SyncOperation::Pull).await?;
+    config.crashes.init().await?;
+    config.tools.init_pull().await?;
+
     set_executable(&config.tools.path).await?;
     let hb_client = config.common.init_heartbeat().await?;
 
-    for sync_dir in &config.readonly_inputs {
-        utils::init_dir(&sync_dir.path).await?;
-        utils::sync_remote_dir(&sync_dir, utils::SyncOperation::Pull).await?;
+    for dir in &config.readonly_inputs {
+        dir.init_pull().await?;
     }
 
-    let resync = resync_corpuses(
-        config.readonly_inputs.clone(),
-        std::time::Duration::from_secs(10),
-    );
-    let crash_dir_monitor = utils::monitor_result_dir(config.crashes.clone(), new_result);
+    let sync_task = continuous_sync(&config.readonly_inputs, Pull, config.ensemble_sync_delay);
+    let crash_dir_monitor = config.crashes.monitor_results(new_result);
     let tester = Tester::new(
         &config.target_exe,
         &config.target_options,
@@ -78,7 +76,7 @@ pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
     );
     let inputs: Vec<_> = config.readonly_inputs.iter().map(|x| &x.path).collect();
     let fuzzing_monitor = start_fuzzing(&config, inputs, tester, hb_client);
-    futures::try_join!(fuzzing_monitor, resync, crash_dir_monitor)?;
+    futures::try_join!(fuzzing_monitor, sync_task, crash_dir_monitor)?;
     Ok(())
 }
 
@@ -180,17 +178,6 @@ async fn start_fuzzing<'a>(
                 corpus_dir.display()
             );
         }
-    }
-}
-
-pub async fn resync_corpuses(dirs: Vec<SyncedDir>, delay: std::time::Duration) -> Result<()> {
-    loop {
-        for sync_dir in &dirs {
-            utils::sync_remote_dir(sync_dir, utils::SyncOperation::Pull)
-                .await
-                .ok();
-        }
-        tokio::time::delay_for(delay).await;
     }
 }
 

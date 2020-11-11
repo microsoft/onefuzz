@@ -6,6 +6,7 @@
 import logging
 import os
 from typing import Any, List, Optional, Tuple
+from uuid import UUID
 
 from azure.cli.core import CLIError
 from azure.common.client_factory import get_client_from_cli_profile
@@ -22,12 +23,12 @@ from msrestazure.tools import parse_resource_id
 from .monkeypatch import allow_more_workers, reduce_logging
 
 
-@cached(ttl=60)
+@cached
 def get_msi() -> MSIAuthentication:
     return MSIAuthentication()
 
 
-@cached(ttl=60)
+@cached
 def mgmt_client_factory(client_class: Any) -> Any:
     allow_more_workers()
     reduce_logging()
@@ -40,7 +41,7 @@ def mgmt_client_factory(client_class: Any) -> Any:
             return client_class(get_msi(), get_subscription())
 
 
-@cached(ttl=60)
+@cached
 def get_storage_account_name_key(account_id: Optional[str] = None) -> Tuple[str, str]:
     db_client = mgmt_client_factory(StorageManagementClient)
     if account_id is None:
@@ -56,7 +57,7 @@ def get_storage_account_name_key(account_id: Optional[str] = None) -> Tuple[str,
     return resource["name"], key
 
 
-@cached(ttl=60)
+@cached
 def get_blob_service(account_id: Optional[str] = None) -> BlockBlobService:
     logging.debug("getting blob container (account_id: %s)", account_id)
     name, key = get_storage_account_name_key(account_id)
@@ -82,6 +83,11 @@ def get_subscription() -> Any:  # should be str
 
 
 @cached
+def get_insights_appid() -> str:
+    return os.environ["APPINSIGHTS_APPID"]
+
+
+@cached
 def get_fuzz_storage() -> str:
     return os.environ["ONEFUZZ_DATA_STORAGE"]
 
@@ -101,7 +107,20 @@ def get_instance_url() -> str:
     return "https://%s.azurewebsites.net" % get_instance_name()
 
 
-@cached(ttl=60)
+@cached
+def get_instance_id() -> UUID:
+    from .containers import get_blob
+
+    blob = get_blob("base-config", "instance_id", account_id=get_func_storage())
+    if blob is None:
+        raise Exception("missing instance_id")
+    return UUID(blob.decode())
+
+
+DAY_IN_SECONDS = 60 * 60 * 24
+
+
+@cached(ttl=DAY_IN_SECONDS)
 def get_regions() -> List[str]:
     client = mgmt_client_factory(SubscriptionClient)
     subscription = get_subscription()
@@ -120,3 +139,24 @@ def is_member_of(group_id: str, member_id: str) -> bool:
             CheckGroupMembershipParameters(group_id=group_id, member_id=member_id)
         ).value
     )
+
+
+@cached
+def get_scaleset_identity_resource_path() -> str:
+    scaleset_id_name = "%s-scalesetid" % get_instance_name()
+    resource_group_path = "/subscriptions/%s/resourceGroups/%s/providers" % (
+        get_subscription(),
+        get_base_resource_group(),
+    )
+    return "%s/Microsoft.ManagedIdentity/userAssignedIdentities/%s" % (
+        resource_group_path,
+        scaleset_id_name,
+    )
+
+
+@cached
+def get_scaleset_principal_id() -> UUID:
+    api_version = "2018-11-30"  # matches the apiversion in the deployment template
+    client = mgmt_client_factory(ResourceManagementClient)
+    uid = client.resources.get_by_id(get_scaleset_identity_resource_path(), api_version)
+    return UUID(uid.properties["principalId"])

@@ -1,3 +1,4 @@
-LICENSE
+include LICENSE
 include *.txt
 include *.md
+graft examples

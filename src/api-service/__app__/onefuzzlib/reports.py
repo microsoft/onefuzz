@@ -5,7 +5,7 @@
 
 import json
 import logging
-from typing import Optional
+from typing import Optional, Union
 
 from onefuzztypes.models import Report
 from pydantic import ValidationError
@@ -13,7 +13,9 @@ from pydantic import ValidationError
 from .azure.containers import get_blob
 
 
-def parse_report(content: str, metadata: Optional[str] = None) -> Optional[Report]:
+def parse_report(
+    content: Union[str, bytes], metadata: Optional[str] = None
+) -> Optional[Report]:
     if isinstance(content, bytes):
         try:
             content = content.decode()

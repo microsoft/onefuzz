@@ -17,7 +17,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use log::{error, trace};
+use log::{debug, error, trace};
 use win_util::{check_winapi, last_os_error, process};
 use winapi::{
     shared::{
@@ -28,17 +28,13 @@ use winapi::{
         dbghelp::ADDRESS64,
         debugapi::{ContinueDebugEvent, WaitForDebugEvent},
         errhandlingapi::GetLastError,
-        minwinbase::{
-            CREATE_PROCESS_DEBUG_INFO, CREATE_THREAD_DEBUG_INFO, EXCEPTION_BREAKPOINT,
-            EXCEPTION_DEBUG_INFO, EXCEPTION_SINGLE_STEP, EXIT_PROCESS_DEBUG_INFO,
-            EXIT_THREAD_DEBUG_INFO, LOAD_DLL_DEBUG_INFO, RIP_INFO, UNLOAD_DLL_DEBUG_INFO,
-        },
+        minwinbase::{EXCEPTION_BREAKPOINT, EXCEPTION_DEBUG_INFO, EXCEPTION_SINGLE_STEP},
         winbase::{DebugSetProcessKillOnExit, DEBUG_ONLY_THIS_PROCESS, INFINITE},
         winnt::{DBG_CONTINUE, DBG_EXCEPTION_NOT_HANDLED, HANDLE},
     },
 };
 
-use crate::target::Target;
+use crate::target::{Module, Target};
 use crate::{
     dbghelp::{self, ModuleInfo, SymInfo, SymLineInfo},
     debug_event::{DebugEvent, DebugEventInfo},
@@ -49,7 +45,7 @@ use crate::{
 const STATUS_WX86_BREAKPOINT: u32 = ::winapi::shared::ntstatus::STATUS_WX86_BREAKPOINT as u32;
 
 /// Uniquely identify a breakpoint.
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BreakpointId(pub u32);
 
 #[derive(Copy, Clone)]
@@ -205,15 +201,15 @@ pub trait DebugEventHandler {
         // Continue normal exception handling processing
         DBG_EXCEPTION_NOT_HANDLED
     }
-    fn on_create_thread(&mut self, _debugger: &mut Debugger, _info: &CREATE_THREAD_DEBUG_INFO) {}
-    fn on_create_process(&mut self, _debugger: &mut Debugger, _info: &CREATE_PROCESS_DEBUG_INFO) {}
-    fn on_exit_thread(&mut self, _debugger: &mut Debugger, _info: &EXIT_THREAD_DEBUG_INFO) {}
-    fn on_exit_process(&mut self, _debugger: &mut Debugger, _info: &EXIT_PROCESS_DEBUG_INFO) {}
-    fn on_load_dll(&mut self, _debugger: &mut Debugger, _info: &LOAD_DLL_DEBUG_INFO) {}
-    fn on_unload_dll(&mut self, _debugger: &mut Debugger, _info: &UNLOAD_DLL_DEBUG_INFO) {}
+    fn on_create_process(&mut self, _debugger: &mut Debugger, _module: &Module) {}
+    fn on_create_thread(&mut self, _debugger: &mut Debugger) {}
+    fn on_exit_process(&mut self, _debugger: &mut Debugger, _exit_code: u32) {}
+    fn on_exit_thread(&mut self, _debugger: &mut Debugger, _exit_code: u32) {}
+    fn on_load_dll(&mut self, _debugger: &mut Debugger, _module: &Module) {}
+    fn on_unload_dll(&mut self, _debugger: &mut Debugger, _base_address: u64) {}
     fn on_output_debug_string(&mut self, _debugger: &mut Debugger, _message: String) {}
     fn on_output_debug_os_string(&mut self, _debugger: &mut Debugger, _message: OsString) {}
-    fn on_rip(&mut self, _debugger: &mut Debugger, _info: &RIP_INFO) {}
+    fn on_rip(&mut self, _debugger: &mut Debugger, _error: u32, _type: u32) {}
     fn on_poll(&mut self, _debugger: &mut Debugger) {}
     fn on_breakpoint(&mut self, _debugger: &mut Debugger, _id: BreakpointId) {}
 }
@@ -265,9 +261,10 @@ impl Debugger {
                 Target::new(de.process_id(), de.thread_id(), info.hProcess, info.hThread);
 
             let base_address = info.lpBaseOfImage as u64;
-            if let Err(e) = target.load_module(info.hFile, base_address) {
-                error!("Error loading process module: {}", e);
-            }
+            let module = target
+                .load_module(info.hFile, base_address)
+                .context("Loading process module")?
+                .unwrap();
 
             let mut debugger = Debugger {
                 target,
@@ -276,7 +273,7 @@ impl Debugger {
                 symbolic_breakpoints: HashMap::default(),
                 breakpoint_count: 0,
             };
-            callbacks.on_create_process(&mut debugger, *info);
+            callbacks.on_create_process(&mut debugger, &module);
 
             if unsafe { ContinueDebugEvent(de.process_id(), de.thread_id(), DBG_CONTINUE) } == FALSE
             {
@@ -307,21 +304,27 @@ impl Debugger {
         let (module, func) = if let Some(split_at) = sym.find('!') {
             (&sym[..split_at], &sym[split_at + 1..])
         } else {
-            ("*", sym)
+            anyhow::bail!("no module name specified for breakpoint {}", sym);
         };
 
         let id = self.next_breakpoint_id();
 
-        let values = self
-            .symbolic_breakpoints
-            .entry(module.into())
-            .or_insert_with(|| Vec::new());
+        if self.target.saw_initial_bp() {
+            self.target
+                .set_symbolic_breakpoint(module, func, kind, id)?;
+        } else {
+            // Defer setting the breakpoint until seeing the initial breakpoint.
+            let values = self
+                .symbolic_breakpoints
+                .entry(module.into())
+                .or_insert_with(|| Vec::new());
 
-        values.push(UnresolvedBreakpoint {
-            kind,
-            id,
-            sym: func.into(),
-        });
+            values.push(UnresolvedBreakpoint {
+                kind,
+                id,
+                sym: func.into(),
+            });
+        }
 
         Ok(id)
     }
@@ -447,15 +450,16 @@ impl Debugger {
             }
 
             DebugEventInfo::LoadDll(info) => {
-                let base_address = info.lpBaseOfDll as u64;
-                match self.target.load_module(info.hFile, base_address) {
-                    Ok(Some(module_name)) => {
+                match self.target.load_module(info.hFile, info.lpBaseOfDll as u64) {
+                    Ok(Some(module)) => {
+                        callbacks.on_load_dll(self, &module);
+
                         // We must defer adding any breakpoints until we've seen the initial
                         // breakpoint notification from the OS. Otherwise we may set
                         // breakpoints in startup code before the debugger is properly
                         // initialized.
                         if self.target.saw_initial_bp() {
-                            self.apply_module_breakpoints(module_name, base_address)
+                            self.apply_module_breakpoints(module.name(), module.base_address())
                         }
                     }
                     Ok(None) => {}
@@ -463,14 +467,12 @@ impl Debugger {
                         error!("Error loading module: {}", e);
                     }
                 }
-
-                callbacks.on_load_dll(self, *info);
             }
 
             DebugEventInfo::UnloadDll(info) => {
                 self.target.unload_module(info.lpBaseOfDll as u64);
 
-                callbacks.on_unload_dll(self, *info);
+                callbacks.on_unload_dll(self, info.lpBaseOfDll as u64);
             }
 
             DebugEventInfo::Exception(info) => {
@@ -487,15 +489,15 @@ impl Debugger {
                 if let Err(err) = self.target.set_exited() {
                     error!("Error cleaning up after process exit: {}", err);
                 }
-                callbacks.on_exit_process(self, *info);
+                callbacks.on_exit_process(self, info.dwExitCode);
             }
 
-            DebugEventInfo::CreateThread(info) => {
-                callbacks.on_create_thread(self, *info);
+            DebugEventInfo::CreateThread(_info) => {
+                callbacks.on_create_thread(self);
             }
 
             DebugEventInfo::ExitThread(info) => {
-                callbacks.on_exit_thread(self, *info);
+                callbacks.on_exit_thread(self, info.dwExitCode);
                 self.target.exit_thread(de.thread_id());
             }
 
@@ -522,7 +524,7 @@ impl Debugger {
             }
 
             DebugEventInfo::Rip(info) => {
-                callbacks.on_rip(self, *info);
+                callbacks.on_rip(self, info.dwError, info.dwType);
             }
 
             DebugEventInfo::Unknown => {}
@@ -606,7 +608,12 @@ impl Debugger {
                                 });
                             }
                             Err(e) => {
-                                error!("Can't set symbolic breakpoints: {}", e);
+                                debug!(
+                                    "Can't set symbolic breakpoint {}!{}: {}",
+                                    module_name.as_ref().display(),
+                                    bp.sym,
+                                    e
+                                );
                             }
                         }
                     }

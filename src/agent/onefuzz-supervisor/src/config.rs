@@ -3,8 +3,9 @@
 
 use anyhow::Result;
 use onefuzz::auth::{ClientCredentials, Credentials, ManagedIdentityCredentials};
-use onefuzz::http::ResponseExt;
+use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
 use reqwest::StatusCode;
+use reqwest_retry::SendRetry;
 use std::{
     path::{Path, PathBuf},
     time::{Duration, Instant},
@@ -26,6 +27,8 @@ pub struct StaticConfig {
     pub telemetry_key: Option<Uuid>,
 
     pub heartbeat_queue: Option<Url>,
+
+    pub instance_id: Uuid,
 }
 
 // Temporary shim type to bridge the current service-provided config.
@@ -42,6 +45,8 @@ struct RawStaticConfig {
     pub telemetry_key: Option<Uuid>,
 
     pub heartbeat_queue: Option<Url>,
+
+    pub instance_id: Uuid,
 }
 
 impl StaticConfig {
@@ -68,6 +73,7 @@ impl StaticConfig {
             instrumentation_key: config.instrumentation_key,
             telemetry_key: config.telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
+            instance_id: config.instance_id,
         };
 
         Ok(config)
@@ -202,7 +208,7 @@ impl Registration {
                 .header("Content-Length", "0")
                 .bearer_auth(token.secret().expose_ref())
                 .body("")
-                .send()
+                .send_retry_default()
                 .await?
                 .error_for_status();
 
@@ -222,7 +228,7 @@ impl Registration {
                         err,
                         REGISTRATION_RETRY_PERIOD.as_secs()
                     );
-                    tokio::time::delay_for(REGISTRATION_RETRY_PERIOD).await;
+                    delay_with_jitter(REGISTRATION_RETRY_PERIOD).await;
                 }
                 Err(err) => return Err(err.into()),
             }
@@ -262,7 +268,7 @@ impl Registration {
         let response = reqwest::Client::new()
             .get(url)
             .bearer_auth(token.secret().expose_ref())
-            .send()
+            .send_retry_default()
             .await?
             .error_for_status_with_body()
             .await?;

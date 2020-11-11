@@ -12,7 +12,7 @@ from onefuzztypes.models import AgentConfig, ReproConfig
 from onefuzztypes.primitives import Extension, Region
 
 from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
-from .azure.creds import get_func_storage, get_instance_url
+from .azure.creds import get_func_storage, get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
 from .reports import get_report
@@ -28,19 +28,19 @@ from .reports import get_report
 #     return commands
 
 
-def generic_extensions(region: Region, os: OS) -> List[Extension]:
-    extensions = [monitor_extension(region, os)]
-    depedency = dependency_extension(region, os)
+def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
+    extensions = [monitor_extension(region, vm_os)]
+    depedency = dependency_extension(region, vm_os)
     if depedency:
         extensions.append(depedency)
 
     return extensions
 
 
-def monitor_extension(region: Region, os: OS) -> Extension:
+def monitor_extension(region: Region, vm_os: OS) -> Extension:
     settings = get_monitor_settings()
 
-    if os == OS.windows:
+    if vm_os == OS.windows:
         return {
             "name": "OMSExtension",
             "publisher": "Microsoft.EnterpriseCloud.Monitoring",
@@ -51,7 +51,7 @@ def monitor_extension(region: Region, os: OS) -> Extension:
             "settings": {"workspaceId": settings["id"]},
             "protectedSettings": {"workspaceKey": settings["key"]},
         }
-    elif os == OS.linux:
+    elif vm_os == OS.linux:
         return {
             "name": "OMSExtension",
             "publisher": "Microsoft.EnterpriseCloud.Monitoring",
@@ -62,11 +62,11 @@ def monitor_extension(region: Region, os: OS) -> Extension:
             "settings": {"workspaceId": settings["id"]},
             "protectedSettings": {"workspaceKey": settings["key"]},
         }
-    raise NotImplementedError("unsupported os: %s" % os)
+    raise NotImplementedError("unsupported os: %s" % vm_os)
 
 
-def dependency_extension(region: Region, os: OS) -> Optional[Extension]:
-    if os == OS.windows:
+def dependency_extension(region: Region, vm_os: OS) -> Optional[Extension]:
+    if vm_os == OS.windows:
         extension = {
             "name": "DependencyAgentWindows",
             "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
@@ -90,22 +90,23 @@ def dependency_extension(region: Region, os: OS) -> Optional[Extension]:
 
 
 def build_pool_config(pool_name: str) -> str:
-    agent_config = AgentConfig(
+    config = AgentConfig(
         pool_name=pool_name,
         onefuzz_url=get_instance_url(),
         instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         heartbeat_queue=get_queue_sas(
             "node-heartbeat",
-            account_id=os.environ["ONEFUZZ_FUNC_STORAGE"],
+            account_id=get_func_storage(),
             add=True,
         ),
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+        instance_id=get_instance_id(),
     )
 
     save_blob(
         "vm-scripts",
         "%s/config.json" % pool_name,
-        agent_config.json(),
+        config.json(),
         account_id=get_func_storage(),
     )
 
@@ -117,7 +118,7 @@ def build_pool_config(pool_name: str) -> str:
     )
 
 
-def update_managed_scripts(mode: AgentMode) -> None:
+def update_managed_scripts() -> None:
     commands = [
         "azcopy sync '%s' instance-specific-setup"
         % (
@@ -151,14 +152,14 @@ def update_managed_scripts(mode: AgentMode) -> None:
 
 
 def agent_config(
-    region: Region, os: OS, mode: AgentMode, *, urls: Optional[List[str]] = None
+    region: Region, vm_os: OS, mode: AgentMode, *, urls: Optional[List[str]] = None
 ) -> Extension:
-    update_managed_scripts(mode)
+    update_managed_scripts()
 
     if urls is None:
         urls = []
 
-    if os == OS.windows:
+    if vm_os == OS.windows:
         urls += [
             get_file_sas_url(
                 "vm-scripts",
@@ -200,7 +201,7 @@ def agent_config(
             "protectedSettings": {},
         }
         return extension
-    elif os == OS.linux:
+    elif vm_os == OS.linux:
         urls += [
             get_file_sas_url(
                 "vm-scripts",
@@ -235,13 +236,13 @@ def agent_config(
         }
         return extension
 
-    raise NotImplementedError("unsupported OS: %s" % os)
+    raise NotImplementedError("unsupported OS: %s" % vm_os)
 
 
-def fuzz_extensions(region: Region, os: OS, pool_name: str) -> List[Extension]:
+def fuzz_extensions(region: Region, vm_os: OS, pool_name: str) -> List[Extension]:
     urls = [build_pool_config(pool_name)]
-    fuzz_extension = agent_config(region, os, AgentMode.fuzz, urls=urls)
-    extensions = generic_extensions(region, os)
+    fuzz_extension = agent_config(region, vm_os, AgentMode.fuzz, urls=urls)
+    extensions = generic_extensions(region, vm_os)
     extensions += [fuzz_extension]
     return extensions
 
