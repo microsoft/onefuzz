@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
@@ -56,6 +56,10 @@ class EnumModel(BaseModel):
 class Error(BaseModel):
     code: ErrorCode
     errors: List[str]
+
+
+OkType = TypeVar("OkType")
+Result = Union[OkType, Error]
 
 
 class FileEntry(BaseModel):
