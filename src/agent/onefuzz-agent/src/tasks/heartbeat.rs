@@ -6,6 +6,7 @@ use crate::onefuzz::machine_id::{get_machine_id, get_machine_name};
 use anyhow::Result;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
+use std::io::{Error, ErrorKind};
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize, Hash, Eq, PartialEq, Clone)]
@@ -64,24 +65,30 @@ pub async fn init_task_heartbeat(queue_url: Url, task_id: Uuid) -> Result<TaskHe
 }
 
 pub trait HeartbeatSender {
-    fn send(&self, data: HeartbeatData);
+    fn send(&self, data: HeartbeatData) -> Result<()>;
 
     fn alive(&self) {
-        self.send(HeartbeatData::TaskAlive)
+        self.send(HeartbeatData::TaskAlive).unwrap()
     }
 }
 
 impl HeartbeatSender for TaskHeartbeatClient {
-    fn send(&self, data: HeartbeatData) {
-        let mut messages_lock = self.context.pending_messages.lock().unwrap();
+    fn send(&self, data: HeartbeatData) -> Result<()> {
+        let mut messages_lock = self
+            .context
+            .pending_messages
+            .lock()
+            .map_err(|_| Error::new(ErrorKind::Other, "Unable to acquire the lock"))?;
         messages_lock.insert(data);
+        Ok(())
     }
 }
 
 impl HeartbeatSender for Option<TaskHeartbeatClient> {
-    fn send(&self, data: HeartbeatData) {
-        if let Some(client) = self {
-            client.send(data)
+    fn send(&self, data: HeartbeatData) -> Result<()> {
+        match self {
+            Some(client) => client.send(data),
+            None => Ok(()),
         }
     }
 }
