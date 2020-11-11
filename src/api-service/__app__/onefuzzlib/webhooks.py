@@ -57,7 +57,7 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
         if self.try_count < MAX_TRIES:
             self.state = WebhookMessageState.retrying
             self.save()
-            self.queue()
+            self.queue_webhook()
             logging.warning(
                 "sending webhook event failed, re-queued. %s:%s",
                 self.webhook_id,
