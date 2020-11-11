@@ -767,24 +767,31 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         to_reimage = []
         to_delete = []
 
-        nodes = Node.search_states(
-            scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
-        )
+        # ground truth of existing nodes
+        azure_nodes = list_instance_ids(self.scaleset_id)
+
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
 
         if not nodes:
             logging.info("no nodes need updating: %s", self.scaleset_id)
             return False
 
-        # ground truth of existing nodes
-        azure_nodes = list_instance_ids(self.scaleset_id)
-
+        # Nodes do not exists in scalesets but in table due to unknown failure
         for node in nodes:
             if node.machine_id not in azure_nodes:
                 logging.info(
                     "no longer in scaleset: %s:%s", self.scaleset_id, node.machine_id
                 )
                 node.delete()
-            elif node.delete_requested:
+
+        nodes_to_reset = [x for x in nodes if x.state in NodeState.ready_for_reset()]
+
+        if len(nodes_to_reset) == 0:
+            logging.info("No needs are ready for resetting: %s", self.scaleset_id)
+            return False
+
+        for node in nodes_to_reset:
+            if node.delete_requested:
                 to_delete.append(node)
             else:
                 if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
