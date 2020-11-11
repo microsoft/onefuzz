@@ -51,7 +51,6 @@ class Template(Command):
             msg.append("build:%s" % build)
         self.logger.info("stopping %s" % " ".join(msg))
 
-        containers = [x.name for x in self.onefuzz.containers.list()]
         jobs = self.onefuzz.jobs.list()
         for job in jobs:
             if job.config.project != project:
@@ -81,10 +80,8 @@ class Template(Command):
                             continue
                         to_remove.append(container.name)
                     for container_name in to_remove:
-                        if container_name in containers:
-                            self.logger.info("removing container: %s", container_name)
-                            self.onefuzz.containers.delete(container_name)
-                            containers.remove(container_name)
+                        if self.onefuzz.containers.delete(container_name).result:
+                            self.logger.info("removed container: %s", container_name)
 
                 if stop_notifications:
                     notifications = self.onefuzz.notifications.list()
