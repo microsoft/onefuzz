@@ -56,7 +56,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         verbose!("tmp dir reset");
         utils::reset_tmp_dir(tmp_dir).await?;
         config.inputs.sync_pull().await?;
-        merge_inputs(config.clone(), tmp_dir).await?;
+        sync_and_merge(config.clone(), tmp_dir).await?;
         Ok(())
     }
 }
@@ -79,7 +79,7 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
 
         let input_path = utils::download_input(input_url.clone(), tmp_dir).await?;
         info!("downloaded input to {}", input_path.display());
-        merge_inputs(config.clone(), tmp_dir).await?;
+        sync_and_merge(config.clone(), tmp_dir).await?;
 
         verbose!("will delete popped message with id = {}", msg.id());
 
@@ -101,20 +101,12 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
     }
 }
 
-async fn merge_inputs(
+async fn sync_and_merge(
     config: Arc<Config>,
-    tmp_dir: impl AsRef<Path>,
+    input_dir: impl AsRef<Path>,
 ) -> Result<LibFuzzerMergeOutput> {
-    info!("Merging corpus");
-    let merger = LibFuzzer::new(
-        &config.target_exe,
-        &config.target_options,
-        &config.target_env,
-    );
-    let candidates = vec![&tmp_dir];
     config.unique_inputs.sync_pull().await?;
-    let merge_result = merger.merge(&config.unique_inputs.path, &candidates).await;
-    match merge_result {
+    match merge_inputs(config.clone(), input_dir).await {
         Ok(result) => {
             if result.added_files_count > 0 {
                 info!("Added {} new files to the corpus", result.added_files_count);
@@ -130,6 +122,20 @@ async fn merge_inputs(
             Err(e)
         }
     }
+}
+
+pub async fn merge_inputs(
+    config: Arc<Config>,
+    input_dir: impl AsRef<Path>,
+) -> Result<LibFuzzerMergeOutput> {
+    info!("Merging corpus");
+    let merger = LibFuzzer::new(
+        &config.target_exe,
+        &config.target_options,
+        &config.target_env,
+    );
+    let candidates = vec![&input_dir];
+    merger.merge(&config.unique_inputs.path, &candidates).await
 }
 
 async fn try_delete_blob(input_url: Url) -> Result<()> {

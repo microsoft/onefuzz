@@ -3,21 +3,16 @@
 
 use crate::tasks::{
     config::CommonConfig,
-    merge::libfuzzer_merge::{Config, spawn},
+    merge::libfuzzer_merge::{merge_inputs, Config},
     utils::parse_key_value,
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir};
-use std::{
-    collections::HashMap,
-    path::{PathBuf},
-    sync::Arc,
-};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tokio::runtime::Runtime;
 use url::Url;
 use uuid::Uuid;
-
 
 pub fn run(args: &clap::ArgMatches) -> Result<()> {
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
@@ -31,18 +26,18 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         target_env.insert(k, v);
     }
 
-    let config = Config {
+    let config = Arc::new(Config {
         target_exe,
         target_env,
         target_options,
         input_queue: None,
         inputs: SyncedDir {
             path: inputs.into(),
-            url: BlobContainerUrl::new(Url::parse("https://contoso.com/coverage")?)?,
+            url: BlobContainerUrl::new(Url::parse("https://contoso.com/inputs")?)?,
         },
         unique_inputs: SyncedDir {
             path: unique_inputs.into(),
-            url: BlobContainerUrl::new(Url::parse("https://contoso.com/coverage")?)?,
+            url: BlobContainerUrl::new(Url::parse("https://contoso.com/unique_inputs")?)?,
         },
         common: CommonConfig {
             heartbeat_queue: None,
@@ -52,10 +47,13 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
             task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
             instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
         },
-    };
+    });
 
     let mut rt = Runtime::new()?;
-    rt.block_on(spawn(Arc::new(config)))?;
+    rt.block_on(merge_inputs(
+        config.clone(),
+        config.clone().inputs.path.clone(),
+    ))?;
 
     Ok(())
 }
@@ -68,11 +66,7 @@ pub fn args() -> App<'static, 'static> {
                 .takes_value(true)
                 .required(true),
         )
-        .arg(
-            Arg::with_name("inputs")
-                .takes_value(true)
-                .required(true),
-        )
+        .arg(Arg::with_name("inputs").takes_value(true).required(true))
         .arg(
             Arg::with_name("unique_inputs")
                 .takes_value(true)
@@ -83,14 +77,5 @@ pub fn args() -> App<'static, 'static> {
                 .long("target_env")
                 .takes_value(true)
                 .multiple(true),
-        )
-        .arg(
-            Arg::with_name("target_options")
-                .long("target_options")
-                .takes_value(true)
-                .multiple(true)
-                .allow_hyphen_values(true)
-                .default_value("{input}")
-                .help("Supports hyphens.  Recommendation: Set target_env first"),
         )
 }
