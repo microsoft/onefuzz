@@ -168,7 +168,7 @@ impl Recorder {
 
 /// Block coverage for a command invocation.
 ///
-/// Organized by module, and includes the size of the disassembled blocks.
+/// Organized by module.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CommandBlockCov {
     pub modules: BTreeMap<PathBuf, ModuleCov>,
@@ -180,8 +180,8 @@ impl CommandBlockCov {
             return Ok(false);
         }
 
-        let offsets = blocks.iter().map(|b| (b.offset, b.size as u32));
-        let cov = ModuleCov::new(image.path(), offsets);
+        let blocks = blocks.iter().map(|b| b.offset);
+        let cov = ModuleCov::new(image.path(), blocks);
 
         self.modules.insert(image.path().to_owned(), cov);
 
@@ -380,7 +380,6 @@ impl Breakpoints {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Block {
     pub offset: u64,
-    pub size: u64,
 }
 
 type ElfFile<'a> = elf::ElfFile64<'a, LE>;
@@ -408,6 +407,8 @@ pub fn find_module_blocks(module: &Path) -> Result<Vec<Block>> {
         }
     }
 
+    // The blocks we've collected have VAs as `offset` values, assuming the preferred base
+    // load address. Make them true offsets, relative to that image base address.
     for block in &mut blocks {
         block.offset -= load_va;
     }
@@ -459,7 +460,7 @@ pub fn find_symbol_blocks(section: ElfSection, sym: ElfSymbol) -> Result<Vec<Blo
         }
     }
 
-    let blocks: Vec<_> = leaders.iter().map(|va| Block { offset: *va, size: 0 }).collect();
+    let blocks: Vec<_> = leaders.iter().map(|va| Block { offset: *va }).collect();
 
     Ok(blocks)
 }

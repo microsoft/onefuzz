@@ -25,11 +25,11 @@ pub struct ModuleCov {
 }
 
 impl ModuleCov {
-    pub fn new(module: impl Into<PathBuf>, blocks: impl IntoIterator<Item = (u64, u32)>) -> Self {
+    pub fn new(module: impl Into<PathBuf>, blocks: impl IntoIterator<Item = u64>) -> Self {
         let module = module.into();
         let blocks = blocks
             .into_iter()
-            .map(|(o, sz)| (o, BlockCov::new(o, sz)))
+            .map(|o| (o, BlockCov::new(o)))
             .collect();
 
         Self { module, blocks }
@@ -41,9 +41,6 @@ impl ModuleCov {
 pub struct BlockCov {
     /// Offset of the block, relative to the module base load address.
     pub offset: u64,
-
-    /// Size of the block in bytes.
-    pub size: u32,
 
     /// Number of times a block was seen to be executed, relative to some input
     /// or corpus.
@@ -59,10 +56,9 @@ pub struct BlockCov {
 }
 
 impl BlockCov {
-    pub fn new(offset: u64, size: u32) -> Self {
+    pub fn new(offset: u64) -> Self {
         Self {
             offset,
-            size,
             count: 0,
         }
     }

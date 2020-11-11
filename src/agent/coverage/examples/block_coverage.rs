@@ -57,7 +57,7 @@ fn main() -> Result<()> {
 
             let marker = if b.count == 0 { " " } else { "x" };
 
-            log::debug!("  [{}] {}+{:x} ({} bytes)", marker, name, b.offset, b.size);
+            log::debug!("  [{}] {}+{:x}", marker, name, b.offset);
         }
 
         let percent = 100.0 * (hit as f64) / (found as f64);
