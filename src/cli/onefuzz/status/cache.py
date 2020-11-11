@@ -117,7 +117,7 @@ class TopCache:
         self.last_update = datetime.now()
         data: Dict[str, Union[int, str]] = {}
         for (k, v) in message.items():
-            if k in ["task_id", "job_id", "pool_id", "scaleset_id"]:
+            if k in ["task_id", "job_id", "pool_id", "scaleset_id", "machine_id"]:
                 k = k.replace("_id", "")
                 data[k] = str(v)[:8]
             elif isinstance(v, (int, str)):

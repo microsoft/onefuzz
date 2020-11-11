@@ -9,6 +9,7 @@ from onefuzztypes.responses import Info
 from ..onefuzzlib.azure.creds import (
     get_base_region,
     get_base_resource_group,
+    get_insights_appid,
     get_instance_id,
     get_subscription,
 )
@@ -24,5 +25,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             subscription=get_subscription(),
             versions=versions(),
             instance_id=get_instance_id(),
+            insights_appid=get_insights_appid(),
         )
     )
