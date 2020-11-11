@@ -117,15 +117,11 @@ class JobHelper:
             )
 
     def create_containers(self) -> None:
-        all_containers = [x.name for x in self.onefuzz.containers.list()]
         for (container_type, container_name) in self.containers.items():
-            if container_name in all_containers:
-                self.logger.info("using container: %s", container_name)
-            else:
-                self.logger.info("creating container: %s", container_name)
-                self.onefuzz.containers.create(
-                    container_name, metadata={"container_type": container_type.name}
-                )
+            self.logger.info("using container: %s", container_name)
+            self.onefuzz.containers.create(
+                container_name, metadata={"container_type": container_type.name}
+            )
 
     def setup_notifications(self, config: Optional[NotificationConfig]) -> None:
         if not config:

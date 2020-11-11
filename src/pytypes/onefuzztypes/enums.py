@@ -214,6 +214,7 @@ class ContainerType(Enum):
             cls.reports,
             cls.setup,
             cls.unique_reports,
+            cls.unique_inputs,
         ]
 
     @classmethod
