@@ -131,7 +131,7 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
 
     @classmethod
     def send_event(cls, event_type: WebhookEventType, event: WebhookEvent) -> None:
-        for webhook in cls.get_webhooks_cached():
+        for webhook in get_webhooks_cached():
             if event_type not in webhook.event_types:
                 continue
 
@@ -142,11 +142,6 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
             )
             message.save()
             message.queue_webhook()
-
-    @cached(ttl=30)
-    @classmethod
-    def get_webhooks_cached(cls) -> List["Webhook"]:
-        return cls.search()
 
     @classmethod
     def get_by_id(cls, webhook_id: UUID) -> Result["Webhook"]:
@@ -163,3 +158,8 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
             )
         webhook = webhooks[0]
         return webhook
+
+
+@cached(ttl=30)
+def get_webhooks_cached() -> List[Webhook]:
+    return Webhook.search()
