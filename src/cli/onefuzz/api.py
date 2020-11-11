@@ -16,7 +16,7 @@ from uuid import UUID
 import pkg_resources
 import semver
 from memoization import cached
-from onefuzztypes import enums, models, primitives, requests, responses
+from onefuzztypes import enums, models, primitives, requests, responses, webhooks
 from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
 
@@ -248,6 +248,81 @@ class Info(Endpoint):
         """ Get information about the OneFuzz instance """
         self.logger.debug("getting info")
         return self._req_model("GET", responses.Info)
+
+
+class Webhooks(Endpoint):
+    """ Interact with Webhooks """
+
+    endpoint = "webhooks"
+
+    def get(self, webhook_id: UUID_EXPANSION) -> webhooks.Webhook:
+        """ get a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("getting webhook: %s", webhook_id_expanded)
+        return self._req_model(
+            "GET",
+            webhooks.Webhook,
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+        )
+
+    def list(self) -> List[webhooks.Webhook]:
+        """ list webhooks """
+
+        self.logger.debug("listing webhooks")
+        return self._req_model_list(
+            "GET",
+            webhooks.Webhook,
+            data=requests.WebhookGet(),
+        )
+
+    def create(
+        self, name: str, url: str, event_types: List[enums.WebhookEventType]
+    ) -> webhooks.Webhook:
+        """ Create a webhook """
+        self.logger.debug("creating webhook.  name: %s", name)
+        return self._req_model(
+            "POST",
+            webhooks.Webhook,
+            data=requests.WebhookCreate(name=name, url=url, event_types=event_types),
+        )
+
+    def update(
+        self,
+        webhook_id: UUID_EXPANSION,
+        name: str,
+        event_types: List[enums.WebhookEventType],
+    ) -> webhooks.Webhook:
+        """ Update a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("updating webhook: %s", webhook_id_expanded)
+        return self._req_model(
+            "PATCH",
+            webhooks.Webhook,
+            data=requests.WebhookUpdate(
+                webhook_id=webhook_id_expanded, name=name, event_types=event_types
+            ),
+        )
+
+    def delete(self, webhook_id: UUID_EXPANSION) -> webhooks.Webhook:
+        """ Delete a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        return self._req_model(
+            "DELETE",
+            webhooks.Webhook,
+            data=requests.WebhookDelete(webhook_id=webhook_id_expanded),
+        )
 
 
 class Containers(Endpoint):
