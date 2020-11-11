@@ -422,55 +422,6 @@ pub fn find_symbol_blocks(section: ElfSection, sym: ElfSymbol) -> Result<Vec<Blo
     let data = section.data()?;
     let data = &data[lo..hi];
 
-    // Find basic block leaders, as VAs relative to the section load addr.
-    let leaders = find_function_leaders(data, sym);
-
-    let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
-
-    // Enable using `Decoder::ip()` to get module-relative offsets.
-    decoder.set_ip(sym.address());
-
-    let mut blocks = vec![];
-
-    let mut offset = 0;
-    let mut size = 0;
-
-    let mut inst = Instruction::default();
-    while decoder.can_decode() {
-        let current = decoder.ip() as u64;
-
-        decoder.decode_out(&mut inst);
-
-        let is_leader = leaders.contains(&current);
-
-        // May not point to an actual instruction in the function span.
-        let next = decoder.ip() as u64;
-
-        // If the next instruction is a leader, or the end of the function, then
-        // we have reached the end of the block.
-        let end = !decoder.can_decode() || leaders.contains(&next);
-
-        size += inst.len() as u64;
-
-        if is_leader {
-            offset = current;
-        }
-
-        // Note: for a 1-instruction block, `is_leader && end`.
-        if end {
-            blocks.push(Block { offset, size });
-
-            // Reset WIP block.
-            offset = 0;
-            size = 0;
-        }
-    }
-
-    Ok(blocks)
-}
-
-/// Compute the basic block leaders of a function as virtual addresses.
-fn find_function_leaders(data: &[u8], sym: ElfSymbol) -> BTreeSet<u64> {
     let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
     decoder.set_ip(sym.address());
 
@@ -488,6 +439,14 @@ fn find_function_leaders(data: &[u8], sym: ElfSymbol) -> BTreeSet<u64> {
             // The branch target is a leader.
             leaders.insert(target);
 
+            // Only mark the next instruction as a leader if the branch is conditional.
+            // This will give an invalid basic block decomposition if the leaders we emit
+            // are used as delimiters. In particular, blocks that end with a `jmp` will be
+            // too large, and have an unconditional branch mid-block.
+            //
+            // However, we only care about the leaders as block entry points, so we can
+            // set software breakpoints. These maybe-unreachable leaders are a liability
+            // wrt mutating the running process' code, so we discard them for now.
             if conditional {
                 // The next instruction is a leader, if it exists.
                 if decoder.can_decode() {
@@ -500,7 +459,9 @@ fn find_function_leaders(data: &[u8], sym: ElfSymbol) -> BTreeSet<u64> {
         }
     }
 
-    leaders
+    let blocks: Vec<_> = leaders.iter().map(|va| Block { offset: *va, size: 0 }).collect();
+
+    Ok(blocks)
 }
 
 // Returns the virtual address of a branch target, if present, with a flag that
