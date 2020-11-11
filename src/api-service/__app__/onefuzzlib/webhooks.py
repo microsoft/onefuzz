@@ -4,7 +4,8 @@ from uuid import UUID
 
 import requests
 from memoization import cached
-from onefuzztypes.enums import WebhookEventType, WebhookMessageState
+from onefuzztypes.enums import ErrorCode, WebhookEventType, WebhookMessageState
+from onefuzztypes.models import Error, Result
 from onefuzztypes.webhooks import Webhook as BASE_WEBHOOK
 from onefuzztypes.webhooks import WebhookEvent, WebhookMessage
 from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
@@ -146,3 +147,19 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
     @classmethod
     def get_webhooks_cached(cls) -> List["Webhook"]:
         return cls.search()
+
+    @classmethod
+    def get_by_id(cls, webhook_id: UUID) -> Result["Webhook"]:
+        webhooks = cls.search(query={"webhook_id": [webhook_id]})
+        if not webhooks:
+            return Error(
+                code=ErrorCode.INVALID_REQUEST, errors=["unable to find webhook"]
+            )
+
+        if len(webhooks) != 1:
+            return Error(
+                code=ErrorCode.INVALID_REQUEST,
+                errors=["error identifying Notification"],
+            )
+        webhook = webhooks[0]
+        return webhook

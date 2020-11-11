@@ -17,6 +17,7 @@ from .enums import (
     PoolState,
     ScalesetState,
     TaskState,
+    WebhookEventType,
 )
 from .models import AutoScaleConfig, NotificationConfig
 from .primitives import Container, PoolName, Region
@@ -209,3 +210,23 @@ class ProxyReset(BaseRequest):
 class CanScheduleRequest(BaseRequest):
     machine_id: UUID
     task_id: UUID
+
+
+class WebhookCreate(BaseRequest):
+    name: str
+    url: str
+    event_types: List[WebhookEventType]
+
+
+class WebhookGet(BaseModel):
+    webhook_id: Optional[UUID]
+
+
+class WebhookDelete(BaseModel):
+    webhook_id: UUID
+
+
+class WebhookUpdate(BaseModel):
+    webhook_id: UUID
+    name: str
+    event_types: List[WebhookEventType]

@@ -32,4 +32,8 @@ class WebhookMessageLog(WebhookMessage):
 class Webhook(BaseModel):
     webhook_id: UUID = Field(default_factory=uuid4)
     url: str
+    name: str
     event_types: List[WebhookEventType]
+
+    def redact(self) -> None:
+        self.url = "***"
