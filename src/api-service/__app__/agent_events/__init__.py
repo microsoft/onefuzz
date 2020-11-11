@@ -215,7 +215,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     logging.info(
         "node event: machine_id: %s event: %s",
         envelope.machine_id,
-        envelope.event,
+        envelope.event.json(exclude_none=True),
     )
 
     if isinstance(envelope.event, NodeEvent):
