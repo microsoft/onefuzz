@@ -199,7 +199,6 @@ class Node(BASE_NODE, ORMMixin):
                         errors=["node reimaged during task execution"],
                     )
                 )
-            entry.delete()
 
     def could_shrink_scaleset(self) -> bool:
         if self.scaleset_id and ScalesetShrinkQueue(self.scaleset_id).should_shrink():
@@ -292,6 +291,10 @@ class Node(BASE_NODE, ORMMixin):
             raw_unchecked_filter=time_filter,
         )
 
+    def delete(self) -> None:
+        NodeTasks.clear_by_machine_id(self.machine_id)
+        super().delete()
+
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
@@ -336,6 +339,11 @@ class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
     def get_by_task_id(cls, task_id: UUID) -> List["NodeTasks"]:
         return cls.search(query={"task_id": [task_id]})
+
+    @classmethod
+    def clear_by_machine_id(cls, machine_id: UUID) -> None:
+        for entry in cls.get_by_machine_id(machine_id):
+            entry.delete()
 
 
 # this isn't anticipated to be needed by the client, hence it not
