@@ -12,4 +12,5 @@ azure-cli-core==2.13.0
 azure-cli==2.13.0 	
 pyfunctional==1.4.2
 cryptography<3.0.0,>=2.3.1
+urllib3==1.25.11
 # azure-mgmt-core==1.2.0

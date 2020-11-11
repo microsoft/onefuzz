@@ -55,6 +55,12 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(envelope, Error):
         return not_ok(envelope, context="node event")
 
+    logging.info(
+        "node event: machine_id: %s event: %s",
+        envelope.machine_id,
+        envelope.event.json(exclude_none=True),
+    )
+
     result = process(envelope)
     if isinstance(result, Error):
         logging.error(
