@@ -75,7 +75,9 @@ def on_state_update(
     node.state = state
     node.save()
 
-    if state == NodeState.setting_up:
+    if state == NodeState.free:
+        logging.info("node now available for work: %s", machine_id)
+    elif state == NodeState.setting_up:
         # Model-validated.
         #
         # This field will be required in the future.
@@ -97,17 +99,23 @@ def on_state_update(
                 if isinstance(task, Error):
                     return task
 
+                logging.info(
+                    "node starting task.  machine_id: %s job_id: %s task_id: %s",
+                    machine_id,
+                    task.job_id,
+                    task.task_id,
+                )
+
                 # The task state may be `running` if it has `vm_count` > 1, and
                 # another node is concurrently executing the task. If so, leave
                 # the state as-is, to represent the max progress made.
                 #
                 # Other states we would want to preserve are excluded by the
                 # outermost conditional check.
-                if task.state != TaskState.running:
+                if task.state not in [TaskState.running, TaskState.setting_up]:
                     task.state = TaskState.setting_up
-
-                task.on_start()
-                task.save()
+                    task.save()
+                    task.on_start()
 
                 # Note: we set the node task state to `setting_up`, even though
                 # the task itself may be `running`.
