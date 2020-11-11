@@ -7,7 +7,7 @@ from memoization import cached
 from onefuzztypes.enums import ErrorCode, WebhookEventType, WebhookMessageState
 from onefuzztypes.models import Error, Result
 from onefuzztypes.webhooks import Webhook as BASE_WEBHOOK
-from onefuzztypes.webhooks import WebhookEvent, WebhookMessage
+from onefuzztypes.webhooks import WebhookEvent, WebhookEventPing, WebhookMessage
 from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
 from pydantic import BaseModel
 
@@ -135,13 +135,7 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
             if event_type not in webhook.event_types:
                 continue
 
-            message = WebhookMessageLog(
-                webhook_id=webhook.webhook_id,
-                event_type=event_type,
-                event=event,
-            )
-            message.save()
-            message.queue_webhook()
+            webhook._add_event(event_type, event)
 
     @classmethod
     def get_by_id(cls, webhook_id: UUID) -> Result["Webhook"]:
@@ -158,6 +152,20 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
             )
         webhook = webhooks[0]
         return webhook
+
+    def _add_event(self, event_type: WebhookEventType, event: WebhookEvent) -> None:
+        message = WebhookMessageLog(
+            webhook_id=self.webhook_id,
+            event_type=event_type,
+            event=event,
+        )
+        message.save()
+        message.queue_webhook()
+
+    def ping(self) -> WebhookEventPing:
+        ping = WebhookEventPing()
+        self._add_event(WebhookEventType.ping, ping)
+        return ping
 
 
 @cached(ttl=30)

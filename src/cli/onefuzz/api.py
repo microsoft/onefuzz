@@ -81,13 +81,14 @@ class Endpoint:
         *,
         data: Optional[BaseModel] = None,
         as_params: bool = False,
+        alternate_endpoint: Optional[str] = None,
     ) -> A:
+        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
+
         if as_params:
-            response = self.onefuzz._backend.request(method, self.endpoint, params=data)
+            response = self.onefuzz._backend.request(method, endpoint, params=data)
         else:
-            response = self.onefuzz._backend.request(
-                method, self.endpoint, json_data=data
-            )
+            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
 
         return model.parse_obj(response)
 
@@ -266,7 +267,7 @@ class Webhooks(Endpoint):
         return self._req_model(
             "GET",
             webhooks.Webhook,
-            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+            data=requests.WebhookSearch(webhook_id=webhook_id_expanded),
         )
 
     def list(self) -> List[webhooks.Webhook]:
@@ -276,7 +277,7 @@ class Webhooks(Endpoint):
         return self._req_model_list(
             "GET",
             webhooks.Webhook,
-            data=requests.WebhookGet(),
+            data=requests.WebhookSearch(),
         )
 
     def create(
@@ -321,7 +322,22 @@ class Webhooks(Endpoint):
         return self._req_model(
             "DELETE",
             webhooks.Webhook,
-            data=requests.WebhookDelete(webhook_id=webhook_id_expanded),
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+        )
+
+    def ping(self, webhook_id: UUID_EXPANSION) -> webhooks.WebhookEventPing:
+        """ ping a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("pinging webhook: %s", webhook_id_expanded)
+        return self._req_model(
+            "POST",
+            webhooks.WebhookEventPing,
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+            alternate_endpoint="webhooks/ping",
         )
 
 

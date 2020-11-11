@@ -218,11 +218,11 @@ class WebhookCreate(BaseRequest):
     event_types: List[WebhookEventType]
 
 
-class WebhookGet(BaseModel):
+class WebhookSearch(BaseModel):
     webhook_id: Optional[UUID]
 
 
-class WebhookDelete(BaseModel):
+class WebhookGet(BaseModel):
     webhook_id: UUID
 
 

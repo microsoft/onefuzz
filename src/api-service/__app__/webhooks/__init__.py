@@ -9,8 +9,8 @@ import azure.functions as func
 from onefuzztypes.models import Error
 from onefuzztypes.requests import (
     WebhookCreate,
-    WebhookDelete,
     WebhookGet,
+    WebhookSearch,
     WebhookUpdate,
 )
 from onefuzztypes.responses import BoolResult
@@ -20,7 +20,7 @@ from ..onefuzzlib.webhooks import Webhook
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_request(WebhookGet, req)
+    request = parse_request(WebhookSearch, req)
     if isinstance(request, Error):
         return not_ok(request, context="webhook get")
 
@@ -73,7 +73,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def delete(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_request(WebhookDelete, req)
+    request = parse_request(WebhookGet, req)
     if isinstance(request, Error):
         return not_ok(request, context="webhook delete")
 

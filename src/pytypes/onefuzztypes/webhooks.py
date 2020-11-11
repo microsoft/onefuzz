@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from .enums import WebhookEventType, WebhookMessageState
 from .models import Error, TaskConfig
+from .responses import BaseResponse
 
 
 class WebhookEventTaskStopped(BaseModel):
@@ -24,8 +25,15 @@ class WebhookEventTaskCreated(BaseModel):
     config: TaskConfig
 
 
+class WebhookEventPing(BaseResponse):
+    ping_id: UUID = Field(default_factory=uuid4)
+
+
 WebhookEvent = Union[
-    WebhookEventTaskCreated, WebhookEventTaskStopped, WebhookEventTaskFailed
+    WebhookEventTaskCreated,
+    WebhookEventTaskStopped,
+    WebhookEventTaskFailed,
+    WebhookEventPing,
 ]
 
 
