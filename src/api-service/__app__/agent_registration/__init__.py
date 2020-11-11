@@ -57,7 +57,6 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
                 ],
             ),
             context="agent registration",
-            status_code=404,
         )
     else:
         pool = Pool.get_by_name(agent_node.pool_name)
