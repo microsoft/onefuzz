@@ -64,26 +64,24 @@ pub async fn init_task_heartbeat(queue_url: Url, task_id: Uuid) -> Result<TaskHe
 }
 
 pub trait HeartbeatSender {
-    fn send(&self, data: HeartbeatData) -> Result<()>;
+    fn send(&self, data: HeartbeatData);
 
     fn alive(&self) {
-        self.send(HeartbeatData::TaskAlive).unwrap()
+        self.send(HeartbeatData::TaskAlive)
     }
 }
 
 impl HeartbeatSender for TaskHeartbeatClient {
-    fn send(&self, data: HeartbeatData) -> Result<()> {
+    fn send(&self, data: HeartbeatData) {
         let mut messages_lock = self.context.pending_messages.lock().unwrap();
         messages_lock.insert(data);
-        Ok(())
     }
 }
 
 impl HeartbeatSender for Option<TaskHeartbeatClient> {
-    fn send(&self, data: HeartbeatData) -> Result<()> {
-        match self {
-            Some(client) => client.send(data),
-            None => Ok(()),
+    fn send(&self, data: HeartbeatData) {
+        if let Some(client) = self {
+            client.send(data)
         }
     }
 }

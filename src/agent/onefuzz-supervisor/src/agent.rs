@@ -44,7 +44,7 @@ impl Agent {
             setup_runner,
             work_queue,
             worker_runner,
-            heartbeat: heartbeat,
+            heartbeat,
             previous_state,
         }
     }

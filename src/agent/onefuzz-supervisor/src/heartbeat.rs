@@ -55,26 +55,24 @@ pub async fn init_agent_heartbeat(queue_url: Url) -> Result<AgentHeartbeatClient
 }
 
 pub trait HeartbeatSender {
-    fn send(&self, data: HeartbeatData) -> Result<()>;
+    fn send(&self, data: HeartbeatData);
 
     fn alive(&self) {
-        self.send(HeartbeatData::MachineAlive).unwrap()
+        self.send(HeartbeatData::MachineAlive)
     }
 }
 
 impl HeartbeatSender for AgentHeartbeatClient {
-    fn send(&self, data: HeartbeatData) -> Result<()> {
+    fn send(&self, data: HeartbeatData) {
         let mut messages_lock = self.context.pending_messages.lock().unwrap();
         messages_lock.insert(data);
-        Ok(())
     }
 }
 
 impl HeartbeatSender for Option<AgentHeartbeatClient> {
-    fn send(&self, data: HeartbeatData) -> Result<()> {
-        match self {
-            Some(client) => client.send(data),
-            None => Ok(()),
+    fn send(&self, data: HeartbeatData) {
+        if let Some(client) = self {
+            client.send(data)
         }
     }
 }
