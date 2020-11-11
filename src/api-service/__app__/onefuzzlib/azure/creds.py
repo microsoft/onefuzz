@@ -6,6 +6,7 @@
 import logging
 import os
 from typing import Any, List, Optional, Tuple
+from uuid import UUID
 
 from azure.cli.core import CLIError
 from azure.common.client_factory import get_client_from_cli_profile
@@ -82,6 +83,11 @@ def get_subscription() -> Any:  # should be str
 
 
 @cached
+def get_insights_appid() -> str:
+    return os.environ["APPINSIGHTS_APPID"]
+
+
+@cached
 def get_fuzz_storage() -> str:
     return os.environ["ONEFUZZ_DATA_STORAGE"]
 
@@ -99,6 +105,16 @@ def get_instance_name() -> str:
 @cached
 def get_instance_url() -> str:
     return "https://%s.azurewebsites.net" % get_instance_name()
+
+
+@cached
+def get_instance_id() -> UUID:
+    from .containers import get_blob
+
+    blob = get_blob("base-config", "instance_id", account_id=get_func_storage())
+    if blob is None:
+        raise Exception("missing instance_id")
+    return UUID(blob.decode())
 
 
 DAY_IN_SECONDS = 60 * 60 * 24
@@ -123,3 +139,24 @@ def is_member_of(group_id: str, member_id: str) -> bool:
             CheckGroupMembershipParameters(group_id=group_id, member_id=member_id)
         ).value
     )
+
+
+@cached
+def get_scaleset_identity_resource_path() -> str:
+    scaleset_id_name = "%s-scalesetid" % get_instance_name()
+    resource_group_path = "/subscriptions/%s/resourceGroups/%s/providers" % (
+        get_subscription(),
+        get_base_resource_group(),
+    )
+    return "%s/Microsoft.ManagedIdentity/userAssignedIdentities/%s" % (
+        resource_group_path,
+        scaleset_id_name,
+    )
+
+
+@cached
+def get_scaleset_principal_id() -> UUID:
+    api_version = "2018-11-30"  # matches the apiversion in the deployment template
+    client = mgmt_client_factory(ResourceManagementClient)
+    uid = client.resources.get_by_id(get_scaleset_identity_resource_path(), api_version)
+    return UUID(uid.properties["principalId"])

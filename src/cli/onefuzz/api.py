@@ -10,11 +10,12 @@ import re
 import subprocess  # nosec
 import uuid
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 import pkg_resources
 import semver
+from memoization import cached
 from onefuzztypes import enums, models, primitives, requests, responses
 from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
@@ -32,6 +33,8 @@ DEFAULT = {
 
 # This was generated randomly and should be preserved moving forwards
 ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
+
+ONE_HOUR_IN_SECONDS = 3600
 
 DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
 DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:rs5-pro:latest"
@@ -146,6 +149,7 @@ class Files(Endpoint):
 
     endpoint = "files"
 
+    @cached(ttl=ONE_HOUR_IN_SECONDS)
     def _get_client(self, container: str) -> ContainerWrapper:
         sas = self.onefuzz.containers.get(container).sas_url
         return ContainerWrapper(sas)
@@ -166,7 +170,8 @@ class Files(Endpoint):
         """ get a file from a container """
         self.logger.debug("getting file from container: %s:%s", container, filename)
         client = self._get_client(container)
-        return client.download_blob(filename)
+        downloaded = cast(bytes, client.download_blob(filename))
+        return downloaded
 
     def upload_file(
         self, container: str, file_path: str, blob_name: Optional[str] = None
@@ -639,35 +644,43 @@ class Tasks(Endpoint):
         target_exe: str,
         containers: List[Tuple[enums.ContainerType, primitives.Container]],
         *,
-        pool_name: str,
-        reboot_after_setup: bool = False,
-        vm_count: int = 1,
+        analyzer_env: Optional[Dict[str, str]] = None,
+        analyzer_exe: Optional[str] = None,
+        analyzer_options: Optional[List[str]] = None,
+        check_asan_log: bool = False,
+        check_debugger: bool = True,
+        check_retry_count: Optional[int] = None,
+        debug: Optional[List[enums.TaskDebugFlag]] = None,
         duration: int = 24,
+        ensemble_sync_delay: Optional[int] = None,
+        generator_exe: Optional[str] = None,
+        generator_options: Optional[List[str]] = None,
+        pool_name: str,
+        prereq_tasks: Optional[List[UUID]] = None,
+        reboot_after_setup: bool = False,
+        rename_output: bool = False,
+        stats_file: Optional[str] = None,
+        stats_format: Optional[enums.StatsFormat] = None,
+        supervisor_env: Optional[Dict[str, str]] = None,
+        supervisor_exe: Optional[str] = None,
+        supervisor_input_marker: Optional[str] = None,
+        supervisor_options: Optional[List[str]] = None,
+        tags: Optional[Dict[str, str]] = None,
+        task_wait_for_files: Optional[enums.ContainerType] = None,
         target_env: Optional[Dict[str, str]] = None,
         target_options: Optional[List[str]] = None,
         target_options_merge: bool = False,
         target_timeout: Optional[int] = None,
-        rename_output: bool = False,
-        check_asan_log: bool = False,
-        check_debugger: bool = True,
-        check_retry_count: Optional[int] = None,
         target_workers: Optional[int] = None,
-        supervisor_exe: Optional[str] = None,
-        supervisor_env: Optional[Dict[str, str]] = None,
-        supervisor_options: Optional[List[str]] = None,
-        supervisor_input_marker: Optional[str] = None,
-        stats_file: Optional[str] = None,
-        stats_format: Optional[enums.StatsFormat] = None,
-        generator_exe: Optional[str] = None,
-        generator_options: Optional[List[str]] = None,
-        task_wait_for_files: Optional[enums.ContainerType] = None,
-        analyzer_exe: Optional[str] = None,
-        analyzer_options: Optional[List[str]] = None,
-        analyzer_env: Optional[Dict[str, str]] = None,
-        tags: Optional[Dict[str, str]] = None,
-        prereq_tasks: Optional[List[UUID]] = None,
+        vm_count: int = 1,
     ) -> models.Task:
-        """ Create a task """
+        """
+        Create a task
+
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
+        """
+
         self.logger.debug("creating task: %s", task_type)
 
         job_id_expanded = self._disambiguate_uuid(
@@ -697,38 +710,40 @@ class Tasks(Endpoint):
             )
 
         config = models.TaskConfig(
+            containers=containers_submit,
+            debug=debug,
             job_id=job_id_expanded,
+            pool=models.TaskPool(count=vm_count, pool_name=pool_name),
             prereq_tasks=prereq_tasks,
+            tags=tags,
             task=models.TaskDetails(
-                type=task_type,
+                analyzer_env=analyzer_env,
+                analyzer_exe=analyzer_exe,
+                analyzer_options=analyzer_options,
+                check_asan_log=check_asan_log,
+                check_debugger=check_debugger,
+                check_retry_count=check_retry_count,
                 duration=duration,
-                target_exe=target_exe,
+                ensemble_sync_delay=ensemble_sync_delay,
+                generator_exe=generator_exe,
+                generator_options=generator_options,
+                reboot_after_setup=reboot_after_setup,
+                rename_output=rename_output,
+                stats_file=stats_file,
+                stats_format=stats_format,
+                supervisor_env=supervisor_env,
+                supervisor_exe=supervisor_exe,
+                supervisor_input_marker=supervisor_input_marker,
+                supervisor_options=supervisor_options,
                 target_env=target_env,
+                target_exe=target_exe,
                 target_options=target_options,
                 target_options_merge=target_options_merge,
                 target_timeout=target_timeout,
                 target_workers=target_workers,
-                rename_output=rename_output,
-                supervisor_exe=supervisor_exe,
-                supervisor_options=supervisor_options,
-                supervisor_env=supervisor_env,
-                supervisor_input_marker=supervisor_input_marker,
-                analyzer_exe=analyzer_exe,
-                analyzer_env=analyzer_env,
-                analyzer_options=analyzer_options,
-                stats_file=stats_file,
-                stats_format=stats_format,
-                generator_exe=generator_exe,
-                generator_options=generator_options,
+                type=task_type,
                 wait_for_files=task_wait_for_files,
-                reboot_after_setup=reboot_after_setup,
-                check_asan_log=check_asan_log,
-                check_debugger=check_debugger,
-                check_retry_count=check_retry_count,
             ),
-            pool=models.TaskPool(count=vm_count, pool_name=pool_name),
-            containers=containers_submit,
-            tags=tags,
         )
 
         return self.create_with_config(config)
@@ -981,6 +996,28 @@ class Node(Endpoint):
             "PATCH",
             responses.BoolResult,
             data=requests.NodeGet(machine_id=machine_id_expanded),
+        )
+
+    def update(
+        self,
+        machine_id: UUID_EXPANSION,
+        *,
+        debug_keep_node: Optional[bool] = None,
+    ) -> responses.BoolResult:
+        self.logger.debug("update node: %s", machine_id)
+        machine_id_expanded = self._disambiguate_uuid(
+            "machine_id",
+            machine_id,
+            lambda: [str(x.machine_id) for x in self.list()],
+        )
+
+        return self._req_model(
+            "POST",
+            responses.BoolResult,
+            data=requests.NodeUpdate(
+                machine_id=machine_id_expanded,
+                debug_keep_node=debug_keep_node,
+            ),
         )
 
     def list(

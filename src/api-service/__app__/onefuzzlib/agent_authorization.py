@@ -14,6 +14,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from pydantic import BaseModel
 
+from .azure.creds import get_scaleset_principal_id
 from .pools import Scaleset
 from .request import not_ok
 
@@ -54,8 +55,15 @@ def try_get_token_auth_header(request: func.HttpRequest) -> Union[Error, TokenDa
 
 @cached(ttl=60)
 def is_authorized(token_data: TokenData) -> bool:
+    # backward compatibility case for scalesets deployed before the migration
+    # to user assigned managed id
     scalesets = Scaleset.get_by_object_id(token_data.object_id)
-    return len(scalesets) > 0
+    if len(scalesets) > 0:
+        return True
+
+    # verify object_id against the user assigned managed identity
+    principal_id: UUID = get_scaleset_principal_id()
+    return principal_id == token_data.object_id
 
 
 def verify_token(

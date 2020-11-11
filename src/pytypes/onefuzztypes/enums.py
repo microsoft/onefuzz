@@ -73,6 +73,7 @@ class TaskFeature(Enum):
     check_asan_log = "check_asan_log"
     check_debugger = "check_debugger"
     check_retry_count = "check_retry_count"
+    ensemble_sync_delay = "ensemble_sync_delay"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -213,6 +214,7 @@ class ContainerType(Enum):
             cls.reports,
             cls.setup,
             cls.unique_reports,
+            cls.unique_inputs,
         ]
 
 
@@ -351,3 +353,8 @@ class GithubIssueState(Enum):
 class GithubIssueSearchMatch(Enum):
     title = "title"
     body = "body"
+
+
+class TaskDebugFlag(Enum):
+    keep_node_on_failure = "keep_node_on_failure"
+    keep_node_on_completion = "keep_node_on_completion"

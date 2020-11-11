@@ -8,7 +8,13 @@ from typing import Optional, cast
 from uuid import UUID
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, NodeState, NodeTaskState, TaskState
+from onefuzztypes.enums import (
+    ErrorCode,
+    NodeState,
+    NodeTaskState,
+    TaskDebugFlag,
+    TaskState,
+)
 from onefuzztypes.models import (
     Error,
     NodeDoneEventData,
@@ -158,8 +164,6 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> None:
         # (as happens in 1.0.0 agents)
         task.on_start()
     elif event.done:
-        node_task.delete()
-
         exit_status = event.done.exit_status
         if not exit_status.success:
             logging.error("task failed. status:%s", exit_status)
@@ -173,8 +177,21 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> None:
                     ],
                 )
             )
+            if task.config.debug and (
+                TaskDebugFlag.keep_node_on_failure in task.config.debug
+                or TaskDebugFlag.keep_node_on_completion in task.config.debug
+            ):
+                node.debug_keep_node = True
+                node.save()
+
         else:
             task.mark_stopping()
+            if (
+                task.config.debug
+                and TaskDebugFlag.keep_node_on_completion in task.config.debug
+            ):
+                node.debug_keep_node = True
+                node.save()
 
         node.to_reimage(done=True)
     else:
@@ -198,7 +215,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     logging.info(
         "node event: machine_id: %s event: %s",
         envelope.machine_id,
-        envelope.event,
+        envelope.event.json(exclude_none=True),
     )
 
     if isinstance(envelope.event, NodeEvent):

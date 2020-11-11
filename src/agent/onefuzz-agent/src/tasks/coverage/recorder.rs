@@ -128,10 +128,13 @@ impl CoverageRecorder {
             .join("libfuzzer-coverage")
             .join("DumpCounters.js");
 
+        let should_disable_sympath = !self.config.target_env.contains_key("_NT_SYMBOL_PATH");
+
         let cdb_cmd = format!(
-            ".scriptload {}; !dumpcounters {:?}; q",
+            ".scriptload {}; !dumpcounters {:?}, {}; q",
             script_path.to_string_lossy(),
-            output.to_string_lossy()
+            output.to_string_lossy(),
+            should_disable_sympath,
         );
 
         let mut cmd = Command::new("cdb.exe");

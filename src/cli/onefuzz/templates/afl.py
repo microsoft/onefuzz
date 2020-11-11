@@ -5,7 +5,7 @@
 
 from typing import Dict, List, Optional
 
-from onefuzztypes.enums import OS, ContainerType, StatsFormat, TaskType
+from onefuzztypes.enums import OS, ContainerType, StatsFormat, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
@@ -51,11 +51,15 @@ class AFL(Command):
         existing_inputs: Optional[Container] = None,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
     ) -> Optional[Job]:
         """
         Basic AFL job
 
         :param Container afl_container: Specify the AFL container to use in the job
+        :param bool ensemble_sync_delay: Specify duration between
+            syncing inputs during ensemble fuzzing (0 to disable).
         """
 
         if existing_inputs:
@@ -63,6 +67,10 @@ class AFL(Command):
 
         if dryrun:
             return None
+
+        # disable ensemble sync if only one VM is used
+        if ensemble_sync_delay is None and vm_count == 1:
+            ensemble_sync_delay = 0
 
         self.logger.info("creating afl from template")
 
@@ -144,6 +152,8 @@ class AFL(Command):
             stats_format=StatsFormat.AFL,
             task_wait_for_files=ContainerType.inputs,
             tags=helper.tags,
+            debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
         )
 
         report_containers = [
@@ -170,6 +180,7 @@ class AFL(Command):
             check_debugger=True,
             tags=tags,
             prereq_tasks=[fuzzer_task.task_id],
+            debug=debug,
         )
 
         self.logger.info("done creating tasks")

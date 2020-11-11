@@ -1,0 +1,125 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+# It is designed to deploy latest versions in the Azure. There are fixed set of pipeline
+# variables which can be used to update onefuzz instances on Azure.
+#
+# Following the OneFuzz document at
+# https://github.com/microsoft/onefuzz/blob/main/docs/getting-started.md#deploying-an-instance-of-onefuzz
+# to deploy OneFuzz on Azure.
+#
+# List of custom variables:
+# | Variable Name        | Comments                                                  | Required/Optional |
+# |----------------------|-----------------------------------------------------------|-------------------|
+# |AZURE_CLIENT_ID       | The appication ID created by you or the deployment script | Required          |
+# |AZURE_CLIENT_SECRET   | Secret created by App registration process                | Required          |
+# |AZURE_TENANT_ID       | Tenant ID of the Azure Subscription                       | Required          |
+# |CONTACT_EMAIL_ADDRESS | Email address for communication                           | Required          |
+# |DEPLOY_ARGS           | Specify OneFuzz deploy.py arguments                       | Optional          |
+# |ONEFUZZ_DEPLOY_LOC    | Deployment Folder location of this script location        | Required          |
+# |ONEFUZZ_INSTANCE_NAME | Instance name of Onefuzz Deployement                      | Required          |
+# |ONEFUZZ_SERVICE_URL   | OneFuzz service URL. Generally the url defined in App     | Required          |
+# |                      | Registration                                              | Required          |
+# |REGION                | OneFuzz Region (prefer westus2)                           | Required          |
+# |RESOURCE_GROUP_NAME   | Resource group name for OneFuzz deployment                | Required          |
+# |VERSION               | Specify OneFuzz version, defaults to latest               | Optional          |
+#
+# Note: Make sure to provide the App owners permission to onefuzz resource group
+
+---
+trigger: none
+
+stages:
+- stage: Deploy
+  jobs:
+    - job: "deploy_oneFuzz"
+      pool:
+        vmImage: "ubuntu-latest"
+      steps:
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: "3.8"
+
+        - task: CmdLine@2
+          name: onefuzz_release
+          displayName: "Downloading OneFuzz Artifacts"
+          inputs:
+            workingDirectory: "$(ONEFUZZ_DEPLOY_LOC)"
+            script: |
+              set -ex
+              python -m pip install pipenv tox
+              pipenv install
+              artifact="artifact"
+              if [ -z $(VERSION) ]
+              then
+                pipenv run python get_latest_version.py -path $artifact
+                version="$(pipenv run python get_latest_version.py -display_latest_version)"
+              else
+                pipenv run python get_latest_version.py -path $artifact -version $(VERSION)
+                version="$(VERSION)"
+              fi
+              echo "Onefuzz version is $version"
+              echo "##vso[task.setvariable variable=version;isOutput=true]$version"
+              echo "##vso[task.setvariable variable=artifact]$artifact"
+
+        - task: CmdLine@2
+          displayName: "Installing Dependencies"
+          inputs:
+            workingDirectory: "$(ONEFUZZ_DEPLOY_LOC)/$(artifact)"
+            script: |
+              set -ex
+              unzip onefuzz-deployment-$(onefuzz_release.version).zip
+              pip install -r requirements.txt
+              wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
+              sudo dpkg -i packages-microsoft-prod.deb
+              sudo apt-get update
+              sudo apt-get install azure-functions-core-tools-3
+
+        - task: CmdLine@2
+          displayName: "Deploying update to OneFuzz"
+          inputs:
+            workingDirectory: "$(ONEFUZZ_DEPLOY_LOC)/$(artifact)"
+            script: |
+              set -ex
+              az login --service-principal -u $(ONEFUZZ_SERVICE_URL) -p $(AZURE_CLIENT_SECRET) --tenant $(AZURE_TENANT_ID)
+              python deploy.py --client_id $(AZURE_CLIENT_ID) --client_secret $(AZURE_CLIENT_SECRET) $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS $DEPLOY_ARGS
+              echo "Deployed Onefuzz $(onefuzz_release.version)"
+
+        - task: CopyFiles@2
+          displayName: "Copying cli to Staging area"
+          inputs:
+            SourceFolder: "$(ONEFUZZ_DEPLOY_LOC)/$(artifact)"
+            Contents:
+              "onefuzz-cli-$(onefuzz_release.version).exe"
+            TargetFolder: $(Build.ArtifactStagingDirectory)
+            flattenFolders: true
+
+        - task: PublishBuildArtifacts@1
+          displayName: "Publish CLI exe"
+          inputs:
+            PathtoPublish: "$(Build.ArtifactStagingDirectory)"
+            ArtifactName: "onefuzz"
+            publishLocation: "Container"
+
+- stage: "Verify"
+  jobs:
+  - job: "verify_onefuzz_version"
+    pool:
+      vmImage: "windows-latest"
+    variables:
+      version: $[ stageDependencies.Deploy.deploy_oneFuzz.outputs['onefuzz_release.version'] ]
+    steps:
+      - download: current
+        artifact: onefuzz
+
+      - task: Bash@3
+        displayName: Test OneFuzz Deployment version
+        timeoutInMinutes: 1
+        inputs:
+          workingDirectory: "$(Pipeline.Workspace)/onefuzz"
+          targetType: 'inline'
+          script: |
+            set -ex
+            ./onefuzz-cli-$(version).exe config --endpoint $(ONEFUZZ_SERVICE_URL) --client_id "$(AZURE_CLIENT_ID)" --client_secret "$(AZURE_CLIENT_SECRET)"
+            ./onefuzz-cli-$(version).exe --version
+            until ./onefuzz-cli-$(version).exe versions check --exact; do echo "waiting due to version mismatch"; sleep 1; done

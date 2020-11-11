@@ -5,7 +5,7 @@
 
 import datetime
 import logging
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
 from onefuzztypes.enums import (
@@ -199,7 +199,6 @@ class Node(BASE_NODE, ORMMixin):
                         errors=["node reimaged during task execution"],
                     )
                 )
-            entry.delete()
 
     def could_shrink_scaleset(self) -> bool:
         if self.scaleset_id and ScalesetShrinkQueue(self.scaleset_id).should_shrink():
@@ -292,6 +291,10 @@ class Node(BASE_NODE, ORMMixin):
             raw_unchecked_filter=time_filter,
         )
 
+    def delete(self) -> None:
+        NodeTasks.clear_by_machine_id(self.machine_id)
+        super().delete()
+
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
@@ -336,6 +339,11 @@ class NodeTasks(BASE_NODE_TASK, ORMMixin):
     @classmethod
     def get_by_task_id(cls, task_id: UUID) -> List["NodeTasks"]:
         return cls.search(query={"task_id": [task_id]})
+
+    @classmethod
+    def clear_by_machine_id(cls, machine_id: UUID) -> None:
+        for entry in cls.get_by_machine_id(machine_id):
+            entry.delete()
 
 
 # this isn't anticipated to be needed by the client, hence it not
@@ -712,13 +720,42 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 logging.info("creating scaleset: %s", self.scaleset_id)
         elif vmss.provisioning_state == "Creating":
             logging.info("Waiting on scaleset creation: %s", self.scaleset_id)
-            if vmss.identity and vmss.identity.principal_id:
-                self.client_object_id = vmss.identity.principal_id
+            self.try_set_identity(vmss)
         else:
             logging.info("scaleset running: %s", self.scaleset_id)
-            self.state = ScalesetState.running
-            self.client_object_id = vmss.identity.principal_id
+            error = self.try_set_identity(vmss)
+            if error:
+                self.state = ScalesetState.creation_failed
+                self.error = error
+            else:
+                self.state = ScalesetState.running
         self.save()
+
+    def try_set_identity(self, vmss: Any) -> Optional[Error]:
+        def get_error() -> Error:
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED,
+                errors=[
+                    "The scaleset is expected to have exactly 1 user assigned identity"
+                ],
+            )
+
+        if self.client_object_id:
+            return None
+        if (
+            vmss.identity
+            and vmss.identity.user_assigned_identities
+            and (len(vmss.identity.user_assigned_identities) != 1)
+        ):
+            return get_error()
+
+        user_assinged_identities = list(vmss.identity.user_assigned_identities.values())
+
+        if user_assinged_identities[0].principal_id:
+            self.client_object_id = user_assinged_identities[0].principal_id
+            return None
+        else:
+            return get_error()
 
     # result = 'did I modify the scaleset in azure'
     def cleanup_nodes(self) -> bool:
@@ -730,24 +767,31 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         to_reimage = []
         to_delete = []
 
-        nodes = Node.search_states(
-            scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
-        )
+        # ground truth of existing nodes
+        azure_nodes = list_instance_ids(self.scaleset_id)
+
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
 
         if not nodes:
             logging.info("no nodes need updating: %s", self.scaleset_id)
             return False
 
-        # ground truth of existing nodes
-        azure_nodes = list_instance_ids(self.scaleset_id)
-
+        # Nodes do not exists in scalesets but in table due to unknown failure
         for node in nodes:
             if node.machine_id not in azure_nodes:
                 logging.info(
                     "no longer in scaleset: %s:%s", self.scaleset_id, node.machine_id
                 )
                 node.delete()
-            elif node.delete_requested:
+
+        nodes_to_reset = [x for x in nodes if x.state in NodeState.ready_for_reset()]
+
+        if len(nodes_to_reset) == 0:
+            logging.info("No needs are ready for resetting: %s", self.scaleset_id)
+            return False
+
+        for node in nodes_to_reset:
+            if node.delete_requested:
                 to_delete.append(node)
             else:
                 if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
@@ -847,7 +891,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.debug("scaleset delete will delete node: %s", self.scaleset_id)
             return
 
-        machine_ids = [x.machine_id for x in nodes]
+        machine_ids = []
+        for node in nodes:
+            if node.debug_keep_node:
+                logging.warning(
+                    "delete manually overridden %s:%s",
+                    self.scaleset_id,
+                    node.machine_id,
+                )
+            else:
+                machine_ids.append(node.machine_id)
 
         logging.info("deleting %s:%s", self.scaleset_id, machine_ids)
         delete_vmss_nodes(self.scaleset_id, machine_ids)
@@ -865,7 +918,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.debug("scaleset delete will delete node: %s", self.scaleset_id)
             return
 
-        machine_ids = [x.machine_id for x in nodes]
+        machine_ids = []
+        for node in nodes:
+            if node.debug_keep_node:
+                logging.warning(
+                    "reimage manually overridden %s:%s",
+                    self.scaleset_id,
+                    node.machine_id,
+                )
+            else:
+                machine_ids.append(node.machine_id)
 
         result = reimage_vmss_nodes(self.scaleset_id, machine_ids)
         if isinstance(result, Error):
@@ -880,6 +942,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def shutdown(self) -> None:
         size = get_vmss_size(self.scaleset_id)
         logging.info("scaleset shutdown: %s (current size: %s)", self.scaleset_id, size)
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
+        for node in nodes:
+            node.set_shutdown()
         if size is None or size == 0:
             self.halt()
 
