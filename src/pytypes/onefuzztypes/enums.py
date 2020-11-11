@@ -361,8 +361,8 @@ class TaskDebugFlag(Enum):
 
 class WebhookEventType(Enum):
     task_created = "task_created"
-    # job_created = "job_created"
-    # task_failed = "task_failed"
+    task_stopped = "task_stopped"
+    task_failed = "task_failed"
 
 
 class WebhookMessageState(Enum):

@@ -4,17 +4,29 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field
 
 from .enums import WebhookEventType, WebhookMessageState
-from .models import TaskConfig
+from .models import Error, TaskConfig
+
+
+class WebhookEventTaskStopped(BaseModel):
+    job_id: UUID
+    task_id: UUID
+
+
+class WebhookEventTaskFailed(BaseModel):
+    job_id: UUID
+    task_id: UUID
+    error: Error
 
 
 class WebhookEventTaskCreated(BaseModel):
-    event_id: UUID
     job_id: UUID
     task_id: UUID
-    task_config: TaskConfig
+    config: TaskConfig
 
 
-WebhookEvent = Union[WebhookEventTaskCreated]
+WebhookEvent = Union[
+    WebhookEventTaskCreated, WebhookEventTaskStopped, WebhookEventTaskFailed
+]
 
 
 class WebhookMessage(BaseModel):
