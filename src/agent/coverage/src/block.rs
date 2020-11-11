@@ -27,10 +27,7 @@ pub struct ModuleCov {
 impl ModuleCov {
     pub fn new(module: impl Into<PathBuf>, blocks: impl IntoIterator<Item = u64>) -> Self {
         let module = module.into();
-        let blocks = blocks
-            .into_iter()
-            .map(|o| (o, BlockCov::new(o)))
-            .collect();
+        let blocks = blocks.into_iter().map(|o| (o, BlockCov::new(o))).collect();
 
         Self { module, blocks }
     }
@@ -57,9 +54,6 @@ pub struct BlockCov {
 
 impl BlockCov {
     pub fn new(offset: u64) -> Self {
-        Self {
-            offset,
-            count: 0,
-        }
+        Self { offset, count: 0 }
     }
 }
