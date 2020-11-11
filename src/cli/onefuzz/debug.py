@@ -70,6 +70,26 @@ class DebugRepro(Command):
             return
 
 
+class DebugNode(Command):
+    """ Debug a specific node on a scaleset """
+
+    def rdp(self, machine_id: UUID_EXPANSION, duration: Optional[int] = 1) -> None:
+        node = self.onefuzz.nodes.get(machine_id)
+        if node.scaleset_id is None:
+            raise Exception("node is not part of a scaleset")
+        self.onefuzz.debug.scalesets.rdp(
+            scaleset_id=node.scaleset_id, machine_id=node.machine_id, duration=duration
+        )
+
+    def ssh(self, machine_id: UUID_EXPANSION, duration: Optional[int] = 1) -> None:
+        node = self.onefuzz.nodes.get(machine_id)
+        if node.scaleset_id is None:
+            raise Exception("node is not part of a scaleset")
+        self.onefuzz.debug.scalesets.ssh(
+            scaleset_id=node.scaleset_id, machine_id=node.machine_id, duration=duration
+        )
+
+
 class DebugScaleset(Command):
     """ Debug tasks """
 
@@ -459,3 +479,4 @@ class Debug(Command):
         self.notification = DebugNotification(onefuzz, logger)
         self.task = DebugTask(onefuzz, logger)
         self.logs = DebugLog(onefuzz, logger)
+        self.node = DebugNode(onefuzz, logger)
