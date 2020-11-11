@@ -83,6 +83,11 @@ def get_subscription() -> Any:  # should be str
 
 
 @cached
+def get_insights_appid() -> str:
+    return os.environ["APPINSIGHTS_APPID"]
+
+
+@cached
 def get_fuzz_storage() -> str:
     return os.environ["ONEFUZZ_DATA_STORAGE"]
 
