@@ -164,8 +164,6 @@ def on_worker_event(machine_id: UUID, event: WorkerEvent) -> None:
         # (as happens in 1.0.0 agents)
         task.on_start()
     elif event.done:
-        node_task.delete()
-
         exit_status = event.done.exit_status
         if not exit_status.success:
             logging.error("task failed. status:%s", exit_status)
