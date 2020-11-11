@@ -359,13 +359,13 @@ class TaskDebugFlag(Enum):
     keep_node_on_completion = "keep_node_on_completion"
 
 
-class WebhookEvent(Enum):
+class WebhookEventType(Enum):
     task_created = "task_created"
     # job_created = "job_created"
     # task_failed = "task_failed"
 
 
-class WebhookSendStatus(Enum):
+class WebhookMessageState(Enum):
     queued = "queued"
     retrying = "retrying"
     succeeded = "succeeded"
