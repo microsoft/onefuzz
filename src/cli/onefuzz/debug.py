@@ -291,6 +291,9 @@ class DebugLog(Command):
         """
         Perform an Application Insights query
 
+        Queries should be well formed Kusto Queries.
+        Ref https://docs.microsoft.com/en-us/azure/data-explorer/kql-quick-reference
+
         :param str log_query: Query to send to Application Insights
         :param str timespan: ISO 8601 duration format
         :param bool raw: Do not simplify the data result
@@ -330,6 +333,9 @@ class DebugLog(Command):
         :param int limit: Limit the number of records returned
         :param bool raw: Do not simplify the data result
         """
+
+        # See https://docs.microsoft.com/en-us/azure/data-explorer/kql-quick-reference
+
         components = ["union isfuzzy=true exceptions, traces, customEvents"]
 
         value = value.strip()
