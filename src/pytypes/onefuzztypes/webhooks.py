@@ -22,11 +22,11 @@ class WebhookMessage(BaseModel):
     event_id: UUID = Field(default_factory=uuid4)
     event_type: WebhookEventType
     event: WebhookEvent
-    try_count: int = 0
 
 
 class WebhookMessageLog(WebhookMessage):
     state: WebhookMessageState = Field(default=WebhookMessageState.queued)
+    try_count: int = Field(default=0)
 
 
 class Webhook(BaseModel):

@@ -1,14 +1,14 @@
-from typing import List, Optional, Tuple
 import logging
-import requests
+from typing import List, Optional, Tuple
 from uuid import UUID
-from pydantic import BaseModel
 
+import requests
 from memoization import cached
 from onefuzztypes.enums import WebhookEventType, WebhookMessageState
 from onefuzztypes.webhooks import Webhook as BASE_WEBHOOK
 from onefuzztypes.webhooks import WebhookEvent, WebhookMessage
 from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
+from pydantic import BaseModel
 
 from .azure.creds import get_func_storage
 from .azure.queue import queue_object
@@ -44,7 +44,7 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
             )
             return
 
-        self.retry_count += 1
+        self.try_count += 1
 
         logging.debug("sending webhook: %s:%s", self.webhook_id, self.event_id)
         if self.send():
@@ -80,8 +80,15 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
             )
             return False
 
+        data = WebhookMessage(
+            webhook_id=self.webhook_id,
+            event_id=self.event_id,
+            event_type=self.event_type,
+            event=self.event,
+        ).json()
+
         try:
-            response = requests.post(webhook.url, json=self.event)
+            response = requests.post(webhook.url, json=data)
             return response.ok
         except Exception as err:
             logging.error(
@@ -92,7 +99,7 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
             )
             return False
 
-    def queue(self) -> None:
+    def queue_webhook(self) -> None:
         obj = WebhookMessageQueueObj(webhook_id=self.webhook_id, event_id=self.event_id)
 
         if self.state == WebhookMessageState.queued:
@@ -127,12 +134,13 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
             if event_type not in webhook.event_types:
                 continue
 
-            message = WebhookMessage(
+            message = WebhookMessageLog(
                 webhook_id=webhook.webhook_id,
+                event_type=event_type,
                 event=event,
             )
             message.save()
-            message.queue()
+            message.queue_webhook()
 
     @cached(ttl=30)
     @classmethod

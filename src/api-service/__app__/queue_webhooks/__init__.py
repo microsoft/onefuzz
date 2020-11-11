@@ -6,10 +6,11 @@
 import json
 
 import azure.functions as func
-from ..onefuzzlib.webhooks import WebhookMessageQueueObj, WebhookMessage
+
+from ..onefuzzlib.webhooks import WebhookMessageLog, WebhookMessageQueueObj
 
 
 def main(msg: func.QueueMessage) -> None:
     body = msg.get_body()
     obj = WebhookMessageQueueObj.parse_obj(json.loads(body))
-    WebhookMessage.process_from_queue(obj)
+    WebhookMessageLog.process_from_queue(obj)
