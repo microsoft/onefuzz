@@ -6,7 +6,7 @@ use tokio::time;
 
 use crate::coordinator::*;
 use crate::done::set_done_lock;
-use crate::heartbeat::AgentHeartbeatClient;
+use crate::heartbeat::{AgentHeartbeatClient, HeartbeatSender};
 use crate::reboot::*;
 use crate::scheduler::*;
 use crate::setup::*;
@@ -20,7 +20,7 @@ pub struct Agent {
     setup_runner: Box<dyn ISetupRunner>,
     work_queue: Box<dyn IWorkQueue>,
     worker_runner: Box<dyn IWorkerRunner>,
-    _heartbeat: Option<AgentHeartbeatClient>,
+    heartbeat: Option<AgentHeartbeatClient>,
     previous_state: NodeState,
 }
 
@@ -44,7 +44,7 @@ impl Agent {
             setup_runner,
             work_queue,
             worker_runner,
-            _heartbeat: heartbeat,
+            heartbeat,
             previous_state,
         }
     }
@@ -67,6 +67,7 @@ impl Agent {
         }
 
         loop {
+            self.heartbeat.alive();
             if delay.is_elapsed() {
                 self.execute_pending_commands().await?;
                 delay = command_delay();
