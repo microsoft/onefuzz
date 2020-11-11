@@ -68,7 +68,7 @@ pub trait HeartbeatSender {
 
     fn alive(&self) {
         if let Err(error) = self.send(HeartbeatData::TaskAlive) {
-            error!("{}", error);
+            error!("failed to send heartbeat: {}", error);
         }
     }
 }
