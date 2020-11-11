@@ -74,6 +74,7 @@ impl Recorder {
                     self.on_breakpoint(&mut tracee)?;
                 }
                 Stop::Clone(pid, tid) => {
+                    // Only seen when the `VM_CLONE` flag is set, as of Linux 4.15.
                     log::info!("new thread: {} -> {}", pid, tid);
                 }
                 _ => {
