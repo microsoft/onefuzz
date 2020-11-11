@@ -162,6 +162,10 @@
                             "value": "[reference(resourceId('microsoft.insights/components/', parameters('name')), '2015-05-01').InstrumentationKey]"
                         },
                         {
+                            "name": "APPINSIGHTS_APPID",
+                            "value": "[reference(resourceId('microsoft.insights/components/', parameters('name')), '2015-05-01').AppId]"
+                        },
+                        {
                             "name": "ONEFUZZ_TELEMETRY",
                             "value": "[variables('telemetry')]"
                         },
