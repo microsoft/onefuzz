@@ -1,12 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-
-#![cfg(windows)]
 #![allow(clippy::as_conversions)]
 #![allow(clippy::new_without_default)]
 
+#[cfg(target_os = "windows")]
 mod intel;
+
+#[cfg(target_os = "windows")]
 pub mod pe;
+
+pub mod block;
 
 use std::{
     ffi::OsString,
@@ -121,6 +124,10 @@ impl AppCoverageBlocks {
         Ok(())
     }
 
+    pub fn count_blocks(&self) -> usize {
+        self.modules().iter().map(|m| m.blocks().len()).sum()
+    }
+
     pub fn count_blocks_hit(&self) -> usize {
         self.modules().iter().map(|m| m.count_blocks_hit()).sum()
     }
@@ -128,6 +135,7 @@ impl AppCoverageBlocks {
 
 /// Statically analyze the specified images to discover the basic block
 /// entry points and write out the results in a file in `output_dir`.
+#[cfg(target_os = "windows")]
 pub fn run_init(output_dir: PathBuf, modules: Vec<PathBuf>, function: bool) -> Result<()> {
     let mut result = AppCoverageBlocks::new();
     for module in modules {
