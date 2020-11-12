@@ -18,7 +18,7 @@ use winapi::{
 };
 
 /// Errors reported via the VC++ /RTC compiler flag, as defined in vctruntime\inc\rtcapi.h
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum VcppRtcError {
     UnknownRtcError,
     /// _RTC_CORRUPT_STACK (stack memory corrupted)
