@@ -27,6 +27,6 @@ cargo test --release --manifest-path ./onefuzz/Cargo.toml
 cp target/release/onefuzz-agent* ../../artifacts/agent
 cp target/release/onefuzz-supervisor* ../../artifacts/agent
 
-if [ -f target/release/onefuzz_agent.pdb ]; then
-    cp target/release/*.pdb ../../artifacts/agent
-fi
+for file in target/release/*.pdb; do
+    cp ${file} ../../artifacts/agent
+done
