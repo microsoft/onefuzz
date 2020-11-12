@@ -251,16 +251,14 @@ class ORMMixin(ModelMixin):
     def event_include(self) -> Optional[MappingIntStrAny]:
         return {}
 
-    def event(self) -> Any:
-        return self.raw(exclude_none=True, include=self.event_include())
-
     def telemetry(self) -> Any:
         return self.raw(exclude_none=True, include=self.telemetry_include())
 
     def _event_as_needed(self) -> None:
         # Upon ORM save, if the object returns event data, we'll send it to the
         # dashboard event subsystem
-        data = self.event()
+
+        data = self.raw(exclude_none=True, include=self.event_include())
         if not data:
             return
         add_event(self.table_name(), data)
