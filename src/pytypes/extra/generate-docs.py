@@ -67,9 +67,6 @@ def main():
         event_type=WebhookEventType.ping,
         event=examples[WebhookEventType.ping],
     )
-    message_schema = message.schema()
-    del message_schema["definitions"]
-    message_schema_text = json.dumps(message_schema, indent=4)
 
     layer(
         1,
@@ -83,8 +80,6 @@ def main():
     )
 
     typed(3, "Example", message.json(indent=4, exclude_none=True), "json")
-    typed(3, "Schema", message_schema_text, "json")
-
     layer(2, "Event Types (WebhookEventType)")
 
     for webhook_type in WebhookEventType:
@@ -92,6 +87,8 @@ def main():
         layer(3, webhook_type.name)
         typed(4, "Example", example.json(indent=4, exclude_none=True), "json")
         typed(4, "Schema", example.schema_json(indent=4), "json")
+
+    typed(2, "Full Event Schema", message.schema_json(indent=4), "json")
 
 
 if __name__ == "__main__":
