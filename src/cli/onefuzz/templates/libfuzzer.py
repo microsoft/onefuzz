@@ -255,7 +255,7 @@ class Libfuzzer(Command):
         wait_for_running: bool = False,
         wait_for_files: Optional[List[ContainerType]] = None,
         extra_files: Optional[List[File]] = None,
-        existing_inputs: Optional[Container] = None,
+        existing_inputs: Optional[List[Container]] = None,
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
@@ -268,7 +268,8 @@ class Libfuzzer(Command):
 
         # verify containers exist
         if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
+            for existing_container in existing_inputs:
+                self.onefuzz.containers.get(existing_container)
 
         if dryrun:
             return None
@@ -295,17 +296,12 @@ class Libfuzzer(Command):
             ContainerType.unique_inputs,
         )
 
-        if existing_inputs:
-            self.onefuzz.containers.get(existing_inputs)
-            helper.containers[ContainerType.inputs] = existing_inputs
-        else:
-            helper.define_containers(ContainerType.inputs)
-
         helper.create_containers()
         helper.setup_notifications(notification_config)
 
         helper.upload_setup(setup_dir, target_exe, extra_files)
         if inputs:
+            helper.define_containers(ContainerType.inputs)
             helper.upload_inputs(inputs)
         helper.wait_on(wait_for_files, wait_for_running)
 
@@ -319,6 +315,10 @@ class Libfuzzer(Command):
             ),
             (ContainerType.inputs, helper.containers[ContainerType.inputs]),
         ]
+
+        if existing_inputs:
+            for existing_container in existing_inputs:
+                merge_containers.append((ContainerType.inputs, existing_container))
 
         self.logger.info("creating libfuzzer_merge task")
         self.onefuzz.tasks.create(

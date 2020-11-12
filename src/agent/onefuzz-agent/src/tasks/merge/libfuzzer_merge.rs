@@ -32,7 +32,7 @@ pub struct Config {
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
     pub input_queue: Option<Url>,
-    pub inputs: SyncedDir,
+    pub inputs: Vec<SyncedDir>,
     pub unique_inputs: SyncedDir,
 
     #[serde(flatten)]
@@ -52,12 +52,12 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             }
         }
     } else {
-        let tmp_dir = "./tmp";
-        verbose!("tmp dir reset");
-        utils::reset_tmp_dir(tmp_dir).await?;
-        config.inputs.init().await?;
-        config.inputs.sync_pull().await?;
-        sync_and_merge(config.clone(), tmp_dir).await?;
+        for input in config.inputs.iter() {
+            input.init().await?;
+            input.sync_pull().await?;
+        }
+        let input_paths = config.inputs.iter().map(|i| &i.path).collect();
+        sync_and_merge(config.clone(), input_paths).await?;
         Ok(())
     }
 }
@@ -80,7 +80,7 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
 
         let input_path = utils::download_input(input_url.clone(), tmp_dir).await?;
         info!("downloaded input to {}", input_path.display());
-        sync_and_merge(config.clone(), tmp_dir).await?;
+        sync_and_merge(config.clone(), vec![tmp_dir]).await?;
 
         verbose!("will delete popped message with id = {}", msg.id());
 
@@ -104,10 +104,10 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
 
 async fn sync_and_merge(
     config: Arc<Config>,
-    input_dir: impl AsRef<Path>,
+    input_dirs: Vec<impl AsRef<Path>>,
 ) -> Result<LibFuzzerMergeOutput> {
     config.unique_inputs.sync_pull().await?;
-    match merge_inputs(config.clone(), input_dir).await {
+    match merge_inputs(config.clone(), input_dirs).await {
         Ok(result) => {
             if result.added_files_count > 0 {
                 info!("Added {} new files to the corpus", result.added_files_count);
@@ -127,7 +127,7 @@ async fn sync_and_merge(
 
 pub async fn merge_inputs(
     config: Arc<Config>,
-    input_dir: impl AsRef<Path>,
+    candidates: Vec<impl AsRef<Path>>,
 ) -> Result<LibFuzzerMergeOutput> {
     info!("Merging corpus");
     let merger = LibFuzzer::new(
@@ -135,7 +135,7 @@ pub async fn merge_inputs(
         &config.target_options,
         &config.target_env,
     );
-    let candidates = vec![&input_dir];
+    // let candidates = vec![&input_dir];
     merger.merge(&config.unique_inputs.path, &candidates).await
 }
 

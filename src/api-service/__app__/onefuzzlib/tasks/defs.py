@@ -202,9 +202,9 @@ TASK_DEFINITIONS = {
             ),
             ContainerDefinition(
                 type=ContainerType.inputs,
-                compare=Compare.Equal,
-                value=1,
-                permissions=[ContainerPermission.Create, ContainerPermission.List],
+                compare=Compare.AtLeast,
+                value=0,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
         ],
         monitor_queue=None,

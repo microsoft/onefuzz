@@ -31,10 +31,10 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         target_env,
         target_options,
         input_queue: None,
-        inputs: SyncedDir {
+        inputs: vec![SyncedDir {
             path: inputs.into(),
             url: BlobContainerUrl::new(Url::parse("https://contoso.com/inputs")?)?,
-        },
+        }],
         unique_inputs: SyncedDir {
             path: unique_inputs.into(),
             url: BlobContainerUrl::new(Url::parse("https://contoso.com/unique_inputs")?)?,
@@ -52,7 +52,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     let mut rt = Runtime::new()?;
     rt.block_on(merge_inputs(
         config.clone(),
-        config.clone().inputs.path.clone(),
+        vec![config.clone().inputs[0].path.clone()],
     ))?;
 
     Ok(())
