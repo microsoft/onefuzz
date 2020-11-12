@@ -19,13 +19,13 @@ from onefuzztypes.enums import WebhookEventType
 
 
 def layer(depth: int, title: str, content: Optional[str] = None) -> None:
-    print(f"{'#' * depth} {title}\n\n")
+    print(f"{'#' * depth} {title}\n")
     if content is not None:
-        print(f"{content}\n\n")
+        print(f"{content}\n")
 
 
 def typed(depth: int, title: str, content: str, data_type: str) -> None:
-    print(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n\n")
+    print(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
 
 
 def main():

@@ -1,14 +1,10 @@
 # Webhook Events
 
-
 This document describes the basic webhook event subscriptions available in OneFuzz
-
 
 ## Payload
 
-
 Each event will be submitted via HTTP POST to the user provided URL.
-
 
 ### Example
 
@@ -22,7 +18,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
     }
 }
 ```
-
 
 ### Schema
 
@@ -70,12 +65,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
-
 ## Event Types (WebhookEventType)
 
-
 ### task_created
-
 
 #### Example
 
@@ -111,7 +103,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
     }
 }
 ```
-
 
 #### Schema
 
@@ -461,9 +452,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
-
 ### task_stopped
-
 
 #### Example
 
@@ -473,7 +462,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "task_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
-
 
 #### Schema
 
@@ -500,9 +488,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
-
 ### task_failed
-
 
 #### Example
 
@@ -518,7 +504,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
     }
 }
 ```
-
 
 #### Schema
 
@@ -597,9 +582,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
-
 ### ping
-
 
 #### Example
 
@@ -608,7 +591,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "ping_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
-
 
 #### Schema
 
@@ -625,5 +607,4 @@ Each event will be submitted via HTTP POST to the user provided URL.
     }
 }
 ```
-
 
