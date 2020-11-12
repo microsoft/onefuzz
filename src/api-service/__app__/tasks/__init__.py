@@ -28,8 +28,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(user_info, Error):
         return not_ok(user_info, context="task create")
 
-    request.user_info = user_info
-
     try:
         check_config(request)
     except TaskConfigError as err:
@@ -63,7 +61,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             if isinstance(prereq, Error):
                 return not_ok(prereq, context="task create prerequisite")
 
-    task = Task.create(config=request, job_id=request.job_id)
+    task = Task.create(config=request, job_id=request.job_id, user_info=user_info)
     if isinstance(task, Error):
         return not_ok(task, context="task create invalid pool")
     return ok(task)

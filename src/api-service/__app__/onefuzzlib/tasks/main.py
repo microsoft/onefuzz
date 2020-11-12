@@ -11,7 +11,7 @@ from uuid import UUID
 from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
-from onefuzztypes.models import TaskConfig, TaskVm
+from onefuzztypes.models import TaskConfig, TaskVm, UserInfo
 from onefuzztypes.webhooks import (
     WebhookEventTaskCreated,
     WebhookEventTaskFailed,
@@ -42,7 +42,9 @@ class Task(BASE_TASK, ORMMixin):
         return True
 
     @classmethod
-    def create(cls, config: TaskConfig, job_id: UUID) -> Union["Task", Error]:
+    def create(
+        cls, config: TaskConfig, job_id: UUID, user_info: UserInfo
+    ) -> Union["Task", Error]:
         if config.vm:
             os = get_os(config.vm.region, config.vm.image)
         elif config.pool:
@@ -52,7 +54,7 @@ class Task(BASE_TASK, ORMMixin):
             os = pool.os
         else:
             raise Exception("task must have vm or pool")
-        task = cls(config=config, job_id=job_id, os=os)
+        task = cls(config=config, job_id=job_id, os=os, user_info=user_info)
         task.save()
         Webhook.send_event(
             WebhookEventTaskCreated(

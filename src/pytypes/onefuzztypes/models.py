@@ -189,7 +189,6 @@ class TaskConfig(BaseModel):
     containers: List[TaskContainers]
     tags: Dict[str, str]
     debug: Optional[List[TaskDebugFlag]]
-    user_info: Optional[UserInfo]
 
 
 class BlobRef(BaseModel):
@@ -711,3 +710,4 @@ class Task(BaseModel):
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
+    user_info: Optional[UserInfo]

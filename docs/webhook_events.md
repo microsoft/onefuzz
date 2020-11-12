@@ -77,6 +77,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "config": {
             "$ref": "#/definitions/TaskConfig"
+        },
+        "user_info": {
+            "$ref": "#/definitions/UserInfo"
         }
     },
     "required": [
@@ -401,6 +404,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "containers",
                 "tags"
             ]
+        },
+        "UserInfo": {
+            "title": "UserInfo",
+            "type": "object",
+            "properties": {
+                "application_id": {
+                    "title": "Application Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "object_id": {
+                    "title": "Object Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "upn": {
+                    "title": "Upn",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "application_id"
+            ]
         }
     }
 }
@@ -433,12 +459,40 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "Task Id",
             "type": "string",
             "format": "uuid"
+        },
+        "user_info": {
+            "$ref": "#/definitions/UserInfo"
         }
     },
     "required": [
         "job_id",
         "task_id"
-    ]
+    ],
+    "definitions": {
+        "UserInfo": {
+            "title": "UserInfo",
+            "type": "object",
+            "properties": {
+                "application_id": {
+                    "title": "Application Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "object_id": {
+                    "title": "Object Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "upn": {
+                    "title": "Upn",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "application_id"
+            ]
+        }
+    }
 }
 ```
 
@@ -478,6 +532,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "error": {
             "$ref": "#/definitions/Error"
+        },
+        "user_info": {
+            "$ref": "#/definitions/UserInfo"
         }
     },
     "required": [
@@ -530,6 +587,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "code",
                 "errors"
+            ]
+        },
+        "UserInfo": {
+            "title": "UserInfo",
+            "type": "object",
+            "properties": {
+                "application_id": {
+                    "title": "Application Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "object_id": {
+                    "title": "Object Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "upn": {
+                    "title": "Upn",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "application_id"
             ]
         }
     }
@@ -933,6 +1013,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tags"
             ]
         },
+        "UserInfo": {
+            "title": "UserInfo",
+            "type": "object",
+            "properties": {
+                "application_id": {
+                    "title": "Application Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "object_id": {
+                    "title": "Object Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "upn": {
+                    "title": "Upn",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "application_id"
+            ]
+        },
         "WebhookEventTaskCreated": {
             "title": "WebhookEventTaskCreated",
             "type": "object",
@@ -949,6 +1052,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
                 }
             },
             "required": [
@@ -970,6 +1076,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Task Id",
                     "type": "string",
                     "format": "uuid"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
                 }
             },
             "required": [
@@ -1039,6 +1148,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "error": {
                     "$ref": "#/definitions/Error"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
                 }
             },
             "required": [
