@@ -55,6 +55,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         let tmp_dir = "./tmp";
         verbose!("tmp dir reset");
         utils::reset_tmp_dir(tmp_dir).await?;
+        config.inputs.init().await?;
         config.inputs.sync_pull().await?;
         sync_and_merge(config.clone(), tmp_dir).await?;
         Ok(())
