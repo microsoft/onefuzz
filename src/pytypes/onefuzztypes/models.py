@@ -35,6 +35,12 @@ from .enums import (
 from .primitives import Container, PoolName, Region
 
 
+class UserInfo(BaseModel):
+    application_id: UUID
+    object_id: Optional[UUID]
+    upn: Optional[str]
+
+
 class EnumModel(BaseModel):
     @root_validator(pre=True)
     def exactly_one(cls: Any, values: Any) -> Any:
@@ -183,6 +189,7 @@ class TaskConfig(BaseModel):
     containers: List[TaskContainers]
     tags: Dict[str, str]
     debug: Optional[List[TaskDebugFlag]]
+    user_info: Optional[UserInfo]
 
 
 class BlobRef(BaseModel):

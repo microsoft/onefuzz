@@ -16,12 +16,19 @@ from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.task_event import TaskEvent
 from ..onefuzzlib.tasks.config import TaskConfigError, check_config
 from ..onefuzzlib.tasks.main import Task
+from ..onefuzzlib.user_credentials import parse_jwt_token
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(TaskConfig, req)
     if isinstance(request, Error):
         return not_ok(request, context="task create")
+
+    user_info = parse_jwt_token(req)
+    if isinstance(user_info, Error):
+        return not_ok(user_info, context="task create")
+
+    request.user_info = user_info
 
     try:
         check_config(request)
