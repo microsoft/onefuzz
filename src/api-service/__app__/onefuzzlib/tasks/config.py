@@ -267,6 +267,9 @@ def build_task_config(
     if TaskFeature.target_options_merge in definition.features:
         config.target_options_merge = task_config.task.target_options_merge or False
 
+    if TaskFeature.target_workers in definition.features:
+        config.target_workers = task_config.task.target_workers
+
     if TaskFeature.rename_output in definition.features:
         config.rename_output = task_config.task.rename_output or False
 
