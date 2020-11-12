@@ -1,3 +1,4 @@
+import datetime
 import logging
 from typing import List, Optional, Tuple
 from uuid import UUID
@@ -16,6 +17,7 @@ from .azure.queue import queue_object
 from .orm import ORMMixin
 
 MAX_TRIES = 5
+EXPIRE_DAYS = 7
 
 
 class WebhookMessageQueueObj(BaseModel):
@@ -27,6 +29,12 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
     @classmethod
     def key_fields(cls) -> Tuple[str, Optional[str]]:
         return ("webhook_id", "event_id")
+
+    @classmethod
+    def search_expired(cls) -> List["WebhookMessageLog"]:
+        expire_time = datetime.datetime.utcnow() - datetime.timedelta(days=EXPIRE_DAYS)
+        time_filter = "Timestamp lt datetime'%s'" % expire_time.isoformat()
+        return cls.search(raw_unchecked_filter=time_filter)
 
     @classmethod
     def process_from_queue(cls, obj: WebhookMessageQueueObj) -> None:
