@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Tuple, Union
 from uuid import UUID
 
-from onefuzztypes.enums import ErrorCode, TaskState, WebhookEventType
+from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm
@@ -55,10 +55,9 @@ class Task(BASE_TASK, ORMMixin):
         task = cls(config=config, job_id=job_id, os=os)
         task.save()
         Webhook.send_event(
-            WebhookEventType.task_created,
             WebhookEventTaskCreated(
                 job_id=task.job_id, task_id=task.task_id, config=config
-            ),
+            )
         )
         return task
 
@@ -184,8 +183,7 @@ class Task(BASE_TASK, ORMMixin):
         self.state = TaskState.stopping
         self.save()
         Webhook.send_event(
-            WebhookEventType.task_stopped,
-            WebhookEventTaskStopped(job_id=self.job_id, task_id=self.task_id),
+            WebhookEventTaskStopped(job_id=self.job_id, task_id=self.task_id)
         )
 
     def mark_failed(self, error: Error) -> None:
@@ -200,10 +198,9 @@ class Task(BASE_TASK, ORMMixin):
         self.save()
 
         Webhook.send_event(
-            WebhookEventType.task_failed,
             WebhookEventTaskFailed(
                 job_id=self.job_id, task_id=self.task_id, error=error
-            ),
+            )
         )
 
     def get_pool(self) -> Optional[Pool]:
