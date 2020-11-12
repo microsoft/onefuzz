@@ -526,7 +526,8 @@
             },
             "properties": {
                 "supportsHttpsTrafficOnly": true,
-                "accessTier": "Hot"
+                "accessTier": "Hot",
+                "allowBlobPublicAccess": false
             },
             "tags": {
                 "OWNER": "[parameters('owner')]"
@@ -544,7 +545,8 @@
             },
             "properties": {
                 "supportsHttpsTrafficOnly": true,
-                "accessTier": "Hot"
+                "accessTier": "Hot",
+                "allowBlobPublicAccess": false
             },
             "tags": {
                 "OWNER": "[parameters('owner')]"
