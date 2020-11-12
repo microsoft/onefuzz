@@ -16,11 +16,10 @@ jobs:
       id: cache-rust-prereqs
       with:
         path: |
-          sccache
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-2020-09
+        key: rust-${{ runner.os }}-2020-11
         restore-keys: |
            rust-${{ runner.os }}
     - name: Install Rust Prereqs
