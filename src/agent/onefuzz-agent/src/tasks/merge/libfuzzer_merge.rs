@@ -22,7 +22,6 @@ use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
 #[derive(Debug, Deserialize)]
 struct QueueMessage {
     content_length: u32,
-
     url: Url,
 }
 
@@ -117,7 +116,6 @@ async fn sync_and_merge(
             }
             Ok(result)
         }
-
         Err(e) => {
             error!("Merge failed : {}", e);
             Err(e)
@@ -135,7 +133,6 @@ pub async fn merge_inputs(
         &config.target_options,
         &config.target_env,
     );
-    // let candidates = vec![&input_dir];
     merger.merge(&config.unique_inputs.path, &candidates).await
 }
 

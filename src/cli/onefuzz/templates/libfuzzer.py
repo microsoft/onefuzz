@@ -279,7 +279,6 @@ class Libfuzzer(Command):
             return None
 
         self.logger.info("creating libfuzzer merge from template")
-
         self._check_is_libfuzzer(target_exe)
 
         helper = JobHelper(
