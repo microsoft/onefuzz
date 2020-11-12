@@ -44,7 +44,10 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="webhook create")
     webhook = Webhook(
-        name=request.name, url=request.url, event_types=request.event_types
+        name=request.name,
+        url=request.url,
+        event_types=request.event_types,
+        secret_token=request.secret_token,
     )
     webhook.save()
 
@@ -72,6 +75,9 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
 
     if request.event_types is not None:
         webhook.event_types = request.event_types
+
+    if request.secret_token is not None:
+        webhook.secret_token = request.secret_token
 
     webhook.save()
     webhook.url = None

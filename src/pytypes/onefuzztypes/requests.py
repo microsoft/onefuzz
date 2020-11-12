@@ -216,6 +216,7 @@ class WebhookCreate(BaseRequest):
     name: str
     url: AnyHttpUrl
     event_types: List[WebhookEventType]
+    secret_token: Optional[str]
 
 
 class WebhookSearch(BaseModel):
@@ -231,3 +232,4 @@ class WebhookUpdate(BaseModel):
     name: Optional[str]
     event_types: Optional[List[WebhookEventType]]
     url: Optional[AnyHttpUrl]
+    secret_token: Optional[str]

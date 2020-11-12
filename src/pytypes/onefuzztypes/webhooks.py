@@ -54,3 +54,4 @@ class Webhook(BaseModel):
     name: str
     url: Optional[AnyHttpUrl]
     event_types: List[WebhookEventType]
+    secret_token: Optional[str]

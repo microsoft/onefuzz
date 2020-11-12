@@ -1,5 +1,7 @@
 import datetime
+import hmac
 import logging
+from hashlib import sha512
 from typing import List, Optional, Tuple
 from uuid import UUID
 
@@ -91,26 +93,8 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
             )
             return False
 
-        data = WebhookMessage(
-            webhook_id=self.webhook_id,
-            event_id=self.event_id,
-            event_type=self.event_type,
-            event=self.event,
-        ).json()
-
-        if webhook.url is None:
-            raise Exception("webhook URL incorrectly removed: %s" % webhook.webhook_id)
-
         try:
-            response = requests.post(
-                webhook.url,
-                data=data,
-                headers={
-                    "Content-type": "application/json",
-                    "User-Agent": USER_AGENT,
-                },
-            )
-            return response.ok
+            return webhook.send(self)
         except Exception as err:
             logging.error(
                 "webhook failed with exception: %s:%s - %s",
@@ -186,6 +170,51 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
         ping = WebhookEventPing()
         self._add_event(WebhookEventType.ping, ping)
         return ping
+
+    def send(self, message_log: WebhookMessageLog) -> bool:
+        if self.url is None:
+            raise Exception("webhook URL incorrectly removed: %s" % self.webhook_id)
+
+        data, digest = build_message(
+            webhook_id=self.webhook_id,
+            event_id=message_log.event_id,
+            event_type=message_log.event_type,
+            event=message_log.event,
+            secret_token=self.secret_token,
+        )
+
+        headers = {"Content-type": "application/json", "User-Agent": USER_AGENT}
+
+        if digest:
+            headers["X-Onefuzz-Digest"] = digest
+
+        response = requests.post(
+            self.url,
+            data=data,
+            headers=headers,
+        )
+        return response.ok
+
+
+def build_message(
+    *,
+    webhook_id: UUID,
+    event_id: UUID,
+    event_type: WebhookEventType,
+    event: WebhookEvent,
+    secret_token: Optional[str] = None,
+) -> Tuple[bytes, Optional[str]]:
+    data = (
+        WebhookMessage(
+            webhook_id=webhook_id, event_id=event_id, event_type=event_type, event=event
+        )
+        .json()
+        .encode()
+    )
+    digest = None
+    if secret_token:
+        digest = hmac.new(secret_token.encode(), msg=data, digestmod=sha512).hexdigest()
+    return (data, digest)
 
 
 @cached(ttl=30)

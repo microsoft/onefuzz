@@ -283,14 +283,21 @@ class Webhooks(Endpoint):
         )
 
     def create(
-        self, name: str, url: str, event_types: List[enums.WebhookEventType]
+        self,
+        name: str,
+        url: str,
+        event_types: List[enums.WebhookEventType],
+        *,
+        secret_token: Optional[str] = None,
     ) -> webhooks.Webhook:
         """ Create a webhook """
         self.logger.debug("creating webhook.  name: %s", name)
         return self._req_model(
             "POST",
             webhooks.Webhook,
-            data=requests.WebhookCreate(name=name, url=url, event_types=event_types),
+            data=requests.WebhookCreate(
+                name=name, url=url, event_types=event_types, secret_token=secret_token
+            ),
         )
 
     def update(
@@ -300,6 +307,7 @@ class Webhooks(Endpoint):
         name: Optional[str] = None,
         url: Optional[str] = None,
         event_types: Optional[List[enums.WebhookEventType]] = None,
+        secret_token: Optional[str] = None,
     ) -> webhooks.Webhook:
         """ Update a webhook """
 
@@ -316,6 +324,7 @@ class Webhooks(Endpoint):
                 name=name,
                 url=url,
                 event_types=event_types,
+                secret_token=secret_token,
             ),
         )
 
