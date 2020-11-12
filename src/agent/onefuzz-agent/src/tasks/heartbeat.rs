@@ -48,9 +48,7 @@ pub async fn init_task_heartbeat(queue_url: Url, task_id: Uuid) -> Result<TaskHe
             let machine_id = context.state.machine_id;
             let machine_name = context.state.machine_name.clone();
 
-            let mut data =
-                HeartbeatClient::<TaskContext, _>::drain_current_messages(context.clone());
-            data.push(HeartbeatData::MachineAlive);
+            let data = HeartbeatClient::<TaskContext, _>::drain_current_messages(context.clone());
             let _ = context
                 .queue_client
                 .enqueue(Heartbeat {
@@ -69,13 +67,19 @@ pub trait HeartbeatSender {
     fn send(&self, data: HeartbeatData) -> Result<()>;
 
     fn alive(&self) {
-        self.send(HeartbeatData::TaskAlive).unwrap()
+        if let Err(error) = self.send(HeartbeatData::TaskAlive) {
+            error!("failed to send heartbeat: {}", error);
+        }
     }
 }
 
 impl HeartbeatSender for TaskHeartbeatClient {
     fn send(&self, data: HeartbeatData) -> Result<()> {
-        let mut messages_lock = self.context.pending_messages.lock().unwrap();
+        let mut messages_lock = self
+            .context
+            .pending_messages
+            .lock()
+            .map_err(|_| anyhow::format_err!("Unable to acquire the lock"))?;
         messages_lock.insert(data);
         Ok(())
     }
