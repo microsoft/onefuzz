@@ -97,6 +97,7 @@ fn generic_exception(exception_record: &EXCEPTION_RECORD) -> Option<ExceptionCod
 
 /// A friendly description of the exception based on the exception code and other
 /// parameters available to the debugger when the exception was raised.
+#[derive(Clone)]
 pub enum ExceptionDescription {
     /// A generic exception with no additional details.
     GenericException(ExceptionCode),
@@ -196,12 +197,14 @@ pub fn new_test_result(
 }
 
 /// The file and line number for frame in the calls stack.
+#[derive(Clone)]
 pub struct FileInfo {
     pub file: String,
     pub line: u32,
 }
 
 /// The location within a function for a call stack entry.
+#[derive(Clone)]
 pub enum DebugFunctionLocation {
     /// If symbol information is available, we use the file/line numbers for stability across builds.
     FileInfo(FileInfo),
@@ -238,6 +241,7 @@ impl<'a> From<&'a stack::DebugFunctionLocation> for DebugFunctionLocation {
 }
 
 /// A stack frame for reporting where an exception or other bug occurs.
+#[derive(Clone)]
 pub enum DebugStackFrame {
     Frame {
         /// The name of the function (if available via symbols or exports) or possibly something else like a
@@ -281,6 +285,7 @@ impl<'a> From<&'a stack::DebugStackFrame> for DebugStackFrame {
 }
 
 /// The details of an exception observed by the execution engine.
+#[derive(Clone)]
 pub struct Exception {
     /// The win32 exception code.
     pub exception_code: u32,
@@ -316,7 +321,7 @@ impl fmt::Display for Exception {
 }
 
 /// How did the program exit - normally (so we have a proper exit code) or was it terminated?
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ExitStatus {
     /// The exit code returned from the process.
     Code(i32),
@@ -363,6 +368,7 @@ impl fmt::Display for ExitStatus {
 }
 
 /// A fuzzer or execution engine sends this message to a back end to report the bugs found for a single input.
+#[derive(Clone)]
 pub struct TestResult {
     /// The input filename that results in the bugs_found.
     pub input_file: String,
@@ -401,7 +407,7 @@ impl TestResult {
 }
 
 /// This is a non-exhaustive list of exceptions that might be raised in a program.
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum ExceptionCode {
     UnknownExceptionCode,
     UnknownApplicationVerifierStop,
