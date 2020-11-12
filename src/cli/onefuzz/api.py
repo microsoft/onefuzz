@@ -328,7 +328,7 @@ class Webhooks(Endpoint):
             ),
         )
 
-    def delete(self, webhook_id: UUID_EXPANSION) -> webhooks.Webhook:
+    def delete(self, webhook_id: UUID_EXPANSION) -> webhooks.BoolResult:
         """ Delete a webhook """
 
         webhook_id_expanded = self._disambiguate_uuid(
@@ -337,7 +337,7 @@ class Webhooks(Endpoint):
 
         return self._req_model(
             "DELETE",
-            webhooks.Webhook,
+            webhooks.BoolResult,
             data=requests.WebhookGet(webhook_id=webhook_id_expanded),
         )
 
