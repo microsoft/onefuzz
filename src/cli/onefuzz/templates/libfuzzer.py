@@ -273,7 +273,7 @@ class Libfuzzer(Command):
             self.logger.info(
                 "please specify either an input folder or at least one existing inputs container"
             )
-            return
+            return None
 
         if dryrun:
             return None
