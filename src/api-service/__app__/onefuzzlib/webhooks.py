@@ -96,6 +96,9 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
             event=self.event,
         ).json()
 
+        if webhook.url is None:
+            raise Exception("webhook URL incorrectly removed: %s", webhook.webhook_id)
+
         try:
             response = requests.post(webhook.url, json=data)
             return response.ok
@@ -135,7 +138,7 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
 class Webhook(BASE_WEBHOOK, ORMMixin):
     @classmethod
     def key_fields(cls) -> Tuple[str, Optional[str]]:
-        return ("webhook_id", "url")
+        return ("webhook_id", "name")
 
     @classmethod
     def send_event(cls, event_type: WebhookEventType, event: WebhookEvent) -> None:

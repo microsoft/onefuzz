@@ -29,13 +29,13 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
         webhook = Webhook.get_by_id(request.webhook_id)
         if isinstance(webhook, Error):
             return not_ok(webhook, context="webhook update")
-        webhook.redact()
+        webhook.url = None
         return ok(webhook)
 
     logging.info("listing webhooks")
     webhooks = Webhook.search()
     for webhook in webhooks:
-        webhook.redact()
+        webhook.url = None
     return ok(webhooks)
 
 
@@ -48,7 +48,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     )
     webhook.save()
 
-    webhook.redact()
+    webhook.url = None
     logging.info("added webhook: %s", request)
     return ok(webhook)
 
@@ -67,7 +67,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     webhook.name = request.name
     webhook.event_types = request.event_types
     webhook.save()
-    webhook.redact()
+    webhook.url = None
 
     return ok(webhook)
 

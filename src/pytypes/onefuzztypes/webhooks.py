@@ -1,7 +1,7 @@
-from typing import List, Union
+from typing import List, Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import AnyHttpUrl, BaseModel, Field
 
 from .enums import WebhookEventType, WebhookMessageState
 from .models import Error, TaskConfig
@@ -51,9 +51,6 @@ class WebhookMessageLog(WebhookMessage):
 
 class Webhook(BaseModel):
     webhook_id: UUID = Field(default_factory=uuid4)
-    url: str
     name: str
+    url: Optional[AnyHttpUrl]
     event_types: List[WebhookEventType]
-
-    def redact(self) -> None:
-        self.url = "***"

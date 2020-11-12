@@ -6,7 +6,7 @@
 from typing import Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import AnyHttpUrl, BaseModel, Field, validator
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -214,7 +214,7 @@ class CanScheduleRequest(BaseRequest):
 
 class WebhookCreate(BaseRequest):
     name: str
-    url: str
+    url: AnyHttpUrl
     event_types: List[WebhookEventType]
 
 
