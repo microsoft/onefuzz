@@ -73,3 +73,8 @@ $
 
 This example pings the webhook `1809010d-57fd-4085-a7ce-9d248895e651` and provides
 the event payload that will be sent to the webhook.
+
+## Securing your Webhook
+
+When creating or updating a webhook, you can specify a `secret_token` which will be used to generate
+an HMAC-SHA512 of the payloads, and which will be added to the HTTP headers as `X-Onefuzz-Digest`.

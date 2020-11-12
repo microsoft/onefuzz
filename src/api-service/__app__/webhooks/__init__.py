@@ -36,6 +36,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     webhooks = Webhook.search()
     for webhook in webhooks:
         webhook.url = None
+        webhook.secret_token = None
     return ok(webhooks)
 
 
@@ -52,6 +53,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     webhook.save()
 
     webhook.url = None
+    webhook.secret_token = None
+
     logging.info("added webhook: %s", request)
     return ok(webhook)
 
@@ -81,6 +84,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
 
     webhook.save()
     webhook.url = None
+    webhook.secret_token = None
 
     return ok(webhook)
 
