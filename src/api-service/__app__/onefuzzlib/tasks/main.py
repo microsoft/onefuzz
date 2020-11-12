@@ -12,6 +12,11 @@ from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm
+from onefuzztypes.webhooks import (
+    WebhookEventTaskCreated,
+    WebhookEventTaskFailed,
+    WebhookEventTaskStopped,
+)
 
 from ..azure.creds import get_fuzz_storage
 from ..azure.image import get_os
@@ -19,6 +24,7 @@ from ..azure.queue import create_queue, delete_queue
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
+from ..webhooks import Webhook
 
 
 class Task(BASE_TASK, ORMMixin):
@@ -28,9 +34,7 @@ class Task(BASE_TASK, ORMMixin):
                 task = Task.get_by_task_id(task_id)
                 # if a prereq task fails, then mark this task as failed
                 if isinstance(task, Error):
-                    self.error = task
-                    self.state = TaskState.stopping
-                    self.save()
+                    self.mark_failed(task)
                     return False
 
                 if task.state not in task.state.has_started():
@@ -50,6 +54,11 @@ class Task(BASE_TASK, ORMMixin):
             raise Exception("task must have vm or pool")
         task = cls(config=config, job_id=job_id, os=os)
         task.save()
+        Webhook.send_event(
+            WebhookEventTaskCreated(
+                job_id=task.job_id, task_id=task.task_id, config=config
+            )
+        )
         return task
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:
@@ -61,9 +70,7 @@ class Task(BASE_TASK, ORMMixin):
                 prereq = Task.get_by_task_id(prereq_id)
                 if isinstance(prereq, Error):
                     logging.info("task prereq has error: %s - %s", self.task_id, prereq)
-                    self.error = prereq
-                    self.state = TaskState.stopping
-                    self.save()
+                    self.mark_failed(prereq)
                     return False
                 if prereq.state != TaskState.running:
                     logging.info(
@@ -110,7 +117,6 @@ class Task(BASE_TASK, ORMMixin):
     def stopping(self) -> None:
         # TODO: we need to 'unschedule' this task from the existing pools
 
-        self.state = TaskState.stopping
         logging.info("stopping task: %s:%s", self.job_id, self.task_id)
         ProxyForward.remove_forward(self.task_id)
         delete_queue(str(self.task_id), account_id=get_fuzz_storage())
@@ -168,9 +174,17 @@ class Task(BASE_TASK, ORMMixin):
         return pool_tasks
 
     def mark_stopping(self) -> None:
-        if self.state not in [TaskState.stopped, TaskState.stopping]:
-            self.state = TaskState.stopping
-            self.save()
+        if self.state in [TaskState.stopped, TaskState.stopping]:
+            logging.debug(
+                "ignoring post-task stop calls to stop %s:%s", self.job_id, self.task_id
+            )
+            return
+
+        self.state = TaskState.stopping
+        self.save()
+        Webhook.send_event(
+            WebhookEventTaskStopped(job_id=self.job_id, task_id=self.task_id)
+        )
 
     def mark_failed(self, error: Error) -> None:
         if self.state in [TaskState.stopped, TaskState.stopping]:
@@ -182,6 +196,12 @@ class Task(BASE_TASK, ORMMixin):
         self.error = error
         self.state = TaskState.stopping
         self.save()
+
+        Webhook.send_event(
+            WebhookEventTaskFailed(
+                job_id=self.job_id, task_id=self.task_id, error=error
+            )
+        )
 
     def get_pool(self) -> Optional[Pool]:
         if self.config.pool:
