@@ -5,7 +5,7 @@
 
 # import logging
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, JobState, TaskState
+from onefuzztypes.enums import ErrorCode, JobState
 from onefuzztypes.models import Error, TaskConfig
 from onefuzztypes.requests import TaskGet, TaskSearch
 from onefuzztypes.responses import BoolResult
@@ -95,8 +95,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(task, Error):
         return not_ok(task, context=request.task_id)
 
-    task.state = TaskState.stopping
-    task.save()
+    task.mark_stopping()
 
     return ok(task)
 
