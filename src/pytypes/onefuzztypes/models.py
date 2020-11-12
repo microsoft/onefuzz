@@ -297,6 +297,7 @@ class TaskUnitConfig(BaseModel):
     target_options: Optional[List[str]]
     target_timeout: Optional[int]
     target_options_merge: Optional[bool]
+    target_workers: Optional[int]
     check_asan_log: Optional[bool]
     check_debugger: Optional[bool]
     check_retry_count: Optional[int]
