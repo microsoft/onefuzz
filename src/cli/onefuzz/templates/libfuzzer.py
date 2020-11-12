@@ -263,13 +263,17 @@ class Libfuzzer(Command):
 
         """
         libfuzzer merge task
-
         """
 
         # verify containers exist
         if existing_inputs:
             for existing_container in existing_inputs:
                 self.onefuzz.containers.get(existing_container)
+        elif not inputs:
+            self.logger.info(
+                "please specify either an input folder or at least one existing inputs container"
+            )
+            return
 
         if dryrun:
             return None
