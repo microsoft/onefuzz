@@ -13,7 +13,6 @@ from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
 from pydantic import BaseModel
 
 from .__version__ import __version__
-
 from .azure.creds import get_func_storage
 from .azure.queue import queue_object
 from .orm import ORMMixin
@@ -86,7 +85,7 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
 
     def send(self) -> bool:
         webhook = Webhook.get_by_id(self.webhook_id)
-        if not webhook:
+        if isinstance(webhook, Error):
             logging.error(
                 "webhook no longer exists: %s:%s", self.webhook_id, self.event_id
             )
@@ -100,7 +99,7 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
         ).json()
 
         if webhook.url is None:
-            raise Exception("webhook URL incorrectly removed: %s", webhook.webhook_id)
+            raise Exception("webhook URL incorrectly removed: %s" % webhook.webhook_id)
 
         try:
             response = requests.post(
