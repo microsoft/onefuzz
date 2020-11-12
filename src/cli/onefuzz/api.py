@@ -99,13 +99,15 @@ class Endpoint:
         *,
         data: Optional[BaseModel] = None,
         as_params: bool = False,
+        alternate_endpoint: Optional[str] = None,
     ) -> List[A]:
+        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
+
         if as_params:
-            response = self.onefuzz._backend.request(method, self.endpoint, params=data)
+            response = self.onefuzz._backend.request(method, endpoint, params=data)
         else:
-            response = self.onefuzz._backend.request(
-                method, self.endpoint, json_data=data
-            )
+            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+
         return [model.parse_obj(x) for x in response]
 
     def _disambiguate(
@@ -338,6 +340,21 @@ class Webhooks(Endpoint):
             webhooks.WebhookEventPing,
             data=requests.WebhookGet(webhook_id=webhook_id_expanded),
             alternate_endpoint="webhooks/ping",
+        )
+
+    def logs(self, webhook_id: UUID_EXPANSION) -> List[webhooks.WebhookMessageLog]:
+        """ retreive webhook event log """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("pinging webhook: %s", webhook_id_expanded)
+        return self._req_model_list(
+            "POST",
+            webhooks.WebhookMessageLog,
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+            alternate_endpoint="webhooks/logs",
         )
 
 
@@ -1408,6 +1425,7 @@ class Onefuzz:
         self.pools = Pool(self)
         self.scalesets = Scaleset(self)
         self.nodes = Node(self)
+        self.webhooks = Webhooks(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
