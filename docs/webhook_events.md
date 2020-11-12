@@ -54,6 +54,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
             }
         ],
         "tags": {}
+    },
+    "user_info": {
+        "application_id": "00000000-0000-0000-0000-000000000000",
+        "object_id": "00000000-0000-0000-0000-000000000000",
+        "upn": "example@contoso.com"
     }
 }
 ```
@@ -439,7 +444,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "job_id": "00000000-0000-0000-0000-000000000000",
-    "task_id": "00000000-0000-0000-0000-000000000000"
+    "task_id": "00000000-0000-0000-0000-000000000000",
+    "user_info": {
+        "application_id": "00000000-0000-0000-0000-000000000000",
+        "object_id": "00000000-0000-0000-0000-000000000000",
+        "upn": "example@contoso.com"
+    }
 }
 ```
 
@@ -509,6 +519,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "errors": [
             "example error message"
         ]
+    },
+    "user_info": {
+        "application_id": "00000000-0000-0000-0000-000000000000",
+        "object_id": "00000000-0000-0000-0000-000000000000",
+        "upn": "example@contoso.com"
     }
 }
 ```

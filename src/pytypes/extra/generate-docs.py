@@ -7,7 +7,7 @@ from typing import Optional
 from uuid import UUID
 import json
 from onefuzztypes.enums import TaskType, ContainerType, ErrorCode
-from onefuzztypes.models import TaskConfig, TaskDetails, TaskContainers, Error
+from onefuzztypes.models import TaskConfig, TaskDetails, TaskContainers, Error, UserInfo
 from onefuzztypes.webhooks import (
     WebhookMessage,
     WebhookEventPing,
@@ -32,12 +32,23 @@ def main():
     examples = {
         WebhookEventType.ping: WebhookEventPing(ping_id=UUID(int=0)),
         WebhookEventType.task_stopped: WebhookEventTaskStopped(
-            job_id=UUID(int=0), task_id=UUID(int=0)
+            job_id=UUID(int=0),
+            task_id=UUID(int=0),
+            user_info=UserInfo(
+                application_id=UUID(int=0),
+                object_id=UUID(int=0),
+                upn="example@contoso.com",
+            ),
         ),
         WebhookEventType.task_failed: WebhookEventTaskFailed(
             job_id=UUID(int=0),
             task_id=UUID(int=0),
             error=Error(code=ErrorCode.TASK_FAILED, errors=["example error message"]),
+            user_info=UserInfo(
+                application_id=UUID(int=0),
+                object_id=UUID(int=0),
+                upn="example@contoso.com",
+            ),
         ),
         WebhookEventType.task_created: WebhookEventTaskCreated(
             job_id=UUID(int=0),
@@ -57,6 +68,11 @@ def main():
                     TaskContainers(name="my-crashes", type=ContainerType.crashes),
                 ],
                 tags={},
+            ),
+            user_info=UserInfo(
+                application_id=UUID(int=0),
+                object_id=UUID(int=0),
+                upn="example@contoso.com",
             ),
         ),
     }
