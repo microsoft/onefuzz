@@ -58,7 +58,10 @@ class Task(BASE_TASK, ORMMixin):
         task.save()
         Webhook.send_event(
             WebhookEventTaskCreated(
-                job_id=task.job_id, task_id=task.task_id, config=config
+                job_id=task.job_id,
+                task_id=task.task_id,
+                config=config,
+                user_info=user_info,
             )
         )
         return task
@@ -185,7 +188,9 @@ class Task(BASE_TASK, ORMMixin):
         self.state = TaskState.stopping
         self.save()
         Webhook.send_event(
-            WebhookEventTaskStopped(job_id=self.job_id, task_id=self.task_id)
+            WebhookEventTaskStopped(
+                job_id=self.job_id, task_id=self.task_id, user_info=self.user_info
+            )
         )
 
     def mark_failed(self, error: Error) -> None:
@@ -201,7 +206,10 @@ class Task(BASE_TASK, ORMMixin):
 
         Webhook.send_event(
             WebhookEventTaskFailed(
-                job_id=self.job_id, task_id=self.task_id, error=error
+                job_id=self.job_id,
+                task_id=self.task_id,
+                error=error,
+                user_info=self.user_info,
             )
         )
 
