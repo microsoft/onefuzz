@@ -83,7 +83,7 @@ stages:
             script: |
               set -ex
               az login --service-principal -u $(ONEFUZZ_SERVICE_URL) -p $(AZURE_CLIENT_SECRET) --tenant $(AZURE_TENANT_ID)
-              python deploy.py --client_id $(AZURE_CLIENT_ID) --client_secret $(AZURE_CLIENT_SECRET) $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS $DEPLOY_ARGS
+              python deploy.py --client_id $(AZURE_CLIENT_ID) --client_secret $(AZURE_CLIENT_SECRET) $REGION $RESOURCE_GROUP_NAME $ONEFUZZ_INSTANCE_NAME $CONTACT_EMAIL_ADDRESS $DEPLOY_ARGS --upgrade
               echo "Deployed Onefuzz $(onefuzz_release.version)"
 
         - task: CopyFiles@2
