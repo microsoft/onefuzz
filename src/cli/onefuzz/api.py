@@ -296,8 +296,10 @@ class Webhooks(Endpoint):
     def update(
         self,
         webhook_id: UUID_EXPANSION,
-        name: str,
-        event_types: List[enums.WebhookEventType],
+        *,
+        name: Optional[str] = None,
+        url: Optional[str] = None,
+        event_types: Optional[List[enums.WebhookEventType]] = None,
     ) -> webhooks.Webhook:
         """ Update a webhook """
 
@@ -310,7 +312,10 @@ class Webhooks(Endpoint):
             "PATCH",
             webhooks.Webhook,
             data=requests.WebhookUpdate(
-                webhook_id=webhook_id_expanded, name=name, event_types=event_types
+                webhook_id=webhook_id_expanded,
+                name=name,
+                url=url,
+                event_types=event_types,
             ),
         )
 

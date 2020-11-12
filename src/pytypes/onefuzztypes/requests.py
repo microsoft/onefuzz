@@ -228,5 +228,6 @@ class WebhookGet(BaseModel):
 
 class WebhookUpdate(BaseModel):
     webhook_id: UUID
-    name: str
-    event_types: List[WebhookEventType]
+    name: Optional[str]
+    event_types: Optional[List[WebhookEventType]]
+    url: Optional[AnyHttpUrl]

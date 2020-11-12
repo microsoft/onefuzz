@@ -64,8 +64,15 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(webhook, Error):
         return not_ok(webhook, context="webhook update")
 
-    webhook.name = request.name
-    webhook.event_types = request.event_types
+    if request.url is not None:
+        webhook.url = request.url
+
+    if request.name is not None:
+        webhook.name = request.name
+
+    if request.event_types is not None:
+        webhook.event_types = request.event_types
+
     webhook.save()
     webhook.url = None
 

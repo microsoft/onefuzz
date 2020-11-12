@@ -46,10 +46,10 @@ $
 
 This example updates the previously created webhook and sets the subscribed event types to `task_created` and `task_failed`.
 ```
-$ onefuzz webhooks update cc6926de-7c6f-487e-96ec-7b632d3ed52b MYNEWNAME task_created task_failed
+$ onefuzz webhooks update cc6926de-7c6f-487e-96ec-7b632d3ed52b --event_types task_created task_failed
 {
     "webhook_id": "cc6926de-7c6f-487e-96ec-7b632d3ed52b",
-    "name": "MYNEWNAME",
+    "name": "MYWEBHOOK",
     "event_types": [
         "task_created",
         "task_failed"
