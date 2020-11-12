@@ -208,7 +208,7 @@ def build_message(
         WebhookMessage(
             webhook_id=webhook_id, event_id=event_id, event_type=event_type, event=event
         )
-        .json()
+        .json(sort_keys=True)
         .encode()
     )
     digest = None
