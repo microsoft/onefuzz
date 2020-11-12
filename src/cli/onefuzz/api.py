@@ -1506,6 +1506,7 @@ class Onefuzz:
 
     def _delete_components(
         self,
+        *,
         containers: bool = False,
         jobs: bool = False,
         notifications: bool = False,
@@ -1513,6 +1514,7 @@ class Onefuzz:
         repros: bool = False,
         scalesets: bool = False,
         tasks: bool = False,
+        webhooks: bool = False,
     ) -> None:
         if jobs:
             for job in self.jobs.list():
@@ -1548,8 +1550,14 @@ class Onefuzz:
         if containers:
             self.containers.reset(yes=True)
 
+        if webhooks:
+            for webhook in self.webhooks.list():
+                self.logger.info("removing webhook: %s", webhook.webhook_id)
+                self.webhooks.delete(webhook.webhook_id)
+
     def reset(
         self,
+        *,
         containers: bool = False,
         everything: bool = False,
         jobs: bool = False,
@@ -1558,6 +1566,7 @@ class Onefuzz:
         repros: bool = False,
         scalesets: bool = False,
         tasks: bool = False,
+        webhooks: bool = True,
         yes: bool = False,
     ) -> None:
         """
@@ -1573,11 +1582,22 @@ class Onefuzz:
         :param bool repros: Delete all repro vms.
         :param bool scalesets: Delete all managed scalesets.
         :param bool tasks: Stop all tasks.
+        :param bool webhooks: Stop all webhooks.
         :param bool yes: Ignoring to specify "y" in prompt.
         """
 
         if everything:
-            containers, jobs, pools, notifications, repros, scalesets, tasks = (
+            (
+                containers,
+                jobs,
+                pools,
+                notifications,
+                repros,
+                scalesets,
+                tasks,
+                webhooks,
+            ) = (
+                True,
                 True,
                 True,
                 True,
@@ -1603,6 +1623,7 @@ class Onefuzz:
             "scalesets",
             "repros",
             "containers",
+            "webhooks",
         }
         for k, v in locals().items():
             if k in argument_str and v:
@@ -1615,7 +1636,14 @@ class Onefuzz:
             return
 
         self._delete_components(
-            containers, jobs, notifications, pools, repros, scalesets, tasks
+            containers=containers,
+            jobs=jobs,
+            notifications=notifications,
+            pools=pools,
+            repros=repros,
+            scalesets=scalesets,
+            tasks=tasks,
+            webhooks=webhooks,
         )
 
 
