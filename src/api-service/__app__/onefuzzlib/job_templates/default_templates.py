@@ -31,7 +31,7 @@ REBOOT_HELP = "After executing the setup script, reboot the VM"
 TAGS_HELP = "User provided metadata for the tasks"
 
 TEMPLATES = {
-    "afl_basic": JobTemplate(
+    "afl": JobTemplate(
         job=JobConfig(project="", name=Container(""), build="", duration=1),
         tasks=[
             TaskConfig(
@@ -264,7 +264,7 @@ TEMPLATES = {
             ),
         ],
     ),
-    "libfuzzer_basic": JobTemplate(
+    "libfuzzer": JobTemplate(
         job=JobConfig(project="", name=Container(""), build="", duration=1),
         tasks=[
             TaskConfig(
