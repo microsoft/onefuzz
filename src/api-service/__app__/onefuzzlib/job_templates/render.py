@@ -1,28 +1,33 @@
 #!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
 
 import json
 from typing import Dict, List
 
 from jsonpatch import apply_patch
+from memoization import cached
 from onefuzztypes.enums import ContainerType, UserFieldType
 from onefuzztypes.job_templates import (
     TEMPLATE_BASE_FIELDS,
-    OnefuzzTemplate,
-    OnefuzzTemplateConfig,
-    OnefuzzTemplateField,
-    OnefuzzTemplateRequest,
+    JobTemplate,
+    JobTemplateConfig,
+    JobTemplateField,
+    JobTemplateRequest,
     TemplateUserData,
     UserField,
 )
 
 
-def template_container_types(template: OnefuzzTemplate) -> List[ContainerType]:
+def template_container_types(template: JobTemplate) -> List[ContainerType]:
     return list(set(y.type for x in template.tasks for y in x.containers if not y.name))
 
 
-def build_input_config(template: OnefuzzTemplate) -> OnefuzzTemplateConfig:
+@cached
+def build_input_config(template: JobTemplate) -> JobTemplateConfig:
     user_fields = [
-        OnefuzzTemplateField(
+        JobTemplateField(
             name=x.name,
             type=x.type,
             required=x.required,
@@ -33,7 +38,7 @@ def build_input_config(template: OnefuzzTemplate) -> OnefuzzTemplateConfig:
     ]
     containers = template_container_types(template)
 
-    return OnefuzzTemplateConfig(
+    return JobTemplateConfig(
         user_fields=user_fields,
         containers=containers,
     )
@@ -67,9 +72,7 @@ def build_patches(
     return patches
 
 
-def render(
-    request: OnefuzzTemplateRequest, template: OnefuzzTemplate
-) -> OnefuzzTemplate:
+def render(request: JobTemplateRequest, template: JobTemplate) -> JobTemplate:
     patches = []
     seen = set()
 
@@ -93,7 +96,7 @@ def render(
 
     raw = json.loads(template.json())
     updated = apply_patch(raw, patches)
-    rendered = OnefuzzTemplate.parse_obj(updated)
+    rendered = JobTemplate.parse_obj(updated)
 
     used_containers = []
     for task in rendered.tasks:

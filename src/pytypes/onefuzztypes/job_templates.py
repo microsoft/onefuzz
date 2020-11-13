@@ -1,3 +1,5 @@
+import string
+from uuid import uuid4, UUID
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator, validator
@@ -5,6 +7,9 @@ from pydantic import BaseModel, Field, root_validator, validator
 from .enums import ContainerType, UserFieldOperation, UserFieldType
 from .models import JobConfig, NotificationConfig, TaskConfig, TaskContainers
 from .primitives import File
+from .validators import check_template_name, check_template_name_modify
+from .requests import BaseRequest
+from .responses import BaseResponse
 
 
 class UserFieldLocation(BaseModel):
@@ -30,15 +35,15 @@ class UserField(BaseModel):
         return value
 
 
-class OnefuzzTemplateNotification(BaseModel):
+class JobTemplateNotification(BaseModel):
     container_type: ContainerType
     notification: NotificationConfig
 
 
-class OnefuzzTemplate(BaseModel):
+class JobTemplate(BaseModel):
     job: JobConfig
     tasks: List[TaskConfig]
-    notifications: List[OnefuzzTemplateNotification]
+    notifications: List[JobTemplateNotification]
     user_fields: List[UserField]
 
     @root_validator()
@@ -77,13 +82,16 @@ class OnefuzzTemplate(BaseModel):
         return data
 
 
-class OnefuzzTemplateRequest(BaseModel):
-    template_name: str
-    user_fields: Dict[str, TemplateUserData]
-    containers: List[TaskContainers]
+class JobTemplateIndex(BaseResponse):
+    domain: str
+    name: str
+    template: JobTemplate
+
+    _validate_domain = validator("domain", allow_reuse=True)(check_template_name)
+    _validate_name = validator("name", allow_reuse=True)(check_template_name)
 
 
-class OnefuzzTemplateField(BaseModel):
+class JobTemplateField(BaseModel):
     name: str
     help: str
     type: UserFieldType
@@ -91,8 +99,8 @@ class OnefuzzTemplateField(BaseModel):
     default: Optional[TemplateUserData]
 
 
-class OnefuzzTemplateConfig(BaseModel):
-    user_fields: List[OnefuzzTemplateField]
+class JobTemplateConfig(BaseModel):
+    user_fields: List[JobTemplateField]
     containers: List[ContainerType]
 
 
@@ -134,3 +142,41 @@ TEMPLATE_BASE_FIELDS = [
         ],
     ),
 ]
+
+
+class JobTemplateCreate(BaseRequest):
+    domain: str
+    name: str
+    template: JobTemplate
+
+    _verify_domain = validator("domain", allow_reuse=True)(check_template_name_modify)
+    _verify_name = validator("name", allow_reuse=True)(check_template_name_modify)
+
+
+class JobTemplateDelete(BaseRequest):
+    domain: str
+    name: str
+
+    _verify_domain = validator("domain", allow_reuse=True)(check_template_name_modify)
+    _verify_name = validator("name", allow_reuse=True)(check_template_name_modify)
+
+
+class JobTemplateUpdate(BaseRequest):
+    domain: str
+    name: str
+    template: JobTemplate
+
+    _verify_domain = validator("domain", allow_reuse=True)(check_template_name_modify)
+    _verify_name = validator("name", allow_reuse=True)(check_template_name_modify)
+
+
+class JobTemplateRequest(BaseRequest):
+    domain: str
+    name: str
+    user_fields: Dict[str, TemplateUserData]
+    containers: List[TaskContainers]
+
+    _validate_domain = validator("template_domain", allow_reuse=True)(
+        check_template_name
+    )
+    _validate_name = validator("template_name", allow_reuse=True)(check_template_name)

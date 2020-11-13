@@ -248,6 +248,7 @@ class ErrorCode(Enum):
     TASK_FAILED = 468
     INVALID_NODE = 469
     NOTIFICATION_FAILURE = 470
+    UNABLE_TO_UPDATE = 471
 
 
 class HeartbeatType(Enum):

@@ -1,4 +1,8 @@
-from typing import Optional
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from uuid import UUID
 
 from onefuzztypes.enums import (
@@ -7,7 +11,7 @@ from onefuzztypes.enums import (
     UserFieldOperation,
     UserFieldType,
 )
-from onefuzztypes.job_templates import OnefuzzTemplate, UserField, UserFieldLocation
+from onefuzztypes.job_templates import JobTemplate, UserField, UserFieldLocation
 from onefuzztypes.models import (
     JobConfig,
     TaskConfig,
@@ -15,6 +19,7 @@ from onefuzztypes.models import (
     TaskDetails,
     TaskPool,
 )
+from onefuzztypes.primitives import Container, PoolName
 
 POOL_HELP = "Execute the task on the specified pool"
 DURATION_HELP = "Number of hours to execute the task"
@@ -26,8 +31,8 @@ REBOOT_HELP = "After executing the setup script, reboot the VM"
 TAGS_HELP = "User provided metadata for the tasks"
 
 TEMPLATES = {
-    "afl_basic": OnefuzzTemplate(
-        job=JobConfig(project="", name="", build="", duration=1),
+    "afl_basic": JobTemplate(
+        job=JobConfig(project="", name=Container(""), build="", duration=1),
         tasks=[
             TaskConfig(
                 job_id=(UUID(int=0)),
@@ -41,12 +46,14 @@ TEMPLATES = {
                     supervisor_options=[],
                     supervisor_input_marker="@@",
                 ),
-                pool=TaskPool(count=1, pool_name=""),
+                pool=TaskPool(count=1, pool_name=PoolName("")),
                 containers=[
-                    TaskContainers(name="afl-container-name", type=ContainerType.tools),
-                    TaskContainers(name="", type=ContainerType.setup),
-                    TaskContainers(name="", type=ContainerType.crashes),
-                    TaskContainers(name="", type=ContainerType.inputs),
+                    TaskContainers(
+                        name=Container("afl-container-name"), type=ContainerType.tools
+                    ),
+                    TaskContainers(name=Container(""), type=ContainerType.setup),
+                    TaskContainers(name=Container(""), type=ContainerType.crashes),
+                    TaskContainers(name=Container(""), type=ContainerType.inputs),
                 ],
                 tags={},
             ),
@@ -61,13 +68,15 @@ TEMPLATES = {
                     target_options=[],
                     check_debugger=True,
                 ),
-                pool=TaskPool(count=1, pool_name=""),
+                pool=TaskPool(count=1, pool_name=PoolName("")),
                 containers=[
-                    TaskContainers(name="", type=ContainerType.setup),
-                    TaskContainers(name="", type=ContainerType.crashes),
-                    TaskContainers(name="", type=ContainerType.no_repro),
-                    TaskContainers(name="", type=ContainerType.reports),
-                    TaskContainers(name="", type=ContainerType.unique_reports),
+                    TaskContainers(name=Container(""), type=ContainerType.setup),
+                    TaskContainers(name=Container(""), type=ContainerType.crashes),
+                    TaskContainers(name=Container(""), type=ContainerType.no_repro),
+                    TaskContainers(name=Container(""), type=ContainerType.reports),
+                    TaskContainers(
+                        name=Container(""), type=ContainerType.unique_reports
+                    ),
                 ],
                 tags={},
             ),
@@ -209,7 +218,10 @@ TEMPLATES = {
             ),
             UserField(
                 name="afl_container",
-                help="Name of the AFL storage container (use this to specify alternate builds of AFL)",
+                help=(
+                    "Name of the AFL storage container (use "
+                    "this to specify alternate builds of AFL)"
+                ),
                 type=UserFieldType.Str,
                 default="afl-linux",
                 locations=[
@@ -252,8 +264,8 @@ TEMPLATES = {
             ),
         ],
     ),
-    "libfuzzer_basic": OnefuzzTemplate(
-        job=JobConfig(project="", name="", build="", duration=1),
+    "libfuzzer_basic": JobTemplate(
+        job=JobConfig(project="", name=Container(""), build="", duration=1),
         tasks=[
             TaskConfig(
                 job_id=UUID(int=0),
@@ -264,11 +276,11 @@ TEMPLATES = {
                     target_env={},
                     target_options=[],
                 ),
-                pool=TaskPool(count=1, pool_name=""),
+                pool=TaskPool(count=1, pool_name=PoolName("")),
                 containers=[
-                    TaskContainers(name="", type=ContainerType.setup),
-                    TaskContainers(name="", type=ContainerType.crashes),
-                    TaskContainers(name="", type=ContainerType.inputs),
+                    TaskContainers(name=Container(""), type=ContainerType.setup),
+                    TaskContainers(name=Container(""), type=ContainerType.crashes),
+                    TaskContainers(name=Container(""), type=ContainerType.inputs),
                 ],
                 tags={},
             ),
@@ -282,13 +294,15 @@ TEMPLATES = {
                     target_env={},
                     target_options=[],
                 ),
-                pool=TaskPool(count=1, pool_name=""),
+                pool=TaskPool(count=1, pool_name=PoolName("")),
                 containers=[
-                    TaskContainers(name="", type=ContainerType.setup),
-                    TaskContainers(name="", type=ContainerType.crashes),
-                    TaskContainers(name="", type=ContainerType.no_repro),
-                    TaskContainers(name="", type=ContainerType.reports),
-                    TaskContainers(name="", type=ContainerType.unique_reports),
+                    TaskContainers(name=Container(""), type=ContainerType.setup),
+                    TaskContainers(name=Container(""), type=ContainerType.crashes),
+                    TaskContainers(name=Container(""), type=ContainerType.no_repro),
+                    TaskContainers(name=Container(""), type=ContainerType.reports),
+                    TaskContainers(
+                        name=Container(""), type=ContainerType.unique_reports
+                    ),
                 ],
                 tags={},
             ),
@@ -302,11 +316,13 @@ TEMPLATES = {
                     target_env={},
                     target_options=[],
                 ),
-                pool=TaskPool(count=1, pool_name=""),
+                pool=TaskPool(count=1, pool_name=PoolName("")),
                 containers=[
-                    TaskContainers(name="", type=ContainerType.setup),
-                    TaskContainers(name="", type=ContainerType.readonly_inputs),
-                    TaskContainers(name="", type=ContainerType.coverage),
+                    TaskContainers(name=Container(""), type=ContainerType.setup),
+                    TaskContainers(
+                        name=Container(""), type=ContainerType.readonly_inputs
+                    ),
+                    TaskContainers(name=Container(""), type=ContainerType.coverage),
                 ],
                 tags={},
             ),
@@ -501,7 +517,3 @@ TEMPLATES = {
         ],
     ),
 }
-
-
-def get_template(name: str) -> Optional[OnefuzzTemplate]:
-    return TEMPLATES.get(name)
