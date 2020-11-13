@@ -67,8 +67,7 @@ class Job(BASE_JOB, ORMMixin):
 
         if not_stopped:
             for task in not_stopped:
-                task.state = TaskState.stopping
-                task.save()
+                task.mark_stopping()
         else:
             self.state = JobState.stopped
         self.save()

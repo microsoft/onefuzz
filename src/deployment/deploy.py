@@ -435,6 +435,7 @@ class Client:
             "node-heartbeat",
             "proxy",
             "update-queue",
+            "webhooks",
         ]:
             try:
                 client.create_queue(queue)
