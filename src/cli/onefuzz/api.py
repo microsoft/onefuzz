@@ -16,7 +16,7 @@ from uuid import UUID
 import pkg_resources
 import semver
 from memoization import cached
-from onefuzztypes import enums, models, primitives, requests, responses
+from onefuzztypes import enums, models, primitives, requests, responses, webhooks
 from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
 
@@ -81,13 +81,14 @@ class Endpoint:
         *,
         data: Optional[BaseModel] = None,
         as_params: bool = False,
+        alternate_endpoint: Optional[str] = None,
     ) -> A:
+        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
+
         if as_params:
-            response = self.onefuzz._backend.request(method, self.endpoint, params=data)
+            response = self.onefuzz._backend.request(method, endpoint, params=data)
         else:
-            response = self.onefuzz._backend.request(
-                method, self.endpoint, json_data=data
-            )
+            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
 
         return model.parse_obj(response)
 
@@ -98,13 +99,15 @@ class Endpoint:
         *,
         data: Optional[BaseModel] = None,
         as_params: bool = False,
+        alternate_endpoint: Optional[str] = None,
     ) -> List[A]:
+        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
+
         if as_params:
-            response = self.onefuzz._backend.request(method, self.endpoint, params=data)
+            response = self.onefuzz._backend.request(method, endpoint, params=data)
         else:
-            response = self.onefuzz._backend.request(
-                method, self.endpoint, json_data=data
-            )
+            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+
         return [model.parse_obj(x) for x in response]
 
     def _disambiguate(
@@ -248,6 +251,125 @@ class Info(Endpoint):
         """ Get information about the OneFuzz instance """
         self.logger.debug("getting info")
         return self._req_model("GET", responses.Info)
+
+
+class Webhooks(Endpoint):
+    """ Interact with Webhooks """
+
+    endpoint = "webhooks"
+
+    def get(self, webhook_id: UUID_EXPANSION) -> webhooks.Webhook:
+        """ get a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("getting webhook: %s", webhook_id_expanded)
+        return self._req_model(
+            "GET",
+            webhooks.Webhook,
+            data=requests.WebhookSearch(webhook_id=webhook_id_expanded),
+        )
+
+    def list(self) -> List[webhooks.Webhook]:
+        """ list webhooks """
+
+        self.logger.debug("listing webhooks")
+        return self._req_model_list(
+            "GET",
+            webhooks.Webhook,
+            data=requests.WebhookSearch(),
+        )
+
+    def create(
+        self,
+        name: str,
+        url: str,
+        event_types: List[enums.WebhookEventType],
+        *,
+        secret_token: Optional[str] = None,
+    ) -> webhooks.Webhook:
+        """ Create a webhook """
+        self.logger.debug("creating webhook.  name: %s", name)
+        return self._req_model(
+            "POST",
+            webhooks.Webhook,
+            data=requests.WebhookCreate(
+                name=name, url=url, event_types=event_types, secret_token=secret_token
+            ),
+        )
+
+    def update(
+        self,
+        webhook_id: UUID_EXPANSION,
+        *,
+        name: Optional[str] = None,
+        url: Optional[str] = None,
+        event_types: Optional[List[enums.WebhookEventType]] = None,
+        secret_token: Optional[str] = None,
+    ) -> webhooks.Webhook:
+        """ Update a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("updating webhook: %s", webhook_id_expanded)
+        return self._req_model(
+            "PATCH",
+            webhooks.Webhook,
+            data=requests.WebhookUpdate(
+                webhook_id=webhook_id_expanded,
+                name=name,
+                url=url,
+                event_types=event_types,
+                secret_token=secret_token,
+            ),
+        )
+
+    def delete(self, webhook_id: UUID_EXPANSION) -> responses.BoolResult:
+        """ Delete a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        return self._req_model(
+            "DELETE",
+            responses.BoolResult,
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+        )
+
+    def ping(self, webhook_id: UUID_EXPANSION) -> webhooks.WebhookEventPing:
+        """ ping a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("pinging webhook: %s", webhook_id_expanded)
+        return self._req_model(
+            "POST",
+            webhooks.WebhookEventPing,
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+            alternate_endpoint="webhooks/ping",
+        )
+
+    def logs(self, webhook_id: UUID_EXPANSION) -> List[webhooks.WebhookMessageLog]:
+        """ retreive webhook event log """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("pinging webhook: %s", webhook_id_expanded)
+        return self._req_model_list(
+            "POST",
+            webhooks.WebhookMessageLog,
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+            alternate_endpoint="webhooks/logs",
+        )
 
 
 class Containers(Endpoint):
@@ -1317,6 +1439,7 @@ class Onefuzz:
         self.pools = Pool(self)
         self.scalesets = Scaleset(self)
         self.nodes = Node(self)
+        self.webhooks = Webhooks(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
@@ -1392,6 +1515,7 @@ class Onefuzz:
 
     def _delete_components(
         self,
+        *,
         containers: bool = False,
         jobs: bool = False,
         notifications: bool = False,
@@ -1399,6 +1523,7 @@ class Onefuzz:
         repros: bool = False,
         scalesets: bool = False,
         tasks: bool = False,
+        webhooks: bool = False,
     ) -> None:
         if jobs:
             for job in self.jobs.list():
@@ -1434,8 +1559,14 @@ class Onefuzz:
         if containers:
             self.containers.reset(yes=True)
 
+        if webhooks:
+            for webhook in self.webhooks.list():
+                self.logger.info("removing webhook: %s", webhook.webhook_id)
+                self.webhooks.delete(webhook.webhook_id)
+
     def reset(
         self,
+        *,
         containers: bool = False,
         everything: bool = False,
         jobs: bool = False,
@@ -1444,6 +1575,7 @@ class Onefuzz:
         repros: bool = False,
         scalesets: bool = False,
         tasks: bool = False,
+        webhooks: bool = True,
         yes: bool = False,
     ) -> None:
         """
@@ -1459,11 +1591,22 @@ class Onefuzz:
         :param bool repros: Delete all repro vms.
         :param bool scalesets: Delete all managed scalesets.
         :param bool tasks: Stop all tasks.
+        :param bool webhooks: Stop all webhooks.
         :param bool yes: Ignoring to specify "y" in prompt.
         """
 
         if everything:
-            containers, jobs, pools, notifications, repros, scalesets, tasks = (
+            (
+                containers,
+                jobs,
+                pools,
+                notifications,
+                repros,
+                scalesets,
+                tasks,
+                webhooks,
+            ) = (
+                True,
                 True,
                 True,
                 True,
@@ -1489,6 +1632,7 @@ class Onefuzz:
             "scalesets",
             "repros",
             "containers",
+            "webhooks",
         }
         for k, v in locals().items():
             if k in argument_str and v:
@@ -1501,7 +1645,14 @@ class Onefuzz:
             return
 
         self._delete_components(
-            containers, jobs, notifications, pools, repros, scalesets, tasks
+            containers=containers,
+            jobs=jobs,
+            notifications=notifications,
+            pools=pools,
+            repros=repros,
+            scalesets=scalesets,
+            tasks=tasks,
+            webhooks=webhooks,
         )
 
 

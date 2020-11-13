@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
@@ -37,6 +37,12 @@ from .enums import (
 from .primitives import Container, File, PoolName, Region
 
 
+class UserInfo(BaseModel):
+    application_id: UUID
+    object_id: Optional[UUID]
+    upn: Optional[str]
+
+
 class EnumModel(BaseModel):
     @root_validator(pre=True)
     def exactly_one(cls: Any, values: Any) -> Any:
@@ -58,6 +64,10 @@ class EnumModel(BaseModel):
 class Error(BaseModel):
     code: ErrorCode
     errors: List[str]
+
+
+OkType = TypeVar("OkType")
+Result = Union[OkType, Error]
 
 
 class FileEntry(BaseModel):
@@ -295,6 +305,7 @@ class TaskUnitConfig(BaseModel):
     target_options: Optional[List[str]]
     target_timeout: Optional[int]
     target_options_merge: Optional[bool]
+    target_workers: Optional[int]
     check_asan_log: Optional[bool]
     check_debugger: Optional[bool]
     check_retry_count: Optional[int]
@@ -701,6 +712,7 @@ class Task(BaseModel):
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
+    user_info: Optional[UserInfo]
 
 
 class UserFieldLocation(BaseModel):

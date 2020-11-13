@@ -21,7 +21,7 @@ use winapi::{
 /// An error detected by ASAN.
 ///
 /// These kinds are based on strings output by the lldb ASAN plugin, unrecognized errors should use `UnknownAsanError`.
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum AsanError {
     UnknownAsanError,
     HeapUseAfterFree,

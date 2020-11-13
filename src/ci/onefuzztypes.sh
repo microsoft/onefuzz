@@ -19,3 +19,12 @@ mypy ./onefuzztypes --ignore-missing-imports
 pytest -v tests
 
 cp dist/*.* ../../artifacts/sdk
+
+echo 'verify webhook docs are up-to-date'
+python -m venv build-docs
+. build-docs/bin/activate
+pip install -e .
+python extra/generate-docs.py > ../../docs/webhook_events.md
+git diff --quiet ../../docs/webhook_events.md
+deactivate
+rm -rf build-docs

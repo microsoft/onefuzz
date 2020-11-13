@@ -114,7 +114,7 @@ fn exception_stop_from_u32(code: u32) -> ExceptionStop {
 }
 
 /// A bug detected by enabling `handles` in application verifier.
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum HandlesStop {
     InvalidHandleStop,
     InvalidTlsValue,
@@ -125,7 +125,7 @@ pub enum HandlesStop {
 }
 
 /// A bug detected by enabling `heaps` in application verifier.
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum HeapStop {
     UnknownError,
     AccessViolation,
@@ -150,7 +150,7 @@ pub enum HeapStop {
 }
 
 /// A bug detected by enabling `leak` in application verifier.
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum LeakStop {
     Allocation,
     Handle,
@@ -165,7 +165,7 @@ pub enum LeakStop {
 ///
 /// We don't enable this option normally because it only detects first chance exceptions which are already
 /// reported and this option ends up reporting the same issue a second time with a different stack.
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum ExceptionStop {
     FirstChanceAccessViolationCode,
 }
@@ -174,6 +174,7 @@ pub enum ExceptionStop {
 /// information in understanding the type of bug detected.
 ///
 /// This message encapsulates the most important kinds of bugs detected by application verifier when fuzzing.
+#[derive(Copy, Clone)]
 pub enum VerifierStop {
     /// A bug detected by enabling `heaps` in application verifier.
     Heap(HeapStop),

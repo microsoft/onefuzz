@@ -364,6 +364,20 @@ class TaskDebugFlag(Enum):
     keep_node_on_completion = "keep_node_on_completion"
 
 
+class WebhookEventType(Enum):
+    task_created = "task_created"
+    task_stopped = "task_stopped"
+    task_failed = "task_failed"
+    ping = "ping"
+
+
+class WebhookMessageState(Enum):
+    queued = "queued"
+    retrying = "retrying"
+    succeeded = "succeeded"
+    failed = "failed"
+
+
 class UserFieldOperation(Enum):
     add = "add"
     replace = "replace"
