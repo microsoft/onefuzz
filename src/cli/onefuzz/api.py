@@ -1442,9 +1442,6 @@ class Onefuzz:
         self.webhooks = Webhooks(self)
         self.job_templates = JobTemplates(self)
 
-        if "endpoint" in self._backend.config:
-            self.job_templates._load_cache(self._backend.config["endpoint"])
-
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
         self.debug = Debug(self, self.logger)
@@ -1454,7 +1451,8 @@ class Onefuzz:
     def __setup__(self, endpoint: Optional[str] = None) -> None:
         if endpoint:
             self._backend.config["endpoint"] = endpoint
-            self.job_templates._load_cache(self._backend.config["endpoint"])
+
+        self.job_templates._load_cache()
 
     def licenses(self) -> object:
         """ Return third-party licenses used by this package """

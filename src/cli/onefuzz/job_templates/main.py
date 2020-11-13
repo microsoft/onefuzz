@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import datetime
 import logging
 from inspect import Parameter, signature
 from typing import Any, Dict, List, Optional
@@ -249,15 +250,22 @@ class JobTemplates(Endpoint):
         self.manage = Manage(onefuzz)
         self.submit = TemplateHandler(onefuzz)
 
-    def _load_cache(self, endpoint: str) -> None:
-        entry = CachedTemplates.get(endpoint)
-        if not entry:
-            self.onefuzz.logger.debug("no templates loaded for %s", endpoint)
+    def _load_cache(self) -> None:
+        endpoint = self.onefuzz._backend.config.get("endpoint")
+        if endpoint is None:
             return
+
+        yesterday = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+        entry = CachedTemplates.get(endpoint)
+        if not entry or entry.timestamp < yesterday:
+            self.refresh()
+            return
+
         load_templates(entry.configs)
 
     def refresh(self) -> None:
         """ Update available templates """
+        self.onefuzz.logger.info("refreshing job template cache")
 
         templates = self._req_model_list("GET", JobTemplateConfig)
 
