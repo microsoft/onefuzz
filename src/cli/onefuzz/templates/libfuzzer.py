@@ -245,6 +245,7 @@ class Libfuzzer(Command):
         target_exe: File = File("fuzz.exe"),
         setup_dir: Optional[Directory] = None,
         inputs: Optional[Directory] = None,
+        output_container: Optional[Container] = None,
         reboot_after_setup: bool = False,
         duration: int = 24,
         target_options: Optional[List[str]] = None,
@@ -270,7 +271,7 @@ class Libfuzzer(Command):
             for existing_container in existing_inputs:
                 self.onefuzz.containers.get(existing_container)
         elif not inputs:
-            self.logger.info(
+            self.logger.error(
                 "please specify either an input folder or at least one existing inputs container"
             )
             return None
@@ -295,16 +296,19 @@ class Libfuzzer(Command):
         helper.add_tags(tags)
         helper.define_containers(
             ContainerType.setup,
-            ContainerType.inputs,
-            ContainerType.unique_inputs,
         )
+        if inputs:
+            helper.define_containers(ContainerType.inputs)
+
+        if output_container:
+            if self.onefuzz.containers.get(output_container):
+                helper.define_containers(ContainerType.unique_inputs)
 
         helper.create_containers()
         helper.setup_notifications(notification_config)
 
         helper.upload_setup(setup_dir, target_exe, extra_files)
         if inputs:
-            helper.define_containers(ContainerType.inputs)
             helper.upload_inputs(inputs)
         helper.wait_on(wait_for_files, wait_for_running)
 
@@ -314,11 +318,14 @@ class Libfuzzer(Command):
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (
                 ContainerType.unique_inputs,
-                helper.containers[ContainerType.unique_inputs],
+                output_container or helper.containers[ContainerType.unique_inputs],
             ),
-            (ContainerType.inputs, helper.containers[ContainerType.inputs]),
         ]
 
+        if inputs:
+            merge_containers.append(
+                (ContainerType.inputs, helper.containers[ContainerType.inputs])
+            )
         if existing_inputs:
             for existing_container in existing_inputs:
                 merge_containers.append((ContainerType.inputs, existing_container))
