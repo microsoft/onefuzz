@@ -5,62 +5,40 @@
 
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode
-from onefuzztypes.job_templates import (
-    JobTemplateCreate,
-    JobTemplateDelete,
-    JobTemplateUpdate,
-)
+from onefuzztypes.job_templates import JobTemplateRequest
 from onefuzztypes.models import Error
-from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.job_templates.templates import JobTemplateIndex
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.user_credentials import parse_jwt_token
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
-    templates = JobTemplateIndex.list()
-    return ok(templates)
+    configs = JobTemplateIndex.get_configs()
+    return ok(configs)
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_request(JobTemplateCreate, req)
+    request = parse_request(JobTemplateRequest, req)
     if isinstance(request, Error):
-        return not_ok(request, context="JobTemplateCreate")
+        return not_ok(request, context="JobTemplateRequest")
 
-    entry = JobTemplateIndex(
-        domain=request.name, name=request.name, template=request.template
-    )
-    result = entry.save(new=True)
-    if isinstance(result, Error):
-        return not_ok(result, context="JobTemplateCreate")
+    user_info = parse_jwt_token(req)
+    if isinstance(user_info, Error):
+        return not_ok(user_info, context="task create")
 
-    return ok(BoolResult(result=True))
-
-
-def patch(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_request(JobTemplateUpdate, req)
-    if isinstance(request, Error):
-        return not_ok(request, context="JobTemplateUpdate")
-
-    entry = JobTemplateIndex.get(request.domain, request.name)
-    if entry is None:
+    template = JobTemplateIndex.get(request.name)
+    if template is None:
         return not_ok(
             Error(code=ErrorCode.UNABLE_TO_UPDATE, errors=["no such job template"]),
-            context="update job template",
+            context="use job template",
         )
 
-    entry.template = request.template
-    entry.save()
-    return ok(BoolResult(result=True))
+    result = template.execute(request, user_info)
+    if isinstance(result, Error):
+        return not_ok(result, context="JobTemplateRequest")
 
-
-def delete(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_request(JobTemplateDelete, req)
-    if isinstance(request, Error):
-        return not_ok(request, context="JobTemplateDelete")
-
-    entry = JobTemplateIndex.get(request.domain, request.name)
-    return ok(BoolResult(result=entry is not None))
+    return ok(result)
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -68,7 +46,5 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return get(req)
     elif req.method == "POST":
         return post(req)
-    elif req.method == "DELETE":
-        return delete(req)
     else:
         raise Exception("invalid method")

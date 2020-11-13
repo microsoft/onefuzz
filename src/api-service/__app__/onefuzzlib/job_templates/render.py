@@ -25,7 +25,7 @@ def template_container_types(template: JobTemplate) -> List[ContainerType]:
 
 
 @cached
-def build_input_config(template: JobTemplate) -> JobTemplateConfig:
+def build_input_config(name: str, template: JobTemplate) -> JobTemplateConfig:
     user_fields = [
         JobTemplateField(
             name=x.name,
@@ -39,6 +39,7 @@ def build_input_config(template: JobTemplate) -> JobTemplateConfig:
     containers = template_container_types(template)
 
     return JobTemplateConfig(
+        name=name,
         user_fields=user_fields,
         containers=containers,
     )

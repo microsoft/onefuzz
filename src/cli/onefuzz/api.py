@@ -1440,6 +1440,7 @@ class Onefuzz:
         self.scalesets = Scaleset(self)
         self.nodes = Node(self)
         self.webhooks = Webhooks(self)
+        self.job_templates = JobTemplates(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
@@ -1657,5 +1658,6 @@ class Onefuzz:
 
 
 from .debug import Debug  # noqa: E402
+from .job_templates import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402

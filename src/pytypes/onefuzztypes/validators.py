@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 from string import ascii_letters, digits
-from .consts import BUILTIN_TEMPLATE_DOMAIN
 
 
 def check_alnum_dash(value: str) -> str:
@@ -29,12 +28,3 @@ def check_template_name(value: str) -> str:
         raise ValueError("invalid value: %s" % value)
 
     return check_alnum_dash(value)
-
-
-def check_template_name_modify(value: str) -> str:
-
-    check_template_name(value)
-    if value == BUILTIN_TEMPLATE_DOMAIN:
-        raise ValueError("invalid value: %s" % value)
-
-    return value

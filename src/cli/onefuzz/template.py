@@ -9,7 +9,6 @@ from typing import Optional
 from onefuzztypes.enums import ContainerType
 
 from .api import Command, Onefuzz
-from .templates._prototype import Prototype
 from .templates.afl import AFL
 from .templates.libfuzzer import Libfuzzer
 from .templates.ossfuzz import OssFuzz
@@ -25,7 +24,6 @@ class Template(Command):
         self.afl = AFL(onefuzz, logger)
         self.radamsa = Radamsa(onefuzz, logger)
         self.ossfuzz = OssFuzz(onefuzz, logger)
-        self.do_not_use = Prototype(onefuzz, logger)
 
     def stop(
         self,

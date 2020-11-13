@@ -64,6 +64,14 @@ class Task(BASE_TASK, ORMMixin):
                 user_info=user_info,
             )
         )
+
+        logging.info(
+            "created task. job_id:%s task_id:%s type:%s user:%s",
+            task.job_id,
+            task.task_id,
+            task.config.task.type.name,
+            user_info,
+        )
         return task
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:

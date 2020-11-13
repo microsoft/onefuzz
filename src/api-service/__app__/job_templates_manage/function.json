@@ -8,8 +8,11 @@
       "name": "req",
       "methods": [
         "get",
-        "post"
-      ]
+        "post",
+        "delete",
+        "patch"
+      ],
+      "route": "job_templates/manage"
     },
     {
       "type": "http",
