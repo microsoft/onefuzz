@@ -12,13 +12,8 @@ from inspect import Parameter, signature
 from typing import Any, Dict, List, Optional
 
 from onefuzztypes.enums import OS, ContainerType, UserFieldType
-from onefuzztypes.models import (
-    Job,
-    OnefuzzTemplateConfig,
-    OnefuzzTemplateRequest,
-    Task,
-    TaskContainers,
-)
+from onefuzztypes.job_templates import OnefuzzTemplateConfig, OnefuzzTemplateRequest
+from onefuzztypes.models import Job, Task, TaskContainers
 from onefuzztypes.primitives import Directory, File
 
 from onefuzz.api import Command

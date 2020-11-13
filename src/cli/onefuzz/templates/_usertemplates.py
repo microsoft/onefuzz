@@ -7,15 +7,13 @@ from onefuzztypes.enums import (
     UserFieldOperation,
     UserFieldType,
 )
+from onefuzztypes.job_templates import OnefuzzTemplate, UserField, UserFieldLocation
 from onefuzztypes.models import (
     JobConfig,
-    OnefuzzTemplate,
     TaskConfig,
     TaskContainers,
     TaskDetails,
     TaskPool,
-    UserField,
-    UserFieldLocation,
 )
 
 POOL_HELP = "Execute the task on the specified pool"

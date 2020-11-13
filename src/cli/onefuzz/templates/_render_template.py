@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from jsonpatch import apply_patch
 from onefuzztypes.enums import ContainerType, UserFieldType
-from onefuzztypes.models import (
+from onefuzztypes.job_templates import (
     TEMPLATE_BASE_FIELDS,
     OnefuzzTemplate,
     OnefuzzTemplateConfig,
