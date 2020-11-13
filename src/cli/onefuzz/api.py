@@ -1442,7 +1442,8 @@ class Onefuzz:
         self.webhooks = Webhooks(self)
         self.job_templates = JobTemplates(self)
 
-        self.job_templates._load_cache(self._backend.config["endpoint"])
+        if "endpoint" in self._backend.config:
+            self.job_templates._load_cache(self._backend.config["endpoint"])
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
