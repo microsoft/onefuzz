@@ -43,8 +43,20 @@ class JobTemplateIndex(BASE_INDEX, ORMMixin):
 
         return configs
 
-    def execute(self, request: JobTemplateRequest, user_info: UserInfo) -> Result[Job]:
-        template = render(request, self.template)
+    @classmethod
+    def execute(cls, request: JobTemplateRequest, user_info: UserInfo) -> Result[Job]:
+        index = cls.get(request.name)
+        if index is None:
+            if request.name not in TEMPLATES:
+                return Error(
+                    code=ErrorCode.INVALID_REQUEST,
+                    errors=["no such template: %s" % request.name],
+                )
+            template = TEMPLATES[request.name]
+        else:
+            template = index.template
+
+        template = render(request, template)
 
         try:
             for task_config in template.tasks:

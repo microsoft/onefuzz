@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode
 from onefuzztypes.job_templates import JobTemplateRequest
 from onefuzztypes.models import Error
 
@@ -27,18 +26,11 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(user_info, Error):
         return not_ok(user_info, context="task create")
 
-    template = JobTemplateIndex.get(request.name)
-    if template is None:
-        return not_ok(
-            Error(code=ErrorCode.UNABLE_TO_UPDATE, errors=["no such job template"]),
-            context="use job template",
-        )
+    job = JobTemplateIndex.execute(request, user_info)
+    if isinstance(job, Error):
+        return not_ok(job, context="JobTemplateRequest")
 
-    result = template.execute(request, user_info)
-    if isinstance(result, Error):
-        return not_ok(result, context="JobTemplateRequest")
-
-    return ok(result)
+    return ok(job)
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:

@@ -3,38 +3,37 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-# from typing import Dict, List, Optional
-# from onefuzztypes.enums import OS, ContainerType, StatsFormat, TaskType
-# from onefuzztypes.models import Job, NotificationConfig
-# from onefuzztypes.primitives import Container, Directory, File
-
+import logging
 from inspect import Parameter, signature
 from typing import Any, Dict, List, Optional
 
 from onefuzztypes.enums import OS, ContainerType, UserFieldType
-from onefuzztypes.job_templates import OnefuzzTemplateConfig, OnefuzzTemplateRequest
-from onefuzztypes.models import Job, Task, TaskContainers
+from onefuzztypes.job_templates import JobTemplateConfig, JobTemplateRequest
+from onefuzztypes.models import Job, TaskContainers
 from onefuzztypes.primitives import Directory, File
 
-from onefuzz.api import Command
+from ..api import Endpoint, Onefuzz
+from ..templates import _build_container_name
+from .cache import CachedTemplates
+from .manage import Manage
 
-from . import _build_container_name
-from ._render_template import build_input_config, render
-from ._usertemplates import TEMPLATES
-
-# from . import JobHelper
+LOGGER = logging.getLogger("job-templates")
 
 
 def container_type_name(container_type: ContainerType) -> str:
     return container_type.name + "_dir"
 
 
-class Prototype(Command):
-    """ Pre-defined Prototype job """
+class TemplateHandler(Endpoint):
+    """ Submit job template """
+
+    endpoint = "job_templates"
 
     def _convert_container_args(
-        self, config: OnefuzzTemplateConfig, args: Any, platform: OS
+        self, config: JobTemplateConfig, args: Any, platform: OS
     ) -> List[TaskContainers]:
+        """ Convert the job template into a list of containers """
+
         containers = []
         container_names = args["container_names"]
         if container_names is None:
@@ -55,9 +54,10 @@ class Prototype(Command):
         return containers
 
     def _convert_args(
-        self, template_name: str, config: OnefuzzTemplateConfig, args: Any, platform: OS
-    ) -> OnefuzzTemplateRequest:
-        """ convert arguments from argparse into a OnefuzzTemplateRequest """
+        self, config: JobTemplateConfig, args: Any, platform: OS
+    ) -> JobTemplateRequest:
+        """ convert arguments from argparse into a JobTemplateRequest """
+
         user_fields = {}
         for field in config.user_fields:
             if field.name not in args and field.required:
@@ -79,21 +79,23 @@ class Prototype(Command):
                     container.name, args[directory_arg]
                 )
 
-        request = OnefuzzTemplateRequest(
-            template_name=template_name, user_fields=user_fields, containers=containers
+        request = JobTemplateRequest(
+            name=config.name, user_fields=user_fields, containers=containers
         )
         return request
 
-    def _process_containers(self, request: OnefuzzTemplateRequest, args: Any) -> None:
+    def _process_containers(self, request: JobTemplateRequest, args: Any) -> None:
+        """ Create containers based on the argparse args """
+
         for container in request.containers:
             directory_arg = container_type_name(container.type)
-            self.logger.info("creating container: %s", container.name)
+            self.onefuzz.logger.info("creating container: %s", container.name)
             self.onefuzz.containers.create(
                 container.name, metadata={"container_type": container.type.name}
             )
 
             if directory_arg in args and args[directory_arg] is not None:
-                self.logger.info(
+                self.onefuzz.logger.info(
                     "uploading %s to %s", args[directory_arg], container.name
                 )
                 self.onefuzz.containers.files.upload_dir(
@@ -106,57 +108,23 @@ class Prototype(Command):
                 target_exe = args["target_exe"]
                 if target_exe is None:
                     continue
-                self.logger.info("uploading %s to %s", target_exe, container.name)
+                self.onefuzz.logger.info(
+                    "uploading %s to %s", target_exe, container.name
+                )
                 self.onefuzz.containers.files.upload_file(container.name, target_exe)
-
-    def _submit_request(self, request: OnefuzzTemplateRequest) -> Job:
-        # In the POC, this is done locally. In production, the request will be
-        # submitted to the server, which would do the same thing.
-        config = render(request, TEMPLATES[request.template_name])
-
-        for template_notification in config.notifications:
-            for task_container in request.containers:
-                if task_container.type == template_notification.container_type:
-                    self.logger.info("creating notification: %s", task_container.name)
-                    self.onefuzz.notifications.create(
-                        task_container.name, template_notification.notification
-                    )
-
-        job = self.onefuzz.jobs.create_with_config(config.job)
-        self.logger.info("created job: %s", job.job_id)
-        tasks: List[Task] = []
-        for task_config in config.tasks:
-            if task_config.pool is None:
-                raise Exception("pool not defined")
-            task_config.job_id = job.job_id
-            if task_config.prereq_tasks:
-                # the model checker verifies prereq_tasks in u128 form are index refs to
-                # previously generated tasks
-                task_config.prereq_tasks = [
-                    tasks[x.int].task_id for x in task_config.prereq_tasks
-                ]
-            self.logger.info(
-                "creating task. pool:%s type:%s",
-                task_config.pool.pool_name,
-                task_config.task.type.name,
-            )
-            task = self.onefuzz.tasks.create_with_config(task_config)
-            tasks.append(task)
-
-        return job
 
     def _execute(
         self,
-        template_name: str,
-        config: OnefuzzTemplateConfig,
+        config: JobTemplateConfig,
         platform: OS,
         args: Any,
     ) -> Job:
-        self.logger.debug("building: %s", template_name)
-        request = self._convert_args(template_name, config, args, platform)
+        """ Convert argparse args into a JobTemplateRequest and submit it """
+
+        self.onefuzz.logger.debug("building: %s", config.name)
+        request = self._convert_args(config, args, platform)
         self._process_containers(request, args)
-        result = self._submit_request(request)
-        return result
+        return self._req_model("POST", Job, data=request)
 
 
 TYPES = {
@@ -176,7 +144,7 @@ NAMES = {
 }
 
 
-def config_to_params(config: OnefuzzTemplateConfig) -> List[Parameter]:
+def config_to_params(config: JobTemplateConfig) -> List[Parameter]:
     params: List[Parameter] = []
 
     for entry in config.user_fields:
@@ -221,9 +189,9 @@ def config_to_params(config: OnefuzzTemplateConfig) -> List[Parameter]:
     return params
 
 
-def build_template_doc(name: str, config: OnefuzzTemplateConfig) -> str:
+def build_template_doc(config: JobTemplateConfig) -> str:
     docs = [
-        f"Launch a pre-defined {name} job",
+        f"Launch '{config.name}' job",
         "",
         ":param Platform platform: Specify the OS to use in the job.",
     ]
@@ -245,9 +213,9 @@ def build_template_doc(name: str, config: OnefuzzTemplateConfig) -> str:
     return "\n".join(docs)
 
 
-def build_template_func(name: str, config: OnefuzzTemplateConfig) -> Any:
-    def func(self: Prototype, platform: OS, **kwargs: Any) -> Job:
-        return self._execute(name, config, platform, kwargs)
+def build_template_func(config: JobTemplateConfig) -> Any:
+    def func(self: TemplateHandler, platform: OS, **kwargs: Any) -> Job:
+        return self._execute(config, platform, kwargs)
 
     sig = signature(func)
     params = [sig.parameters["self"], sig.parameters["platform"]] + config_to_params(
@@ -256,13 +224,46 @@ def build_template_func(name: str, config: OnefuzzTemplateConfig) -> Any:
     sig = sig.replace(parameters=tuple(params))
     func.__signature__ = sig  # type: ignore
 
-    func.__doc__ = build_template_doc(name, config)
+    func.__doc__ = build_template_doc(config)
 
     return func
 
 
-# For now, these come from a local python file.  Eventually, we would expect these
-# to come from a server API, with local caching
-for name, template in TEMPLATES.items():
-    config = build_input_config(template)
-    setattr(Prototype, name, build_template_func(name, config))
+def load_templates(templates: List[JobTemplateConfig]) -> None:
+    for name in dir(TemplateHandler):
+        if name.startswith("_"):
+            continue
+        delattr(TemplateHandler, name)
+
+    for template in templates:
+        setattr(TemplateHandler, template.name, build_template_func(template))
+
+
+class JobTemplates(Endpoint):
+    """ Job Templates """
+
+    endpoint = "job_templates"
+
+    def __init__(self, onefuzz: Onefuzz):
+        super().__init__(onefuzz)
+        self.manage = Manage(onefuzz)
+        self.submit = TemplateHandler(onefuzz)
+
+    def _load_cache(self, endpoint: str) -> None:
+        entry = CachedTemplates.get(endpoint)
+        if not entry:
+            self.onefuzz.logger.debug("no templates loaded for %s", endpoint)
+            return
+        load_templates(entry.configs)
+
+    def refresh(self) -> None:
+        """ Update available templates """
+
+        templates = self._req_model_list("GET", JobTemplateConfig)
+
+        for template in templates:
+            self.onefuzz.logger.info("updated template definition: %s", template.name)
+
+        CachedTemplates.add(self.onefuzz._backend.config["endpoint"], templates)
+
+        load_templates(templates)

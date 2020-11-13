@@ -14,6 +14,5 @@ azure-applicationinsights==0.1.0
 adal~=1.2.5
 tenacity==6.2.0
 docstring_parser==0.7.3
-jsonpatch==1.26
 # onefuzztypes version is set during build
 onefuzztypes==0.0.0

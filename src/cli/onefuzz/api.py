@@ -1442,6 +1442,8 @@ class Onefuzz:
         self.webhooks = Webhooks(self)
         self.job_templates = JobTemplates(self)
 
+        self.job_templates._load_cache(self._backend.config["endpoint"])
+
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
         self.debug = Debug(self, self.logger)
@@ -1451,6 +1453,7 @@ class Onefuzz:
     def __setup__(self, endpoint: Optional[str] = None) -> None:
         if endpoint:
             self._backend.config["endpoint"] = endpoint
+            self.job_templates._load_cache(self._backend.config["endpoint"])
 
     def licenses(self) -> object:
         """ Return third-party licenses used by this package """
@@ -1469,6 +1472,7 @@ class Onefuzz:
         # Rather than interacting MSAL directly, call a simple API which
         # actuates the login process
         self.info.get()
+        self.job_templates.refresh()
         return "succeeded"
 
     def config(
@@ -1658,6 +1662,6 @@ class Onefuzz:
 
 
 from .debug import Debug  # noqa: E402
-from .job_templates import JobTemplates  # noqa: E402
+from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402
