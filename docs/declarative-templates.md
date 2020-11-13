@@ -15,11 +15,9 @@ create the CLI subcommands for the template.
 * On `onefuzz login` (or `onefuzz job_templates refresh`), cache the existing set of templates
 * Users can see the supported templates via `onefuzz job_templates submit --help`
 * Users can submit jobs via `onefuzz job_templates submit libfuzzer OSNAME project name build pool --target_exe fuzz.exe`
+* Template configs are refreshed automatically if they are older than 24 hours.  
 
 Future work:
-* job template config caches are saved by endpoint with a timestamp. We can
-  warn the user if their templates are older than a certain period and
-  potentially even refresh them automatically.
 * submitting jobs by config. Not everything is easy to express via argparse,
   such as values that begin with `-`. In order to support this, it should be
   trivial to expose a method that takes a json file and submits it.
