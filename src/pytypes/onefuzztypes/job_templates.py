@@ -61,8 +61,8 @@ class JobTemplate(BaseModel):
         seen_path = set()
 
         for entry in TEMPLATE_BASE_FIELDS + data["user_fields"]:
-            # field names, which are sent to the user for filing out, must be specified
-            # once and only once
+            # field names, which are sent to the user for filling out, must be
+            # specified once and only once
             if entry.name in seen:
                 raise Exception(f"duplicate field found: {entry.name}")
             seen.add(entry.name)
