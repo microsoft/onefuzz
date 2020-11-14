@@ -22,7 +22,7 @@ from onefuzztypes.job_templates import (
 
 
 def template_container_types(template: JobTemplate) -> List[ContainerType]:
-    return list(set(y.type for x in template.tasks for y in x.containers if not y.name))
+    return list(set(c.type for t in template.tasks for c in t.containers if not c.name))
 
 
 @cached
