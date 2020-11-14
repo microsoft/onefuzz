@@ -15,7 +15,7 @@ create the CLI subcommands for the template.
 * On `onefuzz login` (or `onefuzz job_templates refresh`), cache the existing set of templates
 * Users can see the supported templates via `onefuzz job_templates submit --help`
 * Users can submit jobs via `onefuzz job_templates submit libfuzzer OSNAME project name build pool --target_exe fuzz.exe`
-* Template configs are refreshed automatically if they are older than 24 hours.  
+* Template configs are refreshed automatically if they are older than 24 hours.
 
 Future work:
 * submitting jobs by config. Not everything is easy to express via argparse,
@@ -42,7 +42,9 @@ The form fields allow for 'add' or 'replace' of basic field data using [jsonpatc
 
 ## Example form fields
 
-This following field named `target_workers`, which is required to be an 'int', will optionally (if the request includes it) replace the `target_workers` value of in the first task in the template.
+This following field named `target_workers`, which is required to be an `int`,
+will optionally (if the request includes it) replace the `target_workers` value
+of in the first task in the template.
 
 ```python
 UserField(
@@ -60,19 +62,28 @@ UserField(
 ```
 
 ## Allowed Data Types
-As of right now, the data types allowed in configuring arbitrary components in the JobTemplate are:
+The data types allowed in configuring arbitrary components in the JobTemplate are:
 
-* bool
-* int
-* str
-* Dict\[str, str\]
-* List\[str\]
+* `bool`
+* `int`
+* `str`
+* `Dict[str, str]`
+* `List[str]`
 
 ## Referring to Tasks
 
-The mechanism to refer to pre-existing tasks, such as how `libfuzzer_crash_report` requires `libfuzzer_fuzz` as a prerequisite, is done via specifying the prerequisite task_id.
+In existing procedural templates, some tasks require that other tasks are
+running before they may be scheduled. For example, in the `libfuzzer`
+procedural template, the `libfuzzer_crash_report` task has a `libfuzzer_fuzz`
+task prerequisite. This is specified via the prerequisite's `task_id`, which is
+a random server-assigned UUID.
 
-To support such a reference in `OnefuzzTemplate`, specify the prerequisite TASK by the `u128` representation index in to the list of tasks.  Example, to refer to the first task, use:
+In procedural templates, the dependency task is simply created before its
+dependent.
+
+To support such a reference in `OnefuzzTemplate`, specify the prerequisite task
+by the `u128` representation index in to the list of tasks.  Example, to refer
+to the first task, use:
 
 ```python
 TaskConfig(
@@ -81,10 +92,10 @@ TaskConfig(
 )
 ```
 
-## Hardcoded verses Runtime-specified container names
+## Hardcoded vs Runtime-specified container names
 
-To support differentiating _always use "afl-linux" for tools_ verses 
-_ask what container to use for setup_, if the container name is blank in the
+To support differentiating _always use "afl-linux" for tools_ vs _ask 
+what container to use for setup_, if the container name is blank in the
 template, it will be provided as part of the `JobTemplateConfig` and in the
 resulting `JobTemplateRequest`.
 
