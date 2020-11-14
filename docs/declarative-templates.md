@@ -25,7 +25,7 @@ Future work:
 ## Admin Experience
 
 Administrators can manage their own templates via `onefuzz job_templates
-manage [create,delete,list.update]`.
+manage [create,delete,list,update]`.
 
 If the runtime configuration for the template changes, users will need to
 refresh their cache to pull the runtime configuration.
