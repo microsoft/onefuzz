@@ -86,7 +86,7 @@ afl_linux = JobTemplate(
     user_fields=[
         UserField(
             name="pool_name",
-            help="Execute the task on the specified pool",
+            help=POOL_HELP,
             type=UserFieldType.Str,
             required=True,
             locations=[
