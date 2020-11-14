@@ -30,7 +30,7 @@ manage [create,delete,list,update]`.
 If the runtime configuration for the template changes, users will need to
 refresh their cache to pull the runtime configuration.
 
-## Implementation details
+## Implementation Details
 
 A declarative job template includes:
 * a Job (JobConfig, as used by `onefuzz jobs create`)
@@ -40,7 +40,7 @@ A declarative job template includes:
 
 The form fields allow for 'add' or 'replace' of basic field data using [jsonpatch](http://jsonpatch.com) semantics.
 
-## Example form fields
+## Example Form Fields
 
 This following field named `target_workers`, which is required to be an `int`,
 will optionally (if the request includes it) replace the `target_workers` value
@@ -92,7 +92,7 @@ TaskConfig(
 )
 ```
 
-## Hardcoded vs Runtime-specified container names
+## Hardcoded vs Runtime-specified Container Names
 
 To support differentiating _always use "afl-linux" for tools_ vs _ask 
 what container to use for setup_, if the container name is blank in the
@@ -119,7 +119,7 @@ JobTemplateNotification(
 )
 ```
 
-## Differences from existing templates
+## Differences from Existing Templates
 
 * Declaratively specifying the allowed values for enums, such as StatsFormat,
   is not supported. Fields must currently use Str, which evaluates to Enum
