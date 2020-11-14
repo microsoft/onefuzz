@@ -31,7 +31,7 @@ class TemplateHandler(Endpoint):
     endpoint = "job_templates"
 
     def _convert_container_args(
-        self, config: JobTemplateConfig, args: Any, platform: OS
+        self, config: JobTemplateConfig, args: Any
     ) -> List[TaskContainers]:
         """ Convert the job template into a list of containers """
 
@@ -49,14 +49,12 @@ class TemplateHandler(Endpoint):
                     args["project"],
                     args["name"],
                     args["build"],
-                    platform,
+                    config.os,
                 )
             containers.append(TaskContainers(name=container_name, type=container_type))
         return containers
 
-    def _convert_args(
-        self, config: JobTemplateConfig, args: Any, platform: OS
-    ) -> JobTemplateRequest:
+    def _convert_args(self, config: JobTemplateConfig, args: Any) -> JobTemplateRequest:
         """ convert arguments from argparse into a JobTemplateRequest """
 
         user_fields = {}
@@ -67,7 +65,7 @@ class TemplateHandler(Endpoint):
             if value is not None:
                 user_fields[field.name] = value
 
-        containers = self._convert_container_args(config, args, platform)
+        containers = self._convert_container_args(config, args)
         for container in containers:
             directory_arg = container_type_name(container.type)
 
@@ -117,13 +115,12 @@ class TemplateHandler(Endpoint):
     def _execute(
         self,
         config: JobTemplateConfig,
-        platform: OS,
         args: Any,
     ) -> Job:
         """ Convert argparse args into a JobTemplateRequest and submit it """
 
         self.onefuzz.logger.debug("building: %s", config.name)
-        request = self._convert_args(config, args, platform)
+        request = self._convert_args(config, args)
         self._process_containers(request, args)
         return self._req_model("POST", Job, data=request)
 
@@ -194,7 +191,6 @@ def build_template_doc(config: JobTemplateConfig) -> str:
     docs = [
         f"Launch '{config.name}' job",
         "",
-        ":param Platform platform: Specify the OS to use in the job.",
     ]
 
     for entry in config.user_fields:
@@ -215,13 +211,11 @@ def build_template_doc(config: JobTemplateConfig) -> str:
 
 
 def build_template_func(config: JobTemplateConfig) -> Any:
-    def func(self: TemplateHandler, platform: OS, **kwargs: Any) -> Job:
-        return self._execute(config, platform, kwargs)
+    def func(self: TemplateHandler, **kwargs: Any) -> Job:
+        return self._execute(config, kwargs)
 
     sig = signature(func)
-    params = [sig.parameters["self"], sig.parameters["platform"]] + config_to_params(
-        config
-    )
+    params = [sig.parameters["self"]] + config_to_params(config)
     sig = sig.replace(parameters=tuple(params))
     func.__signature__ = sig  # type: ignore
 

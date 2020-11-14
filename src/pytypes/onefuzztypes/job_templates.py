@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator, validator
 
-from .enums import ContainerType, UserFieldOperation, UserFieldType
+from .enums import ContainerType, UserFieldOperation, UserFieldType, OS
 from .models import JobConfig, NotificationConfig, TaskConfig, TaskContainers
 from .primitives import File
 from .requests import BaseRequest
@@ -39,6 +39,7 @@ class JobTemplateNotification(BaseModel):
 
 
 class JobTemplate(BaseModel):
+    os: OS
     job: JobConfig
     tasks: List[TaskConfig]
     notifications: List[JobTemplateNotification]
@@ -98,6 +99,7 @@ class JobTemplateField(BaseModel):
 
 
 class JobTemplateConfig(BaseResponse):
+    os: OS
     name: str
     user_fields: List[JobTemplateField]
     containers: List[ContainerType]

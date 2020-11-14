@@ -40,6 +40,7 @@ def build_input_config(name: str, template: JobTemplate) -> JobTemplateConfig:
     containers = template_container_types(template)
 
     return JobTemplateConfig(
+        os=template.os,
         name=name,
         user_fields=user_fields,
         containers=containers,

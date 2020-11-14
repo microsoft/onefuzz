@@ -16,7 +16,7 @@ from ..notifications.main import Notification
 from ..orm import ORMMixin
 from ..tasks.config import TaskConfigError, check_config
 from ..tasks.main import Task
-from .default_templates import TEMPLATES
+from .defaults import TEMPLATES
 from .render import build_input_config, render
 
 
