@@ -8,7 +8,7 @@ import logging
 from inspect import Parameter, signature
 from typing import Any, Dict, List, Optional
 
-from onefuzztypes.enums import OS, ContainerType, UserFieldType
+from onefuzztypes.enums import ContainerType, UserFieldType
 from onefuzztypes.job_templates import JobTemplateConfig, JobTemplateRequest
 from onefuzztypes.models import Job, TaskContainers
 from onefuzztypes.primitives import Directory, File
