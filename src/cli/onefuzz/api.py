@@ -1448,6 +1448,8 @@ class Onefuzz:
         self.status = Status(self, self.logger)
         self.utils = Utils(self, self.logger)
 
+        self.__setup__()
+
     def __setup__(self, endpoint: Optional[str] = None) -> None:
         if endpoint:
             self._backend.config["endpoint"] = endpoint
