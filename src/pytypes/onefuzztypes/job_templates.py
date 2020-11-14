@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator, validator

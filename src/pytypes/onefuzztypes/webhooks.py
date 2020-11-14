@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from typing import List, Optional, Union
 from uuid import UUID, uuid4
 
