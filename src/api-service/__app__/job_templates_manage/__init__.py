@@ -44,7 +44,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     if entry is None:
         return not_ok(
             Error(code=ErrorCode.UNABLE_TO_UPDATE, errors=["no such job template"]),
-            context="update job template",
+            context="JobTemplateUpdate",
         )
 
     entry.template = request.template

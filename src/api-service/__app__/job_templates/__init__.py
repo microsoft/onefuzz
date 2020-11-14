@@ -24,7 +24,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     user_info = parse_jwt_token(req)
     if isinstance(user_info, Error):
-        return not_ok(user_info, context="task create")
+        return not_ok(user_info, context="JobTemplateRequest")
 
     job = JobTemplateIndex.execute(request, user_info)
     if isinstance(job, Error):
