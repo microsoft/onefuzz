@@ -6,11 +6,11 @@
 from uuid import UUID
 
 from onefuzztypes.enums import (
+    OS,
     ContainerType,
     TaskType,
     UserFieldOperation,
     UserFieldType,
-    OS,
 )
 from onefuzztypes.job_templates import JobTemplate, UserField, UserFieldLocation
 from onefuzztypes.models import (
@@ -23,14 +23,14 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import Container, PoolName
 
 from .common import (
-    POOL_HELP,
     DURATION_HELP,
+    POOL_HELP,
+    REBOOT_HELP,
+    RETRY_COUNT_HELP,
+    TAGS_HELP,
     TARGET_EXE_HELP,
     TARGET_OPTIONS_HELP,
     VM_COUNT_HELP,
-    RETRY_COUNT_HELP,
-    TAGS_HELP,
-    REBOOT_HELP,
 )
 
 afl_linux = JobTemplate(

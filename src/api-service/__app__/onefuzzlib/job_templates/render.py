@@ -8,8 +8,7 @@ from typing import Dict, List
 
 from jsonpatch import apply_patch
 from memoization import cached
-from onefuzztypes.models import Error, Result
-from onefuzztypes.enums import ContainerType, UserFieldType, ErrorCode
+from onefuzztypes.enums import ContainerType, ErrorCode, UserFieldType
 from onefuzztypes.job_templates import (
     TEMPLATE_BASE_FIELDS,
     JobTemplate,
@@ -19,6 +18,7 @@ from onefuzztypes.job_templates import (
     TemplateUserData,
     UserField,
 )
+from onefuzztypes.models import Error, Result
 
 
 def template_container_types(template: JobTemplate) -> List[ContainerType]:

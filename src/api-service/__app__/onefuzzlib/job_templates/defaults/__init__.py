@@ -1,4 +1,4 @@
-from .afl import afl_windows, afl_linux
+from .afl import afl_linux, afl_windows
 from .libfuzzer import libfuzzer_linux, libfuzzer_windows
 
 TEMPLATES = {
