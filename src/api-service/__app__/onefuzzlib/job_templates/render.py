@@ -99,7 +99,9 @@ def render(request: JobTemplateRequest, template: JobTemplate) -> Result[JobTemp
             if field.required:
                 return _fail(f"missing required field: {field.name}")
             else:
+                # optional fields can be missing
                 continue
+
         patches += build_patches(request.user_fields[field.name], field)
 
     raw = json.loads(template.json())
@@ -110,6 +112,7 @@ def render(request: JobTemplateRequest, template: JobTemplate) -> Result[JobTemp
     for task in rendered.tasks:
         for task_container in task.containers:
             if task_container.name:
+                # only need to fill out containers with names
                 continue
 
             for entry in request.containers:

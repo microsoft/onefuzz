@@ -87,7 +87,7 @@ class JobTemplateIndex(BASE_INDEX, ORMMixin):
         for task_config in template.tasks:
             task_config.job_id = job.job_id
             if task_config.prereq_tasks:
-                # the model checker verifies prereq_tasks in u128 form are index refs to
+                # pydantic verifies prereq_tasks in u128 form are index refs to
                 # previously generated tasks
                 task_config.prereq_tasks = [
                     tasks[x.int].task_id for x in task_config.prereq_tasks
