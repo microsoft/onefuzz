@@ -52,17 +52,22 @@ class JobTemplateIndex(BASE_INDEX, ORMMixin):
                     code=ErrorCode.INVALID_REQUEST,
                     errors=["no such template: %s" % request.name],
                 )
-            template = TEMPLATES[request.name]
+            base_template = TEMPLATES[request.name]
         else:
-            template = index.template
+            base_template = index.template
 
-        template = render(request, template)
+        template = render(request, base_template)
+        if isinstance(template, Error):
+            return template
 
         try:
             for task_config in template.tasks:
                 check_config(task_config)
                 if task_config.pool is None:
-                    raise TaskConfigError("pool not defined")
+                    return Error(
+                        code=ErrorCode.INVALID_REQUEST, errors=["pool not defined"]
+                    )
+
         except TaskConfigError as err:
             return Error(code=ErrorCode.INVALID_REQUEST, errors=[str(err)])
 

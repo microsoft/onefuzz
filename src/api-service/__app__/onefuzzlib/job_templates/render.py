@@ -8,7 +8,8 @@ from typing import Dict, List
 
 from jsonpatch import apply_patch
 from memoization import cached
-from onefuzztypes.enums import ContainerType, UserFieldType
+from onefuzztypes.models import Error, Result
+from onefuzztypes.enums import ContainerType, UserFieldType, ErrorCode
 from onefuzztypes.job_templates import (
     TEMPLATE_BASE_FIELDS,
     JobTemplate,
@@ -73,7 +74,11 @@ def build_patches(
     return patches
 
 
-def render(request: JobTemplateRequest, template: JobTemplate) -> JobTemplate:
+def _fail(why: str) -> Error:
+    return Error(code=ErrorCode.INVALID_REQUEST, errors=[why])
+
+
+def render(request: JobTemplateRequest, template: JobTemplate) -> Result[JobTemplate]:
     patches = []
     seen = set()
 
@@ -81,16 +86,17 @@ def render(request: JobTemplateRequest, template: JobTemplate) -> JobTemplate:
         for field in TEMPLATE_BASE_FIELDS + template.user_fields:
             if field.name == name:
                 if name in seen:
-                    raise ValueError(f"duplicate specification: {name}")
+                    return _fail(f"duplicate specification: {name}")
+
                 seen.add(name)
 
         if name not in seen:
-            raise ValueError(f"extra field: {name}")
+            return _fail(f"extra field: {name}")
 
     for field in TEMPLATE_BASE_FIELDS + template.user_fields:
         if field.name not in request.user_fields:
             if field.required:
-                raise ValueError(f"missing required field: {field.name}")
+                return _fail(f"missing required field: {field.name}")
             else:
                 continue
         patches += build_patches(request.user_fields[field.name], field)
@@ -112,10 +118,10 @@ def render(request: JobTemplateRequest, template: JobTemplate) -> JobTemplate:
                 used_containers.append(entry)
 
             if not task_container.name:
-                raise Exception(f"missing container definition {task_container.type}")
+                return _fail(f"missing container definition {task_container.type}")
 
     for entry in request.containers:
         if entry not in used_containers:
-            raise Exception(f"unused container in request: {entry}")
+            return _fail(f"unused container in request: {entry}")
 
     return rendered
