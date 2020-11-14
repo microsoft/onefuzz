@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator, validator
 
-from .enums import ContainerType, UserFieldOperation, UserFieldType, OS
+from .enums import OS, ContainerType, UserFieldOperation, UserFieldType
 from .models import JobConfig, NotificationConfig, TaskConfig, TaskContainers
 from .primitives import File
 from .requests import BaseRequest
