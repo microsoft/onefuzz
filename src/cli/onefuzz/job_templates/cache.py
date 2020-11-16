@@ -5,6 +5,7 @@
 
 import datetime
 import json
+import logging
 import os
 from typing import Dict, List, Optional
 
@@ -44,10 +45,16 @@ class CachedTemplates(BaseModel):
             entry.save()
             return entry
 
-        with open(TEMPLATE_CACHE, "r") as handle:
-            raw = json.load(handle)
+        try:
+            with open(TEMPLATE_CACHE, "r") as handle:
+                raw = json.load(handle)
 
-        return cls.parse_obj(raw)
+            return cls.parse_obj(raw)
+        except Exception as err:
+            logging.warning("unable to load template cache: %s", err)
+            entry = cls()
+            entry.save()
+            return entry
 
     def save(self) -> None:
         with open(TEMPLATE_CACHE, "w") as handle:
