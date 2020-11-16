@@ -21,6 +21,7 @@ class UserFieldLocation(BaseModel):
 
 
 TemplateUserData = Union[bool, int, str, Dict[str, str], List[str], File]
+TemplateUserFields = Dict[str, TemplateUserData]
 
 
 class UserField(BaseModel):
@@ -172,9 +173,13 @@ class JobTemplateUpdate(BaseRequest):
 
 class JobTemplateRequest(BaseRequest):
     name: str
-    user_fields: Dict[str, TemplateUserData]
+    user_fields: TemplateUserFields
     containers: List[TaskContainers]
 
     _validate_name: classmethod = validator("name", allow_reuse=True)(
         check_template_name
     )
+
+
+class JobTemplateRequestParameters(BaseRequest):
+    user_fields: TemplateUserFields
