@@ -264,7 +264,7 @@ afl_linux = JobTemplate(
     ],
 )
 
-afl_windows = afl_linux.copy()
+afl_windows = afl_linux.copy(deep=True)
 afl_windows.os = OS.windows
 for user_field in afl_windows.user_fields:
     if user_field.name == "afl_container":

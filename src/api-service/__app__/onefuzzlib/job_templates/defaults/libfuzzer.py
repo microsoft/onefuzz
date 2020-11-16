@@ -281,5 +281,5 @@ libfuzzer_linux = JobTemplate(
     ],
 )
 
-libfuzzer_windows = libfuzzer_linux.copy()
+libfuzzer_windows = libfuzzer_linux.copy(deep=True)
 libfuzzer_windows.os = OS.windows
