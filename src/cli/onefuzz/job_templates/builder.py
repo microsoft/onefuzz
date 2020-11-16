@@ -12,6 +12,7 @@ from onefuzztypes.job_templates import JobTemplateConfig, JobTemplateRequestPara
 from onefuzztypes.models import Job
 from onefuzztypes.primitives import Directory, File
 
+from ..api import PreviewFeature
 from .handlers import TemplateSubmitHandler
 
 LOGGER = logging.getLogger("job-templates")
@@ -118,6 +119,7 @@ def build_template_doc(config: JobTemplateConfig) -> str:
 
 def build_template_func(config: JobTemplateConfig) -> Any:
     def func(self: TemplateSubmitHandler, **kwargs: Any) -> Job:
+        self.onefuzz._warn_preview(PreviewFeature.job_templates)
         return self._execute(config, kwargs)
 
     sig = signature(func)

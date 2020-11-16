@@ -9,7 +9,7 @@ from typing import List, Optional
 
 from onefuzztypes.job_templates import JobTemplateConfig
 
-from ..api import Endpoint, Onefuzz
+from ..api import Endpoint, Onefuzz, PreviewFeature
 from .builder import build_template_func
 from .cache import CachedTemplates
 from .handlers import TemplateSubmitHandler
@@ -45,8 +45,9 @@ class JobTemplates(Endpoint):
 
     def info(self, name: str) -> Optional[JobTemplateConfig]:
         """ Display information for a Job Template """
+        self.onefuzz._warn_preview(PreviewFeature.job_templates)
 
-        endpoint = self.onefuzz._backend.config.get("endpoint")
+        endpoint = self.onefuzz._backend.config.endpoint
         if endpoint is None:
             return None
 
@@ -63,7 +64,9 @@ class JobTemplates(Endpoint):
     def list(self) -> Optional[List[str]]:
         """ List available Job Templates """
 
-        endpoint = self.onefuzz._backend.config.get("endpoint")
+        self.onefuzz._warn_preview(PreviewFeature.job_templates)
+
+        endpoint = self.onefuzz._backend.config.endpoint
         if endpoint is None:
             return None
 
@@ -74,7 +77,7 @@ class JobTemplates(Endpoint):
         return [x.name for x in entry.configs]
 
     def _load_cache(self) -> None:
-        endpoint = self.onefuzz._backend.config.get("endpoint")
+        endpoint = self.onefuzz._backend.config.endpoint
         if endpoint is None:
             return
 
@@ -88,13 +91,18 @@ class JobTemplates(Endpoint):
 
     def refresh(self) -> None:
         """ Update available templates """
+        self.onefuzz._warn_preview(PreviewFeature.job_templates)
         self.onefuzz.logger.info("refreshing job template cache")
+
+        endpoint = self.onefuzz._backend.config.endpoint
+        if endpoint is None:
+            return None
 
         templates = self._req_model_list("GET", JobTemplateConfig)
 
         for template in templates:
             self.onefuzz.logger.info("updated template definition: %s", template.name)
 
-        CachedTemplates.add(self.onefuzz._backend.config["endpoint"], templates)
+        CachedTemplates.add(endpoint, templates)
 
         load_templates(templates)
