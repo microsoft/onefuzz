@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Service: Fixed setting `target_workers`, used to configure the number of concurrent libfuzzer workers within a task. [#305](https://github.com/microsoft/onefuzz/pull/305)
+
 ## 1.7.0
 ### Added
 * Deployment: `deploy.py` now takes `--upgrade` to enable simplify upgrading deployments.  For now, this skips assignment of the managed identity role which only needs to be done on installation. [#271](https://github.com/microsoft/onefuzz/pull/271)
