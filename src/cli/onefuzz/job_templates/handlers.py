@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import os
 from typing import Any, Dict, List
 
 from onefuzztypes.enums import ContainerType
@@ -53,6 +54,10 @@ class TemplateSubmitHandler(Endpoint):
                 )
                 self.onefuzz.containers.files.upload_file(container.name, target_exe)
 
+                pdb_path = os.path.splitext(target_exe)[0] + ".pdb"
+                if os.path.exists(pdb_path):
+                    self.onefuzz.containers.files.upload_file(container.name, pdb_path)
+
     def _define_missing_containers(
         self, config: JobTemplateConfig, request: JobTemplateRequest
     ) -> None:
@@ -79,6 +84,7 @@ class TemplateSubmitHandler(Endpoint):
                 )
 
     def _submit(self, request: JobTemplateRequest) -> Job:
+        self.onefuzz.logger.debug("submitting request: %s", request)
         return self._req_model(
             "POST", Job, data=request, alternate_endpoint=self._endpoint
         )
@@ -102,9 +108,10 @@ class TemplateSubmitHandler(Endpoint):
         container_names = args["container_names"]
         if container_names is None:
             container_names = {}
+
         for container_type in config.containers:
-            if container_type.name in container_names:
-                container_name = args["container_names"][container_type]
+            if container_type in container_names:
+                container_name = container_names[container_type]
                 containers.append(
                     TaskContainers(name=container_name, type=container_type)
                 )
@@ -124,6 +131,9 @@ class TemplateSubmitHandler(Endpoint):
                 value = args["parameters"][field.name]
             elif field.required:
                 raise Exception("missing field: %s" % field.name)
+
+            if field == "target_exe":
+                value = os.path.basename(value)
 
             if value is not None:
                 user_fields[field.name] = value
