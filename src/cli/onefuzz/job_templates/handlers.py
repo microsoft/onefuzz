@@ -18,7 +18,7 @@ def container_type_name(container_type: ContainerType) -> str:
 
 
 class TemplateSubmitHandler(Endpoint):
-    """ Submit job template """
+    """ Submit Job Template """
 
     _endpoint = "job_templates"
 

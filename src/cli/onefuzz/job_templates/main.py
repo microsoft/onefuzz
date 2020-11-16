@@ -61,7 +61,7 @@ class JobTemplates(Endpoint):
         return None
 
     def list(self) -> Optional[List[str]]:
-        """ List available Templates """
+        """ List available Job Templates """
 
         endpoint = self.onefuzz._backend.config.get("endpoint")
         if endpoint is None:
