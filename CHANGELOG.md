@@ -7,13 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.8.0
 
 ### Added
-* CLI/Service: Added [Event based webhooks](docs/webhooks.md).  [#296](https://github.com/microsoft/onefuzz/pull/296)
-* Service: Information about the user responsible for creating tasks are now associated with the tasks (this information is available in the task related event webhooks). [#303](https://github.com/microsoft/onefuzz/pull/303)
+* CLI/Service: Added [Event based webhooks](docs/webhooks.md).
+  [#296](https://github.com/microsoft/onefuzz/pull/296)
+* Service: Information about the user responsible for creating tasks are now
+  associated with the tasks (this information is available in the task related
+  event webhooks). [#303](https://github.com/microsoft/onefuzz/pull/303)
+
 ### Changed
-* Contrib: Azure Devops deployment pipeline uses the `--upgrade` feature added in 1.7.0.  [#304](https://github.com/microsoft/onefuzz/pull/304)
+* Contrib: Azure Devops deployment pipeline uses the `--upgrade` feature added
+  in 1.7.0. [#304](https://github.com/microsoft/onefuzz/pull/304)
 
 ### Fixed
-* Service: Fixed setting `target_workers`, used to configure the number of concurrent libfuzzer workers within a task. [#305](https://github.com/microsoft/onefuzz/pull/305)
+* Service: Fixed setting `target_workers`, used to configure the number of
+  concurrent libfuzzer workers within a task.
+  [#305](https://github.com/microsoft/onefuzz/pull/305)
 
 ## 1.7.0
 ### Added
