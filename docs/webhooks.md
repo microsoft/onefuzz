@@ -6,7 +6,7 @@ the URL for the webhook.
 
 ## Types of Events
 
-See the [Webhook Event Types](webhook_events) for a full list of available webhook events, the schemas for each events, as well as an example.
+See the [Webhook Event Types](webhook_events.md) for a full list of available webhook events, the schemas for each events, as well as an example.
 
 ## Configuring your webhooks
 
