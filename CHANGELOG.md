@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.8.0
 
 ### Added
-* CLI/Service: Added [Event based webhooks](docs/webhooks.md).
+* CLI/Service: Added [Event-based webhooks](docs/webhooks.md).
   [#296](https://github.com/microsoft/onefuzz/pull/296)
 * Service: Information about the user responsible for creating tasks are now
   associated with the tasks (this information is available in the task related
