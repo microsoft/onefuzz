@@ -1507,7 +1507,7 @@ class Onefuzz:
         if client_secret is not None:
             self._backend.config.client_secret = client_secret
         if enable_feature:
-            self._backend.config.features[enable_feature.name] = True
+            self._backend.enable_feature(enable_feature.name)
         self._backend.app = None
         self._backend.save_config()
 
