@@ -132,7 +132,7 @@ class TemplateSubmitHandler(Endpoint):
             elif field.required:
                 raise Exception("missing field: %s" % field.name)
 
-            if field == "target_exe":
+            if field.name == "target_exe" and isinstance(value, str):
                 value = os.path.basename(value)
 
             if value is not None:
