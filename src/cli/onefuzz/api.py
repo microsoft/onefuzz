@@ -1606,7 +1606,7 @@ class Onefuzz:
         repros: bool = False,
         scalesets: bool = False,
         tasks: bool = False,
-        webhooks: bool = True,
+        webhooks: bool = False,
         yes: bool = False,
     ) -> None:
         """
