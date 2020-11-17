@@ -135,7 +135,7 @@ pub struct Registration {
     pub machine_id: Uuid,
 }
 
-const DEFAULT_REGISTRATION_CREATE_TIMEOUT: Duration = Duration::from_secs(60 * 5);
+const DEFAULT_REGISTRATION_CREATE_TIMEOUT: Duration = Duration::from_secs(60 * 20);
 const REGISTRATION_RETRY_PERIOD: Duration = Duration::from_secs(60);
 
 impl Registration {
@@ -167,7 +167,7 @@ impl Registration {
                 .body("")
                 .send_retry_default()
                 .await?;
-            
+
             let status_code = response.status();
 
             match response.error_for_status_with_body().await {
