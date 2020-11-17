@@ -87,9 +87,16 @@ chmod -R a+rx /onefuzz/tools/linux
 
 if type apt > /dev/null 2> /dev/null; then
     sudo apt update
-    sudo apt install -y gdb gdbserver
+    until sudo apt install -y gdb gdbserver; do
+        echo "apt failed.  sleep 10s, then retrying"
+        sleep 10
+    done
+
     if ! [ -f ${ASAN_SYMBOLIZER_PATH} ]; then
-        sudo apt install -y llvm-10
+        until sudo apt install -y llvm-10; do
+            echo "apt failed, sleeping 10s then retrying"
+            sleep 10
+        done
 
         # If specifying symbolizer, exe name must be a "known symbolizer".
         # Using `llvm-symbolizer` works for clang 8 .. 10.
