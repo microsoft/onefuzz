@@ -39,8 +39,9 @@ from tenacity.wait import wait_random
 
 _ACCESSTOKENCACHE_UMASK = 0o077
 
-DEFAULT_CONFIG_PATH = os.path.join("~", ".cache", "onefuzz", "config.json")
-DEFAULT_TOKEN_PATH = os.path.join("~", ".cache", "onefuzz", "access_token.json")
+ONEFUZZ_BASE_PATH = os.path.join("~", ".cache", "onefuzz")
+DEFAULT_CONFIG_PATH = os.path.join(ONEFUZZ_BASE_PATH, "config.json")
+DEFAULT_TOKEN_PATH = os.path.join(ONEFUZZ_BASE_PATH, "access_token.json")
 
 LOGGER = logging.getLogger("nsv-backend")
 
