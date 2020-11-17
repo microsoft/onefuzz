@@ -13,6 +13,7 @@ from onefuzztypes.requests import ContainerCreate, ContainerDelete, ContainerGet
 from onefuzztypes.responses import BoolResult, ContainerInfo, ContainerInfoBase
 
 from ..onefuzzlib.azure.containers import (
+    StorageType,
     create_container,
     delete_container,
     get_container_metadata,
@@ -30,7 +31,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="container get")
     if request is not None:
-        metadata = get_container_metadata(request.name)
+        metadata = get_container_metadata(request.name, StorageType.corpus)
         if metadata is None:
             return not_ok(
                 Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
@@ -41,6 +42,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
             name=request.name,
             sas_url=get_container_sas_url(
                 request.name,
+                StorageType.corpus,
                 read=True,
                 write=True,
                 create=True,
@@ -51,7 +53,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
         )
         return ok(info)
 
-    containers = get_containers()
+    containers = get_containers(StorageType.corpus)
 
     container_info = []
     for name in containers:
@@ -66,7 +68,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(request, context="container create")
 
     logging.info("container - creating %s", request.name)
-    sas = create_container(request.name, metadata=request.metadata)
+    sas = create_container(request.name, StorageType.corpus, metadata=request.metadata)
     if sas:
         return ok(
             ContainerInfo(name=request.name, sas_url=sas, metadata=request.metadata)
@@ -83,7 +85,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(request, context="container delete")
 
     logging.info("container - deleting %s", request.name)
-    return ok(BoolResult(result=delete_container(request.name)))
+    return ok(BoolResult(result=delete_container(request.name, StorageType.corpus)))
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:

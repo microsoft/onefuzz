@@ -10,7 +10,7 @@ from typing import Optional, Union
 from onefuzztypes.models import Report
 from pydantic import ValidationError
 
-from .azure.containers import get_blob
+from .azure.containers import StorageType, get_blob
 
 
 def parse_report(
@@ -50,7 +50,7 @@ def get_report(container: str, filename: str) -> Optional[Report]:
         logging.error("get_report invalid extension: %s", metadata)
         return None
 
-    blob = get_blob(container, filename)
+    blob = get_blob(container, filename, StorageType.corpus)
     if blob is None:
         logging.error("get_report invalid blob: %s", metadata)
         return None
