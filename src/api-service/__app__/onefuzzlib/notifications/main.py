@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple
 from uuid import UUID
 
 from memoization import cached
@@ -15,11 +15,17 @@ from onefuzztypes.models import (
     Error,
     GithubIssueTemplate,
     NotificationTemplate,
+    Result,
     TeamsTemplate,
 )
 from onefuzztypes.primitives import Container, Event
 
-from ..azure.containers import StorageType, get_container_metadata, get_file_sas_url
+from ..azure.containers import (
+    StorageType,
+    get_container_metadata,
+    get_file_sas_url,
+    container_exists,
+)
 from ..azure.queue import send_message
 from ..dashboard import add_event
 from ..orm import ORMMixin
@@ -33,7 +39,7 @@ from .teams import notify_teams
 
 class Notification(models.Notification, ORMMixin):
     @classmethod
-    def get_by_id(cls, notification_id: UUID) -> Union[Error, "Notification"]:
+    def get_by_id(cls, notification_id: UUID) -> Result["Notification"]:
         notifications = cls.search(query={"notification_id": [notification_id]})
         if not notifications:
             return Error(
@@ -61,6 +67,26 @@ class Notification(models.Notification, ORMMixin):
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
         return ("notification_id", "container")
+
+    @classmethod
+    def create(
+        cls, container: Container, config: NotificationTemplate
+    ) -> Result["Notification"]:
+        if not container_exists(container, StorageType.corpus):
+            return Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"])
+
+        existing = cls.get_existing(container, config)
+        if existing is not None:
+            return existing
+
+        entry = cls(container=container, config=config)
+        entry.save()
+        logging.info(
+            "created notification.  notification_id:%s container:%s",
+            entry.notification_id,
+            entry.container,
+        )
+        return entry
 
 
 @cached(ttl=10)

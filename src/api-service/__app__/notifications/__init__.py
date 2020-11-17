@@ -6,11 +6,9 @@
 import logging
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import NotificationCreate, NotificationGet
 
-from ..onefuzzlib.azure.containers import StorageType, container_exists
 from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -29,19 +27,11 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="notification create")
 
-    if not container_exists(request.container, StorageType.corpus):
-        return not_ok(
-            Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
-            context=request.container,
-        )
+    entry = Notification.create(container=request.container, config=request.config)
+    if isinstance(entry, Error):
+        return not_ok(entry, context="notification create")
 
-    existing = Notification.get_existing(request.container, request.config)
-    if existing is not None:
-        return ok(existing)
-
-    item = Notification(container=request.container, config=request.config)
-    item.save()
-    return ok(item)
+    return ok(entry)
 
 
 def delete(req: func.HttpRequest) -> func.HttpResponse:
