@@ -22,9 +22,9 @@ from onefuzztypes.primitives import Container, Event
 
 from ..azure.containers import (
     StorageType,
+    container_exists,
     get_container_metadata,
     get_file_sas_url,
-    container_exists,
 )
 from ..azure.queue import send_message
 from ..dashboard import add_event
