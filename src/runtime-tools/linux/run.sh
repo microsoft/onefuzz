@@ -12,12 +12,11 @@ export RUST_LOG=info
 
 logger "onefuzz: starting up onefuzz"
 
-# disable ASLR
-echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
-
 # use core files, not external crash handler
 echo core | sudo tee /proc/sys/kernel/core_pattern
+# disable ASLR
 echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+# set core dumping to default behavior
 echo 1 | sudo tee /proc/sys/fs/suid_dumpable
 
 cd /onefuzz
