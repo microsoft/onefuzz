@@ -23,6 +23,6 @@ else
     if $(git diff --quiet); then
         echo ${BASE_VERSION}-${GIT_HASH}
     else
-        echo ${BASE_VERSION}-${GIT_HASH}.localchanges
+        echo ${BASE_VERSION}-${GIT_HASH}localchanges
     fi 
 fi

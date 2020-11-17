@@ -217,6 +217,10 @@ class ContainerType(Enum):
             cls.unique_inputs,
         ]
 
+    @classmethod
+    def user_config(cls) -> List["ContainerType"]:
+        return [cls.setup, cls.inputs, cls.readonly_inputs]
+
 
 class StatsFormat(Enum):
     AFL = "AFL"
@@ -244,6 +248,7 @@ class ErrorCode(Enum):
     TASK_FAILED = 468
     INVALID_NODE = 469
     NOTIFICATION_FAILURE = 470
+    UNABLE_TO_UPDATE = 471
 
 
 class HeartbeatType(Enum):
@@ -372,3 +377,16 @@ class WebhookMessageState(Enum):
     retrying = "retrying"
     succeeded = "succeeded"
     failed = "failed"
+
+
+class UserFieldOperation(Enum):
+    add = "add"
+    replace = "replace"
+
+
+class UserFieldType(Enum):
+    Bool = "Bool"
+    Int = "Int"
+    Str = "Str"
+    DictStr = "DictStr"
+    ListStr = "ListStr"
