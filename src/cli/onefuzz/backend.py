@@ -12,7 +12,18 @@ import os
 import sys
 import time
 from enum import Enum
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, TypeVar, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    cast,
+)
 from urllib.parse import urlparse, urlunparse
 from uuid import UUID
 
@@ -51,7 +62,7 @@ class BackendConfig(BaseModel):
     client_id: str
     client_secret: Optional[str]
     endpoint: Optional[str]
-    features: Dict[str, bool] = Field(default_factory=dict)
+    features: Set[str] = Field(default_factory=set)
 
 
 class Backend:
@@ -74,10 +85,10 @@ class Backend:
         atexit.register(self.save_cache)
 
     def enable_feature(self, name: str) -> None:
-        self.config.features[name] = True
+        self.config.features.add(name)
 
     def is_feature_enabled(self, name: str) -> bool:
-        return self.config.features.get(name, False)
+        return name in self.config.features
 
     def load_config(self) -> None:
         if os.path.exists(self.config_path):
