@@ -42,12 +42,13 @@ enum Opt {
     Run(RunOpt),
     Debug(debug::DebugOpt),
     Licenses,
+    Version,
 }
 
 #[derive(StructOpt, Debug)]
 struct RunOpt {
     #[structopt(short, long = "--config", parse(from_os_str))]
-    config_path: PathBuf,
+    config_path: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -59,8 +60,19 @@ fn main() -> Result<()> {
         Opt::Run(opt) => run(opt)?,
         Opt::Debug(opt) => debug::debug(opt)?,
         Opt::Licenses => licenses()?,
+        Opt::Version => version()?,
     };
 
+    Ok(())
+}
+
+fn version() -> Result<()> {
+    println!(
+        "{} onefuzz:{} git:{}",
+        crate_version!(),
+        env!("ONEFUZZ_VERSION"),
+        env!("GIT_VERSION")
+    );
     Ok(())
 }
 
@@ -71,13 +83,6 @@ fn licenses() -> Result<()> {
 }
 
 fn run(opt: RunOpt) -> Result<()> {
-    info!(
-        "{} onefuzz:{} git:{}",
-        crate_version!(),
-        env!("ONEFUZZ_VERSION"),
-        env!("GIT_VERSION")
-    );
-
     if done::is_agent_done()? {
         verbose!(
             "agent is done, remove lock ({}) to continue",
@@ -110,9 +115,10 @@ fn run(opt: RunOpt) -> Result<()> {
 fn load_config(opt: RunOpt) -> Result<StaticConfig> {
     info!("loading supervisor agent config");
 
-    let data = std::fs::read(&opt.config_path)?;
-    let config = StaticConfig::new(&data)?;
-    verbose!("loaded static config from: {}", opt.config_path.display());
+    let config = match &opt.config_path {
+        Some(config_path) => StaticConfig::from_file(config_path)?,
+        None => StaticConfig::from_env()?,
+    };
 
     init_telemetry(&config);
 
@@ -123,13 +129,20 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     telemetry::set_property(EventData::InstanceId(config.instance_id));
     telemetry::set_property(EventData::MachineId(get_machine_id().await?));
     telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
-    if let Ok(scaleset) = get_scaleset_name().await {
-        telemetry::set_property(EventData::ScalesetId(scaleset));
+    let scaleset_result = get_scaleset_name().await;
+    if let Ok(scaleset) = &scaleset_result {
+        telemetry::set_property(EventData::ScalesetId(scaleset.to_string()));
     }
 
     let registration = match config::Registration::load_existing(config.clone()).await {
         Ok(registration) => registration,
-        Err(_) => config::Registration::create_managed(config.clone()).await?,
+        Err(_) => {
+            if scaleset_result.is_ok() {
+                config::Registration::create_managed(config.clone()).await?
+            } else {
+                config::Registration::create_unmanaged(config.clone()).await?
+            }
+        }
     };
     verbose!("current registration: {:?}", registration);
 
