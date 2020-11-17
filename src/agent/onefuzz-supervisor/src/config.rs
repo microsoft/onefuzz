@@ -167,7 +167,7 @@ impl Registration {
                 .body("")
                 .send_retry_default()
                 .await?
-                .error_for_status();
+                .error_for_status_with_body();
 
             match response {
                 Ok(response) => {
