@@ -16,7 +16,6 @@ from azure.storage.queue import (
     QueueServiceClient,
     generate_queue_sas,
 )
-
 from memoization import cached
 from pydantic import BaseModel
 
