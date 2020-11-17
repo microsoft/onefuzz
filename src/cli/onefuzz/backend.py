@@ -12,14 +12,25 @@ import os
 import sys
 import time
 from enum import Enum
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, TypeVar, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    cast,
+)
 from urllib.parse import urlparse, urlunparse
 from uuid import UUID
 
 import msal
 import requests
 from azure.storage.blob import ContainerClient
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from tenacity import Future as tenacity_future
 from tenacity import Retrying, retry
 from tenacity.retry import retry_if_exception_type
@@ -45,16 +56,24 @@ def _temporary_umask(new_umask: int) -> Generator[None, None, None]:
             os.umask(prev_umask)
 
 
+class BackendConfig(BaseModel):
+    authority: str
+    client_id: str
+    client_secret: Optional[str]
+    endpoint: Optional[str]
+    features: Set[str] = Field(default_factory=set)
+
+
 class Backend:
     def __init__(
         self,
-        config: Optional[Dict[str, str]] = None,
+        config: BackendConfig,
         config_path: Optional[str] = None,
         token_path: Optional[str] = None,
     ):
         self.config_path = os.path.expanduser(config_path or DEFAULT_CONFIG_PATH)
         self.token_path = os.path.expanduser(token_path or DEFAULT_TOKEN_PATH)
-        self.config = config or {}
+        self.config = config
         self.token_cache: Optional[msal.SerializableTokenCache] = None
         self.init_cache()
         self.app: Optional[Any] = None
@@ -64,14 +83,21 @@ class Backend:
 
         atexit.register(self.save_cache)
 
+    def enable_feature(self, name: str) -> None:
+        self.config.features.add(name)
+
+    def is_feature_enabled(self, name: str) -> bool:
+        return name in self.config.features
+
     def load_config(self) -> None:
         if os.path.exists(self.config_path):
             with open(self.config_path, "r") as handle:
-                self.config.update(json.load(handle))
+                data = json.load(handle)
+            self.config = BackendConfig.parse_obj(data)
 
     def save_config(self) -> None:
         with open(self.config_path, "w") as handle:
-            json.dump(self.config, handle)
+            handle.write(self.config.json(indent=4, exclude_none=True))
 
     def init_cache(self) -> None:
         # Ensure the token_path directory exists
@@ -106,7 +132,7 @@ class Backend:
 
     def headers(self) -> Dict[str, str]:
         value = {}
-        if self.config["client_id"] is not None:
+        if self.config.client_id is not None:
             access_token = self.get_access_token()
             value["Authorization"] = "%s %s" % (
                 access_token["token_type"],
@@ -115,18 +141,21 @@ class Backend:
         return value
 
     def get_access_token(self) -> Any:
-        scopes = [self.config["endpoint"] + "/.default"]
+        if not self.config.endpoint:
+            raise Exception("endpoint not configured")
 
-        if "client_secret" in self.config:
+        scopes = [self.config.endpoint + "/.default"]
+
+        if self.config.client_secret:
             return self.client_secret(scopes)
         return self.device_login(scopes)
 
     def client_secret(self, scopes: List[str]) -> Any:
         if not self.app:
             self.app = msal.ConfidentialClientApplication(
-                self.config["client_id"],
-                authority=self.config["authority"],
-                client_credential=self.config["client_secret"],
+                self.config.client_id,
+                authority=self.config.authority,
+                client_credential=self.config.client_secret,
                 token_cache=self.token_cache,
             )
         result = self.app.acquire_token_for_client(scopes=scopes)
@@ -140,8 +169,8 @@ class Backend:
     def device_login(self, scopes: List[str]) -> Any:
         if not self.app:
             self.app = msal.PublicClientApplication(
-                self.config["client_id"],
-                authority=self.config["authority"],
+                self.config.client_id,
+                authority=self.config.authority,
                 token_cache=self.token_cache,
             )
 
@@ -187,9 +216,9 @@ class Backend:
         params: Optional[Any] = None,
         _retry_on_auth_failure: bool = True,
     ) -> Any:
-        if not self.config["endpoint"]:
+        if not self.config.endpoint:
             raise Exception("endpoint not configured")
-        url = self.config["endpoint"] + "/api/" + path
+        url = self.config.endpoint + "/api/" + path
         headers = self.headers()
         json_data = serialize(json_data)
 
