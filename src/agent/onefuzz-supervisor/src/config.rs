@@ -197,7 +197,14 @@ impl Registration {
 
         if managed {
             let scaleset = onefuzz::machine_id::get_scaleset_name().await?;
-            url.query_pairs_mut().append_pair("scaleset_id", &scaleset);
+            match scaleset {
+                Some(scaleset) => {
+                    url.query_pairs_mut().append_pair("scaleset_id", &scaleset);
+                }
+                None => {
+                    anyhow::bail!("managed instance without scaleset name");
+                }
+            }
         }
         // The registration can fail because this call is made before the virtual machine scaleset is done provisioning
         // The authentication layer of the service will reject this request when that happens
