@@ -166,10 +166,11 @@ impl Registration {
                 .bearer_auth(token.secret().expose_ref())
                 .body("")
                 .send_retry_default()
-                .await?
-                .error_for_status_with_body();
+                .await?;
+            
+            let status_code = response.status();
 
-            match response {
+            match response.error_for_status_with_body().await {
                 Ok(response) => {
                     let dynamic_config: DynamicConfig = response.json().await?;
                     dynamic_config.save().await?;
@@ -179,7 +180,7 @@ impl Registration {
                         machine_id,
                     });
                 }
-                Err(err) if err.status() == Some(StatusCode::UNAUTHORIZED) => {
+                Err(err) if status_code == StatusCode::UNAUTHORIZED => {
                     warn!(
                         "Registration failed: {}\n retrying in {} seconds",
                         err,
