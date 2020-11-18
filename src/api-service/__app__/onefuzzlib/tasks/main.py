@@ -47,6 +47,8 @@ class Task(BASE_TASK, ORMMixin):
     ) -> Union["Task", Error]:
         if config.vm:
             os = get_os(config.vm.region, config.vm.image)
+            if isinstance(os, Error):
+                return os
         elif config.pool:
             pool = Pool.get_by_name(config.pool.pool_name)
             if isinstance(pool, Error):
