@@ -423,12 +423,19 @@ class DebugLog(Command):
     def _query_libfuzzer_coverage(
         self, query: str, timespan: str, limit: Optional[int] = None
     ):
+        project_fields = [
+            "rate=customDimensions.rate",
+            "covered=customDimensions.covered",
+            "features=customDimensions.features",
+            "timestamp",
+        ]
+
         query_parts = [
             "customEvents",
             "where name == 'coverage_data'",
             query,
             "order by timestamp desc",
-            "project rate=customDimensions.rate, timestamp",
+            f"project {','.join(project_fields)}",
         ]
 
         if limit:
@@ -448,7 +455,7 @@ class DebugLog(Command):
         project_fields = [
             "machine_id=customDimensions.machine_id",
             "worker_id=customDimensions.worker_id",
-            "rate=customDimensions.execs_sec",
+            "execs_sec=customDimensions.execs_sec",
             "timestamp",
         ]
 
