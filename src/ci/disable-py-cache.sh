@@ -3,6 +3,13 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+
+# Temporary work-around to improve the efficacy of static analysis of functions
+# decorated with memoization.cached.
+#
+# For more information:
+# https://github.com/lonelyenvoy/python-memoization/issues/16
+
 set -ex
 
 SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
