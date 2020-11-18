@@ -25,8 +25,8 @@ function readU8Array(addr, len) {
 
 function findCounterSymbols(exe) {
     var symbols = [
-        { name: "MSVC 16.8", start: "__sancov$BoolFlagStart", end: "__sancov$BoolFlagEnd" },
-        { name: "MSVC 16.8", start: "__sancov$8bitCountersStart", end: "__sancov$8bitCountersEnd" },
+        { name: "MSVC 16.8 bool flag", start: "__sancov$BoolFlagStart", end: "__sancov$BoolFlagEnd" },
+        { name: "MSVC 16.8 8bit counters", start: "__sancov$8bitCountersStart", end: "__sancov$8bitCountersEnd" },
         { name: "MSVC pre-16.8", start: "SancovBitmapStart", end: "SancovBitmapEnd" },
         // MSVC compiled libfuzzer targets _also_ include the LLVM symbols, so this needs to be checked after MSVC
         { name: "LLVM 10", start: "__start___sancov_cntrs", end: "__stop___sancov_cntrs" },
