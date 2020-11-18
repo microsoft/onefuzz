@@ -12,9 +12,9 @@ from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 from onefuzztypes.responses import BoolResult
 
+from ..onefuzzlib.azure.containers import StorageType
 from ..onefuzzlib.azure.creds import (
     get_base_region,
-    get_func_storage,
     get_instance_id,
     get_instance_url,
     get_regions,
@@ -33,7 +33,7 @@ def set_config(pool: Pool) -> Pool:
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "node-heartbeat",
-            account_id=get_func_storage(),
+            StorageType.config,
             add=True,
         ),
         instance_id=get_instance_id(),
