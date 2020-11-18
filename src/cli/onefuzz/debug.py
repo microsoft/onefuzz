@@ -446,7 +446,6 @@ class DebugLog(Command):
         limit: Optional[int] = None,
     ) -> Any:
         project_fields = [
-            "task_id=customDimensions.task_id",
             "machine_id=customDimensions.machine_id",
             "worker_id=customDimensions.worker_id",
             "rate=customDimensions.execs_sec",
