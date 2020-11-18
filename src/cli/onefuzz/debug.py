@@ -220,6 +220,13 @@ class DebugTask(Command):
         timespan: str = DAY_TIMESPAN,
         limit: Optional[int] = None,
     ) -> Any:
+        """
+        Get the coverage for the specified task
+
+        :param task_id value: Task ID
+        :param str timespan: ISO 8601 duration format
+        :param int limit: Limit the number of records returned
+        """
         task = self.onefuzz.tasks.get(task_id)
         query = f"where customDimensions.task_id == '{task.task_id}'"
         return self.onefuzz.debug.logs._query_libfuzzer_coverage(query, timespan, limit)
@@ -230,6 +237,13 @@ class DebugTask(Command):
         timespan: str = DAY_TIMESPAN,
         limit: Optional[int] = None,
     ) -> Any:
+        """
+        Get the executions per second for the specified task
+
+        :param task_id value: Task ID
+        :param str timespan: ISO 8601 duration format
+        :param int limit: Limit the number of records returned
+        """
         task = self.onefuzz.tasks.get(task_id)
         query = f"where customDimensions.task_id == '{task.task_id}'"
         return self.onefuzz.debug.logs._query_libfuzzer_execs_sec(
@@ -287,6 +301,13 @@ class DebugJob(Command):
         timespan: str = DAY_TIMESPAN,
         limit: Optional[int] = None,
     ) -> Any:
+        """
+        Get the coverage for the specified job
+
+        :param job_id value: Job ID
+        :param str timespan: ISO 8601 duration format
+        :param int limit: Limit the number of records returned
+        """
         job = self.onefuzz.jobs.get(job_id)
         query = f"where customDimensions.job_id == '{job.job_id}'"
         return self.onefuzz.debug.logs._query_libfuzzer_coverage(query, timespan, limit)
@@ -297,6 +318,13 @@ class DebugJob(Command):
         timespan: str = DAY_TIMESPAN,
         limit: Optional[int] = None,
     ) -> Any:
+        """
+        Get the executions per second for the specified job
+
+        :param job_id value: Job ID
+        :param str timespan: ISO 8601 duration format
+        :param int limit: Limit the number of records returned
+        """
         job = self.onefuzz.jobs.get(job_id)
         query = f"where customDimensions.job_id == '{job.job_id}'"
         return self.onefuzz.debug.logs._query_libfuzzer_execs_sec(
