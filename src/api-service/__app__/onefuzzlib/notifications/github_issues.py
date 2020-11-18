@@ -10,7 +10,7 @@ from github3 import login
 from github3.exceptions import GitHubException
 from github3.issues import Issue
 from onefuzztypes.enums import GithubIssueSearchMatch
-from onefuzztypes.models import GithubIssueTemplate, Report, GithubAuth
+from onefuzztypes.models import GithubAuth, GithubIssueTemplate, Report
 
 from .common import Render, fail_task
 

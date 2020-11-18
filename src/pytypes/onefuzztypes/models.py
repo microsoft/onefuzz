@@ -39,6 +39,8 @@ class UserInfo(BaseModel):
     application_id: UUID
     object_id: Optional[UUID]
     upn: Optional[str]
+
+
 class KeyvaultSecret(BaseModel):
     secret_url: str
 
