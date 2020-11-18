@@ -10,7 +10,7 @@ from github3 import login
 from github3.exceptions import GitHubException
 from github3.issues import Issue
 from onefuzztypes.enums import GithubIssueSearchMatch
-from onefuzztypes.models import GithubIssueTemplate, Report
+from onefuzztypes.models import GithubIssueTemplate, Report, GithubAuth
 
 from .common import Render, fail_task
 
@@ -21,9 +21,12 @@ class GithubIssue:
     ):
         self.config = config
         self.report = report
-        self.gh = login(
-            username=config.auth.user, password=config.auth.personal_access_token
-        )
+        if isinstance(config.auth, GithubAuth):
+            self.gh = login(
+                username=config.auth.user, password=config.auth.personal_access_token
+            )
+        else:
+            raise ("TODO: fetch data from keyvault")
         self.renderer = Render(container, filename, report)
 
     def render(self, field: str) -> str:
