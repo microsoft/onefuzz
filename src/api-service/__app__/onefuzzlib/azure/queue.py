@@ -19,6 +19,7 @@ from azure.storage.queue import (
 from memoization import cached
 from pydantic import BaseModel
 
+from .containers import StorageType, get_account_id_by_type
 from .creds import get_storage_account_name_key
 
 QueueNameType = Union[str, UUID]
@@ -27,7 +28,8 @@ DEFAULT_TTL = -1
 
 
 @cached(ttl=60)
-def get_queue_client(account_id: str) -> QueueServiceClient:
+def get_queue_client(storage_type: StorageType) -> QueueServiceClient:
+    account_id = get_account_id_by_type(storage_type)
     logging.debug("getting blob container (account_id: %s)", account_id)
     name, key = get_storage_account_name_key(account_id)
     account_url = "https://%s.queue.core.windows.net" % name
@@ -41,13 +43,14 @@ def get_queue_client(account_id: str) -> QueueServiceClient:
 @cached(ttl=60)
 def get_queue_sas(
     queue: QueueNameType,
+    storage_type: StorageType,
     *,
-    account_id: str,
     read: bool = False,
     add: bool = False,
     update: bool = False,
     process: bool = False,
 ) -> str:
+    account_id = get_account_id_by_type(storage_type)
     logging.debug("getting queue sas %s (account_id: %s)", queue, account_id)
     name, key = get_storage_account_name_key(account_id)
     expiry = datetime.datetime.utcnow() + datetime.timedelta(days=30)
@@ -67,31 +70,33 @@ def get_queue_sas(
 
 
 @cached(ttl=60)
-def create_queue(name: QueueNameType, *, account_id: str) -> None:
-    client = get_queue_client(account_id)
+def create_queue(name: QueueNameType, storage_type: StorageType) -> None:
+    client = get_queue_client(storage_type)
     try:
         client.create_queue(str(name))
     except ResourceExistsError:
         pass
 
 
-def delete_queue(name: QueueNameType, *, account_id: str) -> None:
-    client = get_queue_client(account_id)
+def delete_queue(name: QueueNameType, storage_type: StorageType) -> None:
+    client = get_queue_client(storage_type)
     queues = client.list_queues()
     if str(name) in [x["name"] for x in queues]:
         client.delete_queue(name)
 
 
-def get_queue(name: QueueNameType, *, account_id: str) -> Optional[QueueServiceClient]:
-    client = get_queue_client(account_id)
+def get_queue(
+    name: QueueNameType, storage_type: StorageType
+) -> Optional[QueueServiceClient]:
+    client = get_queue_client(storage_type)
     try:
         return client.get_queue_client(str(name))
     except ResourceNotFoundError:
         return None
 
 
-def clear_queue(name: QueueNameType, *, account_id: str) -> None:
-    queue = get_queue(name, account_id=account_id)
+def clear_queue(name: QueueNameType, storage_type: StorageType) -> None:
+    queue = get_queue(name, storage_type)
     if queue:
         try:
             queue.clear_messages()
@@ -102,12 +107,12 @@ def clear_queue(name: QueueNameType, *, account_id: str) -> None:
 def send_message(
     name: QueueNameType,
     message: bytes,
+    storage_type: StorageType,
     *,
-    account_id: str,
     visibility_timeout: Optional[int] = None,
     time_to_live: int = DEFAULT_TTL,
 ) -> None:
-    queue = get_queue(name, account_id=account_id)
+    queue = get_queue(name, storage_type)
     if queue:
         try:
             queue.send_message(
@@ -119,9 +124,8 @@ def send_message(
             pass
 
 
-def remove_first_message(name: QueueNameType, *, account_id: str) -> bool:
-    create_queue(name, account_id=account_id)
-    queue = get_queue(name, account_id=account_id)
+def remove_first_message(name: QueueNameType, storage_type: StorageType) -> bool:
+    queue = get_queue(name, storage_type)
     if queue:
         try:
             for message in queue.receive_messages():
@@ -143,8 +147,8 @@ MAX_PEEK_SIZE = 32
 # https://docs.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.queueclient
 def peek_queue(
     name: QueueNameType,
+    storage_type: StorageType,
     *,
-    account_id: str,
     object_type: Type[A],
     max_messages: int = MAX_PEEK_SIZE,
 ) -> List[A]:
@@ -154,7 +158,7 @@ def peek_queue(
     if max_messages < MIN_PEEK_SIZE or max_messages > MAX_PEEK_SIZE:
         raise ValueError("invalid max messages: %s" % max_messages)
 
-    queue = get_queue(name, account_id=account_id)
+    queue = get_queue(name, storage_type)
     if not queue:
         return result
 
@@ -168,12 +172,12 @@ def peek_queue(
 def queue_object(
     name: QueueNameType,
     message: BaseModel,
+    storage_type: StorageType,
     *,
-    account_id: str,
     visibility_timeout: Optional[int] = None,
     time_to_live: int = DEFAULT_TTL,
 ) -> bool:
-    queue = get_queue(name, account_id=account_id)
+    queue = get_queue(name, storage_type)
     if not queue:
         raise Exception("unable to queue object, no such queue: %s" % queue)
 

@@ -9,6 +9,7 @@ import os
 import re
 import subprocess  # nosec
 import uuid
+from enum import Enum
 from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
@@ -21,15 +22,15 @@ from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
 
 from .__version__ import __version__
-from .backend import Backend, ContainerWrapper, wait
+from .backend import Backend, BackendConfig, ContainerWrapper, wait
 from .ssh import build_ssh_command, ssh_connect, temp_file
 
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
-DEFAULT = {
-    "authority": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
-    "client_id": "72f1562a-8c0c-41ea-beb9-fa2b71c80134",
-}
+DEFAULT = BackendConfig(
+    authority="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
+    client_id="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
+)
 
 # This was generated randomly and should be preserved moving forwards
 ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
@@ -42,6 +43,10 @@ DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:rs5-pro:latest"
 REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 
 UUID_RE = r"^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}\Z"
+
+
+class PreviewFeature(Enum):
+    job_templates = "job_templates"
 
 
 def is_uuid(value: str) -> bool:
@@ -1441,15 +1446,23 @@ class Onefuzz:
         self.nodes = Node(self)
         self.webhooks = Webhooks(self)
 
+        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+            self.job_templates = JobTemplates(self)
+
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
         self.debug = Debug(self, self.logger)
         self.status = Status(self, self.logger)
         self.utils = Utils(self, self.logger)
 
+        self.__setup__()
+
     def __setup__(self, endpoint: Optional[str] = None) -> None:
         if endpoint:
-            self._backend.config["endpoint"] = endpoint
+            self._backend.config.endpoint = endpoint
+
+        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+            self.job_templates._load_cache()
 
     def licenses(self) -> object:
         """ Return third-party licenses used by this package """
@@ -1468,6 +1481,10 @@ class Onefuzz:
         # Rather than interacting MSAL directly, call a simple API which
         # actuates the login process
         self.info.get()
+
+        # TODO: once job templates are out of preview, this should be enabled
+        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+            self.job_templates.refresh()
         return "succeeded"
 
     def config(
@@ -1476,7 +1493,8 @@ class Onefuzz:
         authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
-    ) -> Dict[str, str]:
+        enable_feature: Optional[PreviewFeature] = None,
+    ) -> BackendConfig:
         """ Configure onefuzz CLI """
         self.logger.debug("set config")
 
@@ -1493,22 +1511,24 @@ class Onefuzz:
                     "This could be an invalid OneFuzz API endpoint: "
                     "Missing HTTP Authentication"
                 )
-            self._backend.config["endpoint"] = endpoint
+            self._backend.config.endpoint = endpoint
         if authority is not None:
-            self._backend.config["authority"] = authority
+            self._backend.config.authority = authority
         if client_id is not None:
-            self._backend.config["client_id"] = client_id
+            self._backend.config.client_id = client_id
         if client_secret is not None:
-            self._backend.config["client_secret"] = client_secret
+            self._backend.config.client_secret = client_secret
+        if enable_feature:
+            self._backend.enable_feature(enable_feature.name)
         self._backend.app = None
         self._backend.save_config()
 
-        data: Dict[str, str] = self._backend.config.copy()
-        if "client_secret" in data:
+        data = self._backend.config.copy(deep=True)
+        if data.client_secret is not None:
             # replace existing secrets with "*** for user display
-            data["client_secret"] = "***"  # nosec
+            data.client_secret = "***"  # nosec
 
-        if not data["endpoint"]:
+        if not data.endpoint:
             self.logger.warning("endpoint not configured yet")
 
         return data
@@ -1655,7 +1675,14 @@ class Onefuzz:
             webhooks=webhooks,
         )
 
+    def _warn_preview(self, feature: PreviewFeature) -> None:
+        self.logger.warning(
+            "%s are a preview-feature and may change in an upcoming release",
+            feature.name,
+        )
+
 
 from .debug import Debug  # noqa: E402
+from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402

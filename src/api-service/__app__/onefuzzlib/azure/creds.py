@@ -87,12 +87,12 @@ def get_insights_appid() -> str:
     return os.environ["APPINSIGHTS_APPID"]
 
 
-@cached
+# @cached
 def get_fuzz_storage() -> str:
     return os.environ["ONEFUZZ_DATA_STORAGE"]
 
 
-@cached
+# @cached
 def get_func_storage() -> str:
     return os.environ["ONEFUZZ_FUNC_STORAGE"]
 
@@ -109,9 +109,9 @@ def get_instance_url() -> str:
 
 @cached
 def get_instance_id() -> UUID:
-    from .containers import get_blob
+    from .containers import StorageType, get_blob
 
-    blob = get_blob("base-config", "instance_id", account_id=get_func_storage())
+    blob = get_blob("base-config", "instance_id", StorageType.config)
     if blob is None:
         raise Exception("missing instance_id")
     return UUID(blob.decode())

@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import datetime
 import hmac
 import logging
@@ -22,7 +27,7 @@ from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
 from pydantic import BaseModel
 
 from .__version__ import __version__
-from .azure.creds import get_func_storage
+from .azure.containers import StorageType
 from .azure.queue import queue_object
 from .orm import ORMMixin
 
@@ -130,8 +135,8 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
         queue_object(
             "webhooks",
             obj,
+            StorageType.config,
             visibility_timeout=visibility_timeout,
-            account_id=get_func_storage(),
         )
 
 

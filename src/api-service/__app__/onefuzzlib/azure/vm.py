@@ -41,7 +41,7 @@ def get_vm(name: str) -> Optional[VirtualMachine]:
 
 def create_vm(
     name: str,
-    location: str,
+    location: Region,
     vm_sku: str,
     image: str,
     password: str,
