@@ -80,9 +80,54 @@ impl StaticConfig {
         Ok(config)
     }
 
-    pub async fn load(config_path: impl AsRef<Path>) -> Result<Self> {
-        let data = tokio::fs::read(config_path).await?;
+    pub fn from_file(config_path: impl AsRef<Path>) -> Result<Self> {
+        let data = std::fs::read(config_path)?;
         Self::new(&data)
+    }
+
+    pub fn from_env() -> Result<Self> {
+        let instance_id = Uuid::parse_str(&std::env::var("ONEFUZZ_INSTANCE_ID")?)?;
+        let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
+        let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?.into();
+        let tenant = std::env::var("ONEFUZZ_TENANT")?;
+        let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
+        let pool_name = std::env::var("ONEFUZZ_POOL")?;
+
+        let heartbeat_queue = if let Ok(key) = std::env::var("ONEFUZZ_HEARTBEAT") {
+            Some(Url::parse(&key)?)
+        } else {
+            None
+        };
+
+        let instrumentation_key = if let Ok(key) = std::env::var("ONEFUZZ_INSTRUMENTATION_KEY") {
+            Some(Uuid::parse_str(&key)?)
+        } else {
+            None
+        };
+
+        let telemetry_key = if let Ok(key) = std::env::var("ONEFUZZ_TELEMETRY_KEY") {
+            Some(Uuid::parse_str(&key)?)
+        } else {
+            None
+        };
+
+        let credentials = ClientCredentials::new(
+            client_id,
+            client_secret,
+            onefuzz_url.clone().to_string(),
+            tenant,
+        )
+        .into();
+
+        Ok(Self {
+            instance_id,
+            credentials,
+            pool_name,
+            onefuzz_url,
+            instrumentation_key,
+            telemetry_key,
+            heartbeat_queue,
+        })
     }
 
     fn register_url(&self) -> Url {
@@ -152,7 +197,14 @@ impl Registration {
 
         if managed {
             let scaleset = onefuzz::machine_id::get_scaleset_name().await?;
-            url.query_pairs_mut().append_pair("scaleset_id", &scaleset);
+            match scaleset {
+                Some(scaleset) => {
+                    url.query_pairs_mut().append_pair("scaleset_id", &scaleset);
+                }
+                None => {
+                    anyhow::bail!("managed instance without scaleset name");
+                }
+            }
         }
         // The registration can fail because this call is made before the virtual machine scaleset is done provisioning
         // The authentication layer of the service will reject this request when that happens
