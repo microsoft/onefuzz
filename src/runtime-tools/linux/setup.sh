@@ -11,6 +11,7 @@ USER_SETUP="/onefuzz/setup/setup.sh"
 TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
 export ONEFUZZ_ROOT=/onefuzz
+export ASAN_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
 logger "onefuzz: making directories"
 sudo mkdir -p /onefuzz/downloaded
@@ -84,6 +85,24 @@ fi
 
 chmod -R a+rx /onefuzz/tools/linux
 
+if type apt > /dev/null 2> /dev/null; then
+    sudo apt update
+    until sudo apt install -y gdb gdbserver; do
+        echo "apt failed.  sleep 10s, then retrying"
+        sleep 10
+    done
+
+    if ! [ -f ${ASAN_SYMBOLIZER_PATH} ]; then
+        until sudo apt install -y llvm-10; do
+            echo "apt failed, sleeping 10s then retrying"
+            sleep 10
+        done
+
+        # If specifying symbolizer, exe name must be a "known symbolizer".
+        # Using `llvm-symbolizer` works for clang 8 .. 10.
+        sudo ln -f -s $(which llvm-symbolizer-10) $ASAN_SYMBOLIZER_PATH
+    fi
+fi
 
 if [ -d /etc/systemd/system ]; then
     logger "onefuzz: setting up systemd"
