@@ -6,37 +6,61 @@
 import datetime
 import os
 import urllib.parse
-from typing import Dict, Optional, Union, cast
+from enum import Enum
+from typing import Any, Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
 from azure.storage.blob import BlobPermissions, ContainerPermissions
 from memoization import cached
 
-from .creds import get_blob_service
+from .creds import get_blob_service, get_func_storage, get_fuzz_storage
+
+
+class StorageType(Enum):
+    corpus = "corpus"
+    config = "config"
+
+
+def get_account_id_by_type(storage_type: StorageType) -> str:
+    if storage_type == StorageType.corpus:
+        account_id = get_fuzz_storage()
+    elif storage_type == StorageType.config:
+        account_id = get_func_storage()
+    else:
+        raise NotImplementedError
+    return account_id
 
 
 @cached(ttl=5)
-def container_exists(name: str, account_id: Optional[str] = None) -> bool:
+def get_blob_service_by_type(storage_type: StorageType) -> Any:
+    account_id = get_account_id_by_type(storage_type)
+    return get_blob_service(account_id)
+
+
+@cached(ttl=5)
+def container_exists(name: str, storage_type: StorageType) -> bool:
     try:
-        get_blob_service(account_id).get_container_properties(name)
+        get_blob_service_by_type(storage_type).get_container_properties(name)
         return True
     except AzureHttpError:
         return False
 
 
-def get_containers(account_id: Optional[str] = None) -> Dict[str, Dict[str, str]]:
+def get_containers(storage_type: StorageType) -> Dict[str, Dict[str, str]]:
     return {
         x.name: x.metadata
-        for x in get_blob_service(account_id).list_containers(include_metadata=True)
+        for x in get_blob_service_by_type(storage_type).list_containers(
+            include_metadata=True
+        )
         if not x.name.startswith("$")
     }
 
 
 def get_container_metadata(
-    name: str, account_id: Optional[str] = None
+    name: str, storage_type: StorageType
 ) -> Optional[Dict[str, str]]:
     try:
-        result = get_blob_service(account_id).get_container_metadata(name)
+        result = get_blob_service_by_type(storage_type).get_container_metadata(name)
         return cast(Dict[str, str], result)
     except AzureHttpError:
         pass
@@ -44,22 +68,29 @@ def get_container_metadata(
 
 
 def create_container(
-    name: str, metadata: Optional[Dict[str, str]], account_id: Optional[str] = None
+    name: str, storage_type: StorageType, metadata: Optional[Dict[str, str]]
 ) -> Optional[str]:
     try:
-        get_blob_service(account_id).create_container(name, metadata=metadata)
+        get_blob_service_by_type(storage_type).create_container(name, metadata=metadata)
     except AzureHttpError:
         # azure storage already logs errors
         return None
 
     return get_container_sas_url(
-        name, read=True, add=True, create=True, write=True, delete=True, list=True
+        name,
+        storage_type,
+        read=True,
+        add=True,
+        create=True,
+        write=True,
+        delete=True,
+        list=True,
     )
 
 
-def delete_container(name: str, account_id: Optional[str] = None) -> bool:
+def delete_container(name: str, storage_type: StorageType) -> bool:
     try:
-        return bool(get_blob_service(account_id).delete_container(name))
+        return bool(get_blob_service_by_type(storage_type).delete_container(name))
     except AzureHttpError:
         # azure storage already logs errors
         return False
@@ -67,7 +98,8 @@ def delete_container(name: str, account_id: Optional[str] = None) -> bool:
 
 def get_container_sas_url(
     container: str,
-    account_id: Optional[str] = None,
+    storage_type: StorageType,
+    *,
     read: bool = False,
     add: bool = False,
     create: bool = False,
@@ -75,7 +107,7 @@ def get_container_sas_url(
     delete: bool = False,
     list: bool = False,
 ) -> str:
-    service = get_blob_service(account_id)
+    service = get_blob_service_by_type(storage_type)
     expiry = datetime.datetime.utcnow() + datetime.timedelta(days=30)
     permission = ContainerPermissions(read, add, create, write, delete, list)
 
@@ -91,7 +123,8 @@ def get_container_sas_url(
 def get_file_sas_url(
     container: str,
     name: str,
-    account_id: Optional[str] = None,
+    storage_type: StorageType,
+    *,
     read: bool = False,
     add: bool = False,
     create: bool = False,
@@ -102,7 +135,7 @@ def get_file_sas_url(
     hours: int = 0,
     minutes: int = 0,
 ) -> str:
-    service = get_blob_service(account_id)
+    service = get_blob_service_by_type(storage_type)
     expiry = datetime.datetime.utcnow() + datetime.timedelta(
         days=days, hours=hours, minutes=minutes
     )
@@ -117,9 +150,9 @@ def get_file_sas_url(
 
 
 def save_blob(
-    container: str, name: str, data: Union[str, bytes], account_id: Optional[str] = None
+    container: str, name: str, data: Union[str, bytes], storage_type: StorageType
 ) -> None:
-    service = get_blob_service(account_id)
+    service = get_blob_service_by_type(storage_type)
     service.create_container(container)
     if isinstance(data, str):
         service.create_blob_from_text(container, name, data)
@@ -127,10 +160,8 @@ def save_blob(
         service.create_blob_from_bytes(container, name, data)
 
 
-def get_blob(
-    container: str, name: str, account_id: Optional[str] = None
-) -> Optional[bytes]:
-    service = get_blob_service(account_id)
+def get_blob(container: str, name: str, storage_type: StorageType) -> Optional[bytes]:
+    service = get_blob_service_by_type(storage_type)
     try:
         blob = service.get_blob_to_bytes(container, name).content
         return cast(bytes, blob)
@@ -138,8 +169,8 @@ def get_blob(
         return None
 
 
-def blob_exists(container: str, name: str, account_id: Optional[str] = None) -> bool:
-    service = get_blob_service(account_id)
+def blob_exists(container: str, name: str, storage_type: StorageType) -> bool:
+    service = get_blob_service_by_type(storage_type)
     try:
         service.get_blob_properties(container, name)
         return True
@@ -147,8 +178,8 @@ def blob_exists(container: str, name: str, account_id: Optional[str] = None) -> 
         return False
 
 
-def delete_blob(container: str, name: str, account_id: Optional[str] = None) -> bool:
-    service = get_blob_service(account_id)
+def delete_blob(container: str, name: str, storage_type: StorageType) -> bool:
+    service = get_blob_service_by_type(storage_type)
     try:
         service.delete_blob(container, name)
         return True

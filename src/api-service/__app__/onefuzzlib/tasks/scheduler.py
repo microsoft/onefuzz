@@ -10,8 +10,12 @@ from uuid import UUID
 from onefuzztypes.enums import OS, PoolState, TaskState
 from onefuzztypes.models import WorkSet, WorkUnit
 
-from ..azure.containers import blob_exists, get_container_sas_url, save_blob
-from ..azure.creds import get_func_storage
+from ..azure.containers import (
+    StorageType,
+    blob_exists,
+    get_container_sas_url,
+    save_blob,
+)
 from ..pools import Pool
 from .config import build_task_config, get_setup_container
 from .main import Task
@@ -60,20 +64,26 @@ def schedule_tasks() -> None:
             agent_config = build_task_config(task.job_id, task.task_id, task.config)
 
             setup_container = get_setup_container(task.config)
-            setup_url = get_container_sas_url(setup_container, read=True, list=True)
+            setup_url = get_container_sas_url(
+                setup_container, StorageType.corpus, read=True, list=True
+            )
 
             setup_script = None
 
-            if task.os == OS.windows and blob_exists(setup_container, "setup.ps1"):
+            if task.os == OS.windows and blob_exists(
+                setup_container, "setup.ps1", StorageType.corpus
+            ):
                 setup_script = "setup.ps1"
-            if task.os == OS.linux and blob_exists(setup_container, "setup.sh"):
+            if task.os == OS.linux and blob_exists(
+                setup_container, "setup.sh", StorageType.corpus
+            ):
                 setup_script = "setup.sh"
 
             save_blob(
                 "task-configs",
                 "%s/config.json" % task.task_id,
                 agent_config.json(exclude_none=True),
-                account_id=get_func_storage(),
+                StorageType.config,
             )
             reboot = False
             count = 1
