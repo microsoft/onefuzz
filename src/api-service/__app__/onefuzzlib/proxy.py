@@ -21,8 +21,7 @@ from pydantic import Field
 
 from .__version__ import __version__
 from .azure.auth import build_auth
-from .azure.containers import get_file_sas_url, save_blob
-from .azure.creds import get_func_storage
+from .azure.containers import StorageType, get_file_sas_url, save_blob
 from .azure.ip import get_public_ip
 from .azure.queue import get_queue_sas
 from .azure.vm import VM
@@ -191,12 +190,12 @@ class Proxy(ORMMixin):
             url=get_file_sas_url(
                 "proxy-configs",
                 "%s/config.json" % self.region,
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
             notification=get_queue_sas(
                 "proxy",
-                account_id=get_func_storage(),
+                StorageType.config,
                 add=True,
             ),
             forwards=forwards,
@@ -207,7 +206,7 @@ class Proxy(ORMMixin):
             "proxy-configs",
             "%s/config.json" % self.region,
             proxy_config.json(),
-            account_id=get_func_storage(),
+            StorageType.config,
         )
 
     @classmethod
