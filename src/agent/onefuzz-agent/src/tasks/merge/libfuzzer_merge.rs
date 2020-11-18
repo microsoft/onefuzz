@@ -57,7 +57,13 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             input.sync_pull().await?;
         }
         let input_paths = config.inputs.iter().map(|i| &i.path).collect();
-        sync_and_merge(config.clone(), input_paths, false, config.overwrite_unique_inputs).await?;
+        sync_and_merge(
+            config.clone(),
+            input_paths,
+            false,
+            config.overwrite_unique_inputs,
+        )
+        .await?;
         Ok(())
     }
 }
