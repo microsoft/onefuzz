@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 use winapi::{
     shared::minwindef::{FALSE, LPHANDLE},
     um::{

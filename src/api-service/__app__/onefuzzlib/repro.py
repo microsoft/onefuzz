@@ -14,8 +14,8 @@ from onefuzztypes.models import Repro as BASE_REPRO
 from onefuzztypes.models import ReproConfig, TaskVm
 
 from .azure.auth import build_auth
-from .azure.containers import save_blob
-from .azure.creds import get_base_region, get_func_storage
+from .azure.containers import StorageType, save_blob
+from .azure.creds import get_base_region
 from .azure.ip import get_public_ip
 from .azure.vm import VM
 from .extension import repro_extensions
@@ -205,7 +205,7 @@ class Repro(BASE_REPRO, ORMMixin):
                 "repro-scripts",
                 "%s/%s" % (self.vm_id, filename),
                 files[filename],
-                account_id=get_func_storage(),
+                StorageType.config,
             )
 
         logging.info("saved repro script")

@@ -46,7 +46,7 @@ UUID_RE = r"^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}\Z"
 
 
 class PreviewFeature(Enum):
-    pass
+    job_templates = "job_templates"
 
 
 def is_uuid(value: str) -> bool:
@@ -1446,15 +1446,23 @@ class Onefuzz:
         self.nodes = Node(self)
         self.webhooks = Webhooks(self)
 
+        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+            self.job_templates = JobTemplates(self)
+
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
         self.debug = Debug(self, self.logger)
         self.status = Status(self, self.logger)
         self.utils = Utils(self, self.logger)
 
+        self.__setup__()
+
     def __setup__(self, endpoint: Optional[str] = None) -> None:
         if endpoint:
             self._backend.config.endpoint = endpoint
+
+        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+            self.job_templates._load_cache()
 
     def licenses(self) -> object:
         """ Return third-party licenses used by this package """
@@ -1473,6 +1481,10 @@ class Onefuzz:
         # Rather than interacting MSAL directly, call a simple API which
         # actuates the login process
         self.info.get()
+
+        # TODO: once job templates are out of preview, this should be enabled
+        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+            self.job_templates.refresh()
         return "succeeded"
 
     def config(
@@ -1671,5 +1683,6 @@ class Onefuzz:
 
 
 from .debug import Debug  # noqa: E402
+from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402

@@ -11,8 +11,13 @@ from onefuzztypes.enums import OS, AgentMode
 from onefuzztypes.models import AgentConfig, ReproConfig
 from onefuzztypes.primitives import Extension, Region
 
-from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
-from .azure.creds import get_func_storage, get_instance_id, get_instance_url
+from .azure.containers import (
+    StorageType,
+    get_container_sas_url,
+    get_file_sas_url,
+    save_blob,
+)
+from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
 from .reports import get_report
@@ -96,7 +101,7 @@ def build_pool_config(pool_name: str) -> str:
         instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         heartbeat_queue=get_queue_sas(
             "node-heartbeat",
-            account_id=get_func_storage(),
+            StorageType.config,
             add=True,
         ),
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
@@ -107,13 +112,13 @@ def build_pool_config(pool_name: str) -> str:
         "vm-scripts",
         "%s/config.json" % pool_name,
         config.json(),
-        account_id=get_func_storage(),
+        StorageType.config,
     )
 
     return get_file_sas_url(
         "vm-scripts",
         "%s/config.json" % pool_name,
-        account_id=get_func_storage(),
+        StorageType.config,
         read=True,
     )
 
@@ -124,30 +129,26 @@ def update_managed_scripts() -> None:
         % (
             get_container_sas_url(
                 "instance-specific-setup",
+                StorageType.config,
                 read=True,
                 list=True,
-                account_id=get_func_storage(),
             )
         ),
         "azcopy sync '%s' tools"
-        % (
-            get_container_sas_url(
-                "tools", read=True, list=True, account_id=get_func_storage()
-            )
-        ),
+        % (get_container_sas_url("tools", StorageType.config, read=True, list=True)),
     ]
 
     save_blob(
         "vm-scripts",
         "managed.ps1",
         "\r\n".join(commands) + "\r\n",
-        account_id=get_func_storage(),
+        StorageType.config,
     )
     save_blob(
         "vm-scripts",
         "managed.sh",
         "\n".join(commands) + "\n",
-        account_id=get_func_storage(),
+        StorageType.config,
     )
 
 
@@ -164,25 +165,25 @@ def agent_config(
             get_file_sas_url(
                 "vm-scripts",
                 "managed.ps1",
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
                 "tools",
                 "win64/azcopy.exe",
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
                 "tools",
                 "win64/setup.ps1",
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
                 "tools",
                 "win64/onefuzz.ps1",
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
         ]
@@ -206,19 +207,19 @@ def agent_config(
             get_file_sas_url(
                 "vm-scripts",
                 "managed.sh",
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
                 "tools",
                 "linux/azcopy",
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
                 "tools",
                 "linux/setup.sh",
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
         ]
@@ -263,13 +264,22 @@ def repro_extensions(
     if setup_container:
         commands += [
             "azcopy sync '%s' ./setup"
-            % (get_container_sas_url(setup_container, read=True, list=True)),
+            % (
+                get_container_sas_url(
+                    setup_container, StorageType.corpus, read=True, list=True
+                )
+            ),
         ]
 
     urls = [
-        get_file_sas_url(repro_config.container, repro_config.path, read=True),
         get_file_sas_url(
-            report.input_blob.container, report.input_blob.name, read=True
+            repro_config.container, repro_config.path, StorageType.corpus, read=True
+        ),
+        get_file_sas_url(
+            report.input_blob.container,
+            report.input_blob.name,
+            StorageType.corpus,
+            read=True,
         ),
     ]
 
@@ -288,7 +298,7 @@ def repro_extensions(
         "task-configs",
         "%s/%s" % (repro_id, script_name),
         task_script,
-        account_id=get_func_storage(),
+        StorageType.config,
     )
 
     for repro_file in repro_files:
@@ -296,13 +306,13 @@ def repro_extensions(
             get_file_sas_url(
                 "repro-scripts",
                 repro_file,
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
                 "task-configs",
                 "%s/%s" % (repro_id, script_name),
-                account_id=get_func_storage(),
+                StorageType.config,
                 read=True,
             ),
         ]
@@ -318,13 +328,13 @@ def proxy_manager_extensions(region: Region) -> List[Extension]:
         get_file_sas_url(
             "proxy-configs",
             "%s/config.json" % region,
-            account_id=get_func_storage(),
+            StorageType.config,
             read=True,
         ),
         get_file_sas_url(
             "tools",
             "linux/onefuzz-proxy-manager",
-            account_id=get_func_storage(),
+            StorageType.config,
             read=True,
         ),
     ]

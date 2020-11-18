@@ -10,7 +10,7 @@ from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import UpdateType
 from pydantic import BaseModel
 
-from .azure.creds import get_func_storage
+from .azure.containers import StorageType
 from .azure.queue import queue_object
 
 
@@ -46,7 +46,7 @@ def queue_update(
         if not queue_object(
             "update-queue",
             update,
-            account_id=get_func_storage(),
+            StorageType.config,
             visibility_timeout=visibility_timeout,
         ):
             logging.error("unable to queue update")

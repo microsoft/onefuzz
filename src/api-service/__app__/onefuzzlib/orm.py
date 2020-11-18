@@ -309,7 +309,9 @@ class ORMMixin(ModelMixin):
             try:
                 self.etag = client.insert_entity(self.table_name(), raw)
             except AzureConflictHttpError:
-                return Error(code=ErrorCode.UNABLE_TO_CREATE, errors=["row exists"])
+                return Error(
+                    code=ErrorCode.UNABLE_TO_CREATE, errors=["entry already exists"]
+                )
         elif self.etag and require_etag:
             self.etag = client.replace_entity(
                 self.table_name(), raw, if_match=self.etag
