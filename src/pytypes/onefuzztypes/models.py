@@ -7,7 +7,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import BaseModel, Field, Generic, root_validator, validator
+from pydantic.fields import ModelField
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -39,6 +40,52 @@ class UserInfo(BaseModel):
     application_id: UUID
     object_id: Optional[UUID]
     upn: Optional[str]
+class KeyvaultSecret(BaseModel):
+    secret_url: str
+
+
+T = TypeVar("T")
+
+
+class SecretData(Generic[T], BaseModel):
+    secret: Union[T, KeyvaultSecret]
+
+    def __init__(self, secret: Union[T, KeyvaultSecret]):
+        self.secret = secret
+
+    def __str__(self):
+        if not isinstance(self.secret, KeyvaultSecret):
+            return "[REDACTED]"
+
+    def __repr__(self):
+        if not isinstance(self.secret, KeyvaultSecret):
+            return "[REDACTED]"
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    # You don't need to add the "ModelField", but it will help your
+    # editor give you completion and catch errors
+    def validate(cls, v, field: ModelField):
+        if not isinstance(v, cls):
+            # The value is not even a TastingModel
+            raise TypeError("Invalid value")
+        if not field.sub_fields:
+            # Generic parameters were not provided so we don't try to validate
+            # them and just return the value as is
+            return v
+
+        generic_param = field.sub_fields[0]
+
+        # Here we don't need the validated value, but we want the errors
+        valid_value, error = generic_param.validate(v.secret, {}, loc="secret")
+
+        if error:
+            raise ValidationError(error, cls)
+
+        return v
 
 
 class EnumModel(BaseModel):
@@ -220,16 +267,13 @@ class ADODuplicateTemplate(BaseModel):
 
 class ADOTemplate(BaseModel):
     base_url: str
-    auth_token: str
+    auth_token: SecretData[str]
     project: str
     type: str
     unique_fields: List[str]
     comment: Optional[str]
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
-
-    def redact(self) -> None:
-        self.auth_token = "***"
 
 
 class TeamsTemplate(BaseModel):
@@ -401,7 +445,7 @@ class GithubAuth(BaseModel):
 
 
 class GithubIssueTemplate(BaseModel):
-    auth: GithubAuth
+    auth: SecretData[GithubAuth]
     organization: str
     repository: str
     title: str
@@ -410,10 +454,6 @@ class GithubIssueTemplate(BaseModel):
     assignees: List[str]
     labels: List[str]
     on_duplicate: GithubIssueDuplicate
-
-    def redact(self) -> None:
-        self.auth.user = "***"
-        self.auth.personal_access_token = "***"
 
 
 NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]

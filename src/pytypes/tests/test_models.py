@@ -5,10 +5,9 @@
 
 import unittest
 
-from pydantic import ValidationError
-
 from onefuzztypes.models import Scaleset, TeamsTemplate
 from onefuzztypes.requests import NotificationCreate
+from pydantic import ValidationError
 
 
 class TestModelsVerify(unittest.TestCase):
