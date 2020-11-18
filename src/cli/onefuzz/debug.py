@@ -28,6 +28,7 @@ from .ssh import ssh_connect
 
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
+DAY_TIMESPAN = "PT24H"
 
 
 class DebugRepro(Command):
@@ -213,6 +214,28 @@ class DebugTask(Command):
         scaleset_id, node_id = self._get_node(task_id, node_id)
         return self.onefuzz.debug.scalesets.rdp(scaleset_id, node_id, duration=duration)
 
+    def libfuzzer_coverage(
+        self,
+        task_id: UUID_EXPANSION,
+        timespan: str = DAY_TIMESPAN,
+        limit: Optional[int] = None,
+    ) -> Any:
+        task = self.onefuzz.tasks.get(task_id)
+        query = f"where customDimensions.task_id == '{task.task_id}'"
+        return self.onefuzz.debug.logs._query_libfuzzer_coverage(query, timespan, limit)
+
+    def libfuzzer_execs_sec(
+        self,
+        task_id: UUID_EXPANSION,
+        timespan: str = DAY_TIMESPAN,
+        limit: Optional[int] = None,
+    ) -> Any:
+        task = self.onefuzz.tasks.get(task_id)
+        query = f"where customDimensions.task_id == '{task.task_id}'"
+        return self.onefuzz.debug.logs._query_libfuzzer_execs_sec(
+            query, timespan, limit
+        )
+
 
 class DebugJobTask(Command):
     """ Debug a task for a specific job """
@@ -257,6 +280,28 @@ class DebugJob(Command):
     def __init__(self, onefuzz: Any, logger: logging.Logger):
         super().__init__(onefuzz, logger)
         self.task = DebugJobTask(onefuzz, logger)
+
+    def libfuzzer_coverage(
+        self,
+        job_id: UUID_EXPANSION,
+        timespan: str = DAY_TIMESPAN,
+        limit: Optional[int] = None,
+    ) -> Any:
+        job = self.onefuzz.jobs.get(job_id)
+        query = f"where customDimensions.job_id == '{job.job_id}'"
+        return self.onefuzz.debug.logs._query_libfuzzer_coverage(query, timespan, limit)
+
+    def libfuzzer_execs_sec(
+        self,
+        job_id: UUID_EXPANSION,
+        timespan: str = DAY_TIMESPAN,
+        limit: Optional[int] = None,
+    ) -> Any:
+        job = self.onefuzz.jobs.get(job_id)
+        query = f"where customDimensions.job_id == '{job.job_id}'"
+        return self.onefuzz.debug.logs._query_libfuzzer_execs_sec(
+            query, timespan, limit
+        )
 
     def download_files(self, job_id: UUID_EXPANSION, output: Directory) -> None:
         """ Download the containers by container type for each task in the specified job """
@@ -306,7 +351,7 @@ class DebugLog(Command):
         return results
 
     def query(
-        self, log_query: str, *, timespan: str = "PT24H", raw: bool = False
+        self, log_query: str, *, timespan: str = DAY_TIMESPAN, raw: bool = False
     ) -> Any:
         """
         Perform an Application Insights query
@@ -326,6 +371,7 @@ class DebugLog(Command):
         app_id = self.onefuzz.info.get().insights_appid
         if app_id is None:
             raise Exception("instance does not have an insights_appid")
+        self.logger.debug("query: %s", log_query)
         raw_data = client.query.execute(
             app_id, body=QueryBody(query=log_query, timespan=timespan)
         )
@@ -337,11 +383,15 @@ class DebugLog(Command):
             return raw_data
         return self._convert(raw_data)
 
+    def _query_parts(self, parts: List[str], timespan=str, *, raw: bool = False) -> Any:
+        log_query = " | ".join(parts)
+        return self.query(log_query, timespan=timespan, raw=raw)
+
     def keyword(
         self,
         value: str,
         *,
-        timespan: str = "PT24H",
+        timespan: str = DAY_TIMESPAN,
         limit: Optional[int] = None,
         raw: bool = False,
     ) -> Any:
@@ -368,10 +418,56 @@ class DebugLog(Command):
         if limit is not None:
             components.append(f"take {limit}")
 
-        log_query = " | ".join(components)
-        self.logger.debug("query: %s", log_query)
+        return self._query_parts(components, timespan=timespan, raw=raw)
 
-        return self.query(log_query, timespan=timespan)
+    def _query_libfuzzer_coverage(
+        self, query: str, timespan: str, limit: Optional[int] = None
+    ):
+        query_parts = [
+            "customEvents",
+            "where name == 'coverage_data'",
+            query,
+            "order by timestamp desc",
+            "project rate=customDimensions.rate, timestamp",
+        ]
+
+        if limit:
+            query_parts.append(f"take {limit}")
+
+        results = self.onefuzz.debug.logs._query_parts(query_parts, timespan=timespan)
+        if "PrimaryResult" in results:
+            return results["PrimaryResult"]
+        return results
+
+    def _query_libfuzzer_execs_sec(
+        self,
+        query: str,
+        timespan: str,
+        limit: Optional[int] = None,
+    ) -> Any:
+        project_fields = [
+            "task_id=customDimensions.task_id",
+            "machine_id=customDimensions.machine_id",
+            "worker_id=customDimensions.worker_id",
+            "rate=customDimensions.execs_sec",
+            "timestamp",
+        ]
+
+        query_parts = [
+            "customEvents",
+            "where name == 'runtime_stats'",
+            query,
+            "where customDimensions.execs_sec > 0",
+            "order by timestamp desc",
+            f"project {','.join(project_fields)}",
+        ]
+        if limit:
+            query_parts.append(f"take {limit}")
+
+        results = self.onefuzz.debug.logs._query_parts(query_parts, timespan=timespan)
+        if "PrimaryResult" in results:
+            return results["PrimaryResult"]
+        return results
 
 
 class DebugNotification(Command):
