@@ -263,6 +263,7 @@ TASK_DEFINITIONS = {
             TaskFeature.supervisor_options,
             TaskFeature.supervisor_input_marker,
             TaskFeature.stats_file,
+            TaskFeature.overwrite_unique_inputs,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[

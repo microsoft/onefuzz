@@ -30,20 +30,20 @@ pub struct SyncedDir {
 }
 
 impl SyncedDir {
-    pub async fn sync(&self, operation: SyncOperation) -> Result<()> {
+    pub async fn sync(&self, operation: SyncOperation, delete_dst: bool) -> Result<()> {
         let dir = &self.path;
         let url = self.url.url();
         let url = url.as_ref();
         verbose!("syncing {:?} {}", operation, dir.display());
         match operation {
-            SyncOperation::Push => az_copy::sync(dir, url).await,
-            SyncOperation::Pull => az_copy::sync(url, dir).await,
+            SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await,
+            SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await,
         }
     }
 
     pub async fn init_pull(&self) -> Result<()> {
         self.init().await?;
-        self.sync(SyncOperation::Pull).await
+        self.sync(SyncOperation::Pull, false).await
     }
 
     pub async fn init(&self) -> Result<()> {
@@ -60,11 +60,11 @@ impl SyncedDir {
     }
 
     pub async fn sync_pull(&self) -> Result<()> {
-        self.sync(SyncOperation::Pull).await
+        self.sync(SyncOperation::Pull, false).await
     }
 
     pub async fn sync_push(&self) -> Result<()> {
-        self.sync(SyncOperation::Push).await
+        self.sync(SyncOperation::Push, false).await
     }
 
     pub async fn continuous_sync(
@@ -79,7 +79,7 @@ impl SyncedDir {
         let delay = Duration::from_secs(delay_seconds);
 
         loop {
-            self.sync(operation).await?;
+            self.sync(operation, false).await?;
             delay_with_jitter(delay).await;
         }
     }
@@ -146,7 +146,7 @@ pub async fn continuous_sync(
 
     loop {
         for dir in dirs {
-            dir.sync(operation).await?;
+            dir.sync(operation, false).await?;
         }
         delay_with_jitter(delay).await;
     }
