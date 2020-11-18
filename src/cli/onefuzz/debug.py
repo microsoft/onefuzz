@@ -383,7 +383,9 @@ class DebugLog(Command):
             return raw_data
         return self._convert(raw_data)
 
-    def _query_parts(self, parts: List[str], timespan=str, *, raw: bool = False) -> Any:
+    def _query_parts(
+        self, parts: List[str], timespan: str, *, raw: bool = False
+    ) -> Any:
         log_query = " | ".join(parts)
         return self.query(log_query, timespan=timespan, raw=raw)
 
@@ -422,7 +424,7 @@ class DebugLog(Command):
 
     def _query_libfuzzer_coverage(
         self, query: str, timespan: str, limit: Optional[int] = None
-    ):
+    ) -> Any:
         project_fields = [
             "rate=customDimensions.rate",
             "covered=customDimensions.covered",
