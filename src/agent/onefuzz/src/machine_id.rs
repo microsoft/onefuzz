@@ -60,24 +60,25 @@ pub async fn get_machine_name() -> Result<String> {
     Ok(body)
 }
 
-pub async fn get_scaleset_name() -> Result<String> {
+pub async fn get_scaleset_name() -> Result<Option<String>> {
     let path = onefuzz_etc()?.join("scaleset_name");
-    let body = match fs::read_to_string(&path).await {
-        Ok(body) => body,
-        Err(_) => {
-            let resp = reqwest::Client::new()
-                .get(VM_SCALESET_NAME)
-                .timeout(Duration::from_millis(500))
-                .header("Metadata", "true")
-                .send_retry_default()
-                .await?;
-            let body = resp.text().await?;
-            write_file(path, &body).await?;
-            body
-        }
-    };
+    if let Ok(scaleset_name) = fs::read_to_string(&path).await {
+        return Ok(Some(scaleset_name));
+    }
 
-    Ok(body)
+    if let Ok(resp) = reqwest::Client::new()
+        .get(VM_SCALESET_NAME)
+        .timeout(Duration::from_millis(500))
+        .header("Metadata", "true")
+        .send_retry_default()
+        .await
+    {
+        let body = resp.text().await?;
+        write_file(path, &body).await?;
+        Ok(Some(body))
+    } else {
+        Ok(None)
+    }
 }
 
 #[cfg(target_os = "linux")]

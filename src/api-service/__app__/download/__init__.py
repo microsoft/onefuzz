@@ -8,6 +8,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, FileEntry
 
 from ..onefuzzlib.azure.containers import (
+    StorageType,
     blob_exists,
     container_exists,
     get_file_sas_url,
@@ -20,13 +21,13 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="download")
 
-    if not container_exists(request.container):
+    if not container_exists(request.container, StorageType.corpus):
         return not_ok(
             Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"]),
             context=request.container,
         )
 
-    if not blob_exists(request.container, request.filename):
+    if not blob_exists(request.container, request.filename, StorageType.corpus):
         return not_ok(
             Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid filename"]),
             context=request.filename,
@@ -34,7 +35,12 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
     return redirect(
         get_file_sas_url(
-            request.container, request.filename, read=True, days=0, minutes=5
+            request.container,
+            request.filename,
+            StorageType.corpus,
+            read=True,
+            days=0,
+            minutes=5,
         )
     )
 
