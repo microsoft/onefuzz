@@ -47,7 +47,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
             task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
             instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
         },
-        overwrite_unique_inputs: true,
+        overwrite_output_container: true,
     });
 
     let mut rt = Runtime::new()?;

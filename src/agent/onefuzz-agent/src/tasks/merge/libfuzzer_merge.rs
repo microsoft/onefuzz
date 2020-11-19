@@ -33,7 +33,7 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub inputs: Vec<SyncedDir>,
     pub unique_inputs: SyncedDir,
-    pub overwrite_unique_inputs: bool,
+    pub overwrite_output_container: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -61,7 +61,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             config.clone(),
             input_paths,
             false,
-            config.overwrite_unique_inputs,
+            config.overwrite_output_container,
         )
         .await?;
         Ok(())
