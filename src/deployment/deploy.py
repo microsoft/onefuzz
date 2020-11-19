@@ -680,6 +680,7 @@ class Client:
                     except subprocess.CalledProcessError as err:
                         error = err
                         if i + 1 < max_tries:
+                            logger.debug("func failure error: %s", err)
                             logger.warning(
                                 "function failed to deploy, waiting 60 seconds and trying again"
                             )
