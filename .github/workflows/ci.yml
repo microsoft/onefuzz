@@ -270,6 +270,18 @@ jobs:
       with:
         name: build-artifacts
         path: artifacts
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Lint
+      shell: bash
+      run: |
+        set -ex
+        cd src/deployment/tools
+        pip install mypy isort black
+        mypy .
+        isort --profile black . --check
+        black . --check
     - name: Package Onefuzz
       run: |
           set -ex

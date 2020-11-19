@@ -4,14 +4,14 @@
 # Licensed under the MIT License.
 
 import argparse
-from uuid import UUID
 import json
 from typing import Callable, Dict, List
+from uuid import UUID
 
+from azure.common.client_factory import get_client_from_cli_profile
 from azure.cosmosdb.table.tablebatch import TableBatch
 from azure.cosmosdb.table.tableservice import TableService
 from azure.mgmt.storage import StorageManagementClient
-from azure.common.client_factory import get_client_from_cli_profile
 
 
 def migrate_task_os(table_service: TableService) -> None:
@@ -84,7 +84,7 @@ def migrate(table_service: TableService, migration_names: List[str]) -> None:
         print("migration '%s' applied" % name)
 
 
-def main():
+def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(formatter_class=formatter)
     parser.add_argument("resource_group")
