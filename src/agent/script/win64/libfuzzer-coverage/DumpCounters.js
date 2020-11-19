@@ -20,15 +20,16 @@ function readU8Array(addr, len) {
 }
 
 // For future research: Other tables of interest in MSVC 16.8
-// _Sancov8bitUsed - __sancov$8bitCountersStart & __sancov$8bitCountersEnd
 // _SancovPcGuardUsed - __sancov$TracePCGuardStart & __sancov$TracePCGuardEnd
 // _SancovPcTableUsed - __sancov$PCTableStart & __sancov$PCTableEnd
 
 function findCounterSymbols(exe) {
     var symbols = [
-        { name: "LLVM 10", start: "__start___sancov_cntrs", end: "__stop___sancov_cntrs" },
-        { name: "MSVC 16.8", start: "__sancov$BoolFlagStart", end: "__sancov$BoolFlagEnd" },
+        { name: "MSVC 16.8 bool flag", start: "__sancov$BoolFlagStart", end: "__sancov$BoolFlagEnd" },
+        { name: "MSVC 16.8 8bit counters", start: "__sancov$8bitCountersStart", end: "__sancov$8bitCountersEnd" },
         { name: "MSVC pre-16.8", start: "SancovBitmapStart", end: "SancovBitmapEnd" },
+        // MSVC compiled libfuzzer targets _also_ include the LLVM symbols, so this needs to be checked after MSVC
+        { name: "LLVM 10", start: "__start___sancov_cntrs", end: "__stop___sancov_cntrs" },
     ];
 
     for (let entry of symbols) {
