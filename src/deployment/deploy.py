@@ -16,6 +16,7 @@ import time
 import uuid
 import zipfile
 from datetime import datetime, timedelta
+from typing import Optional
 
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
@@ -658,19 +659,34 @@ class Client:
         with tempfile.TemporaryDirectory() as tmpdirname:
             with zipfile.ZipFile(self.app_zip, "r") as zip_ref:
                 zip_ref.extractall(tmpdirname)
-                subprocess.check_output(
-                    [
-                        shutil.which("func"),
-                        "azure",
-                        "functionapp",
-                        "publish",
-                        self.application_name,
-                        "--python",
-                        "--no-build",
-                    ],
-                    env=dict(os.environ, CLI_DEBUG="1"),
-                    cwd=tmpdirname,
-                )
+                error: Optional[subprocess.CalledProcessError] = None
+                max_tries = 5
+                for i in range(max_tries):
+                    try:
+                        subprocess.check_output(
+                            [
+                                shutil.which("func"),
+                                "azure",
+                                "functionapp",
+                                "publish",
+                                self.application_name,
+                                "--python",
+                                "--no-build",
+                            ],
+                            env=dict(os.environ, CLI_DEBUG="1"),
+                            cwd=tmpdirname,
+                        )
+                        return
+                    except subprocess.CalledProcessError as err:
+                        error = err
+                        if i + 1 < max_tries:
+                            logger.debug("func failure error: %s", err)
+                            logger.warning(
+                                "function failed to deploy, waiting 60 seconds and trying again"
+                            )
+                            time.sleep(60)
+                if error is not None:
+                    raise error
 
     def update_registration(self):
         if not self.create_registration:
