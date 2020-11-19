@@ -15,9 +15,11 @@ pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, delete_dst: bo
         .stderr(Stdio::piped())
         .arg("sync")
         .arg(&src)
-        .arg(&dst)
-        .arg("--delete_destination")
-        .arg(delete_dst.to_string());
+        .arg(&dst);
+
+    if delete_dst {
+        cmd.arg("--delete-destination");
+    }
 
     let output = cmd.spawn()?.wait_with_output().await?;
     if !output.status.success() {
