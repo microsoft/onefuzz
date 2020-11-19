@@ -260,7 +260,7 @@ class Libfuzzer(Command):
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
-        overwrite_unique_inputs: bool = False
+        overwrite_unique_inputs: bool = False,
     ) -> Optional[Job]:
 
         """
