@@ -277,7 +277,7 @@ jobs:
       shell: bash
       run: |
         set -ex
-        cd src/deployment/tools
+        cd src/deployment
         pip install mypy isort black
         mypy .
         isort --profile black . --check
