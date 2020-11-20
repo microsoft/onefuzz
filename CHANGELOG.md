@@ -4,23 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.9.0
+### Added
+* CLI/Service: Added [Service Managed Job Templates](docs/declarative-templates.md) as a preview feature.  (enable via `onefuzz config --enable_feature job_templates`).  [#226](https://github.com/microsoft/onefuzz/pull/296)
+* Service/agent: Added support for unmanaged nodes.  This paves the way for _bring your own compute_ for fuzzing.  [#318](https://github.com/microsoft/onefuzz/pull/318)
+* CLI: Added `onefuzz debug` sub-commands to simplify coverage and fuzzing performance for LibFuzzer jobs from Application Insights.  [#325](https://github.com/microsoft/onefuzz/pull/325)
+* Service: Information about the user responsible for creating jobs and repro VMs is now associated with the Job and Repro VMs.  [#327](https://github.com/microsoft/onefuzz/pull/327)
+
+### Changed
+* Deployment: `deploy.py` now automatically retries to deploy the Azure Functions on failure.  [#330](https://github.com/microsoft/onefuzz/pull/330)
+
+### Fixed
+* Service: Address multiple minor issues previously hidden by function decorators used for caching.  [#322](https://github.com/microsoft/onefuzz/pull/322)
+* Agent: Fixed libfuzzer coverage support for internal builds of MSVC [#324](https://github.com/microsoft/onefuzz/pull/324)
+* Agent: Address issue preventing instance-wide setup scripts from executing in some cases.  [#331](https://github.com/microsoft/onefuzz/pull/331)
+
 ## 1.8.0
 
 ### Added
-* CLI/Service: Added [Event-based webhooks](docs/webhooks.md).
-  [#296](https://github.com/microsoft/onefuzz/pull/296)
-* Service: Information about the user responsible for creating tasks is now
-  associated with the tasks (this information is available in the task related
-  event webhooks). [#303](https://github.com/microsoft/onefuzz/pull/303)
+* CLI/Service: Added [Event-based webhooks](docs/webhooks.md). [#296](https://github.com/microsoft/onefuzz/pull/296)
+* Service: Information about the user responsible for creating tasks is now associated with the tasks (this information is available in the task related event webhooks). [#303](https://github.com/microsoft/onefuzz/pull/303)
 
 ### Changed
-* Contrib: Azure Devops deployment pipeline uses the `--upgrade` feature added
-  in 1.7.0. [#304](https://github.com/microsoft/onefuzz/pull/304)
+* Contrib: Azure Devops deployment pipeline uses the `--upgrade` feature added in 1.7.0. [#304](https://github.com/microsoft/onefuzz/pull/304)
 
 ### Fixed
-* Service: Fixed setting `target_workers`, used to configure the number of
-  concurrent libfuzzer workers within a task.
-  [#305](https://github.com/microsoft/onefuzz/pull/305)
+* Service: Fixed setting `target_workers`, used to configure the number of concurrent libfuzzer workers within a task. [#305](https://github.com/microsoft/onefuzz/pull/305)
 
 ## 1.7.0
 ### Added
