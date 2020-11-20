@@ -214,7 +214,7 @@ jobs:
         vulture --min-confidence 61 __app__ 
 
         ../ci/disable-py-cache.sh
-        mypy __app__ ./tests
+        mypy __app__ ./tests --no-warn-unused-ignores --no-warn-redundant-casts
   afl:
     runs-on: ubuntu-18.04
     steps:
