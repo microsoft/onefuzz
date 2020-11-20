@@ -37,7 +37,7 @@ def get_primary_account(storage_type: StorageType) -> str:
     raise NotImplementedError
 
 
-@cached(ttl=60 * 60)
+@cached
 def get_accounts(storage_type: StorageType) -> List[str]:
     if storage_type == StorageType.corpus:
         return corpus_accounts()
@@ -71,6 +71,7 @@ def choose_account(storage_type: StorageType) -> str:
     return random.choices(accounts, weights=weights)[0]
 
 
+@cached
 def corpus_accounts() -> List[str]:
     skip = get_func_storage()
     results = [get_fuzz_storage()]
