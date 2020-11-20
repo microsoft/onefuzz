@@ -438,6 +438,7 @@ class Job(BaseModel):
     error: Optional[str]
     end_time: Optional[datetime] = None
     task_info: Optional[List[JobTaskInfo]]
+    user_info: Optional[UserInfo]
 
 
 class TaskHeartbeatEntry(BaseModel):
@@ -577,6 +578,7 @@ class Repro(BaseModel):
     error: Optional[Error]
     ip: Optional[str]
     end_time: Optional[datetime]
+    user_info: Optional[UserInfo]
 
 
 class ExitStatus(BaseModel):
