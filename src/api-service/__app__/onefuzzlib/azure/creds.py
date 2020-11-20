@@ -3,9 +3,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import logging
 import os
-from typing import Any, List, Optional, Tuple
+from typing import Any, List
 from uuid import UUID
 
 from azure.cli.core import CLIError
@@ -13,9 +12,7 @@ from azure.common.client_factory import get_client_from_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import CheckGroupMembershipParameters
 from azure.mgmt.resource import ResourceManagementClient
-from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.subscription import SubscriptionClient
-from azure.storage.blob import BlockBlobService
 from memoization import cached
 from msrestazure.azure_active_directory import MSIAuthentication
 from msrestazure.tools import parse_resource_id
@@ -42,30 +39,6 @@ def mgmt_client_factory(client_class: Any) -> Any:
 
 
 @cached
-def get_storage_account_name_key(account_id: Optional[str] = None) -> Tuple[str, str]:
-    db_client = mgmt_client_factory(StorageManagementClient)
-    if account_id is None:
-        account_id = os.environ["ONEFUZZ_DATA_STORAGE"]
-    resource = parse_resource_id(account_id)
-    key = (
-        db_client.storage_accounts.list_keys(
-            resource["resource_group"], resource["name"]
-        )
-        .keys[0]
-        .value
-    )
-    return resource["name"], key
-
-
-@cached
-def get_blob_service(account_id: Optional[str] = None) -> BlockBlobService:
-    logging.debug("getting blob container (account_id: %s)", account_id)
-    name, key = get_storage_account_name_key(account_id)
-    service = BlockBlobService(account_name=name, account_key=key)
-    return service
-
-
-@cached
 def get_base_resource_group() -> Any:  # should be str
     return parse_resource_id(os.environ["ONEFUZZ_RESOURCE_GROUP"])["resource_group"]
 
@@ -87,16 +60,6 @@ def get_insights_appid() -> str:
     return os.environ["APPINSIGHTS_APPID"]
 
 
-# @cached
-def get_fuzz_storage() -> str:
-    return os.environ["ONEFUZZ_DATA_STORAGE"]
-
-
-# @cached
-def get_func_storage() -> str:
-    return os.environ["ONEFUZZ_FUNC_STORAGE"]
-
-
 @cached
 def get_instance_name() -> str:
     return os.environ["ONEFUZZ_INSTANCE_NAME"]
@@ -109,7 +72,8 @@ def get_instance_url() -> str:
 
 @cached
 def get_instance_id() -> UUID:
-    from .containers import StorageType, get_blob
+    from .containers import get_blob
+    from .storage import StorageType
 
     blob = get_blob("base-config", "instance_id", StorageType.config)
     if blob is None:

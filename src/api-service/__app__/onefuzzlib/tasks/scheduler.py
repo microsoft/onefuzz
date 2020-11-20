@@ -10,12 +10,8 @@ from uuid import UUID
 from onefuzztypes.enums import OS, PoolState, TaskState
 from onefuzztypes.models import WorkSet, WorkUnit
 
-from ..azure.containers import (
-    StorageType,
-    blob_exists,
-    get_container_sas_url,
-    save_blob,
-)
+from ..azure.containers import blob_exists, get_container_sas_url, save_blob
+from ..azure.storage import StorageType
 from ..pools import Pool
 from .config import build_task_config, get_setup_container
 from .main import Task

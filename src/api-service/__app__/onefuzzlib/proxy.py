@@ -21,9 +21,10 @@ from pydantic import Field
 
 from .__version__ import __version__
 from .azure.auth import build_auth
-from .azure.containers import StorageType, get_file_sas_url, save_blob
+from .azure.containers import get_file_sas_url, save_blob
 from .azure.ip import get_public_ip
 from .azure.queue import get_queue_sas
+from .azure.storage import StorageType
 from .azure.vm import VM
 from .extension import proxy_manager_extensions
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter

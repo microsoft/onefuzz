@@ -14,9 +14,10 @@ from onefuzztypes.models import Repro as BASE_REPRO
 from onefuzztypes.models import ReproConfig, TaskVm
 
 from .azure.auth import build_auth
-from .azure.containers import StorageType, save_blob
+from .azure.containers import save_blob
 from .azure.creds import get_base_region
 from .azure.ip import get_public_ip
+from .azure.storage import StorageType
 from .azure.vm import VM
 from .extension import repro_extensions
 from .orm import ORMMixin, QueryFilter

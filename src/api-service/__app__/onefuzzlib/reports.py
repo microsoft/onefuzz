@@ -10,7 +10,8 @@ from typing import Optional, Union
 from onefuzztypes.models import Report
 from pydantic import ValidationError
 
-from .azure.containers import StorageType, get_blob
+from .azure.containers import get_blob
+from .azure.storage import StorageType
 
 
 def parse_report(

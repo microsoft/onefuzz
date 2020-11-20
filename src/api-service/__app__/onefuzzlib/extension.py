@@ -11,15 +11,11 @@ from onefuzztypes.enums import OS, AgentMode
 from onefuzztypes.models import AgentConfig, ReproConfig
 from onefuzztypes.primitives import Extension, Region
 
-from .azure.containers import (
-    StorageType,
-    get_container_sas_url,
-    get_file_sas_url,
-    save_blob,
-)
+from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
 from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
+from .azure.storage import StorageType
 from .reports import get_report
 
 # TODO: figure out how to create VM specific SSH keys for Windows.
