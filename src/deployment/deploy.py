@@ -662,23 +662,38 @@ class Client:
         logger.info("deploying function app %s", self.app_zip)
         with tempfile.TemporaryDirectory() as tmpdirname:
             with zipfile.ZipFile(self.app_zip, "r") as zip_ref:
-                zip_ref.extractall(tmpdirname)
                 func = shutil.which("func")
                 assert func is not None
 
-                subprocess.check_output(
-                    [
-                        func,
-                        "azure",
-                        "functionapp",
-                        "publish",
-                        self.application_name,
-                        "--python",
-                        "--no-build",
-                    ],
-                    env=dict(os.environ, CLI_DEBUG="1"),
-                    cwd=tmpdirname,
-                )
+                zip_ref.extractall(tmpdirname)
+                error: Optional[subprocess.CalledProcessError] = None
+                max_tries = 5
+                for i in range(max_tries):
+                    try:
+                        subprocess.check_output(
+                            [
+                                func,
+                                "azure",
+                                "functionapp",
+                                "publish",
+                                self.application_name,
+                                "--python",
+                                "--no-build",
+                            ],
+                            env=dict(os.environ, CLI_DEBUG="1"),
+                            cwd=tmpdirname,
+                        )
+                        return
+                    except subprocess.CalledProcessError as err:
+                        error = err
+                        if i + 1 < max_tries:
+                            logger.debug("func failure error: %s", err)
+                            logger.warning(
+                                "function failed to deploy, waiting 60 seconds and trying again"
+                            )
+                            time.sleep(60)
+                if error is not None:
+                    raise error
 
     def update_registration(self) -> None:
         if not self.create_registration:
