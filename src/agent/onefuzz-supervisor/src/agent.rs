@@ -86,7 +86,7 @@ impl Agent {
 
     async fn update(&mut self) -> Result<bool> {
         let last = self.scheduler.take().ok_or_else(scheduler_error)?;
-
+        let previous_state = NodeState::from(&last);
         let next = match last {
             Scheduler::Free(s) => self.free(s).await?,
             Scheduler::SettingUp(s) => self.setting_up(s).await?,
@@ -95,8 +95,7 @@ impl Agent {
             Scheduler::Busy(s) => self.busy(s).await?,
             Scheduler::Done(s) => self.done(s).await?,
         };
-
-        self.previous_state = NodeState::from(&next);
+        self.previous_state = previous_state;
         let done = matches!(next, Scheduler::Done(..));
 
         self.scheduler = Some(next);
