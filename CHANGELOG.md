@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Information about the user responsible for creating jobs and repro VMs is now associated with the Job and Repro VMs.  [#327](https://github.com/microsoft/onefuzz/pull/327)
 
 ### Changed
-* Deployment: `deploy.py` now automatically retries to deploy the Azure Functions on failure.  [#330](https://github.com/microsoft/onefuzz/pull/330)
+* Deployment: `deploy.py` now automatically retries on failure when deploying the Azure Function App.  [#330](https://github.com/microsoft/onefuzz/pull/330)
 
 ### Fixed
 * Service: Address multiple minor issues previously hidden by function decorators used for caching.  [#322](https://github.com/microsoft/onefuzz/pull/322)
