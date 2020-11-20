@@ -10,6 +10,7 @@ from onefuzztypes.requests import ReproGet
 
 from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.user_credentials import parse_jwt_token
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -37,7 +38,11 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="repro_vm create")
 
-    vm = Repro.create(request)
+    user_info = parse_jwt_token(req)
+    if isinstance(user_info, Error):
+        return not_ok(user_info, context="task create")
+
+    vm = Repro.create(request, user_info)
     if isinstance(vm, Error):
         return not_ok(vm, context="repro_vm create")
 

@@ -6,7 +6,8 @@
 find .
 set -x
 
-INSTANCE_SETUP="/onefuzz/instance-specific-setup/linux/setup.sh"
+INSTANCE_OS_SETUP="/onefuzz/instance-specific-setup/linux/setup.sh"
+INSTANCE_SETUP="/onefuzz/instance-specific-setup/setup.sh"
 USER_SETUP="/onefuzz/setup/setup.sh"
 TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
@@ -58,6 +59,11 @@ if [ -f ${INSTANCE_SETUP} ]; then
     logger "onefuzz: instance setup script start"
     chmod +x ${INSTANCE_SETUP}
     ${INSTANCE_SETUP} 2>&1 | logger -s -i -t 'onefuzz-instance-setup'
+    logger "onefuzz: instance setup script stop"
+elif [ -f ${INSTANCE_OS_SETUP} ]; then
+    logger "onefuzz: instance setup script (linux) start"
+    chmod +x ${INSTANCE_OS_SETUP}
+    ${INSTANCE_OS_SETUP} 2>&1 | logger -s -i -t 'onefuzz-instance-setup'
     logger "onefuzz: instance setup script stop"
 else
     logger "onefuzz: no instance setup script"

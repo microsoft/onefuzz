@@ -180,7 +180,7 @@ pub struct Registration {
     pub machine_id: Uuid,
 }
 
-const DEFAULT_REGISTRATION_CREATE_TIMEOUT: Duration = Duration::from_secs(60 * 5);
+const DEFAULT_REGISTRATION_CREATE_TIMEOUT: Duration = Duration::from_secs(60 * 20);
 const REGISTRATION_RETRY_PERIOD: Duration = Duration::from_secs(60);
 
 impl Registration {
@@ -218,10 +218,11 @@ impl Registration {
                 .bearer_auth(token.secret().expose_ref())
                 .body("")
                 .send_retry_default()
-                .await?
-                .error_for_status();
+                .await?;
 
-            match response {
+            let status_code = response.status();
+
+            match response.error_for_status_with_body().await {
                 Ok(response) => {
                     let dynamic_config: DynamicConfig = response.json().await?;
                     dynamic_config.save().await?;
@@ -231,7 +232,7 @@ impl Registration {
                         machine_id,
                     });
                 }
-                Err(err) if err.status() == Some(StatusCode::UNAUTHORIZED) => {
+                Err(err) if status_code == StatusCode::UNAUTHORIZED => {
                     warn!(
                         "Registration failed: {}\n retrying in {} seconds",
                         err,
