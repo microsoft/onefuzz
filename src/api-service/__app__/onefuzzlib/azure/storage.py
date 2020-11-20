@@ -72,11 +72,16 @@ def choose_account(storage_type: StorageType) -> str:
 
 
 def corpus_accounts() -> List[str]:
+    skip = get_func_storage()
     results = [get_fuzz_storage()]
 
     client = mgmt_client_factory(StorageManagementClient)
     group = get_base_resource_group()
     for account in client.storage_accounts.list_by_resource_group(group):
+        # protection from someone adding the corpus tag to the config account
+        if account.id == skip:
+            continue
+
         if account.id in results:
             continue
 
