@@ -40,7 +40,8 @@ def get_primary_account(storage_type: StorageType) -> str:
 @cached
 def get_accounts(storage_type: StorageType) -> List[str]:
     if storage_type == StorageType.corpus:
-        return corpus_accounts()
+        # see #322 for discussion about typing
+        return corpus_accounts()  # type: ignore
     elif storage_type == StorageType.config:
         return [get_func_storage()]
     else:
