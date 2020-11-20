@@ -349,7 +349,7 @@ jobs:
       with:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
-  windows:
+  build-integration-tests-windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
