@@ -45,10 +45,15 @@ function Install-OnefuzzSetup {
     log "onefuzz: executing task-setup"
     ./task-setup.ps1
   }
+
   if (Test-Path -Path instance-specific-setup/setup.ps1) {
     log "onefuzz: executing user-setup"
     ./instance-specific-setup/setup.ps1
+  } elseif (Test-Path -Path instance-specific-setup/windows/setup.ps1) {
+    log "onefuzz: executing user-setup (windows)"
+    ./instance-specific-setup/windows/setup.ps1
   }
+
   if (Test-Path -Path setup/setup.ps1) {
     log "onefuzz: executing user-setup"
     ./setup/setup.ps1
