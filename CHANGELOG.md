@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Service: Address multiple minor issues previously hidden by function decorators used for caching.  [#322](https://github.com/microsoft/onefuzz/pull/322)
-* Agent: Fixed libfuzzer coverage support for internal builds of MSVC [#324](https://github.com/microsoft/onefuzz/pull/324)
+* Agent: Fixed libFuzzer coverage support for internal builds of MSVC [#324](https://github.com/microsoft/onefuzz/pull/324)
 * Agent: Address issue preventing instance-wide setup scripts from executing in some cases.  [#331](https://github.com/microsoft/onefuzz/pull/331)
 
 ## 1.8.0
