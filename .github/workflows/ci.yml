@@ -361,7 +361,6 @@ jobs:
           choco install make
           $env:Path += ";C:\Program Files\LLVM\bin;C:\ProgramData\chocolatey\bin"
           
-          
           cd src/integration-tests
           
           mkdir artifacts/windows-libfuzzer
