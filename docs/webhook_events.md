@@ -266,7 +266,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Ensemble Sync Delay",
                     "type": "integer"
                 },
-                "overwrite_output_container": {
+                "preserve_existing_outputs": {
                     "title": "Overwrite Output Container",
                     "type": "boolean"
                 }
@@ -889,7 +889,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Ensemble Sync Delay",
                     "type": "integer"
                 },
-                "overwrite_output_container": {
+                "preserve_existing_outputs": {
                     "title": "Overwrite Output Container",
                     "type": "boolean"
                 }

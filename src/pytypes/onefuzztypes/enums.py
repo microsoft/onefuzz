@@ -74,7 +74,7 @@ class TaskFeature(Enum):
     check_debugger = "check_debugger"
     check_retry_count = "check_retry_count"
     ensemble_sync_delay = "ensemble_sync_delay"
-    overwrite_output_container = "overwrite_output_container"
+    preserve_existing_outputs = "preserve_existing_outputs"
 
 
 # Permissions for an Azure Blob Storage Container.

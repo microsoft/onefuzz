@@ -33,7 +33,7 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub inputs: Vec<SyncedDir>,
     pub unique_inputs: SyncedDir,
-    pub overwrite_output_container: bool,
+    pub preserve_existing_outputs: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -61,7 +61,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             config.clone(),
             input_paths,
             false,
-            config.overwrite_output_container,
+            config.preserve_existing_outputs,
         )
         .await?;
         Ok(())
@@ -86,7 +86,7 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
 
         let input_path = utils::download_input(input_url.clone(), tmp_dir).await?;
         info!("downloaded input to {}", input_path.display());
-        sync_and_merge(config.clone(), vec![tmp_dir], true, false).await?;
+        sync_and_merge(config.clone(), vec![tmp_dir], true, true).await?;
 
         verbose!("will delete popped message with id = {}", msg.id());
 
@@ -112,7 +112,7 @@ async fn sync_and_merge(
     config: Arc<Config>,
     input_dirs: Vec<impl AsRef<Path>>,
     pull_inputs: bool,
-    overwrite_outputs: bool,
+    preserve_existing_outputs: bool,
 ) -> Result<LibFuzzerMergeOutput> {
     if pull_inputs {
         config.unique_inputs.sync_pull().await?;
@@ -123,7 +123,7 @@ async fn sync_and_merge(
                 info!("Added {} new files to the corpus", result.added_files_count);
                 config
                     .unique_inputs
-                    .sync(SyncOperation::Push, overwrite_outputs)
+                    .sync(SyncOperation::Push,  !preserve_existing_outputs)
                     .await?;
             } else {
                 info!("No new files added by the merge")

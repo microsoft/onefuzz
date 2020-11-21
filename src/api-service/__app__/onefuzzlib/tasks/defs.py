@@ -263,7 +263,7 @@ TASK_DEFINITIONS = {
             TaskFeature.supervisor_options,
             TaskFeature.supervisor_input_marker,
             TaskFeature.stats_file,
-            TaskFeature.overwrite_output_container,
+            TaskFeature.preserve_existing_outputs,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[

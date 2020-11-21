@@ -800,7 +800,7 @@ class Tasks(Endpoint):
         target_timeout: Optional[int] = None,
         target_workers: Optional[int] = None,
         vm_count: int = 1,
-        overwrite_output_container: bool = False,
+        preserve_existing_outputs: bool = False,
     ) -> models.Task:
         """
         Create a task

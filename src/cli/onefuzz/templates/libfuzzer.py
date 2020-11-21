@@ -260,7 +260,7 @@ class Libfuzzer(Command):
         dryrun: bool = False,
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
-        overwrite_output_container: bool = False,
+        preserve_existing_outputs: bool = False,
     ) -> Optional[Job]:
 
         """
@@ -347,7 +347,7 @@ class Libfuzzer(Command):
             target_timeout=crash_report_timeout,
             check_retry_count=check_retry_count,
             debug=debug,
-            overwrite_output_container=overwrite_output_container,
+            preserve_existing_outputs=preserve_existing_outputs,
         )
 
         self.logger.info("done creating tasks")
