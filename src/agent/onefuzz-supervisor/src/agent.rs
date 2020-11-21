@@ -88,11 +88,11 @@ impl Agent {
         let last = self.scheduler.take().ok_or_else(scheduler_error)?;
         let previous_state = NodeState::from(&last);
         let (next, done) = match last {
-            Scheduler::Free(s) => (self.free(s).await?, false) ,
-            Scheduler::SettingUp(s) => (self.setting_up(s).await?, false) ,
+            Scheduler::Free(s) => (self.free(s).await?, false),
+            Scheduler::SettingUp(s) => (self.setting_up(s).await?, false),
             Scheduler::PendingReboot(s) => (self.pending_reboot(s).await?, false),
             Scheduler::Ready(s) => (self.ready(s).await?, false),
-            Scheduler::Busy(s) => (self.busy(s).await?, false) ,
+            Scheduler::Busy(s) => (self.busy(s).await?, false),
             Scheduler::Done(s) => (self.done(s).await?, true),
         };
         self.previous_state = previous_state;
