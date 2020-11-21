@@ -267,7 +267,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "integer"
                 },
                 "preserve_existing_outputs": {
-                    "title": "Overwrite Output Container",
+                    "title": "Preserve Existing Outputs",
                     "type": "boolean"
                 }
             },
@@ -890,7 +890,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "integer"
                 },
                 "preserve_existing_outputs": {
-                    "title": "Overwrite Output Container",
+                    "title": "Preserve Existing Outputs",
                     "type": "boolean"
                 }
             },
