@@ -123,7 +123,7 @@ async fn sync_and_merge(
                 info!("Added {} new files to the corpus", result.added_files_count);
                 config
                     .unique_inputs
-                    .sync(SyncOperation::Push,  !preserve_existing_outputs)
+                    .sync(SyncOperation::Push, !preserve_existing_outputs)
                     .await?;
             } else {
                 info!("No new files added by the merge")
