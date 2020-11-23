@@ -14,7 +14,7 @@ pub struct SetupRunnerDouble {
 impl ISetupRunner for SetupRunnerDouble {
     async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput> {
         self.ran.push(work_set.clone());
-        if let Some(error) = self.error_message.clone(){
+        if let Some(error) = self.error_message.clone() {
             anyhow::bail!(error);
         }
         Ok(self.script.clone())

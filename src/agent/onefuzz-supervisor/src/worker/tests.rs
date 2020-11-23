@@ -59,7 +59,6 @@ impl IWorkerRunner for RunnerDouble {
     }
 }
 
-
 #[tokio::test]
 async fn test_ready_run() {
     let mut runner = Fixture.runner(Fixture.child_running());

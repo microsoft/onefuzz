@@ -126,8 +126,8 @@ async fn test_update_free_has_work() {
 async fn test_emitted_state() {
     let mut agent = Agent {
         worker_runner: Box::new(WorkerRunnerDouble {
-            child:ChildDouble{
-                exit_status:Some(ExitStatus {
+            child: ChildDouble {
+                exit_status: Some(ExitStatus {
                     code: Some(0),
                     signal: None,
                     success: true,
@@ -185,13 +185,13 @@ async fn test_emitted_state() {
 async fn test_emitted_state_failed_setup() {
     let error_message = "Failed setup";
     let mut agent = Agent {
-            setup_runner: Box::new(SetupRunnerDouble{
-                error_message: Some(String::from(error_message)),
-                ..SetupRunnerDouble::default()
-            }),
-            ..Fixture.agent()
-        };
-    
+        setup_runner: Box::new(SetupRunnerDouble {
+            error_message: Some(String::from(error_message)),
+            ..SetupRunnerDouble::default()
+        }),
+        ..Fixture.agent()
+    };
+
     agent
         .work_queue
         .downcast_mut::<WorkQueueDouble>()
