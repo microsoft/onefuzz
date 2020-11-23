@@ -66,7 +66,7 @@ impl Fixture {
         WorkSet {
             reboot: false,
             setup_url: self.setup_url(),
-            script: true,
+            script: false,
             work_units: vec![self.work_unit()],
         }
     }
