@@ -67,7 +67,6 @@ pub struct ChildDouble {
     killed: bool,
 }
 
-
 impl IWorkerChild for ChildDouble {
     fn try_wait(&mut self) -> Result<Option<Output>> {
         let output = if let Some(exit_status) = self.exit_status {
