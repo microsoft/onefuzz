@@ -158,7 +158,7 @@ async fn test_emitted_state() {
         NodeEvent::WorkerEvent(WorkerEvent::Done {
             task_id: Fixture.task_id(),
             exit_status: ExitStatus {
-                code: None,
+                code: Some(0),
                 signal: None,
                 success: true,
             },

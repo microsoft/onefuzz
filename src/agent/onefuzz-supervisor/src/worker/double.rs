@@ -29,7 +29,7 @@ impl Default for ChildDouble {
         Self {
             id: 0,
             exit_status: Some(ExitStatus {
-                code: None,
+                code: Some(0),
                 signal: None,
                 success: true,
             }),
