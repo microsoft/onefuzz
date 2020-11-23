@@ -68,13 +68,13 @@ pub struct ChildDouble {
 }
 
 impl Default for ChildDouble {
-    fn default() -> Self { 
-        Self{
+    fn default() -> Self {
+        Self {
             id: 0,
-            exit_status: Some(ExitStatus{
+            exit_status: Some(ExitStatus {
                 code: None,
                 signal: None,
-                success: true
+                success: true,
             }),
             stderr: String::default(),
             stdout: String::default(),

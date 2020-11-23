@@ -25,13 +25,13 @@ pub struct ChildDouble {
 }
 
 impl Default for ChildDouble {
-    fn default() -> Self { 
-        Self{
+    fn default() -> Self {
+        Self {
             id: 0,
-            exit_status: Some(ExitStatus{
+            exit_status: Some(ExitStatus {
                 code: None,
                 signal: None,
-                success: true
+                success: true,
             }),
             stderr: String::default(),
             stdout: String::default(),
@@ -39,7 +39,6 @@ impl Default for ChildDouble {
         }
     }
 }
-
 
 impl IWorkerChild for ChildDouble {
     fn try_wait(&mut self) -> Result<Option<Output>> {

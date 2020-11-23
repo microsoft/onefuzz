@@ -39,11 +39,10 @@ impl Fixture {
     }
 
     pub fn fail_setup_agent(&self, error_message: &str) -> Agent {
-        Agent{
+        Agent {
             setup_runner: Box::new(FailSetupRunnerDouble::new(String::from(error_message))),
             ..self.agent()
         }
-
     }
 
     pub fn job_id(&self) -> Uuid {
@@ -141,7 +140,7 @@ async fn test_emitted_state() {
         .push(Fixture.message());
 
     for _i in 0..10 {
-        if agent.update().await.unwrap(){
+        if agent.update().await.unwrap() {
             break;
         }
     }
@@ -149,28 +148,32 @@ async fn test_emitted_state() {
     let expected_events: Vec<NodeEvent> = vec![
         NodeEvent::StateUpdate(StateUpdateEvent::Free),
         NodeEvent::StateUpdate(StateUpdateEvent::SettingUp {
-            tasks: vec![Fixture.task_id()]
+            tasks: vec![Fixture.task_id()],
         }),
         NodeEvent::StateUpdate(StateUpdateEvent::Ready),
         NodeEvent::StateUpdate(StateUpdateEvent::Busy),
-        NodeEvent::WorkerEvent(WorkerEvent::Running{task_id:Fixture.task_id() }),
-        NodeEvent::WorkerEvent(WorkerEvent::Done{ 
+        NodeEvent::WorkerEvent(WorkerEvent::Running {
             task_id: Fixture.task_id(),
-            exit_status: ExitStatus{
+        }),
+        NodeEvent::WorkerEvent(WorkerEvent::Done {
+            task_id: Fixture.task_id(),
+            exit_status: ExitStatus {
                 code: None,
                 signal: None,
-                success: true
+                success: true,
             },
             stderr: String::default(),
             stdout: String::default(),
-        } ),
-        NodeEvent::StateUpdate(StateUpdateEvent::Done{ error: None, script_output: None }),
+        }),
+        NodeEvent::StateUpdate(StateUpdateEvent::Done {
+            error: None,
+            script_output: None,
+        }),
     ];
-    let coordinator: &CoordinatorDouble  = agent.coordinator.downcast_ref().unwrap();
+    let coordinator: &CoordinatorDouble = agent.coordinator.downcast_ref().unwrap();
     let events = &coordinator.events;
     assert_eq!(events, &expected_events);
 }
-
 
 #[tokio::test]
 async fn test_emitted_state_failed_setup() {
@@ -184,7 +187,7 @@ async fn test_emitted_state_failed_setup() {
         .push(Fixture.message());
 
     for _i in 0..10 {
-        if agent.update().await.unwrap(){
+        if agent.update().await.unwrap() {
             break;
         }
     }
@@ -192,11 +195,14 @@ async fn test_emitted_state_failed_setup() {
     let expected_events: Vec<NodeEvent> = vec![
         NodeEvent::StateUpdate(StateUpdateEvent::Free),
         NodeEvent::StateUpdate(StateUpdateEvent::SettingUp {
-            tasks: vec![Fixture.task_id()]
+            tasks: vec![Fixture.task_id()],
         }),
-        NodeEvent::StateUpdate(StateUpdateEvent::Done{ error: Some(String::from(error_message)), script_output: None }),
+        NodeEvent::StateUpdate(StateUpdateEvent::Done {
+            error: Some(String::from(error_message)),
+            script_output: None,
+        }),
     ];
-    let coordinator: &CoordinatorDouble  = agent.coordinator.downcast_ref().unwrap();
+    let coordinator: &CoordinatorDouble = agent.coordinator.downcast_ref().unwrap();
     let events = &coordinator.events;
     assert_eq!(events, &expected_events);
 }
