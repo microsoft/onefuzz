@@ -15,7 +15,7 @@ impl IWorkerRunner for WorkerRunnerDouble {
     }
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ChildDouble {
     pub id: u64,
     pub exit_status: Option<ExitStatus>,
@@ -23,6 +23,23 @@ pub struct ChildDouble {
     pub stdout: String,
     pub killed: bool,
 }
+
+impl Default for ChildDouble {
+    fn default() -> Self { 
+        Self{
+            id: 0,
+            exit_status: Some(ExitStatus{
+                code: None,
+                signal: None,
+                success: true
+            }),
+            stderr: String::default(),
+            stdout: String::default(),
+            killed: false,
+        }
+    }
+}
+
 
 impl IWorkerChild for ChildDouble {
     fn try_wait(&mut self) -> Result<Option<Output>> {

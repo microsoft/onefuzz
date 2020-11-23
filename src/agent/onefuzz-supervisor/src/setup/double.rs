@@ -16,3 +16,24 @@ impl ISetupRunner for SetupRunnerDouble {
         Ok(self.script.clone())
     }
 }
+
+
+#[derive(Clone, Debug, Default)]
+pub struct FailSetupRunnerDouble {
+    error_message: String
+}
+
+impl FailSetupRunnerDouble {
+    pub fn new(error_message:String) -> Self{
+        Self{
+            error_message
+        }
+    }
+}
+
+#[async_trait]
+impl ISetupRunner for FailSetupRunnerDouble {
+    async fn run(&mut self, _work_set: &WorkSet) -> Result<SetupOutput> {
+       anyhow::bail!(self.error_message.clone());
+    }
+}

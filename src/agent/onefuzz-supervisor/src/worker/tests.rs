@@ -58,13 +58,29 @@ impl IWorkerRunner for RunnerDouble {
     }
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ChildDouble {
     id: u64,
     exit_status: Option<ExitStatus>,
     stderr: String,
     stdout: String,
     killed: bool,
+}
+
+impl Default for ChildDouble {
+    fn default() -> Self { 
+        Self{
+            id: 0,
+            exit_status: Some(ExitStatus{
+                code: None,
+                signal: None,
+                success: true
+            }),
+            stderr: String::default(),
+            stdout: String::default(),
+            killed: false,
+        }
+    }
 }
 
 impl IWorkerChild for ChildDouble {

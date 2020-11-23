@@ -11,6 +11,8 @@ use crate::setup::double::*;
 use crate::work::double::*;
 use crate::work::*;
 use crate::worker::double::*;
+use crate::worker::WorkerEvent;
+use onefuzz::process::ExitStatus;
 
 use super::*;
 
@@ -34,6 +36,14 @@ impl Fixture {
             worker_runner,
             None,
         )
+    }
+
+    pub fn fail_setup_agent(&self, error_message: &str) -> Agent {
+        Agent{
+            setup_runner: Box::new(FailSetupRunnerDouble::new(String::from(error_message))),
+            ..self.agent()
+        }
+
     }
 
     pub fn job_id(&self) -> Uuid {
@@ -64,7 +74,7 @@ impl Fixture {
         WorkSet {
             reboot: false,
             setup_url: self.setup_url(),
-            script: false,
+            script: true,
             work_units: vec![self.work_unit()],
         }
     }
@@ -118,4 +128,75 @@ async fn test_update_free_has_work() {
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
     assert_eq!(double.claimed, &[Fixture.receipt()]);
+}
+
+#[tokio::test]
+async fn test_emitted_state() {
+    let mut agent = Fixture.agent();
+    agent
+        .work_queue
+        .downcast_mut::<WorkQueueDouble>()
+        .unwrap()
+        .available
+        .push(Fixture.message());
+
+    for _i in 0..10 {
+        if agent.update().await.unwrap(){
+            break;
+        }
+    }
+
+    let expected_events: Vec<NodeEvent> = vec![
+        NodeEvent::StateUpdate(StateUpdateEvent::Free),
+        NodeEvent::StateUpdate(StateUpdateEvent::SettingUp {
+            tasks: vec![Fixture.task_id()]
+        }),
+        NodeEvent::StateUpdate(StateUpdateEvent::Ready),
+        NodeEvent::StateUpdate(StateUpdateEvent::Busy),
+        NodeEvent::WorkerEvent(WorkerEvent::Running{task_id:Fixture.task_id() }),
+        NodeEvent::WorkerEvent(WorkerEvent::Done{ 
+            task_id: Fixture.task_id(),
+            exit_status: ExitStatus{
+                code: None,
+                signal: None,
+                success: true
+            },
+            stderr: String::default(),
+            stdout: String::default(),
+        } ),
+        NodeEvent::StateUpdate(StateUpdateEvent::Done{ error: None, script_output: None }),
+    ];
+    let coordinator: &CoordinatorDouble  = agent.coordinator.downcast_ref().unwrap();
+    let events = &coordinator.events;
+    assert_eq!(events, &expected_events);
+}
+
+
+#[tokio::test]
+async fn test_emitted_state_failed_setup() {
+    let error_message = "Failed setup";
+    let mut agent = Fixture.fail_setup_agent(error_message);
+    agent
+        .work_queue
+        .downcast_mut::<WorkQueueDouble>()
+        .unwrap()
+        .available
+        .push(Fixture.message());
+
+    for _i in 0..10 {
+        if agent.update().await.unwrap(){
+            break;
+        }
+    }
+
+    let expected_events: Vec<NodeEvent> = vec![
+        NodeEvent::StateUpdate(StateUpdateEvent::Free),
+        NodeEvent::StateUpdate(StateUpdateEvent::SettingUp {
+            tasks: vec![Fixture.task_id()]
+        }),
+        NodeEvent::StateUpdate(StateUpdateEvent::Done{ error: Some(String::from(error_message)), script_output: None }),
+    ];
+    let coordinator: &CoordinatorDouble  = agent.coordinator.downcast_ref().unwrap();
+    let events = &coordinator.events;
+    assert_eq!(events, &expected_events);
 }
