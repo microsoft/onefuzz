@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::work::WorkUnit;
+use crate::worker::double::ChildDouble;
 
 use super::*;
 
@@ -58,35 +59,6 @@ impl IWorkerRunner for RunnerDouble {
     }
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct ChildDouble {
-    id: u64,
-    exit_status: Option<ExitStatus>,
-    stderr: String,
-    stdout: String,
-    killed: bool,
-}
-
-impl IWorkerChild for ChildDouble {
-    fn try_wait(&mut self) -> Result<Option<Output>> {
-        let output = if let Some(exit_status) = self.exit_status {
-            Some(Output {
-                exit_status,
-                stderr: self.stderr.clone(),
-                stdout: self.stdout.clone(),
-            })
-        } else {
-            None
-        };
-
-        Ok(output)
-    }
-
-    fn kill(&mut self) -> Result<()> {
-        self.killed = true;
-        Ok(())
-    }
-}
 
 #[tokio::test]
 async fn test_ready_run() {

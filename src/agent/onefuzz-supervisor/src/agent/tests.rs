@@ -38,13 +38,6 @@ impl Fixture {
         )
     }
 
-    pub fn fail_setup_agent(&self, error_message: &str) -> Agent {
-        Agent {
-            setup_runner: Box::new(FailSetupRunnerDouble::new(String::from(error_message))),
-            ..self.agent()
-        }
-    }
-
     pub fn job_id(&self) -> Uuid {
         "83267e88-efdd-4b1d-92c0-6b80d01887f8".parse().unwrap()
     }
@@ -131,7 +124,20 @@ async fn test_update_free_has_work() {
 
 #[tokio::test]
 async fn test_emitted_state() {
-    let mut agent = Fixture.agent();
+    let mut agent = Agent {
+        worker_runner: Box::new(WorkerRunnerDouble {
+            child:ChildDouble{
+                exit_status:Some(ExitStatus {
+                    code: Some(0),
+                    signal: None,
+                    success: true,
+                }),
+                ..ChildDouble::default()
+            },
+        }),
+        ..Fixture.agent()
+    };
+
     agent
         .work_queue
         .downcast_mut::<WorkQueueDouble>()
@@ -178,7 +184,14 @@ async fn test_emitted_state() {
 #[tokio::test]
 async fn test_emitted_state_failed_setup() {
     let error_message = "Failed setup";
-    let mut agent = Fixture.fail_setup_agent(error_message);
+    let mut agent = Agent {
+            setup_runner: Box::new(SetupRunnerDouble{
+                error_message: Some(String::from(error_message)),
+                ..SetupRunnerDouble::default()
+            }),
+            ..Fixture.agent()
+        };
+    
     agent
         .work_queue
         .downcast_mut::<WorkQueueDouble>()
