@@ -191,6 +191,7 @@ class Libfuzzer(Command):
             ContainerType.crashes,
             ContainerType.reports,
             ContainerType.unique_reports,
+            ContainerType.unique_inputs,
             ContainerType.no_repro,
             ContainerType.coverage,
             ContainerType.unique_inputs,
@@ -228,6 +229,125 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+        )
+
+        self.logger.info("done creating tasks")
+        helper.wait()
+        return helper.job
+
+    def merge(
+        self,
+        project: str,
+        name: str,
+        build: str,
+        pool_name: str,
+        *,
+        target_exe: File = File("fuzz.exe"),
+        setup_dir: Optional[Directory] = None,
+        inputs: Optional[Directory] = None,
+        output_container: Optional[Container] = None,
+        reboot_after_setup: bool = False,
+        duration: int = 24,
+        target_options: Optional[List[str]] = None,
+        target_env: Optional[Dict[str, str]] = None,
+        check_retry_count: Optional[int] = None,
+        crash_report_timeout: Optional[int] = None,
+        tags: Optional[Dict[str, str]] = None,
+        wait_for_running: bool = False,
+        wait_for_files: Optional[List[ContainerType]] = None,
+        extra_files: Optional[List[File]] = None,
+        existing_inputs: Optional[List[Container]] = None,
+        dryrun: bool = False,
+        notification_config: Optional[NotificationConfig] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
+        preserve_existing_outputs: bool = False,
+    ) -> Optional[Job]:
+
+        """
+        libfuzzer merge task
+        """
+
+        # verify containers exist
+        if existing_inputs:
+            for existing_container in existing_inputs:
+                self.onefuzz.containers.get(existing_container)
+        elif not inputs:
+            self.logger.error(
+                "please specify either an input folder or at least one existing inputs container"
+            )
+            return None
+
+        if dryrun:
+            return None
+
+        self.logger.info("creating libfuzzer merge from template")
+        self._check_is_libfuzzer(target_exe)
+
+        helper = JobHelper(
+            self.onefuzz,
+            self.logger,
+            project,
+            name,
+            build,
+            duration,
+            pool_name=pool_name,
+            target_exe=target_exe,
+        )
+
+        helper.add_tags(tags)
+        helper.define_containers(
+            ContainerType.setup,
+        )
+        if inputs:
+            helper.define_containers(ContainerType.inputs)
+
+        if output_container:
+            if self.onefuzz.containers.get(output_container):
+                helper.define_containers(ContainerType.unique_inputs)
+
+        helper.create_containers()
+        helper.setup_notifications(notification_config)
+
+        helper.upload_setup(setup_dir, target_exe, extra_files)
+        if inputs:
+            helper.upload_inputs(inputs)
+        helper.wait_on(wait_for_files, wait_for_running)
+
+        target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
+
+        merge_containers = [
+            (ContainerType.setup, helper.containers[ContainerType.setup]),
+            (
+                ContainerType.unique_inputs,
+                output_container or helper.containers[ContainerType.unique_inputs],
+            ),
+        ]
+
+        if inputs:
+            merge_containers.append(
+                (ContainerType.inputs, helper.containers[ContainerType.inputs])
+            )
+        if existing_inputs:
+            for existing_container in existing_inputs:
+                merge_containers.append((ContainerType.inputs, existing_container))
+
+        self.logger.info("creating libfuzzer_merge task")
+        self.onefuzz.tasks.create(
+            helper.job.job_id,
+            TaskType.libfuzzer_merge,
+            target_exe_blob_name,
+            merge_containers,
+            pool_name=pool_name,
+            duration=duration,
+            vm_count=1,
+            reboot_after_setup=reboot_after_setup,
+            target_options=target_options,
+            target_env=target_env,
+            tags=tags,
+            target_timeout=crash_report_timeout,
+            check_retry_count=check_retry_count,
+            debug=debug,
+            preserve_existing_outputs=preserve_existing_outputs,
         )
 
         self.logger.info("done creating tasks")

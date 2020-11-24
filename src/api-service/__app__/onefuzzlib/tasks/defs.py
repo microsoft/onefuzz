@@ -202,12 +202,12 @@ TASK_DEFINITIONS = {
             ),
             ContainerDefinition(
                 type=ContainerType.inputs,
-                compare=Compare.Equal,
-                value=1,
-                permissions=[ContainerPermission.Create, ContainerPermission.List],
+                compare=Compare.AtLeast,
+                value=0,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
         ],
-        monitor_queue=ContainerType.inputs,
+        monitor_queue=None,
     ),
     TaskType.generic_supervisor: TaskDefinition(
         features=[
@@ -263,6 +263,7 @@ TASK_DEFINITIONS = {
             TaskFeature.supervisor_options,
             TaskFeature.supervisor_input_marker,
             TaskFeature.stats_file,
+            TaskFeature.preserve_existing_outputs,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
