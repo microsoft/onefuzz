@@ -99,6 +99,7 @@ class Node(BASE_NODE, ORMMixin):
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
         pool_name: Optional[str] = None,
+        exclude_update_scheduled: bool = False,
     ) -> List["Node"]:
         query: QueryFilter = {}
         if scaleset_id:
@@ -108,6 +109,10 @@ class Node(BASE_NODE, ORMMixin):
         if pool_name:
             query["pool_name"] = [pool_name]
 
+        if exclude_update_scheduled:
+            query["reimage_requested"] = [False]
+            query["delete_requested"] = [False]
+
         # azure table query always return false when the column does not exist
         # We write the query this way to allow us to get the nodes where the
         # version is not defined as well as the nodes with a mismatched version
@@ -116,12 +121,8 @@ class Node(BASE_NODE, ORMMixin):
 
     @classmethod
     def mark_outdated_nodes(cls) -> None:
-        outdated = cls.search_outdated()
+        outdated = cls.search_outdated(exclude_update_scheduled=True)
         for node in outdated:
-            if node.reimage_requested or node.delete_requested:
-                # this node is already marked for reimaging/deletion
-                continue
-
             logging.info(
                 "node is outdated: %s - node_version:%s api_version:%s",
                 node.machine_id,
