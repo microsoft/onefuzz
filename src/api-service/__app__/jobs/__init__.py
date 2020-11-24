@@ -11,6 +11,7 @@ from onefuzztypes.requests import JobGet, JobSearch
 from ..onefuzzlib.jobs import Job
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.tasks.main import Task
+from ..onefuzzlib.user_credentials import parse_jwt_token
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -44,7 +45,11 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="jobs create")
 
-    job = Job(config=request)
+    user_info = parse_jwt_token(req)
+    if isinstance(user_info, Error):
+        return not_ok(user_info, context="jobs create")
+
+    job = Job(config=request, user_info=user_info)
     job.save()
     return ok(job)
 
