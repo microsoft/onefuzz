@@ -190,6 +190,13 @@ def on_worker_event_running(
     # (as happens in 1.0.0 agents)
     task.on_start()
 
+    task_event = TaskEvent(
+        task_id=task.task_id,
+        machine_id=machine_id,
+        event_data=WorkerEvent(running=event),
+    )
+    task_event.save()
+
     return None
 
 
