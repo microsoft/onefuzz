@@ -86,21 +86,17 @@ impl Agent {
 
     async fn update(&mut self) -> Result<bool> {
         let last = self.scheduler.take().ok_or_else(scheduler_error)?;
-
-        let next = match last {
-            Scheduler::Free(s) => self.free(s).await?,
-            Scheduler::SettingUp(s) => self.setting_up(s).await?,
-            Scheduler::PendingReboot(s) => self.pending_reboot(s).await?,
-            Scheduler::Ready(s) => self.ready(s).await?,
-            Scheduler::Busy(s) => self.busy(s).await?,
-            Scheduler::Done(s) => self.done(s).await?,
+        let previous_state = NodeState::from(&last);
+        let (next, done) = match last {
+            Scheduler::Free(s) => (self.free(s).await?, false),
+            Scheduler::SettingUp(s) => (self.setting_up(s).await?, false),
+            Scheduler::PendingReboot(s) => (self.pending_reboot(s).await?, false),
+            Scheduler::Ready(s) => (self.ready(s).await?, false),
+            Scheduler::Busy(s) => (self.busy(s).await?, false),
+            Scheduler::Done(s) => (self.done(s).await?, true),
         };
-
-        self.previous_state = NodeState::from(&next);
-        let done = matches!(next, Scheduler::Done(..));
-
+        self.previous_state = previous_state;
         self.scheduler = Some(next);
-
         Ok(done)
     }
 
