@@ -47,7 +47,6 @@ def migrate_notification_keys(table_service: TableService) -> None:
     notifications = table_service.query_entities(
         table_name, select="PartitionKey,RowKey,config"
     )
-    partitionKey = None
 
     count = 0
     for entry in notifications:
