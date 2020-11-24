@@ -376,7 +376,7 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
 
     if not managed_node_role:
         raise Exception(
-            "ManagedNode role not found int the onefuzz application "
+            "ManagedNode role not found in the OneFuzz application "
             "registration. Please redeploy the instance"
         )
 
