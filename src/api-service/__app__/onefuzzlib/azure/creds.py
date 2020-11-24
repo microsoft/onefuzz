@@ -12,6 +12,8 @@ from azure.cli.core import CLIError
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import CheckGroupMembershipParameters
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.subscription import SubscriptionClient
@@ -160,3 +162,7 @@ def get_scaleset_principal_id() -> UUID:
     client = mgmt_client_factory(ResourceManagementClient)
     uid = client.resources.get_by_id(get_scaleset_identity_resource_path(), api_version)
     return UUID(uid.properties["principalId"])
+
+
+def get_keyvault_client(vault_url: str) -> SecretClient:
+    return SecretClient(vault_url=vault_url, credential=DefaultAzureCredential())
