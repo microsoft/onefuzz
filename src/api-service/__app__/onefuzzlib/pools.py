@@ -118,6 +118,10 @@ class Node(BASE_NODE, ORMMixin):
     def mark_outdated_nodes(cls) -> None:
         outdated = cls.search_outdated()
         for node in outdated:
+            if node.reimage_requested or node.delete_requested:
+                # this node is already marked for reimaging/deletion
+                continue
+
             logging.info(
                 "node is outdated: %s - node_version:%s api_version:%s",
                 node.machine_id,
