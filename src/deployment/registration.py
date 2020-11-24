@@ -221,7 +221,7 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
     while count < tries:
         count += 1
         try:
-            return add_application_password(app_object_id)
+            return add_application_password_impl(app_object_id)
         except GraphQueryError as err:
             error = err
             logging.warning("unable to create app password: %s", err.message)
