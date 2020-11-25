@@ -69,7 +69,7 @@ stages:
             workingDirectory: "$(ONEFUZZ_DEPLOY_LOC)/$(artifact)"
             script: |
               set -ex
-              unzip -DD onefuzz-deployment-$(onefuzz_release.version).zip
+              unzip onefuzz-deployment-$(onefuzz_release.version).zip
               pip install -r requirements.txt
               wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
               sudo dpkg -i packages-microsoft-prod.deb
