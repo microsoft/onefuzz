@@ -13,6 +13,8 @@ from onefuzztypes.enums import GithubIssueSearchMatch
 from onefuzztypes.models import GithubAuth, GithubIssueTemplate, Report
 
 from .common import Render, fail_task
+from ..secrets import get_secret_value
+# from ..secrets
 
 
 class GithubIssue:
@@ -22,11 +24,10 @@ class GithubIssue:
         self.config = config
         self.report = report
         if isinstance(config.auth, GithubAuth):
-            self.gh = login(
-                username=config.auth.user, password=config.auth.personal_access_token
-            )
+            auth = config.auth
         else:
-            raise ("TODO: fetch data from keyvault")
+            auth = get_secret_value(config.auth)
+        self.gh = login(username=auth.user, password=auth.personal_access_token)
         self.renderer = Render(container, filename, report)
 
     def render(self, field: str) -> str:

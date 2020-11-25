@@ -1,9 +1,42 @@
-# from onefuzztypes.models import SecretData
-from typing import Tuple
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+
+from onefuzztypes.models import SecretData as BASE_SECRET_DATA, SecretAddress
+from typing import Tuple, TypeVar, cast
 from urllib.parse import urlparse
 
 from azure.keyvault.secrets import KeyVaultSecret
-from onefuzzlib.azure.creds import get_keyvault_client
+from .azure.creds import get_keyvault_client, get_instance_name
+from uuid import uuid4
+from pydantic import BaseModel
+
+T = TypeVar("T", bound=BaseModel)
+
+
+# class SecretData(BASE_SECRET_DATA[T]):
+def save_to_keyvault(self: BASE_SECRET_DATA[T]) -> None:
+    if not isinstance(self.secret, SecretAddress):
+        secret_name = str(uuid4())
+        kv = store_in_keyvault(
+            get_keyvault_address(), secret_name, self.secret.json()
+        )
+        self.secret = SecretAddress(url=kv.id)
+
+
+def get_secret_value(self: BASE_SECRET_DATA[T]) -> T:
+    if isinstance(self.secret, SecretAddress):
+        secret = get_secret(self.secret.url).value
+        parse_raw = getattr(BASE_SECRET_DATA[T], "parse_raw")
+        return cast(T, parse_raw(secret.value))
+    else:
+        return self.secret
+
+
+def get_keyvault_address() -> str:
+    return f"https://{get_instance_name()}-vault.vault.azure.net"
 
 
 def store_in_keyvault(

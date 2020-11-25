@@ -27,6 +27,7 @@ from memoization import cached
 from onefuzztypes.models import ADOTemplate, Report
 
 from .common import Render, fail_task
+from ..secrets import get_secret_value
 
 
 @cached(ttl=60)
@@ -53,7 +54,10 @@ class ADO:
     ):
         self.config = config
         self.renderer = Render(container, filename, report)
-        self.client = get_ado_client(self.config.base_url, self.config.auth_token)
+        auth_token = get_secret_value(self.config.auth_token)
+        self.client = get_ado_client(
+            self.config.base_url, auth_token
+        )
         self.project = self.render(self.config.project)
 
     def render(self, template: str) -> str:

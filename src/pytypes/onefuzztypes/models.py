@@ -10,11 +10,11 @@ from uuid import UUID, uuid4
 from pydantic import (
     BaseModel,
     Field,
-    ModelField,
     ValidationError,
     root_validator,
     validator,
 )
+from pydantic.fields import ModelField
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -40,6 +40,7 @@ from .enums import (
     VmState,
 )
 from .primitives import Container, PoolName, Region
+from pydantic.dataclasses import dataclass
 
 
 class UserInfo(BaseModel):
@@ -48,25 +49,26 @@ class UserInfo(BaseModel):
     upn: Optional[str]
 
 
-class KeyvaultSecret(BaseModel):
-    secret_url: str
+class SecretAddress(BaseModel):
+    url: str
 
 
-T = TypeVar("T")
+T = TypeVar('T', bound=Union[str, BaseModel])
 
 
-class SecretData(Generic[T], BaseModel):
-    secret: Union[T, KeyvaultSecret]
+@dataclass
+class SecretData(Generic[T]):
+    secret: Union[T, SecretAddress]
 
-    def __init__(self, secret: Union[T, KeyvaultSecret]):
+    def __init__(self, secret: Union[T, SecretAddress]):
         self.secret = secret
 
     def __str__(self):
-        if not isinstance(self.secret, KeyvaultSecret):
+        if not isinstance(self.secret, SecretAddress):
             return "[REDACTED]"
 
     def __repr__(self):
-        if not isinstance(self.secret, KeyvaultSecret):
+        if not isinstance(self.secret, SecretAddress):
             return "[REDACTED]"
 
     @classmethod
@@ -76,22 +78,23 @@ class SecretData(Generic[T], BaseModel):
     @classmethod
     # You don't need to add the "ModelField", but it will help your
     # editor give you completion and catch errors
-    def validate(cls, v, field: ModelField):
-        if not isinstance(v, cls):
-            # The value is not even a TastingModel
-            raise TypeError("Invalid value")
+    def validate(cls, v:Any, field: ModelField):
+        print(f"validating v: {v}, cls: {cls}, typev {type(v)}")
         if not field.sub_fields:
             # Generic parameters were not provided so we don't try to validate
             # them and just return the value as is
             return v
 
         generic_param = field.sub_fields[0]
-
-        # Here we don't need the validated value, but we want the errors
-        valid_value, error = generic_param.validate(v.secret, {}, loc="secret")
+        if isinstance(v, dict):
+            valid_value, error = generic_param.validate(v["secret"], {}, loc='secret')
+        elif isinstance(v, cls):
+            valid_value, error = generic_param.validate(v.secret, {}, loc='secret')
+        else:
+            raise (f"Invalid value v: {v}, cls: {cls}, typev {type(v)}")
 
         if error:
-            raise ValidationError(error, cls)
+            raise ValidationError([error], )
 
         return v
 
