@@ -4,12 +4,10 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, ValidationError, root_validator, validator
-from pydantic.dataclasses import dataclass
-from pydantic.fields import ModelField
+from pydantic import BaseModel, Field, root_validator, validator
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
