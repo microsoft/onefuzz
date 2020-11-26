@@ -33,7 +33,7 @@ from onefuzztypes.enums import (
     UpdateType,
     VmState,
 )
-from onefuzztypes.models import Error, SecretAddress
+from onefuzztypes.models import Error
 
 # from .secrets import save_to_keyvault
 from onefuzztypes.primitives import Container, PoolName, Region

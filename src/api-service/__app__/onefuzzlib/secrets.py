@@ -4,13 +4,12 @@
 # Licensed under the MIT License.
 
 
-from typing import Any, Tuple, TypeVar, Union, cast
+from typing import Tuple, cast
 from urllib.parse import urlparse
 from uuid import uuid4
 
 from azure.keyvault.secrets import KeyVaultSecret
 from onefuzztypes.models import SecretAddress
-from pydantic import BaseModel
 
 from .azure.creds import get_instance_name, get_keyvault_client
 
