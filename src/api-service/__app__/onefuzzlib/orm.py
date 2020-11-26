@@ -33,9 +33,9 @@ from onefuzztypes.enums import (
     UpdateType,
     VmState,
 )
+from onefuzztypes.models import Error, SecretAddress
 
-from onefuzztypes.models import Error, SecretAddress, SecretData
-from .secrets import save_to_keyvault
+# from .secrets import save_to_keyvault
 from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
 from typing_extensions import Protocol
@@ -291,13 +291,13 @@ class ORMMixin(ModelMixin):
             if self.__fields__[field].type_ == datetime:
                 raw[field] = getattr(self, field)
 
-            # for secretData make sure the data is stored in keyvault
-            if self.__fields__[field].type_ == SecretData:
-                secret_data: SecretData = getattr(self, field)
-                if not isinstance(secret_data.secret, SecretAddress):
-                    # save secret to keyvault and update the secret type
-                    save_to_keyvault(secret_data)
-                raw[field] = secret_data.secret
+            # # for secretData make sure the data is stored in keyvault
+            # if self.__fields__[field].type_ == SecretData:
+            #     secret_data: SecretData = getattr(self, field)
+            #     if not isinstance(secret_data.secret, SecretAddress):
+            #         # save secret to keyvault and update the secret type
+            #         save_to_keyvault(secret_data)
+            #     raw[field] = secret_data.secret
 
         partition_key_field, row_key_field = self.key_fields()
 

@@ -13,6 +13,7 @@ from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.models import (
     ADOTemplate,
     Error,
+    GithubAuth,
     GithubIssueTemplate,
     NotificationTemplate,
     Result,
@@ -30,6 +31,7 @@ from ..azure.queue import send_message
 from ..dashboard import add_event
 from ..orm import ORMMixin
 from ..reports import get_report
+from ..secrets import save_to_keyvault
 from ..tasks.config import get_input_container_queues
 from ..tasks.main import Task
 from .ado import notify_ado
@@ -87,6 +89,22 @@ class Notification(models.Notification, ORMMixin):
             entry.container,
         )
         return entry
+
+    def save(self, new: bool = False, require_etag: bool = False) -> Optional[Error]:
+
+        if isinstance(self.config, ADOTemplate):
+            if isinstance(self.config.auth_token, str):
+                self.config.auth_token = save_to_keyvault(self.config.auth_token)
+        elif isinstance(self.config, GithubIssueTemplate):
+            if isinstance(self.config.auth, GithubAuth):
+                self.config.auth = save_to_keyvault(self.config.auth.json())
+        elif isinstance(self.config, TeamsTemplate):
+            if isinstance(self.config.url, str):
+                self.config.url = save_to_keyvault(self.config.url)
+        else:
+            pass
+
+        return super().save(new, require_etag)
 
 
 @cached(ttl=10)

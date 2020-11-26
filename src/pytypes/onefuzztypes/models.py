@@ -7,13 +7,8 @@ from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
-from pydantic import (
-    BaseModel,
-    Field,
-    ValidationError,
-    root_validator,
-    validator,
-)
+from pydantic import BaseModel, Field, ValidationError, root_validator, validator
+from pydantic.dataclasses import dataclass
 from pydantic.fields import ModelField
 
 from .consts import ONE_HOUR, SEVEN_DAYS
@@ -40,7 +35,6 @@ from .enums import (
     VmState,
 )
 from .primitives import Container, PoolName, Region
-from pydantic.dataclasses import dataclass
 
 
 class UserInfo(BaseModel):
@@ -51,52 +45,6 @@ class UserInfo(BaseModel):
 
 class SecretAddress(BaseModel):
     url: str
-
-
-T = TypeVar('T', bound=Union[str, BaseModel])
-
-
-@dataclass
-class SecretData(Generic[T]):
-    secret: Union[T, SecretAddress]
-
-    def __init__(self, secret: Union[T, SecretAddress]):
-        self.secret = secret
-
-    def __str__(self):
-        if not isinstance(self.secret, SecretAddress):
-            return "[REDACTED]"
-
-    def __repr__(self):
-        if not isinstance(self.secret, SecretAddress):
-            return "[REDACTED]"
-
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    # You don't need to add the "ModelField", but it will help your
-    # editor give you completion and catch errors
-    def validate(cls, v:Any, field: ModelField):
-        print(f"validating v: {v}, cls: {cls}, typev {type(v)}")
-        if not field.sub_fields:
-            # Generic parameters were not provided so we don't try to validate
-            # them and just return the value as is
-            return v
-
-        generic_param = field.sub_fields[0]
-        if isinstance(v, dict):
-            valid_value, error = generic_param.validate(v["secret"], {}, loc='secret')
-        elif isinstance(v, cls):
-            valid_value, error = generic_param.validate(v.secret, {}, loc='secret')
-        else:
-            raise (f"Invalid value v: {v}, cls: {cls}, typev {type(v)}")
-
-        if error:
-            raise ValidationError([error], )
-
-        return v
 
 
 class EnumModel(BaseModel):
@@ -279,7 +227,7 @@ class ADODuplicateTemplate(BaseModel):
 
 class ADOTemplate(BaseModel):
     base_url: str
-    auth_token: SecretData[str]
+    auth_token: Union[str, SecretAddress]
     project: str
     type: str
     unique_fields: List[str]
@@ -289,7 +237,7 @@ class ADOTemplate(BaseModel):
 
 
 class TeamsTemplate(BaseModel):
-    url: str
+    url: Union[str, SecretAddress]
 
     def redact(self) -> None:
         self.url = "***"
@@ -457,7 +405,7 @@ class GithubAuth(BaseModel):
 
 
 class GithubIssueTemplate(BaseModel):
-    auth: SecretData[GithubAuth]
+    auth: Union[GithubAuth, SecretAddress]
     organization: str
     repository: str
     title: str

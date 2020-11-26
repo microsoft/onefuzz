@@ -4,35 +4,26 @@
 # Licensed under the MIT License.
 
 
-from onefuzztypes.models import SecretData as BASE_SECRET_DATA, SecretAddress
-from typing import Tuple, TypeVar, cast
+from typing import Any, Tuple, TypeVar, Union, cast
 from urllib.parse import urlparse
+from uuid import uuid4
 
 from azure.keyvault.secrets import KeyVaultSecret
-from .azure.creds import get_keyvault_client, get_instance_name
-from uuid import uuid4
+from onefuzztypes.models import SecretAddress
 from pydantic import BaseModel
 
-T = TypeVar("T", bound=BaseModel)
+from .azure.creds import get_instance_name, get_keyvault_client
 
 
-# class SecretData(BASE_SECRET_DATA[T]):
-def save_to_keyvault(self: BASE_SECRET_DATA[T]) -> None:
-    if not isinstance(self.secret, SecretAddress):
-        secret_name = str(uuid4())
-        kv = store_in_keyvault(
-            get_keyvault_address(), secret_name, self.secret.json()
-        )
-        self.secret = SecretAddress(url=kv.id)
+def save_to_keyvault(secret_value: str) -> SecretAddress:
+    secret_name = str(uuid4())
+    kv = store_in_keyvault(get_keyvault_address(), secret_name, secret_value)
+    return SecretAddress(url=kv.id)
 
 
-def get_secret_value(self: BASE_SECRET_DATA[T]) -> T:
-    if isinstance(self.secret, SecretAddress):
-        secret = get_secret(self.secret.url).value
-        parse_raw = getattr(BASE_SECRET_DATA[T], "parse_raw")
-        return cast(T, parse_raw(secret.value))
-    else:
-        return self.secret
+def get_secret_value(self: SecretAddress) -> str:
+    secret = get_secret(self.url).value
+    return cast(str, secret.value)
 
 
 def get_keyvault_address() -> str:
