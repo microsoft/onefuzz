@@ -139,7 +139,7 @@ class Endpoint:
                 % (name, value, ",".join(values))
             )
 
-        raise Exception("%s does not expand to a value: %s" % (name, value))
+        raise Exception("Unable to find %s based on prefix: %s" % (name, value))
 
     def _disambiguate_uuid(
         self,
@@ -800,6 +800,7 @@ class Tasks(Endpoint):
         target_timeout: Optional[int] = None,
         target_workers: Optional[int] = None,
         vm_count: int = 1,
+        preserve_existing_outputs: bool = False,
     ) -> models.Task:
         """
         Create a task
@@ -1064,7 +1065,7 @@ class Pool(Endpoint):
     def get(self, name: str) -> models.Pool:
         self.logger.debug("get details on a specific pool")
         expanded_name = self._disambiguate(
-            "name", name, lambda x: False, lambda: [x.name for x in self.list()]
+            "pool name", name, lambda x: False, lambda: [x.name for x in self.list()]
         )
 
         return self._req_model(
