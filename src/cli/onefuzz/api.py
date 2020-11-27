@@ -139,7 +139,7 @@ class Endpoint:
                 % (name, value, ",".join(values))
             )
 
-        raise Exception("Unable to find %s based on prefix: %s" % (name, value))
+        raise Exception("%s does not expand to a value: %s" % (name, value))
 
     def _disambiguate_uuid(
         self,
@@ -800,7 +800,6 @@ class Tasks(Endpoint):
         target_timeout: Optional[int] = None,
         target_workers: Optional[int] = None,
         vm_count: int = 1,
-        preserve_existing_outputs: bool = False,
     ) -> models.Task:
         """
         Create a task
@@ -1065,7 +1064,7 @@ class Pool(Endpoint):
     def get(self, name: str) -> models.Pool:
         self.logger.debug("get details on a specific pool")
         expanded_name = self._disambiguate(
-            "pool name", name, lambda x: False, lambda: [x.name for x in self.list()]
+            "name", name, lambda x: False, lambda: [x.name for x in self.list()]
         )
 
         return self._req_model(
@@ -1495,6 +1494,7 @@ class Onefuzz:
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
+        tenant_domain: Optional[str] = None,
     ) -> BackendConfig:
         """ Configure onefuzz CLI """
         self.logger.debug("set config")
@@ -1521,6 +1521,8 @@ class Onefuzz:
             self._backend.config.client_secret = client_secret
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
+        if tenant_domain is not None:
+            self._backend.config.tenant_domain = tenant_domain
         self._backend.app = None
         self._backend.save_config()
 
