@@ -63,7 +63,7 @@ class BackendConfig(BaseModel):
     client_secret: Optional[str]
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
-
+    tenant_domain: Optional[str]
 
 class Backend:
     def __init__(
@@ -145,7 +145,11 @@ class Backend:
         if not self.config.endpoint:
             raise Exception("endpoint not configured")
 
-        scopes = [self.config.endpoint + "/.default"]
+        if "common" in self.config.authority:
+            endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
+            scopes = ["https://" + self.config.tenant_domain + "/" + endpoint + "/.default"]
+        else:
+            scopes = [self.config.endpoint + "/.default"]
 
         if self.config.client_secret:
             return self.client_secret(scopes)
