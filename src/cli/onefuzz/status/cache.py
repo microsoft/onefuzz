@@ -100,7 +100,10 @@ class TopCache:
         self.nodes: Dict[UUID, Tuple[datetime, Node]] = {}
 
         self.messages: List[MESSAGE] = []
-        self.endpoint: str = onefuzz._backend.config["endpoint"]
+        endpoint = onefuzz._backend.config.endpoint
+        if not endpoint:
+            raise Exception("endpoint is not set")
+        self.endpoint: str = endpoint
         self.last_update = datetime.now()
 
     def add_container(self, name: str, ignore_date: bool = False) -> None:
@@ -117,7 +120,7 @@ class TopCache:
         self.last_update = datetime.now()
         data: Dict[str, Union[int, str]] = {}
         for (k, v) in message.items():
-            if k in ["task_id", "job_id", "pool_id", "scaleset_id"]:
+            if k in ["task_id", "job_id", "pool_id", "scaleset_id", "machine_id"]:
                 k = k.replace("_id", "")
                 data[k] = str(v)[:8]
             elif isinstance(v, (int, str)):

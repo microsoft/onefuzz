@@ -251,16 +251,14 @@ class ORMMixin(ModelMixin):
     def event_include(self) -> Optional[MappingIntStrAny]:
         return {}
 
-    def event(self) -> Any:
-        return self.raw(exclude_none=True, include=self.event_include())
-
     def telemetry(self) -> Any:
         return self.raw(exclude_none=True, include=self.telemetry_include())
 
     def _event_as_needed(self) -> None:
         # Upon ORM save, if the object returns event data, we'll send it to the
         # dashboard event subsystem
-        data = self.event()
+
+        data = self.raw(exclude_none=True, include=self.event_include())
         if not data:
             return
         add_event(self.table_name(), data)
@@ -311,7 +309,9 @@ class ORMMixin(ModelMixin):
             try:
                 self.etag = client.insert_entity(self.table_name(), raw)
             except AzureConflictHttpError:
-                return Error(code=ErrorCode.UNABLE_TO_CREATE, errors=["row exists"])
+                return Error(
+                    code=ErrorCode.UNABLE_TO_CREATE, errors=["entry already exists"]
+                )
         elif self.etag and require_etag:
             self.etag = client.replace_entity(
                 self.table_name(), raw, if_match=self.etag
@@ -370,7 +370,11 @@ class ORMMixin(ModelMixin):
             annotation = inspect.signature(cls).parameters[key].annotation
 
             if inspect.isclass(annotation):
-                if issubclass(annotation, BaseModel) or issubclass(annotation, dict):
+                if (
+                    issubclass(annotation, BaseModel)
+                    or issubclass(annotation, dict)
+                    or issubclass(annotation, list)
+                ):
                     data[key] = json.loads(data[key])
                     continue
 
@@ -381,9 +385,9 @@ class ORMMixin(ModelMixin):
                 data[key] = json.loads(data[key])
                 continue
 
-            # Required for Python >=3.7. In 3.6, a `Dict[_,_]` annotation is a class
-            # according to `inspect.isclass`.
-            if getattr(annotation, "__origin__", None) == dict:
+            # Required for Python >=3.7. In 3.6, a `Dict[_,_]` and `List[_]` annotations
+            # are a class according to `inspect.isclass`.
+            if getattr(annotation, "__origin__", None) in [dict, list]:
                 data[key] = json.loads(data[key])
                 continue
 

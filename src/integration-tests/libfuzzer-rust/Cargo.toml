@@ -1,0 +1,9 @@
+[package]
+name = "rust_fuzz_example"
+version = "0.1.0"
+license = "MIT"
+authors = ["<fuzzing@microsoft.com>"]
+edition = "2018"
+
+[dependencies]
+libc = "0.2.79"

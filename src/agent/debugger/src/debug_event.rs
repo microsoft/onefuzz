@@ -41,35 +41,39 @@ impl<'a> Display for DebugEventInfo<'a> {
             Exception(info) => {
                 write!(
                     formatter,
-                    "event=Exception exception_code=0x{:08x} exception_address=0x{:08x} first_chance={}",
+                    "Exception code=0x{:08x} address=0x{:08x} {}",
                     info.ExceptionRecord.ExceptionCode,
                     info.ExceptionRecord.ExceptionAddress as u64,
-                    info.dwFirstChance != 0
+                    if info.dwFirstChance == 0 {
+                        "second_chance"
+                    } else {
+                        "first_chance"
+                    }
                 )?;
             }
-            CreateThread(_info) => {
-                write!(formatter, "event=CreateThread")?;
+            CreateThread(info) => {
+                write!(formatter, "CreateThread handle={:x}", info.hThread as u64)?;
             }
             CreateProcess(info) => {
                 let image_name = get_path_from_handle(info.hFile).unwrap_or_else(|_| "???".into());
                 write!(
                     formatter,
-                    "event=CreateProcess name={} base=0x{:016x}",
+                    "CreateProcess name={} base=0x{:016x}",
                     Path::new(&image_name).display(),
                     info.lpBaseOfImage as u64,
                 )?;
             }
             ExitThread(info) => {
-                write!(formatter, "event=ExitThread exit_code={}", info.dwExitCode)?;
+                write!(formatter, "ExitThread exit_code={}", info.dwExitCode)?;
             }
             ExitProcess(info) => {
-                write!(formatter, "event=ExitProcess exit_code={}", info.dwExitCode)?;
+                write!(formatter, "ExitProcess exit_code={}", info.dwExitCode)?;
             }
             LoadDll(info) => {
                 let image_name = get_path_from_handle(info.hFile).unwrap_or_else(|_| "???".into());
                 write!(
                     formatter,
-                    "event=LoadDll name={} base=0x{:016x}",
+                    "LoadDll name={} base=0x{:016x}",
                     Path::new(&image_name).display(),
                     info.lpBaseOfDll as u64,
                 )?;
@@ -77,26 +81,26 @@ impl<'a> Display for DebugEventInfo<'a> {
             UnloadDll(info) => {
                 write!(
                     formatter,
-                    "event=UnloadDll base=0x{:016x}",
+                    "UnloadDll base=0x{:016x}",
                     info.lpBaseOfDll as u64,
                 )?;
             }
             OutputDebugString(info) => {
                 write!(
                     formatter,
-                    "event=OutputDebugString unicode={} address=0x{:016x} length={}",
+                    "OutputDebugString unicode={} address=0x{:016x} length={}",
                     info.fUnicode, info.lpDebugStringData as u64, info.nDebugStringLength,
                 )?;
             }
             Rip(info) => {
                 write!(
                     formatter,
-                    "event=Rip error=0x{:x} type={}",
+                    "Rip error=0x{:x} type={}",
                     info.dwError, info.dwType
                 )?;
             }
             Unknown => {
-                write!(formatter, "event=Unknown")?;
+                write!(formatter, "Unknown debug event")?;
             }
         };
 
@@ -153,7 +157,7 @@ impl<'a> Display for DebugEvent<'a> {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         write!(
             formatter,
-            " pid={} tid={} {}",
+            "{:x}.{:x} {}",
             self.process_id, self.thread_id, self.info
         )?;
         Ok(())

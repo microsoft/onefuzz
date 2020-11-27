@@ -83,11 +83,16 @@ def get_subscription() -> Any:  # should be str
 
 
 @cached
+def get_insights_appid() -> str:
+    return os.environ["APPINSIGHTS_APPID"]
+
+
+# @cached
 def get_fuzz_storage() -> str:
     return os.environ["ONEFUZZ_DATA_STORAGE"]
 
 
-@cached
+# @cached
 def get_func_storage() -> str:
     return os.environ["ONEFUZZ_FUNC_STORAGE"]
 
@@ -104,9 +109,9 @@ def get_instance_url() -> str:
 
 @cached
 def get_instance_id() -> UUID:
-    from .containers import get_blob
+    from .containers import StorageType, get_blob
 
-    blob = get_blob("base-config", "instance_id", account_id=get_func_storage())
+    blob = get_blob("base-config", "instance_id", StorageType.config)
     if blob is None:
         raise Exception("missing instance_id")
     return UUID(blob.decode())
@@ -151,7 +156,7 @@ def get_scaleset_identity_resource_path() -> str:
 
 @cached
 def get_scaleset_principal_id() -> UUID:
-    api_version = "2018-11-30"  # matches the apiversion in the deplyoment template
+    api_version = "2018-11-30"  # matches the apiversion in the deployment template
     client = mgmt_client_factory(ResourceManagementClient)
     uid = client.resources.get_by_id(get_scaleset_identity_resource_path(), api_version)
     return UUID(uid.properties["principalId"])

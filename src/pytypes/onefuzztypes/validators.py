@@ -5,16 +5,34 @@
 
 from string import ascii_letters, digits
 
+ALPHA_NUM = ascii_letters + digits
+ALPHA_NUM_DASH = ALPHA_NUM + "-"
+ALPHA_NUM_UNDERSCORE = ALPHA_NUM + "_"
 
-def check_alnum_dash(value: str) -> str:
-    accepted = ascii_letters + digits + "-"
-    if not all(x in accepted for x in value):
+
+def check_value(value: str, charset: str) -> str:
+    if not all(x in charset for x in value):
         raise ValueError("invalid value: %s" % value)
     return value
 
 
 def check_alnum(value: str) -> str:
-    accepted = ascii_letters + digits
-    if not all(x in accepted for x in value):
+    return check_value(value, ALPHA_NUM)
+
+
+def check_alnum_dash(value: str) -> str:
+    return check_value(value, ALPHA_NUM_DASH)
+
+
+def check_alnum_underscore(value: str) -> str:
+    return check_value(value, ALPHA_NUM_UNDERSCORE)
+
+
+def check_template_name(value: str) -> str:
+    if not value:
         raise ValueError("invalid value: %s" % value)
-    return value
+
+    if value[0] not in ALPHA_NUM:
+        raise ValueError("invalid value: %s" % value)
+
+    return check_alnum_underscore(value)

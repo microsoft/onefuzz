@@ -205,7 +205,7 @@ def create_vmss(
         return None
 
     logging.info(
-        "creating VM count"
+        "creating VM "
         "name: %s vm_sku: %s vm_count: %d "
         "image: %s subnet: %s spot_instances: %s",
         name,

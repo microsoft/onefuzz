@@ -106,13 +106,18 @@ impl ClientCredentials {
         let mut url = Url::parse("https://login.microsoftonline.com")?;
         url.path_segments_mut()
             .expect("Authority URL is cannot-be-a-base")
-            .push(&self.tenant)
-            .push("oauth2/v2.0/token");
+            .extend(&[&self.tenant, "oauth2", "v2.0", "token"]);
 
         let response = reqwest::Client::new()
             .post(url)
             .header("Content-Length", "0")
-            .form(&self.form_data())
+            .form(&[
+                ("client_id", self.client_id.to_hyphenated().to_string()),
+                ("client_secret", self.client_secret.expose_ref().to_string()),
+                ("grant_type", "client_credentials".into()),
+                ("tenant", self.tenant.clone()),
+                ("scope", format!("{}.default", self.resource)),
+            ])
             .send_retry_default()
             .await?
             .error_for_status_with_body()
@@ -122,27 +127,6 @@ impl ClientCredentials {
 
         Ok(body.into())
     }
-
-    fn form_data(&self) -> FormData {
-        let scope = format!("{}/.default", self.resource);
-
-        FormData {
-            client_id: self.client_id,
-            client_secret: self.client_secret.clone(),
-            grant_type: "client_credentials".into(),
-            scope,
-            tenant: self.tenant.clone(),
-        }
-    }
-}
-
-#[derive(Clone, Deserialize, Eq, PartialEq, Serialize)]
-struct FormData {
-    client_id: Uuid,
-    client_secret: Secret<String>,
-    grant_type: String,
-    scope: String,
-    tenant: String,
 }
 
 // See: https://docs.microsoft.com/en-us/azure/active-directory/develop
