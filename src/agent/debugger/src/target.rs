@@ -225,6 +225,7 @@ impl Target {
     }
 
     pub fn set_current_thread(&mut self, thread_id: DWORD) {
+        self.current_thread_id = thread_id;
         self.current_thread_handle = self.thread_info.get(&thread_id).unwrap().handle;
     }
 

@@ -265,6 +265,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "ensemble_sync_delay": {
                     "title": "Ensemble Sync Delay",
                     "type": "integer"
+                },
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
                 }
             },
             "required": [
@@ -884,6 +888,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "ensemble_sync_delay": {
                     "title": "Ensemble Sync Delay",
                     "type": "integer"
+                },
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
                 }
             },
             "required": [

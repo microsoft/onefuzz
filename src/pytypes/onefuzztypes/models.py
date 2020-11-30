@@ -133,6 +133,7 @@ class TaskDetails(BaseModel):
     reboot_after_setup: Optional[bool]
     target_timeout: Optional[int]
     ensemble_sync_delay: Optional[int]
+    preserve_existing_outputs: Optional[bool]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:
