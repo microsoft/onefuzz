@@ -576,7 +576,7 @@ class Client:
         url = "%s/%s?%s" % (account_url, "tools", sas)
 
         subprocess.check_output(
-            [self.azcopy, "copy", self.tools, url, "--overwrite", "true"]
+            [self.azcopy, "copy", os.path.join(self.tools, "*"), url, "--overwrite=true", "--recursive=true"]
         )
 
         subprocess.check_output(
@@ -608,25 +608,11 @@ class Client:
         url = "%s/%s?%s" % (account_url, "instance-specific-setup", sas)
 
         subprocess.check_output(
-            [
-                self.azcopy,
-                "copy",
-                self.instance_specific,
-                url,
-                "--overwrite",
-                "true",
-            ]
+            [self.azcopy, "copy", os.path.join(self.tools, "*"), url, "--overwrite=true", "--recursive=true"]
         )
 
         subprocess.check_output(
-            [
-                self.azcopy,
-                "sync",
-                self.instance_specific,
-                url,
-                "--delete-destination",
-                "true",
-            ]
+            [self.azcopy, "sync", self.instance_specific, url, "--delete-destination", "true",]
         )
 
     def upload_third_party(self) -> None:
@@ -658,7 +644,7 @@ class Client:
             url = "%s/%s?%s" % (account_url, name, sas)
 
             subprocess.check_output(
-                [self.azcopy, "copy", path, url, "--overwrite", "true"]
+                [self.azcopy, "copy", os.path.join(self.tools, "*"), url, "--overwrite=true", "--recursive=true"]
             )
 
             subprocess.check_output(
