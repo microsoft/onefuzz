@@ -34,7 +34,6 @@ from onefuzztypes.enums import (
     VmState,
 )
 from onefuzztypes.models import Error
-
 from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
 from typing_extensions import Protocol
