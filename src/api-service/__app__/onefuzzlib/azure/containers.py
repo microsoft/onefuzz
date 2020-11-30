@@ -57,7 +57,6 @@ def container_metadata(container: Container, account: str) -> Optional[Dict[str,
     return None
 
 
-@cached(ttl=10)
 def get_account_by_container(
     container: Container, storage_type: StorageType
 ) -> Optional[str]:
