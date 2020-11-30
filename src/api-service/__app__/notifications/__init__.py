@@ -15,9 +15,6 @@ from ..onefuzzlib.request import not_ok, ok, parse_request
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
     entries = Notification.search()
-    for entry in entries:
-        entry.config.redact()
-
     return ok(entries)
 
 
@@ -44,7 +41,6 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(entry, context="notification delete")
 
     entry.delete()
-    entry.config.redact()
     return ok(entry)
 
 
