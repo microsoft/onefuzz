@@ -170,8 +170,10 @@ impl State<SettingUp> {
         match output {
             Ok(Some(output)) => {
                 if !output.exit_status.success {
+                    let error = "error running target setup script".to_owned();
+                    warn!("{}", error);
                     let cause = DoneCause::SetupError {
-                        error: "error running target setup script".to_owned(),
+                        error,
                         script_output: Some(output),
                     };
                     let ctx = Done { cause };
@@ -182,8 +184,10 @@ impl State<SettingUp> {
                 // No script was executed.
             }
             Err(err) => {
+                let error = err.to_string();
+                warn!("{}", error);
                 let cause = DoneCause::SetupError {
-                    error: err.to_string(),
+                    error,
                     script_output: None,
                 };
                 let ctx = Done { cause };
