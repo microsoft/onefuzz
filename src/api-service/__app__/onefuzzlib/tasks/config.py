@@ -10,6 +10,7 @@ from uuid import UUID
 
 from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, TaskFeature
 from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
+from onefuzztypes.primitives import Container
 
 from ..azure.containers import blob_exists, container_exists, get_container_sas_url
 from ..azure.creds import get_instance_id, get_instance_url
@@ -316,7 +317,7 @@ def build_task_config(
     return config
 
 
-def get_setup_container(config: TaskConfig) -> str:
+def get_setup_container(config: TaskConfig) -> Container:
     for container in config.containers:
         if container.type == ContainerType.setup:
             return container.name

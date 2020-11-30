@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Union, cast
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
 from azure.storage.blob import BlobPermissions, BlockBlobService, ContainerPermissions
 from memoization import cached
+from onefuzztypes.primitives import Container
 
 from .storage import (
     StorageType,
@@ -24,13 +25,13 @@ from .storage import (
 @cached
 def get_blob_service(account_id: str) -> BlockBlobService:
     logging.debug("getting blob container (account_id: %s)", account_id)
-    name, key = get_storage_account_name_key(account_id)
-    service = BlockBlobService(account_name=name, account_key=key)
+    account_name, account_key = get_storage_account_name_key(account_id)
+    service = BlockBlobService(account_name=account_name, account_key=account_key)
     return service
 
 
 def get_service_by_container(
-    container: str, storage_type: StorageType
+    container: Container, storage_type: StorageType
 ) -> Optional[BlockBlobService]:
     account = get_account_by_container(container, storage_type)
     if account is None:
@@ -39,17 +40,17 @@ def get_service_by_container(
     return service
 
 
-def container_exists_on_account(name: str, account_id: str) -> bool:
+def container_exists_on_account(container: Container, account_id: str) -> bool:
     try:
-        get_blob_service(account_id).get_container_properties(name)
+        get_blob_service(account_id).get_container_properties(container)
         return True
     except AzureHttpError:
         return False
 
 
-def container_metadata(name: str, account: str) -> Optional[Dict[str, str]]:
+def container_metadata(container: Container, account: str) -> Optional[Dict[str, str]]:
     try:
-        result = get_blob_service(account).get_container_metadata(name)
+        result = get_blob_service(account).get_container_metadata(container)
         return cast(Dict[str, str], result)
     except AzureHttpError:
         pass
@@ -58,16 +59,17 @@ def container_metadata(name: str, account: str) -> Optional[Dict[str, str]]:
 
 @cached(ttl=10)
 def get_account_by_container(
-    container: str, storage_type: StorageType
+    container: Container, storage_type: StorageType
 ) -> Optional[str]:
     accounts = cast(List[str], get_accounts(storage_type))
+    print(accounts)
     for account in accounts:
         if container_exists_on_account(container, account):
             return account
     return None
 
 
-def container_exists(container: str, storage_type: StorageType) -> bool:
+def container_exists(container: Container, storage_type: StorageType) -> bool:
     return get_account_by_container(container, storage_type) is not None
 
 
@@ -88,17 +90,19 @@ def get_containers(storage_type: StorageType) -> Dict[str, Dict[str, str]]:
 
 
 def get_container_metadata(
-    container: str, storage_type: StorageType
+    container: Container, storage_type: StorageType
 ) -> Optional[Dict[str, str]]:
     account = get_account_by_container(container, storage_type)
     if account is None:
         return None
 
-    return container_metadata(account, container)
+    return container_metadata(container, account)
 
 
 def create_container(
-    container: str, storage_type: StorageType, metadata: Optional[Dict[str, str]]
+    container: Container,
+    storage_type: StorageType,
+    metadata: Optional[Dict[str, str]],
 ) -> Optional[str]:
     service = get_service_by_container(container, storage_type)
     if service is None:
@@ -132,7 +136,7 @@ def create_container(
     )
 
 
-def delete_container(container: str, storage_type: StorageType) -> bool:
+def delete_container(container: Container, storage_type: StorageType) -> bool:
     service = get_service_by_container(container, storage_type)
     if not service:
         return False
@@ -141,7 +145,7 @@ def delete_container(container: str, storage_type: StorageType) -> bool:
 
 
 def get_container_sas_url_service(
-    container: str,
+    container: Container,
     service: BlockBlobService,
     *,
     read: bool = False,
@@ -164,7 +168,7 @@ def get_container_sas_url_service(
 
 
 def get_container_sas_url(
-    container: str,
+    container: Container,
     storage_type: StorageType,
     *,
     read: bool = False,
@@ -191,7 +195,7 @@ def get_container_sas_url(
 
 
 def get_file_sas_url(
-    container: str,
+    container: Container,
     name: str,
     storage_type: StorageType,
     *,
@@ -223,7 +227,10 @@ def get_file_sas_url(
 
 
 def save_blob(
-    container: str, name: str, data: Union[str, bytes], storage_type: StorageType
+    container: Container,
+    name: str,
+    data: Union[str, bytes],
+    storage_type: StorageType,
 ) -> None:
     service = get_service_by_container(container, storage_type)
     if not service:
@@ -235,7 +242,9 @@ def save_blob(
         service.create_blob_from_bytes(container, name, data)
 
 
-def get_blob(container: str, name: str, storage_type: StorageType) -> Optional[bytes]:
+def get_blob(
+    container: Container, name: str, storage_type: StorageType
+) -> Optional[bytes]:
     service = get_service_by_container(container, storage_type)
     if not service:
         return None
@@ -247,7 +256,7 @@ def get_blob(container: str, name: str, storage_type: StorageType) -> Optional[b
         return None
 
 
-def blob_exists(container: str, name: str, storage_type: StorageType) -> bool:
+def blob_exists(container: Container, name: str, storage_type: StorageType) -> bool:
     service = get_service_by_container(container, storage_type)
     if not service:
         return False
@@ -259,7 +268,7 @@ def blob_exists(container: str, name: str, storage_type: StorageType) -> bool:
         return False
 
 
-def delete_blob(container: str, name: str, storage_type: StorageType) -> bool:
+def delete_blob(container: Container, name: str, storage_type: StorageType) -> bool:
     service = get_service_by_container(container, storage_type)
     if not service:
         return False
@@ -271,7 +280,7 @@ def delete_blob(container: str, name: str, storage_type: StorageType) -> bool:
         return False
 
 
-def auth_download_url(container: str, filename: str) -> str:
+def auth_download_url(container: Container, filename: str) -> str:
     instance = os.environ["ONEFUZZ_INSTANCE"]
     return "%s/api/download?%s" % (
         instance,

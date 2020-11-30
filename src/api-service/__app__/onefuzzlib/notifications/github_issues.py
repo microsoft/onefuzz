@@ -11,13 +11,18 @@ from github3.exceptions import GitHubException
 from github3.issues import Issue
 from onefuzztypes.enums import GithubIssueSearchMatch
 from onefuzztypes.models import GithubIssueTemplate, Report
+from onefuzztypes.primitives import Container
 
 from .common import Render, fail_task
 
 
 class GithubIssue:
     def __init__(
-        self, config: GithubIssueTemplate, container: str, filename: str, report: Report
+        self,
+        config: GithubIssueTemplate,
+        container: Container,
+        filename: str,
+        report: Report,
     ):
         self.config = config
         self.report = report
@@ -95,7 +100,10 @@ class GithubIssue:
 
 
 def github_issue(
-    config: GithubIssueTemplate, container: str, filename: str, report: Optional[Report]
+    config: GithubIssueTemplate,
+    container: Container,
+    filename: str,
+    report: Optional[Report],
 ) -> None:
     if report is None:
         return

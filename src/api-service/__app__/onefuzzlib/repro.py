@@ -12,6 +12,7 @@ from onefuzztypes.enums import OS, ContainerType, ErrorCode, VmState
 from onefuzztypes.models import Error
 from onefuzztypes.models import Repro as BASE_REPRO
 from onefuzztypes.models import ReproConfig, TaskVm, UserInfo
+from onefuzztypes.primitives import Container
 
 from .azure.auth import build_auth
 from .azure.containers import save_blob
@@ -99,7 +100,7 @@ class Repro(BASE_REPRO, ORMMixin):
                 )
         return self.set_error(Error(code=ErrorCode.VM_CREATE_FAILED, errors=errors))
 
-    def get_setup_container(self) -> Optional[str]:
+    def get_setup_container(self) -> Optional[Container]:
         task = Task.get_by_task_id(self.task_id)
         if isinstance(task, Task):
             for container in task.config.containers:
@@ -203,7 +204,7 @@ class Repro(BASE_REPRO, ORMMixin):
 
         for filename in files:
             save_blob(
-                "repro-scripts",
+                Container("repro-scripts"),
                 "%s/%s" % (self.vm_id, filename),
                 files[filename],
                 StorageType.config,

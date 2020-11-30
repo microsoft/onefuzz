@@ -16,7 +16,7 @@ from onefuzztypes.models import (
     ProxyConfig,
     ProxyHeartbeat,
 )
-from onefuzztypes.primitives import Region
+from onefuzztypes.primitives import Container, Region
 from pydantic import Field
 
 from .__version__ import __version__
@@ -189,7 +189,7 @@ class Proxy(ORMMixin):
         forwards = self.get_forwards()
         proxy_config = ProxyConfig(
             url=get_file_sas_url(
-                "proxy-configs",
+                Container("proxy-configs"),
                 "%s/config.json" % self.region,
                 StorageType.config,
                 read=True,
@@ -204,7 +204,7 @@ class Proxy(ORMMixin):
         )
 
         save_blob(
-            "proxy-configs",
+            Container("proxy-configs"),
             "%s/config.json" % self.region,
             proxy_config.json(),
             StorageType.config,

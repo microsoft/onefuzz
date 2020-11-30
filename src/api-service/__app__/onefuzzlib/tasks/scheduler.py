@@ -9,6 +9,7 @@ from uuid import UUID
 
 from onefuzztypes.enums import OS, PoolState, TaskState
 from onefuzztypes.models import WorkSet, WorkUnit
+from onefuzztypes.primitives import Container
 
 from ..azure.containers import blob_exists, get_container_sas_url, save_blob
 from ..azure.storage import StorageType
@@ -76,7 +77,7 @@ def schedule_tasks() -> None:
                 setup_script = "setup.sh"
 
             save_blob(
-                "task-configs",
+                Container("task-configs"),
                 "%s/config.json" % task.task_id,
                 agent_config.json(exclude_none=True),
                 StorageType.config,

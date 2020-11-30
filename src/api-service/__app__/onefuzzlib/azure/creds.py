@@ -16,6 +16,7 @@ from azure.mgmt.subscription import SubscriptionClient
 from memoization import cached
 from msrestazure.azure_active_directory import MSIAuthentication
 from msrestazure.tools import parse_resource_id
+from onefuzztypes.primitives import Container
 
 from .monkeypatch import allow_more_workers, reduce_logging
 
@@ -75,7 +76,7 @@ def get_instance_id() -> UUID:
     from .containers import get_blob
     from .storage import StorageType
 
-    blob = get_blob("base-config", "instance_id", StorageType.config)
+    blob = get_blob(Container("base-config"), "instance_id", StorageType.config)
     if blob is None:
         raise Exception("missing instance_id")
     return UUID(blob.decode())
