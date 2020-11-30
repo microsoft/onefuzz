@@ -61,7 +61,6 @@ def get_account_by_container(
     container: Container, storage_type: StorageType
 ) -> Optional[str]:
     accounts = cast(List[str], get_accounts(storage_type))
-    print(accounts)
     for account in accounts:
         if container_exists_on_account(container, account):
             return account
@@ -106,7 +105,6 @@ def create_container(
     service = get_service_by_container(container, storage_type)
     if service is None:
         account = choose_account(storage_type)
-        print(account)
         service = get_blob_service(account)
         try:
             service.create_container(container, metadata=metadata)
@@ -136,11 +134,13 @@ def create_container(
 
 
 def delete_container(container: Container, storage_type: StorageType) -> bool:
-    service = get_service_by_container(container, storage_type)
-    if not service:
-        return False
+    accounts = cast(List[str], get_accounts(storage_type))
+    for account in accounts:
+        service = get_blob_service(account)
+        if bool(service.delete_container(container)):
+            return True
 
-    return bool(service.delete_container(container))
+    return False
 
 
 def get_container_sas_url_service(
