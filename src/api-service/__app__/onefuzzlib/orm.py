@@ -288,11 +288,11 @@ class ORMMixin(ModelMixin):
             if not isinstance(raw[key], (str, int)):
                 raw[key] = json.dumps(raw[key])
 
+        # for datetime fields that passed through filtering, use the real value,
+        # rather than a serialized form
         for field in self.__fields__:
             if field not in raw:
                 continue
-            # for datetime fields that passed through filtering, use the real value,
-            # rather than a serialized form
             if self.__fields__[field].type_ == datetime:
                 raw[field] = getattr(self, field)
 
