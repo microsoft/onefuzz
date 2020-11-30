@@ -19,7 +19,6 @@ from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
     Application,
     ApplicationCreateParameters,
-    AppRole,
     RequiredResourceAccess,
     ResourceAccess,
 )
@@ -32,6 +31,7 @@ logger = logging.getLogger("deploy")
 class GraphQueryError(Exception):
     def __init__(self, message: str, status_code: int) -> None:
         super(GraphQueryError, self).__init__(message)
+        self.message = message
         self.status_code = status_code
 
 
@@ -211,6 +211,28 @@ def create_application_registration(
 
 
 def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
+    # Work-around the race condition where the app is created but passwords cannot
+    # be created yet.
+
+    error: Optional[GraphQueryError] = None
+    count = 0
+    tries = 10
+    wait_duration = 10
+    while count < tries:
+        count += 1
+        try:
+            return add_application_password_impl(app_object_id)
+        except GraphQueryError as err:
+            error = err
+            logging.warning("unable to create app password: %s", err.message)
+        time.sleep(wait_duration)
+    if error:
+        raise error
+    else:
+        raise Exception("unable to create password")
+
+
+def add_application_password_impl(app_object_id: UUID) -> Tuple[str, str]:
     key = uuid4()
     password_request = {
         "passwordCredential": {
@@ -222,17 +244,14 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
             ),
         }
     }
-    try:
-        password: Dict = query_microsoft_graph(
-            method="POST",
-            resource="applications/%s/addPassword" % app_object_id,
-            body=password_request,
-        )
 
-        return (str(key), password["secretText"])
-    except GraphQueryError as err:
-        logger.warning("creating password failed : %s" % err)
-        raise err
+    password: Dict = query_microsoft_graph(
+        method="POST",
+        resource="applications/%s/addPassword" % app_object_id,
+        body=password_request,
+    )
+
+    return (str(key), password["secretText"])
 
 
 def get_application(app_id: UUID) -> Optional[Any]:
@@ -312,7 +331,10 @@ def update_pool_registration(onefuzz_instance_name: str) -> None:
 
 
 def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None:
-    """ Allows the nodes in the scaleset to access the service by assigning their managed identity to the ManagedNode Role """
+    """
+    Allows the nodes in the scaleset to access the service by assigning
+    their managed identity to the ManagedNode Role
+    """
 
     onefuzz_service_appId = query_microsoft_graph(
         method="GET",
@@ -354,7 +376,8 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
 
     if not managed_node_role:
         raise Exception(
-            "ManagedNode role not found int the onefuzz application registration. Please redeploy the instance"
+            "ManagedNode role not found in the OneFuzz application "
+            "registration. Please redeploy the instance"
         )
 
     assignments = query_microsoft_graph(

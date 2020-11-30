@@ -226,19 +226,7 @@ class Client:
             sys.exit(1)
 
     def create_password(self, object_id: UUID) -> Tuple[str, str]:
-        # Work-around the race condition where the app is created but passwords cannot
-        # be created yet.
-        count = 0
-        wait = 5
-        timeout_seconds = 60
-        while True:
-            time.sleep(wait)
-            count += 1
-            password = add_application_password(object_id)
-            if password:
-                return password
-            if count > timeout_seconds / wait:
-                raise Exception("creating password failed, trying again")
+        return add_application_password(object_id)
 
     def setup_rbac(self) -> None:
         """
@@ -708,7 +696,8 @@ class Client:
                         if i + 1 < max_tries:
                             logger.debug("func failure error: %s", err)
                             logger.warning(
-                                "function failed to deploy, waiting 60 seconds and trying again"
+                                "function failed to deploy, waiting 60 "
+                                "seconds and trying again"
                             )
                             time.sleep(60)
                 if error is not None:

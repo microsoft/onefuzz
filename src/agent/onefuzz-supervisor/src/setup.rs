@@ -47,7 +47,7 @@ impl SetupRunner {
 
         // `azcopy sync` requires the local dir to exist.
         fs::create_dir_all(&setup_dir).await?;
-        az_copy::sync(setup_url.to_string(), &setup_dir).await?;
+        az_copy::sync(setup_url.to_string(), &setup_dir, false).await?;
 
         verbose!(
             "synced setup container from {} to {}",

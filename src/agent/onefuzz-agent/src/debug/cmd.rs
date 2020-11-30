@@ -10,6 +10,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         ("libfuzzer-coverage", Some(sub)) => crate::debug::libfuzzer_coverage::run(sub)?,
         ("libfuzzer-crash-report", Some(sub)) => crate::debug::libfuzzer_crash_report::run(sub)?,
         ("libfuzzer-fuzz", Some(sub)) => crate::debug::libfuzzer_fuzz::run(sub)?,
+        ("libfuzzer-merge", Some(sub)) => crate::debug::libfuzzer_merge::run(sub)?,
         _ => println!("missing subcommand\nUSAGE : {}", args.usage()),
     }
 
@@ -23,4 +24,5 @@ pub fn args() -> App<'static, 'static> {
         .subcommand(crate::debug::libfuzzer_coverage::args())
         .subcommand(crate::debug::libfuzzer_crash_report::args())
         .subcommand(crate::debug::libfuzzer_fuzz::args())
+        .subcommand(crate::debug::libfuzzer_merge::args())
 }
