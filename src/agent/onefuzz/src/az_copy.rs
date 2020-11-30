@@ -5,7 +5,7 @@ use anyhow::Result;
 use std::ffi::OsStr;
 use tokio::process::Command;
 
-pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>) -> Result<()> {
+pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, delete_dst: bool) -> Result<()> {
     use std::process::Stdio;
 
     let mut cmd = Command::new("azcopy");
@@ -16,6 +16,10 @@ pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>) -> Result<()> 
         .arg("sync")
         .arg(&src)
         .arg(&dst);
+
+    if delete_dst {
+        cmd.arg("--delete-destination");
+    }
 
     let output = cmd.spawn()?.wait_with_output().await?;
     if !output.status.success() {
