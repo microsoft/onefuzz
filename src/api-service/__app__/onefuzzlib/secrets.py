@@ -48,3 +48,9 @@ def get_secret(secret_url: str) -> KeyVaultSecret:
     (vault_url, secret_name) = parse_secret_url(secret_url)
     keyvault_client = get_keyvault_client(vault_url)
     return keyvault_client.get_secret(secret_name)
+
+
+def delete_secret(secret_url: str) -> None:
+    (vault_url, secret_name) = parse_secret_url(secret_url)
+    keyvault_client = get_keyvault_client(vault_url)
+    keyvault_client.begin_delete_secret(secret_name)

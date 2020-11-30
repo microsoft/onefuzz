@@ -17,6 +17,7 @@ from onefuzztypes.models import (
     GithubIssueTemplate,
     NotificationTemplate,
     Result,
+    SecretAddress,
     TeamsTemplate,
 )
 from onefuzztypes.primitives import Container, Event
@@ -31,7 +32,7 @@ from ..azure.queue import send_message
 from ..dashboard import add_event
 from ..orm import ORMMixin
 from ..reports import get_report
-from ..secrets import save_to_keyvault
+from ..secrets import delete_secret, save_to_keyvault
 from ..tasks.config import get_input_container_queues
 from ..tasks.main import Task
 from .ado import notify_ado
@@ -105,6 +106,21 @@ class Notification(models.Notification, ORMMixin):
             pass
 
         return super().save(new, require_etag)
+
+    def delete(self) -> None:
+        if isinstance(self.config, ADOTemplate):
+            if isinstance(self.config.auth_token, SecretAddress):
+                delete_secret(self.config.auth_token.url)
+        elif isinstance(self.config, GithubIssueTemplate):
+            if isinstance(self.config.auth, SecretAddress):
+                delete_secret(self.config.auth.url)
+        elif isinstance(self.config, SecretAddress):
+            if isinstance(self.config.url, str):
+                delete_secret(self.config.url)
+        else:
+            pass
+
+        return super().delete()
 
 
 @cached(ttl=10)

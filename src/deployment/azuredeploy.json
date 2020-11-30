@@ -112,7 +112,15 @@
                 "enabledForDiskEncryption": false,
                 "enabledForTemplateDeployment": true,
                 "tenantId": "[subscription().tenantId]",
-                "accessPolicies": [],
+                "accessPolicies": [
+                     {
+                        "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2019-08-01', 'full').identity.principalId]",
+                        "tenantId": "[subscription().tenantId]",
+                        "permissions": {
+                            "secrets": ["get", "list", "set", "delete"]                        
+                        }
+                    }
+                ],
                 "sku": {
                     "name": "standard",
                     "family": "A"
