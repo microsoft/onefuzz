@@ -121,6 +121,6 @@ stages:
           targetType: 'inline'
           script: |
             set -ex
-            ./onefuzz-cli-$(version).exe config --endpoint $(ONEFUZZ_SERVICE_URL) --client_id "$(AZURE_CLIENT_ID)" --client_secret "$(AZURE_CLIENT_SECRET)"
+            ./onefuzz-cli-$(version).exe config --endpoint $(ONEFUZZ_SERVICE_URL) --client_id "$(AZURE_CLIENT_ID)" --client_secret "$(AZURE_CLIENT_SECRET)" --authority "https://login.microsoftonline.com/$(AZURE_TENANT_ID)"
             ./onefuzz-cli-$(version).exe --version
             until ./onefuzz-cli-$(version).exe versions check --exact; do echo "waiting due to version mismatch"; sleep 1; done

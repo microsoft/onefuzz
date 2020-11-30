@@ -46,6 +46,7 @@ from .updates import queue_update
 A = TypeVar("A", bound="ORMMixin")
 
 QUERY_VALUE_TYPES = Union[
+    List[bool],
     List[int],
     List[str],
     List[UUID],
@@ -135,6 +136,12 @@ def build_filters(
             field_name = field
 
         parts: Optional[List[str]] = None
+        if isinstance(values[0], bool):
+            parts = []
+            for x in values:
+                if not isinstance(x, bool):
+                    raise TypeError("unexpected type")
+                parts.append("%s eq %s" % (field_name, str(x).lower))
         if isinstance(values[0], int):
             parts = []
             for x in values:
