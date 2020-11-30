@@ -588,7 +588,7 @@ class Client:
         url = "%s/%s?%s" % (account_url, "tools", sas)
 
         subprocess.check_output(
-            [self.azcopy, "sync", self.tools, url, "--delete-destination", "true"]
+            [self.azcopy, "copy", self.tools, url, "--delete-destination", "true"]
         )
 
     def upload_instance_setup(self) -> None:
@@ -618,7 +618,7 @@ class Client:
         subprocess.check_output(
             [
                 self.azcopy,
-                "sync",
+                "copy",
                 self.instance_specific,
                 url,
                 "--delete-destination",
@@ -655,7 +655,7 @@ class Client:
             url = "%s/%s?%s" % (account_url, name, sas)
 
             subprocess.check_output(
-                [self.azcopy, "sync", path, url, "--delete-destination", "true"]
+                [self.azcopy, "copy", path, url, "--delete-destination", "true"]
             )
 
     def deploy_app(self) -> None:
