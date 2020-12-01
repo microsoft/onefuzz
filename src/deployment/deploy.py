@@ -576,6 +576,17 @@ class Client:
         url = "%s/%s?%s" % (account_url, "tools", sas)
 
         subprocess.check_output(
+            [
+                self.azcopy,
+                "copy",
+                os.path.join(self.tools, "*"),
+                url,
+                "--overwrite=true",
+                "--recursive=true",
+            ]
+        )
+
+        subprocess.check_output(
             [self.azcopy, "sync", self.tools, url, "--delete-destination", "true"]
         )
 
@@ -602,6 +613,17 @@ class Client:
             expiry=expiry,
         )
         url = "%s/%s?%s" % (account_url, "instance-specific-setup", sas)
+
+        subprocess.check_output(
+            [
+                self.azcopy,
+                "copy",
+                os.path.join(self.instance_specific, "*"),
+                url,
+                "--overwrite=true",
+                "--recursive=true",
+            ]
+        )
 
         subprocess.check_output(
             [
@@ -641,6 +663,17 @@ class Client:
                 expiry=expiry,
             )
             url = "%s/%s?%s" % (account_url, name, sas)
+
+            subprocess.check_output(
+                [
+                    self.azcopy,
+                    "copy",
+                    os.path.join(path, "*"),
+                    url,
+                    "--overwrite=true",
+                    "--recursive=true",
+                ]
+            )
 
             subprocess.check_output(
                 [self.azcopy, "sync", path, url, "--delete-destination", "true"]
