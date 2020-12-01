@@ -136,8 +136,8 @@ pub async fn check_asan_string(mut data: String) -> Result<Option<AsanLog>> {
     if asan.is_some() {
         return Ok(asan);
     } else {
-        if data.len() > 1024 {
-            data.truncate(1024);
+        if data.len() > 4096 {
+            data.truncate(4096);
             data.push_str("...<truncated>");
         }
         warn!("unable to parse asan log from string: {:?}", data);
@@ -154,11 +154,11 @@ pub async fn check_asan_path(asan_dir: &Path) -> Result<Option<AsanLog>> {
         if asan.is_some() {
             return Ok(asan);
         } else {
-            if asan_text.len() > 1024 {
-                asan_text.truncate(1024);
+            if asan_text.len() > 4096 {
+                asan_text.truncate(4096);
                 asan_text.push_str("...<truncated>");
             }
-            warn!(
+            bail!(
                 "unable to parse asan log {}: {:?}",
                 file.path().display(),
                 asan_text
