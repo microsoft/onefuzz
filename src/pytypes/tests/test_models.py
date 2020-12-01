@@ -14,7 +14,7 @@ class TestModelsVerify(unittest.TestCase):
     def test_model(self) -> None:
         data = {
             "container": "data",
-            "config": {"url": "https://www.contoso.com/"},
+            "config": {"url": {"secret": "https://www.contoso.com/"}},
         }
 
         notification = NotificationCreate.parse_obj(data)
