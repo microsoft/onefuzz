@@ -61,7 +61,9 @@ def get_account_by_container(
     container: Container, storage_type: StorageType
 ) -> Optional[str]:
     accounts = cast(List[str], get_accounts(storage_type))
-    for account in accounts:
+
+    # check secondary accounts first by searching in reverse
+    for account in reversed(accounts):
         if container_exists_on_account(container, account):
             return account
     return None
