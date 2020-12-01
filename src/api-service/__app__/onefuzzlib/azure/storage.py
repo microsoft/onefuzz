@@ -65,11 +65,11 @@ def choose_account(storage_type: StorageType) -> str:
     if not accounts:
         raise Exception(f"no storage accounts for {storage_type}")
 
-    # extra storage accounts have 3x the weight of the first account, as the
-    # first account is also used for queues & tables
-    weights = [1] + [3] * len(accounts[1:])
+    if len(accounts) == 1:
+        return accounts[0]
 
-    return random.choices(accounts, weights=weights)[0]
+    # Use a random secondary storage account if any are available
+    return random.choice(accounts[1:])
 
 
 @cached
