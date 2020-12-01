@@ -85,6 +85,11 @@ def get_subscription() -> Any:  # should be str
 
 
 @cached
+def get_insights_instrumentation_key() -> Any:  # should be str
+    return os.environ["ONEFUZZ_TELEMETRY"]
+
+
+@cached
 def get_insights_appid() -> str:
     return os.environ["APPINSIGHTS_APPID"]
 
