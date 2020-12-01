@@ -6,9 +6,9 @@
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.job_templates import (
-    JobTemplateCreate,
     JobTemplateDelete,
-    JobTemplateUpdate,
+    JobTemplateGet,
+    JobTemplateSave,
 )
 from onefuzztypes.models import Error
 from onefuzztypes.responses import BoolResult
@@ -18,37 +18,33 @@ from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
+    request = parse_request(JobTemplateGet, req)
+    if isinstance(request, Error):
+        return not_ok(request, context="JobTemplateGet")
+
+    if request.name:
+        entry = JobTemplateIndex.get(request.name)
+        if entry is None:
+            return not_ok(
+                Error(code=ErrorCode.INVALID_REQUEST, errors=["no such job template"]),
+                context="JobTemplateGet",
+            )
+        return ok(entry.template)
+
     templates = JobTemplateIndex.get_index()
     return ok(templates)
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_request(JobTemplateCreate, req)
+    request = parse_request(JobTemplateSave, req)
     if isinstance(request, Error):
-        return not_ok(request, context="JobTemplateCreate")
+        return not_ok(request, context="JobTemplateSave")
 
     entry = JobTemplateIndex(name=request.name, template=request.template)
-    result = entry.save(new=True)
+    result = entry.save()
     if isinstance(result, Error):
-        return not_ok(result, context="JobTemplateCreate")
+        return not_ok(result, context="JobTemplateSave")
 
-    return ok(BoolResult(result=True))
-
-
-def patch(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_request(JobTemplateUpdate, req)
-    if isinstance(request, Error):
-        return not_ok(request, context="JobTemplateUpdate")
-
-    entry = JobTemplateIndex.get(request.name)
-    if entry is None:
-        return not_ok(
-            Error(code=ErrorCode.UNABLE_TO_UPDATE, errors=["no such job template"]),
-            context="JobTemplateUpdate",
-        )
-
-    entry.template = request.template
-    entry.save()
     return ok(BoolResult(result=True))
 
 
@@ -68,7 +64,5 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return post(req)
     elif req.method == "DELETE":
         return delete(req)
-    elif req.method == "PATCH":
-        return patch(req)
     else:
         raise Exception("invalid method")

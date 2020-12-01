@@ -12,7 +12,7 @@ from .models import JobConfig, NotificationConfig, TaskConfig, TaskContainers
 from .primitives import File
 from .requests import BaseRequest
 from .responses import BaseResponse
-from .validators import check_template_name
+from .validators import check_template_name, check_template_name_optional
 
 
 class UserFieldLocation(BaseModel):
@@ -44,7 +44,7 @@ class JobTemplateNotification(BaseModel):
     notification: NotificationConfig
 
 
-class JobTemplate(BaseModel):
+class JobTemplate(BaseResponse):
     os: OS
     job: JobConfig
     tasks: List[TaskConfig]
@@ -151,7 +151,7 @@ TEMPLATE_BASE_FIELDS = [
 ]
 
 
-class JobTemplateCreate(BaseRequest):
+class JobTemplateSave(BaseRequest):
     name: str
     template: JobTemplate
 
@@ -164,13 +164,6 @@ class JobTemplateDelete(BaseRequest):
     _verify_name: classmethod = validator("name", allow_reuse=True)(check_template_name)
 
 
-class JobTemplateUpdate(BaseRequest):
-    name: str
-    template: JobTemplate
-
-    _verify_name: classmethod = validator("name", allow_reuse=True)(check_template_name)
-
-
 class JobTemplateRequest(BaseRequest):
     name: str
     user_fields: TemplateUserFields
@@ -178,6 +171,14 @@ class JobTemplateRequest(BaseRequest):
 
     _validate_name: classmethod = validator("name", allow_reuse=True)(
         check_template_name
+    )
+
+
+class JobTemplateGet(BaseRequest):
+    name: Optional[str]
+
+    _validate_name: classmethod = validator("name", allow_reuse=True)(
+        check_template_name_optional
     )
 
 
