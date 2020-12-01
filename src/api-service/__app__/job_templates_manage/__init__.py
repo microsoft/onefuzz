@@ -8,7 +8,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.job_templates import (
     JobTemplateDelete,
     JobTemplateGet,
-    JobTemplateSave,
+    JobTemplateUpload,
 )
 from onefuzztypes.models import Error
 from onefuzztypes.responses import BoolResult
@@ -36,14 +36,14 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
-    request = parse_request(JobTemplateSave, req)
+    request = parse_request(JobTemplateUpload, req)
     if isinstance(request, Error):
-        return not_ok(request, context="JobTemplateSave")
+        return not_ok(request, context="JobTemplateUpload")
 
     entry = JobTemplateIndex(name=request.name, template=request.template)
     result = entry.save()
     if isinstance(result, Error):
-        return not_ok(result, context="JobTemplateSave")
+        return not_ok(result, context="JobTemplateUpload")
 
     return ok(BoolResult(result=True))
 

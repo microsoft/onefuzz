@@ -10,7 +10,7 @@ from onefuzztypes.job_templates import (
     JobTemplateDelete,
     JobTemplateGet,
     JobTemplateIndex,
-    JobTemplateSave,
+    JobTemplateUpload,
 )
 from onefuzztypes.responses import BoolResult
 
@@ -36,15 +36,15 @@ class Manage(Endpoint):
         self.onefuzz.logger.debug("get job template")
         return self._req_model("GET", JobTemplate, data=JobTemplateGet(name=name))
 
-    def save(self, name: str, template: JobTemplate) -> BoolResult:
-        """ Save a Job Template """
+    def upload(self, name: str, template: JobTemplate) -> BoolResult:
+        """ Upload a Job Template """
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
 
-        self.onefuzz.logger.debug("creating job templates")
+        self.onefuzz.logger.debug("upload job template")
         return self._req_model(
             "POST",
             BoolResult,
-            data=JobTemplateSave(name=name, template=template),
+            data=JobTemplateUpload(name=name, template=template),
         )
 
     def delete(self, name: str) -> BoolResult:

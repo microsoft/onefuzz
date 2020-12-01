@@ -151,7 +151,7 @@ TEMPLATE_BASE_FIELDS = [
 ]
 
 
-class JobTemplateSave(BaseRequest):
+class JobTemplateUpload(BaseRequest):
     name: str
     template: JobTemplate
 
