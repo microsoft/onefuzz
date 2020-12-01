@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, ValidationError, root_validator, validator
+from pydantic import BaseModel, Field, root_validator, validator
 from pydantic.dataclasses import dataclass
 
 from .consts import ONE_HOUR, SEVEN_DAYS
@@ -264,7 +264,7 @@ class ADOTemplate(BaseModel):
     on_duplicate: ADODuplicateTemplate
 
     @validator("auth_token", pre=True, always=True)
-    def validate_auth_token(cls, v):
+    def validate_auth_token(cls, v: Any) -> SecretData:
         if isinstance(v, str):
             return SecretData(secret=v)
         elif isinstance(v, SecretData):
@@ -272,14 +272,14 @@ class ADOTemplate(BaseModel):
         elif isinstance(v, dict):
             return SecretData(v)
         else:
-            raise ValidationError(f"invalid datatype {type(v)}")
+            raise Exception(f"invalid datatype {type(v)}")
 
 
 class TeamsTemplate(BaseModel):
-    url: SecretData[str] = None
+    url: SecretData[str]
 
     @validator("url", pre=True, always=True)
-    def validate_url(cls, v):
+    def validate_url(cls, v: Any) -> SecretData:
         if isinstance(v, str):
             return SecretData(secret=v)
         elif isinstance(v, SecretData):
@@ -287,7 +287,7 @@ class TeamsTemplate(BaseModel):
         elif isinstance(v, dict):
             return SecretData(v)
         else:
-            raise ValidationError(f"invalid datatype {type(v)}")
+            raise Exception(f"invalid datatype {type(v)}")
 
 
 class ContainerDefinition(BaseModel):
@@ -463,7 +463,7 @@ class GithubIssueTemplate(BaseModel):
     on_duplicate: GithubIssueDuplicate
 
     @validator("auth", pre=True, always=True)
-    def validate_auth(cls, v):
+    def validate_auth(cls, v: Any) -> SecretData:
         if isinstance(v, str):
             return SecretData(secret=v)
         elif isinstance(v, SecretData):
@@ -474,7 +474,7 @@ class GithubIssueTemplate(BaseModel):
             except Exception:
                 return SecretData(GithubAuth.parse_obj(v))
         else:
-            raise ValidationError(f"invalid datatype {type(v)}")
+            raise Exception(f"invalid datatype {type(v)}")
 
 
 NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
