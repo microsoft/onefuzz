@@ -65,6 +65,7 @@ class BackendConfig(BaseModel):
     features: Set[str] = Field(default_factory=set)
     tenant_domain: Optional[str]
 
+
 class Backend:
     def __init__(
         self,
