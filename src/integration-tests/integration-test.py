@@ -17,22 +17,25 @@
 #    checks on each of the created items for the stage.  This batch processing
 #    allows testing multiple components concurrently.
 
+import json
 import logging
 import os
 import re
 import sys
+import uuid
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
 from uuid import UUID, uuid4
 
+import requests
+from onefuzz.api import Command, Onefuzz
+from onefuzz.backend import ContainerWrapper, wait
+from onefuzz.cli import execute_api
 from onefuzztypes.enums import OS, ContainerType, TaskState, VmState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset
 from onefuzztypes.primitives import Directory, File
 from pydantic import BaseModel, Field
-
-from onefuzz.api import Command, Onefuzz
-from onefuzz.backend import ContainerWrapper, wait
-from onefuzz.cli import execute_api
 
 LINUX_POOL = "linux-test"
 WINDOWS_POOL = "linux-test"
@@ -152,6 +155,10 @@ class TestOnefuzz:
         # job_id -> target
         self.target_jobs: Dict[UUID, str] = {}
 
+        self.start_log_marker = str(uuid.uuid4())
+        self.stop_log_marker = str(uuid.uuid4())
+        self.inject_log(f"integration-test-start fake error {self.start_log_marker}")
+
     def setup(
         self,
         *,
@@ -170,6 +177,28 @@ class TestOnefuzz:
                 self.pools[entry] = self.of.pools.create(name, entry)
                 self.logger.info("creating scaleset for pool: %s", name)
                 self.of.scalesets.create(name, self.pool_size, region=region)
+
+    def inject_log(self, message: str) -> None:
+        key = self.of.info.get().insights_instrumentation_key
+        assert key is not None, "instrumentation key required for integration testing"
+
+        data = {
+            "data": {
+                "baseData": {
+                    "message": message,
+                    "severityLevel": "Information",
+                    "ver": 2,
+                },
+                "baseType": "MessageData",
+            },
+            "iKey": key,
+            "name": "Microsoft.ApplicationInsights.Message",
+            "time": datetime.now(timezone.utc).astimezone().isoformat(),
+        }
+
+        requests.post(
+            "https://dc.services.visualstudio.com/v2/track", json=data
+        ).raise_for_status()
 
     def launch(self, path: str) -> None:
         """ Launch all of the fuzzing templates """
@@ -478,6 +507,45 @@ class TestOnefuzz:
                 stop_notifications=True,
             )
 
+    def check_log_end_marker(
+        self,
+    ) -> Tuple[bool, str, bool]:
+        logs = self.of.debug.logs.keyword(
+            self.stop_log_marker, limit=1, timespan="PT1H"
+        )
+        return (
+            len(logs["PrimaryResult"]) > 0,
+            "waiting for application insight logs to flush",
+            True,
+        )
+
+    def check_logs_for_errors(self) -> bool:
+        # only check for errors that exist between the start and stop markers
+        # also, only check for the most recent 100 errors
+
+        self.inject_log(f"integration-test-stop fake error {self.stop_log_marker}")
+        wait(self.check_log_end_marker, frequency=5.0)
+        self.logger.info("application insights log flushed")
+
+        logs = self.of.debug.logs.keyword("error", limit=100, timespan="PT2H")
+
+        seen_errors = False
+        seen_stop = False
+        for entry in logs["PrimaryResult"]:
+            entry_as_str = json.dumps(entry, sort_keys=True)
+            if not seen_stop:
+                if self.stop_log_marker in entry_as_str:
+                    seen_stop = True
+                continue
+
+            if self.start_log_marker in entry_as_str:
+                break
+
+            seen_errors = True
+            self.logger.error("error log: %s", entry_as_str)
+
+        return seen_errors
+
     def cleanup(self, *, user_pools: Optional[Dict[str, str]] = None) -> bool:
         """ cleanup all of the integration pools & jobs """
 
@@ -571,6 +639,9 @@ class Run(Command):
             success = False
 
         if tester.failed_jobs or tester.failed_repro:
+            success = False
+
+        if tester.check_logs_for_errors():
             success = False
 
         if error:
