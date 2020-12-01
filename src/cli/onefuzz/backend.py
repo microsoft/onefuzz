@@ -145,7 +145,7 @@ class Backend:
         if not self.config.endpoint:
             raise Exception("endpoint not configured")
 
-        if "common" in self.config.authority:
+        if self.config.tenant_domain:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
             scopes = ["https://" + self.config.tenant_domain + "/" + endpoint + "/.default"]
         else:
