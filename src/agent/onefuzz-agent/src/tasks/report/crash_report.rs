@@ -37,8 +37,8 @@ pub struct CrashReport {
 
     pub job_id: Uuid,
 
-    pub scariness_index: Option<u32>,
-    pub scariness_value: Option<String>,
+    pub scariness_score: Option<u32>,
+    pub scariness_description: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -153,8 +153,8 @@ impl CrashReport {
             call_stack: asan_log.call_stack().to_vec(),
             call_stack_sha256: asan_log.call_stack_sha256(),
             asan_log: Some(asan_log.text().to_string()),
-            scariness_index: asan_log.scariness_index,
-            scariness_value: asan_log.scariness_value,
+            scariness_score: asan_log.scariness_score().into(),
+            scariness_description: asan_log.scariness_description().to_owned(),
             task_id,
             job_id,
         }

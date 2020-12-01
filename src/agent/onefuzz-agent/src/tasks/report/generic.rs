@@ -136,8 +136,8 @@ impl<'a> GenericReportProcessor<'a> {
                 crash_site: crash.crash_site,
                 call_stack_sha256,
                 asan_log: None,
-                scariness_index: None,
-                scariness_value: None,
+                scariness_score: None,
+                scariness_description: None,
                 task_id,
                 job_id,
             };

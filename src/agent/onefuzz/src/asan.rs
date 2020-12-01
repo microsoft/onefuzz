@@ -16,8 +16,8 @@ pub struct AsanLog {
     summary: String,
     fault_type: String,
     call_stack: Vec<String>,
-    scariness_index: Option<u32>,
-    scariness_value: Option<String>,
+    scariness_score: Option<u32>,
+    scariness_description: Option<String>,
 }
 
 impl AsanLog {
@@ -29,7 +29,7 @@ impl AsanLog {
 
         let call_stack = parse_call_stack(&text).unwrap_or_else(Vec::default);
 
-        let (scariness_index, scariness_value) = match parse_scariness(&text) {
+        let (scariness_score, scariness_description) = match parse_scariness(&text) {
             Some((x, y)) => (Some(x), Some(y)),
             None => (None, None),
         };
@@ -40,8 +40,8 @@ impl AsanLog {
             summary,
             fault_type,
             call_stack,
-            scariness_index,
-            scariness_value,
+            scariness_score,
+            scariness_description,
         };
 
         Some(log)
@@ -65,6 +65,14 @@ impl AsanLog {
 
     pub fn call_stack_sha256(&self) -> String {
         sha256::digest_iter(self.call_stack())
+    }
+
+    pub fn scariness_score(&self) -> Option<u32> {
+        self.scariness_score
+    }
+
+    pub fn scariness_description(&self) -> &Option<String> {
+        &self.scariness_description
     }
 }
 
@@ -309,7 +317,7 @@ mod tests {
             ),
         ];
 
-        for (log_path, sanitizer, fault_type, call_stack_len, scariness_index, scariness_value) in
+        for (log_path, sanitizer, fault_type, call_stack_len, scariness_score, scariness_description) in
             test_cases
         {
             let data = std::fs::read_to_string(log_path)?;
@@ -318,8 +326,8 @@ mod tests {
             assert_eq!(log.sanitizer, sanitizer);
             assert_eq!(log.fault_type, fault_type);
             assert_eq!(log.call_stack.len(), call_stack_len);
-            assert_eq!(log.scariness_index, scariness_index);
-            assert_eq!(log.scariness_value, scariness_value);
+            assert_eq!(log.scariness_score, scariness_score);
+            assert_eq!(log.scariness_description, scariness_description);
         }
         Ok(())
     }
