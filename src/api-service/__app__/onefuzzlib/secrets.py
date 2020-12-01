@@ -9,20 +9,35 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 from azure.keyvault.secrets import KeyVaultSecret
-from onefuzztypes.models import SecretAddress
+from onefuzztypes.models import SecretAddress, SecretData
+from pydantic import BaseModel
 
 from .azure.creds import get_instance_name, get_keyvault_client
 
 
-def save_to_keyvault(secret_value: str) -> SecretAddress:
+def save_to_keyvault(secret_data: SecretData) -> SecretData:
+    if isinstance(secret_data.secret, SecretAddress):
+        return secret_data
+
     secret_name = str(uuid4())
+    if isinstance(secret_data.secret, str):
+        secret_value = secret_data.secret
+    elif isinstance(secret_data.secret, BaseModel):
+        secret_value = secret_data.secret.json()
+    else:
+        raise Exception("invalid secret data")
+
     kv = store_in_keyvault(get_keyvault_address(), secret_name, secret_value)
-    return SecretAddress(url=kv.id)
+    secret_address = SecretAddress(url=kv.id)
+    return SecretData(secret=secret_address)
 
 
-def get_secret_value(self: SecretAddress) -> str:
-    secret = get_secret(self.url).value
-    return cast(str, secret.value)
+def get_secret_string_value(self: SecretData[str]) -> str:
+    if isinstance(self.secret, SecretAddress):
+        secret = get_secret(self.secret.url).value
+        return cast(str, secret.value)
+    else:
+        return self.secret
 
 
 def get_keyvault_address() -> str:

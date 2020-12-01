@@ -33,11 +33,12 @@ from onefuzztypes.enums import (
     UpdateType,
     VmState,
 )
-from onefuzztypes.models import Error
+from onefuzztypes.models import Error, SecretData
 from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
 from typing_extensions import Protocol
 
+from ..onefuzzlib.secrets import save_to_keyvault
 from .azure.table import get_client
 from .dashboard import add_event
 from .telemetry import track_event_filtered
@@ -288,13 +289,17 @@ class ORMMixin(ModelMixin):
             if not isinstance(raw[key], (str, int)):
                 raw[key] = json.dumps(raw[key])
 
-        # for datetime fields that passed through filtering, use the real value,
-        # rather than a serialized form
         for field in self.__fields__:
             if field not in raw:
                 continue
+            # for datetime fields that passed through filtering, use the real value,
+            # rather than a serialized form
             if self.__fields__[field].type_ == datetime:
                 raw[field] = getattr(self, field)
+            # for secretData make sure the data is stored in keyvault
+            if self.__fields__[field].type_ == SecretData:
+                secret_data: SecretData = getattr(self, field)
+                raw[field] = save_to_keyvault(secret_data)
 
         partition_key_field, row_key_field = self.key_fields()
 

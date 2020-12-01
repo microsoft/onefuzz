@@ -26,7 +26,7 @@ from azure.devops.v6_0.work_item_tracking.work_item_tracking_client import (
 from memoization import cached
 from onefuzztypes.models import ADOTemplate, Report
 
-from ..secrets import get_secret_value
+from ..secrets import get_secret_string_value
 from .common import Render, fail_task
 
 
@@ -54,10 +54,7 @@ class ADO:
     ):
         self.config = config
         self.renderer = Render(container, filename, report)
-        if isinstance(self.config.auth_token, str):
-            auth_token = self.config.auth_token
-        else:
-            auth_token = get_secret_value(self.config.auth_token)
+        auth_token = get_secret_string_value(self.config.auth_token)
         self.client = get_ado_client(self.config.base_url, auth_token)
         self.project = self.render(self.config.project)
 

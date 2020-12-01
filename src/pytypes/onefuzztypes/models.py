@@ -4,10 +4,11 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
+from pydantic.dataclasses import dataclass
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -43,6 +44,29 @@ class UserInfo(BaseModel):
 
 class SecretAddress(BaseModel):
     url: str
+
+
+T = TypeVar("T")
+
+
+@dataclass
+class SecretData(Generic[T]):
+    secret: Union[T, SecretAddress]
+
+    def __init__(self, secret: Union[T, SecretAddress]):
+        self.secret = secret
+
+    def __str__(self) -> str:
+        if isinstance(self.secret, SecretAddress):
+            return str(self.secret)
+        else:
+            return "[REDACTED]"
+
+    def __repr__(self) -> str:
+        if isinstance(self.secret, SecretAddress):
+            return str(self.secret)
+        else:
+            return "[REDACTED]"
 
 
 class EnumModel(BaseModel):
@@ -225,7 +249,7 @@ class ADODuplicateTemplate(BaseModel):
 
 class ADOTemplate(BaseModel):
     base_url: str
-    auth_token: Union[str, SecretAddress]
+    auth_token: SecretData[str]
     project: str
     type: str
     unique_fields: List[str]
@@ -235,10 +259,7 @@ class ADOTemplate(BaseModel):
 
 
 class TeamsTemplate(BaseModel):
-    url: Union[str, SecretAddress]
-
-    def redact(self) -> None:
-        self.url = "***"
+    url: SecretData[str]
 
 
 class ContainerDefinition(BaseModel):
@@ -403,7 +424,7 @@ class GithubAuth(BaseModel):
 
 
 class GithubIssueTemplate(BaseModel):
-    auth: Union[GithubAuth, SecretAddress]
+    auth: SecretData[GithubAuth]
     organization: str
     repository: str
     title: str
