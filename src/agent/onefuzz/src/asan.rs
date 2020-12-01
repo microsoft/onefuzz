@@ -22,7 +22,7 @@ impl AsanLog {
     pub fn parse(text: String) -> Option<Self> {
         let (summary, sanitizer, fault_type) = match parse_summary(&text) {
             Some(x) => x,
-            None => parse_failure(&text)?,
+            None => parse_asan_runtime_error(&text)?,
         };
 
         let call_stack = parse_call_stack(&text).unwrap_or_else(Vec::default);
@@ -59,7 +59,7 @@ impl AsanLog {
     }
 }
 
-fn parse_failure(text: &str) -> Option<(String, String, String)> {
+fn parse_asan_runtime_error(text: &str) -> Option<(String, String, String)> {
     let pattern = r"==\d+==((\w+) (CHECK failed): [^ \n]+)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
