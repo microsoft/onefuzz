@@ -37,8 +37,8 @@ pub struct CrashReport {
 
     pub job_id: Uuid,
 
-    pub scariness_index: Optional<u32>,
-    pub scariness_value: Optional<String>,
+    pub scariness_index: Option<u32>,
+    pub scariness_value: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
