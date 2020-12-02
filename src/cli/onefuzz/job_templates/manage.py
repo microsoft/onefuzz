@@ -27,7 +27,9 @@ class Manage(Endpoint):
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
 
         self.onefuzz.logger.debug("listing job templates")
-        return self._req_model_list("GET", JobTemplateIndex)
+        return self._req_model_list(
+            "GET", JobTemplateIndex, data=JobTemplateGet(name=None)
+        )
 
     def get(self, name: str) -> JobTemplate:
         """ Get an existing Job Template """
