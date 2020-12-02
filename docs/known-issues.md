@@ -50,3 +50,9 @@
       Go to Azure Active Directory > App registrations > (search for your onefuzz instance name).
       In the Owner tab, add the service principal.
       In the Overview tab, click the link under "Managed application in local directory" > Owner, then add the service principal.
+
+6. {'code': 'RoleAssignmentUpdateNotPermitted', 'message': 'Tenant ID, application ID, principal ID, and scope are not allowed to be updated.'}
+
+   To fix the issue, remove all non existing service principals from the resource group.
+   Go to the resource group > Access Control (IAM) > Role Assignments.
+   Remove all entries marked as "Identity not found".
