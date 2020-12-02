@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Agent: Mark tasks as failed if the application under test generates an ASAN log file that the agent is unable to parse.  [#351](https://github.com/microsoft/onefuzz/pull/351)
-* Agent: Updated the `libfuzzer_merge` task to process pre-existing inputs in a single pass.  [#282](https://github.com/microsoft/onefuzz/pull/282)
+* Agent: Updated the `libfuzzer_merge` task to merge pre-existing inputs in a single pass.  [#282](https://github.com/microsoft/onefuzz/pull/282)
 * CLI: Clarified the error messages when prefix-expansion fails.  [#342](https://github.com/microsoft/onefuzz/pull/342)
 * Service: Rendered `pydantic` models as JSON when logging to prevent `error=None` from showing up in the error logs.  [#350](https://github.com/microsoft/onefuzz/pull/350)
 * Deployment: Pinned the version of pyOpenssl to the version used by multiple Azure libraries.  [#348](https://github.com/microsoft/onefuzz/pull/348)
