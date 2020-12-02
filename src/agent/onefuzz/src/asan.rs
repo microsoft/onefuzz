@@ -317,8 +317,14 @@ mod tests {
             ),
         ];
 
-        for (log_path, sanitizer, fault_type, call_stack_len, scariness_score, scariness_description) in
-            test_cases
+        for (
+            log_path,
+            sanitizer,
+            fault_type,
+            call_stack_len,
+            scariness_score,
+            scariness_description,
+        ) in test_cases
         {
             let data = std::fs::read_to_string(log_path)?;
             let log = AsanLog::parse(data).unwrap();
