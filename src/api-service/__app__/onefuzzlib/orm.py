@@ -14,11 +14,11 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Set,
     Tuple,
     Type,
     TypeVar,
     Union,
-    Set
 )
 from uuid import UUID
 
@@ -216,6 +216,7 @@ class ModelMixin(BaseModel):
 
 Type_has_secrets: Dict[type, bool] = dict()
 
+
 class ORMMixin(ModelMixin):
     Timestamp: Optional[datetime] = Field(alias="Timestamp")
     etag: Optional[str]
@@ -287,8 +288,10 @@ class ORMMixin(ModelMixin):
 
     @classmethod
     def hide_secrets(
-        cls, model: BaseModel, hider: Callable[["SecretData"], None],
-        visited: Set[int] = set()
+        cls,
+        model: BaseModel,
+        hider: Callable[["SecretData"], None],
+        visited: Set[int] = set(),
     ) -> None:
         model_type = type(model)
         if Type_has_secrets.get(model_type, True):
