@@ -4,8 +4,10 @@
 # Licensed under the MIT License.
 
 import unittest
+
 from onefuzztypes.models import Notification, SecretAddress, SecretData, TeamsTemplate
 from onefuzztypes.primitives import Container
+
 from __app__.onefuzzlib.orm import ORMMixin
 
 
