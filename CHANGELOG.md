@@ -7,15 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.10.0
 ### Added
 * CLI: Added `libfuzzer merge` job template, which enables running performing libfuzzer input minimization as a batch operation.  [#282](https://github.com/microsoft/onefuzz/pull/282)
-* CLI/Service: Added the instance specific Application Insights telemetry key to `onefuzz info get`, which will enable logging to the instance specific application insights from the SDK.  [#353](https://github.com/microsoft/onefuzz/pull/353)
+* CLI/Service: Added the instance-specific Application Insights telemetry key to `onefuzz info get`, which will enable logging to the instance specific application insights from the SDK.  [#353](https://github.com/microsoft/onefuzz/pull/353)
 * Agent: Added support for parsing AddressSanitizer `CHECK failed` entries, which can occur during large amounts of memory corruption.  [#358](https://github.com/microsoft/onefuzz/pull/358)
-* Agent/Service: Added support for parsing the `ASAN_OPTIONS` output from `print_scariness`.  [#359](https://github.com/microsoft/onefuzz/pull/359)
+* Agent/Service: Added support for parsing the ASAN "scariness" score and description when `print_scariness=1` in `ASAN_OPTIONS`.  [#359](https://github.com/microsoft/onefuzz/pull/359)
 
 ### Changed
 * Agent: Mark tasks as failed if the application under test generates an ASAN log file that the agent is unable to parse.  [#351](https://github.com/microsoft/onefuzz/pull/351)
-* Agent: Updated the `libfuzzer_merge` task to pre-existing inputs in a single pass.  [#282](https://github.com/microsoft/onefuzz/pull/282)
+* Agent: Updated the `libfuzzer_merge` task to process pre-existing inputs in a single pass.  [#282](https://github.com/microsoft/onefuzz/pull/282)
 * CLI: Clarified the error messages when prefix-expansion fails.  [#342](https://github.com/microsoft/onefuzz/pull/342)
-* Service: Rendered `pydantic` models as JSON when logging to remove `error=None` from showing up in the error logs.  [#350](https://github.com/microsoft/onefuzz/pull/350)
+* Service: Rendered `pydantic` models as JSON when logging to prevent `error=None` from showing up in the error logs.  [#350](https://github.com/microsoft/onefuzz/pull/350)
 * Deployment: Pinned the version of pyOpenssl to the version used by multiple Azure libraries.  [#348](https://github.com/microsoft/onefuzz/pull/348)
 * CLI/Service: (PREVIEW FEATURE) Multiple updates to job template management.  [#354](https://github.com/microsoft/onefuzz/pull/354), [#360](https://github.com/microsoft/onefuzz/pull/360), [#361](https://github.com/microsoft/onefuzz/pull/361)
 
@@ -23,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Fixed issue preventing the supervisor from notifying the service on some state changes. [#337](https://github.com/microsoft/onefuzz/pull/337)
 * Deployment: Fixed a regression in retrying password creation during deployment [#338](https://github.com/microsoft/onefuzz/pull/338)
 * Deployment: Fixed uploading tools when rolling back deployments. [#347](https://github.com/microsoft/onefuzz/pull/347)
-
 
 ## 1.9.0
 ### Added
