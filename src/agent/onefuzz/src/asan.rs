@@ -77,7 +77,7 @@ impl AsanLog {
 }
 
 fn parse_scariness(text: &str) -> Option<(u32, String)> {
-    let pattern = r"(?m)^SCARINESS: (\d+) \(([^\)]+)\)$";
+    let pattern = r"(?m)^SCARINESS: (\d+) \(([^\)]+)\)\r?$";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
     let index = u32::from_str_radix(captures.get(1)?.as_str(), 10).ok()?;
