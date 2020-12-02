@@ -155,6 +155,9 @@ class TestOnefuzz:
         # job_id -> target
         self.target_jobs: Dict[UUID, str] = {}
 
+        # only check for errors that exist between these markers. The first is
+        # added at the start, the second is added just prior to checking the
+        # logs.
         self.start_log_marker = str(uuid.uuid4())
         self.stop_log_marker = str(uuid.uuid4())
         self.inject_log(f"integration-test-start fake error {self.start_log_marker}")
@@ -179,6 +182,11 @@ class TestOnefuzz:
                 self.of.scalesets.create(name, self.pool_size, region=region)
 
     def inject_log(self, message: str) -> None:
+        # This is an *extremely* minimal implementation of the Application Insights rest
+        # API, as discussed here:
+        #
+        # https://apmtips.com/posts/2017-10-27-send-metric-to-application-insights/
+
         key = self.of.info.get().insights_instrumentation_key
         assert key is not None, "instrumentation key required for integration testing"
 
@@ -521,7 +529,8 @@ class TestOnefuzz:
 
     def check_logs_for_errors(self) -> bool:
         # only check for errors that exist between the start and stop markers
-        # also, only check for the most recent 100 errors
+        # also, only check for the most recent 100 errors within the last 2
+        # hours
 
         self.inject_log(f"integration-test-stop fake error {self.stop_log_marker}")
         wait(self.check_log_end_marker, frequency=5.0)
