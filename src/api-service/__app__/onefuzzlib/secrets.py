@@ -28,8 +28,8 @@ def save_to_keyvault(secret_data: SecretData) -> SecretData:
         raise Exception("invalid secret data")
 
     kv = store_in_keyvault(get_keyvault_address(), secret_name, secret_value)
-    secret_address = SecretAddress(url=kv.id)
-    return SecretData(secret=secret_address)
+    secret_data.secret = SecretAddress(url=kv.id)
+    return secret_data
 
 
 def get_secret_string_value(self: SecretData[str]) -> str:

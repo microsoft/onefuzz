@@ -30,6 +30,7 @@ from uuid import UUID
 import msal
 import requests
 from azure.storage.blob import ContainerClient
+from dataclasses import is_dataclass, asdict
 from pydantic import BaseModel, Field
 from tenacity import Future as tenacity_future
 from tenacity import Retrying, retry
@@ -374,6 +375,8 @@ def serialize(data: Any) -> Any:
         return str(data)
     if isinstance(data, (int, str)):
         return data
+    if is_dataclass(data):
+        return {serialize(a): serialize(b) for (a, b) in asdict(data).items()}
 
     raise Exception("unknown type %s" % type(data))
 

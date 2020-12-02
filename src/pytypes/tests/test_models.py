@@ -20,6 +20,7 @@ class TestModelsVerify(unittest.TestCase):
         notification = NotificationCreate.parse_obj(data)
         self.assertIsInstance(notification.config, TeamsTemplate)
         self.assertIsInstance(notification.config.url, SecretData)
+        self.assertEqual(notification.config.url.secret, "https://www.contoso.com/", "mismatch secret value")
 
         missing_container = {
             "config": {"url": "https://www.contoso.com/"},

@@ -270,7 +270,7 @@ class ADOTemplate(BaseModel):
         elif isinstance(v, SecretData):
             return v
         elif isinstance(v, dict):
-            return SecretData(v)
+            return SecretData(secret=v["secret"])
         else:
             raise Exception(f"invalid datatype {type(v)}")
 
@@ -285,7 +285,7 @@ class TeamsTemplate(BaseModel):
         elif isinstance(v, SecretData):
             return v
         elif isinstance(v, dict):
-            return SecretData(v)
+            return SecretData(secret=v["secret"])
         else:
             raise Exception(f"invalid datatype {type(v)}")
 
@@ -470,7 +470,7 @@ class GithubIssueTemplate(BaseModel):
             return v
         elif isinstance(v, dict):
             try:
-                return SecretData(v)
+                return SecretData(secret=v["secret"])
             except Exception:
                 return SecretData(GithubAuth.parse_obj(v))
         else:
