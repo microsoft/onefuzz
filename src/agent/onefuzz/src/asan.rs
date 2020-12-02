@@ -20,7 +20,11 @@ pub struct AsanLog {
 
 impl AsanLog {
     pub fn parse(text: String) -> Option<Self> {
-        let (summary, sanitizer, fault_type) = parse_summary(&text)?;
+        let (summary, sanitizer, fault_type) = match parse_summary(&text) {
+            Some(x) => x,
+            None => parse_asan_runtime_error(&text)?,
+        };
+
         let call_stack = parse_call_stack(&text).unwrap_or_else(Vec::default);
 
         let log = Self {
@@ -53,6 +57,16 @@ impl AsanLog {
     pub fn call_stack_sha256(&self) -> String {
         sha256::digest_iter(self.call_stack())
     }
+}
+
+fn parse_asan_runtime_error(text: &str) -> Option<(String, String, String)> {
+    let pattern = r"==\d+==((\w+) (CHECK failed): [^ \n]+)";
+    let re = Regex::new(pattern).ok()?;
+    let captures = re.captures(text)?;
+    let summary = captures.get(1)?.as_str().trim();
+    let sanitizer = captures.get(2)?.as_str().trim();
+    let fault_type = captures.get(3)?.as_str().trim();
+    Some((summary.into(), sanitizer.into(), fault_type.into()))
 }
 
 fn parse_summary(text: &str) -> Option<(String, String, String)> {
@@ -176,7 +190,7 @@ mod tests {
     use super::AsanLog;
 
     #[test]
-    fn test_asan_log_parse() {
+    fn test_asan_log_parse() -> anyhow::Result<()> {
         let test_cases = vec![
             (
                 "data/libfuzzer-asan-log.txt",
@@ -226,15 +240,28 @@ mod tests {
                 "breakpoint",
                 43,
             ),
+            (
+                "data/asan-check-failure.txt",
+                "AddressSanitizer",
+                "CHECK failed",
+                12,
+            ),
+            (
+                "data/asan-check-failure-missing-symbolizer.txt",
+                "AddressSanitizer",
+                "CHECK failed",
+                12,
+            ),
         ];
 
         for (log_path, sanitizer, fault_type, call_stack_len) in test_cases {
-            let data = std::fs::read_to_string(log_path).unwrap();
+            let data = std::fs::read_to_string(log_path)?;
             let log = AsanLog::parse(data).unwrap();
 
             assert_eq!(log.sanitizer, sanitizer);
             assert_eq!(log.fault_type, fault_type);
             assert_eq!(log.call_stack.len(), call_stack_len);
         }
+        Ok(())
     }
 }
