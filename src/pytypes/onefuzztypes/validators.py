@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 from string import ascii_letters, digits
+from typing import Optional
 
 ALPHA_NUM = ascii_letters + digits
 ALPHA_NUM_DASH = ALPHA_NUM + "-"
@@ -36,3 +37,10 @@ def check_template_name(value: str) -> str:
         raise ValueError("invalid value: %s" % value)
 
     return check_alnum_underscore(value)
+
+
+def check_template_name_optional(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return value
+
+    return check_template_name(value)

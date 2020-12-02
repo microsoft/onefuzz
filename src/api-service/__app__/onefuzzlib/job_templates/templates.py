@@ -26,6 +26,18 @@ class JobTemplateIndex(BASE_INDEX, ORMMixin):
         return ("name", None)
 
     @classmethod
+    def get_base_entry(cls, name: str) -> Optional[BASE_INDEX]:
+        result = cls.get(name)
+        if result is not None:
+            return BASE_INDEX(name=name, template=result.template)
+
+        template = TEMPLATES.get(name)
+        if template is None:
+            return None
+
+        return BASE_INDEX(name=name, template=template)
+
+    @classmethod
     def get_index(cls) -> List[BASE_INDEX]:
         entries = [BASE_INDEX(name=x.name, template=x.template) for x in cls.search()]
 
