@@ -7,7 +7,7 @@
    This means someone already is using `myname.azurewebsites.net`. You'll need
    to pick a different name for your onefuzz instance.
 
-1. The workspace name 'logs-wb-XXX' is not unique
+2. The workspace name 'logs-wb-XXX' is not unique
 
    This means the workbook created by the onefuzz deployment is already
    allocated in a different resource group, even if said resource group has
@@ -30,3 +30,27 @@
    of Azure Functions was not available yet. This race condition is solved by
    ARM reporting the deployment is finished too early. Retry the deployment and
    the error should be corrected automatically.
+
+1. Registration.GraphQueryError: request did not succeed: HTTP 403
+   ```
+   error: {
+      ...
+      "code": "Authorization_RequestDenied",
+      "message": "Insufficient privileges to complete the operation.",
+      ...}
+   ```
+
+   The application registration was created by different user and the current deployer does have access to it.
+   There are two ways to to solve the issue:
+
+   1. Delete the application registration
+      in azure portal got to Azure Active Directory > App registrations > (search for your onefuzz instance name) > delete
+
+   2. Add the service principal currently deploying the application as an owner to the registration
+      Go to Azure Active Directory > App registrations > (search for your onefuzz instance name)
+      In the Owner tab add the service principal
+      In the Overview tab, click the link under "Managed application in local directory" > Owner and add the service principal
+
+
+
+
