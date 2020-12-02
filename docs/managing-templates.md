@@ -9,7 +9,7 @@ This is a walk-through guide for updating an existing job template, though
 the process is similar for creating templates from scratch. 
 
 This process demonstrates adding [Microsoft Teams
-notifications](notifications/teams.md) for any unique reports found to any
+notifications](notifications/teams.md) for new unique crash reports to an existing
 `libfuzzer_linux` job template and saving it as `libfuzzer_with_teams`.
 
 ## Using the CLI & modifying JSON
