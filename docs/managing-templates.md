@@ -122,7 +122,7 @@ Now let's make use of our new template.
     ```
 3. Verify a notification was set up for the unique reports container
     ```
-    $ onefuzz notifications  list --query "[?container == 'oft-unique-reports-88dfb15b9ab758b88b122508d4648687']"
+    $ onefuzz notifications list --query "[?container == 'oft-unique-reports-88dfb15b9ab758b88b122508d4648687']"
     [
         {
             "config": {
