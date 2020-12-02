@@ -18,6 +18,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    Set
 )
 from uuid import UUID
 
@@ -213,6 +214,8 @@ class ModelMixin(BaseModel):
         return result
 
 
+Type_has_secrets: Dict[type, bool] = dict()
+
 class ORMMixin(ModelMixin):
     Timestamp: Optional[datetime] = Field(alias="Timestamp")
     etag: Optional[str]
@@ -282,7 +285,31 @@ class ORMMixin(ModelMixin):
 
         return (partition_key, row_key)
 
+    @classmethod
+    def hide_secrets(
+        cls, model: BaseModel, hider: Callable[["SecretData"], None],
+        visited: Set[int] = set()
+    ) -> None:
+        model_type = type(model)
+        if Type_has_secrets.get(model_type, True):
+            for field in model.__fields__:
+                field_data = getattr(model, field)
+                if id(field_data) in visited:
+                    continue
+
+                if isinstance(field_data, SecretData):
+                    Type_has_secrets[model_type] = True
+                    hider(field_data)
+                else:
+                    if isinstance(field_data, BaseModel):
+                        visited.add(id(field_data))
+                        cls.hide_secrets(field_data, hider, visited)
+
+        if model_type not in Type_has_secrets:
+            Type_has_secrets[model_type] = False
+
     def save(self, new: bool = False, require_etag: bool = False) -> Optional[Error]:
+        self.__class__.hide_secrets(self, save_to_keyvault)
         # TODO: migrate to an inspect.signature() model
         raw = self.raw(by_alias=True, exclude_none=True, exclude=self.save_exclude())
         for key in raw:
@@ -296,10 +323,6 @@ class ORMMixin(ModelMixin):
             # rather than a serialized form
             if self.__fields__[field].type_ == datetime:
                 raw[field] = getattr(self, field)
-            # for secretData make sure the data is stored in keyvault
-            if self.__fields__[field].type_ == SecretData:
-                secret_data: SecretData = getattr(self, field)
-                raw[field] = save_to_keyvault(secret_data)
 
         partition_key_field, row_key_field = self.key_fields()
 

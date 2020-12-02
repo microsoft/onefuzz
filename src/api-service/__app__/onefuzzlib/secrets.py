@@ -15,9 +15,9 @@ from pydantic import BaseModel
 from .azure.creds import get_instance_name, get_keyvault_client
 
 
-def save_to_keyvault(secret_data: SecretData) -> SecretData:
+def save_to_keyvault(secret_data: SecretData) -> None:
     if isinstance(secret_data.secret, SecretAddress):
-        return secret_data
+        return
 
     secret_name = str(uuid4())
     if isinstance(secret_data.secret, str):
@@ -29,7 +29,6 @@ def save_to_keyvault(secret_data: SecretData) -> SecretData:
 
     kv = store_in_keyvault(get_keyvault_address(), secret_name, secret_value)
     secret_data.secret = SecretAddress(url=kv.id)
-    return secret_data
 
 
 def get_secret_string_value(self: SecretData[str]) -> str:

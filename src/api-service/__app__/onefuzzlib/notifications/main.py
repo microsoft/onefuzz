@@ -88,37 +88,6 @@ class Notification(models.Notification, ORMMixin):
         )
         return entry
 
-    # def save(self, new: bool = False, require_etag: bool = False) -> Optional[Error]:
-
-    #     if isinstance(self.config, ADOTemplate):
-    #         if not isinstance(self.config.auth_token, SecretAddress):
-    #             self.config.auth_token = save_to_keyvault(self.config.auth_token)
-    #     elif isinstance(self.config, GithubIssueTemplate):
-    #         if not isinstance(self.config.auth, SecretAddress):
-    #             self.config.auth = save_to_keyvault(self.config.auth)
-    #     elif isinstance(self.config, TeamsTemplate):
-    #         if not isinstance(self.config.url, SecretAddress):
-    #             self.config.url = save_to_keyvault(self.config.url)
-    #     else:
-    #         pass
-
-    #     return super().save(new, require_etag)
-
-    # def delete(self) -> None:
-    #     if isinstance(self.config, ADOTemplate):
-    #         if isinstance(self.config.auth_token, SecretAddress):
-    #             delete_secret(self.config.auth_token.url)
-    #     elif isinstance(self.config, GithubIssueTemplate):
-    #         if isinstance(self.config.auth, SecretAddress):
-    #             delete_secret(self.config.auth.url)
-    #     elif isinstance(self.config, SecretAddress):
-    #         if isinstance(self.config.url, str):
-    #             delete_secret(self.config.url)
-    #     else:
-    #         pass
-
-    #     return super().delete()
-
 
 @cached(ttl=10)
 def get_notifications(container: Container) -> List[Notification]:
