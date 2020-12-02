@@ -244,6 +244,8 @@ class Report(BaseModel):
     asan_log: Optional[str]
     task_id: UUID
     job_id: UUID
+    scariness_score: Optional[int]
+    scariness_description: Optional[str]
 
 
 class ADODuplicateTemplate(BaseModel):
