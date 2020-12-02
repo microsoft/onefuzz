@@ -1,0 +1,55 @@
+=================================================================
+==32266==ERROR: AddressSanitizer: stack-buffer-underflow on address 0x7ffd2173f200 at pc 0x0000004fd403 bp 0x7ffd2173f1f0 sp 0x7ffd2173f1e8
+WRITE of size 4 at 0x7ffd2173f200 thread T0
+SCARINESS: 51 (4-byte-write-stack-buffer-underflow)
+    #0 0x4fd402 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:28:69
+    #1 0x43b271 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43b271)
+    #2 0x43a9a5 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43a9a5)
+    #3 0x43cf9b in fuzzer::Fuzzer::MutateAndTestOne() (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43cf9b)
+    #4 0x43dd15 in fuzzer::Fuzzer::Loop(std::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43dd15)
+    #5 0x42999b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x42999b)
+    #6 0x4557a2 in main (/tmp/xx/linux-libfuzzer/fuzz.exe+0x4557a2)
+    #7 0x7f878654d0b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16
+    #8 0x41db59 in _start (/tmp/xx/linux-libfuzzer/fuzz.exe+0x41db59)
+
+Address 0x7ffd2173f200 is located in stack of thread T0 at offset 0 in frame
+    #0 0x4fcccf in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:8
+
+  This frame has 1 object(s):
+    [32, 36) 'cnt' (line 9)
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-underflow /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:28:69 in LLVMFuzzerTestOneInput
+Shadow bytes around the buggy address:
+  0x1000242dfdf0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000242dfe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000242dfe10: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000242dfe20: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000242dfe30: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x1000242dfe40:[f1]f1 f1 f1 04 f3 f3 f3 00 00 00 00 00 00 00 00
+  0x1000242dfe50: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000242dfe60: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000242dfe70: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000242dfe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000242dfe90: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==32266==ABORTING
