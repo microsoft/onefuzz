@@ -58,6 +58,9 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(request, context="JobTemplateDelete")
 
     entry = JobTemplateIndex.get(request.name)
+    if entry is not None:
+        entry.delete()
+
     return ok(BoolResult(result=entry is not None))
 
 
