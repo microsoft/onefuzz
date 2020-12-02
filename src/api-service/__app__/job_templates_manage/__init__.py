@@ -23,7 +23,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(request, context="JobTemplateGet")
 
     if request.name:
-        entry = JobTemplateIndex.get(request.name)
+        entry = JobTemplateIndex.get_base_entry(request.name)
         if entry is None:
             return not_ok(
                 Error(code=ErrorCode.INVALID_REQUEST, errors=["no such job template"]),
