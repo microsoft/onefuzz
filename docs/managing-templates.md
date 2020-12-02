@@ -71,15 +71,16 @@ notifications](notifications/teams.md) for new unique crash reports to an existi
 ## Using the updated template
 
 The OneFuzz SDK caches the list of Declarative Job Templates and will
-automatically refresh the templates every 24 hours.
+automatically refresh the templates every 24 hours.  As shown below, users can
+refresh the declarative job template cache on demand.
 
 If an existing template is changed without requiring new user input via [form
 fields](declarative-templates.md#example-form-fields), using the template can
 happen transparently.
 
 If you create a new template or update an existing template that changes the
-user interaction, users will need to refresh their templates to make use of
-the change.
+user interaction, users will need to refresh their template cache to make use
+of the change.
 
 Now let's make use of our new template.
 
