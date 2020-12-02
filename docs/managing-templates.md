@@ -10,7 +10,7 @@ the process is similar for creating templates from scratch.
 
 This process demonstrates adding [Microsoft Teams
 notifications](notifications/teams.md) for any unique reports found to any
-`libfuzzer_linux` job templates and saving it as `libfuzzer_with_teams`
+`libfuzzer_linux` job template and saving it as `libfuzzer_with_teams`.
 
 ## Using the CLI & modifying JSON
 
