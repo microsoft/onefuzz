@@ -49,4 +49,4 @@
    2. Add the service principal currently deploying the application as an owner to the registration.
       Go to Azure Active Directory > App registrations > (search for your onefuzz instance name).
       In the Owner tab, add the service principal.
-      In the Overview tab, click the link under "Managed application in local directory" > Owner and add the service principal
+      In the Overview tab, click the link under "Managed application in local directory" > Owner, then add the service principal.
