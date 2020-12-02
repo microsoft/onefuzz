@@ -40,7 +40,7 @@
       ...}
    ```
 
-   The application registration was created by different user and the current deployer does have access to it.
+   The application registration was created by different user and the current deployer does not have access to it.
    There are two ways to to solve the issue:
 
    1. Delete the application registration
@@ -50,7 +50,6 @@
       Go to Azure Active Directory > App registrations > (search for your onefuzz instance name)
       In the Owner tab add the service principal
       In the Overview tab, click the link under "Managed application in local directory" > Owner and add the service principal
-
 
 
 
