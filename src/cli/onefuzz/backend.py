@@ -11,6 +11,7 @@ import logging
 import os
 import sys
 import time
+from dataclasses import asdict, is_dataclass
 from enum import Enum
 from typing import (
     Any,
@@ -30,7 +31,6 @@ from uuid import UUID
 import msal
 import requests
 from azure.storage.blob import ContainerClient
-from dataclasses import is_dataclass, asdict
 from pydantic import BaseModel, Field
 from tenacity import Future as tenacity_future
 from tenacity import Retrying, retry
