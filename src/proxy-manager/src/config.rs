@@ -104,7 +104,7 @@ impl Config {
         let etag = response
             .headers()
             .get(reqwest::header::ETAG)
-            .ok_or_else(|| ProxyError::EtagError)?
+            .ok_or(ProxyError::EtagError)?
             .to_str()?
             .to_owned();
         let data: ConfigData = response.json().await?;
