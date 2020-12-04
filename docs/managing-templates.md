@@ -41,6 +41,7 @@ notifications](notifications/teams.md) for new unique crash reports to an existi
     ```
     onefuzz job_templates manage upload libfuzzer_with_teams @./libfuzzer_linux.json
     ```
+    > NOTE: Using @./filename allows specifying read the contents of a file, rather than specifying JSON on the command line.
 
 ## Using the SDK
 
