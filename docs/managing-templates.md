@@ -162,29 +162,32 @@ This example will demonstrate setting the following:
 3. With your preferred text editor, add the following to the `notifications` list:
     ```json 
     {
-      "config": {
-            "base_url": "https://dev.azure.com/<your-org-name-here>",
-        "auth_token": "ADO_AUTH_TOKEN",
-        "type": "Bug",
-        "project": "{{ job.project }}",
-        "ado_fields": {
-          "System.AreaPath": "{{ task.tags['area_path'] }}",
-          "Microsoft.VSTS.Scheduling.StoryPoints": "1",
-          "System.IterationPath": "{{ task.tags['iteration_path'] }}",
-          "System.Title": "{{ report.crash_site }} - {{ report.executable }}",
-          "Microsoft.VSTS.TCM.ReproSteps": "This is my call stack: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul>"
-        },
-        "comment": "This is my comment. {{ report.input_sha256 }} {{ input_url }} <br> <pre>{{ repro_cmd }}</pre>",
-        "unique_fields": ["System.Title", "System.AreaPath"],
-        "on_duplicate": {
-          "comment": "Another <a href='{{ input_url }}'>POC</a> was found in <a href='{{ target_url }}'>target</a>. <br> <pre>{{ repro_cmd }}</pre>",
-          "set_state": { "Resolved": "Active" },
-          "ado_fields": {
-            "System.IterationPath": "{{ task.tags['iteration_path'] }}"
-          },
-          "increment": ["Microsoft.VSTS.Scheduling.StoryPoints"]
+        "container_type": "unique_reports",
+        "notification": {
+            "config": {
+                "base_url": "https://dev.azure.com/<your-org-name-here>",
+                "auth_token": "ADO_AUTH_TOKEN",
+                "type": "Bug",
+                "project": "{{ job.project }}",
+                "ado_fields": {
+                    "System.AreaPath": "{{ task.tags['area_path'] }}",
+                    "Microsoft.VSTS.Scheduling.StoryPoints": "1",
+                    "System.IterationPath": "{{ task.tags['iteration_path'] }}",
+                    "System.Title": "{{ report.crash_site }} - {{ report.executable }}",
+                    "Microsoft.VSTS.TCM.ReproSteps": "This is my call stack: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul>"
+                },
+                "comment": "This is my comment. {{ report.input_sha256 }} {{ input_url }} <br> <pre>{{ repro_cmd }}</pre>",
+                "unique_fields": ["System.Title", "System.AreaPath"],
+                "on_duplicate": {
+                    "comment": "Another <a href='{{ input_url }}'>POC</a> was found in <a href='{{ target_url }}'>target</a>. <br> <pre>{{ repro_cmd }}</pre>",
+                    "set_state": { "Resolved": "Active" },
+                    "ado_fields": {
+                        "System.IterationPath": "{{ task.tags['iteration_path'] }}"
+                    },
+                    "increment": ["Microsoft.VSTS.Scheduling.StoryPoints"]
+                }
+            }
         }
-      }
     }
     ```
     > NOTE: The use of `task.tags` throughout the template. The next steps will define how values get assigned to this dictionary.
