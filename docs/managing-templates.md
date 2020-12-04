@@ -137,20 +137,20 @@ Now let's make use of our new template.
 
 ## Adding a required field
 
-In may cases, we want users of the template to provide more detail, such as
+In many cases, we want users of the template to provide more detail, such as
 data that can be used to tailor the notifications based on the target at
 hand. This is accomplished via a [form fields](declarative-templates.md#example-form-fields).
 
 Let's make a new template that enables notifications via [Azure Devops Work
 Items](notifications/ado.md), where we require the user to specify the Area
-Path that the work items OneFuzz will create.
+Path for the work items that OneFuzz will create.
 
 This example will demonstrate setting the following:
-* `Project` via the project name specified during job creation.
-* `Area Path` via the new required field.
+* `Project` via a project name specified during job creation.
+* `Area Path` via a new required field.
 * `Iteration Path` via a new optional field, with a default value in the template.
 
-1. Enable support for declarative templates.
+1. Enable support for declarative templates. This is required because declarative templates are not yet stabilized.
     ```
     onefuzz config --enable_feature job_templates
     ```
@@ -162,7 +162,7 @@ This example will demonstrate setting the following:
     ```json 
     {
       "config": {
-        "base_url": "https://dev.azure.com/org_name",
+        "base_url": "https://dev.azure.com/<your-org-name-here>",
         "auth_token": "ADO_AUTH_TOKEN",
         "type": "Bug",
         "project": "{{ job.project }}",
@@ -186,6 +186,7 @@ This example will demonstrate setting the following:
       }
     }
     ```
+Note the use of `task.tags` throughout the template. The next steps will define how values get assigned to this dictionary.
 4. With your preferred text editor, add the following to user fields to the end of the `user_fields` list.
     1. A required field that specifies the tag name `area_path`.
         ```json
@@ -223,7 +224,7 @@ This example will demonstrate setting the following:
     ```
     onefuzz job_templates manage upload libfuzzer_linux_ado_areapath @./libfuzzer_linux_ado_areapath.json
     ```
-6. Refresh the template cache
+6. Refresh the template cache.
     ```
     onefuzz job_templates refresh
     ```
@@ -284,4 +285,4 @@ $
 ```
 
 As we can see, the tag `area_path` is the value we specified, and because we
-didn't specify `iteration_path` it uses the default from the template.
+didn't specify `iteration_path`, it uses the default from the template.
