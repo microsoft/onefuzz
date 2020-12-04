@@ -162,7 +162,7 @@ This example will demonstrate setting the following:
     ```json 
     {
       "config": {
-        "base_url": "https://dev.azure.com/<your-org-name-here>",
+            "base_url": "https://dev.azure.com/<your-org-name-here>",
         "auth_token": "ADO_AUTH_TOKEN",
         "type": "Bug",
         "project": "{{ job.project }}",
@@ -186,7 +186,7 @@ This example will demonstrate setting the following:
       }
     }
     ```
-Note the use of `task.tags` throughout the template. The next steps will define how values get assigned to this dictionary.
+    > NOTE: The use of `task.tags` throughout the template. The next steps will define how values get assigned to this dictionary.
 4. With your preferred text editor, add the following to user fields to the end of the `user_fields` list.
     1. A required field that specifies the tag name `area_path`.
         ```json
@@ -224,6 +224,7 @@ Note the use of `task.tags` throughout the template. The next steps will define 
     ```
     onefuzz job_templates manage upload libfuzzer_linux_ado_areapath @./libfuzzer_linux_ado_areapath.json
     ```
+    > NOTE: Using @./filename allows specifying read the contents of a file, rather than specifying JSON on the command line.
 6. Refresh the template cache.
     ```
     onefuzz job_templates refresh
@@ -252,6 +253,7 @@ an optional argument.
 Let's create a job using this template and verify the tags are as we expect.
 Since the parameters we added only modify the `libfuzzer_crash_report` task,
 we'll search just for the that task.
+
 ```
 $ onefuzz job_templates submit libfuzzer_linux_ado_areapath myproject myname build1 linux My\\Iteration\\Path
 WARNING:onefuzz:job_templates are a preview-feature and may change in an upcoming release
