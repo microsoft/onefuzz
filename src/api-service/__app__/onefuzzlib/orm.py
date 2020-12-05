@@ -303,6 +303,12 @@ class ORMMixin(ModelMixin):
                 if isinstance(field_data, SecretData):
                     Type_has_secrets[model_type] = True
                     hider(field_data)
+                elif isinstance(field_data, List):
+                    if len(field_data) > 0:
+                        if not isinstance(field_data[0], BaseModel):
+                            continue
+                    for data in field_data:
+                        cls.hide_secrets(data, hider, visited)
                 else:
                     if isinstance(field_data, BaseModel):
                         visited.add(id(field_data))
