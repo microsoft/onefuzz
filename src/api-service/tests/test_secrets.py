@@ -5,15 +5,14 @@
 
 import unittest
 
-from onefuzztypes.enums import OS
+from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.job_templates import (
-    JobConfig,
     JobTemplate,
     JobTemplateIndex,
     JobTemplateNotification,
 )
 from onefuzztypes.models import (
-    ContainerType,
+    JobConfig,
     Notification,
     NotificationConfig,
     SecretAddress,
