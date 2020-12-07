@@ -25,7 +25,7 @@ Future work:
 ## Admin Experience
 
 Administrators can manage their own templates via `onefuzz job_templates
-manage [create,delete,list,update]`.
+manage [list,get,update,delete]`.
 
 If the runtime configuration for the template changes, users will need to
 refresh their cache to pull the runtime configuration.
@@ -118,6 +118,7 @@ JobTemplateNotification(
     notification=NotificationConfig(config=TeamsTemplate(url="https://contoso.com/webhook-url-here")),
 )
 ```
+
 
 ## Differences from Existing Templates
 

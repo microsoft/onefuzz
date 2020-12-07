@@ -9,8 +9,7 @@
       "methods": [
         "get",
         "post",
-        "delete",
-        "patch"
+        "delete"
       ],
       "route": "job_templates/manage"
     },

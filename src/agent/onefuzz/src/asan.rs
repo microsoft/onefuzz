@@ -16,6 +16,8 @@ pub struct AsanLog {
     summary: String,
     fault_type: String,
     call_stack: Vec<String>,
+    scariness_score: Option<u32>,
+    scariness_description: Option<String>,
 }
 
 impl AsanLog {
@@ -27,12 +29,19 @@ impl AsanLog {
 
         let call_stack = parse_call_stack(&text).unwrap_or_else(Vec::default);
 
+        let (scariness_score, scariness_description) = match parse_scariness(&text) {
+            Some((x, y)) => (Some(x), Some(y)),
+            None => (None, None),
+        };
+
         let log = Self {
             text,
             sanitizer,
             summary,
             fault_type,
             call_stack,
+            scariness_score,
+            scariness_description,
         };
 
         Some(log)
@@ -57,6 +66,24 @@ impl AsanLog {
     pub fn call_stack_sha256(&self) -> String {
         sha256::digest_iter(self.call_stack())
     }
+
+    pub fn scariness_score(&self) -> Option<u32> {
+        self.scariness_score
+    }
+
+    pub fn scariness_description(&self) -> &Option<String> {
+        &self.scariness_description
+    }
+}
+
+fn parse_scariness(text: &str) -> Option<(u32, String)> {
+    let pattern = r"(?m)^SCARINESS: (\d+) \(([^\)]+)\)\r?$";
+    let re = Regex::new(pattern).ok()?;
+    let captures = re.captures(text)?;
+    let index = u32::from_str_radix(captures.get(1)?.as_str(), 10).ok()?;
+    let value = captures.get(2)?.as_str().trim();
+
+    Some((index, value.into()))
 }
 
 fn parse_asan_runtime_error(text: &str) -> Option<(String, String, String)> {
@@ -197,70 +224,116 @@ mod tests {
                 "AddressSanitizer",
                 "heap-use-after-free",
                 7,
+                None,
+                None,
             ),
             (
                 "data/libfuzzer-deadly-signal.txt",
                 "libFuzzer",
                 "deadly signal",
                 14,
+                None,
+                None,
             ),
             (
                 "data/libfuzzer-windows-llvm10-out-of-memory-malloc.txt",
                 "libFuzzer",
                 "out-of-memory",
                 16,
+                None,
+                None,
             ),
             (
                 "data/libfuzzer-windows-llvm10-out-of-memory-rss.txt",
                 "libFuzzer",
                 "out-of-memory",
                 0,
+                None,
+                None,
             ),
             (
                 "data/libfuzzer-linux-llvm10-out-of-memory-malloc.txt",
                 "libFuzzer",
                 "out-of-memory",
                 15,
+                None,
+                None,
             ),
             (
                 "data/libfuzzer-linux-llvm10-out-of-memory-rss.txt",
                 "libFuzzer",
                 "out-of-memory",
                 4,
+                None,
+                None,
             ),
             (
                 "data/tsan-linux-llvm10-data-race.txt",
                 "ThreadSanitizer",
                 "data race",
                 1,
+                None,
+                None,
             ),
             (
                 "data/clang-10-asan-breakpoint.txt",
                 "AddressSanitizer",
                 "breakpoint",
                 43,
+                None,
+                None,
             ),
             (
                 "data/asan-check-failure.txt",
                 "AddressSanitizer",
                 "CHECK failed",
                 12,
+                None,
+                None,
             ),
             (
                 "data/asan-check-failure-missing-symbolizer.txt",
                 "AddressSanitizer",
                 "CHECK failed",
                 12,
+                None,
+                None,
+            ),
+            (
+                "data/libfuzzer-scariness.txt",
+                "AddressSanitizer",
+                "FPE",
+                9,
+                Some(10),
+                Some("signal".to_string()),
+            ),
+            (
+                "data/libfuzzer-scariness-underflow.txt",
+                "AddressSanitizer",
+                "stack-buffer-underflow",
+                9,
+                Some(51),
+                Some("4-byte-write-stack-buffer-underflow".to_string()),
             ),
         ];
 
-        for (log_path, sanitizer, fault_type, call_stack_len) in test_cases {
+        for (
+            log_path,
+            sanitizer,
+            fault_type,
+            call_stack_len,
+            scariness_score,
+            scariness_description,
+        ) in test_cases
+        {
             let data = std::fs::read_to_string(log_path)?;
             let log = AsanLog::parse(data).unwrap();
 
             assert_eq!(log.sanitizer, sanitizer);
             assert_eq!(log.fault_type, fault_type);
             assert_eq!(log.call_stack.len(), call_stack_len);
+            assert_eq!(log.scariness_score, scariness_score);
+            assert_eq!(log.scariness_description, scariness_description);
         }
         Ok(())
     }
