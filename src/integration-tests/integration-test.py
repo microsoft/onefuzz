@@ -550,6 +550,14 @@ class TestOnefuzz:
             if self.start_log_marker in entry_as_str:
                 break
 
+            # TODO: temporarily ignore blobnotfound and queue not found errors.
+            # see issue 141 for details
+            if "ErrorCode: BlobNotFound" in entry_as_str or (
+                "queue.core.windows.net" in entry_as_str
+                and "404 Not Found" in entry_as_str
+            ):
+                continue
+
             seen_errors = True
             self.logger.error("error log: %s", entry_as_str)
 
