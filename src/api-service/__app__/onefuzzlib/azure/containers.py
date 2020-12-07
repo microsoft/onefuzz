@@ -212,7 +212,7 @@ def get_file_sas_url(
 ) -> str:
     service = get_service_by_container(container, storage_type)
     if not service:
-        raise Exception("unable to find container: %s - %s", container, storage_type)
+        raise Exception("unable to find container: %s - %s" % (container, storage_type))
 
     expiry = datetime.datetime.utcnow() + datetime.timedelta(
         days=days, hours=hours, minutes=minutes
@@ -235,7 +235,7 @@ def save_blob(
 ) -> None:
     service = get_service_by_container(container, storage_type)
     if not service:
-        raise Exception("unable to find container: %s - %s", container, storage_type)
+        raise Exception("unable to find container: %s - %s" % (container, storage_type))
 
     if isinstance(data, str):
         service.create_blob_from_text(container, name, data)
