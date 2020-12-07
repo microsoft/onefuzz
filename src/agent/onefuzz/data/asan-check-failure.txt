@@ -1,0 +1,15 @@
+=================================================================
+==31189==AddressSanitizer CHECK failed: /build/llvm-toolchain-9-uSl4bC/llvm-toolchain-9-9/projects/compiler-rt/lib/asan/asan_descriptions.cc:80 "((0 && "Address is not in memory and not in shadow?")) != (0)" (0x0, 0x0)
+    #0 0x49a92e in __asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)
+    #1 0x4aef3f in __sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)
+    #2 0x423516 in __asan::GetShadowAddressInformation(unsigned long, __asan::ShadowAddressDescription*) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)
+    #3 0x4245b6 in __asan::AddressDescription::AddressDescription(unsigned long, unsigned long, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)
+    #4 0x4261b2 in __asan::ErrorGeneric::ErrorGeneric(unsigned int, unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)
+    #5 0x498180 in __asan::ReportGenericError(unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned int, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)
+    #6 0x47ef01 in strncpy (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)
+    #7 0x4c2223 in check /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:21:3
+    #8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12
+    #9 0x4c274d in main /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:81:12
+    #10 0x7ffff6e22bf6 in __libc_start_main /build/glibc-S7xCS9/glibc-2.27/csu/../csu/libc-start.c:310
+    #11 0x41ab39 in _start (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)
+

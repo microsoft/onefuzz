@@ -1,0 +1,17 @@
+=================================================================
+==15479==AddressSanitizer CHECK failed: /build/llvm-toolchain-9-uSl4bC/llvm-toolchain-9-9/projects/compiler-rt/lib/asan/asan_descriptions.cc:80 "((0 && "Address is not in memory and not in shadow?")) != (0)" (0x0, 0x0)
+==15479==WARNING: invalid path to external symbolizer!
+==15479==WARNING: Failed to use and restart external symbolizer!
+    #0 0x49a92e  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)
+    #1 0x4aef3f  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)
+    #2 0x423516  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)
+    #3 0x4245b6  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)
+    #4 0x4261b2  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)
+    #5 0x498180  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)
+    #6 0x47ef01  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)
+    #7 0x4c2223  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c2223)
+    #8 0x4c26b7  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c26b7)
+    #9 0x4c274d  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c274d)
+    #10 0x7ffff6e22bf6  (/lib/x86_64-linux-gnu/libc.so.6+0x21bf6)
+    #11 0x41ab39  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)
+
