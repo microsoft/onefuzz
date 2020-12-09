@@ -33,10 +33,14 @@ def mgmt_client_factory(client_class: Any) -> Any:
     try:
         return get_client_from_cli_profile(client_class)
     except CLIError:
-        if issubclass(client_class, SubscriptionClient):
-            return client_class(get_msi())
-        else:
-            return client_class(get_msi(), get_subscription())
+        pass
+    except OSError:
+        pass
+
+    if issubclass(client_class, SubscriptionClient):
+        return client_class(get_msi())
+    else:
+        return client_class(get_msi(), get_subscription())
 
 
 @cached
