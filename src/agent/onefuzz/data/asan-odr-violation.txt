@@ -1,0 +1,16 @@
+=================================================================
+==10896==ERROR: AddressSanitizer: odr-violation (0x7fffc6d5bd60):
+  [1] size=64 'vtable for a::b' ../../a/b.cc
+  [2] size=64 'vtable for a::b' ../../a/b.cc
+These globals were registered at these points:
+  [1]:
+    #0 0x555556716bcd in __asan_register_globals /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_globals.cpp:360:3
+    #1 0x7fff9886d28b in asan.module_ctor (/onefuzz/blob-containers/oft-setup-b9607df0891452adabf9aab8954aa772/libviews.so+0xb0228b)
+
+  [2]:
+    #0 0x555556716bcd in __asan_register_globals /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_globals.cpp:360:3
+    #1 0x7fffc6d58ccb in asan.module_ctor (/onefuzz/blob-containers/oft-setup-b9607df0891452adabf9aab8954aa772/libx11_window.so+0x46ccb)
+
+==10896==HINT: if you don't care about these errors you may set ASAN_OPTIONS=detect_odr_violation=0
+SUMMARY: AddressSanitizer: odr-violation: global 'vtable for a::b' at ../../a/b.cc
+==10896==ABORTING

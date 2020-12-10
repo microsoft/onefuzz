@@ -158,11 +158,16 @@ impl LibFuzzerFuzzTask {
             .stderr
             .as_mut()
             .ok_or_else(|| format_err!("stderr not captured"))?;
-        let stderr = BufReader::new(stderr);
+        let mut stderr = BufReader::new(stderr);
 
         let mut libfuzzer_output = Vec::new();
-        let mut lines = stderr.lines();
-        while let Some(line) = lines.next_line().await? {
+        loop {
+            let mut buf = vec![];
+            let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
+            if bytes_read == 0 && buf.is_empty() {
+                break;
+            }
+            let line = String::from_utf8_lossy(&buf).to_string();
             if let Some(stats_sender) = stats_sender {
                 if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, &line) {
                     error!("could not parse fuzzing interation update: {}", err);
