@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::io::ErrorKind;
 use std::path::PathBuf;
 
 use anyhow::Result;
 use downcast_rs::Downcast;
 use onefuzz::blob::BlobContainerUrl;
 use storage_queue::QueueClient;
+use tokio::fs;
 use uuid::Uuid;
 
 use crate::auth::Secret;
@@ -27,6 +29,43 @@ pub struct WorkSet {
 impl WorkSet {
     pub fn task_ids(&self) -> Vec<TaskId> {
         self.work_units.iter().map(|w| w.task_id).collect()
+    }
+
+    pub fn context_path() -> Result<PathBuf> {
+        Ok(onefuzz::fs::onefuzz_root()?.join("workset_context.json"))
+    }
+
+    pub async fn load_context() -> Result<Option<Self>> {
+        let path = Self::context_path()?;
+
+        info!("checking for workset context: {}", path.display());
+
+        let data = fs::read(path).await;
+
+        if let Err(err) = &data {
+            if let ErrorKind::NotFound = err.kind() {
+                // If new image, there won't be any reboot context.
+                info!("no workset context found");
+                return Ok(None);
+            }
+        }
+
+        let data = data?;
+        let ctx = serde_json::from_slice(&data)?;
+
+        info!("loaded workset context");
+
+        Ok(Some(ctx))
+    }
+
+    pub async fn save_context(&self) -> Result<()> {
+        let path = Self::context_path()?;
+        info!("saving workset context: {}", path.display());
+
+        let data = serde_json::to_vec(&self)?;
+        fs::write(path, &data).await?;
+
+        Ok(())
     }
 }
 
