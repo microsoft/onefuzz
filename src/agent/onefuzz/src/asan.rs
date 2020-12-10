@@ -97,7 +97,7 @@ fn parse_asan_runtime_error(text: &str) -> Option<(String, String, String)> {
 }
 
 fn parse_summary(text: &str) -> Option<(String, String, String)> {
-    let pattern = r"SUMMARY: ((\w+): (data race|deadly signal|[^ \n]+).*)";
+    let pattern = r"SUMMARY: ((\w+): (data race|deadly signal|odr-violation|[^ \n]+).*)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
     let summary = captures.get(1)?.as_str().trim();
@@ -314,6 +314,14 @@ mod tests {
                 9,
                 Some(51),
                 Some("4-byte-write-stack-buffer-underflow".to_string()),
+            ),
+            (
+                "data/asan-odr-violation.txt",
+                "AddressSanitizer",
+                "odr-violation",
+                2,
+                None,
+                None,
             ),
         ];
 
