@@ -16,11 +16,12 @@ use onefuzz::{
     },
 };
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, process::Stdio};
 use tempfile::tempdir;
 use tokio::{
     fs::rename,
     io::{AsyncBufReadExt, BufReader},
+    process::Command,
     sync::mpsc,
     task,
     time::{self, Duration},
@@ -36,6 +37,10 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
 
+fn default_bool_true() -> bool {
+    true
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub inputs: SyncedDir,
@@ -46,6 +51,12 @@ pub struct Config {
     pub target_options: Vec<String>,
     pub target_workers: Option<u64>,
     pub ensemble_sync_delay: Option<u64>,
+
+    #[serde(default = "default_bool_true")]
+    pub check_fuzzer_help: bool,
+
+    #[serde(default = "default_bool_true")]
+    pub require_crash_on_failure: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -61,6 +72,10 @@ impl LibFuzzerFuzzTask {
     }
 
     pub async fn start(&self) -> Result<()> {
+        if self.config.check_fuzzer_help {
+            self.check_fuzzer_help().await?;
+        }
+
         let workers = self.config.target_workers.unwrap_or_else(|| {
             let cpus = num_cpus::get() as u64;
             u64::max(1, cpus - 1)
@@ -85,6 +100,23 @@ impl LibFuzzerFuzzTask {
 
         futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
+        Ok(())
+    }
+
+    async fn check_fuzzer_help(&self) -> Result<()> {
+        let mut cmd = Command::new(&self.config.target_exe);
+
+        cmd.kill_on_drop(true)
+            .env_remove("RUST_LOG")
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .arg("-help=1");
+
+        let result = cmd.spawn()?.wait_with_output().await?;
+        if !result.status.success() {
+            bail!("fuzzer does not respond to '-help=1'. output:{:?}", result);
+        }
         Ok(())
     }
 
@@ -161,14 +193,23 @@ impl LibFuzzerFuzzTask {
 
         let files = list_files(crash_dir.path()).await?;
 
-        // ignore libfuzzer exiting cleanly without crashing, which could happen via
-        // -runs=N
-        if !exit_status.success && files.is_empty() {
-            bail!(
-                "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
-                serde_json::to_string(&exit_status)?,
-                libfuzzer_output.join("\n")
-            );
+        // If the target exits, crashes are required unless
+        // 1. Exited cleanly (happens with -runs=N)
+        // 2. require_crash_on_failure is disabled
+        if files.is_empty() && !exit_status.success {
+            if self.config.require_crash_on_failure {
+                bail!(
+                    "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
+                    serde_json::to_string(&exit_status)?,
+                    libfuzzer_output.join("\n")
+                );
+            } else {
+                warn!(
+                    "libfuzzer exited without generating crashes, continuing.  status:{} stderr:{:?}",
+                    serde_json::to_string(&exit_status)?,
+                    libfuzzer_output.join("\n")
+                );
+            }
         }
 
         for file in &files {

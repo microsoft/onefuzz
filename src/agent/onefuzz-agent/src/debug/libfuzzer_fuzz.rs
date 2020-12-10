@@ -26,6 +26,12 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     let inputs_dir = value_t!(args, "inputs_dir", String)?;
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
     let target_options = args.values_of_lossy("target_options").unwrap_or_default();
+
+    // this happens during setup, not during runtime
+    let check_fuzzer_help = true;
+
+    let require_crash_on_failure = args.is_present("require_crash_on_failure");
+
     let mut target_env = HashMap::new();
     for opt in args.values_of_lossy("target_env").unwrap_or_default() {
         let (k, v) = parse_key_value(opt)?;
@@ -56,6 +62,8 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         target_options,
         target_workers,
         ensemble_sync_delay,
+        check_fuzzer_help,
+        require_crash_on_failure,
         common: CommonConfig {
             heartbeat_queue: None,
             instrumentation_key: None,
@@ -103,5 +111,10 @@ pub fn args() -> App<'static, 'static> {
             Arg::with_name("crashes_dir")
                 .takes_value(true)
                 .required(true),
+        )
+        .arg(
+            Arg::with_name("require_crash_on_failure")
+                .takes_value(false)
+                .long("require_crash_on_failure"),
         )
 }
