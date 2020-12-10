@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender};
+use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::Result;
 use futures::{future::try_join_all, stream::StreamExt};
 use onefuzz::{
@@ -16,12 +16,11 @@ use onefuzz::{
     },
 };
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf, process::Stdio};
+use std::{collections::HashMap, path::PathBuf};
 use tempfile::tempdir;
 use tokio::{
     fs::rename,
     io::{AsyncBufReadExt, BufReader},
-    process::Command,
     sync::mpsc,
     task,
     time::{self, Duration},
@@ -36,10 +35,6 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
-
-fn default_bool_true() -> bool {
-    true
-}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
@@ -73,7 +68,12 @@ impl LibFuzzerFuzzTask {
 
     pub async fn start(&self) -> Result<()> {
         if self.config.check_fuzzer_help {
-            self.check_fuzzer_help().await?;
+            let target = LibFuzzer::new(
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+            );
+            target.check_help().await?;
         }
 
         let workers = self.config.target_workers.unwrap_or_else(|| {
@@ -100,23 +100,6 @@ impl LibFuzzerFuzzTask {
 
         futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
-        Ok(())
-    }
-
-    async fn check_fuzzer_help(&self) -> Result<()> {
-        let mut cmd = Command::new(&self.config.target_exe);
-
-        cmd.kill_on_drop(true)
-            .env_remove("RUST_LOG")
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .arg("-help=1");
-
-        let result = cmd.spawn()?.wait_with_output().await?;
-        if !result.status.success() {
-            bail!("fuzzer does not respond to '-help=1'. output:{:?}", result);
-        }
         Ok(())
     }
 
