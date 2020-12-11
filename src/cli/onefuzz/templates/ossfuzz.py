@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Tuple
 
 from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag
 from onefuzztypes.models import NotificationConfig
-from onefuzztypes.primitives import File, Directory
+from onefuzztypes.primitives import Directory, File
 
 from onefuzz.api import Command
 from onefuzz.backend import container_file_path
