@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::{utils::CheckNotify, jitter::delay_with_jitter_size};
+use crate::{jitter::delay_with_jitter_size, utils::CheckNotify};
 use anyhow::Result;
 use futures::Future;
 use reqwest::Url;
