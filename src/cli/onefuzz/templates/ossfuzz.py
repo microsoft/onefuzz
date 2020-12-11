@@ -62,9 +62,9 @@ class OssFuzz(Command):
         return target_env, target_options
 
     def _options(
-        self, filename: File, base_options: Optional[File]
+        self, filename: File, base_options_file: Optional[File]
     ) -> Tuple[Dict[str, str], List[str]]:
-        base_env, base_options = self._read_options(base_options)
+        base_env, base_options = self._read_options(base_options_file)
         target_env, target_options = self._read_options(filename)
 
         if "ASAN_OPTIONS" in target_env and "ASAN_OPTIONS" in base_env:
@@ -180,7 +180,7 @@ class OssFuzz(Command):
         owners_path = File("%s.msowners" % fuzzer.replace(".exe", ""))
         options_path = File("%s.options" % fuzzer.replace(".exe", ""))
 
-        target_env, target_options = self._options(base_options, options_path)
+        target_env, target_options = self._options(options_path, base_options)
         helper.add_tags(self._owners(owners_path))
 
         # All fuzzers are copied to the setup container root.
@@ -262,4 +262,4 @@ class OssFuzz(Command):
             todo.append(kwargs)
 
         with ThreadPool(processes=30) as pool:
-            pool.map(lambda x: self._launch_it(**x), todo)
+            pool.map(lambda x: self._launch_it(**x), todo)  # type: ignore
