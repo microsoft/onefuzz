@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::utils::CheckNotify;
+use crate::{utils::CheckNotify, jitter::delay_with_jitter_size};
 use anyhow::Result;
 use futures::Future;
 use reqwest::Url;
@@ -83,6 +83,7 @@ where
         TContext: Send + Sync + 'static,
     {
         let heartbeat_period = heartbeat_period.unwrap_or(DEFAULT_HEARTBEAT_PERIOD);
+
         let context = Arc::new(HeartbeatContext {
             state: context,
             queue_client: QueueClient::new(queue_url),
@@ -92,6 +93,7 @@ where
 
         let flush_context = context.clone();
         let heartbeat_process = task::spawn(async move {
+            delay_with_jitter_size(heartbeat_period).await;
             flush(flush_context.clone()).await;
             while !flush_context.cancelled.is_notified(heartbeat_period).await {
                 flush(flush_context.clone()).await;
