@@ -40,6 +40,35 @@ impl<'a> LibFuzzer<'a> {
         }
     }
 
+    pub async fn check_help(&self) -> Result<()> {
+        let mut cmd = Command::new(&self.exe);
+
+        cmd.kill_on_drop(true)
+            .env_remove("RUST_LOG")
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .arg("-help=1");
+
+        let mut expand = Expand::new();
+        expand.target_exe(&self.exe).target_options(&self.options);
+
+        for (k, v) in self.env {
+            cmd.env(k, expand.evaluate_value(v)?);
+        }
+
+        // Pass custom option arguments.
+        for o in expand.evaluate(self.options)? {
+            cmd.arg(o);
+        }
+
+        let result = cmd.spawn()?.wait_with_output().await?;
+        if !result.status.success() {
+            bail!("fuzzer does not respond to '-help=1'. output:{:?}", result);
+        }
+        Ok(())
+    }
+
     pub fn fuzz(
         &self,
         fault_dir: impl AsRef<Path>,
