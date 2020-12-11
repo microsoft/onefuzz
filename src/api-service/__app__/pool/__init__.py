@@ -12,7 +12,6 @@ from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 from onefuzztypes.responses import BoolResult
 
-from ..onefuzzlib.azure.containers import StorageType
 from ..onefuzzlib.azure.creds import (
     get_base_region,
     get_instance_id,
@@ -20,6 +19,7 @@ from ..onefuzzlib.azure.creds import (
     get_regions,
 )
 from ..onefuzzlib.azure.queue import get_queue_sas
+from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.azure.vmss import list_available_skus
 from ..onefuzzlib.pools import Pool
 from ..onefuzzlib.request import not_ok, ok, parse_request

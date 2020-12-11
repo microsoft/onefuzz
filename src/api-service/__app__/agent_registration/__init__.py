@@ -13,9 +13,9 @@ from onefuzztypes.requests import AgentRegistrationGet, AgentRegistrationPost
 from onefuzztypes.responses import AgentRegistration
 
 from ..onefuzzlib.agent_authorization import call_if_agent
-from ..onefuzzlib.azure.containers import StorageType
 from ..onefuzzlib.azure.creds import get_instance_url
 from ..onefuzzlib.azure.queue import get_queue_sas
+from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.pools import Node, NodeMessage, NodeTasks, Pool
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 

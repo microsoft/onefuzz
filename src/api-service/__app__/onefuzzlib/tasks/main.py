@@ -18,9 +18,9 @@ from onefuzztypes.webhooks import (
     WebhookEventTaskStopped,
 )
 
-from ..azure.containers import StorageType
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
+from ..azure.storage import StorageType
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
