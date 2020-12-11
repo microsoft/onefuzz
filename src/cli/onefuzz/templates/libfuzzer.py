@@ -48,6 +48,7 @@ class Libfuzzer(Command):
         crash_report_timeout: Optional[int] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        enable_coverage: bool = True,
     ) -> None:
 
         fuzzer_containers = [
@@ -84,21 +85,22 @@ class Libfuzzer(Command):
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
         ]
         self.logger.info("creating libfuzzer_coverage task")
-        self.onefuzz.tasks.create(
-            job.job_id,
-            TaskType.libfuzzer_coverage,
-            target_exe,
-            coverage_containers,
-            pool_name=pool_name,
-            duration=duration,
-            vm_count=1,
-            reboot_after_setup=reboot_after_setup,
-            target_options=target_options,
-            target_env=target_env,
-            tags=tags,
-            prereq_tasks=[fuzzer_task.task_id],
-            debug=debug,
-        )
+        if enable_coverage:
+            self.onefuzz.tasks.create(
+                job.job_id,
+                TaskType.libfuzzer_coverage,
+                target_exe,
+                coverage_containers,
+                pool_name=pool_name,
+                duration=duration,
+                vm_count=1,
+                reboot_after_setup=reboot_after_setup,
+                target_options=target_options,
+                target_env=target_env,
+                tags=tags,
+                prereq_tasks=[fuzzer_task.task_id],
+                debug=debug,
+            )
 
         report_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
