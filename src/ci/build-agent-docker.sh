@@ -16,12 +16,12 @@ mkdir -p tools/linux
 if [ ! -d ../../../artifacts/azcopy ]; then
    (cd ../../../; ./src/ci/agent.sh)
 fi
-(cd ../../../; cp artifacts/azcopy/azcopy ${BUILD_DIR}/tools/linux)
+(cd ../../../; cp artifacts/azcopy/azcopy tools/linux)
 
 if [ -d ../../../artifacts/agent ]; then
-   (cd ../../../; cp artifacts/agent/onefuzz-downloader ${BUILD_DIR}/tools/linux)
+   (cd ../../../; cp artifacts/agent/onefuzz-downloader tools/linux)
 else
-   (cd ../../agent; cargo build --release; cp target/release/onefuzz-downloader ${BUILD_DIR}/tools/linux)
+   (cd ../../agent; cargo build --release; cp target/release/onefuzz-downloader tools/linux)
 fi
 
 docker build -t onefuzz:${ONEFUZZ_VERSION} .
