@@ -112,6 +112,7 @@ impl ClientCredentials {
 
         let response = reqwest::Client::new()
             .post(url)
+            .header("Content-Length", "0")
             .form(&[
                 ("client_id", self.client_id.to_hyphenated().to_string()),
                 ("client_secret", self.client_secret.expose_ref().to_string()),
@@ -119,7 +120,6 @@ impl ClientCredentials {
                 ("tenant", self.tenant.clone()),
                 ("scope", format!("{}.default", self.resource)),
             ])
-            .header("Content-Length", "0")
             .send_retry_default()
             .await?
             .error_for_status_with_body()
