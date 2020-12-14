@@ -2,8 +2,11 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use onefuzz::auth::{ClientCredentials, Credentials, ManagedIdentityCredentials};
-use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
+use onefuzz::{
+    auth::{ClientCredentials, Credentials, ManagedIdentityCredentials},
+    http::ResponseExt,
+    jitter::delay_with_jitter,
+};
 use reqwest::StatusCode;
 use reqwest_retry::SendRetry;
 use std::{
@@ -79,51 +82,7 @@ impl StaticConfig {
         Ok(config)
     }
 
-    pub fn from_env() -> Result<Self> {
-        let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
-        let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?.into();
-        let tenant = std::env::var("ONEFUZZ_TENANT")?;
-        let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
-        let pool_name = std::env::var("ONEFUZZ_POOL")?;
-
-        let heartbeat_queue = if let Ok(key) = std::env::var("ONEFUZZ_HEARTBEAT") {
-            Some(Url::parse(&key)?)
-        } else {
-            None
-        };
-
-        let instrumentation_key = if let Ok(key) = std::env::var("ONEFUZZ_INSTRUMENTATION_KEY") {
-            Some(Uuid::parse_str(&key)?)
-        } else {
-            None
-        };
-
-        let telemetry_key = if let Ok(key) = std::env::var("ONEFUZZ_TELEMETRY_KEY") {
-            Some(Uuid::parse_str(&key)?)
-        } else {
-            None
-        };
-
-        let credentials = ClientCredentials::new(
-            client_id,
-            client_secret,
-            onefuzz_url.clone().to_string(),
-            tenant,
-        )
-        .into();
-
-        Ok(Self {
-            credentials,
-            pool_name,
-            onefuzz_url,
-            instrumentation_key,
-            telemetry_key,
-            heartbeat_queue,
-        })
-    }
-
     pub fn from_file(config_path: impl AsRef<Path>) -> Result<Self> {
-        verbose!("loading config from: {}", config_path.as_ref().display());
         let data = std::fs::read(config_path)?;
         Self::new(&data)
     }

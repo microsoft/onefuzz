@@ -34,7 +34,7 @@ impl Setup {
         fs::create_dir_all(&tools_dir).await?;
         env::set_current_dir(&onefuzz_path)?;
 
-        az_copy::sync(download_config.tools.to_string(), &tools_dir).await?;
+        az_copy::sync(download_config.tools.to_string(), &tools_dir, false).await?;
         let output: Output = self
             .setup_command(&onefuzz_path, tools_dir)
             .output()
