@@ -9,6 +9,7 @@ import os
 import re
 import subprocess  # nosec
 import uuid
+from enum import Enum
 from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
@@ -16,20 +17,20 @@ from uuid import UUID
 import pkg_resources
 import semver
 from memoization import cached
-from onefuzztypes import enums, models, primitives, requests, responses
+from onefuzztypes import enums, models, primitives, requests, responses, webhooks
 from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
 
 from .__version__ import __version__
-from .backend import Backend, ContainerWrapper, wait
+from .backend import Backend, BackendConfig, ContainerWrapper, wait
 from .ssh import build_ssh_command, ssh_connect, temp_file
 
 UUID_EXPANSION = TypeVar("UUID_EXPANSION", UUID, str)
 
-DEFAULT = {
-    "authority": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
-    "client_id": "72f1562a-8c0c-41ea-beb9-fa2b71c80134",
-}
+DEFAULT = BackendConfig(
+    authority="https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
+    client_id="72f1562a-8c0c-41ea-beb9-fa2b71c80134",
+)
 
 # This was generated randomly and should be preserved moving forwards
 ONEFUZZ_GUID_NAMESPACE = uuid.UUID("27f25e3f-6544-4b69-b309-9b096c5a9cbc")
@@ -42,6 +43,10 @@ DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:rs5-pro:latest"
 REPRO_SSH_FORWARD = "1337:127.0.0.1:1337"
 
 UUID_RE = r"^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}\Z"
+
+
+class PreviewFeature(Enum):
+    job_templates = "job_templates"
 
 
 def is_uuid(value: str) -> bool:
@@ -81,13 +86,14 @@ class Endpoint:
         *,
         data: Optional[BaseModel] = None,
         as_params: bool = False,
+        alternate_endpoint: Optional[str] = None,
     ) -> A:
+        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
+
         if as_params:
-            response = self.onefuzz._backend.request(method, self.endpoint, params=data)
+            response = self.onefuzz._backend.request(method, endpoint, params=data)
         else:
-            response = self.onefuzz._backend.request(
-                method, self.endpoint, json_data=data
-            )
+            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
 
         return model.parse_obj(response)
 
@@ -98,13 +104,15 @@ class Endpoint:
         *,
         data: Optional[BaseModel] = None,
         as_params: bool = False,
+        alternate_endpoint: Optional[str] = None,
     ) -> List[A]:
+        endpoint = self.endpoint if alternate_endpoint is None else alternate_endpoint
+
         if as_params:
-            response = self.onefuzz._backend.request(method, self.endpoint, params=data)
+            response = self.onefuzz._backend.request(method, endpoint, params=data)
         else:
-            response = self.onefuzz._backend.request(
-                method, self.endpoint, json_data=data
-            )
+            response = self.onefuzz._backend.request(method, endpoint, json_data=data)
+
         return [model.parse_obj(x) for x in response]
 
     def _disambiguate(
@@ -131,7 +139,7 @@ class Endpoint:
                 % (name, value, ",".join(values))
             )
 
-        raise Exception("%s does not expand to a value: %s" % (name, value))
+        raise Exception("Unable to find %s based on prefix: %s" % (name, value))
 
     def _disambiguate_uuid(
         self,
@@ -248,6 +256,125 @@ class Info(Endpoint):
         """ Get information about the OneFuzz instance """
         self.logger.debug("getting info")
         return self._req_model("GET", responses.Info)
+
+
+class Webhooks(Endpoint):
+    """ Interact with Webhooks """
+
+    endpoint = "webhooks"
+
+    def get(self, webhook_id: UUID_EXPANSION) -> webhooks.Webhook:
+        """ get a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("getting webhook: %s", webhook_id_expanded)
+        return self._req_model(
+            "GET",
+            webhooks.Webhook,
+            data=requests.WebhookSearch(webhook_id=webhook_id_expanded),
+        )
+
+    def list(self) -> List[webhooks.Webhook]:
+        """ list webhooks """
+
+        self.logger.debug("listing webhooks")
+        return self._req_model_list(
+            "GET",
+            webhooks.Webhook,
+            data=requests.WebhookSearch(),
+        )
+
+    def create(
+        self,
+        name: str,
+        url: str,
+        event_types: List[enums.WebhookEventType],
+        *,
+        secret_token: Optional[str] = None,
+    ) -> webhooks.Webhook:
+        """ Create a webhook """
+        self.logger.debug("creating webhook.  name: %s", name)
+        return self._req_model(
+            "POST",
+            webhooks.Webhook,
+            data=requests.WebhookCreate(
+                name=name, url=url, event_types=event_types, secret_token=secret_token
+            ),
+        )
+
+    def update(
+        self,
+        webhook_id: UUID_EXPANSION,
+        *,
+        name: Optional[str] = None,
+        url: Optional[str] = None,
+        event_types: Optional[List[enums.WebhookEventType]] = None,
+        secret_token: Optional[str] = None,
+    ) -> webhooks.Webhook:
+        """ Update a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("updating webhook: %s", webhook_id_expanded)
+        return self._req_model(
+            "PATCH",
+            webhooks.Webhook,
+            data=requests.WebhookUpdate(
+                webhook_id=webhook_id_expanded,
+                name=name,
+                url=url,
+                event_types=event_types,
+                secret_token=secret_token,
+            ),
+        )
+
+    def delete(self, webhook_id: UUID_EXPANSION) -> responses.BoolResult:
+        """ Delete a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        return self._req_model(
+            "DELETE",
+            responses.BoolResult,
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+        )
+
+    def ping(self, webhook_id: UUID_EXPANSION) -> webhooks.WebhookEventPing:
+        """ ping a webhook """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("pinging webhook: %s", webhook_id_expanded)
+        return self._req_model(
+            "POST",
+            webhooks.WebhookEventPing,
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+            alternate_endpoint="webhooks/ping",
+        )
+
+    def logs(self, webhook_id: UUID_EXPANSION) -> List[webhooks.WebhookMessageLog]:
+        """ retreive webhook event log """
+
+        webhook_id_expanded = self._disambiguate_uuid(
+            "webhook_id", webhook_id, lambda: [str(x.webhook_id) for x in self.list()]
+        )
+
+        self.logger.debug("pinging webhook: %s", webhook_id_expanded)
+        return self._req_model_list(
+            "POST",
+            webhooks.WebhookMessageLog,
+            data=requests.WebhookGet(webhook_id=webhook_id_expanded),
+            alternate_endpoint="webhooks/logs",
+        )
 
 
 class Containers(Endpoint):
@@ -673,6 +800,7 @@ class Tasks(Endpoint):
         target_timeout: Optional[int] = None,
         target_workers: Optional[int] = None,
         vm_count: int = 1,
+        preserve_existing_outputs: bool = False,
     ) -> models.Task:
         """
         Create a task
@@ -937,7 +1065,7 @@ class Pool(Endpoint):
     def get(self, name: str) -> models.Pool:
         self.logger.debug("get details on a specific pool")
         expanded_name = self._disambiguate(
-            "name", name, lambda x: False, lambda: [x.name for x in self.list()]
+            "pool name", name, lambda x: False, lambda: [x.name for x in self.list()]
         )
 
         return self._req_model(
@@ -1317,6 +1445,10 @@ class Onefuzz:
         self.pools = Pool(self)
         self.scalesets = Scaleset(self)
         self.nodes = Node(self)
+        self.webhooks = Webhooks(self)
+
+        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+            self.job_templates = JobTemplates(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
@@ -1324,9 +1456,14 @@ class Onefuzz:
         self.status = Status(self, self.logger)
         self.utils = Utils(self, self.logger)
 
+        self.__setup__()
+
     def __setup__(self, endpoint: Optional[str] = None) -> None:
         if endpoint:
-            self._backend.config["endpoint"] = endpoint
+            self._backend.config.endpoint = endpoint
+
+        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+            self.job_templates._load_cache()
 
     def licenses(self) -> object:
         """ Return third-party licenses used by this package """
@@ -1345,6 +1482,10 @@ class Onefuzz:
         # Rather than interacting MSAL directly, call a simple API which
         # actuates the login process
         self.info.get()
+
+        # TODO: once job templates are out of preview, this should be enabled
+        if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
+            self.job_templates.refresh()
         return "succeeded"
 
     def config(
@@ -1353,7 +1494,8 @@ class Onefuzz:
         authority: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
-    ) -> Dict[str, str]:
+        enable_feature: Optional[PreviewFeature] = None,
+    ) -> BackendConfig:
         """ Configure onefuzz CLI """
         self.logger.debug("set config")
 
@@ -1370,28 +1512,31 @@ class Onefuzz:
                     "This could be an invalid OneFuzz API endpoint: "
                     "Missing HTTP Authentication"
                 )
-            self._backend.config["endpoint"] = endpoint
+            self._backend.config.endpoint = endpoint
         if authority is not None:
-            self._backend.config["authority"] = authority
+            self._backend.config.authority = authority
         if client_id is not None:
-            self._backend.config["client_id"] = client_id
+            self._backend.config.client_id = client_id
         if client_secret is not None:
-            self._backend.config["client_secret"] = client_secret
+            self._backend.config.client_secret = client_secret
+        if enable_feature:
+            self._backend.enable_feature(enable_feature.name)
         self._backend.app = None
         self._backend.save_config()
 
-        data: Dict[str, str] = self._backend.config.copy()
-        if "client_secret" in data:
+        data = self._backend.config.copy(deep=True)
+        if data.client_secret is not None:
             # replace existing secrets with "*** for user display
-            data["client_secret"] = "***"  # nosec
+            data.client_secret = "***"  # nosec
 
-        if not data["endpoint"]:
+        if not data.endpoint:
             self.logger.warning("endpoint not configured yet")
 
         return data
 
     def _delete_components(
         self,
+        *,
         containers: bool = False,
         jobs: bool = False,
         notifications: bool = False,
@@ -1399,6 +1544,7 @@ class Onefuzz:
         repros: bool = False,
         scalesets: bool = False,
         tasks: bool = False,
+        webhooks: bool = False,
     ) -> None:
         if jobs:
             for job in self.jobs.list():
@@ -1434,8 +1580,14 @@ class Onefuzz:
         if containers:
             self.containers.reset(yes=True)
 
+        if webhooks:
+            for webhook in self.webhooks.list():
+                self.logger.info("removing webhook: %s", webhook.webhook_id)
+                self.webhooks.delete(webhook.webhook_id)
+
     def reset(
         self,
+        *,
         containers: bool = False,
         everything: bool = False,
         jobs: bool = False,
@@ -1444,6 +1596,7 @@ class Onefuzz:
         repros: bool = False,
         scalesets: bool = False,
         tasks: bool = False,
+        webhooks: bool = False,
         yes: bool = False,
     ) -> None:
         """
@@ -1459,11 +1612,22 @@ class Onefuzz:
         :param bool repros: Delete all repro vms.
         :param bool scalesets: Delete all managed scalesets.
         :param bool tasks: Stop all tasks.
+        :param bool webhooks: Stop all webhooks.
         :param bool yes: Ignoring to specify "y" in prompt.
         """
 
         if everything:
-            containers, jobs, pools, notifications, repros, scalesets, tasks = (
+            (
+                containers,
+                jobs,
+                pools,
+                notifications,
+                repros,
+                scalesets,
+                tasks,
+                webhooks,
+            ) = (
+                True,
                 True,
                 True,
                 True,
@@ -1489,6 +1653,7 @@ class Onefuzz:
             "scalesets",
             "repros",
             "containers",
+            "webhooks",
         }
         for k, v in locals().items():
             if k in argument_str and v:
@@ -1501,10 +1666,24 @@ class Onefuzz:
             return
 
         self._delete_components(
-            containers, jobs, notifications, pools, repros, scalesets, tasks
+            containers=containers,
+            jobs=jobs,
+            notifications=notifications,
+            pools=pools,
+            repros=repros,
+            scalesets=scalesets,
+            tasks=tasks,
+            webhooks=webhooks,
+        )
+
+    def _warn_preview(self, feature: PreviewFeature) -> None:
+        self.logger.warning(
+            "%s are a preview-feature and may change in an upcoming release",
+            feature.name,
         )
 
 
 from .debug import Debug  # noqa: E402
+from .job_templates.main import JobTemplates  # noqa: E402
 from .status.cmd import Status  # noqa: E402
 from .template import Template  # noqa: E402

@@ -6,7 +6,7 @@ use tokio::time;
 
 use crate::coordinator::*;
 use crate::done::set_done_lock;
-use crate::heartbeat::AgentHeartbeatClient;
+use crate::heartbeat::{AgentHeartbeatClient, HeartbeatSender};
 use crate::reboot::*;
 use crate::scheduler::*;
 use crate::setup::*;
@@ -20,7 +20,7 @@ pub struct Agent {
     setup_runner: Box<dyn ISetupRunner>,
     work_queue: Box<dyn IWorkQueue>,
     worker_runner: Box<dyn IWorkerRunner>,
-    _heartbeat: Option<AgentHeartbeatClient>,
+    heartbeat: Option<AgentHeartbeatClient>,
     previous_state: NodeState,
 }
 
@@ -44,7 +44,7 @@ impl Agent {
             setup_runner,
             work_queue,
             worker_runner,
-            _heartbeat: heartbeat,
+            heartbeat,
             previous_state,
         }
     }
@@ -67,6 +67,7 @@ impl Agent {
         }
 
         loop {
+            self.heartbeat.alive();
             if delay.is_elapsed() {
                 self.execute_pending_commands().await?;
                 delay = command_delay();
@@ -85,21 +86,17 @@ impl Agent {
 
     async fn update(&mut self) -> Result<bool> {
         let last = self.scheduler.take().ok_or_else(scheduler_error)?;
-
-        let next = match last {
-            Scheduler::Free(s) => self.free(s).await?,
-            Scheduler::SettingUp(s) => self.setting_up(s).await?,
-            Scheduler::PendingReboot(s) => self.pending_reboot(s).await?,
-            Scheduler::Ready(s) => self.ready(s).await?,
-            Scheduler::Busy(s) => self.busy(s).await?,
-            Scheduler::Done(s) => self.done(s).await?,
+        let previous_state = NodeState::from(&last);
+        let (next, done) = match last {
+            Scheduler::Free(s) => (self.free(s).await?, false),
+            Scheduler::SettingUp(s) => (self.setting_up(s).await?, false),
+            Scheduler::PendingReboot(s) => (self.pending_reboot(s).await?, false),
+            Scheduler::Ready(s) => (self.ready(s).await?, false),
+            Scheduler::Busy(s) => (self.busy(s).await?, false),
+            Scheduler::Done(s) => (self.done(s).await?, true),
         };
-
-        self.previous_state = NodeState::from(&next);
-        let done = matches!(next, Scheduler::Done(..));
-
+        self.previous_state = previous_state;
         self.scheduler = Some(next);
-
         Ok(done)
     }
 

@@ -206,7 +206,7 @@ impl Tester {
             // and return a collection of results to possibly be reported.
             let mut test_results = vec![];
             for result in results {
-                match self.prepare_test_result(result) {
+                match self.prepare_test_result(&result) {
                     Ok(Some(result)) => test_results.push(result),
                     Ok(None) => {}
                     Err(e) => {
@@ -228,7 +228,7 @@ impl Tester {
         let summary = Summary::from(&test_result.debugger_result);
 
         let mut results = vec![];
-        if let Some(result) = self.prepare_test_result(test_result)? {
+        if let Some(result) = self.prepare_test_result(&test_result)? {
             results.push(result);
         }
 
@@ -337,10 +337,10 @@ impl Tester {
         }
     }
 
-    pub fn prepare_test_result(&self, result: InputTestResult) -> Result<Option<TestResult>> {
+    pub fn prepare_test_result(&self, result: &InputTestResult) -> Result<Option<TestResult>> {
         if !result.debugger_result.any_crashes_or_timed_out() {
             return Ok(Some(new_test_result(
-                result.debugger_result,
+                result.debugger_result.clone(),
                 &result.input_path,
                 Path::new(""),
             )));
@@ -396,7 +396,7 @@ impl Tester {
                 ));
                 self.create_test_failure_artifacts(&logs_dir, &result, &copied_file)?;
                 Ok(Some(new_test_result(
-                    result.debugger_result,
+                    result.debugger_result.clone(),
                     &result.input_path,
                     &logs_dir,
                 )))

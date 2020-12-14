@@ -42,6 +42,7 @@ use crate::{
     },
 };
 
+#[derive(Clone)]
 pub struct DebuggerResult {
     pub exceptions: Vec<Exception>,
     pub exit_status: ExitStatus,

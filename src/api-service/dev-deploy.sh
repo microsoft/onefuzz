@@ -6,8 +6,8 @@
 
 APP_DIR=$(dirname $0)
 
-if [ "$#" -ne 1 ]; then
-    echo "usage: $0 <TARGET>"
+if [ "$#" -lt 1 ]; then
+    echo "usage: $0 <TARGET> [<VERSION>]"
     exit 1
 fi
 
@@ -15,8 +15,10 @@ set -ex
 
 TARGET=${1}
 pushd ${APP_DIR}
-VERSION=$(../ci/get-version.sh)
-../ci/set-versions.sh
+VERSION=${2:-$(../ci/get-version.sh)}
+
+../ci/set-versions.sh $VERSION
+
 
 # clean up any previously built onefuzztypes packages
 rm -f __app__/onefuzztypes*.whl
@@ -25,11 +27,14 @@ rm -f __app__/onefuzztypes*.whl
 rm -rf local-pytypes
 cp -r ../pytypes local-pytypes
 pushd local-pytypes
-rm -f dist/*
+rm -rf dist build
+
 python setup.py sdist bdist_wheel
 cp dist/*.whl ../__app__
 popd
+
 rm -r local-pytypes
+
 
 # deploy a the instance with the locally built onefuzztypes
 pushd __app__

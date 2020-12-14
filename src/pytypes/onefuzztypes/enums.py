@@ -74,6 +74,7 @@ class TaskFeature(Enum):
     check_debugger = "check_debugger"
     check_retry_count = "check_retry_count"
     ensemble_sync_delay = "ensemble_sync_delay"
+    preserve_existing_outputs = "preserve_existing_outputs"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -214,7 +215,12 @@ class ContainerType(Enum):
             cls.reports,
             cls.setup,
             cls.unique_reports,
+            cls.unique_inputs,
         ]
+
+    @classmethod
+    def user_config(cls) -> List["ContainerType"]:
+        return [cls.setup, cls.inputs, cls.readonly_inputs]
 
 
 class StatsFormat(Enum):
@@ -243,6 +249,7 @@ class ErrorCode(Enum):
     TASK_FAILED = 468
     INVALID_NODE = 469
     NOTIFICATION_FAILURE = 470
+    UNABLE_TO_UPDATE = 471
 
 
 class HeartbeatType(Enum):
@@ -357,3 +364,30 @@ class GithubIssueSearchMatch(Enum):
 class TaskDebugFlag(Enum):
     keep_node_on_failure = "keep_node_on_failure"
     keep_node_on_completion = "keep_node_on_completion"
+
+
+class WebhookEventType(Enum):
+    task_created = "task_created"
+    task_stopped = "task_stopped"
+    task_failed = "task_failed"
+    ping = "ping"
+
+
+class WebhookMessageState(Enum):
+    queued = "queued"
+    retrying = "retrying"
+    succeeded = "succeeded"
+    failed = "failed"
+
+
+class UserFieldOperation(Enum):
+    add = "add"
+    replace = "replace"
+
+
+class UserFieldType(Enum):
+    Bool = "Bool"
+    Int = "Int"
+    Str = "Str"
+    DictStr = "DictStr"
+    ListStr = "ListStr"

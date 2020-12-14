@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
@@ -35,6 +35,12 @@ from .enums import (
 from .primitives import Container, PoolName, Region
 
 
+class UserInfo(BaseModel):
+    application_id: UUID
+    object_id: Optional[UUID]
+    upn: Optional[str]
+
+
 class EnumModel(BaseModel):
     @root_validator(pre=True)
     def exactly_one(cls: Any, values: Any) -> Any:
@@ -56,6 +62,10 @@ class EnumModel(BaseModel):
 class Error(BaseModel):
     code: ErrorCode
     errors: List[str]
+
+
+OkType = TypeVar("OkType")
+Result = Union[OkType, Error]
 
 
 class FileEntry(BaseModel):
@@ -123,6 +133,7 @@ class TaskDetails(BaseModel):
     reboot_after_setup: Optional[bool]
     target_timeout: Optional[int]
     ensemble_sync_delay: Optional[int]
+    preserve_existing_outputs: Optional[bool]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:
@@ -199,6 +210,8 @@ class Report(BaseModel):
     asan_log: Optional[str]
     task_id: UUID
     job_id: UUID
+    scariness_score: Optional[int]
+    scariness_description: Optional[str]
 
 
 class ADODuplicateTemplate(BaseModel):
@@ -293,6 +306,7 @@ class TaskUnitConfig(BaseModel):
     target_options: Optional[List[str]]
     target_timeout: Optional[int]
     target_options_merge: Optional[bool]
+    target_workers: Optional[int]
     check_asan_log: Optional[bool]
     check_debugger: Optional[bool]
     check_retry_count: Optional[int]
@@ -427,6 +441,7 @@ class Job(BaseModel):
     error: Optional[str]
     end_time: Optional[datetime] = None
     task_info: Optional[List[JobTaskInfo]]
+    user_info: Optional[UserInfo]
 
 
 class TaskHeartbeatEntry(BaseModel):
@@ -566,6 +581,7 @@ class Repro(BaseModel):
     error: Optional[Error]
     ip: Optional[str]
     end_time: Optional[datetime]
+    user_info: Optional[UserInfo]
 
 
 class ExitStatus(BaseModel):
@@ -699,3 +715,4 @@ class Task(BaseModel):
     end_time: Optional[datetime]
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
+    user_info: Optional[UserInfo]

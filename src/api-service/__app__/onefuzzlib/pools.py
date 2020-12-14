@@ -35,7 +35,7 @@ from pydantic import BaseModel, Field
 
 from .__version__ import __version__
 from .azure.auth import build_auth
-from .azure.creds import get_func_storage, get_fuzz_storage
+from .azure.containers import StorageType
 from .azure.image import get_os
 from .azure.network import Network
 from .azure.queue import (
@@ -99,6 +99,7 @@ class Node(BASE_NODE, ORMMixin):
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
         pool_name: Optional[str] = None,
+        exclude_update_scheduled: bool = False,
     ) -> List["Node"]:
         query: QueryFilter = {}
         if scaleset_id:
@@ -108,6 +109,10 @@ class Node(BASE_NODE, ORMMixin):
         if pool_name:
             query["pool_name"] = [pool_name]
 
+        if exclude_update_scheduled:
+            query["reimage_requested"] = [False]
+            query["delete_requested"] = [False]
+
         # azure table query always return false when the column does not exist
         # We write the query this way to allow us to get the nodes where the
         # version is not defined as well as the nodes with a mismatched version
@@ -116,7 +121,7 @@ class Node(BASE_NODE, ORMMixin):
 
     @classmethod
     def mark_outdated_nodes(cls) -> None:
-        outdated = cls.search_outdated()
+        outdated = cls.search_outdated(exclude_update_scheduled=True)
         for node in outdated:
             logging.info(
                 "node is outdated: %s - node_version:%s api_version:%s",
@@ -442,7 +447,7 @@ class Pool(BASE_POOL, ORMMixin):
             return
 
         worksets = peek_queue(
-            self.get_pool_queue(), account_id=get_fuzz_storage(), object_type=WorkSet
+            self.get_pool_queue(), StorageType.corpus, object_type=WorkSet
         )
 
         for workset in worksets:
@@ -460,7 +465,7 @@ class Pool(BASE_POOL, ORMMixin):
         return "pool-%s" % self.pool_id.hex
 
     def init(self) -> None:
-        create_queue(self.get_pool_queue(), account_id=get_fuzz_storage())
+        create_queue(self.get_pool_queue(), StorageType.corpus)
         self.state = PoolState.running
         self.save()
 
@@ -470,7 +475,9 @@ class Pool(BASE_POOL, ORMMixin):
             return False
 
         return queue_object(
-            self.get_pool_queue(), work_set, account_id=get_fuzz_storage()
+            self.get_pool_queue(),
+            work_set,
+            StorageType.corpus,
         )
 
     @classmethod
@@ -531,7 +538,7 @@ class Pool(BASE_POOL, ORMMixin):
         scalesets = Scaleset.search_by_pool(self.name)
         nodes = Node.search(query={"pool_name": [self.name]})
         if not scalesets and not nodes:
-            delete_queue(self.get_pool_queue(), account_id=get_fuzz_storage())
+            delete_queue(self.get_pool_queue(), StorageType.corpus)
             logging.info("pool stopped, deleting: %s", self.name)
             self.state = PoolState.halt
             self.delete()
@@ -767,24 +774,31 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         to_reimage = []
         to_delete = []
 
-        nodes = Node.search_states(
-            scaleset_id=self.scaleset_id, states=NodeState.ready_for_reset()
-        )
+        # ground truth of existing nodes
+        azure_nodes = list_instance_ids(self.scaleset_id)
+
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
 
         if not nodes:
             logging.info("no nodes need updating: %s", self.scaleset_id)
             return False
 
-        # ground truth of existing nodes
-        azure_nodes = list_instance_ids(self.scaleset_id)
-
+        # Nodes do not exists in scalesets but in table due to unknown failure
         for node in nodes:
             if node.machine_id not in azure_nodes:
                 logging.info(
                     "no longer in scaleset: %s:%s", self.scaleset_id, node.machine_id
                 )
                 node.delete()
-            elif node.delete_requested:
+
+        nodes_to_reset = [x for x in nodes if x.state in NodeState.ready_for_reset()]
+
+        if len(nodes_to_reset) == 0:
+            logging.info("No needs are ready for resetting: %s", self.scaleset_id)
+            return False
+
+        for node in nodes_to_reset:
+            if node.delete_requested:
                 to_delete.append(node)
             else:
                 if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
@@ -1046,16 +1060,16 @@ class ScalesetShrinkQueue:
         return "to-shrink-%s" % self.scaleset_id.hex
 
     def clear(self) -> None:
-        clear_queue(self.queue_name(), account_id=get_func_storage())
+        clear_queue(self.queue_name(), StorageType.config)
 
     def create(self) -> None:
-        create_queue(self.queue_name(), account_id=get_func_storage())
+        create_queue(self.queue_name(), StorageType.config)
 
     def delete(self) -> None:
-        delete_queue(self.queue_name(), account_id=get_func_storage())
+        delete_queue(self.queue_name(), StorageType.config)
 
     def add_entry(self) -> None:
-        queue_object(self.queue_name(), ShrinkEntry(), account_id=get_func_storage())
+        queue_object(self.queue_name(), ShrinkEntry(), StorageType.config)
 
     def should_shrink(self) -> bool:
-        return remove_first_message(self.queue_name(), account_id=get_func_storage())
+        return remove_first_message(self.queue_name(), StorageType.config)

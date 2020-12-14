@@ -53,6 +53,7 @@ class Integration(BaseModel):
     use_setup: bool = Field(default=False)
     wait_for_files: List[ContainerType]
     check_asan_log: Optional[bool] = Field(default=False)
+    disable_check_debugger: Optional[bool] = Field(default=False)
 
 
 TARGETS: Dict[str, Integration] = {
@@ -90,6 +91,7 @@ TARGETS: Dict[str, Integration] = {
         inputs="seeds",
         wait_for_files=[ContainerType.unique_reports],
         check_asan_log=True,
+        disable_check_debugger=True,
     ),
     "windows-libfuzzer": Integration(
         template=TemplateType.libfuzzer,
@@ -212,6 +214,7 @@ class TestOnefuzz:
                     inputs=inputs,
                     setup_dir=setup,
                     check_asan_log=config.check_asan_log or False,
+                    disable_check_debugger=config.disable_check_debugger or False,
                     duration=1,
                     vm_count=1,
                 )

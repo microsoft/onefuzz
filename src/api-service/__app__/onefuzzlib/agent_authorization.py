@@ -8,67 +8,29 @@ from typing import Callable, Optional, Union
 from uuid import UUID
 
 import azure.functions as func
-import jwt
 from memoization import cached
 from onefuzztypes.enums import ErrorCode
-from onefuzztypes.models import Error
-from pydantic import BaseModel
+from onefuzztypes.models import Error, UserInfo
 
 from .azure.creds import get_scaleset_principal_id
 from .pools import Pool, Scaleset
 from .request import not_ok
-
-
-class TokenData(BaseModel):
-    application_id: UUID
-    object_id: Optional[UUID]
-
-
-def try_get_token_auth_header(request: func.HttpRequest) -> Union[Error, TokenData]:
-    """ Obtains the Access Token from the Authorization Header """
-    auth: str = request.headers.get("Authorization", None)
-    if not auth:
-        return Error(
-            code=ErrorCode.INVALID_REQUEST, errors=["Authorization header is expected"]
-        )
-    parts = auth.split()
-
-    if parts[0].lower() != "bearer":
-        return Error(
-            code=ErrorCode.INVALID_REQUEST,
-            errors=["Authorization header must start with Bearer"],
-        )
-
-    elif len(parts) == 1:
-        return Error(code=ErrorCode.INVALID_REQUEST, errors=["Token not found"])
-
-    elif len(parts) > 2:
-        return Error(
-            code=ErrorCode.INVALID_REQUEST,
-            errors=["Authorization header must be Bearer token"],
-        )
-
-    # This token has already been verified by the azure authentication layer
-    token = jwt.decode(parts[1], verify=False)
-
-    application_id = UUID(token["appid"])
-    object_id = UUID(token["oid"]) if "oid" in token else None
-    return TokenData(application_id=application_id, object_id=object_id)
+from .user_credentials import parse_jwt_token
 
 
 @cached(ttl=60)
-def is_authorized(token_data: TokenData) -> bool:
-    # backward compatibility case for scalesets deployed before the migration
-    # to user assigned managed id
+def is_agent(token_data: UserInfo) -> bool:
+
     if token_data.object_id:
+        # backward compatibility case for scalesets deployed before the migration
+        # to user assigned managed id
         scalesets = Scaleset.get_by_object_id(token_data.object_id)
         if len(scalesets) > 0:
             return True
 
         # verify object_id against the user assigned managed identity
         principal_id: UUID = get_scaleset_principal_id()
-        if principal_id == token_data.object_id:
-            return True
+        return principal_id == token_data.object_id
 
     pools = Pool.search(query={"client_id": [token_data.application_id]})
     if len(pools) > 0:
@@ -77,15 +39,15 @@ def is_authorized(token_data: TokenData) -> bool:
     return False
 
 
-def verify_token(
+def call_if_agent(
     req: func.HttpRequest, method: Callable[[func.HttpRequest], func.HttpResponse]
 ) -> func.HttpResponse:
-    token = try_get_token_auth_header(req)
 
+    token = parse_jwt_token(req)
     if isinstance(token, Error):
         return not_ok(token, status_code=401, context="token verification")
 
-    if not is_authorized(token):
+    if not is_agent(token):
         logging.error(
             "rejecting token url:%s token:%s body:%s",
             repr(req.url),

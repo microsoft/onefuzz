@@ -11,13 +11,13 @@ from uuid import UUID
 from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, TaskFeature
 from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
 
-from ..azure.containers import blob_exists, container_exists, get_container_sas_url
-from ..azure.creds import (
-    get_func_storage,
-    get_fuzz_storage,
-    get_instance_id,
-    get_instance_url,
+from ..azure.containers import (
+    StorageType,
+    blob_exists,
+    container_exists,
+    get_container_sas_url,
 )
+from ..azure.creds import get_instance_id, get_instance_url
 from ..azure.queue import get_queue_sas
 from .defs import TASK_DEFINITIONS
 
@@ -68,7 +68,7 @@ def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
     containers: Dict[ContainerType, List[str]] = {}
     for container in config.containers:
         if container.name not in checked:
-            if not container_exists(container.name):
+            if not container_exists(container.name, StorageType.corpus):
                 raise TaskConfigError("missing container: %s" % container.name)
             checked.add(container.name)
 
@@ -137,7 +137,7 @@ def check_config(config: TaskConfig) -> None:
 
     if TaskFeature.target_exe in definition.features:
         container = [x for x in config.containers if x.type == ContainerType.setup][0]
-        if not blob_exists(container.name, config.task.target_exe):
+        if not blob_exists(container.name, config.task.target_exe, StorageType.corpus):
             err = "target_exe `%s` does not exist in the setup container `%s`" % (
                 config.task.target_exe,
                 container.name,
@@ -153,7 +153,7 @@ def check_config(config: TaskConfig) -> None:
         for tool_path in tools_paths:
             if config.task.generator_exe.startswith(tool_path):
                 generator = config.task.generator_exe.replace(tool_path, "")
-                if not blob_exists(container.name, generator):
+                if not blob_exists(container.name, generator, StorageType.corpus):
                     err = (
                         "generator_exe `%s` does not exist in the tools container `%s`"
                         % (
@@ -188,7 +188,7 @@ def build_task_config(
         telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "task-heartbeat",
-            account_id=get_func_storage(),
+            StorageType.config,
             add=True,
         ),
         back_channel_address="https://%s/api/back_channel" % (get_instance_url()),
@@ -198,11 +198,11 @@ def build_task_config(
     if definition.monitor_queue:
         config.input_queue = get_queue_sas(
             task_id,
+            StorageType.corpus,
             add=True,
             read=True,
             update=True,
             process=True,
-            account_id=get_fuzz_storage(),
         )
 
     for container_def in definition.containers:
@@ -219,6 +219,7 @@ def build_task_config(
                     "path": "_".join(["task", container_def.type.name, str(i)]),
                     "url": get_container_sas_url(
                         container.name,
+                        StorageType.corpus,
                         read=ContainerPermission.Read in container_def.permissions,
                         write=ContainerPermission.Write in container_def.permissions,
                         add=ContainerPermission.Add in container_def.permissions,
@@ -266,6 +267,9 @@ def build_task_config(
 
     if TaskFeature.target_options_merge in definition.features:
         config.target_options_merge = task_config.task.target_options_merge or False
+
+    if TaskFeature.target_workers in definition.features:
+        config.target_workers = task_config.task.target_workers
 
     if TaskFeature.rename_output in definition.features:
         config.rename_output = task_config.task.rename_output or False

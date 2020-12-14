@@ -38,6 +38,7 @@ class Info(BaseResponse):
     versions: Dict[str, Version]
     instance_id: Optional[UUID]
     insights_appid: Optional[str]
+    insights_instrumentation_key: Optional[str]
 
 
 class ContainerInfoBase(BaseResponse):

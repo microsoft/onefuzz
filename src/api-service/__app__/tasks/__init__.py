@@ -5,7 +5,7 @@
 
 # import logging
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, JobState, TaskState
+from onefuzztypes.enums import ErrorCode, JobState
 from onefuzztypes.models import Error, TaskConfig
 from onefuzztypes.requests import TaskGet, TaskSearch
 from onefuzztypes.responses import BoolResult
@@ -16,12 +16,17 @@ from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.task_event import TaskEvent
 from ..onefuzzlib.tasks.config import TaskConfigError, check_config
 from ..onefuzzlib.tasks.main import Task
+from ..onefuzzlib.user_credentials import parse_jwt_token
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(TaskConfig, req)
     if isinstance(request, Error):
         return not_ok(request, context="task create")
+
+    user_info = parse_jwt_token(req)
+    if isinstance(user_info, Error):
+        return not_ok(user_info, context="task create")
 
     try:
         check_config(request)
@@ -56,7 +61,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             if isinstance(prereq, Error):
                 return not_ok(prereq, context="task create prerequisite")
 
-    task = Task.create(config=request, job_id=request.job_id)
+    task = Task.create(config=request, job_id=request.job_id, user_info=user_info)
     if isinstance(task, Error):
         return not_ok(task, context="task create invalid pool")
     return ok(task)
@@ -88,8 +93,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(task, Error):
         return not_ok(task, context=request.task_id)
 
-    task.state = TaskState.stopping
-    task.save()
+    task.mark_stopping()
 
     return ok(task)
 

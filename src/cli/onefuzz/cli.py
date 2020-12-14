@@ -72,20 +72,6 @@ def call_func(func: Callable, args: argparse.Namespace) -> Any:
     return func(**myargs)
 
 
-class AsDict(argparse.Action):
-    def __call__(
-        self,
-        parser: argparse.ArgumentParser,  # noqa: F841 - unused args required by argparse
-        namespace: argparse.Namespace,
-        values: Union[str, Sequence[Any], None],
-        option_string: str = None,  # noqa: F841 - unused args required by argparse
-    ) -> None:
-        if values is None:
-            return
-        as_dict: Dict[str, str] = {k: v for k, v in (x.split("=", 1) for x in values)}
-        setattr(namespace, self.dest, as_dict)
-
-
 def arg_bool(arg: str) -> bool:
     acceptable = ["true", "false"]
     if arg not in acceptable:
@@ -152,7 +138,7 @@ def add_base(parser: argparse.ArgumentParser) -> None:
 
 
 def enum_help(entry: Type[Enum]) -> str:
-    return "accepted %s: %s" % (entry.__name__, ", ".join(entry.__members__))
+    return "accepted %s: %s" % (entry.__name__, ", ".join([x.name for x in entry]))
 
 
 def tuple_help(entry: Any) -> str:
@@ -160,7 +146,7 @@ def tuple_help(entry: Any) -> str:
     for item in entry:
         if inspect.isclass(item) and issubclass(item, Enum):
             doc.append(
-                "accepted %s: %s." % (item.__name__, ", ".join(item.__members__))
+                "accepted %s: %s." % (item.__name__, ", ".join([x.name for x in item]))
             )
     return " ".join(doc)
 
@@ -174,7 +160,6 @@ class Builder:
             Container: {"type": str},
             File: {"type": arg_file},
             Directory: {"type": arg_dir},
-            Dict[str, str]: {"action": AsDict, "nargs": "+", "metavar": "key=val"},
         }
         self.api_types = tuple(api_types)
         self.top_level = argparse.ArgumentParser(add_help=False)
@@ -303,6 +288,27 @@ class Builder:
 
         return None
 
+    def build_dict_parser(self, annotation: Any) -> Dict[str, Any]:
+        (key_arg, val_arg) = get_arg(annotation)
+
+        class AsDictCustom(argparse.Action):
+            def __call__(
+                self,
+                _parser: argparse.ArgumentParser,  # noqa: F841 - unused args required by argparse
+                namespace: argparse.Namespace,
+                values: Union[str, Sequence[Any], None],
+                option_string: str = None,  # noqa: F841 - unused args required by argparse
+            ) -> None:
+                if values is None:
+                    return
+                as_dict: Dict[str, str] = {
+                    key_arg(k): val_arg(v) for k, v in (x.split("=", 1) for x in values)
+                }
+                setattr(namespace, self.dest, as_dict)
+
+        metavar = "%s=%s" % (key_arg.__name__, val_arg.__name__)
+        return {"action": AsDictCustom, "nargs": "+", "metavar": metavar}
+
     def parse_annotation(
         self,
         name: str,
@@ -331,6 +337,10 @@ class Builder:
         if is_a(annotation, (list, List), count=1):
             result.update(self.parse_annotation(name, get_arg(annotation, 0), default))
             result["nargs"] = "*"
+            return result
+
+        if is_a(annotation, (dict, Dict)):
+            result.update(self.build_dict_parser(annotation))
             return result
 
         if is_a(annotation, (tuple, Tuple)):

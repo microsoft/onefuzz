@@ -11,11 +11,11 @@ from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import OS, ContainerType, ErrorCode, VmState
 from onefuzztypes.models import Error
 from onefuzztypes.models import Repro as BASE_REPRO
-from onefuzztypes.models import ReproConfig, TaskVm
+from onefuzztypes.models import ReproConfig, TaskVm, UserInfo
 
 from .azure.auth import build_auth
-from .azure.containers import save_blob
-from .azure.creds import get_base_region, get_func_storage
+from .azure.containers import StorageType, save_blob
+from .azure.creds import get_base_region
 from .azure.ip import get_public_ip
 from .azure.vm import VM
 from .extension import repro_extensions
@@ -205,7 +205,7 @@ class Repro(BASE_REPRO, ORMMixin):
                 "repro-scripts",
                 "%s/%s" % (self.vm_id, filename),
                 files[filename],
-                account_id=get_func_storage(),
+                StorageType.config,
             )
 
         logging.info("saved repro script")
@@ -219,7 +219,9 @@ class Repro(BASE_REPRO, ORMMixin):
         return cls.search(query=query)
 
     @classmethod
-    def create(cls, config: ReproConfig) -> Union[Error, "Repro"]:
+    def create(
+        cls, config: ReproConfig, user_info: Optional[UserInfo]
+    ) -> Union[Error, "Repro"]:
         report = get_report(config.container, config.path)
         if not report:
             return Error(
@@ -233,6 +235,8 @@ class Repro(BASE_REPRO, ORMMixin):
         vm = cls(config=config, task_id=task.task_id, os=task.os, auth=build_auth())
         if vm.end_time is None:
             vm.end_time = datetime.utcnow() + timedelta(hours=config.duration)
+
+        vm.user_info = user_info
         vm.save()
 
         return vm
