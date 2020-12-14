@@ -19,7 +19,7 @@ from onefuzztypes.models import (
     TeamsTemplate,
 )
 from onefuzztypes.primitives import Container, Event
-
+from onefuzztypes.webhooks import WebhookEventCrashReportCreated
 from ..azure.containers import (
     StorageType,
     container_exists,
@@ -35,6 +35,7 @@ from ..tasks.main import Task
 from .ado import notify_ado
 from .github_issues import github_issue
 from .teams import notify_teams
+from ..webhooks import Webhook
 
 
 class Notification(models.Notification, ORMMixin):
@@ -125,6 +126,12 @@ def new_files(container: Container, filename: str) -> None:
             results["crash_site"] = report.crash_site
             results["job_id"] = report.job_id
             results["task_id"] = report.task_id
+
+            Webhook.send_event(
+                WebhookEventCrashReportCreated(
+                    container=container, filename=filename, report=report
+                )
+            )
 
         logging.info("notifications for %s %s %s", container, filename, notifications)
         done = []

@@ -370,6 +370,7 @@ class WebhookEventType(Enum):
     task_created = "task_created"
     task_stopped = "task_stopped"
     task_failed = "task_failed"
+    crash_report_created = "crash_report_created"
     ping = "ping"
 
 

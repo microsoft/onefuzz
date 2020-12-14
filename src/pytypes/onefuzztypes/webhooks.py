@@ -8,8 +8,9 @@ from uuid import UUID, uuid4
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
+from .primitives import Container
 from .enums import WebhookEventType, WebhookMessageState
-from .models import Error, TaskConfig, UserInfo
+from .models import Error, TaskConfig, UserInfo, Report
 from .responses import BaseResponse
 
 
@@ -33,6 +34,12 @@ class WebhookEventTaskCreated(BaseModel):
     user_info: Optional[UserInfo]
 
 
+class WebhookEventCrashReportCreated(BaseModel):
+    container: Container
+    filename: str
+    report: Report
+
+
 class WebhookEventPing(BaseResponse):
     ping_id: UUID = Field(default_factory=uuid4)
 
@@ -42,6 +49,7 @@ WebhookEvent = Union[
     WebhookEventTaskStopped,
     WebhookEventTaskFailed,
     WebhookEventPing,
+    WebhookEventCrashReportCreated,
 ]
 
 
