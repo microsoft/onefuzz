@@ -8,7 +8,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from onefuzztypes.enums import OS, AgentMode
-from onefuzztypes.models import AgentConfig, ReproConfig
+from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
 from onefuzztypes.primitives import Extension, Region
 
 from .azure.containers import (
@@ -21,16 +21,6 @@ from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
 from .reports import get_report
-
-# TODO: figure out how to create VM specific SSH keys for Windows.
-#
-# Previously done via task specific scripts:
-
-# if is_windows and auth is not None:
-#     ssh_key = auth.public_key.strip()
-#     ssh_path = "$env:ProgramData/ssh/administrators_authorized_keys"
-#     commands += ['Set-Content -Path %s -Value "%s"' % (ssh_path, ssh_key)]
-#     return commands
 
 
 def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
@@ -94,9 +84,24 @@ def dependency_extension(region: Region, vm_os: OS) -> Optional[Extension]:
         return None
 
 
-def build_pool_config(pool_name: str) -> str:
+def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
+    commands = []
+    extension = "ps1" if pool.os == OS.windows else "sh"
+    filename = f"{scaleset.scaleset_id}/scaleset-setup.{extension}"
+    sep = "\r\n" if pool.os == OS.windows else "\n"
+
+    if pool.os == OS.windows and scaleset.auth is not None:
+        ssh_key = scaleset.auth.public_key.strip()
+        ssh_path = "$env:ProgramData/ssh/administrators_authorized_keys"
+        commands += ['Set-Content -Path %s -Value "%s"' % (ssh_path, ssh_key)]
+
+    save_blob("vm-scripts", filename, sep.join(commands) + sep, StorageType.config)
+    return get_file_sas_url("vm-scripts", filename, StorageType.config, read=True)
+
+
+def build_pool_config(pool: Pool) -> str:
     config = AgentConfig(
-        pool_name=pool_name,
+        pool_name=pool.name,
         onefuzz_url=get_instance_url(),
         instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         heartbeat_queue=get_queue_sas(
@@ -108,16 +113,18 @@ def build_pool_config(pool_name: str) -> str:
         instance_id=get_instance_id(),
     )
 
+    filename = f"{pool.name}/config.json"
+
     save_blob(
         "vm-scripts",
-        "%s/config.json" % pool_name,
+        filename,
         config.json(),
         StorageType.config,
     )
 
     return get_file_sas_url(
         "vm-scripts",
-        "%s/config.json" % pool_name,
+        filename,
         StorageType.config,
         read=True,
     )
@@ -240,10 +247,10 @@ def agent_config(
     raise NotImplementedError("unsupported OS: %s" % vm_os)
 
 
-def fuzz_extensions(region: Region, vm_os: OS, pool_name: str) -> List[Extension]:
-    urls = [build_pool_config(pool_name)]
-    fuzz_extension = agent_config(region, vm_os, AgentMode.fuzz, urls=urls)
-    extensions = generic_extensions(region, vm_os)
+def fuzz_extensions(pool: Pool, scaleset: Scaleset) -> List[Extension]:
+    urls = [build_pool_config(pool), build_scaleset_script(pool, scaleset)]
+    fuzz_extension = agent_config(scaleset.region, pool.os, AgentMode.fuzz, urls=urls)
+    extensions = generic_extensions(scaleset.region, pool.os)
     extensions += [fuzz_extension]
     return extensions
 
