@@ -8,9 +8,8 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import DownloadConfigRequest
 from onefuzztypes.responses import DownloadConfig
 
-from ..onefuzzlib.agent_authorization import verify_token
-from ..onefuzzlib.azure.containers import get_container_sas_url
-from ..onefuzzlib.azure.creds import get_func_storage
+from ..onefuzzlib.agent_authorization import call_if_agent
+from ..onefuzzlib.azure.containers import StorageType, get_container_sas_url
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 
@@ -19,9 +18,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="DownloadConfigRequest")
 
-    tools_sas = get_container_sas_url(
-        "tools", read=True, list=True, account_id=get_func_storage()
-    )
+    tools_sas = get_container_sas_url("tools", StorageType.config, read=True, list=True)
 
     return ok(DownloadConfig(tools=tools_sas))
 
@@ -32,4 +29,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     else:
         raise Exception("invalid method")
 
-    return verify_token(req, m)
+    return call_if_agent(req, m)

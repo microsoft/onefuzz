@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Callable, Optional, Union
+from typing import Callable
 from uuid import UUID
 
 import azure.functions as func
