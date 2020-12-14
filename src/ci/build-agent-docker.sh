@@ -12,16 +12,17 @@ cd src/docker/linux-node
 
 rm -rf tools
 mkdir -p tools/linux
+DEST_DIR = $(realpath tools/linux)
 
 if [ ! -d ../../../artifacts/azcopy ]; then
-   (cd ../../../; ./src/ci/agent.sh)
+    (cd ../../../; ./src/ci/agent.sh)
 fi
-(cd ../../../; cp artifacts/azcopy/azcopy tools/linux)
+(cd ../../../; cp artifacts/azcopy/azcopy ${DEST_DIR})
 
 if [ -d ../../../artifacts/agent ]; then
-   (cd ../../../; cp artifacts/agent/onefuzz-downloader tools/linux)
+    (cd ../../../; cp artifacts/agent/onefuzz-downloader ${DEST_DIR})
 else
-   (cd ../../agent; cargo build --release; cp target/release/onefuzz-downloader tools/linux)
+    (cd ../../agent; cargo build --release; cp target/release/onefuzz-downloader ${DEST_DIR})
 fi
 
 docker build -t onefuzz:${ONEFUZZ_VERSION} .
