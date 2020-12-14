@@ -59,13 +59,13 @@ fn main() -> Result<()> {
         Opt::Run(opt) => run(opt)?,
         Opt::Debug(opt) => debug::debug(opt)?,
         Opt::Licenses => licenses()?,
-        Opt::Version => versions()?,
+        Opt::Version => version()?,
     };
 
     Ok(())
 }
 
-fn versions() -> Result<()> {
+fn version() -> Result<()> {
     println!(
         "{} onefuzz:{} git:{}",
         crate_version!(),
@@ -128,15 +128,15 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     telemetry::set_property(EventData::InstanceId(config.instance_id));
     telemetry::set_property(EventData::MachineId(get_machine_id().await?));
     telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
-    let scaleset = get_scaleset_name().await;
-    if let Ok(scaleset) = &scaleset {
+    let scaleset = get_scaleset_name().await?;
+    if let Some(scaleset) = &scaleset {
         telemetry::set_property(EventData::ScalesetId(scaleset.clone()));
     }
 
     let registration = match config::Registration::load_existing(config.clone()).await {
         Ok(registration) => registration,
         Err(_) => {
-            if scaleset.is_ok() {
+            if scaleset.is_some() {
                 config::Registration::create_managed(config.clone()).await?
             } else {
                 config::Registration::create_unmanaged(config.clone()).await?
