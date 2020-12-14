@@ -314,6 +314,9 @@ jobs:
       with:
         name: release-artifacts
         path: release-artifacts
+    - name: Build Fuzzing Containers
+      shell: bash
+      run: src/ci/build-agent-docker.sh
   build-integration-tests-linux:
     runs-on: ubuntu-latest
     steps:

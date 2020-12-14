@@ -1,9 +1,14 @@
-#!/bin/bash 
+#!/bin/bash
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 
 set -ex
 
-BUILD_DIR=$(dirname $(realpath $0))
-cd ${BUILD_DIR}
+SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
+ONEFUZZ_VERSION=$(${SCRIPT_DIR}/get-version.sh)
+
+cd src/docker/linux-node
 
 rm -rf tools
 mkdir -p tools/linux
@@ -19,4 +24,4 @@ else
    (cd ../../agent; cargo build --release; cp target/release/onefuzz-downloader ${BUILD_DIR}/tools/linux)
 fi
 
-docker build -t onefuzz:latest .
+docker build -t onefuzz:${ONEFUZZ_VERSION} .
