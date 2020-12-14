@@ -4,7 +4,6 @@
 use std::fmt;
 
 use anyhow::Result;
-use onefuzz::http::ResponseExt;
 use reqwest_retry::SendRetry;
 use url::Url;
 use uuid::Uuid;
