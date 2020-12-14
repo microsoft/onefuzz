@@ -20,6 +20,7 @@ from onefuzztypes.models import (
 )
 from onefuzztypes.primitives import Container, Event
 from onefuzztypes.webhooks import WebhookEventCrashReportCreated
+
 from ..azure.containers import (
     StorageType,
     container_exists,
@@ -32,10 +33,10 @@ from ..orm import ORMMixin
 from ..reports import get_report
 from ..tasks.config import get_input_container_queues
 from ..tasks.main import Task
+from ..webhooks import Webhook
 from .ado import notify_ado
 from .github_issues import github_issue
 from .teams import notify_teams
-from ..webhooks import Webhook
 
 
 class Notification(models.Notification, ORMMixin):
