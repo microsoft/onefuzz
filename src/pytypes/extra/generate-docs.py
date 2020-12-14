@@ -3,30 +3,30 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+import json
 from typing import Optional
 from uuid import UUID
-import json
-from onefuzztypes.enums import TaskType, ContainerType, ErrorCode
+
+from onefuzztypes.enums import ContainerType, ErrorCode, TaskType, WebhookEventType
 from onefuzztypes.models import (
-    TaskConfig,
     BlobRef,
-    TaskDetails,
-    TaskContainers,
     Error,
-    UserInfo,
     Report,
+    TaskConfig,
+    TaskContainers,
+    TaskDetails,
+    UserInfo,
 )
 from onefuzztypes.primitives import Container
 from onefuzztypes.webhooks import (
-    WebhookMessage,
     WebhookEvent,
+    WebhookEventCrashReportCreated,
     WebhookEventPing,
     WebhookEventTaskCreated,
-    WebhookEventTaskStopped,
     WebhookEventTaskFailed,
-    WebhookEventCrashReportCreated,
+    WebhookEventTaskStopped,
+    WebhookMessage,
 )
-from onefuzztypes.enums import WebhookEventType
 
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)

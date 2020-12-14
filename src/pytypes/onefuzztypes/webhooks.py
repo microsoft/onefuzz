@@ -8,9 +8,9 @@ from uuid import UUID, uuid4
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from .primitives import Container
 from .enums import WebhookEventType, WebhookMessageState
-from .models import Error, TaskConfig, UserInfo, Report
+from .models import Error, Report, TaskConfig, UserInfo
+from .primitives import Container
 from .responses import BaseResponse
 
 
