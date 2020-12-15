@@ -10,12 +10,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "webhook_id": "00000000-0000-0000-0000-000000000000",
     "event_id": "00000000-0000-0000-0000-000000000000",
     "event_type": "ping",
     "event": {
         "ping_id": "00000000-0000-0000-0000-000000000000"
-    }
+    },
+    "webhook_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
@@ -1245,11 +1245,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "title": "WebhookMessage",
     "type": "object",
     "properties": {
-        "webhook_id": {
-            "title": "Webhook Id",
-            "type": "string",
-            "format": "uuid"
-        },
         "event_id": {
             "title": "Event Id",
             "type": "string",
@@ -1301,12 +1296,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventPing"
                 }
             ]
+        },
+        "webhook_id": {
+            "title": "Webhook Id",
+            "type": "string",
+            "format": "uuid"
         }
     },
     "required": [
-        "webhook_id",
         "event_type",
-        "event"
+        "event",
+        "webhook_id"
     ],
     "definitions": {
         "EventType": {
