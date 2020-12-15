@@ -22,6 +22,9 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
+    EventNodeCreated,
+    EventNodeStateUpdated,
+    EventNodeDeleted,
 )
 from onefuzztypes.models import AutoScaleConfig, Error
 from onefuzztypes.models import Node as BASE_NODE
@@ -283,6 +286,7 @@ class Node(BASE_NODE, ORMMixin):
         """ Tell the node to stop everything. """
         self.set_shutdown()
         self.stop()
+        self.set_state(NodeState.halt)
 
     @classmethod
     def get_dead_nodes(
@@ -296,8 +300,28 @@ class Node(BASE_NODE, ORMMixin):
             raw_unchecked_filter=time_filter,
         )
 
+    def set_state(self, state: NodeState) -> None:
+        if self.state != state:
+            self.state = state
+            send_event(
+                EventNodeStateUpdated(
+                    machine_id=self.machine_id,
+                    pool_name=self.pool_name,
+                    scaleset_id=self.scaleset_id,
+                )
+            )
+
+        self.save()
+
     def delete(self) -> None:
         NodeTasks.clear_by_machine_id(self.machine_id)
+        send_event(
+            EventNodeDeleted(
+                machine_id=self.machine_id,
+                pool_name=self.pool_name,
+                scaleset_id=self.scaleset_id,
+            )
+        )
         super().delete()
 
 
@@ -614,6 +638,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             client_object_id=client_object_id,
             tags=tags,
         )
+        entry.save()
         send_event(
             EventScalesetCreated(
                 scaleset_id=entry.scaleset_id,
@@ -846,8 +871,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.delete_nodes(to_delete)
                 for node in to_delete:
                     node.set_halt()
-                    node.state = NodeState.halt
-                    node.save()
 
             if to_reimage:
                 self.reimage_nodes(to_reimage)

@@ -5,7 +5,6 @@
 
 from typing import Optional
 from uuid import UUID
-import json
 from onefuzztypes.primitives import Region
 from onefuzztypes.enums import (
     TaskType,
@@ -13,11 +12,13 @@ from onefuzztypes.enums import (
     ErrorCode,
     OS,
     Architecture,
+    NodeState,
 )
 from onefuzztypes.models import (
     TaskConfig,
     TaskDetails,
     TaskContainers,
+    TaskState,
     Error,
     UserInfo,
     JobConfig,
@@ -37,6 +38,10 @@ from onefuzztypes.events import (
     EventScalesetFailed,
     EventScalesetDeleted,
     EventJobCreated,
+    EventTaskStateUpdated,
+    EventNodeStateUpdated,
+    EventNodeCreated,
+    EventNodeDeleted,
     get_event_type,
     EventType,
 )
@@ -100,6 +105,9 @@ def main():
                 upn="example@contoso.com",
             ),
         ),
+        EventTaskStateUpdated(
+            job_id=UUID(int=0), task_id=UUID(int=0), state=TaskState.init
+        ),
         EventProxyCreated(region=Region("eastus")),
         EventProxyDeleted(region=Region("eastus")),
         EventProxyFailed(
@@ -134,6 +142,11 @@ def main():
                 build="build 1",
                 duration=24,
             ),
+        ),
+        EventNodeCreated(machine_id=UUID(int=0), pool_name="example"),
+        EventNodeDeleted(machine_id=UUID(int=0), pool_name="example"),
+        EventNodeStateUpdated(
+            machine_id=UUID(int=0), pool_name="example", state=NodeState.setting_up
         ),
     ]
 

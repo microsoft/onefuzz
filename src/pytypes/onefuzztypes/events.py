@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
-from .enums import OS, Architecture
+from .enums import OS, Architecture, TaskState, NodeState
 from .models import AutoScaleConfig, Error, JobConfig, TaskConfig, UserInfo
 from .primitives import Region
 from .responses import BaseResponse
@@ -39,6 +39,12 @@ class EventTaskCreated(BaseModel):
     task_id: UUID
     config: TaskConfig
     user_info: Optional[UserInfo]
+
+
+class EventTaskStateUpdated(BaseModel):
+    job_id: UUID
+    task_id: UUID
+    state: TaskState
 
 
 class EventPing(BaseResponse):
@@ -90,6 +96,25 @@ class EventProxyFailed(BaseModel):
     error: Error
 
 
+class EventNodeCreated(BaseModel):
+    machine_id: UUID
+    scaleset_id: Optional[UUID]
+    pool_name: str
+
+
+class EventNodeDeleted(BaseModel):
+    machine_id: UUID
+    scaleset_id: Optional[UUID]
+    pool_name: str
+
+
+class EventNodeStateUpdated(BaseModel):
+    machine_id: UUID
+    scaleset_id: Optional[UUID]
+    pool_name: str
+    state: NodeState
+
+
 Event = Union[
     EventProxyCreated,
     EventProxyDeleted,
@@ -99,11 +124,15 @@ Event = Union[
     EventScalesetCreated,
     EventScalesetFailed,
     EventScalesetDeleted,
+    EventTaskStateUpdated,
     EventTaskCreated,
     EventTaskStopped,
     EventTaskFailed,
     EventJobCreated,
     EventPing,
+    EventNodeStateUpdated,
+    EventNodeCreated,
+    EventNodeDeleted,
 ]
 
 
@@ -111,6 +140,10 @@ class EventType(Enum):
     task_created = "task_created"
     task_stopped = "task_stopped"
     task_failed = "task_failed"
+    task_state_updated = "task_state_updated"
+    node_created = "node_created"
+    node_deleted = "node_deleted"
+    node_state_updated = "node_state_updated"
     ping = "ping"
     job_created = "job_created"
     pool_created = "pool_created"
@@ -128,6 +161,7 @@ def get_event_type(event: Event) -> EventType:
         EventTaskCreated: EventType.task_created,
         EventTaskFailed: EventType.task_failed,
         EventTaskStopped: EventType.task_stopped,
+        EventTaskStateUpdated: EventType.task_state_updated,
         EventPing: EventType.ping,
         EventPoolCreated: EventType.pool_created,
         EventPoolDeleted: EventType.pool_deleted,
@@ -138,6 +172,9 @@ def get_event_type(event: Event) -> EventType:
         EventScalesetCreated: EventType.scaleset_created,
         EventScalesetDeleted: EventType.scaleset_deleted,
         EventScalesetFailed: EventType.scaleset_failed,
+        EventNodeCreated: EventType.node_created,
+        EventNodeDeleted: EventType.node_deleted,
+        EventNodeStateUpdated: EventType.node_state_updated,
     }
 
     for event_class in events:

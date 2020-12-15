@@ -22,6 +22,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ## Event Types (EventType)
 
 * [job_created](#job_created)
+* [node_created](#node_created)
+* [node_deleted](#node_deleted)
+* [node_state_updated](#node_state_updated)
 * [ping](#ping)
 * [pool_created](#pool_created)
 * [pool_deleted](#pool_deleted)
@@ -33,6 +36,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [scaleset_failed](#scaleset_failed)
 * [task_created](#task_created)
 * [task_failed](#task_failed)
+* [task_state_updated](#task_state_updated)
 * [task_stopped](#task_stopped)
 
 ### job_created
@@ -124,6 +128,148 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "application_id"
+            ]
+        }
+    }
+}
+```
+
+### node_created
+
+#### Example
+
+```json
+{
+    "machine_id": "00000000-0000-0000-0000-000000000000",
+    "pool_name": "example"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "EventNodeCreated",
+    "type": "object",
+    "properties": {
+        "machine_id": {
+            "title": "Machine Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "scaleset_id": {
+            "title": "Scaleset Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        }
+    },
+    "required": [
+        "machine_id",
+        "pool_name"
+    ]
+}
+```
+
+### node_deleted
+
+#### Example
+
+```json
+{
+    "machine_id": "00000000-0000-0000-0000-000000000000",
+    "pool_name": "example"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "EventNodeDeleted",
+    "type": "object",
+    "properties": {
+        "machine_id": {
+            "title": "Machine Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "scaleset_id": {
+            "title": "Scaleset Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        }
+    },
+    "required": [
+        "machine_id",
+        "pool_name"
+    ]
+}
+```
+
+### node_state_updated
+
+#### Example
+
+```json
+{
+    "machine_id": "00000000-0000-0000-0000-000000000000",
+    "pool_name": "example",
+    "state": "setting_up"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "EventNodeStateUpdated",
+    "type": "object",
+    "properties": {
+        "machine_id": {
+            "title": "Machine Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "scaleset_id": {
+            "title": "Scaleset Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/NodeState"
+        }
+    },
+    "required": [
+        "machine_id",
+        "pool_name",
+        "state"
+    ],
+    "definitions": {
+        "NodeState": {
+            "title": "NodeState",
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "free",
+                "setting_up",
+                "rebooting",
+                "ready",
+                "busy",
+                "done",
+                "shutdown",
+                "halt"
             ]
         }
     }
@@ -1169,6 +1315,63 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
+### task_state_updated
+
+#### Example
+
+```json
+{
+    "job_id": "00000000-0000-0000-0000-000000000000",
+    "task_id": "00000000-0000-0000-0000-000000000000",
+    "state": "init"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "EventTaskStateUpdated",
+    "type": "object",
+    "properties": {
+        "job_id": {
+            "title": "Job Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "task_id": {
+            "title": "Task Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "state": {
+            "$ref": "#/definitions/TaskState"
+        }
+    },
+    "required": [
+        "job_id",
+        "task_id",
+        "state"
+    ],
+    "definitions": {
+        "TaskState": {
+            "title": "TaskState",
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "waiting",
+                "scheduled",
+                "setting_up",
+                "running",
+                "stopping",
+                "stopped",
+                "wait_job"
+            ]
+        }
+    }
+}
+```
+
 ### task_stopped
 
 #### Example
@@ -1281,6 +1484,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventScalesetDeleted"
                 },
                 {
+                    "$ref": "#/definitions/EventTaskStateUpdated"
+                },
+                {
                     "$ref": "#/definitions/EventTaskCreated"
                 },
                 {
@@ -1294,6 +1500,15 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventPing"
+                },
+                {
+                    "$ref": "#/definitions/EventNodeStateUpdated"
+                },
+                {
+                    "$ref": "#/definitions/EventNodeCreated"
+                },
+                {
+                    "$ref": "#/definitions/EventNodeDeleted"
                 }
             ]
         },
@@ -1316,6 +1531,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "task_created",
                 "task_stopped",
                 "task_failed",
+                "task_state_updated",
+                "node_created",
+                "node_deleted",
+                "node_state_updated",
                 "ping",
                 "job_created",
                 "pool_created",
@@ -1596,6 +1815,44 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "scaleset_id",
                 "pool_name"
+            ]
+        },
+        "TaskState": {
+            "title": "TaskState",
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "waiting",
+                "scheduled",
+                "setting_up",
+                "running",
+                "stopping",
+                "stopped",
+                "wait_job"
+            ]
+        },
+        "EventTaskStateUpdated": {
+            "title": "EventTaskStateUpdated",
+            "type": "object",
+            "properties": {
+                "job_id": {
+                    "title": "Job Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "task_id": {
+                    "title": "Task Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "state": {
+                    "$ref": "#/definitions/TaskState"
+                }
+            },
+            "required": [
+                "job_id",
+                "task_id",
+                "state"
             ]
         },
         "TaskType": {
@@ -2078,6 +2335,97 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "format": "uuid"
                 }
             }
+        },
+        "NodeState": {
+            "title": "NodeState",
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "free",
+                "setting_up",
+                "rebooting",
+                "ready",
+                "busy",
+                "done",
+                "shutdown",
+                "halt"
+            ]
+        },
+        "EventNodeStateUpdated": {
+            "title": "EventNodeStateUpdated",
+            "type": "object",
+            "properties": {
+                "machine_id": {
+                    "title": "Machine Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "scaleset_id": {
+                    "title": "Scaleset Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/NodeState"
+                }
+            },
+            "required": [
+                "machine_id",
+                "pool_name",
+                "state"
+            ]
+        },
+        "EventNodeCreated": {
+            "title": "EventNodeCreated",
+            "type": "object",
+            "properties": {
+                "machine_id": {
+                    "title": "Machine Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "scaleset_id": {
+                    "title": "Scaleset Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "machine_id",
+                "pool_name"
+            ]
+        },
+        "EventNodeDeleted": {
+            "title": "EventNodeDeleted",
+            "type": "object",
+            "properties": {
+                "machine_id": {
+                    "title": "Machine Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "scaleset_id": {
+                    "title": "Scaleset Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "machine_id",
+                "pool_name"
+            ]
         }
     }
 }

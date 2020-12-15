@@ -122,5 +122,4 @@ def schedule_tasks() -> None:
                 continue
 
             if schedule_workset(workset, pool, count):
-                task.state = TaskState.scheduled
-                task.save()
+                task.set_state(TaskState.scheduled)
