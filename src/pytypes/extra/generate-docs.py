@@ -173,14 +173,16 @@ def main():
     typed(3, "Example", message.json(indent=4, exclude_none=True), "json")
     layer(2, "Event Types (EventType)")
 
-    for example in examples:
-        webhook_type = get_event_type(example)
-        print(f"* [{webhook_type.name}](#{webhook_type.name})")
+    event_map = {get_event_type(x).name: x for x in examples}
+
+    for name in sorted(event_map.keys()):
+        print(f"* [{name}](#{name})")
+
     print()
 
-    for example in examples:
-        webhook_type = get_event_type(example)
-        layer(3, webhook_type.name)
+    for name in sorted(event_map.keys()):
+        example = event_map[name]
+        layer(3, name)
         typed(4, "Example", example.json(indent=4, exclude_none=True), "json")
         typed(4, "Schema", example.schema_json(indent=4), "json")
 
