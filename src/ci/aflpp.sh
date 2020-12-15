@@ -3,7 +3,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+set -ex
+
 mkdir -p artifacts/third-party/aflpp-linux
+
 
 sudo apt-get install -y llvm llvm-dev clang
 
