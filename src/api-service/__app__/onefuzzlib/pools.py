@@ -17,14 +17,14 @@ from onefuzztypes.enums import (
     ScalesetState,
 )
 from onefuzztypes.events import (
+    EventNodeCreated,
+    EventNodeDeleted,
+    EventNodeStateUpdated,
     EventPoolCreated,
     EventPoolDeleted,
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
-    EventNodeCreated,
-    EventNodeStateUpdated,
-    EventNodeDeleted,
 )
 from onefuzztypes.models import AutoScaleConfig, Error
 from onefuzztypes.models import Node as BASE_NODE
@@ -85,6 +85,31 @@ class Node(BASE_NODE, ORMMixin):
     # should only be set by Scaleset.reimage_nodes
     # should only be unset during agent_registration POST
     reimage_queued: bool = Field(default=False)
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        pool_name: PoolName,
+        machine_id: UUID,
+        scaleset_id: Optional[UUID],
+        version: str,
+    ) -> "Node":
+        node = cls(
+            pool_name=pool_name,
+            machine_id=machine_id,
+            scaleset_id=scaleset_id,
+            version=version,
+        )
+        node.save()
+        send_event(
+            EventNodeCreated(
+                machine_id=node.machine_id,
+                scaleset_id=node.scaleset_id,
+                pool_name=node.pool_name,
+            )
+        )
+        return node
 
     @classmethod
     def search_states(
@@ -308,6 +333,7 @@ class Node(BASE_NODE, ORMMixin):
                     machine_id=self.machine_id,
                     pool_name=self.pool_name,
                     scaleset_id=self.scaleset_id,
+                    state=state,
                 )
             )
 

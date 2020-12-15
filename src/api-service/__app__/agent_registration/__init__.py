@@ -100,13 +100,12 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         node.reimage_queued = False
         node.set_state(NodeState.init)
     else:
-        node = Node(
+        node = Node.create(
             pool_name=registration_request.pool_name,
             machine_id=registration_request.machine_id,
             scaleset_id=registration_request.scaleset_id,
             version=registration_request.version,
         )
-        node.save()
 
     # if any tasks were running during an earlier instance of this node, clear them out
     node.mark_tasks_stopped_early()

@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
-from .enums import OS, Architecture, TaskState, NodeState
+from .enums import OS, Architecture, NodeState, TaskState
 from .models import AutoScaleConfig, Error, JobConfig, TaskConfig, UserInfo
 from .primitives import Region
 from .responses import BaseResponse
@@ -116,36 +116,32 @@ class EventNodeStateUpdated(BaseModel):
 
 
 Event = Union[
+    EventJobCreated,
+    EventNodeCreated,
+    EventNodeDeleted,
+    EventNodeStateUpdated,
+    EventPing,
+    EventPoolCreated,
+    EventPoolDeleted,
     EventProxyCreated,
     EventProxyDeleted,
     EventProxyFailed,
-    EventPoolCreated,
-    EventPoolDeleted,
     EventScalesetCreated,
-    EventScalesetFailed,
     EventScalesetDeleted,
-    EventTaskStateUpdated,
+    EventScalesetFailed,
     EventTaskCreated,
-    EventTaskStopped,
     EventTaskFailed,
-    EventJobCreated,
-    EventPing,
-    EventNodeStateUpdated,
-    EventNodeCreated,
-    EventNodeDeleted,
+    EventTaskStateUpdated,
+    EventTaskStopped,
 ]
 
 
 class EventType(Enum):
-    task_created = "task_created"
-    task_stopped = "task_stopped"
-    task_failed = "task_failed"
-    task_state_updated = "task_state_updated"
+    job_created = "job_created"
     node_created = "node_created"
     node_deleted = "node_deleted"
     node_state_updated = "node_state_updated"
     ping = "ping"
-    job_created = "job_created"
     pool_created = "pool_created"
     pool_deleted = "pool_deleted"
     proxy_created = "proxy_created"
@@ -154,27 +150,31 @@ class EventType(Enum):
     scaleset_created = "scaleset_created"
     scaleset_deleted = "scaleset_deleted"
     scaleset_failed = "scaleset_failed"
+    task_created = "task_created"
+    task_failed = "task_failed"
+    task_state_updated = "task_state_updated"
+    task_stopped = "task_stopped"
 
 
 def get_event_type(event: Event) -> EventType:
     events = {
-        EventTaskCreated: EventType.task_created,
-        EventTaskFailed: EventType.task_failed,
-        EventTaskStopped: EventType.task_stopped,
-        EventTaskStateUpdated: EventType.task_state_updated,
+        EventJobCreated: EventType.job_created,
+        EventNodeCreated: EventType.node_created,
+        EventNodeDeleted: EventType.node_deleted,
+        EventNodeStateUpdated: EventType.node_state_updated,
         EventPing: EventType.ping,
         EventPoolCreated: EventType.pool_created,
         EventPoolDeleted: EventType.pool_deleted,
-        EventJobCreated: EventType.job_created,
         EventProxyCreated: EventType.proxy_created,
         EventProxyDeleted: EventType.proxy_deleted,
         EventProxyFailed: EventType.proxy_failed,
         EventScalesetCreated: EventType.scaleset_created,
         EventScalesetDeleted: EventType.scaleset_deleted,
         EventScalesetFailed: EventType.scaleset_failed,
-        EventNodeCreated: EventType.node_created,
-        EventNodeDeleted: EventType.node_deleted,
-        EventNodeStateUpdated: EventType.node_state_updated,
+        EventTaskCreated: EventType.task_created,
+        EventTaskFailed: EventType.task_failed,
+        EventTaskStateUpdated: EventType.task_state_updated,
+        EventTaskStopped: EventType.task_stopped,
     }
 
     for event_class in events:
