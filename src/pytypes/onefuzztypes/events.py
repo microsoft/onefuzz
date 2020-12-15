@@ -34,6 +34,12 @@ class EventJobCreated(BaseModel):
     user_info: Optional[UserInfo]
 
 
+class EventJobStopped(BaseModel):
+    job_id: UUID
+    config: JobConfig
+    user_info: Optional[UserInfo]
+
+
 class EventTaskCreated(BaseModel):
     job_id: UUID
     task_id: UUID
@@ -117,6 +123,7 @@ class EventNodeStateUpdated(BaseModel):
 
 Event = Union[
     EventJobCreated,
+    EventJobStopped,
     EventNodeCreated,
     EventNodeDeleted,
     EventNodeStateUpdated,
@@ -138,6 +145,7 @@ Event = Union[
 
 class EventType(Enum):
     job_created = "job_created"
+    job_stopped = "job_stopped"
     node_created = "node_created"
     node_deleted = "node_deleted"
     node_state_updated = "node_state_updated"
@@ -159,6 +167,7 @@ class EventType(Enum):
 def get_event_type(event: Event) -> EventType:
     events = {
         EventJobCreated: EventType.job_created,
+        EventJobStopped: EventType.job_stopped,
         EventNodeCreated: EventType.node_created,
         EventNodeDeleted: EventType.node_deleted,
         EventNodeStateUpdated: EventType.node_state_updated,

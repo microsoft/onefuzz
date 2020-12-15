@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
 from onefuzztypes.enums import JobState, TaskState
-from onefuzztypes.events import EventJobCreated
+from onefuzztypes.events import EventJobCreated, EventJobStopped
 from onefuzztypes.models import Job as BASE_JOB
 
 from .events import send_event
@@ -65,6 +65,11 @@ class Job(BASE_JOB, ORMMixin):
                 task.mark_stopping()
         else:
             self.state = JobState.stopped
+            send_event(
+                EventJobStopped(
+                    job_id=self.job_id, config=self.config, user_info=self.user_info
+                )
+            )
         self.save()
 
     def on_start(self) -> None:

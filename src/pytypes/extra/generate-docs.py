@@ -38,6 +38,7 @@ from onefuzztypes.events import (
     EventScalesetFailed,
     EventScalesetDeleted,
     EventJobCreated,
+    EventJobStopped,
     EventTaskStateUpdated,
     EventNodeStateUpdated,
     EventNodeCreated,
@@ -135,6 +136,15 @@ def main():
         ),
         EventScalesetDeleted(scaleset_id=UUID(int=0), pool_name="example"),
         EventJobCreated(
+            job_id=UUID(int=0),
+            config=JobConfig(
+                project="example project",
+                name="example name",
+                build="build 1",
+                duration=24,
+            ),
+        ),
+        EventJobStopped(
             job_id=UUID(int=0),
             config=JobConfig(
                 project="example project",

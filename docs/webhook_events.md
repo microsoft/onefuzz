@@ -22,6 +22,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ## Event Types (EventType)
 
 * [job_created](#job_created)
+* [job_stopped](#job_stopped)
 * [node_created](#node_created)
 * [node_deleted](#node_deleted)
 * [node_state_updated](#node_state_updated)
@@ -60,6 +61,101 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "title": "EventJobCreated",
+    "type": "object",
+    "properties": {
+        "job_id": {
+            "title": "Job Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "config": {
+            "$ref": "#/definitions/JobConfig"
+        },
+        "user_info": {
+            "$ref": "#/definitions/UserInfo"
+        }
+    },
+    "required": [
+        "job_id",
+        "config"
+    ],
+    "definitions": {
+        "JobConfig": {
+            "title": "JobConfig",
+            "type": "object",
+            "properties": {
+                "project": {
+                    "title": "Project",
+                    "type": "string"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "build": {
+                    "title": "Build",
+                    "type": "string"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "project",
+                "name",
+                "build",
+                "duration"
+            ]
+        },
+        "UserInfo": {
+            "title": "UserInfo",
+            "type": "object",
+            "properties": {
+                "application_id": {
+                    "title": "Application Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "object_id": {
+                    "title": "Object Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "upn": {
+                    "title": "Upn",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "application_id"
+            ]
+        }
+    }
+}
+```
+
+### job_stopped
+
+#### Example
+
+```json
+{
+    "job_id": "00000000-0000-0000-0000-000000000000",
+    "config": {
+        "project": "example project",
+        "name": "example name",
+        "build": "build 1",
+        "duration": 24
+    }
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "EventJobStopped",
     "type": "object",
     "properties": {
         "job_id": {
@@ -1463,6 +1559,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventJobCreated"
                 },
                 {
+                    "$ref": "#/definitions/EventJobStopped"
+                },
+                {
                     "$ref": "#/definitions/EventNodeCreated"
                 },
                 {
@@ -1529,6 +1628,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "description": "An enumeration.",
             "enum": [
                 "job_created",
+                "job_stopped",
                 "node_created",
                 "node_deleted",
                 "node_state_updated",
@@ -1600,6 +1700,27 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "EventJobCreated": {
             "title": "EventJobCreated",
+            "type": "object",
+            "properties": {
+                "job_id": {
+                    "title": "Job Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "config": {
+                    "$ref": "#/definitions/JobConfig"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
+                }
+            },
+            "required": [
+                "job_id",
+                "config"
+            ]
+        },
+        "EventJobStopped": {
+            "title": "EventJobStopped",
             "type": "object",
             "properties": {
                 "job_id": {
