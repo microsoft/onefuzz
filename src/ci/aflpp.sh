@@ -12,9 +12,7 @@ cd AFLplusplus
 # checkout v3.00c
 git checkout 8e712d1a740b30f9e2d5655d97d4cac6e8aed543
 make
-(test -d llvm_mode && cd llvm_mode && make)
-#(test -d gcc_plugin && cd gcc_plugin && make)
-(cd libdislocator && make)
-(cd examples/aflpp_driver && make)
+(cd utils/libdislocator && make)
+(cd examples/aflpp_driver && make); cp examples/aflpp_driver/*.so .
 
 cp -rf afl-* *.so *.a *.o dictionaries LICENSE ../artifacts/third-party/aflpp-linux
