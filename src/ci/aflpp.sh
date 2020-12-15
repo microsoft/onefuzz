@@ -16,6 +16,6 @@ cd AFLplusplus
 git checkout 8e712d1a740b30f9e2d5655d97d4cac6e8aed543
 make
 (cd utils/libdislocator && make)
-(cd utils/aflpp_driver && make); cp examples/aflpp_driver/*.so .
+(cd utils/aflpp_driver && make); cp utils/aflpp_driver/*.so .
 
 cp -rf afl-* *.so *.a *.o dictionaries LICENSE ../artifacts/third-party/aflpp-linux
