@@ -12,7 +12,7 @@ cd src/docker/linux-node
 
 rm -rf tools
 mkdir -p tools/linux
-DEST_DIR = $(realpath tools/linux)
+DEST_DIR=$(realpath tools/linux)
 
 if [ ! -d ../../../artifacts/azcopy ]; then
     (cd ../../../; ./src/ci/agent.sh)
