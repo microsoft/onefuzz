@@ -145,3 +145,9 @@ def get_event_type(event: Event) -> EventType:
             return events[event_class]
 
     raise NotImplementedError("unsupported event type: %s" % type(event))
+
+
+class EventMessage(BaseModel):
+    event_id: UUID = Field(default_factory=uuid4)
+    event_type: EventType
+    event: Event

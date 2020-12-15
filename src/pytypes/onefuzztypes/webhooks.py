@@ -9,14 +9,11 @@ from uuid import UUID, uuid4
 from pydantic import AnyHttpUrl, BaseModel, Field
 
 from .enums import WebhookMessageState
-from .events import Event, EventType
+from .events import EventMessage, EventType
 
 
-class WebhookMessage(BaseModel):
+class WebhookMessage(EventMessage):
     webhook_id: UUID
-    event_id: UUID = Field(default_factory=uuid4)
-    event_type: EventType
-    event: Event
 
 
 class WebhookMessageLog(WebhookMessage):

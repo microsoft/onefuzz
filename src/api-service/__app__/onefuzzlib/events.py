@@ -7,7 +7,7 @@ import json
 from queue import Empty, Queue
 from typing import Optional
 
-from onefuzztypes.events import Event, get_event_type
+from onefuzztypes.events import Event, EventMessage, get_event_type
 
 from .webhooks import Webhook
 
@@ -19,10 +19,8 @@ def get_events() -> Optional[str]:
 
     for _ in range(5):
         try:
-            (event, data) = EVENTS.get(block=False)
-            events.append(
-                {"type": event, "data": json.loads(data.json(exclude_none=True))}
-            )
+            event = EVENTS.get(block=False)
+            events.append(json.loads(event.json(exclude_none=True)))
             EVENTS.task_done()
         except Empty:
             break
@@ -35,5 +33,6 @@ def get_events() -> Optional[str]:
 
 def send_event(event: Event) -> None:
     event_type = get_event_type(event)
-    EVENTS.put((event_type, event))
-    Webhook.send_event(event_type=event_type, event=event)
+    event_message = EventMessage(event_type=event_type, event=event)
+    EVENTS.put(event_message)
+    Webhook.send_event(event_message)

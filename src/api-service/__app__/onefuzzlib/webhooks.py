@@ -13,7 +13,7 @@ from uuid import UUID
 import requests
 from memoization import cached
 from onefuzztypes.enums import ErrorCode, WebhookMessageState
-from onefuzztypes.events import Event, EventPing, EventType
+from onefuzztypes.events import Event, EventMessage, EventPing, EventType
 from onefuzztypes.models import Error, Result
 from onefuzztypes.webhooks import Webhook as BASE_WEBHOOK
 from onefuzztypes.webhooks import WebhookMessage
@@ -140,12 +140,12 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
         return ("webhook_id", "name")
 
     @classmethod
-    def send_event(cls, event_type: EventType, event: Event) -> None:
+    def send_event(cls, event_message: EventMessage) -> None:
         for webhook in get_webhooks_cached():
-            if event_type not in webhook.event_types:
+            if event_message.event_type not in webhook.event_types:
                 continue
 
-            webhook._add_event(event_type, event)
+            webhook._add_event(event_message)
 
     @classmethod
     def get_by_id(cls, webhook_id: UUID) -> Result["Webhook"]:
@@ -163,18 +163,19 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
         webhook = webhooks[0]
         return webhook
 
-    def _add_event(self, event_type: EventType, event: Event) -> None:
+    def _add_event(self, event_message: EventMessage) -> None:
         message = WebhookMessageLog(
             webhook_id=self.webhook_id,
-            event_type=event_type,
-            event=event,
+            event_id=event_message.event_id,
+            event_type=event_message.event_type,
+            event=event_message.event,
         )
         message.save()
         message.queue_webhook()
 
     def ping(self) -> EventPing:
         ping = EventPing()
-        self._add_event(EventType.ping, ping)
+        self._add_event(EventMessage(event_type=EventType.ping, event=ping))
         return ping
 
     def send(self, message_log: WebhookMessageLog) -> bool:
