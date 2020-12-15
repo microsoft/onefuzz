@@ -21,6 +21,46 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ## Event Types (WebhookEventType)
 
+* [ping](#ping)
+* [task_created](#task_created)
+* [task_stopped](#task_stopped)
+* [task_failed](#task_failed)
+* [proxy_created](#proxy_created)
+* [proxy_deleted](#proxy_deleted)
+* [proxy_failed](#proxy_failed)
+* [pool_created](#pool_created)
+* [pool_deleted](#pool_deleted)
+* [scaleset_created](#scaleset_created)
+* [scaleset_failed](#scaleset_failed)
+* [scaleset_deleted](#scaleset_deleted)
+* [job_created](#job_created)
+
+### ping
+
+#### Example
+
+```json
+{
+    "ping_id": "00000000-0000-0000-0000-000000000000"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "WebhookEventPing",
+    "type": "object",
+    "properties": {
+        "ping_id": {
+            "title": "Ping Id",
+            "type": "string",
+            "format": "uuid"
+        }
+    }
+}
+```
+
 ### task_created
 
 #### Example
@@ -586,7 +626,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 468,
                 469,
                 470,
-                471
+                471,
+                472
             ]
         },
         "Error": {
@@ -636,13 +677,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
-### ping
+### proxy_created
 
 #### Example
 
 ```json
 {
-    "ping_id": "00000000-0000-0000-0000-000000000000"
+    "region": "eastus"
 }
 ```
 
@@ -650,13 +691,548 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "WebhookEventPing",
+    "title": "WebhookEventProxyCreated",
     "type": "object",
     "properties": {
-        "ping_id": {
-            "title": "Ping Id",
+        "region": {
+            "title": "Region",
+            "type": "string"
+        }
+    },
+    "required": [
+        "region"
+    ]
+}
+```
+
+### proxy_deleted
+
+#### Example
+
+```json
+{
+    "region": "eastus"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "WebhookEventProxyDeleted",
+    "type": "object",
+    "properties": {
+        "region": {
+            "title": "Region",
+            "type": "string"
+        }
+    },
+    "required": [
+        "region"
+    ]
+}
+```
+
+### proxy_failed
+
+#### Example
+
+```json
+{
+    "region": "eastus",
+    "error": {
+        "code": 472,
+        "errors": [
+            "example error message"
+        ]
+    }
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "WebhookEventProxyFailed",
+    "type": "object",
+    "properties": {
+        "region": {
+            "title": "Region",
+            "type": "string"
+        },
+        "error": {
+            "$ref": "#/definitions/Error"
+        }
+    },
+    "required": [
+        "region",
+        "error"
+    ],
+    "definitions": {
+        "ErrorCode": {
+            "title": "ErrorCode",
+            "description": "An enumeration.",
+            "enum": [
+                450,
+                451,
+                452,
+                453,
+                454,
+                455,
+                456,
+                457,
+                458,
+                459,
+                460,
+                461,
+                462,
+                463,
+                464,
+                465,
+                467,
+                468,
+                469,
+                470,
+                471,
+                472
+            ]
+        },
+        "Error": {
+            "title": "Error",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/ErrorCode"
+                },
+                "errors": {
+                    "title": "Errors",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "code",
+                "errors"
+            ]
+        }
+    }
+}
+```
+
+### pool_created
+
+#### Example
+
+```json
+{
+    "pool_name": "example",
+    "os": "linux",
+    "arch": "x86_64",
+    "managed": true
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "WebhookEventPoolCreated",
+    "type": "object",
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "os": {
+            "$ref": "#/definitions/OS"
+        },
+        "arch": {
+            "$ref": "#/definitions/Architecture"
+        },
+        "managed": {
+            "title": "Managed",
+            "type": "boolean"
+        },
+        "autoscale": {
+            "$ref": "#/definitions/AutoScaleConfig"
+        }
+    },
+    "required": [
+        "pool_name",
+        "os",
+        "arch",
+        "managed"
+    ],
+    "definitions": {
+        "OS": {
+            "title": "OS",
+            "description": "An enumeration.",
+            "enum": [
+                "windows",
+                "linux"
+            ]
+        },
+        "Architecture": {
+            "title": "Architecture",
+            "description": "An enumeration.",
+            "enum": [
+                "x86_64"
+            ]
+        },
+        "AutoScaleConfig": {
+            "title": "AutoScaleConfig",
+            "type": "object",
+            "properties": {
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "max_size": {
+                    "title": "Max Size",
+                    "type": "integer"
+                },
+                "min_size": {
+                    "title": "Min Size",
+                    "default": 0,
+                    "type": "integer"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "scaleset_size": {
+                    "title": "Scaleset Size",
+                    "type": "integer"
+                },
+                "spot_instances": {
+                    "title": "Spot Instances",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "vm_sku": {
+                    "title": "Vm Sku",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "image",
+                "scaleset_size",
+                "vm_sku"
+            ]
+        }
+    }
+}
+```
+
+### pool_deleted
+
+#### Example
+
+```json
+{
+    "pool_name": "example"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "WebhookEventPoolDeleted",
+    "type": "object",
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        }
+    },
+    "required": [
+        "pool_name"
+    ]
+}
+```
+
+### scaleset_created
+
+#### Example
+
+```json
+{
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "pool_name": "example",
+    "vm_sku": "Standard_D2s_v3",
+    "image": "Canonical:UbuntuServer:18.04-LTS:latest",
+    "region": "eastus",
+    "size": 10
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "WebhookEventScalesetCreated",
+    "type": "object",
+    "properties": {
+        "scaleset_id": {
+            "title": "Scaleset Id",
             "type": "string",
             "format": "uuid"
+        },
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "vm_sku": {
+            "title": "Vm Sku",
+            "type": "string"
+        },
+        "image": {
+            "title": "Image",
+            "type": "string"
+        },
+        "region": {
+            "title": "Region",
+            "type": "string"
+        },
+        "size": {
+            "title": "Size",
+            "type": "integer"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "vm_sku",
+        "image",
+        "region",
+        "size"
+    ]
+}
+```
+
+### scaleset_failed
+
+#### Example
+
+```json
+{
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "pool_name": "example",
+    "error": {
+        "code": 456,
+        "errors": [
+            "example error message"
+        ]
+    }
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "WebhookEventScalesetFailed",
+    "type": "object",
+    "properties": {
+        "scaleset_id": {
+            "title": "Scaleset Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "error": {
+            "$ref": "#/definitions/Error"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "error"
+    ],
+    "definitions": {
+        "ErrorCode": {
+            "title": "ErrorCode",
+            "description": "An enumeration.",
+            "enum": [
+                450,
+                451,
+                452,
+                453,
+                454,
+                455,
+                456,
+                457,
+                458,
+                459,
+                460,
+                461,
+                462,
+                463,
+                464,
+                465,
+                467,
+                468,
+                469,
+                470,
+                471,
+                472
+            ]
+        },
+        "Error": {
+            "title": "Error",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/ErrorCode"
+                },
+                "errors": {
+                    "title": "Errors",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "code",
+                "errors"
+            ]
+        }
+    }
+}
+```
+
+### scaleset_deleted
+
+#### Example
+
+```json
+{
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "pool_name": "example"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "WebhookEventScalesetDeleted",
+    "type": "object",
+    "properties": {
+        "scaleset_id": {
+            "title": "Scaleset Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name"
+    ]
+}
+```
+
+### job_created
+
+#### Example
+
+```json
+{
+    "job_id": "00000000-0000-0000-0000-000000000000",
+    "config": {
+        "project": "example project",
+        "name": "example name",
+        "build": "build 1",
+        "duration": 24
+    }
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "WebhookEventJobCreated",
+    "type": "object",
+    "properties": {
+        "job_id": {
+            "title": "Job Id",
+            "type": "string",
+            "format": "uuid"
+        },
+        "config": {
+            "$ref": "#/definitions/JobConfig"
+        },
+        "user_info": {
+            "$ref": "#/definitions/UserInfo"
+        }
+    },
+    "required": [
+        "job_id",
+        "config"
+    ],
+    "definitions": {
+        "JobConfig": {
+            "title": "JobConfig",
+            "type": "object",
+            "properties": {
+                "project": {
+                    "title": "Project",
+                    "type": "string"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "build": {
+                    "title": "Build",
+                    "type": "string"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "project",
+                "name",
+                "build",
+                "duration"
+            ]
+        },
+        "UserInfo": {
+            "title": "UserInfo",
+            "type": "object",
+            "properties": {
+                "application_id": {
+                    "title": "Application Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "object_id": {
+                    "title": "Object Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "upn": {
+                    "title": "Upn",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "application_id"
+            ]
         }
     }
 }
@@ -686,6 +1262,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "Event",
             "anyOf": [
                 {
+                    "$ref": "#/definitions/WebhookEventProxyCreated"
+                },
+                {
+                    "$ref": "#/definitions/WebhookEventProxyDeleted"
+                },
+                {
+                    "$ref": "#/definitions/WebhookEventProxyFailed"
+                },
+                {
+                    "$ref": "#/definitions/WebhookEventPoolCreated"
+                },
+                {
+                    "$ref": "#/definitions/WebhookEventPoolDeleted"
+                },
+                {
+                    "$ref": "#/definitions/WebhookEventScalesetCreated"
+                },
+                {
+                    "$ref": "#/definitions/WebhookEventScalesetFailed"
+                },
+                {
+                    "$ref": "#/definitions/WebhookEventScalesetDeleted"
+                },
+                {
                     "$ref": "#/definitions/WebhookEventTaskCreated"
                 },
                 {
@@ -693,6 +1293,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/WebhookEventTaskFailed"
+                },
+                {
+                    "$ref": "#/definitions/WebhookEventJobCreated"
                 },
                 {
                     "$ref": "#/definitions/WebhookEventPing"
@@ -713,7 +1316,286 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "task_created",
                 "task_stopped",
                 "task_failed",
-                "ping"
+                "ping",
+                "job_created",
+                "pool_created",
+                "pool_deleted",
+                "proxy_created",
+                "proxy_deleted",
+                "proxy_failed",
+                "scaleset_created",
+                "scaleset_deleted",
+                "scaleset_failed"
+            ]
+        },
+        "WebhookEventProxyCreated": {
+            "title": "WebhookEventProxyCreated",
+            "type": "object",
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ]
+        },
+        "WebhookEventProxyDeleted": {
+            "title": "WebhookEventProxyDeleted",
+            "type": "object",
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ]
+        },
+        "ErrorCode": {
+            "title": "ErrorCode",
+            "description": "An enumeration.",
+            "enum": [
+                450,
+                451,
+                452,
+                453,
+                454,
+                455,
+                456,
+                457,
+                458,
+                459,
+                460,
+                461,
+                462,
+                463,
+                464,
+                465,
+                467,
+                468,
+                469,
+                470,
+                471,
+                472
+            ]
+        },
+        "Error": {
+            "title": "Error",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/ErrorCode"
+                },
+                "errors": {
+                    "title": "Errors",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "code",
+                "errors"
+            ]
+        },
+        "WebhookEventProxyFailed": {
+            "title": "WebhookEventProxyFailed",
+            "type": "object",
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "error": {
+                    "$ref": "#/definitions/Error"
+                }
+            },
+            "required": [
+                "region",
+                "error"
+            ]
+        },
+        "OS": {
+            "title": "OS",
+            "description": "An enumeration.",
+            "enum": [
+                "windows",
+                "linux"
+            ]
+        },
+        "Architecture": {
+            "title": "Architecture",
+            "description": "An enumeration.",
+            "enum": [
+                "x86_64"
+            ]
+        },
+        "AutoScaleConfig": {
+            "title": "AutoScaleConfig",
+            "type": "object",
+            "properties": {
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "max_size": {
+                    "title": "Max Size",
+                    "type": "integer"
+                },
+                "min_size": {
+                    "title": "Min Size",
+                    "default": 0,
+                    "type": "integer"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "scaleset_size": {
+                    "title": "Scaleset Size",
+                    "type": "integer"
+                },
+                "spot_instances": {
+                    "title": "Spot Instances",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "vm_sku": {
+                    "title": "Vm Sku",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "image",
+                "scaleset_size",
+                "vm_sku"
+            ]
+        },
+        "WebhookEventPoolCreated": {
+            "title": "WebhookEventPoolCreated",
+            "type": "object",
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "os": {
+                    "$ref": "#/definitions/OS"
+                },
+                "arch": {
+                    "$ref": "#/definitions/Architecture"
+                },
+                "managed": {
+                    "title": "Managed",
+                    "type": "boolean"
+                },
+                "autoscale": {
+                    "$ref": "#/definitions/AutoScaleConfig"
+                }
+            },
+            "required": [
+                "pool_name",
+                "os",
+                "arch",
+                "managed"
+            ]
+        },
+        "WebhookEventPoolDeleted": {
+            "title": "WebhookEventPoolDeleted",
+            "type": "object",
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "pool_name"
+            ]
+        },
+        "WebhookEventScalesetCreated": {
+            "title": "WebhookEventScalesetCreated",
+            "type": "object",
+            "properties": {
+                "scaleset_id": {
+                    "title": "Scaleset Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "vm_sku": {
+                    "title": "Vm Sku",
+                    "type": "string"
+                },
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "size": {
+                    "title": "Size",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "vm_sku",
+                "image",
+                "region",
+                "size"
+            ]
+        },
+        "WebhookEventScalesetFailed": {
+            "title": "WebhookEventScalesetFailed",
+            "type": "object",
+            "properties": {
+                "scaleset_id": {
+                    "title": "Scaleset Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "error": {
+                    "$ref": "#/definitions/Error"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "error"
+            ]
+        },
+        "WebhookEventScalesetDeleted": {
+            "title": "WebhookEventScalesetDeleted",
+            "type": "object",
+            "properties": {
+                "scaleset_id": {
+                    "title": "Scaleset Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name"
             ]
         },
         "TaskType": {
@@ -1110,53 +1992,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "task_id"
             ]
         },
-        "ErrorCode": {
-            "title": "ErrorCode",
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471
-            ]
-        },
-        "Error": {
-            "title": "Error",
-            "type": "object",
-            "properties": {
-                "code": {
-                    "$ref": "#/definitions/ErrorCode"
-                },
-                "errors": {
-                    "title": "Errors",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "code",
-                "errors"
-            ]
-        },
         "WebhookEventTaskFailed": {
             "title": "WebhookEventTaskFailed",
             "type": "object",
@@ -1182,6 +2017,55 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "job_id",
                 "task_id",
                 "error"
+            ]
+        },
+        "JobConfig": {
+            "title": "JobConfig",
+            "type": "object",
+            "properties": {
+                "project": {
+                    "title": "Project",
+                    "type": "string"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "build": {
+                    "title": "Build",
+                    "type": "string"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "project",
+                "name",
+                "build",
+                "duration"
+            ]
+        },
+        "WebhookEventJobCreated": {
+            "title": "WebhookEventJobCreated",
+            "type": "object",
+            "properties": {
+                "job_id": {
+                    "title": "Job Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "config": {
+                    "$ref": "#/definitions/JobConfig"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
+                }
+            },
+            "required": [
+                "job_id",
+                "config"
             ]
         },
         "WebhookEventPing": {

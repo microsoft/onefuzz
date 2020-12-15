@@ -8,8 +8,10 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
 from onefuzztypes.enums import JobState, TaskState
+from onefuzztypes.events import EventJobCreated
 from onefuzztypes.models import Job as BASE_JOB
 
+from .events import send_event
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 from .tasks.main import Task
 
@@ -36,13 +38,6 @@ class Job(BASE_JOB, ORMMixin):
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:
         return {"task_info": ...}
-
-    def event_include(self) -> Optional[MappingIntStrAny]:
-        return {
-            "job_id": ...,
-            "state": ...,
-            "error": ...,
-        }
 
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {
@@ -77,3 +72,14 @@ class Job(BASE_JOB, ORMMixin):
         if self.end_time is None:
             self.end_time = datetime.utcnow() + timedelta(hours=self.config.duration)
             self.save()
+
+    def save(self, new: bool = False, require_etag: bool = False) -> None:
+        created = self.etag is None
+        super().save(new=new, require_etag=require_etag)
+
+        if created:
+            send_event(
+                EventJobCreated(
+                    job_id=self.job_id, config=self.config, user_info=self.user_info
+                )
+            )

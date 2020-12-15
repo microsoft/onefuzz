@@ -27,7 +27,6 @@ from ..azure.containers import (
     get_file_sas_url,
 )
 from ..azure.queue import send_message
-from ..dashboard import add_event
 from ..orm import ORMMixin
 from ..reports import get_report
 from ..tasks.config import get_input_container_queues
@@ -153,5 +152,3 @@ def new_files(container: Container, filename: str) -> None:
                 container, filename, StorageType.corpus, read=True, delete=True
             )
             send_message(task.task_id, bytes(url, "utf-8"), StorageType.corpus)
-
-    add_event("new_file", results)

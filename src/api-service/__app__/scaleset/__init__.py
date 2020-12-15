@@ -91,7 +91,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         spot_instances=request.spot_instances,
         tags=request.tags,
     )
-    scaleset.save()
     # don't return auths during create, only 'get' with include_auth
     scaleset.auth = None
     return ok(scaleset)

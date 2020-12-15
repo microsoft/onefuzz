@@ -10,7 +10,7 @@ from typing import Dict
 import azure.functions as func
 
 from ..onefuzzlib.azure.creds import get_fuzz_storage
-from ..onefuzzlib.dashboard import get_event
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.notifications.main import new_files
 
 
@@ -33,6 +33,6 @@ def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
 
     file_added(event)
 
-    event = get_event()
-    if event:
-        dashboard.set(event)
+    events = get_events()
+    if events:
+        dashboard.set(events)

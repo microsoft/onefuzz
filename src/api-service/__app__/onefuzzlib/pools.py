@@ -16,6 +16,13 @@ from onefuzztypes.enums import (
     PoolState,
     ScalesetState,
 )
+from onefuzztypes.events import (
+    EventPoolCreated,
+    EventPoolDeleted,
+    EventScalesetCreated,
+    EventScalesetDeleted,
+    EventScalesetFailed,
+)
 from onefuzztypes.models import AutoScaleConfig, Error
 from onefuzztypes.models import Node as BASE_NODE
 from onefuzztypes.models import NodeAssignment, NodeCommand
@@ -59,6 +66,7 @@ from .azure.vmss import (
     resize_vmss,
     update_extensions,
 )
+from .events import send_event
 from .extension import fuzz_extensions
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 
@@ -153,14 +161,6 @@ class Node(BASE_NODE, ORMMixin):
 
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {
-            "machine_id": ...,
-            "state": ...,
-            "scaleset_id": ...,
-        }
-
-    def event_include(self) -> Optional[MappingIntStrAny]:
-        return {
-            "pool_name": ...,
             "machine_id": ...,
             "state": ...,
             "scaleset_id": ...,
@@ -390,7 +390,7 @@ class Pool(BASE_POOL, ORMMixin):
         client_id: Optional[UUID],
         autoscale: Optional[AutoScaleConfig],
     ) -> "Pool":
-        return cls(
+        entry = cls(
             name=name,
             os=os,
             arch=arch,
@@ -399,6 +399,17 @@ class Pool(BASE_POOL, ORMMixin):
             config=None,
             autoscale=autoscale,
         )
+        entry.save()
+        send_event(
+            EventPoolCreated(
+                pool_name=name,
+                os=os,
+                arch=arch,
+                managed=managed,
+                autoscale=autoscale,
+            )
+        )
+        return entry
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:
         return {
@@ -413,15 +424,6 @@ class Pool(BASE_POOL, ORMMixin):
         return {
             "etag": ...,
             "timestamp": ...,
-        }
-
-    def event_include(self) -> Optional[MappingIntStrAny]:
-        return {
-            "name": ...,
-            "pool_id": ...,
-            "os": ...,
-            "state": ...,
-            "managed": ...,
         }
 
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
@@ -513,6 +515,17 @@ class Pool(BASE_POOL, ORMMixin):
             query["state"] = states
         return cls.search(query=query)
 
+    def set_shutdown(self, now: bool) -> None:
+        if self.state in [PoolState.halt, PoolState.shutdown]:
+            return
+
+        if now:
+            self.state = PoolState.halt
+        else:
+            self.state = PoolState.shutdown
+
+        self.save()
+
     def shutdown(self) -> None:
         """ shutdown allows nodes to finish current work then delete """
         scalesets = Scaleset.search_by_pool(self.name)
@@ -525,8 +538,7 @@ class Pool(BASE_POOL, ORMMixin):
             return
 
         for scaleset in scalesets:
-            scaleset.state = ScalesetState.shutdown
-            scaleset.save()
+            scaleset.set_shutdown(now=False)
 
         for node in nodes:
             node.set_shutdown()
@@ -535,6 +547,7 @@ class Pool(BASE_POOL, ORMMixin):
 
     def halt(self) -> None:
         """ halt the pool immediately """
+
         scalesets = Scaleset.search_by_pool(self.name)
         nodes = Node.search(query={"pool_name": [self.name]})
         if not scalesets and not nodes:
@@ -557,20 +570,14 @@ class Pool(BASE_POOL, ORMMixin):
     def key_fields(cls) -> Tuple[str, str]:
         return ("name", "pool_id")
 
+    def delete(self) -> None:
+        super().delete()
+        send_event(EventPoolDeleted(pool_name=self.name))
+
 
 class Scaleset(BASE_SCALESET, ORMMixin):
     def save_exclude(self) -> Optional[MappingIntStrAny]:
         return {"nodes": ...}
-
-    def event_include(self) -> Optional[MappingIntStrAny]:
-        return {
-            "pool_name": ...,
-            "scaleset_id": ...,
-            "state": ...,
-            "os": ...,
-            "size": ...,
-            "error": ...,
-        }
 
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {
@@ -595,7 +602,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         client_id: Optional[UUID] = None,
         client_object_id: Optional[UUID] = None,
     ) -> "Scaleset":
-        return cls(
+        entry = cls(
             pool_name=pool_name,
             vm_sku=vm_sku,
             image=image,
@@ -607,6 +614,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             client_object_id=client_object_id,
             tags=tags,
         )
+        send_event(
+            EventScalesetCreated(
+                scaleset_id=entry.scaleset_id,
+                pool_name=entry.pool_name,
+                vm_sku=vm_sku,
+                image=image,
+                region=region,
+                size=size,
+            )
+        )
+        return entry
 
     @classmethod
     def search_by_pool(cls, pool_name: PoolName) -> List["Scaleset"]:
@@ -631,6 +649,20 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def get_by_object_id(cls, object_id: UUID) -> List["Scaleset"]:
         return cls.search(query={"client_object_id": [object_id]})
 
+    def set_failed(self, error: Error) -> None:
+        if self.error is not None:
+            return
+
+        self.error = error
+        self.state = ScalesetState.creation_failed
+        self.save()
+
+        send_event(
+            EventScalesetFailed(
+                scaleset_id=self.scaleset_id, pool_name=self.pool_name, error=self.error
+            )
+        )
+
     def init(self) -> None:
         logging.info("scaleset init: %s", self.scaleset_id)
 
@@ -640,9 +672,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         # scaleset being added to the pool.
         pool = Pool.get_by_name(self.pool_name)
         if isinstance(pool, Error):
-            self.error = pool
-            self.state = ScalesetState.halt
-            self.save()
+            self.set_failed(pool)
             return
 
         if pool.state == PoolState.init:
@@ -652,14 +682,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         elif pool.state == PoolState.running:
             image_os = get_os(self.region, self.image)
             if isinstance(image_os, Error):
-                self.error = image_os
-                self.state = ScalesetState.creation_failed
+                self.set_failed(image_os)
+                return
+
             elif image_os != pool.os:
-                self.error = Error(
+                error = Error(
                     code=ErrorCode.INVALID_REQUEST,
                     errors=["invalid os (got: %s needed: %s)" % (image_os, pool.os)],
                 )
-                self.state = ScalesetState.creation_failed
+                self.set_failed(error)
+                return
             else:
                 self.state = ScalesetState.setup
         else:
@@ -678,26 +710,23 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.info("creating network: %s", self.region)
             result = network.create()
             if isinstance(result, Error):
-                self.error = result
-                self.state = ScalesetState.creation_failed
+                self.set_failed(result)
+                return
             self.save()
             return
 
         if self.auth is None:
-            self.error = Error(
+            error = Error(
                 code=ErrorCode.UNABLE_TO_CREATE, errors=["missing required auth"]
             )
-            self.state = ScalesetState.creation_failed
-            self.save()
+            self.set_failed(error)
             return
 
         vmss = get_vmss(self.scaleset_id)
         if vmss is None:
             pool = Pool.get_by_name(self.pool_name)
             if isinstance(pool, Error):
-                self.error = pool
-                self.state = ScalesetState.halt
-                self.save()
+                self.set_failed(pool)
                 return
 
             logging.info("creating scaleset: %s", self.scaleset_id)
@@ -716,13 +745,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.tags,
             )
             if isinstance(result, Error):
-                self.error = result
-                logging.error(
-                    "stopping task because of failed vmss: %s %s",
-                    self.scaleset_id,
-                    result,
-                )
-                self.state = ScalesetState.creation_failed
+                self.set_failed(result)
+                return
             else:
                 logging.info("creating scaleset: %s", self.scaleset_id)
         elif vmss.provisioning_state == "Creating":
@@ -730,10 +754,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.try_set_identity(vmss)
         else:
             logging.info("scaleset running: %s", self.scaleset_id)
-            error = self.try_set_identity(vmss)
-            if error:
-                self.state = ScalesetState.creation_failed
-                self.error = error
+            identity_result = self.try_set_identity(vmss)
+            if identity_result:
+                self.set_failed(identity_result)
+                return
             else:
                 self.state = ScalesetState.running
         self.save()
@@ -946,6 +970,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             node.reimage_queued = True
             node.save()
 
+    def set_shutdown(self, now: bool) -> None:
+        if self.state in [ScalesetState.halt, ScalesetState.shutdown]:
+            return
+
+        if now:
+            self.state = ScalesetState.halt
+        else:
+            self.state = ScalesetState.shutdown
+
+        self.save()
+
     def shutdown(self) -> None:
         size = get_vmss_size(self.scaleset_id)
         logging.info("scaleset shutdown: %s (current size: %s)", self.scaleset_id, size)
@@ -956,7 +991,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.halt()
 
     def halt(self) -> None:
-        self.state = ScalesetState.halt
         ScalesetShrinkQueue(self.scaleset_id).delete()
 
         for node in Node.search_states(scaleset_id=self.scaleset_id):
@@ -1029,8 +1063,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         pool = Pool.get_by_name(self.pool_name)
         if isinstance(pool, Error):
-            self.error = pool
-            self.halt()
+            self.set_failed(pool)
             return
 
         logging.debug("updating scaleset configs: %s", self.scaleset_id)
@@ -1046,6 +1079,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
         return ("pool_name", "scaleset_id")
+
+    def delete(self) -> None:
+        super().delete()
+        send_event(
+            EventScalesetDeleted(scaleset_id=self.scaleset_id, pool_name=self.pool_name)
+        )
 
 
 class ShrinkEntry(BaseModel):

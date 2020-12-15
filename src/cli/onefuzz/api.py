@@ -17,7 +17,15 @@ from uuid import UUID
 import pkg_resources
 import semver
 from memoization import cached
-from onefuzztypes import enums, models, primitives, requests, responses, webhooks
+from onefuzztypes import (
+    enums,
+    events,
+    models,
+    primitives,
+    requests,
+    responses,
+    webhooks,
+)
 from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
 
@@ -291,7 +299,7 @@ class Webhooks(Endpoint):
         self,
         name: str,
         url: str,
-        event_types: List[enums.WebhookEventType],
+        event_types: List[events.EventType],
         *,
         secret_token: Optional[str] = None,
     ) -> webhooks.Webhook:
@@ -311,7 +319,7 @@ class Webhooks(Endpoint):
         *,
         name: Optional[str] = None,
         url: Optional[str] = None,
-        event_types: Optional[List[enums.WebhookEventType]] = None,
+        event_types: Optional[List[events.EventType]] = None,
         secret_token: Optional[str] = None,
     ) -> webhooks.Webhook:
         """ Update a webhook """
@@ -346,7 +354,7 @@ class Webhooks(Endpoint):
             data=requests.WebhookGet(webhook_id=webhook_id_expanded),
         )
 
-    def ping(self, webhook_id: UUID_EXPANSION) -> webhooks.WebhookEventPing:
+    def ping(self, webhook_id: UUID_EXPANSION) -> events.EventPing:
         """ ping a webhook """
 
         webhook_id_expanded = self._disambiguate_uuid(
@@ -356,7 +364,7 @@ class Webhooks(Endpoint):
         self.logger.debug("pinging webhook: %s", webhook_id_expanded)
         return self._req_model(
             "POST",
-            webhooks.WebhookEventPing,
+            events.EventPing,
             data=requests.WebhookGet(webhook_id=webhook_id_expanded),
             alternate_endpoint="webhooks/ping",
         )

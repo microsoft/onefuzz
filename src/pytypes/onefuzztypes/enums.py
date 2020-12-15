@@ -250,6 +250,7 @@ class ErrorCode(Enum):
     INVALID_NODE = 469
     NOTIFICATION_FAILURE = 470
     UNABLE_TO_UPDATE = 471
+    PROXY_FAILED = 472
 
 
 class HeartbeatType(Enum):
@@ -364,13 +365,6 @@ class GithubIssueSearchMatch(Enum):
 class TaskDebugFlag(Enum):
     keep_node_on_failure = "keep_node_on_failure"
     keep_node_on_completion = "keep_node_on_completion"
-
-
-class WebhookEventType(Enum):
-    task_created = "task_created"
-    task_stopped = "task_stopped"
-    task_failed = "task_failed"
-    ping = "ping"
 
 
 class WebhookMessageState(Enum):

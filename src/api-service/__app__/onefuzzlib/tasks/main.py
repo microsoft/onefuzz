@@ -9,22 +9,18 @@ from typing import List, Optional, Tuple, Union
 from uuid import UUID
 
 from onefuzztypes.enums import ErrorCode, TaskState
+from onefuzztypes.events import EventTaskCreated, EventTaskFailed, EventTaskStopped
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm, UserInfo
-from onefuzztypes.webhooks import (
-    WebhookEventTaskCreated,
-    WebhookEventTaskFailed,
-    WebhookEventTaskStopped,
-)
 
 from ..azure.containers import StorageType
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
+from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
-from ..webhooks import Webhook
 
 
 class Task(BASE_TASK, ORMMixin):
@@ -58,8 +54,8 @@ class Task(BASE_TASK, ORMMixin):
             raise Exception("task must have vm or pool")
         task = cls(config=config, job_id=job_id, os=os, user_info=user_info)
         task.save()
-        Webhook.send_event(
-            WebhookEventTaskCreated(
+        send_event(
+            EventTaskCreated(
                 job_id=task.job_id,
                 task_id=task.task_id,
                 config=config,
@@ -114,14 +110,6 @@ class Task(BASE_TASK, ORMMixin):
             "task_id": ...,
             "state": ...,
             "config": {"vm": {"count": ...}, "task": {"type": ...}},
-        }
-
-    def event_include(self) -> Optional[MappingIntStrAny]:
-        return {
-            "job_id": ...,
-            "task_id": ...,
-            "state": ...,
-            "error": ...,
         }
 
     def init(self) -> None:
@@ -197,8 +185,8 @@ class Task(BASE_TASK, ORMMixin):
 
         self.state = TaskState.stopping
         self.save()
-        Webhook.send_event(
-            WebhookEventTaskStopped(
+        send_event(
+            EventTaskStopped(
                 job_id=self.job_id, task_id=self.task_id, user_info=self.user_info
             )
         )
@@ -214,8 +202,8 @@ class Task(BASE_TASK, ORMMixin):
         self.state = TaskState.stopping
         self.save()
 
-        Webhook.send_event(
-            WebhookEventTaskFailed(
+        send_event(
+            EventTaskFailed(
                 job_id=self.job_id,
                 task_id=self.task_id,
                 error=error,
