@@ -9,7 +9,8 @@ exists() {
     [ -e "$1" ]
 }
 
-export RUSTC_WRAPPER=$(which sccache)
+#export RUSTC_WRAPPER=$(which sccache)
+#sccache --start-server
 
 mkdir -p artifacts/agent
 
