@@ -11,6 +11,8 @@ from uuid import UUID
 
 from onefuzztypes.enums import ContainerType, JobState, NodeState, TaskState, TaskType
 from onefuzztypes.events import (
+    EventCrashReported,
+    EventFileAdded,
     EventJobCreated,
     EventJobStopped,
     EventMessage,
@@ -21,10 +23,12 @@ from onefuzztypes.events import (
     EventPoolDeleted,
     EventTaskCreated,
     EventTaskFailed,
+    EventTaskStateUpdated,
     EventTaskStopped,
     EventType,
 )
 from onefuzztypes.models import Job, JobConfig, Node, Pool, Task, TaskContainers
+from onefuzztypes.primitives import Container
 from pydantic import BaseModel
 
 MESSAGE = Tuple[datetime, EventType, str]
@@ -131,7 +135,7 @@ class TopCache:
         self.job_filters = job_filters
         self.tasks: Dict[UUID, MiniTask] = {}
         self.jobs: Dict[UUID, MiniJob] = {}
-        self.files: Dict[str, Tuple[Optional[datetime], Set[str]]] = {}
+        self.files: Dict[Container, Set[str]] = {}
         self.pools: Dict[str, EventPoolCreated] = {}
         self.nodes: Dict[UUID, MiniNode] = {}
 
@@ -142,7 +146,7 @@ class TopCache:
         self.endpoint: str = endpoint
         self.last_update = datetime.now()
 
-    def add_container(self, name: str, ignore_date: bool = False) -> None:
+    def add_container(self, name: Container, ignore_date: bool = False) -> None:
         if name in self.files:
             return
         try:
@@ -150,7 +154,7 @@ class TopCache:
         except Exception:
             return
 
-        self.add_files(name, set(files.files), ignore_date=ignore_date)
+        self.add_files_set(name, set(files.files))
 
     def add_message(self, message: EventMessage) -> None:
         events = {
@@ -159,11 +163,14 @@ class TopCache:
             EventTaskCreated: lambda x: self.task_created(x),
             EventTaskStopped: lambda x: self.task_stopped(x),
             EventTaskFailed: lambda x: self.task_stopped(x),
+            EventTaskStateUpdated: lambda x: self.task_state_updated(x),
             EventJobCreated: lambda x: self.job_created(x),
             EventJobStopped: lambda x: self.job_stopped(x),
             EventNodeStateUpdated: lambda x: self.node_state_updated(x),
             EventNodeCreated: lambda x: self.node_created(x),
             EventNodeDeleted: lambda x: self.node_deleted(x),
+            EventCrashReported: lambda x: self.file_added(x),
+            EventFileAdded: lambda x: self.file_added(x),
         }
 
         for event_cls in events:
@@ -177,18 +184,21 @@ class TopCache:
         ]
         self.messages = messages
 
-    def add_files(
-        self, container: str, new_files: Set[str], ignore_date: bool = False
-    ) -> None:
-        current_date: Optional[datetime] = None
+    def file_added(self, event: Union[EventFileAdded, EventCrashReported]) -> None:
+        if event.container in self.files:
+            files = self.files[event.container]
+        else:
+            files = set()
+        files.update(set([event.filename]))
+        self.files[event.container] = files
+
+    def add_files_set(self, container: Container, new_files: Set[str]) -> None:
         if container in self.files:
-            (current_date, files) = self.files[container]
+            files = self.files[container]
         else:
             files = set()
         files.update(new_files)
-        if not ignore_date:
-            current_date = datetime.now()
-        self.files[container] = (current_date, files)
+        self.files[container] = files
 
     def add_node(self, node: Node) -> None:
         self.nodes[node.machine_id] = MiniNode(
@@ -274,6 +284,10 @@ class TopCache:
             target=event.config.task.target_exe.replace("setup/", "", 0),
             containers=event.config.containers,
         )
+
+    def task_state_updated(self, event: EventTaskStateUpdated) -> None:
+        if event.task_id in self.tasks:
+            self.tasks[event.task_id].state = event.state
 
     def task_stopped(self, event: EventTaskStopped) -> None:
         if event.task_id in self.tasks:
@@ -369,7 +383,7 @@ class TopCache:
                 if container.type not in results:
                     results[container.type] = {}
                 results[container.type][container.name] = len(
-                    self.files[container.name][1]
+                    self.files[container.name]
                 )
 
         results_merged = {}
