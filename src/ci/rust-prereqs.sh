@@ -9,6 +9,8 @@ if ! sccache --help; then
     cargo install sccache
 fi
 
+sccache --start-server
+
 export RUSTC_WRAPPER=$(which sccache)
 cargo install cargo-audit
 
