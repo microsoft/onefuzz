@@ -146,7 +146,7 @@ class TopCache:
         self.endpoint: str = endpoint
         self.last_update = datetime.now()
 
-    def add_container(self, name: Container, ignore_date: bool = False) -> None:
+    def add_container(self, name: Container) -> None:
         if name in self.files:
             return
         try:
