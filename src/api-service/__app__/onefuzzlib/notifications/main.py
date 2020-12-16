@@ -10,6 +10,7 @@ from uuid import UUID
 from memoization import cached
 from onefuzztypes import models
 from onefuzztypes.enums import ErrorCode, TaskState
+from onefuzztypes.events import EventCrashReported, EventFileAdded
 from onefuzztypes.models import (
     ADOTemplate,
     Error,
@@ -27,6 +28,7 @@ from ..azure.containers import (
     get_file_sas_url,
 )
 from ..azure.queue import send_message
+from ..events import send_event
 from ..orm import ORMMixin
 from ..reports import get_report
 from ..tasks.config import get_input_container_queues
@@ -115,16 +117,16 @@ def new_files(container: Container, filename: str) -> None:
     if metadata:
         results["metadata"] = metadata
 
+    report = get_report(container, filename)
+    if report:
+        results["executable"] = report.executable
+        results["crash_type"] = report.crash_type
+        results["crash_site"] = report.crash_site
+        results["job_id"] = report.job_id
+        results["task_id"] = report.task_id
+
     notifications = get_notifications(container)
     if notifications:
-        report = get_report(container, filename)
-        if report:
-            results["executable"] = report.executable
-            results["crash_type"] = report.crash_type
-            results["crash_site"] = report.crash_site
-            results["job_id"] = report.job_id
-            results["task_id"] = report.task_id
-
         logging.info("notifications for %s %s %s", container, filename, notifications)
         done = []
         for notification in notifications:
@@ -152,3 +154,10 @@ def new_files(container: Container, filename: str) -> None:
                 container, filename, StorageType.corpus, read=True, delete=True
             )
             send_message(task.task_id, bytes(url, "utf-8"), StorageType.corpus)
+
+    if report:
+        send_event(
+            EventCrashReported(report=report, container=container, filename=filename)
+        )
+    else:
+        send_event(EventFileAdded(container=container, filename=filename))

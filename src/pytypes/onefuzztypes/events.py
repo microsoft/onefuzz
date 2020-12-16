@@ -10,8 +10,8 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Extra, Field
 
 from .enums import OS, Architecture, NodeState, TaskState
-from .models import AutoScaleConfig, Error, JobConfig, TaskConfig, UserInfo
-from .primitives import Region
+from .models import AutoScaleConfig, Error, JobConfig, Report, TaskConfig, UserInfo
+from .primitives import Container, Region
 from .responses import BaseResponse
 
 
@@ -126,6 +126,17 @@ class EventNodeStateUpdated(BaseEvent):
     state: NodeState
 
 
+class EventCrashReported(BaseEvent):
+    report: Report
+    container: Container
+    filename: str
+
+
+class EventFileAdded(BaseEvent):
+    container: Container
+    filename: str
+
+
 Event = Union[
     EventJobCreated,
     EventJobStopped,
@@ -145,6 +156,8 @@ Event = Union[
     EventTaskStateUpdated,
     EventTaskCreated,
     EventTaskStopped,
+    EventCrashReported,
+    EventFileAdded,
 ]
 
 
@@ -167,6 +180,8 @@ class EventType(Enum):
     task_failed = "task_failed"
     task_state_updated = "task_state_updated"
     task_stopped = "task_stopped"
+    crash_reported = "crash_reported"
+    file_added = "file_added"
 
 
 EventTypeMap = {
@@ -188,6 +203,8 @@ EventTypeMap = {
     EventType.task_failed: EventTaskFailed,
     EventType.task_state_updated: EventTaskStateUpdated,
     EventType.task_stopped: EventTaskStopped,
+    EventType.crash_reported: EventCrashReported,
+    EventType.file_added: EventFileAdded,
 }
 
 

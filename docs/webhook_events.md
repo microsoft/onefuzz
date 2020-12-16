@@ -21,6 +21,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ## Event Types (EventType)
 
+* [crash_reported](#crash_reported)
+* [file_added](#file_added)
 * [job_created](#job_created)
 * [job_stopped](#job_stopped)
 * [node_created](#node_created)
@@ -39,6 +41,200 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [task_failed](#task_failed)
 * [task_state_updated](#task_state_updated)
 * [task_stopped](#task_stopped)
+
+### crash_reported
+
+#### Example
+
+```json
+{
+    "report": {
+        "input_blob": {
+            "account": "contoso-storage-account",
+            "container": "crashes",
+            "name": "input.txt"
+        },
+        "executable": "fuzz.exe",
+        "crash_type": "example crash report type",
+        "crash_site": "example crash site",
+        "call_stack": [
+            "#0 line",
+            "#1 line",
+            "#2 line"
+        ],
+        "call_stack_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "asan_log": "example asan log",
+        "task_id": "00000000-0000-0000-0000-000000000000",
+        "job_id": "00000000-0000-0000-0000-000000000000",
+        "scariness_score": 10,
+        "scariness_description": "example-scariness"
+    },
+    "container": "container-name",
+    "filename": "example.json"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "EventCrashReported",
+    "type": "object",
+    "properties": {
+        "report": {
+            "$ref": "#/definitions/Report"
+        },
+        "container": {
+            "title": "Container",
+            "type": "string"
+        },
+        "filename": {
+            "title": "Filename",
+            "type": "string"
+        }
+    },
+    "required": [
+        "report",
+        "container",
+        "filename"
+    ],
+    "additionalProperties": false,
+    "definitions": {
+        "BlobRef": {
+            "title": "BlobRef",
+            "type": "object",
+            "properties": {
+                "account": {
+                    "title": "Account",
+                    "type": "string"
+                },
+                "container": {
+                    "title": "Container",
+                    "type": "string"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "account",
+                "container",
+                "name"
+            ]
+        },
+        "Report": {
+            "title": "Report",
+            "type": "object",
+            "properties": {
+                "input_url": {
+                    "title": "Input Url",
+                    "type": "string"
+                },
+                "input_blob": {
+                    "$ref": "#/definitions/BlobRef"
+                },
+                "executable": {
+                    "title": "Executable",
+                    "type": "string"
+                },
+                "crash_type": {
+                    "title": "Crash Type",
+                    "type": "string"
+                },
+                "crash_site": {
+                    "title": "Crash Site",
+                    "type": "string"
+                },
+                "call_stack": {
+                    "title": "Call Stack",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "call_stack_sha256": {
+                    "title": "Call Stack Sha256",
+                    "type": "string"
+                },
+                "input_sha256": {
+                    "title": "Input Sha256",
+                    "type": "string"
+                },
+                "asan_log": {
+                    "title": "Asan Log",
+                    "type": "string"
+                },
+                "task_id": {
+                    "title": "Task Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "job_id": {
+                    "title": "Job Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "scariness_score": {
+                    "title": "Scariness Score",
+                    "type": "integer"
+                },
+                "scariness_description": {
+                    "title": "Scariness Description",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "input_blob",
+                "executable",
+                "crash_type",
+                "crash_site",
+                "call_stack",
+                "call_stack_sha256",
+                "input_sha256",
+                "task_id",
+                "job_id"
+            ]
+        }
+    }
+}
+```
+
+### file_added
+
+#### Example
+
+```json
+{
+    "container": "container-name",
+    "filename": "example.txt"
+}
+```
+
+#### Schema
+
+```json
+{
+    "title": "EventFileAdded",
+    "type": "object",
+    "properties": {
+        "container": {
+            "title": "Container",
+            "type": "string"
+        },
+        "filename": {
+            "title": "Filename",
+            "type": "string"
+        }
+    },
+    "required": [
+        "container",
+        "filename"
+    ],
+    "additionalProperties": false
+}
+```
 
 ### job_created
 
@@ -1628,6 +1824,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventTaskStopped"
+                },
+                {
+                    "$ref": "#/definitions/EventCrashReported"
+                },
+                {
+                    "$ref": "#/definitions/EventFileAdded"
                 }
             ]
         },
@@ -1665,7 +1867,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "task_created",
                 "task_failed",
                 "task_state_updated",
-                "task_stopped"
+                "task_stopped",
+                "crash_reported",
+                "file_added"
             ]
         },
         "JobConfig": {
@@ -2586,6 +2790,144 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "job_id",
                 "task_id"
+            ],
+            "additionalProperties": false
+        },
+        "BlobRef": {
+            "title": "BlobRef",
+            "type": "object",
+            "properties": {
+                "account": {
+                    "title": "Account",
+                    "type": "string"
+                },
+                "container": {
+                    "title": "Container",
+                    "type": "string"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "account",
+                "container",
+                "name"
+            ]
+        },
+        "Report": {
+            "title": "Report",
+            "type": "object",
+            "properties": {
+                "input_url": {
+                    "title": "Input Url",
+                    "type": "string"
+                },
+                "input_blob": {
+                    "$ref": "#/definitions/BlobRef"
+                },
+                "executable": {
+                    "title": "Executable",
+                    "type": "string"
+                },
+                "crash_type": {
+                    "title": "Crash Type",
+                    "type": "string"
+                },
+                "crash_site": {
+                    "title": "Crash Site",
+                    "type": "string"
+                },
+                "call_stack": {
+                    "title": "Call Stack",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "call_stack_sha256": {
+                    "title": "Call Stack Sha256",
+                    "type": "string"
+                },
+                "input_sha256": {
+                    "title": "Input Sha256",
+                    "type": "string"
+                },
+                "asan_log": {
+                    "title": "Asan Log",
+                    "type": "string"
+                },
+                "task_id": {
+                    "title": "Task Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "job_id": {
+                    "title": "Job Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "scariness_score": {
+                    "title": "Scariness Score",
+                    "type": "integer"
+                },
+                "scariness_description": {
+                    "title": "Scariness Description",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "input_blob",
+                "executable",
+                "crash_type",
+                "crash_site",
+                "call_stack",
+                "call_stack_sha256",
+                "input_sha256",
+                "task_id",
+                "job_id"
+            ]
+        },
+        "EventCrashReported": {
+            "title": "EventCrashReported",
+            "type": "object",
+            "properties": {
+                "report": {
+                    "$ref": "#/definitions/Report"
+                },
+                "container": {
+                    "title": "Container",
+                    "type": "string"
+                },
+                "filename": {
+                    "title": "Filename",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "report",
+                "container",
+                "filename"
+            ],
+            "additionalProperties": false
+        },
+        "EventFileAdded": {
+            "title": "EventFileAdded",
+            "type": "object",
+            "properties": {
+                "container": {
+                    "title": "Container",
+                    "type": "string"
+                },
+                "filename": {
+                    "title": "Filename",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "container",
+                "filename"
             ],
             "additionalProperties": false
         }

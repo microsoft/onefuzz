@@ -5,7 +5,7 @@
 
 from typing import Optional
 from uuid import UUID
-from onefuzztypes.primitives import Region
+from onefuzztypes.primitives import Region, Container
 from onefuzztypes.enums import (
     TaskType,
     ContainerType,
@@ -22,10 +22,14 @@ from onefuzztypes.models import (
     Error,
     UserInfo,
     JobConfig,
+    Report,
+    BlobRef,
 )
 from onefuzztypes.events import (
     Event,
     EventPing,
+    EventCrashReported,
+    EventFileAdded,
     EventTaskCreated,
     EventTaskStopped,
     EventTaskFailed,
@@ -47,6 +51,9 @@ from onefuzztypes.events import (
     EventType,
 )
 from onefuzztypes.webhooks import WebhookMessage
+
+EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 
 
 def layer(depth: int, title: str, content: Optional[str] = None) -> None:
@@ -158,6 +165,29 @@ def main():
         EventNodeStateUpdated(
             machine_id=UUID(int=0), pool_name="example", state=NodeState.setting_up
         ),
+        EventCrashReported(
+            container=Container("container-name"),
+            filename="example.json",
+            report=Report(
+                input_blob=BlobRef(
+                    account="contoso-storage-account",
+                    container=Container("crashes"),
+                    name="input.txt",
+                ),
+                executable="fuzz.exe",
+                crash_type="example crash report type",
+                crash_site="example crash site",
+                call_stack=["#0 line", "#1 line", "#2 line"],
+                call_stack_sha256=ZERO_SHA256,
+                input_sha256=EMPTY_SHA256,
+                asan_log="example asan log",
+                task_id=UUID(int=0),
+                job_id=UUID(int=0),
+                scariness_score=10,
+                scariness_description="example-scariness",
+            ),
+        ),
+        EventFileAdded(container=Container("container-name"), filename="example.txt"),
     ]
 
     for event in Event.__args__:
