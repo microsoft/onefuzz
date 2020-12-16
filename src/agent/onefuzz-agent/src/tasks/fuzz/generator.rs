@@ -8,6 +8,7 @@ use onefuzz::{
     expand::Expand,
     fs::set_executable,
     input_tester::Tester,
+    process::monitor_process,
     sha256,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     telemetry::Event::new_result,
@@ -119,9 +120,9 @@ async fn generate_input(
     }
 
     info!("Generating test cases with {:?}", generator);
-    let output = generator.spawn()?.wait_with_output().await?;
+    let output = generator.spawn()?;
+    monitor_process(output, "generator".to_string(), true, None).await?;
 
-    info!("Test case generation result {:?}", output);
     Ok(())
 }
 

@@ -7,6 +7,11 @@ use std::path::Path;
 use std::process::Command;
 use std::time::Duration;
 use std::{collections::HashMap, process::Stdio};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncRead, BufReader},
+    process::Child,
+    sync::Notify,
+};
 
 /// Serializable representation of a process output.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -125,4 +130,77 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
 
     // convert processcontrol::Output into our Output
     runner.await?.map(|result| result.into())
+}
+
+async fn monitor_stream(name: &str, context: &str, stream: impl AsyncRead + Unpin) -> Result<()> {
+    let mut stream = BufReader::new(stream);
+    loop {
+        let mut buf = vec![];
+
+        let bytes_read = stream.read_until(b'\n', &mut buf).await?;
+        if bytes_read == 0 && buf.is_empty() {
+            break;
+        }
+        let line = String::from_utf8_lossy(&buf);
+        info!("process ({}) {}: {}", name, context, line);
+    }
+    Ok(())
+}
+
+async fn monitor_process_child(
+    context: &str,
+    process: Child,
+    stopped: Option<&Notify>,
+) -> Result<()> {
+    verbose!("waiting for child: {}", context);
+
+    let output = process.wait_with_output().await?;
+
+    verbose!("child exited. {}:{:?}", context, output.status);
+    if let Some(stopped) = stopped {
+        stopped.notify();
+    }
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        error!("process failed: {:?}", output);
+        bail!("process failed: {:?}", output);
+    }
+}
+
+pub async fn monitor_process(
+    mut process: Child,
+    context: String,
+    log_output: bool,
+    stopped: Option<&Notify>,
+) -> Result<()> {
+    let tasks = match log_output {
+        true => {
+            let stderr = process
+                .stderr
+                .take()
+                .ok_or_else(|| format_err!("stderr not captured"))?;
+
+            let stdout = process
+                .stdout
+                .take()
+                .ok_or_else(|| format_err!("stdout not captured"))?;
+
+            let stdout_log = monitor_stream("stdout", &context, stdout);
+            let stderr_log = monitor_stream("stderr", &context, stderr);
+            Some((stdout_log, stderr_log))
+        }
+        false => None,
+    };
+
+    let child = monitor_process_child(&context, process, stopped);
+
+    if let Some((t1, t2)) = tasks {
+        futures::try_join!(t1, t2, child)?;
+    } else {
+        child.await?;
+    }
+
+    Ok(())
 }
