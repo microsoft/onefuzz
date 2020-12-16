@@ -13,6 +13,8 @@ use tokio::{
     sync::Notify,
 };
 
+const MAX_LOG_LINE_LENGTH: usize = 8192;
+
 /// Serializable representation of a process output.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Output {
@@ -141,7 +143,12 @@ async fn monitor_stream(name: &str, context: &str, stream: impl AsyncRead + Unpi
         if bytes_read == 0 && buf.is_empty() {
             break;
         }
-        let line = String::from_utf8_lossy(&buf);
+        let mut line = String::from_utf8_lossy(&buf).to_string();
+        if line.len() > MAX_LOG_LINE_LENGTH {
+            line.truncate(MAX_LOG_LINE_LENGTH);
+            line.push_str("...<truncated>");
+        }
+
         info!("process ({}) {}: {}", name, context, line);
     }
     Ok(())
