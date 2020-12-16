@@ -87,6 +87,8 @@ def fmt_delta(data: timedelta) -> str:
 
 
 def fmt(data: Any) -> Any:
+    if data is None:
+        return ""
     if isinstance(data, int):
         return str(data)
     if isinstance(data, str):
@@ -327,7 +329,7 @@ class TopCache:
             entry = (
                 task.job_id,
                 task.task_id,
-                task.state.name if task.state else "",
+                task.state,
                 task.type.name,
                 task.target,
                 files,
