@@ -108,7 +108,7 @@ async fn generate_input(
         .kill_on_drop(true)
         .env_remove("RUST_LOG")
         .stdin(Stdio::null())
-        .stdout(Stdio::null())
+        .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
     for arg in expand.evaluate(generator_options)? {
