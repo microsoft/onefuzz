@@ -9,15 +9,52 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from uuid import UUID
 
-from onefuzztypes.enums import ContainerType, JobState, NodeState, PoolState, TaskState
-from onefuzztypes.models import Job, Node, Pool, Task
+from onefuzztypes.enums import ContainerType, JobState, NodeState, TaskState, TaskType
+from onefuzztypes.events import (
+    EventJobCreated,
+    EventJobStopped,
+    EventMessage,
+    EventNodeCreated,
+    EventNodeDeleted,
+    EventNodeStateUpdated,
+    EventPoolCreated,
+    EventPoolDeleted,
+    EventTaskCreated,
+    EventTaskFailed,
+    EventTaskStopped,
+    EventType,
+)
+from onefuzztypes.models import Job, JobConfig, Node, Pool, Task, TaskContainers
 from pydantic import BaseModel
 
-MESSAGE = Tuple[datetime, str, str]
+MESSAGE = Tuple[datetime, EventType, str]
 
 MINUTES = 60
 HOURS = 60 * MINUTES
 DAYS = 24 * HOURS
+
+
+class MiniNode(BaseModel):
+    machine_id: UUID
+    pool_name: str
+    state: NodeState
+
+
+class MiniJob(BaseModel):
+    job_id: UUID
+    config: JobConfig
+    state: Optional[JobState]
+
+
+class MiniTask(BaseModel):
+    job_id: UUID
+    task_id: UUID
+    type: TaskType
+    target: str
+    state: Optional[TaskState]
+    pool: str
+    end_time: Optional[datetime]
+    containers: List[TaskContainers]
 
 
 def fmt_delta(data: timedelta) -> str:
@@ -72,19 +109,18 @@ class JobFilter(BaseModel):
 
 
 class TopCache:
-    JOB_FIELDS = ["Updated", "State", "Job", "Name", "Files"]
+    JOB_FIELDS = ["Job", "Name", "Files"]
     TASK_FIELDS = [
-        "Updated",
-        "State",
         "Job",
         "Task",
+        "State",
         "Type",
-        "Name",
+        "Target",
         "Files",
         "Pool",
         "Time left",
     ]
-    POOL_FIELDS = ["Updated", "Pool", "Name", "OS", "State", "Nodes"]
+    POOL_FIELDS = ["Name", "OS", "Arch", "Nodes"]
 
     def __init__(
         self,
@@ -93,11 +129,11 @@ class TopCache:
     ):
         self.onefuzz = onefuzz
         self.job_filters = job_filters
-        self.tasks: Dict[UUID, Tuple[datetime, Task]] = {}
-        self.jobs: Dict[UUID, Tuple[datetime, Job]] = {}
+        self.tasks: Dict[UUID, MiniTask] = {}
+        self.jobs: Dict[UUID, MiniJob] = {}
         self.files: Dict[str, Tuple[Optional[datetime], Set[str]]] = {}
-        self.pools: Dict[str, Tuple[datetime, Pool]] = {}
-        self.nodes: Dict[UUID, Tuple[datetime, Node]] = {}
+        self.pools: Dict[str, EventPoolCreated] = {}
+        self.nodes: Dict[UUID, MiniNode] = {}
 
         self.messages: List[MESSAGE] = []
         endpoint = onefuzz._backend.config.endpoint
@@ -116,20 +152,29 @@ class TopCache:
 
         self.add_files(name, set(files.files), ignore_date=ignore_date)
 
-    def add_message(self, name: str, message: Dict[str, Any]) -> None:
+    def add_message(self, message: EventMessage) -> None:
+        events = {
+            EventPoolCreated: lambda x: self.pool_created(x),
+            EventPoolDeleted: lambda x: self.pool_deleted(x),
+            EventTaskCreated: lambda x: self.task_created(x),
+            EventTaskStopped: lambda x: self.task_stopped(x),
+            EventTaskFailed: lambda x: self.task_stopped(x),
+            EventJobCreated: lambda x: self.job_created(x),
+            EventJobStopped: lambda x: self.job_stopped(x),
+            EventNodeStateUpdated: lambda x: self.node_state_updated(x),
+            EventNodeCreated: lambda x: self.node_created(x),
+            EventNodeDeleted: lambda x: self.node_deleted(x),
+        }
+
+        for event_cls in events:
+            if isinstance(message.event, event_cls):
+                events[event_cls](message.event)
+
         self.last_update = datetime.now()
-        data: Dict[str, Union[int, str]] = {}
-        for (k, v) in message.items():
-            if k in ["task_id", "job_id", "pool_id", "scaleset_id", "machine_id"]:
-                k = k.replace("_id", "")
-                data[k] = str(v)[:8]
-            elif isinstance(v, (int, str)):
-                data[k] = v
-
-        as_str = fmt(data)
-        messages = [x for x in self.messages if (x[1:] != [name, as_str])][-99:]
-        messages += [(datetime.now(), name, as_str)]
-
+        messages = [x for x in self.messages][-99:]
+        messages += [
+            (datetime.now(), message.event_type, message.event.json(exclude_none=True))
+        ]
         self.messages = messages
 
     def add_files(
@@ -145,127 +190,119 @@ class TopCache:
             current_date = datetime.now()
         self.files[container] = (current_date, files)
 
-    def add_node(
-        self, machine_id: UUID, state: NodeState, node: Optional[Node] = None
+    def add_node(self, node: Node) -> None:
+        self.nodes[node.machine_id] = MiniNode(
+            machine_id=node.machine_id, state=node.state, pool_name=node.pool_name
+        )
+
+    def add_job(self, job: Job) -> MiniJob:
+        mini_job = MiniJob(job_id=job.job_id, config=job.config, state=job.state)
+        self.jobs[job.job_id] = mini_job
+        return mini_job
+
+    def job_created(
+        self,
+        job: EventJobCreated,
     ) -> None:
-        if state in [NodeState.halt]:
-            if machine_id in self.nodes:
-                del self.nodes[machine_id]
-            return
+        self.jobs[job.job_id] = MiniJob(job_id=job.job_id, config=job.config)
 
-        if machine_id in self.nodes:
-            (_, node) = self.nodes[machine_id]
-            node.state = state
-            self.nodes[machine_id] = (datetime.now(), node)
-        else:
-            try:
-                if not node:
-                    node = self.onefuzz.nodes.get(machine_id)
-                self.nodes[node.machine_id] = (datetime.now(), node)
-            except Exception:
-                logging.debug("unable to find pool: %s", machine_id)
+    def add_pool(self, pool: Pool) -> None:
+        self.pool_created(
+            EventPoolCreated(
+                pool_name=pool.name,
+                os=pool.os,
+                arch=pool.arch,
+                managed=pool.managed,
+            )
+        )
 
-    def add_pool(
-        self, pool_name: str, state: PoolState, pool: Optional[Pool] = None
+    def pool_created(
+        self,
+        pool: EventPoolCreated,
     ) -> None:
-        if state in [PoolState.halt]:
-            if pool_name in self.pools:
-                del self.pools[pool_name]
-            return
+        self.pools[pool.pool_name] = pool
 
-        if pool_name in self.pools:
-            (_, pool) = self.pools[pool_name]
-            pool.state = state
-            self.pools[pool_name] = (datetime.now(), pool)
-        else:
-            try:
-                if not pool:
-                    pool = self.onefuzz.pools.get(pool_name)
-                self.pools[pool.name] = (datetime.now(), pool)
-            except Exception:
-                logging.debug("unable to find pool: %s", pool_name)
+    def pool_deleted(self, pool: EventPoolDeleted) -> None:
+        if pool.pool_name in self.pools:
+            del self.pools[pool.pool_name]
 
     def render_pools(self) -> List:
         results = []
-
-        for (timestamp, pool) in sorted(self.pools.values(), key=lambda x: x[0]):
-            timestamps = [timestamp]
+        for pool in self.pools.values():
             nodes = {}
-            for (node_ts, node) in self.nodes.values():
-                if node.pool_name != pool.name:
+            for node in self.nodes.values():
+                if node.pool_name != pool.pool_name:
                     continue
                 if node.state not in nodes:
                     nodes[node.state] = 0
                 nodes[node.state] += 1
-                timestamps.append(node_ts)
-
-            timestamps = [timestamp]
-            entry = [
-                max(timestamps),
-                pool.pool_id,
-                pool.name,
-                pool.os,
-                pool.state,
-                nodes or "None",
-            ]
+            entry = (pool.pool_name, pool.os, pool.arch, nodes or "None")
             results.append(entry)
         return results
 
-    def add_task(
-        self,
-        task_id: UUID,
-        state: TaskState,
-        add_files: bool = True,
-        task: Optional[Task] = None,
-    ) -> None:
-        if state in [TaskState.stopping, TaskState.stopped]:
-            if task_id in self.tasks:
-                del self.tasks[task_id]
-            return
+    def node_created(self, node: EventNodeCreated) -> None:
+        self.nodes[node.machine_id] = MiniNode(
+            machine_id=node.machine_id, pool_name=node.pool_name, state=NodeState.init
+        )
 
-        if task_id in self.tasks and self.tasks[task_id][1].state != state:
-            (_, task) = self.tasks[task_id]
-            task.state = state
-            self.tasks[task_id] = (datetime.now(), task)
-        else:
-            try:
-                if task is None:
-                    task = self.onefuzz.tasks.get(task_id)
-                self.add_job_if_missing(task.job_id)
-                self.tasks[task.task_id] = (datetime.now(), task)
-                if add_files:
-                    for container in task.config.containers:
-                        self.add_container(container.name)
-            except Exception:
-                logging.debug("unable to find task: %s", task_id)
+    def node_state_updated(self, node: EventNodeStateUpdated) -> None:
+        self.nodes[node.machine_id] = MiniNode(
+            machine_id=node.machine_id, pool_name=node.pool_name, state=node.state
+        )
+
+    def node_deleted(self, node: EventNodeDeleted) -> None:
+        if node.machine_id in self.nodes:
+            del self.nodes[node.machine_id]
+
+    def add_task(self, task: Task) -> None:
+        self.tasks[task.task_id] = MiniTask(
+            job_id=task.job_id,
+            task_id=task.task_id,
+            type=task.config.task.type,
+            pool=task.config.pool.pool_name if task.config.pool else "",
+            state=task.state,
+            target=task.config.task.target_exe.replace("setup/", "", 0),
+            containers=task.config.containers,
+        )
+
+    def task_created(self, event: EventTaskCreated) -> None:
+        self.tasks[event.task_id] = MiniTask(
+            job_id=event.job_id,
+            task_id=event.task_id,
+            type=event.config.task.type,
+            pool=event.config.pool.pool_name if event.config.pool else "",
+            target=event.config.task.target_exe.replace("setup/", "", 0),
+            containers=event.config.containers,
+        )
+
+    def task_stopped(self, event: EventTaskStopped) -> None:
+        if event.task_id in self.tasks:
+            del self.tasks[event.task_id]
 
     def render_tasks(self) -> List:
         results = []
-        for (timestamp, task) in sorted(self.tasks.values(), key=lambda x: x[0]):
+        for task in self.tasks.values():
             job_entry = self.jobs.get(task.job_id)
             if job_entry:
-                (_, job) = job_entry
-                if not self.should_render_job(job):
+                if not self.should_render_job(job_entry):
                     continue
 
-            timestamps, files = self.get_file_counts([task])
-            timestamps += [timestamp]
+            files = self.get_file_counts([task])
 
             end: Union[str, timedelta] = ""
             if task.end_time:
                 end = task.end_time - datetime.now().astimezone(timezone.utc)
 
-            entry = [
-                max(timestamps),
-                task.state.name,
+            entry = (
                 task.job_id,
                 task.task_id,
-                task.config.task.type.name,
-                task.config.task.target_exe.replace("setup/", "", 0),
+                task.state.name if task.state else "",
+                task.type.name,
+                task.target,
                 files,
-                task.config.pool.pool_name if task.config.pool else "",
+                task.pool,
                 end,
-            ]
+            )
             results.append(entry)
         return results
 
@@ -273,27 +310,9 @@ class TopCache:
         if job_id in self.jobs:
             return
         job = self.onefuzz.jobs.get(job_id)
-        self.add_job(job_id, job.state, job)
+        self.add_job(job)
 
-    def add_job(self, job_id: UUID, state: JobState, job: Optional[Job] = None) -> None:
-        if state in [JobState.stopping, JobState.stopped]:
-            if job_id in self.jobs:
-                del self.jobs[job_id]
-            return
-
-        if job_id in self.jobs:
-            (_, job) = self.jobs[job_id]
-            job.state = state
-            self.jobs[job_id] = (datetime.now(), job)
-        else:
-            try:
-                if not job:
-                    job = self.onefuzz.jobs.get(job_id)
-                self.jobs[job_id] = (datetime.now(), job)
-            except Exception:
-                logging.debug("unable to find job: %s", job_id)
-
-    def should_render_job(self, job: Job) -> bool:
+    def should_render_job(self, job: MiniJob) -> bool:
         if self.job_filters.job_id is not None:
             if job.job_id not in self.job_filters.job_id:
                 logging.info("skipping:%s", job)
@@ -311,25 +330,24 @@ class TopCache:
 
         return True
 
+    def job_stopped(self, event: EventJobStopped) -> None:
+        if event.job_id in self.jobs:
+            del self.jobs[event.job_id]
+
     def render_jobs(self) -> List[Tuple]:
         results: List[Tuple] = []
 
-        for (timestamp, job) in sorted(self.jobs.values(), key=lambda x: x[0]):
+        for job in self.jobs.values():
             if not self.should_render_job(job):
                 continue
 
-            timestamps, files = self.get_file_counts(
-                self.get_tasks(job.job_id), merge_inputs=True
-            )
-            timestamps += [timestamp]
+            files = self.get_file_counts(self.get_tasks(job.job_id), merge_inputs=True)
 
             for to_remove in [ContainerType.coverage, ContainerType.setup]:
                 if to_remove in files:
                     del files[to_remove]
 
             entry = (
-                max(timestamps),
-                job.state.name,
                 job.job_id,
                 "%s:%s:%s" % (job.config.project, job.config.name, job.config.build),
                 files,
@@ -339,12 +357,11 @@ class TopCache:
         return results
 
     def get_file_counts(
-        self, tasks: List[Task], merge_inputs: bool = False
-    ) -> Tuple[List[datetime], Dict[ContainerType, int]]:
-        timestamps = []
+        self, tasks: List[MiniTask], merge_inputs: bool = False
+    ) -> Dict[ContainerType, int]:
         results: Dict[ContainerType, Dict[str, int]] = {}
         for task in tasks:
-            for container in task.config.containers:
+            for container in task.containers:
                 if container.name not in self.files:
                     continue
                 if merge_inputs and container.type == ContainerType.readonly_inputs:
@@ -354,20 +371,18 @@ class TopCache:
                 results[container.type][container.name] = len(
                     self.files[container.name][1]
                 )
-                container_date = self.files[container.name][0]
-                if container_date is not None:
-                    timestamps.append(container_date)
+
         results_merged = {}
         for k, v in results.items():
             value = sum(v.values())
             if value:
                 results_merged[k] = value
 
-        return (timestamps, results_merged)
+        return results_merged
 
-    def get_tasks(self, job_id: UUID) -> List[Task]:
+    def get_tasks(self, job_id: UUID) -> List[MiniTask]:
         result = []
-        for (_, task) in self.tasks.values():
+        for task in self.tasks.values():
             if task.job_id == job_id:
                 result.append(task)
         return result

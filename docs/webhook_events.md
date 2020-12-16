@@ -79,6 +79,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "job_id",
         "config"
     ],
+    "additionalProperties": false,
     "definitions": {
         "JobConfig": {
             "title": "JobConfig",
@@ -174,6 +175,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "job_id",
         "config"
     ],
+    "additionalProperties": false,
     "definitions": {
         "JobConfig": {
             "title": "JobConfig",
@@ -266,7 +268,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "required": [
         "machine_id",
         "pool_name"
-    ]
+    ],
+    "additionalProperties": false
 }
 ```
 
@@ -306,7 +309,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "required": [
         "machine_id",
         "pool_name"
-    ]
+    ],
+    "additionalProperties": false
 }
 ```
 
@@ -352,6 +356,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "pool_name",
         "state"
     ],
+    "additionalProperties": false,
     "definitions": {
         "NodeState": {
             "title": "NodeState",
@@ -394,7 +399,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "string",
             "format": "uuid"
         }
-    }
+    },
+    "required": [
+        "ping_id"
+    ]
 }
 ```
 
@@ -442,6 +450,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "arch",
         "managed"
     ],
+    "additionalProperties": false,
     "definitions": {
         "OS": {
             "title": "OS",
@@ -527,7 +536,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     },
     "required": [
         "pool_name"
-    ]
+    ],
+    "additionalProperties": false
 }
 ```
 
@@ -555,7 +565,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     },
     "required": [
         "region"
-    ]
+    ],
+    "additionalProperties": false
 }
 ```
 
@@ -583,7 +594,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     },
     "required": [
         "region"
-    ]
+    ],
+    "additionalProperties": false
 }
 ```
 
@@ -622,6 +634,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "region",
         "error"
     ],
+    "additionalProperties": false,
     "definitions": {
         "ErrorCode": {
             "title": "ErrorCode",
@@ -730,7 +743,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "image",
         "region",
         "size"
-    ]
+    ],
+    "additionalProperties": false
 }
 ```
 
@@ -765,7 +779,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "required": [
         "scaleset_id",
         "pool_name"
-    ]
+    ],
+    "additionalProperties": false
 }
 ```
 
@@ -811,6 +826,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "pool_name",
         "error"
     ],
+    "additionalProperties": false,
     "definitions": {
         "ErrorCode": {
             "title": "ErrorCode",
@@ -935,6 +951,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "task_id",
         "config"
     ],
+    "additionalProperties": false,
     "definitions": {
         "TaskType": {
             "title": "TaskType",
@@ -1335,6 +1352,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "task_id",
         "error"
     ],
+    "additionalProperties": false,
     "definitions": {
         "ErrorCode": {
             "title": "ErrorCode",
@@ -1449,6 +1467,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "task_id",
         "state"
     ],
+    "additionalProperties": false,
     "definitions": {
         "TaskState": {
             "title": "TaskState",
@@ -1509,6 +1528,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "job_id",
         "task_id"
     ],
+    "additionalProperties": false,
     "definitions": {
         "UserInfo": {
             "title": "UserInfo",
@@ -1562,13 +1582,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventJobStopped"
                 },
                 {
+                    "$ref": "#/definitions/EventNodeStateUpdated"
+                },
+                {
                     "$ref": "#/definitions/EventNodeCreated"
                 },
                 {
                     "$ref": "#/definitions/EventNodeDeleted"
-                },
-                {
-                    "$ref": "#/definitions/EventNodeStateUpdated"
                 },
                 {
                     "$ref": "#/definitions/EventPing"
@@ -1580,13 +1600,16 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventPoolDeleted"
                 },
                 {
+                    "$ref": "#/definitions/EventProxyFailed"
+                },
+                {
                     "$ref": "#/definitions/EventProxyCreated"
                 },
                 {
                     "$ref": "#/definitions/EventProxyDeleted"
                 },
                 {
-                    "$ref": "#/definitions/EventProxyFailed"
+                    "$ref": "#/definitions/EventScalesetFailed"
                 },
                 {
                     "$ref": "#/definitions/EventScalesetCreated"
@@ -1595,16 +1618,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventScalesetDeleted"
                 },
                 {
-                    "$ref": "#/definitions/EventScalesetFailed"
-                },
-                {
-                    "$ref": "#/definitions/EventTaskCreated"
-                },
-                {
                     "$ref": "#/definitions/EventTaskFailed"
                 },
                 {
                     "$ref": "#/definitions/EventTaskStateUpdated"
+                },
+                {
+                    "$ref": "#/definitions/EventTaskCreated"
                 },
                 {
                     "$ref": "#/definitions/EventTaskStopped"
@@ -1622,6 +1642,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "event",
         "webhook_id"
     ],
+    "additionalProperties": false,
     "definitions": {
         "EventType": {
             "title": "EventType",
@@ -1717,7 +1738,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "job_id",
                 "config"
-            ]
+            ],
+            "additionalProperties": false
         },
         "EventJobStopped": {
             "title": "EventJobStopped",
@@ -1738,55 +1760,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "job_id",
                 "config"
-            ]
-        },
-        "EventNodeCreated": {
-            "title": "EventNodeCreated",
-            "type": "object",
-            "properties": {
-                "machine_id": {
-                    "title": "Machine Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "scaleset_id": {
-                    "title": "Scaleset Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "machine_id",
-                "pool_name"
-            ]
-        },
-        "EventNodeDeleted": {
-            "title": "EventNodeDeleted",
-            "type": "object",
-            "properties": {
-                "machine_id": {
-                    "title": "Machine Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "scaleset_id": {
-                    "title": "Scaleset Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "machine_id",
-                "pool_name"
-            ]
+            ],
+            "additionalProperties": false
         },
         "NodeState": {
             "title": "NodeState",
@@ -1829,7 +1804,58 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "machine_id",
                 "pool_name",
                 "state"
-            ]
+            ],
+            "additionalProperties": false
+        },
+        "EventNodeCreated": {
+            "title": "EventNodeCreated",
+            "type": "object",
+            "properties": {
+                "machine_id": {
+                    "title": "Machine Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "scaleset_id": {
+                    "title": "Scaleset Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "machine_id",
+                "pool_name"
+            ],
+            "additionalProperties": false
+        },
+        "EventNodeDeleted": {
+            "title": "EventNodeDeleted",
+            "type": "object",
+            "properties": {
+                "machine_id": {
+                    "title": "Machine Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "scaleset_id": {
+                    "title": "Scaleset Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "machine_id",
+                "pool_name"
+            ],
+            "additionalProperties": false
         },
         "EventPing": {
             "title": "EventPing",
@@ -1840,7 +1866,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string",
                     "format": "uuid"
                 }
-            }
+            },
+            "required": [
+                "ping_id"
+            ]
         },
         "OS": {
             "title": "OS",
@@ -1925,7 +1954,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "os",
                 "arch",
                 "managed"
-            ]
+            ],
+            "additionalProperties": false
         },
         "EventPoolDeleted": {
             "title": "EventPoolDeleted",
@@ -1938,33 +1968,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "pool_name"
-            ]
-        },
-        "EventProxyCreated": {
-            "title": "EventProxyCreated",
-            "type": "object",
-            "properties": {
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "region"
-            ]
-        },
-        "EventProxyDeleted": {
-            "title": "EventProxyDeleted",
-            "type": "object",
-            "properties": {
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "region"
-            ]
+            ],
+            "additionalProperties": false
         },
         "ErrorCode": {
             "title": "ErrorCode",
@@ -2029,7 +2034,60 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "region",
                 "error"
-            ]
+            ],
+            "additionalProperties": false
+        },
+        "EventProxyCreated": {
+            "title": "EventProxyCreated",
+            "type": "object",
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ],
+            "additionalProperties": false
+        },
+        "EventProxyDeleted": {
+            "title": "EventProxyDeleted",
+            "type": "object",
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ],
+            "additionalProperties": false
+        },
+        "EventScalesetFailed": {
+            "title": "EventScalesetFailed",
+            "type": "object",
+            "properties": {
+                "scaleset_id": {
+                    "title": "Scaleset Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "error": {
+                    "$ref": "#/definitions/Error"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "error"
+            ],
+            "additionalProperties": false
         },
         "EventScalesetCreated": {
             "title": "EventScalesetCreated",
@@ -2068,7 +2126,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "image",
                 "region",
                 "size"
-            ]
+            ],
+            "additionalProperties": false
         },
         "EventScalesetDeleted": {
             "title": "EventScalesetDeleted",
@@ -2087,30 +2146,75 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "scaleset_id",
                 "pool_name"
-            ]
+            ],
+            "additionalProperties": false
         },
-        "EventScalesetFailed": {
-            "title": "EventScalesetFailed",
+        "EventTaskFailed": {
+            "title": "EventTaskFailed",
             "type": "object",
             "properties": {
-                "scaleset_id": {
-                    "title": "Scaleset Id",
+                "job_id": {
+                    "title": "Job Id",
                     "type": "string",
                     "format": "uuid"
                 },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
+                "task_id": {
+                    "title": "Task Id",
+                    "type": "string",
+                    "format": "uuid"
                 },
                 "error": {
                     "$ref": "#/definitions/Error"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
                 }
             },
             "required": [
-                "scaleset_id",
-                "pool_name",
+                "job_id",
+                "task_id",
                 "error"
+            ],
+            "additionalProperties": false
+        },
+        "TaskState": {
+            "title": "TaskState",
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "waiting",
+                "scheduled",
+                "setting_up",
+                "running",
+                "stopping",
+                "stopped",
+                "wait_job"
             ]
+        },
+        "EventTaskStateUpdated": {
+            "title": "EventTaskStateUpdated",
+            "type": "object",
+            "properties": {
+                "job_id": {
+                    "title": "Job Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "task_id": {
+                    "title": "Task Id",
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "state": {
+                    "$ref": "#/definitions/TaskState"
+                }
+            },
+            "required": [
+                "job_id",
+                "task_id",
+                "state"
+            ],
+            "additionalProperties": false
         },
         "TaskType": {
             "title": "TaskType",
@@ -2458,72 +2562,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "job_id",
                 "task_id",
                 "config"
-            ]
-        },
-        "EventTaskFailed": {
-            "title": "EventTaskFailed",
-            "type": "object",
-            "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "task_id": {
-                    "title": "Task Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "error": {
-                    "$ref": "#/definitions/Error"
-                },
-                "user_info": {
-                    "$ref": "#/definitions/UserInfo"
-                }
-            },
-            "required": [
-                "job_id",
-                "task_id",
-                "error"
-            ]
-        },
-        "TaskState": {
-            "title": "TaskState",
-            "description": "An enumeration.",
-            "enum": [
-                "init",
-                "waiting",
-                "scheduled",
-                "setting_up",
-                "running",
-                "stopping",
-                "stopped",
-                "wait_job"
-            ]
-        },
-        "EventTaskStateUpdated": {
-            "title": "EventTaskStateUpdated",
-            "type": "object",
-            "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "task_id": {
-                    "title": "Task Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "state": {
-                    "$ref": "#/definitions/TaskState"
-                }
-            },
-            "required": [
-                "job_id",
-                "task_id",
-                "state"
-            ]
+            ],
+            "additionalProperties": false
         },
         "EventTaskStopped": {
             "title": "EventTaskStopped",
@@ -2546,7 +2586,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "job_id",
                 "task_id"
-            ]
+            ],
+            "additionalProperties": false
         }
     }
 }

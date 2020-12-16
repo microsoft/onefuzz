@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Extra, Field
 
 from .enums import OS, Architecture, NodeState, TaskState
 from .models import AutoScaleConfig, Error, JobConfig, TaskConfig, UserInfo
@@ -15,49 +15,54 @@ from .primitives import Region
 from .responses import BaseResponse
 
 
-class EventTaskStopped(BaseModel):
+class BaseEvent(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+
+class EventTaskStopped(BaseEvent):
     job_id: UUID
     task_id: UUID
     user_info: Optional[UserInfo]
 
 
-class EventTaskFailed(BaseModel):
+class EventTaskFailed(BaseEvent):
     job_id: UUID
     task_id: UUID
     error: Error
     user_info: Optional[UserInfo]
 
 
-class EventJobCreated(BaseModel):
+class EventJobCreated(BaseEvent):
     job_id: UUID
     config: JobConfig
     user_info: Optional[UserInfo]
 
 
-class EventJobStopped(BaseModel):
+class EventJobStopped(BaseEvent):
     job_id: UUID
     config: JobConfig
     user_info: Optional[UserInfo]
 
 
-class EventTaskCreated(BaseModel):
+class EventTaskCreated(BaseEvent):
     job_id: UUID
     task_id: UUID
     config: TaskConfig
     user_info: Optional[UserInfo]
 
 
-class EventTaskStateUpdated(BaseModel):
+class EventTaskStateUpdated(BaseEvent):
     job_id: UUID
     task_id: UUID
     state: TaskState
 
 
 class EventPing(BaseResponse):
-    ping_id: UUID = Field(default_factory=uuid4)
+    ping_id: UUID
 
 
-class EventScalesetCreated(BaseModel):
+class EventScalesetCreated(BaseEvent):
     scaleset_id: UUID
     pool_name: str
     vm_sku: str
@@ -66,22 +71,22 @@ class EventScalesetCreated(BaseModel):
     size: int
 
 
-class EventScalesetFailed(BaseModel):
+class EventScalesetFailed(BaseEvent):
     scaleset_id: UUID
     pool_name: str
     error: Error
 
 
-class EventScalesetDeleted(BaseModel):
+class EventScalesetDeleted(BaseEvent):
     scaleset_id: UUID
     pool_name: str
 
 
-class EventPoolDeleted(BaseModel):
+class EventPoolDeleted(BaseEvent):
     pool_name: str
 
 
-class EventPoolCreated(BaseModel):
+class EventPoolCreated(BaseEvent):
     pool_name: str
     os: OS
     arch: Architecture
@@ -89,32 +94,32 @@ class EventPoolCreated(BaseModel):
     autoscale: Optional[AutoScaleConfig]
 
 
-class EventProxyCreated(BaseModel):
+class EventProxyCreated(BaseEvent):
     region: Region
 
 
-class EventProxyDeleted(BaseModel):
+class EventProxyDeleted(BaseEvent):
     region: Region
 
 
-class EventProxyFailed(BaseModel):
+class EventProxyFailed(BaseEvent):
     region: Region
     error: Error
 
 
-class EventNodeCreated(BaseModel):
+class EventNodeCreated(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
     pool_name: str
 
 
-class EventNodeDeleted(BaseModel):
+class EventNodeDeleted(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
     pool_name: str
 
 
-class EventNodeStateUpdated(BaseModel):
+class EventNodeStateUpdated(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
     pool_name: str
@@ -124,21 +129,21 @@ class EventNodeStateUpdated(BaseModel):
 Event = Union[
     EventJobCreated,
     EventJobStopped,
+    EventNodeStateUpdated,
     EventNodeCreated,
     EventNodeDeleted,
-    EventNodeStateUpdated,
     EventPing,
     EventPoolCreated,
     EventPoolDeleted,
+    EventProxyFailed,
     EventProxyCreated,
     EventProxyDeleted,
-    EventProxyFailed,
+    EventScalesetFailed,
     EventScalesetCreated,
     EventScalesetDeleted,
-    EventScalesetFailed,
-    EventTaskCreated,
     EventTaskFailed,
     EventTaskStateUpdated,
+    EventTaskCreated,
     EventTaskStopped,
 ]
 
@@ -164,36 +169,38 @@ class EventType(Enum):
     task_stopped = "task_stopped"
 
 
-def get_event_type(event: Event) -> EventType:
-    events = {
-        EventJobCreated: EventType.job_created,
-        EventJobStopped: EventType.job_stopped,
-        EventNodeCreated: EventType.node_created,
-        EventNodeDeleted: EventType.node_deleted,
-        EventNodeStateUpdated: EventType.node_state_updated,
-        EventPing: EventType.ping,
-        EventPoolCreated: EventType.pool_created,
-        EventPoolDeleted: EventType.pool_deleted,
-        EventProxyCreated: EventType.proxy_created,
-        EventProxyDeleted: EventType.proxy_deleted,
-        EventProxyFailed: EventType.proxy_failed,
-        EventScalesetCreated: EventType.scaleset_created,
-        EventScalesetDeleted: EventType.scaleset_deleted,
-        EventScalesetFailed: EventType.scaleset_failed,
-        EventTaskCreated: EventType.task_created,
-        EventTaskFailed: EventType.task_failed,
-        EventTaskStateUpdated: EventType.task_state_updated,
-        EventTaskStopped: EventType.task_stopped,
-    }
+EventTypeMap = {
+    EventType.job_created: EventJobCreated,
+    EventType.job_stopped: EventJobStopped,
+    EventType.node_created: EventNodeCreated,
+    EventType.node_deleted: EventNodeDeleted,
+    EventType.node_state_updated: EventNodeStateUpdated,
+    EventType.ping: EventPing,
+    EventType.pool_created: EventPoolCreated,
+    EventType.pool_deleted: EventPoolDeleted,
+    EventType.proxy_created: EventProxyCreated,
+    EventType.proxy_deleted: EventProxyDeleted,
+    EventType.proxy_failed: EventProxyFailed,
+    EventType.scaleset_created: EventScalesetCreated,
+    EventType.scaleset_deleted: EventScalesetDeleted,
+    EventType.scaleset_failed: EventScalesetFailed,
+    EventType.task_created: EventTaskCreated,
+    EventType.task_failed: EventTaskFailed,
+    EventType.task_state_updated: EventTaskStateUpdated,
+    EventType.task_stopped: EventTaskStopped,
+}
 
-    for event_class in events:
+
+def get_event_type(event: Event) -> EventType:
+
+    for (event_type, event_class) in EventTypeMap.items():
         if isinstance(event, event_class):
-            return events[event_class]
+            return event_type
 
     raise NotImplementedError("unsupported event type: %s" % type(event))
 
 
-class EventMessage(BaseModel):
+class EventMessage(BaseEvent):
     event_id: UUID = Field(default_factory=uuid4)
     event_type: EventType
     event: Event

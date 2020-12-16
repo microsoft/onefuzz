@@ -8,7 +8,7 @@ import hmac
 import logging
 from hashlib import sha512
 from typing import List, Optional, Tuple
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import requests
 from memoization import cached
@@ -174,7 +174,7 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
         message.queue_webhook()
 
     def ping(self) -> EventPing:
-        ping = EventPing()
+        ping = EventPing(ping_id=uuid4())
         self._add_event(EventMessage(event_type=EventType.ping, event=ping))
         return ping
 

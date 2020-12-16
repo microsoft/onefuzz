@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import json
+import logging
 from queue import Empty, Queue
 from typing import Optional
 
@@ -33,6 +34,7 @@ def get_events() -> Optional[str]:
 
 def send_event(event: Event) -> None:
     event_type = get_event_type(event)
+    logging.info("sending event: %s - %s", event_type, event)
     event_message = EventMessage(event_type=event_type, event=event)
     EVENTS.put(event_message)
     Webhook.send_event(event_message)
