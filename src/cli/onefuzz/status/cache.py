@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from uuid import UUID
@@ -70,22 +70,6 @@ class MiniTask(BaseModel):
     containers: List[TaskContainers]
 
 
-def fmt_delta(data: timedelta) -> str:
-    result = []
-
-    seconds = data.total_seconds()
-    for letter, size in [
-        ("d", DAYS),
-        ("h", HOURS),
-        ("m", MINUTES),
-    ]:
-        part, seconds = divmod(seconds, size)
-        if part:
-            result.append("%d%s" % (part, letter))
-
-    return "".join(result)
-
-
 def fmt(data: Any) -> Any:
     if data is None:
         return ""
@@ -99,8 +83,6 @@ def fmt(data: Any) -> Any:
         return [fmt(x) for x in data]
     if isinstance(data, datetime):
         return data.strftime("%H:%M:%S")
-    if isinstance(data, timedelta):
-        return fmt_delta(data)
     if isinstance(data, tuple):
         return tuple([fmt(x) for x in data])
     if isinstance(data, Enum):
