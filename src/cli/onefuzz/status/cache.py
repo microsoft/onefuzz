@@ -27,7 +27,15 @@ from onefuzztypes.events import (
     EventTaskStopped,
     EventType,
 )
-from onefuzztypes.models import Job, JobConfig, Node, Pool, Task, TaskContainers
+from onefuzztypes.models import (
+    Job,
+    JobConfig,
+    Node,
+    Pool,
+    Task,
+    TaskContainers,
+    UserInfo,
+)
 from onefuzztypes.primitives import Container
 from pydantic import BaseModel
 
@@ -48,6 +56,7 @@ class MiniJob(BaseModel):
     job_id: UUID
     config: JobConfig
     state: Optional[JobState]
+    user_info: Optional[UserInfo]
 
 
 class MiniTask(BaseModel):
@@ -55,7 +64,7 @@ class MiniTask(BaseModel):
     task_id: UUID
     type: TaskType
     target: str
-    state: Optional[TaskState]
+    state: TaskState
     pool: str
     end_time: Optional[datetime]
     containers: List[TaskContainers]
@@ -113,7 +122,7 @@ class JobFilter(BaseModel):
 
 
 class TopCache:
-    JOB_FIELDS = ["Job", "Name", "Files"]
+    JOB_FIELDS = ["Job", "Name", "User", "Files"]
     TASK_FIELDS = [
         "Job",
         "Task",
@@ -122,7 +131,7 @@ class TopCache:
         "Target",
         "Files",
         "Pool",
-        "Time left",
+        "End time",
     ]
     POOL_FIELDS = ["Name", "OS", "Arch", "Nodes"]
 
@@ -206,7 +215,12 @@ class TopCache:
         )
 
     def add_job(self, job: Job) -> MiniJob:
-        mini_job = MiniJob(job_id=job.job_id, config=job.config, state=job.state)
+        mini_job = MiniJob(
+            job_id=job.job_id,
+            config=job.config,
+            state=job.state,
+            user_info=job.user_info,
+        )
         self.jobs[job.job_id] = mini_job
         return mini_job
 
@@ -214,7 +228,9 @@ class TopCache:
         self,
         job: EventJobCreated,
     ) -> None:
-        self.jobs[job.job_id] = MiniJob(job_id=job.job_id, config=job.config)
+        self.jobs[job.job_id] = MiniJob(
+            job_id=job.job_id, config=job.config, user_info=job.user_info
+        )
 
     def add_pool(self, pool: Pool) -> None:
         self.pool_created(
@@ -273,6 +289,7 @@ class TopCache:
             state=task.state,
             target=task.config.task.target_exe.replace("setup/", "", 0),
             containers=task.config.containers,
+            end_time=task.end_time,
         )
 
     def task_created(self, event: EventTaskCreated) -> None:
@@ -283,6 +300,7 @@ class TopCache:
             pool=event.config.pool.pool_name if event.config.pool else "",
             target=event.config.task.target_exe.replace("setup/", "", 0),
             containers=event.config.containers,
+            state=TaskState.init,
         )
 
     def task_state_updated(self, event: EventTaskStateUpdated) -> None:
@@ -306,10 +324,6 @@ class TopCache:
 
             files = self.get_file_counts([task])
 
-            end: Union[str, timedelta] = ""
-            if task.end_time:
-                end = task.end_time - datetime.now().astimezone(timezone.utc)
-
             entry = (
                 task.job_id,
                 task.task_id,
@@ -318,7 +332,7 @@ class TopCache:
                 task.target,
                 files,
                 task.pool,
-                end,
+                task.end_time,
             )
             results.append(entry)
         return results
@@ -367,6 +381,7 @@ class TopCache:
             entry = (
                 job.job_id,
                 "%s:%s:%s" % (job.config.project, job.config.name, job.config.build),
+                job.user_info.upn if job.user_info else "",
                 files,
             )
             results.append(entry)
