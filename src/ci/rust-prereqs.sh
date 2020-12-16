@@ -5,8 +5,16 @@
 
 set -ex
 
-cargo install sccache || echo 'already installed?'
-export RUSTC_WRAPPER=$(which sccache)
+#if ! sccache --help; then
+#    cargo install sccache
+#fi
+# sccache --start-server
+# export RUSTC_WRAPPER=$(which sccache)
+
 cargo install cargo-audit
-cargo install cargo-license || echo 'already installed?'
+
+if ! cargo-license --help; then
+    cargo install cargo-license
+fi
+
 rustup component add clippy
