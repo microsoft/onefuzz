@@ -48,7 +48,7 @@ class Top:
     def add_container(self, name: str) -> None:
         if name in self.cache.files:
             return
-        self.queue.put((2, (self.cache.add_container, [name, True])))
+        self.queue.put((2, (self.cache.add_container, [name])))
 
     def handler(self, message: Any) -> None:
         for event_raw in message:
