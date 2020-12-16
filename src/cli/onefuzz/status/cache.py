@@ -287,7 +287,10 @@ class TopCache:
 
     def task_state_updated(self, event: EventTaskStateUpdated) -> None:
         if event.task_id in self.tasks:
-            self.tasks[event.task_id].state = event.state
+            task = self.tasks[event.task_id]
+            task.state = event.state
+            task.end_time = event.end_time
+            self.tasks[event.task_id] = task
 
     def task_stopped(self, event: EventTaskStopped) -> None:
         if event.task_id in self.tasks:

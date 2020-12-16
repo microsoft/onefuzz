@@ -299,6 +299,9 @@ class Task(BASE_TASK, ORMMixin):
 
         send_event(
             EventTaskStateUpdated(
-                job_id=self.job_id, task_id=self.task_id, state=self.state
+                job_id=self.job_id,
+                task_id=self.task_id,
+                state=self.state,
+                end_time=self.end_time,
             )
         )

@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+from datetime import datetime
 from enum import Enum
 from typing import Optional, Union
 from uuid import UUID, uuid4
@@ -56,6 +57,7 @@ class EventTaskStateUpdated(BaseEvent):
     job_id: UUID
     task_id: UUID
     state: TaskState
+    end_time: Optional[datetime]
 
 
 class EventPing(BaseResponse):

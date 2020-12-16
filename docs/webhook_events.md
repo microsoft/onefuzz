@@ -1656,6 +1656,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "state": {
             "$ref": "#/definitions/TaskState"
+        },
+        "end_time": {
+            "title": "End Time",
+            "type": "string",
+            "format": "date-time"
         }
     },
     "required": [
@@ -2411,6 +2416,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "state": {
                     "$ref": "#/definitions/TaskState"
+                },
+                "end_time": {
+                    "title": "End Time",
+                    "type": "string",
+                    "format": "date-time"
                 }
             },
             "required": [
