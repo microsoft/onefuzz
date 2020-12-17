@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import unittest
-from typing import Dict, Generator, List
+from typing import Dict, Generator, List, TypeVar
 from uuid import UUID, uuid4
 
 from onefuzztypes.enums import OS, ContainerType, TaskType
@@ -14,8 +14,10 @@ from onefuzztypes.primitives import Container, PoolName
 from __app__.onefuzzlib.tasks.main import Task
 from __app__.onefuzzlib.tasks.scheduler import bucket_tasks
 
+A = TypeVar("A")
 
-def chunks(items: List, size: int) -> Generator:
+
+def chunks(items: List[A], size: int) -> Generator[List[A], None, None]:
     return (items[x : x + size] for x in range(0, len(items), size))
 
 

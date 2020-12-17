@@ -81,10 +81,7 @@ class Libfuzzer(Command):
             colocate=colocate_all_tasks,
         )
 
-        if colocate_all_tasks:
-            prereq_tasks = []
-        else:
-            prereq_tasks = [fuzzer_task.task_id]
+        prereq_tasks = [fuzzer_task.task_id]
 
         coverage_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),

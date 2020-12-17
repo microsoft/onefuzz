@@ -28,7 +28,7 @@ from ..webhooks import Webhook
 
 
 class Task(BASE_TASK, ORMMixin):
-    def ready_to_schedule(self) -> bool:
+    def check_prereq_tasks(self) -> bool:
         if self.config.prereq_tasks:
             for task_id in self.config.prereq_tasks:
                 task = Task.get_by_task_id(task_id)
