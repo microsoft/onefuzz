@@ -56,7 +56,7 @@ class TaskBucketKey(BaseModel):
 def bucket_tasks(tasks: List[Task]) -> Dict[Tuple, List[Task]]:
     # buckets are hashed by:
     # OS, JOB ID, vm sku & image (if available), pool name (if available),
-    #   if the setup script requires rebooting, and a 'unique' value
+    # target_exe, if the setup script requires rebooting, and a 'unique' value
     #
     # The unique value is set based on the following conditions:
     # * if the task is set to run on more than one VM, than we assume it can't be shared
@@ -88,6 +88,7 @@ def bucket_tasks(tasks: List[Task]) -> Dict[Tuple, List[Task]]:
             vm,
             pool,
             get_setup_container(task.config),
+            task.config.task.target_exe,
             task.config.task.reboot_after_setup,
             unique,
         )
@@ -185,10 +186,13 @@ def build_work_set(tasks: List[Task]) -> Optional[Tuple[BucketConfig, WorkSet]]:
             continue
 
         new_bucket_config, work_unit = result
-        if bucket_config:
-            assert bucket_config == new_bucket_config
-        else:
+        if bucket_config is None:
             bucket_config = new_bucket_config
+        else:
+            if bucket_config != new_bucket_config:
+                raise Exception(
+                    f"bucket configs differ: {bucket_config} VS {new_bucket_config}"
+                )
 
         work_units.append(work_unit)
 
