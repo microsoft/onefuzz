@@ -81,6 +81,11 @@ class Libfuzzer(Command):
             colocate=colocate_all_tasks,
         )
 
+        if colocate_all_tasks:
+            prereq_tasks = []
+        else:
+            prereq_tasks = [fuzzer_task.task_id]
+
         coverage_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.coverage, containers[ContainerType.coverage]),
@@ -99,7 +104,7 @@ class Libfuzzer(Command):
             target_options=target_options,
             target_env=target_env,
             tags=tags,
-            prereq_tasks=[fuzzer_task.task_id],
+            prereq_tasks=prereq_tasks,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
         )
@@ -125,7 +130,7 @@ class Libfuzzer(Command):
             target_options=target_options,
             target_env=target_env,
             tags=tags,
-            prereq_tasks=[fuzzer_task.task_id],
+            prereq_tasks=prereq_tasks,
             target_timeout=crash_report_timeout,
             check_retry_count=check_retry_count,
             debug=debug,
