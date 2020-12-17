@@ -48,6 +48,8 @@ class Libfuzzer(Command):
         crash_report_timeout: Optional[int] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        colocate_all_tasks: bool = False,
+        colocate_secondary_tasks: bool = True,
     ) -> None:
 
         fuzzer_containers = [
@@ -76,6 +78,7 @@ class Libfuzzer(Command):
             tags=tags,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+            colocate=colocate_all_tasks,
         )
 
         coverage_containers = [
@@ -98,6 +101,7 @@ class Libfuzzer(Command):
             tags=tags,
             prereq_tasks=[fuzzer_task.task_id],
             debug=debug,
+            colocate=colocate_all_tasks or colocate_secondary_tasks,
         )
 
         report_containers = [
@@ -125,6 +129,7 @@ class Libfuzzer(Command):
             target_timeout=crash_report_timeout,
             check_retry_count=check_retry_count,
             debug=debug,
+            colocate=colocate_all_tasks or colocate_secondary_tasks,
         )
 
     def basic(
@@ -154,6 +159,8 @@ class Libfuzzer(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        colocate_all_tasks: bool = False,
+        colocate_secondary_tasks: bool = True,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -229,6 +236,8 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+            colocate_all_tasks=colocate_all_tasks,
+            colocate_secondary_tasks=colocate_secondary_tasks,
         )
 
         self.logger.info("done creating tasks")
