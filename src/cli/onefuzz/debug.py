@@ -481,6 +481,7 @@ class DebugLog(Command):
         limit: int = 1000,
         indent: Optional[int] = None,
         filter: Optional[str] = "[message, name, customDimensions]",
+        timespan: Optional[str] = HOUR_TIMESPAN,
     ) -> None:
         """
         Perform an Application Insights keyword query akin to "Transaction Search"
@@ -502,11 +503,9 @@ class DebugLog(Command):
 
         while True:
             query = base_query.copy()
-            if last_seen is None:
-                results = self._query_parts(query, timespan=DAY_TIMESPAN)
-            else:
+            if last_seen is not None:
                 query.append(f'where timestamp > datetime("{last_seen}")')
-                results = self._query_parts(query, timespan=HOUR_TIMESPAN)
+            results = self._query_parts(query, timespan=timespan)
 
             if results:
                 last_seen = results[-1]["timestamp"]
