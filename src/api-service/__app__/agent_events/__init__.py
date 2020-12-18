@@ -16,8 +16,8 @@ from onefuzztypes.models import (
 )
 from onefuzztypes.responses import BoolResult
 
-from ..onefuzzlib.agent_authorization import call_if_agent
 from ..onefuzzlib.agent_events import on_state_update, on_worker_event
+from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
 

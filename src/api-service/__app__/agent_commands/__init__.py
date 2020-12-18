@@ -8,7 +8,7 @@ from onefuzztypes.models import Error, NodeCommandEnvelope
 from onefuzztypes.requests import NodeCommandDelete, NodeCommandGet
 from onefuzztypes.responses import BoolResult, PendingNodeCommand
 
-from ..onefuzzlib.agent_authorization import call_if_agent
+from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.pools import NodeMessage
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
