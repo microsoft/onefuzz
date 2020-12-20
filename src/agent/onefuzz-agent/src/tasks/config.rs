@@ -141,12 +141,12 @@ impl Config {
         match self {
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
-                    .start()
+                    .managed_run()
                     .await
             }
             Config::LibFuzzerReport(config) => {
                 report::libfuzzer_report::ReportTask::new(config)
-                    .run()
+                    .run_managed()
                     .await
             }
             Config::LibFuzzerCoverage(config) => {

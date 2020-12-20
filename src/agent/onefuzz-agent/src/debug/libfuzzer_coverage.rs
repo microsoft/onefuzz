@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::CommonConfig,
-    coverage::libfuzzer_coverage::{Config, CoverageProcessor},
-    utils::parse_key_value,
+use crate::{
+    local::common::build_common_config,
+    tasks::{
+        coverage::libfuzzer_coverage::{Config, CoverageProcessor},
+        utils::parse_key_value,
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
@@ -14,9 +16,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use tokio::runtime::Runtime;
 use url::Url;
-use uuid::Uuid;
 
 async fn run_impl(input: String, config: Config) -> Result<()> {
     let mut processor = CoverageProcessor::new(Arc::new(config))
@@ -36,7 +36,7 @@ async fn run_impl(input: String, config: Config) -> Result<()> {
     Ok(())
 }
 
-pub fn run(args: &clap::ArgMatches) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
     let input = value_t!(args, "input", String)?;
     let result_dir = value_t!(args, "result_dir", String)?;
@@ -48,6 +48,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         target_env.insert(k, v);
     }
 
+    let common = build_common_config(args)?;
     let config = Config {
         target_exe,
         target_env,
@@ -58,24 +59,14 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
             path: result_dir.into(),
             url: BlobContainerUrl::new(Url::parse("https://contoso.com/coverage")?)?,
         },
-        common: CommonConfig {
-            heartbeat_queue: None,
-            instrumentation_key: None,
-            telemetry_key: None,
-            job_id: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-            task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
-            instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
-        },
+        common,
     };
 
-    let mut rt = Runtime::new()?;
-    rt.block_on(run_impl(input, config))?;
-
-    Ok(())
+    run_impl(input, config).await
 }
 
-pub fn args() -> App<'static, 'static> {
-    SubCommand::with_name("libfuzzer-coverage")
+pub fn args(name: &'static str) -> App<'static, 'static> {
+    SubCommand::with_name(name)
         .about("execute a local-only libfuzzer coverage task")
         .arg(
             Arg::with_name("target_exe")

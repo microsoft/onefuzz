@@ -1,0 +1,29 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+use anyhow::Result;
+use clap::{App, SubCommand};
+
+use crate::local::{common::add_common_config, libfuzzer_crash_report, libfuzzer_fuzz};
+
+const LIBFUZZER_FUZZ: &str = "libfuzzer-fuzz";
+const LIBFUZZER_CRASH_REPORT: &str = "libfuzzer-crash-report";
+
+pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
+    match args.subcommand() {
+        (LIBFUZZER_FUZZ, Some(sub)) => libfuzzer_fuzz::run(sub).await,
+        (LIBFUZZER_CRASH_REPORT, Some(sub)) => libfuzzer_crash_report::run(sub).await,
+        _ => {
+            anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
+        }
+    }
+}
+
+pub fn args(name: &str) -> App<'static, 'static> {
+    SubCommand::with_name(name)
+        .about("pre-release local fuzzing")
+        .subcommand(add_common_config(libfuzzer_fuzz::args(LIBFUZZER_FUZZ)))
+        .subcommand(add_common_config(libfuzzer_crash_report::args(
+            LIBFUZZER_CRASH_REPORT,
+        )))
+}

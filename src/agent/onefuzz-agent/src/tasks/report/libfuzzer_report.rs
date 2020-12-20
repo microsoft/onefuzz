@@ -5,7 +5,10 @@ use super::crash_report::*;
 use crate::tasks::{config::CommonConfig, generic::input_poller::*, heartbeat::*};
 use anyhow::Result;
 use async_trait::async_trait;
-use onefuzz::{blob::BlobUrl, libfuzzer::LibFuzzer, sha256, syncdir::SyncedDir};
+use futures::stream::StreamExt;
+use onefuzz::{
+    blob::BlobUrl, libfuzzer::LibFuzzer, monitor::DirectoryMonitor, sha256, syncdir::SyncedDir,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -14,6 +17,10 @@ use std::{
     sync::Arc,
 };
 use storage_queue::Message;
+
+fn default_bool_true() -> bool {
+    true
+}
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -30,6 +37,9 @@ pub struct Config {
     #[serde(default)]
     pub check_retry_count: u64,
 
+    #[serde(default = "default_bool_true")]
+    pub check_queue: bool,
+
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -40,16 +50,38 @@ pub struct ReportTask {
 }
 
 impl ReportTask {
-    pub fn new(config: impl Into<Arc<Config>>) -> Self {
-        let config = config.into();
-
+    pub fn new(config: Config) -> Self {
         let working_dir = config.common.task_id.to_string();
         let poller = InputPoller::new(working_dir);
+        let config = Arc::new(config);
 
         Self { config, poller }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn run_local(&mut self) -> Result<()> {
+        let mut processor = AsanProcessor::new(self.config.clone()).await?;
+        let crashes = match &self.config.crashes {
+            Some(x) => x,
+            None => bail!("missing crashes directory"),
+        };
+
+        self.poller.batch_process(&mut processor, crashes).await?;
+
+        if self.config.check_queue {
+            let mut monitor = DirectoryMonitor::new(crashes.path.clone());
+            monitor.start()?;
+
+            while let Some(crash) = monitor.next().await {
+                let test_url = Url::parse("https://contoso.com/sample-container/blob.txt")?;
+                let input_path = Path::new(&crash);
+                let result = processor.test_input(test_url, &input_path).await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn run_managed(&mut self) -> Result<()> {
         info!("Starting libFuzzer crash report task");
         let mut processor = AsanProcessor::new(self.config.clone()).await?;
 
@@ -57,9 +89,11 @@ impl ReportTask {
             self.poller.batch_process(&mut processor, crashes).await?;
         }
 
-        if let Some(queue) = &self.config.input_queue {
-            let callback = CallbackImpl::new(queue.clone(), processor);
-            self.poller.run(callback).await?;
+        if self.config.check_queue {
+            if let Some(queue) = &self.config.input_queue {
+                let callback = CallbackImpl::new(queue.clone(), processor);
+                self.poller.run(callback).await?;
+            }
         }
         Ok(())
     }

@@ -1,31 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::CommonConfig,
-    fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
-    utils::parse_key_value,
+use crate::{
+    local::common::build_common_config,
+    tasks::{
+        fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
+        utils::parse_key_value,
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir};
 use std::{collections::HashMap, path::PathBuf};
-use tokio::runtime::Runtime;
 use url::Url;
-use uuid::Uuid;
 
-async fn run_impl(config: Config) -> Result<()> {
-    let fuzzer = LibFuzzerFuzzTask::new(config)?;
-    let result = fuzzer.start_fuzzer_monitor(0, None).await?;
-    println!("{:#?}", result);
-    Ok(())
-}
-
-pub fn run(args: &clap::ArgMatches) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let crashes_dir = value_t!(args, "crashes_dir", String)?;
     let inputs_dir = value_t!(args, "inputs_dir", String)?;
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
     let target_options = args.values_of_lossy("target_options").unwrap_or_default();
+    let target_workers = value_t!(args, "target_workers", u64).unwrap_or_default();
     let mut target_env = HashMap::new();
     for opt in args.values_of_lossy("target_env").unwrap_or_default() {
         let (k, v) = parse_key_value(opt)?;
@@ -33,7 +27,6 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     }
 
     let readonly_inputs = None;
-    let target_workers = Some(1);
 
     let inputs = SyncedDir {
         path: inputs_dir.into(),
@@ -46,7 +39,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     };
 
     let ensemble_sync_delay = None;
-
+    let common = build_common_config(args)?;
     let config = Config {
         inputs,
         readonly_inputs,
@@ -56,24 +49,14 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         target_options,
         target_workers,
         ensemble_sync_delay,
-        common: CommonConfig {
-            heartbeat_queue: None,
-            instrumentation_key: None,
-            telemetry_key: None,
-            job_id: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-            task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
-            instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
-        },
+        common,
     };
 
-    let mut rt = Runtime::new()?;
-    rt.block_on(async { run_impl(config).await })?;
-
-    Ok(())
+    LibFuzzerFuzzTask::new(config)?.local_run().await
 }
 
-pub fn args() -> App<'static, 'static> {
-    SubCommand::with_name("libfuzzer-fuzz")
+pub fn args(name: &'static str) -> App<'static, 'static> {
+    SubCommand::with_name(name)
         .about("execute a local-only libfuzzer crash report task")
         .arg(
             Arg::with_name("target_exe")
@@ -103,5 +86,10 @@ pub fn args() -> App<'static, 'static> {
             Arg::with_name("crashes_dir")
                 .takes_value(true)
                 .required(true),
+        )
+        .arg(
+            Arg::with_name("target_workers")
+                .long("target_workers")
+                .takes_value(true),
         )
 }

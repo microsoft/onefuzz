@@ -1,20 +1,20 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::CommonConfig,
-    merge::libfuzzer_merge::{merge_inputs, Config},
-    utils::parse_key_value,
+use crate::{
+    local::common::build_common_config,
+    tasks::{
+        merge::libfuzzer_merge::{merge_inputs, Config},
+        utils::parse_key_value,
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir};
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
-use tokio::runtime::Runtime;
 use url::Url;
-use uuid::Uuid;
 
-pub fn run(args: &clap::ArgMatches) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
     let inputs = value_t!(args, "inputs", String)?;
     let unique_inputs = value_t!(args, "unique_inputs", String)?;
@@ -26,6 +26,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         target_env.insert(k, v);
     }
 
+    let common = build_common_config(args)?;
     let config = Arc::new(Config {
         target_exe,
         target_env,
@@ -39,28 +40,17 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
             path: unique_inputs.into(),
             url: BlobContainerUrl::new(Url::parse("https://contoso.com/unique_inputs")?)?,
         },
-        common: CommonConfig {
-            heartbeat_queue: None,
-            instrumentation_key: None,
-            telemetry_key: None,
-            job_id: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-            task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
-            instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
-        },
+        common,
         preserve_existing_outputs: true,
     });
 
-    let mut rt = Runtime::new()?;
-    rt.block_on(merge_inputs(
-        config.clone(),
-        vec![config.clone().inputs[0].path.clone()],
-    ))?;
-
+    let results = merge_inputs(config.clone(), vec![config.clone().inputs[0].path.clone()]).await?;
+    println!("{:#?}", results);
     Ok(())
 }
 
-pub fn args() -> App<'static, 'static> {
-    SubCommand::with_name("libfuzzer-merge")
+pub fn args(name: &'static str) -> App<'static, 'static> {
+    SubCommand::with_name(name)
         .about("execute a local-only libfuzzer merge task")
         .arg(
             Arg::with_name("target_exe")

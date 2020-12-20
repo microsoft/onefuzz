@@ -13,16 +13,21 @@ extern crate clap;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use onefuzz::telemetry::{self};
+use std::io::{stdout, Write};
 
 mod debug;
+mod local;
 mod tasks;
 
-use tasks::config::Config;
+use tasks::config::{CommonConfig, Config};
+
+const LOCAL_CMD: &str = "local";
+const DEBUG_CMD: &str = "debug";
 
 fn main() -> Result<()> {
-    env_logger::init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     let built_version = format!(
         "{} onefuzz:{} git:{}",
@@ -39,16 +44,23 @@ fn main() -> Result<()> {
                 .short("c")
                 .takes_value(true),
         )
-        .subcommand(debug::cmd::args())
+        .subcommand(local::cmd::args(LOCAL_CMD))
+        .subcommand(debug::cmd::args(DEBUG_CMD))
         .subcommand(SubCommand::with_name("licenses").about("display third-party licenses"));
 
     let matches = app.get_matches();
 
+    let mut rt = tokio::runtime::Runtime::new()?;
+    rt.block_on(run(matches))
+}
+
+async fn run(matches: ArgMatches<'_>) -> Result<()> {
     match matches.subcommand() {
         ("licenses", Some(_)) => {
             return licenses();
         }
-        ("debug", Some(sub)) => return crate::debug::cmd::run(sub),
+        (DEBUG_CMD, Some(sub)) => return debug::cmd::run(sub).await,
+        (LOCAL_CMD, Some(sub)) => return local::cmd::run(sub).await,
         _ => {} // no subcommand
     }
 
@@ -57,34 +69,31 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let config_path: PathBuf = matches.value_of("config").unwrap().parse()?;
+    let config_arg = matches.value_of("config").unwrap();
+    run_config(config_arg).await
+}
+
+async fn run_config(config_arg: &str) -> Result<()> {
+    let config_path: PathBuf = config_arg.parse()?;
     let config = Config::from_file(config_path)?;
 
-    init_telemetry(&config);
-
+    init_telemetry(config.common());
     verbose!("config parsed");
-
-    let mut rt = tokio::runtime::Runtime::new()?;
-
-    let result = rt.block_on(config.run());
+    let result = config.run().await;
 
     if let Err(err) = &result {
         error!("error running task: {}", err);
     }
 
     telemetry::try_flush_and_close();
-
     result
 }
 
 fn licenses() -> Result<()> {
-    use std::io::{self, Write};
-    io::stdout().write_all(include_bytes!("../../data/licenses.json"))?;
+    stdout().write_all(include_bytes!("../../data/licenses.json"))?;
     Ok(())
 }
 
-fn init_telemetry(config: &Config) {
-    let inst_key = config.common().instrumentation_key;
-    let tele_key = config.common().telemetry_key;
-    telemetry::set_appinsights_clients(inst_key, tele_key);
+fn init_telemetry(config: &CommonConfig) {
+    telemetry::set_appinsights_clients(config.instrumentation_key, config.telemetry_key);
 }

@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::CommonConfig,
-    report::generic::{Config, GenericReportProcessor},
-    utils::parse_key_value,
+use crate::{
+    local::common::build_common_config,
+    tasks::{
+        report::generic::{Config, GenericReportProcessor},
+        utils::parse_key_value,
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
@@ -13,9 +15,7 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-use tokio::runtime::Runtime;
 use url::Url;
-use uuid::Uuid;
 
 async fn run_impl(input: String, config: Config) -> Result<()> {
     let input_path = Path::new(&input);
@@ -27,7 +27,7 @@ async fn run_impl(input: String, config: Config) -> Result<()> {
     Ok(())
 }
 
-pub fn run(args: &clap::ArgMatches) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
     let input = value_t!(args, "input", String)?;
     let target_timeout = value_t!(args, "target_timeout", u64).ok();
@@ -41,6 +41,8 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         let (k, v) = parse_key_value(opt)?;
         target_env.insert(k, v);
     }
+
+    let common = build_common_config(args)?;
 
     let config = Config {
         target_exe,
@@ -58,24 +60,14 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
             path: "unique_reports".into(),
             url: BlobContainerUrl::new(url::Url::parse("https://contoso.com/unique_reports")?)?,
         },
-        common: CommonConfig {
-            heartbeat_queue: None,
-            instrumentation_key: None,
-            telemetry_key: None,
-            job_id: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-            task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
-            instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
-        },
+        common,
     };
 
-    let mut rt = Runtime::new()?;
-    rt.block_on(async { run_impl(input, config).await })?;
-
-    Ok(())
+    run_impl(input, config).await
 }
 
-pub fn args() -> App<'static, 'static> {
-    SubCommand::with_name("generic-crash-report")
+pub fn args(name: &'static str) -> App<'static, 'static> {
+    SubCommand::with_name(name)
         .about("execute a local-only generic crash report")
         .arg(
             Arg::with_name("target_exe")
