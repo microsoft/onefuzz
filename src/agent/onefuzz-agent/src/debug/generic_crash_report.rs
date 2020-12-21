@@ -10,7 +10,7 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir};
+use onefuzz::syncdir::SyncedDir;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -22,7 +22,7 @@ async fn run_impl(input: String, config: Config) -> Result<()> {
     let test_url = Url::parse("https://contoso.com/sample-container/blob.txt")?;
     let heartbeat_client = config.common.init_heartbeat().await?;
     let processor = GenericReportProcessor::new(&config, heartbeat_client);
-    let result = processor.test_input(test_url, input_path).await?;
+    let result = processor.test_input(Some(test_url), input_path).await?;
     println!("{:#?}", result);
     Ok(())
 }
@@ -58,7 +58,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         reports: None,
         unique_reports: SyncedDir {
             path: "unique_reports".into(),
-            url: BlobContainerUrl::new(url::Url::parse("https://contoso.com/unique_reports")?)?,
+            url: None,
         },
         common,
     };

@@ -66,8 +66,9 @@ async fn run_existing(config: &Config) -> Result<()> {
 
 async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
     let result = if let Some(crashes) = &config.crashes {
-        crashes.url.account() == input.account()
-            && crashes.url.container() == input.container()
+        // TODO: this should really check if the URL is None then only check the local path.  Otherwise check the container info
+        crashes.url()?.account() == input.account()
+            && crashes.url()?.container() == input.container()
             && crashes.path.join(input.name()).exists()
     } else {
         false

@@ -146,7 +146,7 @@ impl Config {
             }
             Config::LibFuzzerReport(config) => {
                 report::libfuzzer_report::ReportTask::new(config)
-                    .run_managed()
+                    .managed_run()
                     .await
             }
             Config::LibFuzzerCoverage(config) => {

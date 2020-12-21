@@ -228,7 +228,7 @@ impl CoverageProcessor {
 
 #[async_trait]
 impl Processor for CoverageProcessor {
-    async fn process(&mut self, _url: Url, input: &Path) -> Result<()> {
+    async fn process(&mut self, _url: Option<Url>, input: &Path) -> Result<()> {
         self.heartbeat_client.alive();
         self.test_input(input).await?;
         self.report_total().await?;

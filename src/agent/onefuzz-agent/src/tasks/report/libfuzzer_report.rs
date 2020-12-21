@@ -58,30 +58,38 @@ impl ReportTask {
         Self { config, poller }
     }
 
-    pub async fn run_local(&mut self) -> Result<()> {
-        let mut processor = AsanProcessor::new(self.config.clone()).await?;
+    pub async fn local_run(&self) -> Result<()> {
+        let processor = AsanProcessor::new(self.config.clone()).await?;
         let crashes = match &self.config.crashes {
             Some(x) => x,
             None => bail!("missing crashes directory"),
         };
 
-        self.poller.batch_process(&mut processor, crashes).await?;
+        tokio::fs::create_dir_all(&self.config.unique_reports.path).await?;
+        if let Some(reports) = &self.config.reports {
+            tokio::fs::create_dir_all(&reports.path).await?;
+        }
+        if let Some(no_repro) = &self.config.no_repro {
+            tokio::fs::create_dir_all(&no_repro.path).await?;
+        }
+
+        let mut read_dir = tokio::fs::read_dir(&crashes.path).await?;
+        while let Some(crash) = read_dir.next().await {
+            processor.test_local(crash?.path()).await?;
+        }
 
         if self.config.check_queue {
             let mut monitor = DirectoryMonitor::new(crashes.path.clone());
             monitor.start()?;
-
             while let Some(crash) = monitor.next().await {
-                let test_url = Url::parse("https://contoso.com/sample-container/blob.txt")?;
-                let input_path = Path::new(&crash);
-                let result = processor.test_input(test_url, &input_path).await?;
+                processor.test_local(crash).await?;
             }
         }
 
         Ok(())
     }
 
-    pub async fn run_managed(&mut self) -> Result<()> {
+    pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting libFuzzer crash report task");
         let mut processor = AsanProcessor::new(self.config.clone()).await?;
 
@@ -114,7 +122,25 @@ impl AsanProcessor {
         })
     }
 
-    pub async fn test_input(&self, input_url: Url, input: &Path) -> Result<CrashTestResult> {
+    async fn test_local(&self, input: PathBuf) -> Result<()> {
+        info!("generating crash report for: {}", input.display());
+        let result = self.test_input(None, &input).await?;
+        result
+            .save_local(
+                &self.config.unique_reports,
+                &self.config.reports,
+                &self.config.no_repro,
+            )
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn test_input(
+        &self,
+        input_url: Option<Url>,
+        input: &Path,
+    ) -> Result<CrashTestResult> {
         self.heartbeat_client.alive();
         let fuzzer = LibFuzzer::new(
             &self.config.target_exe,
@@ -124,7 +150,10 @@ impl AsanProcessor {
 
         let task_id = self.config.common.task_id;
         let job_id = self.config.common.job_id;
-        let input_blob = InputBlob::from(BlobUrl::new(input_url)?);
+        let input_blob = match input_url {
+            Some(x) => Some(InputBlob::from(BlobUrl::new(x)?)),
+            None => None,
+        };
         let input_sha256 = sha256::digest_file(input).await?;
 
         let test_report = fuzzer
@@ -166,7 +195,8 @@ impl AsanProcessor {
 
 #[async_trait]
 impl Processor for AsanProcessor {
-    async fn process(&mut self, url: Url, input: &Path) -> Result<()> {
+    async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
+        info!("processing libfuzzer crash url:{:?} path:{:?}", url, input);
         let report = self.test_input(url, input).await?;
         report
             .upload(

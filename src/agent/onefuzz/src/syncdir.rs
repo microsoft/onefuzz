@@ -26,19 +26,31 @@ const DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS: u64 = 60;
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct SyncedDir {
     pub path: PathBuf,
-    pub url: BlobContainerUrl,
+    pub url: Option<BlobContainerUrl>,
 }
 
 impl SyncedDir {
     pub async fn sync(&self, operation: SyncOperation, delete_dst: bool) -> Result<()> {
+        if self.url.is_none() {
+            bail!("only able to sync with remote URLs");
+        }
+
         let dir = &self.path;
-        let url = self.url.url();
+        let url = self.url.as_ref().unwrap().url();
         let url = url.as_ref();
         verbose!("syncing {:?} {}", operation, dir.display());
         match operation {
             SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await,
             SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await,
         }
+    }
+
+    pub fn url<'a>(&'a self) -> Result<&'a BlobContainerUrl> {
+        let url = match &self.url {
+            Some(x) => x,
+            None => bail!("missing URL context"),
+        };
+        Ok(url)
     }
 
     pub async fn init_pull(&self) -> Result<()> {
@@ -72,6 +84,10 @@ impl SyncedDir {
         operation: SyncOperation,
         delay_seconds: Option<u64>,
     ) -> Result<()> {
+        if self.url.is_none() {
+            bail!("only able to sync with remote URLs");
+        }
+
         let delay_seconds = delay_seconds.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS);
         if delay_seconds == 0 {
             return Ok(());
@@ -85,7 +101,11 @@ impl SyncedDir {
     }
 
     async fn file_uploader_monitor(&self, event: Event) -> Result<()> {
-        let url = self.url.url();
+        if self.url.is_none() {
+            bail!("only able to monitor with remote URLs");
+        }
+
+        let url = self.url.as_ref().unwrap().url();
         verbose!("monitoring {}", self.path.display());
 
         let mut monitor = DirectoryMonitor::new(self.path.clone());
@@ -118,6 +138,10 @@ impl SyncedDir {
     /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
     /// a directory, and may reset it.
     pub async fn monitor_results(&self, event: Event) -> Result<()> {
+        if self.url.is_none() {
+            bail!("only able to monitor with remote URLs");
+        }
+
         loop {
             verbose!("waiting to monitor {}", self.path.display());
 
@@ -129,6 +153,12 @@ impl SyncedDir {
             verbose!("starting monitor for {}", self.path.display());
             self.file_uploader_monitor(event.clone()).await?;
         }
+    }
+}
+
+impl From<PathBuf> for SyncedDir {
+    fn from(path: PathBuf) -> Self {
+        Self { path, url: None }
     }
 }
 

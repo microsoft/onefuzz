@@ -106,12 +106,19 @@ impl<'a> GenericReportProcessor<'a> {
         }
     }
 
-    pub async fn test_input(&self, input_url: Url, input: &Path) -> Result<CrashTestResult> {
+    pub async fn test_input(
+        &self,
+        input_url: Option<Url>,
+        input: &Path,
+    ) -> Result<CrashTestResult> {
         self.heartbeat_client.alive();
         let input_sha256 = sha256::digest_file(input).await?;
         let task_id = self.config.common.task_id;
         let job_id = self.config.common.job_id;
-        let input_blob = InputBlob::from(BlobUrl::new(input_url)?);
+        let input_blob = match input_url {
+            Some(x) => Some(InputBlob::from(BlobUrl::new(x)?)),
+            None => None,
+        };
 
         let test_report = self.tester.test_input(input).await?;
 
@@ -161,7 +168,7 @@ impl<'a> GenericReportProcessor<'a> {
 
 #[async_trait]
 impl<'a> Processor for GenericReportProcessor<'a> {
-    async fn process(&mut self, url: Url, input: &Path) -> Result<()> {
+    async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
         let report = self.test_input(url, input).await?;
         report
             .upload(

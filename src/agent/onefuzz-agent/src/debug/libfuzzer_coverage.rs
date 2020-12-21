@@ -10,13 +10,12 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir};
+use onefuzz::syncdir::SyncedDir;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     sync::Arc,
 };
-use url::Url;
 
 async fn run_impl(input: String, config: Config) -> Result<()> {
     let mut processor = CoverageProcessor::new(Arc::new(config))
@@ -57,7 +56,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         readonly_inputs: vec![],
         coverage: SyncedDir {
             path: result_dir.into(),
-            url: BlobContainerUrl::new(Url::parse("https://contoso.com/coverage")?)?,
+            url: None,
         },
         common,
     };

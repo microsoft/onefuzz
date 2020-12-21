@@ -109,11 +109,14 @@ impl<M> InputPoller<M> {
         to_process: &SyncedDir,
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
-        to_process.init_pull().await?;
+        if to_process.url.is_some() {
+            to_process.init_pull().await?;
+        }
+        info!("checking: {}", to_process.path.display());
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
-            verbose!("Processing batch-downloaded input {:?}", file);
+            info!("Processing batch-downloaded input {:?}", file);
 
             let file = file?;
             let path = file.path();
@@ -126,7 +129,7 @@ impl<M> InputPoller<M> {
                 let dir_relative = input_path.strip_prefix(&dir_path)?;
                 dir_relative.display().to_string()
             };
-            let url = to_process.url.blob(blob_name).url();
+            let url = to_process.url().map(|x| x.blob(blob_name).url()).ok();
 
             processor.process(url, &path).await?;
         }
@@ -137,8 +140,10 @@ impl<M> InputPoller<M> {
     pub async fn seen_in_batch(&self, url: &Url) -> Result<bool> {
         let result = if let Some(batch_dir) = &self.batch_dir {
             if let Ok(blob) = BlobUrl::new(url.clone()) {
-                batch_dir.url.account() == blob.account()
-                    && batch_dir.url.container() == blob.container()
+                // TODO - this should see if we have a URL container and only check that part if we do
+                // otherwise only check the local path
+                batch_dir.url()?.account() == blob.account()
+                    && batch_dir.url()?.container() == blob.container()
                     && batch_dir.path.join(blob.name()).exists()
             } else {
                 false
@@ -263,7 +268,7 @@ impl<M> InputPoller<M> {
                 }
             }
             (Downloaded(msg, url, input), Process(processor)) => {
-                processor.process(url, &input).await?;
+                processor.process(Some(url), &input).await?;
 
                 self.set_state(Processed(msg));
             }

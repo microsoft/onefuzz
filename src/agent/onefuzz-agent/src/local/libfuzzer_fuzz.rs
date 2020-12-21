@@ -2,41 +2,24 @@
 // Licensed under the MIT License.
 
 use crate::{
-    local::common::build_common_config,
-    tasks::{
-        fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
-        utils::parse_key_value,
+    local::common::{
+        add_target_cmd_options, build_common_config, get_target_env, CRASHES_DIR, INPUTS_DIR,
+        TARGET_WORKERS,
     },
+    tasks::fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir};
-use std::{collections::HashMap, path::PathBuf};
-use url::Url;
+use std::path::PathBuf;
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let crashes_dir = value_t!(args, "crashes_dir", String)?;
-    let inputs_dir = value_t!(args, "inputs_dir", String)?;
+pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
+    let crashes = value_t!(args, CRASHES_DIR, PathBuf)?.into();
+    let inputs = value_t!(args, INPUTS_DIR, PathBuf)?.into();
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
     let target_options = args.values_of_lossy("target_options").unwrap_or_default();
     let target_workers = value_t!(args, "target_workers", u64).unwrap_or_default();
-    let mut target_env = HashMap::new();
-    for opt in args.values_of_lossy("target_env").unwrap_or_default() {
-        let (k, v) = parse_key_value(opt)?;
-        target_env.insert(k, v);
-    }
-
+    let target_env = get_target_env(args)?;
     let readonly_inputs = None;
-
-    let inputs = SyncedDir {
-        path: inputs_dir.into(),
-        url: BlobContainerUrl::new(Url::parse("https://contoso.com/inputs")?)?,
-    };
-
-    let crashes = SyncedDir {
-        path: crashes_dir.into(),
-        url: BlobContainerUrl::new(Url::parse("https://contoso.com/crashes")?)?,
-    };
 
     let ensemble_sync_delay = None;
     let common = build_common_config(args)?;
@@ -52,44 +35,24 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         common,
     };
 
+    Ok(config)
+}
+
+pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
+    let config = build_fuzz_config(args)?;
     LibFuzzerFuzzTask::new(config)?.local_run().await
 }
 
 pub fn args(name: &'static str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
-        .about("execute a local-only libfuzzer crash report task")
+    let mut app =
+        SubCommand::with_name(name).about("execute a local-only libfuzzer crash report task");
+
+    app = add_target_cmd_options(true, true, true, app);
+    app.arg(Arg::with_name(INPUTS_DIR).takes_value(true).required(true))
+        .arg(Arg::with_name(CRASHES_DIR).takes_value(true).required(true))
         .arg(
-            Arg::with_name("target_exe")
-                .takes_value(true)
-                .required(true),
-        )
-        .arg(
-            Arg::with_name("target_env")
-                .long("target_env")
-                .takes_value(true)
-                .multiple(true),
-        )
-        .arg(
-            Arg::with_name("target_options")
-                .long("target_options")
-                .takes_value(true)
-                .multiple(true)
-                .allow_hyphen_values(true)
-                .help("Supports hyphens.  Recommendation: Set target_env first"),
-        )
-        .arg(
-            Arg::with_name("inputs_dir")
-                .takes_value(true)
-                .required(true),
-        )
-        .arg(
-            Arg::with_name("crashes_dir")
-                .takes_value(true)
-                .required(true),
-        )
-        .arg(
-            Arg::with_name("target_workers")
-                .long("target_workers")
+            Arg::with_name(TARGET_WORKERS)
+                .long(TARGET_WORKERS)
                 .takes_value(true),
         )
 }

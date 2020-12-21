@@ -10,9 +10,8 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use onefuzz::{blob::BlobContainerUrl, syncdir::SyncedDir};
+use onefuzz::syncdir::SyncedDir;
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
-use url::Url;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
@@ -34,11 +33,11 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         input_queue: None,
         inputs: vec![SyncedDir {
             path: inputs.into(),
-            url: BlobContainerUrl::new(Url::parse("https://contoso.com/inputs")?)?,
+            url: None,
         }],
         unique_inputs: SyncedDir {
             path: unique_inputs.into(),
-            url: BlobContainerUrl::new(Url::parse("https://contoso.com/unique_inputs")?)?,
+            url: None,
         },
         common,
         preserve_existing_outputs: true,

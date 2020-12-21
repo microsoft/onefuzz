@@ -8,18 +8,19 @@ use onefuzz::{
     syncdir::SyncedDir,
     telemetry::Event::{new_report, new_unable_to_reproduce, new_unique_report},
 };
-
 use reqwest::StatusCode;
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use tokio::fs;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CrashReport {
     pub input_sha256: String,
 
-    pub input_blob: InputBlob,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_blob: Option<InputBlob>,
 
     pub executable: PathBuf,
 
@@ -44,7 +45,8 @@ pub struct CrashReport {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct NoCrash {
     pub input_sha256: String,
-    pub input_blob: InputBlob,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_blob: Option<InputBlob>,
     pub executable: PathBuf,
     pub task_id: Uuid,
     pub job_id: Uuid,
@@ -95,6 +97,34 @@ async fn upload_no_repro(report: &NoCrash, container: &BlobContainerUrl) -> Resu
 }
 
 impl CrashTestResult {
+    pub async fn save_local(
+        &self,
+        unique_reports: &SyncedDir,
+        reports: &Option<SyncedDir>,
+        no_repro: &Option<SyncedDir>,
+    ) -> Result<()> {
+        match self {
+            Self::CrashReport(report) => {
+                let data = serde_json::to_vec(&report)?;
+                let unique_path = unique_reports.path.join(report.blob_name());
+                fs::write(unique_path, &data).await?;
+
+                if let Some(reports) = reports {
+                    let report_path = reports.path.join(report.blob_name());
+                    fs::write(report_path, &data).await?;
+                }
+            }
+            Self::NoRepro(report) => {
+                if let Some(no_repro) = no_repro {
+                    let data = serde_json::to_vec(&report)?;
+                    let no_repro_path = no_repro.path.join(report.blob_name());
+                    fs::write(no_repro_path, &data).await?;
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub async fn upload(
         &self,
         unique_reports: &SyncedDir,
@@ -103,14 +133,14 @@ impl CrashTestResult {
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
-                upload_deduped(report, &unique_reports.url).await?;
+                upload_deduped(report, unique_reports.url()?).await?;
                 if let Some(reports) = reports {
-                    upload_report(report, &reports.url).await?;
+                    upload_report(report, reports.url()?).await?;
                 }
             }
             Self::NoRepro(report) => {
                 if let Some(no_repro) = no_repro {
-                    upload_no_repro(report, &no_repro.url).await?;
+                    upload_no_repro(report, no_repro.url()?).await?;
                 }
             }
         }
@@ -141,7 +171,7 @@ impl CrashReport {
         task_id: Uuid,
         job_id: Uuid,
         executable: impl Into<PathBuf>,
-        input_blob: InputBlob,
+        input_blob: Option<InputBlob>,
         input_sha256: String,
     ) -> Self {
         Self {

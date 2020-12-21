@@ -3,5 +3,6 @@
 
 pub mod cmd;
 pub mod common;
+pub mod libfuzzer;
 pub mod libfuzzer_crash_report;
 pub mod libfuzzer_fuzz;
