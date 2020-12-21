@@ -4,16 +4,21 @@
 use anyhow::Result;
 use clap::{App, SubCommand};
 
-use crate::local::{common::add_common_config, libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz};
+use crate::local::{
+    common::add_common_config, libfuzzer, libfuzzer_coverage, libfuzzer_crash_report,
+    libfuzzer_fuzz,
+};
 
 const LIBFUZZER: &str = "libfuzzer";
 const LIBFUZZER_FUZZ: &str = "libfuzzer-fuzz";
 const LIBFUZZER_CRASH_REPORT: &str = "libfuzzer-crash-report";
+const LIBFUZZER_COVERAGE: &str = "libfuzzer-coverage";
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     match args.subcommand() {
         (LIBFUZZER, Some(sub)) => libfuzzer::run(sub).await,
         (LIBFUZZER_FUZZ, Some(sub)) => libfuzzer_fuzz::run(sub).await,
+        (LIBFUZZER_COVERAGE, Some(sub)) => libfuzzer_coverage::run(sub).await,
         (LIBFUZZER_CRASH_REPORT, Some(sub)) => libfuzzer_crash_report::run(sub).await,
         _ => {
             anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
@@ -26,6 +31,9 @@ pub fn args(name: &str) -> App<'static, 'static> {
         .about("pre-release local fuzzing")
         .subcommand(add_common_config(libfuzzer::args(LIBFUZZER)))
         .subcommand(add_common_config(libfuzzer_fuzz::args(LIBFUZZER_FUZZ)))
+        .subcommand(add_common_config(libfuzzer_coverage::args(
+            LIBFUZZER_COVERAGE,
+        )))
         .subcommand(add_common_config(libfuzzer_crash_report::args(
             LIBFUZZER_CRASH_REPORT,
         )))

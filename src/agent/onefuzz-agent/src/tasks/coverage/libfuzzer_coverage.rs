@@ -79,17 +79,26 @@ pub struct CoverageTask {
 }
 
 impl CoverageTask {
-    pub fn new(config: impl Into<Arc<Config>>) -> Self {
-        let config = config.into();
-
-        let task_dir = PathBuf::from(config.common.task_id.to_string());
-        let poller_dir = task_dir.join("poller");
-        let poller = InputPoller::<Message>::new(poller_dir);
-
+    pub fn new(config: Config) -> Self {
+        let config = Arc::new(config);
+        let poller = InputPoller::new();
         Self { config, poller }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn local_run(&self) -> Result<()> {
+        let mut processor = CoverageProcessor::new(self.config.clone()).await?;
+
+        self.config.coverage.init().await?;
+        for synced_dir in &self.config.readonly_inputs {
+            synced_dir.init().await?;
+            self.record_corpus_coverage(&mut processor, &synced_dir)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn managed_run(&mut self) -> Result<()> {
         info!("starting libFuzzer coverage task");
         self.config.coverage.init_pull().await?;
         self.process().await

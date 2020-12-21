@@ -150,8 +150,8 @@ impl Config {
                     .await
             }
             Config::LibFuzzerCoverage(config) => {
-                coverage::libfuzzer_coverage::CoverageTask::new(Arc::new(config))
-                    .run()
+                coverage::libfuzzer_coverage::CoverageTask::new(config)
+                    .managed_run()
                     .await
             }
             Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,

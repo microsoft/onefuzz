@@ -51,8 +51,7 @@ pub struct ReportTask {
 
 impl ReportTask {
     pub fn new(config: Config) -> Self {
-        let working_dir = config.common.task_id.to_string();
-        let poller = InputPoller::new(working_dir);
+        let poller = InputPoller::new();
         let config = Arc::new(config);
 
         Self { config, poller }
@@ -65,12 +64,12 @@ impl ReportTask {
             None => bail!("missing crashes directory"),
         };
 
-        tokio::fs::create_dir_all(&self.config.unique_reports.path).await?;
+        self.config.unique_reports.init().await?;
         if let Some(reports) = &self.config.reports {
-            tokio::fs::create_dir_all(&reports.path).await?;
+            reports.init().await?;
         }
         if let Some(no_repro) = &self.config.no_repro {
-            tokio::fs::create_dir_all(&no_repro.path).await?;
+            no_repro.init().await?;
         }
 
         let mut read_dir = tokio::fs::read_dir(&crashes.path).await?;

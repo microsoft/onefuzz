@@ -5,8 +5,9 @@ use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use futures::stream::StreamExt;
-use onefuzz::{blob::BlobUrl, fs::OwnedDir, jitter::delay_with_jitter, syncdir::SyncedDir};
+use onefuzz::{blob::BlobUrl, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
+use tempfile::tempdir;
 use tokio::{fs, time::Duration};
 
 mod callback;
@@ -78,10 +79,6 @@ impl<'a, M> fmt::Debug for Event<'a, M> {
 /// application data (here, the input URL, in some encoding) and metadata for
 /// operations like finalizing a dequeue with a pop receipt.
 pub struct InputPoller<M> {
-    /// Agent-local directory where the poller will download inputs.
-    /// Will be reset for each new input.
-    working_dir: OwnedDir,
-
     /// Internal automaton state.
     ///
     /// This is only nullable so we can internally `take()` the current state
@@ -92,12 +89,10 @@ pub struct InputPoller<M> {
 }
 
 impl<M> InputPoller<M> {
-    pub fn new(working_dir: impl Into<PathBuf>) -> Self {
-        let working_dir = OwnedDir::new(working_dir);
+    pub fn new() -> Self {
         let state = Some(State::Ready);
         Self {
             state,
-            working_dir,
             batch_dir: None,
         }
     }
@@ -152,15 +147,6 @@ impl<M> InputPoller<M> {
             false
         };
         Ok(result)
-    }
-
-    /// Path to the working directory.
-    ///
-    /// We will create or reset the working directory before entering the
-    /// `Downloaded` state, but a caller cannot otherwise assume it exists.
-    #[allow(unused)]
-    pub fn working_dir(&self) -> &OwnedDir {
-        &self.working_dir
     }
 
     /// Get the current automaton state, including the state data.
@@ -254,14 +240,13 @@ impl<M> InputPoller<M> {
                 }
             }
             (Parsed(msg, url), Download(downloader)) => {
-                self.working_dir.reset().await?;
-
+                let download_dir = tempdir()?;
                 if self.seen_in_batch(&url).await? {
                     verbose!("url was seen during batch processing: {:?}", url);
                     self.set_state(Processed(msg));
                 } else {
                     let input = downloader
-                        .download(url.clone(), self.working_dir.path())
+                        .download(url.clone(), download_dir.path())
                         .await?;
 
                     self.set_state(Downloaded(msg, url, input));

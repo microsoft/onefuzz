@@ -57,9 +57,7 @@ pub struct ReportTask<'a> {
 
 impl<'a> ReportTask<'a> {
     pub fn new(config: &'a Config) -> Self {
-        let working_dir = config.common.task_id.to_string();
-        let poller = InputPoller::new(working_dir);
-
+        let poller = InputPoller::new();
         Self { config, poller }
     }
 
