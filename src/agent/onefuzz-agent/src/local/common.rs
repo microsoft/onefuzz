@@ -17,6 +17,7 @@ pub const TARGET_TIMEOUT: &str = "target_timeout";
 pub const CHECK_RETRY_COUNT: &str = "check_retry_count";
 pub const DISABLE_CHECK_QUEUE: &str = "disable_check_queue";
 pub const UNIQUE_REPORTS_DIR: &str = "unique_reports_dir";
+pub const COVERAGE_DIR: &str = "coverage_dir";
 
 pub fn add_target_cmd_options(
     exe: bool,

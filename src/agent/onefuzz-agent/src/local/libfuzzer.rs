@@ -4,14 +4,18 @@
 use crate::{
     local::{
         common::{
-            add_target_cmd_options, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE,
-            INPUTS_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_TIMEOUT, TARGET_WORKERS,
-            UNIQUE_REPORTS_DIR,
+            add_target_cmd_options, CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR,
+            DISABLE_CHECK_QUEUE, INPUTS_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_TIMEOUT,
+            TARGET_WORKERS, UNIQUE_REPORTS_DIR,
         },
+        libfuzzer_coverage::build_coverage_config,
         libfuzzer_crash_report::build_report_config,
         libfuzzer_fuzz::build_fuzz_config,
     },
-    tasks::{fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask, report::libfuzzer_report::ReportTask},
+    tasks::{
+        coverage::libfuzzer_coverage::CoverageTask, fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask,
+        report::libfuzzer_report::ReportTask,
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
@@ -25,8 +29,15 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     let report = ReportTask::new(report_config);
     let report_task = report.local_run();
+    if args.is_present(COVERAGE_DIR) {
+        let coverage_config = build_coverage_config(args, true)?;
+        let coverage = CoverageTask::new(coverage_config);
+        let coverage_task = coverage.local_run();
 
-    tokio::try_join!(fuzz_task, report_task)?;
+        tokio::try_join!(fuzz_task, report_task, coverage_task)?;
+    } else {
+        tokio::try_join!(fuzz_task, report_task)?;
+    }
 
     Ok(())
 }
@@ -46,6 +57,12 @@ pub fn args(name: &'static str) -> App<'static, 'static> {
         .arg(
             Arg::with_name(REPORTS_DIR)
                 .long(REPORTS_DIR)
+                .takes_value(true)
+                .required(false),
+        )
+        .arg(
+            Arg::with_name(COVERAGE_DIR)
+                .long(COVERAGE_DIR)
                 .takes_value(true)
                 .required(false),
         )

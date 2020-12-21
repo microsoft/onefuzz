@@ -3,7 +3,8 @@
 
 use crate::{
     local::common::{
-        add_target_cmd_options, build_common_config, get_target_env, TARGET_EXE, TARGET_OPTIONS,
+        add_target_cmd_options, build_common_config, get_target_env, COVERAGE_DIR, INPUTS_DIR,
+        TARGET_EXE, TARGET_OPTIONS,
     },
     tasks::coverage::libfuzzer_coverage::{Config, CoverageTask},
 };
@@ -11,15 +12,20 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
 
-const COVERAGE_DIR: &str = "coverage_dir";
 const READONLY_INPUTS: &str = "readonly_inputs_dir";
 
-pub fn build_coverage_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
+pub fn build_coverage_config(args: &clap::ArgMatches<'_>, use_inputs: bool) -> Result<Config> {
     let target_exe = value_t!(args, TARGET_EXE, PathBuf)?;
-    let readonly_inputs = values_t!(args, READONLY_INPUTS, PathBuf)?
-        .iter()
-        .map(|x| x.to_owned().into())
-        .collect();
+
+    let readonly_inputs = if use_inputs {
+        vec![value_t!(args, INPUTS_DIR, PathBuf)?.into()]
+    } else {
+        values_t!(args, READONLY_INPUTS, PathBuf)?
+            .iter()
+            .map(|x| x.to_owned().into())
+            .collect()
+    };
+
     let coverage = value_t!(args, COVERAGE_DIR, PathBuf)?.into();
     let target_options = args.values_of_lossy(TARGET_OPTIONS).unwrap_or_default();
 
@@ -39,7 +45,7 @@ pub fn build_coverage_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_coverage_config(args)?;
+    let config = build_coverage_config(args, false)?;
 
     let task = CoverageTask::new(config);
     task.local_run().await
