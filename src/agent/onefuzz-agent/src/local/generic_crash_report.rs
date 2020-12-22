@@ -111,11 +111,6 @@ pub fn add_report_options(app: App<'static, 'static>) -> App<'static, 'static> {
                 .takes_value(false)
                 .long("disable_check_debugger"),
         )
-        .arg(
-            Arg::with_name("disable_check_queue")
-                .takes_value(false)
-                .long("disable_check_queue"),
-        )
 }
 
 pub fn args(name: &'static str) -> App<'static, 'static> {
