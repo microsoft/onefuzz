@@ -52,6 +52,10 @@ use tokio::fs;
 
 const TOTAL_COVERAGE: &str = "total.cov";
 
+fn default_bool_true() -> bool {
+    true
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub target_exe: PathBuf,
@@ -60,6 +64,9 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub readonly_inputs: Vec<SyncedDir>,
     pub coverage: SyncedDir,
+
+    #[serde(default = "default_bool_true")]
+    pub check_queue: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,

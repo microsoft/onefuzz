@@ -9,7 +9,10 @@ use crate::tasks::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use onefuzz::{blob::BlobUrl, input_tester::Tester, sha256, syncdir::SyncedDir};
+use futures::stream::StreamExt;
+use onefuzz::{
+    blob::BlobUrl, input_tester::Tester, monitor::DirectoryMonitor, sha256, syncdir::SyncedDir,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -46,6 +49,9 @@ pub struct Config {
     #[serde(default)]
     pub check_retry_count: u64,
 
+    #[serde(default = "default_bool_true")]
+    pub check_queue: bool,
+
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -61,7 +67,31 @@ impl<'a> ReportTask<'a> {
         Self { config, poller }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn local_run(&mut self) -> Result<()> {
+        let processor = GenericReportProcessor::new(&self.config, None);
+
+        info!("Starting generic crash report task");
+        let crashes = match &self.config.crashes {
+            Some(x) => x,
+            None => bail!("missing crashes directory"),
+        };
+
+        let mut read_dir = tokio::fs::read_dir(&crashes.path).await?;
+        while let Some(crash) = read_dir.next().await {
+            processor.test_local(crash?.path()).await?;
+        }
+
+        if self.config.check_queue {
+            let mut monitor = DirectoryMonitor::new(&crashes.path);
+            monitor.start()?;
+            while let Some(crash) = monitor.next().await {
+                processor.test_local(crash).await?;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting generic crash report task");
         let heartbeat_client = self.config.common.init_heartbeat().await?;
         let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
@@ -70,9 +100,11 @@ impl<'a> ReportTask<'a> {
             self.poller.batch_process(&mut processor, &crashes).await?;
         }
 
-        if let Some(queue) = &self.config.input_queue {
-            let callback = CallbackImpl::new(queue.clone(), processor);
-            self.poller.run(callback).await?;
+        if self.config.check_queue {
+            if let Some(queue) = &self.config.input_queue {
+                let callback = CallbackImpl::new(queue.clone(), processor);
+                self.poller.run(callback).await?;
+            }
         }
         Ok(())
     }
@@ -102,6 +134,20 @@ impl<'a> GenericReportProcessor<'a> {
             tester,
             heartbeat_client,
         }
+    }
+
+    async fn test_local(&self, input: PathBuf) -> Result<()> {
+        info!("generating crash report for: {}", input.display());
+        let result = self.test_input(None, &input).await?;
+        result
+            .save_local(
+                &self.config.unique_reports,
+                &self.config.reports,
+                &self.config.no_repro,
+            )
+            .await?;
+
+        Ok(())
     }
 
     pub async fn test_input(

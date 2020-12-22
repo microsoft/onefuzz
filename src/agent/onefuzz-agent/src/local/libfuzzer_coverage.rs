@@ -40,6 +40,7 @@ pub fn build_coverage_config(args: &clap::ArgMatches<'_>, use_inputs: bool) -> R
         readonly_inputs,
         coverage,
         common,
+        check_queue: false,
     };
     Ok(config)
 }

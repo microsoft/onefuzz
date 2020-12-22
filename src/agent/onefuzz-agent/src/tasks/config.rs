@@ -159,7 +159,11 @@ impl Config {
             Config::GenericGenerator(config) => fuzz::generator::spawn(Arc::new(config)).await,
             Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
             Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
-            Config::GenericReport(config) => report::generic::ReportTask::new(&config).run().await,
+            Config::GenericReport(config) => {
+                report::generic::ReportTask::new(&config)
+                    .managed_run()
+                    .await
+            }
         }
     }
 }
