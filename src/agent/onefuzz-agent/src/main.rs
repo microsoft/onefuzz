@@ -10,21 +10,19 @@ extern crate onefuzz;
 #[macro_use]
 extern crate clap;
 
-use std::path::PathBuf;
-
 use anyhow::Result;
-use clap::{App, Arg, ArgMatches, SubCommand};
-use onefuzz::telemetry::{self};
+use clap::{App, ArgMatches, SubCommand};
 use std::io::{stdout, Write};
 
 mod debug;
 mod local;
+mod managed;
 mod tasks;
 
-use tasks::config::{CommonConfig, Config};
-
+const LICENSE_CMD: &str = "licenses";
 const LOCAL_CMD: &str = "local";
 const DEBUG_CMD: &str = "debug";
+const MANAGED_CMD: &str = "managed";
 
 fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
@@ -38,15 +36,10 @@ fn main() -> Result<()> {
 
     let app = App::new("onefuzz-agent")
         .version(built_version.as_str())
-        .arg(
-            Arg::with_name("config")
-                .long("config")
-                .short("c")
-                .takes_value(true),
-        )
+        .subcommand(managed::cmd::args(MANAGED_CMD))
         .subcommand(local::cmd::args(LOCAL_CMD))
         .subcommand(debug::cmd::args(DEBUG_CMD))
-        .subcommand(SubCommand::with_name("licenses").about("display third-party licenses"));
+        .subcommand(SubCommand::with_name(LICENSE_CMD).about("display third-party licenses"));
 
     let matches = app.get_matches();
 
@@ -54,46 +47,19 @@ fn main() -> Result<()> {
     rt.block_on(run(matches))
 }
 
-async fn run(matches: ArgMatches<'_>) -> Result<()> {
-    match matches.subcommand() {
-        ("licenses", Some(_)) => {
-            return licenses();
-        }
+async fn run(args: ArgMatches<'_>) -> Result<()> {
+    match args.subcommand() {
+        (LICENSE_CMD, Some(_)) => return licenses(),
         (DEBUG_CMD, Some(sub)) => return debug::cmd::run(sub).await,
         (LOCAL_CMD, Some(sub)) => return local::cmd::run(sub).await,
-        _ => {} // no subcommand
+        (MANAGED_CMD, Some(sub)) => return managed::cmd::run(sub).await,
+        _ => {
+            anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
+        }
     }
-
-    if matches.value_of("config").is_none() {
-        println!("Missing '--config'\n{}", matches.usage());
-        return Ok(());
-    }
-
-    let config_arg = matches.value_of("config").unwrap();
-    run_config(config_arg).await
-}
-
-async fn run_config(config_arg: &str) -> Result<()> {
-    let config_path: PathBuf = config_arg.parse()?;
-    let config = Config::from_file(config_path)?;
-
-    init_telemetry(config.common());
-    verbose!("config parsed");
-    let result = config.run().await;
-
-    if let Err(err) = &result {
-        error!("error running task: {}", err);
-    }
-
-    telemetry::try_flush_and_close();
-    result
 }
 
 fn licenses() -> Result<()> {
     stdout().write_all(include_bytes!("../../data/licenses.json"))?;
     Ok(())
-}
-
-fn init_telemetry(config: &CommonConfig) {
-    telemetry::set_appinsights_clients(config.instrumentation_key, config.telemetry_key);
 }
