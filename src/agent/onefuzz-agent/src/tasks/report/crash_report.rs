@@ -5,6 +5,7 @@ use anyhow::Result;
 use onefuzz::{
     asan::AsanLog,
     blob::{BlobClient, BlobContainerUrl, BlobUrl},
+    fs::exists,
     syncdir::SyncedDir,
     telemetry::Event::{new_report, new_unable_to_reproduce, new_unique_report},
 };
@@ -105,20 +106,26 @@ impl CrashTestResult {
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
-                let data = serde_json::to_vec(&report)?;
                 let unique_path = unique_reports.path.join(report.blob_name());
-                fs::write(unique_path, &data).await?;
+                let data = serde_json::to_vec(&report)?;
+                if !exists(&unique_path).await? {
+                    fs::write(unique_path, &data).await?;
+                }
 
                 if let Some(reports) = reports {
                     let report_path = reports.path.join(report.blob_name());
-                    fs::write(report_path, &data).await?;
+                    if !exists(&report_path).await? {
+                        fs::write(report_path, &data).await?;
+                    }
                 }
             }
             Self::NoRepro(report) => {
                 if let Some(no_repro) = no_repro {
-                    let data = serde_json::to_vec(&report)?;
                     let no_repro_path = no_repro.path.join(report.blob_name());
-                    fs::write(no_repro_path, &data).await?;
+                    if !exists(&no_repro_path).await? {
+                        let data = serde_json::to_vec(&report)?;
+                        fs::write(no_repro_path, &data).await?;
+                    }
                 }
             }
         }
