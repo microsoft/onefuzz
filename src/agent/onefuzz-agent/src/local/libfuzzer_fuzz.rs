@@ -4,7 +4,7 @@
 use crate::{
     local::common::{
         add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
-        CRASHES_DIR, INPUTS_DIR, TARGET_WORKERS,
+        CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
     },
     tasks::fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
 };
@@ -45,15 +45,38 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     LibFuzzerFuzzTask::new(config)?.local_run().await
 }
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    let mut app = SubCommand::with_name(name).about("execute a local-only libfuzzer fuzzing task");
+pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
+    vec![
+        Arg::with_name(TARGET_EXE)
+            .long(TARGET_EXE)
+            .takes_value(true)
+            .required(true),
+        Arg::with_name(TARGET_ENV)
+            .long(TARGET_ENV)
+            .takes_value(true)
+            .multiple(true),
+        Arg::with_name(TARGET_OPTIONS)
+            .long(TARGET_OPTIONS)
+            .takes_value(true)
+            .multiple(true)
+            .allow_hyphen_values(true)
+            .help("Supports hyphens.  Recommendation: Set last"),
+        Arg::with_name(INPUTS_DIR)
+            .long(INPUTS_DIR)
+            .takes_value(true)
+            .required(true),
+        Arg::with_name(CRASHES_DIR)
+            .long(CRASHES_DIR)
+            .takes_value(true)
+            .required(true),
+        Arg::with_name(TARGET_WORKERS)
+            .long(TARGET_WORKERS)
+            .takes_value(true),
+    ]
+}
 
-    app = add_cmd_options(CmdType::Target, true, true, true, app);
-    app.arg(Arg::with_name(INPUTS_DIR).takes_value(true).required(true))
-        .arg(Arg::with_name(CRASHES_DIR).takes_value(true).required(true))
-        .arg(
-            Arg::with_name(TARGET_WORKERS)
-                .long(TARGET_WORKERS)
-                .takes_value(true),
-        )
+pub fn args(name: &'static str) -> App<'static, 'static> {
+    SubCommand::with_name(name)
+        .about("execute a local-only libfuzzer fuzzing task")
+        .args(&build_shared_args())
 }

@@ -2,7 +2,7 @@ use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
 use clap::{App, Arg, ArgMatches};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use uuid::Uuid;
 
@@ -18,6 +18,8 @@ pub const UNIQUE_REPORTS_DIR: &str = "unique_reports_dir";
 pub const COVERAGE_DIR: &str = "coverage_dir";
 pub const READONLY_INPUTS: &str = "readonly_inputs_dir";
 pub const CHECK_ASAN_LOG: &str = "check_asan_log";
+pub const TOOLS_DIR: &str = "tools_dir";
+pub const RENAME_OUTPUT: &str = "rename_output";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
@@ -51,7 +53,7 @@ pub fn add_cmd_options(
     if exe {
         app = app.arg(Arg::with_name(exe_name).takes_value(true).required(true));
     }
-    if arg {
+    if env {
         app = app.arg(
             Arg::with_name(env_name)
                 .long(env_name)
@@ -59,7 +61,7 @@ pub fn add_cmd_options(
                 .multiple(true),
         )
     }
-    if env {
+    if arg {
         app = app.arg(
             Arg::with_name(arg_name)
                 .long(arg_name)

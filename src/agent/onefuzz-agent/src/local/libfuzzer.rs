@@ -4,13 +4,12 @@
 use crate::{
     local::{
         common::{
-            add_cmd_options, CmdType, CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR,
-            DISABLE_CHECK_QUEUE, INPUTS_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_TIMEOUT,
-            TARGET_WORKERS, UNIQUE_REPORTS_DIR,
+            add_cmd_options, CmdType, COVERAGE_DIR, CRASHES_DIR, DISABLE_CHECK_QUEUE, INPUTS_DIR,
+            NO_REPRO_DIR, REPORTS_DIR, TARGET_TIMEOUT, TARGET_WORKERS, UNIQUE_REPORTS_DIR,
         },
-        libfuzzer_coverage::build_coverage_config,
-        libfuzzer_crash_report::build_report_config,
-        libfuzzer_fuzz::build_fuzz_config,
+        libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
+        libfuzzer_crash_report::{build_report_config, build_shared_args as build_crash_args},
+        libfuzzer_fuzz::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
     tasks::{
         coverage::libfuzzer_coverage::CoverageTask, fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask,
@@ -18,7 +17,8 @@ use crate::{
     },
 };
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{App, SubCommand};
+use std::collections::HashSet;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let fuzz_config = build_fuzz_config(args)?;
@@ -45,52 +45,20 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 pub fn args(name: &'static str) -> App<'static, 'static> {
     let mut app = SubCommand::with_name(name).about("run a local libfuzzer & crash reporting task");
 
-    app = add_cmd_options(CmdType::Target, true, true, true, app);
+    let mut used = HashSet::new();
+    for args in &[
+        build_fuzz_args(),
+        build_crash_args(),
+        build_coverage_args(true),
+    ] {
+        for arg in args {
+            if used.contains(arg.b.name) {
+                continue;
+            }
+            used.insert(arg.b.name.to_string());
+            app = app.arg(arg);
+        }
+    }
 
-    app.arg(Arg::with_name(INPUTS_DIR).takes_value(true).required(true))
-        .arg(Arg::with_name(CRASHES_DIR).takes_value(true).required(true))
-        .arg(
-            Arg::with_name(TARGET_WORKERS)
-                .long(TARGET_WORKERS)
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name(REPORTS_DIR)
-                .long(REPORTS_DIR)
-                .takes_value(true)
-                .required(false),
-        )
-        .arg(
-            Arg::with_name(COVERAGE_DIR)
-                .long(COVERAGE_DIR)
-                .takes_value(true)
-                .required(false),
-        )
-        .arg(
-            Arg::with_name(NO_REPRO_DIR)
-                .long(NO_REPRO_DIR)
-                .takes_value(true)
-                .required(false),
-        )
-        .arg(
-            Arg::with_name(UNIQUE_REPORTS_DIR)
-                .takes_value(true)
-                .required(true),
-        )
-        .arg(
-            Arg::with_name(TARGET_TIMEOUT)
-                .takes_value(true)
-                .long(TARGET_TIMEOUT),
-        )
-        .arg(
-            Arg::with_name(CHECK_RETRY_COUNT)
-                .takes_value(true)
-                .long(CHECK_RETRY_COUNT)
-                .default_value("0"),
-        )
-        .arg(
-            Arg::with_name(DISABLE_CHECK_QUEUE)
-                .takes_value(false)
-                .long(DISABLE_CHECK_QUEUE),
-        )
+    app
 }

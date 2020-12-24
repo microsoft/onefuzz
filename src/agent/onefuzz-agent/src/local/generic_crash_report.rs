@@ -13,7 +13,7 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
 
-pub async fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
+pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
@@ -61,7 +61,7 @@ pub async fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> 
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_report_config(args).await?;
+    let config = build_report_config(args)?;
     ReportTask::new(&config).local_run().await
 }
 

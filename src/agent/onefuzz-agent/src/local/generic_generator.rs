@@ -4,16 +4,14 @@
 use crate::{
     local::common::{
         add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
-        CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR, READONLY_INPUTS, TARGET_TIMEOUT,
+        CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR, READONLY_INPUTS, RENAME_OUTPUT,
+        TARGET_TIMEOUT, TOOLS_DIR,
     },
     tasks::fuzz::generator::{Config, GeneratorTask},
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
-
-const TOOLS_DIR: &str = "tools_dir";
-const RENAME_OUTPUT: &str = "rename_output";
 
 pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     let crashes = value_t!(args, CRASHES_DIR, PathBuf)?.into();

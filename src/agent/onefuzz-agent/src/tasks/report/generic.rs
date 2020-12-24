@@ -67,7 +67,7 @@ impl<'a> ReportTask<'a> {
         Self { config, poller }
     }
 
-    pub async fn local_run(&mut self) -> Result<()> {
+    pub async fn local_run(&self) -> Result<()> {
         let processor = GenericReportProcessor::new(&self.config, None);
 
         info!("Starting generic crash report task");
