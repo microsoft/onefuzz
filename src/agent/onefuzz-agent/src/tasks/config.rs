@@ -66,7 +66,7 @@ pub enum Config {
     GenericAnalysis(analysis::generic::Config),
 
     #[serde(alias = "generic_generator")]
-    GenericGenerator(fuzz::generator::GeneratorConfig),
+    GenericGenerator(fuzz::generator::Config),
 
     #[serde(alias = "generic_supervisor")]
     GenericSupervisor(fuzz::supervisor::SupervisorConfig),
@@ -156,7 +156,11 @@ impl Config {
             }
             Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
             Config::GenericAnalysis(config) => analysis::generic::spawn(config).await,
-            Config::GenericGenerator(config) => fuzz::generator::spawn(Arc::new(config)).await,
+            Config::GenericGenerator(config) => {
+                fuzz::generator::GeneratorTask::new(config)
+                    .managed_run()
+                    .await
+            }
             Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
             Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
             Config::GenericReport(config) => {

@@ -4,9 +4,9 @@
 use crate::{
     local::{
         common::{
-            add_target_cmd_options, CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR,
-            DISABLE_CHECK_QUEUE, INPUTS_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_TIMEOUT,
-            TARGET_WORKERS, UNIQUE_REPORTS_DIR,
+            add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
+            CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR, DISABLE_CHECK_QUEUE, INPUTS_DIR,
+            NO_REPRO_DIR, REPORTS_DIR, TARGET_TIMEOUT, TARGET_WORKERS, UNIQUE_REPORTS_DIR,
         },
         libfuzzer_coverage::build_coverage_config,
         libfuzzer_crash_report::build_report_config,
@@ -45,7 +45,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 pub fn args(name: &'static str) -> App<'static, 'static> {
     let mut app = SubCommand::with_name(name).about("run a local libfuzzer & crash reporting task");
 
-    app = add_target_cmd_options(true, true, true, app);
+    app = add_cmd_options(CmdType::Target, true, true, true, app);
 
     app.arg(Arg::with_name(INPUTS_DIR).takes_value(true).required(true))
         .arg(Arg::with_name(CRASHES_DIR).takes_value(true).required(true))

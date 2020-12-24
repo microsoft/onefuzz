@@ -3,8 +3,8 @@
 
 use crate::{
     local::common::{
-        add_target_cmd_options, build_common_config, get_target_env, CRASHES_DIR, INPUTS_DIR,
-        TARGET_WORKERS,
+        add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
+        CRASHES_DIR, INPUTS_DIR, TARGET_WORKERS,
     },
     tasks::fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
 };
@@ -15,10 +15,12 @@ use std::path::PathBuf;
 pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     let crashes = value_t!(args, CRASHES_DIR, PathBuf)?.into();
     let inputs = value_t!(args, INPUTS_DIR, PathBuf)?.into();
-    let target_exe = value_t!(args, "target_exe", PathBuf)?;
-    let target_options = args.values_of_lossy("target_options").unwrap_or_default();
+
+    let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
+    let target_env = get_cmd_env(CmdType::Target, args)?;
+    let target_options = get_cmd_arg(CmdType::Target, args);
+
     let target_workers = value_t!(args, "target_workers", u64).unwrap_or_default();
-    let target_env = get_target_env(args)?;
     let readonly_inputs = None;
 
     let ensemble_sync_delay = None;
@@ -44,10 +46,9 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 }
 
 pub fn args(name: &'static str) -> App<'static, 'static> {
-    let mut app =
-        SubCommand::with_name(name).about("execute a local-only libfuzzer crash report task");
+    let mut app = SubCommand::with_name(name).about("execute a local-only libfuzzer fuzzing task");
 
-    app = add_target_cmd_options(true, true, true, app);
+    app = add_cmd_options(CmdType::Target, true, true, true, app);
     app.arg(Arg::with_name(INPUTS_DIR).takes_value(true).required(true))
         .arg(Arg::with_name(CRASHES_DIR).takes_value(true).required(true))
         .arg(

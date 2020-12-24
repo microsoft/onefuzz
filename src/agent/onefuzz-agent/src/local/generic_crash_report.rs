@@ -3,9 +3,9 @@
 
 use crate::{
     local::common::{
-        add_target_cmd_options, build_common_config, get_target_env, CHECK_RETRY_COUNT,
-        CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_EXE, TARGET_OPTIONS,
-        TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
+        CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR,
+        REPORTS_DIR, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
     tasks::report::generic::{Config, ReportTask},
 };
@@ -14,7 +14,10 @@ use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
 
 pub async fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
-    let target_exe = value_t!(args, TARGET_EXE, PathBuf)?;
+    let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
+    let target_env = get_cmd_env(CmdType::Target, args)?;
+    let target_options = get_cmd_arg(CmdType::Target, args);
+
     let crashes = Some(value_t!(args, CRASHES_DIR, PathBuf)?.into());
     let reports = if args.is_present(REPORTS_DIR) {
         Some(value_t!(args, REPORTS_DIR, PathBuf)?).map(|x| x.into())
@@ -28,14 +31,11 @@ pub async fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> 
     };
     let unique_reports = value_t!(args, UNIQUE_REPORTS_DIR, PathBuf)?.into();
 
-    let target_options = args.values_of_lossy(TARGET_OPTIONS).unwrap_or_default();
-    let target_env = get_target_env(args)?;
-
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
 
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
     let check_queue = !args.is_present(DISABLE_CHECK_QUEUE);
-    let check_asan_log = args.is_present("check_asan_log");
+    let check_asan_log = args.is_present(CHECK_ASAN_LOG);
     let check_debugger = !args.is_present("disable_check_debugger");
 
     let common = build_common_config(args)?;
@@ -88,7 +88,7 @@ pub fn add_report_options(app: App<'static, 'static>) -> App<'static, 'static> {
             Arg::with_name(TARGET_TIMEOUT)
                 .takes_value(true)
                 .long(TARGET_TIMEOUT)
-                .default_value("5"),
+                .default_value("30"),
         )
         .arg(
             Arg::with_name(CHECK_RETRY_COUNT)
@@ -102,9 +102,9 @@ pub fn add_report_options(app: App<'static, 'static>) -> App<'static, 'static> {
                 .long(DISABLE_CHECK_QUEUE),
         )
         .arg(
-            Arg::with_name("check_asan_log")
+            Arg::with_name(CHECK_ASAN_LOG)
                 .takes_value(false)
-                .long("check_asan_log"),
+                .long(CHECK_ASAN_LOG),
         )
         .arg(
             Arg::with_name("disable_check_debugger")
@@ -115,6 +115,6 @@ pub fn add_report_options(app: App<'static, 'static>) -> App<'static, 'static> {
 
 pub fn args(name: &'static str) -> App<'static, 'static> {
     let mut app = SubCommand::with_name(name).about("execute a local-only generic crash report");
-    app = add_target_cmd_options(true, true, true, app);
+    app = add_cmd_options(CmdType::Target, true, true, true, app);
     add_report_options(app)
 }

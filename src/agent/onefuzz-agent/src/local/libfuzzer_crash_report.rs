@@ -3,9 +3,9 @@
 
 use crate::{
     local::common::{
-        add_target_cmd_options, build_common_config, get_target_env, CHECK_RETRY_COUNT,
-        CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_EXE, TARGET_OPTIONS,
-        TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
+        CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_EXE,
+        TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
     tasks::report::libfuzzer_report::{Config, ReportTask},
 };
@@ -14,7 +14,10 @@ use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
 
 pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
-    let target_exe = value_t!(args, TARGET_EXE, PathBuf)?;
+    let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
+    let target_env = get_cmd_env(CmdType::Target, args)?;
+    let target_options = get_cmd_arg(CmdType::Target, args);
+
     let crashes = Some(value_t!(args, CRASHES_DIR, PathBuf)?.into());
     let reports = if args.is_present(REPORTS_DIR) {
         Some(value_t!(args, REPORTS_DIR, PathBuf)?).map(|x| x.into())
@@ -27,9 +30,6 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
         None
     };
     let unique_reports = value_t!(args, UNIQUE_REPORTS_DIR, PathBuf)?.into();
-
-    let target_options = args.values_of_lossy(TARGET_OPTIONS).unwrap_or_default();
-    let target_env = get_target_env(args)?;
 
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
 
@@ -100,6 +100,6 @@ pub fn args(name: &'static str) -> App<'static, 'static> {
     let mut app =
         SubCommand::with_name(name).about("execute a local-only libfuzzer crash report task");
 
-    app = add_target_cmd_options(true, true, true, app);
+    app = add_cmd_options(CmdType::Target, true, true, true, app);
     add_report_options(app)
 }
