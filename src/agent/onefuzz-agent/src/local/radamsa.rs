@@ -3,19 +3,14 @@
 
 use crate::{
     local::{
-        common::{
-            add_cmd_options, CmdType, CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR,
-            DISABLE_CHECK_QUEUE, INPUTS_DIR, NO_REPRO_DIR, READONLY_INPUTS, RENAME_OUTPUT,
-            REPORTS_DIR, TARGET_TIMEOUT, TARGET_WORKERS, TOOLS_DIR, UNIQUE_REPORTS_DIR,
-        },
-        generic_crash_report::build_report_config,
-        generic_generator::build_fuzz_config,
+        generic_crash_report::{build_report_config, build_shared_args as build_crash_args},
+        generic_generator::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
     tasks::{fuzz::generator::GeneratorTask, report::generic::ReportTask},
 };
-
 use anyhow::Result;
-use clap::{App, Arg, SubCommand};
+use clap::{App, SubCommand};
+use std::collections::HashSet;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let fuzz_config = build_fuzz_config(args)?;
@@ -33,60 +28,18 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 }
 
 pub fn args(name: &'static str) -> App<'static, 'static> {
-    let mut app = SubCommand::with_name(name).about("run a local libfuzzer & crash reporting task");
+    let mut app = SubCommand::with_name(name).about("run a local generator & crash reporting job");
 
-    app = add_cmd_options(CmdType::Generator, true, true, true, app);
-    app = add_cmd_options(CmdType::Target, true, true, true, app);
-    app.arg(Arg::with_name(CRASHES_DIR).takes_value(true).required(true))
-        .arg(
-            Arg::with_name(REPORTS_DIR)
-                .long(REPORTS_DIR)
-                .takes_value(true)
-                .required(false),
-        )
-        .arg(
-            Arg::with_name(NO_REPRO_DIR)
-                .long(NO_REPRO_DIR)
-                .takes_value(true)
-                .required(false),
-        )
-        .arg(
-            Arg::with_name(UNIQUE_REPORTS_DIR)
-                .takes_value(true)
-                .required(true),
-        )
-        .arg(Arg::with_name(TOOLS_DIR).takes_value(true).long(TOOLS_DIR))
-        .arg(
-            Arg::with_name(CHECK_RETRY_COUNT)
-                .takes_value(true)
-                .long(CHECK_RETRY_COUNT)
-                .default_value("0"),
-        )
-        .arg(
-            Arg::with_name(CHECK_ASAN_LOG)
-                .takes_value(false)
-                .long(CHECK_ASAN_LOG),
-        )
-        .arg(
-            Arg::with_name(RENAME_OUTPUT)
-                .takes_value(false)
-                .long(RENAME_OUTPUT),
-        )
-        .arg(
-            Arg::with_name(TARGET_TIMEOUT)
-                .takes_value(true)
-                .long(TARGET_TIMEOUT)
-                .default_value("30"),
-        )
-        .arg(
-            Arg::with_name("disable_check_debugger")
-                .takes_value(false)
-                .long("disable_check_debugger"),
-        )
-        .arg(
-            Arg::with_name(READONLY_INPUTS)
-                .takes_value(true)
-                .required(true)
-                .multiple(true),
-        )
+    let mut used = HashSet::new();
+    for args in &[build_fuzz_args(), build_crash_args()] {
+        for arg in args {
+            if used.contains(arg.b.name) {
+                continue;
+            }
+            used.insert(arg.b.name.to_string());
+            app = app.arg(arg);
+        }
+    }
+
+    app
 }

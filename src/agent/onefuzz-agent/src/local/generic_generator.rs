@@ -3,9 +3,10 @@
 
 use crate::{
     local::common::{
-        add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
-        CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR, READONLY_INPUTS, RENAME_OUTPUT,
-        TARGET_TIMEOUT, TOOLS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_ASAN_LOG,
+        CHECK_RETRY_COUNT, CRASHES_DIR, GENERATOR_ENV, GENERATOR_EXE, GENERATOR_OPTIONS,
+        READONLY_INPUTS, RENAME_OUTPUT, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
+        TOOLS_DIR,
     },
     tasks::fuzz::generator::{Config, GeneratorTask},
 };
@@ -69,44 +70,68 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     GeneratorTask::new(config).local_run().await
 }
 
-pub fn args(name: &'static str) -> App<'static, 'static> {
-    let mut app = SubCommand::with_name(name).about("execute a local-only generator fuzzing task");
+pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
+    vec![
+        Arg::with_name(TARGET_EXE)
+            .long(TARGET_EXE)
+            .takes_value(true)
+            .required(true),
+        Arg::with_name(TARGET_ENV)
+            .long(TARGET_ENV)
+            .takes_value(true)
+            .multiple(true),
+        Arg::with_name(TARGET_OPTIONS)
+            .long(TARGET_OPTIONS)
+            .takes_value(true)
+            .multiple(true)
+            .allow_hyphen_values(true)
+            .help("Supports hyphens.  Recommendation: Set last"),
+        Arg::with_name(GENERATOR_EXE)
+            .long(GENERATOR_EXE)
+            .takes_value(true)
+            .required(true),
+        Arg::with_name(GENERATOR_ENV)
+            .long(GENERATOR_ENV)
+            .takes_value(true)
+            .multiple(true),
+        Arg::with_name(GENERATOR_OPTIONS)
+            .long(GENERATOR_OPTIONS)
+            .takes_value(true)
+            .multiple(true)
+            .allow_hyphen_values(true)
+            .help("Supports hyphens.  Recommendation: Set last"),
+        Arg::with_name(CRASHES_DIR)
+            .takes_value(true)
+            .required(true)
+            .long(CRASHES_DIR),
+        Arg::with_name(READONLY_INPUTS)
+            .takes_value(true)
+            .required(true)
+            .multiple(true)
+            .long(READONLY_INPUTS),
+        Arg::with_name(TOOLS_DIR).takes_value(true).long(TOOLS_DIR),
+        Arg::with_name(CHECK_RETRY_COUNT)
+            .takes_value(true)
+            .long(CHECK_RETRY_COUNT)
+            .default_value("0"),
+        Arg::with_name(CHECK_ASAN_LOG)
+            .takes_value(false)
+            .long(CHECK_ASAN_LOG),
+        Arg::with_name(RENAME_OUTPUT)
+            .takes_value(false)
+            .long(RENAME_OUTPUT),
+        Arg::with_name(TARGET_TIMEOUT)
+            .takes_value(true)
+            .long(TARGET_TIMEOUT)
+            .default_value("30"),
+        Arg::with_name("disable_check_debugger")
+            .takes_value(false)
+            .long("disable_check_debugger"),
+    ]
+}
 
-    app = add_cmd_options(CmdType::Generator, true, true, true, app);
-    app = add_cmd_options(CmdType::Target, true, true, true, app);
-    app.arg(Arg::with_name(CRASHES_DIR).takes_value(true).required(true))
-        .arg(
-            Arg::with_name(READONLY_INPUTS)
-                .takes_value(true)
-                .required(true)
-                .multiple(true),
-        )
-        .arg(Arg::with_name(TOOLS_DIR).takes_value(true))
-        .arg(
-            Arg::with_name(CHECK_RETRY_COUNT)
-                .takes_value(true)
-                .long(CHECK_RETRY_COUNT)
-                .default_value("0"),
-        )
-        .arg(
-            Arg::with_name(CHECK_ASAN_LOG)
-                .takes_value(false)
-                .long(CHECK_ASAN_LOG),
-        )
-        .arg(
-            Arg::with_name(RENAME_OUTPUT)
-                .takes_value(false)
-                .long(RENAME_OUTPUT),
-        )
-        .arg(
-            Arg::with_name(TARGET_TIMEOUT)
-                .takes_value(true)
-                .long(TARGET_TIMEOUT)
-                .default_value("30"),
-        )
-        .arg(
-            Arg::with_name("disable_check_debugger")
-                .takes_value(false)
-                .long("disable_check_debugger"),
-        )
+pub fn args(name: &'static str) -> App<'static, 'static> {
+    SubCommand::with_name(name)
+        .about("execute a local-only generator fuzzing task")
+        .args(&build_shared_args())
 }

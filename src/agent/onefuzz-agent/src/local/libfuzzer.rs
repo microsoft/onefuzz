@@ -3,10 +3,7 @@
 
 use crate::{
     local::{
-        common::{
-            add_cmd_options, CmdType, COVERAGE_DIR, CRASHES_DIR, DISABLE_CHECK_QUEUE, INPUTS_DIR,
-            NO_REPRO_DIR, REPORTS_DIR, TARGET_TIMEOUT, TARGET_WORKERS, UNIQUE_REPORTS_DIR,
-        },
+        common::COVERAGE_DIR,
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
         libfuzzer_crash_report::{build_report_config, build_shared_args as build_crash_args},
         libfuzzer_fuzz::{build_fuzz_config, build_shared_args as build_fuzz_args},
