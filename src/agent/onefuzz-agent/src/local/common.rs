@@ -2,7 +2,7 @@ use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
 use clap::{App, Arg, ArgMatches};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 
 use uuid::Uuid;
 

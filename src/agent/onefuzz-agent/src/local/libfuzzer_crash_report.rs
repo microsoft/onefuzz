@@ -3,9 +3,9 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
-        CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_RETRY_COUNT,
+        CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE,
+        TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
     tasks::report::libfuzzer_report::{Config, ReportTask},
 };
