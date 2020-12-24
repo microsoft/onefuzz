@@ -3,7 +3,7 @@ use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
 use clap::{App, Arg, ArgMatches};
 use std::collections::HashMap;
-use std::path::PathBuf;
+
 use uuid::Uuid;
 
 pub const INPUTS_DIR: &str = "inputs_dir";
@@ -43,9 +43,9 @@ pub fn add_cmd_options(
     mut app: App<'static, 'static>,
 ) -> App<'static, 'static> {
     let (exe_name, env_name, arg_name) = match cmd_type {
-        Target => (TARGET_EXE, TARGET_ENV, TARGET_OPTIONS),
-        Supervisor => (SUPERVISOR_EXE, SUPERVISOR_ENV, SUPERVISOR_OPTIONS),
-        Generator => (GENERATOR_EXE, GENERATOR_ENV, GENERATOR_OPTIONS),
+        CmdType::Target => (TARGET_EXE, TARGET_ENV, TARGET_OPTIONS),
+        CmdType::Supervisor => (SUPERVISOR_EXE, SUPERVISOR_ENV, SUPERVISOR_OPTIONS),
+        CmdType::Generator => (GENERATOR_EXE, GENERATOR_ENV, GENERATOR_OPTIONS),
     };
 
     if exe {
@@ -74,9 +74,9 @@ pub fn add_cmd_options(
 
 pub fn get_cmd_exe(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Result<String> {
     let name = match cmd_type {
-        Target => TARGET_EXE,
-        Supervisor => SUPERVISOR_EXE,
-        Generator => GENERATOR_EXE,
+        CmdType::Target => TARGET_EXE,
+        CmdType::Supervisor => SUPERVISOR_EXE,
+        CmdType::Generator => GENERATOR_EXE,
     };
 
     let exe = value_t!(args, name, String)?;
@@ -85,9 +85,9 @@ pub fn get_cmd_exe(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Result<Str
 
 pub fn get_cmd_arg(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Vec<String> {
     let name = match cmd_type {
-        Target => TARGET_OPTIONS,
-        Supervisor => SUPERVISOR_OPTIONS,
-        Generator => GENERATOR_OPTIONS,
+        CmdType::Target => TARGET_OPTIONS,
+        CmdType::Supervisor => SUPERVISOR_OPTIONS,
+        CmdType::Generator => GENERATOR_OPTIONS,
     };
 
     args.values_of_lossy(name).unwrap_or_default()
@@ -98,9 +98,9 @@ pub fn get_cmd_env(
     args: &clap::ArgMatches<'_>,
 ) -> Result<HashMap<String, String>> {
     let env_name = match cmd_type {
-        Target => TARGET_ENV,
-        Supervisor => SUPERVISOR_ENV,
-        Generator => GENERATOR_ENV,
+        CmdType::Target => TARGET_ENV,
+        CmdType::Supervisor => SUPERVISOR_ENV,
+        CmdType::Generator => GENERATOR_ENV,
     };
 
     let mut env = HashMap::new();

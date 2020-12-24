@@ -5,15 +5,12 @@ use crate::{
     local::common::{
         add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
     },
-    tasks::{
-        merge::libfuzzer_merge::{merge_inputs, Config},
-        utils::parse_key_value,
-    },
+    tasks::merge::libfuzzer_merge::{merge_inputs, Config},
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use onefuzz::syncdir::SyncedDir;
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();

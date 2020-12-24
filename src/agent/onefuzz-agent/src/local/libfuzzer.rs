@@ -4,9 +4,9 @@
 use crate::{
     local::{
         common::{
-            add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
-            CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR, DISABLE_CHECK_QUEUE, INPUTS_DIR,
-            NO_REPRO_DIR, REPORTS_DIR, TARGET_TIMEOUT, TARGET_WORKERS, UNIQUE_REPORTS_DIR,
+            add_cmd_options, CmdType, CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR,
+            DISABLE_CHECK_QUEUE, INPUTS_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_TIMEOUT,
+            TARGET_WORKERS, UNIQUE_REPORTS_DIR,
         },
         libfuzzer_coverage::build_coverage_config,
         libfuzzer_crash_report::build_report_config,
