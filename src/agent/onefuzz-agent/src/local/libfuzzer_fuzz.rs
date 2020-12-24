@@ -3,7 +3,7 @@
 
 use crate::{
     local::common::{
-        add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
         CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
     },
     tasks::fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},

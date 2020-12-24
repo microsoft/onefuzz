@@ -3,7 +3,7 @@
 
 use crate::{
     local::common::{
-        add_cmd_options, build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType,
         COVERAGE_DIR, INPUTS_DIR, READONLY_INPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
     },
     tasks::coverage::libfuzzer_coverage::{Config, CoverageTask},
