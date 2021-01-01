@@ -11,7 +11,7 @@ import subprocess  # nosec
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 import pkg_resources
