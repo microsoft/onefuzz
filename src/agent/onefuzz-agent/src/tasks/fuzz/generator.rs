@@ -128,7 +128,7 @@ async fn generate_input(
 async fn start_fuzzing<'a>(
     config: &GeneratorConfig,
     corpus_dirs: Vec<impl AsRef<Path>>,
-    tester: Tester<'a>,
+    tester: Tester<'_>,
     heartbeat_client: Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     let generator_tmp = "generator_tmp";
