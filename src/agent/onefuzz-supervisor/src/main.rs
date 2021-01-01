@@ -60,20 +60,19 @@ fn main() -> Result<()> {
         Opt::Run(opt) => run(opt)?,
         Opt::Debug(opt) => debug::debug(opt)?,
         Opt::Licenses => licenses()?,
-        Opt::Version => version()?,
+        Opt::Version => version(),
     };
 
     Ok(())
 }
 
-fn version() -> Result<()> {
+fn version() {
     println!(
         "{} onefuzz:{} git:{}",
         crate_version!(),
         env!("ONEFUZZ_VERSION"),
         env!("GIT_VERSION")
     );
-    Ok(())
 }
 
 fn licenses() -> Result<()> {
