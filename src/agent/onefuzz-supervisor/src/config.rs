@@ -88,7 +88,7 @@ impl StaticConfig {
     pub fn from_env() -> Result<Self> {
         let instance_id = Uuid::parse_str(&std::env::var("ONEFUZZ_INSTANCE_ID")?)?;
         let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
-        let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?.into();
+        let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?;
         let tenant = std::env::var("ONEFUZZ_TENANT")?;
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
@@ -114,7 +114,7 @@ impl StaticConfig {
         let credentials = ClientCredentials::new(
             client_id,
             client_secret,
-            onefuzz_url.clone().to_string(),
+            onefuzz_url.to_string(),
             tenant,
         )
         .into();
@@ -240,7 +240,7 @@ impl Registration {
                     );
                     delay_with_jitter(REGISTRATION_RETRY_PERIOD).await;
                 }
-                Err(err) => return Err(err.into()),
+                Err(err) => return Err(err),
             }
         }
 
