@@ -53,7 +53,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     let mut rt = Runtime::new()?;
     rt.block_on(merge_inputs(
         config.clone(),
-        vec![config.clone().inputs[0].path.clone()],
+        vec![config.inputs[0].path.clone()],
     ))?;
 
     Ok(())
