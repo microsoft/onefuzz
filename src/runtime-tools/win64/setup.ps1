@@ -41,6 +41,10 @@ function Install-OnefuzzSetup {
     log "onefuzz: executing managed-setup"
     ./managed.ps1
   }
+  if (Test-Path -Path scaleset-setup.ps1) {
+    log "onefuzz: executing scaleset-setup"
+    ./scaleset-setup.ps1
+  }
   if (Test-Path -Path task-setup.ps1) {
     log "onefuzz: executing task-setup"
     ./task-setup.ps1
