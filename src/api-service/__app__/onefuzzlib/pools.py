@@ -783,11 +783,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.info("no nodes need updating: %s", self.scaleset_id)
             return False
 
-        removed = []
         # Nodes do not exists in scalesets but in table due to unknown failure
         for node in nodes:
             if node.machine_id not in azure_nodes:
-                removed.append(node.machine_id)
                 logging.info(
                     "no longer in scaleset: %s:%s", self.scaleset_id, node.machine_id
                 )
