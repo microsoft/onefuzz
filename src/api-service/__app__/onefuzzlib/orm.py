@@ -294,12 +294,14 @@ class ORMMixin(ModelMixin):
         visited: Set[int] = set(),
     ) -> None:
         model_type = type(model)
+        if id(model) in visited:
+            return
+
+        visited.add(id(model))
+
         if Type_has_secrets.get(model_type, True):
             for field in model.__fields__:
                 field_data = getattr(model, field)
-                if id(field_data) in visited:
-                    continue
-
                 if isinstance(field_data, SecretData):
                     Type_has_secrets[model_type] = True
                     hider(field_data)
@@ -309,9 +311,13 @@ class ORMMixin(ModelMixin):
                             continue
                     for data in field_data:
                         cls.hide_secrets(data, hider, visited)
+                elif isinstance(field_data, dict):
+                    for key in field_data:
+                        if not isinstance(field_data[key], BaseModel):
+                            continue
+                        cls.hide_secrets(field_data[key], hider, visited)
                 else:
                     if isinstance(field_data, BaseModel):
-                        visited.add(id(field_data))
                         cls.hide_secrets(field_data, hider, visited)
 
         if model_type not in Type_has_secrets:

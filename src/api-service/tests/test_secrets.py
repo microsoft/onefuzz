@@ -3,8 +3,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import json
 import unittest
 
+from __app__.onefuzzlib.orm import ORMMixin
 from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.job_templates import (
     JobTemplate,
@@ -20,8 +22,6 @@ from onefuzztypes.models import (
     TeamsTemplate,
 )
 from onefuzztypes.primitives import Container
-
-from __app__.onefuzzlib.orm import ORMMixin
 
 
 class TestQueryBuilder(unittest.TestCase):
@@ -71,3 +71,12 @@ class TestQueryBuilder(unittest.TestCase):
             self.assertIsInstance(notification.config.url.secret, SecretAddress)
         else:
             self.fail(f"Invalid config type {type(notification.config)}")
+
+    def test_read_secret(self) -> None:
+        json_data = '{ "notification_id": "b52b24d1-eec6-46c9-b06a-818a997da43c", "container": "data"}'
+        data = json.loads(json_data)
+        data["config"] = json.loads('{"url": {"secret": {"url": "http://test"}}}')
+        notification = Notification.parse_obj(data)
+        self.assertIsInstance(notification.config, TeamsTemplate)
+        self.assertIsInstance(notification.config.url, SecretData)
+        self.assertIsInstance(notification.config.url.secret, SecretAddress)

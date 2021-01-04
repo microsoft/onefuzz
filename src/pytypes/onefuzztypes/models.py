@@ -54,7 +54,10 @@ class SecretData(Generic[T]):
     secret: Union[T, SecretAddress]
 
     def __init__(self, secret: Union[T, SecretAddress]):
-        self.secret = secret
+        if isinstance(secret, dict):
+            self.secret = SecretAddress.parse_obj(secret)
+        else:
+            self.secret = secret
 
     def __str__(self) -> str:
         if isinstance(self.secret, SecretAddress):
@@ -73,7 +76,6 @@ class SecretData(Generic[T]):
             return None
         else:
             return self.secret
-
 
 class EnumModel(BaseModel):
     @root_validator(pre=True)
