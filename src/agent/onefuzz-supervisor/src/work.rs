@@ -45,7 +45,7 @@ impl WorkSet {
         if let Err(err) = &data {
             if let ErrorKind::NotFound = err.kind() {
                 // If new image, there won't be any reboot context.
-                info!("no workset context found");
+                info!("no workset context found, assuming first launch");
                 return Ok(None);
             }
         }
