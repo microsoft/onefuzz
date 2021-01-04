@@ -77,6 +77,7 @@ class SecretData(Generic[T]):
         else:
             return self.secret
 
+
 class EnumModel(BaseModel):
     @root_validator(pre=True)
     def exactly_one(cls: Any, values: Any) -> Any:
