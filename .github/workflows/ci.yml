@@ -104,8 +104,9 @@ jobs:
         flake8 .
         black onefuzz examples tests --check
         isort --profile black ./onefuzz ./examples/ ./tests/ --check
-        mypy . --ignore-missing-imports
         pytest -v tests
+        ../ci/disable-py-cache.sh
+        mypy . --ignore-missing-imports
 
         # set a minimum confidence to ignore known false positives
         vulture --min-confidence 61 onefuzz
