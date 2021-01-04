@@ -11,7 +11,7 @@ import subprocess  # nosec
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 import pkg_resources
@@ -186,7 +186,7 @@ class Files(Endpoint):
         """ get a file from a container """
         self.logger.debug("getting file from container: %s:%s", container, filename)
         client = self._get_client(container)
-        downloaded = cast(bytes, client.download_blob(filename))
+        downloaded = client.download_blob(filename)
         return downloaded
 
     def upload_file(
