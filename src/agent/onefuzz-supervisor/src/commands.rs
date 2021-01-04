@@ -20,7 +20,7 @@ pub struct SshKeyInfo {
 }
 
 #[cfg(target_os = "windows")]
-async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
+pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     if key_info.user.is_some() {
         bail!("specifying a user is not supported on windows at this time");
     }
