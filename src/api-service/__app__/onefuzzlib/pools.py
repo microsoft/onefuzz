@@ -781,7 +781,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 return
 
             logging.info("creating scaleset: %s", self.scaleset_id)
-            extensions = fuzz_extensions(self.region, pool.os, self.pool_name)
+            extensions = fuzz_extensions(pool, self)
             result = create_vmss(
                 self.region,
                 self.scaleset_id,
@@ -1116,7 +1116,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             return
 
         logging.debug("updating scaleset configs: %s", self.scaleset_id)
-        extensions = fuzz_extensions(self.region, pool.os, self.pool_name)
+        extensions = fuzz_extensions(pool, self)
         try:
             update_extensions(self.scaleset_id, extensions)
         except UnableToUpdate:
