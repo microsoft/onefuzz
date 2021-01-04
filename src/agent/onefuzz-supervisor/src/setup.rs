@@ -38,6 +38,8 @@ impl SetupRunner {
     pub async fn run(&mut self, work_set: &WorkSet) -> Result<SetupOutput> {
         info!("running setup for work set");
 
+        work_set.save_context().await?;
+
         // Download the setup container.
         let setup_url = work_set.setup_url.url();
         let setup_dir = work_set.setup_url.container();
