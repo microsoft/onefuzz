@@ -128,7 +128,11 @@ fn load_config(opt: RunOpt) -> Result<StaticConfig> {
 }
 
 async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> Result<()> {
-    if let Some(work) = WorkSet::load_context().await? {
+    // Having existing worksets at this point means the supervisor crashed. If
+    // that is the case, mark each of the work units within the workset as
+    // failed, then exit as a failure.
+
+    if let Some(work) = WorkSet::load_from_fs_context().await? {
         let failure = "onefuzz-supervisor failed to launch task due to pre-existing config";
 
         for unit in &work.work_units {
@@ -151,6 +155,8 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
         };
         coordinator.emit_event(event.into()).await?;
 
+        // force set done semaphore, as to not prevent the supervisor continuing
+        // to report the workset as failed.
         done::set_done_lock().await?;
         anyhow::bail!("error starting due to pre-existing workset");
     }

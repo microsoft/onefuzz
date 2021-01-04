@@ -35,7 +35,7 @@ impl WorkSet {
         Ok(onefuzz::fs::onefuzz_root()?.join("workset_context.json"))
     }
 
-    pub async fn load_context() -> Result<Option<Self>> {
+    pub async fn load_from_fs_context() -> Result<Option<Self>> {
         let path = Self::context_path()?;
 
         info!("checking for workset context: {}", path.display());
