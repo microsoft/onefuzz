@@ -73,9 +73,14 @@ class TestQueryBuilder(unittest.TestCase):
             self.fail(f"Invalid config type {type(notification.config)}")
 
     def test_read_secret(self) -> None:
-        json_data = '{ "notification_id": "b52b24d1-eec6-46c9-b06a-818a997da43c", "container": "data"}'
+        json_data = """
+            {
+                "notification_id": "b52b24d1-eec6-46c9-b06a-818a997da43c",
+                "container": "data",
+                "config" : {"url": {"secret": {"url": "http://test"}}}
+            }
+            """
         data = json.loads(json_data)
-        data["config"] = json.loads('{"url": {"secret": {"url": "http://test"}}}')
         notification = Notification.parse_obj(data)
         self.assertIsInstance(notification.config, TeamsTemplate)
         self.assertIsInstance(notification.config.url, SecretData)
