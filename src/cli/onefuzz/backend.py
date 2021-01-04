@@ -148,7 +148,9 @@ class Backend:
 
         if self.config.tenant_domain:
             endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
-            scopes = ["https://" + self.config.tenant_domain + "/" + endpoint + "/.default"]
+            scopes = [
+                "https://" + self.config.tenant_domain + "/" + endpoint + "/.default"
+            ]
         else:
             scopes = [self.config.endpoint + "/.default"]
 
