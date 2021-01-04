@@ -11,6 +11,7 @@ INSTANCE_SETUP="/onefuzz/instance-specific-setup/setup.sh"
 USER_SETUP="/onefuzz/setup/setup.sh"
 TASK_SETUP="/onefuzz/bin/task-setup.sh"
 MANAGED_SETUP="/onefuzz/bin/managed.sh"
+SCALESET_SETUP="/onefuzz/bin/scaleset-setup.sh"
 export ONEFUZZ_ROOT=/onefuzz
 export ASAN_SYMBOLIZER_PATH=/onefuzz/bin/llvm-symbolizer
 
@@ -44,6 +45,10 @@ fi
 if [ -f /onefuzz/downloaded/repro-stdout.sh ]; then
     mv /onefuzz/downloaded/repro-stdout.sh /onefuzz/bin/
 fi
+if [ -f /onefuzz/downloaded/scaleset-setup.sh ]; then
+    mv /onefuzz/downloaded/scaleset-setup.sh /onefuzz/bin
+fi
+
 chmod -R a+rx /onefuzz/bin
 
 if [ -f ${MANAGED_SETUP} ]; then
@@ -53,6 +58,15 @@ if [ -f ${MANAGED_SETUP} ]; then
     logger "onefuzz: managed setup script stop"
 else
     logger "onefuzz: no managed setup script"
+fi
+
+if [ -f ${SCALESET_SETUP} ]; then
+    logger "onefuzz: scaleset setup script start"
+    chmod +x ${SCALESET_SETUP}
+    ${SCALESET_SETUP} 2>&1 | logger -s -i -t 'onefuzz-scaleset-setup'
+    logger "onefuzz: scaleset setup script stop"
+else
+    logger "onefuzz: no scaleset setup script"
 fi
 
 if [ -f ${INSTANCE_SETUP} ]; then
