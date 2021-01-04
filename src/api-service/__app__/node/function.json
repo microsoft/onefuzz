@@ -9,7 +9,8 @@
             "methods": [
                 "get",
                 "patch",
-                "delete"
+                "delete",
+                "post"
             ]
         },
         {
