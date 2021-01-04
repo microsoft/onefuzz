@@ -1181,6 +1181,27 @@ class Node(Endpoint):
             ),
         )
 
+    def add_ssh_key(
+        self, machine_id: UUID_EXPANSION, *, key: str, user: Optional[str] = None
+    ) -> responses.BoolResult:
+        self.logger.debug("add ssh key to node: %s", machine_id)
+        machine_id_expanded = self._disambiguate_uuid(
+            "machine_id",
+            machine_id,
+            lambda: [str(x.machine_id) for x in self.list()],
+        )
+
+        return self._req_model(
+            "POST",
+            responses.BoolResult,
+            data=requests.NodeAddSshKey(
+                machine_id=machine_id_expanded,
+                key=key,
+                user=user,
+            ),
+            alternate_endpoint="node/add_ssh_key",
+        )
+
 
 class Scaleset(Endpoint):
     """ Interact with managed scaleset pools """

@@ -18,9 +18,10 @@ from onefuzztypes.enums import (
 )
 from onefuzztypes.models import AutoScaleConfig, Error
 from onefuzztypes.models import Node as BASE_NODE
-from onefuzztypes.models import NodeAssignment, NodeCommand
+from onefuzztypes.models import NodeAssignment, NodeCommand, NodeCommandAddSshKey
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Pool as BASE_POOL
+from onefuzztypes.models import Result
 from onefuzztypes.models import Scaleset as BASE_SCALESET
 from onefuzztypes.models import (
     ScalesetNodeState,
@@ -253,11 +254,10 @@ class Node(BASE_NODE, ORMMixin):
         return self.version != __version__
 
     def send_message(self, message: NodeCommand) -> None:
-        stop_message = NodeMessage(
+        NodeMessage(
             agent_id=self.machine_id,
             message=message,
-        )
-        stop_message.save()
+        ).save()
 
     def to_reimage(self, done: bool = False) -> None:
         if done:
@@ -268,6 +268,21 @@ class Node(BASE_NODE, ORMMixin):
             logging.info("setting reimage_requested: %s", self.machine_id)
             self.reimage_requested = True
         self.save()
+
+    def add_ssh_public_key(self, key: str, user: Optional[str]) -> Result[None]:
+        if self.scaleset_id is None:
+            return Error(
+                code=ErrorCode.INVALID_REQUEST,
+                errors=["only able to add ssh keys to scaleset nodes"],
+            )
+        self.send_message(
+            NodeCommand(
+                add_ssh_key=NodeCommandAddSshKey(
+                    key=key, set_permissions=True, user=user
+                )
+            )
+        )
+        return None
 
     def stop(self) -> None:
         self.to_reimage()

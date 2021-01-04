@@ -675,9 +675,16 @@ class StopTaskNodeCommand(BaseModel):
     task_id: UUID
 
 
+class NodeCommandAddSshKey(BaseModel):
+    user: Optional[str]
+    key: str
+    set_permissions: bool
+
+
 class NodeCommand(EnumModel):
     stop: Optional[StopNodeCommand]
     stop_task: Optional[StopTaskNodeCommand]
+    add_ssh_key: Optional[NodeCommandAddSshKey]
 
 
 class NodeCommandEnvelope(BaseModel):
