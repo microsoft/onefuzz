@@ -46,12 +46,14 @@ HOURS = 60 * MINUTES
 DAYS = 24 * HOURS
 
 
+# status-top only representation of a Node
 class MiniNode(BaseModel):
     machine_id: UUID
     pool_name: str
     state: NodeState
 
 
+# status-top only representation of a Job
 class MiniJob(BaseModel):
     job_id: UUID
     config: JobConfig
@@ -59,6 +61,7 @@ class MiniJob(BaseModel):
     user_info: Optional[UserInfo]
 
 
+# status-top only representation of a Task
 class MiniTask(BaseModel):
     job_id: UUID
     task_id: UUID
