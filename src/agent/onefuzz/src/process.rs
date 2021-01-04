@@ -13,6 +13,7 @@ use tokio::{
     sync::Notify,
 };
 
+// Chosen to be significantly below the 32k ApplicationInsights message size
 const MAX_LOG_LINE_LENGTH: usize = 8192;
 
 /// Serializable representation of a process output.
@@ -154,11 +155,7 @@ async fn monitor_stream(name: &str, context: &str, stream: impl AsyncRead + Unpi
     Ok(())
 }
 
-async fn monitor_process_child(
-    context: &str,
-    process: Child,
-    stopped: Option<&Notify>,
-) -> Result<()> {
+async fn wait_process(context: &str, process: Child, stopped: Option<&Notify>) -> Result<()> {
     verbose!("waiting for child: {}", context);
 
     let output = process.wait_with_output().await?;
@@ -201,7 +198,7 @@ pub async fn monitor_process(
         false => None,
     };
 
-    let child = monitor_process_child(&context, process, stopped);
+    let child = wait_process(&context, process, stopped);
 
     if let Some((t1, t2)) = tasks {
         futures::try_join!(t1, t2, child)?;
