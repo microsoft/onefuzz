@@ -32,6 +32,7 @@ EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 DAY_TIMESPAN = "PT24H"
 HOUR_TIMESPAN = "PT1H"
+DEFAULT_TAIL_DELAY = 10.0
 
 
 class DebugRepro(Command):
@@ -499,7 +500,7 @@ class DebugLog(Command):
         base_query = self._build_keyword_query(value, limit=limit, desc=False)
 
         last_seen: Optional[str] = None
-        wait = 10.0
+        wait = DEFAULT_TAIL_DELAY
 
         while True:
             query = base_query.copy()
@@ -514,7 +515,7 @@ class DebugLog(Command):
                         entry = expression.search(entry)
                     if entry:
                         print(json.dumps(entry, indent=indent, sort_keys=True))
-                wait = 10
+                wait = DEFAULT_TAIL_DELAY
             else:
                 self.onefuzz.logger.debug("waiting %f seconds", wait)
 
