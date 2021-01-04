@@ -5,7 +5,7 @@
 
 set -ex
 
-export RUSTC_WRAPPER=$(which sccache)
+#export RUSTC_WRAPPER=$(which sccache)
 
 mkdir -p artifacts/proxy
 
