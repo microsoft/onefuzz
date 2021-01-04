@@ -238,14 +238,14 @@ libfuzzer_linux = JobTemplate(
             ],
         ),
         UserField(
-            name="require_crash_on_failure",
-            help="Require crashes upon non-clean exits from libfuzzer",
+            name="expect_crash_on_failure",
+            help="Require crashes upon non-zero exits from libfuzzer",
             type=UserFieldType.Bool,
             default=True,
             locations=[
                 UserFieldLocation(
                     op=UserFieldOperation.add,
-                    path="/tasks/0/task/require_crash_on_failure",
+                    path="/tasks/0/task/expect_crash_on_failure",
                 ),
             ],
         ),

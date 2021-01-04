@@ -49,7 +49,7 @@ class Libfuzzer(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
-        require_crash_on_failure: bool = True,
+        expect_crash_on_failure: bool = True,
     ) -> None:
 
         fuzzer_containers = [
@@ -79,7 +79,7 @@ class Libfuzzer(Command):
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
             check_fuzzer_help=check_fuzzer_help,
-            require_crash_on_failure=require_crash_on_failure,
+            expect_crash_on_failure=expect_crash_on_failure,
         )
 
         coverage_containers = [
@@ -161,7 +161,7 @@ class Libfuzzer(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
-        require_crash_on_failure: bool = True,
+        expect_crash_on_failure: bool = True,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -238,7 +238,7 @@ class Libfuzzer(Command):
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
             check_fuzzer_help=check_fuzzer_help,
-            require_crash_on_failure=require_crash_on_failure,
+            expect_crash_on_failure=expect_crash_on_failure,
         )
 
         self.logger.info("done creating tasks")

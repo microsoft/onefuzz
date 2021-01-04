@@ -51,7 +51,7 @@ pub struct Config {
     pub check_fuzzer_help: bool,
 
     #[serde(default = "default_bool_true")]
-    pub require_crash_on_failure: bool,
+    pub expect_crash_on_failure: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -183,9 +183,9 @@ impl LibFuzzerFuzzTask {
 
         // If the target exits, crashes are required unless
         // 1. Exited cleanly (happens with -runs=N)
-        // 2. require_crash_on_failure is disabled
+        // 2. expect_crash_on_failure is disabled
         if files.is_empty() && !exit_status.success {
-            if self.config.require_crash_on_failure {
+            if self.config.expect_crash_on_failure {
                 bail!(
                     "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
                     serde_json::to_string(&exit_status)?,

@@ -324,10 +324,10 @@ def build_task_config(
             else True
         )
 
-    if TaskFeature.require_crash_on_failure in definition.features:
-        config.require_crash_on_failure = (
-            task_config.task.require_crash_on_failure
-            if task_config.task.require_crash_on_failure is not None
+    if TaskFeature.expect_crash_on_failure in definition.features:
+        config.expect_crash_on_failure = (
+            task_config.task.expect_crash_on_failure
+            if task_config.task.expect_crash_on_failure is not None
             else True
         )
 

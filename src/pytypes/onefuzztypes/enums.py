@@ -76,7 +76,7 @@ class TaskFeature(Enum):
     ensemble_sync_delay = "ensemble_sync_delay"
     preserve_existing_outputs = "preserve_existing_outputs"
     check_fuzzer_help = "check_fuzzer_help"
-    require_crash_on_failure = "require_crash_on_failure"
+    expect_crash_on_failure = "expect_crash_on_failure"
 
 
 # Permissions for an Azure Blob Storage Container.

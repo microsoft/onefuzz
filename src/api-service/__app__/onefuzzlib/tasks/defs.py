@@ -64,7 +64,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_workers,
             TaskFeature.ensemble_sync_delay,
             TaskFeature.check_fuzzer_help,
-            TaskFeature.require_crash_on_failure,
+            TaskFeature.expect_crash_on_failure,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[

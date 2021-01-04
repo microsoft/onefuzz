@@ -186,7 +186,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Fuzzer Help",
                     "type": "boolean"
                 },
-                "require_crash_on_failure": {
+                "expect_crash_on_failure": {
                     "title": "Require Crash On Failure",
                     "type": "boolean"
                 },
@@ -817,7 +817,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Fuzzer Help",
                     "type": "boolean"
                 },
-                "require_crash_on_failure": {
+                "expect_crash_on_failure": {
                     "title": "Require Crash On Failure",
                     "type": "boolean"
                 },

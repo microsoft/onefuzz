@@ -117,7 +117,7 @@ class TaskDetails(BaseModel):
     check_debugger: Optional[bool] = Field(default=True)
     check_retry_count: Optional[int]
     check_fuzzer_help: Optional[bool]
-    require_crash_on_failure: Optional[bool]
+    expect_crash_on_failure: Optional[bool]
     rename_output: Optional[bool]
     supervisor_exe: Optional[str]
     supervisor_env: Optional[Dict[str, str]]
@@ -313,7 +313,7 @@ class TaskUnitConfig(BaseModel):
     check_debugger: Optional[bool]
     check_retry_count: Optional[int]
     check_fuzzer_help: Optional[bool]
-    require_crash_on_failure: Optional[bool]
+    expect_crash_on_failure: Optional[bool]
     rename_output: Optional[bool]
     generator_exe: Optional[str]
     generator_env: Optional[Dict[str, str]]

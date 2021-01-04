@@ -41,6 +41,8 @@ impl<'a> LibFuzzer<'a> {
     }
 
     pub async fn check_help(&self) -> Result<()> {
+        // Verify -help=1 exits with a zero return code, which validates the
+        // libfuzzer works as we expect.
         let mut cmd = Command::new(&self.exe);
 
         cmd.kill_on_drop(true)

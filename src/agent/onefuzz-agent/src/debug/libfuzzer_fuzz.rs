@@ -30,7 +30,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     // this happens during setup, not during runtime
     let check_fuzzer_help = true;
 
-    let require_crash_on_failure = args.is_present("require_crash_on_failure");
+    let expect_crash_on_failure = args.is_present("expect_crash_on_failure");
 
     let mut target_env = HashMap::new();
     for opt in args.values_of_lossy("target_env").unwrap_or_default() {
@@ -63,7 +63,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         target_workers,
         ensemble_sync_delay,
         check_fuzzer_help,
-        require_crash_on_failure,
+        expect_crash_on_failure,
         common: CommonConfig {
             heartbeat_queue: None,
             instrumentation_key: None,
@@ -113,8 +113,8 @@ pub fn args() -> App<'static, 'static> {
                 .required(true),
         )
         .arg(
-            Arg::with_name("require_crash_on_failure")
+            Arg::with_name("expect_crash_on_failure")
                 .takes_value(false)
-                .long("require_crash_on_failure"),
+                .long("expect_crash_on_failure"),
         )
 }
