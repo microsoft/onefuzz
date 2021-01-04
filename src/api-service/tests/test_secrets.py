@@ -8,10 +8,19 @@ import unittest
 
 from __app__.onefuzzlib.orm import ORMMixin
 from onefuzztypes.enums import OS, ContainerType
-from onefuzztypes.job_templates import (JobTemplate, JobTemplateIndex,
-                                        JobTemplateNotification)
-from onefuzztypes.models import (JobConfig, Notification, NotificationConfig,
-                                 SecretAddress, SecretData, TeamsTemplate)
+from onefuzztypes.job_templates import (
+    JobTemplate,
+    JobTemplateIndex,
+    JobTemplateNotification,
+)
+from onefuzztypes.models import (
+    JobConfig,
+    Notification,
+    NotificationConfig,
+    SecretAddress,
+    SecretData,
+    TeamsTemplate,
+)
 from onefuzztypes.primitives import Container
 
 
