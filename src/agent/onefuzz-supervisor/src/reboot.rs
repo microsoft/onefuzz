@@ -55,10 +55,11 @@ impl Reboot {
 
     pub async fn load_context(&mut self) -> Result<Option<RebootContext>> {
         use std::io::ErrorKind;
+        let path = reboot_context_path()?;
 
-        info!("checking for saved reboot context");
+        info!("checking for saved reboot context: {}", path.display());
 
-        let data = fs::read(reboot_context_path()?).await;
+        let data = fs::read(&path).await;
 
         if let Err(err) = &data {
             if let ErrorKind::NotFound = err.kind() {
@@ -71,11 +72,9 @@ impl Reboot {
         let data = data?;
         let ctx = serde_json::from_slice(&data)?;
 
-        info!(
-            "loaded reboot context from {}",
-            reboot_context_path()?.display()
-        );
+        fs::remove_file(&path).await?;
 
+        info!("loaded reboot context");
         Ok(Some(ctx))
     }
 
