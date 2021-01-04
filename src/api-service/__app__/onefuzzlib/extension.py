@@ -93,7 +93,7 @@ def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
     if pool.os == OS.windows and scaleset.auth is not None:
         ssh_key = scaleset.auth.public_key.strip()
         ssh_path = "$env:ProgramData/ssh/administrators_authorized_keys"
-        commands += ['Set-Content -Path %s -Value "%s"' % (ssh_path, ssh_key)]
+        commands += [f'Set-Content -Path {ssh_path} -Value "{ssh_key}"']
 
     save_blob("vm-scripts", filename, sep.join(commands) + sep, StorageType.config)
     return get_file_sas_url("vm-scripts", filename, StorageType.config, read=True)
