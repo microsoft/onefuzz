@@ -6,7 +6,6 @@
 import json
 import unittest
 
-from __app__.onefuzzlib.orm import ORMMixin
 from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.job_templates import (
     JobTemplate,
@@ -22,6 +21,8 @@ from onefuzztypes.models import (
     TeamsTemplate,
 )
 from onefuzztypes.primitives import Container
+
+from __app__.onefuzzlib.orm import ORMMixin
 
 
 class TestSecret(unittest.TestCase):
@@ -83,5 +84,8 @@ class TestSecret(unittest.TestCase):
         data = json.loads(json_data)
         notification = Notification.parse_obj(data)
         self.assertIsInstance(notification.config, TeamsTemplate)
-        self.assertIsInstance(notification.config.url, SecretData)
-        self.assertIsInstance(notification.config.url.secret, SecretAddress)
+        if isinstance(notification.config, TeamsTemplate):
+            self.assertIsInstance(notification.config.url, SecretData)
+            self.assertIsInstance(notification.config.url.secret, SecretAddress)
+        else:
+            self.fail(f"Invalid config type {type(notification.config)}")
