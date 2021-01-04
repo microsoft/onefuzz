@@ -67,11 +67,13 @@ def bucket_tasks(tasks: List[Task]) -> Dict[Tuple, List[Task]]:
         pool: Optional[str] = None
         unique: Optional[UUID] = None
 
+        # check for multiple VMs for pre-1.0.0 tasks
         if task.config.vm:
             vm = (task.config.vm.sku, task.config.vm.image)
             if task.config.vm.count > 1:
                 unique = uuid4()
 
+        # check for multiple VMs for 1.0.0 and later tasks
         if task.config.pool:
             pool = task.config.pool.pool_name
             if task.config.pool.count > 1:
