@@ -53,6 +53,7 @@ class Integration(BaseModel):
     wait_for_files: List[ContainerType]
     check_asan_log: Optional[bool] = Field(default=False)
     disable_check_debugger: Optional[bool] = Field(default=False)
+    reboot_after_setup: Optional[bool] = Field(default=False)
 
 
 TARGETS: Dict[str, Integration] = {
@@ -69,6 +70,7 @@ TARGETS: Dict[str, Integration] = {
         target_exe="fuzz.exe",
         inputs="seeds",
         wait_for_files=[ContainerType.unique_reports, ContainerType.coverage],
+        reboot_after_setup=True,
     ),
     "linux-libfuzzer-rust": Integration(
         template=TemplateType.libfuzzer,
@@ -202,6 +204,7 @@ class TestOnefuzz:
                     setup_dir=setup,
                     duration=1,
                     vm_count=1,
+                    reboot_after_setup=config.reboot_after_setup,
                 )
             elif config.template == TemplateType.radamsa:
                 job = self.of.template.radamsa.basic(
