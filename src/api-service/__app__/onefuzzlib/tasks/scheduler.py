@@ -45,12 +45,10 @@ def schedule_workset(workset: WorkSet, pool: Pool, count: int) -> bool:
     return True
 
 
-class TaskBucketKey(BaseModel):
-    os: OS
-    job_id: UUID
-    pool: Optional[TaskPool]
-    vm: Optional[TaskVm]
-    setup_container: str
+# TODO - Once Pydantic supports hashable models, the Tuple should be replaced
+# with a model.
+#
+# For info: https://github.com/samuelcolvin/pydantic/pull/1881
 
 
 def bucket_tasks(tasks: List[Task]) -> Dict[Tuple, List[Task]]:
