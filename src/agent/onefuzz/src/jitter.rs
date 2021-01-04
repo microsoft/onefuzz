@@ -14,7 +14,7 @@ pub async fn delay_with_jitter(value: Duration) {
     delay_for(jitter(value)).await
 }
 
-pub async fn delay_with_jitter_size(value: Duration) {
+pub async fn random_delay(value: Duration) {
     let random: u64 = thread_rng().gen_range(0, value.as_secs());
     let delay = Duration::new(random, 0);
     delay_for(delay).await

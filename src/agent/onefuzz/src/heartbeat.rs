@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::{jitter::delay_with_jitter_size, utils::CheckNotify};
+use crate::{jitter::random_delay, utils::CheckNotify};
 use anyhow::Result;
 use futures::Future;
 use reqwest::Url;
@@ -93,7 +93,7 @@ where
 
         let flush_context = context.clone();
         let heartbeat_process = task::spawn(async move {
-            delay_with_jitter_size(heartbeat_period).await;
+            random_delay(heartbeat_period).await;
             flush(flush_context.clone()).await;
             while !flush_context.cancelled.is_notified(heartbeat_period).await {
                 flush(flush_context.clone()).await;
