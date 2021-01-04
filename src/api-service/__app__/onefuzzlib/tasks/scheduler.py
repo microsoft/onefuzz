@@ -136,11 +136,15 @@ def build_work_unit(task: Task) -> Optional[Tuple[BucketConfig, WorkUnit]]:
     count = 1
     if task.config.pool:
         count = task.config.pool.count
+
+        # NOTE: "is True" is required to handle Optional[bool]
         reboot = task.config.task.reboot_after_setup is True
     elif task.config.vm:
         # this branch should go away when we stop letting people specify
         # VM configs directly.
         count = task.config.vm.count
+
+        # NOTE: "is True" is required to handle Optional[bool]
         reboot = (
             task.config.vm.reboot_after_setup is True
             or task.config.task.reboot_after_setup is True
