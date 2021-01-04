@@ -14,12 +14,16 @@ extern crate clap;
 #[macro_use]
 extern crate anyhow;
 
-use crate::heartbeat::*;
+use crate::{
+    config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::*, work::WorkSet,
+    worker::WorkerEvent,
+};
 use std::path::PathBuf;
 
 use anyhow::Result;
 use onefuzz::{
     machine_id::{get_machine_id, get_scaleset_name},
+    process::ExitStatus,
     telemetry::{self, EventData},
 };
 use structopt::StructOpt;
@@ -37,8 +41,6 @@ pub mod scheduler;
 pub mod setup;
 pub mod work;
 pub mod worker;
-
-use config::StaticConfig;
 
 #[derive(StructOpt, Debug)]
 enum Opt {
@@ -128,6 +130,43 @@ fn load_config(opt: RunOpt) -> Result<StaticConfig> {
     Ok(config)
 }
 
+async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> Result<()> {
+    // Having existing worksets at this point means the supervisor crashed. If
+    // that is the case, mark each of the work units within the workset as
+    // failed, then exit as a failure.
+
+    if let Some(work) = WorkSet::load_from_fs_context().await? {
+        let failure = "onefuzz-supervisor failed to launch task due to pre-existing config";
+
+        for unit in &work.work_units {
+            let event = WorkerEvent::Done {
+                task_id: unit.task_id,
+                stdout: "".to_string(),
+                stderr: failure.to_string(),
+                exit_status: ExitStatus {
+                    code: Some(1),
+                    signal: None,
+                    success: false,
+                },
+            };
+            coordinator.emit_event(event.into()).await?;
+        }
+
+        let event = StateUpdateEvent::Done {
+            error: Some(failure.to_string()),
+            script_output: None,
+        };
+        coordinator.emit_event(event.into()).await?;
+
+        // force set done semaphore, as to not prevent the supervisor continuing
+        // to report the workset as failed.
+        done::set_done_lock().await?;
+        anyhow::bail!("error starting due to pre-existing workset");
+    }
+
+    Ok(())
+}
+
 async fn run_agent(config: StaticConfig) -> Result<()> {
     telemetry::set_property(EventData::InstanceId(config.instance_id));
     telemetry::set_property(EventData::MachineId(get_machine_id().await?));
@@ -149,11 +188,15 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     };
     verbose!("current registration: {:?}", registration);
 
-    let coordinator = coordinator::Coordinator::new(registration.clone()).await?;
+    let mut coordinator = coordinator::Coordinator::new(registration.clone()).await?;
     verbose!("initialized coordinator");
 
     let mut reboot = reboot::Reboot;
-    let scheduler = reboot.load_context().await?.into();
+    let reboot_context = reboot.load_context().await?;
+    if reboot_context.is_none() {
+        check_existing_worksets(&mut coordinator).await?;
+    }
+    let scheduler = reboot_context.into();
     verbose!("loaded scheduler: {}", scheduler);
 
     let work_queue = work::WorkQueue::new(registration.clone());
