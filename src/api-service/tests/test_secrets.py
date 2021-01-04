@@ -24,7 +24,7 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import Container
 
 
-class TestQueryBuilder(unittest.TestCase):
+class TestSecret(unittest.TestCase):
     def test_hide(self) -> None:
         def hider(secret_data: SecretData) -> None:
             if not isinstance(secret_data.secret, SecretAddress):
