@@ -13,6 +13,7 @@ use onefuzz::{
     expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
     jitter::delay_with_jitter,
+    process::monitor_process,
     syncdir::{SyncOperation::Pull, SyncedDir},
     telemetry::Event::new_result,
 };
@@ -105,7 +106,8 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     .await?;
 
     let stopped = Notify::new();
-    let monitor_process = monitor_process(process, &stopped);
+    let monitor_supervisor =
+        monitor_process(process, "supervisor".to_string(), true, Some(&stopped));
     let hb = config.common.init_heartbeat().await?;
 
     let heartbeat_process = heartbeat_process(&stopped, hb);
@@ -125,7 +127,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     futures::try_join!(
         heartbeat_process,
-        monitor_process,
+        monitor_supervisor,
         monitor_stats,
         monitor_crashes,
         continuous_sync_task,
@@ -142,25 +144,6 @@ async fn heartbeat_process(
         heartbeat_client.alive();
     }
     Ok(())
-}
-
-async fn monitor_process(process: tokio::process::Child, stopped: &Notify) -> Result<()> {
-    verbose!("waiting for child output...");
-    let output: std::process::Output = process.wait_with_output().await?;
-    verbose!("child exited with {:?}", output.status);
-
-    if output.status.success() {
-        verbose!("child status is success, notifying");
-        stopped.notify();
-        Ok(())
-    } else {
-        let err_text = String::from_utf8_lossy(&output.stderr);
-        let output_text = String::from_utf8_lossy(&output.stdout);
-        let message = format!("{} {}", err_text, output_text);
-        error!("{}", message);
-        stopped.notify();
-        Err(Error::msg(message))
-    }
 }
 
 async fn start_supervisor(
@@ -212,6 +195,7 @@ async fn start_supervisor(
 mod tests {
     use super::*;
     use crate::tasks::stats::afl::read_stats;
+    use onefuzz::process::monitor_process;
     use onefuzz::telemetry::EventData;
     use std::collections::HashMap;
     use std::time::Instant;
@@ -297,7 +281,8 @@ mod tests {
         .unwrap();
 
         let notify = Notify::new();
-        let _fuzzing_monitor = monitor_process(process, &notify);
+        let _fuzzing_monitor =
+            monitor_process(process, "supervisor".to_string(), false, Some(&notify));
         let stat_output = fault_dir.join("fuzzer_stats");
         let start = Instant::now();
         loop {
