@@ -31,20 +31,19 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
     let host_key_path = ssh_path.join("ssh_host_dsa_key");
     let admin_auth_keys_path = ssh_path.join("administrators_authorized_keys");
-    let mut key_path = ssh_path;
-
-    dsa_path.push("ssh_host_dsa_key");
-    key_path.push("administrators_authorized_keys");
 
     {
-        let mut file = fs::OpenOptions::new().append(true).open(&key_path).await?;
+        let mut file = fs::OpenOptions::new()
+            .append(true)
+            .open(&admin_auth_keys_path)
+            .await?;
         file.write_all(key_info.public_key.expose_ref().as_bytes())
             .await?;
     }
 
     verbose!("removing Authenticated Users permissions from administrators_authorized_keys");
     let result = Command::new("icacls.exe")
-        .arg(&key_path)
+        .arg(&admin_auth_keys_path)
         .arg("/remove")
         .arg("NT AUTHORITY/Authenticated Users")
         .stdin(Stdio::null())
@@ -63,7 +62,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
     verbose!("removing inheritance");
     let result = Command::new("icacls.exe")
-        .arg(&key_path)
+        .arg(&admin_auth_keys_path)
         .arg("/inheritance:r")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -84,8 +83,8 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
         .arg(format!(
             "Get-Acl \"{}\" | Set-Acl \"{}\"",
-            dsa_path.display(),
-            key_path.display()
+            admin_auth_keys_path.display(),
+            host_key_path.display()
         ))
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -108,7 +107,8 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
 #[cfg(target_os = "linux")]
 pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
-    let user = get_user_by_name(ONEFUZZ_SERVICE_USER).ok_or_else(|| format_err!("unable to find user"))?;
+    let user =
+        get_user_by_name(ONEFUZZ_SERVICE_USER).ok_or_else(|| format_err!("unable to find user"))?;
     info!("adding sshkey:{:?} to user:{:?}", key_info, user);
 
     let home_path = user.home_dir().to_owned();
