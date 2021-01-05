@@ -218,6 +218,38 @@ libfuzzer_linux = JobTemplate(
             ],
         ),
         UserField(
+            name="check_fuzzer_help",
+            help="Verify fuzzer by checking if it supports -help=1",
+            type=UserFieldType.Bool,
+            default=True,
+            locations=[
+                UserFieldLocation(
+                    op=UserFieldOperation.add,
+                    path="/tasks/0/task/check_fuzzer_help",
+                ),
+                UserFieldLocation(
+                    op=UserFieldOperation.add,
+                    path="/tasks/1/task/check_fuzzer_help",
+                ),
+                UserFieldLocation(
+                    op=UserFieldOperation.add,
+                    path="/tasks/2/task/check_fuzzer_help",
+                ),
+            ],
+        ),
+        UserField(
+            name="expect_crash_on_failure",
+            help="Require crashes upon non-zero exits from libfuzzer",
+            type=UserFieldType.Bool,
+            default=True,
+            locations=[
+                UserFieldLocation(
+                    op=UserFieldOperation.add,
+                    path="/tasks/0/task/expect_crash_on_failure",
+                ),
+            ],
+        ),
+        UserField(
             name="reboot_after_setup",
             help=REBOOT_HELP,
             type=UserFieldType.Bool,

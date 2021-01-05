@@ -30,14 +30,18 @@
 //!
 //! Versions in parentheses have been tested.
 
-use crate::tasks::coverage::{recorder::CoverageRecorder, total::TotalCoverage};
 use crate::tasks::heartbeat::*;
 use crate::tasks::{config::CommonConfig, generic::input_poller::*};
+use crate::tasks::{
+    coverage::{recorder::CoverageRecorder, total::TotalCoverage},
+    utils::default_bool_true,
+};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use onefuzz::{
-    fs::list_files, syncdir::SyncedDir, telemetry::Event::coverage_data, telemetry::EventData,
+    fs::list_files, libfuzzer::LibFuzzer, syncdir::SyncedDir, telemetry::Event::coverage_data,
+    telemetry::EventData,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -60,6 +64,9 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub readonly_inputs: Vec<SyncedDir>,
     pub coverage: SyncedDir,
+
+    #[serde(default = "default_bool_true")]
+    pub check_fuzzer_help: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -91,6 +98,16 @@ impl CoverageTask {
 
     pub async fn run(&mut self) -> Result<()> {
         info!("starting libFuzzer coverage task");
+
+        if self.config.check_fuzzer_help {
+            let target = LibFuzzer::new(
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+            );
+            target.check_help().await?;
+        }
+
         self.config.coverage.init_pull().await?;
         self.process().await
     }
