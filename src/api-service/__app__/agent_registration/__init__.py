@@ -12,10 +12,10 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import AgentRegistrationGet, AgentRegistrationPost
 from onefuzztypes.responses import AgentRegistration
 
-from ..onefuzzlib.agent_authorization import call_if_agent
 from ..onefuzzlib.azure.containers import StorageType
 from ..onefuzzlib.azure.creds import get_instance_url
 from ..onefuzzlib.azure.queue import get_queue_sas
+from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.pools import Node, NodeMessage, NodeTasks, Pool
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
@@ -116,11 +116,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "POST":
-        m = post
-    elif req.method == "GET":
-        m = get
-    else:
-        raise Exception("invalid method")
-
-    return call_if_agent(req, m)
+    methods = {"POST": post, "GET": get}
+    method = methods[req.method]
+    return call_if_agent(req, method)

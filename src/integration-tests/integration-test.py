@@ -25,14 +25,13 @@ from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
 from uuid import UUID, uuid4
 
+from onefuzz.api import Command, Onefuzz
+from onefuzz.backend import ContainerWrapper, wait
+from onefuzz.cli import execute_api
 from onefuzztypes.enums import OS, ContainerType, TaskState, VmState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset
 from onefuzztypes.primitives import Directory, File
 from pydantic import BaseModel, Field
-
-from onefuzz.api import Command, Onefuzz
-from onefuzz.backend import ContainerWrapper, wait
-from onefuzz.cli import execute_api
 
 LINUX_POOL = "linux-test"
 WINDOWS_POOL = "linux-test"
