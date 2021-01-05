@@ -43,11 +43,6 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        m = get
-    elif req.method == "DELETE":
-        m = delete
-    else:
-        raise Exception("invalid method")
-
-    return call_if_agent(req, m)
+    methods = {"DELETE": delete, "GET": get}
+    method = methods[req.method]
+    return call_if_agent(req, method)

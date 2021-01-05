@@ -72,4 +72,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    return call_if_agent(req, post)
+    methods = {"POST": post}
+    method = methods[req.method]
+    return call_if_agent(req, method)

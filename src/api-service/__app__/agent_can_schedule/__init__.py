@@ -43,9 +43,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "POST":
-        m = post
-    else:
-        raise Exception("invalid method")
-
-    return call_if_agent(req, m)
+    methods = {"POST": post}
+    method = methods[req.method]
+    return call_if_agent(req, method)
