@@ -78,3 +78,7 @@ pub fn parse_key_value(value: String) -> Result<(String, String)> {
 
     Ok((value[..offset].to_string(), value[offset + 1..].to_string()))
 }
+
+pub fn default_bool_true() -> bool {
+    true
+}
