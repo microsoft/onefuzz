@@ -22,14 +22,15 @@ pub struct SshKeyInfo {
 #[cfg(target_os = "windows")]
 pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     if key_info.user.is_some() {
-        bail!("specifying a user is not supported on windows at this time");
+        bail!("specifying a user is not supported on Windows at this time");
     }
 
     let mut ssh_path =
         PathBuf::from(env::var("ProgramData").unwrap_or_else(|_| "c:\\programdata".to_string()));
     ssh_path.push("ssh");
 
-    let mut dsa_path = ssh_path.clone();
+    let host_key_path = ssh_path.join("ssh_host_dsa_key");
+    let admin_auth_keys_path = ssh_path.join("administrators_authorized_keys");
     let mut key_path = ssh_path;
 
     dsa_path.push("ssh_host_dsa_key");
@@ -41,7 +42,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     }
 
     if key_info.set_permissions {
-        verbose!("removing Authenicated Users permissions to ssh key");
+        verbose!("removing Authenticated Users permissions from administrators_authorized_keys");
         let result = Command::new("icacls.exe")
             .arg(&key_path)
             .arg("/remove")
@@ -78,7 +79,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
             );
         }
 
-        verbose!("copying ACL from ssh_host_data_key");
+        verbose!("copying ACL from ssh_host_dsa_key");
         let result = Command::new("powershell.exe")
             .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
             .arg(format!(
