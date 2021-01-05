@@ -8,6 +8,7 @@ use onefuzz::{
     expand::Expand,
     fs::set_executable,
     input_tester::Tester,
+    process::monitor_process,
     sha256,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     telemetry::Event::new_result,
@@ -174,7 +175,7 @@ impl GeneratorTask {
             .kill_on_drop(true)
             .env_remove("RUST_LOG")
             .stdin(Stdio::null())
-            .stdout(Stdio::null())
+            .stdout(Stdio::piped())
             .stderr(Stdio::piped());
 
         for arg in expand.evaluate(&self.config.generator_options)? {
@@ -186,9 +187,9 @@ impl GeneratorTask {
         }
 
         info!("Generating test cases with {:?}", generator);
-        let output = generator.spawn()?.wait_with_output().await?;
+        let output = generator.spawn()?;
+        monitor_process(output, "generator".to_string(), true, None).await?;
 
-        info!("Test case generation result {:?}", output);
         Ok(())
     }
 }
