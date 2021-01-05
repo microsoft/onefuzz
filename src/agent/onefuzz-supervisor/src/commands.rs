@@ -14,7 +14,7 @@ use users::{get_current_uid, get_user_by_name, get_user_by_uid, os::unix::UserEx
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SshKeyInfo {
-    pub key: Secret<String>,
+    pub public_key: Secret<String>,
     pub user: Option<String>,
     set_permissions: bool,
 }
@@ -38,7 +38,8 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
     {
         let mut file = fs::OpenOptions::new().append(true).open(&key_path).await?;
-        file.write_all(key_info.key.expose_ref().as_bytes()).await?;
+        file.write_all(key_info.public_key.expose_ref().as_bytes())
+            .await?;
     }
 
     if key_info.set_permissions {
@@ -148,7 +149,8 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
     {
         let mut file = fs::OpenOptions::new().append(true).open(&ssh_path).await?;
-        file.write_all(key_info.key.expose_ref().as_bytes()).await?;
+        file.write_all(key_info.public_key.expose_ref().as_bytes())
+            .await?;
     }
 
     if key_info.set_permissions {
