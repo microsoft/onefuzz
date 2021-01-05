@@ -19,12 +19,14 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     let inputs = value_t!(args, "inputs", String)?;
     let unique_inputs = value_t!(args, "unique_inputs", String)?;
+    let check_fuzzer_help = false;
 
     let common = build_common_config(args)?;
     let config = Arc::new(Config {
         target_exe,
         target_env,
         target_options,
+        check_fuzzer_help,
         input_queue: None,
         inputs: vec![SyncedDir {
             path: inputs.into(),

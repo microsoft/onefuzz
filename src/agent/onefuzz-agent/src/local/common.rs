@@ -20,6 +20,7 @@ pub const READONLY_INPUTS: &str = "readonly_inputs_dir";
 pub const CHECK_ASAN_LOG: &str = "check_asan_log";
 pub const TOOLS_DIR: &str = "tools_dir";
 pub const RENAME_OUTPUT: &str = "rename_output";
+pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";

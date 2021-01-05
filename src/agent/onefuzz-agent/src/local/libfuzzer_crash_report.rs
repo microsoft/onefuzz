@@ -3,9 +3,9 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_RETRY_COUNT,
-        CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE,
-        TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_FUZZER_HELP,
+        CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV,
+        TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
     tasks::report::libfuzzer_report::{Config, ReportTask},
 };
@@ -35,6 +35,7 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
     let check_queue = !args.is_present(DISABLE_CHECK_QUEUE);
+    let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
 
     let common = build_common_config(args)?;
     let config = Config {
@@ -43,6 +44,7 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
         target_options,
         target_timeout,
         check_retry_count,
+        check_fuzzer_help,
         input_queue: None,
         check_queue,
         crashes,
@@ -100,6 +102,9 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
         Arg::with_name(DISABLE_CHECK_QUEUE)
             .takes_value(false)
             .long(DISABLE_CHECK_QUEUE),
+        Arg::with_name(CHECK_FUZZER_HELP)
+            .takes_value(false)
+            .long(CHECK_FUZZER_HELP),
     ]
 }
 

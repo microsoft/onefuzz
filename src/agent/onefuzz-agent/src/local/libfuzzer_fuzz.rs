@@ -3,14 +3,16 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CRASHES_DIR,
-        INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_FUZZER_HELP,
+        CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
     },
     tasks::fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
+
+const DISABLE_EXPECT_CRASH_ON_FAILURE: &str = "disable_expect_crash_on_failure";
 
 pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     let crashes = value_t!(args, CRASHES_DIR, PathBuf)?.into();
@@ -22,6 +24,8 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 
     let target_workers = value_t!(args, "target_workers", u64).unwrap_or_default();
     let readonly_inputs = None;
+    let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
+    let expect_crash_on_failure = !args.is_present(DISABLE_EXPECT_CRASH_ON_FAILURE);
 
     let ensemble_sync_delay = None;
     let common = build_common_config(args)?;
@@ -34,6 +38,8 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
         target_options,
         target_workers,
         ensemble_sync_delay,
+        expect_crash_on_failure,
+        check_fuzzer_help,
         common,
     };
 
@@ -71,6 +77,12 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
         Arg::with_name(TARGET_WORKERS)
             .long(TARGET_WORKERS)
             .takes_value(true),
+        Arg::with_name(CHECK_FUZZER_HELP)
+            .takes_value(false)
+            .long(CHECK_FUZZER_HELP),
+        Arg::with_name(DISABLE_EXPECT_CRASH_ON_FAILURE)
+            .takes_value(false)
+            .long(DISABLE_EXPECT_CRASH_ON_FAILURE),
     ]
 }
 

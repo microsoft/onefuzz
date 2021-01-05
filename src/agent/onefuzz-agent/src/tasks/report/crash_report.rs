@@ -171,7 +171,7 @@ impl CrashReport {
             call_stack: asan_log.call_stack().to_vec(),
             call_stack_sha256: asan_log.call_stack_sha256(),
             asan_log: Some(asan_log.text().to_string()),
-            scariness_score: asan_log.scariness_score().into(),
+            scariness_score: asan_log.scariness_score(),
             scariness_description: asan_log.scariness_description().to_owned(),
             task_id,
             job_id,

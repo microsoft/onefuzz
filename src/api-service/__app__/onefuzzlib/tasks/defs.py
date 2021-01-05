@@ -63,6 +63,8 @@ TASK_DEFINITIONS = {
             TaskFeature.target_options,
             TaskFeature.target_workers,
             TaskFeature.ensemble_sync_delay,
+            TaskFeature.check_fuzzer_help,
+            TaskFeature.expect_crash_on_failure,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -105,6 +107,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_options,
             TaskFeature.target_timeout,
             TaskFeature.check_retry_count,
+            TaskFeature.check_fuzzer_help,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -146,6 +149,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_exe,
             TaskFeature.target_env,
             TaskFeature.target_options,
+            TaskFeature.check_fuzzer_help,
         ],
         vm=VmDefinition(compare=Compare.Equal, value=1),
         containers=[
@@ -180,6 +184,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_exe,
             TaskFeature.target_env,
             TaskFeature.target_options,
+            TaskFeature.check_fuzzer_help,
         ],
         vm=VmDefinition(compare=Compare.Equal, value=1),
         containers=[

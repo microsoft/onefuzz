@@ -188,8 +188,8 @@ mod global {
         assert_eq!(last_state, UNSET, "unexpected telemetry client state");
 
         unsafe {
-            CLIENTS.instance = instance.map(|s| RwLock::new(s));
-            CLIENTS.shared = shared.map(|s| RwLock::new(s));
+            CLIENTS.instance = instance.map(RwLock::new);
+            CLIENTS.shared = shared.map(RwLock::new);
         }
 
         STATE.store(SET, SeqCst);

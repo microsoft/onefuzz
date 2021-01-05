@@ -190,7 +190,8 @@ pub async fn check_asan_string(mut data: String) -> Result<Option<AsanLog>> {
 
 pub async fn check_asan_path(asan_dir: &Path) -> Result<Option<AsanLog>> {
     let mut entries = fs::read_dir(asan_dir).await?;
-    while let Some(file) = entries.next().await {
+    // there should be only up to one file in asan_dir
+    if let Some(file) = entries.next().await {
         let file = file?;
         let mut asan_text = fs::read_to_string(file.path()).await?;
         let asan = AsanLog::parse(asan_text.clone());

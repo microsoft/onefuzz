@@ -6,6 +6,7 @@ use crate::tasks::{
     config::CommonConfig,
     generic::input_poller::{CallbackImpl, InputPoller, Processor},
     heartbeat::*,
+    utils::default_bool_true,
 };
 use anyhow::Result;
 use async_trait::async_trait;
@@ -21,9 +22,6 @@ use std::{
 };
 use storage_queue::Message;
 
-fn default_bool_true() -> bool {
-    true
-}
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub target_exe: PathBuf,

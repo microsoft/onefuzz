@@ -2,7 +2,9 @@
 // Licensed under the MIT License.
 
 use super::crash_report::*;
-use crate::tasks::{config::CommonConfig, generic::input_poller::*, heartbeat::*};
+use crate::tasks::{
+    config::CommonConfig, generic::input_poller::*, heartbeat::*, utils::default_bool_true,
+};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -18,10 +20,6 @@ use std::{
 };
 use storage_queue::Message;
 
-fn default_bool_true() -> bool {
-    true
-}
-
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub target_exe: PathBuf,
@@ -34,6 +32,10 @@ pub struct Config {
     pub reports: Option<SyncedDir>,
     pub unique_reports: SyncedDir,
     pub no_repro: Option<SyncedDir>,
+
+    #[serde(default = "default_bool_true")]
+    pub check_fuzzer_help: bool,
+
     #[serde(default)]
     pub check_retry_count: u64,
 

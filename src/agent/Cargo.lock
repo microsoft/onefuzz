@@ -2104,6 +2104,7 @@ dependencies = [
  "backoff",
  "log",
  "reqwest",
+ "tokio",
 ]
 
 [[package]]

@@ -38,11 +38,7 @@ impl Worker {
     }
 
     pub fn is_done(&self) -> bool {
-        if let Worker::Done(..) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Worker::Done(..))
     }
 
     pub async fn update(

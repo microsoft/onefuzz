@@ -3,8 +3,8 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, COVERAGE_DIR,
-        INPUTS_DIR, READONLY_INPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_FUZZER_HELP,
+        COVERAGE_DIR, INPUTS_DIR, READONLY_INPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
     },
     tasks::coverage::libfuzzer_coverage::{Config, CoverageTask},
 };
@@ -27,12 +27,14 @@ pub fn build_coverage_config(args: &clap::ArgMatches<'_>, local_job: bool) -> Re
     };
 
     let coverage = value_t!(args, COVERAGE_DIR, PathBuf)?.into();
+    let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
 
     let common = build_common_config(args)?;
     let config = Config {
         target_exe,
         target_env,
         target_options,
+        check_fuzzer_help,
         input_queue: None,
         readonly_inputs,
         coverage,
@@ -68,6 +70,9 @@ pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
             .takes_value(true)
             .required(!local_job)
             .long(COVERAGE_DIR),
+        Arg::with_name(CHECK_FUZZER_HELP)
+            .takes_value(false)
+            .long(CHECK_FUZZER_HELP),
     ];
     if local_job {
         args.push(
