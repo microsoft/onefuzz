@@ -85,7 +85,8 @@ impl SyncedDir {
         delay_seconds: Option<u64>,
     ) -> Result<()> {
         if self.url.is_none() {
-            bail!("only able to sync with remote URLs");
+            verbose!("not continuously syncing, as SyncDir does not have a remote URL");
+            return Ok(());
         }
 
         let delay_seconds = delay_seconds.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS);
@@ -139,7 +140,8 @@ impl SyncedDir {
     /// a directory, and may reset it.
     pub async fn monitor_results(&self, event: Event) -> Result<()> {
         if self.url.is_none() {
-            bail!("only able to monitor with remote URLs");
+            verbose!("not monitoring for results, as SyncDir does not have a remote URL");
+            return Ok(());
         }
 
         loop {
