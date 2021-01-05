@@ -3,6 +3,7 @@
 
 use crate::auth::Secret;
 use anyhow::Result;
+use onefuzz::machine_id::get_scaleset_name;
 use std::process::Stdio;
 use tokio::{fs, io::AsyncWriteExt, process::Command};
 
@@ -21,8 +22,9 @@ pub struct SshKeyInfo {
 
 #[cfg(target_os = "windows")]
 pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
-    if key_info.user.is_some() {
-        bail!("specifying a user is not supported on Windows at this time");
+    if get_scaleset_name().await?.is_none() {
+        warn!("adding ssh keys only supported on managed nodes");
+        return Ok(());
     }
 
     let mut ssh_path =
@@ -107,6 +109,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
 #[cfg(target_os = "linux")]
 pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
+    if get_scaleset_name().await?.is_none() {
+        warn!("adding ssh keys only supported on managed nodes");
+        return Ok(());
+    }
+
     let user =
         get_user_by_name(ONEFUZZ_SERVICE_USER).ok_or_else(|| format_err!("unable to find user"))?;
     info!("adding sshkey:{:?} to user:{:?}", key_info, user);
