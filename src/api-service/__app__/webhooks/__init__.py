@@ -15,6 +15,7 @@ from onefuzztypes.requests import (
 )
 from onefuzztypes.responses import BoolResult
 
+from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.webhooks import Webhook
 
@@ -105,13 +106,6 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        return get(req)
-    elif req.method == "POST":
-        return post(req)
-    elif req.method == "DELETE":
-        return delete(req)
-    elif req.method == "PATCH":
-        return patch(req)
-    else:
-        raise Exception("invalid method")
+    methods = {"GET": get, "POST": post, "DELETE": delete, "PATCH": patch}
+    method = methods[req.method]
+    return call_if_user(req, method)
