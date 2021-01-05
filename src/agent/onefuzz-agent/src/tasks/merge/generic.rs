@@ -124,7 +124,7 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
         .await
     {
         Ok(_) => Ok(()),
-        Err(err) => Err(err.into()),
+        Err(err) => Err(err),
     }
 }
 
