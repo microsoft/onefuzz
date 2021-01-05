@@ -10,7 +10,7 @@ use tokio::process::Command;
 const SYSTEMD_CONFIG_DIR: &str = "/etc/systemd/system";
 const PROXY_PREFIX: &str = "onefuzz-proxy";
 
-fn build(data: &ConfigData) -> Result<HashMap<String, String>> {
+fn build(data: &ConfigData) -> HashMap<String, String> {
     let mut results = HashMap::new();
 
     for entry in &data.forwards {
@@ -40,7 +40,7 @@ ExecStart=/lib/systemd/systemd-socket-proxyd {}:{}
         results.insert(service_filename, service);
     }
 
-    Ok(results)
+    results
 }
 
 async fn stop_service(service: &str) -> Result<()> {
@@ -73,7 +73,7 @@ async fn restart_systemd() -> Result<()> {
 }
 
 pub async fn update(data: &ConfigData) -> Result<bool> {
-    let configs = build(data)?;
+    let configs = build(data);
     let mut changed = false;
 
     let mut config_dir = tokio::fs::read_dir(SYSTEMD_CONFIG_DIR).await?;
