@@ -115,20 +115,29 @@ impl CoverageTask {
     async fn process(&mut self) -> Result<()> {
         let mut processor = CoverageProcessor::new(self.config.clone()).await?;
 
+        let mut seen_inputs = false;
         // Update the total with the coverage from each seed corpus.
         for dir in &self.config.readonly_inputs {
             verbose!("recording coverage for {}", dir.path.display());
             dir.init_pull().await?;
-            self.record_corpus_coverage(&mut processor, dir).await?;
+            if self.record_corpus_coverage(&mut processor, dir).await? {
+                seen_inputs = true;
+            }
+
             fs::remove_dir_all(&dir.path).await?;
         }
-        processor.report_total().await?;
-        self.config.coverage.sync_push().await?;
 
-        info!(
-            "recorded coverage for {} containers in `readonly_inputs`",
-            self.config.readonly_inputs.len(),
-        );
+        if seen_inputs {
+            processor.report_total().await?;
+            self.config.coverage.sync_push().await?;
+
+            info!(
+                "recorded coverage for {} containers in `readonly_inputs`",
+                self.config.readonly_inputs.len(),
+            );
+        } else {
+            info!("no initial inputs in `readonly_inputs`",);
+        }
 
         // If a queue has been provided, poll it for new coverage.
         if let Some(queue) = &self.config.input_queue {
@@ -144,8 +153,9 @@ impl CoverageTask {
         &self,
         processor: &mut CoverageProcessor,
         corpus_dir: &SyncedDir,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let mut corpus = fs::read_dir(&corpus_dir.path).await?;
+        let mut seen_inputs = false;
 
         while let Some(input) = corpus.next().await {
             let input = match input {
@@ -157,9 +167,10 @@ impl CoverageTask {
             };
 
             processor.test_input(&input.path()).await?;
+            seen_inputs = true;
         }
 
-        Ok(())
+        Ok(seen_inputs)
     }
 }
 
