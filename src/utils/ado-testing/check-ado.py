@@ -7,8 +7,9 @@ import argparse
 import os
 import sys
 import time
+
 from azure.devops.connection import Connection
-from azure.devops.credentials import BasicTokenAuthentication, BasicAuthentication
+from azure.devops.credentials import BasicAuthentication, BasicTokenAuthentication
 from azure.devops.v6_0.work_item_tracking.models import Wiql
 
 
@@ -17,11 +18,11 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
-        "--url", default="https://dev.azure.com/your-instance-name", help="ADO Instance URL"
+        "--url",
+        default="https://dev.azure.com/your-instance-name",
+        help="ADO Instance URL",
     )
-    parser.add_argument(
-        "--areapath", default="OneFuzz-Test-Project", help="areapath"
-    )
+    parser.add_argument("--areapath", default="OneFuzz-Test-Project", help="areapath")
     parser.add_argument("--title", help="work item title")
     parser.add_argument(
         "--expected", type=int, help="expected number of work items", default=1
@@ -65,9 +66,11 @@ def main() -> None:
         time.sleep(2)
         print("trying again", flush=True)
 
-    assert len(work_items) >= args.expected, (
-        "unexpected work items (got %d, expected at least %d)"
-        % (len(work_items), args.expected)
+    assert (
+        len(work_items) >= args.expected
+    ), "unexpected work items (got %d, expected at least %d)" % (
+        len(work_items),
+        args.expected,
     )
 
 
