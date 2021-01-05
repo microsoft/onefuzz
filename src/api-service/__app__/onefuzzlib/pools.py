@@ -275,6 +275,10 @@ class Node(BASE_NODE, ORMMixin):
                 code=ErrorCode.INVALID_REQUEST,
                 errors=["only able to add ssh keys to scaleset nodes"],
             )
+
+        if not key.endswith("\n"):
+            key += "\n"
+
         self.send_message(
             NodeCommand(
                 add_ssh_key=NodeCommandAddSshKey(
