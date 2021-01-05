@@ -109,7 +109,7 @@ fn url_fixture(msg: Msg) -> Url {
     Url::parse(&format!("https://azure.com/c/{}", msg)).unwrap()
 }
 
-fn input_fixture(dir: &Path, msg: Msg) -> PathBuf {
+fn _input_fixture(dir: &Path, msg: Msg) -> PathBuf {
     let name = msg.to_string();
     dir.join(name)
 }

@@ -188,19 +188,27 @@ impl GeneratorTask {
 }
 
 mod tests {
+    use anyhow::Result;
+
     #[tokio::test]
     #[cfg(target_os = "linux")]
     #[ignore]
-    async fn test_radamsa_linux() {
-        use super::*;
+    async fn test_radamsa_linux() -> Result<()> {
+        use super::{Config, GeneratorTask};
+        use crate::tasks::config::CommonConfig;
+        use onefuzz::syncdir::SyncedDir;
+        use std::collections::HashMap;
         use std::env;
+        use std::path::Path;
+        use tempfile::tempdir;
 
-        let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX").unwrap();
-        let corpus_dir_temp = tempfile::tempdir().unwrap();
-        let corpus_dir = corpus_dir_temp.into_path();
-        let seed_file_name = corpus_dir.clone().join("seed.txt");
-        let radamsa_output_temp = tempfile::tempdir().unwrap();
-        let radamsa_output = radamsa_output_temp.into_path();
+        let crashes_temp = tempfile::tempdir()?;
+        let crashes = crashes_temp.path();
+
+        let inputs_temp = tempfile::tempdir().unwrap();
+        let inputs = inputs_temp.path();
+        let input_file = inputs.join("seed.txt");
+        tokio::fs::write(input_file, "test").await?;
 
         let generator_options: Vec<String> = vec![
             "-o",
@@ -214,22 +222,45 @@ mod tests {
         .map(|p| p.to_string())
         .collect();
 
+        let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX")?;
         let radamsa_as_path = Path::new(&radamsa_path);
         let radamsa_dir = radamsa_as_path.parent().unwrap();
-        let radamsa_exe = String::from("{tools_dir}/radamsa");
-        let radamsa_env = HashMap::new();
 
-        tokio::fs::write(seed_file_name, "test").await.unwrap();
-        let _output = generate_input(
-            &radamsa_exe,
-            &radamsa_env,
-            &generator_options,
-            &radamsa_dir,
-            corpus_dir,
-            radamsa_output.clone(),
-        )
-        .await;
-        let generated_outputs = std::fs::read_dir(radamsa_output.clone()).unwrap();
-        assert_eq!(generated_outputs.count(), 100, "No crashes generated");
+        let config = Config {
+            generator_exe: String::from("{tools_dir}/radamsa"),
+            generator_options,
+            readonly_inputs: vec![SyncedDir {
+                path: inputs.to_path_buf(),
+                url: None,
+            }],
+            crashes: SyncedDir {
+                path: crashes.to_path_buf(),
+                url: None,
+            },
+            tools: Some(SyncedDir {
+                path: radamsa_dir.to_path_buf(),
+                url: None,
+            }),
+            target_exe: Default::default(),
+            target_env: Default::default(),
+            target_options: Default::default(),
+            target_timeout: None,
+            check_asan_log: false,
+            check_debugger: false,
+            rename_output: false,
+            ensemble_sync_delay: None,
+            generator_env: HashMap::default(),
+            check_retry_count: 0,
+            common: CommonConfig::default(),
+        };
+        let task = GeneratorTask::new(config);
+
+        let generated_inputs = tempdir()?;
+        task.generate_inputs(inputs.to_path_buf(), generated_inputs.path())
+            .await?;
+
+        let count = std::fs::read_dir(generated_inputs.path())?.count();
+        assert_eq!(count, 100, "No inputs generated");
+        Ok(())
     }
 }
