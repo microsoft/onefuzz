@@ -61,20 +61,13 @@ impl GeneratorTask {
         Self { config }
     }
 
-    pub async fn local_run(&self) -> Result<()> {
-        self.config.crashes.init().await?;
-        for dir in &self.config.readonly_inputs {
-            dir.init().await?;
-        }
-
-        self.fuzzing_loop(None).await
-    }
-
-    pub async fn managed_run(&self) -> Result<()> {
+    pub async fn run(&self) -> Result<()> {
         self.config.crashes.init().await?;
         if let Some(tools) = &self.config.tools {
-            tools.init_pull().await?;
-            set_executable(&tools.path).await?;
+            if tools.url.is_some() {
+                tools.init_pull().await?;
+                set_executable(&tools.path).await?;
+            }
         }
 
         let hb_client = self.config.common.init_heartbeat().await?;
@@ -143,8 +136,8 @@ impl GeneratorTask {
 
             let destination_file = self.config.crashes.path.join(destination_file);
             if tester.is_crash(file.path()).await? {
-                info!("Crash found, path = {}", file.path().display());
                 fs::rename(file.path(), &destination_file).await?;
+                verbose!("crash found {}", destination_file.display());
             }
         }
         Ok(())

@@ -66,9 +66,8 @@ pub fn add_cmd_options(
             Arg::with_name(arg_name)
                 .long(arg_name)
                 .takes_value(true)
-                .multiple(true)
-                .allow_hyphen_values(true)
-                .help("Supports hyphens.  Recommendation: Set env first"),
+                .value_delimiter(" ")
+                .help("Use a quoted string with space separation to denote multiple arguments"),
         )
     }
     app

@@ -31,7 +31,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 
     let rename_output = args.is_present(RENAME_OUTPUT);
     let check_asan_log = args.is_present(CHECK_ASAN_LOG);
-    let check_debugger = args.is_present("disable_check_debugger");
+    let check_debugger = !args.is_present("disable_check_debugger");
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
     let target_timeout = Some(value_t!(args, TARGET_TIMEOUT, u64)?);
 
@@ -67,7 +67,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let config = build_fuzz_config(args)?;
-    GeneratorTask::new(config).local_run().await
+    GeneratorTask::new(config).run().await
 }
 
 pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
@@ -81,13 +81,14 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
             .takes_value(true)
             .multiple(true),
         Arg::with_name(TARGET_OPTIONS)
+            .default_value("{input}")
             .long(TARGET_OPTIONS)
             .takes_value(true)
-            .multiple(true)
-            .allow_hyphen_values(true)
-            .help("Supports hyphens.  Recommendation: Set last"),
+            .value_delimiter(" ")
+            .help("Use a quoted string with space separation to denote multiple arguments"),
         Arg::with_name(GENERATOR_EXE)
             .long(GENERATOR_EXE)
+            .default_value("radamsa")
             .takes_value(true)
             .required(true),
         Arg::with_name(GENERATOR_ENV)
@@ -97,9 +98,9 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
         Arg::with_name(GENERATOR_OPTIONS)
             .long(GENERATOR_OPTIONS)
             .takes_value(true)
-            .multiple(true)
-            .allow_hyphen_values(true)
-            .help("Supports hyphens.  Recommendation: Set last"),
+            .value_delimiter(" ")
+            .default_value("-H sha256 -o {generated_inputs}/input-%h.%s -n 100 -r {input_corpus}")
+            .help("Use a quoted string with space separation to denote multiple arguments"),
         Arg::with_name(CRASHES_DIR)
             .takes_value(true)
             .required(true)

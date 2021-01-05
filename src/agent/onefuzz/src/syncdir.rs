@@ -32,7 +32,8 @@ pub struct SyncedDir {
 impl SyncedDir {
     pub async fn sync(&self, operation: SyncOperation, delete_dst: bool) -> Result<()> {
         if self.url.is_none() {
-            bail!("only able to sync with remote URLs");
+            verbose!("not syncing as SyncedDir is missing remote URL");
+            return Ok(());
         }
 
         let dir = &self.path;
@@ -101,27 +102,24 @@ impl SyncedDir {
         }
     }
 
-    async fn file_uploader_monitor(&self, event: Event) -> Result<()> {
-        if self.url.is_none() {
-            bail!("only able to monitor with remote URLs");
-        }
-
-        let url = self.url.as_ref().unwrap().url();
+    async fn file_monitor_event(&self, event: Event) -> Result<()> {
         verbose!("monitoring {}", self.path.display());
-
         let mut monitor = DirectoryMonitor::new(self.path.clone());
         monitor.start()?;
-        let mut uploader = BlobUploader::new(url);
+
+        let mut uploader = self.url.as_ref().map(|x| BlobUploader::new(x.url()));
 
         while let Some(item) = monitor.next().await {
             event!(event.clone(); EventData::Path = item.display().to_string());
-            if let Err(err) = uploader.upload(item.clone()).await {
-                bail!(
-                    "Couldn't upload file.  path:{} dir:{} err:{}",
-                    item.display(),
-                    self.path.display(),
-                    err
-                );
+            if let Some(uploader) = &mut uploader {
+                if let Err(err) = uploader.upload(item.clone()).await {
+                    bail!(
+                        "Couldn't upload file.  path:{} dir:{} err:{}",
+                        item.display(),
+                        self.path.display(),
+                        err
+                    );
+                }
             }
         }
 
@@ -139,11 +137,6 @@ impl SyncedDir {
     /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
     /// a directory, and may reset it.
     pub async fn monitor_results(&self, event: Event) -> Result<()> {
-        if self.url.is_none() {
-            verbose!("not monitoring for results, as SyncDir does not have a remote URL");
-            return Ok(());
-        }
-
         loop {
             verbose!("waiting to monitor {}", self.path.display());
 
@@ -153,7 +146,7 @@ impl SyncedDir {
             }
 
             verbose!("starting monitor for {}", self.path.display());
-            self.file_uploader_monitor(event.clone()).await?;
+            self.file_monitor_event(event.clone()).await?;
         }
     }
 }
@@ -169,6 +162,17 @@ pub async fn continuous_sync(
     operation: SyncOperation,
     delay_seconds: Option<u64>,
 ) -> Result<()> {
+    let mut should_loop = false;
+    for dir in dirs {
+        if dir.url.is_some() {
+            should_loop = true;
+        }
+    }
+    if !should_loop {
+        verbose!("not syncing as SyncDirs do not have remote URLs");
+        return Ok(());
+    }
+
     let delay_seconds = delay_seconds.unwrap_or(DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS);
     if delay_seconds == 0 {
         return Ok(());

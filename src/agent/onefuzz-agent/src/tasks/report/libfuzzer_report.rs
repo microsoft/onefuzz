@@ -58,7 +58,7 @@ impl ReportTask {
     }
 
     pub async fn local_run(&self) -> Result<()> {
-        let processor = AsanProcessor::new(self.config.clone()).await?;
+        let mut processor = AsanProcessor::new(self.config.clone()).await?;
         let crashes = match &self.config.crashes {
             Some(x) => x,
             None => bail!("missing crashes directory"),
@@ -74,14 +74,14 @@ impl ReportTask {
 
         let mut read_dir = tokio::fs::read_dir(&crashes.path).await?;
         while let Some(crash) = read_dir.next().await {
-            processor.test_local(crash?.path()).await?;
+            processor.process(None, &crash?.path()).await?;
         }
 
         if self.config.check_queue {
             let mut monitor = DirectoryMonitor::new(crashes.path.clone());
             monitor.start()?;
             while let Some(crash) = monitor.next().await {
-                processor.test_local(crash).await?;
+                processor.process(None, &crash).await?;
             }
         }
 
@@ -119,20 +119,6 @@ impl AsanProcessor {
             config,
             heartbeat_client,
         })
-    }
-
-    async fn test_local(&self, input: PathBuf) -> Result<()> {
-        info!("generating crash report for: {}", input.display());
-        let result = self.test_input(None, &input).await?;
-        result
-            .save_local(
-                &self.config.unique_reports,
-                &self.config.reports,
-                &self.config.no_repro,
-            )
-            .await?;
-
-        Ok(())
     }
 
     pub async fn test_input(
@@ -195,10 +181,10 @@ impl AsanProcessor {
 #[async_trait]
 impl Processor for AsanProcessor {
     async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
-        info!("processing libfuzzer crash url:{:?} path:{:?}", url, input);
+        verbose!("processing libfuzzer crash url:{:?} path:{:?}", url, input);
         let report = self.test_input(url, input).await?;
         report
-            .upload(
+            .save(
                 &self.config.unique_reports,
                 &self.config.reports,
                 &self.config.no_repro,

@@ -58,9 +58,8 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
         Arg::with_name(TARGET_OPTIONS)
             .long(TARGET_OPTIONS)
             .takes_value(true)
-            .multiple(true)
-            .allow_hyphen_values(true)
-            .help("Supports hyphens.  Recommendation: Set last"),
+            .value_delimiter(" ")
+            .help("Use a quoted string with space separation to denote multiple arguments"),
         Arg::with_name(INPUTS_DIR)
             .long(INPUTS_DIR)
             .takes_value(true)

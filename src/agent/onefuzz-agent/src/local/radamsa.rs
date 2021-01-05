@@ -17,7 +17,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let report_config = build_report_config(args)?;
 
     let fuzzer = GeneratorTask::new(fuzz_config);
-    let fuzz_task = fuzzer.local_run();
+    let fuzz_task = fuzzer.run();
 
     let report = ReportTask::new(&report_config);
     let report_task = report.local_run();
