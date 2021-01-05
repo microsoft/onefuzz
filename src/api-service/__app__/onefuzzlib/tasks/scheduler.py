@@ -8,7 +8,7 @@ from typing import Dict, Generator, List, Optional, Tuple, TypeVar
 from uuid import UUID, uuid4
 
 from onefuzztypes.enums import OS, PoolState, TaskState
-from onefuzztypes.models import TaskPool, TaskVm, WorkSet, WorkUnit
+from onefuzztypes.models import WorkSet, WorkUnit
 from pydantic import BaseModel
 
 from ..azure.containers import StorageType, blob_exists, get_container_sas_url
