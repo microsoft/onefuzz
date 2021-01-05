@@ -261,8 +261,8 @@ pub struct ModuleImage {
 impl ModuleImage {
     pub fn new(map: MemoryMap) -> Result<Self> {
         if let MMapPath::Path(..) = &map.pathname {
-            if map.perms.contains("x") {
-                return Ok(ModuleImage { map });
+            if map.perms.contains('x') {
+                Ok(ModuleImage { map })
             } else {
                 anyhow::bail!("memory mapping is not executable");
             }

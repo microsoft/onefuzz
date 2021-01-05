@@ -104,10 +104,11 @@ impl<'a> LibFuzzer<'a> {
         }
 
         // check if a max_time is already set
-        if let None = self
+        if self
             .options
             .iter()
             .find(|o| o.starts_with("-max_total_time"))
+            .is_none()
         {
             cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
         }
@@ -252,13 +253,13 @@ mod tests {
 
     #[test]
     fn test_libfuzzer_line_pulse() {
-        let line = r"#2097152        pulse  cov: 11 ft: 11 corp: 6/21b lim: 4096 exec/s: 699050 rss: 562Mb".into();
+        let line = r"#2097152        pulse  cov: 11 ft: 11 corp: 6/21b lim: 4096 exec/s: 699050 rss: 562Mb";
 
         let parsed = LibFuzzerLine::parse(line)
             .expect("parse error")
             .expect("no captures");
 
         assert_eq!(parsed.iters(), 2097152);
-        assert_eq!(parsed.execs_sec(), 699050.0);
+        assert_eq!(parsed.execs_sec(), 699050.0_f64);
     }
 }
