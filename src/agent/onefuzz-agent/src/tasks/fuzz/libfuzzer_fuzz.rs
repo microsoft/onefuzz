@@ -80,12 +80,7 @@ impl LibFuzzerFuzzTask {
         }
     }
 
-    pub async fn local_run(&self) -> Result<()> {
-        self.init_directories().await?;
-        self.run_fuzzers(None).await
-    }
-
-    pub async fn managed_run(&self) -> Result<()> {
+    pub async fn run(&self) -> Result<()> {
         self.init_directories().await?;
 
         let hb_client = self.config.common.init_heartbeat().await?;

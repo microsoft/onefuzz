@@ -48,7 +48,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let config = build_fuzz_config(args)?;
-    LibFuzzerFuzzTask::new(config)?.local_run().await
+    LibFuzzerFuzzTask::new(config)?.run().await
 }
 
 pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {

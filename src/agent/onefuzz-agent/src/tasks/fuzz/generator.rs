@@ -188,12 +188,10 @@ impl GeneratorTask {
 }
 
 mod tests {
-    use anyhow::Result;
-
     #[tokio::test]
     #[cfg(target_os = "linux")]
     #[ignore]
-    async fn test_radamsa_linux() -> Result<()> {
+    async fn test_radamsa_linux() -> anyhow::Result<()> {
         use super::{Config, GeneratorTask};
         use crate::tasks::config::CommonConfig;
         use onefuzz::syncdir::SyncedDir;
