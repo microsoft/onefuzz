@@ -676,9 +676,7 @@ class StopTaskNodeCommand(BaseModel):
 
 
 class NodeCommandAddSshKey(BaseModel):
-    user: Optional[str]
     public_key: str
-    set_permissions: bool
 
 
 class NodeCommand(EnumModel):

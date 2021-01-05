@@ -1182,7 +1182,7 @@ class Node(Endpoint):
         )
 
     def add_ssh_key(
-        self, machine_id: UUID_EXPANSION, *, public_key: str, user: Optional[str] = None
+        self, machine_id: UUID_EXPANSION, *, public_key: str
     ) -> responses.BoolResult:
         self.logger.debug("add ssh public key to node: %s", machine_id)
         machine_id_expanded = self._disambiguate_uuid(
@@ -1197,7 +1197,6 @@ class Node(Endpoint):
             data=requests.NodeAddSshKey(
                 machine_id=machine_id_expanded,
                 public_key=public_key,
-                user=user,
             ),
             alternate_endpoint="node/add_ssh_key",
         )

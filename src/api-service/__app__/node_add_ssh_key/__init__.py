@@ -24,7 +24,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             Error(code=ErrorCode.UNABLE_TO_FIND, errors=["unable to find node"]),
             context=request.machine_id,
         )
-    result = node.add_ssh_public_key(public_key=request.public_key, user=request.user)
+    result = node.add_ssh_public_key(public_key=request.public_key)
     if isinstance(result, Error):
         return not_ok(result, context="NodeAddSshKey")
 

@@ -237,5 +237,4 @@ class WebhookUpdate(BaseModel):
 
 class NodeAddSshKey(BaseModel):
     machine_id: UUID
-    user: Optional[str]
     public_key: str

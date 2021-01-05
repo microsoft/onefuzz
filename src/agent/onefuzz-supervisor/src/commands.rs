@@ -10,13 +10,13 @@ use tokio::{fs, io::AsyncWriteExt, process::Command};
 use std::{env, path::PathBuf};
 
 #[cfg(target_os = "linux")]
-use users::{get_current_uid, get_user_by_name, get_user_by_uid, os::unix::UserExt};
+use users::{get_user_by_name, os::unix::UserExt};
+
+const ONEFUZZ_SERVICE_USER: &str = "onefuzz";
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SshKeyInfo {
     pub public_key: Secret<String>,
-    pub user: Option<String>,
-    set_permissions: bool,
 }
 
 #[cfg(target_os = "windows")]
@@ -42,65 +42,63 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
             .await?;
     }
 
-    if key_info.set_permissions {
-        verbose!("removing Authenticated Users permissions from administrators_authorized_keys");
-        let result = Command::new("icacls.exe")
-            .arg(&key_path)
-            .arg("/remove")
-            .arg("NT AUTHORITY/Authenticated Users")
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?
-            .wait_with_output()
-            .await?;
-        if !result.status.success() {
-            bail!(
-                "set authorized_keys ({}) permissions failed: {:?}",
-                key_path.display(),
-                result
-            );
-        }
+    verbose!("removing Authenticated Users permissions from administrators_authorized_keys");
+    let result = Command::new("icacls.exe")
+        .arg(&key_path)
+        .arg("/remove")
+        .arg("NT AUTHORITY/Authenticated Users")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?
+        .wait_with_output()
+        .await?;
+    if !result.status.success() {
+        bail!(
+            "set authorized_keys ({}) permissions failed: {:?}",
+            key_path.display(),
+            result
+        );
+    }
 
-        verbose!("removing inheritance");
-        let result = Command::new("icacls.exe")
-            .arg(&key_path)
-            .arg("/inheritance:r")
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?
-            .wait_with_output()
-            .await?;
-        if !result.status.success() {
-            bail!(
-                "set authorized_keys ({}) permissions failed: {:?}",
-                key_path.display(),
-                result
-            );
-        }
+    verbose!("removing inheritance");
+    let result = Command::new("icacls.exe")
+        .arg(&key_path)
+        .arg("/inheritance:r")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?
+        .wait_with_output()
+        .await?;
+    if !result.status.success() {
+        bail!(
+            "set authorized_keys ({}) permissions failed: {:?}",
+            key_path.display(),
+            result
+        );
+    }
 
-        verbose!("copying ACL from ssh_host_dsa_key");
-        let result = Command::new("powershell.exe")
-            .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
-            .arg(format!(
-                "Get-Acl \"{}\" | Set-Acl \"{}\"",
-                dsa_path.display(),
-                key_path.display()
-            ))
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?
-            .wait_with_output()
-            .await?;
-        if !result.status.success() {
-            bail!(
-                "set authorized_keys ({}) permissions failed: {:?}",
-                key_path.display(),
-                result
-            );
-        }
+    verbose!("copying ACL from ssh_host_dsa_key");
+    let result = Command::new("powershell.exe")
+        .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
+        .arg(format!(
+            "Get-Acl \"{}\" | Set-Acl \"{}\"",
+            dsa_path.display(),
+            key_path.display()
+        ))
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?
+        .wait_with_output()
+        .await?;
+    if !result.status.success() {
+        bail!(
+            "set authorized_keys ({}) permissions failed: {:?}",
+            key_path.display(),
+            result
+        );
     }
 
     info!("ssh key written: {}", key_path.display());
@@ -110,11 +108,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
 #[cfg(target_os = "linux")]
 pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
-    let user = match &key_info.user {
-        Some(user) => get_user_by_name(&user),
-        None => get_user_by_uid(get_current_uid()),
-    }
-    .ok_or_else(|| format_err!("unable to find user"))?;
+    let user = get_user_by_name(ONEFUZZ_SERVICE_USER).ok_or_else(|| format_err!("unable to find user"))?;
     info!("adding sshkey:{:?} to user:{:?}", key_info, user);
 
     let home_path = user.home_dir().to_owned();
@@ -128,20 +122,18 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         fs::create_dir_all(&ssh_path).await?;
     }
 
-    if key_info.set_permissions {
-        verbose!("setting ssh permissions");
-        let result = Command::new("chmod")
-            .arg("700")
-            .arg(&ssh_path)
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?
-            .wait_with_output()
-            .await?;
-        if !result.status.success() {
-            bail!("set $HOME/.ssh permissions failed: {:?}", result);
-        }
+    verbose!("setting ssh permissions");
+    let result = Command::new("chmod")
+        .arg("700")
+        .arg(&ssh_path)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?
+        .wait_with_output()
+        .await?;
+    if !result.status.success() {
+        bail!("set $HOME/.ssh permissions failed: {:?}", result);
     }
 
     ssh_path.push("authorized_keys");
@@ -152,24 +144,22 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
             .await?;
     }
 
-    if key_info.set_permissions {
-        verbose!("setting authorized_keys permissions");
-        let result = Command::new("chmod")
-            .arg("600")
-            .arg(&ssh_path)
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?
-            .wait_with_output()
-            .await?;
-        if !result.status.success() {
-            bail!(
-                "set authorized_keys ({}) permissions failed: {:?}",
-                ssh_path.display(),
-                result
-            );
-        }
+    verbose!("setting authorized_keys permissions");
+    let result = Command::new("chmod")
+        .arg("600")
+        .arg(&ssh_path)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?
+        .wait_with_output()
+        .await?;
+    if !result.status.success() {
+        bail!(
+            "set authorized_keys ({}) permissions failed: {:?}",
+            ssh_path.display(),
+            result
+        );
     }
 
     info!("ssh key written: {}", ssh_path.display());

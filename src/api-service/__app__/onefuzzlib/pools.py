@@ -269,7 +269,7 @@ class Node(BASE_NODE, ORMMixin):
             self.reimage_requested = True
         self.save()
 
-    def add_ssh_public_key(self, public_key: str, user: Optional[str]) -> Result[None]:
+    def add_ssh_public_key(self, public_key: str) -> Result[None]:
         if self.scaleset_id is None:
             return Error(
                 code=ErrorCode.INVALID_REQUEST,
@@ -280,11 +280,7 @@ class Node(BASE_NODE, ORMMixin):
             public_key += "\n"
 
         self.send_message(
-            NodeCommand(
-                add_ssh_key=NodeCommandAddSshKey(
-                    public_key=public_key, set_permissions=True, user=user
-                )
-            )
+            NodeCommand(add_ssh_key=NodeCommandAddSshKey(public_key=public_key))
         )
         return None
 
