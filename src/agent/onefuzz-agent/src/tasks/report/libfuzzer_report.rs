@@ -2,7 +2,9 @@
 // Licensed under the MIT License.
 
 use super::crash_report::*;
-use crate::tasks::{config::CommonConfig, generic::input_poller::*, heartbeat::*};
+use crate::tasks::{
+    config::CommonConfig, generic::input_poller::*, heartbeat::*, utils::default_bool_true,
+};
 use anyhow::Result;
 use async_trait::async_trait;
 use onefuzz::{blob::BlobUrl, libfuzzer::LibFuzzer, sha256, syncdir::SyncedDir};
@@ -27,6 +29,10 @@ pub struct Config {
     pub reports: Option<SyncedDir>,
     pub unique_reports: SyncedDir,
     pub no_repro: Option<SyncedDir>,
+
+    #[serde(default = "default_bool_true")]
+    pub check_fuzzer_help: bool,
+
     #[serde(default)]
     pub check_retry_count: u64,
 
@@ -50,6 +56,15 @@ impl ReportTask {
     }
 
     pub async fn run(&mut self) -> Result<()> {
+        if self.config.check_fuzzer_help {
+            let target = LibFuzzer::new(
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+            );
+            target.check_help().await?;
+        }
+
         info!("Starting libFuzzer crash report task");
         let mut processor = AsanProcessor::new(self.config.clone()).await?;
 
