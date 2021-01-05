@@ -167,7 +167,7 @@ impl Crash {
 
         let proc = stacktrace.trace(tid.as_raw() as u32)?;
 
-        let crashing_access = segv_access_addr(siginfo)?.map(|a| a.into());
+        let crashing_access = segv_access_addr(siginfo).map(|a| a.into());
 
         let maps = proc_maps::get_process_maps(tid.as_raw())?;
 
@@ -331,10 +331,10 @@ fn find_mapping(addr: u64, maps: &[MapRange]) -> Option<&MapRange> {
 // Only 4 signals populate the `si_addr` field of `siginfo_t`. See `sigaction(2)`.
 // On Linux, the most reliable one is SIGSEGV, which saves the address of the invalid
 // memory access.
-fn segv_access_addr(siginfo: Siginfo) -> Result<Option<u64>> {
+fn segv_access_addr(siginfo: Siginfo) -> Option<u64> {
     let is_segv = siginfo.si_signo == (SIGSEGV as i32);
 
-    let addr = if is_segv {
+    if is_segv {
         // Accessing a union, safe because we checked `si_signo`.
         let ptr = unsafe { siginfo.si_addr() };
 
@@ -343,9 +343,7 @@ fn segv_access_addr(siginfo: Siginfo) -> Result<Option<u64>> {
         Some(addr)
     } else {
         None
-    };
-
-    Ok(addr)
+    }
 }
 
 const CRASH_SIGNALS: &[Signal] = &[SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGABRT];

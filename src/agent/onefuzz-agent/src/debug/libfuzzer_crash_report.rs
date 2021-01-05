@@ -40,12 +40,16 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     let target_timeout = value_t!(args, "target_timeout", u64).ok();
     let check_retry_count = value_t!(args, "check_retry_count", u64)?;
 
+    // this happens during setup, not during runtime
+    let check_fuzzer_help = true;
+
     let config = Config {
         target_exe,
         target_env,
         target_options,
         target_timeout,
         check_retry_count,
+        check_fuzzer_help,
         input_queue: None,
         crashes: None,
         reports: None,

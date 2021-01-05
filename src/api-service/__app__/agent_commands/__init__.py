@@ -8,7 +8,7 @@ from onefuzztypes.models import Error, NodeCommandEnvelope
 from onefuzztypes.requests import NodeCommandDelete, NodeCommandGet
 from onefuzztypes.responses import BoolResult, PendingNodeCommand
 
-from ..onefuzzlib.agent_authorization import call_if_agent
+from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.pools import NodeMessage
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -43,11 +43,6 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        m = get
-    elif req.method == "DELETE":
-        m = delete
-    else:
-        raise Exception("invalid method")
-
-    return call_if_agent(req, m)
+    methods = {"DELETE": delete, "GET": get}
+    method = methods[req.method]
+    return call_if_agent(req, method)

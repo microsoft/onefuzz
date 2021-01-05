@@ -20,6 +20,7 @@ from ..onefuzzlib.azure.containers import (
     get_container_sas_url,
     get_containers,
 )
+from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
@@ -90,4 +91,5 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     methods = {"GET": get, "POST": post, "DELETE": delete}
-    return methods[req.method](req)
+    method = methods[req.method]
+    return call_if_user(req, method)

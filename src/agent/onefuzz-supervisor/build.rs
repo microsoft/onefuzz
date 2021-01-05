@@ -53,8 +53,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let sha = run_cmd(&["git", "rev-parse", "HEAD"])?;
 
     let hardcode_version = env::var("ONEFUZZ_SET_VERSION");
-    if hardcode_version.is_ok() {
-        print_values(hardcode_version.unwrap().as_ref(), &sha);
+    if let Ok(hardcode_version) = &hardcode_version {
+        print_values(hardcode_version, &sha);
         return Ok(());
     }
 

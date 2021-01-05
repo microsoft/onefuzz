@@ -256,7 +256,7 @@ impl Coordinator {
         Ok(response)
     }
 
-    fn build_request<'a>(&self, request_type: RequestType<'a>) -> Result<Request> {
+    fn build_request(&self, request_type: RequestType<'_>) -> Result<Request> {
         match request_type {
             RequestType::PollCommands => self.poll_commands_request(),
             RequestType::ClaimCommand(message_id) => self.claim_command_request(message_id),
