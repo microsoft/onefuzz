@@ -187,7 +187,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "expect_crash_on_failure": {
-                    "title": "Require Crash On Failure",
+                    "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
                 "rename_output": {
@@ -818,7 +818,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "expect_crash_on_failure": {
-                    "title": "Require Crash On Failure",
+                    "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
                 "rename_output": {
