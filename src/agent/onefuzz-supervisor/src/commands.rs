@@ -117,13 +117,12 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     .ok_or_else(|| format_err!("unable to find user"))?;
     info!("adding sshkey:{:?} to user:{:?}", key_info, user);
 
-    let mut ssh_path = user.home_dir().to_owned();
-    if !ssh_path.exists() {
+    let home_path = user.home_dir().to_owned();
+    if !home_path.exists() {
         bail!("unable to add SSH key to missing home directory");
     }
 
-    ssh_path.push(".ssh");
-
+    let mut ssh_path = home_path.join(".ssh");
     if !ssh_path.exists() {
         verbose!("creating ssh directory: {}", ssh_path.display());
         fs::create_dir_all(&ssh_path).await?;
