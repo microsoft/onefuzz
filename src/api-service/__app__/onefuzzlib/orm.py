@@ -214,7 +214,7 @@ class ModelMixin(BaseModel):
         return result
 
 
-Type_has_secrets: Dict[type, bool] = dict()
+_TYPE_HAS_SECRETS: Dict[type, bool] = dict()
 
 
 class ORMMixin(ModelMixin):
@@ -299,11 +299,11 @@ class ORMMixin(ModelMixin):
 
         visited.add(id(model))
 
-        if Type_has_secrets.get(model_type, True):
+        if _TYPE_HAS_SECRETS.get(model_type, True):
             for field in model.__fields__:
                 field_data = getattr(model, field)
                 if isinstance(field_data, SecretData):
-                    Type_has_secrets[model_type] = True
+                    _TYPE_HAS_SECRETS[model_type] = True
                     hider(field_data)
                 elif isinstance(field_data, List):
                     if len(field_data) > 0:
@@ -320,8 +320,8 @@ class ORMMixin(ModelMixin):
                     if isinstance(field_data, BaseModel):
                         cls.hide_secrets(field_data, hider, visited)
 
-        if model_type not in Type_has_secrets:
-            Type_has_secrets[model_type] = False
+        if model_type not in _TYPE_HAS_SECRETS:
+            _TYPE_HAS_SECRETS[model_type] = False
 
     def save(self, new: bool = False, require_etag: bool = False) -> Optional[Error]:
         self.__class__.hide_secrets(self, save_to_keyvault)

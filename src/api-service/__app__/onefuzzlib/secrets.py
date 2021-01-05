@@ -40,6 +40,7 @@ def get_secret_string_value(self: SecretData[str]) -> str:
 
 
 def get_keyvault_address() -> str:
+    # https://docs.microsoft.com/en-us/azure/key-vault/general/about-keys-secrets-certificates#vault-name-and-object-name
     return f"https://{get_instance_name()}-vault.vault.azure.net"
 
 
@@ -52,6 +53,7 @@ def store_in_keyvault(
 
 
 def parse_secret_url(secret_url: str) -> Tuple[str, str]:
+    # format: https://{vault-name}.vault.azure.net/secrets/{secret-name}/{secret-version}
     u = urlparse(secret_url)
     vault_url = f"{u.scheme}://{u.netloc}"
     secret_name = u.path.split("/")[2]
@@ -67,4 +69,4 @@ def get_secret(secret_url: str) -> KeyVaultSecret:
 def delete_secret(secret_url: str) -> None:
     (vault_url, secret_name) = parse_secret_url(secret_url)
     keyvault_client = get_keyvault_client(vault_url)
-    keyvault_client.begin_delete_secret(secret_name)
+    keyvault_client.begin_delete_secret(secret_name).wait()

@@ -42,7 +42,9 @@ class UserInfo(BaseModel):
     upn: Optional[str]
 
 
+# Stores the address of a secret
 class SecretAddress(BaseModel):
+    # example keyvault address of a secret
     url: str
 
 
@@ -60,22 +62,13 @@ class SecretData(Generic[T]):
             self.secret = secret
 
     def __str__(self) -> str:
-        if isinstance(self.secret, SecretAddress):
-            return str(self.secret)
-        else:
-            return "[REDACTED]"
+        self.__repr__()
 
     def __repr__(self) -> str:
         if isinstance(self.secret, SecretAddress):
             return str(self.secret)
         else:
             return "[REDACTED]"
-
-    def try_get_value(self) -> Optional[T]:
-        if isinstance(self.secret, SecretAddress):
-            return None
-        else:
-            return self.secret
 
 
 class EnumModel(BaseModel):
@@ -277,7 +270,7 @@ class ADOTemplate(BaseModel):
         elif isinstance(v, dict):
             return SecretData(secret=v["secret"])
         else:
-            raise Exception(f"invalid datatype {type(v)}")
+            raise TypeError(f"invalid datatype {type(v)}")
 
 
 class TeamsTemplate(BaseModel):
@@ -292,7 +285,7 @@ class TeamsTemplate(BaseModel):
         elif isinstance(v, dict):
             return SecretData(secret=v["secret"])
         else:
-            raise Exception(f"invalid datatype {type(v)}")
+            raise TypeError(f"invalid datatype {type(v)}")
 
 
 class ContainerDefinition(BaseModel):
@@ -479,7 +472,7 @@ class GithubIssueTemplate(BaseModel):
             except Exception:
                 return SecretData(GithubAuth.parse_obj(v))
         else:
-            raise Exception(f"invalid datatype {type(v)}")
+            raise TypeError(f"invalid datatype {type(v)}")
 
 
 NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
