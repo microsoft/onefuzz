@@ -13,6 +13,7 @@ use std::{env, path::PathBuf};
 #[cfg(target_os = "linux")]
 use users::{get_user_by_name, os::unix::UserExt};
 
+#[cfg(target_os = "linux")]
 const ONEFUZZ_SERVICE_USER: &str = "onefuzz";
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -57,7 +58,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",
-            key_path.display(),
+            admin_auth_keys_path.display(),
             result
         );
     }
@@ -75,7 +76,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",
-            key_path.display(),
+            admin_auth_keys_path.display(),
             result
         );
     }
@@ -97,12 +98,12 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",
-            key_path.display(),
+            admin_auth_keys_path.display(),
             result
         );
     }
 
-    info!("ssh key written: {}", key_path.display());
+    info!("ssh key written: {}", admin_auth_keys_path.display());
 
     Ok(())
 }
