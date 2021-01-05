@@ -270,7 +270,7 @@ mod tests {
             runtime_dir,
             PathBuf::from(afl_fuzz_exe),
             PathBuf::from(afl_test_binary),
-            fault_dir.clone(),
+            fault_dir,
             corpus_dir,
             &target_options,
             &supervisor_options,
