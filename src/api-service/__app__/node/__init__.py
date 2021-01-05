@@ -106,5 +106,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return delete(req)
     elif req.method == "PATCH":
         return patch(req)
+    elif req.method == "POST":
+        return post(req)
     else:
         raise Exception("invalid method")
