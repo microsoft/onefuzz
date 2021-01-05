@@ -101,6 +101,6 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    methods = {"GET": get, "PATCH": patch, "DELETE": delete}
+    methods = {"GET": get, "PATCH": patch, "DELETE": delete, "POST": post}
     method = methods[req.method]
     return call_if_user(req, method)
