@@ -48,10 +48,14 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
         target_env.insert(k, v);
     }
 
+    // this happens during setup, not during runtime
+    let check_fuzzer_help = true;
+
     let config = Config {
         target_exe,
         target_env,
         target_options,
+        check_fuzzer_help,
         input_queue: None,
         readonly_inputs: vec![],
         coverage: SyncedDir {

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender};
+use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::Result;
 use futures::{future::try_join_all, stream::StreamExt};
 use onefuzz::{
@@ -47,6 +47,12 @@ pub struct Config {
     pub target_workers: Option<u64>,
     pub ensemble_sync_delay: Option<u64>,
 
+    #[serde(default = "default_bool_true")]
+    pub check_fuzzer_help: bool,
+
+    #[serde(default = "default_bool_true")]
+    pub expect_crash_on_failure: bool,
+
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -61,6 +67,15 @@ impl LibFuzzerFuzzTask {
     }
 
     pub async fn start(&self) -> Result<()> {
+        if self.config.check_fuzzer_help {
+            let target = LibFuzzer::new(
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+            );
+            target.check_help().await?;
+        }
+
         let workers = self.config.target_workers.unwrap_or_else(|| {
             let cpus = num_cpus::get() as u64;
             u64::max(1, cpus - 1)
@@ -166,14 +181,23 @@ impl LibFuzzerFuzzTask {
 
         let files = list_files(crash_dir.path()).await?;
 
-        // ignore libfuzzer exiting cleanly without crashing, which could happen via
-        // -runs=N
-        if !exit_status.success && files.is_empty() {
-            bail!(
-                "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
-                serde_json::to_string(&exit_status)?,
-                libfuzzer_output.join("\n")
-            );
+        // If the target exits, crashes are required unless
+        // 1. Exited cleanly (happens with -runs=N)
+        // 2. expect_crash_on_failure is disabled
+        if files.is_empty() && !exit_status.success {
+            if self.config.expect_crash_on_failure {
+                bail!(
+                    "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
+                    serde_json::to_string(&exit_status)?,
+                    libfuzzer_output.join("\n")
+                );
+            } else {
+                warn!(
+                    "libfuzzer exited without generating crashes, continuing.  status:{} stderr:{:?}",
+                    serde_json::to_string(&exit_status)?,
+                    libfuzzer_output.join("\n")
+                );
+            }
         }
 
         for file in &files {

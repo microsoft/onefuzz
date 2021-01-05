@@ -48,6 +48,8 @@ class Libfuzzer(Command):
         crash_report_timeout: Optional[int] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        check_fuzzer_help: bool = True,
+        expect_crash_on_failure: bool = True,
     ) -> None:
 
         fuzzer_containers = [
@@ -76,6 +78,8 @@ class Libfuzzer(Command):
             tags=tags,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+            check_fuzzer_help=check_fuzzer_help,
+            expect_crash_on_failure=expect_crash_on_failure,
         )
 
         coverage_containers = [
@@ -98,6 +102,7 @@ class Libfuzzer(Command):
             tags=tags,
             prereq_tasks=[fuzzer_task.task_id],
             debug=debug,
+            check_fuzzer_help=check_fuzzer_help,
         )
 
         report_containers = [
@@ -124,6 +129,7 @@ class Libfuzzer(Command):
             prereq_tasks=[fuzzer_task.task_id],
             target_timeout=crash_report_timeout,
             check_retry_count=check_retry_count,
+            check_fuzzer_help=check_fuzzer_help,
             debug=debug,
         )
 
@@ -154,6 +160,8 @@ class Libfuzzer(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        check_fuzzer_help: bool = True,
+        expect_crash_on_failure: bool = True,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -229,6 +237,8 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+            check_fuzzer_help=check_fuzzer_help,
+            expect_crash_on_failure=expect_crash_on_failure,
         )
 
         self.logger.info("done creating tasks")
@@ -261,6 +271,7 @@ class Libfuzzer(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         preserve_existing_outputs: bool = False,
+        check_fuzzer_help: bool = True,
     ) -> Optional[Job]:
 
         """
@@ -348,6 +359,7 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             preserve_existing_outputs=preserve_existing_outputs,
+            check_fuzzer_help=check_fuzzer_help,
         )
 
         self.logger.info("done creating tasks")

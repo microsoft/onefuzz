@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::*, utils};
+use crate::tasks::{
+    config::CommonConfig,
+    heartbeat::*,
+    utils::{self, default_bool_true},
+};
 use anyhow::{Error, Result};
 use futures::stream::StreamExt;
 use onefuzz::{
@@ -22,10 +26,6 @@ use std::{
     sync::Arc,
 };
 use tokio::{fs, process::Command};
-
-fn default_bool_true() -> bool {
-    true
-}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct GeneratorConfig {
