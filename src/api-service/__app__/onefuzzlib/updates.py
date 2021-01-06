@@ -10,8 +10,8 @@ from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import UpdateType
 from pydantic import BaseModel
 
-from .azure.containers import StorageType
 from .azure.queue import queue_object
+from .azure.storage import StorageType
 
 
 # This class isn't intended to be shared outside of the service

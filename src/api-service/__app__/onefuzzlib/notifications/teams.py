@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 import requests
 from onefuzztypes.models import Report, TeamsTemplate
+from onefuzztypes.primitives import Container
 
 from ..azure.containers import auth_download_url
 from ..tasks.config import get_setup_container
@@ -51,7 +52,7 @@ def send_teams_webhook(
 
 
 def notify_teams(
-    config: TeamsTemplate, container: str, filename: str, report: Optional[Report]
+    config: TeamsTemplate, container: Container, filename: str, report: Optional[Report]
 ) -> None:
     text = None
     facts: List[Dict[str, str]] = []
