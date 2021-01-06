@@ -19,8 +19,7 @@ from azure.storage.queue import (
 from memoization import cached
 from pydantic import BaseModel
 
-from .containers import StorageType, get_account_id_by_type
-from .creds import get_storage_account_name_key
+from .storage import StorageType, get_primary_account, get_storage_account_name_key
 
 QueueNameType = Union[str, UUID]
 
@@ -29,7 +28,7 @@ DEFAULT_TTL = -1
 
 @cached(ttl=60)
 def get_queue_client(storage_type: StorageType) -> QueueServiceClient:
-    account_id = get_account_id_by_type(storage_type)
+    account_id = get_primary_account(storage_type)
     logging.debug("getting blob container (account_id: %s)", account_id)
     name, key = get_storage_account_name_key(account_id)
     account_url = "https://%s.queue.core.windows.net" % name
@@ -50,7 +49,7 @@ def get_queue_sas(
     update: bool = False,
     process: bool = False,
 ) -> str:
-    account_id = get_account_id_by_type(storage_type)
+    account_id = get_primary_account(storage_type)
     logging.debug("getting queue sas %s (account_id: %s)", queue, account_id)
     name, key = get_storage_account_name_key(account_id)
     expiry = datetime.datetime.utcnow() + datetime.timedelta(days=30)

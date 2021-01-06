@@ -8,11 +8,11 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, FileEntry
 
 from ..onefuzzlib.azure.containers import (
-    StorageType,
     blob_exists,
     container_exists,
     get_file_sas_url,
 )
+from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.request import not_ok, parse_uri, redirect
 

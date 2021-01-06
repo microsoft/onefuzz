@@ -36,7 +36,6 @@ from pydantic import BaseModel, Field
 
 from .__version__ import __version__
 from .azure.auth import build_auth
-from .azure.containers import StorageType
 from .azure.image import get_os
 from .azure.network import Network
 from .azure.queue import (
@@ -47,6 +46,7 @@ from .azure.queue import (
     queue_object,
     remove_first_message,
 )
+from .azure.storage import StorageType
 from .azure.vmss import (
     UnableToUpdate,
     create_vmss,
