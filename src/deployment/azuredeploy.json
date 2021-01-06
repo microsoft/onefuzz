@@ -104,11 +104,10 @@
         },
         {
             "type": "Microsoft.KeyVault/vaults",
-            "apiVersion": "2016-10-01",
+            "apiVersion": "2019-09-01",
             "name": "[variables('keyVaultName')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "enabledForDeployment": true,
                 "enabledForDiskEncryption": false,
                 "enabledForTemplateDeployment": true,
                 "tenantId": "[subscription().tenantId]",
@@ -117,7 +116,7 @@
                         "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2019-08-01', 'full').identity.principalId]",
                         "tenantId": "[subscription().tenantId]",
                         "permissions": {
-                            "secrets": ["get", "list", "set", "delete"]                        
+                            "secrets": ["get", "list", "set", "delete"]
                         }
                     }
                 ],

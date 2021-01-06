@@ -44,13 +44,17 @@ class UserInfo(BaseModel):
 
 # Stores the address of a secret
 class SecretAddress(BaseModel):
-    # example keyvault address of a secret
+    # keyvault address of a secret
     url: str
 
 
 T = TypeVar("T")
 
 
+# This class allows us to store some data that are intended to be secret
+# The secret field stores either the raw data or the address of that data
+# This class allows us to maintain backward compatibility with existing
+# NotificationTemplate classes
 @dataclass
 class SecretData(Generic[T]):
     secret: Union[T, SecretAddress]
@@ -62,7 +66,7 @@ class SecretData(Generic[T]):
             self.secret = secret
 
     def __str__(self) -> str:
-        self.__repr__()
+        return self.__repr__()
 
     def __repr__(self) -> str:
         if isinstance(self.secret, SecretAddress):
@@ -261,6 +265,7 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
+    # validator needed for backward compatibility
     @validator("auth_token", pre=True, always=True)
     def validate_auth_token(cls, v: Any) -> SecretData:
         if isinstance(v, str):
@@ -276,6 +281,7 @@ class ADOTemplate(BaseModel):
 class TeamsTemplate(BaseModel):
     url: SecretData[str]
 
+    # validator needed for backward compatibility
     @validator("url", pre=True, always=True)
     def validate_url(cls, v: Any) -> SecretData:
         if isinstance(v, str):
@@ -460,6 +466,7 @@ class GithubIssueTemplate(BaseModel):
     labels: List[str]
     on_duplicate: GithubIssueDuplicate
 
+    # validator needed for backward compatibility
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
         if isinstance(v, str):
@@ -468,9 +475,9 @@ class GithubIssueTemplate(BaseModel):
             return v
         elif isinstance(v, dict):
             try:
-                return SecretData(secret=v["secret"])
-            except Exception:
                 return SecretData(GithubAuth.parse_obj(v))
+            except Exception:
+                return SecretData(secret=v["secret"])
         else:
             raise TypeError(f"invalid datatype {type(v)}")
 
