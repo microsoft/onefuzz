@@ -3,7 +3,7 @@
 
 use super::*;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct CoordinatorDouble {
     pub commands: Vec<NodeCommand>,
     pub events: Vec<NodeEvent>,
