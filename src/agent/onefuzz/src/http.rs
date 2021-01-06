@@ -3,7 +3,7 @@
 
 use anyhow::{bail, Result};
 use async_trait::async_trait;
-use reqwest::Response;
+use reqwest::{Response, StatusCode};
 
 #[async_trait]
 pub trait ResponseExt: Sized {
@@ -30,4 +30,18 @@ impl ResponseExt for Response {
 
         Ok(self)
     }
+}
+
+pub fn is_auth_error(err: &anyhow::Error) -> bool {
+    if let Some(err) = err.downcast_ref::<reqwest::Error>() {
+        if let Some(status) = err.status() {
+            return is_auth_error_code(status);
+        }
+    }
+
+    false
+}
+
+pub fn is_auth_error_code(status: StatusCode) -> bool {
+    status == StatusCode::UNAUTHORIZED || status == StatusCode::FORBIDDEN
 }

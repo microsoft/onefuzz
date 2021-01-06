@@ -2,8 +2,10 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
-use reqwest::StatusCode;
+use onefuzz::{
+    http::{is_auth_error_code, ResponseExt},
+    jitter::delay_with_jitter,
+};
 use reqwest_retry::SendRetry;
 use std::{
     path::{Path, PathBuf},
@@ -228,7 +230,7 @@ impl Registration {
                         machine_id,
                     });
                 }
-                Err(err) if status_code == StatusCode::UNAUTHORIZED => {
+                Err(err) if is_auth_error_code(status_code) => {
                     warn!(
                         "Registration failed: {}\n retrying in {} seconds",
                         err,
@@ -264,6 +266,7 @@ impl Registration {
     }
 
     pub async fn renew(&mut self) -> Result<()> {
+        info!("renewing registration");
         let token = self.config.credentials.access_token().await?;
 
         let machine_id = self.machine_id.to_string();
