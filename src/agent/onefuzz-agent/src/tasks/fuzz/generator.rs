@@ -1,13 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::*, utils};
+use crate::tasks::{
+    config::CommonConfig,
+    heartbeat::*,
+    utils::{self, default_bool_true},
+};
 use anyhow::{Error, Result};
 use futures::stream::StreamExt;
 use onefuzz::{
     expand::Expand,
     fs::set_executable,
     input_tester::Tester,
+    process::monitor_process,
     sha256,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     telemetry::Event::new_result,
@@ -21,10 +26,6 @@ use std::{
     sync::Arc,
 };
 use tokio::{fs, process::Command};
-
-fn default_bool_true() -> bool {
-    true
-}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct GeneratorConfig {
@@ -107,7 +108,7 @@ async fn generate_input(
         .kill_on_drop(true)
         .env_remove("RUST_LOG")
         .stdin(Stdio::null())
-        .stdout(Stdio::null())
+        .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
     for arg in expand.evaluate(generator_options)? {
@@ -119,16 +120,16 @@ async fn generate_input(
     }
 
     info!("Generating test cases with {:?}", generator);
-    let output = generator.spawn()?.wait_with_output().await?;
+    let output = generator.spawn()?;
+    monitor_process(output, "generator".to_string(), true, None).await?;
 
-    info!("Test case generation result {:?}", output);
     Ok(())
 }
 
 async fn start_fuzzing<'a>(
     config: &GeneratorConfig,
     corpus_dirs: Vec<impl AsRef<Path>>,
-    tester: Tester<'a>,
+    tester: Tester<'_>,
     heartbeat_client: Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     let generator_tmp = "generator_tmp";

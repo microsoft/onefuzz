@@ -314,6 +314,20 @@ def build_task_config(
     if TaskFeature.ensemble_sync_delay in definition.features:
         config.ensemble_sync_delay = task_config.task.ensemble_sync_delay
 
+    if TaskFeature.check_fuzzer_help in definition.features:
+        config.check_fuzzer_help = (
+            task_config.task.check_fuzzer_help
+            if task_config.task.check_fuzzer_help is not None
+            else True
+        )
+
+    if TaskFeature.expect_crash_on_failure in definition.features:
+        config.expect_crash_on_failure = (
+            task_config.task.expect_crash_on_failure
+            if task_config.task.expect_crash_on_failure is not None
+            else True
+        )
+
     return config
 
 

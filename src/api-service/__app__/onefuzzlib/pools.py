@@ -100,6 +100,7 @@ class Node(BASE_NODE, ORMMixin):
         states: Optional[List[NodeState]] = None,
         pool_name: Optional[str] = None,
         exclude_update_scheduled: bool = False,
+        num_results: Optional[int] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
         if scaleset_id:
@@ -117,11 +118,14 @@ class Node(BASE_NODE, ORMMixin):
         # We write the query this way to allow us to get the nodes where the
         # version is not defined as well as the nodes with a mismatched version
         version_query = "not (version eq '%s')" % __version__
-        return cls.search(query=query, raw_unchecked_filter=version_query)
+        return cls.search(
+            query=query, raw_unchecked_filter=version_query, num_results=num_results
+        )
 
     @classmethod
     def mark_outdated_nodes(cls) -> None:
-        outdated = cls.search_outdated(exclude_update_scheduled=True)
+        # ony update 500 nodes at a time to mitigate timeout issues
+        outdated = cls.search_outdated(exclude_update_scheduled=True, num_results=500)
         for node in outdated:
             logging.info(
                 "node is outdated: %s - node_version:%s api_version:%s",
@@ -701,7 +705,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 return
 
             logging.info("creating scaleset: %s", self.scaleset_id)
-            extensions = fuzz_extensions(self.region, pool.os, self.pool_name)
+            extensions = fuzz_extensions(pool, self)
             result = create_vmss(
                 self.region,
                 self.scaleset_id,
@@ -790,6 +794,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     "no longer in scaleset: %s:%s", self.scaleset_id, node.machine_id
                 )
                 node.delete()
+        nodes = [x for x in nodes if x.machine_id in azure_nodes]
 
         nodes_to_reset = [x for x in nodes if x.state in NodeState.ready_for_reset()]
 
@@ -1034,7 +1039,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             return
 
         logging.debug("updating scaleset configs: %s", self.scaleset_id)
-        extensions = fuzz_extensions(self.region, pool.os, self.pool_name)
+        extensions = fuzz_extensions(pool, self)
         try:
             update_extensions(self.scaleset_id, extensions)
         except UnableToUpdate:

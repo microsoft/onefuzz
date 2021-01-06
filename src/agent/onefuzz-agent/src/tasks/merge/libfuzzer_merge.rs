@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::*, utils};
+use crate::tasks::{
+    config::CommonConfig,
+    heartbeat::*,
+    utils::{self, default_bool_true},
+};
 use anyhow::Result;
 use onefuzz::{
     http::ResponseExt,
@@ -35,11 +39,23 @@ pub struct Config {
     pub unique_inputs: SyncedDir,
     pub preserve_existing_outputs: bool,
 
+    #[serde(default = "default_bool_true")]
+    pub check_fuzzer_help: bool,
+
     #[serde(flatten)]
     pub common: CommonConfig,
 }
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
+    if config.check_fuzzer_help {
+        let target = LibFuzzer::new(
+            &config.target_exe,
+            &config.target_options,
+            &config.target_env,
+        );
+        target.check_help().await?;
+    }
+
     config.unique_inputs.init().await?;
     if let Some(url) = config.input_queue.clone() {
         loop {
@@ -160,6 +176,6 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
         .await
     {
         Ok(_) => Ok(()),
-        Err(err) => Err(err.into()),
+        Err(err) => Err(err),
     }
 }

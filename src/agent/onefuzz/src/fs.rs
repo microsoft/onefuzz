@@ -163,7 +163,7 @@ mod tests {
         let mut len = 0;
         let mut entries = fs::read_dir(dir).await.unwrap();
 
-        while let Some(_) = entries.next().await {
+        while entries.next().await.is_some() {
             len += 1;
         }
 

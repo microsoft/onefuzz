@@ -11,7 +11,7 @@ import subprocess  # nosec
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 import pkg_resources
@@ -178,7 +178,7 @@ class Files(Endpoint):
         """ get a file from a container """
         self.logger.debug("getting file from container: %s:%s", container, filename)
         client = self._get_client(container)
-        downloaded = cast(bytes, client.download_blob(filename))
+        downloaded = client.download_blob(filename)
         return downloaded
 
     def upload_file(
@@ -777,6 +777,8 @@ class Tasks(Endpoint):
         check_asan_log: bool = False,
         check_debugger: bool = True,
         check_retry_count: Optional[int] = None,
+        check_fuzzer_help: Optional[bool] = None,
+        expect_crash_on_failure: Optional[bool] = None,
         debug: Optional[List[enums.TaskDebugFlag]] = None,
         duration: int = 24,
         ensemble_sync_delay: Optional[int] = None,
@@ -801,6 +803,7 @@ class Tasks(Endpoint):
         target_workers: Optional[int] = None,
         vm_count: int = 1,
         preserve_existing_outputs: bool = False,
+        colocate: bool = False,
     ) -> models.Task:
         """
         Create a task
@@ -844,6 +847,7 @@ class Tasks(Endpoint):
             pool=models.TaskPool(count=vm_count, pool_name=pool_name),
             prereq_tasks=prereq_tasks,
             tags=tags,
+            colocate=colocate,
             task=models.TaskDetails(
                 analyzer_env=analyzer_env,
                 analyzer_exe=analyzer_exe,
@@ -851,6 +855,8 @@ class Tasks(Endpoint):
                 check_asan_log=check_asan_log,
                 check_debugger=check_debugger,
                 check_retry_count=check_retry_count,
+                check_fuzzer_help=check_fuzzer_help,
+                expect_crash_on_failure=expect_crash_on_failure,
                 duration=duration,
                 ensemble_sync_delay=ensemble_sync_delay,
                 generator_exe=generator_exe,
@@ -1495,6 +1501,7 @@ class Onefuzz:
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
+        tenant_domain: Optional[str] = None,
     ) -> BackendConfig:
         """ Configure onefuzz CLI """
         self.logger.debug("set config")
@@ -1521,6 +1528,8 @@ class Onefuzz:
             self._backend.config.client_secret = client_secret
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
+        if tenant_domain is not None:
+            self._backend.config.tenant_domain = tenant_domain
         self._backend.app = None
         self._backend.save_config()
 
