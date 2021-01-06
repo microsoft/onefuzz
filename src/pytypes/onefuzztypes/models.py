@@ -192,6 +192,7 @@ class TaskConfig(BaseModel):
     containers: List[TaskContainers]
     tags: Dict[str, str]
     debug: Optional[List[TaskDebugFlag]]
+    colocate: Optional[bool]
 
 
 class BlobRef(BaseModel):
