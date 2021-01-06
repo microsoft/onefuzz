@@ -1501,6 +1501,7 @@ class Onefuzz:
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
+        tenant_domain: Optional[str] = None,
     ) -> BackendConfig:
         """ Configure onefuzz CLI """
         self.logger.debug("set config")
@@ -1527,6 +1528,8 @@ class Onefuzz:
             self._backend.config.client_secret = client_secret
         if enable_feature:
             self._backend.enable_feature(enable_feature.name)
+        if tenant_domain is not None:
+            self._backend.config.tenant_domain = tenant_domain
         self._backend.app = None
         self._backend.save_config()
 
