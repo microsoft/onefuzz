@@ -7,7 +7,7 @@ import datetime
 import logging
 import os
 import urllib.parse
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
 from azure.storage.blob import BlobPermissions, BlockBlobService, ContainerPermissions
@@ -60,7 +60,7 @@ def container_metadata(container: Container, account: str) -> Optional[Dict[str,
 def get_account_by_container(
     container: Container, storage_type: StorageType
 ) -> Optional[str]:
-    accounts = cast(List[str], get_accounts(storage_type))
+    accounts = get_accounts(storage_type)
 
     # check secondary accounts first by searching in reverse
     for account in reversed(accounts):
@@ -136,7 +136,7 @@ def create_container(
 
 
 def delete_container(container: Container, storage_type: StorageType) -> bool:
-    accounts = cast(List[str], get_accounts(storage_type))
+    accounts = get_accounts(storage_type)
     for account in accounts:
         service = get_blob_service(account)
         if bool(service.delete_container(container)):

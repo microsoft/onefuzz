@@ -2,7 +2,7 @@ import logging
 import os
 import random
 from enum import Enum
-from typing import List, Tuple, cast
+from typing import List, Tuple
 
 from azure.mgmt.storage import StorageManagementClient
 from memoization import cached
@@ -30,18 +30,17 @@ def get_func_storage() -> str:
 def get_primary_account(storage_type: StorageType) -> str:
     if storage_type == StorageType.corpus:
         # see #322 for discussion about typing
-        return get_fuzz_storage()  # type: ignore
+        return get_fuzz_storage()
     elif storage_type == StorageType.config:
         # see #322 for discussion about typing
-        return get_func_storage()  # type: ignore
+        return get_func_storage()
     raise NotImplementedError
 
 
 @cached
 def get_accounts(storage_type: StorageType) -> List[str]:
     if storage_type == StorageType.corpus:
-        # see #322 for discussion about typing
-        return corpus_accounts()  # type: ignore
+        return corpus_accounts()
     elif storage_type == StorageType.config:
         return [get_func_storage()]
     else:
@@ -61,7 +60,7 @@ def get_storage_account_name_key(account_id: str) -> Tuple[str, str]:
 
 
 def choose_account(storage_type: StorageType) -> str:
-    accounts = cast(List[str], get_accounts(storage_type))
+    accounts = get_accounts(storage_type)
     if not accounts:
         raise Exception(f"no storage accounts for {storage_type}")
 

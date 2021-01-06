@@ -8,17 +8,10 @@ from typing import List, Optional
 from uuid import UUID
 
 from onefuzztypes.enums import OS, AgentMode
-from onefuzztypes.models import AgentConfig, ReproConfig
-from onefuzztypes.primitives import Container, Extension, Region
-from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
 from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
-from onefuzztypes.primitives import Extension, Region
-from .azure.containers import (
-    StorageType,
-    get_container_sas_url,
-    get_file_sas_url,
-    save_blob,
-)
+from onefuzztypes.primitives import Container, Extension, Region
+
+from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
 from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
@@ -98,8 +91,12 @@ def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
         ssh_path = "$env:ProgramData/ssh/administrators_authorized_keys"
         commands += [f'Set-Content -Path {ssh_path} -Value "{ssh_key}"']
 
-    save_blob("vm-scripts", filename, sep.join(commands) + sep, StorageType.config)
-    return get_file_sas_url("vm-scripts", filename, StorageType.config, read=True)
+    save_blob(
+        Container("vm-scripts"), filename, sep.join(commands) + sep, StorageType.config
+    )
+    return get_file_sas_url(
+        Container("vm-scripts"), filename, StorageType.config, read=True
+    )
 
 
 def build_pool_config(pool: Pool) -> str:
