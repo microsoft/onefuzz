@@ -11,6 +11,8 @@ extern crate onefuzz;
 extern crate serde;
 #[macro_use]
 extern crate clap;
+#[macro_use]
+extern crate anyhow;
 
 use crate::{
     config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::*, work::WorkSet,
@@ -28,6 +30,7 @@ use structopt::StructOpt;
 
 pub mod agent;
 pub mod auth;
+pub mod commands;
 pub mod config;
 pub mod coordinator;
 pub mod debug;
