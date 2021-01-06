@@ -48,6 +48,8 @@ class Libfuzzer(Command):
         crash_report_timeout: Optional[int] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        colocate_all_tasks: bool = False,
+        colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = True,
     ) -> None:
@@ -78,9 +80,12 @@ class Libfuzzer(Command):
             tags=tags,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+            colocate=colocate_all_tasks,
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
         )
+
+        prereq_tasks = [fuzzer_task.task_id]
 
         coverage_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
@@ -100,8 +105,9 @@ class Libfuzzer(Command):
             target_options=target_options,
             target_env=target_env,
             tags=tags,
-            prereq_tasks=[fuzzer_task.task_id],
+            prereq_tasks=prereq_tasks,
             debug=debug,
+            colocate=colocate_all_tasks or colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
         )
 
@@ -126,11 +132,12 @@ class Libfuzzer(Command):
             target_options=target_options,
             target_env=target_env,
             tags=tags,
-            prereq_tasks=[fuzzer_task.task_id],
+            prereq_tasks=prereq_tasks,
             target_timeout=crash_report_timeout,
             check_retry_count=check_retry_count,
             check_fuzzer_help=check_fuzzer_help,
             debug=debug,
+            colocate=colocate_all_tasks or colocate_secondary_tasks,
         )
 
     def basic(
@@ -160,6 +167,8 @@ class Libfuzzer(Command):
         notification_config: Optional[NotificationConfig] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
+        colocate_all_tasks: bool = False,
+        colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = True,
     ) -> Optional[Job]:
@@ -237,6 +246,8 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
+            colocate_all_tasks=colocate_all_tasks,
+            colocate_secondary_tasks=colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
         )
