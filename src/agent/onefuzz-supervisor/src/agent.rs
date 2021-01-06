@@ -264,7 +264,7 @@ impl Agent {
 
         if let Some(cmd) = cmd {
             verbose!("agent received node command: {:?}", cmd);
-            self.scheduler()?.execute_command(cmd)?;
+            self.scheduler()?.execute_command(cmd).await?;
         }
 
         Ok(())
