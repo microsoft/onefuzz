@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import logging
 import os
 import random
@@ -67,7 +72,9 @@ def choose_account(storage_type: StorageType) -> str:
     if len(accounts) == 1:
         return accounts[0]
 
-    # Use a random secondary storage account if any are available
+    # Use a random secondary storage account if any are available.  This
+    # reduces IOP contention for the Storage Queues, which are only available
+    # on primary accounts
     return random.choice(accounts[1:])
 
 

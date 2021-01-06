@@ -62,7 +62,13 @@ def get_account_by_container(
 ) -> Optional[str]:
     accounts = get_accounts(storage_type)
 
-    # check secondary accounts first by searching in reverse
+    # check secondary accounts first by searching in reverse.
+    #
+    # By implementation, the primary account is specified first, followed by
+    # any secondary accounts.
+    #
+    # Secondary accounts, if they exist, are preferred for containers and have
+    # increased IOP rates, this should be a slight optimization
     for account in reversed(accounts):
         if container_exists_on_account(container, account):
             return account
