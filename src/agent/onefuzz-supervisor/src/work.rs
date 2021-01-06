@@ -67,6 +67,13 @@ impl WorkSet {
 
         Ok(())
     }
+
+    pub fn setup_dir(&self) -> Result<PathBuf> {
+        let setup_dir = self.setup_url.container();
+        Ok(onefuzz::fs::onefuzz_root()?
+            .join("blob-containers")
+            .join(setup_dir))
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

@@ -71,6 +71,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
             job_id: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
             task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
             instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
+            setup_dir: None,
         },
     };
 

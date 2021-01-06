@@ -10,7 +10,7 @@ use onefuzz::{
 };
 use reqwest::Url;
 use serde::{self, Deserialize};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -33,6 +33,8 @@ pub struct CommonConfig {
     pub heartbeat_queue: Option<Url>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub setup_dir: Option<PathBuf>,
 }
 
 impl CommonConfig {

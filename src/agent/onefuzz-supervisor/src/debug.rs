@@ -180,8 +180,9 @@ async fn run_worker(mut work_set: WorkSet) -> Result<Vec<WorkerEvent>> {
 
     let mut events = vec![];
     let work_unit = work_set.work_units.pop().unwrap();
+    let setup_dir = work_set.setup_dir()?;
 
-    let mut worker = Worker::new(work_unit);
+    let mut worker = Worker::new(&setup_dir, work_unit);
     while !worker.is_done() {
         worker = worker.update(&mut events, &mut WorkerRunner).await?;
     }

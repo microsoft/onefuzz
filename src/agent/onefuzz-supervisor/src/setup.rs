@@ -42,10 +42,7 @@ impl SetupRunner {
 
         // Download the setup container.
         let setup_url = work_set.setup_url.url();
-        let setup_dir = work_set.setup_url.container();
-        let setup_dir = onefuzz::fs::onefuzz_root()?
-            .join("blob-containers")
-            .join(setup_dir);
+        let setup_dir = work_set.setup_dir()?;
 
         // `azcopy sync` requires the local dir to exist.
         fs::create_dir_all(&setup_dir).await?;
