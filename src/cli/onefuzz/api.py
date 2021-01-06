@@ -803,6 +803,7 @@ class Tasks(Endpoint):
         target_workers: Optional[int] = None,
         vm_count: int = 1,
         preserve_existing_outputs: bool = False,
+        colocate: bool = False,
     ) -> models.Task:
         """
         Create a task
@@ -846,6 +847,7 @@ class Tasks(Endpoint):
             pool=models.TaskPool(count=vm_count, pool_name=pool_name),
             prereq_tasks=prereq_tasks,
             tags=tags,
+            colocate=colocate,
             task=models.TaskDetails(
                 analyzer_env=analyzer_env,
                 analyzer_exe=analyzer_exe,

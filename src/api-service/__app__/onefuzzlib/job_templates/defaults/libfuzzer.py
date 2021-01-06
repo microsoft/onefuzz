@@ -238,6 +238,26 @@ libfuzzer_linux = JobTemplate(
             ],
         ),
         UserField(
+            name="colocate",
+            help="Run all of the tasks on the same node",
+            type=UserFieldType.Bool,
+            default=True,
+            locations=[
+                UserFieldLocation(
+                    op=UserFieldOperation.add,
+                    path="/tasks/0/colocate",
+                ),
+                UserFieldLocation(
+                    op=UserFieldOperation.add,
+                    path="/tasks/1/colocate",
+                ),
+                UserFieldLocation(
+                    op=UserFieldOperation.add,
+                    path="/tasks/2/colocate",
+                ),
+            ],
+        ),
+        UserField(
             name="expect_crash_on_failure",
             help="Require crashes upon non-zero exits from libfuzzer",
             type=UserFieldType.Bool,
