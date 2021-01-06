@@ -53,7 +53,7 @@ def store_in_keyvault(
 
 
 def parse_secret_url(secret_url: str) -> Tuple[str, str]:
-    # format: https://{vault-name}.vault.azure.net/secrets/{secret-name}/{secret-version}
+    # format: https://{vault-name}.vault.azure.net/secrets/{secret-name}/{version}
     u = urlparse(secret_url)
     vault_url = f"{u.scheme}://{u.netloc}"
     secret_name = u.path.split("/")[2]

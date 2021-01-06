@@ -213,6 +213,7 @@ class ModelMixin(BaseModel):
         )
         return result
 
+
 # This is a cache of whether or not a types has at least one secret field.
 # We need to traverse all the fields of a type to know if any of them
 # is a secret every time we save. This allows to cache the result of
