@@ -31,7 +31,7 @@ def create_registration_response(machine_id: UUID, pool: Pool) -> func.HttpRespo
         read=True,
         update=True,
         process=True,
-        duration=datetime.timedelta(minutes=10),
+        duration=datetime.timedelta(hours=24)
     )
     return ok(
         AgentRegistration(
