@@ -8,9 +8,11 @@ import logging
 from typing import Optional, Union
 
 from onefuzztypes.models import Report
+from onefuzztypes.primitives import Container
 from pydantic import ValidationError
 
-from .azure.containers import StorageType, get_blob
+from .azure.containers import get_blob
+from .azure.storage import StorageType
 
 
 def parse_report(
@@ -44,7 +46,7 @@ def parse_report(
     return entry
 
 
-def get_report(container: str, filename: str) -> Optional[Report]:
+def get_report(container: Container, filename: str) -> Optional[Report]:
     metadata = "/".join([container, filename])
     if not filename.endswith(".json"):
         logging.error("get_report invalid extension: %s", metadata)
