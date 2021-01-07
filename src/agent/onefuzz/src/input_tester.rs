@@ -9,14 +9,15 @@ use crate::{
     process::run_cmd,
 };
 use anyhow::{Error, Result};
-use std::{collections::HashMap, path::Path, time::Duration};
+use std::{collections::HashMap, path::{Path, PathBuf}, time::Duration};
 use tempfile::tempdir;
 
 const DEFAULT_TIMEOUT_SECS: u64 = 5;
 const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
-    exe_path: &'a Path,
+    setup_dir: Option<PathBuf>,
+    exe_path: PathBuf,
     arguments: &'a [String],
     environ: &'a HashMap<String, String>,
     timeout: Duration,
@@ -42,7 +43,8 @@ pub struct TestResult {
 
 impl<'a> Tester<'a> {
     pub fn new(
-        exe_path: &'a Path,
+        setup_dir: Option<PathBuf>,
+        exe_path: PathBuf,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
         timeout: &'a Option<u64>,
@@ -53,6 +55,7 @@ impl<'a> Tester<'a> {
     ) -> Self {
         let timeout = Duration::from_secs(timeout.unwrap_or(DEFAULT_TIMEOUT_SECS));
         Self {
+            setup_dir,
             exe_path,
             arguments,
             environ,
@@ -72,7 +75,7 @@ impl<'a> Tester<'a> {
     ) -> Result<Option<Crash>> {
         const IGNORE_FIRST_CHANCE_EXCEPTIONS: bool = true;
         let report = input_tester::crash_detector::test_process(
-            self.exe_path,
+            self.exe_path.clone(),
             &argv,
             &env,
             self.timeout,
@@ -193,6 +196,10 @@ impl<'a> Tester<'a> {
                 .target_exe(&self.exe_path)
                 .target_options(&self.arguments);
 
+            if let Some(setup_dir) = &self.setup_dir {
+                expand.setup_dir(setup_dir);
+            }
+
             let argv = expand.evaluate(&self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();
             for (k, v) in self.environ {
@@ -218,7 +225,7 @@ impl<'a> Tester<'a> {
                     Err(error) => (None, Some(error), None),
                 }
             } else {
-                match run_cmd(self.exe_path, argv.clone(), &env, self.timeout).await {
+                match run_cmd(&self.exe_path, argv.clone(), &env, self.timeout).await {
                     Ok(output) => (None, None, Some(output)),
                     Err(error) => (None, Some(error), None),
                 }

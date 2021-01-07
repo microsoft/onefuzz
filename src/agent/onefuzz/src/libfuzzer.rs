@@ -22,6 +22,7 @@ pub struct LibFuzzerMergeOutput {
 }
 
 pub struct LibFuzzer<'a> {
+    setup_dir: Option<PathBuf>,
     exe: PathBuf,
     options: &'a [String],
     env: &'a HashMap<String, String>,
@@ -32,11 +33,13 @@ impl<'a> LibFuzzer<'a> {
         exe: impl Into<PathBuf>,
         options: &'a [String],
         env: &'a HashMap<String, String>,
+        setup_dir: impl Into<Option<PathBuf>>
     ) -> Self {
         Self {
             exe: exe.into(),
             options,
             env,
+            setup_dir: setup_dir.into()
         }
     }
 
@@ -54,6 +57,11 @@ impl<'a> LibFuzzer<'a> {
 
         let mut expand = Expand::new();
         expand.target_exe(&self.exe).target_options(&self.options);
+
+        if let Some(setup_dir) = &self.setup_dir {
+            expand.setup_dir(setup_dir);
+        }
+
 
         for (k, v) in self.env {
             cmd.env(k, expand.evaluate_value(v)?);
@@ -86,6 +94,10 @@ impl<'a> LibFuzzer<'a> {
             .target_options(&self.options)
             .input_corpus(&corpus_dir)
             .crashes(&fault_dir);
+
+        if let Some(setup_dir) = &self.setup_dir {
+            expand.setup_dir(setup_dir);
+        }
 
         let mut cmd = Command::new(&self.exe);
         cmd.kill_on_drop(true)
@@ -148,9 +160,10 @@ impl<'a> LibFuzzer<'a> {
         options.push("{input}".to_string());
 
         let tester = Tester::new(
-            &self.exe, &options, &self.env, &timeout, false, true, false, retry,
+            self.setup_dir.clone(), self.exe.clone(), &options, &self.env, &timeout, false, true, false, retry,
         );
         tester.test_input(test_input.as_ref()).await
+
     }
 
     pub async fn merge(
@@ -163,6 +176,10 @@ impl<'a> LibFuzzer<'a> {
             .target_exe(&self.exe)
             .target_options(&self.options)
             .input_corpus(&corpus_dir);
+
+        if let Some(setup_dir) = &self.setup_dir {
+            expand.setup_dir(setup_dir);
+        }
 
         let mut cmd = Command::new(&self.exe);
 

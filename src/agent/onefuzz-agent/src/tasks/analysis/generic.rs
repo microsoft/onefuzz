@@ -123,6 +123,10 @@ pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
         .analyzer_options(&config.analyzer_options)
         .output_dir(&config.analysis.path);
 
+    if let Some(setup_dir) = &config.common.setup_dir {
+        tool_args.setup_dir(setup_dir);
+    }
+
     let analyzer_path = Expand::new()
         .tools_dir(&config.tools.path)
         .evaluate_value(&config.analyzer_exe)?;

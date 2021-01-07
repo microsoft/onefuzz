@@ -55,7 +55,7 @@ struct RunnerDouble {
 
 #[async_trait]
 impl IWorkerRunner for RunnerDouble {
-    async fn run(&mut self, setup_dir: &Path, _work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+    async fn run(&mut self, _setup_dir: &Path, _work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
         Ok(Box::new(self.child.clone()))
     }
 }
