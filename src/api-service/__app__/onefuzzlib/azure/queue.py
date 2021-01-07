@@ -48,11 +48,12 @@ def get_queue_sas(
     add: bool = False,
     update: bool = False,
     process: bool = False,
+    duration: datetime.timedelta = datetime.timedelta(days=30),
 ) -> str:
     account_id = get_primary_account(storage_type)
     logging.debug("getting queue sas %s (account_id: %s)", queue, account_id)
     name, key = get_storage_account_name_key(account_id)
-    expiry = datetime.datetime.utcnow() + datetime.timedelta(days=30)
+    expiry = datetime.datetime.utcnow() + duration
 
     token = generate_queue_sas(
         name,

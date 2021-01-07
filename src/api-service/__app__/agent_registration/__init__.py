@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import datetime
 import logging
 from uuid import UUID
 
@@ -30,6 +31,7 @@ def create_registration_response(machine_id: UUID, pool: Pool) -> func.HttpRespo
         read=True,
         update=True,
         process=True,
+        duration=datetime.timedelta(hours=24),
     )
     return ok(
         AgentRegistration(

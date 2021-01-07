@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use downcast_rs::Downcast;
-use onefuzz::blob::BlobContainerUrl;
+use onefuzz::{blob::BlobContainerUrl, http::is_auth_error};
 use storage_queue::QueueClient;
 use tokio::fs;
 use uuid::Uuid;
@@ -194,18 +194,6 @@ impl WorkQueue {
 
         Ok(())
     }
-}
-
-fn is_auth_error(err: &anyhow::Error) -> bool {
-    use reqwest::StatusCode;
-
-    if let Some(err) = err.downcast_ref::<reqwest::Error>() {
-        if let Some(status) = err.status() {
-            return status == StatusCode::UNAUTHORIZED;
-        }
-    }
-
-    false
 }
 
 #[cfg(test)]
