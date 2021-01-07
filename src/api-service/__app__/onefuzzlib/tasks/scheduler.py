@@ -157,7 +157,7 @@ def build_work_unit(task: Task) -> Optional[Tuple[BucketConfig, WorkUnit]]:
         job_id=task_config.job_id,
         task_id=task_config.task_id,
         task_type=task_config.task_type,
-        config=task_config.json(),
+        config=task_config.json(exclude_none=True, exclude_unset=True),
     )
 
     bucket_config = BucketConfig(
