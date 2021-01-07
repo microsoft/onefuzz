@@ -87,7 +87,8 @@ pub struct GenericReportProcessor<'a> {
 impl<'a> GenericReportProcessor<'a> {
     pub fn new(config: &'a Config, heartbeat_client: Option<TaskHeartbeatClient>) -> Self {
         let tester = Tester::new(
-            &config.target_exe,
+            config.common.setup_dir.clone(),
+            config.target_exe.clone(),
             &config.target_options,
             &config.target_env,
             &config.target_timeout,

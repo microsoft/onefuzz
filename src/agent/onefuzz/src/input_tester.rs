@@ -9,7 +9,11 @@ use crate::{
     process::run_cmd,
 };
 use anyhow::{Error, Result};
-use std::{collections::HashMap, path::{Path, PathBuf}, time::Duration};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 use tempfile::tempdir;
 
 const DEFAULT_TIMEOUT_SECS: u64 = 5;

@@ -33,13 +33,13 @@ impl<'a> LibFuzzer<'a> {
         exe: impl Into<PathBuf>,
         options: &'a [String],
         env: &'a HashMap<String, String>,
-        setup_dir: impl Into<Option<PathBuf>>
+        setup_dir: Option<impl Into<PathBuf>>,
     ) -> Self {
         Self {
             exe: exe.into(),
             options,
             env,
-            setup_dir: setup_dir.into()
+            setup_dir: setup_dir.map(|d| d.into()),
         }
     }
 
@@ -61,7 +61,6 @@ impl<'a> LibFuzzer<'a> {
         if let Some(setup_dir) = &self.setup_dir {
             expand.setup_dir(setup_dir);
         }
-
 
         for (k, v) in self.env {
             cmd.env(k, expand.evaluate_value(v)?);
@@ -160,10 +159,17 @@ impl<'a> LibFuzzer<'a> {
         options.push("{input}".to_string());
 
         let tester = Tester::new(
-            self.setup_dir.clone(), self.exe.clone(), &options, &self.env, &timeout, false, true, false, retry,
+            self.setup_dir.clone(),
+            self.exe.clone(),
+            &options,
+            &self.env,
+            &timeout,
+            false,
+            true,
+            false,
+            retry,
         );
         tester.test_input(test_input.as_ref()).await
-
     }
 
     pub async fn merge(

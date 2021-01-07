@@ -72,6 +72,7 @@ impl LibFuzzerFuzzTask {
                 &self.config.target_exe,
                 &self.config.target_options,
                 &self.config.target_env,
+                self.config.common.setup_dir.clone(),
             );
             target.check_help().await?;
         }
@@ -148,6 +149,7 @@ impl LibFuzzerFuzzTask {
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
+            self.config.common.setup_dir.clone(),
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
 
