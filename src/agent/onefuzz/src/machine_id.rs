@@ -84,7 +84,7 @@ pub async fn get_scaleset_name() -> Result<Option<String>> {
 
 #[cfg(target_os = "linux")]
 pub async fn get_os_machine_id() -> Result<Uuid> {
-    let path = Path::new("/etc/machine_id");
+    let path = Path::new("/etc/machine-id");
     let contents = fs::read_to_string(&path)
         .await
         .with_context(|| format!("unable to read machine_id: {}", path.display()))?;
