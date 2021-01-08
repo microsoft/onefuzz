@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 
-from typing import Tuple, cast
+from typing import Tuple, cast, Type, TypeVar
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -13,6 +13,9 @@ from onefuzztypes.models import SecretAddress, SecretData
 from pydantic import BaseModel
 
 from .azure.creds import get_instance_name, get_keyvault_client
+
+
+A = TypeVar("A", bound=BaseModel)
 
 
 def save_to_keyvault(secret_data: SecretData) -> None:
@@ -64,6 +67,11 @@ def get_secret(secret_url: str) -> KeyVaultSecret:
     (vault_url, secret_name) = parse_secret_url(secret_url)
     keyvault_client = get_keyvault_client(vault_url)
     return keyvault_client.get_secret(secret_name)
+
+
+def get_secret_obj(secret_url: str, model: Type[A]) -> A:
+    secret = get_secret(secret_url)
+    return model.parse_raw(secret.value)
 
 
 def delete_secret(secret_url: str) -> None:

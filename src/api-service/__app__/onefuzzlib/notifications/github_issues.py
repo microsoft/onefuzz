@@ -12,7 +12,7 @@ from github3.issues import Issue
 from onefuzztypes.enums import GithubIssueSearchMatch
 from onefuzztypes.models import GithubAuth, GithubIssueTemplate, Report
 
-from ..secrets import get_secret
+from ..secrets import get_secret_obj
 from .common import Render, fail_task
 
 
@@ -25,8 +25,7 @@ class GithubIssue:
         if isinstance(config.auth.secret, GithubAuth):
             auth = config.auth.secret
         else:
-            auth_data = get_secret(config.auth.secret.url)
-            auth = GithubAuth.parse_raw(auth_data.value)
+            auth = get_secret_obj(config.auth.secret.url, GithubAuth)
 
         self.gh = login(username=auth.user, password=auth.personal_access_token)
         self.renderer = Render(container, filename, report)
