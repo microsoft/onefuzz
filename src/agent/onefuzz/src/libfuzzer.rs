@@ -56,7 +56,10 @@ impl<'a> LibFuzzer<'a> {
             .arg("-help=1");
 
         let mut expand = Expand::new();
-        expand.target_exe(&self.exe).target_options(&self.options).setup_dir(&self.setup_dir);
+        expand
+            .target_exe(&self.exe)
+            .target_options(&self.options)
+            .setup_dir(&self.setup_dir);
 
         for (k, v) in self.env {
             cmd.env(k, expand.evaluate_value(v)?);
