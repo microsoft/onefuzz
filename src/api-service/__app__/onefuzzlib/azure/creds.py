@@ -169,5 +169,6 @@ def get_scaleset_principal_id() -> UUID:
     return UUID(uid.properties["principalId"])
 
 
+@cached
 def get_keyvault_client(vault_url: str) -> SecretClient:
     return SecretClient(vault_url=vault_url, credential=DefaultAzureCredential())
