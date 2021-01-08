@@ -166,6 +166,7 @@ pub async fn continuous_sync(
     for dir in dirs {
         if dir.url.is_some() {
             should_loop = true;
+            break;
         }
     }
     if !should_loop {
