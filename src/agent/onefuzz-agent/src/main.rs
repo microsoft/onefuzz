@@ -42,7 +42,7 @@ fn main() -> Result<()> {
         .arg(
             Arg::with_name("setup_dir")
                 .long("setup_dir")
-                .short("sd")
+                .short("s")
                 .takes_value(true),
         )
         .subcommand(debug::cmd::args())

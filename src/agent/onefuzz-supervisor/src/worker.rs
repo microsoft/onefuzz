@@ -220,6 +220,8 @@ impl IWorkerRunner for WorkerRunner {
         cmd.current_dir(&working_dir);
         cmd.arg("-c");
         cmd.arg("config.json");
+        cmd.arg("-s");
+        cmd.arg(setup_dir);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 

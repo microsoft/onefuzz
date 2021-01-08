@@ -9,19 +9,15 @@ use crate::{
     process::run_cmd,
 };
 use anyhow::{Error, Result};
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
 const DEFAULT_TIMEOUT_SECS: u64 = 5;
 const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
-    setup_dir: PathBuf,
-    exe_path: PathBuf,
+    setup_dir: &'a Path,
+    exe_path: &'a Path,
     arguments: &'a [String],
     environ: &'a HashMap<String, String>,
     timeout: Duration,
@@ -47,8 +43,8 @@ pub struct TestResult {
 
 impl<'a> Tester<'a> {
     pub fn new(
-        setup_dir: PathBuf,
-        exe_path: PathBuf,
+        setup_dir: &'a Path,
+        exe_path: &'a Path,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
         timeout: &'a Option<u64>,
@@ -79,7 +75,7 @@ impl<'a> Tester<'a> {
     ) -> Result<Option<Crash>> {
         const IGNORE_FIRST_CHANCE_EXCEPTIONS: bool = true;
         let report = input_tester::crash_detector::test_process(
-            self.exe_path.clone(),
+            self.exe_path,
             &argv,
             &env,
             self.timeout,

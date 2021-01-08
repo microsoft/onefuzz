@@ -155,8 +155,8 @@ impl<'a> LibFuzzer<'a> {
         options.push("{input}".to_string());
 
         let tester = Tester::new(
-            self.setup_dir.clone(),
-            self.exe.clone(),
+            &self.setup_dir,
+            &self.exe,
             &options,
             &self.env,
             &timeout,

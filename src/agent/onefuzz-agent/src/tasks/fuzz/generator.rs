@@ -66,8 +66,8 @@ pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
     let sync_task = continuous_sync(&config.readonly_inputs, Pull, config.ensemble_sync_delay);
     let crash_dir_monitor = config.crashes.monitor_results(new_result);
     let tester = Tester::new(
-        config.common.setup_dir.clone(),
-        config.target_exe.clone(),
+        &config.common.setup_dir,
+        &config.target_exe,
         &config.target_options,
         &config.target_env,
         &config.target_timeout,
