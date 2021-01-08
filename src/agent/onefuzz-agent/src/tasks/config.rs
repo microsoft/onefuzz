@@ -34,7 +34,7 @@ pub struct CommonConfig {
 
     pub telemetry_key: Option<Uuid>,
 
-    pub setup_dir: Option<PathBuf>,
+    pub setup_dir: PathBuf,
 }
 
 impl CommonConfig {

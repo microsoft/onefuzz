@@ -20,7 +20,7 @@ const DEFAULT_TIMEOUT_SECS: u64 = 5;
 const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
-    setup_dir: Option<PathBuf>,
+    setup_dir: PathBuf,
     exe_path: PathBuf,
     arguments: &'a [String],
     environ: &'a HashMap<String, String>,
@@ -47,7 +47,7 @@ pub struct TestResult {
 
 impl<'a> Tester<'a> {
     pub fn new(
-        setup_dir: Option<PathBuf>,
+        setup_dir: PathBuf,
         exe_path: PathBuf,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
@@ -200,9 +200,7 @@ impl<'a> Tester<'a> {
                 .target_exe(&self.exe_path)
                 .target_options(&self.arguments);
 
-            if let Some(setup_dir) = &self.setup_dir {
-                expand.setup_dir(setup_dir);
-            }
+            expand.setup_dir(&self.setup_dir);
 
             let argv = expand.evaluate(&self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();

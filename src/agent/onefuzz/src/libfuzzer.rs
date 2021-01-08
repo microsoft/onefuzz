@@ -22,7 +22,7 @@ pub struct LibFuzzerMergeOutput {
 }
 
 pub struct LibFuzzer<'a> {
-    setup_dir: Option<PathBuf>,
+    setup_dir: PathBuf,
     exe: PathBuf,
     options: &'a [String],
     env: &'a HashMap<String, String>,
@@ -33,13 +33,13 @@ impl<'a> LibFuzzer<'a> {
         exe: impl Into<PathBuf>,
         options: &'a [String],
         env: &'a HashMap<String, String>,
-        setup_dir: Option<impl Into<PathBuf>>,
+        setup_dir: impl Into<PathBuf>,
     ) -> Self {
         Self {
             exe: exe.into(),
             options,
             env,
-            setup_dir: setup_dir.map(|d| d.into()),
+            setup_dir: setup_dir.into(),
         }
     }
 
@@ -56,11 +56,7 @@ impl<'a> LibFuzzer<'a> {
             .arg("-help=1");
 
         let mut expand = Expand::new();
-        expand.target_exe(&self.exe).target_options(&self.options);
-
-        if let Some(setup_dir) = &self.setup_dir {
-            expand.setup_dir(setup_dir);
-        }
+        expand.target_exe(&self.exe).target_options(&self.options).setup_dir(&self.setup_dir);
 
         for (k, v) in self.env {
             cmd.env(k, expand.evaluate_value(v)?);
@@ -92,11 +88,8 @@ impl<'a> LibFuzzer<'a> {
             .target_exe(&self.exe)
             .target_options(&self.options)
             .input_corpus(&corpus_dir)
-            .crashes(&fault_dir);
-
-        if let Some(setup_dir) = &self.setup_dir {
-            expand.setup_dir(setup_dir);
-        }
+            .crashes(&fault_dir)
+            .setup_dir(&self.setup_dir);
 
         let mut cmd = Command::new(&self.exe);
         cmd.kill_on_drop(true)
@@ -181,11 +174,8 @@ impl<'a> LibFuzzer<'a> {
         expand
             .target_exe(&self.exe)
             .target_options(&self.options)
-            .input_corpus(&corpus_dir);
-
-        if let Some(setup_dir) = &self.setup_dir {
-            expand.setup_dir(setup_dir);
-        }
+            .input_corpus(&corpus_dir)
+            .setup_dir(&self.setup_dir);
 
         let mut cmd = Command::new(&self.exe);
 

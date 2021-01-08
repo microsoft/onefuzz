@@ -25,6 +25,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
     let crashes_dir = value_t!(args, "crashes_dir", String)?;
     let inputs_dir = value_t!(args, "inputs_dir", String)?;
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
+    let setup_dir = value_t!(args, "setup_dir", PathBuf)?;
     let target_options = args.values_of_lossy("target_options").unwrap_or_default();
 
     // this happens during setup, not during runtime
@@ -71,7 +72,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
             job_id: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
             task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
             instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
-            setup_dir: None,
+            setup_dir,
         },
     };
 

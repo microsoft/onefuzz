@@ -138,11 +138,8 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .generated_inputs(output_dir)
-        .target_exe(&config.target_exe);
-
-    if let Some(setup_dir) = &config.common.setup_dir {
-        supervisor_args.setup_dir(setup_dir);
-    }
+        .target_exe(&config.target_exe)
+        .setup_dir( &config.common.setup_dir);
 
     if config.target_options_merge {
         supervisor_args.target_options(&config.target_options);

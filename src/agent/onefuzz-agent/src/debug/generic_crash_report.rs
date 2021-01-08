@@ -29,6 +29,7 @@ async fn run_impl(input: String, config: Config) -> Result<()> {
 
 pub fn run(args: &clap::ArgMatches) -> Result<()> {
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
+    let setup_dir = value_t!(args, "setup_dir", PathBuf)?;
     let input = value_t!(args, "input", String)?;
     let target_timeout = value_t!(args, "target_timeout", u64).ok();
     let check_retry_count = value_t!(args, "check_retry_count", u64)?;
@@ -65,7 +66,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
             job_id: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
             task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
             instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
-            setup_dir: None,
+            setup_dir,
         },
     };
 

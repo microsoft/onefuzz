@@ -157,7 +157,7 @@ async fn start_supervisor(
     supervisor_options: &[String],
     supervisor_env: &HashMap<String, String>,
     supervisor_input_marker: &Option<String>,
-    setup_dir: &Option<impl AsRef<Path>>,
+    setup_dir: impl AsRef<Path>,
 ) -> Result<Child> {
     let mut cmd = Command::new(supervisor_path.as_ref());
 
@@ -175,11 +175,8 @@ async fn start_supervisor(
         .runtime_dir(runtime_dir)
         .target_exe(target_exe)
         .target_options(target_options)
-        .input_corpus(inputs_dir);
-
-    if let Some(setup_dir) = setup_dir {
-        expand.setup_dir(setup_dir);
-    }
+        .input_corpus(inputs_dir)
+        .setup_dir(setup_dir);
 
     if let Some(input_marker) = supervisor_input_marker {
         expand.input_marker(input_marker);
