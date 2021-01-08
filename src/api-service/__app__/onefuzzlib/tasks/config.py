@@ -13,7 +13,7 @@ from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
 from onefuzztypes.primitives import Container
 
 from ..azure.containers import blob_exists, container_exists, get_container_sas_url
-from ..azure.creds import get_instance_id, get_instance_url
+from ..azure.creds import get_instance_id
 from ..azure.queue import get_queue_sas
 from ..azure.storage import StorageType
 from .defs import TASK_DEFINITIONS
