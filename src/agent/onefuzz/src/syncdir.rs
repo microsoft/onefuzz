@@ -56,7 +56,7 @@ impl SyncedDir {
                 }
             }
             Err(_) => fs::create_dir(&self.path).await.with_context(|| {
-                format!("unable to create init SyncedDir: {}", self.path.display())
+                format!("unable to create local SyncedDir: {}", self.path.display())
             }),
         }
     }

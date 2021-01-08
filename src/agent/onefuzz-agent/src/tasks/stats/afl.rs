@@ -10,7 +10,7 @@ pub async fn read_stats(output_path: impl AsRef<Path>) -> Result<Vec<EventData>,
     let output_path = output_path.as_ref();
     let f = tokio::fs::File::open(&output_path)
         .await
-        .with_context(|| format!("unable to open read AFL stats: {}", output_path.display()))?;
+        .with_context(|| format!("unable to open AFL stats for read: {}", output_path.display()))?;
     let mut stats = Vec::new();
 
     let reader = tokio::io::BufReader::new(f);

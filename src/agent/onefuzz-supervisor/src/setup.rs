@@ -144,7 +144,7 @@ async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<
         .await
         .with_context(|| {
             format!(
-                "unable to create workign directory: {}",
+                "unable to create working directory: {}",
                 working_dir.display()
             )
         })?;
