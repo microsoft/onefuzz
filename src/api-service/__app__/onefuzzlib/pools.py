@@ -258,11 +258,10 @@ class Node(BASE_NODE, ORMMixin):
         return self.version != __version__
 
     def send_message(self, message: NodeCommand) -> None:
-        if not self.delete_requested:
-            NodeMessage(
-                agent_id=self.machine_id,
-                message=message,
-            ).save()
+        NodeMessage(
+            agent_id=self.machine_id,
+            message=message,
+        ).save()
 
     def to_reimage(self, done: bool = False) -> None:
         if done:
@@ -319,6 +318,7 @@ class Node(BASE_NODE, ORMMixin):
     def delete(self) -> None:
         NodeTasks.clear_by_machine_id(self.machine_id)
         super().delete()
+        NodeMessage.clear_messages(self.machine_id)
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):

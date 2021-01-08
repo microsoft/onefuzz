@@ -10,7 +10,7 @@ from onefuzztypes.requests import NodeGet, NodeSearch, NodeUpdate
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
-from ..onefuzzlib.pools import Node, NodeMessage, NodeTasks
+from ..onefuzzlib.pools import Node, NodeTasks
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
@@ -77,8 +77,6 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     if node.debug_keep_node:
         node.debug_keep_node = False
         node.save()
-
-    NodeMessage.clear_messages(node.agent_id)
 
     return ok(BoolResult(result=True))
 
