@@ -188,7 +188,6 @@ def build_task_config(
             StorageType.config,
             add=True,
         ),
-        back_channel_address="https://%s/api/back_channel" % (get_instance_url()),
         instance_id=get_instance_id(),
     )
 
