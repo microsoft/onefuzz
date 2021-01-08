@@ -135,11 +135,14 @@ impl<M> InputPoller<M> {
     pub async fn seen_in_batch(&self, url: &Url) -> Result<bool> {
         let result = if let Some(batch_dir) = &self.batch_dir {
             if let Ok(blob) = BlobUrl::new(url.clone()) {
-                // TODO - this should see if we have a URL container and only check that part if we do
-                // otherwise only check the local path
-                batch_dir.url()?.account() == blob.account()
-                    && batch_dir.url()?.container() == blob.container()
-                    && batch_dir.path.join(blob.name()).exists()
+                match batch_dir.url() {
+                    Ok(batch_url) => {
+                        batch_url.account() == blob.account()
+                            && batch_url.container() == blob.container()
+                            && batch_dir.path.join(blob.name()).exists()
+                    }
+                    Err(_) => batch_dir.path.join(blob.name()).exists(),
+                }
             } else {
                 false
             }

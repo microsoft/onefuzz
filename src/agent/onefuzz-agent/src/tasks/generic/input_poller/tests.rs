@@ -109,7 +109,7 @@ fn url_fixture(msg: Msg) -> Url {
     Url::parse(&format!("https://azure.com/c/{}", msg)).unwrap()
 }
 
-fn _input_fixture(dir: &Path, msg: Msg) -> PathBuf {
+fn input_fixture(dir: &Path, msg: Msg) -> PathBuf {
     let name = msg.to_string();
     dir.join(name)
 }
@@ -162,43 +162,54 @@ async fn test_polled_none_parse() {
     assert_eq!(task.state(), &State::Ready);
 }
 
-// #[tokio::test]
-// async fn test_parsed_download() {
-//     let mut task = fixture();
+#[tokio::test]
+async fn test_parsed_download() {
+    let mut task = fixture();
 
-//     let msg: Msg = 0;
-//     let url = url_fixture(msg);
-//     let input = input_fixture(dir.path(), msg);
+    let dir = Path::new("etc");
+    let msg: Msg = 0;
+    let url = url_fixture(msg);
+    let input = input_fixture(&dir, msg);
 
-//     task.set_state(State::Parsed(msg, url.clone()));
+    task.set_state(State::Parsed(msg, url.clone()));
 
-//     let mut downloader = TestDownloader::default();
+    let mut downloader = TestDownloader::default();
 
-//     task.trigger(Event::Download(&mut downloader))
-//         .await
-//         .unwrap();
+    task.trigger(Event::Download(&mut downloader))
+        .await
+        .unwrap();
 
-//     assert_eq!(task.state(), &State::Downloaded(msg, url.clone(), input));
-//     assert_eq!(downloader.downloaded, vec![url]);
-// }
+    match task.state() {
+        State::Downloaded(got_msg, got_url, got_path) => {
+            assert_eq!(*got_msg, msg);
+            assert_eq!(*got_url, url);
+            assert_eq!(got_path.file_name(), input.file_name());
+        }
+        _ => {
+            panic!("unexpected state");
+        }
+    }
+}
 
-// #[tokio::test]
-// async fn test_downloaded_process() {
-//     let mut task = fixture();
+#[tokio::test]
+async fn test_downloaded_process() {
+    let mut task = fixture();
 
-//     let msg: Msg = 0;
-//     let url = url_fixture(msg);
-//     let input = input_fixture(dir.path(), msg);
+    let dir = Path::new("etc");
 
-//     task.set_state(State::Downloaded(msg, url.clone(), input.clone()));
+    let msg: Msg = 0;
+    let url = url_fixture(msg);
+    let input = input_fixture(dir, msg);
 
-//     let mut processor = TestProcessor::default();
+    task.set_state(State::Downloaded(msg, url.clone(), input.clone()));
 
-//     task.trigger(Event::Process(&mut processor)).await.unwrap();
+    let mut processor = TestProcessor::default();
 
-//     assert_eq!(task.state(), &State::Processed(msg));
-//     assert_eq!(processor.processed, vec![(Some(url), input)]);
-// }
+    task.trigger(Event::Process(&mut processor)).await.unwrap();
+
+    assert_eq!(task.state(), &State::Processed(msg));
+    assert_eq!(processor.processed, vec![(Some(url), input)]);
+}
 
 #[tokio::test]
 async fn test_processed_finish() {
