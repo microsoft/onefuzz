@@ -72,7 +72,7 @@ async fn upload_deduped(report: &CrashReport, container: &BlobContainerUrl) -> R
         .header("If-None-Match", "*")
         .send_retry_default()
         .await?;
-    if result.status() != StatusCode::NOT_MODIFIED {
+    if result.status() == StatusCode::CREATED  {
         event!(new_unique_report;);
     }
     Ok(())
