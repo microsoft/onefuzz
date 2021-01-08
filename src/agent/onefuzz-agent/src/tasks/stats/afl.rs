@@ -8,9 +8,12 @@ use tokio::io::AsyncBufReadExt;
 
 pub async fn read_stats(output_path: impl AsRef<Path>) -> Result<Vec<EventData>, Error> {
     let output_path = output_path.as_ref();
-    let f = tokio::fs::File::open(&output_path)
-        .await
-        .with_context(|| format!("unable to open AFL stats for read: {}", output_path.display()))?;
+    let f = tokio::fs::File::open(&output_path).await.with_context(|| {
+        format!(
+            "unable to open AFL stats for read: {}",
+            output_path.display()
+        )
+    })?;
     let mut stats = Vec::new();
 
     let reader = tokio::io::BufReader::new(f);
