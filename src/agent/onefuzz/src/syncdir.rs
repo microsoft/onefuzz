@@ -46,7 +46,7 @@ impl SyncedDir {
         }
     }
 
-    pub fn url<'a>(&'a self) -> Result<&'a BlobContainerUrl> {
+    pub fn try_url(&self) -> Result<&BlobContainerUrl> {
         let url = match &self.url {
             Some(x) => x,
             None => bail!("missing URL context"),

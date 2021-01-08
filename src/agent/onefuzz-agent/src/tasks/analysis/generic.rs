@@ -66,7 +66,7 @@ async fn run_existing(config: &Config) -> Result<()> {
 
 async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
     let result = if let Some(crashes) = &config.crashes {
-        match crashes.url() {
+        match crashes.try_url() {
             Ok(url) => {
                 url.account() == input.account()
                     && url.container() == input.container()

@@ -124,7 +124,7 @@ impl<M> InputPoller<M> {
                 let dir_relative = input_path.strip_prefix(&dir_path)?;
                 dir_relative.display().to_string()
             };
-            let url = to_process.url().map(|x| x.blob(blob_name).url()).ok();
+            let url = to_process.try_url().map(|x| x.blob(blob_name).url()).ok();
 
             processor.process(url, &path).await?;
         }
@@ -135,7 +135,7 @@ impl<M> InputPoller<M> {
     pub async fn seen_in_batch(&self, url: &Url) -> Result<bool> {
         let result = if let Some(batch_dir) = &self.batch_dir {
             if let Ok(blob) = BlobUrl::new(url.clone()) {
-                match batch_dir.url() {
+                match batch_dir.try_url() {
                     Ok(batch_url) => {
                         batch_url.account() == blob.account()
                             && batch_url.container() == blob.container()
