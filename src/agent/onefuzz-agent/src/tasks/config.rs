@@ -81,9 +81,16 @@ pub enum Config {
 }
 
 impl Config {
-    pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
-        let json = std::fs::read_to_string(path)?;
-        Ok(serde_json::from_str(&json)?)
+    pub fn from_file(path: impl AsRef<Path>, setup_dir: Option<impl AsRef<Path>>) -> Result<Self> {
+        let file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        let mut json_config: serde_json::Value = serde_json::from_reader(reader)?;
+        if let Some(setup_dir) = setup_dir {
+            json_config["setup_dir"] =
+                serde_json::Value::String(setup_dir.as_ref().to_string_lossy().into());
+        }
+
+        Ok(serde_json::from_value(json_config)?)
     }
 
     pub fn common(&self) -> &CommonConfig {

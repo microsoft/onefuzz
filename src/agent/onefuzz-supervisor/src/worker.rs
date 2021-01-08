@@ -202,12 +202,7 @@ impl IWorkerRunner for WorkerRunner {
 
         let config_path = work.config_path()?;
 
-        // injecting the setup_dir path in the agent config
-        let mut json_config: serde_json::Value = serde_json::from_str(work.config.expose_ref())?;
-        json_config["setup_dir"] =
-            serde_json::Value::String(setup_dir.to_string_lossy().into_owned());
-
-        fs::write(&config_path, json_config.to_string()).await?;
+        fs::write(&config_path, work.config.expose_ref()).await?;
 
         verbose!(
             "wrote worker config to config_path = {}",
