@@ -99,7 +99,7 @@ impl<'a> ReportTask<'a> {
             self.poller.batch_process(&mut processor, &crashes).await?;
         }
 
-        info!("processing from queue");
+        info!("processing crashes from queue");
         if self.config.check_queue {
             if let Some(queue) = &self.config.input_queue {
                 let callback = CallbackImpl::new(queue.clone(), processor);

@@ -107,7 +107,7 @@ impl<M> InputPoller<M> {
         if to_process.url.is_some() {
             to_process.init_pull().await?;
         }
-        info!("checking: {}", to_process.path.display());
+        info!("batch processing directory: {}", to_process.path.display());
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
@@ -157,6 +157,7 @@ impl<M> InputPoller<M> {
     }
 
     pub async fn run(&mut self, mut cb: impl Callback<M>) -> Result<()> {
+        info!("starting input queue polling");
         loop {
             match self.state() {
                 State::Polled(None) => {
