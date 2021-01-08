@@ -10,7 +10,7 @@ from onefuzztypes.requests import NodeGet, NodeSearch, NodeUpdate
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
-from ..onefuzzlib.pools import Node, NodeTasks
+from ..onefuzzlib.pools import Node, NodeMessage, NodeTasks
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
@@ -72,6 +72,8 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
             Error(code=ErrorCode.UNABLE_TO_FIND, errors=["unable to find node"]),
             context=request.machine_id,
         )
+
+    NodeMessage.clear_messages(node.agent_id)
 
     node.set_halt()
     if node.debug_keep_node:
