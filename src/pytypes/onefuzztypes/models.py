@@ -298,7 +298,6 @@ class TaskUnitConfig(BaseModel):
     telemetry_key: Optional[str]
     heartbeat_queue: str
     # command_queue: str
-    back_channel_address: str
     input_queue: Optional[str]
     supervisor_exe: Optional[str]
     supervisor_env: Optional[Dict[str, str]]
