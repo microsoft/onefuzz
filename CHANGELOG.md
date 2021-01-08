@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.11.0
+### Added 
+* Service: Added support for sharding corpus storage accounts using "Premium" storage accounts for improved IOPs.  [#334](https://github.com/microsoft/oneufzz/pull/334)
+* CLI/Service/Agent: Added the ability to optionally colocate multiple similar tasks on a single machine. The coverage and crash reporting tasks in the LibFuzzer template make use of this functionality by default. [#402](https://github.com/microsoft/oneufzz/pull/402)
+* CLI: Added `onefuzz debug log tail` which enables continuously following Application Insights query results.  [#401](https://github.com/microsoft/oneufzz/pull/401)
+* CLI/Agent: Add support to optionally verify LibFuzzer targets execute correctly at the start of a task using `-help=1`, which will enable identifying non-functional LibFuzzer targets.  [#381](https://github.com/microsoft/oneufzz/pull/381)
+* CLI/Agent: Add support to optionally specify if LibFuzzer targets exit with non-zero error codes without crashing inputs as a warning rather than a failure.  [#381](https://github.com/microsoft/oneufzz/pull/381)
+* Agent: The STDOUT and STDERR for the supervisors and generators are now logged to Application Insights.  [#400](https://github.com/microsoft/oneufzz/pull/400)
+* Service: Enabled per-Scaleset SSH keys on Windows VMs similar to Linux VMs, enabling `onefuzz debug node ssh` on Windows as well as Linux VMs.  [#390](https://github.com/microsoft/oneufzz/pull/390)
+* Agent: Support ASAN odr-violation results.  [#380](https://github.com/microsoft/oneufzz/pull/380)
+* CLI/Service/Agent: Added the ability add SSH keys to nodes within scalesets.  [#441](https://github.com/microsoft/oneufzz/pull/441)
+* CLI: Added support for multi-tenant authentication.  [#346](https://github.com/microsoft/oneufzz/pull/346)
+
+### Changed
+* Service: Updating outdated nodes is now limited to 500 nodes at a time. [#397](https://github.com/microsoft/oneufzz/pull/397)
+* Service: Restrict agent from accessing API endpoints not specific to the agent.  [#404](https://github.com/microsoft/oneufzz/pull/404)
+* Service: Increased Azure Functions runtime timeout to 15 minutes.  [#384](https://github.com/microsoft/oneufzz/pull/384)
+* Deployment/Agent: Updated AFL++ to 3.00c.  [#393](https://github.com/microsoft/onefuzz/pull/393)
+* Agent: Added randomized initial jitter to agent heartbeats, which reduce API query storms when launching large number of nodes concurrently.  [#387](https://github.com/microsoft/onefuzz/pull/387)
+
+### Fixed
+* CLI/Agent: Handle Add support to verify LibFuzzer targets execute correctly at the start of a task using `-help=1`.  [#381](https://github.com/microsoft/oneufzz/pull/381)
+* Service: Re-enable API endpoint used by `onefuzz nodes update`.  [#412](https://github.com/microsoft/oneufzz/pull/412)
+* Agent: Addressed a race condition in LibFuzzer coverage analysis without initial seeds.  [#403](https://github.com/microsoft/oneufzz/pull/403)
+* Agent: Prevent supervisor that fatally exits from processing additional new tasks.  [#378](https://github.com/microsoft/oneufzz/pull/378)
+* Agent: Address issues handling LibFuzzer targets that produce non-UTF8 output to STDERR.  [#379](https://github.com/microsoft/oneufzz/pull/379)
+
 ## 1.10.0
 ### Added
 * CLI: Added `libfuzzer merge` job template, which enables running performing libfuzzer input minimization as a batch operation.  [#282](https://github.com/microsoft/onefuzz/pull/282)
