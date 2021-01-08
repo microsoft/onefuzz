@@ -135,14 +135,9 @@ impl<M> InputPoller<M> {
     pub async fn seen_in_batch(&self, url: &Url) -> Result<bool> {
         let result = if let Some(batch_dir) = &self.batch_dir {
             if let Ok(blob) = BlobUrl::new(url.clone()) {
-                match batch_dir.try_url() {
-                    Ok(batch_url) => {
-                        batch_url.account() == blob.account()
-                            && batch_url.container() == blob.container()
-                            && batch_dir.path.join(blob.name()).exists()
-                    }
-                    Err(_) => batch_dir.path.join(blob.name()).exists(),
-                }
+                batch_dir.try_url()?.account() == blob.account()
+                    && batch_dir.try_url()?.container() == blob.container()
+                    && batch_dir.path.join(blob.name()).exists()
             } else {
                 false
             }

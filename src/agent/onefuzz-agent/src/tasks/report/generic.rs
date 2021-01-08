@@ -94,10 +94,12 @@ impl<'a> ReportTask<'a> {
         let heartbeat_client = self.config.common.init_heartbeat().await?;
         let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
 
+        info!("processing existing crashes");
         if let Some(crashes) = &self.config.crashes {
             self.poller.batch_process(&mut processor, &crashes).await?;
         }
 
+        info!("processing from queue");
         if self.config.check_queue {
             if let Some(queue) = &self.config.input_queue {
                 let callback = CallbackImpl::new(queue.clone(), processor);

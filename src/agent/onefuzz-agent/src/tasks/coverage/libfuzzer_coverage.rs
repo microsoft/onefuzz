@@ -127,6 +127,7 @@ impl CoverageTask {
     async fn process(&mut self) -> Result<()> {
         let mut processor = CoverageProcessor::new(self.config.clone()).await?;
 
+        info!("processing initial dataset");
         let mut seen_inputs = false;
         // Update the total with the coverage from each seed corpus.
         for dir in &self.config.readonly_inputs {
@@ -153,7 +154,7 @@ impl CoverageTask {
 
         // If a queue has been provided, poll it for new coverage.
         if let Some(queue) = &self.config.input_queue {
-            verbose!("polling queue for new coverage");
+            info!("polling queue for new coverage");
             let callback = CallbackImpl::new(queue.clone(), processor);
             self.poller.run(callback).await?;
         }
