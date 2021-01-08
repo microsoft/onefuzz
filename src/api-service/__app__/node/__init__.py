@@ -73,12 +73,12 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
             context=request.machine_id,
         )
 
-    NodeMessage.clear_messages(node.agent_id)
-
     node.set_halt()
     if node.debug_keep_node:
         node.debug_keep_node = False
         node.save()
+
+    NodeMessage.clear_messages(node.agent_id)
 
     return ok(BoolResult(result=True))
 
