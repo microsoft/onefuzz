@@ -9,17 +9,13 @@ from uuid import UUID
 
 from onefuzztypes.enums import OS, AgentMode
 from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
-from onefuzztypes.primitives import Extension, Region
+from onefuzztypes.primitives import Container, Extension, Region
 
-from .azure.containers import (
-    StorageType,
-    get_container_sas_url,
-    get_file_sas_url,
-    save_blob,
-)
+from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
 from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
+from .azure.storage import StorageType
 from .reports import get_report
 
 
@@ -95,8 +91,12 @@ def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
         ssh_path = "$env:ProgramData/ssh/administrators_authorized_keys"
         commands += [f'Set-Content -Path {ssh_path} -Value "{ssh_key}"']
 
-    save_blob("vm-scripts", filename, sep.join(commands) + sep, StorageType.config)
-    return get_file_sas_url("vm-scripts", filename, StorageType.config, read=True)
+    save_blob(
+        Container("vm-scripts"), filename, sep.join(commands) + sep, StorageType.config
+    )
+    return get_file_sas_url(
+        Container("vm-scripts"), filename, StorageType.config, read=True
+    )
 
 
 def build_pool_config(pool: Pool) -> str:
@@ -116,14 +116,14 @@ def build_pool_config(pool: Pool) -> str:
     filename = f"{pool.name}/config.json"
 
     save_blob(
-        "vm-scripts",
+        Container("vm-scripts"),
         filename,
         config.json(),
         StorageType.config,
     )
 
     return get_file_sas_url(
-        "vm-scripts",
+        Container("vm-scripts"),
         filename,
         StorageType.config,
         read=True,
@@ -135,24 +135,28 @@ def update_managed_scripts() -> None:
         "azcopy sync '%s' instance-specific-setup"
         % (
             get_container_sas_url(
-                "instance-specific-setup",
+                Container("instance-specific-setup"),
                 StorageType.config,
                 read=True,
                 list=True,
             )
         ),
         "azcopy sync '%s' tools"
-        % (get_container_sas_url("tools", StorageType.config, read=True, list=True)),
+        % (
+            get_container_sas_url(
+                Container("tools"), StorageType.config, read=True, list=True
+            )
+        ),
     ]
 
     save_blob(
-        "vm-scripts",
+        Container("vm-scripts"),
         "managed.ps1",
         "\r\n".join(commands) + "\r\n",
         StorageType.config,
     )
     save_blob(
-        "vm-scripts",
+        Container("vm-scripts"),
         "managed.sh",
         "\n".join(commands) + "\n",
         StorageType.config,
@@ -170,25 +174,25 @@ def agent_config(
     if vm_os == OS.windows:
         urls += [
             get_file_sas_url(
-                "vm-scripts",
+                Container("vm-scripts"),
                 "managed.ps1",
                 StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
-                "tools",
+                Container("tools"),
                 "win64/azcopy.exe",
                 StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
-                "tools",
+                Container("tools"),
                 "win64/setup.ps1",
                 StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
-                "tools",
+                Container("tools"),
                 "win64/onefuzz.ps1",
                 StorageType.config,
                 read=True,
@@ -212,19 +216,19 @@ def agent_config(
     elif vm_os == OS.linux:
         urls += [
             get_file_sas_url(
-                "vm-scripts",
+                Container("vm-scripts"),
                 "managed.sh",
                 StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
-                "tools",
+                Container("tools"),
                 "linux/azcopy",
                 StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
-                "tools",
+                Container("tools"),
                 "linux/setup.sh",
                 StorageType.config,
                 read=True,
@@ -260,7 +264,7 @@ def repro_extensions(
     repro_os: OS,
     repro_id: UUID,
     repro_config: ReproConfig,
-    setup_container: Optional[str],
+    setup_container: Optional[Container],
 ) -> List[Extension]:
     # TODO - what about contents of repro.ps1 / repro.sh?
     report = get_report(repro_config.container, repro_config.path)
@@ -302,7 +306,7 @@ def repro_extensions(
         script_name = "task-setup.sh"
 
     save_blob(
-        "task-configs",
+        Container("task-configs"),
         "%s/%s" % (repro_id, script_name),
         task_script,
         StorageType.config,
@@ -311,13 +315,13 @@ def repro_extensions(
     for repro_file in repro_files:
         urls += [
             get_file_sas_url(
-                "repro-scripts",
+                Container("repro-scripts"),
                 repro_file,
                 StorageType.config,
                 read=True,
             ),
             get_file_sas_url(
-                "task-configs",
+                Container("task-configs"),
                 "%s/%s" % (repro_id, script_name),
                 StorageType.config,
                 read=True,
@@ -333,13 +337,13 @@ def repro_extensions(
 def proxy_manager_extensions(region: Region) -> List[Extension]:
     urls = [
         get_file_sas_url(
-            "proxy-configs",
+            Container("proxy-configs"),
             "%s/config.json" % region,
             StorageType.config,
             read=True,
         ),
         get_file_sas_url(
-            "tools",
+            Container("tools"),
             "linux/onefuzz-proxy-manager",
             StorageType.config,
             read=True,

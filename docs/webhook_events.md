@@ -182,6 +182,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "check_fuzzer_help": {
+                    "title": "Check Fuzzer Help",
+                    "type": "boolean"
+                },
+                "expect_crash_on_failure": {
+                    "title": "Expect Crash On Failure",
+                    "type": "boolean"
+                },
                 "rename_output": {
                     "title": "Rename Output",
                     "type": "boolean"
@@ -405,6 +413,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "items": {
                         "$ref": "#/definitions/TaskDebugFlag"
                     }
+                },
+                "colocate": {
+                    "title": "Colocate",
+                    "type": "boolean"
                 }
             },
             "required": [
@@ -805,6 +817,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "check_fuzzer_help": {
+                    "title": "Check Fuzzer Help",
+                    "type": "boolean"
+                },
+                "expect_crash_on_failure": {
+                    "title": "Expect Crash On Failure",
+                    "type": "boolean"
+                },
                 "rename_output": {
                     "title": "Rename Output",
                     "type": "boolean"
@@ -1028,6 +1048,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "items": {
                         "$ref": "#/definitions/TaskDebugFlag"
                     }
+                },
+                "colocate": {
+                    "title": "Colocate",
+                    "type": "boolean"
                 }
             },
             "required": [

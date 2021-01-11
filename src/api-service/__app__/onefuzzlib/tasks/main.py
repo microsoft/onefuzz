@@ -18,9 +18,9 @@ from onefuzztypes.webhooks import (
     WebhookEventTaskStopped,
 )
 
-from ..azure.containers import StorageType
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
+from ..azure.storage import StorageType
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
@@ -28,7 +28,7 @@ from ..webhooks import Webhook
 
 
 class Task(BASE_TASK, ORMMixin):
-    def ready_to_schedule(self) -> bool:
+    def check_prereq_tasks(self) -> bool:
         if self.config.prereq_tasks:
             for task_id in self.config.prereq_tasks:
                 task = Task.get_by_task_id(task_id)

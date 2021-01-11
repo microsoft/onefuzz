@@ -18,9 +18,10 @@ from onefuzztypes.enums import (
 )
 from onefuzztypes.models import AutoScaleConfig, Error
 from onefuzztypes.models import Node as BASE_NODE
-from onefuzztypes.models import NodeAssignment, NodeCommand
+from onefuzztypes.models import NodeAssignment, NodeCommand, NodeCommandAddSshKey
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Pool as BASE_POOL
+from onefuzztypes.models import Result
 from onefuzztypes.models import Scaleset as BASE_SCALESET
 from onefuzztypes.models import (
     ScalesetNodeState,
@@ -35,7 +36,6 @@ from pydantic import BaseModel, Field
 
 from .__version__ import __version__
 from .azure.auth import build_auth
-from .azure.containers import StorageType
 from .azure.image import get_os
 from .azure.network import Network
 from .azure.queue import (
@@ -46,6 +46,7 @@ from .azure.queue import (
     queue_object,
     remove_first_message,
 )
+from .azure.storage import StorageType
 from .azure.vmss import (
     UnableToUpdate,
     create_vmss,
@@ -100,6 +101,7 @@ class Node(BASE_NODE, ORMMixin):
         states: Optional[List[NodeState]] = None,
         pool_name: Optional[str] = None,
         exclude_update_scheduled: bool = False,
+        num_results: Optional[int] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
         if scaleset_id:
@@ -117,11 +119,14 @@ class Node(BASE_NODE, ORMMixin):
         # We write the query this way to allow us to get the nodes where the
         # version is not defined as well as the nodes with a mismatched version
         version_query = "not (version eq '%s')" % __version__
-        return cls.search(query=query, raw_unchecked_filter=version_query)
+        return cls.search(
+            query=query, raw_unchecked_filter=version_query, num_results=num_results
+        )
 
     @classmethod
     def mark_outdated_nodes(cls) -> None:
-        outdated = cls.search_outdated(exclude_update_scheduled=True)
+        # ony update 500 nodes at a time to mitigate timeout issues
+        outdated = cls.search_outdated(exclude_update_scheduled=True, num_results=500)
         for node in outdated:
             logging.info(
                 "node is outdated: %s - node_version:%s api_version:%s",
@@ -253,11 +258,10 @@ class Node(BASE_NODE, ORMMixin):
         return self.version != __version__
 
     def send_message(self, message: NodeCommand) -> None:
-        stop_message = NodeMessage(
+        NodeMessage(
             agent_id=self.machine_id,
             message=message,
-        )
-        stop_message.save()
+        ).save()
 
     def to_reimage(self, done: bool = False) -> None:
         if done:
@@ -268,6 +272,21 @@ class Node(BASE_NODE, ORMMixin):
             logging.info("setting reimage_requested: %s", self.machine_id)
             self.reimage_requested = True
         self.save()
+
+    def add_ssh_public_key(self, public_key: str) -> Result[None]:
+        if self.scaleset_id is None:
+            return Error(
+                code=ErrorCode.INVALID_REQUEST,
+                errors=["only able to add ssh keys to scaleset nodes"],
+            )
+
+        if not public_key.endswith("\n"):
+            public_key += "\n"
+
+        self.send_message(
+            NodeCommand(add_ssh_key=NodeCommandAddSshKey(public_key=public_key))
+        )
+        return None
 
     def stop(self) -> None:
         self.to_reimage()

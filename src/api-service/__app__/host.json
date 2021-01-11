@@ -30,5 +30,5 @@
       "maxDequeueCount": 5
     }
   },
-  "functionTimeout": "00:05:00"
+  "functionTimeout": "00:15:00"
 }
