@@ -8,21 +8,15 @@ import hmac
 import logging
 from hashlib import sha512
 from typing import List, Optional, Tuple
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import requests
 from memoization import cached
-from onefuzztypes.enums import ErrorCode, WebhookEventType, WebhookMessageState
+from onefuzztypes.enums import ErrorCode, WebhookMessageState
+from onefuzztypes.events import Event, EventMessage, EventPing, EventType
 from onefuzztypes.models import Error, Result
 from onefuzztypes.webhooks import Webhook as BASE_WEBHOOK
-from onefuzztypes.webhooks import (
-    WebhookEvent,
-    WebhookEventPing,
-    WebhookEventTaskCreated,
-    WebhookEventTaskFailed,
-    WebhookEventTaskStopped,
-    WebhookMessage,
-)
+from onefuzztypes.webhooks import WebhookMessage
 from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
 from pydantic import BaseModel
 
@@ -140,34 +134,18 @@ class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
         )
 
 
-def get_event_type(event: WebhookEvent) -> WebhookEventType:
-    events = {
-        WebhookEventTaskCreated: WebhookEventType.task_created,
-        WebhookEventTaskFailed: WebhookEventType.task_failed,
-        WebhookEventTaskStopped: WebhookEventType.task_stopped,
-        WebhookEventPing: WebhookEventType.ping,
-    }
-
-    for event_class in events:
-        if isinstance(event, event_class):
-            return events[event_class]
-
-    raise NotImplementedError("unsupported event type: %s" % event)
-
-
 class Webhook(BASE_WEBHOOK, ORMMixin):
     @classmethod
     def key_fields(cls) -> Tuple[str, Optional[str]]:
         return ("webhook_id", "name")
 
     @classmethod
-    def send_event(cls, event: WebhookEvent) -> None:
-        event_type = get_event_type(event)
+    def send_event(cls, event_message: EventMessage) -> None:
         for webhook in get_webhooks_cached():
-            if event_type not in webhook.event_types:
+            if event_message.event_type not in webhook.event_types:
                 continue
 
-            webhook._add_event(event_type, event)
+            webhook._add_event(event_message)
 
     @classmethod
     def get_by_id(cls, webhook_id: UUID) -> Result["Webhook"]:
@@ -185,18 +163,19 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
         webhook = webhooks[0]
         return webhook
 
-    def _add_event(self, event_type: WebhookEventType, event: WebhookEvent) -> None:
+    def _add_event(self, event_message: EventMessage) -> None:
         message = WebhookMessageLog(
             webhook_id=self.webhook_id,
-            event_type=event_type,
-            event=event,
+            event_id=event_message.event_id,
+            event_type=event_message.event_type,
+            event=event_message.event,
         )
         message.save()
         message.queue_webhook()
 
-    def ping(self) -> WebhookEventPing:
-        ping = WebhookEventPing()
-        self._add_event(WebhookEventType.ping, ping)
+    def ping(self) -> EventPing:
+        ping = EventPing(ping_id=uuid4())
+        self._add_event(EventMessage(event_type=EventType.ping, event=ping))
         return ping
 
     def send(self, message_log: WebhookMessageLog) -> bool:
@@ -228,8 +207,8 @@ def build_message(
     *,
     webhook_id: UUID,
     event_id: UUID,
-    event_type: WebhookEventType,
-    event: WebhookEvent,
+    event_type: EventType,
+    event: Event,
     secret_token: Optional[str] = None,
 ) -> Tuple[bytes, Optional[str]]:
     data = (

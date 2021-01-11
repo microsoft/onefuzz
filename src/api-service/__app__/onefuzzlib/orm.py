@@ -41,7 +41,6 @@ from typing_extensions import Protocol
 
 from ..onefuzzlib.secrets import save_to_keyvault
 from .azure.table import get_client
-from .dashboard import add_event
 from .telemetry import track_event_filtered
 from .updates import queue_update
 
@@ -257,20 +256,8 @@ class ORMMixin(ModelMixin):
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {}
 
-    def event_include(self) -> Optional[MappingIntStrAny]:
-        return {}
-
     def telemetry(self) -> Any:
         return self.raw(exclude_none=True, include=self.telemetry_include())
-
-    def _event_as_needed(self) -> None:
-        # Upon ORM save, if the object returns event data, we'll send it to the
-        # dashboard event subsystem
-
-        data = self.raw(exclude_none=True, include=self.event_include())
-        if not data:
-            return
-        add_event(self.table_name(), data)
 
     def get_keys(self) -> Tuple[KEY, KEY]:
         partition_key_field, row_key_field = self.key_fields()
@@ -364,13 +351,9 @@ class ORMMixin(ModelMixin):
             if telem:
                 track_event_filtered(TelemetryEvent[self.table_name()], telem)
 
-        self._event_as_needed()
         return None
 
     def delete(self) -> None:
-        # fire off an event so Signalr knows it's being deleted
-        self._event_as_needed()
-
         partition_key, row_key = self.get_keys()
 
         client = get_client()

@@ -9,22 +9,23 @@ from typing import List, Optional, Tuple, Union
 from uuid import UUID
 
 from onefuzztypes.enums import ErrorCode, TaskState
+from onefuzztypes.events import (
+    EventTaskCreated,
+    EventTaskFailed,
+    EventTaskStateUpdated,
+    EventTaskStopped,
+)
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm, UserInfo
-from onefuzztypes.webhooks import (
-    WebhookEventTaskCreated,
-    WebhookEventTaskFailed,
-    WebhookEventTaskStopped,
-)
 
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
 from ..azure.storage import StorageType
+from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
-from ..webhooks import Webhook
 
 
 class Task(BASE_TASK, ORMMixin):
@@ -58,8 +59,8 @@ class Task(BASE_TASK, ORMMixin):
             raise Exception("task must have vm or pool")
         task = cls(config=config, job_id=job_id, os=os, user_info=user_info)
         task.save()
-        Webhook.send_event(
-            WebhookEventTaskCreated(
+        send_event(
+            EventTaskCreated(
                 job_id=task.job_id,
                 task_id=task.task_id,
                 config=config,
@@ -116,18 +117,9 @@ class Task(BASE_TASK, ORMMixin):
             "config": {"vm": {"count": ...}, "task": {"type": ...}},
         }
 
-    def event_include(self) -> Optional[MappingIntStrAny]:
-        return {
-            "job_id": ...,
-            "task_id": ...,
-            "state": ...,
-            "error": ...,
-        }
-
     def init(self) -> None:
         create_queue(self.task_id, StorageType.corpus)
-        self.state = TaskState.waiting
-        self.save()
+        self.set_state(TaskState.waiting)
 
     def stopping(self) -> None:
         # TODO: we need to 'unschedule' this task from the existing pools
@@ -136,8 +128,7 @@ class Task(BASE_TASK, ORMMixin):
         ProxyForward.remove_forward(self.task_id)
         delete_queue(str(self.task_id), StorageType.corpus)
         Node.stop_task(self.task_id)
-        self.state = TaskState.stopped
-        self.save()
+        self.set_state(TaskState.stopped, send=False)
 
     @classmethod
     def search_states(
@@ -195,10 +186,9 @@ class Task(BASE_TASK, ORMMixin):
             )
             return
 
-        self.state = TaskState.stopping
-        self.save()
-        Webhook.send_event(
-            WebhookEventTaskStopped(
+        self.set_state(TaskState.stopping, send=False)
+        send_event(
+            EventTaskStopped(
                 job_id=self.job_id, task_id=self.task_id, user_info=self.user_info
             )
         )
@@ -211,11 +201,10 @@ class Task(BASE_TASK, ORMMixin):
             return
 
         self.error = error
-        self.state = TaskState.stopping
-        self.save()
+        self.set_state(TaskState.stopping, send=False)
 
-        Webhook.send_event(
-            WebhookEventTaskFailed(
+        send_event(
+            EventTaskFailed(
                 job_id=self.job_id,
                 task_id=self.task_id,
                 error=error,
@@ -287,7 +276,6 @@ class Task(BASE_TASK, ORMMixin):
             self.end_time = datetime.utcnow() + timedelta(
                 hours=self.config.task.duration
             )
-            self.save()
 
             from ..jobs import Job
 
@@ -298,3 +286,22 @@ class Task(BASE_TASK, ORMMixin):
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
         return ("job_id", "task_id")
+
+    def set_state(self, state: TaskState, send: bool = True) -> None:
+        if self.state == state:
+            return
+
+        self.state = state
+        if self.state in [TaskState.running, TaskState.setting_up]:
+            self.on_start()
+
+        self.save()
+
+        send_event(
+            EventTaskStateUpdated(
+                job_id=self.job_id,
+                task_id=self.task_id,
+                state=self.state,
+                end_time=self.end_time,
+            )
+        )

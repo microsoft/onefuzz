@@ -4,12 +4,15 @@
 use std::fs::metadata;
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz::fs::onefuzz_root;
 use tokio::fs;
 
 pub async fn set_done_lock() -> Result<()> {
-    fs::write(done_path()?, "").await?;
+    let path = done_path()?;
+    fs::write(&path, "")
+        .await
+        .with_context(|| format!("unable to write done lock: {}", path.display()))?;
     Ok(())
 }
 

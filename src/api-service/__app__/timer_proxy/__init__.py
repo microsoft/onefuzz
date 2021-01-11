@@ -8,7 +8,7 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import VmState
 
-from ..onefuzzlib.dashboard import get_event
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.proxy import Proxy
 
@@ -28,6 +28,6 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             logging.info("update proxy vm: %s", proxy.region)
             process_state_updates(proxy)
 
-    event = get_event()
-    if event:
-        dashboard.set(event)
+    events = get_events()
+    if events:
+        dashboard.set(events)

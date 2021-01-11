@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz::{
     http::{is_auth_error_code, ResponseExt},
     jitter::delay_with_jitter,
@@ -83,7 +83,9 @@ impl StaticConfig {
     }
 
     pub fn from_file(config_path: impl AsRef<Path>) -> Result<Self> {
-        let data = std::fs::read(config_path)?;
+        let config_path = config_path.as_ref();
+        let data = std::fs::read(config_path)
+            .with_context(|| format!("unable to read config file: {}", config_path.display()))?;
         Self::new(&data)
     }
 
@@ -151,14 +153,18 @@ impl DynamicConfig {
     pub async fn save(&self) -> Result<()> {
         let path = Self::save_path()?;
         let data = serde_json::to_vec(&self)?;
-        fs::write(&path, &data).await?;
+        fs::write(&path, &data)
+            .await
+            .with_context(|| format!("unable to save dynamic config: {}", path.display()))?;
         info!("saved dynamic-config: {}", path.display());
         Ok(())
     }
 
     pub async fn load() -> Result<Self> {
         let path = Self::save_path()?;
-        let data = fs::read(&path).await?;
+        let data = fs::read(&path)
+            .await
+            .with_context(|| format!("unable to load dynamic config: {}", path.display()))?;
         let ctx: Self = serde_json::from_slice(&data)?;
         info!("loaded dynamic-config: {}", path.display());
         Ok(ctx)
