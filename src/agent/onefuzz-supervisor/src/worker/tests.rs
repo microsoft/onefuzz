@@ -65,7 +65,7 @@ async fn test_ready_run() {
     let mut runner = Fixture.runner(Fixture.child_running());
     let state = State {
         ctx: Ready {
-            setup_dir: PathBuf::from(""),
+            setup_dir: PathBuf::default(),
         },
         work: Fixture.work(),
     };
@@ -147,7 +147,7 @@ async fn test_worker_ready_update() {
 
     let state = State {
         ctx: Ready {
-            setup_dir: PathBuf::from(""),
+            setup_dir: PathBuf::default(),
         },
         work: Fixture.work(),
     };
