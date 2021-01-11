@@ -35,7 +35,7 @@ def save_to_keyvault(secret_data: SecretData) -> None:
 
 def get_secret_string_value(self: SecretData[str]) -> str:
     if isinstance(self.secret, SecretAddress):
-        secret = get_secret(self.secret.url).value
+        secret = get_secret(self.secret.url)
         return cast(str, secret.value)
     else:
         return self.secret
