@@ -318,6 +318,7 @@ class Node(BASE_NODE, ORMMixin):
     def delete(self) -> None:
         NodeTasks.clear_by_machine_id(self.machine_id)
         super().delete()
+        NodeMessage.clear_messages(self.machine_id)
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
