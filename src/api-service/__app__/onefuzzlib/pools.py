@@ -368,6 +368,7 @@ class Node(BASE_NODE, ORMMixin):
             )
         )
         super().delete()
+        NodeMessage.clear_messages(self.machine_id)
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
