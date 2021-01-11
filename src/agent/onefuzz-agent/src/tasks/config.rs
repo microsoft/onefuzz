@@ -84,6 +84,7 @@ impl Config {
     pub fn from_file(path: impl AsRef<Path>, setup_dir: Option<impl AsRef<Path>>) -> Result<Self> {
         let json = std::fs::read_to_string(path)?;
         let mut json_config: serde_json::Value = serde_json::from_str(&json)?;
+        // override the setup_dir in the config file with the parameter value if specified
         if let Some(setup_dir) = setup_dir {
             json_config["setup_dir"] =
                 serde_json::Value::String(setup_dir.as_ref().to_string_lossy().into());
