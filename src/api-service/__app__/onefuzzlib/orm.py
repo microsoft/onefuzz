@@ -214,14 +214,6 @@ class ModelMixin(BaseModel):
         return result
 
 
-# This is a cache of whether or not a types has at least one secret field.
-# We need to traverse all the fields of a type to know if any of them
-# is a secret every time we save. This allows to cache the result of
-# that operation so  we can skip types that do not contain any secret
-# on the next save.
-_TYPE_HAS_SECRETS: Dict[type, bool] = dict()
-
-
 class ORMMixin(ModelMixin):
     Timestamp: Optional[datetime] = Field(alias="Timestamp")
     etag: Optional[str]
@@ -303,30 +295,25 @@ class ORMMixin(ModelMixin):
             return
 
         visited.add(id(model))
+        for field in model.__fields__:
+            field_data = getattr(model, field)
+            if isinstance(field_data, SecretData):
+                hider(field_data)
+            elif isinstance(field_data, List):
+                if len(field_data) > 0:
+                    if not isinstance(field_data[0], BaseModel):
+                        continue
+                for data in field_data:
+                    cls.hide_secrets(data, hider, visited)
+            elif isinstance(field_data, dict):
+                for key in field_data:
+                    if not isinstance(field_data[key], BaseModel):
+                        continue
+                    cls.hide_secrets(field_data[key], hider, visited)
+            else:
+                if isinstance(field_data, BaseModel):
+                    cls.hide_secrets(field_data, hider, visited)
 
-        if _TYPE_HAS_SECRETS.get(model_type, True):
-            for field in model.__fields__:
-                field_data = getattr(model, field)
-                if isinstance(field_data, SecretData):
-                    _TYPE_HAS_SECRETS[model_type] = True
-                    hider(field_data)
-                elif isinstance(field_data, List):
-                    if len(field_data) > 0:
-                        if not isinstance(field_data[0], BaseModel):
-                            continue
-                    for data in field_data:
-                        cls.hide_secrets(data, hider, visited)
-                elif isinstance(field_data, dict):
-                    for key in field_data:
-                        if not isinstance(field_data[key], BaseModel):
-                            continue
-                        cls.hide_secrets(field_data[key], hider, visited)
-                else:
-                    if isinstance(field_data, BaseModel):
-                        cls.hide_secrets(field_data, hider, visited)
-
-        if model_type not in _TYPE_HAS_SECRETS:
-            _TYPE_HAS_SECRETS[model_type] = False
 
     def save(self, new: bool = False, require_etag: bool = False) -> Optional[Error]:
         self.__class__.hide_secrets(self, save_to_keyvault)
