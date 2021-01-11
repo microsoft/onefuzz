@@ -290,7 +290,6 @@ class ORMMixin(ModelMixin):
         hider: Callable[["SecretData"], None],
         visited: Set[int] = set(),
     ) -> None:
-        model_type = type(model)
         if id(model) in visited:
             return
 
@@ -313,7 +312,6 @@ class ORMMixin(ModelMixin):
             else:
                 if isinstance(field_data, BaseModel):
                     cls.hide_secrets(field_data, hider, visited)
-
 
     def save(self, new: bool = False, require_etag: bool = False) -> Optional[Error]:
         self.__class__.hide_secrets(self, save_to_keyvault)
