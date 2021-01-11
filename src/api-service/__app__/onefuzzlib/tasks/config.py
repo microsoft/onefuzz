@@ -10,15 +10,12 @@ from uuid import UUID
 
 from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, TaskFeature
 from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
+from onefuzztypes.primitives import Container
 
-from ..azure.containers import (
-    StorageType,
-    blob_exists,
-    container_exists,
-    get_container_sas_url,
-)
-from ..azure.creds import get_instance_id, get_instance_url
+from ..azure.containers import blob_exists, container_exists, get_container_sas_url
+from ..azure.creds import get_instance_id
 from ..azure.queue import get_queue_sas
+from ..azure.storage import StorageType
 from .defs import TASK_DEFINITIONS
 
 LOGGER = logging.getLogger("onefuzz")
@@ -191,7 +188,6 @@ def build_task_config(
             StorageType.config,
             add=True,
         ),
-        back_channel_address="https://%s/api/back_channel" % (get_instance_url()),
         instance_id=get_instance_id(),
     )
 
@@ -317,10 +313,24 @@ def build_task_config(
     if TaskFeature.ensemble_sync_delay in definition.features:
         config.ensemble_sync_delay = task_config.task.ensemble_sync_delay
 
+    if TaskFeature.check_fuzzer_help in definition.features:
+        config.check_fuzzer_help = (
+            task_config.task.check_fuzzer_help
+            if task_config.task.check_fuzzer_help is not None
+            else True
+        )
+
+    if TaskFeature.expect_crash_on_failure in definition.features:
+        config.expect_crash_on_failure = (
+            task_config.task.expect_crash_on_failure
+            if task_config.task.expect_crash_on_failure is not None
+            else True
+        )
+
     return config
 
 
-def get_setup_container(config: TaskConfig) -> str:
+def get_setup_container(config: TaskConfig) -> Container:
     for container in config.containers:
         if container.type == ContainerType.setup:
             return container.name

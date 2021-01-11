@@ -21,8 +21,8 @@ from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
 from pydantic import BaseModel
 
 from .__version__ import __version__
-from .azure.containers import StorageType
 from .azure.queue import queue_object
+from .azure.storage import StorageType
 from .orm import ORMMixin
 
 MAX_TRIES = 5

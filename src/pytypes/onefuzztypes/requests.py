@@ -233,3 +233,8 @@ class WebhookUpdate(BaseModel):
     event_types: Optional[List[EventType]]
     url: Optional[AnyHttpUrl]
     secret_token: Optional[str]
+
+
+class NodeAddSshKey(BaseModel):
+    machine_id: UUID
+    public_key: str

@@ -9,7 +9,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import CanScheduleRequest
 from onefuzztypes.responses import CanSchedule
 
-from ..onefuzzlib.agent_authorization import call_if_agent
+from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.pools import Node
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.tasks.main import Task
@@ -43,9 +43,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "POST":
-        m = post
-    else:
-        raise Exception("invalid method")
-
-    return call_if_agent(req, m)
+    methods = {"POST": post}
+    method = methods[req.method]
+    return call_if_agent(req, method)

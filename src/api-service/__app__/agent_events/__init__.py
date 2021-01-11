@@ -16,8 +16,8 @@ from onefuzztypes.models import (
 )
 from onefuzztypes.responses import BoolResult
 
-from ..onefuzzlib.agent_authorization import call_if_agent
 from ..onefuzzlib.agent_events import on_state_update, on_worker_event
+from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
@@ -72,4 +72,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    return call_if_agent(req, post)
+    methods = {"POST": post}
+    method = methods[req.method]
+    return call_if_agent(req, method)

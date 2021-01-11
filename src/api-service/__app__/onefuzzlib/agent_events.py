@@ -126,6 +126,7 @@ def on_state_update(
         # if tasks are running on the node when it reports as Done
         # those are stopped early
         node.mark_tasks_stopped_early()
+        node.to_reimage(done=True)
 
         # Model-validated.
         #
@@ -232,7 +233,6 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
             node.debug_keep_node = True
             node.save()
 
-    node.to_reimage(done=True)
     task_event = TaskEvent(
         task_id=task.task_id, machine_id=machine_id, event_data=WorkerEvent(done=event)
     )

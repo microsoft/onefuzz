@@ -9,29 +9,31 @@ use serde::Serialize;
 use uuid::Uuid;
 
 use crate::auth::AccessToken;
+use crate::commands::SshKeyInfo;
 use crate::config::Registration;
 use crate::work::{TaskId, WorkSet};
 use crate::worker::WorkerEvent;
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct StopTask {
     pub task_id: TaskId,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum NodeCommand {
+    AddSshKey(SshKeyInfo),
     StopTask(StopTask),
     Stop {},
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct NodeCommandEnvelope {
     pub message_id: String,
     pub command: NodeCommand,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct PendingNodeCommand {
     envelope: Option<NodeCommandEnvelope>,
 }
@@ -254,7 +256,7 @@ impl Coordinator {
         Ok(response)
     }
 
-    fn build_request<'a>(&self, request_type: RequestType<'a>) -> Result<Request> {
+    fn build_request(&self, request_type: RequestType<'_>) -> Result<Request> {
         match request_type {
             RequestType::PollCommands => self.poll_commands_request(),
             RequestType::ClaimCommand(message_id) => self.claim_command_request(message_id),

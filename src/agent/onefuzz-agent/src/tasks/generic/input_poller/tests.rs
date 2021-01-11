@@ -122,8 +122,10 @@ async fn test_ready_poll() {
 
     let msg: Msg = 0;
 
-    let mut queue = TestQueue::default();
-    queue.pending = vec![msg];
+    let mut queue = TestQueue {
+        pending: vec![msg],
+        ..Default::default()
+    };
 
     task.trigger(Event::Poll(&mut queue)).await.unwrap();
 
@@ -140,8 +142,9 @@ async fn test_polled_some_parse() {
 
     task.set_state(State::Polled(Some(msg)));
 
-    let mut parser = TestParser::default();
-    parser.urls = vec![url.clone()]; // at index `msg`
+    let mut parser = TestParser {
+        urls: vec![url.clone()], // at index `msg`
+    };
 
     task.trigger(Event::Parse(&mut parser)).await.unwrap();
 
@@ -155,7 +158,6 @@ async fn test_polled_none_parse() {
     task.set_state(State::Polled(None));
 
     let mut parser = TestParser::default();
-    parser.urls = vec![];
 
     task.trigger(Event::Parse(&mut parser)).await.unwrap();
 

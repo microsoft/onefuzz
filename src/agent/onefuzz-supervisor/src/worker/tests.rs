@@ -22,11 +22,12 @@ impl Fixture {
     }
 
     fn child_running(&self) -> ChildDouble {
-        let mut child = ChildDouble::default();
-        child.id = 123; // Not default
-        child.stderr = "stderr".into();
-        child.stdout = "stdout".into();
-        child
+        ChildDouble {
+            id: 123,
+            stderr: "stderr".into(),
+            stdout: "stdout".into(),
+            ..Default::default()
+        }
     }
 
     fn child_exited(&self, exit_status: ExitStatus) -> ChildDouble {

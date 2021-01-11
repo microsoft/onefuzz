@@ -9,6 +9,7 @@ from typing import Optional
 from jinja2.sandbox import SandboxedEnvironment
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, Report
+from onefuzztypes.primitives import Container
 
 from ..azure.containers import auth_download_url
 from ..azure.creds import get_instance_url
@@ -33,7 +34,7 @@ def fail_task(report: Report, error: Exception) -> None:
 
 
 class Render:
-    def __init__(self, container: str, filename: str, report: Report):
+    def __init__(self, container: Container, filename: str, report: Report):
         self.report = report
         self.container = container
         self.filename = filename

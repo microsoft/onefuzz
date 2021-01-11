@@ -7,11 +7,9 @@
             "direction": "in",
             "name": "req",
             "methods": [
-                "get",
-                "patch",
-                "delete",
                 "post"
-            ]
+            ],
+            "route": "node/add_ssh_key"
         },
         {
             "type": "http",
