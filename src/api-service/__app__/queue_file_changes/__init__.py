@@ -25,7 +25,7 @@ def file_added(event: Dict) -> None:
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
     event = json.loads(msg.get_body())
 
-    if event["topic"] in corpus_accounts():
+    if event["topic"] not in corpus_accounts():
         return
 
     if event["eventType"] != "Microsoft.Storage.BlobCreated":
