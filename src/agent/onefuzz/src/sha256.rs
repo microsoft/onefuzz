@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use sha2::{Digest, Sha256};
 use tokio::fs;
 
@@ -22,7 +22,10 @@ pub fn digest_iter(data: impl IntoIterator<Item = impl AsRef<[u8]>>) -> String {
 }
 
 pub async fn digest_file(file: impl AsRef<Path>) -> Result<String> {
-    let data = fs::read(file).await?;
+    let file = file.as_ref();
+    let data = fs::read(file)
+        .await
+        .with_context(|| format!("unable to read file to generate digest: {}", file.display()))?;
 
     Ok(hex::encode(Sha256::digest(&data)))
 }
