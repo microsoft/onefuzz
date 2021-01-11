@@ -9,7 +9,7 @@ use crate::{
     telemetry::{Event, EventData},
     uploader::BlobUploader,
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use std::{path::PathBuf, str, time::Duration};
 use tokio::fs;
@@ -68,7 +68,9 @@ impl SyncedDir {
                     anyhow::bail!("File with name '{}' already exists", self.path.display());
                 }
             }
-            Err(_) => fs::create_dir(&self.path).await.map_err(|e| e.into()),
+            Err(_) => fs::create_dir(&self.path).await.with_context(|| {
+                format!("unable to create local SyncedDir: {}", self.path.display())
+            }),
         }
     }
 

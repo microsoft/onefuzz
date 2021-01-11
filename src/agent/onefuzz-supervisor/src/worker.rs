@@ -3,7 +3,7 @@
 
 use std::process::{Child, Command, Stdio};
 
-use anyhow::Result;
+use anyhow::{Context as AnyhowContext, Result};
 use downcast_rs::Downcast;
 use onefuzz::process::{ExitStatus, Output};
 use tokio::fs;
@@ -189,13 +189,20 @@ impl IWorkerRunner for WorkerRunner {
 
         verbose!("worker working dir = {}", working_dir.display());
 
-        fs::create_dir_all(&working_dir).await?;
+        fs::create_dir_all(&working_dir).await.with_context(|| {
+            format!(
+                "unable to create working directory: {}",
+                working_dir.display()
+            )
+        })?;
 
         verbose!("created worker working dir: {}", working_dir.display());
 
         let config_path = work.config_path()?;
 
-        fs::write(&config_path, work.config.expose_ref()).await?;
+        fs::write(&config_path, work.config.expose_ref())
+            .await
+            .with_context(|| format!("unable to save task config: {}", config_path.display()))?;
 
         verbose!(
             "wrote worker config to config_path = {}",
