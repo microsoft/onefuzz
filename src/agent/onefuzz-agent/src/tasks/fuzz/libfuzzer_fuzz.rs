@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::{future::try_join_all, stream::StreamExt};
 use onefuzz::{
     fs::list_files,
@@ -121,7 +121,15 @@ impl LibFuzzerFuzzTask {
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
             while let Some(Ok(entry)) = entries.next().await {
                 let destination_path = self.config.inputs.path.clone().join(entry.file_name());
-                tokio::fs::rename(entry.path(), destination_path).await?;
+                tokio::fs::rename(&entry.path(), &destination_path)
+                    .await
+                    .with_context(|| {
+                        format!(
+                            "unable to move crashing input into results directory: {} - {}?",
+                            entry.path().display(),
+                            destination_path.display()
+                        )
+                    })?;
             }
         }
     }

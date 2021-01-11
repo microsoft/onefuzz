@@ -4,7 +4,7 @@
 use std::io::ErrorKind;
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::{blob::BlobContainerUrl, http::is_auth_error};
 use storage_queue::QueueClient;
@@ -63,7 +63,9 @@ impl WorkSet {
         info!("saving workset context: {}", path.display());
 
         let data = serde_json::to_vec(&self)?;
-        fs::write(path, &data).await?;
+        fs::write(&path, &data)
+            .await
+            .with_context(|| format!("unable to save WorkSet context: {}", path.display()))?;
 
         Ok(())
     }
