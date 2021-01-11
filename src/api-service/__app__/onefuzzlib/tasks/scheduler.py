@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 
 from onefuzztypes.enums import OS, PoolState, TaskState
 from onefuzztypes.models import WorkSet, WorkUnit
+from onefuzztypes.primitives import Container
 from pydantic import BaseModel
 
 from ..azure.containers import blob_exists, get_container_sas_url
@@ -102,7 +103,7 @@ def bucket_tasks(tasks: List[Task]) -> Dict[Tuple, List[Task]]:
 class BucketConfig(BaseModel):
     count: int
     reboot: bool
-    setup_url: str
+    setup_container: Container
     setup_script: Optional[str]
     pool: Pool
 
@@ -118,10 +119,6 @@ def build_work_unit(task: Task) -> Optional[Tuple[BucketConfig, WorkUnit]]:
     task_config = build_task_config(task.job_id, task.task_id, task.config)
 
     setup_container = get_setup_container(task.config)
-    setup_url = get_container_sas_url(
-        setup_container, StorageType.corpus, read=True, list=True
-    )
-
     setup_script = None
 
     if task.os == OS.windows and blob_exists(
@@ -165,7 +162,7 @@ def build_work_unit(task: Task) -> Optional[Tuple[BucketConfig, WorkUnit]]:
         count=count,
         reboot=reboot,
         setup_script=setup_script,
-        setup_url=setup_url,
+        setup_container=setup_container,
     )
 
     return bucket_config, work_unit
@@ -201,10 +198,14 @@ def build_work_set(tasks: List[Task]) -> Optional[Tuple[BucketConfig, WorkSet]]:
         work_units.append(work_unit)
 
     if bucket_config:
+        setup_url = get_container_sas_url(
+            bucket_config.setup_container, StorageType.corpus, read=True, list=True
+        )
+
         work_set = WorkSet(
             reboot=bucket_config.reboot,
             script=(bucket_config.setup_script is not None),
-            setup_url=bucket_config.setup_url,
+            setup_url=setup_url,
             work_units=work_units,
         )
         return (bucket_config, work_set)
