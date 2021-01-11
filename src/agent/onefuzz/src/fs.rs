@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use std::path::{Path, PathBuf};
 #[cfg(target_os = "linux")]
@@ -25,13 +25,19 @@ pub fn onefuzz_etc() -> Result<PathBuf> {
 }
 
 pub async fn has_files(path: impl AsRef<Path>) -> Result<bool> {
-    let mut paths = fs::read_dir(&path).await?;
+    let path = path.as_ref();
+    let mut paths = fs::read_dir(&path)
+        .await
+        .with_context(|| format!("unable to check if directory has files: {}", path.display()))?;
     let result = paths.next_entry().await?.is_some();
     Ok(result)
 }
 
 pub async fn list_files(path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
-    let paths = fs::read_dir(&path).await?;
+    let path = path.as_ref();
+    let paths = fs::read_dir(&path)
+        .await
+        .with_context(|| format!("unable to list files: {}", path.display()))?;
 
     let mut files = paths
         .filter_map(|x| async {
@@ -106,8 +112,12 @@ pub async fn write_file(path: impl AsRef<Path>, content: &str) -> Result<()> {
     let parent = path
         .parent()
         .ok_or_else(|| format_err!("no parent for: {}", path.display()))?;
-    fs::create_dir_all(parent).await?;
-    fs::write(path, content).await?;
+    fs::create_dir_all(parent)
+        .await
+        .with_context(|| format!("unable to create nested path: {}", parent.display()))?;
+    fs::write(path, content)
+        .await
+        .with_context(|| format!("unable to write file: {}", path.display()))?;
     Ok(())
 }
 
@@ -115,10 +125,14 @@ pub async fn reset_dir(dir: impl AsRef<Path>) -> Result<()> {
     let dir = dir.as_ref();
 
     if exists(dir).await? {
-        fs::remove_dir_all(dir).await?;
+        fs::remove_dir_all(dir).await.with_context(|| {
+            format!("unable to remove directory and contents: {}", dir.display())
+        })?;
     }
 
-    fs::create_dir_all(dir).await?;
+    fs::create_dir_all(dir)
+        .await
+        .with_context(|| format!("unable to create directory: {}", dir.display()))?;
 
     Ok(())
 }
@@ -143,7 +157,9 @@ impl OwnedDir {
     }
 
     pub async fn create_if_missing(&self) -> Result<()> {
-        fs::create_dir_all(self.path()).await?;
+        fs::create_dir_all(self.path())
+            .await
+            .with_context(|| format!("unable to create directory: {}", self.path().display()))?;
         Ok(())
     }
 

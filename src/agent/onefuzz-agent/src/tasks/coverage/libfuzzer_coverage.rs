@@ -36,7 +36,7 @@ use crate::tasks::{
     coverage::{recorder::CoverageRecorder, total::TotalCoverage},
     utils::default_bool_true,
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use onefuzz::{
@@ -124,7 +124,9 @@ impl CoverageTask {
                 seen_inputs = true;
             }
 
-            fs::remove_dir_all(&dir.path).await?;
+            fs::remove_dir_all(&dir.path).await.with_context(|| {
+                format!("unable to remove readonly_inputs: {}", dir.path.display())
+            })?;
         }
 
         if seen_inputs {
@@ -154,7 +156,12 @@ impl CoverageTask {
         processor: &mut CoverageProcessor,
         corpus_dir: &SyncedDir,
     ) -> Result<bool> {
-        let mut corpus = fs::read_dir(&corpus_dir.path).await?;
+        let mut corpus = fs::read_dir(&corpus_dir.path).await.with_context(|| {
+            format!(
+                "unable to read corpus coverage directory: {}",
+                corpus_dir.path.display()
+            )
+        })?;
         let mut seen_inputs = false;
 
         while let Some(input) = corpus.next().await {
@@ -208,7 +215,12 @@ impl CoverageProcessor {
 
         if !self.module_totals.contains_key(&module) {
             let parent = &self.config.coverage.path.join("by-module");
-            fs::create_dir_all(parent).await?;
+            fs::create_dir_all(parent).await.with_context(|| {
+                format!(
+                    "unable to create by-module coverage directory: {}",
+                    parent.display()
+                )
+            })?;
             let module_total = parent.join(&module);
             let total = TotalCoverage::new(module_total);
             self.module_totals.insert(module.clone(), total);
@@ -226,7 +238,9 @@ impl CoverageProcessor {
 
         for file in &files {
             verbose!("checking {:?}", file);
-            let mut content = fs::read(file).await?;
+            let mut content = fs::read(file)
+                .await
+                .with_context(|| format!("unable to read module coverage: {}", file.display()))?;
             self.update_module_total(file, &content).await?;
             sum.append(&mut content);
         }
@@ -234,7 +248,9 @@ impl CoverageProcessor {
         let mut combined = path.as_os_str().to_owned();
         combined.push(".cov");
 
-        fs::write(&combined, sum).await?;
+        fs::write(&combined, sum)
+            .await
+            .with_context(|| format!("unable to write combined coverage file: {:?}", combined))?;
 
         Ok(combined.into())
     }
