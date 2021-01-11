@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 
-from typing import Tuple, cast, Type, TypeVar
+from typing import Tuple, Type, TypeVar, cast
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -13,7 +13,6 @@ from onefuzztypes.models import SecretAddress, SecretData
 from pydantic import BaseModel
 
 from .azure.creds import get_instance_name, get_keyvault_client
-
 
 A = TypeVar("A", bound=BaseModel)
 
