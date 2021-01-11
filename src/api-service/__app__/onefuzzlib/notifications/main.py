@@ -27,8 +27,8 @@ from ..azure.containers import (
     get_file_sas_url,
 )
 from ..azure.queue import send_message
-from ..events import send_event
 from ..azure.storage import StorageType
+from ..events import send_event
 from ..orm import ORMMixin
 from ..reports import get_report
 from ..tasks.config import get_input_container_queues

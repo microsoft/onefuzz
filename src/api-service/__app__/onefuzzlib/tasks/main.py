@@ -21,8 +21,8 @@ from onefuzztypes.models import TaskConfig, TaskVm, UserInfo
 
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
-from ..events import send_event
 from ..azure.storage import StorageType
+from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward

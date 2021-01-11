@@ -9,8 +9,8 @@ from typing import Dict
 
 import azure.functions as func
 
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.azure.storage import corpus_accounts
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.notifications.main import new_files
 
 
