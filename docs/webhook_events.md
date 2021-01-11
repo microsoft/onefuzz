@@ -408,7 +408,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     }
                 },
                 "debug": {
-                    "title": "Debug",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/TaskDebugFlag"
@@ -1043,7 +1042,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     }
                 },
                 "debug": {
-                    "title": "Debug",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/TaskDebugFlag"
