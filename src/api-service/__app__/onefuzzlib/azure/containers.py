@@ -10,7 +10,11 @@ import urllib.parse
 from typing import Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
-from azure.storage.blob import BlobPermissions, BlockBlobService, ContainerPermissions
+from azure.storage.blob import (
+    BlobSasPermissions,
+    BlobServiceClient,
+    ContainerSasPermissions,
+)
 from memoization import cached
 from onefuzztypes.primitives import Container
 
@@ -23,16 +27,16 @@ from .storage import (
 
 
 @cached
-def get_blob_service(account_id: str) -> BlockBlobService:
+def get_blob_service(account_id: str) -> BlobServiceClient:
     logging.debug("getting blob container (account_id: %s)", account_id)
     account_name, account_key = get_storage_account_name_key(account_id)
-    service = BlockBlobService(account_name=account_name, account_key=account_key)
+    service = BlobServiceClient(account_name=account_name, account_key=account_key)
     return service
 
 
 def get_service_by_container(
     container: Container, storage_type: StorageType
-) -> Optional[BlockBlobService]:
+) -> Optional[BlobServiceClient]:
     account = get_account_by_container(container, storage_type)
     if account is None:
         return None
@@ -153,7 +157,7 @@ def delete_container(container: Container, storage_type: StorageType) -> bool:
 
 def get_container_sas_url_service(
     container: Container,
-    service: BlockBlobService,
+    service: BlobServiceClient,
     *,
     read: bool = False,
     add: bool = False,
@@ -163,7 +167,7 @@ def get_container_sas_url_service(
     list: bool = False,
 ) -> str:
     expiry = datetime.datetime.utcnow() + datetime.timedelta(days=30)
-    permission = ContainerPermissions(read, add, create, write, delete, list)
+    permission = ContainerSasPermissions(read, add, create, write, delete, list)
 
     sas_token = service.generate_container_shared_access_signature(
         container, permission=permission, expiry=expiry
@@ -223,7 +227,7 @@ def get_file_sas_url(
     expiry = datetime.datetime.utcnow() + datetime.timedelta(
         days=days, hours=hours, minutes=minutes
     )
-    permission = BlobPermissions(read, add, create, write, delete, list)
+    permission = BlobSasPermissions(read, add, create, write, delete, list)
 
     sas_token = service.generate_blob_shared_access_signature(
         container, name, permission=permission, expiry=expiry

@@ -6,7 +6,7 @@
 import os
 from typing import Any, Dict
 
-from azure.mgmt.loganalytics import LogAnalyticsManagementClient
+from azure.mgmt.loganalytics import OperationalInsightsManagementClient
 from memoization import cached
 
 from .creds import get_base_resource_group, mgmt_client_factory
@@ -14,7 +14,7 @@ from .creds import get_base_resource_group, mgmt_client_factory
 
 @cached(ttl=60)
 def get_montior_client() -> Any:
-    return mgmt_client_factory(LogAnalyticsManagementClient)
+    return mgmt_client_factory(OperationalInsightsManagementClient)
 
 
 @cached(ttl=60)
