@@ -9,6 +9,7 @@ import azure.functions as func
 from onefuzztypes.models import Error
 from onefuzztypes.requests import NotificationCreate, NotificationGet
 
+from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -45,11 +46,6 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        return get(req)
-    elif req.method == "POST":
-        return post(req)
-    elif req.method == "DELETE":
-        return delete(req)
-    else:
-        raise Exception("invalid method")
+    methods = {"GET": get, "POST": post, "DELETE": delete}
+    method = methods[req.method]
+    return call_if_user(req, method)

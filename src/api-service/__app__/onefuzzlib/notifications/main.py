@@ -21,12 +21,12 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import Container, Event
 
 from ..azure.containers import (
-    StorageType,
     container_exists,
     get_container_metadata,
     get_file_sas_url,
 )
 from ..azure.queue import send_message
+from ..azure.storage import StorageType
 from ..dashboard import add_event
 from ..orm import ORMMixin
 from ..reports import get_report

@@ -5,6 +5,7 @@
 
 import json
 from subprocess import check_call
+
 from onefuzz.api import Onefuzz
 
 

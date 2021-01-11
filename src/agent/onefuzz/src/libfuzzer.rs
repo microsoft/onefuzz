@@ -40,6 +40,37 @@ impl<'a> LibFuzzer<'a> {
         }
     }
 
+    pub async fn check_help(&self) -> Result<()> {
+        // Verify -help=1 exits with a zero return code, which validates the
+        // libfuzzer works as we expect.
+        let mut cmd = Command::new(&self.exe);
+
+        cmd.kill_on_drop(true)
+            .env_remove("RUST_LOG")
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .arg("-help=1");
+
+        let mut expand = Expand::new();
+        expand.target_exe(&self.exe).target_options(&self.options);
+
+        for (k, v) in self.env {
+            cmd.env(k, expand.evaluate_value(v)?);
+        }
+
+        // Pass custom option arguments.
+        for o in expand.evaluate(self.options)? {
+            cmd.arg(o);
+        }
+
+        let result = cmd.spawn()?.wait_with_output().await?;
+        if !result.status.success() {
+            bail!("fuzzer does not respond to '-help=1'. output:{:?}", result);
+        }
+        Ok(())
+    }
+
     pub fn fuzz(
         &self,
         fault_dir: impl AsRef<Path>,
@@ -73,10 +104,11 @@ impl<'a> LibFuzzer<'a> {
         }
 
         // check if a max_time is already set
-        if let None = self
+        if self
             .options
             .iter()
             .find(|o| o.starts_with("-max_total_time"))
+            .is_none()
         {
             cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
         }
@@ -221,13 +253,13 @@ mod tests {
 
     #[test]
     fn test_libfuzzer_line_pulse() {
-        let line = r"#2097152        pulse  cov: 11 ft: 11 corp: 6/21b lim: 4096 exec/s: 699050 rss: 562Mb".into();
+        let line = r"#2097152        pulse  cov: 11 ft: 11 corp: 6/21b lim: 4096 exec/s: 699050 rss: 562Mb";
 
         let parsed = LibFuzzerLine::parse(line)
             .expect("parse error")
             .expect("no captures");
 
         assert_eq!(parsed.iters(), 2097152);
-        assert_eq!(parsed.execs_sec(), 699050.0);
+        assert_eq!(parsed.execs_sec(), 699050.0_f64);
     }
 }

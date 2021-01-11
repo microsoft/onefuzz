@@ -30,14 +30,18 @@
 //!
 //! Versions in parentheses have been tested.
 
-use crate::tasks::coverage::{recorder::CoverageRecorder, total::TotalCoverage};
 use crate::tasks::heartbeat::*;
 use crate::tasks::{config::CommonConfig, generic::input_poller::*};
+use crate::tasks::{
+    coverage::{recorder::CoverageRecorder, total::TotalCoverage},
+    utils::default_bool_true,
+};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use onefuzz::{
-    fs::list_files, syncdir::SyncedDir, telemetry::Event::coverage_data, telemetry::EventData,
+    fs::list_files, libfuzzer::LibFuzzer, syncdir::SyncedDir, telemetry::Event::coverage_data,
+    telemetry::EventData,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -60,6 +64,9 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub readonly_inputs: Vec<SyncedDir>,
     pub coverage: SyncedDir,
+
+    #[serde(default = "default_bool_true")]
+    pub check_fuzzer_help: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -91,6 +98,16 @@ impl CoverageTask {
 
     pub async fn run(&mut self) -> Result<()> {
         info!("starting libFuzzer coverage task");
+
+        if self.config.check_fuzzer_help {
+            let target = LibFuzzer::new(
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+            );
+            target.check_help().await?;
+        }
+
         self.config.coverage.init_pull().await?;
         self.process().await
     }
@@ -98,20 +115,29 @@ impl CoverageTask {
     async fn process(&mut self) -> Result<()> {
         let mut processor = CoverageProcessor::new(self.config.clone()).await?;
 
+        let mut seen_inputs = false;
         // Update the total with the coverage from each seed corpus.
         for dir in &self.config.readonly_inputs {
             verbose!("recording coverage for {}", dir.path.display());
             dir.init_pull().await?;
-            self.record_corpus_coverage(&mut processor, dir).await?;
+            if self.record_corpus_coverage(&mut processor, dir).await? {
+                seen_inputs = true;
+            }
+
             fs::remove_dir_all(&dir.path).await?;
         }
-        processor.report_total().await?;
-        self.config.coverage.sync_push().await?;
 
-        info!(
-            "recorded coverage for {} containers in `readonly_inputs`",
-            self.config.readonly_inputs.len(),
-        );
+        if seen_inputs {
+            processor.report_total().await?;
+            self.config.coverage.sync_push().await?;
+
+            info!(
+                "recorded coverage for {} containers in `readonly_inputs`",
+                self.config.readonly_inputs.len(),
+            );
+        } else {
+            info!("no initial inputs in `readonly_inputs`",);
+        }
 
         // If a queue has been provided, poll it for new coverage.
         if let Some(queue) = &self.config.input_queue {
@@ -127,8 +153,9 @@ impl CoverageTask {
         &self,
         processor: &mut CoverageProcessor,
         corpus_dir: &SyncedDir,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let mut corpus = fs::read_dir(&corpus_dir.path).await?;
+        let mut seen_inputs = false;
 
         while let Some(input) = corpus.next().await {
             let input = match input {
@@ -140,9 +167,10 @@ impl CoverageTask {
             };
 
             processor.test_input(&input.path()).await?;
+            seen_inputs = true;
         }
 
-        Ok(())
+        Ok(seen_inputs)
     }
 }
 

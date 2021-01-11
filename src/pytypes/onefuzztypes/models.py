@@ -150,6 +150,8 @@ class TaskDetails(BaseModel):
     check_asan_log: Optional[bool]
     check_debugger: Optional[bool] = Field(default=True)
     check_retry_count: Optional[int]
+    check_fuzzer_help: Optional[bool]
+    expect_crash_on_failure: Optional[bool]
     rename_output: Optional[bool]
     supervisor_exe: Optional[str]
     supervisor_env: Optional[Dict[str, str]]
@@ -224,6 +226,7 @@ class TaskConfig(BaseModel):
     containers: List[TaskContainers]
     tags: Dict[str, str]
     debug: Optional[List[TaskDebugFlag]]
+    colocate: Optional[bool]
 
 
 class BlobRef(BaseModel):
@@ -347,7 +350,6 @@ class TaskUnitConfig(BaseModel):
     telemetry_key: Optional[str]
     heartbeat_queue: str
     # command_queue: str
-    back_channel_address: str
     input_queue: Optional[str]
     supervisor_exe: Optional[str]
     supervisor_env: Optional[Dict[str, str]]
@@ -362,6 +364,8 @@ class TaskUnitConfig(BaseModel):
     check_asan_log: Optional[bool]
     check_debugger: Optional[bool]
     check_retry_count: Optional[int]
+    check_fuzzer_help: Optional[bool]
+    expect_crash_on_failure: Optional[bool]
     rename_output: Optional[bool]
     generator_exe: Optional[str]
     generator_env: Optional[Dict[str, str]]
@@ -738,9 +742,14 @@ class StopTaskNodeCommand(BaseModel):
     task_id: UUID
 
 
+class NodeCommandAddSshKey(BaseModel):
+    public_key: str
+
+
 class NodeCommand(EnumModel):
     stop: Optional[StopNodeCommand]
     stop_task: Optional[StopTaskNodeCommand]
+    add_ssh_key: Optional[NodeCommandAddSshKey]
 
 
 class NodeCommandEnvelope(BaseModel):

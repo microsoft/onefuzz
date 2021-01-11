@@ -612,6 +612,14 @@
         {
             "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
             "apiVersion": "2018-03-01-preview",
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/', 'vm-scripts')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2018-03-01-preview",
             "name": "[concat(variables('storageAccountNameFunc'), '/default/', 'repro-scripts')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"

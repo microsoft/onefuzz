@@ -9,7 +9,7 @@ from typing import Dict
 
 import azure.functions as func
 
-from ..onefuzzlib.azure.creds import get_fuzz_storage
+from ..onefuzzlib.azure.storage import corpus_accounts
 from ..onefuzzlib.dashboard import get_event
 from ..onefuzzlib.notifications.main import new_files
 
@@ -25,7 +25,7 @@ def file_added(event: Dict) -> None:
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
     event = json.loads(msg.get_body())
 
-    if event["topic"] != get_fuzz_storage():
+    if event["topic"] not in corpus_accounts():
         return
 
     if event["eventType"] != "Microsoft.Storage.BlobCreated":

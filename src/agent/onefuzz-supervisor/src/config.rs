@@ -2,8 +2,10 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
-use reqwest::StatusCode;
+use onefuzz::{
+    http::{is_auth_error_code, ResponseExt},
+    jitter::delay_with_jitter,
+};
 use reqwest_retry::SendRetry;
 use std::{
     path::{Path, PathBuf},
@@ -88,7 +90,7 @@ impl StaticConfig {
     pub fn from_env() -> Result<Self> {
         let instance_id = Uuid::parse_str(&std::env::var("ONEFUZZ_INSTANCE_ID")?)?;
         let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
-        let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?.into();
+        let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?;
         let tenant = std::env::var("ONEFUZZ_TENANT")?;
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
@@ -111,13 +113,9 @@ impl StaticConfig {
             None
         };
 
-        let credentials = ClientCredentials::new(
-            client_id,
-            client_secret,
-            onefuzz_url.clone().to_string(),
-            tenant,
-        )
-        .into();
+        let credentials =
+            ClientCredentials::new(client_id, client_secret, onefuzz_url.to_string(), tenant)
+                .into();
 
         Ok(Self {
             instance_id,
@@ -232,7 +230,7 @@ impl Registration {
                         machine_id,
                     });
                 }
-                Err(err) if status_code == StatusCode::UNAUTHORIZED => {
+                Err(err) if is_auth_error_code(status_code) => {
                     warn!(
                         "Registration failed: {}\n retrying in {} seconds",
                         err,
@@ -240,7 +238,7 @@ impl Registration {
                     );
                     delay_with_jitter(REGISTRATION_RETRY_PERIOD).await;
                 }
-                Err(err) => return Err(err.into()),
+                Err(err) => return Err(err),
             }
         }
 
@@ -268,6 +266,7 @@ impl Registration {
     }
 
     pub async fn renew(&mut self) -> Result<()> {
+        info!("renewing registration");
         let token = self.config.credentials.access_token().await?;
 
         let machine_id = self.machine_id.to_string();
