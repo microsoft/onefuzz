@@ -61,7 +61,7 @@ impl ReportTask {
                 &self.config.target_exe,
                 &self.config.target_options,
                 &self.config.target_env,
-                self.config.common.setup_dir.clone(),
+                &self.config.common.setup_dir,
             );
             target.check_help().await?;
         }
@@ -102,7 +102,7 @@ impl AsanProcessor {
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
-            self.config.common.setup_dir.clone(),
+            &self.config.common.setup_dir,
         );
 
         let task_id = self.config.common.task_id;

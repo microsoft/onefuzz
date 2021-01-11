@@ -69,6 +69,11 @@ pub fn args() -> App<'static, 'static> {
     SubCommand::with_name("libfuzzer-merge")
         .about("execute a local-only libfuzzer merge task")
         .arg(
+            Arg::with_name("setup_dir")
+                .takes_value(true)
+                .required(false),
+        )
+        .arg(
             Arg::with_name("target_exe")
                 .takes_value(true)
                 .required(true),

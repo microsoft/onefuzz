@@ -80,6 +80,11 @@ pub fn args() -> App<'static, 'static> {
     SubCommand::with_name("libfuzzer-crash-report")
         .about("execute a local-only libfuzzer crash report task")
         .arg(
+            Arg::with_name("setup_dir")
+                .takes_value(true)
+                .required(false),
+        )
+        .arg(
             Arg::with_name("target_exe")
                 .takes_value(true)
                 .required(true),
