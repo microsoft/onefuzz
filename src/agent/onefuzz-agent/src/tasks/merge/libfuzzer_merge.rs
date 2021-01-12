@@ -52,7 +52,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             &config.target_exe,
             &config.target_options,
             &config.target_env,
-            config.common.setup_dir.clone(),
+            &config.common.setup_dir,
         );
         target.check_help().await?;
     }
@@ -163,7 +163,7 @@ pub async fn merge_inputs(
         &config.target_exe,
         &config.target_options,
         &config.target_env,
-        config.common.setup_dir.clone(),
+        &config.common.setup_dir,
     );
     merger.merge(&config.unique_inputs.path, &candidates).await
 }
