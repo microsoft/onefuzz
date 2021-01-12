@@ -2,16 +2,18 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::trivially_copy_pass_by_ref)]
-use anyhow::Result;
+use anyhow::{bail, Result};
 use pete::{
-    Command, Pid, Ptracer, Restart, Siginfo,
+    Pid, Ptracer, Restart, Siginfo,
     Signal::{self, *},
     Stop, Tracee,
 };
 use proc_maps::MapRange;
 use serde::Serialize;
+
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
+use std::process::Command;
 
 pub struct TriageCommand {
     argv: Vec<String>,
@@ -23,15 +25,25 @@ pub struct TriageCommand {
 }
 impl TriageCommand {
     pub fn new(argv: Vec<String>, env: HashMap<String, String>) -> Result<Self> {
-        let mut tracer = Ptracer::new();
-
-        let mut cmd = Command::new(argv.clone())?;
-        for (k, v) in &env {
-            cmd.env().set(k, v)?;
+        if argv.is_empty() {
+            bail!("argv for triage command must be non-empty");
         }
 
-        // Pre-exec, in attach-stop.
-        let tracee = tracer.spawn(cmd)?;
+        let mut cmd = Command::new(&argv[0]);
+        if argv.len() > 1 {
+            cmd.args(&argv[1..]);
+        }
+
+        for (k, v) in &env {
+            cmd.env(k, v);
+        }
+
+        let mut tracer = Ptracer::new();
+
+        let _child = tracer.spawn(cmd)?;
+
+        // Continue the tracee process until the return from its initial `execve()`.
+        let tracee = continue_to_init_execve(&mut tracer)?;
 
         // Save the PID of the target parent process.
         let pid = tracee.pid;
@@ -374,4 +386,16 @@ mod se {
     {
         s.serialize_str(&format!("0x{:x}", t))
     }
+}
+
+fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
+    while let Some(tracee) = tracer.wait()? {
+        if let Stop::SyscallExitStop(..) = &tracee.stop {
+            return Ok(tracee);
+        }
+
+        tracer.restart(tracee, Restart::Continue)?;
+    }
+
+    anyhow::bail!("did not see initial execve() in tracee while recording coverage");
 }
