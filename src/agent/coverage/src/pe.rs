@@ -9,7 +9,7 @@ use anyhow::Result;
 use fixedbitset::FixedBitSet;
 use goblin::pe::{debug::DebugData, PE};
 use log::trace;
-use memmap::Mmap;
+use memmap2::Mmap;
 use pdb::{
     AddressMap, FallibleIterator, PdbInternalSectionOffset, ProcedureSymbol, TypeIndex, PDB,
 };
