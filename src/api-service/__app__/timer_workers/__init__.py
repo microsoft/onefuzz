@@ -9,7 +9,7 @@ import azure.functions as func
 from onefuzztypes.enums import NodeState, PoolState
 
 from ..onefuzzlib.autoscale import autoscale_pool
-from ..onefuzzlib.dashboard import get_event
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.pools import Node, Pool, Scaleset
 
@@ -44,6 +44,6 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         elif pool.state in PoolState.available() and pool.autoscale:
             autoscale_pool(pool)
 
-    event = get_event()
-    if event:
-        dashboard.set(event)
+    events = get_events()
+    if events:
+        dashboard.set(events)

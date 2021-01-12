@@ -66,7 +66,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
         if not autoscale_config.region:
             raise Exception("Region is missing")
 
-        scaleset = Scaleset.create(
+        Scaleset.create(
             pool_name=pool.name,
             vm_sku=autoscale_config.vm_sku,
             image=autoscale_config.image,
@@ -75,7 +75,6 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
             spot_instances=autoscale_config.spot_instances,
             tags={"pool": pool.name},
         )
-        scaleset.save()
         nodes_needed -= max_nodes_scaleset
 
 

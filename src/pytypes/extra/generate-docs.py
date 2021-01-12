@@ -5,17 +5,55 @@
 
 from typing import Optional
 from uuid import UUID
-import json
-from onefuzztypes.enums import TaskType, ContainerType, ErrorCode
-from onefuzztypes.models import TaskConfig, TaskDetails, TaskContainers, Error, UserInfo
-from onefuzztypes.webhooks import (
-    WebhookMessage,
-    WebhookEventPing,
-    WebhookEventTaskCreated,
-    WebhookEventTaskStopped,
-    WebhookEventTaskFailed,
+from onefuzztypes.primitives import Region, Container
+from onefuzztypes.enums import (
+    TaskType,
+    ContainerType,
+    ErrorCode,
+    OS,
+    Architecture,
+    NodeState,
 )
-from onefuzztypes.enums import WebhookEventType
+from onefuzztypes.models import (
+    TaskConfig,
+    TaskDetails,
+    TaskContainers,
+    TaskState,
+    Error,
+    UserInfo,
+    JobConfig,
+    Report,
+    BlobRef,
+)
+from onefuzztypes.events import (
+    Event,
+    EventPing,
+    EventCrashReported,
+    EventFileAdded,
+    EventTaskCreated,
+    EventTaskStopped,
+    EventTaskFailed,
+    EventProxyCreated,
+    EventProxyDeleted,
+    EventProxyFailed,
+    EventPoolCreated,
+    EventPoolDeleted,
+    EventScalesetCreated,
+    EventScalesetFailed,
+    EventScalesetDeleted,
+    EventJobCreated,
+    EventJobStopped,
+    EventTaskStateUpdated,
+    EventNodeStateUpdated,
+    EventNodeCreated,
+    EventNodeDeleted,
+    get_event_type,
+    EventType,
+)
+from onefuzztypes.webhooks import WebhookMessage
+
+EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 
 
 def layer(depth: int, title: str, content: Optional[str] = None) -> None:
@@ -29,28 +67,9 @@ def typed(depth: int, title: str, content: str, data_type: str) -> None:
 
 
 def main():
-    examples = {
-        WebhookEventType.ping: WebhookEventPing(ping_id=UUID(int=0)),
-        WebhookEventType.task_stopped: WebhookEventTaskStopped(
-            job_id=UUID(int=0),
-            task_id=UUID(int=0),
-            user_info=UserInfo(
-                application_id=UUID(int=0),
-                object_id=UUID(int=0),
-                upn="example@contoso.com",
-            ),
-        ),
-        WebhookEventType.task_failed: WebhookEventTaskFailed(
-            job_id=UUID(int=0),
-            task_id=UUID(int=0),
-            error=Error(code=ErrorCode.TASK_FAILED, errors=["example error message"]),
-            user_info=UserInfo(
-                application_id=UUID(int=0),
-                object_id=UUID(int=0),
-                upn="example@contoso.com",
-            ),
-        ),
-        WebhookEventType.task_created: WebhookEventTaskCreated(
+    examples = [
+        EventPing(ping_id=UUID(int=0)),
+        EventTaskCreated(
             job_id=UUID(int=0),
             task_id=UUID(int=0),
             config=TaskConfig(
@@ -75,13 +94,122 @@ def main():
                 upn="example@contoso.com",
             ),
         ),
-    }
+        EventTaskStopped(
+            job_id=UUID(int=0),
+            task_id=UUID(int=0),
+            user_info=UserInfo(
+                application_id=UUID(int=0),
+                object_id=UUID(int=0),
+                upn="example@contoso.com",
+            ),
+        ),
+        EventTaskFailed(
+            job_id=UUID(int=0),
+            task_id=UUID(int=0),
+            error=Error(code=ErrorCode.TASK_FAILED, errors=["example error message"]),
+            user_info=UserInfo(
+                application_id=UUID(int=0),
+                object_id=UUID(int=0),
+                upn="example@contoso.com",
+            ),
+        ),
+        EventTaskStateUpdated(
+            job_id=UUID(int=0), task_id=UUID(int=0), state=TaskState.init
+        ),
+        EventProxyCreated(region=Region("eastus")),
+        EventProxyDeleted(region=Region("eastus")),
+        EventProxyFailed(
+            region=Region("eastus"),
+            error=Error(code=ErrorCode.PROXY_FAILED, errors=["example error message"]),
+        ),
+        EventPoolCreated(
+            pool_name="example", os=OS.linux, arch=Architecture.x86_64, managed=True
+        ),
+        EventPoolDeleted(pool_name="example"),
+        EventScalesetCreated(
+            scaleset_id=UUID(int=0),
+            pool_name="example",
+            vm_sku="Standard_D2s_v3",
+            image="Canonical:UbuntuServer:18.04-LTS:latest",
+            region=Region("eastus"),
+            size=10,
+        ),
+        EventScalesetFailed(
+            scaleset_id=UUID(int=0),
+            pool_name="example",
+            error=Error(
+                code=ErrorCode.UNABLE_TO_RESIZE, errors=["example error message"]
+            ),
+        ),
+        EventScalesetDeleted(scaleset_id=UUID(int=0), pool_name="example"),
+        EventJobCreated(
+            job_id=UUID(int=0),
+            config=JobConfig(
+                project="example project",
+                name="example name",
+                build="build 1",
+                duration=24,
+            ),
+        ),
+        EventJobStopped(
+            job_id=UUID(int=0),
+            config=JobConfig(
+                project="example project",
+                name="example name",
+                build="build 1",
+                duration=24,
+            ),
+        ),
+        EventNodeCreated(machine_id=UUID(int=0), pool_name="example"),
+        EventNodeDeleted(machine_id=UUID(int=0), pool_name="example"),
+        EventNodeStateUpdated(
+            machine_id=UUID(int=0), pool_name="example", state=NodeState.setting_up
+        ),
+        EventCrashReported(
+            container=Container("container-name"),
+            filename="example.json",
+            report=Report(
+                input_blob=BlobRef(
+                    account="contoso-storage-account",
+                    container=Container("crashes"),
+                    name="input.txt",
+                ),
+                executable="fuzz.exe",
+                crash_type="example crash report type",
+                crash_site="example crash site",
+                call_stack=["#0 line", "#1 line", "#2 line"],
+                call_stack_sha256=ZERO_SHA256,
+                input_sha256=EMPTY_SHA256,
+                asan_log="example asan log",
+                task_id=UUID(int=0),
+                job_id=UUID(int=0),
+                scariness_score=10,
+                scariness_description="example-scariness",
+            ),
+        ),
+        EventFileAdded(container=Container("container-name"), filename="example.txt"),
+    ]
+
+    for event in Event.__args__:
+        seen = False
+        for value in examples:
+            if isinstance(value, event):
+                seen = True
+                break
+        assert seen, "missing event type definition: %s" % event.__name__
+
+    event_types = [get_event_type(x) for x in examples]
+
+    for event_type in EventType:
+        assert event_type in event_types, (
+            "missing event type definition: %s" % event_type.name
+        )
 
     message = WebhookMessage(
         webhook_id=UUID(int=0),
         event_id=UUID(int=0),
-        event_type=WebhookEventType.ping,
-        event=examples[WebhookEventType.ping],
+        event_type=EventType.ping,
+        event=EventPing(ping_id=UUID(int=0)),
     )
 
     layer(
@@ -96,11 +224,18 @@ def main():
     )
 
     typed(3, "Example", message.json(indent=4, exclude_none=True), "json")
-    layer(2, "Event Types (WebhookEventType)")
+    layer(2, "Event Types (EventType)")
 
-    for webhook_type in WebhookEventType:
-        example = examples[webhook_type]
-        layer(3, webhook_type.name)
+    event_map = {get_event_type(x).name: x for x in examples}
+
+    for name in sorted(event_map.keys()):
+        print(f"* [{name}](#{name})")
+
+    print()
+
+    for name in sorted(event_map.keys()):
+        example = event_map[name]
+        layer(3, name)
         typed(4, "Example", example.json(indent=4, exclude_none=True), "json")
         typed(4, "Schema", example.schema_json(indent=4), "json")
 

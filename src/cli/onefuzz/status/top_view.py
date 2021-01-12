@@ -71,7 +71,7 @@ class TopView(Frame):
         self.add_layout(layout)
 
         self.onefuzz_reversed = {
-            "pools": True,
+            "pools": False,
             "jobs": True,
             "tasks": True,
             "messages": True,
@@ -163,6 +163,8 @@ class TopView(Frame):
             title.value = "%s: %s" % (name.title(), fmt(len(data)))
 
     def update(self, frame_no: int) -> Any:
+        if len(self.cache.pools) != self.pool_count:
+            raise ResizeScreenError("resizing because of a differing pool count")
         if len(self.cache.jobs) != self.job_count:
             raise ResizeScreenError("resizing because of a differing job count")
         self.render_base("status", [[now(), "| " + self.cache.endpoint]])
