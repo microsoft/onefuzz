@@ -9,16 +9,22 @@ import random
 from enum import Enum
 from typing import List, Tuple
 
+from azure.identity import DefaultAzureCredential
 from azure.mgmt.storage import StorageManagementClient
 from memoization import cached
 from msrestazure.tools import parse_resource_id
 
-from .creds import get_base_resource_group, mgmt_client_factory
+from .creds import get_base_resource_group
 
 
 class StorageType(Enum):
     corpus = "corpus"
     config = "config"
+
+
+@cached
+def get_mgmt_client() -> StorageManagementClient:
+    return StorageManagementClient(credential=DefaultAzureCredential())
 
 
 @cached
@@ -54,7 +60,7 @@ def get_accounts(storage_type: StorageType) -> List[str]:
 
 @cached
 def get_storage_account_name_key(account_id: str) -> Tuple[str, str]:
-    client = mgmt_client_factory(StorageManagementClient)
+    client = get_mgmt_client()
     resource = parse_resource_id(account_id)
     key = (
         client.storage_accounts.list_keys(resource["resource_group"], resource["name"])
@@ -83,7 +89,7 @@ def corpus_accounts() -> List[str]:
     skip = get_func_storage()
     results = [get_fuzz_storage()]
 
-    client = mgmt_client_factory(StorageManagementClient)
+    client = get_mgmt_client()
     group = get_base_resource_group()
     for account in client.storage_accounts.list_by_resource_group(group):
         # protection from someone adding the corpus tag to the config account
