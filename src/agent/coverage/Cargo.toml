@@ -13,7 +13,7 @@ fixedbitset = "0.3"
 goblin = "0.2"
 iced-x86 = { version = "1.1", features = ["decoder", "op_code_info", "instr_info", "masm"] }
 log = "0.4"
-memmap = "0.7"
+memmap2 = "0.2.0"
 serde = { version = "1.0", features = ["derive"] }
 uuid = { version = "0.8", features = ["guid"] }
 
