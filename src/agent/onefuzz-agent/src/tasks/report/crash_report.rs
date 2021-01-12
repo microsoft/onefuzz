@@ -69,10 +69,11 @@ async fn upload_deduped(report: &CrashReport, container: &BlobContainerUrl) -> R
         .put(deduped_url)
         .json(report)
         // Conditional PUT, only if-not-exists.
+        // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
         .header("If-None-Match", "*")
         .send_retry_default()
         .await?;
-    if result.status() != StatusCode::NOT_MODIFIED {
+    if result.status() == StatusCode::CREATED {
         event!(new_unique_report;);
     }
     Ok(())
