@@ -397,5 +397,5 @@ fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
         tracer.restart(tracee, Restart::Continue)?;
     }
 
-    anyhow::bail!("did not see initial execve() in tracee while recording coverage");
+    anyhow::bail!("did not see initial execve() in tracee while triaging input");
 }
