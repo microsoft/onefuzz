@@ -1,4 +1,4 @@
-msal~=1.4.3
+msal~=1.8.0
 pyjwt~=1.7.1
 requests~=2.24.0
 jmespath~=0.10.0
@@ -11,7 +11,6 @@ memoization~=0.3.1
 msrestazure==0.6.4
 azure-storage-blob~=12.3
 azure-applicationinsights==0.1.0
-adal~=1.2.5
 tenacity==6.2.0
 docstring_parser==0.7.3
 # onefuzztypes version is set during build

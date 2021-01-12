@@ -671,7 +671,7 @@ struct ImageDetails {
 
 fn get_image_details(path: &Path) -> Result<ImageDetails> {
     let file = fs::File::open(path)?;
-    let map = unsafe { memmap::Mmap::map(&file)? };
+    let map = unsafe { memmap2::Mmap::map(&file)? };
 
     let header = goblin::pe::header::Header::parse(&map)?;
     let image_size = header
