@@ -39,6 +39,7 @@ def mgmt_client_factory(client_class: Any) -> Any:
     try:
         from azure.cli.core import CLIError
         from azure.common.client_factory import get_client_from_cli_profile
+
         return get_client_from_cli_profile(client_class)
     except CLIError:
         pass
