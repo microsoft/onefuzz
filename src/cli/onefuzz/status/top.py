@@ -8,9 +8,8 @@ import time
 from queue import PriorityQueue
 from threading import Thread
 from typing import Any, Optional
-from uuid import UUID
 
-from onefuzztypes.enums import JobState, NodeState, PoolState, TaskState
+from onefuzztypes.events import EventMessage
 
 from .cache import JobFilter, TopCache
 from .signalr import Stream
@@ -49,28 +48,12 @@ class Top:
     def add_container(self, name: str) -> None:
         if name in self.cache.files:
             return
-        self.queue.put((2, (self.cache.add_container, [name, True])))
+        self.queue.put((2, (self.cache.add_container, [name])))
 
     def handler(self, message: Any) -> None:
-        handlers = {
-            "Node": lambda x: self.cache.add_node(
-                UUID(x["machine_id"]), NodeState[x["state"]]
-            ),
-            "Pool": lambda x: self.cache.add_pool(x["name"], PoolState[x["state"]]),
-            "Task": lambda x: self.cache.add_task(
-                UUID(x["task_id"]), TaskState[x["state"]]
-            ),
-            "Job": lambda x: self.cache.add_job(
-                UUID(x["job_id"]), JobState[x["state"]]
-            ),
-            "new_file": lambda x: self.cache.add_files(
-                x["container"], set([x["file"]])
-            ),
-        }
-        for event in message:
-            if event["type"] in handlers:
-                handlers[event["type"]](event["data"])
-            self.cache.add_message(event["type"], event["data"])
+        for event_raw in message:
+            message = EventMessage.parse_obj(event_raw)
+            self.cache.add_message(message)
 
     def setup(self) -> Stream:
         client = Stream(self.onefuzz, self.logger)
@@ -80,26 +63,22 @@ class Top:
 
         pools = self.onefuzz.pools.list()
         for pool in pools:
-            self.cache.add_pool(pool.name, pool.state, pool=pool)
+            self.cache.add_pool(pool)
 
-        nodes = self.onefuzz.nodes.list()
-        for node in nodes:
-            self.cache.add_node(node.machine_id, node.state, node=node)
-
-        jobs = self.onefuzz.jobs.list()
-
-        for job in jobs:
-            self.cache.add_job(job.job_id, job.state, job)
+        for job in self.onefuzz.jobs.list():
+            mini_job = self.cache.add_job(job)
             # don't add pre-add tasks that we're going to filter out
-            if not self.cache.should_render_job(job):
+            if not self.cache.should_render_job(mini_job):
                 continue
 
             for task in self.onefuzz.tasks.list(job_id=job.job_id):
-                self.cache.add_task(
-                    task.task_id, task.state, task=task, add_files=False
-                )
+                self.cache.add_task(task)
                 for container in task.config.containers:
                     self.add_container(container.name)
+
+        nodes = self.onefuzz.nodes.list()
+        for node in nodes:
+            self.cache.add_node(node)
 
         if client.connected is None:
             self.logger.info("waiting for signalr connection")
