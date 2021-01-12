@@ -7,7 +7,7 @@ import logging
 import os
 import random
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.storage import StorageManagementClient
@@ -62,14 +62,17 @@ def get_accounts(storage_type: StorageType) -> List[str]:
 
 @cached
 def get_storage_account_name_key(account_id: str) -> Tuple[str, str]:
-    client = get_mgmt_client()
     resource = parse_resource_id(account_id)
-    key = (
-        client.storage_accounts.list_keys(resource["resource_group"], resource["name"])
-        .keys[0]
-        .value
-    )
+    key = get_storage_account_name_key_by_name(resource["name"])
     return resource["name"], key
+
+
+@cached
+def get_storage_account_name_key_by_name(account_name: str) -> str:
+    client = get_mgmt_client()
+    group = get_base_resource_group()
+    key = client.storage_accounts.list_keys(group, account_name).keys[0].value
+    return cast(str, key)
 
 
 def choose_account(storage_type: StorageType) -> str:
