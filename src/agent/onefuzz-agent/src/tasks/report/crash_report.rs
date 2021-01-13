@@ -71,10 +71,11 @@ async fn upload<T: Serialize>(report: &T, url: Url) -> Result<bool> {
         .put(url)
         .json(report)
         // Conditional PUT, only if-not-exists.
+        // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
         .header("If-None-Match", "*")
         .send_retry_default()
         .await?;
-    Ok(result.status() != StatusCode::NOT_MODIFIED)
+    Ok(result.status() == StatusCode::CREATED)
 }
 
 async fn upload_or_save_local<T: Serialize>(

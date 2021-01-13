@@ -33,6 +33,7 @@ pub enum PlaceHolder {
     GeneratorOptions,
     SupervisorExe,
     SupervisorOptions,
+    SetupDir,
 }
 
 impl PlaceHolder {
@@ -55,6 +56,7 @@ impl PlaceHolder {
             Self::GeneratorOptions => "{generator_options}",
             Self::SupervisorExe => "{supervisor_exe}",
             Self::SupervisorOptions => "{supervisor_options}",
+            Self::SetupDir => "{setup_dir}",
         }
         .to_string()
     }
@@ -212,6 +214,13 @@ impl<'a> Expand<'a> {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
         self.set_value(PlaceHolder::RuntimeDir, ExpandedValue::Path(path));
+        self
+    }
+
+    pub fn setup_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+        let arg = arg.as_ref();
+        let path = String::from(arg.to_string_lossy());
+        self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path));
         self
     }
 

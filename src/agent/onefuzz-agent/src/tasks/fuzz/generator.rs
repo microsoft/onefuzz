@@ -92,6 +92,7 @@ impl GeneratorTask {
 
     async fn fuzzing_loop(&self, heartbeat_client: Option<TaskHeartbeatClient>) -> Result<()> {
         let tester = Tester::new(
+            &self.config.common.setup_dir,
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,

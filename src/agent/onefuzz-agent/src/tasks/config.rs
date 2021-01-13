@@ -10,7 +10,7 @@ use onefuzz::{
 };
 use reqwest::Url;
 use serde::{self, Deserialize};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -33,6 +33,8 @@ pub struct CommonConfig {
     pub heartbeat_queue: Option<Url>,
 
     pub telemetry_key: Option<Uuid>,
+
+    pub setup_dir: PathBuf,
 }
 
 impl CommonConfig {
@@ -79,9 +81,16 @@ pub enum Config {
 }
 
 impl Config {
-    pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
+    pub fn from_file(path: impl AsRef<Path>, setup_dir: Option<impl AsRef<Path>>) -> Result<Self> {
         let json = std::fs::read_to_string(path)?;
-        Ok(serde_json::from_str(&json)?)
+        let mut json_config: serde_json::Value = serde_json::from_str(&json)?;
+        // override the setup_dir in the config file with the parameter value if specified
+        if let Some(setup_dir) = setup_dir {
+            json_config["setup_dir"] =
+                serde_json::Value::String(setup_dir.as_ref().to_string_lossy().into());
+        }
+
+        Ok(serde_json::from_value(json_config)?)
     }
 
     pub fn common(&self) -> &CommonConfig {

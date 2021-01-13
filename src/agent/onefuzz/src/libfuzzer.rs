@@ -23,6 +23,7 @@ pub struct LibFuzzerMergeOutput {
 }
 
 pub struct LibFuzzer<'a> {
+    setup_dir: PathBuf,
     exe: PathBuf,
     options: &'a [String],
     env: &'a HashMap<String, String>,
@@ -33,11 +34,13 @@ impl<'a> LibFuzzer<'a> {
         exe: impl Into<PathBuf>,
         options: &'a [String],
         env: &'a HashMap<String, String>,
+        setup_dir: impl Into<PathBuf>,
     ) -> Self {
         Self {
             exe: exe.into(),
             options,
             env,
+            setup_dir: setup_dir.into(),
         }
     }
 
@@ -54,7 +57,10 @@ impl<'a> LibFuzzer<'a> {
             .arg("-help=1");
 
         let mut expand = Expand::new();
-        expand.target_exe(&self.exe).target_options(&self.options);
+        expand
+            .target_exe(&self.exe)
+            .target_options(&self.options)
+            .setup_dir(&self.setup_dir);
 
         for (k, v) in self.env {
             cmd.env(k, expand.evaluate_value(v)?);
@@ -86,7 +92,8 @@ impl<'a> LibFuzzer<'a> {
             .target_exe(&self.exe)
             .target_options(&self.options)
             .input_corpus(&corpus_dir)
-            .crashes(&fault_dir);
+            .crashes(&fault_dir)
+            .setup_dir(&self.setup_dir);
 
         let mut cmd = Command::new(&self.exe);
         cmd.kill_on_drop(true)
@@ -149,7 +156,15 @@ impl<'a> LibFuzzer<'a> {
         options.push("{input}".to_string());
 
         let tester = Tester::new(
-            &self.exe, &options, &self.env, &timeout, false, true, false, retry,
+            &self.setup_dir,
+            &self.exe,
+            &options,
+            &self.env,
+            &timeout,
+            false,
+            true,
+            false,
+            retry,
         );
         tester.test_input(test_input.as_ref()).await
     }
@@ -163,7 +178,8 @@ impl<'a> LibFuzzer<'a> {
         expand
             .target_exe(&self.exe)
             .target_options(&self.options)
-            .input_corpus(&corpus_dir);
+            .input_corpus(&corpus_dir)
+            .setup_dir(&self.setup_dir);
 
         let mut cmd = Command::new(&self.exe);
 

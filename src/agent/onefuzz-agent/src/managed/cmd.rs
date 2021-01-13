@@ -9,7 +9,8 @@ use std::path::PathBuf;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let config_path = value_t!(args, "config", PathBuf)?;
-    let config = Config::from_file(config_path)?;
+    let setup_dir = value_t!(args, "setup_dir", PathBuf)?;
+    let config = Config::from_file(config_path, setup_dir)?;
 
     init_telemetry(config.common());
     let result = config.run().await;
@@ -30,4 +31,5 @@ pub fn args(name: &str) -> App<'static, 'static> {
     SubCommand::with_name(name)
         .about("managed fuzzing")
         .arg(Arg::with_name("config").required(true))
+        .arg(Arg::with_name("setup_dir").required(true))
 }

@@ -116,6 +116,7 @@ impl CoverageTask {
                 &self.config.target_exe,
                 &self.config.target_options,
                 &self.config.target_env,
+                &self.config.common.setup_dir,
             );
             target.check_help().await?;
         }
