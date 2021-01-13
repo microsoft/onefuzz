@@ -7,16 +7,15 @@ import logging
 import os
 from typing import Any, Optional, Union, cast
 
-from azure.mgmt.network import NetworkManagementClient
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 
-from .creds import mgmt_client_factory
+from .ip import get_client
 
 
 def get_subnet_id(resource_group: str, name: str) -> Optional[str]:
-    network_client = mgmt_client_factory(NetworkManagementClient)
+    network_client = get_client()
     try:
         subnet = network_client.subnets.get(resource_group, name, name)
         return cast(str, subnet.id)
@@ -30,7 +29,7 @@ def get_subnet_id(resource_group: str, name: str) -> Optional[str]:
 
 
 def delete_subnet(resource_group: str, name: str) -> Union[None, CloudError, Any]:
-    network_client = mgmt_client_factory(NetworkManagementClient)
+    network_client = get_client()
     try:
         return network_client.virtual_networks.delete(resource_group, name)
     except CloudError as err:
@@ -52,7 +51,7 @@ def create_virtual_network(
         location,
     )
 
-    network_client = mgmt_client_factory(NetworkManagementClient)
+    network_client = get_client()
     params = {
         "location": location,
         "address_space": {"address_prefixes": ["10.0.0.0/8"]},

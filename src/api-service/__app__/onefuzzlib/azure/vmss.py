@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
 from azure.core.exceptions import ResourceNotFoundError
-from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import ResourceSku, ResourceSkuRestrictionsType
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
@@ -17,19 +16,9 @@ from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from .creds import (
-    get_base_resource_group,
-    get_identity,
-    get_scaleset_identity_resource_path,
-    get_subscription,
-    mgmt_client_factory,
-)
+from .compute import get_client
+from .creds import get_base_resource_group, get_scaleset_identity_resource_path
 from .image import get_os
-
-
-@cached
-def get_client() -> ComputeManagementClient:
-    return ComputeManagementClient(get_identity(), get_subscription())
 
 
 def list_vmss(name: UUID) -> Optional[List[str]]:

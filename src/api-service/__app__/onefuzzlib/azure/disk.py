@@ -8,7 +8,7 @@ from typing import Any
 
 from msrestazure.azure_exceptions import CloudError
 
-from .vmss import get_client
+from .compute import get_client
 
 
 def list_disks(resource_group: str) -> Any:

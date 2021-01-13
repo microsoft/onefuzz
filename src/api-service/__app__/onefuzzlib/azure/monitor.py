@@ -9,12 +9,12 @@ from typing import Any, Dict
 from azure.mgmt.loganalytics import OperationalInsightsManagementClient
 from memoization import cached
 
-from .creds import get_base_resource_group, mgmt_client_factory
+from .creds import get_base_resource_group, get_identity, get_subscription
 
 
-@cached(ttl=60)
+@cached
 def get_montior_client() -> Any:
-    return mgmt_client_factory(OperationalInsightsManagementClient)
+    return OperationalInsightsManagementClient(get_identity(), get_subscription())
 
 
 @cached(ttl=60)

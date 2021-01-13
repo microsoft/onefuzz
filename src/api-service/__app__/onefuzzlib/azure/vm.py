@@ -15,11 +15,11 @@ from onefuzztypes.models import Authentication, Error
 from onefuzztypes.primitives import Extension, Region
 from pydantic import BaseModel
 
-from .creds import get_base_resource_group, mgmt_client_factory
+from .compute import get_client
+from .creds import get_base_resource_group
 from .disk import delete_disk, list_disks
 from .image import get_os
 from .ip import create_public_nic, delete_ip, delete_nic, get_ip, get_public_nic
-from .vmss import get_client
 
 
 def get_vm(name: str) -> Optional[VirtualMachine]:

@@ -12,7 +12,7 @@ from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from .vmss import get_client
+from .compute import get_client
 
 
 @cached(ttl=60)
