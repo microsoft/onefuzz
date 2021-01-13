@@ -30,6 +30,7 @@ async fn run_impl(input: String, config: Config) -> Result<()> {
 
 pub fn run(args: &clap::ArgMatches) -> Result<()> {
     let target_exe = value_t!(args, "target_exe", PathBuf)?;
+    let setup_dir = value_t!(args, "setup_dir", PathBuf)?;
     let input = value_t!(args, "input", String)?;
     let target_options = args.values_of_lossy("target_options").unwrap_or_default();
     let mut target_env = HashMap::new();
@@ -65,6 +66,7 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
             job_id: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
             task_id: Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
             instance_id: Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap(),
+            setup_dir,
         },
     };
 
@@ -77,6 +79,11 @@ pub fn run(args: &clap::ArgMatches) -> Result<()> {
 pub fn args() -> App<'static, 'static> {
     SubCommand::with_name("libfuzzer-crash-report")
         .about("execute a local-only libfuzzer crash report task")
+        .arg(
+            Arg::with_name("setup_dir")
+                .takes_value(true)
+                .required(false),
+        )
         .arg(
             Arg::with_name("target_exe")
                 .takes_value(true)
