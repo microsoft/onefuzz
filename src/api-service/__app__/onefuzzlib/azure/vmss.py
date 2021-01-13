@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import ResourceSku, ResourceSkuRestrictionsType
 from memoization import cached
@@ -48,13 +49,18 @@ def list_vmss(name: UUID) -> Optional[List[str]]:
     return None
 
 
-def delete_vmss(name: UUID) -> Any:
+def delete_vmss(name: UUID) -> bool:
     resource_group = get_base_resource_group()
     compute_client = get_client()
     try:
         compute_client.virtual_machine_scale_sets.delete(resource_group, str(name))
     except CloudError as err:
         logging.error("cloud error deleting vmss: %s (%s)", name, err)
+    except ResourceNotFoundError:
+        logging.error("deleting vmss not found: %s", name)
+        return True
+
+    return False
 
 
 def get_vmss(name: UUID) -> Optional[Any]:
@@ -65,7 +71,10 @@ def get_vmss(name: UUID) -> Optional[Any]:
         return compute_client.virtual_machine_scale_sets.get(resource_group, str(name))
     except CloudError as err:
         logging.debug("vm does not exist %s", err)
-        return None
+    except ResourceNotFoundError as err:
+        logging.debug("vm does not exist %s", err)
+
+    return None
 
 
 def resize_vmss(name: UUID, capacity: int) -> None:
@@ -99,6 +108,8 @@ def list_instance_ids(name: UUID) -> Dict[UUID, str]:
             results[UUID(instance.vm_id)] = cast(str, instance.instance_id)
     except CloudError:
         logging.debug("scaleset not available: %s", name)
+    except ResourceNotFoundError:
+        logging.debug("vm does not exist %s", name)
     return results
 
 

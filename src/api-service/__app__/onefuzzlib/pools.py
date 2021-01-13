@@ -1070,8 +1070,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         vmss = get_vmss(self.scaleset_id)
         if vmss:
             logging.info("scaleset deleting: %s", self.scaleset_id)
-            delete_vmss(self.scaleset_id)
-            self.save()
+            if delete_vmss(self.scaleset_id):
+                logging.info("scaleset deleted: %s", self.scaleset_id)
+                self.delete()
+            else:
+                self.save()
         else:
             logging.info("scaleset deleted: %s", self.scaleset_id)
             self.delete()
