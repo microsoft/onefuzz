@@ -43,10 +43,7 @@ def mgmt_client_factory(client_class: Any) -> Any:
     except Exception:
         pass
 
-    if issubclass(client_class, SubscriptionClient):
-        return client_class(get_msi())
-    else:
-        return client_class(get_msi(), get_subscription())
+    return client_class(get_msi(), get_subscription())
 
 
 @cached
