@@ -15,6 +15,7 @@ The following values are replaced with the specific values at runtime.
   (available wherever `input` is available)
 * `{runtime_dir}`: Path to the runtime directory for the task
 * `{tools_dir}`: Path to the task specific `tools` directory
+* `{setup_dir}` : Path to the setup directory
 
 ## Example
 
