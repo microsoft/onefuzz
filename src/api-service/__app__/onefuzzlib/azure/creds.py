@@ -104,8 +104,8 @@ DAY_IN_SECONDS = 60 * 60 * 24
 
 @cached(ttl=DAY_IN_SECONDS)
 def get_regions() -> List[str]:
-    client = mgmt_client_factory(SubscriptionClient)
     subscription = get_subscription()
+    client = SubscriptionClient(credential=get_identity())
     locations = client.subscriptions.list_locations(subscription)
     return sorted([x.name for x in locations])
 
