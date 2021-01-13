@@ -149,36 +149,38 @@ impl GeneratorTask {
         corpus_dir: impl AsRef<Path>,
         output_dir: impl AsRef<Path>,
     ) -> Result<()> {
-        let mut expand = Expand::new();
-        expand
-            .generated_inputs(&output_dir)
-            .input_corpus(&corpus_dir)
-            .generator_exe(&self.config.generator_exe)
-            .generator_options(&self.config.generator_options);
-
-        if let Some(tools) = &self.config.tools {
-            expand.tools_dir(&tools.path);
-        }
-
         utils::reset_tmp_dir(&output_dir).await?;
+        let mut generator = {
+            let mut expand = Expand::new();
+            expand
+                .generated_inputs(&output_dir)
+                .input_corpus(&corpus_dir)
+                .generator_exe(&self.config.generator_exe)
+                .generator_options(&self.config.generator_options);
 
-        let generator_path = expand.evaluate_value(&self.config.generator_exe)?;
+            if let Some(tools) = &self.config.tools {
+                expand.tools_dir(&tools.path);
+            }
 
-        let mut generator = Command::new(&generator_path);
-        generator
-            .kill_on_drop(true)
-            .env_remove("RUST_LOG")
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
+            let generator_path = expand.evaluate_value(&self.config.generator_exe)?;
 
-        for arg in expand.evaluate(&self.config.generator_options)? {
-            generator.arg(arg);
-        }
+            let mut generator = Command::new(&generator_path);
+            generator
+                .kill_on_drop(true)
+                .env_remove("RUST_LOG")
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped());
 
-        for (k, v) in &self.config.generator_env {
-            generator.env(k, expand.evaluate_value(v)?);
-        }
+            for arg in expand.evaluate(&self.config.generator_options)? {
+                generator.arg(arg);
+            }
+
+            for (k, v) in &self.config.generator_env {
+                generator.env(k, expand.evaluate_value(v)?);
+            }
+            generator
+        };
 
         info!("Generating test cases with {:?}", generator);
         let output = generator.spawn()?;

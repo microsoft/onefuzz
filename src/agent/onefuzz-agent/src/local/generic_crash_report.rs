@@ -62,7 +62,7 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let config = build_report_config(args)?;
-    ReportTask::new(&config).local_run().await
+    ReportTask::new(config).local_run().await
 }
 
 pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
@@ -116,6 +116,7 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
             .long("disable_check_debugger"),
     ]
 }
+
 pub fn args(name: &'static str) -> App<'static, 'static> {
     SubCommand::with_name(name)
         .about("execute a local-only generic crash report")

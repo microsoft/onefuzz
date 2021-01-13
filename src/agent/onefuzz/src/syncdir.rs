@@ -68,7 +68,7 @@ impl SyncedDir {
                     anyhow::bail!("File with name '{}' already exists", self.path.display());
                 }
             }
-            Err(_) => fs::create_dir(&self.path).await.with_context(|| {
+            Err(_) => fs::create_dir_all(&self.path).await.with_context(|| {
                 format!("unable to create local SyncedDir: {}", self.path.display())
             }),
         }

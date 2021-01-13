@@ -5,7 +5,7 @@ use super::crash_report::*;
 use crate::tasks::{
     config::CommonConfig, generic::input_poller::*, heartbeat::*, utils::default_bool_true,
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use onefuzz::{
@@ -65,6 +65,7 @@ impl ReportTask {
             Some(x) => x,
             None => bail!("missing crashes directory"),
         };
+        crashes.init().await?;
 
         self.config.unique_reports.init().await?;
         if let Some(reports) = &self.config.reports {
@@ -74,7 +75,13 @@ impl ReportTask {
             no_repro.init().await?;
         }
 
-        let mut read_dir = tokio::fs::read_dir(&crashes.path).await?;
+        let mut read_dir = tokio::fs::read_dir(&crashes.path).await.with_context(|| {
+            format_err!(
+                "unable to read crashes directory {}",
+                crashes.path.display()
+            )
+        })?;
+
         while let Some(crash) = read_dir.next().await {
             processor.process(None, &crash?.path()).await?;
         }
@@ -142,7 +149,9 @@ impl AsanProcessor {
             Some(x) => Some(InputBlob::from(BlobUrl::new(x)?)),
             None => None,
         };
-        let input_sha256 = sha256::digest_file(input).await?;
+        let input_sha256 = sha256::digest_file(input).await.with_context(|| {
+            format_err!("unable to sha256 digest input file: {}", input.display())
+        })?;
 
         let test_report = fuzzer
             .repro(

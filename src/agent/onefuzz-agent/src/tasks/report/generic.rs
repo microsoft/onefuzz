@@ -54,13 +54,13 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
-pub struct ReportTask<'a> {
-    config: &'a Config,
+pub struct ReportTask {
+    config: Config,
     poller: InputPoller<Message>,
 }
 
-impl<'a> ReportTask<'a> {
-    pub fn new(config: &'a Config) -> Self {
+impl ReportTask {
+    pub fn new(config: Config) -> Self {
         let poller = InputPoller::new();
         Self { config, poller }
     }
