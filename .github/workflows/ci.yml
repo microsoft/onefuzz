@@ -42,7 +42,7 @@ jobs:
       if: "${{ runner.os == 'Linux' }}"
     - run: src/ci/agent.sh
       shell: bash
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -56,7 +56,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: src/ci/azcopy.sh
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -70,7 +70,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - uses: actions/download-artifact@v2.0.5
+    - uses: actions/download-artifact@v2.0.8
       with:
         name: build-artifacts
         path: artifacts
@@ -91,7 +91,7 @@ jobs:
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/sdk/
         cp dist/*.tar.gz dist/*.whl ${GITHUB_WORKSPACE}/artifacts/sdk/
         cp dist/onefuzz.exe ${GITHUB_WORKSPACE}/artifacts/windows-cli/
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -133,7 +133,7 @@ jobs:
       with:
         python-version: 3.7
     - run: src/ci/onefuzztypes.sh
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -167,7 +167,7 @@ jobs:
         restore-keys: |
            proxy-${{ runner.os }}
     - run: src/ci/proxy.sh
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -181,7 +181,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - uses: actions/download-artifact@v2.0.5
+    - uses: actions/download-artifact@v2.0.8
       with:
         name: build-artifacts
         path: artifacts
@@ -194,7 +194,7 @@ jobs:
         zip -r api-service.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
         cp api-service.zip ${GITHUB_WORKSPACE}/artifacts/service
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -221,7 +221,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: src/ci/afl.sh
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -230,7 +230,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: src/ci/aflpp.sh
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -239,7 +239,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: src/ci/radamsa-linux.sh
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -248,7 +248,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: c:\msys64\usr\bin\bash src/ci/radamsa-windows.sh
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: build-artifacts
         path: artifacts
@@ -267,7 +267,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/download-artifact@v2.0.5
+    - uses: actions/download-artifact@v2.0.8
       with:
         name: build-artifacts
         path: artifacts
@@ -309,7 +309,7 @@ jobs:
           cp src/deployment/onefuzz-deployment*zip release-artifacts
           cp -r artifacts/sdk release-artifacts
           cp -r artifacts/windows-cli/onefuzz.exe release-artifacts/onefuzz-cli-$(./src/ci/get-version.sh).exe
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: release-artifacts
         path: release-artifacts
@@ -346,7 +346,7 @@ jobs:
           export AFL_CC_PATH=$PWD/AFL/afl-clang
           (cd trivial-crash ; make clean; make CC=$AFL_CC_PATH)
           cp -r trivial-crash/fuzz.exe trivial-crash/seeds artifacts/linux-trivial-crash-afl
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
@@ -382,7 +382,7 @@ jobs:
           make CFLAGS='-fsanitize=address -fno-omit-frame-pointer'
           cp fuzz.exe,fuzz.pdb,seeds ../artifacts/windows-trivial-crash-asan -Recurse
       shell: powershell
-    - uses: actions/upload-artifact@v2.1.4
+    - uses: actions/upload-artifact@v2.2.2
       with:
         name: integration-test-artifacts
         path: src/integration-tests/artifacts
