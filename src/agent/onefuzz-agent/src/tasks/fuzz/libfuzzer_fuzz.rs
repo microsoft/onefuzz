@@ -162,7 +162,6 @@ impl LibFuzzerFuzzTask {
             &self.config.target_options,
             &self.config.target_env,
             &self.config.common.setup_dir,
-            &self.config.common.setup_dir,
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
 

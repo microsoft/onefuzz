@@ -2,10 +2,11 @@ use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
 use clap::{App, Arg, ArgMatches};
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use uuid::Uuid;
 
+pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
 pub const CRASHES_DIR: &str = "crashes_dir";
 pub const TARGET_WORKERS: &str = "target_workers";
@@ -132,6 +133,12 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
             .takes_value(true)
             .required(false),
     )
+    .arg(
+        Arg::with_name("setup_dir")
+            .long("setup_dir")
+            .takes_value(true)
+            .required(false),
+    )
 }
 
 fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
@@ -147,6 +154,19 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
     let task_id = get_uuid("task_id", args)?;
     let instance_id = get_uuid("instance_id", args)?;
 
+    let setup_dir = if args.is_present(SETUP_DIR) {
+        value_t!(args, SETUP_DIR, PathBuf)?
+    } else {
+        if args.is_present(TARGET_EXE) {
+            value_t!(args, TARGET_EXE, PathBuf)?
+                .parent()
+                .map(|x| x.to_path_buf())
+                .unwrap_or_default()
+        } else {
+            PathBuf::default()
+        }
+    };
+
     let config = CommonConfig {
         heartbeat_queue: None,
         instrumentation_key: None,
@@ -154,6 +174,7 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
         job_id,
         task_id,
         instance_id,
+        setup_dir,
     };
     Ok(config)
 }
