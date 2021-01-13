@@ -18,15 +18,22 @@ from onefuzztypes.primitives import Region
 
 from .creds import (
     get_base_resource_group,
+    get_identity,
     get_scaleset_identity_resource_path,
+    get_subscription,
     mgmt_client_factory,
 )
 from .image import get_os
 
 
+@cached
+def get_client() -> ComputeManagementClient:
+    return ComputeManagementClient(get_identity(), get_subscription())
+
+
 def list_vmss(name: UUID) -> Optional[List[str]]:
     resource_group = get_base_resource_group()
-    client = mgmt_client_factory(ComputeManagementClient)
+    client = get_client()
     try:
         instances = [
             x.instance_id
@@ -43,7 +50,7 @@ def list_vmss(name: UUID) -> Optional[List[str]]:
 
 def delete_vmss(name: UUID) -> Any:
     resource_group = get_base_resource_group()
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
     try:
         compute_client.virtual_machine_scale_sets.delete(resource_group, str(name))
     except CloudError as err:
@@ -82,7 +89,7 @@ def get_vmss_size(name: UUID) -> Optional[int]:
 def list_instance_ids(name: UUID) -> Dict[UUID, str]:
     logging.debug("get instance IDs for scaleset: %s", name)
     resource_group = get_base_resource_group()
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
 
     results = {}
     try:
@@ -99,7 +106,7 @@ def list_instance_ids(name: UUID) -> Dict[UUID, str]:
 def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
     resource_group = get_base_resource_group()
     logging.info("get instance ID for scaleset node: %s:%s", name, vm_id)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
 
     vm_id_str = str(vm_id)
     for instance in compute_client.virtual_machine_scale_set_vms.list(
@@ -134,7 +141,7 @@ def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
     resource_group = get_base_resource_group()
     logging.info("reimaging scaleset VM - name: %s vm_ids:%s", name, vm_ids)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
 
     instance_ids = []
     machine_to_id = list_instance_ids(name)
@@ -156,7 +163,7 @@ def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
     resource_group = get_base_resource_group()
     logging.info("deleting scaleset VM - name: %s vm_ids:%s", name, vm_ids)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
 
     instance_ids = []
     machine_to_id = list_instance_ids(name)
@@ -218,7 +225,7 @@ def create_vmss(
 
     resource_group = get_base_resource_group()
 
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
 
     if image.startswith("/"):
         image_ref = {"id": image}
@@ -322,7 +329,8 @@ def create_vmss(
 
 @cached(ttl=60)
 def list_available_skus(location: str) -> List[str]:
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
+
     skus: List[ResourceSku] = list(
         compute_client.resource_skus.list(filter="location eq '%s'" % location)
     )
