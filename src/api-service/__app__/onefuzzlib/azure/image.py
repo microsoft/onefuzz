@@ -5,7 +5,6 @@
 
 from typing import Union
 
-from azure.mgmt.compute import ComputeManagementClient
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
 from msrestazure.tools import parse_resource_id
@@ -13,12 +12,12 @@ from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from .creds import mgmt_client_factory
+from .vmss import get_client
 
 
 @cached(ttl=60)
 def get_os(region: Region, image: str) -> Union[Error, OS]:
-    client = mgmt_client_factory(ComputeManagementClient)
+    client = get_client()
     parsed = parse_resource_id(image)
     if "resource_group" in parsed:
         try:

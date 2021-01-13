@@ -66,7 +66,7 @@ def delete_vmss(name: UUID) -> bool:
 def get_vmss(name: UUID) -> Optional[Any]:
     resource_group = get_base_resource_group()
     logging.debug("getting vm: %s", name)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
     try:
         return compute_client.virtual_machine_scale_sets.get(resource_group, str(name))
     except CloudError as err:
@@ -82,7 +82,7 @@ def resize_vmss(name: UUID, capacity: int) -> None:
 
     resource_group = get_base_resource_group()
     logging.info("updating VM count - name: %s vm_count: %d", name, capacity)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
     compute_client.virtual_machine_scale_sets.update(
         resource_group, str(name), {"sku": {"capacity": capacity}}
     )
@@ -196,7 +196,7 @@ def update_extensions(name: UUID, extensions: List[Any]) -> None:
 
     resource_group = get_base_resource_group()
     logging.info("updating VM extensions: %s", name)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
     compute_client.virtual_machine_scale_sets.update(
         resource_group,
         str(name),

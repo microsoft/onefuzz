@@ -8,7 +8,6 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
-from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import VirtualMachine
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
@@ -20,13 +19,14 @@ from .creds import get_base_resource_group, mgmt_client_factory
 from .disk import delete_disk, list_disks
 from .image import get_os
 from .ip import create_public_nic, delete_ip, delete_nic, get_ip, get_public_nic
+from .vmss import get_client
 
 
 def get_vm(name: str) -> Optional[VirtualMachine]:
     resource_group = get_base_resource_group()
 
     logging.debug("getting vm: %s", name)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
     try:
         return cast(
             VirtualMachine,
@@ -50,7 +50,7 @@ def create_vm(
     resource_group = get_base_resource_group()
     logging.info("creating vm %s:%s:%s", resource_group, location, name)
 
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
 
     nic = get_public_nic(resource_group, name)
     if nic is None:
@@ -124,7 +124,7 @@ def get_extension(vm_name: str, extension_name: str) -> Optional[Any]:
         vm_name,
         extension_name,
     )
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
     try:
         return compute_client.virtual_machine_extensions.get(
             resource_group, vm_name, extension_name
@@ -140,7 +140,7 @@ def create_extension(vm_name: str, extension: Dict) -> Any:
     logging.info(
         "creating extension: %s:%s:%s", resource_group, vm_name, extension["name"]
     )
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
     return compute_client.virtual_machine_extensions.create_or_update(
         resource_group, vm_name, extension["name"], extension
     )
@@ -150,7 +150,7 @@ def delete_vm(name: str) -> Any:
     resource_group = get_base_resource_group()
 
     logging.info("deleting vm: %s %s", resource_group, name)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_client()
     return compute_client.virtual_machines.delete(resource_group, name)
 
 
