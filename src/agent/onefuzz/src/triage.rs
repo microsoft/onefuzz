@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::trivially_copy_pass_by_ref)]
-use anyhow::{bail, Result};
+use anyhow::Result;
 use pete::{
     Pid, Ptracer, Restart, Siginfo,
     Signal::{self, *},
@@ -11,33 +11,18 @@ use pete::{
 use proc_maps::MapRange;
 use serde::Serialize;
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::fmt;
 use std::process::Command;
 
 pub struct TriageCommand {
-    argv: Vec<String>,
-    env: HashMap<String, String>,
     tracer: Ptracer,
     tracee: Tracee,
     pid: Pid,
     _kill_on_drop: KillOnDrop,
 }
 impl TriageCommand {
-    pub fn new(argv: Vec<String>, env: HashMap<String, String>) -> Result<Self> {
-        if argv.is_empty() {
-            bail!("argv for triage command must be non-empty");
-        }
-
-        let mut cmd = Command::new(&argv[0]);
-        if argv.len() > 1 {
-            cmd.args(&argv[1..]);
-        }
-
-        for (k, v) in &env {
-            cmd.env(k, v);
-        }
-
+    pub fn new(cmd: Command) -> Result<Self> {
         let mut tracer = Ptracer::new();
 
         let _child = tracer.spawn(cmd)?;
@@ -51,8 +36,6 @@ impl TriageCommand {
         let _kill_on_drop = KillOnDrop(pid);
 
         Ok(Self {
-            argv,
-            env,
             tracer,
             tracee,
             pid,
@@ -98,8 +81,6 @@ impl TriageCommand {
         let exit_status = exit_status.unwrap();
 
         Ok(TriageReport {
-            argv: self.argv,
-            env: self.env,
             exit_status,
             crashes,
         })
@@ -122,8 +103,6 @@ impl Drop for KillOnDrop {
 
 #[derive(Debug, Serialize)]
 pub struct TriageReport {
-    pub argv: Vec<String>,
-    pub env: HashMap<String, String>,
     pub exit_status: ExitStatus,
     pub crashes: Vec<Crash>,
 }
