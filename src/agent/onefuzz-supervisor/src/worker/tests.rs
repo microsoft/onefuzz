@@ -55,7 +55,7 @@ struct RunnerDouble {
 
 #[async_trait]
 impl IWorkerRunner for RunnerDouble {
-    async fn run(&mut self, _work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+    async fn run(&mut self, _setup_dir: &Path, _work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
         Ok(Box::new(self.child.clone()))
     }
 }
@@ -64,7 +64,9 @@ impl IWorkerRunner for RunnerDouble {
 async fn test_ready_run() {
     let mut runner = Fixture.runner(Fixture.child_running());
     let state = State {
-        ctx: Ready,
+        ctx: Ready {
+            setup_dir: PathBuf::default(),
+        },
         work: Fixture.work(),
     };
 
@@ -144,7 +146,9 @@ async fn test_worker_ready_update() {
     let task_id = Fixture.work().task_id;
 
     let state = State {
-        ctx: Ready,
+        ctx: Ready {
+            setup_dir: PathBuf::default(),
+        },
         work: Fixture.work(),
     };
     let worker = Worker::Ready(state);
