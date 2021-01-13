@@ -35,7 +35,7 @@ def get_os(region: Region, image: str) -> Union[Error, OS]:
                 )[0].name
             name = client.virtual_machine_images.get(
                 region, publisher, offer, sku, version
-            ).os_disk_image.operating_system.name
+            ).os_disk_image.operating_system.lower()
         except CloudError as err:
             return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
     return OS[name]
