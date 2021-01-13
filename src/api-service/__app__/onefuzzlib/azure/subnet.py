@@ -11,7 +11,7 @@ from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 
-from .ip import get_client
+from .network_mgmt_client import get_client
 
 
 def get_subnet_id(resource_group: str, name: str) -> Optional[str]:

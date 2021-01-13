@@ -8,21 +8,15 @@ import os
 from typing import Any, Dict, Optional, Union
 from uuid import UUID
 
-from azure.mgmt.network import NetworkManagementClient
-from memoization import cached
 from msrestazure.azure_exceptions import CloudError
 from msrestazure.tools import parse_resource_id
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 
-from .creds import get_base_resource_group, get_identity, get_subscription
+from .creds import get_base_resource_group
+from .network_mgmt_client import get_client
 from .subnet import create_virtual_network, get_subnet_id
 from .vmss import get_instance_id
-
-
-@cached
-def get_client() -> NetworkManagementClient:
-    return NetworkManagementClient(get_identity(), get_subscription())
 
 
 def get_scaleset_instance_ip(scaleset: UUID, machine_id: UUID) -> Optional[str]:
