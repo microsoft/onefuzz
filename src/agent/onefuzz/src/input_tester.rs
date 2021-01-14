@@ -16,6 +16,7 @@ const DEFAULT_TIMEOUT_SECS: u64 = 5;
 const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
+    setup_dir: &'a Path,
     exe_path: &'a Path,
     arguments: &'a [String],
     environ: &'a HashMap<String, String>,
@@ -42,6 +43,7 @@ pub struct TestResult {
 
 impl<'a> Tester<'a> {
     pub fn new(
+        setup_dir: &'a Path,
         exe_path: &'a Path,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
@@ -53,6 +55,7 @@ impl<'a> Tester<'a> {
     ) -> Self {
         let timeout = Duration::from_secs(timeout.unwrap_or(DEFAULT_TIMEOUT_SECS));
         Self {
+            setup_dir,
             exe_path,
             arguments,
             environ,
@@ -195,6 +198,8 @@ impl<'a> Tester<'a> {
                 .target_exe(&self.exe_path)
                 .target_options(&self.arguments);
 
+            expand.setup_dir(&self.setup_dir);
+
             let argv = expand.evaluate(&self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();
             for (k, v) in self.environ {
@@ -220,7 +225,7 @@ impl<'a> Tester<'a> {
                     Err(error) => (None, Some(error), None),
                 }
             } else {
-                match run_cmd(self.exe_path, argv.clone(), &env, self.timeout).await {
+                match run_cmd(&self.exe_path, argv.clone(), &env, self.timeout).await {
                     Ok(output) => (None, None, Some(output)),
                     Err(error) => (None, Some(error), None),
                 }

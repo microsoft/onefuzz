@@ -39,6 +39,12 @@ fn main() -> Result<()> {
                 .short("c")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("setup_dir")
+                .long("setup_dir")
+                .short("s")
+                .takes_value(true),
+        )
         .subcommand(debug::cmd::args())
         .subcommand(SubCommand::with_name("licenses").about("display third-party licenses"));
 
@@ -58,7 +64,8 @@ fn main() -> Result<()> {
     }
 
     let config_path: PathBuf = matches.value_of("config").unwrap().parse()?;
-    let config = Config::from_file(config_path)?;
+    let setup_dir = matches.value_of("setup_dir");
+    let config = Config::from_file(config_path, setup_dir)?;
 
     init_telemetry(&config);
 
