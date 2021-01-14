@@ -408,7 +408,7 @@ dependencies = [
  "memmap2",
  "object",
  "pdb",
- "pete 0.3.1",
+ "pete",
  "procfs",
  "serde",
  "uuid",
@@ -1638,7 +1638,7 @@ dependencies = [
  "log",
  "nix 0.19.1",
  "notify",
- "pete 0.4.0",
+ "pete",
  "proc-maps",
  "process_control",
  "rand 0.8.2",
@@ -1656,6 +1656,7 @@ dependencies = [
  "sysinfo",
  "tempfile",
  "tokio 1.0.1",
+ "tokio-stream",
  "tokio-util 0.6.1",
  "url",
  "uuid",
@@ -1813,17 +1814,6 @@ checksum = "28d1e549819476ac90362292319a9d8c9ea1a98a9347931860cb32f4afbb3007"
 dependencies = [
  "libc",
  "nix 0.17.0",
- "thiserror",
-]
-
-[[package]]
-name = "pete"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cd417123c2e101622037d1af9070a10f142d0798ad802dfd0796f982fee8b87"
-dependencies = [
- "libc",
- "nix 0.19.1",
  "thiserror",
 ]
 
@@ -2735,7 +2725,19 @@ dependencies = [
  "once_cell",
  "pin-project-lite 0.2.0",
  "signal-hook-registry",
+ "tokio-macros",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42517d2975ca3114b22a16192634e8241dc5cc1f130be194645970cc1c371494"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote 1.0.7",
+ "syn 1.0.54",
 ]
 
 [[package]]
@@ -2791,7 +2793,6 @@ checksum = "12ae4751faa60b9f96dd8344d74592e5a17c0c9a220413dbc6942d14139bbfcc"
 dependencies = [
  "bytes 1.0.1",
  "futures-core",
- "futures-io",
  "futures-sink",
  "log",
  "pin-project-lite 0.2.0",

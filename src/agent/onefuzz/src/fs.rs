@@ -35,28 +35,26 @@ pub async fn has_files(path: impl AsRef<Path>) -> Result<bool> {
 
 pub async fn list_files(path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
     let path = path.as_ref();
-    let paths = fs::read_dir(&path)
+    let mut paths = fs::read_dir(&path)
         .await
         .with_context(|| format!("unable to list files: {}", path.display()))?;
 
-    let mut files = paths
-        .filter_map(|x| async {
-            match x {
-                Ok(x) => {
-                    if match x.metadata().await {
-                        Ok(x) => x.is_file(),
-                        Err(_) => false,
-                    } {
-                        Some(x.path())
-                    } else {
-                        None
-                    }
-                }
-                Err(_) => None,
-            }
-        })
-        .collect::<Vec<_>>()
-        .await;
+    let mut files = Vec::new();
+
+    while let Some(entry) = paths
+        .next_entry()
+        .await
+        .with_context(|| format_err!("unable to read path: {}", path.display()))?
+    {
+        if entry
+            .metadata()
+            .await
+            .with_context(|| format_err!("unable to get metdata: {}", entry.path().display()))?
+            .is_file()
+        {
+            files.push(entry.path())
+        }
+    }
 
     files.sort();
 
@@ -170,8 +168,9 @@ impl OwnedDir {
 
 #[cfg(test)]
 mod tests {
+    use futures::StreamExt;
     use tempfile::tempdir;
-    use tokio::{fs, stream::StreamExt};
+    use tokio::fs;
 
     use super::*;
 

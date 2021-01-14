@@ -5,7 +5,7 @@ use crate::sha256;
 use anyhow::Result;
 use regex::Regex;
 use std::{collections::HashMap, hash::BuildHasher, path::Path};
-use tokio::{fs, stream::StreamExt};
+use tokio::fs;
 
 const ASAN_LOG_TRUNCATE_SIZE: usize = 4096;
 
@@ -191,8 +191,7 @@ pub async fn check_asan_string(mut data: String) -> Result<Option<AsanLog>> {
 pub async fn check_asan_path(asan_dir: &Path) -> Result<Option<AsanLog>> {
     let mut entries = fs::read_dir(asan_dir).await?;
     // there should be only up to one file in asan_dir
-    if let Some(file) = entries.next().await {
-        let file = file?;
+    if let Some(file) = entries.next_entry().await? {
         let mut asan_text = fs::read_to_string(file.path()).await?;
         let asan = AsanLog::parse(asan_text.clone());
         if asan.is_some() {
