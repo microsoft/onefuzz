@@ -43,6 +43,7 @@ pub struct CrashReport {
     pub job_id: Uuid,
 
     pub scariness_score: Option<u32>,
+
     pub scariness_description: Option<String>,
 }
 
@@ -104,16 +105,14 @@ async fn upload_or_save_local<T: Serialize>(
 impl CrashTestResult {
     pub async fn save(
         &self,
-        unique_reports: &SyncedDir,
+        unique_reports: &Option<SyncedDir>,
         reports: &Option<SyncedDir>,
         no_repro: &Option<SyncedDir>,
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
-                // Use SHA-256 of call stack as dedupe key.
-                let name = report.unique_blob_name();
-                if upload_or_save_local(&report, &name, unique_reports).await? {
-                    event!(new_unique_report; EventData::Path = name);
+                if let Some(unique_reports) = unique_reports {
+                    upload_deduped(report, &unique_reports.url).await?;
                 }
 
                 if let Some(reports) = reports {

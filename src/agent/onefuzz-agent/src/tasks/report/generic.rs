@@ -35,7 +35,8 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub crashes: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
-    pub unique_reports: SyncedDir,
+    pub unique_reports: Option<SyncedDir>,
+    pub file_list: Vec<String>,
     pub no_repro: Option<SyncedDir>,
 
     pub target_timeout: Option<u64>,
@@ -96,7 +97,7 @@ impl ReportTask {
 
         info!("processing existing crashes");
         if let Some(crashes) = &self.config.crashes {
-            self.poller.batch_process(&mut processor, &crashes).await?;
+            self.poller.batch_process(&mut processor, &crashes, &self.config.file_list).await?;
         }
 
         info!("processing crashes from queue");

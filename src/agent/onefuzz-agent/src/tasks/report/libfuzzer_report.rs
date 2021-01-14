@@ -30,7 +30,8 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub crashes: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
-    pub unique_reports: SyncedDir,
+    pub unique_reports: Option<SyncedDir>,
+    pub file_list: Vec<String>,
     pub no_repro: Option<SyncedDir>,
 
     #[serde(default = "default_bool_true")]
@@ -102,7 +103,7 @@ impl ReportTask {
         let mut processor = AsanProcessor::new(self.config.clone()).await?;
 
         if let Some(crashes) = &self.config.crashes {
-            self.poller.batch_process(&mut processor, crashes).await?;
+            self.poller.batch_process(&mut processor, &crashes, &self.config.file_list).await?;
         }
 
         if self.config.check_queue {
@@ -204,3 +205,4 @@ impl Processor for AsanProcessor {
             .await
     }
 }
+

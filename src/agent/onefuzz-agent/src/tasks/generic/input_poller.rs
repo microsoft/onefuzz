@@ -13,6 +13,8 @@ use tokio::{fs, time::Duration};
 mod callback;
 pub use callback::*;
 
+use crate::tasks::utils::{download_input};
+
 const POLL_INTERVAL: Duration = Duration::from_secs(10);
 
 #[cfg(test)]
@@ -102,6 +104,7 @@ impl<M> InputPoller<M> {
         &mut self,
         processor: &mut dyn Processor,
         to_process: &SyncedDir,
+        file_list: &[String]
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
         if to_process.url.is_some() {
