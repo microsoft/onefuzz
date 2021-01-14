@@ -406,6 +406,7 @@ class Libfuzzer(Command):
         check_retry_count: Optional[int] = None,
         check_fuzzer_help: bool = True,
     ) -> None:
+
         # 1 create a notification
         #   - activate duplicate bugs on the report container
         #   - close bugs from the noRepro container
