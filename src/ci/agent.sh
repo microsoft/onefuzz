@@ -9,8 +9,21 @@ exists() {
     [ -e "$1" ]
 }
 
-#export RUSTC_WRAPPER=$(which sccache)
-#sccache --start-server
+# only set RUSTC_WRAPPER if sccache exists
+if sccache --help; then
+    export RUSTC_WRAPPER=$(which sccache)
+fi
+
+# only set CARGO_INCREMENTAL on non-release builds
+# 
+# This speeds up build time, but makes the resulting binaries slightly slower.
+# https://doc.rust-lang.org/cargo/reference/profiles.html?highlight=incremental#incremental
+if [ "${GITHUB_REF}" != "" ]; then
+    TAG_VERSION=${GITHUB_REF#refs/tags/}
+    if [ ${TAG_VERSION} == ${GITHUB_REF} ]; then
+        export CARGO_INCREMENTAL=1
+    fi
+fi
 
 mkdir -p artifacts/agent
 
