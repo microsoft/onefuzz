@@ -186,6 +186,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "task_id": {
                     "format": "uuid",
                     "title": "Task Id",
+                "scariness_description": {
+                    "title": "Scariness Description",
                     "type": "string"
                 }
             },
@@ -1401,6 +1403,16 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "wait_for_files": {
                     "$ref": "#/definitions/ContainerType"
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
+                },
+                "file_list": {
+                    "title": "File List",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             },
             "required": [
