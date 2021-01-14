@@ -103,7 +103,9 @@ impl ReportTask {
         let mut processor = AsanProcessor::new(self.config.clone()).await?;
 
         if let Some(crashes) = &self.config.crashes {
-            self.poller.batch_process(&mut processor, &crashes, &self.config.file_list).await?;
+            self.poller
+                .batch_process(&mut processor, &crashes, &self.config.file_list)
+                .await?;
         }
 
         if self.config.check_queue {
@@ -205,4 +207,3 @@ impl Processor for AsanProcessor {
             .await
     }
 }
-

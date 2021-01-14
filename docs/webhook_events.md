@@ -138,6 +138,32 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "input_sha256": {
                     "title": "Input Sha256",
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
+                },
+                "file_list": {
+                    "title": "File List",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "duration",
+                "target_exe",
+                "target_env",
+                "target_options"
+            ]
+        },
+        "TaskVm": {
+            "title": "TaskVm",
+            "type": "object",
+            "properties": {
+                "region": {
+                    "title": "Region",
                     "type": "string"
                 },
                 "input_url": {
@@ -2711,6 +2737,32 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "supervisor_exe": {
                     "title": "Supervisor Exe",
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
+                },
+                "file_list": {
+                    "title": "File List",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "duration",
+                "target_exe",
+                "target_env",
+                "target_options"
+            ]
+        },
+        "TaskVm": {
+            "title": "TaskVm",
+            "type": "object",
+            "properties": {
+                "region": {
+                    "title": "Region",
                     "type": "string"
                 },
                 "supervisor_input_marker": {

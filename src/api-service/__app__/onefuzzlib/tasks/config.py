@@ -320,6 +320,9 @@ def build_task_config(
             else True
         )
 
+    if TaskFeature.file_list in definition.features:
+        config.file_list = task_config.task.file_list
+
     if TaskFeature.expect_crash_on_failure in definition.features:
         config.expect_crash_on_failure = (
             task_config.task.expect_crash_on_failure
