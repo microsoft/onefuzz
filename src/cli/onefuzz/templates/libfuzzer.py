@@ -462,6 +462,7 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             check_fuzzer_help=check_fuzzer_help,
+            file_list=file_list,
         )
 
         self.logger.info("done creating tasks")
