@@ -108,6 +108,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_timeout,
             TaskFeature.check_retry_count,
             TaskFeature.check_fuzzer_help,
+            TaskFeature.file_list,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -352,6 +353,7 @@ TASK_DEFINITIONS = {
             TaskFeature.check_asan_log,
             TaskFeature.check_debugger,
             TaskFeature.check_retry_count,
+            TaskFeature.file_list,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[

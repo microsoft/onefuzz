@@ -136,6 +136,7 @@ class TaskDetails(BaseModel):
     target_timeout: Optional[int]
     ensemble_sync_delay: Optional[int]
     preserve_existing_outputs: Optional[bool]
+    file_list: Optional[List[str]]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:
@@ -325,6 +326,7 @@ class TaskUnitConfig(BaseModel):
     stats_file: Optional[str]
     stats_format: Optional[StatsFormat]
     ensemble_sync_delay: Optional[int]
+    file_list: Optional[List[str]]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes

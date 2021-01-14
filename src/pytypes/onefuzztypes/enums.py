@@ -77,6 +77,7 @@ class TaskFeature(Enum):
     preserve_existing_outputs = "preserve_existing_outputs"
     check_fuzzer_help = "check_fuzzer_help"
     expect_crash_on_failure = "expect_crash_on_failure"
+    file_list = "file_list"
 
 
 # Permissions for an Azure Blob Storage Container.
