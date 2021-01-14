@@ -9,6 +9,7 @@ exists() {
     [ -e "$1" ]
 }
 
+# only set RUSTC_WRAPPER if sccache exists
 if sccache --help; then
     export RUSTC_WRAPPER=$(which sccache)
 fi
@@ -20,8 +21,6 @@ if [ "${GITHUB_REF}" != "" ]; then
         export CARGO_INCREMENTAL=1
     fi
 fi
-
-#sccache --start-server
 
 mkdir -p artifacts/agent
 
