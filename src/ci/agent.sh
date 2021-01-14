@@ -9,7 +9,18 @@ exists() {
     [ -e "$1" ]
 }
 
-#export RUSTC_WRAPPER=$(which sccache)
+if sccache --help; then
+    export RUSTC_WRAPPER=$(which sccache)
+fi
+
+# only set CARGO_INCREMENTAL on non-release builds
+if [ "${GITHUB_REF}" != "" ]; then
+    TAG_VERSION=${GITHUB_REF#refs/tags/}
+    if [ ${TAG_VERSION} != ${GITHUB_REF} ]; then
+        export CARGO_INCREMENTAL=1
+    fi
+fi
+
 #sccache --start-server
 
 mkdir -p artifacts/agent
