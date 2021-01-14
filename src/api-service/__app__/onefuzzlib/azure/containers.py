@@ -266,7 +266,7 @@ def save_blob(
     if not client:
         raise Exception("unable to find container: %s - %s" % (container, storage_type))
 
-    client.get_blob_client(name).upload_blob(data)
+    client.get_blob_client(name).upload_blob(data, overwrite=True)
 
 
 def get_blob(

@@ -304,7 +304,7 @@ def create_vmss(
         params["tags"]["OWNER"] = owner
 
     try:
-        compute_client.virtual_machine_scale_sets.create_or_update(
+        compute_client.virtual_machine_scale_sets.begin_create_or_update(
             resource_group, name, params
         )
     except (ResourceNotFoundError, CloudError) as err:

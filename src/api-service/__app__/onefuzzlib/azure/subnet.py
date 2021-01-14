@@ -62,7 +62,9 @@ def create_virtual_network(
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
 
     try:
-        network_client.virtual_networks.create_or_update(resource_group, name, params)
+        network_client.virtual_networks.begin_create_or_update(
+            resource_group, name, params
+        )
     except (CloudError, ResourceNotFoundError) as err:
         return Error(code=ErrorCode.UNABLE_TO_CREATE_NETWORK, errors=[str(err.message)])
 
