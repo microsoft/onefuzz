@@ -402,7 +402,7 @@ class Libfuzzer(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         check_retry_count: Optional[int] = None,
         check_fuzzer_help: bool = True,
-    ) -> None:
+    ) -> Optional[Job]:
 
         # 1 create a notification
         #   - activate duplicate bugs on the report container
