@@ -6,6 +6,7 @@
 import logging
 from typing import Dict, Optional, Type
 
+from azure.core.exceptions import ResourceNotFoundError
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import UpdateType
 from pydantic import BaseModel
@@ -50,7 +51,7 @@ def queue_update(
             visibility_timeout=visibility_timeout,
         ):
             logging.error("unable to queue update")
-    except CloudError as err:
+    except (CloudError, ResourceNotFoundError) as err:
         logging.error("GOT ERROR %s", repr(err))
         logging.error("GOT ERROR %s", dir(err))
         raise err

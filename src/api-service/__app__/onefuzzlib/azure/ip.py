@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, Optional, Union
 from uuid import UUID
 
+from azure.core.exceptions import ResourceNotFoundError
 from msrestazure.azure_exceptions import CloudError
 from msrestazure.tools import parse_resource_id
 from onefuzztypes.enums import ErrorCode
@@ -40,7 +41,7 @@ def get_scaleset_instance_ip(scaleset: UUID, machine_id: UUID) -> Optional[str]:
                 if config.private_ip_address is None:
                     continue
                 return str(config.private_ip_address)
-    except CloudError:
+    except (ResourceNotFoundError, CloudError):
         # this can fail if an interface is removed during the iteration
         pass
 
@@ -52,7 +53,7 @@ def get_ip(resource_group: str, name: str) -> Optional[Any]:
     network_client = get_client()
     try:
         return network_client.public_ip_addresses.get(resource_group, name)
-    except CloudError:
+    except (ResourceNotFoundError, CloudError):
         return None
 
 
@@ -82,7 +83,7 @@ def get_public_nic(resource_group: str, name: str) -> Optional[Any]:
     network_client = get_client()
     try:
         return network_client.network_interfaces.get(resource_group, name)
-    except CloudError:
+    except (ResourceNotFoundError, CloudError):
         return None
 
 
@@ -120,7 +121,7 @@ def create_public_nic(resource_group: str, name: str, location: str) -> Optional
 
     try:
         network_client.network_interfaces.create_or_update(resource_group, name, params)
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         if "RetryableError" not in repr(err):
             return Error(
                 code=ErrorCode.VM_CREATE_FAILED,

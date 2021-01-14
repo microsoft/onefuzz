@@ -32,7 +32,7 @@ def list_vmss(name: UUID) -> Optional[List[str]]:
             )
         ]
         return instances
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         logging.error("cloud error listing vmss: %s (%s)", name, err)
 
     return None
@@ -43,10 +43,8 @@ def delete_vmss(name: UUID) -> bool:
     compute_client = get_client()
     try:
         compute_client.virtual_machine_scale_sets.delete(resource_group, str(name))
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         logging.error("cloud error deleting vmss: %s (%s)", name, err)
-    except ResourceNotFoundError:
-        logging.error("deleting vmss not found: %s", name)
         return True
 
     return False
@@ -58,9 +56,7 @@ def get_vmss(name: UUID) -> Optional[Any]:
     compute_client = get_client()
     try:
         return compute_client.virtual_machine_scale_sets.get(resource_group, str(name))
-    except CloudError as err:
-        logging.debug("vm does not exist %s", err)
-    except ResourceNotFoundError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         logging.debug("vm does not exist %s", err)
 
     return None
@@ -95,9 +91,7 @@ def list_instance_ids(name: UUID) -> Dict[UUID, str]:
             resource_group, str(name)
         ):
             results[UUID(instance.vm_id)] = cast(str, instance.instance_id)
-    except CloudError:
-        logging.debug("scaleset not available: %s", name)
-    except ResourceNotFoundError:
+    except (ResourceNotFoundError, CloudError):
         logging.debug("vm does not exist %s", name)
     return results
 
@@ -313,7 +307,7 @@ def create_vmss(
         compute_client.virtual_machine_scale_sets.create_or_update(
             resource_group, name, params
         )
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         if "The request failed due to conflict with a concurrent request" in repr(err):
             logging.debug(
                 "create VM had conflicts with concurrent request, ignoring %s", err

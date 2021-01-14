@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.compute.models import VirtualMachine
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
@@ -34,7 +35,7 @@ def get_vm(name: str) -> Optional[VirtualMachine]:
                 resource_group, name, expand="instanceView"
             ),
         )
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         logging.debug("vm does not exist %s", err)
         return None
 
@@ -105,7 +106,7 @@ def create_vm(
 
     try:
         compute_client.virtual_machines.create_or_update(resource_group, name, params)
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         if "The request failed due to conflict with a concurrent request" in str(err):
             logging.debug(
                 "create VM had conflicts with concurrent request, ignoring %s", err
@@ -129,7 +130,7 @@ def get_extension(vm_name: str, extension_name: str) -> Optional[Any]:
         return compute_client.virtual_machine_extensions.get(
             resource_group, vm_name, extension_name
         )
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         logging.error("extension does not exist %s", err)
         return None
 

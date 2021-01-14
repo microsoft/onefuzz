@@ -5,6 +5,7 @@
 
 from typing import Union
 
+from azure.core.exceptions import ResourceNotFoundError
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
 from msrestazure.tools import parse_resource_id
@@ -24,7 +25,7 @@ def get_os(region: Region, image: str) -> Union[Error, OS]:
             name = client.images.get(
                 parsed["resource_group"], parsed["name"]
             ).storage_profile.os_disk.os_type.name
-        except CloudError as err:
+        except (ResourceNotFoundError, CloudError) as err:
             return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
     else:
         publisher, offer, sku, version = image.split(":")
@@ -36,6 +37,6 @@ def get_os(region: Region, image: str) -> Union[Error, OS]:
             name = client.virtual_machine_images.get(
                 region, publisher, offer, sku, version
             ).os_disk_image.operating_system.lower()
-        except CloudError as err:
+        except (ResourceNotFoundError, CloudError) as err:
             return Error(code=ErrorCode.INVALID_IMAGE, errors=[str(err)])
     return OS[name]

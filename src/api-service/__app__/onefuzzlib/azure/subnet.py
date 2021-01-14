@@ -7,6 +7,7 @@ import logging
 import os
 from typing import Any, Optional, Union, cast
 
+from azure.core.exceptions import ResourceNotFoundError
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
@@ -19,7 +20,7 @@ def get_subnet_id(resource_group: str, name: str) -> Optional[str]:
     try:
         subnet = network_client.subnets.get(resource_group, name, name)
         return cast(str, subnet.id)
-    except CloudError:
+    except (CloudError, ResourceNotFoundError):
         logging.info(
             "subnet missing: resource group: %s name: %s",
             resource_group,
@@ -32,7 +33,7 @@ def delete_subnet(resource_group: str, name: str) -> Union[None, CloudError, Any
     network_client = get_client()
     try:
         return network_client.virtual_networks.delete(resource_group, name)
-    except CloudError as err:
+    except (CloudError, ResourceNotFoundError) as err:
         if err.error and "InUseSubnetCannotBeDeleted" in str(err.error):
             logging.error(
                 "subnet delete failed: %s %s : %s", resource_group, name, repr(err)
@@ -62,7 +63,7 @@ def create_virtual_network(
 
     try:
         network_client.virtual_networks.create_or_update(resource_group, name, params)
-    except CloudError as err:
+    except (CloudError, ResourceNotFoundError) as err:
         return Error(code=ErrorCode.UNABLE_TO_CREATE_NETWORK, errors=[str(err.message)])
 
     return None

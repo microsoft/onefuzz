@@ -6,6 +6,7 @@
 import logging
 from typing import Any
 
+from azure.core.exceptions import ResourceNotFoundError
 from msrestazure.azure_exceptions import CloudError
 
 from .compute import get_client
@@ -23,6 +24,6 @@ def delete_disk(resource_group: str, name: str) -> bool:
     try:
         compute_client.disks.delete(resource_group, name)
         return True
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         logging.error("unable to delete disk: %s", err)
     return False
