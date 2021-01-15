@@ -22,6 +22,7 @@ import os
 import re
 import sys
 from enum import Enum
+from shutil import which
 from typing import Dict, List, Optional, Set, Tuple
 from uuid import UUID, uuid4
 
@@ -378,11 +379,17 @@ class TestOnefuzz:
         has_gdb = bool(which("gdb"))
         for job_id in self.successful_jobs:
             if self.job_os[job_id] == OS.linux and not has_gdb:
-                self.logger.warning("missing gdb in path, not launching repro: %s", self.target_jobs[job_id])
+                self.logger.warning(
+                    "missing gdb in path, not launching repro: %s",
+                    self.target_jobs[job_id],
+                )
                 continue
 
             if self.job_os[job_id] == OS.windows and not has_cdb:
-                self.logger.warning("missing cdb in path, not launching repro: %s", self.target_jobs[job_id])
+                self.logger.warning(
+                    "missing cdb in path, not launching repro: %s",
+                    self.target_jobs[job_id],
+                )
                 continue
 
             self.logger.info("launching repro: %s", self.target_jobs[job_id])
