@@ -42,7 +42,9 @@ def delete_vmss(name: UUID) -> bool:
     resource_group = get_base_resource_group()
     compute_client = get_client()
     try:
-        compute_client.virtual_machine_scale_sets.begin_delete(resource_group, str(name))
+        compute_client.virtual_machine_scale_sets.begin_delete(
+            resource_group, str(name)
+        )
     except (ResourceNotFoundError, CloudError) as err:
         logging.error("cloud error deleting vmss: %s (%s)", name, err)
         return True

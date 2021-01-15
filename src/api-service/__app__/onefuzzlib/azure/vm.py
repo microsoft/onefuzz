@@ -105,7 +105,9 @@ def create_vm(
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
 
     try:
-        compute_client.virtual_machines.begin_create_or_update(resource_group, name, params)
+        compute_client.virtual_machines.begin_create_or_update(
+            resource_group, name, params
+        )
     except (ResourceNotFoundError, CloudError) as err:
         if "The request failed due to conflict with a concurrent request" in str(err):
             logging.debug(
