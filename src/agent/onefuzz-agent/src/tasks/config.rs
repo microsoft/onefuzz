@@ -34,6 +34,7 @@ pub struct CommonConfig {
 
     pub telemetry_key: Option<Uuid>,
 
+    #[serde(default)]
     pub setup_dir: PathBuf,
 }
 
