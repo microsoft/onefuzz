@@ -168,7 +168,7 @@ def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
     if instance_ids:
-        compute_client.virtual_machine_scale_sets.delete_instances(
+        compute_client.virtual_machine_scale_sets.begin_delete_instances(
             resource_group, str(name), instance_ids=instance_ids
         )
     return None
@@ -180,7 +180,7 @@ def update_extensions(name: UUID, extensions: List[Any]) -> None:
     resource_group = get_base_resource_group()
     logging.info("updating VM extensions: %s", name)
     compute_client = get_client()
-    compute_client.virtual_machine_scale_sets.update(
+    compute_client.virtual_machine_scale_sets.begin_update(
         resource_group,
         str(name),
         {"virtual_machine_profile": {"extension_profile": {"extensions": extensions}}},

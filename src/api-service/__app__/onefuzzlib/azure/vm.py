@@ -105,7 +105,7 @@ def create_vm(
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
 
     try:
-        compute_client.virtual_machines.create_or_update(resource_group, name, params)
+        compute_client.virtual_machines.begin_create_or_update(resource_group, name, params)
     except (ResourceNotFoundError, CloudError) as err:
         if "The request failed due to conflict with a concurrent request" in str(err):
             logging.debug(
@@ -142,7 +142,7 @@ def create_extension(vm_name: str, extension: Dict) -> Any:
         "creating extension: %s:%s:%s", resource_group, vm_name, extension["name"]
     )
     compute_client = get_client()
-    return compute_client.virtual_machine_extensions.create_or_update(
+    return compute_client.virtual_machine_extensions.begin_create_or_update(
         resource_group, vm_name, extension["name"], extension
     )
 
@@ -152,7 +152,7 @@ def delete_vm(name: str) -> Any:
 
     logging.info("deleting vm: %s %s", resource_group, name)
     compute_client = get_client()
-    return compute_client.virtual_machines.delete(resource_group, name)
+    return compute_client.virtual_machines.begin_delete(resource_group, name)
 
 
 def has_components(name: str) -> bool:

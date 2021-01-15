@@ -32,7 +32,7 @@ def get_subnet_id(resource_group: str, name: str) -> Optional[str]:
 def delete_subnet(resource_group: str, name: str) -> Union[None, CloudError, Any]:
     network_client = get_client()
     try:
-        return network_client.virtual_networks.delete(resource_group, name)
+        return network_client.virtual_networks.begin_delete(resource_group, name)
     except (CloudError, ResourceNotFoundError) as err:
         if err.error and "InUseSubnetCannotBeDeleted" in str(err.error):
             logging.error(
