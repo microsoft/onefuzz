@@ -42,7 +42,7 @@ def delete_vmss(name: UUID) -> bool:
     resource_group = get_base_resource_group()
     compute_client = get_client()
     try:
-        compute_client.virtual_machine_scale_sets.delete(resource_group, str(name))
+        compute_client.virtual_machine_scale_sets.begin_delete(resource_group, str(name))
     except (ResourceNotFoundError, CloudError) as err:
         logging.error("cloud error deleting vmss: %s (%s)", name, err)
         return True
@@ -68,7 +68,7 @@ def resize_vmss(name: UUID, capacity: int) -> None:
     resource_group = get_base_resource_group()
     logging.info("updating VM count - name: %s vm_count: %d", name, capacity)
     compute_client = get_client()
-    compute_client.virtual_machine_scale_sets.update(
+    compute_client.virtual_machine_scale_sets.begin_update(
         resource_group, str(name), {"sku": {"capacity": capacity}}
     )
 
@@ -146,7 +146,7 @@ def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
     if instance_ids:
-        compute_client.virtual_machine_scale_sets.reimage_all(
+        compute_client.virtual_machine_scale_sets.begin_reimage_all(
             resource_group, str(name), instance_ids=instance_ids
         )
     return None
