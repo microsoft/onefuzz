@@ -23,7 +23,7 @@ winapi = "0.3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 object = "0.22"
-pete = "0.3"
+pete = "0.4"
 procfs = "0.8"
 
 [dev-dependencies]
