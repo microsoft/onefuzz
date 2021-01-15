@@ -60,7 +60,7 @@ def get_ip(resource_group: str, name: str) -> Optional[Any]:
 def delete_ip(resource_group: str, name: str) -> Any:
     logging.info("deleting ip %s:%s", resource_group, name)
     network_client = get_client()
-    return network_client.public_ip_addresses.delete(resource_group, name)
+    return network_client.public_ip_addresses.begin_delete(resource_group, name)
 
 
 def create_ip(resource_group: str, name: str, location: str) -> Any:
@@ -73,7 +73,7 @@ def create_ip(resource_group: str, name: str, location: str) -> Any:
     }
     if "ONEFUZZ_OWNER" in os.environ:
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
-    return network_client.public_ip_addresses.create_or_update(
+    return network_client.public_ip_addresses.begin_create_or_update(
         resource_group, name, params
     )
 
@@ -90,7 +90,7 @@ def get_public_nic(resource_group: str, name: str) -> Optional[Any]:
 def delete_nic(resource_group: str, name: str) -> Optional[Any]:
     logging.info("deleting nic %s:%s", resource_group, name)
     network_client = get_client()
-    return network_client.network_interfaces.delete(resource_group, name)
+    return network_client.network_interfaces.begin_delete(resource_group, name)
 
 
 def create_public_nic(resource_group: str, name: str, location: str) -> Optional[Error]:
@@ -120,7 +120,9 @@ def create_public_nic(resource_group: str, name: str, location: str) -> Optional
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
 
     try:
-        network_client.network_interfaces.create_or_update(resource_group, name, params)
+        network_client.network_interfaces.begin_create_or_update(
+            resource_group, name, params
+        )
     except (ResourceNotFoundError, CloudError) as err:
         if "RetryableError" not in repr(err):
             return Error(
