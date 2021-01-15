@@ -9,7 +9,12 @@ from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
 from azure.core.exceptions import ResourceNotFoundError
-from azure.mgmt.compute.models import ResourceSku, ResourceSkuRestrictionsType
+from azure.mgmt.compute.models import (
+    ResourceSku,
+    ResourceSkuRestrictionsType,
+    VirtualMachineScaleSetVMInstanceIDs,
+    VirtualMachineScaleSetVMInstanceRequiredIDs,
+)
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
@@ -149,7 +154,9 @@ def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
     if instance_ids:
         compute_client.virtual_machine_scale_sets.begin_reimage_all(
-            resource_group, str(name), instance_ids
+            resource_group,
+            str(name),
+            VirtualMachineScaleSetVMInstanceIDs(instance_ids=instance_ids),
         )
     return None
 
@@ -171,7 +178,9 @@ def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
     if instance_ids:
         compute_client.virtual_machine_scale_sets.begin_delete_instances(
-            resource_group, str(name), instance_ids
+            resource_group,
+            str(name),
+            VirtualMachineScaleSetVMInstanceRequiredIDs(instance_ids=instance_ids),
         )
     return None
 
