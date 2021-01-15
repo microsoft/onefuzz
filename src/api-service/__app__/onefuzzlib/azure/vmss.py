@@ -171,7 +171,7 @@ def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
     if instance_ids:
         compute_client.virtual_machine_scale_sets.begin_delete_instances(
-            resource_group, str(name), instance_ids=instance_ids
+            resource_group, str(name), instance_ids
         )
     return None
 
