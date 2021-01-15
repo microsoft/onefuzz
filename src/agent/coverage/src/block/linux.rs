@@ -4,12 +4,13 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use anyhow::{format_err, Result};
 use iced_x86::{Decoder, DecoderOptions, Instruction};
 use object::endian::LittleEndian as LE;
 use object::{read::elf, Object, ObjectSection, ObjectSegment, ObjectSymbol};
-use pete::{Command, Ptracer, Restart, Signal, Stop, Tracee};
+use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
 use serde::{Deserialize, Serialize};
 
@@ -32,22 +33,11 @@ impl Recorder {
     pub fn record(&mut self, cmd: Command) -> Result<()> {
         use pete::ptracer::Options;
 
-        let mut ptracer = Ptracer::new();
+        let mut tracer = Ptracer::new();
+        let _child = tracer.spawn(cmd)?;
 
-        // Attach stop.
-        let mut tracee = ptracer.spawn(cmd)?;
-
-        ptracer.restart(tracee, Restart::Continue)?;
-
-        // Continue until `exec()`.
-        while let Some(t) = ptracer.wait()? {
-            if let Stop::Exec(..) = t.stop {
-                tracee = t;
-                break;
-            }
-
-            ptracer.restart(tracee, Restart::Continue)?;
-        }
+        // Continue the tracee process until the return from its initial `execve()`.
+        let mut tracee = continue_to_init_execve(&mut tracer)?;
 
         // Do not follow forks.
         //
@@ -62,9 +52,9 @@ impl Recorder {
         self.images = Some(Images::new(tracee.pid.as_raw()));
         self.update_images(&mut tracee)?;
 
-        ptracer.restart(tracee, Restart::Syscall)?;
+        tracer.restart(tracee, Restart::Syscall)?;
 
-        while let Some(mut tracee) = ptracer.wait()? {
+        while let Some(mut tracee) = tracer.wait()? {
             match tracee.stop {
                 Stop::SyscallEnterStop(..) => log::trace!("syscall-enter: {:?}", tracee.stop),
                 Stop::SyscallExitStop(..) => {
@@ -82,7 +72,7 @@ impl Recorder {
                 }
             }
 
-            if let Err(err) = ptracer.restart(tracee, Restart::Syscall) {
+            if let Err(err) = tracer.restart(tracee, Restart::Syscall) {
                 log::error!("unable to restart tracee: {}", err);
             }
         }
@@ -483,4 +473,16 @@ fn branch_target(inst: &iced_x86::Instruction) -> Option<(u64, bool)> {
         | FlowControl::Return
         | FlowControl::XbeginXabortXend => None,
     }
+}
+
+fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
+    while let Some(tracee) = tracer.wait()? {
+        if let Stop::SyscallExitStop(..) = &tracee.stop {
+            return Ok(tracee);
+        }
+
+        tracer.restart(tracee, Restart::Continue)?;
+    }
+
+    anyhow::bail!("did not see initial execve() in tracee while recording coverage");
 }
