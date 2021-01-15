@@ -12,8 +12,13 @@ registered:
 - `Microsoft.EventGrid`
 - `Microsoft.Network`
 - `Microsoft.Compute`
+- `Microsoft.SignalRService`
 
 ## Deploying an instance of Onefuzz
+
+Ensure you have python3 (at least 3.7), [Azure Functions Core Tools
+v3](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local),
+and OpenSSL installed.
 
 From the [Latest Release of
 Onefuzz](https://github.com/microsoft/onefuzz/releases) download the
