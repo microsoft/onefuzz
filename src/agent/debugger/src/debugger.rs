@@ -50,7 +50,7 @@ pub struct BreakpointId(pub u64);
 
 #[derive(Copy, Clone)]
 pub(crate) enum StepState {
-    Breakpoint { pc: u64 },
+    RemoveBreakpoint { pc: u64, original_byte: u8 },
     SingleStep,
 }
 
@@ -58,7 +58,6 @@ pub(crate) enum StepState {
 pub enum BreakpointType {
     Counter,
     OneTime,
-    StepOut { rsp: u64 },
 }
 
 pub(crate) struct ModuleBreakpoint {
@@ -576,8 +575,8 @@ impl Debugger {
                 }
                 Ok(DBG_CONTINUE)
             }
-            Some(DebuggerNotification::SingleStep(step_state)) => {
-                self.target.handle_single_step(step_state)?;
+            Some(DebuggerNotification::SingleStep(handle)) => {
+                self.target.complete_single_step(handle);
                 Ok(DBG_CONTINUE)
             }
             None => {
@@ -717,25 +716,6 @@ impl Debugger {
         self.continue_debugging()?;
         Ok(true)
     }
-
-    /// Find the return address (and stack pointer to cover recursion), set a breakpoint
-    /// (internal, not reported to the client) that gets cleared after stepping out.
-    ///
-    /// The return address and stack pointer are returned so the caller can check
-    /// that the step out is complete regardless of other debug events that may happen before
-    /// hitting the breakpoint at the return address.
-    pub fn prepare_to_step_out(&mut self) -> Result<StackFrame> {
-        let stack_frame = self.get_current_frame()?;
-        let address = stack_frame.return_address();
-        self.register_absolute_breakpoint(
-            address,
-            BreakpointType::StepOut {
-                rsp: stack_frame.stack_pointer(),
-            },
-        )?;
-
-        Ok(stack_frame)
-    }
 }
 
 enum DebuggerNotification {
@@ -743,7 +723,7 @@ enum DebuggerNotification {
     InitialBreak,
     InitialWow64Break,
     Breakpoint(u64),
-    SingleStep(StepState),
+    SingleStep(HANDLE),
 }
 
 fn is_debugger_notification(
@@ -784,8 +764,10 @@ fn is_debugger_notification(
         }
 
         EXCEPTION_SINGLE_STEP => {
-            if let Some(step_state) = target.single_step(target.current_thread_handle()) {
-                Some(DebuggerNotification::SingleStep(step_state))
+            if target.expecting_single_step(target.current_thread_handle()) {
+                Some(DebuggerNotification::SingleStep(
+                    target.current_thread_handle(),
+                ))
             } else {
                 // Unexpected single step - could be a logic bug in the debugger or less
                 // likely but possibly an intentional exception in the debug target.
