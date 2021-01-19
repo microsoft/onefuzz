@@ -425,6 +425,6 @@ TASK_DEFINITIONS = {
                 value=1,
                 permissions=[ContainerPermission.Create],
             ),
-        ]
-    )
+        ],
+    ),
 }
