@@ -4,20 +4,13 @@
 use crate::tasks::{
     config::CommonConfig,
     heartbeat::*,
-    report::{
-        crash_report::CrashReport,
-        generic, libfuzzer_report,
-    },
+    report::{crash_report::CrashReport, generic, libfuzzer_report},
     utils::{default_bool_true, download_input},
 };
 use anyhow::Result;
-use onefuzz::{syncdir::SyncedDir};
+use onefuzz::syncdir::SyncedDir;
 use serde::Deserialize;
-use std::{
-    collections::HashMap,
-    path::{ PathBuf},
-};
-
+use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -125,13 +118,7 @@ impl<'a> GenericRegressionTask<'a> {
             let reports = Some(self.config.reports.clone());
             let no_repro = Some(self.config.no_repro.clone());
 
-            report
-                .upload(
-                    &None,
-                    &reports,
-                    &no_repro,
-                )
-                .await?;
+            report.upload(&None, &reports, &no_repro).await?;
         }
 
         Ok(())

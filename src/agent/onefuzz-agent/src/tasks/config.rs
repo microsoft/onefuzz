@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::large_enum_variant)]
-use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, report, regression};
+use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, regression, report};
 use anyhow::Result;
 use onefuzz::{
     machine_id::{get_machine_id, get_scaleset_name},
@@ -189,9 +189,12 @@ impl Config {
             }
             Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
             Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
-            Config::GenericReport(config) => report::generic::ReportTask::new(&config).managed_run().await,
-            Config::GenericRegression(config) => regression::generic::GenericRegressionTask::new(&config).run().await,
-
+            Config::GenericReport(config) => report::generic::ReportTask::managed_run(&config).run().await,
+            Config::GenericRegression(config) => {
+                regression::generic::GenericRegressionTask::new(&config)
+                    .run()
+                    .await
+            }
         }
     }
 }

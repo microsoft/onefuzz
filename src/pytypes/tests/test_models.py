@@ -33,7 +33,7 @@ class TestScaleset(unittest.TestCase):
     def test_scaleset_size(self) -> None:
         with self.assertRaises(ValueError):
             Scaleset(
-                pool_name=PoolName("test_pool"),
+                pool_name=PoolName("test-pool"),
                 vm_sku="Standard_D2ds_v4",
                 image="Canonical:UbuntuServer:18.04-LTS:latest",
                 region=Region("westus2"),
@@ -42,7 +42,7 @@ class TestScaleset(unittest.TestCase):
             )
 
         scaleset = Scaleset(
-            pool_name=PoolName("test_pool"),
+            pool_name=PoolName("test-pool"),
             vm_sku="Standard_D2ds_v4",
             image="Canonical:UbuntuServer:18.04-LTS:latest",
             region=Region("westus2"),
@@ -52,7 +52,7 @@ class TestScaleset(unittest.TestCase):
         self.assertEqual(scaleset.size, 0)
 
         scaleset = Scaleset(
-            pool_name=PoolName("test_pool"),
+            pool_name=PoolName("test-pool"),
             vm_sku="Standard_D2ds_v4",
             image="Canonical:UbuntuServer:18.04-LTS:latest",
             region=Region("westus2"),

@@ -1152,6 +1152,25 @@ Each event will be submitted via HTTP POST to the user provided URL.
 {
     "additionalProperties": false,
     "definitions": {
+<<<<<<< HEAD
+=======
+        "TaskType": {
+            "title": "TaskType",
+            "description": "An enumeration.",
+            "enum": [
+                "libfuzzer_fuzz",
+                "libfuzzer_coverage",
+                "libfuzzer_crash_report",
+                "libfuzzer_merge",
+                "generic_analysis",
+                "generic_supervisor",
+                "generic_merge",
+                "generic_generator",
+                "generic_crash_report",
+                "generic_regression"
+            ]
+        },
+>>>>>>> 3eddf10 (build fix)
         "ContainerType": {
             "description": "An enumeration.",
             "enum": [
@@ -1407,8 +1426,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
                 },
-                "file_list": {
-                    "title": "File List",
+                "report_list": {
+                    "title": "Report List",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -2438,6 +2457,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "file_added"
             ],
             "title": "EventType"
+                "libfuzzer_fuzz",
+                "libfuzzer_coverage",
+                "libfuzzer_crash_report",
+                "libfuzzer_merge",
+                "generic_analysis",
+                "generic_supervisor",
+                "generic_merge",
+                "generic_generator",
+                "generic_crash_report",
+                "generic_regression"
+            ]
         },
         "JobConfig": {
             "properties": {
@@ -2753,8 +2783,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
                 },
-                "file_list": {
-                    "title": "File List",
+                "report_list": {
+                    "title": "Report List",
                     "type": "array",
                     "items": {
                         "type": "string"
