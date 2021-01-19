@@ -340,6 +340,7 @@ class TaskUnitConfig(BaseModel):
     tools: CONTAINER_DEF
     unique_inputs: CONTAINER_DEF
     unique_reports: CONTAINER_DEF
+    input_reports: CONTAINER_DEF
 
 
 class Forward(BaseModel):
