@@ -1184,9 +1184,15 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
+<<<<<<< HEAD
                 "unique_reports"
             ],
             "title": "ContainerType"
+=======
+                "unique_reports",
+                "input_reports"
+            ]
+>>>>>>> f997ea0 (regenerate webhook_event)
         },
         "StatsFormat": {
             "description": "An enumeration.",
@@ -2469,7 +2475,38 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_regression"
             ]
         },
+<<<<<<< HEAD
         "JobConfig": {
+=======
+        "ContainerType": {
+            "title": "ContainerType",
+            "description": "An enumeration.",
+            "enum": [
+                "analysis",
+                "coverage",
+                "crashes",
+                "inputs",
+                "no_repro",
+                "readonly_inputs",
+                "reports",
+                "setup",
+                "tools",
+                "unique_inputs",
+                "unique_reports",
+                "input_reports"
+            ]
+        },
+        "StatsFormat": {
+            "title": "StatsFormat",
+            "description": "An enumeration.",
+            "enum": [
+                "AFL"
+            ]
+        },
+        "TaskDetails": {
+            "title": "TaskDetails",
+            "type": "object",
+>>>>>>> f997ea0 (regenerate webhook_event)
             "properties": {
                 "build": {
                     "title": "Build",
