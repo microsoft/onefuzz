@@ -22,7 +22,7 @@ pub struct Config {
     #[serde(default)]
     pub target_env: HashMap<String, String>,
 
-    pub crash_reports: SyncedDir,
+    pub input_reports: SyncedDir,
     pub crashes: SyncedDir,
     pub report_list: Vec<String>,
 
@@ -55,19 +55,19 @@ impl<'a> GenericRegressionTask<'a> {
         info!("Starting generic regression task");
         let heartbeat_client = self.config.common.init_heartbeat().await?;
 
-        self.config.crash_reports.init().await?;
+        self.config.input_reports.init().await?;
         self.config.crashes.init().await?;
 
         if self.config.report_list.is_empty() {
-            self.config.crash_reports.sync_pull().await?;
+            self.config.input_reports.sync_pull().await?;
         } else {
             for file in &self.config.report_list {
-                let input_url = self.config.crash_reports.url.blob(file);
-                download_input(input_url.url(), &self.config.crash_reports.path).await?;
+                let input_url = self.config.input_reports.url.blob(file);
+                download_input(input_url.url(), &self.config.input_reports.path).await?;
             }
         }
 
-        let mut report_files = tokio::fs::read_dir(&self.config.crash_reports.path).await?;
+        let mut report_files = tokio::fs::read_dir(&self.config.input_reports.path).await?;
         while let Some(file) = report_files.next_entry().await? {
             heartbeat_client.alive();
             let crash_report_str = std::fs::read_to_string(file.path())?;

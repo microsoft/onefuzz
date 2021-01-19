@@ -408,6 +408,12 @@ TASK_DEFINITIONS = {
                 permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
             ContainerDefinition(
+                type=ContainerType.input_reports,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
                 type=ContainerType.crashes,
                 compare=Compare.Equal,
                 value=1,

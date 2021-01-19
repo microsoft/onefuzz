@@ -24,11 +24,9 @@ class Regression(Command):
         build: str,
         pool_name: str,
         crashes: Container,
-        inputs: Container,
-        setup: Container,
-        # regression_type: RegressionType,
-        target_exe: File,
+        input_reports: Container,
         *,
+        target_exe: File = File("fuzz.exe"),
         tags: Optional[Dict[str, str]] = None,
         notification_config: Optional[NotificationConfig] = None,
         target_env: Optional[Dict[str, str]] = None,
@@ -43,11 +41,6 @@ class Regression(Command):
         check_retry_count: Optional[int] = None,
         check_fuzzer_help: bool = True,
     ) -> Optional[Job]:
-
-        # 1 create a notification
-        #   - activate duplicate bugs on the report container
-        #   - close bugs from the noRepro container
-        # notification_config: Optional[NotificationConfig] = None,
 
         if dryrun:
             return None
@@ -72,23 +65,28 @@ class Regression(Command):
             self.logger.error(f"invalid crash container {crashes}")
 
         helper.define_containers(
+            ContainerType.setup,
             ContainerType.reports,
             ContainerType.unique_reports,
             ContainerType.no_repro,
         )
 
         helper.create_containers()
+        helper.setup_notifications(notification_config)
         containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
+            (ContainerType.input_reports, input_reports),
             (ContainerType.crashes, crashes),
-            (ContainerType.setup, setup),
         ]
+
+        helper.upload_setup(setup_dir, target_exe)
+        target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
 
         self.logger.info("creating libfuzzer_merge task")
         self.onefuzz.tasks.create(
             helper.job.job_id,
             TaskType.generic_regression,
-            target_exe,
+            target_exe_blob_name,
             containers,
             pool_name=pool_name,
             duration=duration,
