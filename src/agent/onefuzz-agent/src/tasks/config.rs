@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::large_enum_variant)]
-use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, report};
+use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, report, regression};
 use anyhow::Result;
 use onefuzz::{
     machine_id::{get_machine_id, get_scaleset_name},
@@ -79,6 +79,9 @@ pub enum Config {
 
     #[serde(alias = "generic_crash_report")]
     GenericReport(report::generic::Config),
+
+    #[serde(alias = "generic_regression")]
+    GenericRegression(regression::generic::Config),
 }
 
 impl Config {
@@ -118,6 +121,7 @@ impl Config {
             Config::GenericReport(c) => &c.common,
             Config::GenericSupervisor(c) => &c.common,
             Config::GenericGenerator(c) => &c.common,
+            Config::GenericRegression(c) => &c.common,
         }
     }
 
@@ -132,6 +136,7 @@ impl Config {
             Config::GenericReport(_) => "generic_crash_report",
             Config::GenericSupervisor(_) => "generic_supervisor",
             Config::GenericGenerator(_) => "generic_generator",
+            Config::GenericRegression(_) => "generic_regression",
         };
 
         match self {
@@ -184,9 +189,9 @@ impl Config {
             }
             Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
             Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
-            Config::GenericReport(config) => {
-                report::generic::ReportTask::new(config).managed_run().await
-            }
+            Config::GenericReport(config) => report::generic::ReportTask::new(&config).managed_run().await,
+            Config::GenericRegression(config) => regression::generic::GenericRegressionTask::new(&config).run().await,
+
         }
     }
 }

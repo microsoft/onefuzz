@@ -118,6 +118,59 @@ impl ReportTask {
     }
 }
 
+pub async fn test_input(
+    input_url: Url,
+    input: &Path,
+    target_exe: &Path,
+    target_options: &[String],
+    target_env: &HashMap<String, String>,
+    setup_dir: &Path,
+    task_id: uuid::Uuid,
+    job_id: uuid::Uuid,
+    target_timeout: Option<u64>,
+    check_retry_count: u64,
+) -> Result<CrashTestResult> {
+    let fuzzer = LibFuzzer::new(target_exe, target_options, target_env, setup_dir);
+
+    let task_id = task_id;
+    let job_id = job_id;
+    let input_blob = InputBlob::from(BlobUrl::new(input_url)?);
+    let input_sha256 = sha256::digest_file(input).await.with_context(|| {
+        format_err!("unable to sha256 digest input file: {}", input.display())
+    })?;
+
+    let test_report = fuzzer
+        .repro(input, target_timeout, check_retry_count)
+        .await?;
+
+    match test_report.asan_log {
+        Some(asan_log) => {
+            let crash_report = CrashReport::new(
+                asan_log,
+                task_id,
+                job_id,
+                target_exe,
+                input_blob,
+                input_sha256,
+            );
+            Ok(CrashTestResult::CrashReport(crash_report))
+        }
+        None => {
+            let no_repro = NoCrash {
+                input_blob,
+                input_sha256,
+                executable: PathBuf::from(&target_exe),
+                task_id,
+                job_id,
+                tries: 1 + check_retry_count,
+                error: test_report.error.map(|e| format!("{}", e)),
+            };
+
+            Ok(CrashTestResult::NoRepro(no_repro))
+        }
+    }
+}
+
 pub struct AsanProcessor {
     config: Arc<Config>,
     heartbeat_client: Option<TaskHeartbeatClient>,
@@ -139,57 +192,21 @@ impl AsanProcessor {
         input: &Path,
     ) -> Result<CrashTestResult> {
         self.heartbeat_client.alive();
-        let fuzzer = LibFuzzer::new(
+        let result = test_input(
+            input_url,
+            input,
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
             &self.config.common.setup_dir,
-        );
+            self.config.common.task_id,
+            self.config.common.job_id,
+            self.config.target_timeout,
+            self.config.check_retry_count,
+        )
+        .await?;
 
-        let task_id = self.config.common.task_id;
-        let job_id = self.config.common.job_id;
-        let input_blob = match input_url {
-            Some(x) => Some(InputBlob::from(BlobUrl::new(x)?)),
-            None => None,
-        };
-        let input_sha256 = sha256::digest_file(input).await.with_context(|| {
-            format_err!("unable to sha256 digest input file: {}", input.display())
-        })?;
-
-        let test_report = fuzzer
-            .repro(
-                input,
-                self.config.target_timeout,
-                self.config.check_retry_count,
-            )
-            .await?;
-
-        match test_report.asan_log {
-            Some(asan_log) => {
-                let crash_report = CrashReport::new(
-                    asan_log,
-                    task_id,
-                    job_id,
-                    &self.config.target_exe,
-                    input_blob,
-                    input_sha256,
-                );
-                Ok(CrashTestResult::CrashReport(crash_report))
-            }
-            None => {
-                let no_repro = NoCrash {
-                    input_blob,
-                    input_sha256,
-                    executable: PathBuf::from(&self.config.target_exe),
-                    task_id,
-                    job_id,
-                    tries: 1 + self.config.check_retry_count,
-                    error: test_report.error.map(|e| format!("{}", e)),
-                };
-
-                Ok(CrashTestResult::NoRepro(no_repro))
-            }
-        }
+        Ok(result)
     }
 }
 

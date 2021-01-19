@@ -21,6 +21,15 @@ impl BlobUrl {
         Ok(Self { url })
     }
 
+    pub fn from_blob_info(account: &str, container: &str, name: &str) -> Result<Self> {
+        // format https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#resource-uri-syntax
+        let url = Url::parse(&format!(
+            "https://{}.blob.core.windows.net/{}/{}",
+            account, container, name
+        ))?;
+        Ok(Self { url })
+    }
+
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
         let url = Url::parse(url.as_ref())?;
 
