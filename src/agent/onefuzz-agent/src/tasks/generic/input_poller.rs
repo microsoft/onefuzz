@@ -13,8 +13,6 @@ use tokio::{fs, time::Duration};
 mod callback;
 pub use callback::*;
 
-use crate::tasks::utils::download_input;
-
 const POLL_INTERVAL: Duration = Duration::from_secs(10);
 
 #[cfg(test)]
