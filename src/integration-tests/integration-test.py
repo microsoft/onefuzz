@@ -22,6 +22,7 @@ import os
 import re
 import sys
 from enum import Enum
+from shutil import which
 from typing import Dict, List, Optional, Set, Tuple
 from uuid import UUID, uuid4
 
@@ -143,6 +144,8 @@ class TestOnefuzz:
         # task_id -> job_id
         self.tasks: Dict[UUID, UUID] = {}
 
+        self.job_os: Dict[UUID, OS] = {}
+
         self.successful_jobs: Set[UUID] = set()
         self.failed_jobs: Set[UUID] = set()
         self.failed_repro: Set[UUID] = set()
@@ -247,6 +250,7 @@ class TestOnefuzz:
                     if x.type in TARGETS[job.config.name].wait_for_files
                 ]
             self.jobs[job.job_id] = job
+            self.job_os[job.job_id] = config.os
             self.target_jobs[job.job_id] = target
 
     def check_task(self, task_id: UUID, scalesets: List[Scaleset]) -> Optional[str]:
@@ -371,7 +375,23 @@ class TestOnefuzz:
 
     def launch_repro(self) -> None:
         # launch repro for one report from all succeessful jobs
+        has_cdb = bool(which("cdb.exe"))
+        has_gdb = bool(which("gdb"))
         for job_id in self.successful_jobs:
+            if self.job_os[job_id] == OS.linux and not has_gdb:
+                self.logger.warning(
+                    "missing gdb in path, not launching repro: %s",
+                    self.target_jobs[job_id],
+                )
+                continue
+
+            if self.job_os[job_id] == OS.windows and not has_cdb:
+                self.logger.warning(
+                    "missing cdb in path, not launching repro: %s",
+                    self.target_jobs[job_id],
+                )
+                continue
+
             self.logger.info("launching repro: %s", self.target_jobs[job_id])
             report = self.get_job_crash(job_id)
             if report is None:
