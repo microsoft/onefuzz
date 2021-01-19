@@ -13,6 +13,7 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
 import requests
+from azure.cli.core.utils import get_az_rest_user_agent
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
@@ -49,6 +50,7 @@ def query_microsoft_graph(
     headers = {
         "Authorization": "%s %s" % (token_type, access_token),
         "Content-Type": "application/json",
+        "User-Agent": get_az_rest_user_agent(),
     }
     response = requests.request(
         method=method, url=url, headers=headers, params=params, json=body
