@@ -22,7 +22,7 @@ def delete_disk(resource_group: str, name: str) -> bool:
     logging.info("deleting disks %s : %s", resource_group, name)
     compute_client = get_client()
     try:
-        compute_client.disks.delete(resource_group, name)
+        compute_client.disks.begin_delete(resource_group, name)
         return True
     except (ResourceNotFoundError, CloudError) as err:
         logging.error("unable to delete disk: %s", err)
