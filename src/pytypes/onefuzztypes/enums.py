@@ -77,7 +77,7 @@ class TaskFeature(Enum):
     preserve_existing_outputs = "preserve_existing_outputs"
     check_fuzzer_help = "check_fuzzer_help"
     expect_crash_on_failure = "expect_crash_on_failure"
-    file_list = "file_list"
+    report_list = "report_list"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -152,6 +152,7 @@ class TaskType(Enum):
     generic_merge = "generic_merge"
     generic_generator = "generic_generator"
     generic_crash_report = "generic_crash_report"
+    generic_regression = "generic_regression"
 
 
 class VmState(Enum):

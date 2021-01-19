@@ -812,7 +812,7 @@ class Tasks(Endpoint):
         vm_count: int = 1,
         preserve_existing_outputs: bool = False,
         colocate: bool = False,
-        file_list: Optional[List[str]] = None,
+        report_list: Optional[List[str]] = None,
     ) -> models.Task:
         """
         Create a task
@@ -886,7 +886,7 @@ class Tasks(Endpoint):
                 target_workers=target_workers,
                 type=task_type,
                 wait_for_files=task_wait_for_files,
-                file_list=file_list,
+                report_list=report_list,
                 preserve_existing_outputs=preserve_existing_outputs,
             ),
         )
