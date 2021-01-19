@@ -7,7 +7,7 @@ use anyhow::Result;
 use futures::stream::StreamExt;
 use onefuzz::{blob::BlobUrl, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
-use tempfile::tempdir;
+use tempfile::{tempdir, TempDir};
 use tokio::{fs, time::Duration};
 
 mod callback;
@@ -18,12 +18,12 @@ const POLL_INTERVAL: Duration = Duration::from_secs(10);
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub enum State<M> {
     Ready,
     Polled(Option<M>),
     Parsed(M, Url),
-    Downloaded(M, Url, PathBuf),
+    Downloaded(M, Url, PathBuf, TempDir),
     Processed(M),
 }
 
@@ -164,7 +164,7 @@ impl<M> InputPoller<M> {
                     verbose!("Input queue empty, sleeping");
                     delay_with_jitter(POLL_INTERVAL).await;
                 }
-                State::Downloaded(_msg, _url, input) => {
+                State::Downloaded(_msg, _url, input, _tempdir) => {
                     info!("Processing downloaded input: {:?}", input);
                 }
                 _ => {}
@@ -248,10 +248,13 @@ impl<M> InputPoller<M> {
                         .download(url.clone(), download_dir.path())
                         .await?;
 
-                    self.set_state(Downloaded(msg, url, input));
+                    self.set_state(Downloaded(msg, url, input, download_dir));
                 }
             }
-            (Downloaded(msg, url, input), Process(processor)) => {
+            // NOTE: _download_dir is a TempDir, which the physical path gets
+            // deleted automatically upon going out of scope.  Keep it in-scope until
+            // here.
+            (Downloaded(msg, url, input, _download_dir), Process(processor)) => {
                 processor.process(Some(url), &input).await?;
 
                 self.set_state(Processed(msg));
