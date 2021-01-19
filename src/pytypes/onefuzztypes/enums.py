@@ -208,7 +208,6 @@ class ContainerType(Enum):
     unique_reports = "unique_reports"
     input_reports = "input_reports"
 
-
     @classmethod
     def reset_defaults(cls) -> List["ContainerType"]:
         return [
