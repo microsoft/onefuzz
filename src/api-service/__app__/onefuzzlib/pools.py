@@ -360,7 +360,9 @@ class Node(BASE_NODE, ORMMixin):
 
     def delete(self) -> None:
         logging.info("deleting node: %s", self.machine_id)
+        self.mark_tasks_stopped_early()
         NodeTasks.clear_by_machine_id(self.machine_id)
+        NodeMessage.clear_messages(self.machine_id)
         send_event(
             EventNodeDeleted(
                 machine_id=self.machine_id,
@@ -369,7 +371,6 @@ class Node(BASE_NODE, ORMMixin):
             )
         )
         super().delete()
-        NodeMessage.clear_messages(self.machine_id)
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
