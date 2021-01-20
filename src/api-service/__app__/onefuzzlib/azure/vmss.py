@@ -250,6 +250,7 @@ def create_vmss(
         "do_not_run_extensions_on_overprovisioned_vms": True,
         "upgrade_policy": {"mode": "Manual"},
         "sku": sku,
+        "overprovision": False,
         "identity": {
             "type": "userAssigned",
             "userAssignedIdentities": {get_scaleset_identity_resource_path(): {}},
