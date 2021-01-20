@@ -4,25 +4,21 @@
 use anyhow::Result;
 use clap::{App, SubCommand};
 
-pub fn run(args: &clap::ArgMatches) -> Result<()> {
-    match args.subcommand() {
-        ("generic-crash-report", Some(sub)) => crate::debug::generic_crash_report::run(sub)?,
-        ("libfuzzer-coverage", Some(sub)) => crate::debug::libfuzzer_coverage::run(sub)?,
-        ("libfuzzer-crash-report", Some(sub)) => crate::debug::libfuzzer_crash_report::run(sub)?,
-        ("libfuzzer-fuzz", Some(sub)) => crate::debug::libfuzzer_fuzz::run(sub)?,
-        ("libfuzzer-merge", Some(sub)) => crate::debug::libfuzzer_merge::run(sub)?,
-        _ => println!("missing subcommand\nUSAGE : {}", args.usage()),
-    }
+use crate::{debug::libfuzzer_merge, local::common::add_common_config};
 
-    Ok(())
+const LIBFUZZER_MERGE: &str = "libfuzzer-merge";
+
+pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
+    match args.subcommand() {
+        (LIBFUZZER_MERGE, Some(sub)) => libfuzzer_merge::run(sub).await,
+        _ => {
+            anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
+        }
+    }
 }
 
-pub fn args() -> App<'static, 'static> {
-    SubCommand::with_name("debug")
+pub fn args(name: &str) -> App<'static, 'static> {
+    SubCommand::with_name(name)
         .about("unsupported internal debugging commands")
-        .subcommand(crate::debug::generic_crash_report::args())
-        .subcommand(crate::debug::libfuzzer_coverage::args())
-        .subcommand(crate::debug::libfuzzer_crash_report::args())
-        .subcommand(crate::debug::libfuzzer_fuzz::args())
-        .subcommand(crate::debug::libfuzzer_merge::args())
+        .subcommand(add_common_config(libfuzzer_merge::args(LIBFUZZER_MERGE)))
 }

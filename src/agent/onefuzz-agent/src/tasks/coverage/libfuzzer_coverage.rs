@@ -66,6 +66,9 @@ pub struct Config {
     pub coverage: SyncedDir,
 
     #[serde(default = "default_bool_true")]
+    pub check_queue: bool,
+
+    #[serde(default = "default_bool_true")]
     pub check_fuzzer_help: bool,
 
     #[serde(flatten)]
@@ -86,17 +89,26 @@ pub struct CoverageTask {
 }
 
 impl CoverageTask {
-    pub fn new(config: impl Into<Arc<Config>>) -> Self {
-        let config = config.into();
-
-        let task_dir = PathBuf::from(config.common.task_id.to_string());
-        let poller_dir = task_dir.join("poller");
-        let poller = InputPoller::<Message>::new(poller_dir);
-
+    pub fn new(config: Config) -> Self {
+        let config = Arc::new(config);
+        let poller = InputPoller::new();
         Self { config, poller }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn local_run(&self) -> Result<()> {
+        let mut processor = CoverageProcessor::new(self.config.clone()).await?;
+
+        self.config.coverage.init().await?;
+        for synced_dir in &self.config.readonly_inputs {
+            synced_dir.init().await?;
+            self.record_corpus_coverage(&mut processor, &synced_dir)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn managed_run(&mut self) -> Result<()> {
         info!("starting libFuzzer coverage task");
 
         if self.config.check_fuzzer_help {
@@ -116,6 +128,7 @@ impl CoverageTask {
     async fn process(&mut self) -> Result<()> {
         let mut processor = CoverageProcessor::new(self.config.clone()).await?;
 
+        info!("processing initial dataset");
         let mut seen_inputs = false;
         // Update the total with the coverage from each seed corpus.
         for dir in &self.config.readonly_inputs {
@@ -144,7 +157,7 @@ impl CoverageTask {
 
         // If a queue has been provided, poll it for new coverage.
         if let Some(queue) = &self.config.input_queue {
-            verbose!("polling queue for new coverage");
+            info!("polling queue for new coverage");
             let callback = CallbackImpl::new(queue.clone(), processor);
             self.poller.run(callback).await?;
         }
@@ -273,7 +286,7 @@ impl CoverageProcessor {
 
 #[async_trait]
 impl Processor for CoverageProcessor {
-    async fn process(&mut self, _url: Url, input: &Path) -> Result<()> {
+    async fn process(&mut self, _url: Option<Url>, input: &Path) -> Result<()> {
         self.heartbeat_client.alive();
         self.test_input(input).await?;
         self.report_total().await?;
