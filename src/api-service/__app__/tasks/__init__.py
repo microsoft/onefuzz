@@ -10,8 +10,6 @@ from onefuzztypes.requests import TaskGet, TaskSearch
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
-
-# import logging
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.jobs import Job
 from ..onefuzzlib.pools import NodeTasks
