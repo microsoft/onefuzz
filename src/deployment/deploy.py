@@ -333,7 +333,6 @@ class Client:
                 )
 
         onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
-        # cli_app = get_application(onefuzz_cli_app_uuid)
 
         if not cli_app:
             logger.info(
