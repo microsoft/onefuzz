@@ -372,6 +372,7 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
     )
     input("Press Enter to continue...")
 
+
 def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
 
