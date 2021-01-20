@@ -329,10 +329,14 @@ class Client:
 
         (password_id, password) = self.create_password(app.object_id)
 
-        onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
-        cli_app = get_application(onefuzz_cli_app_uuid)
+        cli_app = client.applications.list(
+                    filter="appId eq '%s'" % ONEFUZZ_CLI_APP
+                )
 
-        if cli_app is None:
+        # onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
+        # cli_app = get_application(onefuzz_cli_app_uuid)
+
+        if not cli_app:
             logger.info(
                 "Could not find the default CLI application under the current "
                 "subscription, creating a new one"
