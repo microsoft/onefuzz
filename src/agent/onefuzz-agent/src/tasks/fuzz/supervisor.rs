@@ -103,6 +103,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         &config.supervisor_env,
         &config.supervisor_input_marker,
         &config.common.setup_dir,
+        &config.tools.path,
     )
     .await?;
 
@@ -158,6 +159,7 @@ async fn start_supervisor(
     supervisor_env: &HashMap<String, String>,
     supervisor_input_marker: &Option<String>,
     setup_dir: impl AsRef<Path>,
+    tools_dir: impl AsRef<Path>,
 ) -> Result<Child> {
     let mut cmd = Command::new(supervisor_path.as_ref());
 
@@ -176,7 +178,8 @@ async fn start_supervisor(
         .target_exe(target_exe)
         .target_options(target_options)
         .input_corpus(inputs_dir)
-        .setup_dir(setup_dir);
+        .setup_dir(setup_dir)
+        .tools_dir(tools_dir);
 
     if let Some(input_marker) = supervisor_input_marker {
         expand.input_marker(input_marker);
@@ -279,7 +282,8 @@ mod tests {
             &supervisor_options,
             &supervisor_env,
             &supervisor_input_marker,
-            None,
+            PathBuf::default(),
+            PathBuf::default(),
         )
         .await
         .unwrap();
