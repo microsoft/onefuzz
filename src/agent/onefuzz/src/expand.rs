@@ -291,6 +291,16 @@ mod tests {
     use std::path::Path;
 
     #[test]
+    fn test_expand_nested() -> Result<()> {
+        let supervisor_options = vec!["{target_options}".to_string()];
+        let target_options: Vec<_> = vec!["a", "b", "c"].iter().map(|p| p.to_string()).collect();
+        let result = Expand::new().target_options(&target_options).evaluate(&supervisor_options)?;
+        let expected = vec!["a b c"];
+        assert_eq!(result, expected, "result: {:?} expected: {:?}", result, expected);
+        Ok(())
+    }
+
+    #[test]
     fn test_expand() -> Result<()> {
         let my_options: Vec<_> = vec![
             "inner",
