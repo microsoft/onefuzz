@@ -425,7 +425,7 @@ class NodeTasks(BASE_NODE_TASK, ORMMixin):
         return cls.search(query={"task_id": [task_id]})
 
     @classmethod
-    def clear_by_machine_id(cls, machine_id: UUID) -> List[UUID]:
+    def clear_by_machine_id(cls, machine_id: UUID) -> None:
         logging.info("clearing tasks for node: %s", machine_id)
         for entry in cls.get_by_machine_id(machine_id):
             entry.delete()
