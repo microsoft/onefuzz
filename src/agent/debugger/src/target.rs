@@ -11,6 +11,7 @@ use std::{
 
 use anyhow::Result;
 use log::{error, trace};
+use rand::{thread_rng, Rng};
 use win_util::{file, handle::Handle, last_os_error, process};
 use winapi::{
     shared::minwindef::{DWORD, LPVOID},
@@ -25,6 +26,11 @@ use crate::{
     dbghelp::{self, FrameContext},
     debugger::{Breakpoint, BreakpointId, BreakpointType, ModuleBreakpoint, StepState},
 };
+
+struct CodeByteToUpdate {
+    address: u64,
+    byte: u8,
+}
 
 struct ThreadInfo {
     id: u32,
@@ -174,9 +180,9 @@ pub struct Target {
     breakpoints: fnv::FnvHashMap<u64, Breakpoint>,
 
     // Map of thread to stepping state (e.g. breakpoint address to restore breakpoints)
-    single_step: fnv::FnvHashMap<HANDLE, StepState>,
+    single_step: fnv::FnvHashMap<DWORD, StepState>,
 
-    last_breakpoint_address: Option<u64>,
+    code_byte_to_update: Option<CodeByteToUpdate>,
 }
 
 impl Target {
@@ -205,7 +211,7 @@ impl Target {
             modules: fnv::FnvHashMap::default(),
             breakpoints: fnv::FnvHashMap::default(),
             single_step: fnv::FnvHashMap::default(),
-            last_breakpoint_address: None,
+            code_byte_to_update: None,
         }
     }
 
@@ -286,12 +292,12 @@ impl Target {
         self.breakpoints.contains_key(&address)
     }
 
-    pub(crate) fn expecting_single_step(&self, thread_handle: HANDLE) -> bool {
-        self.single_step.contains_key(&thread_handle)
+    pub(crate) fn expecting_single_step(&self, thread_id: DWORD) -> bool {
+        self.single_step.contains_key(&thread_id)
     }
 
-    pub(crate) fn complete_single_step(&mut self, thread_handle: HANDLE) {
-        self.single_step.remove(&thread_handle);
+    pub(crate) fn complete_single_step(&mut self, thread_id: DWORD) {
+        self.single_step.remove(&thread_id);
     }
 
     pub fn sym_initialize(&mut self) -> Result<()> {
@@ -501,9 +507,9 @@ impl Target {
         //
         // First, if we last stepped because of hitting a breakpoint, we restore the breakpoint
         // so that whichever thread is resumed, it can't miss the breakpoint.
-        if let Some(last_breakpoint_address) = self.last_breakpoint_address.take() {
-            trace!("Restoring breakpoint at 0x{:x}", last_breakpoint_address);
-            write_instruction_byte(self.process_handle, last_breakpoint_address, 0xcc)?;
+        if let Some(CodeByteToUpdate { address, byte }) = self.code_byte_to_update.take() {
+            trace!("Updating breakpoint at 0x{:x}", address);
+            write_instruction_byte(self.process_handle, address, byte)?;
         }
 
         if self.single_step.is_empty() {
@@ -514,31 +520,31 @@ impl Target {
                 thread_info.resume_thread()?;
             }
         } else {
-            // Otherwise pick one thread to resume, giving preference to the current thread.
-            let mut step_state = self.single_step.get(&self.current_thread_handle);
-            let thread_info;
-            if step_state.is_some() {
-                thread_info = self.thread_info.get_mut(&self.current_thread_id).unwrap()
-            } else {
-                thread_info = self.thread_info.values_mut().nth(0).unwrap();
-                step_state = self.single_step.get(&thread_info.handle);
+            // We will single step a single thread, but we must first make sure all
+            // threads are suspended.
+            for thread_info in self.thread_info.values_mut() {
+                thread_info.suspend_thread()?;
             }
+
+            // Now pick a random thread to resume.
+            let idx = thread_rng().gen_range(0, self.single_step.len());
+            let (handle, step_state) = self.single_step.iter().nth(idx).unwrap();
+            let thread_info = self.thread_info.get_mut(handle).unwrap();
 
             thread_info.resume_thread()?;
 
             // We may also need to remove a breakpoint.
-            match step_state {
-                Some(StepState::RemoveBreakpoint { pc, original_byte }) => {
-                    trace!("Restoring original byte at 0x{:x}", *pc);
-                    write_instruction_byte(self.process_handle, *pc, *original_byte)?;
+            if let StepState::RemoveBreakpoint { pc, original_byte } = step_state {
+                trace!("Restoring original byte at 0x{:x}", *pc);
+                write_instruction_byte(self.process_handle, *pc, *original_byte)?;
 
-                    // We are stepping to remove the breakpoint. After we've stepped,
-                    // we must restore the breakpoint (which is done on the subsequent
-                    // call to this function).
-                    self.last_breakpoint_address = Some(*pc);
-                }
-
-                _ => {}
+                // We are stepping to remove the breakpoint. After we've stepped,
+                // we must restore the breakpoint (which is done on the subsequent
+                // call to this function).
+                self.code_byte_to_update = Some(CodeByteToUpdate {
+                    address: *pc,
+                    byte: 0xcc,
+                });
             }
         }
 
@@ -551,11 +557,11 @@ impl Target {
     pub fn prepare_to_step(&mut self) -> Result<bool> {
         // Don't change the reason we're single stepping on this thread if
         // we previously set the reason (e.g. so we would restore a breakpoint).
-        let current_thread_handle = self.current_thread_handle;
         self.single_step
-            .entry(current_thread_handle)
+            .entry(self.current_thread_id)
             .or_insert(StepState::SingleStep);
 
+        let current_thread_handle = self.current_thread_handle; //borrowck
         let context = self.get_current_context_mut()?;
         context.set_single_step(true);
         context.set_thread_context(current_thread_handle)?;
@@ -611,11 +617,15 @@ impl Target {
             original_byte = bp.original_byte().unwrap();
 
             if let BreakpointType::OneTime = bp.kind() {
-                // If the breakpoint is not being restored, we write the original byte
-                // now because we don't want any other threads to hit the breakpoint.
-                //
-                // See `prepare_to_resume` for additional details.
-                write_instruction_byte(self.process_handle, bp.ip(), original_byte)?;
+                // This assertion simplifies `prepare_to_resume` slightly.
+                // If it fires, we could restore the original code byte here, otherwise we
+                // would need an additional Option to test in `prepare_to_resume`.
+                assert!(self.code_byte_to_update.is_none());
+
+                self.code_byte_to_update = Some(CodeByteToUpdate {
+                    address: bp.ip(),
+                    byte: original_byte,
+                });
 
                 bp.set_enabled(false);
                 bp.set_original_byte(None);
@@ -642,15 +652,9 @@ impl Target {
             // Remember that on the current thread, we need to restore the original byte.
             // When resuming, if we pick the current thread, we'll remove the breakpoint.
             self.single_step.insert(
-                current_thread_handle,
+                self.current_thread_id,
                 StepState::RemoveBreakpoint { pc, original_byte },
             );
-
-            // When single stepping, we resume a single thread - which one will be
-            // determined later when we resume execution.
-            for thread_info in self.thread_info.values_mut() {
-                thread_info.suspend_thread()?;
-            }
         }
 
         Ok(Some(id))

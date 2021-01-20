@@ -569,14 +569,14 @@ impl Debugger {
                 Ok(DBG_CONTINUE)
             }
             Some(DebuggerNotification::Clr) => Ok(DBG_CONTINUE),
-            Some(DebuggerNotification::Breakpoint(pc)) => {
+            Some(DebuggerNotification::Breakpoint { pc }) => {
                 if let Some(bp_id) = self.target.handle_breakpoint(pc)? {
                     callbacks.on_breakpoint(self, bp_id);
                 }
                 Ok(DBG_CONTINUE)
             }
-            Some(DebuggerNotification::SingleStep(handle)) => {
-                self.target.complete_single_step(handle);
+            Some(DebuggerNotification::SingleStep { thread_id }) => {
+                self.target.complete_single_step(thread_id);
                 Ok(DBG_CONTINUE)
             }
             None => {
@@ -722,8 +722,8 @@ enum DebuggerNotification {
     Clr,
     InitialBreak,
     InitialWow64Break,
-    Breakpoint(u64),
-    SingleStep(HANDLE),
+    Breakpoint { pc: u64 },
+    SingleStep { thread_id: DWORD },
 }
 
 fn is_debugger_notification(
@@ -744,7 +744,9 @@ fn is_debugger_notification(
         EXCEPTION_BREAKPOINT => {
             if target.saw_initial_bp() {
                 if target.breakpoint_set_at_addr(exception_address) {
-                    Some(DebuggerNotification::Breakpoint(exception_address))
+                    Some(DebuggerNotification::Breakpoint {
+                        pc: exception_address,
+                    })
                 } else {
                     None
                 }
@@ -764,10 +766,9 @@ fn is_debugger_notification(
         }
 
         EXCEPTION_SINGLE_STEP => {
-            if target.expecting_single_step(target.current_thread_handle()) {
-                Some(DebuggerNotification::SingleStep(
-                    target.current_thread_handle(),
-                ))
+            let thread_id = target.current_thread_id();
+            if target.expecting_single_step(thread_id) {
+                Some(DebuggerNotification::SingleStep { thread_id })
             } else {
                 // Unexpected single step - could be a logic bug in the debugger or less
                 // likely but possibly an intentional exception in the debug target.
