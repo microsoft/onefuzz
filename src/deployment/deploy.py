@@ -67,7 +67,6 @@ from registration import (
     add_application_password,
     assign_scaleset_role,
     authorize_application,
-    get_application,
     register_application,
     update_pool_registration,
 )
@@ -333,7 +332,7 @@ class Client:
                     filter="appId eq '%s'" % ONEFUZZ_CLI_APP
                 )
 
-        # onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
+        onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
         # cli_app = get_application(onefuzz_cli_app_uuid)
 
         if not cli_app:
