@@ -15,7 +15,7 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
 import requests
-from adal.adal_error import AdalError
+import adal # type: ignore
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
@@ -288,7 +288,7 @@ def add_application_password_impl(app_object_id: UUID) -> Tuple[str, str]:
             body=password_request,
         )
         return (str(key), password["secretText"])
-    except AdalError:
+    except adal.AdalError:
         return add_application_password_legacy(app_object_id)
 
 
@@ -346,7 +346,7 @@ def authorize_application(
                 }
             },
         )
-    except AdalError:
+    except adal.AdalError:
         logger.warning("*** Browse to: %s", FIX_URL % onefuzz_app_id)
         logger.warning("*** Then add the client application %s", registration_app_id)
 
@@ -503,7 +503,7 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
                     "appRoleId": managed_node_role["id"],
                 },
             )
-    except AdalError:
+    except adal.AdalError:
         assign_scaleset_role_manually(onefuzz_instance_name, scaleset_name)
 
 
