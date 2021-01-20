@@ -286,7 +286,6 @@ def authorize_application(
 ) -> None:
     logger.warning("*** Browse to: %s", FIX_URL % onefuzz_app_id)
     logger.warning("*** Then add the client application %s", registration_app_id)
-    input("Press Enter to continue...")
 
 
 def create_and_display_registration(
@@ -356,21 +355,20 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
             "registration. Please redeploy the instance"
         )
 
-    body = '{ "principalId": %s, "resourceId": %s, "appRoleId": %s}' % (
+    body = '{ "principalId": "%s", "resourceId": "%s", "appRoleId": "%s"}' % (
         scaleset_service_principal.object_id,
         onefuzz_service_principal.object_id,
         app_roles[0].id,
     )
 
     query = (
-        "az rest --method get --url https://graph.microsoft.com/v1.0/servicePrincipals/%s/appRoleAssignments --body '%s'"
+        "az rest --method post --url https://graph.microsoft.com/v1.0/servicePrincipals/%s/appRoleAssignedTo --body '%s' --headers \"Content-Type\"=application/json"
         % (scaleset_service_principal.object_id, body)
     )
 
     logger.warning(
-        "execute the following query to complete the role assignment : \n%s" % query
+        "execute the following query in the azure portal bash shell : \n%s" % query
     )
-    input("Press Enter to continue...")
 
 
 def main() -> None:
