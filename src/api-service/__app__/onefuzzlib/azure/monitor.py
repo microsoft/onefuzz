@@ -4,17 +4,17 @@
 # Licensed under the MIT License.
 
 import os
-from typing import Any, Dict
+from typing import Dict
 
-from azure.mgmt.loganalytics import OperationalInsightsManagementClient
+from azure.mgmt.loganalytics import LogAnalyticsManagementClient
 from memoization import cached
 
 from .creds import get_base_resource_group, get_identity, get_subscription
 
 
 @cached
-def get_montior_client() -> Any:
-    return OperationalInsightsManagementClient(get_identity(), get_subscription())
+def get_montior_client() -> LogAnalyticsManagementClient:
+    return LogAnalyticsManagementClient(get_identity(), get_subscription())
 
 
 @cached(ttl=60)
