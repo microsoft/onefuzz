@@ -309,6 +309,16 @@ pub fn set_property(entry: EventData) {
     }
 }
 
+fn local_log_event(event: &Event, properties: &[EventData]) {
+    let as_values = properties
+        .iter()
+        .map(|x| x.as_values())
+        .map(|(x, y)| format!("{}:{}", x, y))
+        .collect::<Vec<String>>()
+        .join(" ");
+    log::log!(log::Level::Info, "{} {}", event.as_str(), as_values);
+}
+
 pub fn track_event(event: Event, properties: Vec<EventData>) {
     use appinsights::telemetry::Telemetry;
 
@@ -334,6 +344,7 @@ pub fn track_event(event: Event, properties: Vec<EventData>) {
         }
         client.track(evt);
     }
+    local_log_event(&event, &properties);
 }
 
 #[macro_export]
