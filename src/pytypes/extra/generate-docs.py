@@ -223,7 +223,9 @@ def main():
         "Each event will be submitted via HTTP POST to the user provided URL.",
     )
 
-    typed(3, "Example", message.json(indent=4, exclude_none=True), "json")
+    typed(
+        3, "Example", message.json(indent=4, exclude_none=True, sort_keys=True), "json"
+    )
     layer(2, "Event Types (EventType)")
 
     event_map = {get_event_type(x).name: x for x in examples}
@@ -236,10 +238,15 @@ def main():
     for name in sorted(event_map.keys()):
         example = event_map[name]
         layer(3, name)
-        typed(4, "Example", example.json(indent=4, exclude_none=True), "json")
-        typed(4, "Schema", example.schema_json(indent=4), "json")
+        typed(
+            4,
+            "Example",
+            example.json(indent=4, exclude_none=True, sort_keys=True),
+            "json",
+        )
+        typed(4, "Schema", example.schema_json(indent=4, sort_keys=True), "json")
 
-    typed(2, "Full Event Schema", message.schema_json(indent=4), "json")
+    typed(2, "Full Event Schema", message.schema_json(indent=4, sort_keys=True), "json")
 
 
 if __name__ == "__main__":
