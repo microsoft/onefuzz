@@ -18,6 +18,7 @@ from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.pools import Node, Pool
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 
@@ -107,7 +108,13 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     return create_registration_response(node.machine_id, pool)
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
     methods = {"POST": post, "GET": get}
     method = methods[req.method]
-    return call_if_agent(req, method)
+    result = call_if_agent(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result
