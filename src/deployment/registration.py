@@ -14,8 +14,8 @@ from random import choice
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
+import adal  # type: ignore
 import requests
-import adal # type: ignore
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
