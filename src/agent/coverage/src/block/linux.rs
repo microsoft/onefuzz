@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{format_err, Result};
-use iced_x86::{Decoder, DecoderOptions, Instruction};
 use goblin::elf;
+use iced_x86::{Decoder, DecoderOptions, Instruction};
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
 use serde::{Deserialize, Serialize};
@@ -392,7 +392,9 @@ pub fn find_module_blocks(module: &Path) -> Result<Vec<Block>> {
     let mut leaders = BTreeSet::new();
 
     for sym in object.syms.iter() {
-        if sym.st_size == 0 { continue; }
+        if sym.st_size == 0 {
+            continue;
+        }
 
         if sym.is_function() {
             let section = object
@@ -422,7 +424,11 @@ pub fn find_module_blocks(module: &Path) -> Result<Vec<Block>> {
 /// block leaders of the function `sym`.
 ///
 /// Assumes `sym` is a function symbol (has type `STT_FUNC`) with nonzero size.
-pub fn find_symbol_block_leaders(data: &[u8], section: elf::SectionHeader, sym: elf::Sym) -> Result<BTreeSet<u64>> {
+pub fn find_symbol_block_leaders(
+    data: &[u8],
+    section: elf::SectionHeader,
+    sym: elf::Sym,
+) -> Result<BTreeSet<u64>> {
     // For executables and shared objects, `st_value` contains the VA of the symbol.
     //
     // https://refspecs.linuxbase.org/elf/gabi4+/ch4.symtab.html#symbol_value
