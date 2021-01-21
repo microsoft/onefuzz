@@ -839,6 +839,8 @@ class Tasks(Endpoint):
             supervisor_options = []
         if supervisor_env is None:
             supervisor_env = {}
+        if report_list is None:
+            report_list = []
 
         if prereq_tasks is None:
             prereq_tasks = []

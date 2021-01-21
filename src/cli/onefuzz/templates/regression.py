@@ -77,7 +77,7 @@ class Regression(Command):
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.input_reports, input_reports),
             (ContainerType.crashes, crashes),
-            (ContainerType.reports, containers[ContainerType.reports]),
+            (ContainerType.reports, helper.containers[ContainerType.reports]),
             (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
         ]
 
