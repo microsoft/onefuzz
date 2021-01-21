@@ -5,12 +5,10 @@
 
 import argparse
 import logging
-import string
 import time
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from random import choice
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
@@ -246,11 +244,8 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
 
 
 def add_application_password_legacy(app_object_id: UUID) -> Tuple[str, str]:
-    key = uuid4()
-    password = "".join(
-        choice(string.ascii_letters + string.punctuation + string.digits)
-        for x in range(16)
-    )
+    key = str(uuid4())
+    password = str(uuid4())
 
     client = get_graph_client()
     password_cred = [
@@ -260,12 +255,12 @@ def add_application_password_legacy(app_object_id: UUID) -> Tuple[str, str]:
             % (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
                 "%Y-%m-%dT%H:%M.%fZ"
             ),
-            key_id=str(key),
+            key_id=key,
             value=password,
         )
     ]
     client.applications.update_password_credentials(app_object_id, password_cred)
-    return (str(key), password)
+    return (key, password)
 
 
 def add_application_password_impl(app_object_id: UUID) -> Tuple[str, str]:
