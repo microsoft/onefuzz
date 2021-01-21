@@ -1,11 +1,17 @@
 {
-    "bindings": [
-        {
-            "direction": "in",
-            "name": "mytimer",
-            "schedule": "1.00:00:00",
-            "type": "timerTrigger"
-        }
-    ],
-    "scriptFile": "__init__.py"
+  "bindings": [
+    {
+      "direction": "in",
+      "name": "mytimer",
+      "schedule": "1.00:00:00",
+      "type": "timerTrigger"
+    },
+    {
+      "type": "signalR",
+      "direction": "out",
+      "name": "dashboard",
+      "hubName": "dashboard"
+    }
+  ],
+  "scriptFile": "__init__.py"
 }

@@ -272,7 +272,8 @@ class TestOnefuzz:
 
         # check if the task itself has an error
         if task.error is not None:
-            return "task failed: %s - %s (%s)" % (
+            return "task failed: %s - %s - %s (%s)" % (
+                task_id,
                 self.jobs[self.tasks[task_id]].config.name,
                 task.config.task.type.name,
                 task.error,
