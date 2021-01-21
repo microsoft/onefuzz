@@ -312,7 +312,7 @@ def authorize_application(
     try:
         onefuzz_app = get_application(onefuzz_app_id)
         if onefuzz_app is None:
-            logger.error("Application '%s' not found" % onefuzz_app_id)
+            logger.error("Application '%s' not found", onefuzz_app_id)
             return
 
         scopes = seq(onefuzz_app["api"]["oauth2PermissionScopes"]).filter(
