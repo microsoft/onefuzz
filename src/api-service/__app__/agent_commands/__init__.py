@@ -9,6 +9,7 @@ from onefuzztypes.requests import NodeCommandDelete, NodeCommandGet
 from onefuzztypes.responses import BoolResult, PendingNodeCommand
 
 from ..onefuzzlib.endpoint_authorization import call_if_agent
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.pools import NodeMessage
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -42,7 +43,13 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     return ok(BoolResult(result=True))
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
     methods = {"DELETE": delete, "GET": get}
     method = methods[req.method]
-    return call_if_agent(req, method)
+    result = call_if_agent(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result
