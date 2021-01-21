@@ -9,6 +9,8 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import NodeAddSshKey
 from onefuzztypes.responses import BoolResult
 
+from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.pools import Node
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -31,8 +33,13 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     return ok(BoolResult(result=True))
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "POST":
-        return post(req)
-    else:
-        raise Exception("invalid method")
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+    methods = {"POST": post}
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result
