@@ -8,6 +8,7 @@ from onefuzztypes.job_templates import JobTemplateRequest
 from onefuzztypes.models import Error
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.job_templates.templates import JobTemplateIndex
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.user_credentials import parse_jwt_token
@@ -34,7 +35,13 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     return ok(job)
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
     methods = {"GET": get, "POST": post}
     method = methods[req.method]
-    return call_if_user(req, method)
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result
