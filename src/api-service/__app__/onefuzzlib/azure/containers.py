@@ -20,8 +20,7 @@ from azure.storage.blob import (
     generate_blob_sas,
     generate_container_sas,
 )
-
-# from memoization import cached
+from memoization import cached
 from onefuzztypes.primitives import Container
 
 from .storage import (
@@ -32,9 +31,8 @@ from .storage import (
     get_storage_account_name_key_by_name,
 )
 
-# @cached
 
-
+@cached
 def get_blob_service(account_id: str) -> BlobServiceClient:
     logging.debug("getting blob container (account_id: %s)", account_id)
     account_name, account_key = get_storage_account_name_key(account_id)

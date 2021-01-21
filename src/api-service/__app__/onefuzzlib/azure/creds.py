@@ -35,18 +35,6 @@ def get_identity() -> DefaultAzureCredential:
 
 
 @cached
-def mgmt_client_factory(client_class: Any) -> Any:
-    try:
-        from azure.common.client_factory import get_client_from_cli_profile
-
-        return get_client_from_cli_profile(client_class)
-    except Exception:
-        pass
-
-    return client_class(get_msi(), get_subscription())
-
-
-@cached
 def get_base_resource_group() -> Any:  # should be str
     return parse_resource_id(os.environ["ONEFUZZ_RESOURCE_GROUP"])["resource_group"]
 
@@ -107,8 +95,9 @@ def get_regions() -> List[str]:
     return sorted([x.name for x in locations])
 
 
-def get_graph_client() -> Any:
-    return mgmt_client_factory(GraphRbacManagementClient)
+@cached
+def get_graph_client() -> GraphRbacManagementClient:
+    return GraphRbacManagementClient(get_msi(), get_subscription())
 
 
 def is_member_of(group_id: str, member_id: str) -> bool:
