@@ -63,6 +63,13 @@ def find_container(
 ) -> Optional[ContainerClient]:
     accounts = get_accounts(storage_type)
 
+    # check secondary accounts first by searching in reverse.
+    #
+    # By implementation, the primary account is specified first, followed by
+    # any secondary accounts.
+    #
+    # Secondary accounts, if they exist, are preferred for containers and have
+    # increased IOP rates, this should be a slight optimization
     for account in reversed(accounts):
         client = get_blob_service(account).get_container_client(container)
         try:
