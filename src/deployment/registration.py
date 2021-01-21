@@ -260,7 +260,7 @@ def add_application_password_legacy(app_object_id: UUID) -> Tuple[str, str]:
             % (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
                 "%Y-%m-%dT%H:%M.%fZ"
             ),
-            key_id="%s" % key,
+            key_id=str(key),
             value=password,
         )
     ]
