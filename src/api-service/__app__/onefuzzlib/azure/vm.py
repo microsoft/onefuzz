@@ -16,7 +16,7 @@ from onefuzztypes.models import Authentication, Error
 from onefuzztypes.primitives import Extension, Region
 from pydantic import BaseModel
 
-from .compute import get_client
+from .compute import get_compute_client
 from .creds import get_base_resource_group
 from .disk import delete_disk, list_disks
 from .image import get_os
@@ -27,7 +27,7 @@ def get_vm(name: str) -> Optional[VirtualMachine]:
     resource_group = get_base_resource_group()
 
     logging.debug("getting vm: %s", name)
-    compute_client = get_client()
+    compute_client = get_compute_client()
     try:
         return cast(
             VirtualMachine,
@@ -51,7 +51,7 @@ def create_vm(
     resource_group = get_base_resource_group()
     logging.info("creating vm %s:%s:%s", resource_group, location, name)
 
-    compute_client = get_client()
+    compute_client = get_compute_client()
 
     nic = get_public_nic(resource_group, name)
     if nic is None:
@@ -127,7 +127,7 @@ def get_extension(vm_name: str, extension_name: str) -> Optional[Any]:
         vm_name,
         extension_name,
     )
-    compute_client = get_client()
+    compute_client = get_compute_client()
     try:
         return compute_client.virtual_machine_extensions.get(
             resource_group, vm_name, extension_name
@@ -143,7 +143,7 @@ def create_extension(vm_name: str, extension: Dict) -> Any:
     logging.info(
         "creating extension: %s:%s:%s", resource_group, vm_name, extension["name"]
     )
-    compute_client = get_client()
+    compute_client = get_compute_client()
     return compute_client.virtual_machine_extensions.begin_create_or_update(
         resource_group, vm_name, extension["name"], extension
     )
@@ -153,7 +153,7 @@ def delete_vm(name: str) -> Any:
     resource_group = get_base_resource_group()
 
     logging.info("deleting vm: %s %s", resource_group, name)
-    compute_client = get_client()
+    compute_client = get_compute_client()
     return compute_client.virtual_machines.begin_delete(resource_group, name)
 
 

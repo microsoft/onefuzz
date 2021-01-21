@@ -5,5 +5,5 @@ from .creds import get_identity, get_subscription
 
 
 @cached
-def get_client() -> NetworkManagementClient:
+def get_network_client() -> NetworkManagementClient:
     return NetworkManagementClient(get_identity(), get_subscription())

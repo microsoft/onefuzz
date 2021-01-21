@@ -21,14 +21,14 @@ from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from .compute import get_client
+from .compute import get_compute_client
 from .creds import get_base_resource_group, get_scaleset_identity_resource_path
 from .image import get_os
 
 
 def list_vmss(name: UUID) -> Optional[List[str]]:
     resource_group = get_base_resource_group()
-    client = get_client()
+    client = get_compute_client()
     try:
         instances = [
             x.instance_id
@@ -45,7 +45,7 @@ def list_vmss(name: UUID) -> Optional[List[str]]:
 
 def delete_vmss(name: UUID) -> bool:
     resource_group = get_base_resource_group()
-    compute_client = get_client()
+    compute_client = get_compute_client()
     try:
         compute_client.virtual_machine_scale_sets.begin_delete(
             resource_group, str(name)
@@ -60,7 +60,7 @@ def delete_vmss(name: UUID) -> bool:
 def get_vmss(name: UUID) -> Optional[Any]:
     resource_group = get_base_resource_group()
     logging.debug("getting vm: %s", name)
-    compute_client = get_client()
+    compute_client = get_compute_client()
     try:
         return compute_client.virtual_machine_scale_sets.get(resource_group, str(name))
     except (ResourceNotFoundError, CloudError) as err:
@@ -74,7 +74,7 @@ def resize_vmss(name: UUID, capacity: int) -> None:
 
     resource_group = get_base_resource_group()
     logging.info("updating VM count - name: %s vm_count: %d", name, capacity)
-    compute_client = get_client()
+    compute_client = get_compute_client()
     compute_client.virtual_machine_scale_sets.begin_update(
         resource_group, str(name), {"sku": {"capacity": capacity}}
     )
@@ -90,7 +90,7 @@ def get_vmss_size(name: UUID) -> Optional[int]:
 def list_instance_ids(name: UUID) -> Dict[UUID, str]:
     logging.debug("get instance IDs for scaleset: %s", name)
     resource_group = get_base_resource_group()
-    compute_client = get_client()
+    compute_client = get_compute_client()
 
     results = {}
     try:
@@ -107,7 +107,7 @@ def list_instance_ids(name: UUID) -> Dict[UUID, str]:
 def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
     resource_group = get_base_resource_group()
     logging.info("get instance ID for scaleset node: %s:%s", name, vm_id)
-    compute_client = get_client()
+    compute_client = get_compute_client()
 
     vm_id_str = str(vm_id)
     for instance in compute_client.virtual_machine_scale_set_vms.list(
@@ -142,7 +142,7 @@ def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
     resource_group = get_base_resource_group()
     logging.info("reimaging scaleset VM - name: %s vm_ids:%s", name, vm_ids)
-    compute_client = get_client()
+    compute_client = get_compute_client()
 
     instance_ids = []
     machine_to_id = list_instance_ids(name)
@@ -166,7 +166,7 @@ def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
     resource_group = get_base_resource_group()
     logging.info("deleting scaleset VM - name: %s vm_ids:%s", name, vm_ids)
-    compute_client = get_client()
+    compute_client = get_compute_client()
 
     instance_ids = []
     machine_to_id = list_instance_ids(name)
@@ -190,7 +190,7 @@ def update_extensions(name: UUID, extensions: List[Any]) -> None:
 
     resource_group = get_base_resource_group()
     logging.info("updating VM extensions: %s", name)
-    compute_client = get_client()
+    compute_client = get_compute_client()
     compute_client.virtual_machine_scale_sets.begin_update(
         resource_group,
         str(name),
@@ -230,7 +230,7 @@ def create_vmss(
 
     resource_group = get_base_resource_group()
 
-    compute_client = get_client()
+    compute_client = get_compute_client()
 
     if image.startswith("/"):
         image_ref = {"id": image}
@@ -335,7 +335,7 @@ def create_vmss(
 
 @cached(ttl=60)
 def list_available_skus(location: str) -> List[str]:
-    compute_client = get_client()
+    compute_client = get_compute_client()
 
     skus: List[ResourceSku] = list(
         compute_client.resource_skus.list(filter="location eq '%s'" % location)

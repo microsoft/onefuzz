@@ -15,7 +15,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 
 from .creds import get_base_resource_group
-from .network_mgmt_client import get_client
+from .network_mgmt_client import get_network_client
 from .subnet import create_virtual_network, get_subnet_id
 from .vmss import get_instance_id
 
@@ -27,7 +27,7 @@ def get_scaleset_instance_ip(scaleset: UUID, machine_id: UUID) -> Optional[str]:
 
     resource_group = get_base_resource_group()
 
-    client = get_client()
+    client = get_network_client()
     intf = client.network_interfaces.list_virtual_machine_scale_set_network_interfaces(
         resource_group, str(scaleset)
     )
@@ -50,7 +50,7 @@ def get_scaleset_instance_ip(scaleset: UUID, machine_id: UUID) -> Optional[str]:
 
 def get_ip(resource_group: str, name: str) -> Optional[Any]:
     logging.info("getting ip %s:%s", resource_group, name)
-    network_client = get_client()
+    network_client = get_network_client()
     try:
         return network_client.public_ip_addresses.get(resource_group, name)
     except (ResourceNotFoundError, CloudError):
@@ -59,14 +59,14 @@ def get_ip(resource_group: str, name: str) -> Optional[Any]:
 
 def delete_ip(resource_group: str, name: str) -> Any:
     logging.info("deleting ip %s:%s", resource_group, name)
-    network_client = get_client()
+    network_client = get_network_client()
     return network_client.public_ip_addresses.begin_delete(resource_group, name)
 
 
 def create_ip(resource_group: str, name: str, location: str) -> Any:
     logging.info("creating ip for %s:%s in %s", resource_group, name, location)
 
-    network_client = get_client()
+    network_client = get_network_client()
     params: Dict[str, Union[str, Dict[str, str]]] = {
         "location": location,
         "public_ip_allocation_method": "Dynamic",
@@ -80,7 +80,7 @@ def create_ip(resource_group: str, name: str, location: str) -> Any:
 
 def get_public_nic(resource_group: str, name: str) -> Optional[Any]:
     logging.info("getting  nic: %s %s", resource_group, name)
-    network_client = get_client()
+    network_client = get_network_client()
     try:
         return network_client.network_interfaces.get(resource_group, name)
     except (ResourceNotFoundError, CloudError):
@@ -89,14 +89,14 @@ def get_public_nic(resource_group: str, name: str) -> Optional[Any]:
 
 def delete_nic(resource_group: str, name: str) -> Optional[Any]:
     logging.info("deleting nic %s:%s", resource_group, name)
-    network_client = get_client()
+    network_client = get_network_client()
     return network_client.network_interfaces.begin_delete(resource_group, name)
 
 
 def create_public_nic(resource_group: str, name: str, location: str) -> Optional[Error]:
     logging.info("creating nic for %s:%s in %s", resource_group, name, location)
 
-    network_client = get_client()
+    network_client = get_network_client()
     subnet_id = get_subnet_id(resource_group, location)
     if not subnet_id:
         return create_virtual_network(resource_group, location, location)
@@ -134,7 +134,7 @@ def create_public_nic(resource_group: str, name: str, location: str) -> Optional
 
 def get_public_ip(resource_id: str) -> Optional[str]:
     logging.info("getting ip for %s", resource_id)
-    network_client = get_client()
+    network_client = get_network_client()
     resource = parse_resource_id(resource_id)
     ip = (
         network_client.network_interfaces.get(

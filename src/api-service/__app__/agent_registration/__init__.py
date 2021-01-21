@@ -17,8 +17,8 @@ from ..onefuzzlib.azure.creds import get_instance_url
 from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.endpoint_authorization import call_if_agent
-from ..onefuzzlib.pools import Node, Pool
 from ..onefuzzlib.events import get_events
+from ..onefuzzlib.pools import Node, Pool
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 

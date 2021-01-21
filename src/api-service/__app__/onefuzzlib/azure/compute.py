@@ -5,5 +5,5 @@ from .creds import get_identity, get_subscription
 
 
 @cached
-def get_client() -> ComputeManagementClient:
+def get_compute_client() -> ComputeManagementClient:
     return ComputeManagementClient(get_identity(), get_subscription())

@@ -12,11 +12,11 @@ from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 
-from .network_mgmt_client import get_client
+from .network_mgmt_client import get_network_client
 
 
 def get_subnet_id(resource_group: str, name: str) -> Optional[str]:
-    network_client = get_client()
+    network_client = get_network_client()
     try:
         subnet = network_client.subnets.get(resource_group, name, name)
         return cast(str, subnet.id)
@@ -30,7 +30,7 @@ def get_subnet_id(resource_group: str, name: str) -> Optional[str]:
 
 
 def delete_subnet(resource_group: str, name: str) -> Union[None, CloudError, Any]:
-    network_client = get_client()
+    network_client = get_network_client()
     try:
         return network_client.virtual_networks.begin_delete(resource_group, name)
     except (CloudError, ResourceNotFoundError) as err:
@@ -52,7 +52,7 @@ def create_virtual_network(
         location,
     )
 
-    network_client = get_client()
+    network_client = get_network_client()
     params = {
         "location": location,
         "address_space": {"address_prefixes": ["10.0.0.0/8"]},

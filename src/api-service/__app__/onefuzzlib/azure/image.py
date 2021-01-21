@@ -13,12 +13,12 @@ from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from .compute import get_client
+from .compute import get_compute_client
 
 
 @cached(ttl=60)
 def get_os(region: Region, image: str) -> Union[Error, OS]:
-    client = get_client()
+    client = get_compute_client()
     parsed = parse_resource_id(image)
     if "resource_group" in parsed:
         try:
