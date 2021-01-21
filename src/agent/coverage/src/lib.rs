@@ -10,6 +10,11 @@ mod intel;
 pub mod pe;
 
 pub mod block;
+pub mod cache;
+pub mod code;
+pub mod disasm;
+pub mod filter;
+mod region;
 
 use std::{
     ffi::OsString,

@@ -408,7 +408,10 @@ dependencies = [
  "pdb",
  "pete",
  "procfs",
+ "regex",
  "serde",
+ "serde_json",
+ "structopt",
  "uuid",
  "winapi 0.3.9",
 ]

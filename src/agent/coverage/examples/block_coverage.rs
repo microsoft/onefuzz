@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::env;
+use std::path::PathBuf;
 
 use anyhow::Result;
+use structopt::StructOpt;
 
 #[cfg(target_os = "windows")]
 fn main() -> Result<()> {
@@ -28,42 +29,68 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug, PartialEq, StructOpt)]
+struct Opt {
+    #[structopt(short, long)]
+    filter: Option<PathBuf>,
+
+    cmd: Vec<String>,
+}
+
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
-    use coverage::block::linux::record;
     use std::process::Command;
+
+    use coverage::code::{CmdFilter, CmdFilterSpec};
+    use coverage::block::linux::Recorder;
 
     env_logger::init();
 
-    let argv: Vec<_> = env::args().skip(1).collect();
-    if argv.is_empty() {
-        anyhow::bail!("empty target argv");
-    }
-    let mut cmd = Command::new(&argv[0]);
-    if argv.len() > 1 {
-        cmd.args(&argv[1..]);
-    }
+    let opt = Opt::from_args();
+    let filter = if let Some(path) = &opt.filter {
+        let data = std::fs::read(path)?;
+        let spec: CmdFilterSpec = serde_json::from_slice(&data)?;
+        CmdFilter::new(spec)?
+    } else {
+        CmdFilter::default()
+    };
 
-    let coverage = record(cmd)?;
+    let mut cmd = Command::new(&opt.cmd[0]);
+    cmd.args(&opt.cmd[1..]);
 
-    for m in coverage.modules.values() {
+    let mut recorder = Recorder::default();
+    recorder.module_filter = filter.modules;
+    recorder.symbol_filter = filter.symbols;
+    recorder.record(cmd)?;
+
+    for (module_path, cov) in recorder.coverage.iter() {
         let mut hit = 0;
         let mut found = 0;
 
-        let name = m.module.file_name().unwrap().to_string_lossy();
+        let name = module_path.name_lossy();
 
-        log::info!("{}", m.module.display());
+        log::info!("{}", module_path);
 
-        for b in m.blocks.values() {
+        for block in cov.blocks.values() {
             found += 1;
 
-            if b.count > 0 {
+            if block.count > 0 {
                 hit += 1;
-            };
+            }
 
-            let marker = if b.count == 0 { " " } else { "x" };
+            let marker = if block.count == 0 { " " } else { "x" };
 
-            log::debug!("  [{}] {}+{:x}", marker, name, b.offset);
+            let module = recorder.modules.cached.get(module_path).unwrap();
+
+            if let Some(sym) = module.module.symbols.find(block.offset) {
+                let sym_offset = block.offset - sym.image_offset;
+                log::debug!(
+                    "  [{}] {}+{:x} ({}+{:x})",
+                    marker, name, block.offset, sym.name, sym_offset,
+                );
+            } else {
+                log::debug!("  [{}] {}+{:x}", marker, name, block.offset);
+            }
         }
 
         let percent = 100.0 * (hit as f64) / (found as f64);
