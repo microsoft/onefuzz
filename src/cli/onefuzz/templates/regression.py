@@ -40,6 +40,7 @@ class Regression(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         check_retry_count: Optional[int] = None,
         check_fuzzer_help: bool = True,
+        fail_on_repro: bool = False,
     ) -> Optional[Job]:
 
         if dryrun:
@@ -103,6 +104,15 @@ class Regression(Command):
             check_fuzzer_help=check_fuzzer_help,
             report_list=report_list,
         )
+
+        if fail_on_repro:
+            repro_count = len(
+                self.onefuzz.containers.files.list(
+                    helper.containers[ContainerType.reports]
+                ).files
+            )
+            if repro_count > 0:
+                raise Exception("Failure detected")
 
         self.logger.info("done creating tasks")
         helper.wait()
