@@ -51,7 +51,6 @@ def delete_vmss(name: UUID) -> bool:
             resource_group, str(name)
         )
     except ResourceNotFoundError:
-        logging.info("scaleset already deleted: %s", name)
         return True
     except CloudError as err:
         logging.error("cloud error deleting vmss: %s (%s)", name, err)

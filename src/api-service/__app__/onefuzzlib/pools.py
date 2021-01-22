@@ -1078,17 +1078,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.info("deleting node %s:%s", self.scaleset_id, node.machine_id)
             node.delete()
 
-        vmss = get_vmss(self.scaleset_id)
-        if vmss:
-            logging.info("scaleset deleting: %s", self.scaleset_id)
-            if delete_vmss(self.scaleset_id):
-                logging.info("scaleset deleted: %s", self.scaleset_id)
-                self.delete()
-            else:
-                self.save()
-        else:
+        logging.info("scaleset delete starting", self.scaleset_id)
+        if delete_vmss(self.scaleset_id):
             logging.info("scaleset deleted: %s", self.scaleset_id)
             self.delete()
+        else:
+            self.save()
 
     @classmethod
     def scaleset_max_size(cls, image: str) -> int:
