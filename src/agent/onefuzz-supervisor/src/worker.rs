@@ -225,9 +225,8 @@ impl IWorkerRunner for WorkerRunner {
 
         let mut cmd = Command::new("onefuzz-agent");
         cmd.current_dir(&working_dir);
-        cmd.arg("-c");
+        cmd.arg("managed");
         cmd.arg("config.json");
-        cmd.arg("-s");
         cmd.arg(setup_dir);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());

@@ -628,6 +628,14 @@
         {
             "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
             "apiVersion": "2018-03-01-preview",
+            "name": "[concat(variables('storageAccountNameFunc'), '/default/', 'proxy-configs')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2018-03-01-preview",
             "name": "[concat(variables('storageAccountNameFunc'), '/default/', 'task-configs')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"

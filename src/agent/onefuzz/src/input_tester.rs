@@ -113,10 +113,12 @@ impl<'a> Tester<'a> {
     #[cfg(target_os = "linux")]
     async fn test_input_debugger(
         &self,
-        mut argv: Vec<String>,
+        args: Vec<String>,
         env: HashMap<String, String>,
     ) -> Result<Option<Crash>> {
-        argv.insert(0, self.exe_path.display().to_string());
+        let mut cmd = std::process::Command::new(self.exe_path);
+        cmd.args(args);
+        cmd.envs(&env);
 
         let (sender, receiver) = std::sync::mpsc::channel();
 
@@ -126,7 +128,7 @@ impl<'a> Tester<'a> {
             // Spawn a triage run, but stop it before execing.
             //
             // This calls a blocking `wait()` internally, on the forked child.
-            let triage = crate::triage::TriageCommand::new(argv, env)?;
+            let triage = crate::triage::TriageCommand::new(cmd)?;
 
             // Share the new child ID with main thread.
             sender.send(triage.pid())?;

@@ -4,22 +4,27 @@
 use anyhow::Result;
 use onefuzz::{
     asan::AsanLog,
-    blob::{BlobClient, BlobContainerUrl, BlobUrl},
+    blob::{BlobClient, BlobUrl},
+    fs::exists,
     syncdir::SyncedDir,
-    telemetry::Event::{new_report, new_unable_to_reproduce, new_unique_report},
+    telemetry::{
+        Event::{new_report, new_unable_to_reproduce, new_unique_report},
+        EventData,
+    },
 };
-
-use reqwest::StatusCode;
+use reqwest::{StatusCode, Url};
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use tokio::fs;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CrashReport {
     pub input_sha256: String,
 
-    pub input_blob: InputBlob,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_blob: Option<InputBlob>,
 
     pub executable: PathBuf,
 
@@ -44,7 +49,8 @@ pub struct CrashReport {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct NoCrash {
     pub input_sha256: String,
-    pub input_blob: InputBlob,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_blob: Option<InputBlob>,
     pub executable: PathBuf,
     pub task_id: Uuid,
     pub job_id: Uuid,
@@ -59,44 +65,44 @@ pub enum CrashTestResult {
 }
 
 // Conditionally upload a report, if it would not be a duplicate.
-//
-// Use SHA-256 of call stack as dedupe key.
-async fn upload_deduped(report: &CrashReport, container: &BlobContainerUrl) -> Result<()> {
+async fn upload<T: Serialize>(report: &T, url: Url) -> Result<bool> {
     let blob = BlobClient::new();
-    let deduped_name = report.unique_blob_name();
-    let deduped_url = container.blob(deduped_name).url();
     let result = blob
-        .put(deduped_url)
+        .put(url)
         .json(report)
         // Conditional PUT, only if-not-exists.
         // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
         .header("If-None-Match", "*")
         .send_retry_default()
         .await?;
-    if result.status() == StatusCode::CREATED {
-        event!(new_unique_report;);
+    Ok(result.status() == StatusCode::CREATED)
+}
+
+async fn upload_or_save_local<T: Serialize>(
+    report: &T,
+    dest_name: &str,
+    container: &SyncedDir,
+) -> Result<bool> {
+    match &container.url {
+        Some(blob_url) => {
+            let url = blob_url.blob(dest_name).url();
+            upload(report, url).await
+        }
+        None => {
+            let path = container.path.join(dest_name);
+            if !exists(&path).await? {
+                let data = serde_json::to_vec(&report)?;
+                fs::write(path, data).await?;
+                Ok(true)
+            } else {
+                Ok(false)
+            }
+        }
     }
-    Ok(())
-}
-
-async fn upload_report(report: &CrashReport, container: &BlobContainerUrl) -> Result<()> {
-    event!(new_report;);
-    let blob = BlobClient::new();
-    let url = container.blob(report.blob_name()).url();
-    blob.put(url).json(report).send_retry_default().await?;
-    Ok(())
-}
-
-async fn upload_no_repro(report: &NoCrash, container: &BlobContainerUrl) -> Result<()> {
-    event!(new_unable_to_reproduce;);
-    let blob = BlobClient::new();
-    let url = container.blob(report.blob_name()).url();
-    blob.put(url).json(report).send_retry_default().await?;
-    Ok(())
 }
 
 impl CrashTestResult {
-    pub async fn upload(
+    pub async fn save(
         &self,
         unique_reports: &SyncedDir,
         reports: &Option<SyncedDir>,
@@ -104,14 +110,26 @@ impl CrashTestResult {
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
-                upload_deduped(report, &unique_reports.url).await?;
+                // Use SHA-256 of call stack as dedupe key.
+                let name = report.unique_blob_name();
+                if upload_or_save_local(&report, &name, unique_reports).await? {
+                    event!(new_unique_report; EventData::Path = name);
+                }
+
                 if let Some(reports) = reports {
-                    upload_report(report, &reports.url).await?;
+                    let name = report.blob_name();
+                    if upload_or_save_local(&report, &name, reports).await? {
+                        event!(new_report; EventData::Path = name);
+                    }
                 }
             }
+
             Self::NoRepro(report) => {
                 if let Some(no_repro) = no_repro {
-                    upload_no_repro(report, &no_repro.url).await?;
+                    let name = report.blob_name();
+                    if upload_or_save_local(&report, &name, no_repro).await? {
+                        event!(new_unable_to_reproduce; EventData::Path = name);
+                    }
                 }
             }
         }
@@ -142,7 +160,7 @@ impl CrashReport {
         task_id: Uuid,
         job_id: Uuid,
         executable: impl Into<PathBuf>,
-        input_blob: InputBlob,
+        input_blob: Option<InputBlob>,
         input_sha256: String,
     ) -> Self {
         Self {

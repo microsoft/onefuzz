@@ -16,6 +16,7 @@ use tokio::process::{Child, Command};
 
 const DEFAULT_MAX_TOTAL_SECONDS: i32 = 10 * 60;
 
+#[derive(Debug)]
 pub struct LibFuzzerMergeOutput {
     pub added_files_count: i32,
     pub added_feature_count: i32,

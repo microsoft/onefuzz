@@ -5,8 +5,9 @@ use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use futures::stream::StreamExt;
-use onefuzz::{blob::BlobUrl, fs::OwnedDir, jitter::delay_with_jitter, syncdir::SyncedDir};
+use onefuzz::{blob::BlobUrl, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
+use tempfile::{tempdir, TempDir};
 use tokio::{fs, time::Duration};
 
 mod callback;
@@ -17,12 +18,12 @@ const POLL_INTERVAL: Duration = Duration::from_secs(10);
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub enum State<M> {
     Ready,
     Polled(Option<M>),
     Parsed(M, Url),
-    Downloaded(M, Url, PathBuf),
+    Downloaded(M, Url, PathBuf, TempDir),
     Processed(M),
 }
 
@@ -78,10 +79,6 @@ impl<'a, M> fmt::Debug for Event<'a, M> {
 /// application data (here, the input URL, in some encoding) and metadata for
 /// operations like finalizing a dequeue with a pop receipt.
 pub struct InputPoller<M> {
-    /// Agent-local directory where the poller will download inputs.
-    /// Will be reset for each new input.
-    working_dir: OwnedDir,
-
     /// Internal automaton state.
     ///
     /// This is only nullable so we can internally `take()` the current state
@@ -92,12 +89,10 @@ pub struct InputPoller<M> {
 }
 
 impl<M> InputPoller<M> {
-    pub fn new(working_dir: impl Into<PathBuf>) -> Self {
-        let working_dir = OwnedDir::new(working_dir);
+    pub fn new() -> Self {
         let state = Some(State::Ready);
         Self {
             state,
-            working_dir,
             batch_dir: None,
         }
     }
@@ -109,11 +104,14 @@ impl<M> InputPoller<M> {
         to_process: &SyncedDir,
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
-        to_process.init_pull().await?;
+        if to_process.url.is_some() {
+            to_process.init_pull().await?;
+        }
+        info!("batch processing directory: {}", to_process.path.display());
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
-            verbose!("Processing batch-downloaded input {:?}", file);
+            info!("Processing batch-downloaded input {:?}", file);
 
             let file = file?;
             let path = file.path();
@@ -126,7 +124,7 @@ impl<M> InputPoller<M> {
                 let dir_relative = input_path.strip_prefix(&dir_path)?;
                 dir_relative.display().to_string()
             };
-            let url = to_process.url.blob(blob_name).url();
+            let url = to_process.try_url().map(|x| x.blob(blob_name).url()).ok();
 
             processor.process(url, &path).await?;
         }
@@ -137,8 +135,8 @@ impl<M> InputPoller<M> {
     pub async fn seen_in_batch(&self, url: &Url) -> Result<bool> {
         let result = if let Some(batch_dir) = &self.batch_dir {
             if let Ok(blob) = BlobUrl::new(url.clone()) {
-                batch_dir.url.account() == blob.account()
-                    && batch_dir.url.container() == blob.container()
+                batch_dir.try_url()?.account() == blob.account()
+                    && batch_dir.try_url()?.container() == blob.container()
                     && batch_dir.path.join(blob.name()).exists()
             } else {
                 false
@@ -147,15 +145,6 @@ impl<M> InputPoller<M> {
             false
         };
         Ok(result)
-    }
-
-    /// Path to the working directory.
-    ///
-    /// We will create or reset the working directory before entering the
-    /// `Downloaded` state, but a caller cannot otherwise assume it exists.
-    #[allow(unused)]
-    pub fn working_dir(&self) -> &OwnedDir {
-        &self.working_dir
     }
 
     /// Get the current automaton state, including the state data.
@@ -168,13 +157,14 @@ impl<M> InputPoller<M> {
     }
 
     pub async fn run(&mut self, mut cb: impl Callback<M>) -> Result<()> {
+        info!("starting input queue polling");
         loop {
             match self.state() {
                 State::Polled(None) => {
                     verbose!("Input queue empty, sleeping");
                     delay_with_jitter(POLL_INTERVAL).await;
                 }
-                State::Downloaded(_msg, _url, input) => {
+                State::Downloaded(_msg, _url, input, _tempdir) => {
                     info!("Processing downloaded input: {:?}", input);
                 }
                 _ => {}
@@ -249,21 +239,23 @@ impl<M> InputPoller<M> {
                 }
             }
             (Parsed(msg, url), Download(downloader)) => {
-                self.working_dir.reset().await?;
-
+                let download_dir = tempdir()?;
                 if self.seen_in_batch(&url).await? {
                     verbose!("url was seen during batch processing: {:?}", url);
                     self.set_state(Processed(msg));
                 } else {
                     let input = downloader
-                        .download(url.clone(), self.working_dir.path())
+                        .download(url.clone(), download_dir.path())
                         .await?;
 
-                    self.set_state(Downloaded(msg, url, input));
+                    self.set_state(Downloaded(msg, url, input, download_dir));
                 }
             }
-            (Downloaded(msg, url, input), Process(processor)) => {
-                processor.process(url, &input).await?;
+            // NOTE: _download_dir is a TempDir, which the physical path gets
+            // deleted automatically upon going out of scope.  Keep it in-scope until
+            // here.
+            (Downloaded(msg, url, input, _download_dir), Process(processor)) => {
+                processor.process(Some(url), &input).await?;
 
                 self.set_state(Processed(msg));
             }

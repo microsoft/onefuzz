@@ -8,7 +8,7 @@ import logging
 from uuid import UUID
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, NodeState
+from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.requests import AgentRegistrationGet, AgentRegistrationPost
 from onefuzztypes.responses import AgentRegistration
@@ -17,7 +17,8 @@ from ..onefuzzlib.azure.creds import get_instance_url
 from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.endpoint_authorization import call_if_agent
-from ..onefuzzlib.pools import Node, NodeMessage, NodeTasks, Pool
+from ..onefuzzlib.events import get_events
+from ..onefuzzlib.pools import Node, Pool
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 
@@ -95,28 +96,25 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     node = Node.get_by_machine_id(registration_request.machine_id)
     if node:
-        if node.version != registration_request.version:
-            NodeMessage.clear_messages(node.machine_id)
-        node.version = registration_request.version
-        node.reimage_requested = False
-        node.reimage_queued = False
-        node.set_state(NodeState.init)
-    else:
-        node = Node.create(
-            pool_name=registration_request.pool_name,
-            machine_id=registration_request.machine_id,
-            scaleset_id=registration_request.scaleset_id,
-            version=registration_request.version,
-        )
+        node.delete()
 
-    # if any tasks were running during an earlier instance of this node, clear them out
-    node.mark_tasks_stopped_early()
-    NodeTasks.clear_by_machine_id(node.machine_id)
+    node = Node.create(
+        pool_name=registration_request.pool_name,
+        machine_id=registration_request.machine_id,
+        scaleset_id=registration_request.scaleset_id,
+        version=registration_request.version,
+    )
 
     return create_registration_response(node.machine_id, pool)
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
     methods = {"POST": post, "GET": get}
     method = methods[req.method]
-    return call_if_agent(req, method)
+    result = call_if_agent(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

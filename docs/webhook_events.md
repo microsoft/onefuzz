@@ -10,11 +10,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "event_id": "00000000-0000-0000-0000-000000000000",
-    "event_type": "ping",
     "event": {
         "ping_id": "00000000-0000-0000-0000-000000000000"
     },
+    "event_id": "00000000-0000-0000-0000-000000000000",
+    "event_type": "ping",
     "webhook_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
@@ -48,30 +48,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "container": "container-name",
+    "filename": "example.json",
     "report": {
-        "input_blob": {
-            "account": "contoso-storage-account",
-            "container": "crashes",
-            "name": "input.txt"
-        },
-        "executable": "fuzz.exe",
-        "crash_type": "example crash report type",
-        "crash_site": "example crash site",
+        "asan_log": "example asan log",
         "call_stack": [
             "#0 line",
             "#1 line",
             "#2 line"
         ],
         "call_stack_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "crash_site": "example crash site",
+        "crash_type": "example crash report type",
+        "executable": "fuzz.exe",
+        "input_blob": {
+            "account": "contoso-storage-account",
+            "container": "crashes",
+            "name": "input.txt"
+        },
         "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "asan_log": "example asan log",
-        "task_id": "00000000-0000-0000-0000-000000000000",
         "job_id": "00000000-0000-0000-0000-000000000000",
+        "scariness_description": "example-scariness",
         "scariness_score": 10,
-        "scariness_description": "example-scariness"
-    },
-    "container": "container-name",
-    "filename": "example.json"
+        "task_id": "00000000-0000-0000-0000-000000000000"
+    }
 }
 ```
 
@@ -79,31 +79,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventCrashReported",
-    "type": "object",
-    "properties": {
-        "report": {
-            "$ref": "#/definitions/Report"
-        },
-        "container": {
-            "title": "Container",
-            "type": "string"
-        },
-        "filename": {
-            "title": "Filename",
-            "type": "string"
-        }
-    },
-    "required": [
-        "report",
-        "container",
-        "filename"
-    ],
     "additionalProperties": false,
     "definitions": {
         "BlobRef": {
-            "title": "BlobRef",
-            "type": "object",
             "properties": {
                 "account": {
                     "title": "Account",
@@ -122,66 +100,66 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "account",
                 "container",
                 "name"
-            ]
+            ],
+            "title": "BlobRef",
+            "type": "object"
         },
         "Report": {
-            "title": "Report",
-            "type": "object",
             "properties": {
-                "input_url": {
-                    "title": "Input Url",
+                "asan_log": {
+                    "title": "Asan Log",
                     "type": "string"
                 },
-                "input_blob": {
-                    "$ref": "#/definitions/BlobRef"
+                "call_stack": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Call Stack",
+                    "type": "array"
                 },
-                "executable": {
-                    "title": "Executable",
-                    "type": "string"
-                },
-                "crash_type": {
-                    "title": "Crash Type",
+                "call_stack_sha256": {
+                    "title": "Call Stack Sha256",
                     "type": "string"
                 },
                 "crash_site": {
                     "title": "Crash Site",
                     "type": "string"
                 },
-                "call_stack": {
-                    "title": "Call Stack",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "call_stack_sha256": {
-                    "title": "Call Stack Sha256",
+                "crash_type": {
+                    "title": "Crash Type",
                     "type": "string"
+                },
+                "executable": {
+                    "title": "Executable",
+                    "type": "string"
+                },
+                "input_blob": {
+                    "$ref": "#/definitions/BlobRef"
                 },
                 "input_sha256": {
                     "title": "Input Sha256",
                     "type": "string"
                 },
-                "asan_log": {
-                    "title": "Asan Log",
+                "input_url": {
+                    "title": "Input Url",
                     "type": "string"
                 },
-                "task_id": {
-                    "title": "Task Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
                 "job_id": {
+                    "format": "uuid",
                     "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
+                },
+                "scariness_description": {
+                    "title": "Scariness Description",
+                    "type": "string"
                 },
                 "scariness_score": {
                     "title": "Scariness Score",
                     "type": "integer"
                 },
-                "scariness_description": {
-                    "title": "Scariness Description",
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
                     "type": "string"
                 }
             },
@@ -195,9 +173,31 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "input_sha256",
                 "task_id",
                 "job_id"
-            ]
+            ],
+            "title": "Report",
+            "type": "object"
         }
-    }
+    },
+    "properties": {
+        "container": {
+            "title": "Container",
+            "type": "string"
+        },
+        "filename": {
+            "title": "Filename",
+            "type": "string"
+        },
+        "report": {
+            "$ref": "#/definitions/Report"
+        }
+    },
+    "required": [
+        "report",
+        "container",
+        "filename"
+    ],
+    "title": "EventCrashReported",
+    "type": "object"
 }
 ```
 
@@ -216,8 +216,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventFileAdded",
-    "type": "object",
+    "additionalProperties": false,
     "properties": {
         "container": {
             "title": "Container",
@@ -232,7 +231,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "container",
         "filename"
     ],
-    "additionalProperties": false
+    "title": "EventFileAdded",
+    "type": "object"
 }
 ```
 
@@ -242,13 +242,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "job_id": "00000000-0000-0000-0000-000000000000",
     "config": {
-        "project": "example project",
-        "name": "example name",
         "build": "build 1",
-        "duration": 24
-    }
+        "duration": 24,
+        "name": "example name",
+        "project": "example project"
+    },
+    "job_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
@@ -256,16 +256,68 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventJobCreated",
-    "type": "object",
-    "properties": {
-        "job_id": {
-            "title": "Job Id",
-            "type": "string",
-            "format": "uuid"
+    "additionalProperties": false,
+    "definitions": {
+        "JobConfig": {
+            "properties": {
+                "build": {
+                    "title": "Build",
+                    "type": "string"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "project": {
+                    "title": "Project",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "project",
+                "name",
+                "build",
+                "duration"
+            ],
+            "title": "JobConfig",
+            "type": "object"
         },
+        "UserInfo": {
+            "properties": {
+                "application_id": {
+                    "format": "uuid",
+                    "title": "Application Id",
+                    "type": "string"
+                },
+                "object_id": {
+                    "format": "uuid",
+                    "title": "Object Id",
+                    "type": "string"
+                },
+                "upn": {
+                    "title": "Upn",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "application_id"
+            ],
+            "title": "UserInfo",
+            "type": "object"
+        }
+    },
+    "properties": {
         "config": {
             "$ref": "#/definitions/JobConfig"
+        },
+        "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
         },
         "user_info": {
             "$ref": "#/definitions/UserInfo"
@@ -275,60 +327,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "job_id",
         "config"
     ],
-    "additionalProperties": false,
-    "definitions": {
-        "JobConfig": {
-            "title": "JobConfig",
-            "type": "object",
-            "properties": {
-                "project": {
-                    "title": "Project",
-                    "type": "string"
-                },
-                "name": {
-                    "title": "Name",
-                    "type": "string"
-                },
-                "build": {
-                    "title": "Build",
-                    "type": "string"
-                },
-                "duration": {
-                    "title": "Duration",
-                    "type": "integer"
-                }
-            },
-            "required": [
-                "project",
-                "name",
-                "build",
-                "duration"
-            ]
-        },
-        "UserInfo": {
-            "title": "UserInfo",
-            "type": "object",
-            "properties": {
-                "application_id": {
-                    "title": "Application Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "object_id": {
-                    "title": "Object Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "upn": {
-                    "title": "Upn",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "application_id"
-            ]
-        }
-    }
+    "title": "EventJobCreated",
+    "type": "object"
 }
 ```
 
@@ -338,13 +338,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "job_id": "00000000-0000-0000-0000-000000000000",
     "config": {
-        "project": "example project",
-        "name": "example name",
         "build": "build 1",
-        "duration": 24
-    }
+        "duration": 24,
+        "name": "example name",
+        "project": "example project"
+    },
+    "job_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
@@ -352,16 +352,68 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventJobStopped",
-    "type": "object",
-    "properties": {
-        "job_id": {
-            "title": "Job Id",
-            "type": "string",
-            "format": "uuid"
+    "additionalProperties": false,
+    "definitions": {
+        "JobConfig": {
+            "properties": {
+                "build": {
+                    "title": "Build",
+                    "type": "string"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "project": {
+                    "title": "Project",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "project",
+                "name",
+                "build",
+                "duration"
+            ],
+            "title": "JobConfig",
+            "type": "object"
         },
+        "UserInfo": {
+            "properties": {
+                "application_id": {
+                    "format": "uuid",
+                    "title": "Application Id",
+                    "type": "string"
+                },
+                "object_id": {
+                    "format": "uuid",
+                    "title": "Object Id",
+                    "type": "string"
+                },
+                "upn": {
+                    "title": "Upn",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "application_id"
+            ],
+            "title": "UserInfo",
+            "type": "object"
+        }
+    },
+    "properties": {
         "config": {
             "$ref": "#/definitions/JobConfig"
+        },
+        "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
         },
         "user_info": {
             "$ref": "#/definitions/UserInfo"
@@ -371,60 +423,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "job_id",
         "config"
     ],
-    "additionalProperties": false,
-    "definitions": {
-        "JobConfig": {
-            "title": "JobConfig",
-            "type": "object",
-            "properties": {
-                "project": {
-                    "title": "Project",
-                    "type": "string"
-                },
-                "name": {
-                    "title": "Name",
-                    "type": "string"
-                },
-                "build": {
-                    "title": "Build",
-                    "type": "string"
-                },
-                "duration": {
-                    "title": "Duration",
-                    "type": "integer"
-                }
-            },
-            "required": [
-                "project",
-                "name",
-                "build",
-                "duration"
-            ]
-        },
-        "UserInfo": {
-            "title": "UserInfo",
-            "type": "object",
-            "properties": {
-                "application_id": {
-                    "title": "Application Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "object_id": {
-                    "title": "Object Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "upn": {
-                    "title": "Upn",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "application_id"
-            ]
-        }
-    }
+    "title": "EventJobStopped",
+    "type": "object"
 }
 ```
 
@@ -443,21 +443,20 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventNodeCreated",
-    "type": "object",
+    "additionalProperties": false,
     "properties": {
         "machine_id": {
+            "format": "uuid",
             "title": "Machine Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "scaleset_id": {
-            "title": "Scaleset Id",
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
         },
         "pool_name": {
             "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
             "type": "string"
         }
     },
@@ -465,7 +464,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "machine_id",
         "pool_name"
     ],
-    "additionalProperties": false
+    "title": "EventNodeCreated",
+    "type": "object"
 }
 ```
 
@@ -484,21 +484,20 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventNodeDeleted",
-    "type": "object",
+    "additionalProperties": false,
     "properties": {
         "machine_id": {
+            "format": "uuid",
             "title": "Machine Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "scaleset_id": {
-            "title": "Scaleset Id",
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
         },
         "pool_name": {
             "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
             "type": "string"
         }
     },
@@ -506,7 +505,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "machine_id",
         "pool_name"
     ],
-    "additionalProperties": false
+    "title": "EventNodeDeleted",
+    "type": "object"
 }
 ```
 
@@ -526,36 +526,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventNodeStateUpdated",
-    "type": "object",
-    "properties": {
-        "machine_id": {
-            "title": "Machine Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "scaleset_id": {
-            "title": "Scaleset Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "pool_name": {
-            "title": "Pool Name",
-            "type": "string"
-        },
-        "state": {
-            "$ref": "#/definitions/NodeState"
-        }
-    },
-    "required": [
-        "machine_id",
-        "pool_name",
-        "state"
-    ],
     "additionalProperties": false,
     "definitions": {
         "NodeState": {
-            "title": "NodeState",
             "description": "An enumeration.",
             "enum": [
                 "init",
@@ -567,9 +540,36 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "done",
                 "shutdown",
                 "halt"
-            ]
+            ],
+            "title": "NodeState"
         }
-    }
+    },
+    "properties": {
+        "machine_id": {
+            "format": "uuid",
+            "title": "Machine Id",
+            "type": "string"
+        },
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/NodeState"
+        }
+    },
+    "required": [
+        "machine_id",
+        "pool_name",
+        "state"
+    ],
+    "title": "EventNodeStateUpdated",
+    "type": "object"
 }
 ```
 
@@ -587,18 +587,18 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventPing",
-    "type": "object",
     "properties": {
         "ping_id": {
+            "format": "uuid",
             "title": "Ping Id",
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
         }
     },
     "required": [
         "ping_id"
-    ]
+    ],
+    "title": "EventPing",
+    "type": "object"
 }
 ```
 
@@ -608,10 +608,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "pool_name": "example",
-    "os": "linux",
     "arch": "x86_64",
-    "managed": true
+    "managed": true,
+    "os": "linux",
+    "pool_name": "example"
 }
 ```
 
@@ -619,53 +619,16 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventPoolCreated",
-    "type": "object",
-    "properties": {
-        "pool_name": {
-            "title": "Pool Name",
-            "type": "string"
-        },
-        "os": {
-            "$ref": "#/definitions/OS"
-        },
-        "arch": {
-            "$ref": "#/definitions/Architecture"
-        },
-        "managed": {
-            "title": "Managed",
-            "type": "boolean"
-        },
-        "autoscale": {
-            "$ref": "#/definitions/AutoScaleConfig"
-        }
-    },
-    "required": [
-        "pool_name",
-        "os",
-        "arch",
-        "managed"
-    ],
     "additionalProperties": false,
     "definitions": {
-        "OS": {
-            "title": "OS",
-            "description": "An enumeration.",
-            "enum": [
-                "windows",
-                "linux"
-            ]
-        },
         "Architecture": {
-            "title": "Architecture",
             "description": "An enumeration.",
             "enum": [
                 "x86_64"
-            ]
+            ],
+            "title": "Architecture"
         },
         "AutoScaleConfig": {
-            "title": "AutoScaleConfig",
-            "type": "object",
             "properties": {
                 "image": {
                     "title": "Image",
@@ -676,8 +639,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "integer"
                 },
                 "min_size": {
-                    "title": "Min Size",
                     "default": 0,
+                    "title": "Min Size",
                     "type": "integer"
                 },
                 "region": {
@@ -689,8 +652,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "integer"
                 },
                 "spot_instances": {
-                    "title": "Spot Instances",
                     "default": false,
+                    "title": "Spot Instances",
                     "type": "boolean"
                 },
                 "vm_sku": {
@@ -702,9 +665,46 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "image",
                 "scaleset_size",
                 "vm_sku"
-            ]
+            ],
+            "title": "AutoScaleConfig",
+            "type": "object"
+        },
+        "OS": {
+            "description": "An enumeration.",
+            "enum": [
+                "windows",
+                "linux"
+            ],
+            "title": "OS"
         }
-    }
+    },
+    "properties": {
+        "arch": {
+            "$ref": "#/definitions/Architecture"
+        },
+        "autoscale": {
+            "$ref": "#/definitions/AutoScaleConfig"
+        },
+        "managed": {
+            "title": "Managed",
+            "type": "boolean"
+        },
+        "os": {
+            "$ref": "#/definitions/OS"
+        },
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        }
+    },
+    "required": [
+        "pool_name",
+        "os",
+        "arch",
+        "managed"
+    ],
+    "title": "EventPoolCreated",
+    "type": "object"
 }
 ```
 
@@ -722,8 +722,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventPoolDeleted",
-    "type": "object",
+    "additionalProperties": false,
     "properties": {
         "pool_name": {
             "title": "Pool Name",
@@ -733,7 +732,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "required": [
         "pool_name"
     ],
-    "additionalProperties": false
+    "title": "EventPoolDeleted",
+    "type": "object"
 }
 ```
 
@@ -751,8 +751,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventProxyCreated",
-    "type": "object",
+    "additionalProperties": false,
     "properties": {
         "region": {
             "title": "Region",
@@ -762,7 +761,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "required": [
         "region"
     ],
-    "additionalProperties": false
+    "title": "EventProxyCreated",
+    "type": "object"
 }
 ```
 
@@ -780,8 +780,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventProxyDeleted",
-    "type": "object",
+    "additionalProperties": false,
     "properties": {
         "region": {
             "title": "Region",
@@ -791,7 +790,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "required": [
         "region"
     ],
-    "additionalProperties": false
+    "title": "EventProxyDeleted",
+    "type": "object"
 }
 ```
 
@@ -801,13 +801,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "region": "eastus",
     "error": {
         "code": 472,
         "errors": [
             "example error message"
         ]
-    }
+    },
+    "region": "eastus"
 }
 ```
 
@@ -815,25 +815,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventProxyFailed",
-    "type": "object",
-    "properties": {
-        "region": {
-            "title": "Region",
-            "type": "string"
-        },
-        "error": {
-            "$ref": "#/definitions/Error"
-        }
-    },
-    "required": [
-        "region",
-        "error"
-    ],
     "additionalProperties": false,
     "definitions": {
+        "Error": {
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/ErrorCode"
+                },
+                "errors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Errors",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "code",
+                "errors"
+            ],
+            "title": "Error",
+            "type": "object"
+        },
         "ErrorCode": {
-            "title": "ErrorCode",
             "description": "An enumeration.",
             "enum": [
                 450,
@@ -858,29 +862,25 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 470,
                 471,
                 472
-            ]
-        },
-        "Error": {
-            "title": "Error",
-            "type": "object",
-            "properties": {
-                "code": {
-                    "$ref": "#/definitions/ErrorCode"
-                },
-                "errors": {
-                    "title": "Errors",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "code",
-                "errors"
-            ]
+            ],
+            "title": "ErrorCode"
         }
-    }
+    },
+    "properties": {
+        "error": {
+            "$ref": "#/definitions/Error"
+        },
+        "region": {
+            "title": "Region",
+            "type": "string"
+        }
+    },
+    "required": [
+        "region",
+        "error"
+    ],
+    "title": "EventProxyFailed",
+    "type": "object"
 }
 ```
 
@@ -890,12 +890,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
-    "pool_name": "example",
-    "vm_sku": "Standard_D2s_v3",
     "image": "Canonical:UbuntuServer:18.04-LTS:latest",
+    "pool_name": "example",
     "region": "eastus",
-    "size": 10
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "size": 10,
+    "vm_sku": "Standard_D2s_v3"
 }
 ```
 
@@ -903,33 +903,32 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventScalesetCreated",
-    "type": "object",
+    "additionalProperties": false,
     "properties": {
-        "scaleset_id": {
-            "title": "Scaleset Id",
-            "type": "string",
-            "format": "uuid"
+        "image": {
+            "title": "Image",
+            "type": "string"
         },
         "pool_name": {
             "title": "Pool Name",
-            "type": "string"
-        },
-        "vm_sku": {
-            "title": "Vm Sku",
-            "type": "string"
-        },
-        "image": {
-            "title": "Image",
             "type": "string"
         },
         "region": {
             "title": "Region",
             "type": "string"
         },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
         "size": {
             "title": "Size",
             "type": "integer"
+        },
+        "vm_sku": {
+            "title": "Vm Sku",
+            "type": "string"
         }
     },
     "required": [
@@ -940,7 +939,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "region",
         "size"
     ],
-    "additionalProperties": false
+    "title": "EventScalesetCreated",
+    "type": "object"
 }
 ```
 
@@ -950,8 +950,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
-    "pool_name": "example"
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
@@ -959,16 +959,15 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventScalesetDeleted",
-    "type": "object",
+    "additionalProperties": false,
     "properties": {
-        "scaleset_id": {
-            "title": "Scaleset Id",
-            "type": "string",
-            "format": "uuid"
-        },
         "pool_name": {
             "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
             "type": "string"
         }
     },
@@ -976,7 +975,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "scaleset_id",
         "pool_name"
     ],
-    "additionalProperties": false
+    "title": "EventScalesetDeleted",
+    "type": "object"
 }
 ```
 
@@ -986,14 +986,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "scaleset_id": "00000000-0000-0000-0000-000000000000",
-    "pool_name": "example",
     "error": {
         "code": 456,
         "errors": [
             "example error message"
         ]
-    }
+    },
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
@@ -1001,31 +1001,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventScalesetFailed",
-    "type": "object",
-    "properties": {
-        "scaleset_id": {
-            "title": "Scaleset Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "pool_name": {
-            "title": "Pool Name",
-            "type": "string"
-        },
-        "error": {
-            "$ref": "#/definitions/Error"
-        }
-    },
-    "required": [
-        "scaleset_id",
-        "pool_name",
-        "error"
-    ],
     "additionalProperties": false,
     "definitions": {
+        "Error": {
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/ErrorCode"
+                },
+                "errors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Errors",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "code",
+                "errors"
+            ],
+            "title": "Error",
+            "type": "object"
+        },
         "ErrorCode": {
-            "title": "ErrorCode",
             "description": "An enumeration.",
             "enum": [
                 450,
@@ -1050,29 +1048,31 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 470,
                 471,
                 472
-            ]
-        },
-        "Error": {
-            "title": "Error",
-            "type": "object",
-            "properties": {
-                "code": {
-                    "$ref": "#/definitions/ErrorCode"
-                },
-                "errors": {
-                    "title": "Errors",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "code",
-                "errors"
-            ]
+            ],
+            "title": "ErrorCode"
         }
-    }
+    },
+    "properties": {
+        "error": {
+            "$ref": "#/definitions/Error"
+        },
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "error"
+    ],
+    "title": "EventScalesetFailed",
+    "type": "object"
 }
 ```
 
@@ -1082,34 +1082,34 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "job_id": "00000000-0000-0000-0000-000000000000",
-    "task_id": "00000000-0000-0000-0000-000000000000",
     "config": {
-        "job_id": "00000000-0000-0000-0000-000000000000",
-        "task": {
-            "type": "libfuzzer_fuzz",
-            "duration": 1,
-            "target_exe": "fuzz.exe",
-            "target_env": {},
-            "target_options": [],
-            "check_debugger": true
-        },
         "containers": [
             {
-                "type": "setup",
-                "name": "my-setup"
+                "name": "my-setup",
+                "type": "setup"
             },
             {
-                "type": "inputs",
-                "name": "my-inputs"
+                "name": "my-inputs",
+                "type": "inputs"
             },
             {
-                "type": "crashes",
-                "name": "my-crashes"
+                "name": "my-crashes",
+                "type": "crashes"
             }
         ],
-        "tags": {}
+        "job_id": "00000000-0000-0000-0000-000000000000",
+        "tags": {},
+        "task": {
+            "check_debugger": true,
+            "duration": 1,
+            "target_env": {},
+            "target_exe": "fuzz.exe",
+            "target_options": [],
+            "type": "libfuzzer_fuzz"
+        }
     },
+    "job_id": "00000000-0000-0000-0000-000000000000",
+    "task_id": "00000000-0000-0000-0000-000000000000",
     "user_info": {
         "application_id": "00000000-0000-0000-0000-000000000000",
         "object_id": "00000000-0000-0000-0000-000000000000",
@@ -1122,50 +1122,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventTaskCreated",
-    "type": "object",
-    "properties": {
-        "job_id": {
-            "title": "Job Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "task_id": {
-            "title": "Task Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "config": {
-            "$ref": "#/definitions/TaskConfig"
-        },
-        "user_info": {
-            "$ref": "#/definitions/UserInfo"
-        }
-    },
-    "required": [
-        "job_id",
-        "task_id",
-        "config"
-    ],
     "additionalProperties": false,
     "definitions": {
-        "TaskType": {
-            "title": "TaskType",
-            "description": "An enumeration.",
-            "enum": [
-                "libfuzzer_fuzz",
-                "libfuzzer_coverage",
-                "libfuzzer_crash_report",
-                "libfuzzer_merge",
-                "generic_analysis",
-                "generic_supervisor",
-                "generic_merge",
-                "generic_generator",
-                "generic_crash_report"
-            ]
-        },
         "ContainerType": {
-            "title": "ContainerType",
             "description": "An enumeration.",
             "enum": [
                 "analysis",
@@ -1179,137 +1138,178 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports"
-            ]
+            ],
+            "title": "ContainerType"
         },
         "StatsFormat": {
-            "title": "StatsFormat",
             "description": "An enumeration.",
             "enum": [
                 "AFL"
-            ]
+            ],
+            "title": "StatsFormat"
         },
-        "TaskDetails": {
-            "title": "TaskDetails",
-            "type": "object",
+        "TaskConfig": {
             "properties": {
-                "type": {
-                    "$ref": "#/definitions/TaskType"
+                "colocate": {
+                    "title": "Colocate",
+                    "type": "boolean"
                 },
-                "duration": {
-                    "title": "Duration",
-                    "type": "integer"
+                "containers": {
+                    "items": {
+                        "$ref": "#/definitions/TaskContainers"
+                    },
+                    "title": "Containers",
+                    "type": "array"
                 },
-                "target_exe": {
-                    "title": "Target Exe",
+                "debug": {
+                    "items": {
+                        "$ref": "#/definitions/TaskDebugFlag"
+                    },
+                    "title": "Debug",
+                    "type": "array"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
                     "type": "string"
                 },
-                "target_env": {
-                    "title": "Target Env",
-                    "type": "object",
+                "pool": {
+                    "$ref": "#/definitions/TaskPool"
+                },
+                "prereq_tasks": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Prereq Tasks",
+                    "type": "array"
+                },
+                "tags": {
                     "additionalProperties": {
                         "type": "string"
-                    }
+                    },
+                    "title": "Tags",
+                    "type": "object"
                 },
-                "target_options": {
-                    "title": "Target Options",
-                    "type": "array",
+                "task": {
+                    "$ref": "#/definitions/TaskDetails"
+                },
+                "vm": {
+                    "$ref": "#/definitions/TaskVm"
+                }
+            },
+            "required": [
+                "job_id",
+                "task",
+                "containers",
+                "tags"
+            ],
+            "title": "TaskConfig",
+            "type": "object"
+        },
+        "TaskContainers": {
+            "properties": {
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "name"
+            ],
+            "title": "TaskContainers",
+            "type": "object"
+        },
+        "TaskDebugFlag": {
+            "description": "An enumeration.",
+            "enum": [
+                "keep_node_on_failure",
+                "keep_node_on_completion"
+            ],
+            "title": "TaskDebugFlag"
+        },
+        "TaskDetails": {
+            "properties": {
+                "analyzer_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Env",
+                    "type": "object"
+                },
+                "analyzer_exe": {
+                    "title": "Analyzer Exe",
+                    "type": "string"
+                },
+                "analyzer_options": {
                     "items": {
                         "type": "string"
-                    }
-                },
-                "target_workers": {
-                    "title": "Target Workers",
-                    "type": "integer"
-                },
-                "target_options_merge": {
-                    "title": "Target Options Merge",
-                    "type": "boolean"
+                    },
+                    "title": "Analyzer Options",
+                    "type": "array"
                 },
                 "check_asan_log": {
                     "title": "Check Asan Log",
                     "type": "boolean"
                 },
                 "check_debugger": {
-                    "title": "Check Debugger",
                     "default": true,
+                    "title": "Check Debugger",
+                    "type": "boolean"
+                },
+                "check_fuzzer_help": {
+                    "title": "Check Fuzzer Help",
                     "type": "boolean"
                 },
                 "check_retry_count": {
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
-                "check_fuzzer_help": {
-                    "title": "Check Fuzzer Help",
-                    "type": "boolean"
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                },
+                "ensemble_sync_delay": {
+                    "title": "Ensemble Sync Delay",
+                    "type": "integer"
                 },
                 "expect_crash_on_failure": {
                     "title": "Expect Crash On Failure",
                     "type": "boolean"
                 },
-                "rename_output": {
-                    "title": "Rename Output",
-                    "type": "boolean"
-                },
-                "supervisor_exe": {
-                    "title": "Supervisor Exe",
-                    "type": "string"
-                },
-                "supervisor_env": {
-                    "title": "Supervisor Env",
-                    "type": "object",
+                "generator_env": {
                     "additionalProperties": {
                         "type": "string"
-                    }
-                },
-                "supervisor_options": {
-                    "title": "Supervisor Options",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "supervisor_input_marker": {
-                    "title": "Supervisor Input Marker",
-                    "type": "string"
+                    },
+                    "title": "Generator Env",
+                    "type": "object"
                 },
                 "generator_exe": {
                     "title": "Generator Exe",
                     "type": "string"
                 },
-                "generator_env": {
-                    "title": "Generator Env",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
                 "generator_options": {
+                    "items": {
+                        "type": "string"
+                    },
                     "title": "Generator Options",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                    "type": "array"
                 },
-                "analyzer_exe": {
-                    "title": "Analyzer Exe",
-                    "type": "string"
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
                 },
-                "analyzer_env": {
-                    "title": "Analyzer Env",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
                 },
-                "analyzer_options": {
-                    "title": "Analyzer Options",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "wait_for_files": {
-                    "$ref": "#/definitions/ContainerType"
+                "rename_output": {
+                    "title": "Rename Output",
+                    "type": "boolean"
                 },
                 "stats_file": {
                     "title": "Stats File",
@@ -1318,21 +1318,63 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "stats_format": {
                     "$ref": "#/definitions/StatsFormat"
                 },
-                "reboot_after_setup": {
-                    "title": "Reboot After Setup",
+                "supervisor_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Env",
+                    "type": "object"
+                },
+                "supervisor_exe": {
+                    "title": "Supervisor Exe",
+                    "type": "string"
+                },
+                "supervisor_input_marker": {
+                    "title": "Supervisor Input Marker",
+                    "type": "string"
+                },
+                "supervisor_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Options",
+                    "type": "array"
+                },
+                "target_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Target Env",
+                    "type": "object"
+                },
+                "target_exe": {
+                    "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Target Options",
+                    "type": "array"
+                },
+                "target_options_merge": {
+                    "title": "Target Options Merge",
                     "type": "boolean"
                 },
                 "target_timeout": {
                     "title": "Target Timeout",
                     "type": "integer"
                 },
-                "ensemble_sync_delay": {
-                    "title": "Ensemble Sync Delay",
+                "target_workers": {
+                    "title": "Target Workers",
                     "type": "integer"
                 },
-                "preserve_existing_outputs": {
-                    "title": "Preserve Existing Outputs",
-                    "type": "boolean"
+                "type": {
+                    "$ref": "#/definitions/TaskType"
+                },
+                "wait_for_files": {
+                    "$ref": "#/definitions/ContainerType"
                 }
             },
             "required": [
@@ -1341,48 +1383,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "target_exe",
                 "target_env",
                 "target_options"
-            ]
-        },
-        "TaskVm": {
-            "title": "TaskVm",
-            "type": "object",
-            "properties": {
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                },
-                "sku": {
-                    "title": "Sku",
-                    "type": "string"
-                },
-                "image": {
-                    "title": "Image",
-                    "type": "string"
-                },
-                "count": {
-                    "title": "Count",
-                    "default": 1,
-                    "type": "integer"
-                },
-                "spot_instances": {
-                    "title": "Spot Instances",
-                    "default": false,
-                    "type": "boolean"
-                },
-                "reboot_after_setup": {
-                    "title": "Reboot After Setup",
-                    "type": "boolean"
-                }
-            },
-            "required": [
-                "region",
-                "sku",
-                "image"
-            ]
+            ],
+            "title": "TaskDetails",
+            "type": "object"
         },
         "TaskPool": {
-            "title": "TaskPool",
-            "type": "object",
             "properties": {
                 "count": {
                     "title": "Count",
@@ -1396,105 +1401,73 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "count",
                 "pool_name"
-            ]
+            ],
+            "title": "TaskPool",
+            "type": "object"
         },
-        "TaskContainers": {
-            "title": "TaskContainers",
-            "type": "object",
-            "properties": {
-                "type": {
-                    "$ref": "#/definitions/ContainerType"
-                },
-                "name": {
-                    "title": "Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "type",
-                "name"
-            ]
-        },
-        "TaskDebugFlag": {
-            "title": "TaskDebugFlag",
+        "TaskType": {
             "description": "An enumeration.",
             "enum": [
-                "keep_node_on_failure",
-                "keep_node_on_completion"
-            ]
+                "libfuzzer_fuzz",
+                "libfuzzer_coverage",
+                "libfuzzer_crash_report",
+                "libfuzzer_merge",
+                "generic_analysis",
+                "generic_supervisor",
+                "generic_merge",
+                "generic_generator",
+                "generic_crash_report"
+            ],
+            "title": "TaskType"
         },
-        "TaskConfig": {
-            "title": "TaskConfig",
-            "type": "object",
+        "TaskVm": {
             "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
+                "count": {
+                    "default": 1,
+                    "title": "Count",
+                    "type": "integer"
                 },
-                "prereq_tasks": {
-                    "title": "Prereq Tasks",
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "format": "uuid"
-                    }
+                "image": {
+                    "title": "Image",
+                    "type": "string"
                 },
-                "task": {
-                    "$ref": "#/definitions/TaskDetails"
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
                 },
-                "vm": {
-                    "$ref": "#/definitions/TaskVm"
+                "region": {
+                    "title": "Region",
+                    "type": "string"
                 },
-                "pool": {
-                    "$ref": "#/definitions/TaskPool"
+                "sku": {
+                    "title": "Sku",
+                    "type": "string"
                 },
-                "containers": {
-                    "title": "Containers",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/TaskContainers"
-                    }
-                },
-                "tags": {
-                    "title": "Tags",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "debug": {
-                    "title": "Debug",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/TaskDebugFlag"
-                    }
-                },
-                "colocate": {
-                    "title": "Colocate",
+                "spot_instances": {
+                    "default": false,
+                    "title": "Spot Instances",
                     "type": "boolean"
                 }
             },
             "required": [
-                "job_id",
-                "task",
-                "containers",
-                "tags"
-            ]
+                "region",
+                "sku",
+                "image"
+            ],
+            "title": "TaskVm",
+            "type": "object"
         },
         "UserInfo": {
-            "title": "UserInfo",
-            "type": "object",
             "properties": {
                 "application_id": {
+                    "format": "uuid",
                     "title": "Application Id",
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                 },
                 "object_id": {
+                    "format": "uuid",
                     "title": "Object Id",
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                 },
                 "upn": {
                     "title": "Upn",
@@ -1503,9 +1476,36 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "application_id"
-            ]
+            ],
+            "title": "UserInfo",
+            "type": "object"
         }
-    }
+    },
+    "properties": {
+        "config": {
+            "$ref": "#/definitions/TaskConfig"
+        },
+        "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+        },
+        "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+        },
+        "user_info": {
+            "$ref": "#/definitions/UserInfo"
+        }
+    },
+    "required": [
+        "job_id",
+        "task_id",
+        "config"
+    ],
+    "title": "EventTaskCreated",
+    "type": "object"
 }
 ```
 
@@ -1515,14 +1515,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "job_id": "00000000-0000-0000-0000-000000000000",
-    "task_id": "00000000-0000-0000-0000-000000000000",
     "error": {
         "code": 468,
         "errors": [
             "example error message"
         ]
     },
+    "job_id": "00000000-0000-0000-0000-000000000000",
+    "task_id": "00000000-0000-0000-0000-000000000000",
     "user_info": {
         "application_id": "00000000-0000-0000-0000-000000000000",
         "object_id": "00000000-0000-0000-0000-000000000000",
@@ -1535,35 +1535,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventTaskFailed",
-    "type": "object",
-    "properties": {
-        "job_id": {
-            "title": "Job Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "task_id": {
-            "title": "Task Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "error": {
-            "$ref": "#/definitions/Error"
-        },
-        "user_info": {
-            "$ref": "#/definitions/UserInfo"
-        }
-    },
-    "required": [
-        "job_id",
-        "task_id",
-        "error"
-    ],
     "additionalProperties": false,
     "definitions": {
+        "Error": {
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/ErrorCode"
+                },
+                "errors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Errors",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "code",
+                "errors"
+            ],
+            "title": "Error",
+            "type": "object"
+        },
         "ErrorCode": {
-            "title": "ErrorCode",
             "description": "An enumeration.",
             "enum": [
                 450,
@@ -1588,41 +1582,20 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 470,
                 471,
                 472
-            ]
-        },
-        "Error": {
-            "title": "Error",
-            "type": "object",
-            "properties": {
-                "code": {
-                    "$ref": "#/definitions/ErrorCode"
-                },
-                "errors": {
-                    "title": "Errors",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "code",
-                "errors"
-            ]
+            ],
+            "title": "ErrorCode"
         },
         "UserInfo": {
-            "title": "UserInfo",
-            "type": "object",
             "properties": {
                 "application_id": {
+                    "format": "uuid",
                     "title": "Application Id",
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                 },
                 "object_id": {
+                    "format": "uuid",
                     "title": "Object Id",
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                 },
                 "upn": {
                     "title": "Upn",
@@ -1631,9 +1604,36 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "application_id"
-            ]
+            ],
+            "title": "UserInfo",
+            "type": "object"
         }
-    }
+    },
+    "properties": {
+        "error": {
+            "$ref": "#/definitions/Error"
+        },
+        "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+        },
+        "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+        },
+        "user_info": {
+            "$ref": "#/definitions/UserInfo"
+        }
+    },
+    "required": [
+        "job_id",
+        "task_id",
+        "error"
+    ],
+    "title": "EventTaskFailed",
+    "type": "object"
 }
 ```
 
@@ -1644,8 +1644,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "job_id": "00000000-0000-0000-0000-000000000000",
-    "task_id": "00000000-0000-0000-0000-000000000000",
-    "state": "init"
+    "state": "init",
+    "task_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
@@ -1653,37 +1653,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventTaskStateUpdated",
-    "type": "object",
-    "properties": {
-        "job_id": {
-            "title": "Job Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "task_id": {
-            "title": "Task Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "state": {
-            "$ref": "#/definitions/TaskState"
-        },
-        "end_time": {
-            "title": "End Time",
-            "type": "string",
-            "format": "date-time"
-        }
-    },
-    "required": [
-        "job_id",
-        "task_id",
-        "state"
-    ],
     "additionalProperties": false,
     "definitions": {
         "TaskState": {
-            "title": "TaskState",
             "description": "An enumeration.",
             "enum": [
                 "init",
@@ -1694,9 +1666,37 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "stopping",
                 "stopped",
                 "wait_job"
-            ]
+            ],
+            "title": "TaskState"
         }
-    }
+    },
+    "properties": {
+        "end_time": {
+            "format": "date-time",
+            "title": "End Time",
+            "type": "string"
+        },
+        "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/TaskState"
+        },
+        "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+        }
+    },
+    "required": [
+        "job_id",
+        "task_id",
+        "state"
+    ],
+    "title": "EventTaskStateUpdated",
+    "type": "object"
 }
 ```
 
@@ -1720,18 +1720,42 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "title": "EventTaskStopped",
-    "type": "object",
+    "additionalProperties": false,
+    "definitions": {
+        "UserInfo": {
+            "properties": {
+                "application_id": {
+                    "format": "uuid",
+                    "title": "Application Id",
+                    "type": "string"
+                },
+                "object_id": {
+                    "format": "uuid",
+                    "title": "Object Id",
+                    "type": "string"
+                },
+                "upn": {
+                    "title": "Upn",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "application_id"
+            ],
+            "title": "UserInfo",
+            "type": "object"
+        }
+    },
     "properties": {
         "job_id": {
+            "format": "uuid",
             "title": "Job Id",
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
         },
         "task_id": {
+            "format": "uuid",
             "title": "Task Id",
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
         },
         "user_info": {
             "$ref": "#/definitions/UserInfo"
@@ -1741,21 +1765,1107 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "job_id",
         "task_id"
     ],
+    "title": "EventTaskStopped",
+    "type": "object"
+}
+```
+
+## Full Event Schema
+
+```json
+{
     "additionalProperties": false,
     "definitions": {
+        "Architecture": {
+            "description": "An enumeration.",
+            "enum": [
+                "x86_64"
+            ],
+            "title": "Architecture"
+        },
+        "AutoScaleConfig": {
+            "properties": {
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "max_size": {
+                    "title": "Max Size",
+                    "type": "integer"
+                },
+                "min_size": {
+                    "default": 0,
+                    "title": "Min Size",
+                    "type": "integer"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "scaleset_size": {
+                    "title": "Scaleset Size",
+                    "type": "integer"
+                },
+                "spot_instances": {
+                    "default": false,
+                    "title": "Spot Instances",
+                    "type": "boolean"
+                },
+                "vm_sku": {
+                    "title": "Vm Sku",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "image",
+                "scaleset_size",
+                "vm_sku"
+            ],
+            "title": "AutoScaleConfig",
+            "type": "object"
+        },
+        "BlobRef": {
+            "properties": {
+                "account": {
+                    "title": "Account",
+                    "type": "string"
+                },
+                "container": {
+                    "title": "Container",
+                    "type": "string"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "account",
+                "container",
+                "name"
+            ],
+            "title": "BlobRef",
+            "type": "object"
+        },
+        "ContainerType": {
+            "description": "An enumeration.",
+            "enum": [
+                "analysis",
+                "coverage",
+                "crashes",
+                "inputs",
+                "no_repro",
+                "readonly_inputs",
+                "reports",
+                "setup",
+                "tools",
+                "unique_inputs",
+                "unique_reports"
+            ],
+            "title": "ContainerType"
+        },
+        "Error": {
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/ErrorCode"
+                },
+                "errors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Errors",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "code",
+                "errors"
+            ],
+            "title": "Error",
+            "type": "object"
+        },
+        "ErrorCode": {
+            "description": "An enumeration.",
+            "enum": [
+                450,
+                451,
+                452,
+                453,
+                454,
+                455,
+                456,
+                457,
+                458,
+                459,
+                460,
+                461,
+                462,
+                463,
+                464,
+                465,
+                467,
+                468,
+                469,
+                470,
+                471,
+                472
+            ],
+            "title": "ErrorCode"
+        },
+        "EventCrashReported": {
+            "additionalProperties": false,
+            "properties": {
+                "container": {
+                    "title": "Container",
+                    "type": "string"
+                },
+                "filename": {
+                    "title": "Filename",
+                    "type": "string"
+                },
+                "report": {
+                    "$ref": "#/definitions/Report"
+                }
+            },
+            "required": [
+                "report",
+                "container",
+                "filename"
+            ],
+            "title": "EventCrashReported",
+            "type": "object"
+        },
+        "EventFileAdded": {
+            "additionalProperties": false,
+            "properties": {
+                "container": {
+                    "title": "Container",
+                    "type": "string"
+                },
+                "filename": {
+                    "title": "Filename",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "container",
+                "filename"
+            ],
+            "title": "EventFileAdded",
+            "type": "object"
+        },
+        "EventJobCreated": {
+            "additionalProperties": false,
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/JobConfig"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
+                }
+            },
+            "required": [
+                "job_id",
+                "config"
+            ],
+            "title": "EventJobCreated",
+            "type": "object"
+        },
+        "EventJobStopped": {
+            "additionalProperties": false,
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/JobConfig"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
+                }
+            },
+            "required": [
+                "job_id",
+                "config"
+            ],
+            "title": "EventJobStopped",
+            "type": "object"
+        },
+        "EventNodeCreated": {
+            "additionalProperties": false,
+            "properties": {
+                "machine_id": {
+                    "format": "uuid",
+                    "title": "Machine Id",
+                    "type": "string"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "machine_id",
+                "pool_name"
+            ],
+            "title": "EventNodeCreated",
+            "type": "object"
+        },
+        "EventNodeDeleted": {
+            "additionalProperties": false,
+            "properties": {
+                "machine_id": {
+                    "format": "uuid",
+                    "title": "Machine Id",
+                    "type": "string"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "machine_id",
+                "pool_name"
+            ],
+            "title": "EventNodeDeleted",
+            "type": "object"
+        },
+        "EventNodeStateUpdated": {
+            "additionalProperties": false,
+            "properties": {
+                "machine_id": {
+                    "format": "uuid",
+                    "title": "Machine Id",
+                    "type": "string"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/NodeState"
+                }
+            },
+            "required": [
+                "machine_id",
+                "pool_name",
+                "state"
+            ],
+            "title": "EventNodeStateUpdated",
+            "type": "object"
+        },
+        "EventPing": {
+            "properties": {
+                "ping_id": {
+                    "format": "uuid",
+                    "title": "Ping Id",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "ping_id"
+            ],
+            "title": "EventPing",
+            "type": "object"
+        },
+        "EventPoolCreated": {
+            "additionalProperties": false,
+            "properties": {
+                "arch": {
+                    "$ref": "#/definitions/Architecture"
+                },
+                "autoscale": {
+                    "$ref": "#/definitions/AutoScaleConfig"
+                },
+                "managed": {
+                    "title": "Managed",
+                    "type": "boolean"
+                },
+                "os": {
+                    "$ref": "#/definitions/OS"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "pool_name",
+                "os",
+                "arch",
+                "managed"
+            ],
+            "title": "EventPoolCreated",
+            "type": "object"
+        },
+        "EventPoolDeleted": {
+            "additionalProperties": false,
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "pool_name"
+            ],
+            "title": "EventPoolDeleted",
+            "type": "object"
+        },
+        "EventProxyCreated": {
+            "additionalProperties": false,
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ],
+            "title": "EventProxyCreated",
+            "type": "object"
+        },
+        "EventProxyDeleted": {
+            "additionalProperties": false,
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ],
+            "title": "EventProxyDeleted",
+            "type": "object"
+        },
+        "EventProxyFailed": {
+            "additionalProperties": false,
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/Error"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region",
+                "error"
+            ],
+            "title": "EventProxyFailed",
+            "type": "object"
+        },
+        "EventScalesetCreated": {
+            "additionalProperties": false,
+            "properties": {
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "size": {
+                    "title": "Size",
+                    "type": "integer"
+                },
+                "vm_sku": {
+                    "title": "Vm Sku",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "vm_sku",
+                "image",
+                "region",
+                "size"
+            ],
+            "title": "EventScalesetCreated",
+            "type": "object"
+        },
+        "EventScalesetDeleted": {
+            "additionalProperties": false,
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name"
+            ],
+            "title": "EventScalesetDeleted",
+            "type": "object"
+        },
+        "EventScalesetFailed": {
+            "additionalProperties": false,
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/Error"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "error"
+            ],
+            "title": "EventScalesetFailed",
+            "type": "object"
+        },
+        "EventTaskCreated": {
+            "additionalProperties": false,
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/TaskConfig"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
+                }
+            },
+            "required": [
+                "job_id",
+                "task_id",
+                "config"
+            ],
+            "title": "EventTaskCreated",
+            "type": "object"
+        },
+        "EventTaskFailed": {
+            "additionalProperties": false,
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/Error"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
+                }
+            },
+            "required": [
+                "job_id",
+                "task_id",
+                "error"
+            ],
+            "title": "EventTaskFailed",
+            "type": "object"
+        },
+        "EventTaskStateUpdated": {
+            "additionalProperties": false,
+            "properties": {
+                "end_time": {
+                    "format": "date-time",
+                    "title": "End Time",
+                    "type": "string"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/TaskState"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "job_id",
+                "task_id",
+                "state"
+            ],
+            "title": "EventTaskStateUpdated",
+            "type": "object"
+        },
+        "EventTaskStopped": {
+            "additionalProperties": false,
+            "properties": {
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                },
+                "user_info": {
+                    "$ref": "#/definitions/UserInfo"
+                }
+            },
+            "required": [
+                "job_id",
+                "task_id"
+            ],
+            "title": "EventTaskStopped",
+            "type": "object"
+        },
+        "EventType": {
+            "description": "An enumeration.",
+            "enum": [
+                "job_created",
+                "job_stopped",
+                "node_created",
+                "node_deleted",
+                "node_state_updated",
+                "ping",
+                "pool_created",
+                "pool_deleted",
+                "proxy_created",
+                "proxy_deleted",
+                "proxy_failed",
+                "scaleset_created",
+                "scaleset_deleted",
+                "scaleset_failed",
+                "task_created",
+                "task_failed",
+                "task_state_updated",
+                "task_stopped",
+                "crash_reported",
+                "file_added"
+            ],
+            "title": "EventType"
+        },
+        "JobConfig": {
+            "properties": {
+                "build": {
+                    "title": "Build",
+                    "type": "string"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "project": {
+                    "title": "Project",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "project",
+                "name",
+                "build",
+                "duration"
+            ],
+            "title": "JobConfig",
+            "type": "object"
+        },
+        "NodeState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "free",
+                "setting_up",
+                "rebooting",
+                "ready",
+                "busy",
+                "done",
+                "shutdown",
+                "halt"
+            ],
+            "title": "NodeState"
+        },
+        "OS": {
+            "description": "An enumeration.",
+            "enum": [
+                "windows",
+                "linux"
+            ],
+            "title": "OS"
+        },
+        "Report": {
+            "properties": {
+                "asan_log": {
+                    "title": "Asan Log",
+                    "type": "string"
+                },
+                "call_stack": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Call Stack",
+                    "type": "array"
+                },
+                "call_stack_sha256": {
+                    "title": "Call Stack Sha256",
+                    "type": "string"
+                },
+                "crash_site": {
+                    "title": "Crash Site",
+                    "type": "string"
+                },
+                "crash_type": {
+                    "title": "Crash Type",
+                    "type": "string"
+                },
+                "executable": {
+                    "title": "Executable",
+                    "type": "string"
+                },
+                "input_blob": {
+                    "$ref": "#/definitions/BlobRef"
+                },
+                "input_sha256": {
+                    "title": "Input Sha256",
+                    "type": "string"
+                },
+                "input_url": {
+                    "title": "Input Url",
+                    "type": "string"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "scariness_description": {
+                    "title": "Scariness Description",
+                    "type": "string"
+                },
+                "scariness_score": {
+                    "title": "Scariness Score",
+                    "type": "integer"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "input_blob",
+                "executable",
+                "crash_type",
+                "crash_site",
+                "call_stack",
+                "call_stack_sha256",
+                "input_sha256",
+                "task_id",
+                "job_id"
+            ],
+            "title": "Report",
+            "type": "object"
+        },
+        "StatsFormat": {
+            "description": "An enumeration.",
+            "enum": [
+                "AFL"
+            ],
+            "title": "StatsFormat"
+        },
+        "TaskConfig": {
+            "properties": {
+                "colocate": {
+                    "title": "Colocate",
+                    "type": "boolean"
+                },
+                "containers": {
+                    "items": {
+                        "$ref": "#/definitions/TaskContainers"
+                    },
+                    "title": "Containers",
+                    "type": "array"
+                },
+                "debug": {
+                    "items": {
+                        "$ref": "#/definitions/TaskDebugFlag"
+                    },
+                    "title": "Debug",
+                    "type": "array"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "pool": {
+                    "$ref": "#/definitions/TaskPool"
+                },
+                "prereq_tasks": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Prereq Tasks",
+                    "type": "array"
+                },
+                "tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Tags",
+                    "type": "object"
+                },
+                "task": {
+                    "$ref": "#/definitions/TaskDetails"
+                },
+                "vm": {
+                    "$ref": "#/definitions/TaskVm"
+                }
+            },
+            "required": [
+                "job_id",
+                "task",
+                "containers",
+                "tags"
+            ],
+            "title": "TaskConfig",
+            "type": "object"
+        },
+        "TaskContainers": {
+            "properties": {
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "name"
+            ],
+            "title": "TaskContainers",
+            "type": "object"
+        },
+        "TaskDebugFlag": {
+            "description": "An enumeration.",
+            "enum": [
+                "keep_node_on_failure",
+                "keep_node_on_completion"
+            ],
+            "title": "TaskDebugFlag"
+        },
+        "TaskDetails": {
+            "properties": {
+                "analyzer_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Env",
+                    "type": "object"
+                },
+                "analyzer_exe": {
+                    "title": "Analyzer Exe",
+                    "type": "string"
+                },
+                "analyzer_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Options",
+                    "type": "array"
+                },
+                "check_asan_log": {
+                    "title": "Check Asan Log",
+                    "type": "boolean"
+                },
+                "check_debugger": {
+                    "default": true,
+                    "title": "Check Debugger",
+                    "type": "boolean"
+                },
+                "check_fuzzer_help": {
+                    "title": "Check Fuzzer Help",
+                    "type": "boolean"
+                },
+                "check_retry_count": {
+                    "title": "Check Retry Count",
+                    "type": "integer"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                },
+                "ensemble_sync_delay": {
+                    "title": "Ensemble Sync Delay",
+                    "type": "integer"
+                },
+                "expect_crash_on_failure": {
+                    "title": "Expect Crash On Failure",
+                    "type": "boolean"
+                },
+                "generator_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Generator Env",
+                    "type": "object"
+                },
+                "generator_exe": {
+                    "title": "Generator Exe",
+                    "type": "string"
+                },
+                "generator_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Generator Options",
+                    "type": "array"
+                },
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "rename_output": {
+                    "title": "Rename Output",
+                    "type": "boolean"
+                },
+                "stats_file": {
+                    "title": "Stats File",
+                    "type": "string"
+                },
+                "stats_format": {
+                    "$ref": "#/definitions/StatsFormat"
+                },
+                "supervisor_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Env",
+                    "type": "object"
+                },
+                "supervisor_exe": {
+                    "title": "Supervisor Exe",
+                    "type": "string"
+                },
+                "supervisor_input_marker": {
+                    "title": "Supervisor Input Marker",
+                    "type": "string"
+                },
+                "supervisor_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Options",
+                    "type": "array"
+                },
+                "target_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Target Env",
+                    "type": "object"
+                },
+                "target_exe": {
+                    "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Target Options",
+                    "type": "array"
+                },
+                "target_options_merge": {
+                    "title": "Target Options Merge",
+                    "type": "boolean"
+                },
+                "target_timeout": {
+                    "title": "Target Timeout",
+                    "type": "integer"
+                },
+                "target_workers": {
+                    "title": "Target Workers",
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/TaskType"
+                },
+                "wait_for_files": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "duration",
+                "target_exe",
+                "target_env",
+                "target_options"
+            ],
+            "title": "TaskDetails",
+            "type": "object"
+        },
+        "TaskPool": {
+            "properties": {
+                "count": {
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "count",
+                "pool_name"
+            ],
+            "title": "TaskPool",
+            "type": "object"
+        },
+        "TaskState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "waiting",
+                "scheduled",
+                "setting_up",
+                "running",
+                "stopping",
+                "stopped",
+                "wait_job"
+            ],
+            "title": "TaskState"
+        },
+        "TaskType": {
+            "description": "An enumeration.",
+            "enum": [
+                "libfuzzer_fuzz",
+                "libfuzzer_coverage",
+                "libfuzzer_crash_report",
+                "libfuzzer_merge",
+                "generic_analysis",
+                "generic_supervisor",
+                "generic_merge",
+                "generic_generator",
+                "generic_crash_report"
+            ],
+            "title": "TaskType"
+        },
+        "TaskVm": {
+            "properties": {
+                "count": {
+                    "default": 1,
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "sku": {
+                    "title": "Sku",
+                    "type": "string"
+                },
+                "spot_instances": {
+                    "default": false,
+                    "title": "Spot Instances",
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "region",
+                "sku",
+                "image"
+            ],
+            "title": "TaskVm",
+            "type": "object"
+        },
         "UserInfo": {
-            "title": "UserInfo",
-            "type": "object",
             "properties": {
                 "application_id": {
+                    "format": "uuid",
                     "title": "Application Id",
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                 },
                 "object_id": {
+                    "format": "uuid",
                     "title": "Object Id",
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                 },
                 "upn": {
                     "title": "Upn",
@@ -1764,29 +2874,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "application_id"
-            ]
+            ],
+            "title": "UserInfo",
+            "type": "object"
         }
-    }
-}
-```
-
-## Full Event Schema
-
-```json
-{
-    "title": "WebhookMessage",
-    "type": "object",
+    },
     "properties": {
-        "event_id": {
-            "title": "Event Id",
-            "type": "string",
-            "format": "uuid"
-        },
-        "event_type": {
-            "$ref": "#/definitions/EventType"
-        },
         "event": {
-            "title": "Event",
             "anyOf": [
                 {
                     "$ref": "#/definitions/EventJobCreated"
@@ -1848,12 +2942,21 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 {
                     "$ref": "#/definitions/EventFileAdded"
                 }
-            ]
+            ],
+            "title": "Event"
+        },
+        "event_id": {
+            "format": "uuid",
+            "title": "Event Id",
+            "type": "string"
+        },
+        "event_type": {
+            "$ref": "#/definitions/EventType"
         },
         "webhook_id": {
+            "format": "uuid",
             "title": "Webhook Id",
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
         }
     },
     "required": [
@@ -1861,1111 +2964,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "event",
         "webhook_id"
     ],
-    "additionalProperties": false,
-    "definitions": {
-        "EventType": {
-            "title": "EventType",
-            "description": "An enumeration.",
-            "enum": [
-                "job_created",
-                "job_stopped",
-                "node_created",
-                "node_deleted",
-                "node_state_updated",
-                "ping",
-                "pool_created",
-                "pool_deleted",
-                "proxy_created",
-                "proxy_deleted",
-                "proxy_failed",
-                "scaleset_created",
-                "scaleset_deleted",
-                "scaleset_failed",
-                "task_created",
-                "task_failed",
-                "task_state_updated",
-                "task_stopped",
-                "crash_reported",
-                "file_added"
-            ]
-        },
-        "JobConfig": {
-            "title": "JobConfig",
-            "type": "object",
-            "properties": {
-                "project": {
-                    "title": "Project",
-                    "type": "string"
-                },
-                "name": {
-                    "title": "Name",
-                    "type": "string"
-                },
-                "build": {
-                    "title": "Build",
-                    "type": "string"
-                },
-                "duration": {
-                    "title": "Duration",
-                    "type": "integer"
-                }
-            },
-            "required": [
-                "project",
-                "name",
-                "build",
-                "duration"
-            ]
-        },
-        "UserInfo": {
-            "title": "UserInfo",
-            "type": "object",
-            "properties": {
-                "application_id": {
-                    "title": "Application Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "object_id": {
-                    "title": "Object Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "upn": {
-                    "title": "Upn",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "application_id"
-            ]
-        },
-        "EventJobCreated": {
-            "title": "EventJobCreated",
-            "type": "object",
-            "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "config": {
-                    "$ref": "#/definitions/JobConfig"
-                },
-                "user_info": {
-                    "$ref": "#/definitions/UserInfo"
-                }
-            },
-            "required": [
-                "job_id",
-                "config"
-            ],
-            "additionalProperties": false
-        },
-        "EventJobStopped": {
-            "title": "EventJobStopped",
-            "type": "object",
-            "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "config": {
-                    "$ref": "#/definitions/JobConfig"
-                },
-                "user_info": {
-                    "$ref": "#/definitions/UserInfo"
-                }
-            },
-            "required": [
-                "job_id",
-                "config"
-            ],
-            "additionalProperties": false
-        },
-        "NodeState": {
-            "title": "NodeState",
-            "description": "An enumeration.",
-            "enum": [
-                "init",
-                "free",
-                "setting_up",
-                "rebooting",
-                "ready",
-                "busy",
-                "done",
-                "shutdown",
-                "halt"
-            ]
-        },
-        "EventNodeStateUpdated": {
-            "title": "EventNodeStateUpdated",
-            "type": "object",
-            "properties": {
-                "machine_id": {
-                    "title": "Machine Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "scaleset_id": {
-                    "title": "Scaleset Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                },
-                "state": {
-                    "$ref": "#/definitions/NodeState"
-                }
-            },
-            "required": [
-                "machine_id",
-                "pool_name",
-                "state"
-            ],
-            "additionalProperties": false
-        },
-        "EventNodeCreated": {
-            "title": "EventNodeCreated",
-            "type": "object",
-            "properties": {
-                "machine_id": {
-                    "title": "Machine Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "scaleset_id": {
-                    "title": "Scaleset Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "machine_id",
-                "pool_name"
-            ],
-            "additionalProperties": false
-        },
-        "EventNodeDeleted": {
-            "title": "EventNodeDeleted",
-            "type": "object",
-            "properties": {
-                "machine_id": {
-                    "title": "Machine Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "scaleset_id": {
-                    "title": "Scaleset Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "machine_id",
-                "pool_name"
-            ],
-            "additionalProperties": false
-        },
-        "EventPing": {
-            "title": "EventPing",
-            "type": "object",
-            "properties": {
-                "ping_id": {
-                    "title": "Ping Id",
-                    "type": "string",
-                    "format": "uuid"
-                }
-            },
-            "required": [
-                "ping_id"
-            ]
-        },
-        "OS": {
-            "title": "OS",
-            "description": "An enumeration.",
-            "enum": [
-                "windows",
-                "linux"
-            ]
-        },
-        "Architecture": {
-            "title": "Architecture",
-            "description": "An enumeration.",
-            "enum": [
-                "x86_64"
-            ]
-        },
-        "AutoScaleConfig": {
-            "title": "AutoScaleConfig",
-            "type": "object",
-            "properties": {
-                "image": {
-                    "title": "Image",
-                    "type": "string"
-                },
-                "max_size": {
-                    "title": "Max Size",
-                    "type": "integer"
-                },
-                "min_size": {
-                    "title": "Min Size",
-                    "default": 0,
-                    "type": "integer"
-                },
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                },
-                "scaleset_size": {
-                    "title": "Scaleset Size",
-                    "type": "integer"
-                },
-                "spot_instances": {
-                    "title": "Spot Instances",
-                    "default": false,
-                    "type": "boolean"
-                },
-                "vm_sku": {
-                    "title": "Vm Sku",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "image",
-                "scaleset_size",
-                "vm_sku"
-            ]
-        },
-        "EventPoolCreated": {
-            "title": "EventPoolCreated",
-            "type": "object",
-            "properties": {
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                },
-                "os": {
-                    "$ref": "#/definitions/OS"
-                },
-                "arch": {
-                    "$ref": "#/definitions/Architecture"
-                },
-                "managed": {
-                    "title": "Managed",
-                    "type": "boolean"
-                },
-                "autoscale": {
-                    "$ref": "#/definitions/AutoScaleConfig"
-                }
-            },
-            "required": [
-                "pool_name",
-                "os",
-                "arch",
-                "managed"
-            ],
-            "additionalProperties": false
-        },
-        "EventPoolDeleted": {
-            "title": "EventPoolDeleted",
-            "type": "object",
-            "properties": {
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "pool_name"
-            ],
-            "additionalProperties": false
-        },
-        "ErrorCode": {
-            "title": "ErrorCode",
-            "description": "An enumeration.",
-            "enum": [
-                450,
-                451,
-                452,
-                453,
-                454,
-                455,
-                456,
-                457,
-                458,
-                459,
-                460,
-                461,
-                462,
-                463,
-                464,
-                465,
-                467,
-                468,
-                469,
-                470,
-                471,
-                472
-            ]
-        },
-        "Error": {
-            "title": "Error",
-            "type": "object",
-            "properties": {
-                "code": {
-                    "$ref": "#/definitions/ErrorCode"
-                },
-                "errors": {
-                    "title": "Errors",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "code",
-                "errors"
-            ]
-        },
-        "EventProxyFailed": {
-            "title": "EventProxyFailed",
-            "type": "object",
-            "properties": {
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                },
-                "error": {
-                    "$ref": "#/definitions/Error"
-                }
-            },
-            "required": [
-                "region",
-                "error"
-            ],
-            "additionalProperties": false
-        },
-        "EventProxyCreated": {
-            "title": "EventProxyCreated",
-            "type": "object",
-            "properties": {
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "region"
-            ],
-            "additionalProperties": false
-        },
-        "EventProxyDeleted": {
-            "title": "EventProxyDeleted",
-            "type": "object",
-            "properties": {
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "region"
-            ],
-            "additionalProperties": false
-        },
-        "EventScalesetFailed": {
-            "title": "EventScalesetFailed",
-            "type": "object",
-            "properties": {
-                "scaleset_id": {
-                    "title": "Scaleset Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                },
-                "error": {
-                    "$ref": "#/definitions/Error"
-                }
-            },
-            "required": [
-                "scaleset_id",
-                "pool_name",
-                "error"
-            ],
-            "additionalProperties": false
-        },
-        "EventScalesetCreated": {
-            "title": "EventScalesetCreated",
-            "type": "object",
-            "properties": {
-                "scaleset_id": {
-                    "title": "Scaleset Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                },
-                "vm_sku": {
-                    "title": "Vm Sku",
-                    "type": "string"
-                },
-                "image": {
-                    "title": "Image",
-                    "type": "string"
-                },
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                },
-                "size": {
-                    "title": "Size",
-                    "type": "integer"
-                }
-            },
-            "required": [
-                "scaleset_id",
-                "pool_name",
-                "vm_sku",
-                "image",
-                "region",
-                "size"
-            ],
-            "additionalProperties": false
-        },
-        "EventScalesetDeleted": {
-            "title": "EventScalesetDeleted",
-            "type": "object",
-            "properties": {
-                "scaleset_id": {
-                    "title": "Scaleset Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "scaleset_id",
-                "pool_name"
-            ],
-            "additionalProperties": false
-        },
-        "EventTaskFailed": {
-            "title": "EventTaskFailed",
-            "type": "object",
-            "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "task_id": {
-                    "title": "Task Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "error": {
-                    "$ref": "#/definitions/Error"
-                },
-                "user_info": {
-                    "$ref": "#/definitions/UserInfo"
-                }
-            },
-            "required": [
-                "job_id",
-                "task_id",
-                "error"
-            ],
-            "additionalProperties": false
-        },
-        "TaskState": {
-            "title": "TaskState",
-            "description": "An enumeration.",
-            "enum": [
-                "init",
-                "waiting",
-                "scheduled",
-                "setting_up",
-                "running",
-                "stopping",
-                "stopped",
-                "wait_job"
-            ]
-        },
-        "EventTaskStateUpdated": {
-            "title": "EventTaskStateUpdated",
-            "type": "object",
-            "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "task_id": {
-                    "title": "Task Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "state": {
-                    "$ref": "#/definitions/TaskState"
-                },
-                "end_time": {
-                    "title": "End Time",
-                    "type": "string",
-                    "format": "date-time"
-                }
-            },
-            "required": [
-                "job_id",
-                "task_id",
-                "state"
-            ],
-            "additionalProperties": false
-        },
-        "TaskType": {
-            "title": "TaskType",
-            "description": "An enumeration.",
-            "enum": [
-                "libfuzzer_fuzz",
-                "libfuzzer_coverage",
-                "libfuzzer_crash_report",
-                "libfuzzer_merge",
-                "generic_analysis",
-                "generic_supervisor",
-                "generic_merge",
-                "generic_generator",
-                "generic_crash_report"
-            ]
-        },
-        "ContainerType": {
-            "title": "ContainerType",
-            "description": "An enumeration.",
-            "enum": [
-                "analysis",
-                "coverage",
-                "crashes",
-                "inputs",
-                "no_repro",
-                "readonly_inputs",
-                "reports",
-                "setup",
-                "tools",
-                "unique_inputs",
-                "unique_reports"
-            ]
-        },
-        "StatsFormat": {
-            "title": "StatsFormat",
-            "description": "An enumeration.",
-            "enum": [
-                "AFL"
-            ]
-        },
-        "TaskDetails": {
-            "title": "TaskDetails",
-            "type": "object",
-            "properties": {
-                "type": {
-                    "$ref": "#/definitions/TaskType"
-                },
-                "duration": {
-                    "title": "Duration",
-                    "type": "integer"
-                },
-                "target_exe": {
-                    "title": "Target Exe",
-                    "type": "string"
-                },
-                "target_env": {
-                    "title": "Target Env",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "target_options": {
-                    "title": "Target Options",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "target_workers": {
-                    "title": "Target Workers",
-                    "type": "integer"
-                },
-                "target_options_merge": {
-                    "title": "Target Options Merge",
-                    "type": "boolean"
-                },
-                "check_asan_log": {
-                    "title": "Check Asan Log",
-                    "type": "boolean"
-                },
-                "check_debugger": {
-                    "title": "Check Debugger",
-                    "default": true,
-                    "type": "boolean"
-                },
-                "check_retry_count": {
-                    "title": "Check Retry Count",
-                    "type": "integer"
-                },
-                "check_fuzzer_help": {
-                    "title": "Check Fuzzer Help",
-                    "type": "boolean"
-                },
-                "expect_crash_on_failure": {
-                    "title": "Expect Crash On Failure",
-                    "type": "boolean"
-                },
-                "rename_output": {
-                    "title": "Rename Output",
-                    "type": "boolean"
-                },
-                "supervisor_exe": {
-                    "title": "Supervisor Exe",
-                    "type": "string"
-                },
-                "supervisor_env": {
-                    "title": "Supervisor Env",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "supervisor_options": {
-                    "title": "Supervisor Options",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "supervisor_input_marker": {
-                    "title": "Supervisor Input Marker",
-                    "type": "string"
-                },
-                "generator_exe": {
-                    "title": "Generator Exe",
-                    "type": "string"
-                },
-                "generator_env": {
-                    "title": "Generator Env",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "generator_options": {
-                    "title": "Generator Options",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "analyzer_exe": {
-                    "title": "Analyzer Exe",
-                    "type": "string"
-                },
-                "analyzer_env": {
-                    "title": "Analyzer Env",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "analyzer_options": {
-                    "title": "Analyzer Options",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "wait_for_files": {
-                    "$ref": "#/definitions/ContainerType"
-                },
-                "stats_file": {
-                    "title": "Stats File",
-                    "type": "string"
-                },
-                "stats_format": {
-                    "$ref": "#/definitions/StatsFormat"
-                },
-                "reboot_after_setup": {
-                    "title": "Reboot After Setup",
-                    "type": "boolean"
-                },
-                "target_timeout": {
-                    "title": "Target Timeout",
-                    "type": "integer"
-                },
-                "ensemble_sync_delay": {
-                    "title": "Ensemble Sync Delay",
-                    "type": "integer"
-                },
-                "preserve_existing_outputs": {
-                    "title": "Preserve Existing Outputs",
-                    "type": "boolean"
-                }
-            },
-            "required": [
-                "type",
-                "duration",
-                "target_exe",
-                "target_env",
-                "target_options"
-            ]
-        },
-        "TaskVm": {
-            "title": "TaskVm",
-            "type": "object",
-            "properties": {
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                },
-                "sku": {
-                    "title": "Sku",
-                    "type": "string"
-                },
-                "image": {
-                    "title": "Image",
-                    "type": "string"
-                },
-                "count": {
-                    "title": "Count",
-                    "default": 1,
-                    "type": "integer"
-                },
-                "spot_instances": {
-                    "title": "Spot Instances",
-                    "default": false,
-                    "type": "boolean"
-                },
-                "reboot_after_setup": {
-                    "title": "Reboot After Setup",
-                    "type": "boolean"
-                }
-            },
-            "required": [
-                "region",
-                "sku",
-                "image"
-            ]
-        },
-        "TaskPool": {
-            "title": "TaskPool",
-            "type": "object",
-            "properties": {
-                "count": {
-                    "title": "Count",
-                    "type": "integer"
-                },
-                "pool_name": {
-                    "title": "Pool Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "count",
-                "pool_name"
-            ]
-        },
-        "TaskContainers": {
-            "title": "TaskContainers",
-            "type": "object",
-            "properties": {
-                "type": {
-                    "$ref": "#/definitions/ContainerType"
-                },
-                "name": {
-                    "title": "Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "type",
-                "name"
-            ]
-        },
-        "TaskDebugFlag": {
-            "title": "TaskDebugFlag",
-            "description": "An enumeration.",
-            "enum": [
-                "keep_node_on_failure",
-                "keep_node_on_completion"
-            ]
-        },
-        "TaskConfig": {
-            "title": "TaskConfig",
-            "type": "object",
-            "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "prereq_tasks": {
-                    "title": "Prereq Tasks",
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "format": "uuid"
-                    }
-                },
-                "task": {
-                    "$ref": "#/definitions/TaskDetails"
-                },
-                "vm": {
-                    "$ref": "#/definitions/TaskVm"
-                },
-                "pool": {
-                    "$ref": "#/definitions/TaskPool"
-                },
-                "containers": {
-                    "title": "Containers",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/TaskContainers"
-                    }
-                },
-                "tags": {
-                    "title": "Tags",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "debug": {
-                    "title": "Debug",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/TaskDebugFlag"
-                    }
-                },
-                "colocate": {
-                    "title": "Colocate",
-                    "type": "boolean"
-                }
-            },
-            "required": [
-                "job_id",
-                "task",
-                "containers",
-                "tags"
-            ]
-        },
-        "EventTaskCreated": {
-            "title": "EventTaskCreated",
-            "type": "object",
-            "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "task_id": {
-                    "title": "Task Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "config": {
-                    "$ref": "#/definitions/TaskConfig"
-                },
-                "user_info": {
-                    "$ref": "#/definitions/UserInfo"
-                }
-            },
-            "required": [
-                "job_id",
-                "task_id",
-                "config"
-            ],
-            "additionalProperties": false
-        },
-        "EventTaskStopped": {
-            "title": "EventTaskStopped",
-            "type": "object",
-            "properties": {
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "task_id": {
-                    "title": "Task Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "user_info": {
-                    "$ref": "#/definitions/UserInfo"
-                }
-            },
-            "required": [
-                "job_id",
-                "task_id"
-            ],
-            "additionalProperties": false
-        },
-        "BlobRef": {
-            "title": "BlobRef",
-            "type": "object",
-            "properties": {
-                "account": {
-                    "title": "Account",
-                    "type": "string"
-                },
-                "container": {
-                    "title": "Container",
-                    "type": "string"
-                },
-                "name": {
-                    "title": "Name",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "account",
-                "container",
-                "name"
-            ]
-        },
-        "Report": {
-            "title": "Report",
-            "type": "object",
-            "properties": {
-                "input_url": {
-                    "title": "Input Url",
-                    "type": "string"
-                },
-                "input_blob": {
-                    "$ref": "#/definitions/BlobRef"
-                },
-                "executable": {
-                    "title": "Executable",
-                    "type": "string"
-                },
-                "crash_type": {
-                    "title": "Crash Type",
-                    "type": "string"
-                },
-                "crash_site": {
-                    "title": "Crash Site",
-                    "type": "string"
-                },
-                "call_stack": {
-                    "title": "Call Stack",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "call_stack_sha256": {
-                    "title": "Call Stack Sha256",
-                    "type": "string"
-                },
-                "input_sha256": {
-                    "title": "Input Sha256",
-                    "type": "string"
-                },
-                "asan_log": {
-                    "title": "Asan Log",
-                    "type": "string"
-                },
-                "task_id": {
-                    "title": "Task Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "job_id": {
-                    "title": "Job Id",
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "scariness_score": {
-                    "title": "Scariness Score",
-                    "type": "integer"
-                },
-                "scariness_description": {
-                    "title": "Scariness Description",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "input_blob",
-                "executable",
-                "crash_type",
-                "crash_site",
-                "call_stack",
-                "call_stack_sha256",
-                "input_sha256",
-                "task_id",
-                "job_id"
-            ]
-        },
-        "EventCrashReported": {
-            "title": "EventCrashReported",
-            "type": "object",
-            "properties": {
-                "report": {
-                    "$ref": "#/definitions/Report"
-                },
-                "container": {
-                    "title": "Container",
-                    "type": "string"
-                },
-                "filename": {
-                    "title": "Filename",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "report",
-                "container",
-                "filename"
-            ],
-            "additionalProperties": false
-        },
-        "EventFileAdded": {
-            "title": "EventFileAdded",
-            "type": "object",
-            "properties": {
-                "container": {
-                    "title": "Container",
-                    "type": "string"
-                },
-                "filename": {
-                    "title": "Filename",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "container",
-                "filename"
-            ],
-            "additionalProperties": false
-        }
-    }
+    "title": "WebhookMessage",
+    "type": "object"
 }
 ```
 

@@ -10,7 +10,10 @@ use crate::tasks::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use onefuzz::{blob::BlobUrl, input_tester::Tester, sha256, syncdir::SyncedDir};
+use futures::stream::StreamExt;
+use onefuzz::{
+    blob::BlobUrl, input_tester::Tester, monitor::DirectoryMonitor, sha256, syncdir::SyncedDir,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -44,35 +47,64 @@ pub struct Config {
     #[serde(default)]
     pub check_retry_count: u64,
 
+    #[serde(default = "default_bool_true")]
+    pub check_queue: bool,
+
     #[serde(flatten)]
     pub common: CommonConfig,
 }
 
-pub struct ReportTask<'a> {
-    config: &'a Config,
+pub struct ReportTask {
+    config: Config,
     poller: InputPoller<Message>,
 }
 
-impl<'a> ReportTask<'a> {
-    pub fn new(config: &'a Config) -> Self {
-        let working_dir = config.common.task_id.to_string();
-        let poller = InputPoller::new(working_dir);
-
+impl ReportTask {
+    pub fn new(config: Config) -> Self {
+        let poller = InputPoller::new();
         Self { config, poller }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn local_run(&self) -> Result<()> {
+        let mut processor = GenericReportProcessor::new(&self.config, None);
+
+        info!("Starting generic crash report task");
+        let crashes = match &self.config.crashes {
+            Some(x) => x,
+            None => bail!("missing crashes directory"),
+        };
+
+        let mut read_dir = tokio::fs::read_dir(&crashes.path).await?;
+        while let Some(crash) = read_dir.next().await {
+            processor.process(None, &crash?.path()).await?;
+        }
+
+        if self.config.check_queue {
+            let mut monitor = DirectoryMonitor::new(&crashes.path);
+            monitor.start()?;
+            while let Some(crash) = monitor.next().await {
+                processor.process(None, &crash).await?;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting generic crash report task");
         let heartbeat_client = self.config.common.init_heartbeat().await?;
         let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
 
+        info!("processing existing crashes");
         if let Some(crashes) = &self.config.crashes {
             self.poller.batch_process(&mut processor, &crashes).await?;
         }
 
-        if let Some(queue) = &self.config.input_queue {
-            let callback = CallbackImpl::new(queue.clone(), processor);
-            self.poller.run(callback).await?;
+        info!("processing crashes from queue");
+        if self.config.check_queue {
+            if let Some(queue) = &self.config.input_queue {
+                let callback = CallbackImpl::new(queue.clone(), processor);
+                self.poller.run(callback).await?;
+            }
         }
         Ok(())
     }
@@ -105,12 +137,19 @@ impl<'a> GenericReportProcessor<'a> {
         }
     }
 
-    pub async fn test_input(&self, input_url: Url, input: &Path) -> Result<CrashTestResult> {
+    pub async fn test_input(
+        &self,
+        input_url: Option<Url>,
+        input: &Path,
+    ) -> Result<CrashTestResult> {
         self.heartbeat_client.alive();
         let input_sha256 = sha256::digest_file(input).await?;
         let task_id = self.config.common.task_id;
         let job_id = self.config.common.job_id;
-        let input_blob = InputBlob::from(BlobUrl::new(input_url)?);
+        let input_blob = match input_url {
+            Some(x) => Some(InputBlob::from(BlobUrl::new(x)?)),
+            None => None,
+        };
 
         let test_report = self.tester.test_input(input).await?;
 
@@ -160,10 +199,11 @@ impl<'a> GenericReportProcessor<'a> {
 
 #[async_trait]
 impl<'a> Processor for GenericReportProcessor<'a> {
-    async fn process(&mut self, url: Url, input: &Path) -> Result<()> {
+    async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
+        verbose!("generating crash report for: {}", input.display());
         let report = self.test_input(url, input).await?;
         report
-            .upload(
+            .save(
                 &self.config.unique_reports,
                 &self.config.reports,
                 &self.config.no_repro,

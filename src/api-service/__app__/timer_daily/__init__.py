@@ -8,12 +8,13 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import VmState
 
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.pools import Scaleset
 from ..onefuzzlib.proxy import Proxy
 from ..onefuzzlib.webhooks import WebhookMessageLog
 
 
-def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
+def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
     for proxy in Proxy.search():
         if not proxy.is_used():
             logging.info("stopping proxy")
@@ -33,3 +34,7 @@ def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
             log_entry.event_id,
         )
         log_entry.delete()
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
