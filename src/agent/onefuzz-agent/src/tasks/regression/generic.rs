@@ -62,7 +62,13 @@ impl<'a> GenericRegressionTask<'a> {
             self.config.input_reports.sync_pull().await?;
         } else {
             for file in &self.config.report_list {
-                let input_url = self.config.input_reports.url.blob(file);
+                let input_url = self
+                    .config
+                    .input_reports
+                    .url
+                    .clone()
+                    .ok_or(format_err!("no input url"))?
+                    .blob(file);
                 download_input(input_url.url(), &self.config.input_reports.path).await?;
             }
         }
@@ -72,18 +78,18 @@ impl<'a> GenericRegressionTask<'a> {
             heartbeat_client.alive();
             let crash_report_str = std::fs::read_to_string(file.path())?;
             let crash_report: CrashReport = serde_json::from_str(&crash_report_str)?;
+            let input_url = crash_report
+                .input_blob
+                .ok_or(format_err!("no input url"))?
+                .blob_url()?
+                .url();
 
-            let input = download_input(
-                crash_report.input_blob.blob_url()?.url(),
-                &self.config.crashes.path,
-            )
-            .await?;
-            let input_url = crash_report.input_blob.blob_url()?.url();
+            let input = download_input(input_url.clone(), &self.config.crashes.path).await?;
 
             let report = match crash_report.asan_log {
                 Some(_) => {
                     libfuzzer_report::test_input(
-                        input_url,
+                        Some(input_url),
                         &input,
                         &self.config.target_exe,
                         &self.config.target_options,
@@ -98,7 +104,7 @@ impl<'a> GenericRegressionTask<'a> {
                 }
                 None => {
                     generic::test_input(
-                        input_url,
+                        Some(input_url),
                         &input,
                         &self.config.target_exe,
                         &self.config.target_options,
@@ -118,7 +124,7 @@ impl<'a> GenericRegressionTask<'a> {
             let reports = Some(self.config.reports.clone());
             let no_repro = Some(self.config.no_repro.clone());
 
-            report.upload(&None, &reports, &no_repro).await?;
+            report.save(&None, &reports, &no_repro).await?;
         }
 
         Ok(())

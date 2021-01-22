@@ -138,32 +138,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "input_sha256": {
                     "title": "Input Sha256",
-                "preserve_existing_outputs": {
-                    "title": "Preserve Existing Outputs",
-                    "type": "boolean"
-                },
-                "file_list": {
-                    "title": "File List",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "type",
-                "duration",
-                "target_exe",
-                "target_env",
-                "target_options"
-            ]
-        },
-        "TaskVm": {
-            "title": "TaskVm",
-            "type": "object",
-            "properties": {
-                "region": {
-                    "title": "Region",
                     "type": "string"
                 },
                 "input_url": {
@@ -186,8 +160,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "task_id": {
                     "format": "uuid",
                     "title": "Task Id",
-                "scariness_description": {
-                    "title": "Scariness Description",
                     "type": "string"
                 }
             },
@@ -1152,25 +1124,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 {
     "additionalProperties": false,
     "definitions": {
-<<<<<<< HEAD
-=======
-        "TaskType": {
-            "title": "TaskType",
-            "description": "An enumeration.",
-            "enum": [
-                "libfuzzer_fuzz",
-                "libfuzzer_coverage",
-                "libfuzzer_crash_report",
-                "libfuzzer_merge",
-                "generic_analysis",
-                "generic_supervisor",
-                "generic_merge",
-                "generic_generator",
-                "generic_crash_report",
-                "generic_regression"
-            ]
-        },
->>>>>>> 3eddf10 (build fix)
         "ContainerType": {
             "description": "An enumeration.",
             "enum": [
@@ -1184,15 +1137,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
-<<<<<<< HEAD
-                "unique_reports"
-            ],
-            "title": "ContainerType"
-=======
                 "unique_reports",
                 "input_reports"
-            ]
->>>>>>> f997ea0 (regenerate webhook_event)
+            ],
+            "title": "ContainerType"
         },
         "StatsFormat": {
             "description": "An enumeration.",
@@ -1364,6 +1312,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Rename Output",
                     "type": "boolean"
                 },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
                 "stats_file": {
                     "title": "Stats File",
                     "type": "string"
@@ -1428,16 +1383,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "wait_for_files": {
                     "$ref": "#/definitions/ContainerType"
-                "preserve_existing_outputs": {
-                    "title": "Preserve Existing Outputs",
-                    "type": "boolean"
-                },
-                "report_list": {
-                    "title": "Report List",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             },
             "required": [
@@ -1479,7 +1424,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -1923,7 +1869,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
-                "unique_reports"
+                "unique_reports",
+                "input_reports"
             ],
             "title": "ContainerType"
         },
@@ -2463,50 +2410,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "file_added"
             ],
             "title": "EventType"
-                "libfuzzer_fuzz",
-                "libfuzzer_coverage",
-                "libfuzzer_crash_report",
-                "libfuzzer_merge",
-                "generic_analysis",
-                "generic_supervisor",
-                "generic_merge",
-                "generic_generator",
-                "generic_crash_report",
-                "generic_regression"
-            ]
         },
-<<<<<<< HEAD
         "JobConfig": {
-=======
-        "ContainerType": {
-            "title": "ContainerType",
-            "description": "An enumeration.",
-            "enum": [
-                "analysis",
-                "coverage",
-                "crashes",
-                "inputs",
-                "no_repro",
-                "readonly_inputs",
-                "reports",
-                "setup",
-                "tools",
-                "unique_inputs",
-                "unique_reports",
-                "input_reports"
-            ]
-        },
-        "StatsFormat": {
-            "title": "StatsFormat",
-            "description": "An enumeration.",
-            "enum": [
-                "AFL"
-            ]
-        },
-        "TaskDetails": {
-            "title": "TaskDetails",
-            "type": "object",
->>>>>>> f997ea0 (regenerate webhook_event)
             "properties": {
                 "build": {
                     "title": "Build",
@@ -2800,6 +2705,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Rename Output",
                     "type": "boolean"
                 },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
                 "stats_file": {
                     "title": "Stats File",
                     "type": "string"
@@ -2816,32 +2728,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "supervisor_exe": {
                     "title": "Supervisor Exe",
-                "preserve_existing_outputs": {
-                    "title": "Preserve Existing Outputs",
-                    "type": "boolean"
-                },
-                "report_list": {
-                    "title": "Report List",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "type",
-                "duration",
-                "target_exe",
-                "target_env",
-                "target_options"
-            ]
-        },
-        "TaskVm": {
-            "title": "TaskVm",
-            "type": "object",
-            "properties": {
-                "region": {
-                    "title": "Region",
                     "type": "string"
                 },
                 "supervisor_input_marker": {
@@ -2945,7 +2831,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },

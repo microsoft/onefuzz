@@ -29,7 +29,7 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     } else {
         None
     };
-    let unique_reports = value_t!(args, UNIQUE_REPORTS_DIR, PathBuf)?.into();
+    let unique_reports = Some(value_t!(args, UNIQUE_REPORTS_DIR, PathBuf)?.into());
 
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
 

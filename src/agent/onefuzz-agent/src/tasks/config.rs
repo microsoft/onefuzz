@@ -107,6 +107,7 @@ impl Config {
             Config::GenericReport(c) => &mut c.common,
             Config::GenericSupervisor(c) => &mut c.common,
             Config::GenericGenerator(c) => &mut c.common,
+            Config::GenericRegression(c) => &mut c.common,
         }
     }
 
@@ -189,7 +190,9 @@ impl Config {
             }
             Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
             Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
-            Config::GenericReport(config) => report::generic::ReportTask::managed_run(&config).run().await,
+            Config::GenericReport(config) => {
+                report::generic::ReportTask::new(config).managed_run().await
+            }
             Config::GenericRegression(config) => {
                 regression::generic::GenericRegressionTask::new(&config)
                     .run()

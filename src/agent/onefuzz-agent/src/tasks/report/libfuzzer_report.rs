@@ -67,7 +67,9 @@ impl ReportTask {
         };
         crashes.init().await?;
 
-        self.config.unique_reports.init().await?;
+        if let Some(unique_reports) = &self.config.unique_reports {
+            unique_reports.init().await?;
+        }
         if let Some(reports) = &self.config.reports {
             reports.init().await?;
         }
@@ -116,7 +118,7 @@ impl ReportTask {
 }
 
 pub async fn test_input(
-    input_url: Url,
+    input_url: Option<Url>,
     input: &Path,
     target_exe: &Path,
     target_options: &[String],
@@ -131,10 +133,12 @@ pub async fn test_input(
 
     let task_id = task_id;
     let job_id = job_id;
-    let input_blob = InputBlob::from(BlobUrl::new(input_url)?);
-    let input_sha256 = sha256::digest_file(input).await.with_context(|| {
-        format_err!("unable to sha256 digest input file: {}", input.display())
-    })?;
+    let input_blob = input_url
+        .and_then(|u| BlobUrl::new(u).ok())
+        .map(|u| InputBlob::from(u));
+    let input_sha256 = sha256::digest_file(input)
+        .await
+        .with_context(|| format_err!("unable to sha256 digest input file: {}", input.display()))?;
 
     let test_report = fuzzer
         .repro(input, target_timeout, check_retry_count)

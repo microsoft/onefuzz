@@ -37,7 +37,6 @@ pub struct Config {
     pub crashes: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
     pub unique_reports: Option<SyncedDir>,
-    pub file_list: Vec<String>,
     pub no_repro: Option<SyncedDir>,
 
     pub target_timeout: Option<u64>,
@@ -113,7 +112,7 @@ impl ReportTask {
 }
 
 pub async fn test_input(
-    input_url: Url,
+    input_url: Option<Url>,
     input: &Path,
     target_exe: &Path,
     target_options: &[String],
@@ -141,7 +140,9 @@ pub async fn test_input(
     let input_sha256 = sha256::digest_file(input).await?;
     let task_id = task_id;
     let job_id = job_id;
-    let input_blob = InputBlob::from(BlobUrl::new(input_url)?);
+    let input_blob = input_url
+        .and_then(|u| BlobUrl::new(u).ok())
+        .map(|u| InputBlob::from(u));
 
     let test_report = tester.test_input(input).await?;
 

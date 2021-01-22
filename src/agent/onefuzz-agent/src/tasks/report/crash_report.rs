@@ -112,7 +112,11 @@ impl CrashTestResult {
         match self {
             Self::CrashReport(report) => {
                 if let Some(unique_reports) = unique_reports {
-                    upload_deduped(report, &unique_reports.url).await?;
+                    // Use SHA-256 of call stack as dedupe key.
+                    let name = report.unique_blob_name();
+                    if upload_or_save_local(&report, &name, unique_reports).await? {
+                        event!(new_unique_report; EventData::Path = name);
+                    }
                 }
 
                 if let Some(reports) = reports {
