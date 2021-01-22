@@ -23,7 +23,7 @@ pub enum SyncOperation {
 const DELAY: Duration = Duration::from_secs(10);
 const DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS: u64 = 60;
 
-#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Clone, PartialEq, Default)]
 pub struct SyncedDir {
     pub path: PathBuf,
     pub url: Option<BlobContainerUrl>,
