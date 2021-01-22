@@ -32,11 +32,15 @@ from .storage import (
 )
 
 
+def get_url(account_name: str) -> str:
+    return f"https://{account_name}.blob.core.windows.net/"
+
+
 @cached
 def get_blob_service(account_id: str) -> BlobServiceClient:
     logging.debug("getting blob container (account_id: %s)", account_id)
     account_name, account_key = get_storage_account_name_key(account_id)
-    account_url = f"https://{account_name}.blob.core.windows.net/"
+    account_url = get_url(account_name)
     service = BlobServiceClient(account_url=account_url, credential=account_key)
     return service
 
@@ -181,7 +185,7 @@ def get_container_sas_url_service(
     )
 
     with_sas = ContainerClient(
-        f"https://{account_name}.blob.core.windows.net/",
+        get_url(account_name),
         container_name=container_name,
         credential=sas,
     )
@@ -253,7 +257,7 @@ def get_file_sas_url(
     )
 
     with_sas = BlobClient(
-        f"https://{client.account_name}.blob.core.windows.net/",
+        get_url(client.account_name),
         container,
         name,
         credential=sas,
