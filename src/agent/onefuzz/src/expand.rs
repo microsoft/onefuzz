@@ -34,6 +34,7 @@ pub enum PlaceHolder {
     SupervisorExe,
     SupervisorOptions,
     SetupDir,
+    ReportsDir,
 }
 
 impl PlaceHolder {
@@ -57,6 +58,7 @@ impl PlaceHolder {
             Self::SupervisorExe => "{supervisor_exe}",
             Self::SupervisorOptions => "{supervisor_options}",
             Self::SetupDir => "{setup_dir}",
+            Self::ReportsDir => "{reports_dir}",
         }
         .to_string()
     }
@@ -200,6 +202,13 @@ impl<'a> Expand<'a> {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
         self.set_value(PlaceHolder::OutputDir, ExpandedValue::Path(path));
+        self
+    }
+
+    pub fn reports_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+        let arg = arg.as_ref();
+        let path = String::from(arg.to_string_lossy());
+        self.set_value(PlaceHolder::ReportsDir, ExpandedValue::Path(path));
         self
     }
 
