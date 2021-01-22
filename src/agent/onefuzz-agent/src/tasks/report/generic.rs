@@ -35,7 +35,7 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub crashes: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
-    pub unique_reports: SyncedDir,
+    pub unique_reports: Option<SyncedDir>,
     pub no_repro: Option<SyncedDir>,
 
     pub target_timeout: Option<u64>,

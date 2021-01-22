@@ -30,7 +30,7 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub crashes: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
-    pub unique_reports: SyncedDir,
+    pub unique_reports: Option<SyncedDir>,
     pub no_repro: Option<SyncedDir>,
 
     #[serde(default = "default_bool_true")]
@@ -67,7 +67,9 @@ impl ReportTask {
         };
         crashes.init().await?;
 
-        self.config.unique_reports.init().await?;
+        if let Some(unique_reports) = &self.config.unique_reports {
+            unique_reports.init().await?;
+        }
         if let Some(reports) = &self.config.reports {
             reports.init().await?;
         }
