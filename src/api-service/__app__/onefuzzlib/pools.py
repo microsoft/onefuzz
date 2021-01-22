@@ -913,11 +913,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
             if to_reimage:
                 self.reimage_nodes(to_reimage)
-            return bool(to_reimage) or bool(to_delete)
         except UnableToUpdate:
             logging.info("scaleset update already in progress: %s", self.scaleset_id)
 
-        return False
+        return bool(to_reimage) or bool(to_delete)
 
     def _resize_equal(self) -> None:
         # NOTE: this is the only place we reset to the 'running' state.
