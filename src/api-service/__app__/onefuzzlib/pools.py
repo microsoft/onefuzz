@@ -358,18 +358,11 @@ class Node(BASE_NODE, ORMMixin):
 
         self.save()
 
-    def clear_all(self) -> None:
+    def delete(self) -> None:
         self.mark_tasks_stopped_early()
         NodeTasks.clear_by_machine_id(self.machine_id)
         NodeMessage.clear_messages(self.machine_id)
-
-    def reset(self) -> None:
-        logging.info("resetting node: %s", self.machine_id)
-        self.clear_all()
-
-    def delete(self) -> None:
-        logging.info("deleting node: %s", self.machine_id)
-        self.clear_all()
+        super().delete()
         send_event(
             EventNodeDeleted(
                 machine_id=self.machine_id,
@@ -377,7 +370,6 @@ class Node(BASE_NODE, ORMMixin):
                 scaleset_id=self.scaleset_id,
             )
         )
-        super().delete()
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
