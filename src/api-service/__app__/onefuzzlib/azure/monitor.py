@@ -13,7 +13,7 @@ from .creds import get_base_resource_group, get_identity, get_subscription
 
 
 @cached
-def get_montior_client() -> LogAnalyticsManagementClient:
+def get_monitor_client() -> LogAnalyticsManagementClient:
     return LogAnalyticsManagementClient(get_identity(), get_subscription())
 
 
@@ -21,7 +21,7 @@ def get_montior_client() -> LogAnalyticsManagementClient:
 def get_monitor_settings() -> Dict[str, str]:
     resource_group = get_base_resource_group()
     workspace_name = os.environ["ONEFUZZ_MONITOR"]
-    client = get_montior_client()
+    client = get_monitor_client()
     customer_id = client.workspaces.get(resource_group, workspace_name).customer_id
     shared_key = client.shared_keys.get_shared_keys(
         resource_group, workspace_name
