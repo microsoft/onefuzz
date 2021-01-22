@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from enum import Enum
-from typing import Any, Dict, NewType, Union, cast
+from typing import Any, Dict, NewType, Union
 from uuid import UUID
 
 from onefuzztypes.validators import check_alnum, check_alnum_dash
