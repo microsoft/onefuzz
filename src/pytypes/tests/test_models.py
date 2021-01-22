@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from onefuzztypes.models import Scaleset, TeamsTemplate
 from onefuzztypes.requests import NotificationCreate
-
+from onefuzztypes.primitives import PoolName, Region
 
 class TestModelsVerify(unittest.TestCase):
     def test_model(self) -> None:
@@ -32,29 +32,29 @@ class TestScaleset(unittest.TestCase):
     def test_scaleset_size(self) -> None:
         with self.assertRaises(ValueError):
             Scaleset(
-                pool_name="test_pool",
+                pool_name=PoolName("test_pool"),
                 vm_sku="Standard_D2ds_v4",
                 image="Canonical:UbuntuServer:18.04-LTS:latest",
-                region="westus2",
+                region=Region("westus2"),
                 size=-1,
                 spot_instances=False,
             )
 
         scaleset = Scaleset(
-            pool_name="test_pool",
+            pool_name=PoolName("test_pool"),
             vm_sku="Standard_D2ds_v4",
             image="Canonical:UbuntuServer:18.04-LTS:latest",
-            region="westus2",
+            region=Region("westus2"),
             size=0,
             spot_instances=False,
         )
         self.assertEqual(scaleset.size, 0)
 
         scaleset = Scaleset(
-            pool_name="test_pool",
+            pool_name=PoolName("test_pool"),
             vm_sku="Standard_D2ds_v4",
             image="Canonical:UbuntuServer:18.04-LTS:latest",
-            region="westus2",
+            region=Region("westus2"),
             size=80,
             spot_instances=False,
         )
