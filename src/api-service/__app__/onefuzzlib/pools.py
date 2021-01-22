@@ -287,7 +287,7 @@ class Node(BASE_NODE, ORMMixin):
 
     def send_message(self, message: NodeCommand) -> None:
         NodeMessage(
-            agent_id=self.machine_id,
+            machine_id=self.machine_id,
             message=message,
         ).save()
 
@@ -425,26 +425,26 @@ class NodeTasks(BASE_NODE_TASK, ORMMixin):
 # this isn't anticipated to be needed by the client, hence it not
 # being in onefuzztypes
 class NodeMessage(ORMMixin):
-    agent_id: UUID
+    machine_id: UUID
     message_id: str = Field(default_factory=datetime.datetime.utcnow().timestamp)
     message: NodeCommand
 
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:
-        return ("agent_id", "message_id")
+        return ("machine_id", "message_id")
 
     @classmethod
     def get_messages(
-        cls, agent_id: UUID, num_results: int = None
+        cls, machine_id: UUID, num_results: int = None
     ) -> List["NodeMessage"]:
         entries: List["NodeMessage"] = cls.search(
-            query={"agent_id": [agent_id]}, num_results=num_results
+            query={"machine_id": [machine_id]}, num_results=num_results
         )
         return entries
 
     @classmethod
-    def clear_messages(cls, agent_id: UUID) -> None:
-        messages = cls.get_messages(agent_id)
+    def clear_messages(cls, machine_id: UUID) -> None:
+        messages = cls.get_messages(machine_id)
         for message in messages:
             message.delete()
 
