@@ -8,7 +8,7 @@ import logging
 from uuid import UUID
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode
+from onefuzztypes.enums import ErrorCode, NodeState
 from onefuzztypes.models import Error
 from onefuzztypes.requests import AgentRegistrationGet, AgentRegistrationPost
 from onefuzztypes.responses import AgentRegistration
@@ -18,7 +18,7 @@ from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.events import get_events
-from ..onefuzzlib.pools import Node, Pool
+from ..onefuzzlib.pools import Node, NodeMessage, NodeTasks, Pool
 from ..onefuzzlib.request import not_ok, ok, parse_uri
 
 
@@ -96,14 +96,23 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     node = Node.get_by_machine_id(registration_request.machine_id)
     if node:
-        node.delete()
+        if node.version != registration_request.version:
+            NodeMessage.clear_messages(node.machine_id)
+        node.version = registration_request.version
+        node.reimage_requested = False
+        node.reimage_queued = False
+        node.set_state(NodeState.init)
+    else:
+        node = Node.create(
+            pool_name=registration_request.pool_name,
+            machine_id=registration_request.machine_id,
+            scaleset_id=registration_request.scaleset_id,
+            version=registration_request.version,
+        )
 
-    node = Node.create(
-        pool_name=registration_request.pool_name,
-        machine_id=registration_request.machine_id,
-        scaleset_id=registration_request.scaleset_id,
-        version=registration_request.version,
-    )
+    # if any tasks were running during an earlier instance of this node, clear them out
+    node.mark_tasks_stopped_early()
+    NodeTasks.clear_by_machine_id(node.machine_id)
 
     return create_registration_response(node.machine_id, pool)
 
