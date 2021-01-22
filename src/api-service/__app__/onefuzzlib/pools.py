@@ -874,10 +874,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
 
-        if not nodes:
-            logging.info("no nodes need updating: %s", self.scaleset_id)
-            return False
-
         # Nodes do not exists in scalesets but in table due to unknown failure
         for node in nodes:
             if node.machine_id not in azure_nodes:
@@ -888,10 +884,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         nodes = [x for x in nodes if x.machine_id in azure_nodes]
 
         nodes_to_reset = [x for x in nodes if x.state in NodeState.ready_for_reset()]
-
-        if len(nodes_to_reset) == 0:
-            logging.info("No needs are ready for resetting: %s", self.scaleset_id)
-            return False
 
         for node in nodes_to_reset:
             if node.delete_requested:
@@ -921,10 +913,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
             if to_reimage:
                 self.reimage_nodes(to_reimage)
+            return bool(to_reimage) or bool(to_delete)
         except UnableToUpdate:
             logging.info("scaleset update already in progress: %s", self.scaleset_id)
 
-        return True
+        return False
 
     def _resize_equal(self) -> None:
         # NOTE: this is the only place we reset to the 'running' state.
