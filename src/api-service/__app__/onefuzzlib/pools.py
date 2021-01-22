@@ -881,9 +881,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     "no longer in scaleset: %s:%s", self.scaleset_id, node.machine_id
                 )
                 node.delete()
-        nodes = [x for x in nodes if x.machine_id in azure_nodes]
 
-        nodes_to_reset = [x for x in nodes if x.state in NodeState.ready_for_reset()]
+        existing_nodes = [x for x in nodes if x.machine_id in azure_nodes]
+        nodes_to_reset = [
+            x for x in existing_nodes if x.state in NodeState.ready_for_reset()
+        ]
 
         for node in nodes_to_reset:
             if node.delete_requested:
