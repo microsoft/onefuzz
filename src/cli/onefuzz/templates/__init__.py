@@ -87,6 +87,7 @@ class JobHelper:
                 )
 
         self.wait_for_running: bool = False
+        self.wait_for_stopping: bool = False
         self.containers: Dict[ContainerType, Container] = {}
         self.tags: Dict[str, str] = {"project": project, "name": name, "build": build}
         if job is None:
@@ -250,6 +251,15 @@ class JobHelper:
             raise StoppedEarly("tasks stopped unexpectedly.\n%s" % "\n".join(errors))
         return job
 
+    def is_stopping(self) -> Tuple[bool, str, Any]:
+        tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
+        stopping = [
+            "%s:%s" % (x.config.task.type.name, x.state.name)
+            for x in tasks
+            if x.state not in TaskState.shutting_down()
+        ]
+        return (not stopping, "waiting on: %s" % ", ".join(sorted(stopping)), None)
+
     def get_waiting(self) -> List[str]:
         tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
         waiting = [
@@ -288,6 +298,10 @@ class JobHelper:
         if self.to_monitor:
             wait(self.has_files)
             self.logger.info("new files found")
+
+        if self.wait_for_stopping:
+            wait(self.is_stopping)
+            self.logger.info("tasks stopped")
 
     def target_exe_blob_name(
         self, target_exe: File, setup_dir: Optional[Directory]

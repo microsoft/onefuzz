@@ -104,7 +104,10 @@ class Regression(Command):
             check_fuzzer_help=check_fuzzer_help,
             report_list=report_list,
         )
+        helper.wait_for_stopping = fail_on_repro
 
+        self.logger.info("done creating tasks")
+        helper.wait()
         if fail_on_repro:
             repro_count = len(
                 self.onefuzz.containers.files.list(
@@ -114,6 +117,4 @@ class Regression(Command):
             if repro_count > 0:
                 raise Exception("Failure detected")
 
-        self.logger.info("done creating tasks")
-        helper.wait()
         return helper.job
