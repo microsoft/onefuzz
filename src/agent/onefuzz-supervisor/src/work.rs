@@ -145,7 +145,7 @@ impl WorkQueue {
         }
     }
 
-    pub async fn renew(&mut self) -> Result<()> {
+    async fn renew(&mut self) -> Result<()> {
         self.registration.renew().await?;
         let url = self.registration.dynamic_config.work_queue.clone();
         self.queue = QueueClient::new(url);
@@ -159,7 +159,7 @@ impl WorkQueue {
         // it was just due to a stale SAS URL.
         if let Err(err) = &msg {
             if is_auth_error(err) {
-                self.registration.renew().await?;
+                self.renew().await?;
                 msg = self.queue.pop().await;
             }
         }
@@ -189,7 +189,7 @@ impl WorkQueue {
         // it was just due to a stale SAS URL.
         if let Err(err) = &result {
             if is_auth_error(err) {
-                self.registration.renew().await?;
+                self.renew().await?;
                 self.queue.delete(receipt).await?;
             }
         }
