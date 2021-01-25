@@ -11,6 +11,7 @@ from onefuzztypes.models import Report, TeamsTemplate
 from onefuzztypes.primitives import Container
 
 from ..azure.containers import auth_download_url
+from ..secrets import get_secret_string_value
 from ..tasks.config import get_setup_container
 from ..tasks.main import Task
 
@@ -46,7 +47,8 @@ def send_teams_webhook(
     if text:
         message["sections"].append({"text": text})
 
-    response = requests.post(config.url, json=message)
+    config_url = get_secret_string_value(config.url)
+    response = requests.post(config_url, json=message)
     if not response.ok:
         logging.error("webhook failed %s %s", response.status_code, response.content)
 

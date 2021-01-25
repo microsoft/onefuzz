@@ -10,9 +10,10 @@ from github3 import login
 from github3.exceptions import GitHubException
 from github3.issues import Issue
 from onefuzztypes.enums import GithubIssueSearchMatch
-from onefuzztypes.models import GithubIssueTemplate, Report
+from onefuzztypes.models import GithubAuth, GithubIssueTemplate, Report
 from onefuzztypes.primitives import Container
 
+from ..secrets import get_secret_obj
 from .common import Render, fail_task
 
 
@@ -26,9 +27,12 @@ class GithubIssue:
     ):
         self.config = config
         self.report = report
-        self.gh = login(
-            username=config.auth.user, password=config.auth.personal_access_token
-        )
+        if isinstance(config.auth.secret, GithubAuth):
+            auth = config.auth.secret
+        else:
+            auth = get_secret_obj(config.auth.secret.url, GithubAuth)
+
+        self.gh = login(username=auth.user, password=auth.personal_access_token)
         self.renderer = Render(container, filename, report)
 
     def render(self, field: str) -> str:
