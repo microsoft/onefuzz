@@ -11,6 +11,7 @@ import logging
 import os
 import sys
 import time
+from dataclasses import asdict, is_dataclass
 from enum import Enum
 from typing import (
     Any,
@@ -381,6 +382,8 @@ def serialize(data: Any) -> Any:
         return str(data)
     if isinstance(data, (int, str)):
         return data
+    if is_dataclass(data):
+        return {serialize(a): serialize(b) for (a, b) in asdict(data).items()}
 
     raise Exception("unknown type %s" % type(data))
 
