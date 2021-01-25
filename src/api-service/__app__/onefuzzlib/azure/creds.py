@@ -7,8 +7,6 @@ import os
 from typing import Any, List
 from uuid import UUID
 
-from azure.cli.core import CLIError
-from azure.common.client_factory import get_client_from_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import CheckGroupMembershipParameters
 from azure.identity import DefaultAzureCredential
@@ -25,24 +23,16 @@ from .monkeypatch import allow_more_workers, reduce_logging
 
 @cached
 def get_msi() -> MSIAuthentication:
+    allow_more_workers()
+    reduce_logging()
     return MSIAuthentication()
 
 
 @cached
-def mgmt_client_factory(client_class: Any) -> Any:
+def get_identity() -> DefaultAzureCredential:
     allow_more_workers()
     reduce_logging()
-    try:
-        return get_client_from_cli_profile(client_class)
-    except CLIError:
-        pass
-    except OSError:
-        pass
-
-    if issubclass(client_class, SubscriptionClient):
-        return client_class(get_msi())
-    else:
-        return client_class(get_msi(), get_subscription())
+    return DefaultAzureCredential()
 
 
 @cached
@@ -52,7 +42,9 @@ def get_base_resource_group() -> Any:  # should be str
 
 @cached
 def get_base_region() -> Any:  # should be str
-    client = mgmt_client_factory(ResourceManagementClient)
+    client = ResourceManagementClient(
+        credential=get_identity(), subscription_id=get_subscription()
+    )
     group = client.resource_groups.get(get_base_resource_group())
     return group.location
 
@@ -98,14 +90,15 @@ DAY_IN_SECONDS = 60 * 60 * 24
 
 @cached(ttl=DAY_IN_SECONDS)
 def get_regions() -> List[str]:
-    client = mgmt_client_factory(SubscriptionClient)
     subscription = get_subscription()
+    client = SubscriptionClient(credential=get_identity())
     locations = client.subscriptions.list_locations(subscription)
     return sorted([x.name for x in locations])
 
 
-def get_graph_client() -> Any:
-    return mgmt_client_factory(GraphRbacManagementClient)
+@cached
+def get_graph_client() -> GraphRbacManagementClient:
+    return GraphRbacManagementClient(get_msi(), get_subscription())
 
 
 def is_member_of(group_id: str, member_id: str) -> bool:
@@ -133,7 +126,9 @@ def get_scaleset_identity_resource_path() -> str:
 @cached
 def get_scaleset_principal_id() -> UUID:
     api_version = "2018-11-30"  # matches the apiversion in the deployment template
-    client = mgmt_client_factory(ResourceManagementClient)
+    client = ResourceManagementClient(
+        credential=get_identity(), subscription_id=get_subscription()
+    )
     uid = client.resources.get_by_id(get_scaleset_identity_resource_path(), api_version)
     return UUID(uid.properties["principalId"])
 

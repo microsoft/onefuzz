@@ -8,25 +8,27 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
-from azure.mgmt.compute import ComputeManagementClient
-from azure.mgmt.compute.models import ResourceSku, ResourceSkuRestrictionsType
+from azure.core.exceptions import ResourceNotFoundError
+from azure.mgmt.compute.models import (
+    ResourceSku,
+    ResourceSkuRestrictionsType,
+    VirtualMachineScaleSetVMInstanceIDs,
+    VirtualMachineScaleSetVMInstanceRequiredIDs,
+)
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.primitives import Region
 
-from .creds import (
-    get_base_resource_group,
-    get_scaleset_identity_resource_path,
-    mgmt_client_factory,
-)
+from .compute import get_compute_client
+from .creds import get_base_resource_group, get_scaleset_identity_resource_path
 from .image import get_os
 
 
 def list_vmss(name: UUID) -> Optional[List[str]]:
     resource_group = get_base_resource_group()
-    client = mgmt_client_factory(ComputeManagementClient)
+    client = get_compute_client()
     try:
         instances = [
             x.instance_id
@@ -35,30 +37,37 @@ def list_vmss(name: UUID) -> Optional[List[str]]:
             )
         ]
         return instances
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         logging.error("cloud error listing vmss: %s (%s)", name, err)
 
     return None
 
 
-def delete_vmss(name: UUID) -> Any:
+def delete_vmss(name: UUID) -> bool:
     resource_group = get_base_resource_group()
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
     try:
-        compute_client.virtual_machine_scale_sets.delete(resource_group, str(name))
+        compute_client.virtual_machine_scale_sets.begin_delete(
+            resource_group, str(name)
+        )
+    except ResourceNotFoundError:
+        return True
     except CloudError as err:
         logging.error("cloud error deleting vmss: %s (%s)", name, err)
+
+    return False
 
 
 def get_vmss(name: UUID) -> Optional[Any]:
     resource_group = get_base_resource_group()
     logging.debug("getting vm: %s", name)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
     try:
         return compute_client.virtual_machine_scale_sets.get(resource_group, str(name))
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         logging.debug("vm does not exist %s", err)
-        return None
+
+    return None
 
 
 def resize_vmss(name: UUID, capacity: int) -> None:
@@ -66,8 +75,8 @@ def resize_vmss(name: UUID, capacity: int) -> None:
 
     resource_group = get_base_resource_group()
     logging.info("updating VM count - name: %s vm_count: %d", name, capacity)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
-    compute_client.virtual_machine_scale_sets.update(
+    compute_client = get_compute_client()
+    compute_client.virtual_machine_scale_sets.begin_update(
         resource_group, str(name), {"sku": {"capacity": capacity}}
     )
 
@@ -82,7 +91,7 @@ def get_vmss_size(name: UUID) -> Optional[int]:
 def list_instance_ids(name: UUID) -> Dict[UUID, str]:
     logging.debug("get instance IDs for scaleset: %s", name)
     resource_group = get_base_resource_group()
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
 
     results = {}
     try:
@@ -90,8 +99,8 @@ def list_instance_ids(name: UUID) -> Dict[UUID, str]:
             resource_group, str(name)
         ):
             results[UUID(instance.vm_id)] = cast(str, instance.instance_id)
-    except CloudError:
-        logging.debug("scaleset not available: %s", name)
+    except (ResourceNotFoundError, CloudError):
+        logging.debug("vm does not exist %s", name)
     return results
 
 
@@ -99,7 +108,7 @@ def list_instance_ids(name: UUID) -> Dict[UUID, str]:
 def get_instance_id(name: UUID, vm_id: UUID) -> Union[str, Error]:
     resource_group = get_base_resource_group()
     logging.info("get instance ID for scaleset node: %s:%s", name, vm_id)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
 
     vm_id_str = str(vm_id)
     for instance in compute_client.virtual_machine_scale_set_vms.list(
@@ -134,7 +143,7 @@ def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
     resource_group = get_base_resource_group()
     logging.info("reimaging scaleset VM - name: %s vm_ids:%s", name, vm_ids)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
 
     instance_ids = []
     machine_to_id = list_instance_ids(name)
@@ -145,8 +154,10 @@ def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
     if instance_ids:
-        compute_client.virtual_machine_scale_sets.reimage_all(
-            resource_group, str(name), instance_ids=instance_ids
+        compute_client.virtual_machine_scale_sets.begin_reimage_all(
+            resource_group,
+            str(name),
+            VirtualMachineScaleSetVMInstanceIDs(instance_ids=instance_ids),
         )
     return None
 
@@ -156,7 +167,7 @@ def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
     resource_group = get_base_resource_group()
     logging.info("deleting scaleset VM - name: %s vm_ids:%s", name, vm_ids)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
 
     instance_ids = []
     machine_to_id = list_instance_ids(name)
@@ -167,8 +178,10 @@ def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
     if instance_ids:
-        compute_client.virtual_machine_scale_sets.delete_instances(
-            resource_group, str(name), instance_ids=instance_ids
+        compute_client.virtual_machine_scale_sets.begin_delete_instances(
+            resource_group,
+            str(name),
+            VirtualMachineScaleSetVMInstanceRequiredIDs(instance_ids=instance_ids),
         )
     return None
 
@@ -178,8 +191,8 @@ def update_extensions(name: UUID, extensions: List[Any]) -> None:
 
     resource_group = get_base_resource_group()
     logging.info("updating VM extensions: %s", name)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
-    compute_client.virtual_machine_scale_sets.update(
+    compute_client = get_compute_client()
+    compute_client.virtual_machine_scale_sets.begin_update(
         resource_group,
         str(name),
         {"virtual_machine_profile": {"extension_profile": {"extensions": extensions}}},
@@ -219,7 +232,7 @@ def create_vmss(
 
     resource_group = get_base_resource_group()
 
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
 
     if image.startswith("/"):
         image_ref = {"id": image}
@@ -239,6 +252,7 @@ def create_vmss(
         "do_not_run_extensions_on_overprovisioned_vms": True,
         "upgrade_policy": {"mode": "Manual"},
         "sku": sku,
+        "overprovision": False,
         "identity": {
             "type": "userAssigned",
             "userAssignedIdentities": {get_scaleset_identity_resource_path(): {}},
@@ -313,10 +327,10 @@ def create_vmss(
         params["tags"]["OWNER"] = owner
 
     try:
-        compute_client.virtual_machine_scale_sets.create_or_update(
+        compute_client.virtual_machine_scale_sets.begin_create_or_update(
             resource_group, name, params
         )
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         if "The request failed due to conflict with a concurrent request" in repr(err):
             logging.debug(
                 "create VM had conflicts with concurrent request, ignoring %s", err
@@ -332,7 +346,8 @@ def create_vmss(
 
 @cached(ttl=60)
 def list_available_skus(location: str) -> List[str]:
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
+
     skus: List[ResourceSku] = list(
         compute_client.resource_skus.list(filter="location eq '%s'" % location)
     )

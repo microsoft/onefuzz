@@ -418,7 +418,9 @@ def assign_scaleset_role_manually(
     )
 
     query = (
-        "az rest --method post --url https://graph.microsoft.com/v1.0/servicePrincipals/%s/appRoleAssignedTo --body '%s' --headers \"Content-Type\"=application/json"
+        "az rest --method post --url "
+        "https://graph.microsoft.com/v1.0/servicePrincipals/%s/appRoleAssignedTo "
+        "--body '%s' --headers \"Content-Type\"=application/json"
         % (scaleset_service_principal.object_id, body)
     )
 

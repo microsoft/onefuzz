@@ -1170,7 +1170,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "items": {
                         "$ref": "#/definitions/TaskDebugFlag"
                     },
-                    "title": "Debug",
                     "type": "array"
                 },
                 "job_id": {
@@ -2559,7 +2558,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "items": {
                         "$ref": "#/definitions/TaskDebugFlag"
                     },
-                    "title": "Debug",
                     "type": "array"
                 },
                 "job_id": {

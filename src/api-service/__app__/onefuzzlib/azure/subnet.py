@@ -7,20 +7,20 @@ import logging
 import os
 from typing import Any, Optional, Union, cast
 
-from azure.mgmt.network import NetworkManagementClient
+from azure.core.exceptions import ResourceNotFoundError
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 
-from .creds import mgmt_client_factory
+from .network_mgmt_client import get_network_client
 
 
 def get_subnet_id(resource_group: str, name: str) -> Optional[str]:
-    network_client = mgmt_client_factory(NetworkManagementClient)
+    network_client = get_network_client()
     try:
         subnet = network_client.subnets.get(resource_group, name, name)
         return cast(str, subnet.id)
-    except CloudError:
+    except (CloudError, ResourceNotFoundError):
         logging.info(
             "subnet missing: resource group: %s name: %s",
             resource_group,
@@ -30,10 +30,10 @@ def get_subnet_id(resource_group: str, name: str) -> Optional[str]:
 
 
 def delete_subnet(resource_group: str, name: str) -> Union[None, CloudError, Any]:
-    network_client = mgmt_client_factory(NetworkManagementClient)
+    network_client = get_network_client()
     try:
-        return network_client.virtual_networks.delete(resource_group, name)
-    except CloudError as err:
+        return network_client.virtual_networks.begin_delete(resource_group, name)
+    except (CloudError, ResourceNotFoundError) as err:
         if err.error and "InUseSubnetCannotBeDeleted" in str(err.error):
             logging.error(
                 "subnet delete failed: %s %s : %s", resource_group, name, repr(err)
@@ -52,7 +52,7 @@ def create_virtual_network(
         location,
     )
 
-    network_client = mgmt_client_factory(NetworkManagementClient)
+    network_client = get_network_client()
     params = {
         "location": location,
         "address_space": {"address_prefixes": ["10.0.0.0/8"]},
@@ -62,8 +62,10 @@ def create_virtual_network(
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
 
     try:
-        network_client.virtual_networks.create_or_update(resource_group, name, params)
-    except CloudError as err:
+        network_client.virtual_networks.begin_create_or_update(
+            resource_group, name, params
+        )
+    except (CloudError, ResourceNotFoundError) as err:
         return Error(code=ErrorCode.UNABLE_TO_CREATE_NETWORK, errors=[str(err.message)])
 
     return None

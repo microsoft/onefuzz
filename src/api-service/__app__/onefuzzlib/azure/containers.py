@@ -10,7 +10,16 @@ import urllib.parse
 from typing import Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
-from azure.storage.blob import BlobPermissions, BlockBlobService, ContainerPermissions
+from azure.core.exceptions import ResourceNotFoundError
+from azure.storage.blob import (
+    BlobClient,
+    BlobSasPermissions,
+    BlobServiceClient,
+    ContainerClient,
+    ContainerSasPermissions,
+    generate_blob_sas,
+    generate_container_sas,
+)
 from memoization import cached
 from onefuzztypes.primitives import Container
 
@@ -19,47 +28,41 @@ from .storage import (
     choose_account,
     get_accounts,
     get_storage_account_name_key,
+    get_storage_account_name_key_by_name,
 )
 
 
+def get_url(account_name: str) -> str:
+    return f"https://{account_name}.blob.core.windows.net/"
+
+
 @cached
-def get_blob_service(account_id: str) -> BlockBlobService:
+def get_blob_service(account_id: str) -> BlobServiceClient:
     logging.debug("getting blob container (account_id: %s)", account_id)
     account_name, account_key = get_storage_account_name_key(account_id)
-    service = BlockBlobService(account_name=account_name, account_key=account_key)
+    account_url = get_url(account_name)
+    service = BlobServiceClient(account_url=account_url, credential=account_key)
     return service
 
 
-def get_service_by_container(
-    container: Container, storage_type: StorageType
-) -> Optional[BlockBlobService]:
-    account = get_account_by_container(container, storage_type)
-    if account is None:
-        return None
-    service = get_blob_service(account)
-    return service
-
-
-def container_exists_on_account(container: Container, account_id: str) -> bool:
+def container_metadata(
+    container: Container, account_id: str
+) -> Optional[Dict[str, str]]:
     try:
-        get_blob_service(account_id).get_container_properties(container)
-        return True
-    except AzureHttpError:
-        return False
-
-
-def container_metadata(container: Container, account: str) -> Optional[Dict[str, str]]:
-    try:
-        result = get_blob_service(account).get_container_metadata(container)
+        result = (
+            get_blob_service(account_id)
+            .get_container_client(container)
+            .get_container_properties()
+        )
         return cast(Dict[str, str], result)
     except AzureHttpError:
         pass
     return None
 
 
-def get_account_by_container(
+def find_container(
     container: Container, storage_type: StorageType
-) -> Optional[str]:
+) -> Optional[ContainerClient]:
     accounts = get_accounts(storage_type)
 
     # check secondary accounts first by searching in reverse.
@@ -70,13 +73,17 @@ def get_account_by_container(
     # Secondary accounts, if they exist, are preferred for containers and have
     # increased IOP rates, this should be a slight optimization
     for account in reversed(accounts):
-        if container_exists_on_account(container, account):
-            return account
+        client = get_blob_service(account).get_container_client(container)
+        try:
+            client.get_container_properties()
+            return client
+        except ResourceNotFoundError:
+            continue
     return None
 
 
 def container_exists(container: Container, storage_type: StorageType) -> bool:
-    return get_account_by_container(container, storage_type) is not None
+    return find_container(container, storage_type) is not None
 
 
 def get_containers(storage_type: StorageType) -> Dict[str, Dict[str, str]]:
@@ -98,11 +105,11 @@ def get_containers(storage_type: StorageType) -> Dict[str, Dict[str, str]]:
 def get_container_metadata(
     container: Container, storage_type: StorageType
 ) -> Optional[Dict[str, str]]:
-    account = get_account_by_container(container, storage_type)
-    if account is None:
+    client = find_container(container, storage_type)
+    if client is None:
         return None
-
-    return container_metadata(container, account)
+    result = client.get_container_properties().metadata
+    return cast(Dict[str, str], result)
 
 
 def create_container(
@@ -110,12 +117,12 @@ def create_container(
     storage_type: StorageType,
     metadata: Optional[Dict[str, str]],
 ) -> Optional[str]:
-    service = get_service_by_container(container, storage_type)
-    if service is None:
+    client = find_container(container, storage_type)
+    if client is None:
         account = choose_account(storage_type)
-        service = get_blob_service(account)
+        client = get_blob_service(account).get_container_client(container)
         try:
-            service.create_container(container, metadata=metadata)
+            client.create_container(metadata=metadata)
         except AzureHttpError as err:
             logging.error(
                 (
@@ -130,11 +137,8 @@ def create_container(
             return None
 
     return get_container_sas_url_service(
-        container,
-        service,
+        client,
         read=True,
-        add=True,
-        create=True,
         write=True,
         delete=True,
         list=True,
@@ -152,26 +156,40 @@ def delete_container(container: Container, storage_type: StorageType) -> bool:
 
 
 def get_container_sas_url_service(
-    container: Container,
-    service: BlockBlobService,
+    client: ContainerClient,
     *,
     read: bool = False,
-    add: bool = False,
-    create: bool = False,
     write: bool = False,
     delete: bool = False,
     list: bool = False,
+    delete_previous_version: bool = False,
+    tag: bool = False,
 ) -> str:
-    expiry = datetime.datetime.utcnow() + datetime.timedelta(days=30)
-    permission = ContainerPermissions(read, add, create, write, delete, list)
+    account_name = client.account_name
+    container_name = client.container_name
+    account_key = get_storage_account_name_key_by_name(account_name)
 
-    sas_token = service.generate_container_shared_access_signature(
-        container, permission=permission, expiry=expiry
+    sas = generate_container_sas(
+        account_name,
+        container_name,
+        account_key=account_key,
+        permission=ContainerSasPermissions(
+            read=read,
+            write=write,
+            delete=delete,
+            list=list,
+            delete_previous_version=delete_previous_version,
+            tag=tag,
+        ),
+        expiry=datetime.datetime.utcnow() + datetime.timedelta(days=30),
     )
 
-    url = service.make_container_url(container, sas_token=sas_token)
-    url = url.replace("?restype=container&", "?")
-    return str(url)
+    with_sas = ContainerClient(
+        get_url(account_name),
+        container_name=container_name,
+        credential=sas,
+    )
+    return cast(str, with_sas.url)
 
 
 def get_container_sas_url(
@@ -179,22 +197,17 @@ def get_container_sas_url(
     storage_type: StorageType,
     *,
     read: bool = False,
-    add: bool = False,
-    create: bool = False,
     write: bool = False,
     delete: bool = False,
     list: bool = False,
 ) -> str:
-    service = get_service_by_container(container, storage_type)
-    if not service:
+    client = find_container(container, storage_type)
+    if not client:
         raise Exception("unable to create container sas for missing container")
 
     return get_container_sas_url_service(
-        container,
-        service,
+        client,
         read=read,
-        add=add,
-        create=create,
         write=write,
         delete=delete,
         list=list,
@@ -211,26 +224,45 @@ def get_file_sas_url(
     create: bool = False,
     write: bool = False,
     delete: bool = False,
-    list: bool = False,
+    delete_previous_version: bool = False,
+    tag: bool = False,
     days: int = 30,
     hours: int = 0,
     minutes: int = 0,
 ) -> str:
-    service = get_service_by_container(container, storage_type)
-    if not service:
+    client = find_container(container, storage_type)
+    if not client:
         raise Exception("unable to find container: %s - %s" % (container, storage_type))
 
+    account_key = get_storage_account_name_key_by_name(client.account_name)
     expiry = datetime.datetime.utcnow() + datetime.timedelta(
         days=days, hours=hours, minutes=minutes
     )
-    permission = BlobPermissions(read, add, create, write, delete, list)
-
-    sas_token = service.generate_blob_shared_access_signature(
-        container, name, permission=permission, expiry=expiry
+    permission = BlobSasPermissions(
+        read=read,
+        add=add,
+        create=create,
+        write=write,
+        delete=delete,
+        delete_previous_version=delete_previous_version,
+        tag=tag,
+    )
+    sas = generate_blob_sas(
+        client.account_name,
+        container,
+        name,
+        account_key=account_key,
+        permission=permission,
+        expiry=expiry,
     )
 
-    url = service.make_blob_url(container, name, sas_token=sas_token)
-    return str(url)
+    with_sas = BlobClient(
+        get_url(client.account_name),
+        container,
+        name,
+        credential=sas,
+    )
+    return cast(str, with_sas.url)
 
 
 def save_blob(
@@ -239,49 +271,43 @@ def save_blob(
     data: Union[str, bytes],
     storage_type: StorageType,
 ) -> None:
-    service = get_service_by_container(container, storage_type)
-    if not service:
+    client = find_container(container, storage_type)
+    if not client:
         raise Exception("unable to find container: %s - %s" % (container, storage_type))
 
-    if isinstance(data, str):
-        service.create_blob_from_text(container, name, data)
-    elif isinstance(data, bytes):
-        service.create_blob_from_bytes(container, name, data)
+    client.get_blob_client(name).upload_blob(data, overwrite=True)
 
 
 def get_blob(
     container: Container, name: str, storage_type: StorageType
 ) -> Optional[bytes]:
-    service = get_service_by_container(container, storage_type)
-    if not service:
+    client = find_container(container, storage_type)
+    if not client:
         return None
 
     try:
-        blob = service.get_blob_to_bytes(container, name).content
-        return cast(bytes, blob)
+        return cast(
+            bytes, client.get_blob_client(name).download_blob().content_as_bytes()
+        )
     except AzureMissingResourceHttpError:
         return None
 
 
 def blob_exists(container: Container, name: str, storage_type: StorageType) -> bool:
-    service = get_service_by_container(container, storage_type)
-    if not service:
+    client = find_container(container, storage_type)
+    if not client:
         return False
 
-    try:
-        service.get_blob_properties(container, name)
-        return True
-    except AzureMissingResourceHttpError:
-        return False
+    return cast(bool, client.get_blob_client(name).exists())
 
 
 def delete_blob(container: Container, name: str, storage_type: StorageType) -> bool:
-    service = get_service_by_container(container, storage_type)
-    if not service:
+    client = find_container(container, storage_type)
+    if not client:
         return False
 
     try:
-        service.delete_blob(container, name)
+        client.get_blob_client(name).delete_blob()
         return True
     except AzureMissingResourceHttpError:
         return False
