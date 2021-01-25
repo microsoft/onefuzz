@@ -194,6 +194,7 @@ def create_vmss(
     image: str,
     network_id: str,
     spot_instances: bool,
+    ephemeral_os_disks: bool,
     extensions: List[Any],
     password: str,
     ssh_public_key: str,
@@ -246,11 +247,6 @@ def create_vmss(
             "priority": "Regular",
             "storage_profile": {
                 "image_reference": image_ref,
-                "osDisk": {
-                    "diffDiskSettings": {"option": "Local"},
-                    "caching": "ReadOnly",
-                    "createOption": "FromImage",
-                },
             },
             "os_profile": {
                 "computer_name_prefix": "node",
@@ -288,6 +284,13 @@ def create_vmss(
                     }
                 ]
             },
+        }
+
+    if ephemeral_os_disks:
+        params["virtual_machine_profile"]["storage_profile"]["os_disk"] = {
+            "diffDiskSettings": {"option": "Local"},
+            "caching": "ReadOnly",
+            "createOption": "FromImage",
         }
 
     if spot_instances:
