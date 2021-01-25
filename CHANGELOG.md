@@ -6,21 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.0.0
 ### Added
-* Agent: Added clarifying context to file system errors.  [#421](https://github.com/microsoft/onefuzz/pull/421)
+* Agent: Added clarifying context to file system errors.  [#423](https://github.com/microsoft/onefuzz/pull/423)
 * CLI/Service: Significantly expanded the [events](docs/webhook_events.md) available for webhooks.  [#394](https://github.com/microsoft/onefuzz/pull/394)
-* Agent: Added `{setup_dir}` to [configuration values expansion](docs/command-replacements.md) [#417](https://github.com/microsoft/onefuzz/pull/417)
-* Agent: Added `{tools_dir}` [configuration values expansion](docs/command-replacements.md) to `{supervisor_options}` and `{supervisor_env}` [#444](https://github.com/microsoft/onefuzz/pull/444)
+* Agent: Added `{setup_dir}` to [configuration value expansion](docs/command-replacements.md) [#417](https://github.com/microsoft/onefuzz/pull/417)
+* Agent: Added `{tools_dir}` [configuration value expansion](docs/command-replacements.md) to `{supervisor_options}` and `{supervisor_env}` [#444](https://github.com/microsoft/onefuzz/pull/444)
 
 ### Changed
 * CLI/Service: Migrated `onefuzz status top` to use [Webhook Events](docs/webhook_events.md).  (BREAKING CHANGE) [#394](https://github.com/microsoft/onefuzz/pull/394)
 * CLI/Service: New notification secrets, such as ADO tokens, are managed in Azure KeyVault and are no longer accessible to the user once created.  (BREAKING CHANGE) [#326](https://github.com/microsoft/onefuzz/pull/326), [#389](https://github.com/microsoft/onefuzz/pull/389)
-* CLI/Service: Updated multiple Python dependencies. [#426](https://github.com/microsoft/onefuzz/pull/426), [#427](https://github.com/microsoft/onefuzz/pull/427),  [#430](https://github.com/microsoft/onefuzz/pull/)
+* CLI/Service: Updated multiple Python dependencies. [#426](https://github.com/microsoft/onefuzz/pull/426), [#427](https://github.com/microsoft/onefuzz/pull/427),  [#430](https://github.com/microsoft/onefuzz/pull/430)
 
 ### Fixed
 * Agent: Fixed triggering condition for new unique report events [#422](https://github.com/microsoft/onefuzz/pull/422)
 * Deployment: Mitigate issues related to deployments within conditional access policy scenarios. [#447](https://github.com/microsoft/onefuzz/pull/447)
 * Agent: Fixed an issue where unused nodes would stop requesting new work. [#459](https://github.com/microsoft/onefuzz/pull/459)
-* Service: Fixed dead-node cleanup. [#458](https://github.com/microsoft/onefuzz/pull/458)
+* Service: Fixed dead node cleanup. [#458](https://github.com/microsoft/onefuzz/pull/458)
 * Service: Fixed an issue logging excessively large stdout/stderr from tasks.  [#460](https://github.com/microsoft/onefuzz/pull/460)
 
 ## 1.11.0
