@@ -1,9 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::process::{Child, Command, Stdio};
+use std::{
+    path::{Path, PathBuf},
+    process::{Child, Command, Stdio},
+};
 
-use anyhow::Result;
+use anyhow::{Context as AnyhowContext, Result};
 use downcast_rs::Downcast;
 use onefuzz::process::{ExitStatus, Output};
 use tokio::fs;
@@ -31,8 +34,10 @@ pub enum Worker {
 }
 
 impl Worker {
-    pub fn new(work: WorkUnit) -> Self {
-        let ctx = Ready;
+    pub fn new(setup_dir: impl AsRef<Path>, work: WorkUnit) -> Self {
+        let ctx = Ready {
+            setup_dir: PathBuf::from(setup_dir.as_ref()),
+        };
         let state = State { ctx, work };
         state.into()
     }
@@ -79,7 +84,9 @@ impl Worker {
     }
 }
 
-pub struct Ready;
+pub struct Ready {
+    setup_dir: PathBuf,
+}
 
 pub struct Running {
     child: Box<dyn IWorkerChild>,
@@ -108,7 +115,7 @@ impl<C: Context> State<C> {
 
 impl State<Ready> {
     pub async fn run(self, runner: &mut dyn IWorkerRunner) -> Result<State<Running>> {
-        let child = runner.run(&self.work).await?;
+        let child = runner.run(&self.ctx.setup_dir, &self.work).await?;
 
         let state = State {
             ctx: Running { child },
@@ -167,7 +174,7 @@ impl_from_state_for_worker!(Done);
 
 #[async_trait]
 pub trait IWorkerRunner: Downcast {
-    async fn run(&mut self, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>>;
+    async fn run(&mut self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>>;
 }
 
 impl_downcast!(IWorkerRunner);
@@ -184,18 +191,25 @@ pub struct WorkerRunner;
 
 #[async_trait]
 impl IWorkerRunner for WorkerRunner {
-    async fn run(&mut self, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
+    async fn run(&mut self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
         let working_dir = work.working_dir()?;
 
         verbose!("worker working dir = {}", working_dir.display());
 
-        fs::create_dir_all(&working_dir).await?;
+        fs::create_dir_all(&working_dir).await.with_context(|| {
+            format!(
+                "unable to create working directory: {}",
+                working_dir.display()
+            )
+        })?;
 
         verbose!("created worker working dir: {}", working_dir.display());
 
         let config_path = work.config_path()?;
 
-        fs::write(&config_path, work.config.expose_ref()).await?;
+        fs::write(&config_path, work.config.expose_ref())
+            .await
+            .with_context(|| format!("unable to save task config: {}", config_path.display()))?;
 
         verbose!(
             "wrote worker config to config_path = {}",
@@ -211,8 +225,9 @@ impl IWorkerRunner for WorkerRunner {
 
         let mut cmd = Command::new("onefuzz-agent");
         cmd.current_dir(&working_dir);
-        cmd.arg("-c");
+        cmd.arg("managed");
         cmd.arg("config.json");
+        cmd.arg(setup_dir);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 

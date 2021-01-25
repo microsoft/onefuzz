@@ -66,8 +66,9 @@ async fn run_existing(config: &Config) -> Result<()> {
 
 async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
     let result = if let Some(crashes) = &config.crashes {
-        crashes.url.account() == input.account()
-            && crashes.url.container() == input.container()
+        let url = crashes.try_url()?;
+        url.account() == input.account()
+            && url.container() == input.container()
             && crashes.path.join(input.name()).exists()
     } else {
         false
@@ -121,7 +122,8 @@ pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)
-        .output_dir(&config.analysis.path);
+        .output_dir(&config.analysis.path)
+        .setup_dir(&config.common.setup_dir);
 
     let analyzer_path = Expand::new()
         .tools_dir(&config.tools.path)

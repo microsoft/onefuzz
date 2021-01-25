@@ -5,14 +5,34 @@
 
 import unittest
 
-from pydantic import ValidationError
-
-from onefuzztypes.models import Scaleset, TeamsTemplate
+from onefuzztypes.models import Scaleset, SecretData, TeamsTemplate
 from onefuzztypes.requests import NotificationCreate
+from pydantic import ValidationError
 
 
 class TestModelsVerify(unittest.TestCase):
     def test_model(self) -> None:
+        data = {
+            "container": "data",
+            "config": {"url": {"secret": "https://www.contoso.com/"}},
+        }
+
+        notification = NotificationCreate.parse_obj(data)
+        self.assertIsInstance(notification.config, TeamsTemplate)
+        self.assertIsInstance(notification.config.url, SecretData)
+        self.assertEqual(
+            notification.config.url.secret,
+            "https://www.contoso.com/",
+            "mismatch secret value",
+        )
+
+        missing_container = {
+            "config": {"url": "https://www.contoso.com/"},
+        }
+        with self.assertRaises(ValidationError):
+            NotificationCreate.parse_obj(missing_container)
+
+    def test_legacy_model(self) -> None:
         data = {
             "container": "data",
             "config": {"url": "https://www.contoso.com/"},
@@ -20,6 +40,7 @@ class TestModelsVerify(unittest.TestCase):
 
         notification = NotificationCreate.parse_obj(data)
         self.assertIsInstance(notification.config, TeamsTemplate)
+        self.assertIsInstance(notification.config.url, SecretData)
 
         missing_container = {
             "config": {"url": "https://www.contoso.com/"},

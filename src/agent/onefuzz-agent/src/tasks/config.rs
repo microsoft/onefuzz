@@ -10,7 +10,7 @@ use onefuzz::{
 };
 use reqwest::Url;
 use serde::{self, Deserialize};
-use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -20,7 +20,7 @@ pub enum ContainerType {
     Inputs,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct CommonConfig {
     pub job_id: Uuid,
 
@@ -33,6 +33,9 @@ pub struct CommonConfig {
     pub heartbeat_queue: Option<Url>,
 
     pub telemetry_key: Option<Uuid>,
+
+    #[serde(default)]
+    pub setup_dir: PathBuf,
 }
 
 impl CommonConfig {
@@ -66,7 +69,7 @@ pub enum Config {
     GenericAnalysis(analysis::generic::Config),
 
     #[serde(alias = "generic_generator")]
-    GenericGenerator(fuzz::generator::GeneratorConfig),
+    GenericGenerator(fuzz::generator::Config),
 
     #[serde(alias = "generic_supervisor")]
     GenericSupervisor(fuzz::supervisor::SupervisorConfig),
@@ -79,9 +82,29 @@ pub enum Config {
 }
 
 impl Config {
-    pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
+    pub fn from_file(path: PathBuf, setup_dir: PathBuf) -> Result<Self> {
         let json = std::fs::read_to_string(path)?;
-        Ok(serde_json::from_str(&json)?)
+        let json_config: serde_json::Value = serde_json::from_str(&json)?;
+
+        // override the setup_dir in the config file with the parameter value if specified
+        let mut config: Self = serde_json::from_value(json_config)?;
+        config.common_mut().setup_dir = setup_dir;
+
+        Ok(config)
+    }
+
+    fn common_mut(&mut self) -> &mut CommonConfig {
+        match self {
+            Config::LibFuzzerFuzz(c) => &mut c.common,
+            Config::LibFuzzerMerge(c) => &mut c.common,
+            Config::LibFuzzerReport(c) => &mut c.common,
+            Config::LibFuzzerCoverage(c) => &mut c.common,
+            Config::GenericAnalysis(c) => &mut c.common,
+            Config::GenericMerge(c) => &mut c.common,
+            Config::GenericReport(c) => &mut c.common,
+            Config::GenericSupervisor(c) => &mut c.common,
+            Config::GenericGenerator(c) => &mut c.common,
+        }
     }
 
     pub fn common(&self) -> &CommonConfig {
@@ -141,25 +164,29 @@ impl Config {
         match self {
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
-                    .start()
+                    .run()
                     .await
             }
             Config::LibFuzzerReport(config) => {
                 report::libfuzzer_report::ReportTask::new(config)
-                    .run()
+                    .managed_run()
                     .await
             }
             Config::LibFuzzerCoverage(config) => {
-                coverage::libfuzzer_coverage::CoverageTask::new(Arc::new(config))
-                    .run()
+                coverage::libfuzzer_coverage::CoverageTask::new(config)
+                    .managed_run()
                     .await
             }
             Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
             Config::GenericAnalysis(config) => analysis::generic::spawn(config).await,
-            Config::GenericGenerator(config) => fuzz::generator::spawn(Arc::new(config)).await,
+            Config::GenericGenerator(config) => {
+                fuzz::generator::GeneratorTask::new(config).run().await
+            }
             Config::GenericSupervisor(config) => fuzz::supervisor::spawn(config).await,
             Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
-            Config::GenericReport(config) => report::generic::ReportTask::new(&config).run().await,
+            Config::GenericReport(config) => {
+                report::generic::ReportTask::new(config).managed_run().await
+            }
         }
     }
 }

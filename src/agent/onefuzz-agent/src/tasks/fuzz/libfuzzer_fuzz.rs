@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::{future::try_join_all, stream::StreamExt};
 use onefuzz::{
     fs::list_files,
@@ -36,6 +36,11 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
 
+pub fn default_workers() -> u64 {
+    let cpus = num_cpus::get() as u64;
+    u64::max(1, cpus - 1)
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub inputs: SyncedDir,
@@ -44,7 +49,9 @@ pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
-    pub target_workers: Option<u64>,
+
+    #[serde(default = "default_workers")]
+    pub target_workers: u64,
     pub ensemble_sync_delay: Option<u64>,
 
     #[serde(default = "default_bool_true")]
@@ -66,22 +73,16 @@ impl LibFuzzerFuzzTask {
         Ok(Self { config })
     }
 
-    pub async fn start(&self) -> Result<()> {
-        if self.config.check_fuzzer_help {
-            let target = LibFuzzer::new(
-                &self.config.target_exe,
-                &self.config.target_options,
-                &self.config.target_env,
-            );
-            target.check_help().await?;
+    fn workers(&self) -> u64 {
+        match self.config.target_workers {
+            0 => default_workers(),
+            x => x,
         }
+    }
 
-        let workers = self.config.target_workers.unwrap_or_else(|| {
-            let cpus = num_cpus::get() as u64;
-            u64::max(1, cpus - 1)
-        });
-
+    pub async fn run(&self) -> Result<()> {
         self.init_directories().await?;
+
         let hb_client = self.config.common.init_heartbeat().await?;
 
         // To be scheduled.
@@ -90,15 +91,19 @@ impl LibFuzzerFuzzTask {
         let new_crashes = self.config.crashes.monitor_results(new_result);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
-        let report_stats = report_runtime_stats(workers as usize, stats_receiver, hb_client);
+        let report_stats = report_runtime_stats(self.workers() as usize, stats_receiver, hb_client);
+        let fuzzers = self.run_fuzzers(Some(&stats_sender));
+        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
-        let fuzzers: Vec<_> = (0..workers)
-            .map(|id| self.start_fuzzer_monitor(id, Some(&stats_sender)))
+        Ok(())
+    }
+
+    pub async fn run_fuzzers(&self, stats_sender: Option<&StatsSender>) -> Result<()> {
+        let fuzzers: Vec<_> = (0..self.workers())
+            .map(|id| self.start_fuzzer_monitor(id, stats_sender))
             .collect();
 
-        let fuzzers = try_join_all(fuzzers);
-
-        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
+        try_join_all(fuzzers).await?;
 
         Ok(())
     }
@@ -120,7 +125,15 @@ impl LibFuzzerFuzzTask {
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
             while let Some(Ok(entry)) = entries.next().await {
                 let destination_path = self.config.inputs.path.clone().join(entry.file_name());
-                tokio::fs::rename(entry.path(), destination_path).await?;
+                tokio::fs::rename(&entry.path(), &destination_path)
+                    .await
+                    .with_context(|| {
+                        format!(
+                            "unable to move crashing input into results directory: {} - {}?",
+                            entry.path().display(),
+                            destination_path.display()
+                        )
+                    })?;
             }
         }
     }
@@ -137,7 +150,7 @@ impl LibFuzzerFuzzTask {
         let crash_dir = tempdir()?;
         let run_id = Uuid::new_v4();
 
-        info!("starting fuzzer run, run_id = {}", run_id);
+        verbose!("starting fuzzer run, run_id = {}", run_id);
 
         let mut inputs = vec![&self.config.inputs.path];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
@@ -148,6 +161,7 @@ impl LibFuzzerFuzzTask {
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
+            &self.config.common.setup_dir,
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
 

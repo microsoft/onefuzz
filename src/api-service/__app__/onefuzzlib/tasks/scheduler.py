@@ -154,7 +154,7 @@ def build_work_unit(task: Task) -> Optional[Tuple[BucketConfig, WorkUnit]]:
         job_id=task_config.job_id,
         task_id=task_config.task_id,
         task_type=task_config.task_type,
-        config=task_config.json(),
+        config=task_config.json(exclude_none=True, exclude_unset=True),
     )
 
     bucket_config = BucketConfig(
@@ -235,8 +235,7 @@ def schedule_tasks() -> None:
             if schedule_workset(work_set, bucket_config.pool, bucket_config.count):
                 for work_unit in work_set.work_units:
                     task = tasks_by_id[work_unit.task_id]
-                    task.state = TaskState.scheduled
-                    task.save()
+                    task.set_state(TaskState.scheduled)
                     seen.add(task.task_id)
 
     not_ready_count = len(tasks) - len(seen)

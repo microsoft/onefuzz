@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use tokio::fs;
 
@@ -40,13 +40,14 @@ pub struct Reboot;
 
 impl Reboot {
     pub async fn save_context(&mut self, ctx: RebootContext) -> Result<()> {
-        info!(
-            "saving reboot context to: {}",
-            reboot_context_path()?.display()
-        );
+        let path = reboot_context_path()?;
+
+        info!("saving reboot context to: {}", path.display());
 
         let data = serde_json::to_vec(&ctx)?;
-        fs::write(reboot_context_path()?, &data).await?;
+        fs::write(&path, &data)
+            .await
+            .with_context(|| format!("unable to save reboot context: {}", path.display()))?;
 
         verbose!("reboot context saved");
 
@@ -72,7 +73,9 @@ impl Reboot {
         let data = data?;
         let ctx = serde_json::from_slice(&data)?;
 
-        fs::remove_file(&path).await?;
+        fs::remove_file(&path)
+            .await
+            .with_context(|| format!("unable to remove reboot context: {}", path.display()))?;
 
         info!("loaded reboot context");
         Ok(Some(ctx))

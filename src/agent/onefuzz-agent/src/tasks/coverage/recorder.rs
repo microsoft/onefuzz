@@ -8,7 +8,7 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz::{
     fs::{has_files, OwnedDir},
     sha256::digest_file,
@@ -47,7 +47,12 @@ impl CoverageRecorder {
             self.config.coverage.path.join("inputs").join(digest)
         };
 
-        fs::create_dir_all(&coverage_path).await?;
+        fs::create_dir_all(&coverage_path).await.with_context(|| {
+            format!(
+                "unable to create coverage path: {}",
+                coverage_path.display()
+            )
+        })?;
 
         let script = self.invoke_debugger_script(test_input, &coverage_path)?;
         let output = script.wait_with_output().await?;
@@ -77,7 +82,14 @@ impl CoverageRecorder {
         }
 
         if !has_files(&coverage_path).await? {
-            tokio::fs::remove_dir(&coverage_path).await?;
+            tokio::fs::remove_dir(&coverage_path)
+                .await
+                .with_context(|| {
+                    format!(
+                        "unable to remove coverage path: {}",
+                        coverage_path.display()
+                    )
+                })?;
             bail!("no coverage files for input: {}", test_input.display());
         }
 

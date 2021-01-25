@@ -5,9 +5,12 @@ use super::crash_report::*;
 use crate::tasks::{
     config::CommonConfig, generic::input_poller::*, heartbeat::*, utils::default_bool_true,
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
-use onefuzz::{blob::BlobUrl, libfuzzer::LibFuzzer, sha256, syncdir::SyncedDir};
+use futures::stream::StreamExt;
+use onefuzz::{
+    blob::BlobUrl, libfuzzer::LibFuzzer, monitor::DirectoryMonitor, sha256, syncdir::SyncedDir,
+};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -27,7 +30,7 @@ pub struct Config {
     pub input_queue: Option<Url>,
     pub crashes: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
-    pub unique_reports: SyncedDir,
+    pub unique_reports: Option<SyncedDir>,
     pub no_repro: Option<SyncedDir>,
 
     #[serde(default = "default_bool_true")]
@@ -35,6 +38,9 @@ pub struct Config {
 
     #[serde(default)]
     pub check_retry_count: u64,
+
+    #[serde(default = "default_bool_true")]
+    pub check_queue: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -46,25 +52,54 @@ pub struct ReportTask {
 }
 
 impl ReportTask {
-    pub fn new(config: impl Into<Arc<Config>>) -> Self {
-        let config = config.into();
-
-        let working_dir = config.common.task_id.to_string();
-        let poller = InputPoller::new(working_dir);
+    pub fn new(config: Config) -> Self {
+        let poller = InputPoller::new();
+        let config = Arc::new(config);
 
         Self { config, poller }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
-        if self.config.check_fuzzer_help {
-            let target = LibFuzzer::new(
-                &self.config.target_exe,
-                &self.config.target_options,
-                &self.config.target_env,
-            );
-            target.check_help().await?;
+    pub async fn local_run(&self) -> Result<()> {
+        let mut processor = AsanProcessor::new(self.config.clone()).await?;
+        let crashes = match &self.config.crashes {
+            Some(x) => x,
+            None => bail!("missing crashes directory"),
+        };
+        crashes.init().await?;
+
+        if let Some(unique_reports) = &self.config.unique_reports {
+            unique_reports.init().await?;
+        }
+        if let Some(reports) = &self.config.reports {
+            reports.init().await?;
+        }
+        if let Some(no_repro) = &self.config.no_repro {
+            no_repro.init().await?;
         }
 
+        let mut read_dir = tokio::fs::read_dir(&crashes.path).await.with_context(|| {
+            format_err!(
+                "unable to read crashes directory {}",
+                crashes.path.display()
+            )
+        })?;
+
+        while let Some(crash) = read_dir.next().await {
+            processor.process(None, &crash?.path()).await?;
+        }
+
+        if self.config.check_queue {
+            let mut monitor = DirectoryMonitor::new(crashes.path.clone());
+            monitor.start()?;
+            while let Some(crash) = monitor.next().await {
+                processor.process(None, &crash).await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting libFuzzer crash report task");
         let mut processor = AsanProcessor::new(self.config.clone()).await?;
 
@@ -72,9 +107,11 @@ impl ReportTask {
             self.poller.batch_process(&mut processor, crashes).await?;
         }
 
-        if let Some(queue) = &self.config.input_queue {
-            let callback = CallbackImpl::new(queue.clone(), processor);
-            self.poller.run(callback).await?;
+        if self.config.check_queue {
+            if let Some(queue) = &self.config.input_queue {
+                let callback = CallbackImpl::new(queue.clone(), processor);
+                self.poller.run(callback).await?;
+            }
         }
         Ok(())
     }
@@ -95,18 +132,28 @@ impl AsanProcessor {
         })
     }
 
-    pub async fn test_input(&self, input_url: Url, input: &Path) -> Result<CrashTestResult> {
+    pub async fn test_input(
+        &self,
+        input_url: Option<Url>,
+        input: &Path,
+    ) -> Result<CrashTestResult> {
         self.heartbeat_client.alive();
         let fuzzer = LibFuzzer::new(
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
+            &self.config.common.setup_dir,
         );
 
         let task_id = self.config.common.task_id;
         let job_id = self.config.common.job_id;
-        let input_blob = InputBlob::from(BlobUrl::new(input_url)?);
-        let input_sha256 = sha256::digest_file(input).await?;
+        let input_blob = match input_url {
+            Some(x) => Some(InputBlob::from(BlobUrl::new(x)?)),
+            None => None,
+        };
+        let input_sha256 = sha256::digest_file(input).await.with_context(|| {
+            format_err!("unable to sha256 digest input file: {}", input.display())
+        })?;
 
         let test_report = fuzzer
             .repro(
@@ -147,10 +194,11 @@ impl AsanProcessor {
 
 #[async_trait]
 impl Processor for AsanProcessor {
-    async fn process(&mut self, url: Url, input: &Path) -> Result<()> {
+    async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
+        verbose!("processing libfuzzer crash url:{:?} path:{:?}", url, input);
         let report = self.test_input(url, input).await?;
         report
-            .upload(
+            .save(
                 &self.config.unique_reports,
                 &self.config.reports,
                 &self.config.no_repro,

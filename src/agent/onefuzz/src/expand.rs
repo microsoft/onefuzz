@@ -33,6 +33,8 @@ pub enum PlaceHolder {
     GeneratorOptions,
     SupervisorExe,
     SupervisorOptions,
+    SetupDir,
+    ReportsDir,
 }
 
 impl PlaceHolder {
@@ -55,6 +57,8 @@ impl PlaceHolder {
             Self::GeneratorOptions => "{generator_options}",
             Self::SupervisorExe => "{supervisor_exe}",
             Self::SupervisorOptions => "{supervisor_options}",
+            Self::SetupDir => "{setup_dir}",
+            Self::ReportsDir => "{reports_dir}",
         }
         .to_string()
     }
@@ -201,6 +205,13 @@ impl<'a> Expand<'a> {
         self
     }
 
+    pub fn reports_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+        let arg = arg.as_ref();
+        let path = String::from(arg.to_string_lossy());
+        self.set_value(PlaceHolder::ReportsDir, ExpandedValue::Path(path));
+        self
+    }
+
     pub fn tools_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
@@ -212,6 +223,13 @@ impl<'a> Expand<'a> {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
         self.set_value(PlaceHolder::RuntimeDir, ExpandedValue::Path(path));
+        self
+    }
+
+    pub fn setup_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+        let arg = arg.as_ref();
+        let path = String::from(arg.to_string_lossy());
+        self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path));
         self
     }
 
@@ -280,6 +298,22 @@ mod tests {
     use super::Expand;
     use anyhow::Result;
     use std::path::Path;
+
+    #[test]
+    fn test_expand_nested() -> Result<()> {
+        let supervisor_options = vec!["{target_options}".to_string()];
+        let target_options: Vec<_> = vec!["a", "b", "c"].iter().map(|p| p.to_string()).collect();
+        let result = Expand::new()
+            .target_options(&target_options)
+            .evaluate(&supervisor_options)?;
+        let expected = vec!["a b c"];
+        assert_eq!(
+            result, expected,
+            "result: {:?} expected: {:?}",
+            result, expected
+        );
+        Ok(())
+    }
 
     #[test]
     fn test_expand() -> Result<()> {
