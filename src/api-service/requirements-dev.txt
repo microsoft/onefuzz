@@ -1,4 +1,3 @@
--r __app__/requirements.txt
 pytest
 flake8
 mypy

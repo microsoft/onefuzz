@@ -47,7 +47,6 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
                 StorageType.corpus,
                 read=True,
                 write=True,
-                create=True,
                 delete=True,
                 list=True,
             ),

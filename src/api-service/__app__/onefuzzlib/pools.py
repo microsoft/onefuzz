@@ -418,6 +418,7 @@ class NodeTasks(BASE_NODE_TASK, ORMMixin):
 
     @classmethod
     def clear_by_machine_id(cls, machine_id: UUID) -> None:
+        logging.info("clearing tasks for node: %s", machine_id)
         for entry in cls.get_by_machine_id(machine_id):
             entry.delete()
 
@@ -444,6 +445,7 @@ class NodeMessage(ORMMixin):
 
     @classmethod
     def clear_messages(cls, machine_id: UUID) -> None:
+        logging.info("clearing messages for node: %s", machine_id)
         messages = cls.get_messages(machine_id)
         for message in messages:
             message.delete()
@@ -1062,14 +1064,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.info("deleting node %s:%s", self.scaleset_id, node.machine_id)
             node.delete()
 
-        vmss = get_vmss(self.scaleset_id)
-        if vmss:
-            logging.info("scaleset deleting: %s", self.scaleset_id)
-            delete_vmss(self.scaleset_id)
-            self.save()
-        else:
+        logging.info("scaleset delete starting: %s", self.scaleset_id)
+        if delete_vmss(self.scaleset_id):
             logging.info("scaleset deleted: %s", self.scaleset_id)
             self.delete()
+        else:
+            self.save()
 
     @classmethod
     def scaleset_max_size(cls, image: str) -> int:

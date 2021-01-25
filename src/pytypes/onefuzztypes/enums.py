@@ -85,10 +85,8 @@ class TaskFeature(Enum):
 class ContainerPermission(Enum):
     Read = "Read"
     Write = "Write"
-    Create = "Create"
     List = "List"
     Delete = "Delete"
-    Add = "Add"
 
 
 class JobState(Enum):
