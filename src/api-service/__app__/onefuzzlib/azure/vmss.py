@@ -244,7 +244,14 @@ def create_vmss(
         },
         "virtual_machine_profile": {
             "priority": "Regular",
-            "storage_profile": {"image_reference": image_ref},
+            "storage_profile": {
+                "image_reference": image_ref,
+                "osDisk": {
+                    "diffDiskSettings": {"option": "Local"},
+                    "caching": "ReadOnly",
+                    "createOption": "FromImage",
+                },
+            },
             "os_profile": {
                 "computer_name_prefix": "node",
                 "admin_username": "onefuzz",
