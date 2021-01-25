@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 
+import os
 from typing import Tuple, Type, TypeVar, cast
 from urllib.parse import urlparse
 from uuid import uuid4
@@ -12,7 +13,7 @@ from azure.keyvault.secrets import KeyVaultSecret
 from onefuzztypes.models import SecretAddress, SecretData
 from pydantic import BaseModel
 
-from .azure.creds import get_instance_name, get_keyvault_client
+from .azure.creds import get_keyvault_client
 
 A = TypeVar("A", bound=BaseModel)
 
@@ -43,7 +44,8 @@ def get_secret_string_value(self: SecretData[str]) -> str:
 
 def get_keyvault_address() -> str:
     # https://docs.microsoft.com/en-us/azure/key-vault/general/about-keys-secrets-certificates#vault-name-and-object-name
-    return f"https://{get_instance_name()}-vault.vault.azure.net"
+    keyvault_name = os.environ["ONEFUZZ_KEYVAULT"]
+    return f"https://{keyvault_name}.vault.azure.net"
 
 
 def store_in_keyvault(
