@@ -5,7 +5,7 @@ use crate::{
     expand::Expand,
     input_tester::{TestResult, Tester},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use std::{
     collections::HashMap,
     ffi::OsString,
@@ -71,7 +71,12 @@ impl<'a> LibFuzzer<'a> {
             cmd.arg(o);
         }
 
-        let result = cmd.spawn()?.wait_with_output().await?;
+        let result = cmd
+            .spawn()
+            .with_context(|| format_err!("libfuzzer failed to start: {}", self.exe.display()))?
+            .wait_with_output()
+            .await
+            .with_context(|| format_err!("libfuzzer failed to run: {}", self.exe.display()))?;
         if !result.status.success() {
             bail!("fuzzer does not respond to '-help=1'. output:{:?}", result);
         }
@@ -141,7 +146,9 @@ impl<'a> LibFuzzer<'a> {
             cmd.arg(dir.as_ref());
         }
 
-        let child = cmd.spawn()?;
+        let child = cmd
+            .spawn()
+            .with_context(|| format_err!("libfuzzer failed to start: {}", self.exe.display()))?;
 
         Ok(child)
     }
@@ -204,7 +211,12 @@ impl<'a> LibFuzzer<'a> {
             cmd.arg(o);
         }
 
-        let output = cmd.spawn()?.wait_with_output().await?;
+        let output = cmd
+            .spawn()
+            .with_context(|| format_err!("libfuzzer failed to start: {}", self.exe.display()))?
+            .wait_with_output()
+            .await
+            .with_context(|| format_err!("libfuzzer failed to run: {}", self.exe.display()))?;
 
         let output_text = String::from_utf8_lossy(&output.stderr);
         let pat = r"MERGE-OUTER: (\d+) new files with (\d+) new features added";
