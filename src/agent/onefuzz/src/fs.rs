@@ -75,10 +75,10 @@ pub async fn set_executable(path: impl AsRef<Path>) -> Result<()> {
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
         .spawn()
-        .context("chmod")?
+        .with_context(|| format!("command failed to start: chmod -R +x {}", path.display()))?
         .wait_with_output()
         .await
-        .context("chmod")?;
+        .with_context(|| format!("command failed to run: chmod -R +x {}", path.display()))?;
 
     if !output.status.success() {
         bail!("'chmod -R +x' of {:?} failed: {}", path, output.status);
