@@ -80,9 +80,15 @@ impl<'a> GenericRegressionTask<'a> {
             let crash_report: CrashReport = serde_json::from_str(&crash_report_str)?;
             let input_url = crash_report
                 .input_blob
-                .ok_or(format_err!("no input url"))?
-                .blob_url()?
-                .url();
+                .map(|b| b.name)
+                .and_then(|crash_name| {
+                    self.config
+                        .crashes
+                        .url
+                        .clone()
+                        .map(|u| u.blob(crash_name).url())
+                })
+                .ok_or(format_err!("invalid input url"))?;
 
             let input = download_input(input_url.clone(), &self.config.crashes.path).await?;
 
