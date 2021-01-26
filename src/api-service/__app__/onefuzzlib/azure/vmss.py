@@ -49,6 +49,13 @@ def delete_vmss(name: UUID) -> bool:
     response = compute_client.virtual_machine_scale_sets.begin_delete(
         resource_group, str(name)
     )
+
+    # https://docs.microsoft.com/en-us/python/api/azure-core/
+    #   azure.core.polling.lropoller?view=azure-python#status--
+    #
+    # status returns a str, however mypy thinks this is an Any.
+    #
+    # Checked by hand that the result is Succeeded in practice
     return bool(response.status() == "Succeeded")
 
 
