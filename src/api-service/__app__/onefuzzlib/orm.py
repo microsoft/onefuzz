@@ -5,6 +5,7 @@
 
 import inspect
 import json
+import logging
 from datetime import datetime
 from enum import Enum
 from typing import (
@@ -85,6 +86,13 @@ def process_state_update(obj: HasState) -> None:
     func = getattr(obj, obj.state.name, None)
     if func is None:
         return
+
+    key_fields_func = getattr(obj, "key_fields", None)
+    if key_fields_func is not None:
+        logging.info(
+            "processing state update: %s - %s", key_fields_func(), obj.state.name
+        )
+
     func()
 
 

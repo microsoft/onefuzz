@@ -46,16 +46,10 @@ def list_vmss(name: UUID) -> Optional[List[str]]:
 def delete_vmss(name: UUID) -> bool:
     resource_group = get_base_resource_group()
     compute_client = get_compute_client()
-    try:
-        compute_client.virtual_machine_scale_sets.begin_delete(
-            resource_group, str(name)
-        )
-    except ResourceNotFoundError:
-        return True
-    except CloudError as err:
-        logging.error("cloud error deleting vmss: %s (%s)", name, err)
-
-    return False
+    response = compute_client.virtual_machine_scale_sets.begin_delete(
+        resource_group, str(name)
+    )
+    return bool(response.status() == "Succeeded")
 
 
 def get_vmss(name: UUID) -> Optional[Any]:
@@ -64,7 +58,7 @@ def get_vmss(name: UUID) -> Optional[Any]:
     compute_client = get_compute_client()
     try:
         return compute_client.virtual_machine_scale_sets.get(resource_group, str(name))
-    except (ResourceNotFoundError, CloudError) as err:
+    except ResourceNotFoundError as err:
         logging.debug("vm does not exist %s", err)
 
     return None
