@@ -87,11 +87,9 @@ def process_state_update(obj: HasState) -> None:
     if func is None:
         return
 
-    key_fields_func = getattr(obj, "key_fields", None)
-    if key_fields_func is not None:
-        logging.info(
-            "processing state update: %s - %s", key_fields_func(), obj.state.name
-        )
+    get_keys = getattr(obj, "get_keys", None)
+    if get_keys is not None:
+        logging.info("processing state update: %s - %s", get_keys(), obj.state.name)
 
     func()
 
