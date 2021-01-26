@@ -5,10 +5,11 @@
 use crate::tasks::{
     config::{CommonConfig, ContainerType},
     heartbeat::*,
+    report::crash_report::monitor_reports,
     stats::common::{monitor_stats, StatsFormat},
     utils::CheckNotify,
 };
-use anyhow::{Error, Result};
+use anyhow::{Context, Error, Result};
 use onefuzz::{
     expand::Expand,
     fs::{has_files, set_executable, OwnedDir},
@@ -24,12 +25,13 @@ use std::{
     process::Stdio,
     time::Duration,
 };
+use tempfile::tempdir;
 use tokio::{
     process::{Child, Command},
     sync::Notify,
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct SupervisorConfig {
     pub inputs: SyncedDir,
     pub crashes: SyncedDir,
@@ -37,13 +39,16 @@ pub struct SupervisorConfig {
     pub supervisor_env: HashMap<String, String>,
     pub supervisor_options: Vec<String>,
     pub supervisor_input_marker: Option<String>,
-    pub target_exe: PathBuf,
-    pub target_options: Vec<String>,
-    pub tools: SyncedDir,
+    pub target_exe: Option<PathBuf>,
+    pub target_options: Option<Vec<String>>,
+    pub tools: Option<SyncedDir>,
     pub wait_for_files: Option<ContainerType>,
     pub stats_file: Option<String>,
     pub stats_format: Option<StatsFormat>,
     pub ensemble_sync_delay: Option<u64>,
+    pub reports: Option<SyncedDir>,
+    pub unique_reports: Option<SyncedDir>,
+    pub no_repro: Option<SyncedDir>,
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -54,27 +59,43 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     let runtime_dir = OwnedDir::new(config.common.task_id.to_string());
     runtime_dir.create_if_missing().await?;
 
-    config.tools.init_pull().await?;
-    set_executable(&config.tools.path).await?;
+    // setup tools
+    if let Some(tools) = &config.tools {
+        tools.init_pull().await?;
+        set_executable(&tools.path).await?;
+    }
 
-    let supervisor_path = Expand::new()
-        .tools_dir(&config.tools.path)
-        .evaluate_value(&config.supervisor_exe)?;
-
+    // setup crashes
     let crashes = SyncedDir {
         path: runtime_dir.path().join("crashes"),
         url: config.crashes.url.clone(),
     };
-
     crashes.init().await?;
     let monitor_crashes = crashes.monitor_results(new_result);
+
+    // setup reports
+    let reports_dir = tempdir()?;
+    if let Some(unique_reports) = &config.unique_reports {
+        unique_reports.init().await?;
+    }
+    if let Some(reports) = &config.reports {
+        reports.init().await?;
+    }
+    if let Some(no_repro) = &config.no_repro {
+        no_repro.init().await?;
+    }
+    let monitor_reports_future = monitor_reports(
+        reports_dir.path(),
+        &config.unique_reports,
+        &config.reports,
+        &config.no_repro,
+    );
 
     let inputs = SyncedDir {
         path: runtime_dir.path().join("inputs"),
         url: config.inputs.url.clone(),
     };
     inputs.init().await?;
-
     if let Some(context) = &config.wait_for_files {
         let dir = match context {
             ContainerType::Inputs => &inputs,
@@ -94,16 +115,10 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
 
     let process = start_supervisor(
         &runtime_dir.path(),
-        &supervisor_path,
-        &config.target_exe,
-        &crashes.path,
-        &inputs.path,
-        &config.target_options,
-        &config.supervisor_options,
-        &config.supervisor_env,
-        &config.supervisor_input_marker,
-        &config.common.setup_dir,
-        &config.tools.path,
+        &config,
+        &crashes,
+        &inputs,
+        reports_dir.path().to_path_buf(),
     )
     .await?;
 
@@ -133,6 +148,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         monitor_stats,
         monitor_crashes,
         continuous_sync_task,
+        monitor_reports_future,
     )?;
 
     Ok(())
@@ -150,50 +166,56 @@ async fn heartbeat_process(
 
 async fn start_supervisor(
     runtime_dir: impl AsRef<Path>,
-    supervisor_path: impl AsRef<Path>,
-    target_exe: impl AsRef<Path>,
-    fault_dir: impl AsRef<Path>,
-    inputs_dir: impl AsRef<Path>,
-    target_options: &[String],
-    supervisor_options: &[String],
-    supervisor_env: &HashMap<String, String>,
-    supervisor_input_marker: &Option<String>,
-    setup_dir: impl AsRef<Path>,
-    tools_dir: impl AsRef<Path>,
+    config: &SupervisorConfig,
+    crashes: &SyncedDir,
+    inputs: &SyncedDir,
+    reports_dir: PathBuf,
 ) -> Result<Child> {
-    let mut cmd = Command::new(supervisor_path.as_ref());
+    let mut expand = Expand::new();
+    expand
+        .supervisor_exe(&config.supervisor_exe)
+        .supervisor_options(&config.supervisor_options)
+        .runtime_dir(&runtime_dir)
+        .crashes(&crashes.path)
+        .input_corpus(&inputs.path)
+        .reports_dir(&reports_dir)
+        .setup_dir(&config.common.setup_dir);
 
+    if let Some(tools) = &config.tools {
+        expand.tools_dir(&tools.path);
+    }
+
+    if let Some(target_exe) = &config.target_exe {
+        expand.target_exe(target_exe);
+    }
+
+    if let Some(target_options) = &config.target_options {
+        expand.target_options(target_options);
+    }
+
+    if let Some(input_marker) = &config.supervisor_input_marker {
+        expand.input_marker(input_marker);
+    }
+
+    let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
+    let mut cmd = Command::new(supervisor_path);
     let cmd = cmd
         .kill_on_drop(true)
         .env_remove("RUST_LOG")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
-    let mut expand = Expand::new();
-    expand
-        .supervisor_exe(supervisor_path)
-        .supervisor_options(supervisor_options)
-        .crashes(fault_dir)
-        .runtime_dir(runtime_dir)
-        .target_exe(target_exe)
-        .target_options(target_options)
-        .input_corpus(inputs_dir)
-        .setup_dir(setup_dir)
-        .tools_dir(tools_dir);
-
-    if let Some(input_marker) = supervisor_input_marker {
-        expand.input_marker(input_marker);
-    }
-
-    let args = expand.evaluate(supervisor_options)?;
+    let args = expand.evaluate(&config.supervisor_options)?;
     cmd.args(&args);
 
-    for (k, v) in supervisor_env {
+    for (k, v) in &config.supervisor_env {
         cmd.env(k, expand.evaluate_value(v)?);
     }
 
     info!("starting supervisor '{:?}'", cmd);
-    let child = cmd.spawn()?;
+    let child = cmd
+        .spawn()
+        .with_context(|| format!("supervisor failed to start: {:?}", cmd))?;
     Ok(child)
 }
 
@@ -228,26 +250,39 @@ mod tests {
         use std::env;
 
         let runtime_dir = tempfile::tempdir().unwrap();
-        let afl_fuzz_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {
-            x
+
+        let supervisor_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {
+            x.into()
         } else {
             warn!("Unable to test AFL integration");
             return;
         };
 
-        let afl_test_binary = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_TEST_BINARY") {
-            x
+        let target_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_TEST_BINARY") {
+            Some(x.into())
         } else {
             warn!("Unable to test AFL integration");
             return;
         };
+
+        let reports_dir_temp = tempfile::tempdir().unwrap();
+        let reports_dir = reports_dir_temp.path().into();
 
         let fault_dir_temp = tempfile::tempdir().unwrap();
-        let fault_dir = fault_dir_temp.path();
+        let crashes = SyncedDir {
+            path: fault_dir_temp.path().into(),
+            url: None,
+        };
+
         let corpus_dir_temp = tempfile::tempdir().unwrap();
-        let corpus_dir = corpus_dir_temp.into_path();
-        let seed_file_name = corpus_dir.clone().join("seed.txt");
-        let target_options = vec!["{input}".to_owned()];
+        let corpus_dir = SyncedDir {
+            path: corpus_dir_temp.path().into(),
+            url: None,
+        };
+        let seed_file_name = corpus_dir.path.join("seed.txt");
+        tokio::fs::write(seed_file_name, "xyz").await.unwrap();
+
+        let target_options = Some(vec!["{input}".to_owned()]);
         let supervisor_env = HashMap::new();
         let supervisor_options: Vec<_> = vec![
             "-d",
@@ -266,32 +301,24 @@ mod tests {
         // AFL input marker
         let supervisor_input_marker = Some("@@".to_owned());
 
-        println!(
-            "testing 2: corpus_dir {:?} -- fault_dir {:?} -- seed_file_name {:?}",
-            corpus_dir, fault_dir, seed_file_name
-        );
+        let config = SupervisorConfig {
+            supervisor_exe,
+            supervisor_env,
+            supervisor_options,
+            supervisor_input_marker,
+            target_exe,
+            target_options,
+            ..Default::default()
+        };
 
-        tokio::fs::write(seed_file_name, "xyz").await.unwrap();
-        let process = start_supervisor(
-            runtime_dir,
-            PathBuf::from(afl_fuzz_exe),
-            PathBuf::from(afl_test_binary),
-            fault_dir,
-            corpus_dir,
-            &target_options,
-            &supervisor_options,
-            &supervisor_env,
-            &supervisor_input_marker,
-            PathBuf::default(),
-            PathBuf::default(),
-        )
-        .await
-        .unwrap();
+        let process = start_supervisor(runtime_dir, &config, &crashes, &corpus_dir, reports_dir)
+            .await
+            .unwrap();
 
         let notify = Notify::new();
         let _fuzzing_monitor =
             monitor_process(process, "supervisor".to_string(), false, Some(&notify));
-        let stat_output = fault_dir.join("fuzzer_stats");
+        let stat_output = crashes.path.join("fuzzer_stats");
         let start = Instant::now();
         loop {
             if has_stats(&stat_output).await {

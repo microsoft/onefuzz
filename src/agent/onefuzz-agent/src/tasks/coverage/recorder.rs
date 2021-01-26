@@ -126,7 +126,7 @@ impl CoverageRecorder {
             cmd.env(k, v);
         }
 
-        let child = cmd.spawn()?;
+        let child = cmd.spawn().context("gdb failed to start")?;
 
         Ok(child)
     }
@@ -163,7 +163,7 @@ impl CoverageRecorder {
             cmd.env(k, v);
         }
 
-        let child = cmd.spawn()?;
+        let child = cmd.spawn().context("cdb.exe failed to start")?;
 
         Ok(child)
     }

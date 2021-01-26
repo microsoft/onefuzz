@@ -29,6 +29,8 @@ from ..onefuzzlib.pools import Node, NodeTasks
 from ..onefuzzlib.task_event import TaskEvent
 from ..onefuzzlib.tasks.main import Task
 
+MAX_OUTPUT_SIZE = 4096
+
 
 def get_node(machine_id: UUID) -> Result[Node]:
     node = Node.get_by_machine_id(machine_id)
@@ -220,8 +222,8 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
                 code=ErrorCode.TASK_FAILED,
                 errors=[
                     "task failed. exit_status:%s" % event.exit_status,
-                    event.stdout[-4096:],
-                    event.stderr[-4096:],
+                    event.stdout[-MAX_OUTPUT_SIZE:],
+                    event.stderr[-MAX_OUTPUT_SIZE:],
                 ],
             )
         )
@@ -233,6 +235,8 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
             node.debug_keep_node = True
             node.save()
 
+    event.stdout = event.stdout[-MAX_OUTPUT_SIZE:]
+    event.stderr = event.stderr[-MAX_OUTPUT_SIZE:]
     task_event = TaskEvent(
         task_id=task.task_id, machine_id=machine_id, event_data=WorkerEvent(done=event)
     )

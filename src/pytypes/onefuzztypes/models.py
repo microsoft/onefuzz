@@ -4,10 +4,11 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
+from pydantic.dataclasses import dataclass
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -39,6 +40,39 @@ class UserInfo(BaseModel):
     application_id: UUID
     object_id: Optional[UUID]
     upn: Optional[str]
+
+
+# Stores the address of a secret
+class SecretAddress(BaseModel):
+    # keyvault address of a secret
+    url: str
+
+
+T = TypeVar("T")
+
+
+# This class allows us to store some data that are intended to be secret
+# The secret field stores either the raw data or the address of that data
+# This class allows us to maintain backward compatibility with existing
+# NotificationTemplate classes
+@dataclass
+class SecretData(Generic[T]):
+    secret: Union[T, SecretAddress]
+
+    def __init__(self, secret: Union[T, SecretAddress]):
+        if isinstance(secret, dict):
+            self.secret = SecretAddress.parse_obj(secret)
+        else:
+            self.secret = secret
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        if isinstance(self.secret, SecretAddress):
+            return str(self.secret)
+        else:
+            return "[REDACTED]"
 
 
 class EnumModel(BaseModel):
@@ -227,7 +261,7 @@ class ADODuplicateTemplate(BaseModel):
 
 class ADOTemplate(BaseModel):
     base_url: str
-    auth_token: str
+    auth_token: SecretData[str]
     project: str
     type: str
     unique_fields: List[str]
@@ -235,15 +269,33 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
-    def redact(self) -> None:
-        self.auth_token = "***"
+    # validator needed for backward compatibility
+    @validator("auth_token", pre=True, always=True)
+    def validate_auth_token(cls, v: Any) -> SecretData:
+        if isinstance(v, str):
+            return SecretData(secret=v)
+        elif isinstance(v, SecretData):
+            return v
+        elif isinstance(v, dict):
+            return SecretData(secret=v["secret"])
+        else:
+            raise TypeError(f"invalid datatype {type(v)}")
 
 
 class TeamsTemplate(BaseModel):
-    url: str
+    url: SecretData[str]
 
-    def redact(self) -> None:
-        self.url = "***"
+    # validator needed for backward compatibility
+    @validator("url", pre=True, always=True)
+    def validate_url(cls, v: Any) -> SecretData:
+        if isinstance(v, str):
+            return SecretData(secret=v)
+        elif isinstance(v, SecretData):
+            return v
+        elif isinstance(v, dict):
+            return SecretData(secret=v["secret"])
+        else:
+            raise TypeError(f"invalid datatype {type(v)}")
 
 
 class ContainerDefinition(BaseModel):
@@ -411,7 +463,7 @@ class GithubAuth(BaseModel):
 
 
 class GithubIssueTemplate(BaseModel):
-    auth: GithubAuth
+    auth: SecretData[GithubAuth]
     organization: str
     repository: str
     title: str
@@ -421,9 +473,20 @@ class GithubIssueTemplate(BaseModel):
     labels: List[str]
     on_duplicate: GithubIssueDuplicate
 
-    def redact(self) -> None:
-        self.auth.user = "***"
-        self.auth.personal_access_token = "***"
+    # validator needed for backward compatibility
+    @validator("auth", pre=True, always=True)
+    def validate_auth(cls, v: Any) -> SecretData:
+        if isinstance(v, str):
+            return SecretData(secret=v)
+        elif isinstance(v, SecretData):
+            return v
+        elif isinstance(v, dict):
+            try:
+                return SecretData(GithubAuth.parse_obj(v))
+            except Exception:
+                return SecretData(secret=v["secret"])
+        else:
+            raise TypeError(f"invalid datatype {type(v)}")
 
 
 NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]

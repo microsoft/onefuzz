@@ -9,7 +9,7 @@
 # For more information:
 # https://github.com/lonelyenvoy/python-memoization/issues/16
 
-set -ex
+set -e
 
 SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
 

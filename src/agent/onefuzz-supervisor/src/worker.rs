@@ -231,7 +231,7 @@ impl IWorkerRunner for WorkerRunner {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
-        let child = cmd.spawn()?;
+        let child = cmd.spawn().context("onefuzz-agent failed to start")?;
         let child = Box::new(child);
 
         Ok(child)

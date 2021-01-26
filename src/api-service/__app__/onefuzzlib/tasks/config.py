@@ -218,9 +218,7 @@ def build_task_config(
                         StorageType.corpus,
                         read=ContainerPermission.Read in container_def.permissions,
                         write=ContainerPermission.Write in container_def.permissions,
-                        add=ContainerPermission.Add in container_def.permissions,
                         delete=ContainerPermission.Delete in container_def.permissions,
-                        create=ContainerPermission.Create in container_def.permissions,
                         list=ContainerPermission.List in container_def.permissions,
                     ),
                 }

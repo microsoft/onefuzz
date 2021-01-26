@@ -359,7 +359,10 @@ class Node(BASE_NODE, ORMMixin):
         self.save()
 
     def delete(self) -> None:
+        self.mark_tasks_stopped_early()
         NodeTasks.clear_by_machine_id(self.machine_id)
+        NodeMessage.clear_messages(self.machine_id)
+        super().delete()
         send_event(
             EventNodeDeleted(
                 machine_id=self.machine_id,
@@ -367,8 +370,6 @@ class Node(BASE_NODE, ORMMixin):
                 scaleset_id=self.scaleset_id,
             )
         )
-        super().delete()
-        NodeMessage.clear_messages(self.machine_id)
 
 
 class NodeTasks(BASE_NODE_TASK, ORMMixin):
@@ -417,6 +418,7 @@ class NodeTasks(BASE_NODE_TASK, ORMMixin):
 
     @classmethod
     def clear_by_machine_id(cls, machine_id: UUID) -> None:
+        logging.info("clearing tasks for node: %s", machine_id)
         for entry in cls.get_by_machine_id(machine_id):
             entry.delete()
 
@@ -443,6 +445,7 @@ class NodeMessage(ORMMixin):
 
     @classmethod
     def clear_messages(cls, machine_id: UUID) -> None:
+        logging.info("clearing messages for node: %s", machine_id)
         messages = cls.get_messages(machine_id)
         for message in messages:
             message.delete()
@@ -874,10 +877,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
 
-        if not nodes:
-            logging.info("no nodes need updating: %s", self.scaleset_id)
-            return False
-
         # Nodes do not exists in scalesets but in table due to unknown failure
         for node in nodes:
             if node.machine_id not in azure_nodes:
@@ -885,13 +884,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     "no longer in scaleset: %s:%s", self.scaleset_id, node.machine_id
                 )
                 node.delete()
-        nodes = [x for x in nodes if x.machine_id in azure_nodes]
 
-        nodes_to_reset = [x for x in nodes if x.state in NodeState.ready_for_reset()]
-
-        if len(nodes_to_reset) == 0:
-            logging.info("No needs are ready for resetting: %s", self.scaleset_id)
-            return False
+        existing_nodes = [x for x in nodes if x.machine_id in azure_nodes]
+        nodes_to_reset = [
+            x for x in existing_nodes if x.state in NodeState.ready_for_reset()
+        ]
 
         for node in nodes_to_reset:
             if node.delete_requested:
@@ -924,7 +921,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         except UnableToUpdate:
             logging.info("scaleset update already in progress: %s", self.scaleset_id)
 
-        return True
+        return bool(to_reimage) or bool(to_delete)
 
     def _resize_equal(self) -> None:
         # NOTE: this is the only place we reset to the 'running' state.
@@ -1067,14 +1064,12 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.info("deleting node %s:%s", self.scaleset_id, node.machine_id)
             node.delete()
 
-        vmss = get_vmss(self.scaleset_id)
-        if vmss:
-            logging.info("scaleset deleting: %s", self.scaleset_id)
-            delete_vmss(self.scaleset_id)
-            self.save()
-        else:
+        logging.info("scaleset delete starting: %s", self.scaleset_id)
+        if delete_vmss(self.scaleset_id):
             logging.info("scaleset deleted: %s", self.scaleset_id)
             self.delete()
+        else:
+            self.save()
 
     @classmethod
     def scaleset_max_size(cls, image: str) -> int:

@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
+use futures::StreamExt;
 use onefuzz::{
     asan::AsanLog,
     blob::{BlobClient, BlobUrl},
     fs::exists,
+    monitor::DirectoryMonitor,
     syncdir::SyncedDir,
     telemetry::{
         Event::{new_report, new_unable_to_reproduce, new_unique_report},
@@ -15,7 +17,7 @@ use onefuzz::{
 use reqwest::{StatusCode, Url};
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tokio::fs;
 use uuid::Uuid;
 
@@ -111,8 +113,8 @@ impl CrashTestResult {
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
+                // Use SHA-256 of call stack as dedupe key.
                 if let Some(unique_reports) = unique_reports {
-                    // Use SHA-256 of call stack as dedupe key.
                     let name = report.unique_blob_name();
                     if upload_or_save_local(&report, &name, unique_reports).await? {
                         event!(new_unique_report; EventData::Path = name);
@@ -205,4 +207,43 @@ impl NoCrash {
     pub fn blob_name(&self) -> String {
         format!("{}.json", self.input_sha256)
     }
+}
+
+async fn parse_report_file(path: PathBuf) -> Result<CrashTestResult> {
+    let raw = std::fs::read_to_string(&path)
+        .with_context(|| format_err!("unable to open crash report: {}", path.display()))?;
+
+    let json: serde_json::Value = serde_json::from_str(&raw)
+        .with_context(|| format_err!("invalid json: {} - {:?}", path.display(), raw))?;
+
+    let report: Result<CrashReport, serde_json::Error> = serde_json::from_value(json.clone());
+    if let Ok(report) = report {
+        return Ok(CrashTestResult::CrashReport(report));
+    }
+    let no_repro: Result<NoCrash, serde_json::Error> = serde_json::from_value(json);
+    if let Ok(no_repro) = no_repro {
+        return Ok(CrashTestResult::NoRepro(no_repro));
+    }
+
+    bail!("unable to parse report: {} - {:?}", path.display(), raw)
+}
+
+pub async fn monitor_reports(
+    base_dir: &Path,
+    unique_reports: &Option<SyncedDir>,
+    reports: &Option<SyncedDir>,
+    no_crash: &Option<SyncedDir>,
+) -> Result<()> {
+    if unique_reports.is_none() && reports.is_none() && no_crash.is_none() {
+        verbose!("no report directories configured");
+        return Ok(());
+    }
+
+    let mut monitor = DirectoryMonitor::new(base_dir);
+    monitor.start()?;
+    while let Some(file) = monitor.next().await {
+        let result = parse_report_file(file).await?;
+        result.save(unique_reports, reports, no_crash).await?;
+    }
+    Ok(())
 }
