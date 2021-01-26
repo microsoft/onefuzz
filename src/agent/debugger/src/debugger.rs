@@ -238,7 +238,10 @@ impl Debugger {
         mut command: Command,
         callbacks: &mut impl DebugEventHandler,
     ) -> Result<(Self, Child)> {
-        let child = command.creation_flags(DEBUG_ONLY_THIS_PROCESS).spawn()?;
+        let child = command
+            .creation_flags(DEBUG_ONLY_THIS_PROCESS)
+            .spawn()
+            .with_context("debugee failed to start")?;
 
         check_winapi(|| unsafe { DebugSetProcessKillOnExit(TRUE) })
             .context("Setting DebugSetProcessKillOnExit to TRUE")?;
