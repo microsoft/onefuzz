@@ -21,11 +21,18 @@ The following values are replaced with the specific values at runtime.
 
 Assume the following:
 
-* `supervisor_options` is: "a", "{target_options}", "b"
-* `target_options` is: "c", "{target_exe}"
-* `target_exe` is: "d"
+* `supervisor_options` is: ``"a", "{target_options}", "b"`
+* `target_options` is: `"c", "{target_exe}"`
+* `target_exe` is: `"d"`
 
-The resulting `supervisor_options` is: "a", "c", "d", "b"
+The resulting `supervisor_options` is: `"a", "c d", "b"`.
+
+If you need `supervisor_options` to expand to: `"a", "c", "b", "d"`, you should use the following values:
+
+* `supervisor_options`: `"a", "c", "{target_exe}"`
+* `target_options`: `"c", "{target_exe}"`
+* `target_exe`: `"d"`
+
 
 ## Uses
 
