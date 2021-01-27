@@ -75,6 +75,7 @@ from .extension import fuzz_extensions
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
+NODE_LIVED_TOO_LONG: datetime.timedelta = datetime.timedelta(days=7)
 
 # Future work:
 #
@@ -343,6 +344,29 @@ class Node(BASE_NODE, ORMMixin):
             query={"scaleset_id": [scaleset_id]},
             raw_unchecked_filter=time_filter,
         )
+
+    @classmethod
+    def reimage_long_lived_nodes(cls, scaleset_id: UUID) -> None:
+        """
+        Mark any excessively long lived node to be re-imaged.
+
+        This helps keep nodes on scalesets that use `latest` OS image SKUs
+        reasonably up-to-date with OS patches without disrupting running
+        fuzzing tasks with patch reboot cycles.
+        """
+        time_filter = "Timestamp lt datetime'%s'" % (
+            (datetime.datetime.utcnow() - NODE_LIVED_TOO_LONG).isoformat()
+        )
+        # skip any nodes already marked for reimage/deletion
+        for node in cls.search(
+            query={
+                "scaleset_id": [scaleset_id],
+                "reimage_requested": [False],
+                "delete_requested": [False],
+            },
+            raw_unchecked_filter=time_filter,
+        ):
+            node.to_reimage()
 
     def set_state(self, state: NodeState) -> None:
         if self.state != state:
@@ -868,6 +892,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             logging.info("halting scaleset: %s", self.scaleset_id)
             self.halt()
             return True
+
+        Node.reimage_long_lived_nodes(self.scaleset_id)
 
         to_reimage = []
         to_delete = []
