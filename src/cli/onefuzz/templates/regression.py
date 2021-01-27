@@ -3,7 +3,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from logging import Logger
 from typing import Dict, List, Optional
 
 from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
