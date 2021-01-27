@@ -427,6 +427,15 @@ TASK_DEFINITIONS = {
                 value=1,
                 permissions=[ContainerPermission.Write],
             ),
+            ContainerDefinition(
+                type=ContainerType.inputs,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
         ],
     ),
 }

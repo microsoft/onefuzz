@@ -67,6 +67,12 @@ pub enum CrashTestResult {
     NoRepro(NoCrash),
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RegressionReport {
+    crash_result: CrashTestResult,
+    original_report: Option<CrashReport>,
+}
+
 // Conditionally upload a report, if it would not be a duplicate.
 async fn upload<T: Serialize>(report: &T, url: Url) -> Result<bool> {
     let blob = BlobClient::new();
@@ -105,25 +111,24 @@ async fn upload_or_save_local<T: Serialize>(
 }
 
 impl CrashTestResult {
-    pub async fn save_with_prefix(
+    pub async fn save(
         &self,
         unique_reports: &Option<SyncedDir>,
         reports: &Option<SyncedDir>,
         no_repro: &Option<SyncedDir>,
-        prefix: impl AsRef<str>,
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
                 // Use SHA-256 of call stack as dedupe key.
                 if let Some(unique_reports) = unique_reports {
-                    let name = format!("{}{}", prefix.as_ref(), report.unique_blob_name());
+                    let name = report.unique_blob_name();
                     if upload_or_save_local(&report, &name, unique_reports).await? {
                         event!(new_unique_report; EventData::Path = name);
                     }
                 }
 
                 if let Some(reports) = reports {
-                    let name = format!("{}{}", prefix.as_ref(), report.blob_name());
+                    let name = report.blob_name();
                     if upload_or_save_local(&report, &name, reports).await? {
                         event!(new_report; EventData::Path = name);
                     }
@@ -132,7 +137,7 @@ impl CrashTestResult {
 
             Self::NoRepro(report) => {
                 if let Some(no_repro) = no_repro {
-                    let name = format!("{}{}", prefix.as_ref(), report.blob_name());
+                    let name = report.blob_name();
                     if upload_or_save_local(&report, &name, no_repro).await? {
                         event!(new_unable_to_reproduce; EventData::Path = name);
                     }
@@ -142,18 +147,56 @@ impl CrashTestResult {
         Ok(())
     }
 
-    pub async fn save(
-        &self,
-        unique_reports: &Option<SyncedDir>,
+    pub async fn save_regression(
+        self,
+        original_report: Option<CrashReport>,
         reports: &Option<SyncedDir>,
         no_repro: &Option<SyncedDir>,
+        prefix: impl AsRef<str>,
     ) -> Result<()> {
-        self.save_with_prefix(unique_reports, reports, no_repro, &String::default())
-            .await
+        match self {
+            Self::CrashReport(report) => {
+                // Use SHA-256 of call stack as dedupe key.
+                if let Some(reports) = reports {
+                    let name = format!("{}{}", prefix.as_ref(), report.unique_blob_name());
+                    if upload_or_save_local(
+                        &RegressionReport {
+                            crash_result: Self::CrashReport(report),
+                            original_report,
+                        },
+                        &name,
+                        reports,
+                    )
+                    .await?
+                    {
+                        event!(new_unique_report; EventData::Path = name);
+                    }
+                }
+            }
+
+            Self::NoRepro(report) => {
+                if let Some(no_repro) = no_repro {
+                    let name = format!("{}{}", prefix.as_ref(), report.blob_name());
+                    if upload_or_save_local(
+                        &RegressionReport {
+                            crash_result: Self::NoRepro(report),
+                            original_report,
+                        },
+                        &name,
+                        no_repro,
+                    )
+                    .await?
+                    {
+                        event!(new_unable_to_reproduce; EventData::Path = name);
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct InputBlob {
     pub account: String,
     pub container: String,

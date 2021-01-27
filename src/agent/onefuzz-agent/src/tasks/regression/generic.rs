@@ -4,13 +4,20 @@
 use crate::tasks::{
     config::CommonConfig,
     heartbeat::*,
-    report::{crash_report::CrashReport, generic, libfuzzer_report},
+    report::{
+        crash_report::{CrashReport, CrashTestResult},
+        generic, libfuzzer_report,
+    },
     utils::{default_bool_true, download_input},
 };
 use anyhow::Result;
-use onefuzz::syncdir::SyncedDir;
+use onefuzz::syncdir::{self, SyncedDir};
+use reqwest::Url;
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -22,8 +29,10 @@ pub struct Config {
     #[serde(default)]
     pub target_env: HashMap<String, String>,
 
-    pub input_reports: SyncedDir,
-    pub crashes: SyncedDir,
+    pub inputs: Option<SyncedDir>,
+
+    pub input_reports: Option<SyncedDir>,
+    pub crashes: Option<SyncedDir>,
     pub report_list: Vec<String>,
 
     pub no_repro: SyncedDir,
@@ -54,85 +63,43 @@ impl<'a> GenericRegressionTask<'a> {
     pub async fn run(&self) -> Result<()> {
         info!("Starting generic regression task");
         let heartbeat_client = self.config.common.init_heartbeat().await?;
-
-        self.config.input_reports.init().await?;
-        self.config.crashes.init().await?;
-
-        if self.config.report_list.is_empty() {
-            self.config.input_reports.sync_pull().await?;
-        } else {
-            for file in &self.config.report_list {
-                let input_url = self
-                    .config
-                    .input_reports
-                    .url
-                    .clone()
-                    .ok_or(format_err!("no input url"))?
-                    .blob(file);
-                download_input(input_url.url(), &self.config.input_reports.path).await?;
-            }
+        if let (Some(input_reports), Some(crashes)) =
+            (&self.config.input_reports, &self.config.crashes)
+        {
+            self.handle_crash_reports(&heartbeat_client, input_reports, crashes)
+                .await?;
         }
 
-        let mut report_files = tokio::fs::read_dir(&self.config.input_reports.path).await?;
-        while let Some(file) = report_files.next_entry().await? {
+        if let Some(inputs) = &self.config.inputs {
+            self.handle_inputs(inputs, &heartbeat_client).await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn handle_inputs(
+        &self,
+        inputs: &SyncedDir,
+        heartbeat_client: &Option<TaskHeartbeatClient>,
+    ) -> Result<()> {
+        inputs.sync_pull().await?;
+        let mut input_files = tokio::fs::read_dir(&inputs.path).await?;
+        while let Some(file) = input_files.next_entry().await? {
             heartbeat_client.alive();
-            let crash_report_str = std::fs::read_to_string(file.path())?;
-            let crash_report: CrashReport = serde_json::from_str(&crash_report_str)?;
-            let input_url = crash_report
-                .input_blob
-                .map(|b| b.name)
-                .and_then(|crash_name| {
-                    self.config
-                        .crashes
-                        .url
-                        .clone()
-                        .map(|u| u.blob(crash_name).url())
-                })
-                .ok_or(format_err!("invalid input url"))?;
-
-            let input = download_input(input_url.clone(), &self.config.crashes.path).await?;
-
-            let report = match crash_report.asan_log {
-                Some(_) => {
-                    libfuzzer_report::test_input(
-                        Some(input_url),
-                        &input,
-                        &self.config.target_exe,
-                        &self.config.target_options,
-                        &self.config.target_env,
-                        &self.config.common.setup_dir,
-                        self.config.common.task_id,
-                        self.config.common.job_id,
-                        self.config.target_timeout,
-                        self.config.check_retry_count,
-                    )
-                    .await?
-                }
-                None => {
-                    generic::test_input(
-                        Some(input_url),
-                        &input,
-                        &self.config.target_exe,
-                        &self.config.target_options,
-                        &self.config.target_env,
-                        &self.config.common.setup_dir,
-                        self.config.common.task_id,
-                        self.config.common.job_id,
-                        self.config.target_timeout,
-                        self.config.check_retry_count,
-                        self.config.check_asan_log,
-                        self.config.check_debugger,
-                    )
-                    .await?
-                }
-            };
+            let input_url = inputs.url.clone().and_then(|container_url| {
+                file.file_name()
+                    .to_str()
+                    .and_then(|f_name| container_url.url().join(f_name).ok())
+            });
+            let report = self
+                .get_crash_result(file.path(), input_url, self.config.check_asan_log)
+                .await?;
 
             let reports = Some(self.config.reports.clone());
             let no_repro = Some(self.config.no_repro.clone());
-
             report
-                .save_with_prefix(
-                    &None,
+                .save_regression(
+                    None,
                     &reports,
                     &no_repro,
                     format!("{}/", self.config.common.task_id),
@@ -141,5 +108,94 @@ impl<'a> GenericRegressionTask<'a> {
         }
 
         Ok(())
+    }
+
+    pub async fn handle_crash_reports(
+        &self,
+        heartbeat_client: &Option<TaskHeartbeatClient>,
+        input_reports: &SyncedDir,
+        crashes: &SyncedDir,
+    ) -> Result<()> {
+        if self.config.report_list.is_empty() {
+            input_reports.sync_pull().await?;
+        } else {
+            for file in &self.config.report_list {
+                let input_url = input_reports
+                    .url
+                    .clone()
+                    .ok_or(format_err!("no input url"))?
+                    .blob(file);
+                download_input(input_url.url(), &input_reports.path).await?;
+            }
+        }
+
+        let mut report_files = tokio::fs::read_dir(&input_reports.path).await?;
+        while let Some(file) = report_files.next_entry().await? {
+            heartbeat_client.alive();
+            let crash_report_str = std::fs::read_to_string(file.path())?;
+            let crash_report: CrashReport = serde_json::from_str(&crash_report_str)?;
+            let input_url = crash_report
+                .input_blob
+                .clone()
+                .map(|b| b.name)
+                .and_then(|crash_name| crashes.url.clone().map(|u| u.blob(crash_name).url()));
+
+            if let Some(input_url) = input_url {
+                let input = download_input(input_url.clone(), &crashes.path).await?;
+                let report = self
+                    .get_crash_result(input, Some(input_url), crash_report.asan_log.is_some())
+                    .await?;
+                let reports = Some(self.config.reports.clone());
+                let no_repro = Some(self.config.no_repro.clone());
+                report
+                    .save_regression(
+                        Some(crash_report),
+                        &reports,
+                        &no_repro,
+                        format!("{}/", self.config.common.task_id),
+                    )
+                    .await?;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn get_crash_result(
+        &self,
+        input: impl AsRef<Path>,
+        input_url: Option<Url>,
+        is_asan: bool,
+    ) -> Result<CrashTestResult> {
+        if is_asan {
+            libfuzzer_report::test_input(
+                input_url,
+                input.as_ref(),
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+                &self.config.common.setup_dir,
+                self.config.common.task_id,
+                self.config.common.job_id,
+                self.config.target_timeout,
+                self.config.check_retry_count,
+            )
+            .await
+        } else {
+            generic::test_input(
+                input_url,
+                input.as_ref(),
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+                &self.config.common.setup_dir,
+                self.config.common.task_id,
+                self.config.common.job_id,
+                self.config.target_timeout,
+                self.config.check_retry_count,
+                self.config.check_asan_log,
+                self.config.check_debugger,
+            )
+            .await
+        }
     }
 }

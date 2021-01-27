@@ -23,9 +23,10 @@ class Regression(Command):
         name: str,
         build: str,
         pool_name: str,
-        crashes: Container,
-        input_reports: Container,
         *,
+        crashes: Container = None,
+        input_reports: Container = None,
+        inputs: Optional[Directory] = None,
         target_exe: File = File("fuzz.exe"),
         tags: Optional[Dict[str, str]] = None,
         notification_config: Optional[NotificationConfig] = None,
@@ -41,7 +42,13 @@ class Regression(Command):
         check_retry_count: Optional[int] = None,
         check_fuzzer_help: bool = True,
         fail_on_repro: bool = False,
+        check_asan_log: bool = False,
     ) -> Optional[Job]:
+
+        if not ((crashes and input_reports) or inputs):
+            self.logger.error(
+                "please specify either the 'crash' and 'input_reports' parameters or the inputs parameter"
+            )
 
         if dryrun:
             return None
@@ -65,6 +72,9 @@ class Regression(Command):
         else:
             self.logger.error(f"invalid crash container {crashes}")
 
+        if inputs:
+            helper.define_containers(ContainerType.readonly_inputs)
+
         helper.define_containers(
             ContainerType.setup,
             ContainerType.reports,
@@ -73,6 +83,9 @@ class Regression(Command):
 
         helper.create_containers()
         helper.setup_notifications(notification_config)
+        if inputs:
+            helper.upload_inputs(inputs, read_only=True)
+
         containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.input_reports, input_reports),
@@ -102,6 +115,7 @@ class Regression(Command):
             debug=debug,
             check_fuzzer_help=check_fuzzer_help,
             report_list=report_list,
+            check_asan_log=check_asan_log,
         )
         helper.wait_for_stopping = fail_on_repro
 
