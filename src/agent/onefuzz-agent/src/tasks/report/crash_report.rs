@@ -114,7 +114,6 @@ impl CrashTestResult {
     ) -> Result<()> {
         match self {
             Self::CrashReport(report) => {
-
                 // Use SHA-256 of call stack as dedupe key.
                 if let Some(unique_reports) = unique_reports {
                     let name = format!("{}{}", prefix.as_ref(), report.unique_blob_name());
@@ -149,7 +148,8 @@ impl CrashTestResult {
         reports: &Option<SyncedDir>,
         no_repro: &Option<SyncedDir>,
     ) -> Result<()> {
-        self.save_with_prefix(unique_reports, reports, no_repro, &String::default()).await
+        self.save_with_prefix(unique_reports, reports, no_repro, &String::default())
+            .await
     }
 }
 
