@@ -67,10 +67,17 @@ class Regression(Command):
         )
 
         helper.add_tags(tags)
-        if self.onefuzz.containers.get(crashes):
-            helper.define_containers(ContainerType.unique_inputs)
-        else:
-            self.logger.error(f"invalid crash container {crashes}")
+        if crashes:
+            if self.onefuzz.containers.get(crashes):
+                helper.define_containers(ContainerType.unique_inputs)
+            else:
+                self.logger.error(f"invalid crash container {crashes}")
+
+        if input_reports:
+            if self.onefuzz.containers.get(input_reports):
+                helper.define_containers(ContainerType.input_reports)
+            else:
+                self.logger.error(f"invalid crash container {input_reports}")
 
         if inputs:
             helper.define_containers(ContainerType.readonly_inputs)
@@ -88,11 +95,14 @@ class Regression(Command):
 
         containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
-            (ContainerType.input_reports, input_reports),
-            (ContainerType.crashes, crashes),
             (ContainerType.reports, helper.containers[ContainerType.reports]),
             (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
         ]
+
+        if crashes:
+            containers.append((ContainerType.crashes, crashes))
+        if input_reports:
+            containers.append((ContainerType.input_reports, input_reports))
 
         helper.upload_setup(setup_dir, target_exe)
         target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
