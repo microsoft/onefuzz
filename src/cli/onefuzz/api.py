@@ -170,11 +170,11 @@ class Files(Endpoint):
         sas = self.onefuzz.containers.get(container).sas_url
         return ContainerWrapper(sas)
 
-    def list(self, container: str) -> models.Files:
+    def list(self, container: str, prefix: Optional[str] = None) -> models.Files:
         """ Get a list of files in a container """
         self.logger.debug("listing files in container: %s", container)
         client = self._get_client(container)
-        return models.Files(files=client.list_blobs())
+        return models.Files(files=client.list_blobs(name_starts_with=prefix))
 
     def delete(self, container: str, filename: str) -> None:
         """ delete a file from a container """

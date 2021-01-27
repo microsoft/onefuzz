@@ -130,7 +130,7 @@ impl<'a> GenericRegressionTask<'a> {
             let reports = Some(self.config.reports.clone());
             let no_repro = Some(self.config.no_repro.clone());
 
-            report.save(&None, &reports, &no_repro).await?;
+            report.save_with_prefix(&None, &reports, &no_repro, format!("{}/", self.config.common.task_id)).await?;
         }
 
         Ok(())

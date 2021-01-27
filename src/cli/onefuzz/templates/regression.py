@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+from logging import Logger
 from typing import Dict, List, Optional
 
 from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
@@ -17,7 +18,7 @@ from . import JobHelper
 class Regression(Command):
     """ Regression job """
 
-    def regression(
+    def basic(
         self,
         project: str,
         name: str,
@@ -46,7 +47,7 @@ class Regression(Command):
         if dryrun:
             return None
 
-        self.logger.info("creating libfuzzer merge from template")
+        self.logger.info("creating regression task from template")
 
         helper = JobHelper(
             self.onefuzz,
@@ -68,7 +69,6 @@ class Regression(Command):
         helper.define_containers(
             ContainerType.setup,
             ContainerType.reports,
-            ContainerType.unique_reports,
             ContainerType.no_repro,
         )
 
@@ -85,8 +85,8 @@ class Regression(Command):
         helper.upload_setup(setup_dir, target_exe)
         target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
 
-        self.logger.info("creating libfuzzer_merge task")
-        self.onefuzz.tasks.create(
+        self.logger.info("creating regression task")
+        regression_task = self.onefuzz.tasks.create(
             helper.job.job_id,
             TaskType.generic_regression,
             target_exe_blob_name,
@@ -111,10 +111,13 @@ class Regression(Command):
         if fail_on_repro:
             repro_count = len(
                 self.onefuzz.containers.files.list(
-                    helper.containers[ContainerType.reports]
+                    helper.containers[ContainerType.reports],
+                    prefix=str(regression_task.task_id),
                 ).files
             )
             if repro_count > 0:
                 raise Exception("Failure detected")
+            else:
+                self.logger.info("No Failure detected")
 
         return helper.job
