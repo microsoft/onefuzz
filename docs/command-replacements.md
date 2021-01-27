@@ -27,9 +27,9 @@ Assume the following:
 
 The resulting `supervisor_options` is: `"a", "c d", "b"`.
 
-If you need `supervisor_options` to expand to: `"a", "c", "b", "d"`, you should use the following values:
+If you need `supervisor_options` to expand to: `"a", "c", "d", "b"`, you should use the following values:
 
-* `supervisor_options`: `"a", "c", "{target_exe}"`
+* `supervisor_options`: `"a", "c", "{target_exe}", "b"`
 * `target_options`: `"c", "{target_exe}"`
 * `target_exe`: `"d"`
 
