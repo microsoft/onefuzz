@@ -17,7 +17,7 @@ from onefuzz.backend import wait
 
 ELF_MAGIC = b"\x7fELF"
 DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
-DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:rs5-pro:latest"
+DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"
 
 
 class StoppedEarly(Exception):

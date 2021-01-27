@@ -67,6 +67,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: src/ci/set-versions.sh
+      shell: bash
     - uses: actions/setup-python@v2
       with:
         python-version: 3.7
