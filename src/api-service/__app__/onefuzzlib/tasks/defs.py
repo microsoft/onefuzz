@@ -232,7 +232,7 @@ TASK_DEFINITIONS = {
             ),
             ContainerDefinition(
                 type=ContainerType.tools,
-                compare=Compare.Equal,
+                compare=Compare.AtMost,
                 value=1,
                 permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
