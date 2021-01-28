@@ -252,6 +252,36 @@ TASK_DEFINITIONS = {
                     ContainerPermission.List,
                 ],
             ),
+            ContainerDefinition(
+                type=ContainerType.unique_reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+            ContainerDefinition(
+                type=ContainerType.reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+            ContainerDefinition(
+                type=ContainerType.no_repro,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
         ],
         monitor_queue=None,
     ),
