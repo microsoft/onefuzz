@@ -13,7 +13,10 @@ pub async fn download_input(input_url: Url, dst: impl AsRef<Path>) -> Result<Pat
     let file_name = input_url.path_segments().unwrap().last().unwrap();
     let file_path = dst.as_ref().join(file_name);
 
-    let resp = reqwest::get(input_url).await?;
+    let resp = reqwest::get(input_url)
+        .await?
+        .error_for_status_with_body()
+        .await?;
 
     let body = resp.bytes().await?;
     let mut body = body.as_ref();
