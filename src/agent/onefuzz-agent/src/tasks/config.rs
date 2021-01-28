@@ -65,6 +65,9 @@ pub enum Config {
     #[serde(alias = "libfuzzer_coverage")]
     LibFuzzerCoverage(coverage::libfuzzer_coverage::Config),
 
+    #[serde(alias = "libfuzzer_regression")]
+    LibFuzzerRegression(regression::regression::Config),
+
     #[serde(alias = "generic_analysis")]
     GenericAnalysis(analysis::generic::Config),
 
@@ -81,7 +84,7 @@ pub enum Config {
     GenericReport(report::generic::Config),
 
     #[serde(alias = "generic_regression")]
-    GenericRegression(regression::generic::Config),
+    GenericRegression(regression::regression::Config),
 }
 
 impl Config {
@@ -102,6 +105,7 @@ impl Config {
             Config::LibFuzzerMerge(c) => &mut c.common,
             Config::LibFuzzerReport(c) => &mut c.common,
             Config::LibFuzzerCoverage(c) => &mut c.common,
+            Config::LibFuzzerRegression(c) => &mut c.common,
             Config::GenericAnalysis(c) => &mut c.common,
             Config::GenericMerge(c) => &mut c.common,
             Config::GenericReport(c) => &mut c.common,
@@ -117,6 +121,7 @@ impl Config {
             Config::LibFuzzerMerge(c) => &c.common,
             Config::LibFuzzerReport(c) => &c.common,
             Config::LibFuzzerCoverage(c) => &c.common,
+            Config::LibFuzzerRegression(c) => &c.common,
             Config::GenericAnalysis(c) => &c.common,
             Config::GenericMerge(c) => &c.common,
             Config::GenericReport(c) => &c.common,
@@ -132,6 +137,7 @@ impl Config {
             Config::LibFuzzerMerge(_) => "libfuzzer_merge",
             Config::LibFuzzerReport(_) => "libfuzzer_crash_report",
             Config::LibFuzzerCoverage(_) => "libfuzzer_coverage",
+            Config::LibFuzzerRegression(_) => "libfuzzer_regression",
             Config::GenericAnalysis(_) => "generic_analysis",
             Config::GenericMerge(_) => "generic_merge",
             Config::GenericReport(_) => "generic_crash_report",
@@ -195,6 +201,11 @@ impl Config {
             }
             Config::GenericRegression(config) => {
                 regression::generic::GenericRegressionTask::new(&config)
+                    .run()
+                    .await
+            }
+            Config::LibFuzzerRegression(config) => {
+                regression::libfuzzer::LibFuzzerRegressionTask::new(&config)
                     .run()
                     .await
             }
