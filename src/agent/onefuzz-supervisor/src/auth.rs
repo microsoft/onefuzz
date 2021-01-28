@@ -167,7 +167,7 @@ impl ManagedIdentityCredentials {
 		let instance_name: Vec<&str> = resource_name.host_str().unwrap().split(".").collect();
 		
         url.query_pairs_mut()
-            .append_pair("resource", &format!("http://mspmecloud.onmicrosoft.com/{}", instance_name[0]));
+            .append_pair("resource", &format!("https://mspmecloud.onmicrosoft.com/{}", instance_name[0]));
         url
     }
 
