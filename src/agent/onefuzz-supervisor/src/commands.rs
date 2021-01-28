@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::auth::Secret;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz::machine_id::get_scaleset_name;
 use std::process::Stdio;
 use tokio::{fs, io::AsyncWriteExt, process::Command};
@@ -52,9 +52,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("icacls failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("icalcs failed to run")?;
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",
@@ -70,9 +72,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("icacls failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("icacls failed to run")?;
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",
@@ -92,9 +96,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("Powershell Get-ACL | Set-ACL failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("Powershell Get-ACL | Set-ACL failed to run")?;
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",
@@ -137,9 +143,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("chmod failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("chmod failed to run")?;
     if !result.status.success() {
         bail!("set $HOME/.ssh permissions failed: {:?}", result);
     }
@@ -159,9 +167,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("chmod failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("chmod failed to run")?;
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",

@@ -6,7 +6,7 @@ use crate::tasks::{
     heartbeat::*,
     utils::{self, default_bool_true},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use onefuzz::{
     expand::Expand,
@@ -150,7 +150,7 @@ impl GeneratorTask {
         output_dir: impl AsRef<Path>,
     ) -> Result<()> {
         utils::reset_tmp_dir(&output_dir).await?;
-        let mut generator = {
+        let (mut generator, generator_path) = {
             let mut expand = Expand::new();
             expand
                 .generated_inputs(&output_dir)
@@ -179,11 +179,13 @@ impl GeneratorTask {
             for (k, v) in &self.config.generator_env {
                 generator.env(k, expand.evaluate_value(v)?);
             }
-            generator
+            (generator, generator_path)
         };
 
         info!("Generating test cases with {:?}", generator);
-        let output = generator.spawn()?;
+        let output = generator
+            .spawn()
+            .with_context(|| format!("generator failed to start: {}", generator_path))?;
         monitor_process(output, "generator".to_string(), true, None).await?;
 
         Ok(())
