@@ -329,7 +329,7 @@ libfuzzer_linux = JobTemplate(
                     path="/tasks/2/tags",
                 ),
             ],
-        )
+        ),
     ],
 )
 
