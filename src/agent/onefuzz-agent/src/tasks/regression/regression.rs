@@ -2,92 +2,62 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{
-    config::CommonConfig,
     heartbeat::*,
-    report::{
-        crash_report::{CrashReport, CrashTestResult},
-        generic, libfuzzer_report,
-    },
-    utils::{default_bool_true, download_input},
+    report::crash_report::{CrashReport, CrashTestResult},
+    utils::download_input,
 };
 use anyhow::Result;
-use futures::Future;
-use onefuzz::syncdir::{self, SyncedDir};
+use async_trait::async_trait;
+use onefuzz::syncdir::SyncedDir;
 use reqwest::Url;
-use serde::Deserialize;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
-#[derive(Debug, Deserialize)]
-pub struct Config {
-    pub target_exe: PathBuf,
-
-    #[serde(default)]
-    pub target_options: Vec<String>,
-
-    #[serde(default)]
-    pub target_env: HashMap<String, String>,
-
-    pub inputs: Option<SyncedDir>,
-
-    pub input_reports: Option<SyncedDir>,
-    pub crashes: Option<SyncedDir>,
-    pub report_list: Vec<String>,
-
-    pub no_repro: SyncedDir,
-    pub reports: SyncedDir,
-
-    pub target_timeout: Option<u64>,
-
-    #[serde(default)]
-    pub check_asan_log: bool,
-    #[serde(default = "default_bool_true")]
-    pub check_debugger: bool,
-    #[serde(default)]
-    pub check_retry_count: u64,
-
-    #[serde(flatten)]
-    pub common: CommonConfig,
+#[async_trait]
+pub trait RegressionHandler {
+    async fn get_crash_result(
+        &self,
+        input: PathBuf,
+        input_url: Option<Url>,
+    ) -> Result<CrashTestResult>;
+    async fn save_regression(
+        &self,
+        crash_result: CrashTestResult,
+        original_report: Option<CrashReport>,
+    ) -> Result<()>;
 }
 
-pub async fn run<'a, Fut>(
-    config: &'a Config,
-    get_crash_result: impl Fn(&'a Config, PathBuf, Option<Url>) -> Fut,
-) -> Result<()>
-where
-    Fut: Future<Output = Result<CrashTestResult>> + Send,
-{
+pub async fn run(
+    heartbeat_client: Option<TaskHeartbeatClient>,
+    input_reports: &Option<SyncedDir>,
+    crashes: &Option<SyncedDir>,
+    inputs: &Option<SyncedDir>,
+    report_list: &[String],
+    handler: &impl RegressionHandler,
+) -> Result<()> {
     info!("Starting generic regression task");
-    let heartbeat_client = config.common.init_heartbeat().await?;
-    if let (Some(input_reports), Some(crashes)) = (&config.input_reports, &config.crashes) {
+    if let (Some(input_reports), Some(crashes)) = (input_reports, crashes) {
         handle_crash_reports(
-            config,
             &heartbeat_client,
             &input_reports,
             &crashes,
-            &get_crash_result,
+            report_list,
+            handler,
         )
         .await?;
     }
 
-    if let Some(inputs) = &config.inputs {
-        handle_inputs(config, &inputs, &heartbeat_client, &get_crash_result).await?;
+    if let Some(inputs) = &inputs {
+        handle_inputs(&inputs, &heartbeat_client, handler).await?;
     }
 
     Ok(())
 }
 
-pub async fn handle_inputs<'a, Fut>(
-    config: &'a Config,
+pub async fn handle_inputs(
     inputs: &SyncedDir,
     heartbeat_client: &Option<TaskHeartbeatClient>,
-    get_crash_result: impl Fn(&'a Config, PathBuf, Option<Url>) -> Fut,
-) -> Result<()>
-where
-    Fut: Future<Output = Result<CrashTestResult>> + Send,
-{
+    handler: &impl RegressionHandler,
+) -> Result<()> {
     inputs.sync_pull().await?;
     let mut input_files = tokio::fs::read_dir(&inputs.path).await?;
     while let Some(file) = input_files.next_entry().await? {
@@ -97,37 +67,25 @@ where
                 .to_str()
                 .and_then(|f_name| container_url.url().join(f_name).ok())
         });
-        let report = get_crash_result(config, file.path(), input_url).await?;
 
-        let reports = Some(config.reports.clone());
-        let no_repro = Some(config.no_repro.clone());
-        report
-            .save_regression(
-                None,
-                &reports,
-                &no_repro,
-                format!("{}/", config.common.task_id),
-            )
-            .await?;
+        let report = handler.get_crash_result(file.path(), input_url).await?;
+        handler.save_regression(report, None).await?;
     }
 
     Ok(())
 }
 
-pub async fn handle_crash_reports<'a, Fut>(
-    config: &'a Config,
+pub async fn handle_crash_reports(
     heartbeat_client: &Option<TaskHeartbeatClient>,
     input_reports: &SyncedDir,
     crashes: &SyncedDir,
-    get_crash_result: impl Fn(&'a Config, PathBuf, Option<Url>) -> Fut,
-) -> Result<()>
-where
-    Fut: Future<Output = Result<CrashTestResult>> + Send,
-{
-    if config.report_list.is_empty() {
+    report_list: &[String],
+    handler: &impl RegressionHandler,
+) -> Result<()> {
+    if report_list.is_empty() {
         input_reports.sync_pull().await?;
     } else {
-        for file in &config.report_list {
+        for file in report_list {
             let input_url = input_reports
                 .url
                 .clone()
@@ -150,17 +108,9 @@ where
 
         if let Some(input_url) = input_url {
             let input = download_input(input_url.clone(), &crashes.path).await?;
-            let report = get_crash_result(config, input, Some(input_url)).await?;
-            let reports = Some(config.reports.clone());
-            let no_repro = Some(config.no_repro.clone());
-            report
-                .save_regression(
-                    Some(crash_report),
-                    &reports,
-                    &no_repro,
-                    format!("{}/", config.common.task_id),
-                )
-                .await?;
+            let report = handler.get_crash_result(input, Some(input_url)).await?;
+
+            handler.save_regression(report, Some(crash_report)).await?;
         }
     }
     Ok(())

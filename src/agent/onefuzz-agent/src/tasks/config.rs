@@ -66,7 +66,7 @@ pub enum Config {
     LibFuzzerCoverage(coverage::libfuzzer_coverage::Config),
 
     #[serde(alias = "libfuzzer_regression")]
-    LibFuzzerRegression(regression::regression::Config),
+    LibFuzzerRegression(regression::libfuzzer::Config),
 
     #[serde(alias = "generic_analysis")]
     GenericAnalysis(analysis::generic::Config),
@@ -84,7 +84,7 @@ pub enum Config {
     GenericReport(report::generic::Config),
 
     #[serde(alias = "generic_regression")]
-    GenericRegression(regression::regression::Config),
+    GenericRegression(regression::generic::Config),
 }
 
 impl Config {
@@ -200,12 +200,12 @@ impl Config {
                 report::generic::ReportTask::new(config).managed_run().await
             }
             Config::GenericRegression(config) => {
-                regression::generic::GenericRegressionTask::new(&config)
+                regression::generic::GenericRegressionTask::new(config)
                     .run()
                     .await
             }
             Config::LibFuzzerRegression(config) => {
-                regression::libfuzzer::LibFuzzerRegressionTask::new(&config)
+                regression::libfuzzer::LibFuzzerRegressionTask::new(config)
                     .run()
                     .await
             }
