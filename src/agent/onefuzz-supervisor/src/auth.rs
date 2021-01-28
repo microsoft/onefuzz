@@ -108,6 +108,9 @@ impl ClientCredentials {
             .expect("Authority URL is cannot-be-a-base")
             .extend(&[&self.tenant, "oauth2", "v2.0", "token"]);
 
+		let resource_name = Url::parse(&self.resource)?;
+		let instance_name: Vec<&str> = resource_name.host_str().unwrap().split(".").collect();
+
         let response = reqwest::Client::new()
             .post(url)
             .header("Content-Length", "0")
@@ -115,8 +118,8 @@ impl ClientCredentials {
                 ("client_id", self.client_id.to_hyphenated().to_string()),
                 ("client_secret", self.client_secret.expose_ref().to_string()),
                 ("grant_type", "client_credentials".into()),
-                ("tenant", self.tenant.clone()),
-                ("scope", format!("{}.default", self.resource)),
+                ("tenant", "http://login.microsoftonline.com/common".to_string()),
+                ("scope", format!("http://mspmecloud.onmicrosoft.com/{}/.default", instance_name[0])),
             ])
             .send_retry_default()
             .await?
@@ -159,8 +162,12 @@ impl ManagedIdentityCredentials {
 
     fn url(&self) -> Url {
         let mut url = Url::parse(MANAGED_IDENTITY_URL).unwrap();
+		
+		let resource_name = Url::parse(&self.resource)?;
+		let instance_name: Vec<&str> = resource_name.host_str().unwrap().split(".").collect();
+		
         url.query_pairs_mut()
-            .append_pair("resource", &self.resource);
+            .append_pair("resource", format!("http://mspmecloud.onmicrosoft.com/{}", instance_name[0]));
         url
     }
 
