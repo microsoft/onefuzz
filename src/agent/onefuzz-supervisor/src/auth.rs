@@ -163,11 +163,11 @@ impl ManagedIdentityCredentials {
     fn url(&self) -> Url {
         let mut url = Url::parse(MANAGED_IDENTITY_URL).unwrap();
 		
-		let resource_name = Url::parse(&self.resource)?;
+		let resource_name = Url::parse(&self.resource).unwrap();
 		let instance_name: Vec<&str> = resource_name.host_str().unwrap().split(".").collect();
 		
         url.query_pairs_mut()
-            .append_pair("resource", format!("http://mspmecloud.onmicrosoft.com/{}", instance_name[0]));
+            .append_pair("resource", &format!("http://mspmecloud.onmicrosoft.com/{}", instance_name[0]));
         url
     }
 
