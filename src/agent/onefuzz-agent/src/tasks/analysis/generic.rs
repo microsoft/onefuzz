@@ -114,30 +114,29 @@ async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
 }
 
 pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
-    let mut tool_args = Expand::new();
+    let mut expand = Expand::new();
 
-    tool_args
+    expand
         .input_path(&input)
         .target_exe(&config.target_exe)
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)
         .output_dir(&config.analysis.path)
+        .tools_dir(&config.tools.path)
         .setup_dir(&config.common.setup_dir);
 
-    let analyzer_path = Expand::new()
-        .tools_dir(&config.tools.path)
-        .evaluate_value(&config.analyzer_exe)?;
+    let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
 
     let mut cmd = Command::new(analyzer_path);
     cmd.kill_on_drop(true).env_remove("RUST_LOG");
 
-    for arg in tool_args.evaluate(&config.analyzer_options)? {
+    for arg in expand.evaluate(&config.analyzer_options)? {
         cmd.arg(arg);
     }
 
     for (k, v) in &config.analyzer_env {
-        cmd.env(k, tool_args.evaluate_value(v)?);
+        cmd.env(k, expand.evaluate_value(v)?);
     }
 
     cmd.output().await?;
