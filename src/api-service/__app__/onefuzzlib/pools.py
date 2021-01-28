@@ -75,7 +75,7 @@ from .extension import fuzz_extensions
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
-NODE_LIVED_TOO_LONG: datetime.timedelta = datetime.timedelta(days=7)
+NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
 
 # Future work:
 #
@@ -355,7 +355,7 @@ class Node(BASE_NODE, ORMMixin):
         fuzzing tasks with patch reboot cycles.
         """
         time_filter = "Timestamp lt datetime'%s'" % (
-            (datetime.datetime.utcnow() - NODE_LIVED_TOO_LONG).isoformat()
+            (datetime.datetime.utcnow() - NODE_REIMAGE_TIME).isoformat()
         )
         # skip any nodes already marked for reimage/deletion
         for node in cls.search(
