@@ -38,7 +38,7 @@ setuptools.setup(
     url="https://github.com/microsoft/onefuzz/",
     author="Microsoft Corporation",
     author_email="fuzzing@microsoft.com",
-    license_file="LICENSE",
+    license="MIT",
     packages=setuptools.find_packages(),
     entry_points={"console_scripts": ["onefuzz = onefuzz.__main__:main"]},
     install_requires=requirements,
