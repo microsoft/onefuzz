@@ -3,13 +3,13 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
 
 from .models import Forward, NodeCommandEnvelope
-from .primitives import Region
+from .primitives import Container, ContainerHoldName, Region
 
 
 class BaseResponse(BaseModel):
@@ -46,8 +46,17 @@ class ContainerInfoBase(BaseResponse):
     metadata: Optional[Dict[str, str]]
 
 
-class ContainerInfo(ContainerInfoBase):
+class ContainerDetail(BaseResponse):
+    name: Container
+    metadata: Dict[str, str]
+    holds: List[ContainerHoldName]
+
+
+class ContainerInfo(BaseResponse):
     sas_url: str
+    name: Container
+    holds: List[ContainerHoldName]
+    metadata: Optional[Dict[str, str]]
 
 
 class TestData(BaseResponse):

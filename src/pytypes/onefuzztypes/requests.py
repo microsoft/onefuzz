@@ -20,7 +20,7 @@ from .enums import (
 )
 from .events import EventType
 from .models import AutoScaleConfig, NotificationConfig
-from .primitives import Container, PoolName, Region
+from .primitives import Container, ContainerHoldName, PoolName, Region
 
 
 class BaseRequest(BaseModel):
@@ -197,6 +197,12 @@ class ContainerCreate(BaseRequest):
 class ContainerDelete(BaseRequest):
     name: Container
     metadata: Optional[Dict[str, str]]
+
+
+class ContainerUpdate(BaseRequest):
+    name: Container
+    metadata: Optional[Dict[str, str]]
+    holds: Optional[List[ContainerHoldName]]
 
 
 class ReproGet(BaseRequest):

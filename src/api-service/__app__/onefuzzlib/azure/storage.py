@@ -60,6 +60,11 @@ def get_accounts(storage_type: StorageType) -> List[str]:
         raise NotImplementedError
 
 
+def get_storage_account_name(account_id: str) -> str:
+    resource = parse_resource_id(account_id)
+    return cast(str, resource["name"])
+
+
 @cached
 def get_storage_account_name_key(account_id: str) -> Tuple[str, str]:
     resource = parse_resource_id(account_id)

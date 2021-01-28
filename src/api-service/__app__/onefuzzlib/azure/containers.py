@@ -7,10 +7,11 @@ import datetime
 import logging
 import os
 import urllib.parse
-from typing import Dict, Optional, Union, cast
+from typing import Dict, List, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
 from azure.core.exceptions import ResourceNotFoundError
+from azure.mgmt.storage.models import BlobContainer, LegalHold
 from azure.storage.blob import (
     BlobClient,
     BlobSasPermissions,
@@ -21,12 +22,16 @@ from azure.storage.blob import (
     generate_container_sas,
 )
 from memoization import cached
-from onefuzztypes.primitives import Container
+from onefuzztypes.primitives import Container, ContainerHoldName
+from onefuzztypes.responses import ContainerDetail
 
+from .creds import get_base_resource_group
 from .storage import (
     StorageType,
     choose_account,
     get_accounts,
+    get_mgmt_client,
+    get_storage_account_name,
     get_storage_account_name_key,
     get_storage_account_name_key_by_name,
 )
@@ -38,7 +43,7 @@ def get_url(account_name: str) -> str:
 
 @cached
 def get_blob_service(account_id: str) -> BlobServiceClient:
-    logging.debug("getting blob container (account_id: %s)", account_id)
+    logging.debug("getting blob storage client (account_id: %s)", account_id)
     account_name, account_key = get_storage_account_name_key(account_id)
     account_url = get_url(account_name)
     service = BlobServiceClient(account_url=account_url, credential=account_key)
@@ -82,6 +87,28 @@ def find_container(
     return None
 
 
+def find_container_account(
+    container: Container, storage_type: StorageType
+) -> Optional[str]:
+    accounts = get_accounts(storage_type)
+
+    # check secondary accounts first by searching in reverse.
+    #
+    # By implementation, the primary account is specified first, followed by
+    # any secondary accounts.
+    #
+    # Secondary accounts, if they exist, are preferred for containers and have
+    # increased IOP rates, this should be a slight optimization
+    for account in reversed(accounts):
+        client = get_blob_service(account).get_container_client(container)
+        try:
+            client.get_container_properties()
+            return account
+        except ResourceNotFoundError:
+            continue
+    return None
+
+
 def container_exists(container: Container, storage_type: StorageType) -> bool:
     return find_container(container, storage_type) is not None
 
@@ -100,6 +127,57 @@ def get_containers(storage_type: StorageType) -> Dict[str, Dict[str, str]]:
         )
 
     return containers
+
+
+def get_container_detail(
+    container: Container, storage_type: StorageType
+) -> Optional[ContainerDetail]:
+    account = find_container_account(container, storage_type)
+    if account is None:
+        return None
+
+    resource_group = get_base_resource_group()
+    account_name = get_storage_account_name(account)
+    mgmt_client = get_mgmt_client()
+    info = mgmt_client.blob_containers.get(resource_group, account_name, container)
+    holds = [ContainerHoldName(x.tag) for x in info.legal_hold.tags]
+
+    return ContainerDetail(name=container, metadata=info.metadata, holds=holds)
+
+
+def set_container_detail(
+    container: Container,
+    storage_type: StorageType,
+    *,
+    metadata: Optional[Dict[str, str]] = None,
+    holds: Optional[List[ContainerHoldName]] = None,
+) -> Optional[bool]:
+    if metadata is None and holds is None:
+        return False
+
+    account = find_container_account(container, storage_type)
+    if account is None:
+        return None
+
+    resource_group = get_base_resource_group()
+    account_name = get_storage_account_name(account)
+    mgmt_client = get_mgmt_client()
+    if holds is not None:
+        if len(holds):
+            holds = LegalHold(tags=holds)
+            mgmt_client.blob_containers.set_legal_hold(
+                resource_group, account_name, container, holds
+            )
+        # TODO - call clear_legal_hold on non-existant holds
+    if metadata is not None:
+        mgmt_client.blob_containers.update(
+            resource_group,
+            account_name,
+            container,
+            BlobContainer(metadata=metadata),
+        )
+
+    return True
 
 
 def get_container_metadata(

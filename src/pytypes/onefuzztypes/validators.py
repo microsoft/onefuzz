@@ -17,6 +17,16 @@ def check_value(value: str, charset: str) -> str:
     return value
 
 
+def check_len(
+    value: str, *, min_len: Optional[int] = None, max_len: Optional[int] = None
+) -> str:
+    if min_len is not None and len(value) < min_len:
+        raise ValueError("invalid value: %s - too short" % value)
+    if max_len is not None and len(value) > max_len:
+        raise ValueError("invalid value: %s - too long" % value)
+    return value
+
+
 def check_alnum(value: str) -> str:
     return check_value(value, ALPHA_NUM)
 
