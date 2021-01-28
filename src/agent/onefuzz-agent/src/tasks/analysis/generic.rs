@@ -124,7 +124,9 @@ pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
         .analyzer_options(&config.analyzer_options)
         .output_dir(&config.analysis.path)
         .tools_dir(&config.tools.path)
-        .setup_dir(&config.common.setup_dir);
+        .setup_dir(&config.common.setup_dir)
+        .job_id(&config.common.job_id)
+        .task_id(&config.common.task_id);
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
 

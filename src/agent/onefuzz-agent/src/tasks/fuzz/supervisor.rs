@@ -179,7 +179,9 @@ async fn start_supervisor(
         .crashes(&crashes.path)
         .input_corpus(&inputs.path)
         .reports_dir(&reports_dir)
-        .setup_dir(&config.common.setup_dir);
+        .setup_dir(&config.common.setup_dir)
+        .job_id(&config.common.job_id)
+        .task_id(&config.common.task_id);
 
     if let Some(tools) = &config.tools {
         expand.tools_dir(&tools.path);
