@@ -438,4 +438,58 @@ TASK_DEFINITIONS = {
             ),
         ],
     ),
+    TaskType.libfuzzer_regression: TaskDefinition(
+        features=[
+            TaskFeature.target_exe,
+            TaskFeature.target_env,
+            TaskFeature.target_options,
+            TaskFeature.target_timeout,
+            TaskFeature.check_asan_log,
+            TaskFeature.check_debugger,
+            TaskFeature.check_retry_count,
+            TaskFeature.report_list,
+        ],
+        vm=VmDefinition(compare=Compare.AtLeast, value=1),
+        containers=[
+            ContainerDefinition(
+                type=ContainerType.setup,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.input_reports,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.crashes,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Write],
+            ),
+            ContainerDefinition(
+                type=ContainerType.no_repro,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Write],
+            ),
+            ContainerDefinition(
+                type=ContainerType.inputs,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+        ],
+    ),
 }

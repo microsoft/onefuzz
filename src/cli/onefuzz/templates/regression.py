@@ -17,7 +17,7 @@ from . import JobHelper
 class Regression(Command):
     """ Regression job """
 
-    def basic(
+    def generic(
         self,
         project: str,
         name: str,
@@ -42,7 +42,112 @@ class Regression(Command):
         check_retry_count: Optional[int] = None,
         check_fuzzer_help: bool = True,
         fail_on_repro: bool = False,
-        check_asan_log: bool = False,
+    ) -> Optional[Job]:
+
+        return self._create_job(
+            TaskType.generic_regression,
+            project,
+            name,
+            build,
+            pool_name,
+            crashes,
+            input_reports,
+            inputs,
+            target_exe,
+            tags,
+            notification_config,
+            target_env,
+            setup_dir,
+            reboot_after_setup,
+            target_options,
+            dryrun,
+            duration,
+            report_list,
+            crash_report_timeout,
+            debug,
+            check_retry_count,
+            check_fuzzer_help,
+            fail_on_repro,
+        )
+
+    def libfuzzer(
+        self,
+        project: str,
+        name: str,
+        build: str,
+        pool_name: str,
+        *,
+        crashes: Container = None,
+        input_reports: Container = None,
+        inputs: Optional[Directory] = None,
+        target_exe: File = File("fuzz.exe"),
+        tags: Optional[Dict[str, str]] = None,
+        notification_config: Optional[NotificationConfig] = None,
+        target_env: Optional[Dict[str, str]] = None,
+        setup_dir: Optional[Directory] = None,
+        reboot_after_setup: bool = False,
+        target_options: Optional[List[str]] = None,
+        dryrun: bool = False,
+        duration: int = 24,
+        report_list: Optional[List[str]] = None,
+        crash_report_timeout: Optional[int] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
+        check_retry_count: Optional[int] = None,
+        check_fuzzer_help: bool = True,
+        fail_on_repro: bool = False,
+    ) -> Optional[Job]:
+
+        return self._create_job(
+            TaskType.libfuzzer_regression,
+            project,
+            name,
+            build,
+            pool_name,
+            crashes,
+            input_reports,
+            inputs,
+            target_exe,
+            tags,
+            notification_config,
+            target_env,
+            setup_dir,
+            reboot_after_setup,
+            target_options,
+            dryrun,
+            duration,
+            report_list,
+            crash_report_timeout,
+            debug,
+            check_retry_count,
+            check_fuzzer_help,
+            fail_on_repro,
+        )
+
+    def _create_job(
+        self,
+        task_type: TaskType,
+        project: str,
+        name: str,
+        build: str,
+        pool_name: str,
+        crashes: Container = None,
+        input_reports: Container = None,
+        inputs: Optional[Directory] = None,
+        target_exe: File = File("fuzz.exe"),
+        tags: Optional[Dict[str, str]] = None,
+        notification_config: Optional[NotificationConfig] = None,
+        target_env: Optional[Dict[str, str]] = None,
+        setup_dir: Optional[Directory] = None,
+        reboot_after_setup: bool = False,
+        target_options: Optional[List[str]] = None,
+        dryrun: bool = False,
+        duration: int = 24,
+        report_list: Optional[List[str]] = None,
+        crash_report_timeout: Optional[int] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
+        check_retry_count: Optional[int] = None,
+        check_fuzzer_help: bool = True,
+        fail_on_repro: bool = False,
     ) -> Optional[Job]:
 
         if not ((crashes and input_reports) or inputs):
@@ -110,7 +215,7 @@ class Regression(Command):
         self.logger.info("creating regression task")
         regression_task = self.onefuzz.tasks.create(
             helper.job.job_id,
-            TaskType.generic_regression,
+            task_type,
             target_exe_blob_name,
             containers,
             pool_name=pool_name,
@@ -125,7 +230,6 @@ class Regression(Command):
             debug=debug,
             check_fuzzer_help=check_fuzzer_help,
             report_list=report_list,
-            check_asan_log=check_asan_log,
         )
         helper.wait_for_stopping = fail_on_repro
 
