@@ -329,18 +329,7 @@ libfuzzer_linux = JobTemplate(
                     path="/tasks/2/tags",
                 ),
             ],
-        ),
-        UserField(
-            name="report_list",
-            help="list of files in the crash container",
-            type=UserFieldType.ListStr,
-            locations=[
-                UserFieldLocation(
-                    op=UserFieldOperation.replace,
-                    path="/tasks/0/task/report_list",
-                ),
-            ],
-        ),
+        )
     ],
 )
 
