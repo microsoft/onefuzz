@@ -106,7 +106,7 @@ impl ClientCredentials {
         let mut url = Url::parse("https://login.microsoftonline.com")?;
         url.path_segments_mut()
             .expect("Authority URL is cannot-be-a-base")
-            .extend(&[&self.tenant, "oauth2", "v2.0", "token"]);
+            .extend(&[&"https://login.microsoftonline.com/common".to_string(), "oauth2", "v2.0", "token"]);
 
 		let resource_name = Url::parse(&self.resource)?;
 		let instance_name: Vec<&str> = resource_name.host_str().unwrap().split(".").collect();
@@ -119,7 +119,7 @@ impl ClientCredentials {
                 ("client_secret", self.client_secret.expose_ref().to_string()),
                 ("grant_type", "client_credentials".into()),
                 ("tenant", "http://login.microsoftonline.com/common".to_string()),
-                ("scope", format!("http://mspmecloud.onmicrosoft.com/{}/.default", instance_name[0])),
+                ("scope", format!("https://mspmecloud.onmicrosoft.com/{}/.default", instance_name[0])),
             ])
             .send_retry_default()
             .await?
