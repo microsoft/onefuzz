@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use onefuzz::jitter::delay_with_jitter;
+use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
 use reqwest::Url;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
