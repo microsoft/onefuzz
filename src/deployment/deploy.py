@@ -328,7 +328,9 @@ class Client:
 
         (password_id, password) = self.create_password(app.object_id)
 
-        cli_app = list(client.applications.list(filter="appId eq '%s'" % ONEFUZZ_CLI_APP))
+        cli_app = list(
+            client.applications.list(filter="appId eq '%s'" % ONEFUZZ_CLI_APP)
+        )
 
         if len(cli_app) == 0:
             logger.info(
