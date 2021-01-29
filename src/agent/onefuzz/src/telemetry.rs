@@ -22,6 +22,8 @@ pub enum Event {
     new_report,
     new_unique_report,
     new_unable_to_reproduce,
+    regression_report,
+    regression_unable_to_reproduce,
 }
 
 impl Event {
@@ -36,6 +38,8 @@ impl Event {
             Self::new_report => "new_report",
             Self::new_unique_report => "new_unique_report",
             Self::new_unable_to_reproduce => "new_unable_to_reproduce",
+            Self::regression_report => "regression_report",
+            Self::regression_unable_to_reproduce => "regression_unable_to_reproduce",
         }
     }
 }

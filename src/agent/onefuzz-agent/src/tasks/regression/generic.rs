@@ -34,8 +34,8 @@ pub struct Config {
     pub crashes: Option<SyncedDir>,
     pub report_list: Vec<String>,
 
-    pub no_repro: SyncedDir,
-    pub reports: SyncedDir,
+    pub no_repro: Option<SyncedDir>,
+    pub reports: Option<SyncedDir>,
 
     pub target_timeout: Option<u64>,
 
@@ -83,13 +83,11 @@ impl RegressionHandler for GenericRegressionTask {
         crash_result: CrashTestResult,
         original_report: Option<CrashReport>,
     ) -> Result<()> {
-        let reports = Some(self.config.reports.clone());
-        let no_repro = Some(self.config.no_repro.clone());
         crash_result
             .save_regression(
                 original_report,
-                &reports,
-                &no_repro,
+                &self.config.reports,
+                &self.config.no_repro,
                 format!("{}/", self.config.common.task_id),
             )
             .await

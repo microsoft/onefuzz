@@ -10,7 +10,10 @@ use onefuzz::{
     monitor::DirectoryMonitor,
     syncdir::SyncedDir,
     telemetry::{
-        Event::{new_report, new_unable_to_reproduce, new_unique_report},
+        Event::{
+            new_report, new_unable_to_reproduce, new_unique_report, regression_report,
+            regression_unable_to_reproduce,
+        },
         EventData,
     },
 };
@@ -169,7 +172,7 @@ impl CrashTestResult {
                     )
                     .await?
                     {
-                        event!(new_unique_report; EventData::Path = name);
+                        event!(regression_report; EventData::Path = name);
                     }
                 }
             }
@@ -187,7 +190,7 @@ impl CrashTestResult {
                     )
                     .await?
                     {
-                        event!(new_unable_to_reproduce; EventData::Path = name);
+                        event!(regression_unable_to_reproduce; EventData::Path = name);
                     }
                 }
             }
