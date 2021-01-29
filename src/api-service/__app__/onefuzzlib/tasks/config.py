@@ -92,6 +92,25 @@ def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
             )
 
 
+def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
+    if config.task.target_exe is None:
+        if TaskFeature.target_exe in definition.features:
+            raise TaskConfigError("missing target_exe")
+
+        if TaskFeature.target_exe_optional in definition.features:
+            return
+
+        return
+
+    container = [x for x in config.containers if x.type == ContainerType.setup][0]
+    if not blob_exists(container.name, config.task.target_exe, StorageType.corpus):
+        err = "target_exe `%s` does not exist in the setup container `%s`" % (
+            config.task.target_exe,
+            container.name,
+        )
+        LOGGER.warning(err)
+
+
 def check_config(config: TaskConfig) -> None:
     if config.task.type not in TASK_DEFINITIONS:
         raise TaskConfigError("unsupported task type: %s" % config.task.type.name)
@@ -132,14 +151,7 @@ def check_config(config: TaskConfig) -> None:
     else:
         raise TaskConfigError("either the vm or pool must be specified")
 
-    if TaskFeature.target_exe in definition.features:
-        container = [x for x in config.containers if x.type == ContainerType.setup][0]
-        if not blob_exists(container.name, config.task.target_exe, StorageType.corpus):
-            err = "target_exe `%s` does not exist in the setup container `%s`" % (
-                config.task.target_exe,
-                container.name,
-            )
-            LOGGER.warning(err)
+    check_target_exe(config, definition)
 
     if TaskFeature.generator_exe in definition.features:
         container = [x for x in config.containers if x.type == ContainerType.tools][0]
@@ -251,6 +263,12 @@ def build_task_config(
         config.supervisor_input_marker = task_config.task.supervisor_input_marker
 
     if TaskFeature.target_exe in definition.features:
+        config.target_exe = "setup/%s" % task_config.task.target_exe
+
+    if (
+        TaskFeature.target_exe_optional in definition.features
+        and task_config.task.target_exe
+    ):
         config.target_exe = "setup/%s" % task_config.task.target_exe
 
     if TaskFeature.target_env in definition.features:

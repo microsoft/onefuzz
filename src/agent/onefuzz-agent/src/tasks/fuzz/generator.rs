@@ -156,7 +156,9 @@ impl GeneratorTask {
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
                 .generator_exe(&self.config.generator_exe)
-                .generator_options(&self.config.generator_options);
+                .generator_options(&self.config.generator_options)
+                .job_id(&self.config.common.job_id)
+                .task_id(&self.config.common.task_id);
 
             if let Some(tools) = &self.config.tools {
                 expand.tools_dir(&tools.path);
