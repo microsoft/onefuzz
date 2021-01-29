@@ -621,6 +621,7 @@ class Scaleset(BaseModel):
     region: Region
     size: int
     spot_instances: bool
+    needs_config_update: bool = Field(default=False)
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]
     client_id: Optional[UUID]
