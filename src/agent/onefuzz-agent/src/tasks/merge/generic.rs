@@ -129,9 +129,9 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
 }
 
 async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
-    let mut supervisor_args = Expand::new();
+    let mut expand = Expand::new();
 
-    supervisor_args
+    expand
         .input_marker(&config.supervisor_input_marker)
         .input_corpus(&config.unique_inputs.path)
         .target_options(&config.target_options)
@@ -139,15 +139,12 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         .supervisor_options(&config.supervisor_options)
         .generated_inputs(output_dir)
         .target_exe(&config.target_exe)
-        .setup_dir(&config.common.setup_dir);
-
-    if config.target_options_merge {
-        supervisor_args.target_options(&config.target_options);
-    }
-
-    let supervisor_path = Expand::new()
+        .setup_dir(&config.common.setup_dir)
         .tools_dir(&config.tools.path)
-        .evaluate_value(&config.supervisor_exe)?;
+        .job_id(&config.common.job_id)
+        .task_id(&config.common.task_id);
+
+    let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
 
     let mut cmd = Command::new(supervisor_path);
 
@@ -157,15 +154,15 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         .stderr(Stdio::piped());
 
     for (k, v) in &config.supervisor_env {
-        cmd.env(k, v);
+        cmd.env(k, expand.evaluate_value(v)?);
     }
 
-    for arg in supervisor_args.evaluate(&config.supervisor_options)? {
+    for arg in expand.evaluate(&config.supervisor_options)? {
         cmd.arg(arg);
     }
 
     if !config.target_options_merge {
-        for arg in supervisor_args.evaluate(&config.target_options)? {
+        for arg in expand.evaluate(&config.target_options)? {
             cmd.arg(arg);
         }
     }

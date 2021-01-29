@@ -16,7 +16,7 @@ use onefuzz::{
     jitter::delay_with_jitter,
     process::monitor_process,
     syncdir::{SyncOperation::Pull, SyncedDir},
-    telemetry::Event::new_result,
+    telemetry::Event::{new_coverage, new_result},
 };
 use serde::Deserialize;
 use std::{
@@ -95,6 +95,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         path: runtime_dir.path().join("inputs"),
         url: config.inputs.url.clone(),
     };
+
     inputs.init().await?;
     if let Some(context) = &config.wait_for_files {
         let dir = match context {
@@ -110,7 +111,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
             delay_with_jitter(delay).await;
         }
     }
-
+    let monitor_inputs = inputs.monitor_results(new_coverage);
     let continuous_sync_task = inputs.continuous_sync(Pull, config.ensemble_sync_delay);
 
     let process = start_supervisor(
@@ -147,6 +148,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         monitor_supervisor,
         monitor_stats,
         monitor_crashes,
+        monitor_inputs,
         continuous_sync_task,
         monitor_reports_future,
     )?;
@@ -179,7 +181,9 @@ async fn start_supervisor(
         .crashes(&crashes.path)
         .input_corpus(&inputs.path)
         .reports_dir(&reports_dir)
-        .setup_dir(&config.common.setup_dir);
+        .setup_dir(&config.common.setup_dir)
+        .job_id(&config.common.job_id)
+        .task_id(&config.common.task_id);
 
     if let Some(tools) = &config.tools {
         expand.tools_dir(&tools.path);

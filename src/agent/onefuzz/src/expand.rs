@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use uuid::Uuid;
 
 pub enum ExpandedValue<'a> {
     Path(String),
@@ -35,6 +36,8 @@ pub enum PlaceHolder {
     SupervisorOptions,
     SetupDir,
     ReportsDir,
+    JobId,
+    TaskId,
 }
 
 impl PlaceHolder {
@@ -59,6 +62,8 @@ impl PlaceHolder {
             Self::SupervisorOptions => "{supervisor_options}",
             Self::SetupDir => "{setup_dir}",
             Self::ReportsDir => "{reports_dir}",
+            Self::JobId => "{job_id}",
+            Self::TaskId => "{task_id}",
         }
         .to_string()
     }
@@ -230,6 +235,18 @@ impl<'a> Expand<'a> {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
         self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path));
+        self
+    }
+
+    pub fn task_id(&mut self, arg: &Uuid) -> &mut Self {
+        let value = arg.to_hyphenated().to_string();
+        self.set_value(PlaceHolder::TaskId, ExpandedValue::Scalar(value));
+        self
+    }
+
+    pub fn job_id(&mut self, arg: &Uuid) -> &mut Self {
+        let value = arg.to_hyphenated().to_string();
+        self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value));
         self
     }
 
