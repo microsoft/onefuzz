@@ -828,19 +828,8 @@ class Tasks(Endpoint):
             lambda: [str(x.job_id) for x in self.onefuzz.jobs.list()],
         )
 
-        if target_env is None:
-            target_env = {}
         if tags is None:
             tags = {}
-        if target_options is None:
-            target_options = []
-        if supervisor_options is None:
-            supervisor_options = []
-        if supervisor_env is None:
-            supervisor_env = {}
-
-        if prereq_tasks is None:
-            prereq_tasks = []
 
         containers_submit = []
         for (container_type, container) in containers:
