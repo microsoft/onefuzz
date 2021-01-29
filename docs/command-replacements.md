@@ -16,6 +16,8 @@ The following values are replaced with the specific values at runtime.
 * `{runtime_dir}`: Path to the runtime directory for the task
 * `{tools_dir}`: Path to the task specific `tools` directory
 * `{setup_dir}` : Path to the setup directory
+* `{job_id}`: UUID that indicates the Job ID
+* `{task_id}`: UUID that indicates the Task ID
 
 ## Example
 
@@ -38,15 +40,18 @@ If you need `supervisor_options` to expand to: `"a", "b", "c", "d"`, you should 
 
 These are currently used in the following tasks:
 
-* libfuzzer_fuzz: `target_exe`, `target_options`, `input_corpus`, `crashes`
-* libfuzzer_crash_report: `target_exe`, `target_options`, `input`
-* libfuzzer_merge: `target_exe`, `target_options`, `input_corpus`
-* libfuzzer_coverage: None
-* generic_analysis: `input`, `target_exe`, `target_options`, `analyzer_exe`,
-  `anayzer_options`, `output_dir`, `tools_dir`
-* generic_generator: `generated_inputs`, `input_corpus`, `tools_dir`,
-  `generator_exe`, `generator_options`, `target_exe`, `target_options`, `input`
-* generic_supervisor: `crashes`, `runtime_dir`, `target_exe`, `target_options`,
-  `input_corpus`, `input`, `supervisor_exe`, `supervisor_options`, `tools_dir`
-* generic_merge: `input`, `input_corpus`, `output_dir`, `target_exe`,
-  `target_options`, `supervisor_exe`, `supervisor_options`, `tools_dir`
+* libfuzzer\_fuzz: `target_exe`, `target_options`, `input_corpus`, `crashes`
+* libfuzzer\_crash\_report: `target_exe`, `target_options`, `input`
+* libfuzzer\_merge: `target_exe`, `target_options`, `input_corpus`
+* libfuzzer\_coverage: None
+* generic\_analysis: `input`, `target_exe`, `target_options`, `analyzer_exe`,
+  `anayzer_options`, `output_dir`, `tools_dir`, `job_id`, `task_id`
+* generic\_generator: `generated_inputs`, `input_corpus`, `tools_dir`,
+  `generator_exe`, `generator_options`, `target_exe`, `target_options`,
+  `input`, `job_id`, `task_id`
+* generic\_supervisor: `crashes`, `runtime_dir`, `target_exe`, `target_options`,
+  `input_corpus`, `input`, `supervisor_exe`, `supervisor_options`, `tools_dir`,
+  `job_id`, `task_id`
+* generic\_merge: `input`, `input_corpus`, `output_dir`, `target_exe`,
+  `target_options`, `supervisor_exe`, `supervisor_options`, `tools_dir`,
+  `job_id`, `task_id`
