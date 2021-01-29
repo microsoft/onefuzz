@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 2.1.0
 ### Added
 * Agent: Added `job_id` and `task_id` to [configuration value expansion](docs/command-replacements.md). [#481](https://github.com/microsoft/onefuzz/pull/481)
-* Agent: Expanded the availablility of `tools_dir` to [configuration value expansion](docs/command-replacements.md). [#480](https://github.com/microsoft/onefuzz/pull/480)
+* Agent: Broadened the availability of `tools_dir` to [configuration value expansion](docs/command-replacements.md). [#480](https://github.com/microsoft/onefuzz/pull/480)
 * Agent: Added clarifying context to command errors.  [#466](https://github.com/microsoft/onefuzz/pull/466)
 
 ### Changed
