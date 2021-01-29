@@ -142,9 +142,9 @@ class ReproConfig(BaseModel):
 class TaskDetails(BaseModel):
     type: TaskType
     duration: int
-    target_exe: str
-    target_env: Dict[str, str]
-    target_options: List[str]
+    target_exe: Optional[str]
+    target_env: Optional[Dict[str, str]]
+    target_options: Optional[List[str]]
     target_workers: Optional[int]
     target_options_merge: Optional[bool]
     check_asan_log: Optional[bool]
