@@ -140,7 +140,9 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         .generated_inputs(output_dir)
         .target_exe(&config.target_exe)
         .setup_dir(&config.common.setup_dir)
-        .tools_dir(&config.tools.path);
+        .tools_dir(&config.tools.path)
+        .job_id(&config.common.job_id)
+        .task_id(&config.common.task_id);
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
 
