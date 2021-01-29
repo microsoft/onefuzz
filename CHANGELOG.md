@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.1.0
 ### Added
-* Agent: Added `job_id` and `task_id` to [configuration value expansion](docs/command-replacements.md) [#481](https://github.com/microsoft/onefuzz/pull/481)
-* Agent: Expanded the availablility of `tools_dir` to [configuration value expansion](docs/command-replacements.md) [#480](https://github.com/microsoft/onefuzz/pull/480)
+* Agent: Added `job_id` and `task_id` to [configuration value expansion](docs/command-replacements.md). [#481](https://github.com/microsoft/onefuzz/pull/481)
+* Agent: Expanded the availablility of `tools_dir` to [configuration value expansion](docs/command-replacements.md). [#480](https://github.com/microsoft/onefuzz/pull/480)
 * Agent: Added clarifying context to command errors.  [#466](https://github.com/microsoft/onefuzz/pull/466)
 
 ### Changed
@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: New inputs discovered by supervisor tasks are now saved to the `inputs` container.  [#484](https://github.com/microsoft/onefuzz/pull/484)
 * CLI: The license is now properly set in the python package metadata.  [#475](https://github.com/microsoft/onefuzz/pull/475)
 * Agent: Failure to download files via HTTP from queues now results in a failure, rather than the HTTP error being interpreted as the requested file.  [#485](https://github.com/microsoft/onefuzz/pull/485)
+* Deployment: Fixed error when checking if the default CLI application exists.  [#488](https://github.com/microsoft/onefuzz/pull/488)
 
 ## 2.0.0
 ### Added
