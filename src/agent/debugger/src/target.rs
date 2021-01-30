@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#![allow(clippy::single_match)]
+
 use std::{
     collections::hash_map,
     fs,
