@@ -12,7 +12,7 @@ use anyhow::{Error, Result};
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
-const DEFAULT_TIMEOUT_SECS: Duration = Duration::from_secs(5);
+const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
 const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
@@ -53,7 +53,7 @@ impl<'a> Tester<'a> {
             exe_path,
             arguments,
             environ,
-            timeout: DEFAULT_TIMEOUT_SECS,
+            timeout: DEFAULT_TIMEOUT,
             check_asan_log: false,
             check_asan_stderr: false,
             check_debugger: true,
