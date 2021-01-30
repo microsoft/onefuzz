@@ -68,8 +68,8 @@ def wsl_path(path: str) -> str:
     if which("wslpath"):
         # security note: path is a temporary path constructed by this library
         return (
-            subprocess.check_output(["wslpath", "-w", path]).decode().strip()
-        )  # nosec
+            subprocess.check_output(["wslpath", "-w", path]).decode().strip()  # nosec
+        )
     return path
 
 
