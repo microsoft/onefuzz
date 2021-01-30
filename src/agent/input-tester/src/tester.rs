@@ -420,11 +420,11 @@ impl Tester {
 }
 
 fn exception_from_throw(exception: &Exception) -> bool {
-    match exception.description {
+    matches!(
+        exception.description,
         ExceptionDescription::GenericException(ExceptionCode::ClrException)
-        | ExceptionDescription::GenericException(ExceptionCode::CppException) => true,
-        _ => false,
-    }
+            | ExceptionDescription::GenericException(ExceptionCode::CppException)
+    )
 }
 
 /// Using heuristics, choose the most serious exception. Typically this would be the one that

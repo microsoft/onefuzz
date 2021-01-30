@@ -405,14 +405,16 @@ impl Target {
                 bp.set_original_byte(Some(original_byte));
                 bp.set_id(id);
             })
-            .or_insert(Breakpoint::new(
-                address,
-                kind,
-                /*enabled*/ true,
-                /*original_byte*/ Some(original_byte),
-                /*hit_count*/ 0,
-                id,
-            ));
+            .or_insert_with(|| {
+                Breakpoint::new(
+                    address,
+                    kind,
+                    /*enabled*/ true,
+                    /*original_byte*/ Some(original_byte),
+                    /*hit_count*/ 0,
+                    id,
+                )
+            });
 
         write_instruction_byte(self.process_handle, address, 0xcc)?;
 
@@ -616,18 +618,15 @@ impl Target {
     pub(crate) fn handle_single_step(&mut self, step_state: StepState) -> Result<()> {
         self.single_step.remove(&self.current_thread_handle);
 
-        match step_state {
-            StepState::Breakpoint { pc } => {
-                write_instruction_byte(self.process_handle, pc, 0xcc)?;
+        if let StepState::Breakpoint { pc } = step_state {
+            write_instruction_byte(self.process_handle, pc, 0xcc)?;
 
-                // Resume all threads if we aren't waiting for any threads to single step.
-                if self.single_step.is_empty() {
-                    for thread_info in self.thread_info.values_mut() {
-                        thread_info.resume_thread()?;
-                    }
+            // Resume all threads if we aren't waiting for any threads to single step.
+            if self.single_step.is_empty() {
+                for thread_info in self.thread_info.values_mut() {
+                    thread_info.resume_thread()?;
                 }
             }
-            _ => {}
         }
 
         Ok(())
