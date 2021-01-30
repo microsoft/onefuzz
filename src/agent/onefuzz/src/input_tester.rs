@@ -12,7 +12,7 @@ use anyhow::{Error, Result};
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
-const DEFAULT_TIMEOUT_SECS: u64 = 5;
+const DEFAULT_TIMEOUT_SECS: Duration = Duration::from_secs(5);
 const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
@@ -47,24 +47,43 @@ impl<'a> Tester<'a> {
         exe_path: &'a Path,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
-        timeout: &'a Option<u64>,
-        check_asan_log: bool,
-        check_asan_stderr: bool,
-        check_debugger: bool,
-        check_retry_count: u64,
     ) -> Self {
-        let timeout = Duration::from_secs(timeout.unwrap_or(DEFAULT_TIMEOUT_SECS));
         Self {
             setup_dir,
             exe_path,
             arguments,
             environ,
-            timeout,
-            check_asan_log,
-            check_asan_stderr,
-            check_debugger,
-            check_retry_count,
+            timeout: DEFAULT_TIMEOUT_SECS,
+            check_asan_log: false,
+            check_asan_stderr: false,
+            check_debugger: true,
+            check_retry_count: 0,
         }
+    }
+
+    pub fn timeout(&mut self, value: u64) -> &mut Self {
+        self.timeout = Duration::from_secs(value);
+        self
+    }
+
+    pub fn check_asan_log(&mut self, value: bool) -> &mut Self {
+        self.check_asan_log = value;
+        self
+    }
+
+    pub fn check_asan_stderr(&mut self, value: bool) -> &mut Self {
+        self.check_asan_stderr = value;
+        self
+    }
+
+    pub fn check_debugger(&mut self, value: bool) -> &mut Self {
+        self.check_debugger = value;
+        self
+    }
+
+    pub fn check_retry_count(&mut self, value: u64) -> &mut Self {
+        self.check_retry_count = value;
+        self
     }
 
     #[cfg(target_os = "windows")]

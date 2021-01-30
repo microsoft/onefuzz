@@ -162,17 +162,11 @@ impl<'a> LibFuzzer<'a> {
         let mut options = self.options.to_owned();
         options.push("{input}".to_string());
 
-        let tester = Tester::new(
-            &self.setup_dir,
-            &self.exe,
-            &options,
-            &self.env,
-            &timeout,
-            false,
-            true,
-            false,
-            retry,
-        );
+        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env);
+        tester.check_asan_stderr(true).check_retry_count(retry);
+        if let Some(timeout) = timeout {
+            tester.timeout(timeout);
+        }
         tester.test_input(test_input.as_ref()).await
     }
 
