@@ -5,3 +5,4 @@ isort
 pydantic
 vulture
 black
+bandit
