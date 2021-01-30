@@ -35,6 +35,7 @@ cargo fmt -- --check
 cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2019-0031 --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036
 cargo-license -j > data/licenses.json
 cargo build --release --locked
+cargo clippy --release -- -D warnings
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
 cargo test --release --manifest-path ./onefuzz-supervisor/Cargo.toml
