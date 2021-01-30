@@ -360,7 +360,12 @@ class DebugJob(Command):
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
             self.logger.info("downloading: %s", name)
-            subprocess.check_output([azcopy, "sync", to_download[name], outdir])
+            # security note: the src for azcopy comes from the server which is
+            # trusted in this context, while the destination is provided by the
+            # user
+            subprocess.check_output(
+                [azcopy, "sync", to_download[name], outdir]
+            )  # nosec
 
 
 class DebugLog(Command):

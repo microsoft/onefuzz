@@ -43,7 +43,8 @@ def temp_file(
             handle.write(content)
 
         if permissions is not None and platform.system() != "Windows":
-            subprocess.check_call(["chmod", permissions, full_path])
+            # security note: arguments all checked
+            subprocess.check_call(["chmod", permissions, full_path])  # nosec
 
         yield full_path
 
@@ -102,10 +103,14 @@ def ssh_connect(
         logging.info("launching ssh: %s", " ".join(cmd))
 
         if call:
-            yield subprocess.call(cmd)
+            # security note: command includes user provided arguments
+            # intentionally
+            yield subprocess.call(cmd)  # nosec
             return
 
-        with subprocess.Popen(
+        # security note: command includes user provided arguments
+        # intentionally
+        with subprocess.Popen(  # nosec
             cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, bufsize=0
         ) as ssh:
             yield ssh

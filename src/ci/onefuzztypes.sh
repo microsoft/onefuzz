@@ -14,6 +14,7 @@ python setup.py sdist bdist_wheel
 pip install -r requirements-lint.txt
 black ./onefuzztypes --check
 flake8 ./onefuzztypes
+bandit -r ./onefuzztypes
 isort --profile black ./onefuzztypes --check
 mypy ./onefuzztypes --ignore-missing-imports
 pytest -v tests
