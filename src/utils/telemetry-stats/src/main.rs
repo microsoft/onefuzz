@@ -1,3 +1,8 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+//
+// Tested with data logged to Application Insights from OneFuzz 1.0.0 through 2.1.0
+
 #[macro_use]
 extern crate serde;
 
