@@ -152,7 +152,7 @@ class Regression(Command):
 
         if not ((crashes and input_reports) or inputs):
             self.logger.error(
-                "please specify either the 'crash' and 'input_reports' parameters or the inputs parameter"
+                "please specify either the 'crash' and 'input_reports' parameters or the 'inputs' parameter"
             )
 
         if dryrun:
