@@ -64,10 +64,8 @@ impl GeneratorTask {
     pub async fn run(&self) -> Result<()> {
         self.config.crashes.init().await?;
         if let Some(tools) = &self.config.tools {
-            if tools.url.is_some() {
-                tools.init_pull().await?;
-                set_executable(&tools.path).await?;
-            }
+            tools.init_pull().await?;
+            set_executable(&tools.path).await?;
         }
 
         let hb_client = self.config.common.init_heartbeat().await?;

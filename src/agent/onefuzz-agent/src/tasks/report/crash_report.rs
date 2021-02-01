@@ -85,21 +85,14 @@ async fn upload_or_save_local<T: Serialize>(
     dest_name: &str,
     container: &SyncedDir,
 ) -> Result<bool> {
-    match &container.url {
-        Some(blob_url) => {
-            let url = blob_url.blob(dest_name).url();
-            upload(report, url).await
-        }
-        None => {
-            let path = container.path.join(dest_name);
-            if !exists(&path).await? {
-                let data = serde_json::to_vec(&report)?;
-                fs::write(path, data).await?;
-                Ok(true)
-            } else {
-                Ok(false)
-            }
-        }
+    let path = container.path.join(dest_name);
+    if !exists(&path).await? {
+        let data = serde_json::to_vec(&report)?;
+        fs::write(path, data).await?;
+        container.sync_push().await?;
+        Ok(true)
+    } else {
+        Ok(false)
     }
 }
 
