@@ -146,7 +146,7 @@ class OssFuzz(Command):
 
         self.logger.info("uploading build artifacts")
 
-        # security note: the container sas is considerd trusted from the
+        # security note: the container sas is considered trusted from the
         # service
         subprocess.check_output(  # nosec
             [
