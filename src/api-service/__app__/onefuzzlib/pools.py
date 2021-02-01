@@ -1146,21 +1146,26 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.nodes.append(node_state)
 
     def update_configs(self) -> None:
-        if self.state != ScalesetState.running:
-            logging.debug(
-                "scaleset not running, not updating configs: %s", self.scaleset_id
-            )
-            return
+        if not self.needs_config_update:
+            logging.debug("config update not needed: %s", self.scaleset_id)
+
+        logging.info("updating scaleset configs: %s", self.scaleset_id)
 
         pool = Pool.get_by_name(self.pool_name)
         if isinstance(pool, Error):
+            logging.error(
+                "unable to find pool during config update: %s - %s",
+                self.scaleset_id,
+                pool,
+            )
             self.set_failed(pool)
             return
 
-        logging.debug("updating scaleset configs: %s", self.scaleset_id)
         extensions = fuzz_extensions(pool, self)
         try:
             update_extensions(self.scaleset_id, extensions)
+            self.needs_config_update = False
+            self.save()
         except UnableToUpdate:
             logging.debug(
                 "unable to update configs, update already in progress: %s",
