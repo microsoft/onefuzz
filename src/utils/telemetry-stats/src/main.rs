@@ -2,11 +2,10 @@
 extern crate serde;
 
 use anyhow::Result;
+use chrono::{DateTime, Duration, Utc};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-use chrono::{DateTime, Utc, Duration};
-//use std::time::Duration;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -51,7 +50,7 @@ fn read_file(filename: &str) -> Result<Vec<Entry>> {
     let mut results = vec![];
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
-    for (_, line) in reader.lines().enumerate() {
+    for line in reader.lines() {
         let line = line?;
         let entry: Entry = serde_json::from_str(&line)?;
         results.push(entry);
@@ -109,7 +108,13 @@ fn main() -> Result<()> {
                         x.last = event_time.to_owned();
                     }
                 } else {
-                    stats.machines.insert(x.to_owned(), Seen{first: event_time.to_owned(), last: event_time.to_owned()});
+                    stats.machines.insert(
+                        x.to_owned(),
+                        Seen {
+                            first: event_time.to_owned(),
+                            last: event_time.to_owned(),
+                        },
+                    );
                 }
             } else if let Some(x) = dimension.get("tool_name") {
                 if let Some(x) = stats.tools.get_mut(x) {
