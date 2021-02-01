@@ -86,7 +86,9 @@ def choose_account(storage_type: StorageType) -> str:
     # Use a random secondary storage account if any are available.  This
     # reduces IOP contention for the Storage Queues, which are only available
     # on primary accounts
-    return random.choice(accounts[1:])
+    #
+    # security note: this is not used as a security feature
+    return random.choice(accounts[1:])  # nosec
 
 
 @cached

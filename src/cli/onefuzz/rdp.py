@@ -25,7 +25,9 @@ def rdp_connect(ip: str, password: str, *, port: int) -> Generator:
         )
 
         encrypted = (
-            subprocess.check_output(
+            # security note: script includes content coming from the server,
+            # which is trusted in this context.
+            subprocess.check_output(  # nosec
                 ["powershell.exe", "-ExecutionPolicy", "Unrestricted", script]
             )
             .decode()
@@ -46,5 +48,7 @@ def rdp_connect(ip: str, password: str, *, port: int) -> Generator:
         os.chdir(tmpdir)
         cmd = ["mstsc.exe", FILENAME]
         logging.info("launching rdp: %s", " ".join(cmd))
-        yield subprocess.call(cmd)
+        # security note: mstsc.exe is called using a config with data coming
+        # from the server, which is trusted in this context.
+        yield subprocess.call(cmd)  # nosec
         os.chdir(previous)
