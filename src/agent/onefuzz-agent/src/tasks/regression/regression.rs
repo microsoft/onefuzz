@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{
-    heartbeat::*,
+    heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     report::crash_report::{CrashReport, CrashTestResult},
     utils::download_input,
 };
@@ -63,9 +63,9 @@ pub async fn handle_inputs(
     while let Some(file) = input_files.next_entry().await? {
         heartbeat_client.alive();
         let input_url = inputs.url.clone().and_then(|container_url| {
-            file.file_name()
-                .to_str()
-                .and_then(|f_name| container_url.url().join(f_name).ok())
+            let os_file_name = file.file_name();
+            let file_name = os_file_name.to_str()?;
+            container_url.url().join(file_name).ok()
         });
 
         let report = handler.get_crash_result(file.path(), input_url).await?;
@@ -100,12 +100,10 @@ pub async fn handle_crash_reports(
         heartbeat_client.alive();
         let crash_report_str = std::fs::read_to_string(file.path())?;
         let crash_report: CrashReport = serde_json::from_str(&crash_report_str)?;
-        let input_url = crash_report
-            .input_blob
-            .clone()
-            .map(|b| b.name)
-            .and_then(|crash_name| crashes.url.clone().map(|u| u.blob(crash_name).url()));
-
+        let input_url = crash_report.input_blob.clone().and_then(|input_blob| {
+            let crashes_url = crashes.url.clone()?;
+            Some(crashes_url.blob(input_blob.name).url())
+        });
         if let Some(input_url) = input_url {
             let input = download_input(input_url.clone(), &crashes.path).await?;
             let report = handler.get_crash_result(input, Some(input_url)).await?;

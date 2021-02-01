@@ -2,7 +2,11 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::large_enum_variant)]
-use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, regression, report};
+use crate::tasks::{
+    analysis, coverage, fuzz,
+    heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
+    merge, regression, report,
+};
 use anyhow::Result;
 use onefuzz::{
     machine_id::{get_machine_id, get_scaleset_name},

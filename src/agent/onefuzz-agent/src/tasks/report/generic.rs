@@ -5,7 +5,7 @@ use super::crash_report::{CrashReport, CrashTestResult, InputBlob, NoCrash};
 use crate::tasks::{
     config::CommonConfig,
     generic::input_poller::{CallbackImpl, InputPoller, Processor},
-    heartbeat::*,
+    heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     utils::default_bool_true,
 };
 use anyhow::Result;

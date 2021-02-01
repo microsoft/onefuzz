@@ -3,7 +3,10 @@
 
 use super::crash_report::*;
 use crate::tasks::{
-    config::CommonConfig, generic::input_poller::*, heartbeat::*, utils::default_bool_true,
+    config::CommonConfig,
+    generic::input_poller::*,
+    heartbeat::{HeartbeatSender, TaskHeartbeatClient},
+    utils::default_bool_true,
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;

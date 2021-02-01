@@ -15,8 +15,8 @@ extern crate clap;
 extern crate anyhow;
 
 use crate::{
-    config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::*, work::WorkSet,
-    worker::WorkerEvent,
+    config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,
+    work::WorkSet, worker::WorkerEvent,
 };
 use std::path::PathBuf;
 
