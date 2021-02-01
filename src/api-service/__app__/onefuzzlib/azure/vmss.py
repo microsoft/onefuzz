@@ -133,7 +133,7 @@ def check_can_update(name: UUID) -> Any:
     if vmss is None:
         raise UnableToUpdate
 
-    if vmss.provisioning_state != "Succeeded":
+    if vmss.provisioning_state == "Updating":
         raise UnableToUpdate
 
     return vmss
