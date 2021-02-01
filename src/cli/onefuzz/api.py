@@ -64,7 +64,7 @@ def is_uuid(value: str) -> bool:
 A = TypeVar("A", bound=BaseModel)
 
 
-def wsl_path(path: str) -> str:
+def _wsl_path(path: str) -> str:
     if which("wslpath"):
         # security note: path is a temporary path constructed by this library
         return (
@@ -568,7 +568,7 @@ class Repro(Endpoint):
             if debug_command:
                 dbg_script = [debug_command, "qq"]
                 with temp_file("db.script", "\r\n".join(dbg_script)) as dbg_script_path:
-                    dbg += ["-cf", wsl_path(dbg_script_path)]
+                    dbg += ["-cf", _wsl_path(dbg_script_path)]
 
                     logging.debug("launching: %s", dbg)
                     try:
