@@ -66,7 +66,8 @@ A = TypeVar("A", bound=BaseModel)
 
 def _wsl_path(path: str) -> str:
     if which("wslpath"):
-        # security note: path is a temporary path constructed by this library
+        # security note: path should always be a temporary path constructed by
+        # this library
         return (
             subprocess.check_output(["wslpath", "-w", path]).decode().strip()  # nosec
         )
