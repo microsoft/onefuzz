@@ -63,7 +63,7 @@ impl RegressionHandler for GenericRegressionTask {
     ) -> Result<CrashTestResult> {
         generic::test_input(
             input_url,
-            input.as_ref(),
+            &input,
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
