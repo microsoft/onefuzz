@@ -26,9 +26,9 @@ pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
 pub const TARGET_OPTIONS: &str = "target_options";
-pub const SUPERVISOR_EXE: &str = "supervisor_exe";
-pub const SUPERVISOR_ENV: &str = "supervisor_env";
-pub const SUPERVISOR_OPTIONS: &str = "supervisor_options";
+// pub const SUPERVISOR_EXE: &str = "supervisor_exe";
+// pub const SUPERVISOR_ENV: &str = "supervisor_env";
+// pub const SUPERVISOR_OPTIONS: &str = "supervisor_options";
 pub const GENERATOR_EXE: &str = "generator_exe";
 pub const GENERATOR_ENV: &str = "generator_env";
 pub const GENERATOR_OPTIONS: &str = "generator_options";
@@ -36,7 +36,7 @@ pub const GENERATOR_OPTIONS: &str = "generator_options";
 pub enum CmdType {
     Target,
     Generator,
-    Supervisor,
+    // Supervisor,
 }
 
 pub fn add_cmd_options(
@@ -48,7 +48,7 @@ pub fn add_cmd_options(
 ) -> App<'static, 'static> {
     let (exe_name, env_name, arg_name) = match cmd_type {
         CmdType::Target => (TARGET_EXE, TARGET_ENV, TARGET_OPTIONS),
-        CmdType::Supervisor => (SUPERVISOR_EXE, SUPERVISOR_ENV, SUPERVISOR_OPTIONS),
+        // CmdType::Supervisor => (SUPERVISOR_EXE, SUPERVISOR_ENV, SUPERVISOR_OPTIONS),
         CmdType::Generator => (GENERATOR_EXE, GENERATOR_ENV, GENERATOR_OPTIONS),
     };
 
@@ -78,7 +78,7 @@ pub fn add_cmd_options(
 pub fn get_cmd_exe(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Result<String> {
     let name = match cmd_type {
         CmdType::Target => TARGET_EXE,
-        CmdType::Supervisor => SUPERVISOR_EXE,
+        // CmdType::Supervisor => SUPERVISOR_EXE,
         CmdType::Generator => GENERATOR_EXE,
     };
 
@@ -89,7 +89,7 @@ pub fn get_cmd_exe(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Result<Str
 pub fn get_cmd_arg(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Vec<String> {
     let name = match cmd_type {
         CmdType::Target => TARGET_OPTIONS,
-        CmdType::Supervisor => SUPERVISOR_OPTIONS,
+        // CmdType::Supervisor => SUPERVISOR_OPTIONS,
         CmdType::Generator => GENERATOR_OPTIONS,
     };
 
@@ -102,7 +102,7 @@ pub fn get_cmd_env(
 ) -> Result<HashMap<String, String>> {
     let env_name = match cmd_type {
         CmdType::Target => TARGET_ENV,
-        CmdType::Supervisor => SUPERVISOR_ENV,
+        // CmdType::Supervisor => SUPERVISOR_ENV,
         CmdType::Generator => GENERATOR_ENV,
     };
 
@@ -156,15 +156,13 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
 
     let setup_dir = if args.is_present(SETUP_DIR) {
         value_t!(args, SETUP_DIR, PathBuf)?
+    } else if args.is_present(TARGET_EXE) {
+        value_t!(args, TARGET_EXE, PathBuf)?
+            .parent()
+            .map(|x| x.to_path_buf())
+            .unwrap_or_default()
     } else {
-        if args.is_present(TARGET_EXE) {
-            value_t!(args, TARGET_EXE, PathBuf)?
-                .parent()
-                .map(|x| x.to_path_buf())
-                .unwrap_or_default()
-        } else {
-            PathBuf::default()
-        }
+        PathBuf::default()
     };
 
     let config = CommonConfig {
