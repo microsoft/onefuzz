@@ -15,7 +15,6 @@ use std::path::PathBuf;
 /// Abstraction for handling regression reports
 #[async_trait]
 pub trait RegressionHandler {
-
     /// Test the provided input ang generate a crash result
     /// * `input` - path to the input to test
     /// * `input_url` - input url
@@ -24,7 +23,6 @@ pub trait RegressionHandler {
         input: PathBuf,
         input_url: Option<Url>,
     ) -> Result<CrashTestResult>;
-
 
     /// Saves a regression
     /// * `crash_result` - crash result to save
@@ -35,7 +33,6 @@ pub trait RegressionHandler {
         original_report: Option<CrashReport>,
     ) -> Result<()>;
 }
-
 
 /// Runs the regression task
 /// * `heartbeat_client` - heartbeat client
@@ -96,7 +93,6 @@ pub async fn handle_inputs(
 
     Ok(())
 }
-
 
 /// Run the regression on the reports in the 'inputs_reports' location
 /// * `heartbeat_client` - heartbeat client
