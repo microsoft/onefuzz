@@ -34,6 +34,7 @@ from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
 from onefuzztypes.primitives import Container, Directory, File
 from pydantic import BaseModel, ValidationError
+
 from .templates.template_error import TemplateError
 
 LOGGER = logging.getLogger("cli")

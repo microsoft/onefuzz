@@ -6,9 +6,9 @@
 import json
 import os
 import tempfile
-from uuid import uuid4
 import zipfile
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import uuid4
 
 from onefuzztypes.enums import OS, ContainerType, TaskState
 from onefuzztypes.models import Job, NotificationConfig

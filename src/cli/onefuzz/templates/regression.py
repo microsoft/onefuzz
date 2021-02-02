@@ -8,7 +8,9 @@ from typing import Dict, List, Optional
 from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
+
 from onefuzz.api import Command
+
 from . import JobHelper
 from .template_error import TemplateError
 
