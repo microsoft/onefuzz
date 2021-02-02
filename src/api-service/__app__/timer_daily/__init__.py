@@ -24,7 +24,8 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     scalesets = Scaleset.search()
     for scaleset in scalesets:
         logging.info("updating scaleset configs: %s", scaleset.scaleset_id)
-        scaleset.update_configs()
+        scaleset.needs_config_update = True
+        scaleset.save()
 
     expired_webhook_logs = WebhookMessageLog.search_expired()
     for log_entry in expired_webhook_logs:

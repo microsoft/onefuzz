@@ -4,3 +4,4 @@ mypy
 isort
 vulture
 black
+bandit
