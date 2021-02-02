@@ -32,6 +32,8 @@ pub struct Config {
 
     pub input_reports: Option<SyncedDir>,
     pub crashes: Option<SyncedDir>,
+
+    #[serde(default)]
     pub report_list: Vec<String>,
 
     pub no_repro: Option<SyncedDir>,
