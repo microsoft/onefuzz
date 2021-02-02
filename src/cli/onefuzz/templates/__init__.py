@@ -6,6 +6,7 @@
 import json
 import os
 import tempfile
+from uuid import uuid4
 import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -117,12 +118,24 @@ class JobHelper:
                 self.platform,
             )
 
+    def get_unique_container_name(self, container_type: ContainerType) -> Container:
+        return Container(
+            "oft-%s-%s"
+            % (
+                container_type.name.replace("_", "-"),
+                uuid4().hex,
+            )
+        )
+
     def create_containers(self) -> None:
         for (container_type, container_name) in self.containers.items():
             self.logger.info("using container: %s", container_name)
             self.onefuzz.containers.create(
                 container_name, metadata={"container_type": container_type.name}
             )
+
+    def delete_container(self, container_name: Container) -> None:
+        self.onefuzz.containers.delete(container_name)
 
     def setup_notifications(self, config: Optional[NotificationConfig]) -> None:
         if not config:

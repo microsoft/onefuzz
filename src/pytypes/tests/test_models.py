@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 import unittest
-from onefuzztypes.primitives import PoolName, Region
 
 from onefuzztypes.models import Scaleset, SecretData, TeamsTemplate
 from onefuzztypes.requests import NotificationCreate
