@@ -504,7 +504,7 @@ def output(result: Any, output_format: str, expression: Optional[Any]) -> None:
             print(result, flush=True)
 
 
-def log_exception(args: argparse.Namespace, err: Exception):
+def log_exception(args: argparse.Namespace, err: Exception) -> None:
     if args.verbose > 0:
         entry = traceback.format_exc()
         for x in entry.split("\n"):

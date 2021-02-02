@@ -52,6 +52,8 @@ class Regression(Command):
 
         :param Container input_reports: Specify the container of the crash reports used in the regression
         :param Container crashes: Specify the container of the input files of the crashes
+        :param bool fail_on_repro: Specify wether or not to throw an exception if a repro was generated
+        :param bool delete_input_container: Specify wether or not to delete the input container
         """
 
         return self._create_job(
@@ -110,10 +112,12 @@ class Regression(Command):
     ) -> Optional[Job]:
 
         """
-        libfuzzer regression task
+        generic regression task
 
         :param Container input_reports: Specify the container of the crash reports used in the regression
         :param Container crashes: Specify the container of the input files of the crashes
+        :param bool fail_on_repro: Specify wether or not to throw an exception if a repro was generated
+        :param bool delete_input_container: Specify wether or not to delete the input container
         """
 
         return self._create_job(
@@ -252,12 +256,13 @@ class Regression(Command):
 
         self.logger.info("done creating tasks")
         helper.wait()
-        if helper.job.error:
-            raise TemplateError(
-                "unable to run the the regression", GIT_BISSECT_SKIP_CODE
-            )
 
         if fail_on_repro:
+            if helper.job.error:
+                raise TemplateError(
+                    "unable to run the the regression", GIT_BISSECT_SKIP_CODE
+                )
+
             repro_count = len(
                 self.onefuzz.containers.files.list(
                     helper.containers[ContainerType.reports],
