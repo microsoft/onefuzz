@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#![allow(clippy::single_match)]
+
 use std::{
     collections::hash_map,
     fs,
@@ -405,14 +407,16 @@ impl Target {
                 bp.set_original_byte(Some(original_byte));
                 bp.set_id(id);
             })
-            .or_insert(Breakpoint::new(
-                address,
-                kind,
-                /*enabled*/ true,
-                /*original_byte*/ Some(original_byte),
-                /*hit_count*/ 0,
-                id,
-            ));
+            .or_insert_with(|| {
+                Breakpoint::new(
+                    address,
+                    kind,
+                    /*enabled*/ true,
+                    /*original_byte*/ Some(original_byte),
+                    /*hit_count*/ 0,
+                    id,
+                )
+            });
 
         write_instruction_byte(self.process_handle, address, 0xcc)?;
 

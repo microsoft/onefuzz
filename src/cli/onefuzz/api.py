@@ -64,9 +64,13 @@ def is_uuid(value: str) -> bool:
 A = TypeVar("A", bound=BaseModel)
 
 
-def wsl_path(path: str) -> str:
+def _wsl_path(path: str) -> str:
     if which("wslpath"):
-        return subprocess.check_output(["wslpath", "-w", path]).decode().strip()
+        # security note: path should always be a temporary path constructed by
+        # this library
+        return (
+            subprocess.check_output(["wslpath", "-w", path]).decode().strip()  # nosec
+        )
     return path
 
 
@@ -530,7 +534,9 @@ class Repro(Endpoint):
                     dbg += ["--batch"]
 
                     try:
-                        return subprocess.run(
+                        # security note: dbg is built from content coming from
+                        # the server, which is trusted in this context.
+                        return subprocess.run(  # nosec
                             dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                         ).stdout.decode(errors="ignore")
                     except subprocess.CalledProcessError as err:
@@ -539,7 +545,9 @@ class Repro(Endpoint):
                         )
                         raise err
                 else:
-                    subprocess.call(dbg)
+                    # security note: dbg is built from content coming from the
+                    # server, which is trusted in this context.
+                    subprocess.call(dbg)  # nosec
         return None
 
     def _dbg_windows(
@@ -561,11 +569,13 @@ class Repro(Endpoint):
             if debug_command:
                 dbg_script = [debug_command, "qq"]
                 with temp_file("db.script", "\r\n".join(dbg_script)) as dbg_script_path:
-                    dbg += ["-cf", wsl_path(dbg_script_path)]
+                    dbg += ["-cf", _wsl_path(dbg_script_path)]
 
                     logging.debug("launching: %s", dbg)
                     try:
-                        return subprocess.run(
+                        # security note: dbg is built from content coming from the server,
+                        # which is trusted in this context.
+                        return subprocess.run(  # nosec
                             dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                         ).stdout.decode(errors="ignore")
                     except subprocess.CalledProcessError as err:
@@ -575,7 +585,9 @@ class Repro(Endpoint):
                         raise err
             else:
                 logging.debug("launching: %s", dbg)
-                subprocess.call(dbg)
+                # security note:  dbg is built from content coming from the
+                # server, which is trusted in this context.
+                subprocess.call(dbg)  # nosec
 
         return None
 

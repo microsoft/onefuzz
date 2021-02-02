@@ -136,6 +136,10 @@ pub async fn test_input(
         check_debugger,
         check_retry_count,
     );
+    tester
+      .check_asan_log(check_asan_log)
+      .check_debugger(check_debugger)
+      .check_retry_count(check_retry_count);
 
     let input_sha256 = sha256::digest_file(input).await?;
     let task_id = task_id;

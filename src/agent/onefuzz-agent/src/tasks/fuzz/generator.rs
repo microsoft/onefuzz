@@ -91,17 +91,20 @@ impl GeneratorTask {
     }
 
     async fn fuzzing_loop(&self, heartbeat_client: Option<TaskHeartbeatClient>) -> Result<()> {
-        let tester = Tester::new(
+        let mut tester = Tester::new(
             &self.config.common.setup_dir,
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
-            &self.config.target_timeout,
-            self.config.check_asan_log,
-            false,
-            self.config.check_debugger,
-            self.config.check_retry_count,
         );
+
+        tester
+            .check_asan_log(self.config.check_asan_log)
+            .check_debugger(self.config.check_debugger)
+            .check_retry_count(self.config.check_retry_count);
+        if let Some(timeout) = self.config.target_timeout {
+            tester.timeout(timeout);
+        }
 
         loop {
             for corpus_dir in &self.config.readonly_inputs {
