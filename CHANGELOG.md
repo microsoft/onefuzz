@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.1.1
+### Added
+* Agent: Added [Rust Clippy](https://github.com/rust-lang/rust-clippy) static analysis to CICD. [#490](https://github.com/microsoft/onefuzz/pull/490)
+* CLI/Service: Added [Bandit](https://github.com/PyCQA/bandit) static analysis to CICD.  [#491](https://github.com/microsoft/onefuzz/pull/491)
+
+### Fixed
+* Service: Fixed an issue where scalesets could get in a state that would stop updating configurations.  [#489](https://github.com/microsoft/onefuzz/pull/489)
+
 ## 2.1.0
 ### Added
 * Agent: Added `job_id` and `task_id` to [configuration value expansion](docs/command-replacements.md). [#481](https://github.com/microsoft/onefuzz/pull/481)
