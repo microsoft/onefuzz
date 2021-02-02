@@ -12,13 +12,23 @@ use onefuzz::syncdir::SyncedDir;
 use reqwest::Url;
 use std::path::PathBuf;
 
+/// Abstraction for handling regression reports
 #[async_trait]
 pub trait RegressionHandler {
+
+    /// Test the provided input ang generate a crash result
+    /// * `input` - path to the input to test
+    /// * `input_url` - input url
     async fn get_crash_result(
         &self,
         input: PathBuf,
         input_url: Option<Url>,
     ) -> Result<CrashTestResult>;
+
+
+    /// Saves a regression
+    /// * `crash_result` - crash result to save
+    /// * `original_report` - original report used to generate the report
     async fn save_regression(
         &self,
         crash_result: CrashTestResult,
@@ -26,12 +36,20 @@ pub trait RegressionHandler {
     ) -> Result<()>;
 }
 
+
+/// Runs the regression task
+/// * `heartbeat_client` - heartbeat client
+/// * `input_reports` - location of the reports used in this regression run
+/// * `report_list` - list of report file names selected to be used in the regression
+/// * `crashes` - location of the crash files referenced by the reports in input_reports
+/// * `inputs` - location of the input files
+/// * `handler` - regression handler
 pub async fn run(
     heartbeat_client: Option<TaskHeartbeatClient>,
     input_reports: &Option<SyncedDir>,
+    report_list: &[String],
     crashes: &Option<SyncedDir>,
     inputs: &Option<SyncedDir>,
-    report_list: &[String],
     handler: &impl RegressionHandler,
 ) -> Result<()> {
     info!("Starting generic regression task");
@@ -39,8 +57,8 @@ pub async fn run(
         handle_crash_reports(
             &heartbeat_client,
             &input_reports,
-            &crashes,
             report_list,
+            &crashes,
             handler,
         )
         .await?;
@@ -53,6 +71,10 @@ pub async fn run(
     Ok(())
 }
 
+/// Run the regression on the files in the 'inputs' location
+/// * `heartbeat_client` - heartbeat client
+/// * `inputs` - location of the input files
+/// * `handler` - regression handler
 pub async fn handle_inputs(
     inputs: &SyncedDir,
     heartbeat_client: &Option<TaskHeartbeatClient>,
@@ -75,11 +97,17 @@ pub async fn handle_inputs(
     Ok(())
 }
 
+
+/// Run the regression on the reports in the 'inputs_reports' location
+/// * `heartbeat_client` - heartbeat client
+/// * `input_reports` - location of the reports used in this regression run
+/// * `report_list` - list of report file names selected to be used in the regression
+/// * `crashes` - location of the crash files referenced by the reports in input_reports
 pub async fn handle_crash_reports(
     heartbeat_client: &Option<TaskHeartbeatClient>,
     input_reports: &SyncedDir,
-    crashes: &SyncedDir,
     report_list: &[String],
+    crashes: &SyncedDir,
     handler: &impl RegressionHandler,
 ) -> Result<()> {
     if report_list.is_empty() {

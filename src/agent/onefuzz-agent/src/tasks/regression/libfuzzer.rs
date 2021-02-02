@@ -104,9 +104,9 @@ impl LibFuzzerRegressionTask {
         regression::run(
             heartbeat_client,
             &self.config.input_reports,
+            &self.config.report_list,
             &self.config.crashes,
             &self.config.inputs,
-            &self.config.report_list,
             self,
         )
         .await?;
