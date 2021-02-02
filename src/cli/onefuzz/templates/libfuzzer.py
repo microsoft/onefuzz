@@ -356,7 +356,7 @@ class Libfuzzer(Command):
         self.logger.info("creating libfuzzer_merge task")
         self.onefuzz.tasks.create(
             helper.job.job_id,
-            TaskType.libfuzzer_crash_report,
+            TaskType.libfuzzer_merge,
             target_exe_blob_name,
             merge_containers,
             pool_name=pool_name,
