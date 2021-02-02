@@ -130,16 +130,16 @@ pub async fn test_input(
         target_exe,
         target_options,
         target_env,
-        &target_timeout,
-        check_asan_log,
-        false,
-        check_debugger,
-        check_retry_count,
     );
+
     tester
       .check_asan_log(check_asan_log)
       .check_debugger(check_debugger)
       .check_retry_count(check_retry_count);
+
+    if let Some(timeout) = self.config.target_timeout {
+        tester.timeout(timeout);
+    }
 
     let input_sha256 = sha256::digest_file(input).await?;
     let task_id = task_id;
