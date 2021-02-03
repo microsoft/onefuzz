@@ -118,7 +118,7 @@ impl<'a> Expand<'a> {
     }
 
     pub fn set_value(self, name: PlaceHolder, value: ExpandedValue<'a>) -> Self {
-        let mut values = HashMap::from(self.values);
+        let mut values = self.values;
         values.insert(name.get_string(), value);
         Self { values }
     }
@@ -128,6 +128,14 @@ impl<'a> Expand<'a> {
         value: &Option<T>,
         setter: impl FnOnce(Self, &T) -> Self,
     ) -> Self {
+        if let Some(value) = value {
+            setter(self, value)
+        } else {
+            self
+        }
+    }
+
+    pub fn set_optional<T>(self, value: Option<T>, setter: impl FnOnce(Self, T) -> Self) -> Self {
         if let Some(value) = value {
             setter(self, value)
         } else {
