@@ -183,11 +183,11 @@ async fn start_supervisor(
         .setup_dir(&config.common.setup_dir)
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
-        .set_optional(&config.tools, |expand, tools| expand.tools_dir(&tools.path))
-        .set_optional(&config.target_exe, |expand, target_exe| {
+        .set_optional_ref(&config.tools, |expand, tools| expand.tools_dir(&tools.path))
+        .set_optional_ref(&config.target_exe, |expand, target_exe| {
             expand.target_exe(target_exe)
         })
-        .set_optional(&config.supervisor_input_marker, |expand, input_marker| {
+        .set_optional_ref(&config.supervisor_input_marker, |expand, input_marker| {
             expand.input_marker(input_marker)
         });
     let expand = if let Some(target_options) = &config.target_options {

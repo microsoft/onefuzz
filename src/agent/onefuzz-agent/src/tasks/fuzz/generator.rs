@@ -159,7 +159,7 @@ impl GeneratorTask {
                 .generator_options(&self.config.generator_options)
                 .job_id(&self.config.common.job_id)
                 .task_id(&self.config.common.task_id)
-                .set_optional(&self.config.tools, |expand, tools| {
+                .set_optional_ref(&self.config.tools, |expand, tools| {
                     expand.tools_dir(&tools.path)
                 });
 
