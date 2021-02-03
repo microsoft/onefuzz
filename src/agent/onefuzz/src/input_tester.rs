@@ -211,13 +211,11 @@ impl<'a> Tester<'a> {
         };
 
         let (argv, env) = {
-            let mut expand = Expand::new();
-            expand
+            let expand = Expand::new()
                 .input_path(input_file)
                 .target_exe(&self.exe_path)
-                .target_options(&self.arguments);
-
-            expand.setup_dir(&self.setup_dir);
+                .target_options(&self.arguments)
+                .setup_dir(&self.setup_dir);
 
             let argv = expand.evaluate(&self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();

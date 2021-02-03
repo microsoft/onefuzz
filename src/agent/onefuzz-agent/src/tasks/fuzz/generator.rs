@@ -154,18 +154,15 @@ impl GeneratorTask {
     ) -> Result<()> {
         utils::reset_tmp_dir(&output_dir).await?;
         let (mut generator, generator_path) = {
-            let mut expand = Expand::new();
-            expand
+            let expand = Expand::new()
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
                 .generator_exe(&self.config.generator_exe)
                 .generator_options(&self.config.generator_options)
                 .job_id(&self.config.common.job_id)
-                .task_id(&self.config.common.task_id);
+                .task_id(&self.config.common.task_id)
+                .set_optional(&self.config.tools, |expand, tools| expand.tools_dir(&tools.path));
 
-            if let Some(tools) = &self.config.tools {
-                expand.tools_dir(&tools.path);
-            }
 
             let generator_path = expand.evaluate_value(&self.config.generator_exe)?;
 

@@ -56,8 +56,7 @@ impl<'a> LibFuzzer<'a> {
             .stderr(Stdio::piped())
             .arg("-help=1");
 
-        let mut expand = Expand::new();
-        expand
+        let expand = Expand::new()
             .target_exe(&self.exe)
             .target_options(&self.options)
             .setup_dir(&self.setup_dir);
@@ -92,8 +91,7 @@ impl<'a> LibFuzzer<'a> {
         let corpus_dir = corpus_dir.as_ref();
         let fault_dir = fault_dir.as_ref();
 
-        let mut expand = Expand::new();
-        expand
+        let expand = Expand::new()
             .target_exe(&self.exe)
             .target_options(&self.options)
             .input_corpus(&corpus_dir)
@@ -175,8 +173,7 @@ impl<'a> LibFuzzer<'a> {
         corpus_dir: impl AsRef<Path>,
         corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<LibFuzzerMergeOutput> {
-        let mut expand = Expand::new();
-        expand
+        let expand = Expand::new()
             .target_exe(&self.exe)
             .target_options(&self.options)
             .input_corpus(&corpus_dir)
