@@ -125,14 +125,14 @@ pub async fn test_input(
     check_asan_log: bool,
     check_debugger: bool,
 ) -> Result<CrashTestResult> {
-    let tester = Tester::new(setup_dir, target_exe, target_options, target_env);
+    let mut tester = Tester::new(setup_dir, target_exe, target_options, target_env);
 
     tester
         .check_asan_log(check_asan_log)
         .check_debugger(check_debugger)
         .check_retry_count(check_retry_count);
 
-    if let Some(timeout) = self.config.target_timeout {
+    if let Some(timeout) = target_timeout {
         tester.timeout(timeout);
     }
 
