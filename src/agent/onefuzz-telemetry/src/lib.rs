@@ -4,6 +4,8 @@
 use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
 use uuid::Uuid;
 
+pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
+
 pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
 pub enum ClientType {
     Instance,
@@ -364,9 +366,7 @@ macro_rules! event {
 #[macro_export]
 macro_rules! log {
     ($level: expr, $msg: expr) => {{
-        use appinsights::telemetry::SeverityLevel::{
-            Critical, Error, Information, Verbose, Warning,
-        };
+        use onefuzz_telemetry::{Critical, Error, Information, Verbose, Warning};
 
         let log_level = match $level {
             Verbose => log::Level::Debug,
@@ -392,7 +392,7 @@ macro_rules! log {
 macro_rules! verbose {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Verbose, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Verbose, msg);
     }}
 }
 
@@ -400,7 +400,7 @@ macro_rules! verbose {
 macro_rules! info {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Information, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Information, msg);
     }}
 }
 
@@ -408,7 +408,7 @@ macro_rules! info {
 macro_rules! warn {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Warning, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Warning, msg);
     }}
 }
 
@@ -416,7 +416,7 @@ macro_rules! warn {
 macro_rules! error {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Error, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Error, msg);
     }}
 }
 
@@ -424,7 +424,7 @@ macro_rules! error {
 macro_rules! critical {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Critical, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Critical, msg);
     }}
 }
 
