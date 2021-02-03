@@ -4,7 +4,6 @@
 use crate::tasks::config::{CommonConfig, Config};
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use onefuzz_telemetry;
 use std::path::PathBuf;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
