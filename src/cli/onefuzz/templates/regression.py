@@ -222,13 +222,13 @@ class Regression(Command):
 
         if crashes:
             if self.onefuzz.containers.get(crashes):
-                containers.append(ContainerType.crashes, crashes)
+                containers.append((ContainerType.crashes, crashes))
             else:
                 self.logger.error(f"invalid crash container {crashes}")
 
         if input_reports:
             if self.onefuzz.containers.get("input_reports"):
-                containers.append(ContainerType.input_reports, input_reports)
+                containers.append((ContainerType.input_reports, input_reports))
             else:
                 self.logger.error(f"invalid crash container {input_reports}")
 
