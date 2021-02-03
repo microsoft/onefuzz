@@ -189,12 +189,10 @@ async fn start_supervisor(
         })
         .set_optional_ref(&config.supervisor_input_marker, |expand, input_marker| {
             expand.input_marker(input_marker)
+        })
+        .set_optional_ref(&config.target_options, |expand, target_options| {
+            expand.target_options(target_options)
         });
-    let expand = if let Some(target_options) = &config.target_options {
-        expand.target_options(target_options)
-    } else {
-        expand
-    };
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
     let mut cmd = Command::new(supervisor_path);
