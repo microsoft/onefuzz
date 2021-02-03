@@ -349,6 +349,28 @@ pub fn track_event(event: Event, properties: Vec<EventData>) {
     local_log_event(&event, &properties);
 }
 
+pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
+    match level {
+        Verbose => log::Level::Debug,
+        Information => log::Level::Info,
+        Warning => log::Level::Warn,
+        Error => log::Level::Error,
+        Critical => log::Level::Error,
+    }
+}
+
+pub fn should_log(level: &appinsights::telemetry::SeverityLevel) -> bool {
+    to_log_level(level) <= log::max_level()
+}
+
+pub fn log_message(level: appinsights::telemetry::SeverityLevel, msg: String) {
+    let log_level = to_log_level(&level);
+    log::log!(log_level, "{}", msg);
+    if let Some(client) = client(ClientType::Instance) {
+        client.track_trace(msg, level);
+    }
+}
+
 #[macro_export]
 macro_rules! event {
     ($name: expr ; $($k: path = $v: expr),*) => {{
@@ -366,24 +388,8 @@ macro_rules! event {
 #[macro_export]
 macro_rules! log {
     ($level: expr, $msg: expr) => {{
-        use onefuzz_telemetry::{Critical, Error, Information, Verbose, Warning};
-
-        let log_level = match $level {
-            Verbose => log::Level::Debug,
-            Information => log::Level::Info,
-            Warning => log::Level::Warn,
-            Error => log::Level::Error,
-            Critical => log::Level::Error,
-        };
-
-        // while log::log will filter based on log level, the telemetry
-        // client does *not*.
-        if log_level <= log::max_level() {
-            log::log!(log_level, "{}", $msg.to_string());
-            if let Some(client) = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance)
-            {
-                client.track_trace($msg, $level);
-            }
+        if onefuzz_telemetry::should_log(&$level) {
+            onefuzz_telemetry::log_message($level, $msg.to_string());
         }
     }};
 }
