@@ -31,6 +31,7 @@ uuid = { version = "0.8", features = ["serde", "v4"] }
 onefuzz = { path = "../onefuzz" }
 storage-queue = { path = "../storage-queue" }
 reqwest-retry = { path = "../reqwest-retry" }
+onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 
 [dev-dependencies]
 tempfile = "3.1"

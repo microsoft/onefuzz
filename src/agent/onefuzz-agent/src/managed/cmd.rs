@@ -4,7 +4,7 @@
 use crate::tasks::config::{CommonConfig, Config};
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use onefuzz::telemetry;
+use onefuzz_telemetry;
 use std::path::PathBuf;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
@@ -19,12 +19,12 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         error!("error running task: {}", err);
     }
 
-    telemetry::try_flush_and_close();
+    onefuzz_telemetry::try_flush_and_close();
     result
 }
 
 fn init_telemetry(config: &CommonConfig) {
-    telemetry::set_appinsights_clients(config.instrumentation_key, config.telemetry_key);
+    onefuzz_telemetry::set_appinsights_clients(config.instrumentation_key, config.telemetry_key);
 }
 
 pub fn args(name: &str) -> App<'static, 'static> {

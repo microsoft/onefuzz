@@ -357,7 +357,7 @@ macro_rules! event {
 
         })*;
 
-        $crate::telemetry::track_event($name, events);
+        onefuzz_telemetry::track_event($name, events);
     }};
 }
 
@@ -380,7 +380,7 @@ macro_rules! log {
         // client does *not*.
         if log_level <= log::max_level() {
             log::log!(log_level, "{}", $msg.to_string());
-            if let Some(client) = $crate::telemetry::client($crate::telemetry::ClientType::Instance)
+            if let Some(client) = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance)
             {
                 client.track_trace($msg, $level);
             }
@@ -431,7 +431,7 @@ macro_rules! critical {
 #[macro_export]
 macro_rules! metric {
     ($name: expr, $value: expr) => {{
-        let client = $crate::telemetry::client($crate::telemetry::ClientType::Instance);
+        let client = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance);
         client.track_metric($name.into(), $value);
     }};
 }

@@ -16,8 +16,8 @@ use onefuzz::{
     jitter::delay_with_jitter,
     process::monitor_process,
     syncdir::{SyncOperation::Pull, SyncedDir},
-    telemetry::Event::{new_coverage, new_result},
 };
+use onefuzz_telemetry::Event::{new_coverage, new_result};
 use serde::Deserialize;
 use std::{
     collections::HashMap,

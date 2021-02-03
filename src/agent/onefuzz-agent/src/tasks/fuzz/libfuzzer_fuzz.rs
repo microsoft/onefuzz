@@ -10,10 +10,10 @@ use onefuzz::{
     process::ExitStatus,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     system,
-    telemetry::{
-        Event::{new_coverage, new_result, process_stats, runtime_stats},
-        EventData,
-    },
+};
+use onefuzz_telemetry::{
+    Event::{new_coverage, new_result, process_stats, runtime_stats},
+    EventData,
 };
 use serde::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
