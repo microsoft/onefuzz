@@ -123,7 +123,11 @@ impl<'a> Expand<'a> {
         Self { values }
     }
 
-    pub fn set_optional_ref<T>(self, value: &Option<T>, setter: impl FnOnce(Self, &T) -> Self) -> Self {
+    pub fn set_optional_ref<T>(
+        self,
+        value: &Option<T>,
+        setter: impl FnOnce(Self, &T) -> Self,
+    ) -> Self {
         if let Some(value) = value {
             setter(self, value)
         } else {
