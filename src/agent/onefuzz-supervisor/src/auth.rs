@@ -106,7 +106,7 @@ impl ClientCredentials {
         let mut url = Url::parse("https://login.microsoftonline.com")?;
         url.path_segments_mut()
             .expect("Authority URL is cannot-be-a-base")
-            .extend(&[&"https://login.microsoftonline.com/common".to_string(), "oauth2", "v2.0", "token"]);
+            .extend(&[&self.tenant, "oauth2", "v2.0", "token"]);
 
 		let resource_name = Url::parse(&self.resource)?;
 		let instance_name: Vec<&str> = resource_name.host_str().unwrap().split(".").collect();
