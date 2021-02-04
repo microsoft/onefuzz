@@ -39,10 +39,8 @@ use crate::tasks::{
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use onefuzz::{
-    fs::list_files, libfuzzer::LibFuzzer, syncdir::SyncedDir, telemetry::Event::coverage_data,
-    telemetry::EventData,
-};
+use onefuzz::{fs::list_files, libfuzzer::LibFuzzer, syncdir::SyncedDir};
+use onefuzz_telemetry::{Event::coverage_data, EventData};
 use reqwest::Url;
 use serde::Deserialize;
 use std::collections::HashMap;

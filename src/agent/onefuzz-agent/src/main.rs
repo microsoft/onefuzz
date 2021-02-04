@@ -3,12 +3,11 @@
 
 #[macro_use]
 extern crate anyhow;
-
-#[macro_use]
-extern crate onefuzz;
-
 #[macro_use]
 extern crate clap;
+#[macro_use]
+extern crate onefuzz_telemetry;
+extern crate onefuzz;
 
 use anyhow::Result;
 use clap::{App, ArgMatches, SubCommand};

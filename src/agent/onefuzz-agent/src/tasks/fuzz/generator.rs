@@ -15,8 +15,8 @@ use onefuzz::{
     process::monitor_process,
     sha256,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
-    telemetry::Event::new_result,
 };
+use onefuzz_telemetry::Event::new_result;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::{
