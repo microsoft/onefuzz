@@ -114,9 +114,7 @@ async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
 }
 
 pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
-    let mut expand = Expand::new();
-
-    expand
+    let expand = Expand::new()
         .input_path(&input)
         .target_exe(&config.target_exe)
         .target_options(&config.target_options)

@@ -61,29 +61,47 @@ impl<'a> Tester<'a> {
         }
     }
 
-    pub fn timeout(&mut self, value: u64) -> &mut Self {
-        self.timeout = Duration::from_secs(value);
-        self
+    pub fn timeout(self, value: u64) -> Self {
+        Self {
+            timeout: Duration::from_secs(value),
+            ..self
+        }
     }
 
-    pub fn check_asan_log(&mut self, value: bool) -> &mut Self {
-        self.check_asan_log = value;
-        self
+    pub fn check_asan_log(self, value: bool) -> Self {
+        Self {
+            check_asan_log: value,
+            ..self
+        }
     }
 
-    pub fn check_asan_stderr(&mut self, value: bool) -> &mut Self {
-        self.check_asan_stderr = value;
-        self
+    pub fn check_asan_stderr(self, value: bool) -> Self {
+        Self {
+            check_asan_stderr: value,
+            ..self
+        }
     }
 
-    pub fn check_debugger(&mut self, value: bool) -> &mut Self {
-        self.check_debugger = value;
-        self
+    pub fn check_debugger(self, value: bool) -> Self {
+        Self {
+            check_debugger: value,
+            ..self
+        }
     }
 
-    pub fn check_retry_count(&mut self, value: u64) -> &mut Self {
-        self.check_retry_count = value;
-        self
+    pub fn check_retry_count(self, value: u64) -> Self {
+        Self {
+            check_retry_count: value,
+            ..self
+        }
+    }
+
+    pub fn set_optional<T>(self, value: Option<T>, setter: impl FnOnce(Self, T) -> Self) -> Self {
+        if let Some(value) = value {
+            setter(self, value)
+        } else {
+            self
+        }
     }
 
     #[cfg(target_os = "windows")]
@@ -211,13 +229,11 @@ impl<'a> Tester<'a> {
         };
 
         let (argv, env) = {
-            let mut expand = Expand::new();
-            expand
+            let expand = Expand::new()
                 .input_path(input_file)
                 .target_exe(&self.exe_path)
-                .target_options(&self.arguments);
-
-            expand.setup_dir(&self.setup_dir);
+                .target_options(&self.arguments)
+                .setup_dir(&self.setup_dir);
 
             let argv = expand.evaluate(&self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();

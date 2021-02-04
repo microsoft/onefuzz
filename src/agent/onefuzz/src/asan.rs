@@ -177,7 +177,7 @@ pub fn add_asan_log_env<S: BuildHasher>(env: &mut HashMap<String, String, S>, as
 pub async fn check_asan_string(mut data: String) -> Result<Option<AsanLog>> {
     let asan = AsanLog::parse(data.clone());
     if asan.is_some() {
-        return Ok(asan);
+        Ok(asan)
     } else {
         if data.len() > ASAN_LOG_TRUNCATE_SIZE {
             data.truncate(ASAN_LOG_TRUNCATE_SIZE);
