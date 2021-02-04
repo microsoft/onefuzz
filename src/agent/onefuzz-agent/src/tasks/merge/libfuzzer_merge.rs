@@ -3,7 +3,7 @@
 
 use crate::tasks::{
     config::CommonConfig,
-    heartbeat::{HeartbeatSender, TaskHeartbeatClient},
+    heartbeat::HeartbeatSender,
     utils::{self, default_bool_true},
 };
 use anyhow::Result;

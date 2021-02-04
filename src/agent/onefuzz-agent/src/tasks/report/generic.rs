@@ -111,46 +111,54 @@ impl ReportTask {
     }
 }
 
-pub async fn test_input(
-    input_url: Option<Url>,
-    input: &Path,
-    target_exe: &Path,
-    target_options: &[String],
-    target_env: &HashMap<String, String>,
-    setup_dir: &Path,
-    task_id: Uuid,
-    job_id: Uuid,
-    target_timeout: Option<u64>,
-    check_retry_count: u64,
-    check_asan_log: bool,
-    check_debugger: bool,
-) -> Result<CrashTestResult> {
-    let mut tester = Tester::new(setup_dir, target_exe, target_options, target_env);
+pub struct TestInputArgs<'a> {
+    pub input_url: Option<Url>,
+    pub input: &'a Path,
+    pub target_exe: &'a Path,
+    pub target_options: &'a [String],
+    pub target_env: &'a HashMap<String, String>,
+    pub setup_dir: &'a Path,
+    pub task_id: Uuid,
+    pub job_id: Uuid,
+    pub target_timeout: Option<u64>,
+    pub check_retry_count: u64,
+    pub check_asan_log: bool,
+    pub check_debugger: bool,
+}
+
+pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
+    let mut tester = Tester::new(
+        args.setup_dir,
+        args.target_exe,
+        args.target_options,
+        args.target_env,
+    );
 
     tester
-        .check_asan_log(check_asan_log)
-        .check_debugger(check_debugger)
-        .check_retry_count(check_retry_count);
+        .check_asan_log(args.check_asan_log)
+        .check_debugger(args.check_debugger)
+        .check_retry_count(args.check_retry_count);
 
-    if let Some(timeout) = target_timeout {
+    if let Some(timeout) = args.target_timeout {
         tester.timeout(timeout);
     }
 
-    let input_sha256 = sha256::digest_file(input).await?;
-    let task_id = task_id;
-    let job_id = job_id;
-    let input_blob = input_url
+    let input_sha256 = sha256::digest_file(args.input).await?;
+    let task_id = args.task_id;
+    let job_id = args.job_id;
+    let input_blob = args
+        .input_url
         .and_then(|u| BlobUrl::new(u).ok())
-        .map(|u| InputBlob::from(u));
+        .map(InputBlob::from);
 
-    let test_report = tester.test_input(input).await?;
+    let test_report = tester.test_input(args.input).await?;
 
     if let Some(asan_log) = test_report.asan_log {
         let crash_report = CrashReport::new(
             asan_log,
             task_id,
             job_id,
-            target_exe,
+            args.target_exe,
             input_blob,
             input_sha256,
         );
@@ -160,7 +168,7 @@ pub async fn test_input(
         let crash_report = CrashReport {
             input_blob,
             input_sha256,
-            executable: PathBuf::from(target_exe),
+            executable: PathBuf::from(args.target_exe),
             call_stack: crash.call_stack,
             crash_type: crash.crash_type,
             crash_site: crash.crash_site,
@@ -177,10 +185,10 @@ pub async fn test_input(
         let no_repro = NoCrash {
             input_blob,
             input_sha256,
-            executable: PathBuf::from(target_exe),
+            executable: PathBuf::from(args.target_exe),
             task_id,
             job_id,
-            tries: 1 + check_retry_count,
+            tries: 1 + args.check_retry_count,
             error: test_report.error.map(|e| format!("{}", e)),
         };
 
@@ -207,21 +215,22 @@ impl<'a> GenericReportProcessor<'a> {
         input: &Path,
     ) -> Result<CrashTestResult> {
         self.heartbeat_client.alive();
-        let result = test_input(
+
+        let args = TestInputArgs {
             input_url,
             input,
-            &self.config.target_exe,
-            &self.config.target_options,
-            &self.config.target_env,
-            &self.config.common.setup_dir,
-            self.config.common.task_id,
-            self.config.common.job_id,
-            self.config.target_timeout,
-            self.config.check_retry_count,
-            self.config.check_asan_log,
-            self.config.check_debugger,
-        )
-        .await?;
+            target_exe: &self.config.target_exe,
+            target_options: &self.config.target_options,
+            target_env: &self.config.target_env,
+            setup_dir: &self.config.common.setup_dir,
+            task_id: self.config.common.task_id,
+            job_id: self.config.common.job_id,
+            target_timeout: self.config.target_timeout,
+            check_retry_count: self.config.check_retry_count,
+            check_asan_log: self.config.check_asan_log,
+            check_debugger: self.config.check_debugger,
+        };
+        let result = test_input(args).await?;
 
         Ok(result)
     }

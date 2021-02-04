@@ -16,7 +16,7 @@ use reqwest::Url;
 use serde::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
 
-use super::regression::{self, RegressionHandler};
+use super::common::{self, RegressionHandler};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -63,19 +63,22 @@ impl RegressionHandler for GenericRegressionTask {
         input: PathBuf,
         input_url: Option<Url>,
     ) -> Result<CrashTestResult> {
-        generic::test_input(
+        let args = generic::TestInputArgs {
             input_url,
-            &input,
-            &self.config.target_exe,
-            &self.config.target_options,
-            &self.config.target_env,
-            &self.config.common.setup_dir,
-            self.config.common.task_id,
-            self.config.common.job_id,
-            self.config.target_timeout,
-            self.config.check_retry_count,
-            self.config.check_asan_log,
-            self.config.check_debugger,
+            input: &input,
+            target_exe: &self.config.target_exe,
+            target_options: &self.config.target_options,
+            target_env: &self.config.target_env,
+            setup_dir: &self.config.common.setup_dir,
+            task_id: self.config.common.task_id,
+            job_id: self.config.common.job_id,
+            target_timeout: self.config.target_timeout,
+            check_retry_count: self.config.check_retry_count,
+            check_asan_log: self.config.check_asan_log,
+            check_debugger: self.config.check_debugger,
+        };
+        generic::test_input(
+            args
         )
         .await
     }
@@ -104,7 +107,7 @@ impl GenericRegressionTask {
     pub async fn run(&self) -> Result<()> {
         info!("Starting generic regression task");
         let heartbeat_client = self.config.common.init_heartbeat().await?;
-        regression::run(
+        common::run(
             heartbeat_client,
             &self.config.input_reports,
             &self.config.report_list,

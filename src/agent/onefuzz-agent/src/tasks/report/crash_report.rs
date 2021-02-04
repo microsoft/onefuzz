@@ -216,16 +216,6 @@ impl From<BlobUrl> for InputBlob {
     }
 }
 
-impl InputBlob {
-    pub fn blob_url(&self) -> Result<BlobUrl> {
-        Ok(BlobUrl::from_blob_info(
-            &self.account,
-            &self.container,
-            &self.name,
-        )?)
-    }
-}
-
 impl CrashReport {
     pub fn new(
         asan_log: AsanLog,

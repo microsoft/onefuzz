@@ -113,7 +113,7 @@ pub async fn handle_crash_reports(
             let input_url = input_reports
                 .url
                 .clone()
-                .ok_or(format_err!("no input url"))?
+                .ok_or_else(|| format_err!("no input url"))?
                 .blob(file);
             download_input(input_url.url(), &input_reports.path).await?;
         }
