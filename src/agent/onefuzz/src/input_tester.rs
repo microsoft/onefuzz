@@ -56,7 +56,7 @@ impl<'a> Tester<'a> {
             timeout: DEFAULT_TIMEOUT,
             check_asan_log: false,
             check_asan_stderr: false,
-            check_debugger: true,
+            check_debugger: false,
             check_retry_count: 0,
         }
     }
