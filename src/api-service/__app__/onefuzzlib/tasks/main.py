@@ -24,8 +24,10 @@ from ..azure.queue import create_queue, delete_queue
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
-from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
+from ..workers.nodes import Node
+from ..workers.pools import Pool
+from ..workers.scalesets import Scaleset
 
 
 class Task(BASE_TASK, ORMMixin):

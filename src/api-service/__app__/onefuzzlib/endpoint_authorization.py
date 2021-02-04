@@ -13,9 +13,10 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, UserInfo
 
 from .azure.creds import get_scaleset_principal_id
-from .pools import Pool, Scaleset
 from .request import not_ok
 from .user_credentials import parse_jwt_token
+from .workers.pools import Pool
+from .workers.scalesets import Scaleset
 
 
 @cached(ttl=60)

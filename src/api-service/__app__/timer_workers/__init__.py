@@ -11,7 +11,9 @@ from onefuzztypes.enums import NodeState, PoolState
 from ..onefuzzlib.autoscale import autoscale_pool
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.orm import process_state_updates
-from ..onefuzzlib.pools import Node, Pool, Scaleset
+from ..onefuzzlib.workers.nodes import Node
+from ..onefuzzlib.workers.pools import Pool
+from ..onefuzzlib.workers.scalesets import Scaleset
 
 
 def process_scaleset(scaleset: Scaleset) -> None:
