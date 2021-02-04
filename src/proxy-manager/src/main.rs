@@ -27,14 +27,14 @@ const MINIMUM_NOTIFY_INTERVAL: Duration = Duration::from_secs(120);
 const POLL_INTERVAL: Duration = Duration::from_secs(5);
 
 async fn run(mut proxy_config: Config) -> Result<()> {
-    let mut last_updated = Instant::now();
+    let mut last_notified = Instant::now();
     loop {
         info!("checking updates");
         proxy_config.update().await?;
 
-        if last_updated + MINIMUM_NOTIFY_INTERVAL < Instant::now() {
+        if last_notified + MINIMUM_NOTIFY_INTERVAL < Instant::now() {
             proxy_config.notify().await?;
-            last_updated = Instant::now();
+            last_notified = Instant::now();
         }
 
         delay_for(POLL_INTERVAL).await;
