@@ -1556,6 +1556,7 @@ dependencies = [
  "log",
  "nix 0.19.1",
  "notify",
+ "onefuzz-telemetry",
  "pete",
  "proc-maps",
  "process_control",
@@ -1597,6 +1598,7 @@ dependencies = [
  "log",
  "num_cpus",
  "onefuzz",
+ "onefuzz-telemetry",
  "reqwest",
  "reqwest-retry",
  "serde",
@@ -1622,6 +1624,7 @@ dependencies = [
  "futures",
  "log",
  "onefuzz",
+ "onefuzz-telemetry",
  "reqwest",
  "reqwest-retry",
  "serde",
@@ -1631,6 +1634,16 @@ dependencies = [
  "tokio",
  "url",
  "users",
+ "uuid",
+]
+
+[[package]]
+name = "onefuzz-telemetry"
+version = "0.1.0"
+dependencies = [
+ "appinsights",
+ "log",
+ "tokio",
  "uuid",
 ]
 
