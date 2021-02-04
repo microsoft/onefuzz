@@ -28,6 +28,9 @@ def process_scaleset(scaleset: Scaleset) -> None:
 
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+    # NOTE: Update pools first, such that scalesets impacted by pool updates
+    # (such as shutdown or resize) happen during this iteration `timer_worker`
+    # rather than the following iteration.
     pools = Pool.search()
     for pool in pools:
         if pool.state in PoolState.needs_work():
