@@ -74,6 +74,7 @@ pub enum EventData {
     CoveragePathsImported(u64),
     CoverageMaxDepth(u64),
     ToolName(String),
+    Region(String),
 }
 
 impl EventData {
@@ -109,6 +110,7 @@ impl EventData {
             Self::CoverageMaxDepth(x) => ("coverage_paths_depth", x.to_string()),
             Self::Coverage(x) => ("coverage", x.to_string()),
             Self::ToolName(x) => ("tool_name", x.to_owned()),
+            Self::Region(x) => ("region", x.to_owned()),
         }
     }
 
@@ -146,6 +148,7 @@ impl EventData {
             Self::CoverageMaxDepth(_) => true,
             Self::Coverage(_) => true,
             Self::ToolName(_) => true,
+            Self::Region(_) => false,
         }
     }
 }
