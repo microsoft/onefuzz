@@ -28,6 +28,14 @@ def process_scaleset(scaleset: Scaleset) -> None:
 
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+    pools = Pool.search()
+    for pool in pools:
+        if pool.state in PoolState.needs_work():
+            logging.info("update pool: %s (%s)", pool.pool_id, pool.name)
+            process_state_updates(pool)
+        elif pool.state in PoolState.available() and pool.autoscale:
+            autoscale_pool(pool)
+
     Node.mark_outdated_nodes()
     nodes = Node.search_states(states=NodeState.needs_work())
     for node in nodes:
@@ -37,14 +45,6 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     scalesets = Scaleset.search()
     for scaleset in scalesets:
         process_scaleset(scaleset)
-
-    pools = Pool.search()
-    for pool in pools:
-        if pool.state in PoolState.needs_work():
-            logging.info("update pool: %s (%s)", pool.pool_id, pool.name)
-            process_state_updates(pool)
-        elif pool.state in PoolState.available() and pool.autoscale:
-            autoscale_pool(pool)
 
     events = get_events()
     if events:
