@@ -18,7 +18,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use storage_queue::Message;
+use storage_queue::message::Message;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {

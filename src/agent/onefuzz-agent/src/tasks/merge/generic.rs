@@ -74,7 +74,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             } else {
                 debug!("will delete popped message with id = {}", msg.id());
 
-                queue.delete(msg).await?;
+                msg.delete().await?;
 
                 debug!(
                     "Attempting to delete {} from the candidate container",

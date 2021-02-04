@@ -6,7 +6,8 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use async_trait::async_trait;
 use reqwest::Url;
-use storage_queue::{Message, QueueClient};
+use storage_queue::message::Message;
+use storage_queue::QueueClient;
 
 #[async_trait]
 pub trait Queue<M> {
@@ -88,7 +89,7 @@ where
     }
 
     async fn delete(&mut self, msg: Message) -> Result<()> {
-        self.queue.delete(msg).await
+        msg.delete().await
     }
 }
 

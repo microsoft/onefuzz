@@ -107,7 +107,7 @@ async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
                     run_tool(destination_path, &config).await?;
                     config.analysis.sync_push().await?
                 }
-                input_queue.delete(message).await?;
+                message.delete().await?;
             } else {
                 warn!("no new candidate inputs found, sleeping");
                 delay_with_jitter(EMPTY_QUEUE_DELAY).await;

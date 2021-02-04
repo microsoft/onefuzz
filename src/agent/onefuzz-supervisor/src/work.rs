@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::{blob::BlobContainerUrl, http::is_auth_error};
-use storage_queue::QueueClient;
+use storage_queue::{message::Message as QueueMessage, QueueClient};
 use tokio::fs;
 use uuid::Uuid;
 
@@ -104,7 +104,7 @@ impl WorkUnit {
 pub trait IWorkQueue: Downcast {
     async fn poll(&mut self) -> Result<Option<Message>>;
 
-    async fn claim(&mut self, receipt: Receipt) -> Result<()>;
+    //async fn claim(&mut self, receipt: Receipt) -> Result<()>;
 }
 
 #[async_trait]
@@ -113,21 +113,38 @@ impl IWorkQueue for WorkQueue {
         self.poll().await
     }
 
-    async fn claim(&mut self, receipt: Receipt) -> Result<()> {
-        self.claim(receipt).await
-    }
+    // async fn claim(&mut self, receipt: Receipt) -> Result<()> {
+    //     self.claim(receipt).await
+    // }
 }
 
 impl_downcast!(IWorkQueue);
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Message {
-    pub receipt: Receipt,
+    pub queue_message: QueueMessage,
     pub work_set: WorkSet,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Receipt(pub storage_queue::Receipt);
+impl Message {
+    pub async fn claim(&self) -> Result<()> {
+        let result = self.queue_message.delete().await?;
+        Ok(())
+
+        // todo: handle token renewal
+        // // If we had an auth err, renew our registration and retry once, in case
+        // // it was just due to a stale SAS URL.
+        // if let Err(err) = &result {
+        //     if is_auth_error(err) {
+        //         self.renew().await?;
+        //         self.queue.delete(receipt).await?;
+        //     }
+        // }
+    }
+}
+
+// #[derive(Clone, Debug, Eq, PartialEq)]
+// pub struct Receipt(pub storage_queue::Receipt);
 
 pub struct WorkQueue {
     queue: QueueClient,
@@ -172,30 +189,33 @@ impl WorkQueue {
             return Ok(None);
         }
 
-        let msg = msg.unwrap();
-        let work_set = serde_json::from_slice(msg.data())?;
-        let receipt = Receipt(msg.receipt);
-        let msg = Message { receipt, work_set };
+        let queue_message = msg.unwrap();
+        let work_set = serde_json::from_slice(queue_message.data())?;
+        // let receipt = Receipt(msg.);
+        let msg = Message {
+            queue_message,
+            work_set,
+        };
 
         Ok(Some(msg))
     }
 
-    pub async fn claim(&mut self, receipt: Receipt) -> Result<()> {
-        let receipt = receipt.0;
+    // pub async fn claim(&mut self, receipt: Receipt) -> Result<()> {
+    //     let receipt = receipt.0;
 
-        let result = self.queue.delete(receipt.clone()).await;
+    //     let result = self.queue.delete(receipt.clone()).await;
 
-        // If we had an auth err, renew our registration and retry once, in case
-        // it was just due to a stale SAS URL.
-        if let Err(err) = &result {
-            if is_auth_error(err) {
-                self.renew().await?;
-                self.queue.delete(receipt).await?;
-            }
-        }
+    //     // If we had an auth err, renew our registration and retry once, in case
+    //     // it was just due to a stale SAS URL.
+    //     if let Err(err) = &result {
+    //         if is_auth_error(err) {
+    //             self.renew().await?;
+    //             self.queue.delete(receipt).await?;
+    //         }
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }
 
 #[cfg(test)]
