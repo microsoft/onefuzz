@@ -25,6 +25,7 @@ url = { version = "2.1.1", features = ["serde"] }
 uuid = { version = "0.8.1", features = ["serde", "v4"] }
 clap = "2.33"
 reqwest-retry = { path = "../reqwest-retry" }
+onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 users = "0.11"

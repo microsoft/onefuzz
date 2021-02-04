@@ -8,10 +8,8 @@ use crate::tasks::{
     merge, regression, report,
 };
 use anyhow::Result;
-use onefuzz::{
-    machine_id::{get_machine_id, get_scaleset_name},
-    telemetry::{self, Event::task_start, EventData},
-};
+use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
+use onefuzz_telemetry::{self as telemetry, Event::task_start, EventData};
 use reqwest::Url;
 use serde::{self, Deserialize};
 use std::path::PathBuf;

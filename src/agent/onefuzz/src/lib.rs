@@ -11,7 +11,7 @@ extern crate lazy_static;
 extern crate serde;
 
 #[macro_use]
-pub mod telemetry;
+extern crate onefuzz_telemetry;
 
 pub mod asan;
 pub mod az_copy;

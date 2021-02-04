@@ -9,13 +9,14 @@ use onefuzz::{
     fs::exists,
     monitor::DirectoryMonitor,
     syncdir::SyncedDir,
-    telemetry::{
-        Event::{
-            new_report, new_unable_to_reproduce, new_unique_report, regression_report,
-            regression_unable_to_reproduce,
-        },
-        EventData,
+
+};
+use onefuzz_telemetry::{
+    Event::{
+        new_report, new_unable_to_reproduce, new_unique_report, regression_report,
+        regression_unable_to_reproduce,
     },
+    EventData,
 };
 use reqwest::{StatusCode, Url};
 use reqwest_retry::SendRetry;

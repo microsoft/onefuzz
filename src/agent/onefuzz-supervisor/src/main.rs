@@ -6,13 +6,14 @@ extern crate async_trait;
 #[macro_use]
 extern crate downcast_rs;
 #[macro_use]
-extern crate onefuzz;
-#[macro_use]
 extern crate serde;
 #[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate anyhow;
+#[macro_use]
+extern crate onefuzz_telemetry;
+extern crate onefuzz;
 
 use crate::{
     config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,
@@ -24,8 +25,8 @@ use anyhow::Result;
 use onefuzz::{
     machine_id::{get_machine_id, get_scaleset_name},
     process::ExitStatus,
-    telemetry::{self, EventData},
 };
+use onefuzz_telemetry::{self as telemetry, EventData};
 use structopt::StructOpt;
 
 pub mod agent;
