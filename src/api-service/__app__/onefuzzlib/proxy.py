@@ -5,6 +5,7 @@
 
 import datetime
 import logging
+import os
 from typing import List, Optional, Tuple
 
 from azure.mgmt.compute.models import VirtualMachine
@@ -23,6 +24,7 @@ from pydantic import Field
 from .__version__ import __version__
 from .azure.auth import build_auth
 from .azure.containers import get_file_sas_url, save_blob
+from .azure.creds import get_instance_id
 from .azure.ip import get_public_ip
 from .azure.queue import get_queue_sas
 from .azure.storage import StorageType
@@ -211,6 +213,9 @@ class Proxy(ORMMixin):
             ),
             forwards=forwards,
             region=self.region,
+            instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+            telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+            instance_id=get_instance_id(),
         )
 
         save_blob(

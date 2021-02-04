@@ -118,17 +118,15 @@ pub struct GenericReportProcessor<'a> {
 
 impl<'a> GenericReportProcessor<'a> {
     pub fn new(config: &'a Config, heartbeat_client: Option<TaskHeartbeatClient>) -> Self {
-        let mut tester = Tester::new(
+        let tester = Tester::new(
             &config.common.setup_dir,
             &config.target_exe,
             &config.target_options,
             &config.target_env,
-        );
-
-        tester
-            .check_asan_log(config.check_asan_log)
-            .check_debugger(config.check_debugger)
-            .check_retry_count(config.check_retry_count);
+        )
+        .check_asan_log(config.check_asan_log)
+        .check_debugger(config.check_debugger)
+        .check_retry_count(config.check_retry_count);
 
         Self {
             config,

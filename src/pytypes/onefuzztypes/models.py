@@ -403,6 +403,9 @@ class ProxyConfig(BaseModel):
     notification: str
     region: Region
     forwards: List[Forward]
+    instrumentation_key: Optional[str]
+    telemetry_key: Optional[str]
+    instance_id: UUID
 
 
 class ProxyHeartbeat(BaseModel):
