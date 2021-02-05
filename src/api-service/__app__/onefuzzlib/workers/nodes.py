@@ -72,7 +72,7 @@ class Node(BASE_NODE, ORMMixin):
         *,
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
-        pool_name: Optional[str] = None,
+        pool_name: Optional[PoolName] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
         if scaleset_id:
@@ -89,7 +89,7 @@ class Node(BASE_NODE, ORMMixin):
         *,
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
-        pool_name: Optional[str] = None,
+        pool_name: Optional[PoolName] = None,
         exclude_update_scheduled: bool = False,
         num_results: Optional[int] = None,
     ) -> List["Node"]:

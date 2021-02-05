@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
-from onefuzztypes.primitives import Container, Directory, File
+from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
@@ -35,7 +35,7 @@ class Libfuzzer(Command):
         *,
         job: Job,
         containers: Dict[ContainerType, Container],
-        pool_name: str,
+        pool_name: PoolName,
         target_exe: str,
         vm_count: int = 2,
         reboot_after_setup: bool = False,
@@ -145,7 +145,7 @@ class Libfuzzer(Command):
         project: str,
         name: str,
         build: str,
-        pool_name: str,
+        pool_name: PoolName,
         *,
         target_exe: File = File("fuzz.exe"),
         setup_dir: Optional[Directory] = None,
@@ -261,7 +261,7 @@ class Libfuzzer(Command):
         project: str,
         name: str,
         build: str,
-        pool_name: str,
+        pool_name: PoolName,
         *,
         target_exe: File = File("fuzz.exe"),
         setup_dir: Optional[Directory] = None,
