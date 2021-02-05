@@ -29,7 +29,7 @@ def set_shrink_queues(pool: Pool, scalesets: List[Scaleset], size: int) -> None:
 def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
     logging.info(
         "autoscale up - pool:%s to_add:%d scalesets:%s",
-        pool,
+        pool.name,
         to_add,
         [x.scaleset_id for x in scalesets],
     )
@@ -104,7 +104,7 @@ def shutdown_empty_scalesets(pool: Pool, scalesets: List[Scaleset]) -> None:
 def scale_down(pool: Pool, scalesets: List[Scaleset], to_remove: int) -> None:
     logging.info(
         "autoscale down - pool:%s to_remove:%d scalesets:%s",
-        pool,
+        pool.name,
         to_remove,
         [x.scaleset_id for x in scalesets],
     )
