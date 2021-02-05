@@ -45,7 +45,9 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
 
     # NOTE: Nodes, and Scalesets should be processed in a consistent order such
     # during 'pool scale down' operations. This means that pools that are
-    # scaling down will more likely remove from the early scalesets first.
+    # scaling down will more likely remove from the same scalesets over time.
+    # By more likely removing from the same scalesets, we are more likely to
+    # get to empty scalesets, which can safely be deleted.
 
     Node.mark_outdated_nodes()
     nodes = Node.search_states(states=NodeState.needs_work())
