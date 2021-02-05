@@ -11,8 +11,12 @@ import os
 from typing import List
 
 from onefuzztypes.enums import NodeState, ScalesetState
+from onefuzztypes.models import WorkSet
+from onefuzztypes.primitives import Container
 
+from ..azure.containers import get_container_sas_url
 from ..azure.creds import get_base_region
+from ..azure.storage import StorageType
 from .nodes import Node
 from .pools import Pool
 from .scalesets import Scaleset
@@ -110,6 +114,25 @@ def scale_down(pool: Pool, scalesets: List[Scaleset], to_remove: int) -> None:
     )
 
     set_shrink_queues(pool, scalesets, to_remove)
+
+    # TODO: this injects synthetic WorkSet entries into the pool queue to
+    # trigger the nodes to reset faster
+    #
+    # This synthetic WorkSet uses the `tools` container as the workset setup
+    # container.
+    #
+    # This should be revisited.
+    if to_remove:
+        container_sas = get_container_sas_url(
+            Container("tools"), StorageType.config, read=True, list=True
+        )
+
+        workset = WorkSet(
+            reboot=False, script=False, work_units=[], setup_url=container_sas
+        )
+
+        for _ in range(to_remove):
+            pool.schedule_workset(workset)
 
 
 def needed_nodes(pool: Pool) -> int:
