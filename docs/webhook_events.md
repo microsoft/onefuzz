@@ -647,10 +647,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Region",
                     "type": "string"
                 },
-                "scaleset_size": {
-                    "title": "Scaleset Size",
-                    "type": "integer"
-                },
                 "spot_instances": {
                     "default": false,
                     "title": "Spot Instances",
@@ -663,7 +659,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "image",
-                "scaleset_size",
                 "vm_sku"
             ],
             "title": "AutoScaleConfig",
@@ -1798,10 +1793,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Region",
                     "type": "string"
                 },
-                "scaleset_size": {
-                    "title": "Scaleset Size",
-                    "type": "integer"
-                },
                 "spot_instances": {
                     "default": false,
                     "title": "Spot Instances",
@@ -1814,7 +1805,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "image",
-                "scaleset_size",
                 "vm_sku"
             ],
             "title": "AutoScaleConfig",
