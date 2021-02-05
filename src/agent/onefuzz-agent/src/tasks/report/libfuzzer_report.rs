@@ -148,12 +148,9 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         .and_then(|u| BlobUrl::new(u).ok())
         .map(InputBlob::from);
     let input = args.input;
-    let input_sha256 = sha256::digest_file(args.input).await.with_context(|| {
-        format_err!(
-            "unable to sha256 digest input file: {}",
-            input.display()
-        )
-    })?;
+    let input_sha256 = sha256::digest_file(args.input)
+        .await
+        .with_context(|| format_err!("unable to sha256 digest input file: {}", input.display()))?;
 
     let test_report = fuzzer
         .repro(args.input, args.target_timeout, args.check_retry_count)

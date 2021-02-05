@@ -9,7 +9,6 @@ use onefuzz::{
     fs::exists,
     monitor::DirectoryMonitor,
     syncdir::SyncedDir,
-
 };
 use onefuzz_telemetry::{
     Event::{

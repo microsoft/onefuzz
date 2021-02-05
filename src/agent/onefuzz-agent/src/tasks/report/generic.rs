@@ -133,11 +133,12 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         args.target_options,
         args.target_env,
     )
-
-        .check_asan_log(args.check_asan_log)
-        .check_debugger(args.check_debugger)
-        .check_retry_count(args.check_retry_count)
-        .set_optional(args.target_timeout, |tester, timeout| tester.timeout(timeout));
+    .check_asan_log(args.check_asan_log)
+    .check_debugger(args.check_debugger)
+    .check_retry_count(args.check_retry_count)
+    .set_optional(args.target_timeout, |tester, timeout| {
+        tester.timeout(timeout)
+    });
 
     let input_sha256 = sha256::digest_file(args.input).await?;
     let task_id = args.task_id;

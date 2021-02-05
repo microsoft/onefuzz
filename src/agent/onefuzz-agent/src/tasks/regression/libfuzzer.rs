@@ -62,8 +62,7 @@ impl RegressionHandler for LibFuzzerRegressionTask {
         input: PathBuf,
         input_url: Option<Url>,
     ) -> Result<CrashTestResult> {
-
-        let args = libfuzzer_report::TestInputArgs{
+        let args = libfuzzer_report::TestInputArgs {
             input_url,
             input: &input,
             target_exe: &self.config.target_exe,
@@ -74,11 +73,8 @@ impl RegressionHandler for LibFuzzerRegressionTask {
             job_id: self.config.common.job_id,
             target_timeout: self.config.target_timeout,
             check_retry_count: self.config.check_retry_count,
-
         };
-        libfuzzer_report::test_input(args
-        )
-        .await
+        libfuzzer_report::test_input(args).await
     }
 
     async fn save_regression(

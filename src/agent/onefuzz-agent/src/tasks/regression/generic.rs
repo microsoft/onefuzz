@@ -77,10 +77,7 @@ impl RegressionHandler for GenericRegressionTask {
             check_asan_log: self.config.check_asan_log,
             check_debugger: self.config.check_debugger,
         };
-        generic::test_input(
-            args
-        )
-        .await
+        generic::test_input(args).await
     }
 
     async fn save_regression(
