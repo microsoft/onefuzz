@@ -1041,28 +1041,27 @@ class Pool(Endpoint):
         *,
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
-        autoscale_config: Optional[models.AutoScaleConfig] = None,
+        autoscale: Optional[models.AutoScaleConfig] = None,
     ) -> models.Pool:
         """
         Create a worker pool
 
         :param str name: Name of the worker-pool
         """
-        self.logger.debug("create worker pool")
+        self.logger.debug("create worker pool: %s", autoscale)
         managed = not unmanaged
 
-        return self._req_model(
-            "POST",
-            models.Pool,
-            data=requests.PoolCreate(
-                name=name,
-                os=os,
-                arch=arch,
-                managed=managed,
-                client_id=client_id,
-                autoscale_config=autoscale_config,
-            ),
+        data = requests.PoolCreate(
+            name=name,
+            os=os,
+            arch=arch,
+            managed=managed,
+            client_id=client_id,
+            autoscale=autoscale,
         )
+        self.logger.debug("pool request: %s", data.json())
+
+        return self._req_model("POST", models.Pool, data=data)
 
     def create_autoscale(
         self,
@@ -1081,7 +1080,7 @@ class Pool(Endpoint):
         if image is None:
             image = _get_default_image(os)
 
-        autoscale_config = models.AutoScaleConfig(
+        autoscale = models.AutoScaleConfig(
             image=image,
             max_size=max_size,
             min_size=min_size,
@@ -1095,7 +1094,7 @@ class Pool(Endpoint):
             client_id,
             unmanaged=False,
             arch=arch,
-            autoscale_config=autoscale_config,
+            autoscale=autoscale,
         )
 
     def get_config(self, pool_name: str) -> models.AgentConfig:
