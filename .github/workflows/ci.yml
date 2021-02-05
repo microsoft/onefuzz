@@ -67,6 +67,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: src/ci/set-versions.sh
+      shell: bash
     - uses: actions/setup-python@v2
       with:
         python-version: 3.7
@@ -102,6 +103,7 @@ jobs:
         cd src/cli
         pip install -r requirements-lint.txt
         flake8 .
+        bandit -r ./onefuzz/
         black onefuzz examples tests --check
         isort --profile black ./onefuzz ./examples/ ./tests/ --check
         pytest -v tests
@@ -207,6 +209,7 @@ jobs:
         pip install -r requirements-dev.txt
         pytest
         flake8 .
+        bandit -r ./__app__/
         black ./__app__/ ./tests --check
         isort --profile black ./__app__/ ./tests --check
         mypy __app__ ./tests

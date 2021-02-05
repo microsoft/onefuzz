@@ -142,9 +142,9 @@ class ReproConfig(BaseModel):
 class TaskDetails(BaseModel):
     type: TaskType
     duration: int
-    target_exe: str
-    target_env: Dict[str, str]
-    target_options: List[str]
+    target_exe: Optional[str]
+    target_env: Optional[Dict[str, str]]
+    target_options: Optional[List[str]]
     target_workers: Optional[int]
     target_options_merge: Optional[bool]
     check_asan_log: Optional[bool]
@@ -403,6 +403,9 @@ class ProxyConfig(BaseModel):
     notification: str
     region: Region
     forwards: List[Forward]
+    instrumentation_key: Optional[str]
+    telemetry_key: Optional[str]
+    instance_id: UUID
 
 
 class ProxyHeartbeat(BaseModel):
@@ -623,6 +626,7 @@ class Scaleset(BaseModel):
     size: int
     spot_instances: bool
     ephemeral_os_disks: bool = Field(default=False)
+    needs_config_update: bool = Field(default=False)
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]
     client_id: Optional[UUID]

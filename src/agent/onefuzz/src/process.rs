@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use process_control::{self, ChildExt, Timeout};
 use std::path::Path;
 use std::process::Command;
@@ -122,8 +122,13 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
         .args(argv)
         .envs(env);
 
+    // make a stringified version to save in the context of spawn_blocking
+    let program_name = program.display().to_string();
+
     let runner = tokio::task::spawn_blocking(move || {
-        let child = cmd.spawn()?;
+        let child = cmd
+            .spawn()
+            .with_context(|| format!("process failed to start: {}", program_name))?;
         child
             .with_output_timeout(timeout)
             .terminating()

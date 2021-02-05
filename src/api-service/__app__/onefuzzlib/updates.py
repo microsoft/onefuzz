@@ -60,10 +60,12 @@ def queue_update(
 def execute_update(update: Update) -> None:
     from .jobs import Job
     from .orm import ORMMixin
-    from .pools import Node, Pool, Scaleset
     from .proxy import Proxy
     from .repro import Repro
     from .tasks.main import Task
+    from .workers.nodes import Node
+    from .workers.pools import Pool
+    from .workers.scalesets import Scaleset
 
     update_objects: Dict[UpdateType, Type[ORMMixin]] = {
         UpdateType.Task: Task,

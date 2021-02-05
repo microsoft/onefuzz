@@ -3,10 +3,8 @@
 
 use super::afl;
 use anyhow::{Error, Result};
-use onefuzz::{
-    jitter::delay_with_jitter,
-    telemetry::{track_event, Event::runtime_stats},
-};
+use onefuzz::jitter::delay_with_jitter;
+use onefuzz_telemetry::{track_event, Event::runtime_stats};
 use serde::Deserialize;
 pub const STATS_DELAY: std::time::Duration = std::time::Duration::from_secs(30);
 
