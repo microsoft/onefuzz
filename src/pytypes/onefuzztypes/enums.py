@@ -359,6 +359,10 @@ class NodeState(Enum):
         # from the agent.
         return [cls.done, cls.shutdown, cls.halt]
 
+    @classmethod
+    def in_use(cls) -> List["NodeState"]:
+        return [cls.setting_up, cls.rebooting, cls.ready, cls.busy, cls.done]
+
 
 class GithubIssueState(Enum):
     open = "open"

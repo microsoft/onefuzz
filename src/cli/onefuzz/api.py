@@ -1051,17 +1051,18 @@ class Pool(Endpoint):
         self.logger.debug("create worker pool: %s", autoscale)
         managed = not unmanaged
 
-        data = requests.PoolCreate(
-            name=name,
-            os=os,
-            arch=arch,
-            managed=managed,
-            client_id=client_id,
-            autoscale=autoscale,
+        return self._req_model(
+            "POST",
+            models.Pool,
+            data=requests.PoolCreate(
+                name=name,
+                os=os,
+                arch=arch,
+                managed=managed,
+                client_id=client_id,
+                autoscale=autoscale,
+            ),
         )
-        self.logger.debug("pool request: %s", data.json())
-
-        return self._req_model("POST", models.Pool, data=data)
 
     def create_autoscale(
         self,
@@ -1080,21 +1081,20 @@ class Pool(Endpoint):
         if image is None:
             image = _get_default_image(os)
 
-        autoscale = models.AutoScaleConfig(
-            image=image,
-            max_size=max_size,
-            min_size=min_size,
-            region=region,
-            spot_instances=spot_instances,
-            vm_sku=vm_sku,
-        )
         return self.create(
             name,
             os,
             client_id,
             unmanaged=False,
             arch=arch,
-            autoscale=autoscale,
+            autoscale=models.AutoScaleConfig(
+                image=image,
+                max_size=max_size,
+                min_size=min_size,
+                region=region,
+                spot_instances=spot_instances,
+                vm_sku=vm_sku,
+            ),
         )
 
     def get_config(self, pool_name: str) -> models.AgentConfig:

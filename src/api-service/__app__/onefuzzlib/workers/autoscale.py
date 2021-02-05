@@ -10,10 +10,9 @@ import logging
 import os
 from typing import List
 
-from onefuzztypes.enums import ScalesetState
+from onefuzztypes.enums import NodeState, ScalesetState
 
 from ..azure.creds import get_base_region
-from ..tasks.main import Task
 from .nodes import Node
 from .pools import Pool
 from .scalesets import Scaleset
@@ -115,29 +114,30 @@ def scale_down(pool: Pool, scalesets: List[Scaleset], to_remove: int) -> None:
     set_shrink_queues(pool, scalesets, to_remove)
 
 
-def get_tasks_vm_count(tasks: List[Task]) -> int:
+def needed_nodes(pool: Pool) -> int:
     count = 0
-    for task in tasks:
-        if task.config.pool:
-            count += task.config.pool.count
 
-        if task.config.vm:
-            count += task.config.vm.count
+    # NOTE: queue peek only returns the first 30 objects.
+    workset_queue = pool.peek_work_queue()
+    count += len(workset_queue)
+
+    nodes = Node.search_states(pool_name=pool.name, states=NodeState.in_use())
+    count += len(nodes)
 
     return count
 
 
 def autoscale_pool(pool: Pool) -> None:
-    logging.info("autoscale: %s", pool.autoscale)
     if not pool.autoscale:
         return
+    logging.info("autoscale pool.  pool:%s config:%s", pool.name, pool.autoscale.json())
 
-    # get all the tasks (count not stopped) for the pool
-    tasks = Task.get_tasks_by_pool_name(pool.name)
-    logging.info("Pool: %s, #Tasks %d", pool.name, len(tasks))
+    node_need_estimate = needed_nodes(pool)
+    logging.info(
+        "autoscale pool estimate.  pool:%s estimate:%d", pool.name, node_need_estimate
+    )
 
-    num_of_tasks = get_tasks_vm_count(tasks)
-    new_size = max(num_of_tasks, pool.autoscale.min_size)
+    new_size = max(node_need_estimate, pool.autoscale.min_size)
     if pool.autoscale.max_size:
         new_size = min(new_size, pool.autoscale.max_size)
 
@@ -151,7 +151,8 @@ def autoscale_pool(pool: Pool) -> None:
         ]
         if modifying:
             logging.info(
-                "pool has modifying scalesets, unable to autoscale: %s - %s",
+                "autoscale - pool has modifying scalesets, "
+                "unable to autoscale: %s - %s",
                 pool.name,
                 modifying,
             )

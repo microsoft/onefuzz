@@ -99,6 +99,11 @@ class Pool(BASE_POOL, ORMMixin):
             for x in Scaleset.search_by_pool(self.name)
         ]
 
+    def peek_work_queue(self) -> List[WorkSet]:
+        return peek_queue(
+            self.get_pool_queue(), StorageType.corpus, object_type=WorkSet
+        )
+
     def populate_work_queue(self) -> None:
         self.work_queue = []
 
@@ -107,9 +112,7 @@ class Pool(BASE_POOL, ORMMixin):
         if self.state == PoolState.init:
             return
 
-        worksets = peek_queue(
-            self.get_pool_queue(), StorageType.corpus, object_type=WorkSet
-        )
+        worksets = self.peek_work_queue()
 
         for workset in worksets:
             work_units = [
