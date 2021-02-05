@@ -13,7 +13,7 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
-    EventScalesetSizeChanged,
+    EventScalesetResizeScheduled,
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Scaleset as BASE_SCALESET
@@ -591,7 +591,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         self.save()
 
         send_event(
-            EventScalesetSizeChanged(
+            EventScalesetResizeScheduled(
                 scaleset_id=self.scaleset_id, pool_name=self.pool_name, size=self.size
             )
         )

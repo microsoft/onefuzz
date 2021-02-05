@@ -41,7 +41,7 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetFailed,
     EventScalesetDeleted,
-    EventScalesetSizeChanged,
+    EventScalesetResizeScheduled,
     EventJobCreated,
     EventJobStopped,
     EventTaskStateUpdated,
@@ -189,7 +189,7 @@ def main():
             ),
         ),
         EventFileAdded(container=Container("container-name"), filename="example.txt"),
-        EventScalesetSizeChanged(
+        EventScalesetResizeScheduled(
             scaleset_id=UUID(int=0), pool_name=PoolName("example"), size=0
         ),
     ]

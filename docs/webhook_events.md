@@ -37,7 +37,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [scaleset_created](#scaleset_created)
 * [scaleset_deleted](#scaleset_deleted)
 * [scaleset_failed](#scaleset_failed)
-* [scaleset_size_changed](#scaleset_size_changed)
+* [scaleset_resize_scheduled](#scaleset_resize_scheduled)
 * [task_created](#task_created)
 * [task_failed](#task_failed)
 * [task_state_updated](#task_state_updated)
@@ -1071,7 +1071,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
-### scaleset_size_changed
+### scaleset_resize_scheduled
 
 #### Example
 
@@ -1107,7 +1107,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "pool_name",
         "size"
     ],
-    "title": "EventScalesetSizeChanged",
+    "title": "EventScalesetResizeScheduled",
     "type": "object"
 }
 ```
@@ -2291,7 +2291,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventScalesetFailed",
             "type": "object"
         },
-        "EventScalesetSizeChanged": {
+        "EventScalesetResizeScheduled": {
             "properties": {
                 "pool_name": {
                     "title": "Pool Name",
@@ -2312,7 +2312,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "pool_name",
                 "size"
             ],
-            "title": "EventScalesetSizeChanged",
+            "title": "EventScalesetResizeScheduled",
             "type": "object"
         },
         "EventTaskCreated": {
@@ -2442,7 +2442,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "scaleset_created",
                 "scaleset_deleted",
                 "scaleset_failed",
-                "scaleset_size_changed",
+                "scaleset_resize_scheduled",
                 "task_created",
                 "task_failed",
                 "task_state_updated",
@@ -2972,7 +2972,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventScalesetDeleted"
                 },
                 {
-                    "$ref": "#/definitions/EventScalesetSizeChanged"
+                    "$ref": "#/definitions/EventScalesetResizeScheduled"
                 },
                 {
                     "$ref": "#/definitions/EventTaskFailed"
