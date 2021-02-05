@@ -1032,6 +1032,7 @@ class Pool(Endpoint):
         *,
         unmanaged: bool = False,
         arch: enums.Architecture = enums.Architecture.x86_64,
+        autoscale_config: Optional[models.AutoScaleConfig] = None,
     ) -> models.Pool:
         """
         Create a worker pool
@@ -1045,9 +1046,41 @@ class Pool(Endpoint):
             "POST",
             models.Pool,
             data=requests.PoolCreate(
-                name=name, os=os, arch=arch, managed=managed, client_id=client_id
+                name=name, os=os, arch=arch, managed=managed, client_id=client_id, autoscale_config=autoscale_config
             ),
         )
+
+    def create_autoscale(
+        self,
+        name: str,
+        os: enums.OS,
+        client_id: Optional[UUID] = None,
+        *,
+        arch: enums.Architecture = enums.Architecture.x86_64,
+        min_size: Optional[int] = None,
+        max_size: Optional[int] = None,
+        image: Optional[str] = None,
+        vm_sku: Optional[str] = "Standard_D2s_v3",
+        region: Optional[primitives.Region] = None,
+        spot_instances: bool = False,
+    ) -> models.Pool:
+        if image is None:
+            if os == enums.OS.linux:
+                image = DEFAULT_LINUX_IMAGE
+            elif os == enums.OS.windows:
+                image = DEFAULT_WINDOWS_IMAGE
+            else:
+                raise NotImplementedError
+
+        autoscale_config = models.AutoScaleConfig(
+            image=image,
+            max_size=max_size,
+            min_size=min_size,
+            region=region,
+            spot_instances=spot_instances,
+            vm_sku=vm_sku,
+        )
+        return self.create(name, os, client_id, unmanaged=False, arch=arch, autoscale_config=autoscale_config)
 
     def get_config(self, pool_name: str) -> models.AgentConfig:
         """ Get the agent configuration for the pool  """

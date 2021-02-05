@@ -32,7 +32,7 @@ from uuid import UUID
 import jmespath
 from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
-from onefuzztypes.primitives import Container, Directory, File
+from onefuzztypes.primitives import Container, Directory, File, Region
 from pydantic import BaseModel, ValidationError
 
 LOGGER = logging.getLogger("cli")
@@ -158,6 +158,7 @@ class Builder:
             int: {"type": int},
             UUID: {"type": UUID},
             Container: {"type": str},
+            Region: {"type": str},
             File: {"type": arg_file},
             Directory: {"type": arg_dir},
         }
