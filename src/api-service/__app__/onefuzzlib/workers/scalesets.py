@@ -13,6 +13,7 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
+    EventScalesetSizeChanged,
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Scaleset as BASE_SCALESET
@@ -577,6 +578,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 "unable to update configs, update already in progress: %s",
                 self.scaleset_id,
             )
+
+    def set_new_size(self, size: int) -> None:
+        self.size = size
+        self.state = ScalesetState.resize
+        self.save()
+
+        send_event(
+            EventScalesetSizeChanged(
+                scaleset_id=self.scaleset_id, pool_name=self.pool_name, size=size
+            )
+        )
 
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:

@@ -5,7 +5,7 @@
 
 from typing import Optional
 from uuid import UUID
-from onefuzztypes.primitives import Region, Container
+from onefuzztypes.primitives import Region, Container, PoolName
 from onefuzztypes.enums import (
     TaskType,
     ContainerType,
@@ -41,6 +41,7 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetFailed,
     EventScalesetDeleted,
+    EventScalesetSizeChanged,
     EventJobCreated,
     EventJobStopped,
     EventTaskStateUpdated,
@@ -188,6 +189,9 @@ def main():
             ),
         ),
         EventFileAdded(container=Container("container-name"), filename="example.txt"),
+        EventScalesetSizeChanged(
+            scaleset_id=UUID(int=0), pool_name=PoolName("example"), size=0
+        ),
     ]
 
     for event in Event.__args__:

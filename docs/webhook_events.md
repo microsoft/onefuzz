@@ -37,6 +37,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [scaleset_created](#scaleset_created)
 * [scaleset_deleted](#scaleset_deleted)
 * [scaleset_failed](#scaleset_failed)
+* [scaleset_size_changed](#scaleset_size_changed)
 * [task_created](#task_created)
 * [task_failed](#task_failed)
 * [task_state_updated](#task_state_updated)
@@ -639,7 +640,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "integer"
                 },
                 "min_size": {
-                    "default": 0,
                     "title": "Min Size",
                     "type": "integer"
                 },
@@ -1067,6 +1067,47 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error"
     ],
     "title": "EventScalesetFailed",
+    "type": "object"
+}
+```
+
+### scaleset_size_changed
+
+#### Example
+
+```json
+{
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "size": 0
+}
+```
+
+#### Schema
+
+```json
+{
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
+        "size": {
+            "title": "Size",
+            "type": "integer"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "size"
+    ],
+    "title": "EventScalesetSizeChanged",
     "type": "object"
 }
 ```
@@ -1785,7 +1826,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "integer"
                 },
                 "min_size": {
-                    "default": 0,
                     "title": "Min Size",
                     "type": "integer"
                 },
@@ -2251,6 +2291,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventScalesetFailed",
             "type": "object"
         },
+        "EventScalesetSizeChanged": {
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "size": {
+                    "title": "Size",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "size"
+            ],
+            "title": "EventScalesetSizeChanged",
+            "type": "object"
+        },
         "EventTaskCreated": {
             "additionalProperties": false,
             "properties": {
@@ -2378,6 +2442,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "scaleset_created",
                 "scaleset_deleted",
                 "scaleset_failed",
+                "scaleset_size_changed",
                 "task_created",
                 "task_failed",
                 "task_state_updated",
@@ -2905,6 +2970,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventScalesetDeleted"
+                },
+                {
+                    "$ref": "#/definitions/EventScalesetSizeChanged"
                 },
                 {
                     "$ref": "#/definitions/EventTaskFailed"

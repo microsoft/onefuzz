@@ -56,9 +56,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
                     scaleset.size,
                     scaleset_to_add,
                 )
-                scaleset.size += scaleset_to_add
-                scaleset.state = ScalesetState.resize
-                scaleset.save()
+                scaleset.set_new_size(scaleset.size + scaleset_to_add)
                 to_add -= scaleset_to_add
 
     region = config.region or get_base_region()
@@ -137,8 +135,10 @@ def autoscale_pool(pool: Pool) -> None:
         "autoscale pool estimate.  pool:%s estimate:%d", pool.name, node_need_estimate
     )
 
-    new_size = max(node_need_estimate, pool.autoscale.min_size)
-    if pool.autoscale.max_size:
+    new_size = node_need_estimate
+    if pool.autoscale.min_size is not None:
+        new_size = max(node_need_estimate, pool.autoscale.min_size)
+    if pool.autoscale.max_size is not None:
         new_size = min(new_size, pool.autoscale.max_size)
 
     scalesets = Scaleset.search_by_pool(pool.name)

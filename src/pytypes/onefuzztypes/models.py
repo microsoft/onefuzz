@@ -552,8 +552,8 @@ class NodeTasks(BaseModel):
 
 class AutoScaleConfig(BaseModel):
     image: str
-    max_size: Optional[int]  # max size of pool
-    min_size: int = Field(default=0)  # min size of pool
+    max_size: Optional[int]
+    min_size: Optional[int]
     region: Optional[Region]
     spot_instances: bool = Field(default=False)
     vm_sku: str
@@ -570,13 +570,13 @@ class AutoScaleConfig(BaseModel):
 
     @validator("max_size", allow_reuse=True)
     def check_max_size(cls, value: Optional[int]) -> Optional[int]:
-        if value and value < 1:
+        if value is not None and (value < 1 or value > 1000):
             raise ValueError("Autoscale sizes are not defined properly")
         return value
 
     @validator("min_size", allow_reuse=True)
-    def check_min_size(cls, value: int) -> int:
-        if value < 0 or value > 1000:
+    def check_min_size(cls, value: Optional[int]) -> Optional[int]:
+        if value is not None and (value < 0 or value > 1000):
             raise ValueError("Invalid pool min_size")
         return value
 
