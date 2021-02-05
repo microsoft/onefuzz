@@ -137,10 +137,8 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     if request.size is not None:
-        scaleset.size = request.size
-        scaleset.state = ScalesetState.resize
+        scaleset.set_new_size(request.size)
 
-    scaleset.save()
     scaleset.auth = None
     return ok(scaleset)
 
