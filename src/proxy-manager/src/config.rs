@@ -3,12 +3,14 @@
 
 use crate::proxy;
 use anyhow::Result;
+use onefuzz_telemetry::{set_appinsights_clients, EventData};
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::PathBuf};
 use storage_queue::QueueClient;
 use thiserror::Error;
 use url::Url;
+use uuid::Uuid;
 
 #[derive(Error, Debug)]
 pub enum ProxyError {
@@ -40,6 +42,9 @@ pub struct Forward {
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct ConfigData {
+    pub instance_id: Uuid,
+    pub instrumentation_key: Option<Uuid>,
+    pub telemetry_key: Option<Uuid>,
     pub region: String,
     pub url: Url,
     pub notification: Url,
@@ -67,6 +72,12 @@ impl Config {
         let r = BufReader::new(f);
         let data: ConfigData =
             serde_json::from_reader(r).map_err(|source| ProxyError::ParseError { source })?;
+
+        set_appinsights_clients(data.instrumentation_key, data.telemetry_key);
+
+        onefuzz_telemetry::set_property(EventData::Region(data.region.to_owned()));
+        onefuzz_telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
+        onefuzz_telemetry::set_property(EventData::InstanceId(data.instance_id));
 
         Ok(Self {
             config_path,

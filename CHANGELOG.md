@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.2.0
+### Added
+* Proxy: The logs from the proxy manager logged to Application Insights.  [#502](https://github.com/microsoft/onefuzz/pull/502)
+
+### Changed
+* Agent: Updated the web request retry logic to retry requests upon connection refused errors.  [#506](https://github.com/microsoft/onefuzz/pull/506)
+* Service: Improved the performance of shutting down pools.  [#503](https://github.com/microsoft/onefuzz/pull/503)
+* Service: Updated `azure-mgmt-compute` Python dependency. [#499](https://github.com/microsoft/onefuzz/pull/499)
+
+### Fixed
+* Proxy: Fixed an issue in the proxy heartbeats that caused proxy VMs to be reset after 10 minutes.  [#502](https://github.com/microsoft/onefuzz/pull/502)
+* Agent: Fixed an issue that broke libFuzzer based crash reporting that was introduced 2.1.1. [#505](https://github.com/microsoft/onefuzz/pull/505)
+
+## 2.1.1
+### Added
+* Agent: Added [Rust Clippy](https://github.com/rust-lang/rust-clippy) static analysis to CICD. [#490](https://github.com/microsoft/onefuzz/pull/490)
+* CLI/Service: Added [Bandit](https://github.com/PyCQA/bandit) static analysis to CICD.  [#491](https://github.com/microsoft/onefuzz/pull/491)
+
+### Fixed
+* Service: Fixed an issue where scalesets could get in a state that would stop updating configurations.  [#489](https://github.com/microsoft/onefuzz/pull/489)
+
+## 2.1.0
+### Added
+* Agent: Added `job_id` and `task_id` to [configuration value expansion](docs/command-replacements.md). [#481](https://github.com/microsoft/onefuzz/pull/481)
+* Agent: Broadened the availability of `tools_dir` to [configuration value expansion](docs/command-replacements.md). [#480](https://github.com/microsoft/onefuzz/pull/480)
+* Agent: Added clarifying context to command errors.  [#466](https://github.com/microsoft/onefuzz/pull/466)
+
+### Changed
+* CLI/Service/Agent: Supervisor can now be fully self-contained fuzzing tasks, no longer requiring `target_exe`.  Additionally, supervisor tasks can now optionally have managed report containers.  [#474](https://github.com/microsoft/onefuzz/pull/474)
+* Service: Managed nodes that are unused beyond 7 days are automatically reimaged to ensure OS patch levels are maintained.  [#476](https://github.com/microsoft/onefuzz/pull/476)
+* CLI/Service: Updated the default Windows VM image to `MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest`.  Existing scalesets will not be impacted by this change, only newly created scalesets using the default image.  [#469](https://github.com/microsoft/onefuzz/pull/469)
+
+### Fixed
+* Agent: New inputs discovered by supervisor tasks are now saved to the `inputs` container.  [#484](https://github.com/microsoft/onefuzz/pull/484)
+* CLI: The license is now properly set in the python package metadata.  [#472](https://github.com/microsoft/onefuzz/pull/472)
+* Agent: Failure to download files via HTTP from queues now results in a failure, rather than the HTTP error being interpreted as the requested file.  [#485](https://github.com/microsoft/onefuzz/pull/485)
+* Deployment: Fixed error when checking if the default CLI application exists.  [#488](https://github.com/microsoft/onefuzz/pull/488)
+
 ## 2.0.0
 ### Added
 * Agent: Added clarifying context to file system errors.  [#423](https://github.com/microsoft/onefuzz/pull/423)

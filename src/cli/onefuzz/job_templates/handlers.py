@@ -68,9 +68,12 @@ class TemplateSubmitHandler(Endpoint):
                 if container_type == container.type:
                     seen = True
             if not seen:
-                assert isinstance(request.user_fields["project"], str)
-                assert isinstance(request.user_fields["name"], str)
-                assert isinstance(request.user_fields["build"], str)
+                if not isinstance(request.user_fields["project"], str):
+                    raise TypeError
+                if not isinstance(request.user_fields["name"], str):
+                    raise TypeError
+                if not isinstance(request.user_fields["build"], str):
+                    raise TypeError
                 container_name = _build_container_name(
                     self.onefuzz,
                     container_type,

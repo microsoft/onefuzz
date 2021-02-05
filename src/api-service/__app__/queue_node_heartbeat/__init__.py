@@ -12,7 +12,7 @@ from onefuzztypes.models import NodeHeartbeatEntry
 from pydantic import ValidationError
 
 from ..onefuzzlib.events import get_events
-from ..onefuzzlib.pools import Node
+from ..onefuzzlib.workers.nodes import Node
 
 
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:

@@ -33,7 +33,7 @@ on-premise hardware, third-party clouds, etc).
 All telemetry is gathered from two places, the agents that run within fuzzing
 nodes and the service API running in the Azure Functions instance.
 
-1. The rust library [onefuzz::telemetry](../src/agent/onefuzz/src/telemetry.rs)
+1. The rust library [onefuzz::telemetry](../src/agent/onefuzz-telemetry/src/lib.rs)
    provides a detailed set of telemetry types, as well as the function
    `can_share`, which gates if a given telemetry field should be sent to the
    Microsoft central telemetry instance.

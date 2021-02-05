@@ -3,14 +3,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from enum import Enum
-from typing import Any, Dict, NewType, Union
-from uuid import UUID
+from typing import Any, Dict, NewType
 
 from onefuzztypes.validators import check_alnum, check_alnum_dash, check_len
 
 Extension = Dict[str, Any]
-Event = Union[str, int, UUID, Enum, Dict[str, str]]
 Directory = NewType("Directory", str)
 File = NewType("File", str)
 

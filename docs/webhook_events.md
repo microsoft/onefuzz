@@ -1378,10 +1378,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "type",
-                "duration",
-                "target_exe",
-                "target_env",
-                "target_options"
+                "duration"
             ],
             "title": "TaskDetails",
             "type": "object"
@@ -2761,10 +2758,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "type",
-                "duration",
-                "target_exe",
-                "target_env",
-                "target_options"
+                "duration"
             ],
             "title": "TaskDetails",
             "type": "object"

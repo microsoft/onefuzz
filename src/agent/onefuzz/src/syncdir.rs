@@ -2,15 +2,12 @@
 // Licensed under the MIT License.
 
 use crate::{
-    az_copy,
-    blob::BlobContainerUrl,
-    jitter::delay_with_jitter,
-    monitor::DirectoryMonitor,
-    telemetry::{Event, EventData},
+    az_copy, blob::BlobContainerUrl, jitter::delay_with_jitter, monitor::DirectoryMonitor,
     uploader::BlobUploader,
 };
 use anyhow::{Context, Result};
 use futures::stream::StreamExt;
+use onefuzz_telemetry::{Event, EventData};
 use std::{path::PathBuf, str, time::Duration};
 use tokio::fs;
 
