@@ -204,9 +204,11 @@ class Node(BASE_NODE, ORMMixin):
     def can_process_new_work(self) -> bool:
         if self.is_outdated():
             logging.info(
-                "can_schedule old version machine_id:%s version:%s",
+                "can_schedule agent and service versions differ, stopping node. "
+                "machine_id:%s agent_version:%s service_version: %s",
                 self.machine_id,
                 self.version,
+                __version__,
             )
             self.stop()
             return False
