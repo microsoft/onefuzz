@@ -306,13 +306,10 @@ class ScalesetState(Enum):
         return [x for x in cls if x not in unavailable]
 
     @classmethod
-    def modifying(cls) -> List["ScalesetState"]:
-        """ set of states that indicate scaleset is resizing """
-        return [
-            cls.halt,
-            cls.init,
-            cls.setup,
-        ]
+    def include_autoscale_count(cls) -> List["ScalesetState"]:
+        """ set of states that indicate inclusion in autoscale counts """
+        unavailable = [cls.halt, cls.init, cls.setup]
+        return [x for x in cls if x not in unavailable]
 
     @classmethod
     def can_resize(cls) -> List["ScalesetState"]:

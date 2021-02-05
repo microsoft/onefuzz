@@ -141,20 +141,20 @@ def autoscale_pool(pool: Pool) -> None:
     if pool.autoscale.max_size:
         new_size = min(new_size, pool.autoscale.max_size)
 
-    # do scaleset logic match with pool
-    # get all the scalesets for the pool
     scalesets = Scaleset.search_by_pool(pool.name)
     current_size = 0
     for scaleset in scalesets:
-        modifying = [
-            x.scaleset_id for x in scalesets if x.state in ScalesetState.modifying()
+        unable_to_autoscale = [
+            x.scaleset_id
+            for x in scalesets
+            if x.state not in ScalesetState.include_autoscale_count()
         ]
-        if modifying:
+        if unable_to_autoscale:
             logging.info(
                 "autoscale - pool has modifying scalesets, "
                 "unable to autoscale: %s - %s",
                 pool.name,
-                modifying,
+                unable_to_autoscale,
             )
             return
         current_size += scaleset.size
