@@ -6,8 +6,8 @@
 # NOTE: Set ONEFUZZ_SCALESET_MAX_SIZE environment variable to artificially set
 # the maximum size of a scaleset for testing.
 
-import os
 import logging
+import os
 from typing import List
 
 from onefuzztypes.enums import ScalesetState
@@ -50,7 +50,8 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
             if scaleset.size < scaleset_max_size:
                 scaleset_to_add = min(to_add, scaleset_max_size - scaleset.size)
                 logging.info(
-                    "autoscale adding to scaleset: pool:%s scaleset:%s existing_size:%d adding:%d",
+                    "autoscale adding to scaleset: "
+                    "pool:%s scaleset:%s existing_size:%d adding:%d",
                     pool.name,
                     scaleset.scaleset_id,
                     scaleset.size,
