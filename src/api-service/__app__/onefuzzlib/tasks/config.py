@@ -49,7 +49,7 @@ def check_container(
     compare: Compare,
     expected: int,
     container_type: ContainerType,
-    containers: Dict[ContainerType, List[str]],
+    containers: Dict[ContainerType, List[Container]],
 ) -> None:
     actual = len(containers.get(container_type, []))
     if not check_val(compare, expected, actual):
@@ -62,7 +62,7 @@ def check_container(
 def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
     checked = set()
 
-    containers: Dict[ContainerType, List[str]] = {}
+    containers: Dict[ContainerType, List[Container]] = {}
     for container in config.containers:
         if container.name not in checked:
             if not container_exists(container.name, StorageType.corpus):

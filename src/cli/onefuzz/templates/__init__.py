@@ -71,7 +71,7 @@ class JobHelper:
         self.project = project
         self.name = name
         self.build = build
-        self.to_monitor: Dict[str, int] = {}
+        self.to_monitor: Dict[Container, int] = {}
 
         if platform is None:
             self.platform = JobHelper.get_platform(target_exe)
