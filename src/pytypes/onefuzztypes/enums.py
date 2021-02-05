@@ -314,6 +314,13 @@ class ScalesetState(Enum):
             cls.setup,
         ]
 
+    @classmethod
+    def can_resize(cls) -> List["ScalesetState"]:
+        """
+        set of states that indicate the scaleset can be resized
+        """
+        return [cls.running, cls.resize]
+
 
 class Architecture(Enum):
     x86_64 = "x86_64"

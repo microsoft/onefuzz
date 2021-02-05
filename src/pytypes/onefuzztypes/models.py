@@ -527,6 +527,7 @@ class NodeHeartbeatEntry(BaseModel):
 
 class Node(BaseModel):
     pool_name: PoolName
+    pool_id: Optional[UUID]
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
@@ -554,15 +555,8 @@ class AutoScaleConfig(BaseModel):
     max_size: Optional[int]  # max size of pool
     min_size: int = Field(default=0)  # min size of pool
     region: Optional[Region]
-    scaleset_size: int  # Individual scaleset size
     spot_instances: bool = Field(default=False)
     vm_sku: str
-
-    @validator("scaleset_size", allow_reuse=True)
-    def check_scaleset_size(cls, value: int) -> int:
-        if value < 1 or value > 1000:
-            raise ValueError("invalid scaleset size")
-        return value
 
     @root_validator()
     def check_data(cls, values: Any) -> Any:

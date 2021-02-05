@@ -24,6 +24,7 @@ from ..azure.queue import create_queue, delete_queue, peek_queue, queue_object
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
+from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -126,6 +127,7 @@ class Pool(BASE_POOL, ORMMixin):
 
     def init(self) -> None:
         create_queue(self.get_pool_queue(), StorageType.corpus)
+        ShrinkQueue(self.pool_id).create()
         self.state = PoolState.running
         self.save()
 
@@ -236,4 +238,5 @@ class Pool(BASE_POOL, ORMMixin):
 
     def delete(self) -> None:
         super().delete()
+        ShrinkQueue(self.pool_id).delete()
         send_event(EventPoolDeleted(pool_name=self.name))

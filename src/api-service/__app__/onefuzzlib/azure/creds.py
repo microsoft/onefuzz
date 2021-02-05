@@ -16,7 +16,7 @@ from azure.mgmt.subscription import SubscriptionClient
 from memoization import cached
 from msrestazure.azure_active_directory import MSIAuthentication
 from msrestazure.tools import parse_resource_id
-from onefuzztypes.primitives import Container
+from onefuzztypes.primitives import Container, Region
 
 from .monkeypatch import allow_more_workers, reduce_logging
 
@@ -41,12 +41,12 @@ def get_base_resource_group() -> Any:  # should be str
 
 
 @cached
-def get_base_region() -> Any:  # should be str
+def get_base_region() -> Region:  # should be str
     client = ResourceManagementClient(
         credential=get_identity(), subscription_id=get_subscription()
     )
     group = client.resource_groups.get(get_base_resource_group())
-    return group.location
+    return Region(group.location)
 
 
 @cached

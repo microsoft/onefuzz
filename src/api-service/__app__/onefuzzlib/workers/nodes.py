@@ -26,6 +26,7 @@ from ..__version__ import __version__
 from ..azure.vmss import get_instance_id
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
+from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -46,12 +47,14 @@ class Node(BASE_NODE, ORMMixin):
         cls,
         *,
         pool_name: PoolName,
+        pool_id: UUID,
         machine_id: UUID,
         scaleset_id: Optional[UUID],
         version: str,
     ) -> "Node":
         node = cls(
             pool_name=pool_name,
+            pool_id=pool_id,
             machine_id=machine_id,
             scaleset_id=scaleset_id,
             version=version,
@@ -70,13 +73,16 @@ class Node(BASE_NODE, ORMMixin):
     def search_states(
         cls,
         *,
+        pool_id: Optional[UUID] = None,
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
-        pool_name: Optional[str] = None,
+        pool_name: Optional[PoolName] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
         if scaleset_id:
             query["scaleset_id"] = [scaleset_id]
+        if pool_id:
+            query["pool_id"] = [pool_id]
         if states:
             query["state"] = states
         if pool_name:
@@ -87,13 +93,16 @@ class Node(BASE_NODE, ORMMixin):
     def search_outdated(
         cls,
         *,
+        pool_id: Optional[UUID] = None,
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
-        pool_name: Optional[str] = None,
+        pool_name: Optional[PoolName] = None,
         exclude_update_scheduled: bool = False,
         num_results: Optional[int] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
+        if pool_id:
+            query["pool_id"] = [pool_id]
         if scaleset_id:
             query["scaleset_id"] = [scaleset_id]
         if states:
@@ -195,10 +204,13 @@ class Node(BASE_NODE, ORMMixin):
                 )
 
     def could_shrink_scaleset(self) -> bool:
-        from .scalesets import ScalesetShrinkQueue
+        if self.scaleset_id:
+            if ShrinkQueue(self.scaleset_id).should_shrink():
+                return True
+        if self.pool_id:
+            if ShrinkQueue(self.pool_id).should_shrink():
+                return True
 
-        if self.scaleset_id and ScalesetShrinkQueue(self.scaleset_id).should_shrink():
-            return True
         return False
 
     def can_process_new_work(self) -> bool:

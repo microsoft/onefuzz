@@ -8,9 +8,9 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import NodeState, PoolState
 
-from ..onefuzzlib.autoscale import autoscale_pool
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.orm import process_state_updates
+from ..onefuzzlib.workers.autoscale import autoscale_pool
 from ..onefuzzlib.workers.nodes import Node
 from ..onefuzzlib.workers.pools import Pool
 from ..onefuzzlib.workers.scalesets import Scaleset
@@ -38,7 +38,8 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         if pool.state in PoolState.needs_work():
             logging.info("update pool: %s (%s)", pool.pool_id, pool.name)
             process_state_updates(pool)
-        elif pool.state in PoolState.available() and pool.autoscale:
+
+        if pool.state in PoolState.available() and pool.autoscale:
             autoscale_pool(pool)
 
     Node.mark_outdated_nodes()

@@ -6,7 +6,7 @@
 import datetime
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from onefuzztypes.enums import ErrorCode, NodeState, PoolState, ScalesetState
 from onefuzztypes.events import (
@@ -18,19 +18,10 @@ from onefuzztypes.models import Error
 from onefuzztypes.models import Scaleset as BASE_SCALESET
 from onefuzztypes.models import ScalesetNodeState
 from onefuzztypes.primitives import PoolName, Region
-from pydantic import BaseModel, Field
 
 from ..azure.auth import build_auth
 from ..azure.image import get_os
 from ..azure.network import Network
-from ..azure.queue import (
-    clear_queue,
-    create_queue,
-    delete_queue,
-    queue_object,
-    remove_first_message,
-)
-from ..azure.storage import StorageType
 from ..azure.vmss import (
     UnableToUpdate,
     create_vmss,
@@ -47,6 +38,7 @@ from ..events import send_event
 from ..extension import fuzz_extensions
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from .nodes import Node
+from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -151,7 +143,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         logging.info("scaleset init: %s", self.scaleset_id)
 
-        ScalesetShrinkQueue(self.scaleset_id).create()
+        ShrinkQueue(self.scaleset_id).create()
 
         # Handle the race condition between a pool being deleted and a
         # scaleset being added to the pool.
@@ -277,9 +269,21 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     # result = 'did I modify the scaleset in azure'
     def cleanup_nodes(self) -> bool:
+        from .pools import Pool
+
         if self.state == ScalesetState.halt:
             logging.info("halting scaleset: %s", self.scaleset_id)
             self.halt()
+            return True
+
+        pool = Pool.get_by_name(self.pool_name)
+        if isinstance(pool, Error):
+            logging.error(
+                "unable to find pool during cleanup: %s - %s",
+                self.scaleset_id,
+                pool,
+            )
+            self.set_failed(pool)
             return True
 
         Node.reimage_long_lived_nodes(self.scaleset_id)
@@ -309,7 +313,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             if node.delete_requested:
                 to_delete.append(node)
             else:
-                if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
+                if ShrinkQueue(pool.pool_id).should_shrink():
+                    node.set_halt()
+                    to_delete.append(node)
+                elif ShrinkQueue(self.scaleset_id).should_shrink():
                     node.set_halt()
                     to_delete.append(node)
                 elif not node.reimage_queued:
@@ -365,7 +372,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         return
 
     def _resize_shrink(self, to_remove: int) -> None:
-        queue = ScalesetShrinkQueue(self.scaleset_id)
+        queue = ShrinkQueue(self.scaleset_id)
         for _ in range(to_remove):
             queue.add_entry()
 
@@ -377,7 +384,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         logging.info("scaleset resize: %s - %s", self.scaleset_id, self.size)
 
         # reset the node delete queue
-        ScalesetShrinkQueue(self.scaleset_id).clear()
+        ShrinkQueue(self.scaleset_id).clear()
 
         # just in case, always ensure size is within max capacity
         self.size = min(self.size, self.max_size())
@@ -473,7 +480,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             self.halt()
 
     def halt(self) -> None:
-        ScalesetShrinkQueue(self.scaleset_id).delete()
+        ShrinkQueue(self.scaleset_id).delete()
 
         for node in Node.search_states(scaleset_id=self.scaleset_id):
             logging.info("deleting node %s:%s", self.scaleset_id, node.machine_id)
@@ -569,33 +576,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     def delete(self) -> None:
         super().delete()
+        ShrinkQueue(self.scaleset_id).delete()
         send_event(
             EventScalesetDeleted(scaleset_id=self.scaleset_id, pool_name=self.pool_name)
         )
-
-
-class ShrinkEntry(BaseModel):
-    shrink_id: UUID = Field(default_factory=uuid4)
-
-
-class ScalesetShrinkQueue:
-    def __init__(self, scaleset_id: UUID):
-        self.scaleset_id = scaleset_id
-
-    def queue_name(self) -> str:
-        return "to-shrink-%s" % self.scaleset_id.hex
-
-    def clear(self) -> None:
-        clear_queue(self.queue_name(), StorageType.config)
-
-    def create(self) -> None:
-        create_queue(self.queue_name(), StorageType.config)
-
-    def delete(self) -> None:
-        delete_queue(self.queue_name(), StorageType.config)
-
-    def add_entry(self) -> None:
-        queue_object(self.queue_name(), ShrinkEntry(), StorageType.config)
-
-    def should_shrink(self) -> bool:
-        return remove_first_message(self.queue_name(), StorageType.config)

@@ -11,8 +11,8 @@ from onefuzztypes.enums import OS, Architecture, ContainerType, TaskType
 from onefuzztypes.models import TaskConfig, TaskContainers, TaskDetails, TaskPool
 from onefuzztypes.primitives import Container, PoolName
 
-from __app__.onefuzzlib.autoscale import autoscale_pool, get_vm_count
 from __app__.onefuzzlib.tasks.main import Task
+from __app__.onefuzzlib.workers.autoscale import autoscale_pool, get_tasks_vm_count
 from __app__.onefuzzlib.workers.pools import Pool
 
 
@@ -31,7 +31,7 @@ class TestAutoscale(unittest.TestCase):
 
     @patch("__app__.onefuzzlib.tasks.main.Task.get_pool")
     def test_get_vm_count(self, mock_get_pool: MagicMock) -> None:
-        self.assertEqual(get_vm_count([]), 0)
+        self.assertEqual(get_tasks_vm_count([]), 0)
 
         task_config = TaskConfig(
             job_id=UUID("6b049d51-23e9-4f5c-a5af-ff1f73d0d9e9"),
@@ -62,4 +62,4 @@ class TestAutoscale(unittest.TestCase):
             managed=False,
             arch=Architecture.x86_64,
         )
-        self.assertEqual(get_vm_count([task]), 2)
+        self.assertEqual(get_tasks_vm_count([task]), 2)
