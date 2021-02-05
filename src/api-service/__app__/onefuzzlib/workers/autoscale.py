@@ -151,12 +151,8 @@ def needed_nodes(pool: Pool) -> int:
 def autoscale_pool(pool: Pool) -> None:
     if not pool.autoscale:
         return
-    logging.info("autoscale pool.  pool:%s config:%s", pool.name, pool.autoscale.json())
 
     node_need_estimate = needed_nodes(pool)
-    logging.info(
-        "autoscale pool estimate.  pool:%s estimate:%d", pool.name, node_need_estimate
-    )
 
     new_size = node_need_estimate
     if pool.autoscale.min_size is not None:
@@ -183,7 +179,7 @@ def autoscale_pool(pool: Pool) -> None:
         current_size += scaleset.size
 
     logging.info(
-        "autoscale pool %s - current_size: %d new_size: %d",
+        "autoscale pool:%s current_size: %d new_size: %d",
         pool.name,
         current_size,
         new_size,
