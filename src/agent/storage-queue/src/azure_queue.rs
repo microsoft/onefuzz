@@ -5,13 +5,100 @@ use anyhow::{bail, Result};
 use async_trait::async_trait;
 use reqwest::{Client, Url};
 use reqwest_retry::SendRetry;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json::json;
+use serde_xml_rs;
 use std::time::Duration;
 use uuid::Uuid;
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
 
-use crate::message::{AzureQueueMessage, Message, Receipt};
+// <QueueMessagesList>
+// 	<QueueMessage>
+// 		<MessageId>7d35e47d-f58e-42da-ba4a-9e6ac7e1214d</MessageId>
+// 		<InsertionTime>Fri, 05 Feb 2021 06:27:47 GMT</InsertionTime>
+// 		<ExpirationTime>Fri, 12 Feb 2021 06:27:47 GMT</ExpirationTime>
+// 		<PopReceipt>AgAAAAMAAAAAAAAAtg40eYj71gE=</PopReceipt>
+// 		<TimeNextVisible>Fri, 05 Feb 2021 06:31:02 GMT</TimeNextVisible>
+// 		<DequeueCount>1</DequeueCount>
+// 		<MessageText>dGVzdA==</MessageText>
+// 	</QueueMessage>
+// </QueueMessagesList>
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(rename = "QueueMessage")]
+pub struct AzureQueueMessage {
+    message_id: Uuid,
+    // InsertionTime:
+    // ExpirationTime
+    pop_receipt: String,
+    // TimeNextVisible
+    // DequeueCount
+    message_text: String,
+
+    #[serde(skip)]
+    messages_url: Option<Url>,
+}
+
+impl AzureQueueMessage {
+    pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
+        let decoded = base64::decode(&self.message_text)?;
+        parser(&decoded)
+    }
+
+    pub async fn claim<T: DeserializeOwned>(self) -> Result<T> {
+        if let Some(messages_url) = self.messages_url {
+            let messages_path = messages_url.path();
+            let item_path = format!("{}/{}", messages_path, self.message_id);
+            let mut url = messages_url.clone();
+            url.set_path(&item_path);
+            url.query_pairs_mut()
+                .append_pair("popreceipt", &self.pop_receipt);
+
+            let http = Client::new();
+            http.delete(url)
+                .send_retry_default()
+                .await?
+                .error_for_status()?;
+        }
+        let decoded = base64::decode(self.message_text)?;
+        let value: T = serde_json::from_slice(&decoded)?;
+        Ok(value)
+    }
+    pub async fn delete(self) -> Result<()> {
+        if let Some(messages_url) = self.messages_url {
+            let messages_path = messages_url.path();
+            let item_path = format!("{}/{}", messages_path, self.message_id);
+            let mut url = messages_url.clone();
+            url.set_path(&item_path);
+            url.query_pairs_mut()
+                .append_pair("popreceipt", &self.pop_receipt);
+
+            let http = Client::new();
+            http.delete(url)
+                .send_retry_default()
+                .await?
+                .error_for_status()?;
+        }
+
+        Ok(())
+    }
+
+    pub fn get<T: DeserializeOwned>(&self) -> Result<T> {
+        let decoded = base64::decode(&self.message_text)?;
+        let value = serde_json::from_slice(&decoded)?;
+        Ok(value)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(rename = "QueueMessagesList")]
+struct AzureQueueMessageList {
+    #[serde(rename = "QueueMessage", default)]
+    pub queue_message: Option<AzureQueueMessage>,
+}
 
 pub struct AzureQueueClient {
     pub http: Client,
@@ -36,7 +123,7 @@ impl AzureQueueClient {
         let body = serde_xml_rs::to_string(&base64::encode(&serialized)).unwrap();
         let r = self
             .http
-            .post(self.messages_url())
+            .post(self.messages_url.clone())
             .body(body)
             .send_retry_default()
             .await?;
@@ -47,93 +134,17 @@ impl AzureQueueClient {
     pub async fn pop(&mut self) -> Result<Option<AzureQueueMessage>> {
         let response = self
             .http
-            .get(self.messages_url())
+            .get(self.messages_url.clone())
             .send_retry_default()
             .await?
             .error_for_status()?;
         let text = response.text().await?;
-        let msg = parse_message(&text, self.messages_url.clone());
+        let msg: AzureQueueMessageList = serde_xml_rs::from_str(&text)?;
 
-        let msg = if let Some(msg) = msg {
-            msg
-        } else {
-            return Ok(None);
-        };
-
-        let msg = if msg.data.is_empty() { None } else { Some(msg) };
-
-        Ok(msg)
+        let m = msg.queue_message.map(|msg| AzureQueueMessage {
+            messages_url: Some(self.messages_url.clone()),
+            ..msg
+        });
+        Ok(m)
     }
-
-    pub async fn delete(&mut self, receipt: impl Into<Receipt>) -> Result<()> {
-        let receipt = receipt.into();
-        let url = self.delete_url(receipt);
-        self.http
-            .delete(url)
-            .send_retry_default()
-            .await?
-            .error_for_status()?;
-        Ok(())
-    }
-
-    fn delete_url(&self, receipt: Receipt) -> Url {
-        let messages_url = self.messages_url();
-        let messages_path = messages_url.path();
-        let item_path = format!("{}/{}", messages_path, receipt.message_id);
-        let mut url = messages_url;
-        url.set_path(&item_path);
-        url.query_pairs_mut()
-            .append_pair("popreceipt", &receipt.pop_receipt);
-        url
-    }
-
-    fn messages_url(&self) -> Url {
-        self.messages_url.clone()
-    }
-}
-
-fn parse_message_id(text: &str) -> Option<Uuid> {
-    let pat = r"<MessageId>(.*)</MessageId>";
-    let re = regex::Regex::new(pat).unwrap();
-
-    let msg_id_text = re.captures_iter(text).next()?.get(1)?.as_str();
-
-    Uuid::parse_str(msg_id_text).ok()
-}
-
-fn parse_pop_receipt(text: &str) -> Option<String> {
-    let pat = r"<PopReceipt>(.*)</PopReceipt>";
-    let re = regex::Regex::new(pat).unwrap();
-
-    let text = re.captures_iter(text).next()?.get(1)?.as_str().into();
-
-    Some(text)
-}
-
-fn parse_data(text: &str) -> Option<Vec<u8>> {
-    let pat = r"<MessageText>(.*)</MessageText>";
-    let re = regex::Regex::new(pat).unwrap();
-
-    let encoded = re.captures_iter(text).next()?.get(1)?.as_str();
-    let decoded = base64::decode(encoded).ok()?;
-
-    Some(decoded)
-}
-
-pub fn parse_message(text: &str, messages_url: Url) -> Option<AzureQueueMessage> {
-    let message_id = parse_message_id(text)?;
-    let pop_receipt = parse_pop_receipt(text)?;
-    let receipt = Receipt {
-        message_id,
-        pop_receipt,
-    };
-    let data = parse_data(text)?;
-
-    let msg = AzureQueueMessage {
-        receipt,
-        data,
-        messages_url,
-    };
-
-    Some(msg)
 }

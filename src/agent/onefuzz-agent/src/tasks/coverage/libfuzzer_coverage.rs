@@ -49,7 +49,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use storage_queue::message::Message;
+use storage_queue::Message;
 use tokio::fs;
 
 const TOTAL_COVERAGE: &str = "total.cov";

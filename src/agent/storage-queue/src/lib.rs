@@ -4,17 +4,15 @@
 use anyhow::{bail, Result};
 use reqwest::{Client, Url};
 use reqwest_retry::SendRetry;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
 pub mod azure_queue;
 pub mod local_queue;
-pub mod message;
 
-use azure_queue::AzureQueueClient;
-use message::Message;
+use azure_queue::{AzureQueueClient, AzureQueueMessage};
 
 pub enum QueueClient {
     AzureQueue(AzureQueueClient),
@@ -39,4 +37,71 @@ impl QueueClient {
             }
         }
     }
+}
+
+// #[derive(Clone)]
+pub enum Message {
+    QueueMessage(AzureQueueMessage),
+    // LocalQueueMessage(LocalQueueMessage<'a, T>)
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Receipt {
+    // Unique ID of the associated queue message.
+    pub message_id: Uuid,
+
+    // Opaque data that licenses message deletion.
+    pub pop_receipt: String,
+}
+
+impl Message {
+    pub fn get<T: DeserializeOwned>(&self) -> Result<T> {
+        match self {
+            Message::QueueMessage(message) => {
+                let data = message.get()?;
+                Ok(data)
+            }
+            // Message::LocalQueueMessage(message) => {
+            //     Ok(serde_json::from_slice(&*message.data)?)
+            // }
+        }
+    }
+
+    pub async fn claim<T: DeserializeOwned>(self) -> Result<T> {
+        match self {
+            Message::QueueMessage(message) => Ok(message.claim().await?), // Message::LocalQueueMessage(message) => {
+                                                                          //     let value = message.data.into_inner();
+                                                                          //     Ok(serde_json::from_slice(value))
+
+                                                                          // }
+        }
+    }
+
+    pub async fn delete(self) -> Result<()> {
+        match self {
+            Message::QueueMessage(message) => Ok(message.delete().await?), // Message::LocalQueueMessage(message) => {
+                                                                           //     let value = message.data.into_inner();
+                                                                           //     Ok(serde_json::from_slice(value))
+
+                                                                           // }
+        }
+    }
+
+    pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
+        match self {
+            Message::QueueMessage(message) => message.parse(parser), // Message::LocalQueueMessage(message) => {
+                                                                     //     let value = message.data.into_inner();
+                                                                     //     Ok(serde_json::from_slice(value))
+
+                                                                     // }
+        }
+    }
+
+    // pub fn id(&self) -> Uuid {
+    //     match self {
+    //         Message::QueueMessage(message) => message.receipt.message_id,
+    //         // todo: add meaning full id if possible
+    //         Message::LocalQueueMessage(_message) => Uuid::new_v4(),
+    //     }
+    // }
 }

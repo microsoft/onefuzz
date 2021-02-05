@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use async_trait::async_trait;
 use reqwest::Url;
-use storage_queue::message::Message;
+use storage_queue::Message;
 use storage_queue::QueueClient;
 
 #[async_trait]
@@ -98,9 +98,10 @@ where
     P: Processor + Send,
 {
     fn parse(&mut self, msg: &Message) -> Result<Url> {
-        let text = std::str::from_utf8(msg.data())?;
-        let url = Url::parse(text)?;
-
+        let url= msg.parse(|data| {
+            let data = std::str::from_utf8(data)?;
+            Ok(Url::parse(data)?)
+        })?;
         Ok(url)
     }
 }

@@ -17,4 +17,5 @@ uuid = { version = "0.8", features = ["serde", "v4"] }
 regex = "1.4"
 base64 = "0.13"
 reqwest-retry = { path = "../reqwest-retry" }
-yaque = "0.4.3"
+yaque = "0.5.0-pre3"
+tokio = { version = "0.2", features = ["full"] }

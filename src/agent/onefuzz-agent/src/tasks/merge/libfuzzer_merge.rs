@@ -93,7 +93,11 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
     utils::reset_tmp_dir(tmp_dir).await?;
 
     if let Some(msg) = input_queue.pop().await? {
-        let input_url = match utils::parse_url_data(msg.data()) {
+        let input_url= msg.parse(|data| {
+            let data = std::str::from_utf8(data)?;
+            Ok(Url::parse(data)?)
+        });
+        let input_url: Url = match input_url {
             Ok(url) => url,
             Err(err) => {
                 error!("could not parse input URL from queue message: {}", err);
@@ -105,7 +109,7 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
         info!("downloaded input to {}", input_path.display());
         sync_and_merge(config.clone(), vec![tmp_dir], true, true).await?;
 
-        debug!("will delete popped message with id = {}", msg.id());
+        //debug!("will delete popped message with id = {}", msg.id());
 
         msg.delete().await?;
         // input_queue.delete(msg).await?;

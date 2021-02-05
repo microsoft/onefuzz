@@ -6,14 +6,16 @@ use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::{io::Read, time::Duration};
+use tokio::time::delay_for;
 use uuid::Uuid;
 
-use yaque;
+use yaque::{self, channel, queue::RecvGuard, Sender};
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
 
-use crate::message::Message;
-
+pub struct LocalQueueMessage<'a> {
+    pub data: RecvGuard<'a, Vec<u8>>,
+}
 pub struct LocalQueueClient {
     sender: yaque::Sender,
     receiver: yaque::Receiver,
@@ -29,6 +31,15 @@ impl LocalQueueClient {
         let body = serde_xml_rs::to_string(&data).unwrap();
         self.sender.send(body.as_bytes())?;
         Ok(())
+    }
+
+    pub async fn pop(&mut self) -> Result<Option<RecvGuard<'_, Vec<u8>>>> {
+        let data = self
+            .receiver
+            .recv_timeout(tokio::time::delay_for(Duration::from_secs(1)))
+            .await?;
+
+        Ok(data)
     }
 
     // pub async fn pop(&mut self) -> Result<Option<Message>> {

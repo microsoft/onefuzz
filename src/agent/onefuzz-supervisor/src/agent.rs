@@ -130,26 +130,27 @@ impl Agent {
             if can_schedule.allowed {
                 info!("claiming work set: {:?}", msg.work_set);
 
-                let claim = msg.claim().await;
+                match msg.claim().await {
+                    Err(err) => {
+                        error!("unable to claim work set: {}", err);
 
-                if let Err(err) = claim {
-                    error!("unable to claim work set: {}", err);
+                        // We were unable to claim the work set, so it will reappear in the pool's
+                        // work queue when the visibility timeout expires. Don't execute the work,
+                        // or else another node will pick it up, and it will be double-scheduled.
+                        //
+                        // Stay in the `Free` state.
+                        state.into()
+                    }
+                    Ok(work_set) => {
+                        info!("claimed work set: {:?}", work_set);
 
-                    // We were unable to claim the work set, so it will reappear in the pool's
-                    // work queue when the visibility timeout expires. Don't execute the work,
-                    // or else another node will pick it up, and it will be double-scheduled.
-                    //
-                    // Stay in the `Free` state.
-                    state.into()
-                } else {
-                    info!("claimed work set: {:?}", msg.work_set);
-
-                    // We are allowed to schedule this work, and we have claimed it, so no other
-                    // node will see it.
-                    //
-                    // Transition to `SettingUp` state.
-                    let state = state.schedule(msg.work_set.clone());
-                    state.into()
+                        // We are allowed to schedule this work, and we have claimed it, so no other
+                        // node will see it.
+                        //
+                        // Transition to `SettingUp` state.
+                        let state = state.schedule(work_set.clone());
+                        state.into()
+                    }
                 }
             } else {
                 // We cannot schedule the work set. Depending on why, we want to either drop the work
@@ -160,10 +161,13 @@ impl Agent {
                 // If `work_stopped`, the work set is not valid for any node, and we should drop it for the
                 // entire pool by claiming but not executing it.
                 if can_schedule.work_stopped {
-                    if let Err(err) = msg.claim().await {
-                        error!("unable to drop stopped work: {}", err);
-                    } else {
-                        info!("dropped stopped work set: {:?}", msg.work_set);
+                    match msg.claim().await {
+                        Err(err) => {
+                            error!("unable to drop stopped work: {}", err);
+                        }
+                        Ok(work_set) => {
+                            info!("dropped stopped work set: {:?}", work_set);
+                        }
                     }
                 } else {
                     // Otherwise, the work was not stopped, but we still should not execute it. This is likely

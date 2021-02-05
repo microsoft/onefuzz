@@ -7,7 +7,8 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::{blob::BlobContainerUrl, http::is_auth_error};
-use storage_queue::{message::Message as QueueMessage, QueueClient};
+use serde::de::DeserializeOwned;
+use storage_queue::{Message as QueueMessage, QueueClient};
 use tokio::fs;
 use uuid::Uuid;
 
@@ -120,16 +121,15 @@ impl IWorkQueue for WorkQueue {
 
 impl_downcast!(IWorkQueue);
 
-#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Message {
     pub queue_message: QueueMessage,
     pub work_set: WorkSet,
 }
 
 impl Message {
-    pub async fn claim(&self) -> Result<()> {
-        let result = self.queue_message.delete().await?;
-        Ok(())
+    pub async fn claim(self) -> Result<WorkSet> {
+        let result = self.queue_message.claim().await?;
+        Ok(result)
 
         // todo: handle token renewal
         // // If we had an auth err, renew our registration and retry once, in case
@@ -190,7 +190,7 @@ impl WorkQueue {
         }
 
         let queue_message = msg.unwrap();
-        let work_set = serde_json::from_slice(queue_message.data())?;
+        let work_set: WorkSet = queue_message.get()?;
         // let receipt = Receipt(msg.);
         let msg = Message {
             queue_message,

@@ -20,7 +20,7 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-use storage_queue::message::Message;
+use storage_queue::Message;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
