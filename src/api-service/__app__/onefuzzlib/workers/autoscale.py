@@ -3,6 +3,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+# NOTE: Set ONEFUZZ_SCALESET_MAX_SIZE environment variable to artificially set
+# the maximum size of a scaleset for testing.
+
+import os
 import logging
 from typing import List
 
@@ -45,13 +49,25 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
             scaleset_max_size = scaleset.max_size()
             if scaleset.size < scaleset_max_size:
                 scaleset_to_add = min(to_add, scaleset_max_size - scaleset.size)
+                logging.info(
+                    "autoscale adding to scaleset: pool:%s scaleset:%s existing_size:%d adding:%d",
+                    pool.name,
+                    scaleset.scaleset_id,
+                    scaleset.size,
+                    scaleset_to_add,
+                )
                 scaleset.size += scaleset_to_add
                 scaleset.state = ScalesetState.resize
                 scaleset.save()
                 to_add -= scaleset_to_add
 
-    base_size = Scaleset.scaleset_max_size(config.image)
     region = config.region or get_base_region()
+    base_size = Scaleset.scaleset_max_size(config.image)
+
+    alternate_max_size = os.environ.get("ONEFUZZ_SCALESET_MAX_SIZE")
+    if alternate_max_size is not None:
+        base_size = min(base_size, int(alternate_max_size))
+
     while to_add > 0:
         scaleset_size = min(base_size, to_add)
         logging.info(
