@@ -1,0 +1,432 @@
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+import datetime
+import logging
+from typing import List, Optional, Tuple
+from uuid import UUID
+
+from onefuzztypes.enums import ErrorCode, NodeState
+from onefuzztypes.events import (
+    EventNodeCreated,
+    EventNodeDeleted,
+    EventNodeStateUpdated,
+)
+from onefuzztypes.models import Error
+from onefuzztypes.models import Node as BASE_NODE
+from onefuzztypes.models import NodeAssignment, NodeCommand, NodeCommandAddSshKey
+from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
+from onefuzztypes.models import Result, StopNodeCommand
+from onefuzztypes.primitives import PoolName
+from pydantic import Field
+
+from ..__version__ import __version__
+from ..azure.vmss import get_instance_id
+from ..events import send_event
+from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
+
+NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
+NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
+
+# Future work:
+#
+# Enabling autoscaling for the scalesets based on the pool work queues.
+# https://docs.microsoft.com/en-us/azure/azure-monitor/platform/autoscale-common-metrics#commonly-used-storage-metrics
+
+
+class Node(BASE_NODE, ORMMixin):
+    # should only be set by Scaleset.reimage_nodes
+    # should only be unset during agent_registration POST
+    reimage_queued: bool = Field(default=False)
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        pool_name: PoolName,
+        machine_id: UUID,
+        scaleset_id: Optional[UUID],
+        version: str,
+    ) -> "Node":
+        node = cls(
+            pool_name=pool_name,
+            machine_id=machine_id,
+            scaleset_id=scaleset_id,
+            version=version,
+        )
+        node.save()
+        send_event(
+            EventNodeCreated(
+                machine_id=node.machine_id,
+                scaleset_id=node.scaleset_id,
+                pool_name=node.pool_name,
+            )
+        )
+        return node
+
+    @classmethod
+    def search_states(
+        cls,
+        *,
+        scaleset_id: Optional[UUID] = None,
+        states: Optional[List[NodeState]] = None,
+        pool_name: Optional[str] = None,
+    ) -> List["Node"]:
+        query: QueryFilter = {}
+        if scaleset_id:
+            query["scaleset_id"] = [scaleset_id]
+        if states:
+            query["state"] = states
+        if pool_name:
+            query["pool_name"] = [pool_name]
+        return cls.search(query=query)
+
+    @classmethod
+    def search_outdated(
+        cls,
+        *,
+        scaleset_id: Optional[UUID] = None,
+        states: Optional[List[NodeState]] = None,
+        pool_name: Optional[str] = None,
+        exclude_update_scheduled: bool = False,
+        num_results: Optional[int] = None,
+    ) -> List["Node"]:
+        query: QueryFilter = {}
+        if scaleset_id:
+            query["scaleset_id"] = [scaleset_id]
+        if states:
+            query["state"] = states
+        if pool_name:
+            query["pool_name"] = [pool_name]
+
+        if exclude_update_scheduled:
+            query["reimage_requested"] = [False]
+            query["delete_requested"] = [False]
+
+        # azure table query always return false when the column does not exist
+        # We write the query this way to allow us to get the nodes where the
+        # version is not defined as well as the nodes with a mismatched version
+        version_query = "not (version eq '%s')" % __version__
+        return cls.search(
+            query=query, raw_unchecked_filter=version_query, num_results=num_results
+        )
+
+    @classmethod
+    def mark_outdated_nodes(cls) -> None:
+        # ony update 500 nodes at a time to mitigate timeout issues
+        outdated = cls.search_outdated(exclude_update_scheduled=True, num_results=500)
+        for node in outdated:
+            logging.info(
+                "node is outdated: %s - node_version:%s api_version:%s",
+                node.machine_id,
+                node.version,
+                __version__,
+            )
+            if node.version == "1.0.0":
+                node.to_reimage(done=True)
+            else:
+                node.to_reimage()
+
+    @classmethod
+    def get_by_machine_id(cls, machine_id: UUID) -> Optional["Node"]:
+        nodes = cls.search(query={"machine_id": [machine_id]})
+        if not nodes:
+            return None
+
+        if len(nodes) != 1:
+            return None
+        return nodes[0]
+
+    @classmethod
+    def key_fields(cls) -> Tuple[str, str]:
+        return ("pool_name", "machine_id")
+
+    def save_exclude(self) -> Optional[MappingIntStrAny]:
+        return {"tasks": ...}
+
+    def telemetry_include(self) -> Optional[MappingIntStrAny]:
+        return {
+            "machine_id": ...,
+            "state": ...,
+            "scaleset_id": ...,
+        }
+
+    def scaleset_node_exists(self) -> bool:
+        if self.scaleset_id is None:
+            return False
+
+        from .scalesets import Scaleset
+
+        scaleset = Scaleset.get_by_id(self.scaleset_id)
+        if not isinstance(scaleset, Scaleset):
+            return False
+
+        instance_id = get_instance_id(scaleset.scaleset_id, self.machine_id)
+        return isinstance(instance_id, str)
+
+    @classmethod
+    def stop_task(cls, task_id: UUID) -> None:
+        # For now, this just re-images the node.  Eventually, this
+        # should send a message to the node to let the agent shut down
+        # gracefully
+        nodes = NodeTasks.get_nodes_by_task_id(task_id)
+        for node in nodes:
+            if node.state not in NodeState.ready_for_reset():
+                logging.info(
+                    "stopping machine_id:%s running task:%s",
+                    node.machine_id,
+                    task_id,
+                )
+                node.stop()
+
+    def mark_tasks_stopped_early(self) -> None:
+        from ..tasks.main import Task
+
+        for entry in NodeTasks.get_by_machine_id(self.machine_id):
+            task = Task.get_by_task_id(entry.task_id)
+            if isinstance(task, Task):
+                task.mark_failed(
+                    Error(
+                        code=ErrorCode.TASK_FAILED,
+                        errors=["node reimaged during task execution"],
+                    )
+                )
+
+    def could_shrink_scaleset(self) -> bool:
+        from .scalesets import ScalesetShrinkQueue
+
+        if self.scaleset_id and ScalesetShrinkQueue(self.scaleset_id).should_shrink():
+            return True
+        return False
+
+    def can_process_new_work(self) -> bool:
+        if self.is_outdated():
+            logging.info(
+                "can_schedule old version machine_id:%s version:%s",
+                self.machine_id,
+                self.version,
+            )
+            self.stop()
+            return False
+
+        if self.state in NodeState.ready_for_reset():
+            logging.info(
+                "can_schedule node is set for reset.  machine_id:%s", self.machine_id
+            )
+            return False
+
+        if self.delete_requested:
+            logging.info(
+                "can_schedule is set to be deleted.  machine_id:%s",
+                self.machine_id,
+            )
+            self.stop()
+            return False
+
+        if self.reimage_requested:
+            logging.info(
+                "can_schedule is set to be reimaged.  machine_id:%s",
+                self.machine_id,
+            )
+            self.stop()
+            return False
+
+        if self.could_shrink_scaleset():
+            self.set_halt()
+            logging.info("node scheduled to shrink.  machine_id:%s", self.machine_id)
+            return False
+
+        return True
+
+    def is_outdated(self) -> bool:
+        return self.version != __version__
+
+    def send_message(self, message: NodeCommand) -> None:
+        NodeMessage(
+            machine_id=self.machine_id,
+            message=message,
+        ).save()
+
+    def to_reimage(self, done: bool = False) -> None:
+        if done:
+            if self.state not in NodeState.ready_for_reset():
+                self.state = NodeState.done
+
+        if not self.reimage_requested and not self.delete_requested:
+            logging.info("setting reimage_requested: %s", self.machine_id)
+            self.reimage_requested = True
+        self.save()
+
+    def add_ssh_public_key(self, public_key: str) -> Result[None]:
+        if self.scaleset_id is None:
+            return Error(
+                code=ErrorCode.INVALID_REQUEST,
+                errors=["only able to add ssh keys to scaleset nodes"],
+            )
+
+        if not public_key.endswith("\n"):
+            public_key += "\n"
+
+        self.send_message(
+            NodeCommand(add_ssh_key=NodeCommandAddSshKey(public_key=public_key))
+        )
+        return None
+
+    def stop(self) -> None:
+        self.to_reimage()
+        self.send_message(NodeCommand(stop=StopNodeCommand()))
+
+    def set_shutdown(self) -> None:
+        # don't give out more work to the node, but let it finish existing work
+        logging.info("setting delete_requested: %s", self.machine_id)
+        self.delete_requested = True
+        self.save()
+
+    def set_halt(self) -> None:
+        """ Tell the node to stop everything. """
+        self.set_shutdown()
+        self.stop()
+        self.set_state(NodeState.halt)
+
+    @classmethod
+    def get_dead_nodes(
+        cls, scaleset_id: UUID, expiration_period: datetime.timedelta
+    ) -> List["Node"]:
+        time_filter = "heartbeat lt datetime'%s'" % (
+            (datetime.datetime.utcnow() - expiration_period).isoformat()
+        )
+        return cls.search(
+            query={"scaleset_id": [scaleset_id]},
+            raw_unchecked_filter=time_filter,
+        )
+
+    @classmethod
+    def reimage_long_lived_nodes(cls, scaleset_id: UUID) -> None:
+        """
+        Mark any excessively long lived node to be re-imaged.
+
+        This helps keep nodes on scalesets that use `latest` OS image SKUs
+        reasonably up-to-date with OS patches without disrupting running
+        fuzzing tasks with patch reboot cycles.
+        """
+        time_filter = "Timestamp lt datetime'%s'" % (
+            (datetime.datetime.utcnow() - NODE_REIMAGE_TIME).isoformat()
+        )
+        # skip any nodes already marked for reimage/deletion
+        for node in cls.search(
+            query={
+                "scaleset_id": [scaleset_id],
+                "reimage_requested": [False],
+                "delete_requested": [False],
+            },
+            raw_unchecked_filter=time_filter,
+        ):
+            node.to_reimage()
+
+    def set_state(self, state: NodeState) -> None:
+        if self.state != state:
+            self.state = state
+            send_event(
+                EventNodeStateUpdated(
+                    machine_id=self.machine_id,
+                    pool_name=self.pool_name,
+                    scaleset_id=self.scaleset_id,
+                    state=state,
+                )
+            )
+
+        self.save()
+
+    def delete(self) -> None:
+        self.mark_tasks_stopped_early()
+        NodeTasks.clear_by_machine_id(self.machine_id)
+        NodeMessage.clear_messages(self.machine_id)
+        super().delete()
+        send_event(
+            EventNodeDeleted(
+                machine_id=self.machine_id,
+                pool_name=self.pool_name,
+                scaleset_id=self.scaleset_id,
+            )
+        )
+
+
+class NodeTasks(BASE_NODE_TASK, ORMMixin):
+    @classmethod
+    def key_fields(cls) -> Tuple[str, str]:
+        return ("machine_id", "task_id")
+
+    def telemetry_include(self) -> Optional[MappingIntStrAny]:
+        return {
+            "machine_id": ...,
+            "task_id": ...,
+            "state": ...,
+        }
+
+    @classmethod
+    def get_nodes_by_task_id(cls, task_id: UUID) -> List["Node"]:
+        result = []
+        for entry in cls.search(query={"task_id": [task_id]}):
+            node = Node.get_by_machine_id(entry.machine_id)
+            if node:
+                result.append(node)
+        return result
+
+    @classmethod
+    def get_node_assignments(cls, task_id: UUID) -> List[NodeAssignment]:
+        result = []
+        for entry in cls.search(query={"task_id": [task_id]}):
+            node = Node.get_by_machine_id(entry.machine_id)
+            if node:
+                node_assignment = NodeAssignment(
+                    node_id=node.machine_id,
+                    scaleset_id=node.scaleset_id,
+                    state=entry.state,
+                )
+                result.append(node_assignment)
+
+        return result
+
+    @classmethod
+    def get_by_machine_id(cls, machine_id: UUID) -> List["NodeTasks"]:
+        return cls.search(query={"machine_id": [machine_id]})
+
+    @classmethod
+    def get_by_task_id(cls, task_id: UUID) -> List["NodeTasks"]:
+        return cls.search(query={"task_id": [task_id]})
+
+    @classmethod
+    def clear_by_machine_id(cls, machine_id: UUID) -> None:
+        logging.info("clearing tasks for node: %s", machine_id)
+        for entry in cls.get_by_machine_id(machine_id):
+            entry.delete()
+
+
+# this isn't anticipated to be needed by the client, hence it not
+# being in onefuzztypes
+class NodeMessage(ORMMixin):
+    machine_id: UUID
+    message_id: str = Field(default_factory=datetime.datetime.utcnow().timestamp)
+    message: NodeCommand
+
+    @classmethod
+    def key_fields(cls) -> Tuple[str, str]:
+        return ("machine_id", "message_id")
+
+    @classmethod
+    def get_messages(
+        cls, machine_id: UUID, num_results: int = None
+    ) -> List["NodeMessage"]:
+        entries: List["NodeMessage"] = cls.search(
+            query={"machine_id": [machine_id]}, num_results=num_results
+        )
+        return entries
+
+    @classmethod
+    def clear_messages(cls, machine_id: UUID) -> None:
+        logging.info("clearing messages for node: %s", machine_id)
+        messages = cls.get_messages(machine_id)
+        for message in messages:
+            message.delete()

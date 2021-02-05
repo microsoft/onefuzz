@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from ..azure.containers import blob_exists, get_container_sas_url
 from ..azure.storage import StorageType
-from ..pools import Pool
+from ..workers.pools import Pool
 from .config import build_task_config, get_setup_container
 from .main import Task
 
