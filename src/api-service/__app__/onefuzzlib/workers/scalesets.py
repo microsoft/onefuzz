@@ -580,13 +580,14 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
 
     def set_new_size(self, size: int) -> None:
-        self.size = size
+        # ensure we always stay within max_size boundaries
+        self.size = min(size, self.max_size())
         self.state = ScalesetState.resize
         self.save()
 
         send_event(
             EventScalesetSizeChanged(
-                scaleset_id=self.scaleset_id, pool_name=self.pool_name, size=size
+                scaleset_id=self.scaleset_id, pool_name=self.pool_name, size=self.size
             )
         )
 
