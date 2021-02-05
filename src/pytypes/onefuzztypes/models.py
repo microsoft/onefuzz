@@ -561,8 +561,8 @@ class AutoScaleConfig(BaseModel):
     @root_validator()
     def check_data(cls, values: Any) -> Any:
         if (
-            "max_size" in values
-            and values.get("max_size")
+            values.get("max_size") is not None
+            and values.get("min_size") is not None
             and values.get("min_size") > values.get("max_size")
         ):
             raise ValueError("The pool min_size is greater than max_size")
