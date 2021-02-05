@@ -41,7 +41,7 @@ def get_base_resource_group() -> Any:  # should be str
 
 
 @cached
-def get_base_region() -> Region:  # should be str
+def get_base_region() -> Region:
     client = ResourceManagementClient(
         credential=get_identity(), subscription_id=get_subscription()
     )
@@ -89,11 +89,11 @@ DAY_IN_SECONDS = 60 * 60 * 24
 
 
 @cached(ttl=DAY_IN_SECONDS)
-def get_regions() -> List[str]:
+def get_regions() -> List[Region]:
     subscription = get_subscription()
     client = SubscriptionClient(credential=get_identity())
     locations = client.subscriptions.list_locations(subscription)
-    return sorted([x.name for x in locations])
+    return sorted([Region(x.name) for x in locations])
 
 
 @cached

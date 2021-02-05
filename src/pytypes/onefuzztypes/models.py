@@ -334,7 +334,7 @@ class ClientCredentials(BaseModel):
 class AgentConfig(BaseModel):
     client_credentials: Optional[ClientCredentials]
     onefuzz_url: str
-    pool_name: str
+    pool_name: PoolName
     heartbeat_queue: Optional[str]
     instrumentation_key: Optional[str]
     telemetry_key: Optional[str]

@@ -18,6 +18,7 @@ from onefuzztypes.events import (
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm, UserInfo
+from onefuzztypes.primitives import PoolName
 
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
