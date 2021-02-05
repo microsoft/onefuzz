@@ -344,6 +344,11 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         except UnableToUpdate:
             logging.info("scaleset update already in progress: %s", self.scaleset_id)
 
+        if pool.autoscale and self.state == ScalesetState.running:
+            ground_truth_size = get_vmss_size(self.scaleset_id)
+            if ground_truth_size is not None and ground_truth_size != self.size:
+                self.set_new_size(ground_truth_size)
+
         return bool(to_reimage) or bool(to_delete)
 
     def _resize_equal(self) -> None:
