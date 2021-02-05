@@ -537,8 +537,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def update_configs(self) -> None:
         from .pools import Pool
 
+        if self.state == ScalesetState.halt:
+            logging.info(
+                "not updating configs, scaleset is set to be deleted: %s",
+                self.scaleset_id,
+            )
+            return
+
         if not self.needs_config_update:
             logging.debug("config update not needed: %s", self.scaleset_id)
+            return
 
         logging.info("updating scaleset configs: %s", self.scaleset_id)
 
