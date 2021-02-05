@@ -74,6 +74,15 @@ def _wsl_path(path: str) -> str:
     return path
 
 
+def _get_default_image(os: enums.OS) -> str:
+    if os == enums.OS.linux:
+        return DEFAULT_LINUX_IMAGE
+    elif os == enums.OS.windows:
+        return DEFAULT_WINDOWS_IMAGE
+    else:
+        raise NotImplementedError
+
+
 def user_confirmation(message: str) -> bool:
     answer: Optional[str] = None
     while answer not in ["y", "n"]:
@@ -1046,7 +1055,12 @@ class Pool(Endpoint):
             "POST",
             models.Pool,
             data=requests.PoolCreate(
-                name=name, os=os, arch=arch, managed=managed, client_id=client_id, autoscale_config=autoscale_config
+                name=name,
+                os=os,
+                arch=arch,
+                managed=managed,
+                client_id=client_id,
+                autoscale_config=autoscale_config,
             ),
         )
 
@@ -1065,12 +1079,7 @@ class Pool(Endpoint):
         spot_instances: bool = False,
     ) -> models.Pool:
         if image is None:
-            if os == enums.OS.linux:
-                image = DEFAULT_LINUX_IMAGE
-            elif os == enums.OS.windows:
-                image = DEFAULT_WINDOWS_IMAGE
-            else:
-                raise NotImplementedError
+            image = _get_default_image(os)
 
         autoscale_config = models.AutoScaleConfig(
             image=image,
@@ -1080,7 +1089,14 @@ class Pool(Endpoint):
             spot_instances=spot_instances,
             vm_sku=vm_sku,
         )
-        return self.create(name, os, client_id, unmanaged=False, arch=arch, autoscale_config=autoscale_config)
+        return self.create(
+            name,
+            os,
+            client_id,
+            unmanaged=False,
+            arch=arch,
+            autoscale_config=autoscale_config,
+        )
 
     def get_config(self, pool_name: str) -> models.AgentConfig:
         """ Get the agent configuration for the pool  """
@@ -1291,12 +1307,7 @@ class Scaleset(Endpoint):
 
         if image is None:
             pool = self.onefuzz.pools.get(pool_name)
-            if pool.os == enums.OS.linux:
-                image = DEFAULT_LINUX_IMAGE
-            elif pool.os == enums.OS.windows:
-                image = DEFAULT_WINDOWS_IMAGE
-            else:
-                raise NotImplementedError
+            image = _get_default_image(pool.os)
 
         return self._req_model(
             "POST",
