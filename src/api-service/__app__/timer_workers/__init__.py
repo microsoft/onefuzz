@@ -39,20 +39,21 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         if pool.state in PoolState.needs_work():
             logging.info("update pool: %s (%s)", pool.pool_id, pool.name)
             process_state_updates(pool)
-        elif pool.state in PoolState.available() and pool.autoscale:
+
+        if pool.state in PoolState.available() and pool.autoscale:
             autoscale_pool(pool)
 
+    # NOTE: Nodes, and Scalesets should be processed in a consistent order such
+    # during 'pool scale down' operations. This means that pools that are
+    # scaling down will more likely remove from the early scalesets first.
+
     Node.mark_outdated_nodes()
-    # ensure nodes are updated in a consistent order, which is needed for
-    # autoscaling of pools
     nodes = Node.search_states(states=NodeState.needs_work())
     for node in sorted(nodes, key=lambda x: x.machine_id):
         logging.info("update node: %s", node.machine_id)
         process_state_updates(node)
 
     scalesets = Scaleset.search()
-    # ensure scalesets are updated in a consistent order, which is needed for
-    # autoscaling of pools
     for scaleset in sorted(scalesets, key=lambda x: x.scaleset_id):
         process_scaleset(scaleset)
 
