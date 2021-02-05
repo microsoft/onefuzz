@@ -370,7 +370,7 @@ impl Debugger {
         &mut self,
         callbacks: &mut impl DebugEventHandler,
         timeout_ms: DWORD,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let mut de = MaybeUninit::uninit();
         if unsafe { WaitForDebugEvent(de.as_mut_ptr(), timeout_ms) } == TRUE {
             let de = unsafe { de.assume_init() };
@@ -383,6 +383,7 @@ impl Debugger {
                 process_id: de.process_id(),
                 thread_id: de.thread_id(),
             });
+            Ok(true)
         } else {
             self.continue_args = None;
 
@@ -392,9 +393,8 @@ impl Debugger {
             }
 
             trace!("timeout waiting for debug event");
+            Ok(false)
         }
-
-        Ok(())
     }
 
     pub fn continue_debugging(&mut self) -> Result<()> {
