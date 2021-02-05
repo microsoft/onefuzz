@@ -33,6 +33,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     # NOTE: Update pools first, such that scalesets impacted by pool updates
     # (such as shutdown or resize) happen during this iteration `timer_worker`
     # rather than the following iteration.
+
     pools = Pool.search()
     for pool in pools:
         if pool.state in PoolState.needs_work():
@@ -42,13 +43,17 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             autoscale_pool(pool)
 
     Node.mark_outdated_nodes()
+    # ensure nodes are updated in a consistent order, which is needed for
+    # autoscaling of pools
     nodes = Node.search_states(states=NodeState.needs_work())
-    for node in nodes:
+    for node in sorted(nodes, key=lambda x: x.machine_id):
         logging.info("update node: %s", node.machine_id)
         process_state_updates(node)
 
     scalesets = Scaleset.search()
-    for scaleset in scalesets:
+    # ensure scalesets are updated in a consistent order, which is needed for
+    # autoscaling of pools
+    for scaleset in sorted(scalesets, key=lambda x: x.scaleset_id):
         process_scaleset(scaleset)
 
     events = get_events()
