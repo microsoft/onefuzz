@@ -520,6 +520,7 @@ dependencies = [
  "iced-x86",
  "log",
  "memmap2",
+ "rand",
  "serde",
  "win-util",
  "winapi 0.3.9",
