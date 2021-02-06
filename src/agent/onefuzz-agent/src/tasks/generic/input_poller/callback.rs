@@ -98,7 +98,7 @@ where
     P: Processor + Send,
 {
     fn parse(&mut self, msg: &Message) -> Result<Url> {
-        let url= msg.parse(|data| {
+        let url = msg.parse(|data| {
             let data = std::str::from_utf8(data)?;
             Ok(Url::parse(data)?)
         })?;

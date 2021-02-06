@@ -131,7 +131,7 @@ impl AzureQueueClient {
         Ok(())
     }
 
-    pub async fn pop(&mut self) -> Result<Option<AzureQueueMessage>> {
+    pub async fn pop(&self) -> Result<Option<AzureQueueMessage>> {
         let response = self
             .http
             .get(self.messages_url.clone())

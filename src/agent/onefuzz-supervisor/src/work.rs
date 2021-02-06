@@ -170,16 +170,16 @@ impl WorkQueue {
     }
 
     pub async fn poll(&mut self) -> Result<Option<Message>> {
-        let mut msg = self.queue.pop().await;
+        let msg = self.queue.pop().await;
 
-        // If we had an auth err, renew our registration and retry once, in case
-        // it was just due to a stale SAS URL.
-        if let Err(err) = &msg {
-            if is_auth_error(err) {
-                self.renew().await?;
-                msg = self.queue.pop().await;
-            }
-        }
+        // // If we had an auth err, renew our registration and retry once, in case
+        // // it was just due to a stale SAS URL.
+        // if let Err(err) = &msg {
+        //     if is_auth_error(err) {
+        //         self.renew().await?;
+        //         msg = self.queue.pop().await;
+        //     }
+        // }
 
         // Now we've had a chance to ensure our SAS URL is fresh. For any other
         // error, including another auth error, bail.
