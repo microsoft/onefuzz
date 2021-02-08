@@ -60,7 +60,7 @@ class Node(BASE_NODE, ORMMixin):
         # `save` only returns None when `new` is True and an object already
         # exists in Azure Tables. If we're in that case, don't send an event.
         result = node.save(new=new)
-        if result is None:
+        if result is not None:
             send_event(
                 EventNodeCreated(
                     machine_id=node.machine_id,
