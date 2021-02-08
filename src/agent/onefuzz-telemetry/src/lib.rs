@@ -12,6 +12,19 @@ pub enum ClientType {
     Shared,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum Role {
+    Proxy,
+}
+
+impl Role {
+    pub fn to_string(&self) -> String {
+        match self {
+            Self::Proxy => "proxy".to_string(),
+        }
+    }
+}
+
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug)]
 pub enum Event {
@@ -75,6 +88,7 @@ pub enum EventData {
     CoverageMaxDepth(u64),
     ToolName(String),
     Region(String),
+    Role(Role),
 }
 
 impl EventData {
@@ -111,6 +125,7 @@ impl EventData {
             Self::Coverage(x) => ("coverage", x.to_string()),
             Self::ToolName(x) => ("tool_name", x.to_owned()),
             Self::Region(x) => ("region", x.to_owned()),
+            Self::Role(x) => ("role", x.to_string())
         }
     }
 
@@ -149,6 +164,7 @@ impl EventData {
             Self::Coverage(_) => true,
             Self::ToolName(_) => true,
             Self::Region(_) => false,
+            Self::Role(_) => false,
         }
     }
 }

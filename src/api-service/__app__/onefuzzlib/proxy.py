@@ -36,6 +36,7 @@ from .proxy_forward import ProxyForward
 
 PROXY_SKU = "Standard_B2s"
 PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
+PROXY_LOG_PREFIX = "scaleset-proxy: "
 
 
 # This isn't intended to ever be shared to the client, hence not being in
@@ -101,7 +102,7 @@ class Proxy(ORMMixin):
         if self.error is not None:
             return
 
-        logging.error("proxy vm failed: %s - %s", self.region, error)
+        logging.error(PROXY_LOG_PREFIX + "vm failed: %s - %s", self.region, error)
         send_event(EventProxyFailed(region=self.region, error=error))
         self.error = error
         self.state = VmState.stopping
@@ -142,19 +143,19 @@ class Proxy(ORMMixin):
     def stopping(self) -> None:
         vm = self.get_vm()
         if not vm.is_deleted():
-            logging.info("stopping proxy: %s", self.region)
+            logging.info(PROXY_LOG_PREFIX + "stopping proxy: %s", self.region)
             vm.delete()
             self.save()
         else:
             self.stopped()
 
     def stopped(self) -> None:
-        logging.info("removing proxy: %s", self.region)
+        logging.info(PROXY_LOG_PREFIX + "removing proxy: %s", self.region)
         self.delete()
 
     def is_used(self) -> bool:
         if len(self.get_forwards()) == 0:
-            logging.info("proxy has no forwards: %s", self.region)
+            logging.info(PROXY_LOG_PREFIX + "no forwards: %s", self.region)
             return False
         return True
 
@@ -170,13 +171,21 @@ class Proxy(ORMMixin):
             and self.heartbeat.timestamp < ten_minutes_ago_no_tz
         ):
             logging.error(
-                "proxy last heartbeat is more than an 10 minutes old: %s", self.region
+                PROXY_LOG_PREFIX + "last heartbeat is more than an 10 minutes old: "
+                "%s - last heartbeat:%s compared_to:%s",
+                self.region,
+                self.heartbeat,
+                ten_minutes_ago_no_tz,
             )
             return False
 
         elif not self.heartbeat and self.Timestamp and self.Timestamp < ten_minutes_ago:
             logging.error(
-                "proxy has no heartbeat in the last 10 minutes: %s", self.region
+                PROXY_LOG_PREFIX + "no heartbeat in the last 10 minutes: "
+                "%s timestamp: %s compared_to:%s",
+                self.region,
+                self.Timestamp,
+                ten_minutes_ago,
             )
             return False
 
@@ -237,6 +246,12 @@ class Proxy(ORMMixin):
         proxy = Proxy.get(region)
         if proxy is not None:
             if proxy.version != __version__:
+                logging.info(
+                    PROXY_LOG_PREFIX + "mismatch version: proxy:%s service:%s state:%s",
+                    proxy.version,
+                    __version__,
+                    proxy.state,
+                )
                 if proxy.state != VmState.stopping:
                     # If the proxy is out-of-date, delete and re-create it
                     proxy.state = VmState.stopping
@@ -244,6 +259,7 @@ class Proxy(ORMMixin):
                 return None
             return proxy
 
+        logging.info(PROXY_LOG_PREFIX + "creating proxy: region:%s", region)
         proxy = Proxy(region=region)
         proxy.save()
         send_event(EventProxyCreated(region=region))
