@@ -22,6 +22,8 @@ from .pools import Pool
 from .scalesets import Scaleset
 from .shrink_queue import ShrinkQueue
 
+AUTOSCALE_LOG_PREFIX = "autoscale: "
+
 
 def set_shrink_queues(pool: Pool, scalesets: List[Scaleset], size: int) -> None:
     for scaleset in scalesets:
@@ -32,7 +34,7 @@ def set_shrink_queues(pool: Pool, scalesets: List[Scaleset], size: int) -> None:
 
 def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
     logging.info(
-        "autoscale up - pool:%s to_add:%d scalesets:%s",
+        AUTOSCALE_LOG_PREFIX + "scale up - pool:%s to_add:%d scalesets:%s",
         pool.name,
         to_add,
         [x.scaleset_id for x in scalesets],
@@ -53,7 +55,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
             if scaleset.size < scaleset_max_size:
                 scaleset_to_add = min(to_add, scaleset_max_size - scaleset.size)
                 logging.info(
-                    "autoscale adding to scaleset: "
+                    AUTOSCALE_LOG_PREFIX + "adding to scaleset: "
                     "pool:%s scaleset:%s existing_size:%d adding:%d",
                     pool.name,
                     scaleset.scaleset_id,
@@ -73,7 +75,9 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
     while to_add > 0:
         scaleset_size = min(base_size, to_add)
         logging.info(
-            "autoscale adding scaleset.  pool:%s size:%s", pool.name, scaleset_size
+            AUTOSCALE_LOG_PREFIX + "adding scaleset.  pool:%s size:%s",
+            pool.name,
+            scaleset_size,
         )
         scaleset = Scaleset.create(
             pool_name=pool.name,
@@ -84,7 +88,11 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
             spot_instances=config.spot_instances,
             tags={"pool": pool.name},
         )
-        logging.info("autoscale added scaleset:%s", scaleset.scaleset_id)
+        logging.info(
+            AUTOSCALE_LOG_PREFIX + "added pool:%s scaleset:%s",
+            pool.name,
+            scaleset.scaleset_id,
+        )
         to_add -= scaleset_size
 
 
@@ -98,7 +106,7 @@ def shutdown_empty_scalesets(pool: Pool, scalesets: List[Scaleset]) -> None:
             and scaleset.state not in ScalesetState.needs_work()
         ):
             logging.info(
-                "autoscale halting empty scaleset.  pool:%s scaleset:%s",
+                AUTOSCALE_LOG_PREFIX + "halting empty scaleset.  pool:%s scaleset:%s",
                 pool.name,
                 scaleset.scaleset_id,
             )
@@ -107,7 +115,7 @@ def shutdown_empty_scalesets(pool: Pool, scalesets: List[Scaleset]) -> None:
 
 def scale_down(pool: Pool, scalesets: List[Scaleset], to_remove: int) -> None:
     logging.info(
-        "autoscale down - pool:%s to_remove:%d scalesets:%s",
+        AUTOSCALE_LOG_PREFIX + "scaling down - pool:%s to_remove:%d scalesets:%s",
         pool.name,
         to_remove,
         [x.scaleset_id for x in scalesets],
@@ -169,8 +177,9 @@ def autoscale_pool(pool: Pool) -> None:
         ]
         if unable_to_autoscale:
             logging.info(
-                "autoscale - pool has modifying scalesets, "
-                "unable to autoscale: %s - %s",
+                AUTOSCALE_LOG_PREFIX
+                + "unable to autoscale pool due to modifying scalesets. "
+                "pool:%s scalesets:%s",
                 pool.name,
                 unable_to_autoscale,
             )
@@ -178,7 +187,7 @@ def autoscale_pool(pool: Pool) -> None:
         current_size += scaleset.size
 
     logging.info(
-        "autoscale pool:%s current_size: %d new_size: %d "
+        AUTOSCALE_LOG_PREFIX + "status - pool:%s current_size: %d new_size: %d "
         "(in-use nodes: %d, scheduled worksets: %d)",
         pool.name,
         current_size,
