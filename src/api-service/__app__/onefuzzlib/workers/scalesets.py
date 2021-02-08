@@ -328,6 +328,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             # Note, using `new=True` makes it such that if a node already has
             # checked in, this won't overwrite it.
             Node.create(
+                pool_id=pool.pool_id,
                 pool_name=self.pool_name,
                 machine_id=machine_id,
                 scaleset_id=self.scaleset_id,

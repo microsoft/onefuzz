@@ -8,7 +8,7 @@
 
 import logging
 import os
-from typing import List
+from typing import List, Tuple
 
 from onefuzztypes.enums import NodeState, ScalesetState
 from onefuzztypes.models import WorkSet
@@ -135,24 +135,23 @@ def scale_down(pool: Pool, scalesets: List[Scaleset], to_remove: int) -> None:
             pool.schedule_workset(workset)
 
 
-def needed_nodes(pool: Pool) -> int:
-    count = 0
-
+def needed_nodes(pool: Pool) -> Tuple[int, int]:
     # NOTE: queue peek only returns the first 30 objects.
     workset_queue = pool.peek_work_queue()
-    count += len(workset_queue)
+    scheduled_worksets = len(workset_queue)
 
     nodes = Node.search_states(pool_name=pool.name, states=NodeState.in_use())
-    count += len(nodes)
+    from_nodes = len(nodes)
 
-    return count
+    return (scheduled_worksets, from_nodes)
 
 
 def autoscale_pool(pool: Pool) -> None:
     if not pool.autoscale:
         return
 
-    node_need_estimate = needed_nodes(pool)
+    scheduled_worksets, in_use_nodes = needed_nodes(pool)
+    node_need_estimate = scheduled_worksets + in_use_nodes
 
     new_size = node_need_estimate
     if pool.autoscale.min_size is not None:
@@ -179,10 +178,13 @@ def autoscale_pool(pool: Pool) -> None:
         current_size += scaleset.size
 
     logging.info(
-        "autoscale pool:%s current_size: %d new_size: %d",
+        "autoscale pool:%s current_size: %d new_size: %d "
+        "(in-use nodes: %d, scheduled worksets: %d)",
         pool.name,
         current_size,
         new_size,
+        in_use_nodes,
+        scheduled_worksets,
     )
 
     if new_size > current_size:
