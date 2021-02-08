@@ -49,6 +49,7 @@ class Node(BASE_NODE, ORMMixin):
         machine_id: UUID,
         scaleset_id: Optional[UUID],
         version: str,
+        new: bool = False,
     ) -> "Node":
         node = cls(
             pool_name=pool_name,
@@ -56,14 +57,17 @@ class Node(BASE_NODE, ORMMixin):
             scaleset_id=scaleset_id,
             version=version,
         )
-        node.save()
-        send_event(
-            EventNodeCreated(
-                machine_id=node.machine_id,
-                scaleset_id=node.scaleset_id,
-                pool_name=node.pool_name,
+        # `save` only returns None when `new` is True and an object already
+        # exists in Azure Tables. If we're in that case, don't send an event.
+        result = node.save(new=new)
+        if result is None:
+            send_event(
+                EventNodeCreated(
+                    machine_id=node.machine_id,
+                    scaleset_id=node.scaleset_id,
+                    pool_name=node.pool_name,
+                )
             )
-        )
         return node
 
     @classmethod
