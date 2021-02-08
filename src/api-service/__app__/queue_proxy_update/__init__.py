@@ -10,7 +10,7 @@ import azure.functions as func
 from onefuzztypes.models import ProxyHeartbeat
 
 from ..onefuzzlib.events import get_events
-from ..onefuzzlib.proxy import Proxy, PROXY_LOG_PREFIX
+from ..onefuzzlib.proxy import PROXY_LOG_PREFIX, Proxy
 
 
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
