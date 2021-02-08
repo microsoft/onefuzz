@@ -46,6 +46,9 @@ impl TotalCoverage {
     pub async fn update_bytes(&self, new_data: &[u8]) -> Result<()> {
         match self.data().await {
             Ok(Some(mut total_data)) => {
+                if total_data.len() < new_data.len() {
+                    total_data.resize_with(new_data.len(), || 0);
+                }
                 for (i, b) in new_data.iter().enumerate() {
                     if *b > 0 {
                         total_data[i] = 1;
