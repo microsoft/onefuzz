@@ -105,9 +105,9 @@ class DebugScaleset(Command):
             scaleset_id, machine_id, port, duration=duration
         )
         if proxy.ip is None:
-            return (False, "waiting on proxy", None)
+            return (False, "waiting on proxy ip", None)
 
-        return (True, "waiting on proxy", (proxy.ip, proxy.forward.src_port))
+        return (True, "waiting on proxy port", (proxy.ip, proxy.forward.src_port))
 
     def rdp(
         self,
