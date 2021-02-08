@@ -26,7 +26,7 @@ use tokio::{
 const MINIMUM_NOTIFY_INTERVAL: Duration = Duration::from_secs(120);
 const POLL_INTERVAL: Duration = Duration::from_secs(5);
 
-async fn run(mut proxy_config: Config) -> Result<()> {
+async fn run_loop(mut proxy_config: Config) -> Result<()> {
     let mut last_notified = Instant::now();
     loop {
         info!("checking updates");
@@ -39,6 +39,15 @@ async fn run(mut proxy_config: Config) -> Result<()> {
 
         delay_for(POLL_INTERVAL).await;
     }
+}
+
+async fn run(proxy_config: Config) -> Result<()> {
+    let result = run_loop(proxy_config).await;
+    if let Err(err) = &result {
+        error!("run loop failed: {}", err);
+    }
+    onefuzz_telemetry::try_flush_and_close();
+    result
 }
 
 fn main() -> Result<()> {
