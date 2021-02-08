@@ -20,7 +20,7 @@ pub enum Role {
 impl Role {
     pub fn as_str(&self) -> &'static str {
         match self {
-            Self::Proxy => "proxy"
+            Self::Proxy => "proxy",
         }
     }
 }
@@ -125,7 +125,7 @@ impl EventData {
             Self::Coverage(x) => ("coverage", x.to_string()),
             Self::ToolName(x) => ("tool_name", x.to_owned()),
             Self::Region(x) => ("region", x.to_owned()),
-            Self::Role(x) => ("role", x.as_str().to_owned())
+            Self::Role(x) => ("role", x.as_str().to_owned()),
         }
     }
 
