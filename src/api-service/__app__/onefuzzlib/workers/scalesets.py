@@ -351,37 +351,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         return bool(to_reimage) or bool(to_delete)
 
-    def _resize_equal(self) -> None:
-        # NOTE: this is the only place we reset to the 'running' state.
-        # This ensures that our idea of scaleset size agrees with Azure
-        node_count = len(Node.search_states(scaleset_id=self.scaleset_id))
-        if node_count == self.size:
-            logging.info("resize finished: %s", self.scaleset_id)
-            self.state = ScalesetState.running
-            self.save()
-            return
-        else:
-            logging.info(
-                "resize is finished, waiting for nodes to check in: "
-                "%s (%d of %d nodes checked in)",
-                self.scaleset_id,
-                node_count,
-                self.size,
-            )
-            return
-
-    def _resize_grow(self) -> None:
-        try:
-            resize_vmss(self.scaleset_id, self.size)
-        except UnableToUpdate:
-            logging.info("scaleset is mid-operation already")
-        return
-
-    def _resize_shrink(self, to_remove: int) -> None:
-        queue = ShrinkQueue(self.scaleset_id)
-        for _ in range(to_remove):
-            queue.add_entry()
-
     def resize(self) -> None:
         # no longer needing to resize
         if self.state != ScalesetState.resize:
@@ -396,17 +365,38 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         self.size = min(self.size, self.max_size())
 
         # Treat Azure knowledge of the size of the scaleset as "ground truth"
-        size = get_vmss_size(self.scaleset_id)
-        if size is None:
-            logging.info("scaleset is unavailable: %s", self.scaleset_id)
+        ground_truth_size = get_vmss_size(self.scaleset_id)
+        if ground_truth_size is None:
+            logging.info("scaleset is unavailable during resize: %s", self.scaleset_id)
             return
 
-        if size == self.size:
-            self._resize_equal()
-        elif self.size > size:
-            self._resize_grow()
+        if ground_truth_size < self.size:
+            logging.info(
+                "scaleset resize - growing.  scaleset:%s new_size:%d azure_size:%d",
+                self.scaleset_id,
+                self.size,
+                ground_truth_size,
+            )
+            try:
+                resize_vmss(self.scaleset_id, self.size)
+            except UnableToUpdate:
+                logging.info(
+                    "scaleset resize - unable to update, mid-operation already"
+                )
+                return
+        elif ground_truth_size > self.size:
+            to_remove = ground_truth_size - self.size
+            logging.info(
+                "scaleset resize - shrinking.  scaleset:%s removing:%d",
+                self.scaleset_id,
+                to_remove,
+            )
+            ShrinkQueue(self.scaleset_id).set_size(to_remove)
         else:
-            self._resize_shrink(size - self.size)
+            logging.info("scaleset resize - no change.  scaleset:%s", self.scaleset_id)
+
+        self.state = ScalesetState.running
+        self.save()
 
     def delete_nodes(self, nodes: List[Node]) -> None:
         if not nodes:
