@@ -57,10 +57,11 @@ class Node(BASE_NODE, ORMMixin):
             scaleset_id=scaleset_id,
             version=version,
         )
-        # `save` only returns None when `new` is True and an object already
-        # exists in Azure Tables. If we're in that case, don't send an event.
+        # `save` returns None if it's successfully saved.  If `new` is set to
+        # True, `save` returns an Error if an object already exists.  As such,
+        # only send an event if result is None
         result = node.save(new=new)
-        if result is not None:
+        if result is None:
             send_event(
                 EventNodeCreated(
                     machine_id=node.machine_id,
