@@ -13,7 +13,7 @@ from azure.mgmt.storage import StorageManagementClient
 from memoization import cached
 from msrestazure.tools import parse_resource_id
 
-from .creds import get_base_resource_group, get_subscription, get_identity
+from .creds import get_base_resource_group, get_identity, get_subscription
 
 
 class StorageType(Enum):
