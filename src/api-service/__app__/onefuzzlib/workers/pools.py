@@ -20,13 +20,7 @@ from onefuzztypes.models import (
 )
 from onefuzztypes.primitives import PoolName
 
-from ..azure.queue import (
-    create_queue,
-    delete_queue,
-    peek_queue,
-    peek_queue_with_id,
-    queue_object,
-)
+from ..azure.queue import create_queue, delete_queue, peek_queue, queue_object
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
@@ -107,11 +101,6 @@ class Pool(BASE_POOL, ORMMixin):
 
     def peek_work_queue(self) -> List[WorkSet]:
         return peek_queue(
-            self.get_pool_queue(), StorageType.corpus, object_type=WorkSet
-        )
-
-    def peek_work_queue_with_id(self) -> List[Tuple[str, WorkSet]]:
-        return peek_queue_with_id(
             self.get_pool_queue(), StorageType.corpus, object_type=WorkSet
         )
 

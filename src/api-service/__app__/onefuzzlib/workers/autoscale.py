@@ -16,7 +16,7 @@ from onefuzztypes.primitives import Container
 
 from ..azure.containers import get_container_sas_url
 from ..azure.creds import get_base_region
-from ..azure.queue import delete_messages
+from ..azure.queue import decode_message, get_queue
 from ..azure.storage import StorageType
 from .nodes import Node
 from .pools import Pool
@@ -145,20 +145,25 @@ def scale_down(pool: Pool, scalesets: List[Scaleset], to_remove: int) -> None:
 
 
 def clear_synthetic_worksets(pool: Pool) -> None:
-    while True:
-        to_remove = []
+    client = get_queue(pool.get_pool_queue(), StorageType.corpus)
+    if client is None:
+        return
 
-        for (message_id, workset) in pool.peek_work_queue_with_id():
-            if not workset.work_units:
-                to_remove.append(message_id)
+    deleted = 0
 
-        if not to_remove:
-            break
+    for message in client.receive_messages():
+        decoded = decode_message(message, WorkSet)
+        if not decoded:
+            logging.warning(AUTOSCALE_LOG_PREFIX + "decode workset failed: %s", message)
+            continue
 
-        logging.info(
-            AUTOSCALE_LOG_PREFIX + "removing %d synthetic worksets", len(to_remove)
-        )
-        delete_messages(pool.get_pool_queue(), StorageType.corpus, to_remove)
+        if decoded.work_units:
+            client.update_message(message, visibility_timeout=0)
+        else:
+            client.delete_message(message)
+            deleted += 1
+
+        logging.info(AUTOSCALE_LOG_PREFIX + "removed %d synthetic worksets", deleted)
 
 
 def needed_nodes(pool: Pool) -> Tuple[int, int]:

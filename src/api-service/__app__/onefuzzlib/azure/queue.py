@@ -7,11 +7,12 @@ import base64
 import datetime
 import json
 import logging
-from typing import List, Optional, Tuple, Type, TypeVar, Union
+from typing import List, Optional, Type, TypeVar, Union
 from uuid import UUID
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.storage.queue import (
+    QueueMessage,
     QueueSasPermissions,
     QueueServiceClient,
     generate_queue_sas,
@@ -180,36 +181,16 @@ def peek_queue(
         return result
 
     for message in queue.peek_messages(max_messages=max_messages):
-        decoded = base64.b64decode(message.content)
-        raw = json.loads(decoded)
-        result.append(object_type.parse_obj(raw))
+        decoded = decode_message(message, object_type=object_type)
+        if decoded:
+            result.append(decoded)
     return result
 
 
-# Peek at a max of 32 messages
-# https://docs.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.queueclient
-def peek_queue_with_id(
-    name: QueueNameType,
-    storage_type: StorageType,
-    *,
-    object_type: Type[A],
-    max_messages: int = MAX_PEEK_SIZE,
-) -> List[Tuple[str, A]]:
-    result: List[Tuple[str, A]] = []
-
-    # message count
-    if max_messages < MIN_PEEK_SIZE or max_messages > MAX_PEEK_SIZE:
-        raise ValueError("invalid max messages: %s" % max_messages)
-
-    queue = get_queue(name, storage_type)
-    if not queue:
-        return result
-
-    for message in queue.peek_messages(max_messages=max_messages):
-        decoded = base64.b64decode(message.content)
-        raw = json.loads(decoded)
-        result.append((message.id, object_type.parse_obj(raw)))
-    return result
+def decode_message(message: QueueMessage, object_type: Type[A]) -> Optional[A]:
+    decoded = base64.b64decode(message.content)
+    raw = json.loads(decoded)
+    return object_type.parse_obj(raw)
 
 
 def queue_object(
