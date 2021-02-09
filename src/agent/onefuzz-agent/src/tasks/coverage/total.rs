@@ -43,22 +43,29 @@ impl TotalCoverage {
         &self.path
     }
 
+    pub async fn write(&self, data: &[u8]) -> Result<()> {
+        fs::write(self.path(), data).await?;
+        Ok(())
+    }
+
     pub async fn update_bytes(&self, new_data: &[u8]) -> Result<()> {
         match self.data().await {
             Ok(Some(mut total_data)) => {
+                if total_data.len() < new_data.len() {
+                    total_data.resize_with(new_data.len(), || 0);
+                }
                 for (i, b) in new_data.iter().enumerate() {
                     if *b > 0 {
                         total_data[i] = 1;
                     }
                 }
-
-                fs::write(self.path(), total_data).await?;
+                self.write(&total_data).await?;
             }
             Ok(None) => {
                 // Base case: we don't yet have any total coverage. Promote the
                 // new coverage to being our total coverage.
                 info!("initializing total coverage map {}", self.path().display());
-                fs::write(self.path(), new_data).await?;
+                self.write(new_data).await?;
             }
             Err(err) => {
                 // Couldn't read total for some other reason, so this is a real error.
@@ -67,11 +74,6 @@ impl TotalCoverage {
         }
 
         Ok(())
-    }
-
-    pub async fn update(&self, new: impl AsRef<Path>) -> Result<()> {
-        let new_data = fs::read(new).await?;
-        self.update_bytes(&new_data).await
     }
 
     pub async fn info(&self) -> Result<Info> {
