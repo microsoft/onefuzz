@@ -116,5 +116,5 @@ def corpus_accounts() -> List[str]:
 
         results.append(account.id)
 
-    logging.info("corpus accounts: %s", corpus_accounts)
+    logging.info("corpus accounts: %s", results)
     return results
