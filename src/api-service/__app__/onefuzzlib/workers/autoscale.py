@@ -146,7 +146,8 @@ def scale_down(pool: Pool, scalesets: List[Scaleset], to_remove: int) -> None:
 def needed_nodes(pool: Pool) -> Tuple[int, int]:
     # NOTE: queue peek only returns the first 30 objects.
     workset_queue = pool.peek_work_queue()
-    scheduled_worksets = len(workset_queue)
+    # only count worksets with work
+    scheduled_worksets = len([x for x in workset_queue if x.work_units])
 
     nodes = Node.search_states(pool_name=pool.name, states=NodeState.in_use())
     from_nodes = len(nodes)
