@@ -165,11 +165,11 @@ def clear_synthetic_worksets(pool: Pool) -> None:
             client.delete_message(message)
             deleted += 1
 
-        logging.info(
-            AUTOSCALE_LOG_PREFIX + "cleanup synthetic worksets.  ignored:%d deleted:%d",
-            ignored,
-            deleted,
-        )
+    logging.info(
+        AUTOSCALE_LOG_PREFIX + "cleanup synthetic worksets.  ignored:%d deleted:%d",
+        ignored,
+        deleted,
+    )
 
 
 def needed_nodes(pool: Pool) -> Tuple[int, int]:
