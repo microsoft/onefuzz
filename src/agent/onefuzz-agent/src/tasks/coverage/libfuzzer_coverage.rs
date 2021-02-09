@@ -43,7 +43,7 @@ use onefuzz::{fs::list_files, libfuzzer::LibFuzzer, syncdir::SyncedDir};
 use onefuzz_telemetry::{Event::coverage_data, EventData};
 use reqwest::Url;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::{
     ffi::OsString,
     path::{Path, PathBuf},
@@ -200,7 +200,7 @@ pub struct CoverageProcessor {
     config: Arc<Config>,
     pub recorder: CoverageRecorder,
     pub total: TotalCoverage,
-    pub module_totals: HashMap<OsString, TotalCoverage>,
+    pub module_totals: BTreeMap<OsString, TotalCoverage>,
     heartbeat_client: Option<TaskHeartbeatClient>,
 }
 
@@ -209,7 +209,7 @@ impl CoverageProcessor {
         let heartbeat_client = config.common.init_heartbeat().await?;
         let total = TotalCoverage::new(config.coverage.path.join(TOTAL_COVERAGE));
         let recorder = CoverageRecorder::new(config.clone());
-        let module_totals = HashMap::default();
+        let module_totals = BTreeMap::default();
 
         Ok(Self {
             config,
@@ -247,8 +247,9 @@ impl CoverageProcessor {
         Ok(())
     }
 
-    async fn collect_by_module(&mut self, path: &Path) -> Result<PathBuf> {
-        let files = list_files(&path).await?;
+    async fn collect_by_module(&mut self, path: &Path) -> Result<()> {
+        let mut files = list_files(&path).await?;
+        files.sort();
         let mut sum = Vec::new();
 
         for file in &files {
@@ -267,14 +268,25 @@ impl CoverageProcessor {
             .await
             .with_context(|| format!("unable to write combined coverage file: {:?}", combined))?;
 
-        Ok(combined.into())
+        Ok(())
     }
 
     pub async fn test_input(&mut self, input: &Path) -> Result<()> {
         info!("processing input {:?}", input);
         let new_coverage = self.recorder.record(input).await?;
-        let combined = self.collect_by_module(&new_coverage).await?;
-        self.total.update(&combined).await?;
+        self.collect_by_module(&new_coverage).await?;
+        self.update_total().await?;
+        Ok(())
+    }
+
+    async fn update_total(&mut self) -> Result<()> {
+        let mut total = Vec::new();
+        for module_total in self.module_totals.values() {
+            if let Some(mut module_data) = module_total.data().await? {
+                total.append(&mut module_data);
+            }
+        }
+        self.total.write(&total).await?;
         Ok(())
     }
 
