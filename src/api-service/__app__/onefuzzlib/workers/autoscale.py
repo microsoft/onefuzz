@@ -16,6 +16,7 @@ from onefuzztypes.primitives import Container
 
 from ..azure.containers import get_container_sas_url
 from ..azure.creds import get_base_region
+from ..azure.queue import delete_messages
 from ..azure.storage import StorageType
 from .nodes import Node
 from .pools import Pool
@@ -143,6 +144,23 @@ def scale_down(pool: Pool, scalesets: List[Scaleset], to_remove: int) -> None:
             pool.schedule_workset(workset)
 
 
+def clear_synthetic_worksets(pool: Pool) -> None:
+    while True:
+        to_remove = []
+
+        for (message_id, workset) in pool.peek_work_queue_with_id():
+            if not workset.work_units:
+                to_remove.append(message_id)
+
+        if not to_remove:
+            break
+
+        logging.info(
+            AUTOSCALE_LOG_PREFIX + "removing %d synthetic worksets", len(to_remove)
+        )
+        delete_messages(pool.get_pool_queue(), StorageType.corpus, to_remove)
+
+
 def needed_nodes(pool: Pool) -> Tuple[int, int]:
     # NOTE: queue peek only returns the first 30 objects.
     workset_queue = pool.peek_work_queue()
@@ -198,8 +216,10 @@ def autoscale_pool(pool: Pool) -> None:
     )
 
     if new_size > current_size:
+        clear_synthetic_worksets(pool)
         scale_up(pool, scalesets, new_size - current_size)
     elif current_size > new_size:
+        clear_synthetic_worksets(pool)
         scale_down(pool, scalesets, current_size - new_size)
         shutdown_empty_scalesets(pool, scalesets)
     else:

@@ -7,7 +7,7 @@ import base64
 import datetime
 import json
 import logging
-from typing import List, Optional, Type, TypeVar, Union
+from typing import List, Optional, Tuple, Type, TypeVar, Union
 from uuid import UUID
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
@@ -124,6 +124,23 @@ def send_message(
             pass
 
 
+def delete_messages(
+    name: QueueNameType, storage_type: StorageType, messages: List[str]
+) -> None:
+    queue = get_queue(name, storage_type)
+    if not queue:
+        return
+
+    done = []
+    for message in messages:
+        try:
+            queue.delete_message(message)
+            done.append(message)
+        except ResourceNotFoundError:
+            logging.debug("queue message already deleted: %s - %s", name, message)
+    logging.debug("queue messages deleted: %s", done)
+
+
 def remove_first_message(name: QueueNameType, storage_type: StorageType) -> bool:
     queue = get_queue(name, storage_type)
     if queue:
@@ -166,6 +183,32 @@ def peek_queue(
         decoded = base64.b64decode(message.content)
         raw = json.loads(decoded)
         result.append(object_type.parse_obj(raw))
+    return result
+
+
+# Peek at a max of 32 messages
+# https://docs.microsoft.com/en-us/python/api/azure-storage-queue/azure.storage.queue.queueclient
+def peek_queue_with_id(
+    name: QueueNameType,
+    storage_type: StorageType,
+    *,
+    object_type: Type[A],
+    max_messages: int = MAX_PEEK_SIZE,
+) -> List[Tuple[str, A]]:
+    result: List[Tuple[str, A]] = []
+
+    # message count
+    if max_messages < MIN_PEEK_SIZE or max_messages > MAX_PEEK_SIZE:
+        raise ValueError("invalid max messages: %s" % max_messages)
+
+    queue = get_queue(name, storage_type)
+    if not queue:
+        return result
+
+    for message in queue.peek_messages(max_messages=max_messages):
+        decoded = base64.b64decode(message.content)
+        raw = json.loads(decoded)
+        result.append((message.id, object_type.parse_obj(raw)))
     return result
 
 
