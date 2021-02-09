@@ -115,6 +115,10 @@ class Pool(BASE_POOL, ORMMixin):
         worksets = self.peek_work_queue()
 
         for workset in worksets:
+            # only include work units with real work
+            if not workset.work_units:
+                continue
+
             work_units = [
                 WorkUnitSummary(
                     job_id=work_unit.job_id,
