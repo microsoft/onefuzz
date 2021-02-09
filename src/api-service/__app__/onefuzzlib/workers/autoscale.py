@@ -152,6 +152,7 @@ def clear_synthetic_worksets(pool: Pool) -> None:
     deleted = 0
     ignored = 0
 
+    keeping = []
     for message in client.receive_messages():
         decoded = decode_message(message, WorkSet)
         if not decoded:
@@ -159,11 +160,14 @@ def clear_synthetic_worksets(pool: Pool) -> None:
             continue
 
         if decoded.work_units:
-            client.update_message(message, visibility_timeout=0)
+            keeping.append(message)
             ignored += 1
         else:
             client.delete_message(message)
             deleted += 1
+
+    for message in keeping:
+        client.update_message(message, visibility_timeout=0)
 
     logging.info(
         AUTOSCALE_LOG_PREFIX + "cleanup synthetic worksets.  ignored:%d deleted:%d",
