@@ -80,6 +80,11 @@ impl LibFuzzerFuzzTask {
         }
     }
 
+    pub async fn check_run(&self) -> Result<()> {
+        self.check_libfuzzer().await?;
+        self.run().await
+    }
+
     pub async fn run(&self) -> Result<()> {
         self.init_directories().await?;
 
@@ -95,6 +100,19 @@ impl LibFuzzerFuzzTask {
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
         futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
+        Ok(())
+    }
+
+    pub async fn check_libfuzzer(&self) -> Result<()> {
+        if self.config.check_fuzzer_help {
+            let fuzzer = LibFuzzer::new(
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+                &self.config.common.setup_dir,
+            );
+            fuzzer.check_help().await?;
+        }
         Ok(())
     }
 
