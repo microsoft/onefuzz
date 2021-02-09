@@ -108,6 +108,10 @@ class JobState(Enum):
         """
         return [cls.init, cls.stopping]
 
+    @classmethod
+    def shutting_down(cls) -> List["JobState"]:
+        return [cls.stopping, cls.stopped]
+
 
 class TaskState(Enum):
     init = "init"
