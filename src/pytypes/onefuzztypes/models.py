@@ -37,7 +37,7 @@ from .primitives import Container, PoolName, Region
 
 
 class UserInfo(BaseModel):
-    application_id: UUID
+    application_id: Optional[UUID]
     object_id: Optional[UUID]
     upn: Optional[str]
 
