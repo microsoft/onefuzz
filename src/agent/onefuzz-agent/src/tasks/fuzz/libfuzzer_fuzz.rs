@@ -80,7 +80,7 @@ impl LibFuzzerFuzzTask {
         }
     }
 
-    pub async fn check_run(&self) -> Result<()> {
+    pub async fn managed_run(&self) -> Result<()> {
         self.check_libfuzzer().await?;
         self.run().await
     }
