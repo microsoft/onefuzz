@@ -233,7 +233,7 @@ class JobHelper:
         }
         self.wait_for_running = wait_for_running
 
-    def check_current_job(self) -> List[Task]:
+    def get_running_tasks_checked(self) -> List[Task]:
         self.job = self.onefuzz.jobs.get(self.job.job_id)
         if self.job.state in JobState.shutting_down():
             raise StoppedEarly("job unexpectedly stopped early")
@@ -253,7 +253,7 @@ class JobHelper:
         return tasks
 
     def get_waiting(self) -> List[str]:
-        tasks = self.check_current_job()
+        tasks = self.get_running_tasks_checked()
 
         waiting = []
         for task in tasks:
@@ -272,7 +272,7 @@ class JobHelper:
         return (not waiting, "waiting on: %s" % ", ".join(sorted(waiting)), None)
 
     def has_files(self) -> Tuple[bool, str, Any]:
-        self.check_current_job()
+        self.get_running_tasks_checked()
 
         new = {
             x: len(self.onefuzz.containers.files.list(x).files)
