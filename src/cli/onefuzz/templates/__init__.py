@@ -9,8 +9,8 @@ import tempfile
 import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 
-from onefuzztypes.enums import OS, ContainerType, TaskState
-from onefuzztypes.models import Job, NotificationConfig
+from onefuzztypes.enums import OS, ContainerType, JobState, TaskState
+from onefuzztypes.models import Job, NotificationConfig, Task
 from onefuzztypes.primitives import Container, Directory, File
 
 from onefuzz.backend import wait
@@ -233,30 +233,38 @@ class JobHelper:
         }
         self.wait_for_running = wait_for_running
 
-    def check_current_job(self) -> Job:
-        job = self.onefuzz.jobs.get(self.job.job_id)
-        if job.state in ["stopped", "stopping"]:
+    def get_running_tasks_checked(self) -> List[Task]:
+        self.job = self.onefuzz.jobs.get(self.job.job_id)
+        if self.job.state in JobState.shutting_down():
             raise StoppedEarly("job unexpectedly stopped early")
 
         errors = []
+        tasks = []
         for task in self.onefuzz.tasks.list(job_id=self.job.job_id):
-            if task.state in ["stopped", "stopping"]:
+            if task.state in TaskState.shutting_down():
                 if task.error:
                     errors.append("%s: %s" % (task.config.task.type, task.error))
                 else:
                     errors.append("%s" % task.config.task.type)
+            tasks.append(task)
 
         if errors:
             raise StoppedEarly("tasks stopped unexpectedly.\n%s" % "\n".join(errors))
-        return job
+        return tasks
 
     def get_waiting(self) -> List[str]:
-        tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
-        waiting = [
-            "%s:%s" % (x.config.task.type.name, x.state.name)
-            for x in tasks
-            if x.state not in TaskState.has_started()
-        ]
+        tasks = self.get_running_tasks_checked()
+
+        waiting = []
+        for task in tasks:
+            state_msg = task.state.name
+            if task.state in TaskState.has_started():
+                task = self.onefuzz.tasks.get(task.task_id)
+                if task.events:
+                    continue
+                state_msg = "waiting-for-heartbeat"
+
+            waiting.append(f"{task.config.task.type.name}:{state_msg}")
         return waiting
 
     def is_running(self) -> Tuple[bool, str, Any]:
@@ -264,7 +272,7 @@ class JobHelper:
         return (not waiting, "waiting on: %s" % ", ".join(sorted(waiting)), None)
 
     def has_files(self) -> Tuple[bool, str, Any]:
-        self.check_current_job()
+        self.get_running_tasks_checked()
 
         new = {
             x: len(self.onefuzz.containers.files.list(x).files)
