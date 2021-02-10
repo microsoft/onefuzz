@@ -15,9 +15,11 @@ With libfuzzer-dotnet, developers provide an application that within `Main` call
 
 > NOTE: libfuzzer-dotnet only works on Linux at this time.
 
+TL/DR: check out our [libfuzzer-dotnet example](../../src/integration-tests/libfuzzer-dotnet/)
+
 ## Example
 
-Let's fuzz the `Func` function of our example library named [problems/problems.cs](problems/problems.cs).
+Let's fuzz the `Func` function of our example library named [problems/problems.cs](../../src/integration-tests/libfuzzer-dotnet/problems/problems.cs).
 
 1. Make sure sharpfuzz and a recent version of clang are installed.  We'll need these later.
 
@@ -28,7 +30,7 @@ Let's fuzz the `Func` function of our example library named [problems/problems.c
 
 2. We need to build an application that uses `Fuzzer.LibFuzzer.Run` that calls our function `Func`.  For this example, let's call this `wrapper`.  
 
-  The [wrapper/wrapper.csproj](wrapper.csproj) project file uses SharpFuzz 1.6.1 and refers to our `problems` library locally.
+  The [wrapper/wrapper.csproj](../../src/integration-tests/libfuzzer-dotnet/wrapper/wrapper.csproj) project file uses SharpFuzz 1.6.1 and refers to our `problems` library locally.
   ```xml
   <Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
@@ -45,7 +47,7 @@ Let's fuzz the `Func` function of our example library named [problems/problems.c
   ```
   
   For our example `problems` library, our callback for `Fuzzer.LibFuzzer.Run` is straight forwards.  `Func` already takes a `ReadOnlySpan<byte>`.  If your functions takes strings, this would be the place to convert the span of bytes to strings.
-  [wrapper/program.cs](wrapper/program.cs)
+  [wrapper/program.cs](../../src/integration-tests/libfuzzer-dotnet/wrapper/program.cs)
   ```C#
   using SharpFuzz;
   namespace Wrapper {
