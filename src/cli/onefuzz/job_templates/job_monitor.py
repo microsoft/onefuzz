@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from typing import Any, Dict, List, Optional, Tuple
 
 from onefuzztypes.enums import JobState, TaskState
