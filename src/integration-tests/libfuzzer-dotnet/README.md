@@ -1,4 +1,4 @@
-# Fuzzing .Net using SharpFuzz & libFuzzer
+# Fuzzing .Net using libfuzzer-dotnet
 
 Fuzzing .Net using libFuzzer makes use of three Open Source capabilities.
 
@@ -11,11 +11,9 @@ When using libFuzzer in C, developers provide a function
 and the length of said buffer.  ([Tutorial using libFuzzer in
 C](https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md))
 
-With SharpFuzz+libFuzzer, developers provide an application that within
-`Main` calls the method `Fuzzer.LibFuzzer.Run`, with a callback that passes a
-read only byte-stream their function of interest. 
+With libfuzzer-dotnet, developers provide an application that within `Main` calls the method `Fuzzer.LibFuzzer.Run`, with a callback that passes a read only byte-stream their function of interest. 
 
-> NOTE: SharpFuzz and libfuzzer-dotnet only work on Linux at this time.
+> NOTE: libfuzzer-dotnet only works on Linux at this time.
 
 ## Example
 
