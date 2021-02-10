@@ -163,7 +163,7 @@ impl Config {
         match self {
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
-                    .run()
+                    .managed_run()
                     .await
             }
             Config::LibFuzzerReport(config) => {

@@ -106,19 +106,22 @@ impl CoverageTask {
         Ok(())
     }
 
-    pub async fn managed_run(&mut self) -> Result<()> {
-        info!("starting libFuzzer coverage task");
-
+    async fn check_libfuzzer(&self) -> Result<()> {
         if self.config.check_fuzzer_help {
-            let target = LibFuzzer::new(
+            let fuzzer = LibFuzzer::new(
                 &self.config.target_exe,
                 &self.config.target_options,
                 &self.config.target_env,
                 &self.config.common.setup_dir,
             );
-            target.check_help().await?;
+            fuzzer.check_help().await?;
         }
+        Ok(())
+    }
 
+    pub async fn managed_run(&mut self) -> Result<()> {
+        info!("starting libFuzzer coverage task");
+        self.check_libfuzzer().await?;
         self.config.coverage.init_pull().await?;
         self.process().await
     }
