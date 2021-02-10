@@ -21,6 +21,7 @@ use tokio::task::spawn;
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let fuzz_config = build_fuzz_config(args)?;
     let fuzzer = LibFuzzerFuzzTask::new(fuzz_config)?;
+    fuzzer.check_libfuzzer().await?;
     let fuzz_task = spawn(async move { fuzzer.run().await });
 
     let report_config = build_report_config(args)?;
