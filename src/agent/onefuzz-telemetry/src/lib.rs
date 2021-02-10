@@ -14,13 +14,17 @@ pub enum ClientType {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Role {
+    Agent,
     Proxy,
+    Supervisor,
 }
 
 impl Role {
     pub fn as_str(&self) -> &'static str {
         match self {
+            Self::Agent => "agent",
             Self::Proxy => "proxy",
+            Self::Supervisor => "supervisor",
         }
     }
 }
