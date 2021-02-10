@@ -51,7 +51,7 @@ def parse_jwt_token(request: func.HttpRequest) -> Result[UserInfo]:
     # This token has already been verified by the azure authentication layer
     token = jwt.decode(token_str, verify=False)
 
-    application_id = UUID(token["appid"])
+    application_id = UUID(token["appid"]) if "appid" in token else None
     object_id = UUID(token["oid"]) if "oid" in token else None
     upn = token.get("upn")
     return UserInfo(application_id=application_id, object_id=object_id, upn=upn)

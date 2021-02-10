@@ -303,9 +303,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 }
             },
-            "required": [
-                "application_id"
-            ],
             "title": "UserInfo",
             "type": "object"
         }
@@ -399,9 +396,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 }
             },
-            "required": [
-                "application_id"
-            ],
             "title": "UserInfo",
             "type": "object"
         }
@@ -1470,9 +1464,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 }
             },
-            "required": [
-                "application_id"
-            ],
             "title": "UserInfo",
             "type": "object"
         }
@@ -1598,9 +1589,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 }
             },
-            "required": [
-                "application_id"
-            ],
             "title": "UserInfo",
             "type": "object"
         }
@@ -1735,9 +1723,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 }
             },
-            "required": [
-                "application_id"
-            ],
             "title": "UserInfo",
             "type": "object"
         }
@@ -2864,9 +2849,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 }
             },
-            "required": [
-                "application_id"
-            ],
             "title": "UserInfo",
             "type": "object"
         }
