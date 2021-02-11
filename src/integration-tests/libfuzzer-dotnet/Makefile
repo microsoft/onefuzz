@@ -9,7 +9,7 @@ libfuzzer-dotnet:
 
 build-harness: libfuzzer-dotnet
 	dotnet tool install --global SharpFuzz.CommandLine || echo already installed
-	dotnet publish ./wrapper/wrapper.csproj -c release -o my-fuzzer
+	dotnet publish ./wrapper/wrapper.csproj -c release -o my-fuzzer -r linux-x64
 	sharpfuzz my-fuzzer/problems.dll || echo already instrumented
 
 check: build-harness
