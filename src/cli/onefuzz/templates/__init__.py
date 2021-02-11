@@ -7,13 +7,13 @@ import json
 import os
 import tempfile
 import zipfile
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from onefuzztypes.enums import OS, ContainerType, JobState, TaskState
-from onefuzztypes.models import Job, NotificationConfig, Task
+from onefuzztypes.enums import OS, ContainerType
+from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
-from onefuzz.backend import wait
+from ..job_templates.job_monitor import JobMonitor
 
 ELF_MAGIC = b"\x7fELF"
 DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
@@ -233,69 +233,10 @@ class JobHelper:
         }
         self.wait_for_running = wait_for_running
 
-    def get_running_tasks_checked(self) -> List[Task]:
-        self.job = self.onefuzz.jobs.get(self.job.job_id)
-        if self.job.state in JobState.shutting_down():
-            raise StoppedEarly("job unexpectedly stopped early")
-
-        errors = []
-        tasks = []
-        for task in self.onefuzz.tasks.list(job_id=self.job.job_id):
-            if task.state in TaskState.shutting_down():
-                if task.error:
-                    errors.append("%s: %s" % (task.config.task.type, task.error))
-                else:
-                    errors.append("%s" % task.config.task.type)
-            tasks.append(task)
-
-        if errors:
-            raise StoppedEarly("tasks stopped unexpectedly.\n%s" % "\n".join(errors))
-        return tasks
-
-    def get_waiting(self) -> List[str]:
-        tasks = self.get_running_tasks_checked()
-
-        waiting = []
-        for task in tasks:
-            state_msg = task.state.name
-            if task.state in TaskState.has_started():
-                task = self.onefuzz.tasks.get(task.task_id)
-                if task.events:
-                    continue
-                state_msg = "waiting-for-heartbeat"
-
-            waiting.append(f"{task.config.task.type.name}:{state_msg}")
-        return waiting
-
-    def is_running(self) -> Tuple[bool, str, Any]:
-        waiting = self.get_waiting()
-        return (not waiting, "waiting on: %s" % ", ".join(sorted(waiting)), None)
-
-    def has_files(self) -> Tuple[bool, str, Any]:
-        self.get_running_tasks_checked()
-
-        new = {
-            x: len(self.onefuzz.containers.files.list(x).files)
-            for x in self.to_monitor.keys()
-        }
-
-        for container in new:
-            if new[container] > self.to_monitor[container]:
-                del self.to_monitor[container]
-        return (
-            not self.to_monitor,
-            "waiting for new files: %s" % ", ".join(self.to_monitor.keys()),
-            None,
-        )
-
     def wait(self) -> None:
-        if self.wait_for_running:
-            wait(self.is_running)
-            self.logger.info("tasks started")
-
-        if self.to_monitor:
-            wait(self.has_files)
-            self.logger.info("new files found")
+        JobMonitor(self.onefuzz, self.job).wait(
+            wait_for_running=self.wait_for_running, wait_for_files=self.to_monitor
+        )
 
     def target_exe_blob_name(
         self, target_exe: File, setup_dir: Optional[Directory]
