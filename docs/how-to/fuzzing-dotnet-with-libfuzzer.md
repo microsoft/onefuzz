@@ -17,6 +17,12 @@ With libfuzzer-dotnet, developers provide an application that within `Main` call
 
 TL/DR: check out our [libfuzzer-dotnet example](../../src/integration-tests/libfuzzer-dotnet/)
 
+## Supported versions
+OneFuzz supports net45 framework or any version that support least
+netstandard1.6.  Refer to [.Net
+Standard](https://dotnet.microsoft.com/platform/dotnet-standard) check if your
+framework version is supported.
+
 ## Issues using libfuzzer-dotnet in OneFuzz
 * The `libfuzzer_coverage` task does not support the coverage features used by libfuzzer-dotnet.  (Work item: [#536](https://github.com/microsoft/onefuzz/issues/536))
 * The `libfuzzer_crash_report` does not support extracting unique output during analysis, making the crash de-duplication and reporting ineffective. (Work item: [#538]https://github.com/microsoft/onefuzz/issues/538))
