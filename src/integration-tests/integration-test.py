@@ -31,7 +31,7 @@ from onefuzz.backend import ContainerWrapper, wait
 from onefuzz.cli import execute_api
 from onefuzztypes.enums import OS, ContainerType, TaskState, VmState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset
-from onefuzztypes.primitives import Directory, File
+from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
 
 LINUX_POOL = "linux-test"
@@ -41,6 +41,7 @@ BUILD = "0"
 
 class TemplateType(Enum):
     libfuzzer = "libfuzzer"
+    libfuzzer_dotnet = "libfuzzer_dotnet"
     afl = "afl"
     radamsa = "radamsa"
 
@@ -72,6 +73,14 @@ TARGETS: Dict[str, Integration] = {
         inputs="seeds",
         wait_for_files=[ContainerType.unique_reports, ContainerType.coverage],
         reboot_after_setup=True,
+    ),
+    "linux-libfuzzer-dotnet": Integration(
+        template=TemplateType.libfuzzer_dotnet,
+        os=OS.linux,
+        target_exe="wrapper",
+        inputs="inputs",
+        use_setup=True,
+        wait_for_files=[ContainerType.inputs, ContainerType.crashes],
     ),
     "linux-libfuzzer-rust": Integration(
         template=TemplateType.libfuzzer,
@@ -159,7 +168,7 @@ class TestOnefuzz:
     def setup(
         self,
         *,
-        region: Optional[str] = None,
+        region: Optional[Region] = None,
         user_pools: Optional[Dict[str, str]] = None,
     ) -> None:
         for entry in self.os:
@@ -169,7 +178,7 @@ class TestOnefuzz:
                 )
                 self.pools[entry] = self.of.pools.get(user_pools[entry.name])
             else:
-                name = "pool-%s-%s" % (self.project, entry.name)
+                name = PoolName("pool-%s-%s" % (self.project, entry.name))
                 self.logger.info("creating pool: %s:%s", entry.name, name)
                 self.pools[entry] = self.of.pools.create(name, entry)
                 self.logger.info("creating scaleset for pool: %s", name)
@@ -207,7 +216,21 @@ class TestOnefuzz:
                     setup_dir=setup,
                     duration=1,
                     vm_count=1,
-                    reboot_after_setup=config.reboot_after_setup,
+                    reboot_after_setup=config.reboot_after_setup or False,
+                )
+            elif config.template == TemplateType.libfuzzer_dotnet:
+                if setup is None:
+                    raise Exception("setup required for libfuzzer_dotnet")
+                job = self.of.template.libfuzzer.dotnet(
+                    self.project,
+                    target,
+                    BUILD,
+                    self.pools[config.os].name,
+                    target_harness=config.target_exe,
+                    inputs=inputs,
+                    setup_dir=setup,
+                    duration=1,
+                    vm_count=1,
                 )
             elif config.template == TemplateType.radamsa:
                 job = self.of.template.radamsa.basic(
@@ -362,7 +385,7 @@ class TestOnefuzz:
         self.logger.info("checking jobs")
         return wait(self.check_jobs_impl)
 
-    def get_job_crash(self, job_id: UUID) -> Optional[Tuple[str, str]]:
+    def get_job_crash(self, job_id: UUID) -> Optional[Tuple[Container, str]]:
         # get the crash container for a given job
 
         for task in self.of.tasks.list(job_id=job_id, state=None):
@@ -555,7 +578,7 @@ class Run(Command):
         endpoint: Optional[str] = None,
         user_pools: Optional[Dict[str, str]] = None,
         pool_size: int = 10,
-        region: Optional[str] = None,
+        region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         targets: List[str] = list(TARGETS.keys()),
         skip_repro: bool = False,
