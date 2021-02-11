@@ -17,6 +17,12 @@ With libfuzzer-dotnet, developers provide an application that within `Main` call
 
 TL/DR: check out our [libfuzzer-dotnet example](../../src/integration-tests/libfuzzer-dotnet/)
 
+## Issues using libfuzzer-dotnet in OneFuzz
+* The `libfuzzer_coverage` task does not support the coverage features used by libfuzzer-dotnet.  (Work item: [#536](https://github.com/microsoft/onefuzz/issues/536))
+* The `libfuzzer_crash_report` does not support extracting unique output during analysis, making the crash de-duplication and reporting ineffective. (Work item: [#538]https://github.com/microsoft/onefuzz/issues/538))
+
+As such, a libfuzzer-dotnet template is available, which only uses the `libfuzzer_fuzz` tasks.  As these issues are resolve, the template will be updated to include the additional tasks.
+
 ## Example
 
 Let's fuzz the `Func` function of our example library named [problems/problems.cs](../../src/integration-tests/libfuzzer-dotnet/problems/problems.cs).
@@ -61,8 +67,9 @@ Let's fuzz the `Func` function of our example library named [problems/problems.c
 
 3. Build our wrapper
   ```
-  dotnet publish ./wrapper/wrapper.csproj -c release -o my-fuzzer
+  dotnet publish ./wrapper/wrapper.csproj -c release -r linux-x64 -o my-fuzzer
   ```
+  > NOTE: Specifying the runtime `linux-x64` is important such that we make a self-contained deployment.
 
 4. Then we need to ensure our `problems` library is instrumented:
   ```
@@ -161,3 +168,55 @@ Let's fuzz the `Func` function of our example library named [problems/problems.c
   SUMMARY: libFuzzer: deadly signal
   ```
   > NOTE: The stack shown here is from `libfuzzer-dotnet`, which isn't useful in figuring out the bug in `Problems`. However, fuzzing found a reproducable crash in our `Problems` library. We can use this crashing input file using traditional debug tooling to figure out the underlying problem.
+
+
+## Launching our example in OneFuzz
+
+These commands launches the a libfuzzer-dotnet focused fuzzing task in OneFuzz.  Note, we've added the arguments `--wait_for_running --wait_for_files inputs` such that we can monitor our job until we've seen at least one new input found via fuzzing.
+```bash
+TARGET_PROJECT=Problems
+TARGET_NAME=Func
+TARGET_BUILD=1
+FUZZ_POOL=linux
+onefuzz template libfuzzer dotnet ${TARGET_PROJECT} ${TARGET_NAME} ${TARGET_BUILD} ${FUZZ_POOL} ./my-fuzzer/ wrapper --wait_for_running --wait_for_files inputs
+```
+
+When we run this, we'll see output similar to:
+```
+INFO:onefuzz:creating job (runtime: 24 hours)
+INFO:onefuzz:created job: 62d666d3-3373-4094-adbe-e705d722d698
+INFO:onefuzz:using container: oft-setup-b8c2890353235ab497b14913fe2ee204
+INFO:onefuzz:using container: oft-inputs-68e4cb24b37855f0b0abab9b533d5fc1
+INFO:onefuzz:using container: oft-crashes-68e4cb24b37855f0b0abab9b533d5fc1
+INFO:onefuzz:uploading setup dir `./my-fuzzer/`
+INFO:onefuzz:done creating tasks
+\ waiting on: libfuzzer_fuzz:init
+| waiting on: libfuzzer_fuzz:scheduled
+- waiting on: libfuzzer_fuzz:setting_up
+INFO:onefuzz:tasks started
+\ waiting for new files: oft-inputs-68e4cb24b37855f0b0abab9b533d5fc1
+INFO:onefuzz:new files found
+{
+    "config": {
+        "build": "1",
+        "duration": 24,
+        "name": "Func",
+        "project": "Problems"
+    },
+    "end_time": "2021-02-12T01:52:45+00:00",
+    "job_id": "62d666d3-3373-4094-adbe-e705d722d698",
+    "state": "enabled",
+    "task_info": [
+        {
+            "state": "running",
+            "task_id": "e951e3ee-5097-46be-832d-08fff05507e4",
+            "type": "libfuzzer_fuzz"
+        }
+    ],
+    "user_info": {
+        "application_id": "5e400594-28e9-4e26-97d8-8ea5bc2ff306",
+        "object_id": "33041cd0-ad34-4168-a98d-c8e6b4b666cb",
+        "upn": "example@contoso.com"
+    }
+}
+```
