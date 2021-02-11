@@ -25,7 +25,7 @@ As such, a libfuzzer-dotnet template is available, which only uses the `libfuzze
 
 ## Example
 
-Let's fuzz the `Func` function of our example library named [problems/problems.cs](../../src/integration-tests/libfuzzer-dotnet/problems/problems.cs).
+Let's fuzz the `Func` function of our example library named.
 
 1. Make sure sharpfuzz and a recent version of clang are installed.  We'll need these later.
 
@@ -34,7 +34,7 @@ Let's fuzz the `Func` function of our example library named [problems/problems.c
   sudo apt-get install -y clang
   ```
 
-2. We need to build an application that uses `Fuzzer.LibFuzzer.Run` that calls our function `Func`.  For this example, let's call this `wrapper`.  
+2. We need to build an application that uses `Fuzzer.LibFuzzer.Run` that calls our function `Func`.  For this example, let's call this [wrapper](../../src/integration-tests/libfuzzer-dotnet/wrapper/) 
 
   The [wrapper/wrapper.csproj](../../src/integration-tests/libfuzzer-dotnet/wrapper/wrapper.csproj) project file uses SharpFuzz 1.6.1 and refers to our `problems` library locally.
   ```xml
@@ -52,7 +52,7 @@ Let's fuzz the `Func` function of our example library named [problems/problems.c
   </Project>
   ```
   
-  For our example `problems` library, our callback for `Fuzzer.LibFuzzer.Run` is straight forwards.  `Func` already takes a `ReadOnlySpan<byte>`.  If your functions takes strings, this would be the place to convert the span of bytes to strings.
+  For our example [problems](../../src/integration-tests/libfuzzer-dotnet/problems/) library, our callback for `Fuzzer.LibFuzzer.Run` is straight forwards.  `Func` already takes a `ReadOnlySpan<byte>`.  If your functions takes strings, this would be the place to convert the span of bytes to strings.
   [wrapper/program.cs](../../src/integration-tests/libfuzzer-dotnet/wrapper/program.cs)
   ```C#
   using SharpFuzz;
@@ -65,18 +65,18 @@ Let's fuzz the `Func` function of our example library named [problems/problems.c
   }
   ```
 
-3. Build our wrapper
+3. Build our [wrapper](../../src/integration-tests/libfuzzer-dotnet/wrapper/)
   ```
   dotnet publish ./wrapper/wrapper.csproj -c release -r linux-x64 -o my-fuzzer
   ```
   > NOTE: Specifying the runtime `linux-x64` is important such that we make a self-contained deployment.
 
-4. Then we need to ensure our `problems` library is instrumented:
+4. Then we need to ensure our [problems](../../src/integration-tests/libfuzzer-dotnet/problems/) library is instrumented:
   ```
   sharpfuzz ./my-fuzzer/problems.dll
   ```
 
-5. The last thing we need to build before we can start fuzzing is the `libfuzzer-dotnet` harness.
+5. The last thing we need to build before we can start fuzzing is the [libfuzzer-dotnet](https://github.com/Metalnem/libfuzzer-dotnet) harness.
   ```
   curl -o libfuzzer-dotnet.cc https://raw.githubusercontent.com/Metalnem/libfuzzer-dotnet/master/libfuzzer-dotnet.cc
   clang -fsanitize=fuzzer libfuzzer-dotnet.cc -o my-fuzzer/libfuzzer-dotnet
