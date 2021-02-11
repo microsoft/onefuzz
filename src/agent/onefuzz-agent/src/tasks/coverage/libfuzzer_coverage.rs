@@ -102,6 +102,7 @@ impl CoverageTask {
             self.record_corpus_coverage(&mut processor, &synced_dir)
                 .await?;
         }
+        processor.report_total().await?;
 
         Ok(())
     }
@@ -133,7 +134,7 @@ impl CoverageTask {
         let mut seen_inputs = false;
         // Update the total with the coverage from each seed corpus.
         for dir in &self.config.readonly_inputs {
-            verbose!("recording coverage for {}", dir.path.display());
+            debug!("recording coverage for {}", dir.path.display());
             dir.init_pull().await?;
             if self.record_corpus_coverage(&mut processor, dir).await? {
                 seen_inputs = true;
@@ -226,7 +227,7 @@ impl CoverageProcessor {
             .ok_or_else(|| format_err!("module must have filename"))?
             .to_os_string();
 
-        verbose!("updating module info {:?}", module);
+        debug!("updating module info {:?}", module);
 
         if !self.module_totals.contains_key(&module) {
             let parent = &self.config.coverage.path.join("by-module");
@@ -243,7 +244,7 @@ impl CoverageProcessor {
 
         self.module_totals[&module].update_bytes(data).await?;
 
-        verbose!("updated {:?}", module);
+        debug!("updated {:?}", module);
         Ok(())
     }
 
@@ -253,7 +254,7 @@ impl CoverageProcessor {
         let mut sum = Vec::new();
 
         for file in &files {
-            verbose!("checking {:?}", file);
+            debug!("checking {:?}", file);
             let mut content = fs::read(file)
                 .await
                 .with_context(|| format!("unable to read module coverage: {}", file.display()))?;

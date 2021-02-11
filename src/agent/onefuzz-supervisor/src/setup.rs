@@ -50,7 +50,7 @@ impl SetupRunner {
         })?;
         az_copy::sync(setup_url.to_string(), &setup_dir, false).await?;
 
-        verbose!(
+        debug!(
             "synced setup container from {} to {}",
             setup_url,
             setup_dir.display(),
@@ -76,10 +76,9 @@ impl SetupRunner {
             let output = setup_script.invoke().await?;
 
             if output.exit_status.success {
-                verbose!(
+                debug!(
                     "setup script succeeded. stdout:{:?} stderr:{:?}",
-                    &output.stdout,
-                    &output.stderr,
+                    &output.stdout, &output.stderr,
                 );
                 info!("setup script succeeded");
             } else {
@@ -122,7 +121,7 @@ async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<
     let blocking = spawn_blocking(move || symlink_dir(src, dst));
     blocking.await??;
 
-    verbose!(
+    debug!(
         "created symlink from {} to {}",
         setup_dir.display(),
         task_setup_dir.display(),
@@ -157,7 +156,7 @@ async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<
             )
         })?;
 
-    verbose!(
+    debug!(
         "created symlink from {} to {}",
         setup_dir.display(),
         task_setup_dir.display(),
