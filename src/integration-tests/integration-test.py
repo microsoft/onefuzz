@@ -52,6 +52,7 @@ class Integration(BaseModel):
     target_exe: str
     inputs: Optional[str]
     use_setup: bool = Field(default=False)
+    nested_setup_dir: Optional[str]
     wait_for_files: List[ContainerType]
     check_asan_log: Optional[bool] = Field(default=False)
     disable_check_debugger: Optional[bool] = Field(default=False)
@@ -78,6 +79,7 @@ TARGETS: Dict[str, Integration] = {
         template=TemplateType.libfuzzer_dotnet,
         os=OS.linux,
         target_exe="wrapper",
+        nested_setup_dir="my-fuzzer",
         inputs="inputs",
         use_setup=True,
         wait_for_files=[ContainerType.inputs, ContainerType.crashes],
@@ -203,6 +205,9 @@ class TestOnefuzz:
                 if config.inputs
                 else None
             )
+
+            if setup and config.nested_setup_dir:
+                setup = Directory(os.path.join(setup, config.nested_setup_dir))
 
             job: Optional[Job] = None
             if config.template == TemplateType.libfuzzer:
@@ -419,6 +424,7 @@ class TestOnefuzz:
             self.logger.info("launching repro: %s", self.target_jobs[job_id])
             report = self.get_job_crash(job_id)
             if report is None:
+                self.logger.warning("target does not include crash reports: %s", self.target_jobs[job_id])
                 return
             (container, path) = report
             self.repros[job_id] = self.of.repro.create(container, path, duration=1)
@@ -603,6 +609,7 @@ class Run(Command):
             if skip_repro:
                 self.logger.warning("not testing crash repro")
             else:
+                self.logger.info("launching crash repro tests")
                 tester.launch_repro()
                 tester.check_repro()
         except Exception as e:
