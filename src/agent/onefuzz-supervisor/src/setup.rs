@@ -78,8 +78,7 @@ impl SetupRunner {
             if output.exit_status.success {
                 debug!(
                     "setup script succeeded. stdout:{:?} stderr:{:?}",
-                    &output.stdout,
-                    &output.stderr,
+                    &output.stdout, &output.stderr,
                 );
                 info!("setup script succeeded");
             } else {

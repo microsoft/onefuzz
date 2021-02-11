@@ -109,10 +109,7 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
 ) -> Result<Output> {
     debug!(
         "running command with timeout: cmd:{:?} argv:{:?} env:{:?} timeout:{:?}",
-        program,
-        argv,
-        env,
-        timeout
+        program, argv, env, timeout
     );
 
     let mut cmd = Command::new(program);
