@@ -58,7 +58,7 @@ async fn run_existing(config: &Config) -> Result<()> {
         let mut count = 0;
         let mut read_dir = fs::read_dir(&crashes.path).await?;
         while let Some(file) = read_dir.next().await {
-            verbose!("Processing file {:?}", file);
+            debug!("Processing file {:?}", file);
             let file = file?;
             run_tool(file.path(), &config).await?;
             count += 1;
