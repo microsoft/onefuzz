@@ -71,11 +71,11 @@ impl CoverageRecorder {
 
             return Err(err);
         } else {
-            verbose!(
+            debug!(
                 "recording stderr: {}",
                 String::from_utf8_lossy(&output.stderr)
             );
-            verbose!(
+            debug!(
                 "recording stdout: {}",
                 String::from_utf8_lossy(&output.stdout)
             );
