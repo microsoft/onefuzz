@@ -25,7 +25,7 @@ As such, a libfuzzer-dotnet template is available, which only uses the `libfuzze
 
 ## Example
 
-Let's fuzz the `Func` function of our example library named.
+Let's fuzz the `Func` function of our example library named [problems](../../src/integration-tests/libfuzzer-dotnet/problems/).
 
 1. Make sure sharpfuzz and a recent version of clang are installed.  We'll need these later.
 
@@ -36,7 +36,7 @@ Let's fuzz the `Func` function of our example library named.
 
 2. We need to build an application that uses `Fuzzer.LibFuzzer.Run` that calls our function `Func`.  For this example, let's call this [wrapper](../../src/integration-tests/libfuzzer-dotnet/wrapper/) 
 
-  The [wrapper/wrapper.csproj](../../src/integration-tests/libfuzzer-dotnet/wrapper/wrapper.csproj) project file uses SharpFuzz 1.6.1 and refers to our `problems` library locally.
+  The [wrapper/wrapper.csproj](../../src/integration-tests/libfuzzer-dotnet/wrapper/wrapper.csproj) project file uses SharpFuzz 1.6.1 and refers to our [problems](../../src/integration-tests/libfuzzer-dotnet/problems/) library locally.
   ```xml
   <Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
