@@ -89,7 +89,7 @@ fn licenses() -> Result<()> {
 
 fn run(opt: RunOpt) -> Result<()> {
     if done::is_agent_done()? {
-        verbose!(
+        debug!(
             "agent is done, remove lock ({}) to continue",
             done::done_path()?.display()
         );
@@ -187,10 +187,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
             }
         }
     };
-    verbose!("current registration: {:?}", registration);
+    debug!("current registration: {:?}", registration);
 
     let mut coordinator = coordinator::Coordinator::new(registration.clone()).await?;
-    verbose!("initialized coordinator");
+    debug!("initialized coordinator");
 
     let mut reboot = reboot::Reboot;
     let reboot_context = reboot.load_context().await?;
@@ -198,7 +198,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         check_existing_worksets(&mut coordinator).await?;
     }
     let scheduler = reboot_context.into();
-    verbose!("loaded scheduler: {}", scheduler);
+    debug!("loaded scheduler: {}", scheduler);
 
     let work_queue = work::WorkQueue::new(registration.clone());
 

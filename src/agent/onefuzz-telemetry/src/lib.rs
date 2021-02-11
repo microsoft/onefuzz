@@ -418,7 +418,7 @@ macro_rules! log {
 }
 
 #[macro_export]
-macro_rules! verbose {
+macro_rules! debug {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
         onefuzz_telemetry::log!(onefuzz_telemetry::Verbose, msg);
