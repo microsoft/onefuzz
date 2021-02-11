@@ -8,7 +8,8 @@ namespace Problems {
       }
       if (data[0] == 0) { count++; } 
       if (data[1] == 1) { count++; }
-      if (count >= 2) { throw new Exception("this is bad"); }
+      if (data[2] == 2) { count++; }
+      if (count >= 3) { throw new Exception("this is bad"); }
     }
   }
 }
