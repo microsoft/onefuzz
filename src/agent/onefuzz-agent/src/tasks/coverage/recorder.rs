@@ -90,7 +90,16 @@ impl CoverageRecorder {
                         coverage_path.display()
                     )
                 })?;
-            bail!("no coverage files for input: {}", test_input.display());
+
+            let filename = test_input
+                .file_name()
+                .ok_or_else(|| format_err!("unable to identify coverage input filename"))?;
+
+            bail!(
+                "coverage extraction from {} failed when processing file {:?}.  target appears to be missing sancov instrumentation",
+                self.config.target_exe.display(),
+                filename
+            );
         }
 
         Ok(coverage_path)
