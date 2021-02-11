@@ -102,6 +102,7 @@ impl CoverageTask {
             self.record_corpus_coverage(&mut processor, &synced_dir)
                 .await?;
         }
+        processor.report_total().await?;
 
         Ok(())
     }
