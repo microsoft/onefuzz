@@ -388,7 +388,7 @@ class Client:
         )
         
         if self.multi_tenant_domain is not None:
-            # clear the value in the Issuer Url field per:
+            # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
             app_func_audience = "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
             app_func_issuer = ""
