@@ -65,11 +65,11 @@ from data_migration import migrate
 from registration import (
     OnefuzzAppRole,
     add_application_password,
+    assign_multi_tenant_auth,
     assign_scaleset_role,
     authorize_application,
     register_application,
     update_pool_registration,
-    assign_multi_tenant_auth,
 )
 
 USER_IMPERSONATION = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
