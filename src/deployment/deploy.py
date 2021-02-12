@@ -69,6 +69,7 @@ from registration import (
     authorize_application,
     register_application,
     update_pool_registration,
+    assign_multi_tenant_auth,
 )
 
 USER_IMPERSONATION = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
@@ -118,6 +119,7 @@ class Client:
         migrations: List[str],
         export_appinsights: bool,
         log_service_principal: bool,
+        multi_tenant_domain: str,
         upgrade: bool,
     ):
         self.resource_group = resource_group
@@ -142,6 +144,7 @@ class Client:
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.log_service_principal = log_service_principal
+        self.multi_tenant_domain = multi_tenant_domain
 
         machine = platform.machine()
         system = platform.system()
@@ -274,7 +277,11 @@ class Client:
 
         if not existing:
             logger.info("creating Application registration")
-            url = "https://%s.azurewebsites.net" % self.application_name
+            
+            if self.multi_tenant_domain is not None:
+                url = "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
+            else:
+                url = "https://%s.azurewebsites.net" % self.application_name
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
@@ -291,7 +298,13 @@ class Client:
                 ],
                 app_roles=app_roles,
             )
+
             app = client.applications.create(params)
+
+            if self.multi_tenant_domain is not None:
+            # signInAudience must be set using Microsoft Graph REST API and not Azure AD due to issue:
+            # https://github.com/Azure/azure-cli/issues/14086 requires Microsoft Graph REST API v1.0
+                assign_multi_tenant_auth(app.object_id)
 
             logger.info("creating service principal")
             service_principal_params = ServicePrincipalCreateParameters(
@@ -315,12 +328,18 @@ class Client:
                     role.is_enabled = False
 
                 client.applications.patch(
-                    app.object_id, ApplicationUpdateParameters(app_roles=app.app_roles)
+                    app.object_id, ApplicationUpdateParameters(
+                        app_roles=app.app_roles,
+                        sign_in_audience=audience
+                    )
                 )
 
                 # overriding the list of app roles
                 client.applications.patch(
-                    app.object_id, ApplicationUpdateParameters(app_roles=app_roles)
+                    app.object_id, ApplicationUpdateParameters(
+                        app_roles=app_roles,
+                        sign_in_audience=audience
+                    )
                 )
 
             creds = list(client.applications.list_password_credentials(app.object_id))
@@ -350,6 +369,8 @@ class Client:
 
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password
+
+        import pdb; pdb.set_trace()
 
         # Log `client_secret` for consumption by CI.
         if self.log_service_principal:
@@ -848,6 +869,12 @@ def main() -> None:
         action="store_true",
         help="display service prinipal with info log level",
     )
+    parser.add_argument(
+        "--multi_tenant_domain",
+        type=str,
+        default=None,
+        help="enable multi-tenant authentication with this tenant domain",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -871,6 +898,7 @@ def main() -> None:
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
         log_service_principal=args.log_service_principal,
+        multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
     )
     if args.verbose:

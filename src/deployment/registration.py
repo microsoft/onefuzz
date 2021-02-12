@@ -503,6 +503,21 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
     except adal.AdalError:
         assign_scaleset_role_manually(onefuzz_instance_name, scaleset_name)
 
+def assign_multi_tenant_auth(
+    objectId: str
+) -> None:
+
+    try:
+        query_microsoft_graph(
+            method="PATCH",
+            resource="applications/%s" % objectId,
+            body={ "signInAudience": "AzureADMultipleOrgs"},
+        )
+    except adal.AdalError:
+        raise Exception("error setting signInAudience in ad application %s: %s" %
+            onefuzz_instance_name,
+            adal.AdalError
+        )
 
 def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
