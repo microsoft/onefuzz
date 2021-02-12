@@ -370,8 +370,6 @@ class Client:
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password
 
-        import pdb; pdb.set_trace()
-
         # Log `client_secret` for consumption by CI.
         if self.log_service_principal:
             logger.info("client_id: %s client_secret: %s", app.app_id, password)
