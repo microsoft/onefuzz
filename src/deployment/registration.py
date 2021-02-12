@@ -514,9 +514,9 @@ def assign_multi_tenant_auth(
             body={ "signInAudience": "AzureADMultipleOrgs"},
         )
     except adal.AdalError:
-        raise Exception("error setting signInAudience in ad application %s: %s" %
+        raise Exception("error setting signInAudience in ad application %s: %s" % (
             objectId,
-            adal.AdalError
+            adal.AdalError)
         )
 
 def main() -> None:
