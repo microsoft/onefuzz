@@ -17,6 +17,15 @@
         "signedExpiry": {
             "type": "string"
         },
+        "app_func_issuer": {
+            "type": "string"
+        },
+        "app_func_audience": {
+            "type": "string"
+        },
+        "multi_tenant_domain": {
+            "type": "string"
+        },
         "diagnosticsLogsLevel": {
             "type": "string",
             "defaultValue": "Verbose",
@@ -211,6 +220,10 @@
                             "value": "[listkeys(resourceId('Microsoft.SignalRService/SignalR', variables('signalr-name')), '2018-10-01').primaryConnectionString]"
                         },
                         {
+                            "name": "MULTI_TENANT_DOMAIN",
+                            "value": "[parameters('multi_tenant_domain')]"
+                        },
+                        {
                             "name": "ONEFUZZ_INSTANCE_NAME",
                             "value": "[parameters('name')]"
                         },
@@ -258,11 +271,9 @@
                         "tokenStoreEnabled": true,
                         "clientId": "[parameters('clientId')]",
                         "clientSecret": "[parameters('clientSecret')]",
-                        "issuer": "[concat('https://sts.windows.net/', subscription().tenantId, '/')]",
+                        "issuer": "[parameters('app_func_issuer')]",
                         "defaultProvider": "AzureActiveDirectory",
-                        "allowedAudiences": [
-                            "[concat('https://', parameters('name'), '.azurewebsites.net')]"
-                        ],
+                        "allowedAudiences": ["[parameters('app_func_audience')]"],
                         "isAadAutoProvisioned": false
                     }
                 },

@@ -392,12 +392,27 @@ class Client:
         expiry = (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
+        
+        if self.multi_tenant_domain is not None:
+            # clear the value in the Issuer Url field per:
+            # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
+            app_func_audience = "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
+            app_func_issuer = ""
+            var = {"value": self.multi_tenant_domain}
+        else:
+            app_func_audience = "https://%s.azurewebsites.net" % self.application_name
+            app_func_issuer = "https://sts.windows.net/', subscription().tenantId, '/')]"
+            var = {"value": "disabled"}
+
         params = {
+            "app_func_audience": {"value": app_func_audience},
             "name": {"value": self.application_name},
             "owner": {"value": self.owner},
             "clientId": {"value": self.results["client_id"]},
             "clientSecret": {"value": self.results["client_secret"]},
+            "app_func_issuer": {"value": app_func_issuer},
             "signedExpiry": {"value": expiry},
+            "multi_tenant_domain": var,
             "workbookData": {"value": self.workbook_data},
         }
         deployment = Deployment(
