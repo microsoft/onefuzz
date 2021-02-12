@@ -329,17 +329,13 @@ class Client:
 
                 client.applications.patch(
                     app.object_id, ApplicationUpdateParameters(
-                        app_roles=app.app_roles,
-                        sign_in_audience=audience
-                    )
+                        app_roles=app.app_roles)
                 )
 
                 # overriding the list of app roles
                 client.applications.patch(
                     app.object_id, ApplicationUpdateParameters(
-                        app_roles=app_roles,
-                        sign_in_audience=audience
-                    )
+                        app_roles=app_roles)
                 )
 
             creds = list(client.applications.list_password_credentials(app.object_id))
