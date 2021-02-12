@@ -338,6 +338,7 @@ class AgentConfig(BaseModel):
     heartbeat_queue: Optional[str]
     instrumentation_key: Optional[str]
     telemetry_key: Optional[str]
+    multi_tenant_domain: Optional[str]
     instance_id: UUID
 
 
