@@ -515,7 +515,7 @@ def assign_multi_tenant_auth(
         )
     except adal.AdalError:
         raise Exception("error setting signInAudience in ad application %s: %s" %
-            onefuzz_instance_name,
+            objectId,
             adal.AdalError
         )
 
