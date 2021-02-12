@@ -277,9 +277,12 @@ class Client:
 
         if not existing:
             logger.info("creating Application registration")
-            
+
             if self.multi_tenant_domain is not None:
-                url = "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
+                url = "https://%s/%s" % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                )
             else:
                 url = "https://%s.azurewebsites.net" % self.application_name
 
@@ -302,8 +305,8 @@ class Client:
             app = client.applications.create(params)
 
             if self.multi_tenant_domain is not None:
-            # signInAudience must be set using Microsoft Graph REST API and not Azure AD due to issue:
-            # https://github.com/Azure/azure-cli/issues/14086 requires Microsoft Graph REST API v1.0
+                # signInAudience must be set using Microsoft Graph REST API and not Azure AD due to issue:
+                # https://github.com/Azure/azure-cli/issues/14086 requires Microsoft Graph REST API v1.0
                 assign_multi_tenant_auth(app.object_id)
 
             logger.info("creating service principal")
@@ -328,14 +331,12 @@ class Client:
                     role.is_enabled = False
 
                 client.applications.patch(
-                    app.object_id, ApplicationUpdateParameters(
-                        app_roles=app.app_roles)
+                    app.object_id, ApplicationUpdateParameters(app_roles=app.app_roles)
                 )
 
                 # overriding the list of app roles
                 client.applications.patch(
-                    app.object_id, ApplicationUpdateParameters(
-                        app_roles=app_roles)
+                    app.object_id, ApplicationUpdateParameters(app_roles=app_roles)
                 )
 
             creds = list(client.applications.list_password_credentials(app.object_id))
@@ -386,16 +387,21 @@ class Client:
         expiry = (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
-        
+
         if self.multi_tenant_domain is not None:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
-            app_func_audience = "https://%s/%s" % (self.multi_tenant_domain, self.application_name)
+            app_func_audience = "https://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
             app_func_issuer = ""
             var = {"value": self.multi_tenant_domain}
         else:
             app_func_audience = "https://%s.azurewebsites.net" % self.application_name
-            app_func_issuer = "https://sts.windows.net/', subscription().tenantId, '/')]"
+            app_func_issuer = (
+                "https://sts.windows.net/', subscription().tenantId, '/')]"
+            )
             var = {"value": "disabled"}
 
         params = {
