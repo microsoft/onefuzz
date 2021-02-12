@@ -224,6 +224,10 @@
                             "value": "[listkeys(resourceId('Microsoft.SignalRService/SignalR', variables('signalr-name')), '2018-10-01').primaryConnectionString]"
                         },
                         {
+                            "name": "AzureSignalRServiceTransportType",
+                            "value": "Transient"
+                        },
+                        {
                             "name": "ONEFUZZ_INSTANCE_NAME",
                             "value": "[parameters('name')]"
                         },

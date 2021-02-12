@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::{collections::HashMap, hash::Hash};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use uuid::Uuid;
@@ -117,137 +117,138 @@ impl<'a> Expand<'a> {
         }
     }
 
-    pub fn set_value(&mut self, name: PlaceHolder, value: ExpandedValue<'a>) -> &mut Self {
-        self.values.insert(name.get_string(), value);
-        self
+    pub fn set_value(self, name: PlaceHolder, value: ExpandedValue<'a>) -> Self {
+        let mut values = self.values;
+        values.insert(name.get_string(), value);
+        Self { values }
     }
 
-    pub fn generated_inputs(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn set_optional_ref<'l, T: 'l>(
+        self,
+        value: &'l Option<T>,
+        setter: impl FnOnce(Self, &'l T) -> Self,
+    ) -> Self {
+        if let Some(value) = value {
+            setter(self, value)
+        } else {
+            self
+        }
+    }
+
+    pub fn set_optional<T>(self, value: Option<T>, setter: impl FnOnce(Self, T) -> Self) -> Self {
+        if let Some(value) = value {
+            setter(self, value)
+        } else {
+            self
+        }
+    }
+
+    pub fn generated_inputs(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::GeneratedInputs, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::GeneratedInputs, ExpandedValue::Path(path))
     }
 
-    pub fn crashes(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn crashes(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::Crashes, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::Crashes, ExpandedValue::Path(path))
     }
 
-    pub fn input_path(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn input_path(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::Input, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::Input, ExpandedValue::Path(path))
     }
 
-    pub fn input_marker(&mut self, arg: &str) -> &mut Self {
-        self.set_value(PlaceHolder::Input, ExpandedValue::Scalar(String::from(arg)));
-        self
+    pub fn input_marker(self, arg: &str) -> Self {
+        self.set_value(PlaceHolder::Input, ExpandedValue::Scalar(String::from(arg)))
     }
 
-    pub fn input_corpus(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn input_corpus(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::InputCorpus, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::InputCorpus, ExpandedValue::Path(path))
     }
 
-    pub fn generator_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn generator_exe(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::GeneratorExe, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::GeneratorExe, ExpandedValue::Path(path))
     }
 
-    pub fn generator_options(&mut self, arg: &'a [String]) -> &mut Self {
-        self.set_value(PlaceHolder::GeneratorOptions, ExpandedValue::List(arg));
-        self
+    pub fn generator_options(self, arg: &'a [String]) -> Self {
+        self.set_value(PlaceHolder::GeneratorOptions, ExpandedValue::List(arg))
     }
 
-    pub fn target_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn target_exe(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::TargetExe, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::TargetExe, ExpandedValue::Path(path))
     }
 
-    pub fn target_options(&mut self, arg: &'a [String]) -> &mut Self {
-        self.set_value(PlaceHolder::TargetOptions, ExpandedValue::List(arg));
-        self
+    pub fn target_options(self, arg: &'a [String]) -> Self {
+        self.set_value(PlaceHolder::TargetOptions, ExpandedValue::List(arg))
     }
 
-    pub fn analyzer_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn analyzer_exe(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::AnalyzerExe, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::AnalyzerExe, ExpandedValue::Path(path))
     }
 
-    pub fn analyzer_options(&mut self, arg: &'a [String]) -> &mut Self {
-        self.set_value(PlaceHolder::AnalyzerOptions, ExpandedValue::List(arg));
-        self
+    pub fn analyzer_options(self, arg: &'a [String]) -> Self {
+        self.set_value(PlaceHolder::AnalyzerOptions, ExpandedValue::List(arg))
     }
 
-    pub fn supervisor_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn supervisor_exe(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::SupervisorExe, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::SupervisorExe, ExpandedValue::Path(path))
     }
 
-    pub fn supervisor_options(&mut self, arg: &'a [String]) -> &mut Self {
-        self.set_value(PlaceHolder::SupervisorOptions, ExpandedValue::List(arg));
-        self
+    pub fn supervisor_options(self, arg: &'a [String]) -> Self {
+        self.set_value(PlaceHolder::SupervisorOptions, ExpandedValue::List(arg))
     }
 
-    pub fn output_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn output_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::OutputDir, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::OutputDir, ExpandedValue::Path(path))
     }
 
-    pub fn reports_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn reports_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::ReportsDir, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::ReportsDir, ExpandedValue::Path(path))
     }
 
-    pub fn tools_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn tools_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::ToolsDir, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::ToolsDir, ExpandedValue::Path(path))
     }
 
-    pub fn runtime_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn runtime_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::RuntimeDir, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::RuntimeDir, ExpandedValue::Path(path))
     }
 
-    pub fn setup_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn setup_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path))
     }
 
-    pub fn task_id(&mut self, arg: &Uuid) -> &mut Self {
+    pub fn task_id(self, arg: &Uuid) -> Self {
         let value = arg.to_hyphenated().to_string();
-        self.set_value(PlaceHolder::TaskId, ExpandedValue::Scalar(value));
-        self
+        self.set_value(PlaceHolder::TaskId, ExpandedValue::Scalar(value))
     }
 
-    pub fn job_id(&mut self, arg: &Uuid) -> &mut Self {
+    pub fn job_id(self, arg: &Uuid) -> Self {
         let value = arg.to_hyphenated().to_string();
-        self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value));
-        self
+        self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value))
     }
 
     fn replace_value(

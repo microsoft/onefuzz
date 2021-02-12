@@ -76,7 +76,7 @@ impl Agent {
             let done = self.update().await?;
 
             if done {
-                verbose!("agent done, exiting loop");
+                debug!("agent done, exiting loop");
                 break;
             }
         }
@@ -123,7 +123,7 @@ impl Agent {
         let msg = self.work_queue.poll().await?;
 
         let next = if let Some(msg) = msg {
-            verbose!("received work set message: {:?}", msg);
+            debug!("received work set message: {:?}", msg);
 
             let can_schedule = self.coordinator.can_schedule(&msg.work_set).await?;
 
@@ -169,7 +169,7 @@ impl Agent {
                     // Otherwise, the work was not stopped, but we still should not execute it. This is likely
                     // our because agent version is out of date. Do nothing, so another node can see the work.
                     // The service will eventually send us a stop command and reimage our node, if appropriate.
-                    verbose!(
+                    debug!(
                         "not scheduling active work set, not dropping: {:?}",
                         msg.work_set
                     );
@@ -187,7 +187,7 @@ impl Agent {
     }
 
     async fn setting_up(&mut self, state: State<SettingUp>) -> Result<Scheduler> {
-        verbose!("agent setting up");
+        debug!("agent setting up");
 
         let tasks = state.work_set().task_ids();
         self.emit_state_update_if_changed(StateUpdateEvent::SettingUp { tasks })
@@ -203,7 +203,7 @@ impl Agent {
     }
 
     async fn pending_reboot(&mut self, state: State<PendingReboot>) -> Result<Scheduler> {
-        verbose!("agent pending reboot");
+        debug!("agent pending reboot");
         self.emit_state_update_if_changed(StateUpdateEvent::Rebooting)
             .await?;
 
@@ -215,7 +215,7 @@ impl Agent {
     }
 
     async fn ready(&mut self, state: State<Ready>) -> Result<Scheduler> {
-        verbose!("agent ready");
+        debug!("agent ready");
         self.emit_state_update_if_changed(StateUpdateEvent::Ready)
             .await?;
         Ok(state.run().await?.into())
@@ -237,7 +237,7 @@ impl Agent {
     }
 
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
-        verbose!("agent done");
+        debug!("agent done");
         set_done_lock().await?;
 
         let event = match state.cause() {
@@ -263,7 +263,7 @@ impl Agent {
         let cmd = self.coordinator.poll_commands().await?;
 
         if let Some(cmd) = cmd {
-            verbose!("agent received node command: {:?}", cmd);
+            debug!("agent received node command: {:?}", cmd);
             self.scheduler()?.execute_command(cmd).await?;
         }
 

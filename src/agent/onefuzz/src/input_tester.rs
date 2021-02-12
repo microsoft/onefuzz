@@ -12,7 +12,7 @@ use anyhow::{Error, Result};
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
-const DEFAULT_TIMEOUT_SECS: u64 = 5;
+const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
 const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {
@@ -47,23 +47,60 @@ impl<'a> Tester<'a> {
         exe_path: &'a Path,
         arguments: &'a [String],
         environ: &'a HashMap<String, String>,
-        timeout: &'a Option<u64>,
-        check_asan_log: bool,
-        check_asan_stderr: bool,
-        check_debugger: bool,
-        check_retry_count: u64,
     ) -> Self {
-        let timeout = Duration::from_secs(timeout.unwrap_or(DEFAULT_TIMEOUT_SECS));
         Self {
             setup_dir,
             exe_path,
             arguments,
             environ,
-            timeout,
-            check_asan_log,
-            check_asan_stderr,
-            check_debugger,
-            check_retry_count,
+            timeout: DEFAULT_TIMEOUT,
+            check_asan_log: false,
+            check_asan_stderr: false,
+            check_debugger: false,
+            check_retry_count: 0,
+        }
+    }
+
+    pub fn timeout(self, value: u64) -> Self {
+        Self {
+            timeout: Duration::from_secs(value),
+            ..self
+        }
+    }
+
+    pub fn check_asan_log(self, value: bool) -> Self {
+        Self {
+            check_asan_log: value,
+            ..self
+        }
+    }
+
+    pub fn check_asan_stderr(self, value: bool) -> Self {
+        Self {
+            check_asan_stderr: value,
+            ..self
+        }
+    }
+
+    pub fn check_debugger(self, value: bool) -> Self {
+        Self {
+            check_debugger: value,
+            ..self
+        }
+    }
+
+    pub fn check_retry_count(self, value: u64) -> Self {
+        Self {
+            check_retry_count: value,
+            ..self
+        }
+    }
+
+    pub fn set_optional<T>(self, value: Option<T>, setter: impl FnOnce(Self, T) -> Self) -> Self {
+        if let Some(value) = value {
+            setter(self, value)
+        } else {
+            self
         }
     }
 
@@ -192,13 +229,11 @@ impl<'a> Tester<'a> {
         };
 
         let (argv, env) = {
-            let mut expand = Expand::new();
-            expand
+            let expand = Expand::new()
                 .input_path(input_file)
                 .target_exe(&self.exe_path)
-                .target_options(&self.arguments);
-
-            expand.setup_dir(&self.setup_dir);
+                .target_options(&self.arguments)
+                .setup_dir(&self.setup_dir);
 
             let argv = expand.evaluate(&self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();

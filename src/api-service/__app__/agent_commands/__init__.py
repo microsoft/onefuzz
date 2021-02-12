@@ -10,8 +10,8 @@ from onefuzztypes.responses import BoolResult, PendingNodeCommand
 
 from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.events import get_events
-from ..onefuzzlib.pools import NodeMessage
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.nodes import NodeMessage
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:

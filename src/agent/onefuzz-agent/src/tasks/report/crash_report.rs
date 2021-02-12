@@ -9,10 +9,10 @@ use onefuzz::{
     fs::exists,
     monitor::DirectoryMonitor,
     syncdir::SyncedDir,
-    telemetry::{
-        Event::{new_report, new_unable_to_reproduce, new_unique_report},
-        EventData,
-    },
+};
+use onefuzz_telemetry::{
+    Event::{new_report, new_unable_to_reproduce, new_unique_report},
+    EventData,
 };
 use reqwest::{StatusCode, Url};
 use reqwest_retry::SendRetry;
@@ -224,7 +224,7 @@ pub async fn monitor_reports(
     no_crash: &Option<SyncedDir>,
 ) -> Result<()> {
     if unique_reports.is_none() && reports.is_none() && no_crash.is_none() {
-        verbose!("no report directories configured");
+        debug!("no report directories configured");
         return Ok(());
     }
 

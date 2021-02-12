@@ -123,12 +123,10 @@ impl<'a> GenericReportProcessor<'a> {
             &config.target_exe,
             &config.target_options,
             &config.target_env,
-            &config.target_timeout,
-            config.check_asan_log,
-            false,
-            config.check_debugger,
-            config.check_retry_count,
-        );
+        )
+        .check_asan_log(config.check_asan_log)
+        .check_debugger(config.check_debugger)
+        .check_retry_count(config.check_retry_count);
 
         Self {
             config,
@@ -200,7 +198,7 @@ impl<'a> GenericReportProcessor<'a> {
 #[async_trait]
 impl<'a> Processor for GenericReportProcessor<'a> {
     async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
-        verbose!("generating crash report for: {}", input.display());
+        debug!("generating crash report for: {}", input.display());
         let report = self.test_input(url, input).await?;
         report
             .save(

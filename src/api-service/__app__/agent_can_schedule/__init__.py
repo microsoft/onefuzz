@@ -11,9 +11,9 @@ from onefuzztypes.responses import CanSchedule
 
 from ..onefuzzlib.endpoint_authorization import call_if_agent
 from ..onefuzzlib.events import get_events
-from ..onefuzzlib.pools import Node
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.tasks.main import Task
+from ..onefuzzlib.workers.nodes import Node
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:

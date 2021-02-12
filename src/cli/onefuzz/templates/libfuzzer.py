@@ -3,11 +3,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import os
 from typing import Dict, List, Optional
 
-from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
+from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
-from onefuzztypes.primitives import Container, Directory, File
+from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
@@ -35,7 +36,7 @@ class Libfuzzer(Command):
         *,
         job: Job,
         containers: Dict[ContainerType, Container],
-        pool_name: str,
+        pool_name: PoolName,
         target_exe: str,
         vm_count: int = 2,
         reboot_after_setup: bool = False,
@@ -145,7 +146,7 @@ class Libfuzzer(Command):
         project: str,
         name: str,
         build: str,
-        pool_name: str,
+        pool_name: PoolName,
         *,
         target_exe: File = File("fuzz.exe"),
         setup_dir: Optional[Directory] = None,
@@ -261,7 +262,7 @@ class Libfuzzer(Command):
         project: str,
         name: str,
         build: str,
-        pool_name: str,
+        pool_name: PoolName,
         *,
         target_exe: File = File("fuzz.exe"),
         setup_dir: Optional[Directory] = None,
@@ -371,6 +372,117 @@ class Libfuzzer(Command):
             debug=debug,
             preserve_existing_outputs=preserve_existing_outputs,
             check_fuzzer_help=check_fuzzer_help,
+        )
+
+        self.logger.info("done creating tasks")
+        helper.wait()
+        return helper.job
+
+    def dotnet(
+        self,
+        project: str,
+        name: str,
+        build: str,
+        pool_name: PoolName,
+        *,
+        setup_dir: Directory,
+        target_harness: str,
+        vm_count: int = 1,
+        inputs: Optional[Directory] = None,
+        reboot_after_setup: bool = False,
+        duration: int = 24,
+        target_workers: Optional[int] = None,
+        target_options: Optional[List[str]] = None,
+        target_env: Optional[Dict[str, str]] = None,
+        tags: Optional[Dict[str, str]] = None,
+        wait_for_running: bool = False,
+        wait_for_files: Optional[List[ContainerType]] = None,
+        existing_inputs: Optional[Container] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
+        check_fuzzer_help: bool = True,
+        expect_crash_on_failure: bool = True,
+    ) -> Optional[Job]:
+
+        """
+        libfuzzer-dotnet task
+        """
+
+        harness = "libfuzzer-dotnet"
+
+        pool = self.onefuzz.pools.get(pool_name)
+        if pool.os != OS.linux:
+            raise Exception("libfuzzer-dotnet jobs are only compatable on linux")
+
+        target_exe = File(os.path.join(setup_dir, harness))
+        if not os.path.exists(target_exe):
+            raise Exception(f"missing harness: {target_exe}")
+
+        assembly_path = os.path.join(setup_dir, target_harness)
+        if not os.path.exists(assembly_path):
+            raise Exception(f"missing assembly: {assembly_path}")
+
+        self._check_is_libfuzzer(target_exe)
+        if target_options is None:
+            target_options = []
+        target_options = [
+            "--target_path={setup_dir}/" f"{target_harness}"
+        ] + target_options
+
+        helper = JobHelper(
+            self.onefuzz,
+            self.logger,
+            project,
+            name,
+            build,
+            duration,
+            pool_name=pool_name,
+            target_exe=target_exe,
+        )
+
+        helper.add_tags(tags)
+        helper.define_containers(
+            ContainerType.setup,
+            ContainerType.inputs,
+            ContainerType.crashes,
+        )
+
+        if existing_inputs:
+            self.onefuzz.containers.get(existing_inputs)
+            helper.containers[ContainerType.inputs] = existing_inputs
+        else:
+            helper.define_containers(ContainerType.inputs)
+
+        fuzzer_containers = [
+            (ContainerType.setup, helper.containers[ContainerType.setup]),
+            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
+            (ContainerType.inputs, helper.containers[ContainerType.inputs]),
+        ]
+
+        helper.create_containers()
+
+        helper.upload_setup(setup_dir, target_exe)
+        if inputs:
+            helper.upload_inputs(inputs)
+        helper.wait_on(wait_for_files, wait_for_running)
+
+        self.onefuzz.tasks.create(
+            helper.job.job_id,
+            TaskType.libfuzzer_fuzz,
+            harness,
+            fuzzer_containers,
+            pool_name=pool_name,
+            reboot_after_setup=reboot_after_setup,
+            duration=duration,
+            vm_count=vm_count,
+            target_options=target_options,
+            target_env=target_env,
+            target_workers=target_workers,
+            tags=tags,
+            debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
+            check_fuzzer_help=check_fuzzer_help,
+            expect_crash_on_failure=expect_crash_on_failure,
         )
 
         self.logger.info("done creating tasks")

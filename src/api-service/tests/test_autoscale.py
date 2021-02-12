@@ -12,8 +12,8 @@ from onefuzztypes.models import TaskConfig, TaskContainers, TaskDetails, TaskPoo
 from onefuzztypes.primitives import Container, PoolName
 
 from __app__.onefuzzlib.autoscale import autoscale_pool, get_vm_count
-from __app__.onefuzzlib.pools import Pool
 from __app__.onefuzzlib.tasks.main import Task
+from __app__.onefuzzlib.workers.pools import Pool
 
 
 class TestAutoscale(unittest.TestCase):

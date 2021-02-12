@@ -6,13 +6,14 @@ extern crate async_trait;
 #[macro_use]
 extern crate downcast_rs;
 #[macro_use]
-extern crate onefuzz;
-#[macro_use]
 extern crate serde;
 #[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate anyhow;
+#[macro_use]
+extern crate onefuzz_telemetry;
+extern crate onefuzz;
 
 use crate::{
     config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::*, work::WorkSet,
@@ -24,8 +25,8 @@ use anyhow::Result;
 use onefuzz::{
     machine_id::{get_machine_id, get_scaleset_name},
     process::ExitStatus,
-    telemetry::{self, EventData},
 };
+use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use structopt::StructOpt;
 
 pub mod agent;
@@ -88,7 +89,7 @@ fn licenses() -> Result<()> {
 
 fn run(opt: RunOpt) -> Result<()> {
     if done::is_agent_done()? {
-        verbose!(
+        debug!(
             "agent is done, remove lock ({}) to continue",
             done::done_path()?.display()
         );
@@ -170,6 +171,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     telemetry::set_property(EventData::InstanceId(config.instance_id));
     telemetry::set_property(EventData::MachineId(get_machine_id().await?));
     telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
+    telemetry::set_property(EventData::Role(Role::Supervisor));
     let scaleset = get_scaleset_name().await?;
     if let Some(scaleset_name) = &scaleset {
         telemetry::set_property(EventData::ScalesetId(scaleset_name.to_string()));
@@ -185,10 +187,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
             }
         }
     };
-    verbose!("current registration: {:?}", registration);
+    debug!("current registration: {:?}", registration);
 
     let mut coordinator = coordinator::Coordinator::new(registration.clone()).await?;
-    verbose!("initialized coordinator");
+    debug!("initialized coordinator");
 
     let mut reboot = reboot::Reboot;
     let reboot_context = reboot.load_context().await?;
@@ -196,7 +198,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         check_existing_worksets(&mut coordinator).await?;
     }
     let scheduler = reboot_context.into();
-    verbose!("loaded scheduler: {}", scheduler);
+    debug!("loaded scheduler: {}", scheduler);
 
     let work_queue = work::WorkQueue::new(registration.clone());
 

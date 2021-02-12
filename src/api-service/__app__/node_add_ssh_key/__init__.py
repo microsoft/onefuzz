@@ -11,8 +11,8 @@ from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.events import get_events
-from ..onefuzzlib.pools import Node
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.nodes import Node
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:

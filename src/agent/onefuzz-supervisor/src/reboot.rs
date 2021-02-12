@@ -49,7 +49,7 @@ impl Reboot {
             .await
             .with_context(|| format!("unable to save reboot context: {}", path.display()))?;
 
-        verbose!("reboot context saved");
+        debug!("reboot context saved");
 
         Ok(())
     }
@@ -106,7 +106,7 @@ impl Reboot {
     fn wait_for_reboot(&self) -> Result<()> {
         use std::{thread, time};
 
-        verbose!("waiting for reboot");
+        debug!("waiting for reboot");
 
         // 10 minutes.
         let d = time::Duration::from_secs(60 * 10);
