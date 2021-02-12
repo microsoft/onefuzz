@@ -212,16 +212,16 @@
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountNameFunc'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
                         },
                         {
+                            "name": "MULTI_TENANT_DOMAIN",
+                            "value": "[parameters('multi_tenant_domain')]"
+                        },
+                        {
                             "name": "AzureWebJobsDisableHomepage",
                             "value": "true"
                         },
                         {
                             "name": "AzureSignalRConnectionString",
                             "value": "[listkeys(resourceId('Microsoft.SignalRService/SignalR', variables('signalr-name')), '2018-10-01').primaryConnectionString]"
-                        },
-                        {
-                            "name": "MULTI_TENANT_DOMAIN",
-                            "value": "[parameters('multi_tenant_domain')]"
                         },
                         {
                             "name": "ONEFUZZ_INSTANCE_NAME",
