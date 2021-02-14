@@ -396,13 +396,13 @@ class Client:
                 self.application_name,
             )
             app_func_issuer = ""
-            var = {"value": self.multi_tenant_domain}
+            multi_tenant_domain = {"value": self.multi_tenant_domain}
         else:
             app_func_audience = "https://%s.azurewebsites.net" % self.application_name
             app_func_issuer = (
                 "https://sts.windows.net/', subscription().tenantId, '/')]"
             )
-            var = {"value": ""}
+            multi_tenant_domain = {"value": ""}
 
         params = {
             "app_func_audience": {"value": app_func_audience},
@@ -412,7 +412,7 @@ class Client:
             "clientSecret": {"value": self.results["client_secret"]},
             "app_func_issuer": {"value": app_func_issuer},
             "signedExpiry": {"value": expiry},
-            "multi_tenant_domain": var,
+            "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
         }
         deployment = Deployment(
