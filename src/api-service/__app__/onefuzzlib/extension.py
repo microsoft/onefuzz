@@ -116,8 +116,7 @@ def build_pool_config(pool: Pool) -> str:
     multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
     if multi_tenant_domain:
         config.multi_tenant_domain = multi_tenant_domain
-        config.tenant = "common"
-        config.resource = (
+        config.onefuzz_url = (
             "https://"
             + multi_tenant_domain
             + "/"

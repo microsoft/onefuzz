@@ -45,7 +45,6 @@ def set_config(pool: Pool) -> Pool:
     if multi_tenant_domain:
         pool.config.multi_tenant_domain = multi_tenant_domain
         pool.config.tenant = "common"
-        pool.config.resource = (
             "https://"
             + multi_tenant_domain
             + "/"
