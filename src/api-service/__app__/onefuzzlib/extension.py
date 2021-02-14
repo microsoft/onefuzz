@@ -113,8 +113,10 @@ def build_pool_config(pool: Pool) -> str:
         instance_id=get_instance_id(),
     )
 
-    if os.environ.get("MULTI_TENANT_DOMAIN") is not None:
-        config.multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
+    multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
+    if multi_tenant_domain:
+        config.multi_tenant_domain = multi_tenant_domain
+        config.tenant = "common"
 
     filename = f"{pool.name}/config.json"
 

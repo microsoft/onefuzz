@@ -402,7 +402,7 @@ class Client:
             app_func_issuer = (
                 "https://sts.windows.net/', subscription().tenantId, '/')]"
             )
-            var = {"value": "disabled"}
+            var = {"value": ""}
 
         params = {
             "app_func_audience": {"value": app_func_audience},
