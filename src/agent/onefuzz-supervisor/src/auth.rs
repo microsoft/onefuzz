@@ -123,7 +123,7 @@ impl ClientCredentials {
                 ("client_secret", self.client_secret.expose_ref().to_string()),
                 ("grant_type", "client_credentials".into()),
                 ("tenant", self.tenant.clone()),
-                ("scope", format!("{}.default", "https://mspmecloud.onmicrosoft.com/anslutsk-testing1337/")),
+                ("scope", format!("{}.default", "https://mspmecloud.onmicrosoft.com/anslutsk-testing1337/".to_string())),
             ])
             .send_retry_default()
             .await?
