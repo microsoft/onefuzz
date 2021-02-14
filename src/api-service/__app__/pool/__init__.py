@@ -44,10 +44,6 @@ def set_config(pool: Pool) -> Pool:
     multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
     if multi_tenant_domain:
         pool.config.multi_tenant_domain = multi_tenant_domain
-        pool.config.onefuzz_url = "https://%s/%s" % (
-            multi_tenant_domain,
-            os.environ.get("ONEFUZZ_INSTANCE_NAME"),
-        )
     return pool
 
 
