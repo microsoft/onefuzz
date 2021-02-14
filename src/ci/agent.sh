@@ -31,7 +31,7 @@ cd src/agent
 cargo fmt -- --check
 # RUSTSEC-2020-0016: a dependency net2 (pulled in from tokio) is deprecated
 # RUSTSEC-2020-0036: a dependency failure (pulled from proc-maps) is deprecated
-cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036
+#cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036
 cargo-license -j > data/licenses.json
 cargo build --release --locked
 cargo clippy --release -- -D warnings
