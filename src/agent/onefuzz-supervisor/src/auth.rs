@@ -109,7 +109,8 @@ impl ClientCredentials {
             .extend(&[&self.tenant, "oauth2", "v2.0", "token"]);
 
         // How is self.tenant populated? It looks like std::env::var("ONEFUZZ_TENANT")
-        // But I cannot find any reference in the entire OneFuzz project for where it's set
+        // But I cannot find any reference in the entire OneFuzz project for where it's set. So
+        // we may also need to assign 'https://login.microsoftonline.com/common" to self.tenant
 
         // If "multi_tenant_domain" exists in config.json then format self.resource:
         // self.resource = "https://<multi_tenant_domain>/<instance_name>/
