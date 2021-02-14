@@ -108,13 +108,13 @@ impl ClientCredentials {
             .expect("Authority URL is cannot-be-a-base")
             .extend(&[&self.tenant, "oauth2", "v2.0", "token"]);
 
-        // How is self.tenant populated? It looks like std::env::var("ONEFUZZ_TENANT")
-        // But I cannot find any reference in the entire OneFuzz project for where it's set. So
-        // we may also need to assign 'https://login.microsoftonline.com/common" to self.tenant
-
         // If "multi_tenant_domain" exists in config.json then format self.resource:
         // self.resource = "https://<multi_tenant_domain>/<instance_name>/
         // Where <instance_name> is parsed out of the config item 'onefuzz_url'
+
+        // How is self.tenant populated? It looks like std::env::var("ONEFUZZ_TENANT")
+        // But I cannot find any reference in the entire OneFuzz project for where it's set. So
+        // we may also need to assign 'https://login.microsoftonline.com/common" to self.tenant
 
         let response = reqwest::Client::new()
             .post(url)
@@ -124,7 +124,10 @@ impl ClientCredentials {
                 ("client_secret", self.client_secret.expose_ref().to_string()),
                 ("grant_type", "client_credentials".into()),
                 ("tenant", self.tenant.clone()),
-                ("scope", "https://mspmecloud.onmicrosoft.com/anslutsk-testing1337/.default".to_string()),
+                (
+                    "scope",
+                    "https://mspmecloud.onmicrosoft.com/anslutsk-testing1337/.default".to_string(),
+                ),
             ])
             .send_retry_default()
             .await?
