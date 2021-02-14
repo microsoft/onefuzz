@@ -112,7 +112,7 @@ impl ClientCredentials {
         // But I cannot find any reference in the entire OneFuzz project for where it's set
 
         // If "multi_tenant_domain" exists in config.json then format self.resource:
-        // self.resource = "https://<multi_tenant_domain>/<instance_name>
+        // self.resource = "https://<multi_tenant_domain>/<instance_name>/
         // Where <instance_name> is parsed out of the config item 'onefuzz_url'
 
         let response = reqwest::Client::new()
