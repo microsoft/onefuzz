@@ -114,10 +114,12 @@ def build_pool_config(pool: Pool) -> str:
     )
 
     multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
-    if multi_tenant_domain is not None and multi_tenant_domain:
-        instance_name = os.environ.get("ONEFUZZ_INSTANCE_NAME")
+    if multi_tenant_domain:
         config.multi_tenant_domain = multi_tenant_domain
-        config.onefuzz_url = "https://" + multi_tenant_domain + "/" + instance_name
+        config.onefuzz_url = "https://%s/%s" % (
+            multi_tenant_domain,
+            os.environ.get("ONEFUZZ_INSTANCE_NAME"),
+        )
 
     filename = f"{pool.name}/config.json"
 
