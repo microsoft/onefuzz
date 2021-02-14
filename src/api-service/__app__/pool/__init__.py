@@ -45,12 +45,7 @@ def set_config(pool: Pool) -> Pool:
     if multi_tenant_domain is not None and multi_tenant_domain:
         pool.config.multi_tenant_domain = multi_tenant_domain
         instance_name = os.environ.get("ONEFUZZ_INSTANCE_NAME")
-        pool.config.onefuzz_url = (
-            "https://"
-            + multi_tenant_domain
-            + "/"
-            + instance_name
-        )
+        pool.config.onefuzz_url = "https://" + multi_tenant_domain + "/" + instance_name
     return pool
 
 
