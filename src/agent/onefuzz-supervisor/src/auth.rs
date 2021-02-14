@@ -108,9 +108,6 @@ impl ClientCredentials {
             .expect("Authority URL is cannot-be-a-base")
             .extend(&[&self.tenant, "oauth2", "v2.0", "token"]);
 
-        info!("VAR self.tenant 1111111111111111111: {}", self.tenant);
-        info!("VAR &self.tenant 2222222222222222222: {}", &self.tenant);
-
         let response = reqwest::Client::new()
             .post(url)
             .header("Content-Length", "0")
