@@ -172,20 +172,29 @@ impl From<ClientAccessTokenBody> for AccessToken {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ManagedIdentityCredentials {
     resource: String,
+    multi_tenant_domain: String,
 }
 
 const MANAGED_IDENTITY_URL: &str =
     "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01";
 
 impl ManagedIdentityCredentials {
-    pub fn new(resource: String) -> Self {
-        Self { resource }
+    pub fn new(resource: String, multi_tenant_domain: String) -> Self {
+        Self {
+            resource,
+            multi_tenant_domain,
+        }
     }
 
     fn url(&self) -> Url {
         let mut url = Url::parse(MANAGED_IDENTITY_URL).unwrap();
-        url.query_pairs_mut()
-            .append_pair("resource", &self.resource);
+
+        let url2 = Url::parse(&self.resource).unwrap();
+        let host = url2.host_str().unwrap();
+        let instance: Vec<&str> = host.split('.').collect();
+        let resource = format!("https://{}/{}/", &self.multi_tenant_domain, instance[0]);
+
+        url.query_pairs_mut().append_pair("resource", &resource);
         url
     }
 
