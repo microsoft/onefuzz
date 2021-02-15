@@ -111,18 +111,16 @@ impl ClientCredentials {
     }
 
     pub async fn access_token(&self) -> Result<AccessToken> {
-        // How is self.tenant populated? It looks like from std::env::var("ONEFUZZ_TENANT")
-        // But I cannot find any reference in the project for where it's set. So
-        // we may also need to assign 'https://login.microsoftonline.com/common" to self.tenant
-        // but maybe not depending if the Managed Identity just assumes it's own tenant
+        // If let [Optional] "multi_tenant_domain" item exists then set authority to 'common' otherwise use self.tenant
+        let authority = String::from("common");
 
         let mut url = Url::parse("https://login.microsoftonline.com")?;
         url.path_segments_mut()
             .expect("Authority URL is cannot-be-a-base")
-            .extend(&[&self.tenant, "oauth2", "v2.0", "token"]);
+            .extend(&[&authority, "oauth2", "v2.0", "token"]);
 
-        // If [Optional] "multi_tenant_domain" item exists in config.json then format the scope
-        // using the following format instead of what is already in self.resource:
+        // If let [Optional] "multi_tenant_domain" item exists then format the scope
+        // using the following format, otherwise use self.resource:
         //    <instance_name> is parsed out of the config item 'onefuzz_url'
         //    self.resource = "https://<multi_tenant_domain>/<instance_name>/
         //
