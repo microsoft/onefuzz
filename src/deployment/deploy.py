@@ -77,6 +77,7 @@ ONEFUZZ_CLI_APP = "72f1562a-8c0c-41ea-beb9-fa2b71c80134"
 ONEFUZZ_CLI_AUTHORITY = (
     "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
 )
+COMMON_AUTHORITY = "https://login.microsoftonline.com/common"
 TELEMETRY_NOTICE = (
     "Telemetry collection on stats and OneFuzz failures are sent to Microsoft. "
     "To disable, delete the ONEFUZZ_TELEMETRY application setting in the "
@@ -132,14 +133,14 @@ class Client:
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
+        self.multi_tenant_domain = multi_tenant_domain
         self.upgrade = upgrade
         self.results: Dict = {
             "client_id": client_id,
             "client_secret": client_secret,
         }
-        self.multi_tenant_domain = multi_tenant_domain
-        if multi_tenant_domain:
-            authority = self.multi_tenant_domain
+        if self.multi_tenant_domain:
+            authority = COMMON_AUTHORITY
         else:
             authority = ONEFUZZ_CLI_AUTHORITY
         self.cli_config: Dict[str, Union[str, UUID]] = {
@@ -360,9 +361,13 @@ class Client:
             app_info = register_application(
                 "onefuzz-cli", self.application_name, OnefuzzAppRole.CliClient
             )
+            if self.multi_tenant_domain:
+                authority = COMMON_AUTHORITY
+            else:
+                authority = ONEFUZZ_CLI_AUTHORITY
             self.cli_config = {
                 "client_id": app_info.client_id,
-                "authority": app_info.authority,
+                "authority": authority,
             }
 
         else:
