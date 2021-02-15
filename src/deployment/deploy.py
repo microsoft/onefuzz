@@ -776,7 +776,7 @@ class Client:
         )
         multi_tenant_domain = ""
         if self.multi_tenant_domain:
-            multi_tenant_domain = "--multi_tenant_domain %s" % self.multi_tenant_domain
+            multi_tenant_domain = "--tenant_domain %s" % self.multi_tenant_domain
         logger.info(
             "Update your CLI config via: onefuzz config --endpoint "
             "https://%s.azurewebsites.net --authority %s --client_id %s %s %s",
