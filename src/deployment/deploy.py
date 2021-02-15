@@ -137,14 +137,18 @@ class Client:
             "client_id": client_id,
             "client_secret": client_secret,
         }
+        self.multi_tenant_domain = multi_tenant_domain
+        if multi_tenant_domain:
+            authority = self.multi_tenant_domain
+        else:
+            authority = ONEFUZZ_CLI_AUTHORITY
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": ONEFUZZ_CLI_APP,
-            "authority": ONEFUZZ_CLI_AUTHORITY,
+            "authority": authority,
         }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.log_service_principal = log_service_principal
-        self.multi_tenant_domain = multi_tenant_domain
 
         machine = platform.machine()
         system = platform.system()
@@ -278,7 +282,7 @@ class Client:
         if not existing:
             logger.info("creating Application registration")
 
-            if self.multi_tenant_domain is not None:
+            if self.multi_tenant_domain:
                 url = "https://%s/%s" % (
                     self.multi_tenant_domain,
                     self.application_name,
@@ -304,7 +308,7 @@ class Client:
 
             app = client.applications.create(params)
 
-            if self.multi_tenant_domain is not None:
+            if self.multi_tenant_domain:
                 # signInAudience must be set using Microsoft Graph REST API and not Azure AD due to issue:
                 # https://github.com/Azure/azure-cli/issues/14086 requires Microsoft Graph REST API v1.0
                 assign_multi_tenant_auth(app.object_id)
@@ -388,7 +392,7 @@ class Client:
             "%Y-%m-%dT%H:%M:%SZ"
         )
 
-        if self.multi_tenant_domain is not None:
+        if self.multi_tenant_domain:
             # clear the value in the Issuer Url field:
             # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
             app_func_audience = "https://%s/%s" % (
@@ -765,13 +769,17 @@ class Client:
             if "client_secret" in self.cli_config
             else ""
         )
+        multi_tenant_domain = ""
+        if self.multi_tenant_domain:
+            multi_tenant_domain = "--multi_tenant_domain %s" % self.multi_tenant_domain
         logger.info(
             "Update your CLI config via: onefuzz config --endpoint "
-            "https://%s.azurewebsites.net --authority %s --client_id %s %s",
+            "https://%s.azurewebsites.net --authority %s --client_id %s %s %s",
             self.application_name,
             self.cli_config["authority"],
             self.cli_config["client_id"],
             client_secret_arg,
+            multi_tenant_domain,
         )
 
 
