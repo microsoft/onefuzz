@@ -130,11 +130,11 @@ impl ClientCredentials {
 
         let url = Url::parse(&self.resource.clone())?;
         let host = url.host_str().unwrap();
-        let instance: Vec<&str> = host.split(".").collect();
-        let resource = String::from(format!(
+        let instance: Vec<&str> = host.split('.').collect();
+        let resource = format!(
             "https://{}/{}/",
             &self.multi_tenant_domain, instance[0]
-        ));
+        );
 
         let response = reqwest::Client::new()
             .post(url)
