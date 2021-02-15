@@ -111,25 +111,26 @@ impl ClientCredentials {
     }
 
     pub async fn access_token(&self) -> Result<AccessToken> {
-        // If let [Optional] "multi_tenant_domain" item exists then set authority to 'common' otherwise use self.tenant
+        // If let [Optional] "multi_tenant_domain" item exists:
+        // then set authority to 'common'
+        // else use self.tenant
         let authority = String::from("common");
 
         let mut url = Url::parse("https://login.microsoftonline.com")?;
         url.path_segments_mut()
             .expect("Authority URL is cannot-be-a-base")
-            .extend(&[&authority, "oauth2", "v2.0", "token"]);
+            .extend(&[&authority.clone(), "oauth2", "v2.0", "token"]);
 
-        // If let [Optional] "multi_tenant_domain" item exists then format the scope
-        // using the following format, otherwise use self.resource:
+        // If let [Optional] "multi_tenant_domain" item exists:
+        // then format the scope using the following format:
         //    <instance_name> is parsed out of the config item 'onefuzz_url'
         //    self.resource = "https://<multi_tenant_domain>/<instance_name>/
-        //
-        // if String multi_tenant_domain is not None or Empty;
-
         let url = Url::parse(&self.resource.clone())?;
         let host = url.host_str().unwrap();
         let instance: Vec<&str> = host.split('.').collect();
         let resource = format!("https://{}/{}/", &self.multi_tenant_domain, instance[0]);
+        // else use self.resource:
+        //    let resource = self.resource.clone();
 
         let response = reqwest::Client::new()
             .post(url)
@@ -138,7 +139,7 @@ impl ClientCredentials {
                 ("client_id", self.client_id.to_hyphenated().to_string()),
                 ("client_secret", self.client_secret.expose_ref().to_string()),
                 ("grant_type", "client_credentials".into()),
-                ("tenant", self.tenant.clone()),
+                ("tenant", authority),
                 ("scope", format!("{}.default", resource)),
             ])
             .send_retry_default()
