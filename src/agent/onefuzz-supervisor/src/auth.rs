@@ -92,7 +92,13 @@ pub struct ClientCredentials {
 }
 
 impl ClientCredentials {
-    pub fn new(client_id: Uuid, client_secret: String, resource: String, multi_tenant_domain: String, tenant: String) -> Self {
+    pub fn new(
+        client_id: Uuid,
+        client_secret: String,
+        resource: String,
+        multi_tenant_domain: String,
+        tenant: String,
+    ) -> Self {
         let client_secret = client_secret.into();
 
         Self {
@@ -125,7 +131,10 @@ impl ClientCredentials {
         let url = Url::parse(&self.resource.clone())?;
         let host = url.host_str().unwrap();
         let instance: Vec<&str> = host.split(".").collect();
-        let resource = String::from(format!("https://{}/{}/", &self.multi_tenant_domain, instance[0]));
+        let resource = String::from(format!(
+            "https://{}/{}/",
+            &self.multi_tenant_domain, instance[0]
+        ));
 
         let response = reqwest::Client::new()
             .post(url)

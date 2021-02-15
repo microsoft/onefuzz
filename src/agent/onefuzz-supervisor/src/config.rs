@@ -121,9 +121,14 @@ impl StaticConfig {
             None
         };
 
-        let credentials =
-            ClientCredentials::new(client_id, client_secret, onefuzz_url.to_string(), multi_tenant_domain.clone(), tenant)
-                .into();
+        let credentials = ClientCredentials::new(
+            client_id,
+            client_secret,
+            onefuzz_url.to_string(),
+            multi_tenant_domain.clone(),
+            tenant,
+        )
+        .into();
 
         Ok(Self {
             instance_id,
