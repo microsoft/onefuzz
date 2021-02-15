@@ -25,6 +25,8 @@ pub struct StaticConfig {
 
     pub onefuzz_url: Url,
 
+    pub multi_tenant_domain: String,
+
     pub instrumentation_key: Option<Uuid>,
 
     pub telemetry_key: Option<Uuid>,
@@ -42,6 +44,8 @@ struct RawStaticConfig {
     pub pool_name: String,
 
     pub onefuzz_url: Url,
+
+    pub multi_tenant_domain: String,
 
     pub instrumentation_key: Option<Uuid>,
 
@@ -73,6 +77,7 @@ impl StaticConfig {
             credentials,
             pool_name: config.pool_name,
             onefuzz_url: config.onefuzz_url,
+            multi_tenant_domain: config.multi_tenant_domain,
             instrumentation_key: config.instrumentation_key,
             telemetry_key: config.telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
@@ -94,6 +99,7 @@ impl StaticConfig {
         let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
         let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?;
         let tenant = std::env::var("ONEFUZZ_TENANT")?;
+        let multi_tenant_domain = std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN")?;
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
 
@@ -116,7 +122,7 @@ impl StaticConfig {
         };
 
         let credentials =
-            ClientCredentials::new(client_id, client_secret, onefuzz_url.to_string(), tenant)
+            ClientCredentials::new(client_id, client_secret, onefuzz_url.to_string(), multi_tenant_domain.clone(), tenant)
                 .into();
 
         Ok(Self {
@@ -124,6 +130,7 @@ impl StaticConfig {
             credentials,
             pool_name,
             onefuzz_url,
+            multi_tenant_domain,
             instrumentation_key,
             telemetry_key,
             heartbeat_queue,

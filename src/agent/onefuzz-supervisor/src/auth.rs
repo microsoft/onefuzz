@@ -87,26 +87,45 @@ pub struct ClientCredentials {
     client_id: Uuid,
     client_secret: Secret<String>,
     resource: String,
+    multi_tenant_domain: String,
     tenant: String,
 }
 
 impl ClientCredentials {
-    pub fn new(client_id: Uuid, client_secret: String, resource: String, tenant: String) -> Self {
+    pub fn new(client_id: Uuid, client_secret: String, resource: String, multi_tenant_domain: String, tenant: String) -> Self {
         let client_secret = client_secret.into();
 
         Self {
             client_id,
             client_secret,
             resource,
+            multi_tenant_domain,
             tenant,
         }
     }
 
     pub async fn access_token(&self) -> Result<AccessToken> {
+        // How is self.tenant populated? It looks like from std::env::var("ONEFUZZ_TENANT")
+        // But I cannot find any reference in the project for where it's set. So
+        // we may also need to assign 'https://login.microsoftonline.com/common" to self.tenant
+        // but maybe not depending if the Managed Identity just assumes it's own tenant
+
         let mut url = Url::parse("https://login.microsoftonline.com")?;
         url.path_segments_mut()
             .expect("Authority URL is cannot-be-a-base")
             .extend(&[&self.tenant, "oauth2", "v2.0", "token"]);
+
+        // If [Optional] "multi_tenant_domain" item exists in config.json then format the scope
+        // using the following format instead of what is already in self.resource:
+        //    <instance_name> is parsed out of the config item 'onefuzz_url'
+        //    self.resource = "https://<multi_tenant_domain>/<instance_name>/
+        //
+        // if String multi_tenant_domain is not None or Empty;
+
+        let url = Url::parse(&self.resource.clone())?;
+        let host = url.host_str().unwrap();
+        let instance: Vec<&str> = host.split(".").collect();
+        let resource = String::from(format!("https://{}/{}/", &self.multi_tenant_domain, instance[0]));
 
         let response = reqwest::Client::new()
             .post(url)
@@ -116,7 +135,7 @@ impl ClientCredentials {
                 ("client_secret", self.client_secret.expose_ref().to_string()),
                 ("grant_type", "client_credentials".into()),
                 ("tenant", self.tenant.clone()),
-                ("scope", format!("{}.default", self.resource)),
+                ("scope", format!("{}.default", resource)),
             ])
             .send_retry_default()
             .await?
