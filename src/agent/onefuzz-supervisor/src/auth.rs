@@ -188,11 +188,14 @@ impl ManagedIdentityCredentials {
     fn url(&self) -> Url {
         let mut url = Url::parse(MANAGED_IDENTITY_URL).unwrap();
 
+        // if let multi_tenant_domain is present
+        // then:
         let url2 = Url::parse(&self.resource).unwrap();
         let host = url2.host_str().unwrap();
         let instance: Vec<&str> = host.split('.').collect();
         let resource = format!("https://{}/{}", &self.multi_tenant_domain, instance[0]);
-
+        // else:
+        //     resource = &self.resource
         url.query_pairs_mut().append_pair("resource", &resource);
         url
     }
