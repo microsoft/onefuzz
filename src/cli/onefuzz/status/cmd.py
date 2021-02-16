@@ -92,10 +92,17 @@ class Status(Command):
         print("\ncontainers:")
         for container_type in containers:
             for container_name in containers[container_type]:
-                count = len(self.onefuzz.containers.files.list(container_name).files)
-                print(
-                    f"{container_type.name:<15} count:{count:<5} name:{container_name}"
-                )
+                try:
+                    count = len(
+                        self.onefuzz.containers.files.list(container_name).files
+                    )
+                    print(
+                        f"{container_type.name:<15} count:{count:<5} name:{container_name}"
+                    )
+                except Exception:
+                    print(
+                        f"{container_type.name:<15} INACCESSABLE CONTAINER name:{container_name}"
+                    )
 
     def raw(self) -> None:
         """ Raw status update stream """
