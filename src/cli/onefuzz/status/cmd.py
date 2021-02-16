@@ -74,10 +74,12 @@ class Status(Command):
                 if not task.error:
                     continue
 
+                errors = "\n".join([x.strip() for x in task.error.errors])
+
                 message = (
                     f"{short(task.task_id)} type:{task.config.task.type.name} "
                     f"target:{task.config.task.target_exe}"
-                    f"\nerror:\n{task.error.errors[-1].strip()}"
+                    f"\nerror:\n{errors}"
                 )
                 entries.append(message)
             print("\n\n".join(entries))
@@ -101,7 +103,7 @@ class Status(Command):
                     )
                 except Exception:
                     print(
-                        f"{container_type.name:<15} INACCESSABLE CONTAINER name:{container_name}"
+                        f"{container_type.name:<15} INACCESSIBLE CONTAINER name:{container_name}"
                     )
 
     def raw(self) -> None:
