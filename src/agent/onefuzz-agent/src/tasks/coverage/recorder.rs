@@ -25,6 +25,8 @@ pub struct CoverageRecorder {
     script_dir: OwnedDir,
 }
 
+const SYMBOL_EXTRACT_ERROR: &str = "Target appears to be missing sancov instrumentation.  This error can happen due to missing coverage symbols.";
+
 impl CoverageRecorder {
     pub fn new(config: Arc<Config>) -> Self {
         let script_dir =
@@ -57,28 +59,19 @@ impl CoverageRecorder {
         let script = self.invoke_debugger_script(test_input, &coverage_path)?;
         let output = script.wait_with_output().await?;
 
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+
         if !output.status.success() {
             let err = format_err!("coverage recording failed: {}", output.status);
             error!("{}", err);
-            error!(
-                "recording stderr: {}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-            error!(
-                "recording stdout: {}",
-                String::from_utf8_lossy(&output.stdout)
-            );
+            error!("recording stderr: {}", stderr);
+            error!("recording stdout: {}", stdout);
 
             return Err(err);
         } else {
-            debug!(
-                "recording stderr: {}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-            debug!(
-                "recording stdout: {}",
-                String::from_utf8_lossy(&output.stdout)
-            );
+            debug!("recording stderr: {}", stderr);
+            debug!("recording stdout: {}", stdout);
         }
 
         if !has_files(&coverage_path).await? {
@@ -96,9 +89,12 @@ impl CoverageRecorder {
                 .ok_or_else(|| format_err!("unable to identify coverage input filename"))?;
 
             bail!(
-                "coverage extraction from {} failed when processing file {:?}.  target appears to be missing sancov instrumentation",
+                "{}\ntarget_exe: {}\ninput: {:?}\ndebugger stdout: {}\ndebugger stderr: {}",
+                SYMBOL_EXTRACT_ERROR,
                 self.config.target_exe.display(),
-                filename
+                filename,
+                stdout,
+                stderr
             );
         }
 
