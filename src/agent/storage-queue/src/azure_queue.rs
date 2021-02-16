@@ -2,11 +2,9 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use async_trait::async_trait;
 use reqwest::{Client, Url};
 use reqwest_retry::SendRetry;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use uuid::Uuid;
 // use derivative::Derivative;
