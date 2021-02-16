@@ -424,7 +424,10 @@ class TestOnefuzz:
             self.logger.info("launching repro: %s", self.target_jobs[job_id])
             report = self.get_job_crash(job_id)
             if report is None:
-                self.logger.warning("target does not include crash reports: %s", self.target_jobs[job_id])
+                self.logger.warning(
+                    "target does not include crash reports: %s",
+                    self.target_jobs[job_id],
+                )
                 return
             (container, path) = report
             self.repros[job_id] = self.of.repro.create(container, path, duration=1)
