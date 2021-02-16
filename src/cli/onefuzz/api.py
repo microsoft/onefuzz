@@ -174,7 +174,9 @@ class Files(Endpoint):
         sas = self.onefuzz.containers.get(container).sas_url
         return ContainerWrapper(sas)
 
-    def list(self, container: primitives.Container, prefix: Optional[str] = None) -> models.Files:
+    def list(
+        self, container: primitives.Container, prefix: Optional[str] = None
+    ) -> models.Files:
         """ Get a list of files in a container """
         self.logger.debug("listing files in container: %s", container)
         client = self._get_client(container)

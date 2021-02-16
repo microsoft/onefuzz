@@ -83,6 +83,7 @@ class JobMonitor:
         *,
         wait_for_running: Optional[bool] = False,
         wait_for_files: Optional[Dict[Container, int]] = None,
+        wait_for_stopping: Optional[bool] = False,
     ) -> None:
         if wait_for_running:
             wait(self.is_running)
@@ -92,3 +93,7 @@ class JobMonitor:
             self.containers = wait_for_files
             wait(self.has_files)
             self.onefuzz.logger.info("new files found")
+
+        if wait_for_stopping:
+            wait(self.is_stopping)
+            self.logger.info("tasks stopped")

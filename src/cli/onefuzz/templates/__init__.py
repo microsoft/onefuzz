@@ -10,7 +10,7 @@ import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from onefuzztypes.enums import OS, ContainerType
+from onefuzztypes.enums import OS, ContainerType, TaskState
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
@@ -305,12 +305,10 @@ class JobHelper:
 
     def wait(self) -> None:
         JobMonitor(self.onefuzz, self.job).wait(
-            wait_for_running=self.wait_for_running, wait_for_files=self.to_monitor
+            wait_for_running=self.wait_for_running,
+            wait_for_files=self.to_monitor,
+            wait_for_stopping=self.wait_for_stopping,
         )
-
-        if self.wait_for_stopping:
-            wait(self.is_stopping)
-            self.logger.info("tasks stopped")
 
     def target_exe_blob_name(
         self, target_exe: File, setup_dir: Optional[Directory]
