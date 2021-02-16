@@ -28,16 +28,16 @@ pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
 #[serde(rename_all = "PascalCase")]
 #[serde(rename = "QueueMessage")]
 pub struct AzureQueueMessage {
-    message_id: Uuid,
+    pub message_id: Uuid,
     // InsertionTime:
     // ExpirationTime
-    pop_receipt: String,
+    pub pop_receipt: String,
     // TimeNextVisible
     // DequeueCount
-    message_text: String,
+    pub message_text: String,
 
     #[serde(skip)]
-    messages_url: Option<Url>,
+    pub messages_url: Option<Url>,
 }
 
 impl AzureQueueMessage {
@@ -65,8 +65,8 @@ impl AzureQueueMessage {
         let value: T = serde_json::from_slice(&decoded)?;
         Ok(value)
     }
-    pub async fn delete(self) -> Result<()> {
-        if let Some(messages_url) = self.messages_url {
+    pub async fn delete(&self) -> Result<()> {
+        if let Some(messages_url) = self.messages_url.clone() {
             let messages_path = messages_url.path();
             let item_path = format!("{}/{}", messages_path, self.message_id);
             let mut url = messages_url.clone();

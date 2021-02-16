@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use reqwest::Url;
 use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;
@@ -22,6 +22,16 @@ pub enum QueueClient {
 impl QueueClient {
     pub fn new(queue_url: Url) -> Self {
         QueueClient::AzureQueue(AzureQueueClient::new(queue_url))
+    }
+
+    pub fn get_url(self) -> Result<Url> {
+        match self {
+            QueueClient::AzureQueue(queue_client) => Ok(queue_client.messages_url),
+            QueueClient::LocalQueue(queue_client) => {
+                Url::from_file_path(queue_client.as_ref().path.clone())
+                    .map_err(|_| anyhow!("invalid queue url"))
+            }
+        }
     }
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
@@ -45,7 +55,6 @@ impl QueueClient {
     }
 }
 
-// #[derive(Clone)]
 pub enum Message {
     QueueMessage(AzureQueueMessage),
     LocalQueueMessage(LocalQueueMessage),
@@ -78,7 +87,7 @@ impl Message {
         }
     }
 
-    pub async fn delete(self) -> Result<()> {
+    pub async fn delete(&self) -> Result<()> {
         match self {
             Message::QueueMessage(message) => Ok(message.delete().await?),
             Message::LocalQueueMessage(_) => {
@@ -95,11 +104,21 @@ impl Message {
         }
     }
 
-    // pub fn id(&self) -> Uuid {
-    //     match self {
-    //         Message::QueueMessage(message) => message.receipt.message_id,
-    //         // todo: add meaning full id if possible
-    //         Message::LocalQueueMessage(_message) => Uuid::new_v4(),
-    //     }
-    // }
+    pub fn update_url(self, new_url: Url) -> Self {
+        match self {
+            Message::QueueMessage(message) => Message::QueueMessage(AzureQueueMessage {
+                messages_url: Some(new_url),
+                ..message
+            }),
+            m => m,
+        }
+    }
+
+    pub fn id(&self) -> Uuid {
+        match self {
+            Message::QueueMessage(message) => message.message_id,
+            // todo: add meaning full id if possible
+            Message::LocalQueueMessage(_message) => Uuid::default(),
+        }
+    }
 }

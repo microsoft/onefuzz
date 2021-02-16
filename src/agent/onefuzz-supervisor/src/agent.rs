@@ -130,7 +130,7 @@ impl Agent {
             if can_schedule.allowed {
                 info!("claiming work set: {:?}", msg.work_set);
 
-                match msg.claim().await {
+                match self.work_queue.claim(msg).await {
                     Err(err) => {
                         error!("unable to claim work set: {}", err);
 
@@ -161,7 +161,7 @@ impl Agent {
                 // If `work_stopped`, the work set is not valid for any node, and we should drop it for the
                 // entire pool by claiming but not executing it.
                 if can_schedule.work_stopped {
-                    match msg.claim().await {
+                    match self.work_queue.claim(msg).await {
                         Err(err) => {
                             error!("unable to drop stopped work: {}", err);
                         }

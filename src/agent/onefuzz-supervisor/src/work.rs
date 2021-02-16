@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
-use onefuzz::{auth::Secret, blob::BlobContainerUrl};
+use onefuzz::{auth::Secret, blob::BlobContainerUrl, http::is_auth_error};
 use storage_queue::{Message as QueueMessage, QueueClient};
 use tokio::fs;
 use uuid::Uuid;
@@ -103,7 +103,7 @@ impl WorkUnit {
 pub trait IWorkQueue: Downcast {
     async fn poll(&mut self) -> Result<Option<Message>>;
 
-    //async fn claim(&mut self, receipt: Receipt) -> Result<()>;
+    async fn claim(&mut self, message: Message) -> Result<WorkSet>;
 }
 
 #[async_trait]
@@ -112,9 +112,9 @@ impl IWorkQueue for WorkQueue {
         self.poll().await
     }
 
-    // async fn claim(&mut self, receipt: Receipt) -> Result<()> {
-    //     self.claim(receipt).await
-    // }
+    async fn claim(&mut self, message: Message) -> Result<WorkSet> {
+        self.claim(message).await
+    }
 }
 
 impl_downcast!(IWorkQueue);
@@ -124,22 +124,6 @@ pub struct Message {
     pub work_set: WorkSet,
 }
 
-impl Message {
-    pub async fn claim(self) -> Result<WorkSet> {
-        let result = self.queue_message.claim().await?;
-        Ok(result)
-
-        // todo: handle token renewal
-        // // If we had an auth err, renew our registration and retry once, in case
-        // // it was just due to a stale SAS URL.
-        // if let Err(err) = &result {
-        //     if is_auth_error(err) {
-        //         self.renew().await?;
-        //         self.queue.delete(receipt).await?;
-        //     }
-        // }
-    }
-}
 
 // #[derive(Clone, Debug, Eq, PartialEq)]
 // pub struct Receipt(pub storage_queue::Receipt);
@@ -160,7 +144,7 @@ impl WorkQueue {
         }
     }
 
-    async fn _renew(&mut self) -> Result<()> {
+    async fn renew(&mut self) -> Result<()> {
         self._registration.renew().await?;
         let url = self._registration.dynamic_config.work_queue.clone();
         self.queue = QueueClient::new(url);
@@ -168,16 +152,16 @@ impl WorkQueue {
     }
 
     pub async fn poll(&mut self) -> Result<Option<Message>> {
-        let msg = self.queue.pop().await;
+        let mut msg = self.queue.pop().await;
 
-        // // If we had an auth err, renew our registration and retry once, in case
-        // // it was just due to a stale SAS URL.
-        // if let Err(err) = &msg {
-        //     if is_auth_error(err) {
-        //         self.renew().await?;
-        //         msg = self.queue.pop().await;
-        //     }
-        // }
+        // If we had an auth err, renew our registration and retry once, in case
+        // it was just due to a stale SAS URL.
+        if let Err(err) = &msg {
+            if is_auth_error(err) {
+                self.renew().await?;
+                msg = self.queue.pop().await;
+            }
+        }
 
         // Now we've had a chance to ensure our SAS URL is fresh. For any other
         // error, including another auth error, bail.
@@ -198,22 +182,24 @@ impl WorkQueue {
         Ok(Some(msg))
     }
 
-    // pub async fn claim(&mut self, receipt: Receipt) -> Result<()> {
-    //     let receipt = receipt.0;
+    pub async fn claim(&mut self, message: Message) -> Result<WorkSet> {
+        match &message.queue_message.delete().await {
+            Err(err) => {
+                if is_auth_error(err) {
+                    self.renew().await?;
+                    let url = self._registration.dynamic_config.work_queue.clone();
+                    message.queue_message.update_url(url).delete().await?;
+                    Ok(message.work_set)
+                } else {
+                    bail!("{}", err )
+                }
+            },
+                Ok(_) =>  Ok(message.work_set)
+        }
 
-    //     let result = self.queue.delete(receipt.clone()).await;
 
-    //     // If we had an auth err, renew our registration and retry once, in case
-    //     // it was just due to a stale SAS URL.
-    //     if let Err(err) = &result {
-    //         if is_auth_error(err) {
-    //             self.renew().await?;
-    //             self.queue.delete(receipt).await?;
-    //         }
-    //     }
 
-    //     Ok(())
-    // }
+    }
 }
 
 #[cfg(test)]

@@ -3,7 +3,7 @@
 
 use anyhow::{bail, Result};
 use serde::Serialize;
-use std::path::Path;
+use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::Mutex;
 
@@ -14,16 +14,18 @@ pub struct LocalQueueMessage {
 }
 
 pub struct LocalQueueClient {
+    pub path: PathBuf,
     sender: Mutex<yaque::Sender>,
     receiver: Mutex<yaque::Receiver>,
 }
 
 impl LocalQueueClient {
-    pub fn new(queue_url: impl AsRef<Path>) -> Result<Self> {
-        let (sender, receiver) = yaque::channel(queue_url)?;
+    pub fn new(queue_url: PathBuf) -> Result<Self> {
+        let (sender, receiver) = yaque::channel(queue_url.clone())?;
         Ok(LocalQueueClient {
             sender: Mutex::new(sender),
             receiver: Mutex::new(receiver),
+            path: queue_url,
         })
     }
 
