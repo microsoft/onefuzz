@@ -129,7 +129,16 @@ pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
         .tools_dir(&config.tools.path)
         .setup_dir(&config.common.setup_dir)
         .job_id(&config.common.job_id)
-        .task_id(&config.common.task_id);
+        .task_id(&config.common.task_id)
+        .set_optional_ref(&config.crashes, |tester, crashes| {
+            if let Some(url) = &crashes.url {
+                tester
+                    .crashes_account(&url.account())
+                    .crashes_container(&url.container())
+            } else {
+                tester
+            }
+        });
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
 
