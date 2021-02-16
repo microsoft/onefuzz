@@ -2,14 +2,16 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
-    expand::Expand, fs::set_executable, fs::OwnedDir, jitter::delay_with_jitter, syncdir::SyncedDir,
+    expand::Expand, fs::set_executable, fs::OwnedDir, jitter::delay_with_jitter,
+    process::monitor_process, syncdir::SyncedDir,
 };
 use reqwest::Url;
 use serde::Deserialize;
+use std::process::Stdio;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -53,12 +55,15 @@ pub async fn spawn(config: Config) -> Result<()> {
 async fn run_existing(config: &Config) -> Result<()> {
     if let Some(crashes) = &config.crashes {
         crashes.init_pull().await?;
+        let mut count = 0;
         let mut read_dir = fs::read_dir(&crashes.path).await?;
         while let Some(file) = read_dir.next().await {
-            verbose!("Processing file {:?}", file);
+            debug!("Processing file {:?}", file);
             let file = file?;
             run_tool(file.path(), &config).await?;
+            count += 1;
         }
+        info!("processed {} initial inputs", count);
         config.analysis.sync_push().await?;
     }
     Ok(())
@@ -124,12 +129,25 @@ pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
         .tools_dir(&config.tools.path)
         .setup_dir(&config.common.setup_dir)
         .job_id(&config.common.job_id)
-        .task_id(&config.common.task_id);
+        .task_id(&config.common.task_id)
+        .set_optional_ref(&config.crashes, |tester, crashes| {
+            if let Some(url) = &crashes.url {
+                tester
+                    .crashes_account(&url.account())
+                    .crashes_container(&url.container())
+            } else {
+                tester
+            }
+        });
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
 
-    let mut cmd = Command::new(analyzer_path);
-    cmd.kill_on_drop(true).env_remove("RUST_LOG");
+    let mut cmd = Command::new(&analyzer_path);
+    cmd.kill_on_drop(true)
+        .env_remove("RUST_LOG")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
     for arg in expand.evaluate(&config.analyzer_options)? {
         cmd.arg(arg);
@@ -139,6 +157,13 @@ pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
         cmd.env(k, expand.evaluate_value(v)?);
     }
 
-    cmd.output().await?;
+    info!("analyzing input with {:?}", cmd);
+    let output = cmd
+        .spawn()
+        .with_context(|| format!("analyzer failed to start: {}", analyzer_path))?;
+
+    monitor_process(output, "analyzer".to_string(), true, None)
+        .await
+        .with_context(|| format!("analyzer failed to run: {}", analyzer_path))?;
     Ok(())
 }

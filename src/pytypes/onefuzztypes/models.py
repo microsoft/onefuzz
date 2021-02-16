@@ -37,7 +37,7 @@ from .primitives import Container, PoolName, Region
 
 
 class UserInfo(BaseModel):
-    application_id: UUID
+    application_id: Optional[UUID]
     object_id: Optional[UUID]
     upn: Optional[str]
 
@@ -335,7 +335,7 @@ class ClientCredentials(BaseModel):
 class AgentConfig(BaseModel):
     client_credentials: Optional[ClientCredentials]
     onefuzz_url: str
-    pool_name: str
+    pool_name: PoolName
     heartbeat_queue: Optional[str]
     instrumentation_key: Optional[str]
     telemetry_key: Optional[str]

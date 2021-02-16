@@ -32,7 +32,7 @@ from uuid import UUID
 import jmespath
 from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
-from onefuzztypes.primitives import Container, Directory, File
+from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, ValidationError
 
 from .templates.template_error import TemplateError
@@ -160,6 +160,8 @@ class Builder:
             int: {"type": int},
             UUID: {"type": UUID},
             Container: {"type": str},
+            Region: {"type": str},
+            PoolName: {"type": str},
             File: {"type": arg_file},
             Directory: {"type": arg_dir},
         }

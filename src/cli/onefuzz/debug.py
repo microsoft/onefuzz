@@ -20,7 +20,7 @@ from azure.applicationinsights.models import QueryBody
 from azure.common.client_factory import get_azure_cli_credentials
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, NodeAssignment, Report, Task
-from onefuzztypes.primitives import Directory
+from onefuzztypes.primitives import Container, Directory
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
@@ -105,9 +105,9 @@ class DebugScaleset(Command):
             scaleset_id, machine_id, port, duration=duration
         )
         if proxy.ip is None:
-            return (False, "waiting on proxy", None)
+            return (False, "waiting on proxy ip", None)
 
-        return (True, "waiting on proxy", (proxy.ip, proxy.forward.src_port))
+        return (True, "waiting on proxy port", (proxy.ip, proxy.forward.src_port))
 
     def rdp(
         self,
@@ -583,13 +583,13 @@ class DebugNotification(Command):
 
     def _get_container(
         self, task: Task, container_type: ContainerType
-    ) -> Optional[str]:
+    ) -> Optional[Container]:
         for container in task.config.containers:
             if container.type == container_type:
                 return container.name
         return None
 
-    def _get_storage_account(self, container_name: str) -> str:
+    def _get_storage_account(self, container_name: Container) -> str:
         sas_url = self.onefuzz.containers.get(container_name).sas_url
         _, netloc, _, _, _, _ = urlparse(sas_url)
         return netloc.split(".")[0]

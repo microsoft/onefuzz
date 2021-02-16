@@ -10,11 +10,11 @@ import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from onefuzztypes.enums import OS, ContainerType, TaskState
+from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
-from onefuzz.backend import wait
+from ..job_templates.job_monitor import JobMonitor
 
 ELF_MAGIC = b"\x7fELF"
 DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
@@ -72,7 +72,7 @@ class JobHelper:
         self.project = project
         self.name = name
         self.build = build
-        self.to_monitor: Dict[str, int] = {}
+        self.to_monitor: Dict[Container, int] = {}
 
         if platform is None:
             self.platform = JobHelper.get_platform(target_exe)
@@ -304,13 +304,9 @@ class JobHelper:
         )
 
     def wait(self) -> None:
-        if self.wait_for_running:
-            wait(self.is_running)
-            self.logger.info("tasks started")
-
-        if self.to_monitor:
-            wait(self.has_files)
-            self.logger.info("new files found")
+        JobMonitor(self.onefuzz, self.job).wait(
+            wait_for_running=self.wait_for_running, wait_for_files=self.to_monitor
+        )
 
         if self.wait_for_stopping:
             wait(self.is_stopping)

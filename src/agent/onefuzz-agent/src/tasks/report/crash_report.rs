@@ -282,7 +282,7 @@ pub async fn monitor_reports(
     no_crash: &Option<SyncedDir>,
 ) -> Result<()> {
     if unique_reports.is_none() && reports.is_none() && no_crash.is_none() {
-        verbose!("no report directories configured");
+        debug!("no report directories configured");
         return Ok(());
     }
 

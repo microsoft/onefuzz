@@ -127,7 +127,7 @@ impl GeneratorTask {
         while let Some(file) = read_dir.next().await {
             let file = file?;
 
-            verbose!("testing input: {:?}", file);
+            debug!("testing input: {:?}", file);
 
             let destination_file = if self.config.rename_output {
                 let hash = sha256::digest_file(file.path()).await?;
@@ -139,7 +139,7 @@ impl GeneratorTask {
             let destination_file = self.config.crashes.path.join(destination_file);
             if tester.is_crash(file.path()).await? {
                 fs::rename(file.path(), &destination_file).await?;
-                verbose!("crash found {}", destination_file.display());
+                debug!("crash found {}", destination_file.display());
             }
         }
         Ok(())

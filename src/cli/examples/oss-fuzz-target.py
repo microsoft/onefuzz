@@ -12,6 +12,7 @@ from subprocess import PIPE, CalledProcessError, check_call  # nosec
 from typing import List, Optional
 
 from onefuzztypes.models import NotificationConfig
+from onefuzztypes.primitives import PoolName
 
 from onefuzz.api import Command, Onefuzz
 from onefuzz.cli import execute_api
@@ -42,7 +43,7 @@ class Ossfuzz(Command):
         self,
         project: str,
         build: str,
-        pool: str,
+        pool: PoolName,
         sanitizers: Optional[List[str]] = None,
         notification_config: Optional[NotificationConfig] = None,
     ) -> None:

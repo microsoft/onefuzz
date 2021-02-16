@@ -12,6 +12,23 @@ pub enum ClientType {
     Shared,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum Role {
+    Agent,
+    Proxy,
+    Supervisor,
+}
+
+impl Role {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Agent => "agent",
+            Self::Proxy => "proxy",
+            Self::Supervisor => "supervisor",
+        }
+    }
+}
+
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug)]
 pub enum Event {
@@ -79,6 +96,7 @@ pub enum EventData {
     CoverageMaxDepth(u64),
     ToolName(String),
     Region(String),
+    Role(Role),
 }
 
 impl EventData {
@@ -115,6 +133,7 @@ impl EventData {
             Self::Coverage(x) => ("coverage", x.to_string()),
             Self::ToolName(x) => ("tool_name", x.to_owned()),
             Self::Region(x) => ("region", x.to_owned()),
+            Self::Role(x) => ("role", x.as_str().to_owned()),
         }
     }
 
@@ -153,6 +172,7 @@ impl EventData {
             Self::Coverage(_) => true,
             Self::ToolName(_) => true,
             Self::Region(_) => false,
+            Self::Role(_) => false,
         }
     }
 }
@@ -402,7 +422,7 @@ macro_rules! log {
 }
 
 #[macro_export]
-macro_rules! verbose {
+macro_rules! debug {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
         onefuzz_telemetry::log!(onefuzz_telemetry::Verbose, msg);

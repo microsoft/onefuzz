@@ -236,7 +236,7 @@ impl<'a> GenericReportProcessor<'a> {
 #[async_trait]
 impl<'a> Processor for GenericReportProcessor<'a> {
     async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
-        verbose!("generating crash report for: {}", input.display());
+        debug!("generating crash report for: {}", input.display());
         let report = self.test_input(url, input).await?;
         report
             .save(

@@ -9,7 +9,7 @@ use crate::tasks::{
 };
 use anyhow::Result;
 use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
-use onefuzz_telemetry::{self as telemetry, Event::task_start, EventData};
+use onefuzz_telemetry::{self as telemetry, Event::task_start, EventData, Role};
 use reqwest::Url;
 use serde::{self, Deserialize};
 use std::path::PathBuf;
@@ -167,6 +167,7 @@ impl Config {
         telemetry::set_property(EventData::MachineId(get_machine_id().await?));
         telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
         telemetry::set_property(EventData::InstanceId(self.common().instance_id));
+        telemetry::set_property(EventData::Role(Role::Agent));
         let scaleset = get_scaleset_name().await?;
         if let Some(scaleset_name) = &scaleset {
             telemetry::set_property(EventData::ScalesetId(scaleset_name.to_string()));
@@ -178,7 +179,7 @@ impl Config {
         match self {
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
-                    .run()
+                    .managed_run()
                     .await
             }
             Config::LibFuzzerReport(config) => {

@@ -38,6 +38,8 @@ pub enum PlaceHolder {
     ReportsDir,
     JobId,
     TaskId,
+    CrashesContainer,
+    CrashesAccount,
 }
 
 impl PlaceHolder {
@@ -64,6 +66,8 @@ impl PlaceHolder {
             Self::ReportsDir => "{reports_dir}",
             Self::JobId => "{job_id}",
             Self::TaskId => "{task_id}",
+            Self::CrashesContainer => "{crashes_container}",
+            Self::CrashesAccount => "{crashes_account}",
         }
         .to_string()
     }
@@ -249,6 +253,20 @@ impl<'a> Expand<'a> {
     pub fn job_id(self, arg: &Uuid) -> Self {
         let value = arg.to_hyphenated().to_string();
         self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value))
+    }
+
+    pub fn crashes_account(self, arg: &str) -> Self {
+        self.set_value(
+            PlaceHolder::CrashesAccount,
+            ExpandedValue::Scalar(String::from(arg)),
+        )
+    }
+
+    pub fn crashes_container(self, arg: &str) -> Self {
+        self.set_value(
+            PlaceHolder::CrashesContainer,
+            ExpandedValue::Scalar(String::from(arg)),
+        )
     }
 
     fn replace_value(

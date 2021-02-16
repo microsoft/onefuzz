@@ -89,7 +89,7 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
     let hb_client = config.common.init_heartbeat().await?;
     hb_client.alive();
     let tmp_dir = "./tmp";
-    verbose!("tmp dir reset");
+    debug!("tmp dir reset");
     utils::reset_tmp_dir(tmp_dir).await?;
 
     if let Some(msg) = input_queue.pop().await? {
@@ -105,11 +105,11 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
         info!("downloaded input to {}", input_path.display());
         sync_and_merge(config.clone(), vec![tmp_dir], true, true).await?;
 
-        verbose!("will delete popped message with id = {}", msg.id());
+        debug!("will delete popped message with id = {}", msg.id());
 
         input_queue.delete(msg).await?;
 
-        verbose!(
+        debug!(
             "Attempting to delete {} from the candidate container",
             input_url.clone()
         );

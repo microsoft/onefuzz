@@ -3,7 +3,7 @@
 
 use crate::proxy;
 use anyhow::Result;
-use onefuzz_telemetry::{set_appinsights_clients, EventData};
+use onefuzz_telemetry::{set_appinsights_clients, EventData, Role};
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::PathBuf};
@@ -78,6 +78,7 @@ impl Config {
         onefuzz_telemetry::set_property(EventData::Region(data.region.to_owned()));
         onefuzz_telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
         onefuzz_telemetry::set_property(EventData::InstanceId(data.instance_id));
+        onefuzz_telemetry::set_property(EventData::Role(Role::Proxy));
 
         Ok(Self {
             config_path,
@@ -129,6 +130,7 @@ impl Config {
     }
 
     pub async fn notify(&self) -> Result<()> {
+        info!("notifying service of proxy update");
         let client = QueueClient::new(self.data.notification.clone());
 
         client

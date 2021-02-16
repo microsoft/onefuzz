@@ -81,6 +81,7 @@ jobs:
         set -ex
         ls artifacts
         cd src/cli
+        python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         pip-licenses -uf json > onefuzz/data/licenses.json
         python setup.py sdist bdist_wheel
@@ -124,6 +125,7 @@ jobs:
       run: |
         set -ex
         cd contrib/deploy-onefuzz-via-azure-devops
+        python -m pip install --upgrade pip
         python -m pip install tox pipenv
         tox
   onefuzztypes:
@@ -192,6 +194,7 @@ jobs:
         cd src/api-service/__app__
         echo ${GITHUB_RUN_ID} | tee onefuzzlib/build.id
         echo ${GITHUB_SHA} | tee onefuzzlib/git.version
+        python -m pip install --upgrade pip
         pip install --target="./.python_packages/lib/site-packages" -r ./requirements.txt ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
         zip -r api-service.zip .
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/service
@@ -204,6 +207,7 @@ jobs:
       run: |
         cd src/api-service
         rm -rf __app__/.python_packages
+        python -m pip install --upgrade pip
         pip install ${GITHUB_WORKSPACE}/artifacts/sdk/onefuzztypes-*.whl
         pip install -r __app__/requirements.txt
         pip install -r requirements-dev.txt
@@ -282,6 +286,7 @@ jobs:
       run: |
         set -ex
         cd src/deployment
+        python -m pip install --upgrade pip
         pip install mypy isort black
         mypy .
         isort --profile black . --check
@@ -333,6 +338,10 @@ jobs:
           mkdir -p artifacts/linux-trivial-crash
           (cd trivial-crash ; make )
           cp -r trivial-crash/fuzz.exe trivial-crash/seeds artifacts/linux-trivial-crash
+
+          mkdir -p artifacts/linux-libfuzzer-dotnet
+          (cd libfuzzer-dotnet; make)
+          cp -r libfuzzer-dotnet/my-fuzzer libfuzzer-dotnet/inputs artifacts/linux-libfuzzer-dotnet/
 
           mkdir -p artifacts/linux-trivial-crash-asan
           (cd trivial-crash ; make clean; make CFLAGS='-fsanitize=address -fno-omit-frame-pointer')
