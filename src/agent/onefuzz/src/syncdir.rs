@@ -2,15 +2,12 @@
 // Licensed under the MIT License.
 
 use crate::{
-    az_copy,
-    blob::BlobContainerUrl,
-    jitter::delay_with_jitter,
-    monitor::DirectoryMonitor,
-    telemetry::{Event, EventData},
+    az_copy, blob::BlobContainerUrl, jitter::delay_with_jitter, monitor::DirectoryMonitor,
     uploader::BlobUploader,
 };
 use anyhow::{Context, Result};
 use futures::stream::StreamExt;
+use onefuzz_telemetry::{Event, EventData};
 use std::{path::PathBuf, str, time::Duration};
 use tokio::fs;
 
@@ -32,14 +29,14 @@ pub struct SyncedDir {
 impl SyncedDir {
     pub async fn sync(&self, operation: SyncOperation, delete_dst: bool) -> Result<()> {
         if self.url.is_none() {
-            verbose!("not syncing as SyncedDir is missing remote URL");
+            debug!("not syncing as SyncedDir is missing remote URL");
             return Ok(());
         }
 
         let dir = &self.path;
         let url = self.url.as_ref().unwrap().url();
         let url = url.as_ref();
-        verbose!("syncing {:?} {}", operation, dir.display());
+        debug!("syncing {:?} {}", operation, dir.display());
         match operation {
             SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await,
             SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await,
@@ -88,7 +85,7 @@ impl SyncedDir {
         delay_seconds: Option<u64>,
     ) -> Result<()> {
         if self.url.is_none() {
-            verbose!("not continuously syncing, as SyncDir does not have a remote URL");
+            debug!("not continuously syncing, as SyncDir does not have a remote URL");
             return Ok(());
         }
 
@@ -105,7 +102,7 @@ impl SyncedDir {
     }
 
     async fn file_monitor_event(&self, event: Event) -> Result<()> {
-        verbose!("monitoring {}", self.path.display());
+        debug!("monitoring {}", self.path.display());
         let mut monitor = DirectoryMonitor::new(self.path.clone());
         monitor.start()?;
 
@@ -140,14 +137,14 @@ impl SyncedDir {
     /// a directory, and may reset it.
     pub async fn monitor_results(&self, event: Event) -> Result<()> {
         loop {
-            verbose!("waiting to monitor {}", self.path.display());
+            debug!("waiting to monitor {}", self.path.display());
 
             while fs::metadata(&self.path).await.is_err() {
-                verbose!("dir {} not ready to monitor, delaying", self.path.display());
+                debug!("dir {} not ready to monitor, delaying", self.path.display());
                 delay_with_jitter(DELAY).await;
             }
 
-            verbose!("starting monitor for {}", self.path.display());
+            debug!("starting monitor for {}", self.path.display());
             self.file_monitor_event(event.clone()).await?;
         }
     }
@@ -172,7 +169,7 @@ pub async fn continuous_sync(
         }
     }
     if !should_loop {
-        verbose!("not syncing as SyncDirs do not have remote URLs");
+        debug!("not syncing as SyncDirs do not have remote URLs");
         return Ok(());
     }
 

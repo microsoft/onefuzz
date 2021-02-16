@@ -16,8 +16,8 @@ use onefuzz::{
     jitter::delay_with_jitter,
     process::monitor_process,
     syncdir::{SyncOperation::Pull, SyncedDir},
-    telemetry::Event::new_result,
 };
+use onefuzz_telemetry::Event::{new_coverage, new_result};
 use serde::Deserialize;
 use std::{
     collections::HashMap,
@@ -95,6 +95,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         path: runtime_dir.path().join("inputs"),
         url: config.inputs.url.clone(),
     };
+
     inputs.init().await?;
     if let Some(context) = &config.wait_for_files {
         let dir = match context {
@@ -110,7 +111,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
             delay_with_jitter(delay).await;
         }
     }
-
+    let monitor_inputs = inputs.monitor_results(new_coverage);
     let continuous_sync_task = inputs.continuous_sync(Pull, config.ensemble_sync_delay);
 
     let process = start_supervisor(
@@ -136,7 +137,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
                 .evaluate_value(stats_file)?,
         )
     } else {
-        verbose!("no stats file to monitor");
+        debug!("no stats file to monitor");
         None
     };
 
@@ -147,6 +148,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         monitor_supervisor,
         monitor_stats,
         monitor_crashes,
+        monitor_inputs,
         continuous_sync_task,
         monitor_reports_future,
     )?;
@@ -171,31 +173,26 @@ async fn start_supervisor(
     inputs: &SyncedDir,
     reports_dir: PathBuf,
 ) -> Result<Child> {
-    let mut expand = Expand::new();
-    expand
+    let expand = Expand::new()
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .runtime_dir(&runtime_dir)
         .crashes(&crashes.path)
         .input_corpus(&inputs.path)
         .reports_dir(&reports_dir)
-        .setup_dir(&config.common.setup_dir);
-
-    if let Some(tools) = &config.tools {
-        expand.tools_dir(&tools.path);
-    }
-
-    if let Some(target_exe) = &config.target_exe {
-        expand.target_exe(target_exe);
-    }
-
-    if let Some(target_options) = &config.target_options {
-        expand.target_options(target_options);
-    }
-
-    if let Some(input_marker) = &config.supervisor_input_marker {
-        expand.input_marker(input_marker);
-    }
+        .setup_dir(&config.common.setup_dir)
+        .job_id(&config.common.job_id)
+        .task_id(&config.common.task_id)
+        .set_optional_ref(&config.tools, |expand, tools| expand.tools_dir(&tools.path))
+        .set_optional_ref(&config.target_exe, |expand, target_exe| {
+            expand.target_exe(target_exe)
+        })
+        .set_optional_ref(&config.supervisor_input_marker, |expand, input_marker| {
+            expand.input_marker(input_marker)
+        })
+        .set_optional_ref(&config.target_options, |expand, target_options| {
+            expand.target_options(target_options)
+        });
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
     let mut cmd = Command::new(supervisor_path);

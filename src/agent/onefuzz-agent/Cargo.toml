@@ -14,8 +14,8 @@ anyhow = "1.0"
 appinsights = "0.1"
 async-trait = "0.1"
 clap = "2.33"
-tempfile = "3.1"
-env_logger = "0.7"
+tempfile = "3.2"
+env_logger = "0.8"
 futures = "0.3"
 hex = "0.4"
 lazy_static = "1.4"
@@ -26,11 +26,12 @@ serde = "1.0"
 serde_json = "1.0"
 tokio = { version = "0.2", features = ["full"] }
 tokio-util = { version = "0.3", features = ["full"] }
-url = { version = "2.1", features = ["serde"] }
+url = { version = "2.2", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 onefuzz = { path = "../onefuzz" }
 storage-queue = { path = "../storage-queue" }
 reqwest-retry = { path = "../reqwest-retry" }
+onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 
 [dev-dependencies]
-tempfile = "3.1"
+tempfile = "3.2"

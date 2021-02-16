@@ -33,7 +33,7 @@ def get_local_tmp() -> Optional[str]:
 
 @contextmanager
 def temp_file(
-    filename: str, content: str, *, permissions: Optional[str] = None
+    filename: str, content: str, *, set_owner_only: bool = False
 ) -> Generator:
     with tempfile.TemporaryDirectory(dir=get_local_tmp()) as tmpdir:
         full_path = os.path.join(tmpdir, filename)
@@ -42,8 +42,10 @@ def temp_file(
         with open(full_path, "w") as handle:
             handle.write(content)
 
-        if permissions is not None and platform.system() != "Windows":
-            subprocess.check_call(["chmod", permissions, full_path])
+        if set_owner_only and platform.system() != "Windows":
+            # security note: full_path is created via callers using known static
+            # filenames within the newly created temporary file name
+            subprocess.check_call(["chmod", "600", full_path])  # nosec
 
         yield full_path
 
@@ -59,7 +61,7 @@ def build_ssh_command(
     port: Optional[int] = None,
     command: Optional[str] = None,
 ) -> Generator:
-    with temp_file("id_rsa", private_key, permissions="600") as ssh_key:
+    with temp_file("id_rsa", private_key, set_owner_only=True) as ssh_key:
         cmd = [
             "ssh",
             "onefuzz@%s" % ip,
@@ -102,10 +104,14 @@ def ssh_connect(
         logging.info("launching ssh: %s", " ".join(cmd))
 
         if call:
-            yield subprocess.call(cmd)
+            # security note: command includes user provided arguments
+            # intentionally
+            yield subprocess.call(cmd)  # nosec
             return
 
-        with subprocess.Popen(
+        # security note: command includes user provided arguments
+        # intentionally
+        with subprocess.Popen(  # nosec
             cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, bufsize=0
         ) as ssh:
             yield ssh

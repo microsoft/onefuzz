@@ -18,14 +18,17 @@ from onefuzztypes.events import (
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm, UserInfo
+from onefuzztypes.primitives import PoolName
 
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
-from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
+from ..workers.nodes import Node
+from ..workers.pools import Pool
+from ..workers.scalesets import Scaleset
 
 
 class Task(BASE_TASK, ORMMixin):
@@ -163,7 +166,7 @@ class Task(BASE_TASK, ORMMixin):
         return task
 
     @classmethod
-    def get_tasks_by_pool_name(cls, pool_name: str) -> List["Task"]:
+    def get_tasks_by_pool_name(cls, pool_name: PoolName) -> List["Task"]:
         tasks = cls.search_states(states=TaskState.available())
         if not tasks:
             return []

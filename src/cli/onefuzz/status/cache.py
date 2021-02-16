@@ -36,7 +36,7 @@ from onefuzztypes.models import (
     TaskContainers,
     UserInfo,
 )
-from onefuzztypes.primitives import Container
+from onefuzztypes.primitives import Container, PoolName
 from pydantic import BaseModel
 
 MESSAGE = Tuple[datetime, EventType, str]
@@ -49,7 +49,7 @@ DAYS = 24 * HOURS
 # status-top only representation of a Node
 class MiniNode(BaseModel):
     machine_id: UUID
-    pool_name: str
+    pool_name: PoolName
     state: NodeState
 
 
@@ -274,7 +274,7 @@ class TopCache:
             type=task.config.task.type,
             pool=task.config.pool.pool_name if task.config.pool else "",
             state=task.state,
-            target=task.config.task.target_exe.replace("setup/", "", 0),
+            target=(task.config.task.target_exe or "").replace("setup/", "", 0),
             containers=task.config.containers,
             end_time=task.end_time,
         )
@@ -285,7 +285,7 @@ class TopCache:
             task_id=event.task_id,
             type=event.config.task.type,
             pool=event.config.pool.pool_name if event.config.pool else "",
-            target=event.config.task.target_exe.replace("setup/", "", 0),
+            target=(event.config.task.target_exe or "").replace("setup/", "", 0),
             containers=event.config.containers,
             state=TaskState.init,
         )
