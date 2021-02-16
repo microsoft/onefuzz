@@ -6,12 +6,11 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
-use onefuzz::blob::BlobContainerUrl;
+use onefuzz::{auth::Secret, blob::BlobContainerUrl};
 use storage_queue::{Message as QueueMessage, QueueClient};
 use tokio::fs;
 use uuid::Uuid;
 
-use crate::auth::Secret;
 use crate::config::Registration;
 
 pub type JobId = Uuid;
