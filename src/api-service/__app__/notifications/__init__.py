@@ -9,15 +9,14 @@ import azure.functions as func
 from onefuzztypes.models import Error
 from onefuzztypes.requests import NotificationCreate, NotificationGet
 
+from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
     entries = Notification.search()
-    for entry in entries:
-        entry.config.redact()
-
     return ok(entries)
 
 
@@ -44,16 +43,16 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(entry, context="notification delete")
 
     entry.delete()
-    entry.config.redact()
     return ok(entry)
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        return get(req)
-    elif req.method == "POST":
-        return post(req)
-    elif req.method == "DELETE":
-        return delete(req)
-    else:
-        raise Exception("invalid method")
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+    methods = {"GET": get, "POST": post, "DELETE": delete}
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

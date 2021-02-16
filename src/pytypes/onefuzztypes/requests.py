@@ -17,8 +17,8 @@ from .enums import (
     PoolState,
     ScalesetState,
     TaskState,
-    WebhookEventType,
 )
+from .events import EventType
 from .models import AutoScaleConfig, NotificationConfig
 from .primitives import Container, PoolName, Region
 
@@ -135,7 +135,7 @@ class NodeSearch(BaseRequest):
     machine_id: Optional[UUID]
     state: Optional[List[NodeState]]
     scaleset_id: Optional[UUID]
-    pool_name: Optional[str]
+    pool_name: Optional[PoolName]
 
 
 class NodeGet(BaseRequest):
@@ -215,7 +215,7 @@ class CanScheduleRequest(BaseRequest):
 class WebhookCreate(BaseRequest):
     name: str
     url: AnyHttpUrl
-    event_types: List[WebhookEventType]
+    event_types: List[EventType]
     secret_token: Optional[str]
 
 
@@ -230,6 +230,11 @@ class WebhookGet(BaseModel):
 class WebhookUpdate(BaseModel):
     webhook_id: UUID
     name: Optional[str]
-    event_types: Optional[List[WebhookEventType]]
+    event_types: Optional[List[EventType]]
     url: Optional[AnyHttpUrl]
     secret_token: Optional[str]
+
+
+class NodeAddSshKey(BaseModel):
+    machine_id: UUID
+    public_key: str

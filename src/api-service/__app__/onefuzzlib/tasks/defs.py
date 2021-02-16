@@ -38,7 +38,6 @@ TASK_DEFINITIONS = {
                     ContainerPermission.Write,
                     ContainerPermission.Read,
                     ContainerPermission.List,
-                    ContainerPermission.Create,
                 ],
             ),
             ContainerDefinition(
@@ -63,6 +62,8 @@ TASK_DEFINITIONS = {
             TaskFeature.target_options,
             TaskFeature.target_workers,
             TaskFeature.ensemble_sync_delay,
+            TaskFeature.check_fuzzer_help,
+            TaskFeature.expect_crash_on_failure,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -76,7 +77,7 @@ TASK_DEFINITIONS = {
                 type=ContainerType.crashes,
                 compare=Compare.Equal,
                 value=1,
-                permissions=[ContainerPermission.Write, ContainerPermission.Create],
+                permissions=[ContainerPermission.Write],
             ),
             ContainerDefinition(
                 type=ContainerType.inputs,
@@ -86,7 +87,6 @@ TASK_DEFINITIONS = {
                     ContainerPermission.Write,
                     ContainerPermission.Read,
                     ContainerPermission.List,
-                    ContainerPermission.Create,
                 ],
             ),
             ContainerDefinition(
@@ -105,6 +105,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_options,
             TaskFeature.target_timeout,
             TaskFeature.check_retry_count,
+            TaskFeature.check_fuzzer_help,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -124,19 +125,19 @@ TASK_DEFINITIONS = {
                 type=ContainerType.reports,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Create],
+                permissions=[ContainerPermission.Write],
             ),
             ContainerDefinition(
                 type=ContainerType.unique_reports,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Create],
+                permissions=[ContainerPermission.Write],
             ),
             ContainerDefinition(
                 type=ContainerType.no_repro,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Create],
+                permissions=[ContainerPermission.Write],
             ),
         ],
         monitor_queue=ContainerType.crashes,
@@ -146,6 +147,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_exe,
             TaskFeature.target_env,
             TaskFeature.target_options,
+            TaskFeature.check_fuzzer_help,
         ],
         vm=VmDefinition(compare=Compare.Equal, value=1),
         containers=[
@@ -166,7 +168,6 @@ TASK_DEFINITIONS = {
                 compare=Compare.Equal,
                 value=1,
                 permissions=[
-                    ContainerPermission.Create,
                     ContainerPermission.List,
                     ContainerPermission.Read,
                     ContainerPermission.Write,
@@ -180,6 +181,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_exe,
             TaskFeature.target_env,
             TaskFeature.target_options,
+            TaskFeature.check_fuzzer_help,
         ],
         vm=VmDefinition(compare=Compare.Equal, value=1),
         containers=[
@@ -194,7 +196,6 @@ TASK_DEFINITIONS = {
                 compare=Compare.Equal,
                 value=1,
                 permissions=[
-                    ContainerPermission.Create,
                     ContainerPermission.List,
                     ContainerPermission.Read,
                     ContainerPermission.Write,
@@ -231,7 +232,7 @@ TASK_DEFINITIONS = {
             ),
             ContainerDefinition(
                 type=ContainerType.tools,
-                compare=Compare.Equal,
+                compare=Compare.AtMost,
                 value=1,
                 permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
@@ -239,14 +240,44 @@ TASK_DEFINITIONS = {
                 type=ContainerType.crashes,
                 compare=Compare.Equal,
                 value=1,
-                permissions=[ContainerPermission.Create],
+                permissions=[ContainerPermission.Write],
             ),
             ContainerDefinition(
                 type=ContainerType.inputs,
                 compare=Compare.Equal,
                 value=1,
                 permissions=[
-                    ContainerPermission.Create,
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+            ContainerDefinition(
+                type=ContainerType.unique_reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+            ContainerDefinition(
+                type=ContainerType.reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+            ContainerDefinition(
+                type=ContainerType.no_repro,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Write,
                     ContainerPermission.Read,
                     ContainerPermission.List,
                 ],
@@ -289,7 +320,7 @@ TASK_DEFINITIONS = {
                 type=ContainerType.inputs,
                 compare=Compare.Equal,
                 value=1,
-                permissions=[ContainerPermission.Create, ContainerPermission.List],
+                permissions=[ContainerPermission.Write, ContainerPermission.List],
             ),
         ],
         monitor_queue=None,
@@ -327,7 +358,7 @@ TASK_DEFINITIONS = {
                 type=ContainerType.crashes,
                 compare=Compare.Equal,
                 value=1,
-                permissions=[ContainerPermission.Create],
+                permissions=[ContainerPermission.Write],
             ),
             ContainerDefinition(
                 type=ContainerType.readonly_inputs,
@@ -366,19 +397,19 @@ TASK_DEFINITIONS = {
                 type=ContainerType.reports,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Create],
+                permissions=[ContainerPermission.Write],
             ),
             ContainerDefinition(
                 type=ContainerType.unique_reports,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Create],
+                permissions=[ContainerPermission.Write],
             ),
             ContainerDefinition(
                 type=ContainerType.no_repro,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Create],
+                permissions=[ContainerPermission.Write],
             ),
         ],
         monitor_queue=ContainerType.crashes,

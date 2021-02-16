@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
-use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
-use reqwest::StatusCode;
+use anyhow::{Context, Result};
+use onefuzz::{
+    http::{is_auth_error_code, ResponseExt},
+    jitter::delay_with_jitter,
+};
 use reqwest_retry::SendRetry;
 use std::{
     path::{Path, PathBuf},
@@ -81,14 +83,16 @@ impl StaticConfig {
     }
 
     pub fn from_file(config_path: impl AsRef<Path>) -> Result<Self> {
-        let data = std::fs::read(config_path)?;
+        let config_path = config_path.as_ref();
+        let data = std::fs::read(config_path)
+            .with_context(|| format!("unable to read config file: {}", config_path.display()))?;
         Self::new(&data)
     }
 
     pub fn from_env() -> Result<Self> {
         let instance_id = Uuid::parse_str(&std::env::var("ONEFUZZ_INSTANCE_ID")?)?;
         let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
-        let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?.into();
+        let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?;
         let tenant = std::env::var("ONEFUZZ_TENANT")?;
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
@@ -111,13 +115,9 @@ impl StaticConfig {
             None
         };
 
-        let credentials = ClientCredentials::new(
-            client_id,
-            client_secret,
-            onefuzz_url.clone().to_string(),
-            tenant,
-        )
-        .into();
+        let credentials =
+            ClientCredentials::new(client_id, client_secret, onefuzz_url.to_string(), tenant)
+                .into();
 
         Ok(Self {
             instance_id,
@@ -153,14 +153,18 @@ impl DynamicConfig {
     pub async fn save(&self) -> Result<()> {
         let path = Self::save_path()?;
         let data = serde_json::to_vec(&self)?;
-        fs::write(&path, &data).await?;
+        fs::write(&path, &data)
+            .await
+            .with_context(|| format!("unable to save dynamic config: {}", path.display()))?;
         info!("saved dynamic-config: {}", path.display());
         Ok(())
     }
 
     pub async fn load() -> Result<Self> {
         let path = Self::save_path()?;
-        let data = fs::read(&path).await?;
+        let data = fs::read(&path)
+            .await
+            .with_context(|| format!("unable to load dynamic config: {}", path.display()))?;
         let ctx: Self = serde_json::from_slice(&data)?;
         info!("loaded dynamic-config: {}", path.display());
         Ok(ctx)
@@ -232,7 +236,7 @@ impl Registration {
                         machine_id,
                     });
                 }
-                Err(err) if status_code == StatusCode::UNAUTHORIZED => {
+                Err(err) if is_auth_error_code(status_code) => {
                     warn!(
                         "Registration failed: {}\n retrying in {} seconds",
                         err,
@@ -240,7 +244,7 @@ impl Registration {
                     );
                     delay_with_jitter(REGISTRATION_RETRY_PERIOD).await;
                 }
-                Err(err) => return Err(err.into()),
+                Err(err) => return Err(err),
             }
         }
 
@@ -268,6 +272,7 @@ impl Registration {
     }
 
     pub async fn renew(&mut self) -> Result<()> {
+        info!("renewing registration");
         let token = self.config.credentials.access_token().await?;
 
         let machine_id = self.machine_id.to_string();

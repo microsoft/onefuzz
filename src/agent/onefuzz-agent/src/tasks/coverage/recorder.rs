@@ -8,7 +8,7 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz::{
     fs::{has_files, OwnedDir},
     sha256::digest_file,
@@ -47,7 +47,12 @@ impl CoverageRecorder {
             self.config.coverage.path.join("inputs").join(digest)
         };
 
-        fs::create_dir_all(&coverage_path).await?;
+        fs::create_dir_all(&coverage_path).await.with_context(|| {
+            format!(
+                "unable to create coverage path: {}",
+                coverage_path.display()
+            )
+        })?;
 
         let script = self.invoke_debugger_script(test_input, &coverage_path)?;
         let output = script.wait_with_output().await?;
@@ -66,19 +71,35 @@ impl CoverageRecorder {
 
             return Err(err);
         } else {
-            verbose!(
+            debug!(
                 "recording stderr: {}",
                 String::from_utf8_lossy(&output.stderr)
             );
-            verbose!(
+            debug!(
                 "recording stdout: {}",
                 String::from_utf8_lossy(&output.stdout)
             );
         }
 
         if !has_files(&coverage_path).await? {
-            tokio::fs::remove_dir(&coverage_path).await?;
-            bail!("no coverage files for input: {}", test_input.display());
+            tokio::fs::remove_dir(&coverage_path)
+                .await
+                .with_context(|| {
+                    format!(
+                        "unable to remove coverage path: {}",
+                        coverage_path.display()
+                    )
+                })?;
+
+            let filename = test_input
+                .file_name()
+                .ok_or_else(|| format_err!("unable to identify coverage input filename"))?;
+
+            bail!(
+                "coverage extraction from {} failed when processing file {:?}.  target appears to be missing sancov instrumentation",
+                self.config.target_exe.display(),
+                filename
+            );
         }
 
         Ok(coverage_path)
@@ -114,7 +135,7 @@ impl CoverageRecorder {
             cmd.env(k, v);
         }
 
-        let child = cmd.spawn()?;
+        let child = cmd.spawn().context("gdb failed to start")?;
 
         Ok(child)
     }
@@ -151,7 +172,7 @@ impl CoverageRecorder {
             cmd.env(k, v);
         }
 
-        let child = cmd.spawn()?;
+        let child = cmd.spawn().context("cdb.exe failed to start")?;
 
         Ok(child)
     }

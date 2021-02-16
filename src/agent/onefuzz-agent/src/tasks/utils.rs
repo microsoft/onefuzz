@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use onefuzz::jitter::delay_with_jitter;
+use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
 use reqwest::Url;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -13,7 +13,10 @@ pub async fn download_input(input_url: Url, dst: impl AsRef<Path>) -> Result<Pat
     let file_name = input_url.path_segments().unwrap().last().unwrap();
     let file_path = dst.as_ref().join(file_name);
 
-    let resp = reqwest::get(input_url).await?;
+    let resp = reqwest::get(input_url)
+        .await?
+        .error_for_status_with_body()
+        .await?;
 
     let body = resp.bytes().await?;
     let mut body = body.as_ref();
@@ -38,12 +41,12 @@ pub async fn reset_tmp_dir(tmp_dir: impl AsRef<Path>) -> Result<()> {
     if dir_exists {
         fs::remove_dir_all(tmp_dir).await?;
 
-        verbose!("deleted {}", tmp_dir.display());
+        debug!("deleted {}", tmp_dir.display());
     }
 
     fs::create_dir_all(tmp_dir).await?;
 
-    verbose!("created {}", tmp_dir.display());
+    debug!("created {}", tmp_dir.display());
 
     Ok(())
 }
@@ -77,4 +80,8 @@ pub fn parse_key_value(value: String) -> Result<(String, String)> {
         .ok_or_else(|| format_err!("invalid key=value, no = found {:?}", value))?;
 
     Ok((value[..offset].to_string(), value[offset + 1..].to_string()))
+}
+
+pub fn default_bool_true() -> bool {
+    true
 }

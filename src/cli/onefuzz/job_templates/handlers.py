@@ -12,6 +12,7 @@ from onefuzztypes.models import Job, TaskContainers
 
 from ..api import Endpoint
 from ..templates import _build_container_name
+from .job_monitor import JobMonitor
 
 
 def container_type_name(container_type: ContainerType) -> str:
@@ -68,9 +69,12 @@ class TemplateSubmitHandler(Endpoint):
                 if container_type == container.type:
                     seen = True
             if not seen:
-                assert isinstance(request.user_fields["project"], str)
-                assert isinstance(request.user_fields["name"], str)
-                assert isinstance(request.user_fields["build"], str)
+                if not isinstance(request.user_fields["project"], str):
+                    raise TypeError
+                if not isinstance(request.user_fields["name"], str):
+                    raise TypeError
+                if not isinstance(request.user_fields["build"], str):
+                    raise TypeError
                 container_name = _build_container_name(
                     self.onefuzz,
                     container_type,
@@ -149,8 +153,13 @@ class TemplateSubmitHandler(Endpoint):
         self,
         config: JobTemplateConfig,
         args: Dict[str, Any],
+        *,
+        wait_for_running: bool,
     ) -> Job:
         """ Convert argparse args into a JobTemplateRequest and submit it """
         self.onefuzz.logger.debug("building: %s", config.name)
         request = self._convert_args(config, args)
-        return self._execute_request(config, request, args)
+        job = self._execute_request(config, request, args)
+
+        JobMonitor(self.onefuzz, job).wait(wait_for_running=wait_for_running)
+        return job

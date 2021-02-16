@@ -3,6 +3,7 @@
     "Description": "Permissions required for OneFuzz deployment",
     "Actions": [
         "Microsoft.Authorization/locks/*",
+        "Microsoft.Keyvault/vaults/*",
         "Microsoft.Authorization/roleAssignments/write",
         "Microsoft.EventGrid/eventSubscriptions/read",
         "Microsoft.EventGrid/eventSubscriptions/write",

@@ -1,8 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::*, utils};
-use anyhow::{Error, Result};
+use crate::tasks::{
+    config::CommonConfig,
+    heartbeat::*,
+    utils::{self, default_bool_true},
+};
+use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use onefuzz::{
     expand::Expand,
@@ -11,30 +15,26 @@ use onefuzz::{
     process::monitor_process,
     sha256,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
-    telemetry::Event::new_result,
 };
+use onefuzz_telemetry::Event::new_result;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::{
     ffi::OsString,
     path::{Path, PathBuf},
     process::Stdio,
-    sync::Arc,
 };
+use tempfile::tempdir;
 use tokio::{fs, process::Command};
 
-fn default_bool_true() -> bool {
-    true
-}
-
 #[derive(Debug, Deserialize, Clone)]
-pub struct GeneratorConfig {
+pub struct Config {
     pub generator_exe: String,
     pub generator_env: HashMap<String, String>,
     pub generator_options: Vec<String>,
     pub readonly_inputs: Vec<SyncedDir>,
     pub crashes: SyncedDir,
-    pub tools: SyncedDir,
+    pub tools: Option<SyncedDir>,
 
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
@@ -52,133 +52,144 @@ pub struct GeneratorConfig {
     pub common: CommonConfig,
 }
 
-pub async fn spawn(config: Arc<GeneratorConfig>) -> Result<(), Error> {
-    config.crashes.init().await?;
-    config.tools.init_pull().await?;
-
-    set_executable(&config.tools.path).await?;
-    let hb_client = config.common.init_heartbeat().await?;
-
-    for dir in &config.readonly_inputs {
-        dir.init_pull().await?;
-    }
-
-    let sync_task = continuous_sync(&config.readonly_inputs, Pull, config.ensemble_sync_delay);
-    let crash_dir_monitor = config.crashes.monitor_results(new_result);
-    let tester = Tester::new(
-        &config.target_exe,
-        &config.target_options,
-        &config.target_env,
-        &config.target_timeout,
-        config.check_asan_log,
-        false,
-        config.check_debugger,
-        config.check_retry_count,
-    );
-    let inputs: Vec<_> = config.readonly_inputs.iter().map(|x| &x.path).collect();
-    let fuzzing_monitor = start_fuzzing(&config, inputs, tester, hb_client);
-    futures::try_join!(fuzzing_monitor, sync_task, crash_dir_monitor)?;
-    Ok(())
+pub struct GeneratorTask {
+    config: Config,
 }
 
-async fn generate_input(
-    generator_exe: &str,
-    generator_env: &HashMap<String, String>,
-    generator_options: &[String],
-    tools_dir: impl AsRef<Path>,
-    corpus_dir: impl AsRef<Path>,
-    output_dir: impl AsRef<Path>,
-) -> Result<()> {
-    let mut expand = Expand::new();
-    expand
-        .generated_inputs(&output_dir)
-        .input_corpus(&corpus_dir)
-        .generator_exe(&generator_exe)
-        .generator_options(&generator_options)
-        .tools_dir(&tools_dir);
-
-    utils::reset_tmp_dir(&output_dir).await?;
-
-    let generator_path = Expand::new()
-        .tools_dir(tools_dir.as_ref())
-        .evaluate_value(generator_exe)?;
-
-    let mut generator = Command::new(&generator_path);
-    generator
-        .kill_on_drop(true)
-        .env_remove("RUST_LOG")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-
-    for arg in expand.evaluate(generator_options)? {
-        generator.arg(arg);
+impl GeneratorTask {
+    pub fn new(config: Config) -> Self {
+        Self { config }
     }
 
-    for (k, v) in generator_env {
-        generator.env(k, expand.evaluate_value(v)?);
+    pub async fn run(&self) -> Result<()> {
+        self.config.crashes.init().await?;
+        if let Some(tools) = &self.config.tools {
+            if tools.url.is_some() {
+                tools.init_pull().await?;
+                set_executable(&tools.path).await?;
+            }
+        }
+
+        let hb_client = self.config.common.init_heartbeat().await?;
+
+        for dir in &self.config.readonly_inputs {
+            dir.init_pull().await?;
+        }
+
+        let sync_task = continuous_sync(
+            &self.config.readonly_inputs,
+            Pull,
+            self.config.ensemble_sync_delay,
+        );
+
+        let crash_dir_monitor = self.config.crashes.monitor_results(new_result);
+
+        let fuzzer = self.fuzzing_loop(hb_client);
+
+        futures::try_join!(fuzzer, sync_task, crash_dir_monitor)?;
+        Ok(())
     }
 
-    info!("Generating test cases with {:?}", generator);
-    let output = generator.spawn()?;
-    monitor_process(output, "generator".to_string(), true, None).await?;
+    async fn fuzzing_loop(&self, heartbeat_client: Option<TaskHeartbeatClient>) -> Result<()> {
+        let tester = Tester::new(
+            &self.config.common.setup_dir,
+            &self.config.target_exe,
+            &self.config.target_options,
+            &self.config.target_env,
+        )
+        .check_asan_log(self.config.check_asan_log)
+        .check_debugger(self.config.check_debugger)
+        .check_retry_count(self.config.check_retry_count)
+        .set_optional(self.config.target_timeout, |tester, timeout| {
+            tester.timeout(timeout)
+        });
 
-    Ok(())
-}
+        loop {
+            for corpus_dir in &self.config.readonly_inputs {
+                heartbeat_client.alive();
+                let corpus_dir = &corpus_dir.path;
+                let generated_inputs = tempdir()?;
+                let generated_inputs_path = generated_inputs.path();
 
-async fn start_fuzzing<'a>(
-    config: &GeneratorConfig,
-    corpus_dirs: Vec<impl AsRef<Path>>,
-    tester: Tester<'a>,
-    heartbeat_client: Option<TaskHeartbeatClient>,
-) -> Result<()> {
-    let generator_tmp = "generator_tmp";
+                self.generate_inputs(corpus_dir, &generated_inputs_path)
+                    .await?;
+                self.test_inputs(&generated_inputs_path, &tester).await?;
+            }
+        }
+    }
 
-    info!("Starting generator fuzzing loop");
+    async fn test_inputs(
+        &self,
+        generated_inputs: impl AsRef<Path>,
+        tester: &Tester<'_>,
+    ) -> Result<()> {
+        let mut read_dir = fs::read_dir(generated_inputs).await?;
+        while let Some(file) = read_dir.next().await {
+            let file = file?;
 
-    loop {
-        heartbeat_client.alive();
+            debug!("testing input: {:?}", file);
 
-        for corpus_dir in &corpus_dirs {
-            let corpus_dir = corpus_dir.as_ref();
+            let destination_file = if self.config.rename_output {
+                let hash = sha256::digest_file(file.path()).await?;
+                OsString::from(hash)
+            } else {
+                file.file_name()
+            };
 
-            generate_input(
-                &config.generator_exe,
-                &config.generator_env,
-                &config.generator_options,
-                &config.tools.path,
-                corpus_dir,
-                generator_tmp,
-            )
-            .await?;
+            let destination_file = self.config.crashes.path.join(destination_file);
+            if tester.is_crash(file.path()).await? {
+                fs::rename(file.path(), &destination_file).await?;
+                debug!("crash found {}", destination_file.display());
+            }
+        }
+        Ok(())
+    }
 
-            let mut read_dir = fs::read_dir(generator_tmp).await?;
-            while let Some(file) = read_dir.next().await {
-                verbose!("Processing file {:?}", file);
-                let file = file?;
+    async fn generate_inputs(
+        &self,
+        corpus_dir: impl AsRef<Path>,
+        output_dir: impl AsRef<Path>,
+    ) -> Result<()> {
+        utils::reset_tmp_dir(&output_dir).await?;
+        let (mut generator, generator_path) = {
+            let expand = Expand::new()
+                .generated_inputs(&output_dir)
+                .input_corpus(&corpus_dir)
+                .generator_exe(&self.config.generator_exe)
+                .generator_options(&self.config.generator_options)
+                .job_id(&self.config.common.job_id)
+                .task_id(&self.config.common.task_id)
+                .set_optional_ref(&self.config.tools, |expand, tools| {
+                    expand.tools_dir(&tools.path)
+                });
 
-                let destination_file = if config.rename_output {
-                    let hash = sha256::digest_file(file.path()).await?;
-                    OsString::from(hash)
-                } else {
-                    file.file_name()
-                };
+            let generator_path = expand.evaluate_value(&self.config.generator_exe)?;
 
-                let destination_file = config.crashes.path.join(destination_file);
-                if tester.is_crash(file.path()).await? {
-                    info!("Crash found, path = {}", file.path().display());
+            let mut generator = Command::new(&generator_path);
+            generator
+                .kill_on_drop(true)
+                .env_remove("RUST_LOG")
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped());
 
-                    if let Err(err) = fs::rename(file.path(), &destination_file).await {
-                        warn!("Unable to move file {:?} : {:?}", file.path(), err);
-                    }
-                }
+            for arg in expand.evaluate(&self.config.generator_options)? {
+                generator.arg(arg);
             }
 
-            verbose!(
-                "Tested generated inputs for corpus = {}",
-                corpus_dir.display()
-            );
-        }
+            for (k, v) in &self.config.generator_env {
+                generator.env(k, expand.evaluate_value(v)?);
+            }
+            (generator, generator_path)
+        };
+
+        info!("Generating test cases with {:?}", generator);
+        let output = generator
+            .spawn()
+            .with_context(|| format!("generator failed to start: {}", generator_path))?;
+        monitor_process(output, "generator".to_string(), true, None).await?;
+
+        Ok(())
     }
 }
 
@@ -186,16 +197,22 @@ mod tests {
     #[tokio::test]
     #[cfg(target_os = "linux")]
     #[ignore]
-    async fn test_radamsa_linux() {
-        use super::*;
+    async fn test_radamsa_linux() -> anyhow::Result<()> {
+        use super::{Config, GeneratorTask};
+        use crate::tasks::config::CommonConfig;
+        use onefuzz::syncdir::SyncedDir;
+        use std::collections::HashMap;
         use std::env;
+        use std::path::Path;
+        use tempfile::tempdir;
 
-        let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX").unwrap();
-        let corpus_dir_temp = tempfile::tempdir().unwrap();
-        let corpus_dir = corpus_dir_temp.into_path();
-        let seed_file_name = corpus_dir.clone().join("seed.txt");
-        let radamsa_output_temp = tempfile::tempdir().unwrap();
-        let radamsa_output = radamsa_output_temp.into_path();
+        let crashes_temp = tempfile::tempdir()?;
+        let crashes = crashes_temp.path();
+
+        let inputs_temp = tempfile::tempdir().unwrap();
+        let inputs = inputs_temp.path();
+        let input_file = inputs.join("seed.txt");
+        tokio::fs::write(input_file, "test").await?;
 
         let generator_options: Vec<String> = vec![
             "-o",
@@ -209,22 +226,45 @@ mod tests {
         .map(|p| p.to_string())
         .collect();
 
+        let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX")?;
         let radamsa_as_path = Path::new(&radamsa_path);
         let radamsa_dir = radamsa_as_path.parent().unwrap();
-        let radamsa_exe = String::from("{tools_dir}/radamsa");
-        let radamsa_env = HashMap::new();
 
-        tokio::fs::write(seed_file_name, "test").await.unwrap();
-        let _output = generate_input(
-            &radamsa_exe,
-            &radamsa_env,
-            &generator_options,
-            &radamsa_dir,
-            corpus_dir,
-            radamsa_output.clone(),
-        )
-        .await;
-        let generated_outputs = std::fs::read_dir(radamsa_output.clone()).unwrap();
-        assert_eq!(generated_outputs.count(), 100, "No crashes generated");
+        let config = Config {
+            generator_exe: String::from("{tools_dir}/radamsa"),
+            generator_options,
+            readonly_inputs: vec![SyncedDir {
+                path: inputs.to_path_buf(),
+                url: None,
+            }],
+            crashes: SyncedDir {
+                path: crashes.to_path_buf(),
+                url: None,
+            },
+            tools: Some(SyncedDir {
+                path: radamsa_dir.to_path_buf(),
+                url: None,
+            }),
+            target_exe: Default::default(),
+            target_env: Default::default(),
+            target_options: Default::default(),
+            target_timeout: None,
+            check_asan_log: false,
+            check_debugger: false,
+            rename_output: false,
+            ensemble_sync_delay: None,
+            generator_env: HashMap::default(),
+            check_retry_count: 0,
+            common: CommonConfig::default(),
+        };
+        let task = GeneratorTask::new(config);
+
+        let generated_inputs = tempdir()?;
+        task.generate_inputs(inputs.to_path_buf(), generated_inputs.path())
+            .await?;
+
+        let count = std::fs::read_dir(generated_inputs.path())?.count();
+        assert_eq!(count, 100, "No inputs generated");
+        Ok(())
     }
 }

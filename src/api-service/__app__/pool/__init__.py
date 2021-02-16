@@ -7,12 +7,11 @@ import logging
 import os
 
 import azure.functions as func
-from onefuzztypes.enums import ErrorCode, PoolState
+from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import AgentConfig, Error
 from onefuzztypes.requests import PoolCreate, PoolSearch, PoolStop
 from onefuzztypes.responses import BoolResult
 
-from ..onefuzzlib.azure.containers import StorageType
 from ..onefuzzlib.azure.creds import (
     get_base_region,
     get_instance_id,
@@ -20,9 +19,12 @@ from ..onefuzzlib.azure.creds import (
     get_regions,
 )
 from ..onefuzzlib.azure.queue import get_queue_sas
+from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.azure.vmss import list_available_skus
-from ..onefuzzlib.pools import Pool
+from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.pools import Pool
 
 
 def set_config(pool: Pool) -> Pool:
@@ -115,7 +117,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         client_id=request.client_id,
         autoscale=request.autoscale,
     )
-    pool.save()
     return ok(set_config(pool))
 
 
@@ -127,20 +128,17 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     pool = Pool.get_by_name(request.name)
     if isinstance(pool, Error):
         return not_ok(pool, context="pool stop")
-    if request.now:
-        pool.state = PoolState.halt
-    else:
-        pool.state = PoolState.shutdown
-    pool.save()
+    pool.set_shutdown(now=request.now)
     return ok(BoolResult(result=True))
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        return get(req)
-    elif req.method == "POST":
-        return post(req)
-    elif req.method == "DELETE":
-        return delete(req)
-    else:
-        raise Exception("invalid method")
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+    methods = {"GET": get, "POST": post, "DELETE": delete}
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

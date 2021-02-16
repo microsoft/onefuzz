@@ -4,9 +4,9 @@
 use std::io::ErrorKind;
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use downcast_rs::Downcast;
-use onefuzz::blob::BlobContainerUrl;
+use onefuzz::{blob::BlobContainerUrl, http::is_auth_error};
 use storage_queue::QueueClient;
 use tokio::fs;
 use uuid::Uuid;
@@ -63,9 +63,18 @@ impl WorkSet {
         info!("saving workset context: {}", path.display());
 
         let data = serde_json::to_vec(&self)?;
-        fs::write(path, &data).await?;
+        fs::write(&path, &data)
+            .await
+            .with_context(|| format!("unable to save WorkSet context: {}", path.display()))?;
 
         Ok(())
+    }
+
+    pub fn setup_dir(&self) -> Result<PathBuf> {
+        let setup_dir = self.setup_url.container();
+        Ok(onefuzz::fs::onefuzz_root()?
+            .join("blob-containers")
+            .join(setup_dir))
     }
 }
 
@@ -136,7 +145,7 @@ impl WorkQueue {
         }
     }
 
-    pub async fn renew(&mut self) -> Result<()> {
+    async fn renew(&mut self) -> Result<()> {
         self.registration.renew().await?;
         let url = self.registration.dynamic_config.work_queue.clone();
         self.queue = QueueClient::new(url);
@@ -150,7 +159,7 @@ impl WorkQueue {
         // it was just due to a stale SAS URL.
         if let Err(err) = &msg {
             if is_auth_error(err) {
-                self.registration.renew().await?;
+                self.renew().await?;
                 msg = self.queue.pop().await;
             }
         }
@@ -180,25 +189,13 @@ impl WorkQueue {
         // it was just due to a stale SAS URL.
         if let Err(err) = &result {
             if is_auth_error(err) {
-                self.registration.renew().await?;
+                self.renew().await?;
                 self.queue.delete(receipt).await?;
             }
         }
 
         Ok(())
     }
-}
-
-fn is_auth_error(err: &anyhow::Error) -> bool {
-    use reqwest::StatusCode;
-
-    if let Some(err) = err.downcast_ref::<reqwest::Error>() {
-        if let Some(status) = err.status() {
-            return status == StatusCode::UNAUTHORIZED;
-        }
-    }
-
-    false
 }
 
 #[cfg(test)]

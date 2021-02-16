@@ -16,8 +16,11 @@ from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.azure.creds import get_base_region, get_regions
 from ..onefuzzlib.azure.vmss import list_available_skus
-from ..onefuzzlib.pools import Pool, Scaleset
+from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.pools import Pool
+from ..onefuzzlib.workers.scalesets import Scaleset
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -91,7 +94,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         spot_instances=request.spot_instances,
         tags=request.tags,
     )
-    scaleset.save()
     # don't return auths during create, only 'get' with include_auth
     scaleset.auth = None
     return ok(scaleset)
@@ -143,14 +145,13 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     return ok(scaleset)
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        return get(req)
-    elif req.method == "POST":
-        return post(req)
-    elif req.method == "DELETE":
-        return delete(req)
-    elif req.method == "PATCH":
-        return patch(req)
-    else:
-        raise Exception("invalid method")
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+    methods = {"GET": get, "POST": post, "DELETE": delete, "PATCH": patch}
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

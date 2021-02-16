@@ -6,12 +6,13 @@
 import logging
 from typing import Dict, Optional, Type
 
+from azure.core.exceptions import ResourceNotFoundError
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import UpdateType
 from pydantic import BaseModel
 
-from .azure.containers import StorageType
 from .azure.queue import queue_object
+from .azure.storage import StorageType
 
 
 # This class isn't intended to be shared outside of the service
@@ -50,7 +51,7 @@ def queue_update(
             visibility_timeout=visibility_timeout,
         ):
             logging.error("unable to queue update")
-    except CloudError as err:
+    except (CloudError, ResourceNotFoundError) as err:
         logging.error("GOT ERROR %s", repr(err))
         logging.error("GOT ERROR %s", dir(err))
         raise err
@@ -59,10 +60,12 @@ def queue_update(
 def execute_update(update: Update) -> None:
     from .jobs import Job
     from .orm import ORMMixin
-    from .pools import Node, Pool, Scaleset
     from .proxy import Proxy
     from .repro import Repro
     from .tasks.main import Task
+    from .workers.nodes import Node
+    from .workers.pools import Pool
+    from .workers.scalesets import Scaleset
 
     update_objects: Dict[UpdateType, Type[ORMMixin]] = {
         UpdateType.Task: Task,

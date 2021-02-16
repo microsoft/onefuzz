@@ -6,6 +6,7 @@ use std::fmt;
 use anyhow::Result;
 use onefuzz::process::Output;
 
+use crate::commands::add_ssh_key;
 use crate::coordinator::{NodeCommand, NodeState};
 use crate::reboot::RebootContext;
 use crate::setup::ISetupRunner;
@@ -53,8 +54,11 @@ impl Scheduler {
         Self::default()
     }
 
-    pub fn execute_command(&mut self, cmd: NodeCommand) -> Result<()> {
+    pub async fn execute_command(&mut self, cmd: NodeCommand) -> Result<()> {
         match cmd {
+            NodeCommand::AddSshKey(ssh_key_info) => {
+                add_ssh_key(ssh_key_info).await?;
+            }
             NodeCommand::StopTask(stop_task) => {
                 if let Scheduler::Busy(state) = self {
                     state.stop(stop_task.task_id)?;
@@ -220,9 +224,9 @@ impl State<PendingReboot> {
 impl State<Ready> {
     pub async fn run(self) -> Result<State<Busy>> {
         let mut workers = vec![];
-
+        let setup_dir = self.ctx.work_set.setup_dir()?;
         for work in self.ctx.work_set.work_units {
-            let worker = Some(Worker::new(work));
+            let worker = Some(Worker::new(&setup_dir, work));
             workers.push(worker);
         }
 

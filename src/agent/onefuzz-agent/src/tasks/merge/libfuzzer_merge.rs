@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::*, utils};
+use crate::tasks::{
+    config::CommonConfig,
+    heartbeat::*,
+    utils::{self, default_bool_true},
+};
 use anyhow::Result;
 use onefuzz::{
     http::ResponseExt,
@@ -35,11 +39,24 @@ pub struct Config {
     pub unique_inputs: SyncedDir,
     pub preserve_existing_outputs: bool,
 
+    #[serde(default = "default_bool_true")]
+    pub check_fuzzer_help: bool,
+
     #[serde(flatten)]
     pub common: CommonConfig,
 }
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
+    if config.check_fuzzer_help {
+        let target = LibFuzzer::new(
+            &config.target_exe,
+            &config.target_options,
+            &config.target_env,
+            &config.common.setup_dir,
+        );
+        target.check_help().await?;
+    }
+
     config.unique_inputs.init().await?;
     if let Some(url) = config.input_queue.clone() {
         loop {
@@ -72,7 +89,7 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
     let hb_client = config.common.init_heartbeat().await?;
     hb_client.alive();
     let tmp_dir = "./tmp";
-    verbose!("tmp dir reset");
+    debug!("tmp dir reset");
     utils::reset_tmp_dir(tmp_dir).await?;
 
     if let Some(msg) = input_queue.pop().await? {
@@ -88,11 +105,11 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
         info!("downloaded input to {}", input_path.display());
         sync_and_merge(config.clone(), vec![tmp_dir], true, true).await?;
 
-        verbose!("will delete popped message with id = {}", msg.id());
+        debug!("will delete popped message with id = {}", msg.id());
 
         input_queue.delete(msg).await?;
 
-        verbose!(
+        debug!(
             "Attempting to delete {} from the candidate container",
             input_url.clone()
         );
@@ -146,6 +163,7 @@ pub async fn merge_inputs(
         &config.target_exe,
         &config.target_options,
         &config.target_env,
+        &config.common.setup_dir,
     );
     merger.merge(&config.unique_inputs.path, &candidates).await
 }
@@ -160,6 +178,6 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
         .await
     {
         Ok(_) => Ok(()),
-        Err(err) => Err(err.into()),
+        Err(err) => Err(err),
     }
 }

@@ -26,7 +26,7 @@ pub trait Downloader {
 
 #[async_trait]
 pub trait Processor {
-    async fn process(&mut self, url: Url, input: &Path) -> Result<()>;
+    async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()>;
 }
 
 pub trait Callback<M> {

@@ -10,15 +10,12 @@ from uuid import UUID
 
 from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, TaskFeature
 from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
+from onefuzztypes.primitives import Container
 
-from ..azure.containers import (
-    StorageType,
-    blob_exists,
-    container_exists,
-    get_container_sas_url,
-)
-from ..azure.creds import get_instance_id, get_instance_url
+from ..azure.containers import blob_exists, container_exists, get_container_sas_url
+from ..azure.creds import get_instance_id
 from ..azure.queue import get_queue_sas
+from ..azure.storage import StorageType
 from .defs import TASK_DEFINITIONS
 
 LOGGER = logging.getLogger("onefuzz")
@@ -52,7 +49,7 @@ def check_container(
     compare: Compare,
     expected: int,
     container_type: ContainerType,
-    containers: Dict[ContainerType, List[str]],
+    containers: Dict[ContainerType, List[Container]],
 ) -> None:
     actual = len(containers.get(container_type, []))
     if not check_val(compare, expected, actual):
@@ -65,7 +62,7 @@ def check_container(
 def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
     checked = set()
 
-    containers: Dict[ContainerType, List[str]] = {}
+    containers: Dict[ContainerType, List[Container]] = {}
     for container in config.containers:
         if container.name not in checked:
             if not container_exists(container.name, StorageType.corpus):
@@ -93,6 +90,25 @@ def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
                 "unable to monitor container type as it is not used by this task: %s"
                 % definition.monitor_queue.name
             )
+
+
+def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
+    if config.task.target_exe is None:
+        if TaskFeature.target_exe in definition.features:
+            raise TaskConfigError("missing target_exe")
+
+        if TaskFeature.target_exe_optional in definition.features:
+            return
+
+        return
+
+    container = [x for x in config.containers if x.type == ContainerType.setup][0]
+    if not blob_exists(container.name, config.task.target_exe, StorageType.corpus):
+        err = "target_exe `%s` does not exist in the setup container `%s`" % (
+            config.task.target_exe,
+            container.name,
+        )
+        LOGGER.warning(err)
 
 
 def check_config(config: TaskConfig) -> None:
@@ -135,14 +151,7 @@ def check_config(config: TaskConfig) -> None:
     else:
         raise TaskConfigError("either the vm or pool must be specified")
 
-    if TaskFeature.target_exe in definition.features:
-        container = [x for x in config.containers if x.type == ContainerType.setup][0]
-        if not blob_exists(container.name, config.task.target_exe, StorageType.corpus):
-            err = "target_exe `%s` does not exist in the setup container `%s`" % (
-                config.task.target_exe,
-                container.name,
-            )
-            LOGGER.warning(err)
+    check_target_exe(config, definition)
 
     if TaskFeature.generator_exe in definition.features:
         container = [x for x in config.containers if x.type == ContainerType.tools][0]
@@ -191,7 +200,6 @@ def build_task_config(
             StorageType.config,
             add=True,
         ),
-        back_channel_address="https://%s/api/back_channel" % (get_instance_url()),
         instance_id=get_instance_id(),
     )
 
@@ -222,9 +230,7 @@ def build_task_config(
                         StorageType.corpus,
                         read=ContainerPermission.Read in container_def.permissions,
                         write=ContainerPermission.Write in container_def.permissions,
-                        add=ContainerPermission.Add in container_def.permissions,
                         delete=ContainerPermission.Delete in container_def.permissions,
-                        create=ContainerPermission.Create in container_def.permissions,
                         list=ContainerPermission.List in container_def.permissions,
                     ),
                 }
@@ -257,6 +263,12 @@ def build_task_config(
         config.supervisor_input_marker = task_config.task.supervisor_input_marker
 
     if TaskFeature.target_exe in definition.features:
+        config.target_exe = "setup/%s" % task_config.task.target_exe
+
+    if (
+        TaskFeature.target_exe_optional in definition.features
+        and task_config.task.target_exe
+    ):
         config.target_exe = "setup/%s" % task_config.task.target_exe
 
     if TaskFeature.target_env in definition.features:
@@ -317,10 +329,24 @@ def build_task_config(
     if TaskFeature.ensemble_sync_delay in definition.features:
         config.ensemble_sync_delay = task_config.task.ensemble_sync_delay
 
+    if TaskFeature.check_fuzzer_help in definition.features:
+        config.check_fuzzer_help = (
+            task_config.task.check_fuzzer_help
+            if task_config.task.check_fuzzer_help is not None
+            else True
+        )
+
+    if TaskFeature.expect_crash_on_failure in definition.features:
+        config.expect_crash_on_failure = (
+            task_config.task.expect_crash_on_failure
+            if task_config.task.expect_crash_on_failure is not None
+            else True
+        )
+
     return config
 
 
-def get_setup_container(config: TaskConfig) -> str:
+def get_setup_container(config: TaskConfig) -> Container:
     for container in config.containers:
         if container.type == ContainerType.setup:
             return container.name

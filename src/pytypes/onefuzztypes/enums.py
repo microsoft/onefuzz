@@ -57,6 +57,7 @@ class TaskFeature(Enum):
     stats_file = "stats_file"
     stats_format = "stats_format"
     target_exe = "target_exe"
+    target_exe_optional = "target_exe_optional"
     target_env = "target_env"
     target_options = "target_options"
     analyzer_exe = "analyzer_exe"
@@ -75,6 +76,8 @@ class TaskFeature(Enum):
     check_retry_count = "check_retry_count"
     ensemble_sync_delay = "ensemble_sync_delay"
     preserve_existing_outputs = "preserve_existing_outputs"
+    check_fuzzer_help = "check_fuzzer_help"
+    expect_crash_on_failure = "expect_crash_on_failure"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -83,10 +86,8 @@ class TaskFeature(Enum):
 class ContainerPermission(Enum):
     Read = "Read"
     Write = "Write"
-    Create = "Create"
     List = "List"
     Delete = "Delete"
-    Add = "Add"
 
 
 class JobState(Enum):
@@ -106,6 +107,10 @@ class JobState(Enum):
         set of states that indicate work is needed during eventing
         """
         return [cls.init, cls.stopping]
+
+    @classmethod
+    def shutting_down(cls) -> List["JobState"]:
+        return [cls.stopping, cls.stopped]
 
 
 class TaskState(Enum):
@@ -250,6 +255,7 @@ class ErrorCode(Enum):
     INVALID_NODE = 469
     NOTIFICATION_FAILURE = 470
     UNABLE_TO_UPDATE = 471
+    PROXY_FAILED = 472
 
 
 class HeartbeatType(Enum):
@@ -364,13 +370,6 @@ class GithubIssueSearchMatch(Enum):
 class TaskDebugFlag(Enum):
     keep_node_on_failure = "keep_node_on_failure"
     keep_node_on_completion = "keep_node_on_completion"
-
-
-class WebhookEventType(Enum):
-    task_created = "task_created"
-    task_stopped = "task_stopped"
-    task_failed = "task_failed"
-    ping = "ping"
 
 
 class WebhookMessageState(Enum):

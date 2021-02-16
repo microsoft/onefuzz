@@ -4,6 +4,124 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.4.1
+### Changed
+* Agent: Verifying LibFuzzer targets at the start of a task using `-help=1` now happens prior to sending heartbeats.  [#528](https://github.com/microsoft/onefuzz/pull/528)
+
+### Fixed
+* Service: Fixed issue related to Azure Functions not always providing the JWT token via Authorization headers. [#531](https://github.com/microsoft/onefuzz/pull/531)
+* CLI: Fixed `--wait_for_running` in job templates. [#530](https://github.com/microsoft/onefuzz/pull/530)
+* Deployment: Fixed a log error by setting the default SignalR transport used by Azure Functions. [#525](https://github.com/microsoft/onefuzz/pull/525)
+* Agent: Fixed LibFuzzer coverage collection when instrumenting DLLs loaded at runtime. [#519](https://github.com/microsoft/onefuzz/pull/519)
+* Service: Fixed issue where the cached Azure Identity was not being used. [#526](https://github.com/microsoft/onefuzz/pull/526)
+* Service: Fixed log message related to identifying secondary corpus instances. [#524](https://github.com/microsoft/onefuzz/pull/524)
+
+## 2.4.0
+### Added
+* Service: Handle scaleset nodes that never register, such as nodes with instance-specific setup script failures.  [#518](https://github.com/microsoft/onefuzz/pull/518)
+
+### Changed
+* Agent: Added stdout/stderr logging and clarifying context during failures to the `generic_analysis` task.  [#522](https://github.com/microsoft/onefuzz/pull/522)
+* Agent/Service/Proxy: Clarify log messages from the scaleset proxy.  [#520](https://github.com/microsoft/onefuzz/pull/520)
+* Agent/Proxy: Update multiple third-party Rust libraries.  [#517](https://github.com/microsoft/onefuzz/pull/517)
+
+### Fixed
+* Agent: Fixed potential race condition when single stepping when debugging during the `generic_crash_reporter` and `generic_generator` tasks running on Windows.  [#440](https://github.com/microsoft/onefuzz/pull/440)
+
+## 2.3.0
+### Changed
+* Service: Clarify log messages when the service and agent versions mismatch. [#510](https://github.com/microsoft/onefuzz/pull/510)
+* Service: Scalesets and Nodes are now updated in a consistent order during scheduled updates. [#512](https://github.com/microsoft/onefuzz/pull/512)
+* CLI/Service: Expanded the use of Primitive data types that provide data validation. [#514](https://github.com/microsoft/onefuzz/pull/514)
+
+### Fixed
+* Service: Fixed an error generated when scalesets scheduled for deletion had configurations updated.  [#511](https://github.com/microsoft/onefuzz/pull/511)
+* Service: Fixed an issue where scaleset configurations were updated too frequently.  [#511](https://github.com/microsoft/onefuzz/pull/511)
+
+## 2.2.0
+### Added
+* Proxy: The logs from the proxy manager logged to Application Insights.  [#502](https://github.com/microsoft/onefuzz/pull/502)
+
+### Changed
+* Agent: Updated the web request retry logic to retry requests upon connection refused errors.  [#506](https://github.com/microsoft/onefuzz/pull/506)
+* Service: Improved the performance of shutting down pools.  [#503](https://github.com/microsoft/onefuzz/pull/503)
+* Service: Updated `azure-mgmt-compute` Python dependency. [#499](https://github.com/microsoft/onefuzz/pull/499)
+
+### Fixed
+* Proxy: Fixed an issue in the proxy heartbeats that caused proxy VMs to be reset after 10 minutes.  [#502](https://github.com/microsoft/onefuzz/pull/502)
+* Agent: Fixed an issue that broke libFuzzer based crash reporting that was introduced 2.1.1. [#505](https://github.com/microsoft/onefuzz/pull/505)
+
+## 2.1.1
+### Added
+* Agent: Added [Rust Clippy](https://github.com/rust-lang/rust-clippy) static analysis to CICD. [#490](https://github.com/microsoft/onefuzz/pull/490)
+* CLI/Service: Added [Bandit](https://github.com/PyCQA/bandit) static analysis to CICD.  [#491](https://github.com/microsoft/onefuzz/pull/491)
+
+### Fixed
+* Service: Fixed an issue where scalesets could get in a state that would stop updating configurations.  [#489](https://github.com/microsoft/onefuzz/pull/489)
+
+## 2.1.0
+### Added
+* Agent: Added `job_id` and `task_id` to [configuration value expansion](docs/command-replacements.md). [#481](https://github.com/microsoft/onefuzz/pull/481)
+* Agent: Broadened the availability of `tools_dir` to [configuration value expansion](docs/command-replacements.md). [#480](https://github.com/microsoft/onefuzz/pull/480)
+* Agent: Added clarifying context to command errors.  [#466](https://github.com/microsoft/onefuzz/pull/466)
+
+### Changed
+* CLI/Service/Agent: Supervisor can now be fully self-contained fuzzing tasks, no longer requiring `target_exe`.  Additionally, supervisor tasks can now optionally have managed report containers.  [#474](https://github.com/microsoft/onefuzz/pull/474)
+* Service: Managed nodes that are unused beyond 7 days are automatically reimaged to ensure OS patch levels are maintained.  [#476](https://github.com/microsoft/onefuzz/pull/476)
+* CLI/Service: Updated the default Windows VM image to `MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest`.  Existing scalesets will not be impacted by this change, only newly created scalesets using the default image.  [#469](https://github.com/microsoft/onefuzz/pull/469)
+
+### Fixed
+* Agent: New inputs discovered by supervisor tasks are now saved to the `inputs` container.  [#484](https://github.com/microsoft/onefuzz/pull/484)
+* CLI: The license is now properly set in the python package metadata.  [#472](https://github.com/microsoft/onefuzz/pull/472)
+* Agent: Failure to download files via HTTP from queues now results in a failure, rather than the HTTP error being interpreted as the requested file.  [#485](https://github.com/microsoft/onefuzz/pull/485)
+* Deployment: Fixed error when checking if the default CLI application exists.  [#488](https://github.com/microsoft/onefuzz/pull/488)
+
+## 2.0.0
+### Added
+* Agent: Added clarifying context to file system errors.  [#423](https://github.com/microsoft/onefuzz/pull/423)
+* CLI/Service: Significantly expanded the [events](docs/webhook_events.md) available for webhooks.  [#394](https://github.com/microsoft/onefuzz/pull/394)
+* Agent: Added `{setup_dir}` to [configuration value expansion](docs/command-replacements.md) [#417](https://github.com/microsoft/onefuzz/pull/417)
+* Agent: Added `{tools_dir}` [configuration value expansion](docs/command-replacements.md) to `{supervisor_options}` and `{supervisor_env}` [#444](https://github.com/microsoft/onefuzz/pull/444)
+
+### Changed
+* CLI/Service: Migrated `onefuzz status top` to use [Webhook Events](docs/webhook_events.md).  (BREAKING CHANGE) [#394](https://github.com/microsoft/onefuzz/pull/394)
+* CLI/Service: New notification secrets, such as ADO tokens, are managed in Azure KeyVault and are no longer accessible to the user once created.  (BREAKING CHANGE) [#326](https://github.com/microsoft/onefuzz/pull/326), [#389](https://github.com/microsoft/onefuzz/pull/389)
+* CLI/Service: Updated multiple Python dependencies. [#426](https://github.com/microsoft/onefuzz/pull/426), [#427](https://github.com/microsoft/onefuzz/pull/427),  [#430](https://github.com/microsoft/onefuzz/pull/430)
+
+### Fixed
+* Agent: Fixed triggering condition for new unique report events [#422](https://github.com/microsoft/onefuzz/pull/422)
+* Deployment: Mitigate issues related to deployments within conditional access policy scenarios. [#447](https://github.com/microsoft/onefuzz/pull/447)
+* Agent: Fixed an issue where unused nodes would stop requesting new work. [#459](https://github.com/microsoft/onefuzz/pull/459)
+* Service: Fixed dead node cleanup. [#458](https://github.com/microsoft/onefuzz/pull/458)
+* Service: Fixed an issue logging excessively large stdout/stderr from tasks.  [#460](https://github.com/microsoft/onefuzz/pull/460)
+
+## 1.11.0
+### Added 
+* Service: Added support for sharding corpus storage accounts using "Premium" storage accounts for improved IOPs.  [#334](https://github.com/microsoft/onefuzz/pull/334)
+* CLI/Service/Agent: Added the ability to optionally colocate multiple compatible tasks on a single machine. The coverage and crash reporting tasks in the LibFuzzer template make use of this functionality by default. [#402](https://github.com/microsoft/onefuzz/pull/402)
+* CLI: Added `onefuzz debug log tail` which enables continuously following Application Insights query results.  [#401](https://github.com/microsoft/onefuzz/pull/401)
+* CLI/Agent: Support verifying LibFuzzer targets at the start of a task using `-help=1`, which will enable identifying non-functional LibFuzzer targets.  [#381](https://github.com/microsoft/onefuzz/pull/381)
+* CLI/Agent: Support specifying whether to log a warning or fail the task when a LibFuzzer target exits with a non-zero status code (without also generating a crashing input).  [#381](https://github.com/microsoft/onefuzz/pull/381)
+* Agent: The STDOUT and STDERR for the supervisors and generators are now logged to Application Insights.  [#400](https://github.com/microsoft/onefuzz/pull/400)
+* Service: Enabled per-Scaleset SSH keys on Windows VMs, similar to existing Linux support, enabling `onefuzz debug node ssh` to both Windows and Linux nodes.  [#390](https://github.com/microsoft/onefuzz/pull/390)
+* Agent: Support ASAN odr-violation results.  [#380](https://github.com/microsoft/onefuzz/pull/380)
+* CLI/Service/Agent: Added the ability add SSH keys to nodes within scalesets.  [#441](https://github.com/microsoft/onefuzz/pull/441)
+* CLI: Added support for multi-tenant authentication.  [#346](https://github.com/microsoft/onefuzz/pull/346)
+
+### Changed
+* Service: Updating outdated nodes is now limited to 500 nodes at a time. [#397](https://github.com/microsoft/onefuzz/pull/397)
+* Service: Restrict agent from accessing API endpoints not specific to the agent.  [#404](https://github.com/microsoft/onefuzz/pull/404)
+* Service: Increased Azure Functions runtime timeout to 15 minutes.  [#384](https://github.com/microsoft/onefuzz/pull/384)
+* Deployment/Agent: Updated AFL++ to 3.00c.  [#393](https://github.com/microsoft/onefuzz/pull/393)
+* Agent: Added randomized initial jitter to agent heartbeats, which reduce API query storms when launching large number of nodes concurrently.  [#387](https://github.com/microsoft/onefuzz/pull/387)
+
+### Fixed
+* CLI/Agent: Add support to verify LibFuzzer targets execute correctly at the start of a task using `-help=1`.  [#381](https://github.com/microsoft/onefuzz/pull/381)
+* Service: Re-enable API endpoint used by `onefuzz nodes update`.  [#412](https://github.com/microsoft/onefuzz/pull/412)
+* Agent: Addressed a race condition in LibFuzzer coverage analysis without initial seeds.  [#403](https://github.com/microsoft/onefuzz/pull/403)
+* Agent: Prevent supervisor that fatally exits from processing additional new tasks.  [#378](https://github.com/microsoft/onefuzz/pull/378)
+* Agent: Address issues handling LibFuzzer targets that produce non-UTF8 output to STDERR.  [#379](https://github.com/microsoft/onefuzz/pull/379)
+
 ## 1.10.0
 ### Added
 * CLI: Added `libfuzzer merge` job template, which enables running performing libfuzzer input minimization as a batch operation.  [#282](https://github.com/microsoft/onefuzz/pull/282)

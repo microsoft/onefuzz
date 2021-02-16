@@ -6,8 +6,7 @@
 import unittest
 from uuid import UUID
 
-from onefuzztypes.enums import WebhookEventType
-from onefuzztypes.webhooks import WebhookEventPing
+from onefuzztypes.events import EventPing, EventType
 
 from __app__.onefuzzlib.webhooks import build_message
 
@@ -16,8 +15,8 @@ class TestWebhookHmac(unittest.TestCase):
     def test_webhook_hmac(self) -> None:
         webhook_id = UUID(int=0)
         event_id = UUID(int=1)
-        event_type = WebhookEventType.ping
-        event = WebhookEventPing(ping_id=UUID(int=2))
+        event_type = EventType.ping
+        event = EventPing(ping_id=UUID(int=2))
 
         data, digest = build_message(
             webhook_id=webhook_id, event_id=event_id, event_type=event_type, event=event

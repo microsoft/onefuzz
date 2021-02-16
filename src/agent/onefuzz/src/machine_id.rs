@@ -2,8 +2,12 @@
 // Licensed under the MIT License.
 
 use crate::fs::{onefuzz_etc, write_file};
+#[cfg(target_os = "linux")]
+use anyhow::Context;
 use anyhow::Result;
 use reqwest_retry::SendRetry;
+#[cfg(target_os = "linux")]
+use std::path::Path;
 use std::time::Duration;
 use tokio::fs;
 use uuid::Uuid;
@@ -83,7 +87,10 @@ pub async fn get_scaleset_name() -> Result<Option<String>> {
 
 #[cfg(target_os = "linux")]
 pub async fn get_os_machine_id() -> Result<Uuid> {
-    let contents = fs::read_to_string("/etc/machine-id").await?;
+    let path = Path::new("/etc/machine-id");
+    let contents = fs::read_to_string(&path)
+        .await
+        .with_context(|| format!("unable to read machine_id: {}", path.display()))?;
     let uuid = Uuid::parse_str(contents.trim())?;
     Ok(uuid)
 }

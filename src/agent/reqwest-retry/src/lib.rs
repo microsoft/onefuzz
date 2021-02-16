@@ -27,6 +27,7 @@ fn to_backoff_response(
                 match io_error.kind() {
                     ErrorKind::ConnectionAborted
                     | ErrorKind::ConnectionReset
+                    | ErrorKind::ConnectionRefused
                     | ErrorKind::TimedOut
                     | ErrorKind::NotConnected => return true,
                     _ => (),

@@ -25,9 +25,11 @@ from onefuzztypes.models import (
     WorkerRunningEvent,
 )
 
-from ..onefuzzlib.pools import Node, NodeTasks
 from ..onefuzzlib.task_event import TaskEvent
 from ..onefuzzlib.tasks.main import Task
+from ..onefuzzlib.workers.nodes import Node, NodeTasks
+
+MAX_OUTPUT_SIZE = 4096
 
 
 def get_node(machine_id: UUID) -> Result[Node]:
@@ -67,13 +69,11 @@ def on_state_update(
         # they send 'init' with reimage_requested, it's because the node was reimaged
         # successfully.
         node.reimage_requested = False
-        node.state = state
-        node.save()
+        node.set_state(state)
         return None
 
     logging.info("node state update: %s from:%s to:%s", machine_id, node.state, state)
-    node.state = state
-    node.save()
+    node.set_state(state)
 
     if state == NodeState.free:
         logging.info("node now available for work: %s", machine_id)
@@ -113,9 +113,7 @@ def on_state_update(
                 # Other states we would want to preserve are excluded by the
                 # outermost conditional check.
                 if task.state not in [TaskState.running, TaskState.setting_up]:
-                    task.state = TaskState.setting_up
-                    task.save()
-                    task.on_start()
+                    task.set_state(TaskState.setting_up)
 
                 # Note: we set the node task state to `setting_up`, even though
                 # the task itself may be `running`.
@@ -130,6 +128,7 @@ def on_state_update(
         # if tasks are running on the node when it reports as Done
         # those are stopped early
         node.mark_tasks_stopped_early()
+        node.to_reimage(done=True)
 
         # Model-validated.
         #
@@ -159,8 +158,7 @@ def on_worker_event_running(
         return node
 
     if node.state not in NodeState.ready_for_reset():
-        node.state = NodeState.busy
-        node.save()
+        node.set_state(NodeState.busy)
 
     node_task = NodeTasks(
         machine_id=machine_id, task_id=event.task_id, state=NodeTaskState.running
@@ -183,12 +181,7 @@ def on_worker_event_running(
         task.job_id,
         task.task_id,
     )
-    task.state = TaskState.running
-    task.save()
-
-    # Start the clock for the task if it wasn't started already
-    # (as happens in 1.0.0 agents)
-    task.on_start()
+    task.set_state(TaskState.running)
 
     task_event = TaskEvent(
         task_id=task.task_id,
@@ -229,8 +222,8 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
                 code=ErrorCode.TASK_FAILED,
                 errors=[
                     "task failed. exit_status:%s" % event.exit_status,
-                    event.stdout[-4096:],
-                    event.stderr[-4096:],
+                    event.stdout[-MAX_OUTPUT_SIZE:],
+                    event.stderr[-MAX_OUTPUT_SIZE:],
                 ],
             )
         )
@@ -242,7 +235,8 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
             node.debug_keep_node = True
             node.save()
 
-    node.to_reimage(done=True)
+    event.stdout = event.stdout[-MAX_OUTPUT_SIZE:]
+    event.stderr = event.stderr[-MAX_OUTPUT_SIZE:]
     task_event = TaskEvent(
         task_id=task.task_id, machine_id=machine_id, event_data=WorkerEvent(done=event)
     )

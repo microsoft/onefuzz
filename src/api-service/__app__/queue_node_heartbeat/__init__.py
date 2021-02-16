@@ -11,8 +11,8 @@ import azure.functions as func
 from onefuzztypes.models import NodeHeartbeatEntry
 from pydantic import ValidationError
 
-from ..onefuzzlib.dashboard import get_event
-from ..onefuzzlib.pools import Node
+from ..onefuzzlib.events import get_events
+from ..onefuzzlib.workers.nodes import Node
 
 
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
@@ -30,6 +30,6 @@ def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
     except ValidationError:
         logging.error("invalid node heartbeat: %s", raw)
 
-    event = get_event()
-    if event:
-        dashboard.set(event)
+    events = get_events()
+    if events:
+        dashboard.set(events)

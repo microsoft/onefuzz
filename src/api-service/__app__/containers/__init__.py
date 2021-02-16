@@ -13,13 +13,15 @@ from onefuzztypes.requests import ContainerCreate, ContainerDelete, ContainerGet
 from onefuzztypes.responses import BoolResult, ContainerInfo, ContainerInfoBase
 
 from ..onefuzzlib.azure.containers import (
-    StorageType,
     create_container,
     delete_container,
     get_container_metadata,
     get_container_sas_url,
     get_containers,
 )
+from ..onefuzzlib.azure.storage import StorageType
+from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
 
@@ -45,7 +47,6 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
                 StorageType.corpus,
                 read=True,
                 write=True,
-                create=True,
                 delete=True,
                 list=True,
             ),
@@ -88,6 +89,13 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     return ok(BoolResult(result=delete_container(request.name, StorageType.corpus)))
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
     methods = {"GET": get, "POST": post, "DELETE": delete}
-    return methods[req.method](req)
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

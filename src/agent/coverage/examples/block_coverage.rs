@@ -31,12 +31,18 @@ fn main() -> Result<()> {
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
     use coverage::block::linux::record;
-    use pete::Command;
+    use std::process::Command;
 
     env_logger::init();
 
-    let argv = env::args().skip(1).collect();
-    let cmd = Command::new(argv)?;
+    let argv: Vec<_> = env::args().skip(1).collect();
+    if argv.is_empty() {
+        anyhow::bail!("empty target argv");
+    }
+    let mut cmd = Command::new(&argv[0]);
+    if argv.len() > 1 {
+        cmd.args(&argv[1..]);
+    }
 
     let coverage = record(cmd)?;
 

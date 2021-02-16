@@ -4,10 +4,29 @@
 use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
 use uuid::Uuid;
 
+pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
+
 pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
 pub enum ClientType {
     Instance,
     Shared,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Role {
+    Agent,
+    Proxy,
+    Supervisor,
+}
+
+impl Role {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Agent => "agent",
+            Self::Proxy => "proxy",
+            Self::Supervisor => "supervisor",
+        }
+    }
 }
 
 #[allow(non_camel_case_types)]
@@ -72,6 +91,8 @@ pub enum EventData {
     CoveragePathsImported(u64),
     CoverageMaxDepth(u64),
     ToolName(String),
+    Region(String),
+    Role(Role),
 }
 
 impl EventData {
@@ -107,6 +128,8 @@ impl EventData {
             Self::CoverageMaxDepth(x) => ("coverage_paths_depth", x.to_string()),
             Self::Coverage(x) => ("coverage", x.to_string()),
             Self::ToolName(x) => ("tool_name", x.to_owned()),
+            Self::Region(x) => ("region", x.to_owned()),
+            Self::Role(x) => ("role", x.as_str().to_owned()),
         }
     }
 
@@ -144,6 +167,8 @@ impl EventData {
             Self::CoverageMaxDepth(_) => true,
             Self::Coverage(_) => true,
             Self::ToolName(_) => true,
+            Self::Region(_) => false,
+            Self::Role(_) => false,
         }
     }
 }
@@ -188,8 +213,8 @@ mod global {
         assert_eq!(last_state, UNSET, "unexpected telemetry client state");
 
         unsafe {
-            CLIENTS.instance = instance.map(|s| RwLock::new(s));
-            CLIENTS.shared = shared.map(|s| RwLock::new(s));
+            CLIENTS.instance = instance.map(RwLock::new);
+            CLIENTS.shared = shared.map(RwLock::new);
         }
 
         STATE.store(SET, SeqCst);
@@ -309,6 +334,16 @@ pub fn set_property(entry: EventData) {
     }
 }
 
+fn local_log_event(event: &Event, properties: &[EventData]) {
+    let as_values = properties
+        .iter()
+        .map(|x| x.as_values())
+        .map(|(x, y)| format!("{}:{}", x, y))
+        .collect::<Vec<String>>()
+        .join(" ");
+    log::log!(log::Level::Info, "{} {}", event.as_str(), as_values);
+}
+
 pub fn track_event(event: Event, properties: Vec<EventData>) {
     use appinsights::telemetry::Telemetry;
 
@@ -334,6 +369,29 @@ pub fn track_event(event: Event, properties: Vec<EventData>) {
         }
         client.track(evt);
     }
+    local_log_event(&event, &properties);
+}
+
+pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
+    match level {
+        Verbose => log::Level::Debug,
+        Information => log::Level::Info,
+        Warning => log::Level::Warn,
+        Error => log::Level::Error,
+        Critical => log::Level::Error,
+    }
+}
+
+pub fn should_log(level: &appinsights::telemetry::SeverityLevel) -> bool {
+    to_log_level(level) <= log::max_level()
+}
+
+pub fn log_message(level: appinsights::telemetry::SeverityLevel, msg: String) {
+    let log_level = to_log_level(&level);
+    log::log!(log_level, "{}", msg);
+    if let Some(client) = client(ClientType::Instance) {
+        client.track_trace(msg, level);
+    }
 }
 
 #[macro_export]
@@ -346,42 +404,24 @@ macro_rules! event {
 
         })*;
 
-        $crate::telemetry::track_event($name, events);
+        onefuzz_telemetry::track_event($name, events);
     }};
 }
 
 #[macro_export]
 macro_rules! log {
     ($level: expr, $msg: expr) => {{
-        use appinsights::telemetry::SeverityLevel::{
-            Critical, Error, Information, Verbose, Warning,
-        };
-
-        let log_level = match $level {
-            Verbose => log::Level::Debug,
-            Information => log::Level::Info,
-            Warning => log::Level::Warn,
-            Error => log::Level::Error,
-            Critical => log::Level::Error,
-        };
-
-        // while log::log will filter based on log level, the telemetry
-        // client does *not*.
-        if log_level <= log::max_level() {
-            log::log!(log_level, "{}", $msg.to_string());
-            if let Some(client) = $crate::telemetry::client($crate::telemetry::ClientType::Instance)
-            {
-                client.track_trace($msg, $level);
-            }
+        if onefuzz_telemetry::should_log(&$level) {
+            onefuzz_telemetry::log_message($level, $msg.to_string());
         }
     }};
 }
 
 #[macro_export]
-macro_rules! verbose {
+macro_rules! debug {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Verbose, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Verbose, msg);
     }}
 }
 
@@ -389,7 +429,7 @@ macro_rules! verbose {
 macro_rules! info {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Information, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Information, msg);
     }}
 }
 
@@ -397,7 +437,7 @@ macro_rules! info {
 macro_rules! warn {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Warning, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Warning, msg);
     }}
 }
 
@@ -405,7 +445,7 @@ macro_rules! warn {
 macro_rules! error {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Error, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Error, msg);
     }}
 }
 
@@ -413,14 +453,14 @@ macro_rules! error {
 macro_rules! critical {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
-        $crate::log!(Critical, msg);
+        onefuzz_telemetry::log!(onefuzz_telemetry::Critical, msg);
     }}
 }
 
 #[macro_export]
 macro_rules! metric {
     ($name: expr, $value: expr) => {{
-        let client = $crate::telemetry::client($crate::telemetry::ClientType::Instance);
+        let client = onefuzz_telemetry::client(onefuzz_telemetry::ClientType::Instance);
         client.track_metric($name.into(), $value);
     }};
 }

@@ -40,7 +40,7 @@ class Stream:
         )
         self.hub.on_open(self.on_connect)
         self.hub.on_close(self.on_close)
-        self.hub.on("dashboard", handler)
+        self.hub.on("events", handler)
         self.logger.info("connecting to signalr")
         self.hub.start()
 

@@ -4,34 +4,31 @@
 #![allow(clippy::trivially_copy_pass_by_ref)]
 use anyhow::Result;
 use pete::{
-    Command, Pid, Ptracer, Restart, Siginfo,
+    Pid, Ptracer, Restart, Siginfo,
     Signal::{self, *},
     Stop, Tracee,
 };
 use proc_maps::MapRange;
 use serde::Serialize;
-use std::collections::{BTreeMap, HashMap};
+
+use std::collections::BTreeMap;
 use std::fmt;
+use std::process::Command;
 
 pub struct TriageCommand {
-    argv: Vec<String>,
-    env: HashMap<String, String>,
     tracer: Ptracer,
     tracee: Tracee,
     pid: Pid,
     _kill_on_drop: KillOnDrop,
 }
 impl TriageCommand {
-    pub fn new(argv: Vec<String>, env: HashMap<String, String>) -> Result<Self> {
+    pub fn new(cmd: Command) -> Result<Self> {
         let mut tracer = Ptracer::new();
 
-        let mut cmd = Command::new(argv.clone())?;
-        for (k, v) in &env {
-            cmd.env().set(k, v)?;
-        }
+        let _child = tracer.spawn(cmd)?;
 
-        // Pre-exec, in attach-stop.
-        let tracee = tracer.spawn(cmd)?;
+        // Continue the tracee process until the return from its initial `execve()`.
+        let tracee = continue_to_init_execve(&mut tracer)?;
 
         // Save the PID of the target parent process.
         let pid = tracee.pid;
@@ -39,8 +36,6 @@ impl TriageCommand {
         let _kill_on_drop = KillOnDrop(pid);
 
         Ok(Self {
-            argv,
-            env,
             tracer,
             tracee,
             pid,
@@ -86,8 +81,6 @@ impl TriageCommand {
         let exit_status = exit_status.unwrap();
 
         Ok(TriageReport {
-            argv: self.argv,
-            env: self.env,
             exit_status,
             crashes,
         })
@@ -110,8 +103,6 @@ impl Drop for KillOnDrop {
 
 #[derive(Debug, Serialize)]
 pub struct TriageReport {
-    pub argv: Vec<String>,
-    pub env: HashMap<String, String>,
     pub exit_status: ExitStatus,
     pub crashes: Vec<Crash>,
 }
@@ -167,7 +158,7 @@ impl Crash {
 
         let proc = stacktrace.trace(tid.as_raw() as u32)?;
 
-        let crashing_access = segv_access_addr(siginfo)?.map(|a| a.into());
+        let crashing_access = segv_access_addr(siginfo).map(|a| a.into());
 
         let maps = proc_maps::get_process_maps(tid.as_raw())?;
 
@@ -331,10 +322,10 @@ fn find_mapping(addr: u64, maps: &[MapRange]) -> Option<&MapRange> {
 // Only 4 signals populate the `si_addr` field of `siginfo_t`. See `sigaction(2)`.
 // On Linux, the most reliable one is SIGSEGV, which saves the address of the invalid
 // memory access.
-fn segv_access_addr(siginfo: Siginfo) -> Result<Option<u64>> {
+fn segv_access_addr(siginfo: Siginfo) -> Option<u64> {
     let is_segv = siginfo.si_signo == (SIGSEGV as i32);
 
-    let addr = if is_segv {
+    if is_segv {
         // Accessing a union, safe because we checked `si_signo`.
         let ptr = unsafe { siginfo.si_addr() };
 
@@ -343,9 +334,7 @@ fn segv_access_addr(siginfo: Siginfo) -> Result<Option<u64>> {
         Some(addr)
     } else {
         None
-    };
-
-    Ok(addr)
+    }
 }
 
 const CRASH_SIGNALS: &[Signal] = &[SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGABRT];
@@ -376,4 +365,16 @@ mod se {
     {
         s.serialize_str(&format!("0x{:x}", t))
     }
+}
+
+fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
+    while let Some(tracee) = tracer.wait()? {
+        if let Stop::SyscallExitStop(..) = &tracee.stop {
+            return Ok(tracee);
+        }
+
+        tracer.restart(tracee, Restart::Continue)?;
+    }
+
+    anyhow::bail!("did not see initial execve() in tracee while triaging input");
 }

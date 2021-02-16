@@ -602,7 +602,7 @@ impl DebugHelpGuard {
     ) -> Result<SymLineInfo> {
         let mut line_info: IMAGEHLP_LINEW64 = unsafe { MaybeUninit::zeroed().assume_init() };
         line_info.SizeOfStruct = size_of::<IMAGEHLP_LINEW64>() as DWORD;
-        let mut displacement = 0 as DWORD;
+        let mut displacement: DWORD = 0;
         check_winapi(|| unsafe {
             SymGetLineFromInlineContextW(
                 process_handle,

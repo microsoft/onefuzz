@@ -25,6 +25,7 @@ import sys
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
+from shutil import which
 from typing import Dict, List, Optional, Set, Tuple
 from uuid import UUID, uuid4
 
@@ -34,7 +35,7 @@ from onefuzz.backend import ContainerWrapper, wait
 from onefuzz.cli import execute_api
 from onefuzztypes.enums import OS, ContainerType, TaskState, VmState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset
-from onefuzztypes.primitives import Directory, File
+from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
 
 LINUX_POOL = "linux-test"
@@ -44,6 +45,7 @@ BUILD = "0"
 
 class TemplateType(Enum):
     libfuzzer = "libfuzzer"
+    libfuzzer_dotnet = "libfuzzer_dotnet"
     afl = "afl"
     radamsa = "radamsa"
 
@@ -54,6 +56,7 @@ class Integration(BaseModel):
     target_exe: str
     inputs: Optional[str]
     use_setup: bool = Field(default=False)
+    nested_setup_dir: Optional[str]
     wait_for_files: List[ContainerType]
     check_asan_log: Optional[bool] = Field(default=False)
     disable_check_debugger: Optional[bool] = Field(default=False)
@@ -75,6 +78,15 @@ TARGETS: Dict[str, Integration] = {
         inputs="seeds",
         wait_for_files=[ContainerType.unique_reports, ContainerType.coverage],
         reboot_after_setup=True,
+    ),
+    "linux-libfuzzer-dotnet": Integration(
+        template=TemplateType.libfuzzer_dotnet,
+        os=OS.linux,
+        target_exe="wrapper",
+        nested_setup_dir="my-fuzzer",
+        inputs="inputs",
+        use_setup=True,
+        wait_for_files=[ContainerType.inputs, ContainerType.crashes],
     ),
     "linux-libfuzzer-rust": Integration(
         template=TemplateType.libfuzzer,
@@ -147,6 +159,8 @@ class TestOnefuzz:
         # task_id -> job_id
         self.tasks: Dict[UUID, UUID] = {}
 
+        self.job_os: Dict[UUID, OS] = {}
+
         self.successful_jobs: Set[UUID] = set()
         self.failed_jobs: Set[UUID] = set()
         self.failed_repro: Set[UUID] = set()
@@ -167,7 +181,7 @@ class TestOnefuzz:
     def setup(
         self,
         *,
-        region: Optional[str] = None,
+        region: Optional[Region] = None,
         user_pools: Optional[Dict[str, str]] = None,
     ) -> None:
         for entry in self.os:
@@ -177,7 +191,7 @@ class TestOnefuzz:
                 )
                 self.pools[entry] = self.of.pools.get(user_pools[entry.name])
             else:
-                name = "pool-%s-%s" % (self.project, entry.name)
+                name = PoolName("pool-%s-%s" % (self.project, entry.name))
                 self.logger.info("creating pool: %s:%s", entry.name, name)
                 self.pools[entry] = self.of.pools.create(name, entry)
                 self.logger.info("creating scaleset for pool: %s", name)
@@ -230,6 +244,9 @@ class TestOnefuzz:
                 else None
             )
 
+            if setup and config.nested_setup_dir:
+                setup = Directory(os.path.join(setup, config.nested_setup_dir))
+
             job: Optional[Job] = None
             if config.template == TemplateType.libfuzzer:
                 job = self.of.template.libfuzzer.basic(
@@ -242,7 +259,21 @@ class TestOnefuzz:
                     setup_dir=setup,
                     duration=1,
                     vm_count=1,
-                    reboot_after_setup=config.reboot_after_setup,
+                    reboot_after_setup=config.reboot_after_setup or False,
+                )
+            elif config.template == TemplateType.libfuzzer_dotnet:
+                if setup is None:
+                    raise Exception("setup required for libfuzzer_dotnet")
+                job = self.of.template.libfuzzer.dotnet(
+                    self.project,
+                    target,
+                    BUILD,
+                    self.pools[config.os].name,
+                    target_harness=config.target_exe,
+                    inputs=inputs,
+                    setup_dir=setup,
+                    duration=1,
+                    vm_count=1,
                 )
             elif config.template == TemplateType.radamsa:
                 job = self.of.template.radamsa.basic(
@@ -285,6 +316,7 @@ class TestOnefuzz:
                     if x.type in TARGETS[job.config.name].wait_for_files
                 ]
             self.jobs[job.job_id] = job
+            self.job_os[job.job_id] = config.os
             self.target_jobs[job.job_id] = target
 
     def check_task(self, task_id: UUID, scalesets: List[Scaleset]) -> Optional[str]:
@@ -306,7 +338,8 @@ class TestOnefuzz:
 
         # check if the task itself has an error
         if task.error is not None:
-            return "task failed: %s - %s (%s)" % (
+            return "task failed: %s - %s - %s (%s)" % (
+                task_id,
                 self.jobs[self.tasks[task_id]].config.name,
                 task.config.task.type.name,
                 task.error,
@@ -395,7 +428,7 @@ class TestOnefuzz:
         self.logger.info("checking jobs")
         return wait(self.check_jobs_impl)
 
-    def get_job_crash(self, job_id: UUID) -> Optional[Tuple[str, str]]:
+    def get_job_crash(self, job_id: UUID) -> Optional[Tuple[Container, str]]:
         # get the crash container for a given job
 
         for task in self.of.tasks.list(job_id=job_id, state=None):
@@ -409,10 +442,30 @@ class TestOnefuzz:
 
     def launch_repro(self) -> None:
         # launch repro for one report from all succeessful jobs
+        has_cdb = bool(which("cdb.exe"))
+        has_gdb = bool(which("gdb"))
         for job_id in self.successful_jobs:
+            if self.job_os[job_id] == OS.linux and not has_gdb:
+                self.logger.warning(
+                    "missing gdb in path, not launching repro: %s",
+                    self.target_jobs[job_id],
+                )
+                continue
+
+            if self.job_os[job_id] == OS.windows and not has_cdb:
+                self.logger.warning(
+                    "missing cdb in path, not launching repro: %s",
+                    self.target_jobs[job_id],
+                )
+                continue
+
             self.logger.info("launching repro: %s", self.target_jobs[job_id])
             report = self.get_job_crash(job_id)
             if report is None:
+                self.logger.warning(
+                    "target does not include crash reports: %s",
+                    self.target_jobs[job_id],
+                )
                 return
             (container, path) = report
             self.repros[job_id] = self.of.repro.create(container, path, duration=1)
@@ -620,7 +673,7 @@ class Run(Command):
         endpoint: Optional[str] = None,
         user_pools: Optional[Dict[str, str]] = None,
         pool_size: int = 10,
-        region: Optional[str] = None,
+        region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         targets: List[str] = list(TARGETS.keys()),
         skip_repro: bool = False,
@@ -645,6 +698,7 @@ class Run(Command):
             if skip_repro:
                 self.logger.warning("not testing crash repro")
             else:
+                self.logger.info("launching crash repro tests")
                 tester.launch_repro()
                 tester.check_repro()
         except Exception as e:

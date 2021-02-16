@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use tokio::fs;
 
@@ -40,15 +40,16 @@ pub struct Reboot;
 
 impl Reboot {
     pub async fn save_context(&mut self, ctx: RebootContext) -> Result<()> {
-        info!(
-            "saving reboot context to: {}",
-            reboot_context_path()?.display()
-        );
+        let path = reboot_context_path()?;
+
+        info!("saving reboot context to: {}", path.display());
 
         let data = serde_json::to_vec(&ctx)?;
-        fs::write(reboot_context_path()?, &data).await?;
+        fs::write(&path, &data)
+            .await
+            .with_context(|| format!("unable to save reboot context: {}", path.display()))?;
 
-        verbose!("reboot context saved");
+        debug!("reboot context saved");
 
         Ok(())
     }
@@ -72,7 +73,9 @@ impl Reboot {
         let data = data?;
         let ctx = serde_json::from_slice(&data)?;
 
-        fs::remove_file(&path).await?;
+        fs::remove_file(&path)
+            .await
+            .with_context(|| format!("unable to remove reboot context: {}", path.display()))?;
 
         info!("loaded reboot context");
         Ok(Some(ctx))
@@ -103,7 +106,7 @@ impl Reboot {
     fn wait_for_reboot(&self) -> Result<()> {
         use std::{thread, time};
 
-        verbose!("waiting for reboot");
+        debug!("waiting for reboot");
 
         // 10 minutes.
         let d = time::Duration::from_secs(60 * 10);

@@ -8,6 +8,8 @@ from onefuzztypes.enums import ErrorCode, VmState
 from onefuzztypes.models import Error, ReproConfig
 from onefuzztypes.requests import ReproGet
 
+from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.user_credentials import parse_jwt_token
@@ -72,12 +74,13 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     return ok(vm)
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        return get(req)
-    elif req.method == "POST":
-        return post(req)
-    elif req.method == "DELETE":
-        return delete(req)
-    else:
-        raise Exception("invalid method")
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+    methods = {"GET": get, "POST": post, "DELETE": delete}
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

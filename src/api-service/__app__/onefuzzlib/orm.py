@@ -5,6 +5,7 @@
 
 import inspect
 import json
+import logging
 from datetime import datetime
 from enum import Enum
 from typing import (
@@ -14,6 +15,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -33,13 +35,13 @@ from onefuzztypes.enums import (
     UpdateType,
     VmState,
 )
-from onefuzztypes.models import Error
+from onefuzztypes.models import Error, SecretData
 from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
 from typing_extensions import Protocol
 
+from ..onefuzzlib.secrets import save_to_keyvault
 from .azure.table import get_client
-from .dashboard import add_event
 from .telemetry import track_event_filtered
 from .updates import queue_update
 
@@ -84,6 +86,11 @@ def process_state_update(obj: HasState) -> None:
     func = getattr(obj, obj.state.name, None)
     if func is None:
         return
+
+    get_keys = getattr(obj, "get_keys", None)
+    if get_keys is not None:
+        logging.info("processing state update: %s - %s", get_keys(), obj.state.name)
+
     func()
 
 
@@ -255,20 +262,8 @@ class ORMMixin(ModelMixin):
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {}
 
-    def event_include(self) -> Optional[MappingIntStrAny]:
-        return {}
-
     def telemetry(self) -> Any:
         return self.raw(exclude_none=True, include=self.telemetry_include())
-
-    def _event_as_needed(self) -> None:
-        # Upon ORM save, if the object returns event data, we'll send it to the
-        # dashboard event subsystem
-
-        data = self.raw(exclude_none=True, include=self.event_include())
-        if not data:
-            return
-        add_event(self.table_name(), data)
 
     def get_keys(self) -> Tuple[KEY, KEY]:
         partition_key_field, row_key_field = self.key_fields()
@@ -281,18 +276,49 @@ class ORMMixin(ModelMixin):
 
         return (partition_key, row_key)
 
+    @classmethod
+    def hide_secrets(
+        cls,
+        model: BaseModel,
+        hider: Callable[["SecretData"], None],
+        visited: Set[int] = set(),
+    ) -> None:
+        if id(model) in visited:
+            return
+
+        visited.add(id(model))
+        for field in model.__fields__:
+            field_data = getattr(model, field)
+            if isinstance(field_data, SecretData):
+                hider(field_data)
+            elif isinstance(field_data, List):
+                if len(field_data) > 0:
+                    if not isinstance(field_data[0], BaseModel):
+                        continue
+                for data in field_data:
+                    cls.hide_secrets(data, hider, visited)
+            elif isinstance(field_data, dict):
+                for key in field_data:
+                    if not isinstance(field_data[key], BaseModel):
+                        continue
+                    cls.hide_secrets(field_data[key], hider, visited)
+            else:
+                if isinstance(field_data, BaseModel):
+                    cls.hide_secrets(field_data, hider, visited)
+
     def save(self, new: bool = False, require_etag: bool = False) -> Optional[Error]:
+        self.__class__.hide_secrets(self, save_to_keyvault)
         # TODO: migrate to an inspect.signature() model
         raw = self.raw(by_alias=True, exclude_none=True, exclude=self.save_exclude())
         for key in raw:
             if not isinstance(raw[key], (str, int)):
                 raw[key] = json.dumps(raw[key])
 
-        # for datetime fields that passed through filtering, use the real value,
-        # rather than a serialized form
         for field in self.__fields__:
             if field not in raw:
                 continue
+            # for datetime fields that passed through filtering, use the real value,
+            # rather than a serialized form
             if self.__fields__[field].type_ == datetime:
                 raw[field] = getattr(self, field)
 
@@ -331,13 +357,9 @@ class ORMMixin(ModelMixin):
             if telem:
                 track_event_filtered(TelemetryEvent[self.table_name()], telem)
 
-        self._event_as_needed()
         return None
 
     def delete(self) -> None:
-        # fire off an event so Signalr knows it's being deleted
-        self._event_as_needed()
-
         partition_key, row_key = self.get_keys()
 
         client = get_client()

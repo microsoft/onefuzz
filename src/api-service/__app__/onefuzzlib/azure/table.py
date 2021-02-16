@@ -10,7 +10,7 @@ from typing import Optional
 from azure.cosmosdb.table import TableService
 from memoization import cached
 
-from .creds import get_storage_account_name_key
+from .storage import get_storage_account_name_key
 
 
 @cached(ttl=60)

@@ -3,20 +3,21 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-# import logging
 import azure.functions as func
 from onefuzztypes.enums import ErrorCode, JobState
 from onefuzztypes.models import Error, TaskConfig
 from onefuzztypes.requests import TaskGet, TaskSearch
 from onefuzztypes.responses import BoolResult
 
+from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.jobs import Job
-from ..onefuzzlib.pools import NodeTasks
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.task_event import TaskEvent
 from ..onefuzzlib.tasks.config import TaskConfigError, check_config
 from ..onefuzzlib.tasks.main import Task
 from ..onefuzzlib.user_credentials import parse_jwt_token
+from ..onefuzzlib.workers.nodes import NodeTasks
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
@@ -98,12 +99,13 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     return ok(task)
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        return get(req)
-    elif req.method == "POST":
-        return post(req)
-    elif req.method == "DELETE":
-        return delete(req)
-    else:
-        raise Exception("invalid method")
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+    methods = {"GET": get, "POST": post, "DELETE": delete}
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

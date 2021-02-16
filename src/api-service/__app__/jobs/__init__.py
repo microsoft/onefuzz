@@ -8,6 +8,8 @@ from onefuzztypes.enums import ErrorCode, JobState
 from onefuzztypes.models import Error, JobConfig, JobTaskInfo
 from onefuzztypes.requests import JobGet, JobSearch
 
+from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.jobs import Job
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.tasks.main import Task
@@ -73,12 +75,13 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     return ok(job)
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    if req.method == "GET":
-        return get(req)
-    elif req.method == "POST":
-        return post(req)
-    elif req.method == "DELETE":
-        return delete(req)
-    else:
-        raise Exception("invalid method")
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+    methods = {"GET": get, "POST": post, "DELETE": delete}
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

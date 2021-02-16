@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Tuple
 
 from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag
 from onefuzztypes.models import NotificationConfig
-from onefuzztypes.primitives import File
+from onefuzztypes.primitives import File, PoolName
 
 from onefuzz.api import Command
 from onefuzz.backend import container_file_path
@@ -80,7 +80,9 @@ class OssFuzz(Command):
             dst_sas,
         ]
         self.logger.info("copying base setup")
-        subprocess.check_output(cmd)
+        # security note: the source and destination container sas URLS are
+        # considerd trusted from the service
+        subprocess.check_output(cmd)  # nosec
 
     def _copy_exe(self, src_sas: str, dst_sas: str, target_exe: File) -> None:
         files: List[File] = [target_exe]
@@ -100,13 +102,15 @@ class OssFuzz(Command):
                 dst_url,
             ]
             self.logger.info("uploading %s", path)
-            subprocess.check_output(cmd)
+            # security note: the source and destination container sas URLS
+            # are considerd trusted from the service
+            subprocess.check_output(cmd)  # nosec
 
     def libfuzzer(
         self,
         project: str,
         build: str,
-        pool_name: str,
+        pool_name: PoolName,
         duration: int = 24,
         tags: Optional[Dict[str, str]] = None,
         dryrun: bool = False,
@@ -141,7 +145,10 @@ class OssFuzz(Command):
             container_sas[name] = sas_url
 
         self.logger.info("uploading build artifacts")
-        subprocess.check_output(
+
+        # security note: the container sas is considered trusted from the
+        # service
+        subprocess.check_output(  # nosec
             [
                 "azcopy",
                 "sync",
@@ -151,7 +158,7 @@ class OssFuzz(Command):
                 "*fuzzer_seed_corpus.zip",
             ]
         )
-        subprocess.check_output(
+        subprocess.check_output(  # nosec
             [
                 "azcopy",
                 "sync",

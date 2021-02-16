@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender};
-use anyhow::Result;
+use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
+use anyhow::{Context, Result};
 use futures::{future::try_join_all, stream::StreamExt};
 use onefuzz::{
     fs::list_files,
@@ -10,10 +10,10 @@ use onefuzz::{
     process::ExitStatus,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     system,
-    telemetry::{
-        Event::{new_coverage, new_result, process_stats, runtime_stats},
-        EventData,
-    },
+};
+use onefuzz_telemetry::{
+    Event::{new_coverage, new_result, process_stats, runtime_stats},
+    EventData,
 };
 use serde::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
@@ -36,6 +36,11 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
 
+pub fn default_workers() -> u64 {
+    let cpus = num_cpus::get() as u64;
+    u64::max(1, cpus - 1)
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub inputs: SyncedDir,
@@ -44,8 +49,16 @@ pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
-    pub target_workers: Option<u64>,
+
+    #[serde(default = "default_workers")]
+    pub target_workers: u64,
     pub ensemble_sync_delay: Option<u64>,
+
+    #[serde(default = "default_bool_true")]
+    pub check_fuzzer_help: bool,
+
+    #[serde(default = "default_bool_true")]
+    pub expect_crash_on_failure: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,
@@ -60,13 +73,21 @@ impl LibFuzzerFuzzTask {
         Ok(Self { config })
     }
 
-    pub async fn start(&self) -> Result<()> {
-        let workers = self.config.target_workers.unwrap_or_else(|| {
-            let cpus = num_cpus::get() as u64;
-            u64::max(1, cpus - 1)
-        });
+    fn workers(&self) -> u64 {
+        match self.config.target_workers {
+            0 => default_workers(),
+            x => x,
+        }
+    }
 
+    pub async fn managed_run(&self) -> Result<()> {
+        self.check_libfuzzer().await?;
+        self.run().await
+    }
+
+    pub async fn run(&self) -> Result<()> {
         self.init_directories().await?;
+
         let hb_client = self.config.common.init_heartbeat().await?;
 
         // To be scheduled.
@@ -75,15 +96,32 @@ impl LibFuzzerFuzzTask {
         let new_crashes = self.config.crashes.monitor_results(new_result);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
-        let report_stats = report_runtime_stats(workers as usize, stats_receiver, hb_client);
+        let report_stats = report_runtime_stats(self.workers() as usize, stats_receiver, hb_client);
+        let fuzzers = self.run_fuzzers(Some(&stats_sender));
+        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
-        let fuzzers: Vec<_> = (0..workers)
-            .map(|id| self.start_fuzzer_monitor(id, Some(&stats_sender)))
+        Ok(())
+    }
+
+    pub async fn check_libfuzzer(&self) -> Result<()> {
+        if self.config.check_fuzzer_help {
+            let fuzzer = LibFuzzer::new(
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+                &self.config.common.setup_dir,
+            );
+            fuzzer.check_help().await?;
+        }
+        Ok(())
+    }
+
+    pub async fn run_fuzzers(&self, stats_sender: Option<&StatsSender>) -> Result<()> {
+        let fuzzers: Vec<_> = (0..self.workers())
+            .map(|id| self.start_fuzzer_monitor(id, stats_sender))
             .collect();
 
-        let fuzzers = try_join_all(fuzzers);
-
-        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
+        try_join_all(fuzzers).await?;
 
         Ok(())
     }
@@ -105,7 +143,15 @@ impl LibFuzzerFuzzTask {
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
             while let Some(Ok(entry)) = entries.next().await {
                 let destination_path = self.config.inputs.path.clone().join(entry.file_name());
-                tokio::fs::rename(entry.path(), destination_path).await?;
+                tokio::fs::rename(&entry.path(), &destination_path)
+                    .await
+                    .with_context(|| {
+                        format!(
+                            "unable to move crashing input into results directory: {} - {}?",
+                            entry.path().display(),
+                            destination_path.display()
+                        )
+                    })?;
             }
         }
     }
@@ -122,7 +168,7 @@ impl LibFuzzerFuzzTask {
         let crash_dir = tempdir()?;
         let run_id = Uuid::new_v4();
 
-        info!("starting fuzzer run, run_id = {}", run_id);
+        debug!("starting fuzzer run, run_id = {}", run_id);
 
         let mut inputs = vec![&self.config.inputs.path];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
@@ -133,6 +179,7 @@ impl LibFuzzerFuzzTask {
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
+            &self.config.common.setup_dir,
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
 
@@ -166,14 +213,23 @@ impl LibFuzzerFuzzTask {
 
         let files = list_files(crash_dir.path()).await?;
 
-        // ignore libfuzzer exiting cleanly without crashing, which could happen via
-        // -runs=N
-        if !exit_status.success && files.is_empty() {
-            bail!(
-                "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
-                serde_json::to_string(&exit_status)?,
-                libfuzzer_output.join("\n")
-            );
+        // If the target exits, crashes are required unless
+        // 1. Exited cleanly (happens with -runs=N)
+        // 2. expect_crash_on_failure is disabled
+        if files.is_empty() && !exit_status.success {
+            if self.config.expect_crash_on_failure {
+                bail!(
+                    "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
+                    serde_json::to_string(&exit_status)?,
+                    libfuzzer_output.join("\n")
+                );
+            } else {
+                warn!(
+                    "libfuzzer exited without generating crashes, continuing.  status:{} stderr:{:?}",
+                    serde_json::to_string(&exit_status)?,
+                    libfuzzer_output.join("\n")
+                );
+            }
         }
 
         for file in &files {

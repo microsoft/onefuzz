@@ -4,12 +4,12 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use anyhow::{format_err, Result};
+use goblin::elf;
 use iced_x86::{Decoder, DecoderOptions, Instruction};
-use object::endian::LittleEndian as LE;
-use object::{read::elf, Object, ObjectSection, ObjectSegment, ObjectSymbol};
-use pete::{Command, Ptracer, Restart, Signal, Stop, Tracee};
+use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
 use serde::{Deserialize, Serialize};
 
@@ -32,22 +32,11 @@ impl Recorder {
     pub fn record(&mut self, cmd: Command) -> Result<()> {
         use pete::ptracer::Options;
 
-        let mut ptracer = Ptracer::new();
+        let mut tracer = Ptracer::new();
+        let _child = tracer.spawn(cmd)?;
 
-        // Attach stop.
-        let mut tracee = ptracer.spawn(cmd)?;
-
-        ptracer.restart(tracee, Restart::Continue)?;
-
-        // Continue until `exec()`.
-        while let Some(t) = ptracer.wait()? {
-            if let Stop::Exec(..) = t.stop {
-                tracee = t;
-                break;
-            }
-
-            ptracer.restart(tracee, Restart::Continue)?;
-        }
+        // Continue the tracee process until the return from its initial `execve()`.
+        let mut tracee = continue_to_init_execve(&mut tracer)?;
 
         // Do not follow forks.
         //
@@ -62,9 +51,9 @@ impl Recorder {
         self.images = Some(Images::new(tracee.pid.as_raw()));
         self.update_images(&mut tracee)?;
 
-        ptracer.restart(tracee, Restart::Syscall)?;
+        tracer.restart(tracee, Restart::Syscall)?;
 
-        while let Some(mut tracee) = ptracer.wait()? {
+        while let Some(mut tracee) = tracer.wait()? {
             match tracee.stop {
                 Stop::SyscallEnterStop(..) => log::trace!("syscall-enter: {:?}", tracee.stop),
                 Stop::SyscallExitStop(..) => {
@@ -82,7 +71,7 @@ impl Recorder {
                 }
             }
 
-            if let Err(err) = ptracer.restart(tracee, Restart::Syscall) {
+            if let Err(err) = tracer.restart(tracee, Restart::Syscall) {
                 log::error!("unable to restart tracee: {}", err);
             }
         }
@@ -261,8 +250,8 @@ pub struct ModuleImage {
 impl ModuleImage {
     pub fn new(map: MemoryMap) -> Result<Self> {
         if let MMapPath::Path(..) = &map.pathname {
-            if map.perms.contains("x") {
-                return Ok(ModuleImage { map });
+            if map.perms.contains('x') {
+                Ok(ModuleImage { map })
             } else {
                 anyhow::bail!("memory mapping is not executable");
             }
@@ -383,55 +372,98 @@ pub struct Block {
     pub offset: u64,
 }
 
-type ElfFile<'a> = elf::ElfFile64<'a, LE>;
-type ElfSymbol<'a> = elf::ElfSymbol64<'a, 'a, LE>;
-type ElfSection<'a> = elf::ElfSection64<'a, 'a, LE>;
-
 pub fn find_module_blocks(module: &Path) -> Result<Vec<Block>> {
+    use elf::program_header::PT_LOAD;
+
     let data = std::fs::read(module)?;
-    let elf = ElfFile::parse(&data)?;
+    let object = elf::Elf::parse(&data)?;
 
-    let load_va =
-        elf.segments().map(|s| s.address()).min().ok_or_else(|| {
-            format_err!("no loadable segments for ELF object ({})", module.display())
-        })?;
+    // Calculate the module base address as the lowest preferred VA of any loadable segment.
+    //
+    // https://refspecs.linuxbase.org/elf/gabi4+/ch5.pheader.html#base_address
+    let base_va = object
+        .program_headers
+        .iter()
+        .filter(|h| h.p_type == PT_LOAD)
+        .map(|h| h.p_vaddr)
+        .min()
+        .ok_or_else(|| format_err!("no loadable segments for ELF object ({})", module.display()))?;
 
-    let mut blocks = vec![];
+    let mut leaders = BTreeSet::new();
 
-    for sym in elf.symbols() {
-        if sym.kind() == object::SymbolKind::Text && sym.size() > 0 {
-            if let Some(idx) = sym.section().index() {
-                let section = elf.section_by_index(idx)?;
-                let sym_blocks = find_symbol_blocks(section, sym)?;
-                blocks.extend(sym_blocks);
-            }
+    for sym in object.syms.iter() {
+        if sym.st_size == 0 {
+            continue;
+        }
+
+        if sym.is_function() {
+            let section = object
+                .section_headers
+                .get(sym.st_shndx)
+                .cloned()
+                .ok_or_else(|| format_err!("invalid section table index for symbol"))?;
+            let sym_leaders = find_symbol_block_leaders(&data, section, sym)?;
+            leaders.extend(sym_leaders);
         }
     }
 
-    // The blocks we've collected have VAs as `offset` values, assuming the preferred base
-    // load address. Make them true offsets, relative to that image base address.
-    for block in &mut blocks {
-        block.offset -= load_va;
+    // Translate leader VAs to blocks, with block entry points represented as offsets
+    // from the module image base.
+    let mut blocks = vec![];
+
+    for va in leaders {
+        // Calculate image offsets (RVAs).
+        let offset = va - base_va;
+        blocks.push(Block { offset });
     }
 
     Ok(blocks)
 }
 
-pub fn find_symbol_blocks(section: ElfSection, sym: ElfSymbol) -> Result<Vec<Block>> {
-    // Slice symbol's data within section.
-    let lo = (sym.address() - section.address()) as usize;
-    let hi = lo + (sym.size() as usize);
-    let data = section.data()?;
-    let data = &data[lo..hi];
+/// From the raw file data and containing section header, find the virtual addrs for the
+/// block leaders of the function `sym`.
+///
+/// Assumes `sym` is a function symbol (has type `STT_FUNC`) with nonzero size.
+pub fn find_symbol_block_leaders(
+    data: &[u8],
+    section: elf::SectionHeader,
+    sym: elf::Sym,
+) -> Result<BTreeSet<u64>> {
+    // For executables and shared objects, `st_value` contains the VA of the symbol.
+    //
+    // https://refspecs.linuxbase.org/elf/gabi4+/ch4.symtab.html#symbol_value
+    let sym_va = sym.st_value;
 
-    let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
-    decoder.set_ip(sym.address());
+    // If mapped into a segment, `sh_addr` contains the VA of the section image, consistent with
+    // the `p_vaddr` of the segment.
+    //
+    // https://refspecs.linuxbase.org/elf/gabi4+/ch4.sheader.html#section_header
+    let section_va = section.sh_addr;
+
+    // The offset of the symbol, relative to the section (both in-file and when mapped).
+    let sym_section_offset = sym_va - section_va;
+
+    // We have the file offset for the section, and the offset of the symbol
+    // relative to the section. From these, calculate the file offset for the
+    // symbol, which we can use to index into `data`.
+    let sym_file_offset = section.sh_offset + sym_section_offset;
+
+    // Extract symbol's instruction data from file.
+    let sym_data = {
+        let lo = sym_file_offset as usize;
+        // Checked by caller: `st_size` is nonzero.
+        let hi = lo + (sym.st_size as usize);
+        &data[lo..hi]
+    };
+
+    let mut decoder = Decoder::new(64, sym_data, DecoderOptions::NONE);
+    decoder.set_ip(sym_va);
 
     // Contains leaders with VAs, assuming section load address.
     let mut leaders = BTreeSet::new();
 
     // Function entry is a leader.
-    leaders.insert(sym.address());
+    leaders.insert(sym_va);
 
     let mut inst = Instruction::default();
     while decoder.can_decode() {
@@ -461,9 +493,7 @@ pub fn find_symbol_blocks(section: ElfSection, sym: ElfSymbol) -> Result<Vec<Blo
         }
     }
 
-    let blocks: Vec<_> = leaders.iter().map(|va| Block { offset: *va }).collect();
-
-    Ok(blocks)
+    Ok(leaders)
 }
 
 // Returns the virtual address of a branch target, if present, with a flag that
@@ -483,4 +513,16 @@ fn branch_target(inst: &iced_x86::Instruction) -> Option<(u64, bool)> {
         | FlowControl::Return
         | FlowControl::XbeginXabortXend => None,
     }
+}
+
+fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
+    while let Some(tracee) = tracer.wait()? {
+        if let Stop::SyscallExitStop(..) = &tracee.stop {
+            return Ok(tracee);
+        }
+
+        tracer.restart(tracee, Restart::Continue)?;
+    }
+
+    anyhow::bail!("did not see initial execve() in tracee while recording coverage");
 }

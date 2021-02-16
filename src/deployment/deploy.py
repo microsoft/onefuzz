@@ -67,7 +67,6 @@ from registration import (
     add_application_password,
     assign_scaleset_role,
     authorize_application,
-    get_application,
     register_application,
     update_pool_registration,
 )
@@ -329,10 +328,11 @@ class Client:
 
         (password_id, password) = self.create_password(app.object_id)
 
-        onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
-        cli_app = get_application(onefuzz_cli_app_uuid)
+        cli_app = list(
+            client.applications.list(filter="appId eq '%s'" % ONEFUZZ_CLI_APP)
+        )
 
-        if cli_app is None:
+        if len(cli_app) == 0:
             logger.info(
                 "Could not find the default CLI application under the current "
                 "subscription, creating a new one"
@@ -346,7 +346,7 @@ class Client:
             }
 
         else:
-            authorize_application(onefuzz_cli_app_uuid, app.app_id)
+            authorize_application(uuid.UUID(ONEFUZZ_CLI_APP), app.app_id)
 
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password

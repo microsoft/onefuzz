@@ -5,10 +5,12 @@
 
 import datetime
 import logging
+import os
 from typing import List, Optional, Tuple
 
 from azure.mgmt.compute.models import VirtualMachine
-from onefuzztypes.enums import VmState
+from onefuzztypes.enums import ErrorCode, VmState
+from onefuzztypes.events import EventProxyCreated, EventProxyDeleted, EventProxyFailed
 from onefuzztypes.models import (
     Authentication,
     Error,
@@ -16,21 +18,25 @@ from onefuzztypes.models import (
     ProxyConfig,
     ProxyHeartbeat,
 )
-from onefuzztypes.primitives import Region
+from onefuzztypes.primitives import Container, Region
 from pydantic import Field
 
 from .__version__ import __version__
 from .azure.auth import build_auth
-from .azure.containers import StorageType, get_file_sas_url, save_blob
+from .azure.containers import get_file_sas_url, save_blob
+from .azure.creds import get_instance_id
 from .azure.ip import get_public_ip
 from .azure.queue import get_queue_sas
+from .azure.storage import StorageType
 from .azure.vm import VM
+from .events import send_event
 from .extension import proxy_manager_extensions
-from .orm import MappingIntStrAny, ORMMixin, QueryFilter
+from .orm import ORMMixin, QueryFilter
 from .proxy_forward import ProxyForward
 
 PROXY_SKU = "Standard_B2s"
 PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
+PROXY_LOG_PREFIX = "scaleset-proxy: "
 
 
 # This isn't intended to ever be shared to the client, hence not being in
@@ -40,21 +46,13 @@ class Proxy(ORMMixin):
     state: VmState = Field(default=VmState.init)
     auth: Authentication = Field(default_factory=build_auth)
     ip: Optional[str]
-    error: Optional[str]
+    error: Optional[Error]
     version: str = Field(default=__version__)
     heartbeat: Optional[ProxyHeartbeat]
 
     @classmethod
     def key_fields(cls) -> Tuple[str, Optional[str]]:
         return ("region", None)
-
-    def event_include(self) -> Optional[MappingIntStrAny]:
-        return {
-            "region": ...,
-            "state": ...,
-            "ip": ...,
-            "error": ...,
-        }
 
     def get_vm(self) -> VM:
         vm = VM(
@@ -71,42 +69,59 @@ class Proxy(ORMMixin):
         vm_data = vm.get()
         if vm_data:
             if vm_data.provisioning_state == "Failed":
-                self.set_failed(vm)
+                self.set_provision_failed(vm_data)
+                return
             else:
                 self.save_proxy_config()
                 self.state = VmState.extensions_launch
         else:
             result = vm.create()
             if isinstance(result, Error):
-                self.error = repr(result)
-                self.state = VmState.stopping
+                self.set_failed(result)
+                return
         self.save()
 
-    def set_failed(self, vm_data: VirtualMachine) -> None:
-        logging.error("vm failed to provision: %s", vm_data.name)
+    def set_provision_failed(self, vm_data: VirtualMachine) -> None:
+        errors = ["provisioning failed"]
         for status in vm_data.instance_view.statuses:
             if status.level.name.lower() == "error":
-                logging.error(
-                    "vm status: %s %s %s %s",
-                    vm_data.name,
-                    status.code,
-                    status.display_status,
-                    status.message,
+                errors.append(
+                    f"code:{status.code} status:{status.display_status} "
+                    f"message:{status.message}"
                 )
-        self.state = VmState.vm_allocation_failed
+
+        self.set_failed(
+            Error(
+                code=ErrorCode.PROXY_FAILED,
+                errors=errors,
+            )
+        )
+        return
+
+    def set_failed(self, error: Error) -> None:
+        if self.error is not None:
+            return
+
+        logging.error(PROXY_LOG_PREFIX + "vm failed: %s - %s", self.region, error)
+        send_event(EventProxyFailed(region=self.region, error=error))
+        self.error = error
+        self.state = VmState.stopping
+        self.save()
 
     def extensions_launch(self) -> None:
         vm = self.get_vm()
         vm_data = vm.get()
         if not vm_data:
-            logging.error("Azure VM does not exist: %s", vm.name)
-            self.state = VmState.stopping
-            self.save()
+            self.set_failed(
+                Error(
+                    code=ErrorCode.PROXY_FAILED,
+                    errors=["azure not able to find vm"],
+                )
+            )
             return
 
         if vm_data.provisioning_state == "Failed":
-            self.set_failed(vm_data)
-            self.save()
+            self.set_provision_failed(vm_data)
             return
 
         ip = get_public_ip(vm_data.network_profile.network_interfaces[0].id)
@@ -118,9 +133,8 @@ class Proxy(ORMMixin):
         extensions = proxy_manager_extensions(self.region)
         result = vm.add_extensions(extensions)
         if isinstance(result, Error):
-            logging.error("vm extension failed: %s", repr(result))
-            self.error = repr(result)
-            self.state = VmState.stopping
+            self.set_failed(result)
+            return
         elif result:
             self.state = VmState.running
 
@@ -129,19 +143,19 @@ class Proxy(ORMMixin):
     def stopping(self) -> None:
         vm = self.get_vm()
         if not vm.is_deleted():
-            logging.info("stopping proxy: %s", self.region)
+            logging.info(PROXY_LOG_PREFIX + "stopping proxy: %s", self.region)
             vm.delete()
             self.save()
         else:
             self.stopped()
 
     def stopped(self) -> None:
-        logging.info("removing proxy: %s", self.region)
+        logging.info(PROXY_LOG_PREFIX + "removing proxy: %s", self.region)
         self.delete()
 
     def is_used(self) -> bool:
         if len(self.get_forwards()) == 0:
-            logging.info("proxy has no forwards: %s", self.region)
+            logging.info(PROXY_LOG_PREFIX + "no forwards: %s", self.region)
             return False
         return True
 
@@ -157,13 +171,21 @@ class Proxy(ORMMixin):
             and self.heartbeat.timestamp < ten_minutes_ago_no_tz
         ):
             logging.error(
-                "proxy last heartbeat is more than an 10 minutes old: %s", self.region
+                PROXY_LOG_PREFIX + "last heartbeat is more than an 10 minutes old: "
+                "%s - last heartbeat:%s compared_to:%s",
+                self.region,
+                self.heartbeat,
+                ten_minutes_ago_no_tz,
             )
             return False
 
         elif not self.heartbeat and self.Timestamp and self.Timestamp < ten_minutes_ago:
             logging.error(
-                "proxy has no heartbeat in the last 10 minutes: %s", self.region
+                PROXY_LOG_PREFIX + "no heartbeat in the last 10 minutes: "
+                "%s timestamp: %s compared_to:%s",
+                self.region,
+                self.Timestamp,
+                ten_minutes_ago,
             )
             return False
 
@@ -188,7 +210,7 @@ class Proxy(ORMMixin):
         forwards = self.get_forwards()
         proxy_config = ProxyConfig(
             url=get_file_sas_url(
-                "proxy-configs",
+                Container("proxy-configs"),
                 "%s/config.json" % self.region,
                 StorageType.config,
                 read=True,
@@ -200,10 +222,13 @@ class Proxy(ORMMixin):
             ),
             forwards=forwards,
             region=self.region,
+            instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+            telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+            instance_id=get_instance_id(),
         )
 
         save_blob(
-            "proxy-configs",
+            Container("proxy-configs"),
             "%s/config.json" % self.region,
             proxy_config.json(),
             StorageType.config,
@@ -221,6 +246,12 @@ class Proxy(ORMMixin):
         proxy = Proxy.get(region)
         if proxy is not None:
             if proxy.version != __version__:
+                logging.info(
+                    PROXY_LOG_PREFIX + "mismatch version: proxy:%s service:%s state:%s",
+                    proxy.version,
+                    __version__,
+                    proxy.state,
+                )
                 if proxy.state != VmState.stopping:
                     # If the proxy is out-of-date, delete and re-create it
                     proxy.state = VmState.stopping
@@ -228,6 +259,12 @@ class Proxy(ORMMixin):
                 return None
             return proxy
 
+        logging.info(PROXY_LOG_PREFIX + "creating proxy: region:%s", region)
         proxy = Proxy(region=region)
         proxy.save()
+        send_event(EventProxyCreated(region=region))
         return proxy
+
+    def delete(self) -> None:
+        super().delete()
+        send_event(EventProxyDeleted(region=self.region))

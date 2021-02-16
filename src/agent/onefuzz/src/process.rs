@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use process_control::{self, ChildExt, Timeout};
 use std::path::Path;
 use std::process::Command;
@@ -107,12 +107,9 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
     env: &HashMap<String, String, S>,
     timeout: Duration,
 ) -> Result<Output> {
-    verbose!(
+    debug!(
         "running command with timeout: cmd:{:?} argv:{:?} env:{:?} timeout:{:?}",
-        program,
-        argv,
-        env,
-        timeout
+        program, argv, env, timeout
     );
 
     let mut cmd = Command::new(program);
@@ -122,8 +119,13 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
         .args(argv)
         .envs(env);
 
+    // make a stringified version to save in the context of spawn_blocking
+    let program_name = program.display().to_string();
+
     let runner = tokio::task::spawn_blocking(move || {
-        let child = cmd.spawn()?;
+        let child = cmd
+            .spawn()
+            .with_context(|| format!("process failed to start: {}", program_name))?;
         child
             .with_output_timeout(timeout)
             .terminating()
@@ -156,11 +158,11 @@ async fn monitor_stream(name: &str, context: &str, stream: impl AsyncRead + Unpi
 }
 
 async fn wait_process(context: &str, process: Child, stopped: Option<&Notify>) -> Result<()> {
-    verbose!("waiting for child: {}", context);
+    debug!("waiting for child: {}", context);
 
     let output = process.wait_with_output().await?;
 
-    verbose!("child exited. {}:{:?}", context, output.status);
+    debug!("child exited. {}:{:?}", context, output.status);
     if let Some(stopped) = stopped {
         stopped.notify();
     }

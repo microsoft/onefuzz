@@ -8,12 +8,13 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import VmState
 
-from ..onefuzzlib.pools import Scaleset
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.proxy import Proxy
 from ..onefuzzlib.webhooks import WebhookMessageLog
+from ..onefuzzlib.workers.scalesets import Scaleset
 
 
-def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
+def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
     for proxy in Proxy.search():
         if not proxy.is_used():
             logging.info("stopping proxy")
@@ -23,7 +24,8 @@ def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     scalesets = Scaleset.search()
     for scaleset in scalesets:
         logging.info("updating scaleset configs: %s", scaleset.scaleset_id)
-        scaleset.update_configs()
+        scaleset.needs_config_update = True
+        scaleset.save()
 
     expired_webhook_logs = WebhookMessageLog.search_expired()
     for log_entry in expired_webhook_logs:
@@ -33,3 +35,7 @@ def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
             log_entry.event_id,
         )
         log_entry.delete()
+
+    events = get_events()
+    if events:
+        dashboard.set(events)

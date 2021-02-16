@@ -4,12 +4,13 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 from uuid import UUID
 
 from memoization import cached
 from onefuzztypes import models
 from onefuzztypes.enums import ErrorCode, TaskState
+from onefuzztypes.events import EventCrashReported, EventFileAdded
 from onefuzztypes.models import (
     ADOTemplate,
     Error,
@@ -18,16 +19,12 @@ from onefuzztypes.models import (
     Result,
     TeamsTemplate,
 )
-from onefuzztypes.primitives import Container, Event
+from onefuzztypes.primitives import Container
 
-from ..azure.containers import (
-    StorageType,
-    container_exists,
-    get_container_metadata,
-    get_file_sas_url,
-)
+from ..azure.containers import container_exists, get_file_sas_url
 from ..azure.queue import send_message
-from ..dashboard import add_event
+from ..azure.storage import StorageType
+from ..events import send_event
 from ..orm import ORMMixin
 from ..reports import get_report
 from ..tasks.config import get_input_container_queues
@@ -104,28 +101,11 @@ def get_queue_tasks() -> Sequence[Tuple[Task, Sequence[str]]]:
     return results
 
 
-@cached(ttl=60)
-def container_metadata(container: Container) -> Optional[Dict[str, str]]:
-    return get_container_metadata(container, StorageType.corpus)
-
-
 def new_files(container: Container, filename: str) -> None:
-    results: Dict[str, Event] = {"container": container, "file": filename}
-
-    metadata = container_metadata(container)
-    if metadata:
-        results["metadata"] = metadata
+    report = get_report(container, filename)
 
     notifications = get_notifications(container)
     if notifications:
-        report = get_report(container, filename)
-        if report:
-            results["executable"] = report.executable
-            results["crash_type"] = report.crash_type
-            results["crash_site"] = report.crash_site
-            results["job_id"] = report.job_id
-            results["task_id"] = report.task_id
-
         logging.info("notifications for %s %s %s", container, filename, notifications)
         done = []
         for notification in notifications:
@@ -154,4 +134,9 @@ def new_files(container: Container, filename: str) -> None:
             )
             send_message(task.task_id, bytes(url, "utf-8"), StorageType.corpus)
 
-    add_event("new_file", results)
+    if report:
+        send_event(
+            EventCrashReported(report=report, container=container, filename=filename)
+        )
+    else:
+        send_event(EventFileAdded(container=container, filename=filename))

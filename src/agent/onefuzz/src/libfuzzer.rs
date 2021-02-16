@@ -5,7 +5,7 @@ use crate::{
     expand::Expand,
     input_tester::{TestResult, Tester},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use std::{
     collections::HashMap,
     ffi::OsString,
@@ -16,12 +16,14 @@ use tokio::process::{Child, Command};
 
 const DEFAULT_MAX_TOTAL_SECONDS: i32 = 10 * 60;
 
+#[derive(Debug)]
 pub struct LibFuzzerMergeOutput {
     pub added_files_count: i32,
     pub added_feature_count: i32,
 }
 
 pub struct LibFuzzer<'a> {
+    setup_dir: PathBuf,
     exe: PathBuf,
     options: &'a [String],
     env: &'a HashMap<String, String>,
@@ -32,12 +34,52 @@ impl<'a> LibFuzzer<'a> {
         exe: impl Into<PathBuf>,
         options: &'a [String],
         env: &'a HashMap<String, String>,
+        setup_dir: impl Into<PathBuf>,
     ) -> Self {
         Self {
             exe: exe.into(),
             options,
             env,
+            setup_dir: setup_dir.into(),
         }
+    }
+
+    pub async fn check_help(&self) -> Result<()> {
+        // Verify -help=1 exits with a zero return code, which validates the
+        // libfuzzer works as we expect.
+        let mut cmd = Command::new(&self.exe);
+
+        cmd.kill_on_drop(true)
+            .env_remove("RUST_LOG")
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .arg("-help=1");
+
+        let expand = Expand::new()
+            .target_exe(&self.exe)
+            .target_options(&self.options)
+            .setup_dir(&self.setup_dir);
+
+        for (k, v) in self.env {
+            cmd.env(k, expand.evaluate_value(v)?);
+        }
+
+        // Pass custom option arguments.
+        for o in expand.evaluate(self.options)? {
+            cmd.arg(o);
+        }
+
+        let result = cmd
+            .spawn()
+            .with_context(|| format_err!("libfuzzer failed to start: {}", self.exe.display()))?
+            .wait_with_output()
+            .await
+            .with_context(|| format_err!("libfuzzer failed to run: {}", self.exe.display()))?;
+        if !result.status.success() {
+            bail!("fuzzer does not respond to '-help=1'. output:{:?}", result);
+        }
+        Ok(())
     }
 
     pub fn fuzz(
@@ -49,12 +91,12 @@ impl<'a> LibFuzzer<'a> {
         let corpus_dir = corpus_dir.as_ref();
         let fault_dir = fault_dir.as_ref();
 
-        let mut expand = Expand::new();
-        expand
+        let expand = Expand::new()
             .target_exe(&self.exe)
             .target_options(&self.options)
             .input_corpus(&corpus_dir)
-            .crashes(&fault_dir);
+            .crashes(&fault_dir)
+            .setup_dir(&self.setup_dir);
 
         let mut cmd = Command::new(&self.exe);
         cmd.kill_on_drop(true)
@@ -73,10 +115,11 @@ impl<'a> LibFuzzer<'a> {
         }
 
         // check if a max_time is already set
-        if let None = self
+        if self
             .options
             .iter()
             .find(|o| o.starts_with("-max_total_time"))
+            .is_none()
         {
             cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
         }
@@ -101,7 +144,9 @@ impl<'a> LibFuzzer<'a> {
             cmd.arg(dir.as_ref());
         }
 
-        let child = cmd.spawn()?;
+        let child = cmd
+            .spawn()
+            .with_context(|| format_err!("libfuzzer failed to start: {}", self.exe.display()))?;
 
         Ok(child)
     }
@@ -115,9 +160,10 @@ impl<'a> LibFuzzer<'a> {
         let mut options = self.options.to_owned();
         options.push("{input}".to_string());
 
-        let tester = Tester::new(
-            &self.exe, &options, &self.env, &timeout, false, true, false, retry,
-        );
+        let tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
+            .check_asan_stderr(true)
+            .check_retry_count(retry)
+            .set_optional(timeout, |tester, timeout| tester.timeout(timeout));
         tester.test_input(test_input.as_ref()).await
     }
 
@@ -126,11 +172,11 @@ impl<'a> LibFuzzer<'a> {
         corpus_dir: impl AsRef<Path>,
         corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<LibFuzzerMergeOutput> {
-        let mut expand = Expand::new();
-        expand
+        let expand = Expand::new()
             .target_exe(&self.exe)
             .target_options(&self.options)
-            .input_corpus(&corpus_dir);
+            .input_corpus(&corpus_dir)
+            .setup_dir(&self.setup_dir);
 
         let mut cmd = Command::new(&self.exe);
 
@@ -155,7 +201,12 @@ impl<'a> LibFuzzer<'a> {
             cmd.arg(o);
         }
 
-        let output = cmd.spawn()?.wait_with_output().await?;
+        let output = cmd
+            .spawn()
+            .with_context(|| format_err!("libfuzzer failed to start: {}", self.exe.display()))?
+            .wait_with_output()
+            .await
+            .with_context(|| format_err!("libfuzzer failed to run: {}", self.exe.display()))?;
 
         let output_text = String::from_utf8_lossy(&output.stderr);
         let pat = r"MERGE-OUTER: (\d+) new files with (\d+) new features added";
@@ -221,13 +272,13 @@ mod tests {
 
     #[test]
     fn test_libfuzzer_line_pulse() {
-        let line = r"#2097152        pulse  cov: 11 ft: 11 corp: 6/21b lim: 4096 exec/s: 699050 rss: 562Mb".into();
+        let line = r"#2097152        pulse  cov: 11 ft: 11 corp: 6/21b lim: 4096 exec/s: 699050 rss: 562Mb";
 
         let parsed = LibFuzzerLine::parse(line)
             .expect("parse error")
             .expect("no captures");
 
         assert_eq!(parsed.iters(), 2097152);
-        assert_eq!(parsed.execs_sec(), 699050.0);
+        assert_eq!(parsed.execs_sec(), 699050.0_f64);
     }
 }

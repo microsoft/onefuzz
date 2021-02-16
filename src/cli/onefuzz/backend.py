@@ -11,6 +11,7 @@ import logging
 import os
 import sys
 import time
+from dataclasses import asdict, is_dataclass
 from enum import Enum
 from typing import (
     Any,
@@ -63,6 +64,7 @@ class BackendConfig(BaseModel):
     client_secret: Optional[str]
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
+    tenant_domain: Optional[str]
 
 
 class Backend:
@@ -145,7 +147,13 @@ class Backend:
         if not self.config.endpoint:
             raise Exception("endpoint not configured")
 
-        scopes = [self.config.endpoint + "/.default"]
+        if self.config.tenant_domain:
+            endpoint = urlparse(self.config.endpoint).netloc.split(".")[0]
+            scopes = [
+                "https://" + self.config.tenant_domain + "/" + endpoint + "/.default"
+            ]
+        else:
+            scopes = [self.config.endpoint + "/.default"]
 
         if self.config.client_secret:
             return self.client_secret(scopes)
@@ -374,6 +382,8 @@ def serialize(data: Any) -> Any:
         return str(data)
     if isinstance(data, (int, str)):
         return data
+    if is_dataclass(data):
+        return {serialize(a): serialize(b) for (a, b) in asdict(data).items()}
 
     raise Exception("unknown type %s" % type(data))
 
