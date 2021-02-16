@@ -53,7 +53,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     loop {
         hb_client.alive();
         let tmp_dir = PathBuf::from("./tmp");
-        verbose!("tmp dir reset");
+        debug!("tmp dir reset");
         utils::reset_tmp_dir(&tmp_dir).await?;
         config.unique_inputs.sync_pull().await?;
         let mut queue = QueueClient::new(config.input_queue.clone());
@@ -72,11 +72,11 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
                     error
                 );
             } else {
-                verbose!("will delete popped message with id = {}", msg.id());
+                debug!("will delete popped message with id = {}", msg.id());
 
                 queue.delete(msg).await?;
 
-                verbose!(
+                debug!(
                     "Attempting to delete {} from the candidate container",
                     input_url.clone()
                 );

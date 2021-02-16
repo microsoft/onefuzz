@@ -168,7 +168,7 @@ impl LibFuzzerFuzzTask {
         let crash_dir = tempdir()?;
         let run_id = Uuid::new_v4();
 
-        verbose!("starting fuzzer run, run_id = {}", run_id);
+        debug!("starting fuzzer run, run_id = {}", run_id);
 
         let mut inputs = vec![&self.config.inputs.path];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
