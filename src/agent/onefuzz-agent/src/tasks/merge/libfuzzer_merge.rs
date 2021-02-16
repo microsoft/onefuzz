@@ -85,7 +85,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     }
 }
 
-async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> Result<()> {
+async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Result<()> {
     let hb_client = config.common.init_heartbeat().await?;
     hb_client.alive();
     let tmp_dir = "./tmp";

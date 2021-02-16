@@ -148,7 +148,7 @@ impl Agent {
                         // node will see it.
                         //
                         // Transition to `SettingUp` state.
-                        let state = state.schedule(work_set.clone());
+                        let state = state.schedule(work_set);
                         state.into()
                     }
                 }

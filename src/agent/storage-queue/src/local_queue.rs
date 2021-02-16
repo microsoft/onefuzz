@@ -2,15 +2,10 @@
 // Licensed under the MIT License.
 
 use anyhow::{bail, Result};
-use reqwest::Url;
-use serde::{Deserialize, Serialize};
-use std::{borrow::Borrow, path::Path};
-use std::{io::Read, time::Duration};
+use serde::Serialize;
+use std::path::Path;
+use std::time::Duration;
 use tokio::sync::Mutex;
-use tokio::time::delay_for;
-use uuid::Uuid;
-
-use yaque::{self, channel, queue::RecvGuard, Sender};
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
 

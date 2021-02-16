@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use reqwest::Url;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -16,7 +16,7 @@ use local_queue::{LocalQueueClient, LocalQueueMessage};
 
 pub enum QueueClient {
     AzureQueue(AzureQueueClient),
-    LocalQueue(LocalQueueClient),
+    LocalQueue(Box<LocalQueueClient>),
 }
 
 impl QueueClient {

@@ -67,7 +67,7 @@ pub enum CrashTestResult {
 }
 
 // Conditionally upload a report, if it would not be a duplicate.
-async fn upload<T: Serialize>(report: &T, url: Url) -> Result<bool> {
+async fn _upload<T: Serialize>(report: &T, url: Url) -> Result<bool> {
     let blob = BlobClient::new();
     let result = blob
         .put(url)

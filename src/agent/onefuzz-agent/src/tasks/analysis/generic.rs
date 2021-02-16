@@ -85,7 +85,7 @@ async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
 async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
     let heartbeat = config.common.init_heartbeat().await?;
     if let Some(queue) = &config.input_queue {
-        let mut input_queue = QueueClient::new(queue.clone());
+        let input_queue = QueueClient::new(queue.clone());
 
         loop {
             heartbeat.alive();

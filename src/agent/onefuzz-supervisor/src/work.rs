@@ -6,8 +6,7 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
-use onefuzz::{blob::BlobContainerUrl, http::is_auth_error};
-use serde::de::DeserializeOwned;
+use onefuzz::blob::BlobContainerUrl;
 use storage_queue::{Message as QueueMessage, QueueClient};
 use tokio::fs;
 use uuid::Uuid;
@@ -148,7 +147,7 @@ impl Message {
 
 pub struct WorkQueue {
     queue: QueueClient,
-    registration: Registration,
+    _registration: Registration,
 }
 
 impl WorkQueue {
@@ -158,13 +157,13 @@ impl WorkQueue {
 
         Self {
             queue,
-            registration,
+            _registration: registration,
         }
     }
 
-    async fn renew(&mut self) -> Result<()> {
-        self.registration.renew().await?;
-        let url = self.registration.dynamic_config.work_queue.clone();
+    async fn _renew(&mut self) -> Result<()> {
+        self._registration.renew().await?;
+        let url = self._registration.dynamic_config.work_queue.clone();
         self.queue = QueueClient::new(url);
         Ok(())
     }

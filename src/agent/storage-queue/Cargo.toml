@@ -8,14 +8,15 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
+base64 = "0.13"
+derivative = "2.2.0"
+regex = "1.4"
 reqwest = { version = "0.10", features = ["json", "stream"] }
+reqwest-retry = { path = "../reqwest-retry" }
 serde = "1.0"
+serde_derive = "1.0"
 serde_json = "1.0"
 serde-xml-rs = "0.4"
-serde_derive = "1.0"
-uuid = { version = "0.8", features = ["serde", "v4"] }
-regex = "1.4"
-base64 = "0.13"
-reqwest-retry = { path = "../reqwest-retry" }
-yaque = "0.5.0-pre3"
 tokio = { version = "0.2", features = ["full"] }
+uuid = { version = "0.8", features = ["serde", "v4"] }
+yaque = "0.5.0-pre3"
