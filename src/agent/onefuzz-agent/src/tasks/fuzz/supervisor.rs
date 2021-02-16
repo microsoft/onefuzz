@@ -137,7 +137,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
                 .evaluate_value(stats_file)?,
         )
     } else {
-        verbose!("no stats file to monitor");
+        debug!("no stats file to monitor");
         None
     };
 

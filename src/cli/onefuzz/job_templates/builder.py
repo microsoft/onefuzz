@@ -118,12 +118,24 @@ def build_template_doc(config: JobTemplateConfig) -> str:
 
 
 def build_template_func(config: JobTemplateConfig) -> Any:
-    def func(self: TemplateSubmitHandler, **kwargs: Any) -> Job:
+    def func(
+        self: TemplateSubmitHandler,
+        *,
+        wait_for_running: bool = False,
+        **kwargs: Any,
+    ) -> Job:
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
-        return self._execute(config, kwargs)
+        return self._execute(
+            config,
+            kwargs,
+            wait_for_running=wait_for_running,
+        )
 
     sig = signature(func)
-    params = [sig.parameters["self"]] + config_to_params(config)
+    params = [
+        sig.parameters["self"],
+        sig.parameters["wait_for_running"],
+    ] + config_to_params(config)
     sig = sig.replace(parameters=tuple(params))
     func.__signature__ = sig  # type: ignore
 

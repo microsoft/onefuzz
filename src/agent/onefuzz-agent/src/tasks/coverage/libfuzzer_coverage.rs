@@ -43,7 +43,7 @@ use onefuzz::{fs::list_files, libfuzzer::LibFuzzer, syncdir::SyncedDir};
 use onefuzz_telemetry::{Event::coverage_data, EventData};
 use reqwest::Url;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::{
     ffi::OsString,
     path::{Path, PathBuf},
@@ -102,23 +102,27 @@ impl CoverageTask {
             self.record_corpus_coverage(&mut processor, &synced_dir)
                 .await?;
         }
+        processor.report_total().await?;
 
         Ok(())
     }
 
-    pub async fn managed_run(&mut self) -> Result<()> {
-        info!("starting libFuzzer coverage task");
-
+    async fn check_libfuzzer(&self) -> Result<()> {
         if self.config.check_fuzzer_help {
-            let target = LibFuzzer::new(
+            let fuzzer = LibFuzzer::new(
                 &self.config.target_exe,
                 &self.config.target_options,
                 &self.config.target_env,
                 &self.config.common.setup_dir,
             );
-            target.check_help().await?;
+            fuzzer.check_help().await?;
         }
+        Ok(())
+    }
 
+    pub async fn managed_run(&mut self) -> Result<()> {
+        info!("starting libFuzzer coverage task");
+        self.check_libfuzzer().await?;
         self.config.coverage.init_pull().await?;
         self.process().await
     }
@@ -130,7 +134,7 @@ impl CoverageTask {
         let mut seen_inputs = false;
         // Update the total with the coverage from each seed corpus.
         for dir in &self.config.readonly_inputs {
-            verbose!("recording coverage for {}", dir.path.display());
+            debug!("recording coverage for {}", dir.path.display());
             dir.init_pull().await?;
             if self.record_corpus_coverage(&mut processor, dir).await? {
                 seen_inputs = true;
@@ -197,7 +201,7 @@ pub struct CoverageProcessor {
     config: Arc<Config>,
     pub recorder: CoverageRecorder,
     pub total: TotalCoverage,
-    pub module_totals: HashMap<OsString, TotalCoverage>,
+    pub module_totals: BTreeMap<OsString, TotalCoverage>,
     heartbeat_client: Option<TaskHeartbeatClient>,
 }
 
@@ -206,7 +210,7 @@ impl CoverageProcessor {
         let heartbeat_client = config.common.init_heartbeat().await?;
         let total = TotalCoverage::new(config.coverage.path.join(TOTAL_COVERAGE));
         let recorder = CoverageRecorder::new(config.clone());
-        let module_totals = HashMap::default();
+        let module_totals = BTreeMap::default();
 
         Ok(Self {
             config,
@@ -223,7 +227,7 @@ impl CoverageProcessor {
             .ok_or_else(|| format_err!("module must have filename"))?
             .to_os_string();
 
-        verbose!("updating module info {:?}", module);
+        debug!("updating module info {:?}", module);
 
         if !self.module_totals.contains_key(&module) {
             let parent = &self.config.coverage.path.join("by-module");
@@ -240,16 +244,17 @@ impl CoverageProcessor {
 
         self.module_totals[&module].update_bytes(data).await?;
 
-        verbose!("updated {:?}", module);
+        debug!("updated {:?}", module);
         Ok(())
     }
 
-    async fn collect_by_module(&mut self, path: &Path) -> Result<PathBuf> {
-        let files = list_files(&path).await?;
+    async fn collect_by_module(&mut self, path: &Path) -> Result<()> {
+        let mut files = list_files(&path).await?;
+        files.sort();
         let mut sum = Vec::new();
 
         for file in &files {
-            verbose!("checking {:?}", file);
+            debug!("checking {:?}", file);
             let mut content = fs::read(file)
                 .await
                 .with_context(|| format!("unable to read module coverage: {}", file.display()))?;
@@ -264,14 +269,25 @@ impl CoverageProcessor {
             .await
             .with_context(|| format!("unable to write combined coverage file: {:?}", combined))?;
 
-        Ok(combined.into())
+        Ok(())
     }
 
     pub async fn test_input(&mut self, input: &Path) -> Result<()> {
         info!("processing input {:?}", input);
         let new_coverage = self.recorder.record(input).await?;
-        let combined = self.collect_by_module(&new_coverage).await?;
-        self.total.update(&combined).await?;
+        self.collect_by_module(&new_coverage).await?;
+        self.update_total().await?;
+        Ok(())
+    }
+
+    async fn update_total(&mut self) -> Result<()> {
+        let mut total = Vec::new();
+        for module_total in self.module_totals.values() {
+            if let Some(mut module_data) = module_total.data().await? {
+                total.append(&mut module_data);
+            }
+        }
+        self.total.write(&total).await?;
         Ok(())
     }
 

@@ -20,6 +20,7 @@ from onefuzztypes.models import ScalesetNodeState
 from onefuzztypes.primitives import PoolName, Region
 from pydantic import BaseModel, Field
 
+from ..__version__ import __version__
 from ..azure.auth import build_auth
 from ..azure.image import get_os
 from ..azure.network import Network
@@ -300,6 +301,35 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 )
                 node.delete()
 
+        # Scalesets can have nodes that never check in (such as broken OS setup
+        # scripts).
+        #
+        # This will add nodes that Azure knows about but have not checked in
+        # such that the `dead node` detection will eventually reimage the node.
+        #
+        # NOTE: If node setup takes longer than NODE_EXPIRATION_TIME (1 hour),
+        # this will cause the nodes to continuously get reimaged.
+        node_machine_ids = [x.machine_id for x in nodes]
+        for machine_id in azure_nodes:
+            if machine_id in node_machine_ids:
+                continue
+
+            logging.info(
+                "scaleset - adding missing azure node: %s:%s",
+                self.scaleset_id,
+                machine_id,
+            )
+
+            # Note, using `new=True` makes it such that if a node already has
+            # checked in, this won't overwrite it.
+            Node.create(
+                pool_name=self.pool_name,
+                machine_id=machine_id,
+                scaleset_id=self.scaleset_id,
+                version=__version__,
+                new=True,
+            )
+
         existing_nodes = [x for x in nodes if x.machine_id in azure_nodes]
         nodes_to_reset = [
             x for x in existing_nodes if x.state in NodeState.ready_for_reset()
@@ -537,8 +567,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
     def update_configs(self) -> None:
         from .pools import Pool
 
+        if self.state == ScalesetState.halt:
+            logging.info(
+                "not updating configs, scaleset is set to be deleted: %s",
+                self.scaleset_id,
+            )
+            return
+
         if not self.needs_config_update:
             logging.debug("config update not needed: %s", self.scaleset_id)
+            return
 
         logging.info("updating scaleset configs: %s", self.scaleset_id)
 

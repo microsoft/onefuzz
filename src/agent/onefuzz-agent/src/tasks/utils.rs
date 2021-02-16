@@ -41,12 +41,12 @@ pub async fn reset_tmp_dir(tmp_dir: impl AsRef<Path>) -> Result<()> {
     if dir_exists {
         fs::remove_dir_all(tmp_dir).await?;
 
-        verbose!("deleted {}", tmp_dir.display());
+        debug!("deleted {}", tmp_dir.display());
     }
 
     fs::create_dir_all(tmp_dir).await?;
 
-    verbose!("created {}", tmp_dir.display());
+    debug!("created {}", tmp_dir.display());
 
     Ok(())
 }
