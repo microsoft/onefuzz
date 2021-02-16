@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
-from onefuzztypes.primitives import Container, Directory, File
+from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
@@ -27,7 +27,7 @@ class Regression(Command):
         project: str,
         name: str,
         build: str,
-        pool_name: str,
+        pool_name: PoolName,
         *,
         crashes: Container = None,
         input_reports: Container = None,
@@ -90,7 +90,7 @@ class Regression(Command):
         project: str,
         name: str,
         build: str,
-        pool_name: str,
+        pool_name: PoolName,
         *,
         crashes: Container = None,
         input_reports: Container = None,
@@ -155,7 +155,7 @@ class Regression(Command):
         project: str,
         name: str,
         build: str,
-        pool_name: str,
+        pool_name: PoolName,
         crashes: Container = None,
         input_reports: Container = None,
         inputs: Optional[Directory] = None,

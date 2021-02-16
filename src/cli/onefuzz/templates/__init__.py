@@ -264,15 +264,6 @@ class JobHelper:
             raise StoppedEarly("tasks stopped unexpectedly.\n%s" % "\n".join(errors))
         return job
 
-    def is_stopping(self) -> Tuple[bool, str, Any]:
-        tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
-        stopping = [
-            "%s:%s" % (x.config.task.type.name, x.state.name)
-            for x in tasks
-            if x.state not in TaskState.shutting_down()
-        ]
-        return (not stopping, "waiting on: %s" % ", ".join(sorted(stopping)), None)
-
     def get_waiting(self) -> List[str]:
         tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
         waiting = [

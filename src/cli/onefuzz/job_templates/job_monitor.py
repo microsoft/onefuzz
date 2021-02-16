@@ -78,6 +78,15 @@ class JobMonitor:
             None,
         )
 
+    def is_stopping(self) -> Tuple[bool, str, Any]:
+        tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
+        stopping = [
+            "%s:%s" % (x.config.task.type.name, x.state.name)
+            for x in tasks
+            if x.state not in TaskState.shutting_down()
+        ]
+        return (not stopping, "waiting on: %s" % ", ".join(sorted(stopping)), None)
+
     def wait(
         self,
         *,
@@ -96,4 +105,4 @@ class JobMonitor:
 
         if wait_for_stopping:
             wait(self.is_stopping)
-            self.logger.info("tasks stopped")
+            self.onefuzz.logger.info("tasks stopped")
