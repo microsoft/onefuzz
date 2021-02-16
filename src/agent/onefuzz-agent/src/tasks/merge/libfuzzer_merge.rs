@@ -60,7 +60,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     config.unique_inputs.init().await?;
     if let Some(url) = config.input_queue.clone() {
         loop {
-            let queue = QueueClient::new(url.clone());
+            let queue = QueueClient::new(url.clone())?;
             if let Err(error) = process_message(config.clone(), queue).await {
                 error!(
                     "failed to process latest message from notification queue: {}",

@@ -56,7 +56,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         debug!("tmp dir reset");
         utils::reset_tmp_dir(&tmp_dir).await?;
         config.unique_inputs.sync_pull().await?;
-        let queue = QueueClient::new(config.input_queue.clone());
+        let queue = QueueClient::new(config.input_queue.clone())?;
         if let Some(msg) = queue.pop().await? {
             let input_url = msg.parse(utils::parse_url_data);
             let input_url = match input_url {

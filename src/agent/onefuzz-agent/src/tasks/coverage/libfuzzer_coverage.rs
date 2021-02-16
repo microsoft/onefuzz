@@ -160,7 +160,7 @@ impl CoverageTask {
         // If a queue has been provided, poll it for new coverage.
         if let Some(queue) = &self.config.input_queue {
             info!("polling queue for new coverage");
-            let callback = CallbackImpl::new(queue.clone(), processor);
+            let callback = CallbackImpl::new(queue.clone(), processor)?;
             self.poller.run(callback).await?;
         }
 

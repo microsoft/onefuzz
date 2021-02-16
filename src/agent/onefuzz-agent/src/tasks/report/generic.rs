@@ -102,7 +102,7 @@ impl ReportTask {
         info!("processing crashes from queue");
         if self.config.check_queue {
             if let Some(queue) = &self.config.input_queue {
-                let callback = CallbackImpl::new(queue.clone(), processor);
+                let callback = CallbackImpl::new(queue.clone(), processor)?;
                 self.poller.run(callback).await?;
             }
         }

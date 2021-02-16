@@ -59,7 +59,7 @@ pub async fn init_task_heartbeat(queue_url: Url, task_id: Uuid) -> Result<TaskHe
                 })
                 .await;
         },
-    );
+    )?;
     Ok(hb)
 }
 

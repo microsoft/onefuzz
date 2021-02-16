@@ -124,7 +124,6 @@ pub struct Message {
     pub work_set: WorkSet,
 }
 
-
 // #[derive(Clone, Debug, Eq, PartialEq)]
 // pub struct Receipt(pub storage_queue::Receipt);
 
@@ -134,20 +133,20 @@ pub struct WorkQueue {
 }
 
 impl WorkQueue {
-    pub fn new(registration: Registration) -> Self {
+    pub fn new(registration: Registration) -> Result<Self> {
         let url = registration.dynamic_config.work_queue.clone();
-        let queue = QueueClient::new(url);
+        let queue = QueueClient::new(url)?;
 
-        Self {
+        Ok(Self {
             queue,
             _registration: registration,
-        }
+        })
     }
 
     async fn renew(&mut self) -> Result<()> {
         self._registration.renew().await?;
         let url = self._registration.dynamic_config.work_queue.clone();
-        self.queue = QueueClient::new(url);
+        self.queue = QueueClient::new(url)?;
         Ok(())
     }
 
@@ -191,14 +190,11 @@ impl WorkQueue {
                     message.queue_message.update_url(url).delete().await?;
                     Ok(message.work_set)
                 } else {
-                    bail!("{}", err )
+                    bail!("{}", err)
                 }
-            },
-                Ok(_) =>  Ok(message.work_set)
+            }
+            Ok(_) => Ok(message.work_set),
         }
-
-
-
     }
 }
 

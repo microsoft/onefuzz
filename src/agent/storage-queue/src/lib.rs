@@ -20,8 +20,16 @@ pub enum QueueClient {
 }
 
 impl QueueClient {
-    pub fn new(queue_url: Url) -> Self {
-        QueueClient::AzureQueue(AzureQueueClient::new(queue_url))
+    pub fn new(queue_url: Url) -> Result<Self> {
+        if queue_url.scheme().to_lowercase() == "file://" {
+            let path = queue_url
+                .to_file_path()
+                .map_err(|_| anyhow!("invalid local path"))?;
+            let local_queue = LocalQueueClient::new(path)?;
+            Ok(QueueClient::LocalQueue(Box::new(local_queue)))
+        } else {
+            Ok(QueueClient::AzureQueue(AzureQueueClient::new(queue_url)))
+        }
     }
 
     pub fn get_url(self) -> Result<Url> {

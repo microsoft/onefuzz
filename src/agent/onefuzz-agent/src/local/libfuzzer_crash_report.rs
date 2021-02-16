@@ -11,14 +11,36 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use std::path::PathBuf;
+use futures::stream::StreamExt;
+use onefuzz::monitor::DirectoryMonitor;
+use reqwest::Url;
+use serde::{Deserialize, Serialize};
+use tokio::task::JoinHandle;
+use std::{
+    path::{Path, PathBuf},
+};
 
-pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
+#[derive(Serialize, Deserialize)]
+struct FileNotification {}
+
+async fn monitor_folder_into_queue(path: impl AsRef<Path>, queue_url: Url) -> Result<()> {
+
+    let queue = storage_queue::QueueClient::new(queue_url.clone())?;
+
+    let mut monitor = DirectoryMonitor::new(PathBuf::from(path.as_ref()));
+    monitor.start()?;
+    while let Some(_crash) = monitor.next().await {
+        queue.enqueue(FileNotification {}).await?
+    }
+    Ok(())
+}
+
+pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<(Config, JoinHandle<Result<()>>)> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
 
-    let crashes = Some(value_t!(args, CRASHES_DIR, PathBuf)?.into());
+    let crashes = value_t!(args, CRASHES_DIR, PathBuf)?;
     let reports = if args.is_present(REPORTS_DIR) {
         Some(value_t!(args, REPORTS_DIR, PathBuf)?).map(|x| x.into())
     } else {
@@ -34,8 +56,20 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
 
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
+
     let check_queue = !args.is_present(DISABLE_CHECK_QUEUE);
+
     let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
+
+
+    let input_queue = Url::from_file_path("temp file").map_err( |_| anyhow!("invalid file path"))?;
+
+    let file_monitor = tokio::spawn(monitor_folder_into_queue(crashes.clone(), input_queue.clone()));
+
+    // tokio::try_join!()
+
+    // futures::try_join!(t1, t2, child)?;
+
 
     let common = build_common_config(args)?;
     let config = Config {
@@ -45,20 +79,23 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
         target_timeout,
         check_retry_count,
         check_fuzzer_help,
-        input_queue: None,
+        input_queue: Some(input_queue),
         check_queue,
-        crashes,
+        crashes: Some(crashes.into()),
         reports,
         no_repro,
         unique_reports,
         common,
     };
-    Ok(config)
+    Ok((config, file_monitor))
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_report_config(args)?;
-    ReportTask::new(config).local_run().await
+    let (config, file_monitor) = build_report_config(args)?;
+    let _run_handle = tokio::task::spawn(file_monitor);
+    ReportTask::new(config).managed_run().await
+
+    // let run = tokio::try_join!(run_handle, file_monitor)?;
 }
 
 pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {

@@ -73,9 +73,9 @@ impl<P> CallbackImpl<P>
 where
     P: Processor + Send,
 {
-    pub fn new(queue_url: Url, processor: P) -> Self {
-        let queue = QueueClient::new(queue_url);
-        Self { queue, processor }
+    pub fn new(queue_url: Url, processor: P) -> Result<Self> {
+        let queue = QueueClient::new(queue_url)?;
+        Ok(Self { queue, processor })
     }
 }
 
