@@ -111,7 +111,7 @@ impl ClientCredentials {
     }
 
     pub async fn access_token(&self) -> Result<AccessToken> {
-        let (authority, resource) = if let Some(domain) = &self.multi_tenant_domain {
+        let (authority, resource) = if let Some(domain) = self.multi_tenant_domain {
             let url = Url::parse(&self.resource.clone())?;
             let host = url.host_str().unwrap();
             let instance: Vec<&str> = host.split('.').collect();
@@ -164,7 +164,7 @@ impl From<ClientAccessTokenBody> for AccessToken {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ManagedIdentityCredentials {
     resource: String,
-    multi_tenant_domain: String,
+    multi_tenant_domain: Option<String>,
 }
 
 const MANAGED_IDENTITY_URL: &str =
@@ -180,10 +180,9 @@ impl ManagedIdentityCredentials {
 
     fn url(&self) -> Url {
         let mut url = Url::parse(MANAGED_IDENTITY_URL).unwrap();
-
-        let resource = if let Some(domain) = &self.multi_tenant_domain {
-            let url2 = Url::parse(&self.resource).unwrap();
-            let host = url2.host_str().unwrap();
+        let resource = if let Some(domain) = self.multi_tenant_domain {
+            let uri = Url::parse(&self.resource).unwrap();
+            let host = uri.host_str().unwrap();
             let instance: Vec<&str> = host.split('.').collect();
             format!("https://{}/{}", domain, instance[0])
         } else {

@@ -69,8 +69,24 @@ impl StaticConfig {
                     .to_string()
                     .trim_end_matches('/')
                     .to_owned();
-                let managed =
-                    ManagedIdentityCredentials::new(resource, config.multi_tenant_domain.clone());
+                //let managed = ManagedIdentityCredentials::new(resource, config.multi_tenant_domain);
+                let managed = if let Some(domain) = config.multi_tenant_domain {
+                    ManagedIdentityCredentials::new(resource, domain)
+                } else {
+                    ManagedIdentityCredentials::new(resource, config.multi_tenant_domain)
+                };
+
+        /*
+        let (authority, resource) = if let Some(domain) = &self.multi_tenant_domain {
+            let url = Url::parse(&self.resource.clone())?;
+            let host = url.host_str().unwrap();
+            let instance: Vec<&str> = host.split('.').collect();
+            (String::from("common"), format!("https://{}/{}/", &self.multi_tenant_domain, instance[0]))
+        } else {
+            (self.tenant.clone(), self.resource.clone())
+        };
+        */
+                
                 managed.into()
             }
         };
@@ -126,7 +142,7 @@ impl StaticConfig {
             client_id,
             client_secret,
             onefuzz_url.to_string(),
-            multi_tenant_domain.clone(),
+            multi_tenant_domain,
             tenant,
         )
         .into();
