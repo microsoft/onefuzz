@@ -25,7 +25,7 @@ pub struct CoverageRecorder {
     script_dir: OwnedDir,
 }
 
-const SYMBOL_EXTRACT_ERROR: &str = "Target appears to be missing sancov instrumentation.  This error can happen due to missing coverage symbols.";
+const SYMBOL_EXTRACT_ERROR: &str = "Target appears to be missing sancov instrumentation. This error can also happen if symbols for the target are not available.";
 
 impl CoverageRecorder {
     pub fn new(config: Arc<Config>) -> Self {
