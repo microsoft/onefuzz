@@ -25,7 +25,7 @@ pub struct StaticConfig {
 
     pub onefuzz_url: Url,
 
-    pub multi_tenant_domain: String,
+    pub multi_tenant_domain: Option<String>,
 
     pub instrumentation_key: Option<Uuid>,
 
@@ -45,7 +45,7 @@ struct RawStaticConfig {
 
     pub onefuzz_url: Url,
 
-    pub multi_tenant_domain: String,
+    pub multi_tenant_domain: Option<String>,
 
     pub instrumentation_key: Option<Uuid>,
 
