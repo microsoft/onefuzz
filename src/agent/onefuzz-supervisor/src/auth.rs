@@ -111,26 +111,23 @@ impl ClientCredentials {
     }
 
     pub async fn access_token(&self) -> Result<AccessToken> {
-        // If let [Optional] "multi_tenant_domain" item exists:
-        // then set authority to 'common'
-        // else use self.tenant
-        let authority = String::from("common");
+        let mut authority = String::new();
+        let mut resource = String::new();
+		if let String = &self.multi_tenant_domain {
+			authority = String::from("common");
+			let url = Url::parse(&self.resource.clone())?;
+			let host = url.host_str().unwrap();
+			let instance: Vec<&str> = host.split('.').collect();
+			resource = format!("https://{}/{}/", &self.multi_tenant_domain, instance[0]);
+		} else {
+			authority = self.tenant.clone();
+			resource = self.resource.clone();
+		};
 
         let mut url = Url::parse("https://login.microsoftonline.com")?;
         url.path_segments_mut()
             .expect("Authority URL is cannot-be-a-base")
             .extend(&[&authority.clone(), "oauth2", "v2.0", "token"]);
-
-        // If let [Optional] "multi_tenant_domain" item exists:
-        // then format the scope using the following format:
-        //    <instance_name> is parsed out of the config item 'onefuzz_url'
-        //    self.resource = "https://<multi_tenant_domain>/<instance_name>/
-        let url = Url::parse(&self.resource.clone())?;
-        let host = url.host_str().unwrap();
-        let instance: Vec<&str> = host.split('.').collect();
-        let resource = format!("https://{}/{}/", &self.multi_tenant_domain, instance[0]);
-        // else use self.resource:
-        //    let resource = self.resource.clone();
 
         let response = reqwest::Client::new()
             .post(url)
@@ -187,15 +184,16 @@ impl ManagedIdentityCredentials {
 
     fn url(&self) -> Url {
         let mut url = Url::parse(MANAGED_IDENTITY_URL).unwrap();
+        let mut resource = String::new();
+		if let String = &self.multi_tenant_domain {
+			let url2 = Url::parse(&self.resource).unwrap();
+			let host = url2.host_str().unwrap();
+			let instance: Vec<&str> = host.split('.').collect();
+			let resource = format!("https://{}/{}", &self.multi_tenant_domain, instance[0]);
+		} else {
+			resource = self.resource.clone()
+		};
 
-        // if let multi_tenant_domain is present
-        // then:
-        let url2 = Url::parse(&self.resource).unwrap();
-        let host = url2.host_str().unwrap();
-        let instance: Vec<&str> = host.split('.').collect();
-        let resource = format!("https://{}/{}", &self.multi_tenant_domain, instance[0]);
-        // else:
-        //     resource = &self.resource
         url.query_pairs_mut().append_pair("resource", &resource);
         url
     }
