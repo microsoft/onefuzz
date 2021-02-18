@@ -408,8 +408,9 @@ class Client:
             multi_tenant_domain = {"value": self.multi_tenant_domain}
         else:
             app_func_audience = "https://%s.azurewebsites.net" % self.application_name
+            tenant_oid = self.cli_config["authority"].split("/")[-1]
             app_func_issuer = (
-                "https://sts.windows.net/%s/" % self.cli_config["authority"]
+                "https://sts.windows.net/%s/" % tenant_oid
             )
             multi_tenant_domain = {"value": ""}
 
