@@ -135,6 +135,14 @@ class Node(BASE_NODE, ORMMixin):
                 node.to_reimage()
 
     @classmethod
+    def cleanup_busy_nodes_without_work(cls) -> None:
+        # There is a potential race condition if multiple `Node.stop_task` calls
+        # are made concurrently.  By performing this check regularly, any nodes
+        # that hit this race condition will get cleaned up.
+        for node in cls.search_states(states=[NodeState.busy]):
+            node.stop_if_complete()
+
+    @classmethod
     def get_by_machine_id(cls, machine_id: UUID) -> Optional["Node"]:
         nodes = cls.search(query={"machine_id": [machine_id]})
         if not nodes:
@@ -173,8 +181,6 @@ class Node(BASE_NODE, ORMMixin):
 
     @classmethod
     def stop_task(cls, task_id: UUID) -> None:
-        from ..tasks.main import Task
-
         # For now, this just re-images the node.  Eventually, this
         # should send a message to the node to let the agent shut down
         # gracefully
@@ -184,32 +190,35 @@ class Node(BASE_NODE, ORMMixin):
                 NodeCommand(stop_task=StopTaskNodeCommand(task_id=task_id))
             )
 
-            should_stop_node = True
-            node_tasks = NodeTasks.get_by_machine_id(node.machine_id)
-            for node_task in node_tasks:
-                # don't bother checking the existing task, that one is already
-                # shutting down
-                if node_task.task_id != task_id:
-                    continue
-
-                task = Task.get_by_task_id(node_task.task_id)
-                # ignore invalid tasks when deciding if the node should be
-                # shutdown
-                if isinstance(task, Error):
-                    continue
-
-                if task.state not in TaskState.shutting_down():
-                    should_stop_node = False
-
-            if should_stop_node:
-                node.stop()
-            else:
+            if not node.stop_if_complete():
                 logging.info(
                     "nodes: stopped task on node, "
                     "but not reimaging due to other tasks: task_id:%s machine_id:%s",
                     task_id,
                     node.machine_id,
                 )
+
+    def stop_if_complete(self) -> bool:
+        # returns True on stopping the node and False if this doesn't stop the node
+        from ..tasks.main import Task
+
+        node_tasks = NodeTasks.get_by_machine_id(self.machine_id)
+        for node_task in node_tasks:
+            task = Task.get_by_task_id(node_task.task_id)
+            # ignore invalid tasks when deciding if the node should be
+            # shutdown
+            if isinstance(task, Error):
+                continue
+
+            if task.state not in TaskState.shutting_down():
+                return False
+
+        logging.info(
+            "node: stopping busy node with all tasks complete: %s",
+            self.machine_id,
+        )
+        self.stop()
+        return True
 
     def mark_tasks_stopped_early(self) -> None:
         from ..tasks.main import Task
