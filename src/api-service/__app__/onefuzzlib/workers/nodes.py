@@ -8,7 +8,7 @@ import logging
 from typing import List, Optional, Tuple
 from uuid import UUID
 
-from onefuzztypes.enums import ErrorCode, NodeState
+from onefuzztypes.enums import ErrorCode, NodeState, TaskState
 from onefuzztypes.events import (
     EventNodeCreated,
     EventNodeDeleted,
@@ -18,7 +18,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.models import Node as BASE_NODE
 from onefuzztypes.models import NodeAssignment, NodeCommand, NodeCommandAddSshKey
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
-from onefuzztypes.models import Result, StopNodeCommand
+from onefuzztypes.models import Result, StopNodeCommand, StopTaskNodeCommand
 from onefuzztypes.primitives import PoolName
 from pydantic import Field
 
@@ -173,18 +173,43 @@ class Node(BASE_NODE, ORMMixin):
 
     @classmethod
     def stop_task(cls, task_id: UUID) -> None:
+        from ..tasks.main import Task
+
         # For now, this just re-images the node.  Eventually, this
         # should send a message to the node to let the agent shut down
         # gracefully
         nodes = NodeTasks.get_nodes_by_task_id(task_id)
         for node in nodes:
-            if node.state not in NodeState.ready_for_reset():
-                logging.info(
-                    "stopping machine_id:%s running task:%s",
-                    node.machine_id,
-                    task_id,
-                )
+            node.send_message(
+                NodeCommand(stop_task=StopTaskNodeCommand(task_id=task_id))
+            )
+
+            should_stop_node = True
+            node_tasks = NodeTasks.get_by_machine_id(node.machine_id)
+            for node_task in node_tasks:
+                # don't bother checking the existing task, that one is already
+                # shutting down
+                if node_task.task_id != task_id:
+                    continue
+
+                task = Task.get_by_task_id(node_task.task_id)
+                # ignore invalid tasks when deciding if the node should be
+                # shutdown
+                if isinstance(task, Error):
+                    continue
+
+                if task.state not in TaskState.shutting_down():
+                    should_stop_node = False
+
+            if should_stop_node:
                 node.stop()
+            else:
+                logging.info(
+                    "nodes: stopped task on node, "
+                    "but not reimaging due to other tasks: task_id:%s machine_id:%s",
+                    task_id,
+                    node.machine_id,
+                )
 
     def mark_tasks_stopped_early(self) -> None:
         from ..tasks.main import Task
