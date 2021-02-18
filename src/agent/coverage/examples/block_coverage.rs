@@ -58,9 +58,7 @@ fn main() -> Result<()> {
     let mut cmd = Command::new(&opt.cmd[0]);
     cmd.args(&opt.cmd[1..]);
 
-    let mut recorder = Recorder::default();
-    recorder.module_filter = filter.modules;
-    recorder.symbol_filter = filter.symbols;
+    let mut recorder = Recorder::new(filter.modules, filter.symbols);
     recorder.record(cmd)?;
 
     for (module_path, cov) in recorder.coverage.iter() {
