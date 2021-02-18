@@ -72,7 +72,7 @@ impl StaticConfig {
                 let managed = if let Some(domain) = config.multi_tenant_domain {
                     ManagedIdentityCredentials::new(resource, domain)
                 } else {
-                    ManagedIdentityCredentials::new(resource, config.multi_tenant_domain)
+                    ManagedIdentityCredentials::new(resource, &config.multi_tenant_domain)
                 };
                 managed.into()
             }
