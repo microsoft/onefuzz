@@ -69,11 +69,7 @@ impl StaticConfig {
                     .to_string()
                     .trim_end_matches('/')
                     .to_owned();
-                let managed = if let Some(domain) = config.multi_tenant_domain {
-                    ManagedIdentityCredentials::new(resource, domain)
-                } else {
-                    ManagedIdentityCredentials::new(resource, &config.multi_tenant_domain)
-                };
+                let managed = ManagedIdentityCredentials::new(resource, config.multi_tenant_domain.clone());
                 managed.into()
             }
         };
@@ -103,7 +99,10 @@ impl StaticConfig {
         let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
         let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?;
         let tenant = std::env::var("ONEFUZZ_TENANT")?;
-        let multi_tenant_domain = std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN")?;
+        let multi_tenant_domain = match std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN") {
+            Ok(v) => Some(v),
+            Err(e) => None,
+        };
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
 
@@ -129,7 +128,7 @@ impl StaticConfig {
             client_id,
             client_secret,
             onefuzz_url.to_string(),
-            multi_tenant_domain,
+            multi_tenant_domain.clone(),
             tenant,
         )
         .into();

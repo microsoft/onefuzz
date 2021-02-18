@@ -87,7 +87,7 @@ pub struct ClientCredentials {
     client_id: Uuid,
     client_secret: Secret<String>,
     resource: String,
-    multi_tenant_domain: String,
+    multi_tenant_domain: Option<String>,
     tenant: String,
 }
 
@@ -96,7 +96,7 @@ impl ClientCredentials {
         client_id: Uuid,
         client_secret: String,
         resource: String,
-        multi_tenant_domain: String,
+        multi_tenant_domain: Option<String>,
         tenant: String,
     ) -> Self {
         let client_secret = client_secret.into();
@@ -111,11 +111,11 @@ impl ClientCredentials {
     }
 
     pub async fn access_token(&self) -> Result<AccessToken> {
-        let (authority, resource) = if let Some(domain) = self.multi_tenant_domain {
+        let (authority, resource) = if let Some(domain) = &self.multi_tenant_domain {
             let url = Url::parse(&self.resource.clone())?;
             let host = url.host_str().unwrap();
             let instance: Vec<&str> = host.split('.').collect();
-            (String::from("common"), format!("https://{}/{}/", &self.multi_tenant_domain, instance[0]))
+            (String::from("common"), format!("https://{}/{}/", &domain, instance[0]))
         } else {
             (self.tenant.clone(), self.resource.clone())
         };
@@ -171,7 +171,7 @@ const MANAGED_IDENTITY_URL: &str =
     "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01";
 
 impl ManagedIdentityCredentials {
-    pub fn new(resource: String, multi_tenant_domain: String) -> Self {
+    pub fn new(resource: String, multi_tenant_domain: Option<String>) -> Self {
         Self {
             resource,
             multi_tenant_domain,
@@ -180,7 +180,7 @@ impl ManagedIdentityCredentials {
 
     fn url(&self) -> Url {
         let mut url = Url::parse(MANAGED_IDENTITY_URL).unwrap();
-        let resource = if let Some(domain) = self.multi_tenant_domain {
+        let resource = if let Some(domain) = &self.multi_tenant_domain {
             let uri = Url::parse(&self.resource).unwrap();
             let host = uri.host_str().unwrap();
             let instance: Vec<&str> = host.split('.').collect();
