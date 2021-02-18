@@ -174,7 +174,7 @@ impl WorkQueue {
         let work_set: WorkSet = queue_message.get()?;
         // let receipt = Receipt(msg.);
         let msg = Message {
-            queue_message: Some(queue_message) ,
+            queue_message: Some(queue_message),
             work_set,
         };
 
@@ -182,7 +182,7 @@ impl WorkQueue {
     }
 
     pub async fn claim(&mut self, message: Message) -> Result<WorkSet> {
-        if let Some(queue_message) = message.queue_message{
+        if let Some(queue_message) = message.queue_message {
             match queue_message.delete().await {
                 Err(err) => {
                     if is_auth_error(&err) {

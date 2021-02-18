@@ -50,7 +50,10 @@ impl Fixture {
         // let receipt = self.receipt();
         let work_set = self.work_set();
 
-        Message { work_set, queue_message: None }
+        Message {
+            work_set,
+            queue_message: None,
+        }
     }
 
     // pub fn receipt(&self) -> Receipt {
@@ -97,8 +100,12 @@ async fn test_update_free_no_work() {
     assert!(matches!(agent.scheduler().unwrap(), Scheduler::Free(..)));
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
-    let claimed_worksets = double.claimed.iter().map(|cl| cl.work_set.clone()).collect::<Vec<WorkSet>>();
-    assert_eq!(claimed_worksets , &[]);
+    let claimed_worksets = double
+        .claimed
+        .iter()
+        .map(|cl| cl.work_set.clone())
+        .collect::<Vec<WorkSet>>();
+    assert_eq!(claimed_worksets, &[]);
 }
 
 #[tokio::test]
@@ -120,8 +127,12 @@ async fn test_update_free_has_work() {
     ));
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
-    let claimed_worksets = double.claimed.iter().map(|cl| cl.work_set.clone()).collect::<Vec<WorkSet>>();
-    assert_eq!(claimed_worksets,  &[Fixture.work_set()]);
+    let claimed_worksets = double
+        .claimed
+        .iter()
+        .map(|cl| cl.work_set.clone())
+        .collect::<Vec<WorkSet>>();
+    assert_eq!(claimed_worksets, &[Fixture.work_set()]);
 }
 
 #[tokio::test]
