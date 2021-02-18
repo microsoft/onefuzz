@@ -281,8 +281,8 @@ class Node(BASE_NODE, ORMMixin):
         )
         return None
 
-    def stop(self) -> None:
-        self.to_reimage()
+    def stop(self, done: bool = False) -> None:
+        self.to_reimage(done=done)
         self.send_message(NodeCommand(stop=StopNodeCommand()))
 
     def set_shutdown(self) -> None:
