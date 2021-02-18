@@ -138,15 +138,6 @@ impl ModuleIndex {
                     Some(Ok(name)) => name.to_owned(),
                 };
 
-                // A symbol is defined relative to some section, identified by `st_shndx`, an index
-                // into the section header table. We'll use the section header to compute the file
-                // offset of the symbol.
-                let section = object
-                    .section_headers
-                    .get(sym.st_shndx)
-                    .cloned()
-                    .ok_or_else(|| format_err!("invalid section table index for symbol"))?;
-
                 // For executables and shared objects, `st_value` contains the VA of the symbol.
                 //
                 // https://refspecs.linuxbase.org/elf/gabi4+/ch4.symtab.html#symbol_value
@@ -156,7 +147,16 @@ impl ModuleIndex {
                 let image_offset = sym_va - base_va;
 
                 // We want to make it easy to read the symbol from the file on disk. To do this, we
-                // need to compute its file offset
+                // need to compute its file offset.
+                //
+                // A symbol is defined relative to some section, identified by `st_shndx`, an index
+                // into the section header table. We'll use the section header to compute the file
+                // offset of the symbol.
+                let section = object
+                    .section_headers
+                    .get(sym.st_shndx)
+                    .cloned()
+                    .ok_or_else(|| format_err!("invalid section table index for symbol"))?;
 
                 // If mapped into a segment, `sh_addr` contains the VA of the section image,
                 // consistent with the `p_vaddr` of the segment.
