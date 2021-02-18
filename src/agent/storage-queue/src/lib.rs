@@ -21,7 +21,7 @@ pub enum QueueClient {
 
 impl QueueClient {
     pub fn new(queue_url: Url) -> Result<Self> {
-        if queue_url.scheme().to_lowercase() == "file://" {
+        if queue_url.scheme().to_lowercase() == "file" {
             let path = queue_url
                 .to_file_path()
                 .map_err(|_| anyhow!("invalid local path"))?;
