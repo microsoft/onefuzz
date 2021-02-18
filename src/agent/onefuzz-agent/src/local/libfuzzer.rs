@@ -25,8 +25,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let fuzz_task = spawn(async move { fuzzer.run().await });
 
     let (report_config, _) = build_report_config(args)?;
-    let report = ReportTask::new(report_config);
-    let report_task = spawn(async move { report.local_run().await });
+    let mut report = ReportTask::new(report_config);
+    let report_task = spawn(async move { report.managed_run().await });
 
     if args.is_present(COVERAGE_DIR) {
         let coverage_config = build_coverage_config(args, true)?;

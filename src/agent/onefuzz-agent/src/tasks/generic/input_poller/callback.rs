@@ -10,23 +10,23 @@ use storage_queue::Message;
 use storage_queue::QueueClient;
 
 #[async_trait]
-pub trait Queue<M> {
+pub trait Queue<M>: Send {
     async fn pop(&mut self) -> Result<Option<M>>;
 
     async fn delete(&mut self, msg: M) -> Result<()>;
 }
 
-pub trait Parser<M> {
+pub trait Parser<M>: Send {
     fn parse(&mut self, msg: &M) -> Result<Url>;
 }
 
 #[async_trait]
-pub trait Downloader {
+pub trait Downloader: Send {
     async fn download(&mut self, url: Url, dir: &Path) -> Result<PathBuf>;
 }
 
 #[async_trait]
-pub trait Processor {
+pub trait Processor: Send {
     async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()>;
 }
 

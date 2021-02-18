@@ -3,33 +3,20 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_FUZZER_HELP,
-        CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, monitor_folder_into_queue,
+        CmdType, CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE,
+        NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
+        UNIQUE_REPORTS_DIR,
     },
     tasks::report::libfuzzer_report::{Config, ReportTask},
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use futures::stream::StreamExt;
-use onefuzz::monitor::DirectoryMonitor;
 use reqwest::Url;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use tokio::task::JoinHandle;
 
 use tempfile::tempdir;
-
-async fn monitor_folder_into_queue(path: impl AsRef<Path>, queue_url: Url) -> Result<()> {
-    let queue = storage_queue::QueueClient::new(queue_url.clone())?;
-
-    let mut monitor = DirectoryMonitor::new(PathBuf::from(path.as_ref()));
-    monitor.start()?;
-    while let Some(crash) = monitor.next().await {
-        let file_url = Url::from_file_path(crash).map_err(|_| anyhow!("invalid file path"))?;
-        queue.enqueue(file_url).await?
-    }
-    Ok(())
-}
 
 pub fn build_report_config(
     args: &clap::ArgMatches<'_>,

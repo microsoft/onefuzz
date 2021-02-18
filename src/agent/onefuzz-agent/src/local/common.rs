@@ -2,7 +2,13 @@ use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
 use clap::{App, Arg, ArgMatches};
-use std::{collections::HashMap, path::PathBuf};
+use onefuzz::monitor::DirectoryMonitor;
+use reqwest::Url;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
+use tokio::stream::StreamExt;
 
 use uuid::Uuid;
 
@@ -175,4 +181,16 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
         setup_dir,
     };
     Ok(config)
+}
+
+pub async fn monitor_folder_into_queue(path: impl AsRef<Path>, queue_url: Url) -> Result<()> {
+    let queue = storage_queue::QueueClient::new(queue_url.clone())?;
+
+    let mut monitor = DirectoryMonitor::new(PathBuf::from(path.as_ref()));
+    monitor.start()?;
+    while let Some(crash) = monitor.next().await {
+        let file_url = Url::from_file_path(crash).map_err(|_| anyhow!("invalid file path"))?;
+        queue.enqueue(file_url).await?
+    }
+    Ok(())
 }

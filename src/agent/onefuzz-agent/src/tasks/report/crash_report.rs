@@ -136,8 +136,8 @@ impl CrashTestResult {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InputBlob {
-    pub account: String,
-    pub container: String,
+    pub account: Option<String>,
+    pub container: Option<String>,
     pub name: String,
 }
 

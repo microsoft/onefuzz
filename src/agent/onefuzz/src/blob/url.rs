@@ -10,15 +10,13 @@ use serde::{de, Serialize, Serializer};
 #[derive(Clone, Eq, PartialEq)]
 pub struct BlobUrl {
     url: Url,
+    pub is_azure_blob: bool,
 }
 
 impl BlobUrl {
     pub fn new(url: Url) -> Result<Self> {
-        if !possible_blob_storage_url(&url, false) {
-            bail!("Invalid blob URL: {}", url);
-        }
-
-        Ok(Self { url })
+        let is_azure_blob = possible_blob_storage_url(&url, false);
+        Ok(Self { url, is_azure_blob })
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
@@ -31,20 +29,30 @@ impl BlobUrl {
         self.url.clone()
     }
 
-    pub fn account(&self) -> String {
-        // Ctor checks that domain has at least one subdomain.
-        self.url
-            .domain()
-            .unwrap()
-            .split('.')
-            .next()
-            .unwrap()
-            .to_owned()
+    pub fn account(&self) -> Option<String> {
+        if self.is_azure_blob {
+            // Ctor checks that domain has at least one subdomain.
+            Some(
+                self.url
+                    .domain()
+                    .unwrap()
+                    .split('.')
+                    .next()
+                    .unwrap()
+                    .to_owned(),
+            )
+        } else {
+            None
+        }
     }
 
-    pub fn container(&self) -> String {
-        // Segment existence checked in ctor, so we can unwrap.
-        self.url.path_segments().unwrap().next().unwrap().to_owned()
+    pub fn container(&self) -> Option<String> {
+        if self.is_azure_blob {
+            // Segment existence checked in ctor, so we can unwrap.
+            Some(self.url.path_segments().unwrap().next().unwrap().to_owned())
+        } else {
+            None
+        }
     }
 
     pub fn name(&self) -> String {
@@ -52,10 +60,9 @@ impl BlobUrl {
             .url
             .path_segments()
             .unwrap()
-            .skip(1)
+            .skip(if self.is_azure_blob { 1 } else { 0 })
             .map(|s| s.to_owned())
             .collect();
-
         name_segments.join("/")
     }
 }
@@ -68,7 +75,17 @@ impl fmt::Debug for BlobUrl {
 
 impl fmt::Display for BlobUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}/{}", self.account(), self.container(), self.name())
+        if self.is_azure_blob {
+            write!(
+                f,
+                "{}:{}/{}",
+                self.account().unwrap_or_default(),
+                self.container().unwrap_or_default(),
+                self.name()
+            )
+        } else {
+            write!(f, "{}", self.url)
+        }
     }
 }
 

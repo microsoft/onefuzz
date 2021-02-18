@@ -7,10 +7,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use futures::stream::StreamExt;
-use onefuzz::{
-    blob::BlobUrl, libfuzzer::LibFuzzer, monitor::DirectoryMonitor, sha256, syncdir::SyncedDir,
-};
+use onefuzz::{blob::BlobUrl, libfuzzer::LibFuzzer, sha256, syncdir::SyncedDir};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -59,8 +56,7 @@ impl ReportTask {
         Self { config, poller }
     }
 
-    pub async fn local_run(&self) -> Result<()> {
-        let mut processor = AsanProcessor::new(self.config.clone()).await?;
+    pub async fn managed_run(&mut self) -> Result<()> {
         let crashes = match &self.config.crashes {
             Some(x) => x,
             None => bail!("missing crashes directory"),
@@ -77,30 +73,6 @@ impl ReportTask {
             no_repro.init().await?;
         }
 
-        let mut read_dir = tokio::fs::read_dir(&crashes.path).await.with_context(|| {
-            format_err!(
-                "unable to read crashes directory {}",
-                crashes.path.display()
-            )
-        })?;
-
-        while let Some(crash) = read_dir.next().await {
-            processor.process(None, &crash?.path()).await?;
-        }
-
-        if self.config.check_queue {
-            let mut monitor = DirectoryMonitor::new(crashes.path.clone());
-            monitor.start()?;
-            while let Some(crash) = monitor.next().await {
-                processor.process(None, &crash).await?;
-            }
-        }
-
-        Ok(())
-    }
-
-    pub async fn managed_run(&mut self) -> Result<()> {
-        info!("Starting libFuzzer crash report task");
         let mut processor = AsanProcessor::new(self.config.clone()).await?;
 
         if let Some(crashes) = &self.config.crashes {

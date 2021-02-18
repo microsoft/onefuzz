@@ -14,11 +14,12 @@ pub async fn download_input(input_url: Url, dst: impl AsRef<Path>) -> Result<Pat
     let file_path = dst.as_ref().join(file_name);
 
     if input_url.scheme().to_lowercase() == "file" {
-        let input_file_path = input_url.to_file_path().map_err(|_| { anyhow!("Invalid file Url") })?;
+        let input_file_path = input_url
+            .to_file_path()
+            .map_err(|_| anyhow!("Invalid file Url"))?;
         fs::copy(&input_file_path, &file_path).await?;
         Ok(file_path)
-    }
-    else{
+    } else {
         let resp = reqwest::get(input_url)
             .await?
             .error_for_status_with_body()
