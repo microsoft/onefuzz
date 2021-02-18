@@ -24,7 +24,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     fuzzer.check_libfuzzer().await?;
     let fuzz_task = spawn(async move { fuzzer.run().await });
 
-    let (report_config,_) = build_report_config(args)?;
+    let (report_config, _) = build_report_config(args)?;
     let report = ReportTask::new(report_config);
     let report_task = spawn(async move { report.local_run().await });
 

@@ -15,16 +15,15 @@ use futures::stream::StreamExt;
 use onefuzz::monitor::DirectoryMonitor;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
 use tokio::task::JoinHandle;
-use std::{
-    path::{Path, PathBuf},
-};
+
+use tempfile::tempdir;
 
 #[derive(Serialize, Deserialize)]
 struct FileNotification {}
 
 async fn monitor_folder_into_queue(path: impl AsRef<Path>, queue_url: Url) -> Result<()> {
-
     let queue = storage_queue::QueueClient::new(queue_url.clone())?;
 
     let mut monitor = DirectoryMonitor::new(PathBuf::from(path.as_ref()));
@@ -35,7 +34,9 @@ async fn monitor_folder_into_queue(path: impl AsRef<Path>, queue_url: Url) -> Re
     Ok(())
 }
 
-pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<(Config, JoinHandle<Result<()>>)> {
+pub fn build_report_config(
+    args: &clap::ArgMatches<'_>,
+) -> Result<(Config, JoinHandle<Result<()>>)> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
@@ -61,15 +62,15 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<(Config, JoinH
 
     let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
 
+    let queue_file = tempdir()?;
 
-    let input_queue = Url::from_file_path("temp file").map_err( |_| anyhow!("invalid file path"))?;
+    let input_queue =
+        Url::from_file_path(queue_file.path()).map_err(|_| anyhow!("invalid file path"))?;
 
-    let file_monitor = tokio::spawn(monitor_folder_into_queue(crashes.clone(), input_queue.clone()));
-
-    // tokio::try_join!()
-
-    // futures::try_join!(t1, t2, child)?;
-
+    let file_monitor = tokio::spawn(monitor_folder_into_queue(
+        crashes.clone(),
+        input_queue.clone(),
+    ));
 
     let common = build_common_config(args)?;
     let config = Config {

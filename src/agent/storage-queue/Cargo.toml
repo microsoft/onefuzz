@@ -8,6 +8,7 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
+backoff = { version = "0.3", features = ["async-std"] }
 base64 = "0.13"
 derivative = "2.2.0"
 regex = "1.4"

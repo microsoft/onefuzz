@@ -1,13 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{bail, Result};
+use anyhow::Result;
+use backoff::{future::retry_notify, ExponentialBackoff};
 use serde::Serialize;
 use std::path::PathBuf;
 use std::time::Duration;
-use tokio::sync::Mutex;
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
+pub const SEND_RETRY_DELAY: Duration = Duration::from_millis(500);
+pub const RECEIVE_RETRY_DELAY: Duration = Duration::from_millis(500);
+pub const MAX_SEND_ATTEMPTS: i32 = 5;
+pub const MAX_RECEIVE_ATTEMPTS: i32 = 5;
+pub const MAX_ELAPSED_TIME: Duration = Duration::from_secs(2 * 60);
 
 pub struct LocalQueueMessage {
     pub data: Vec<u8>,
@@ -15,44 +20,55 @@ pub struct LocalQueueMessage {
 
 pub struct LocalQueueClient {
     pub path: PathBuf,
-    sender: Mutex<yaque::Sender>,
-    receiver: Mutex<yaque::Receiver>,
 }
 
 impl LocalQueueClient {
     pub fn new(queue_url: PathBuf) -> Result<Self> {
-        let (sender, receiver) = yaque::channel(queue_url.clone())?;
-        Ok(LocalQueueClient {
-            sender: Mutex::new(sender),
-            receiver: Mutex::new(receiver),
-            path: queue_url,
-        })
+        Ok(LocalQueueClient { path: queue_url })
     }
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
-        let body = serde_xml_rs::to_string(&data).unwrap();
-        match self.sender.try_lock() {
-            Ok(ref mut sender) => {
-                sender.send(body.as_bytes())?;
-                Ok(())
-            }
-            Err(_) => bail!("cant enqueue"),
-        }
+        let send_data = || async {
+            let body = serde_xml_rs::to_string(&data).unwrap();
+            let mut sender = yaque::Sender::open(&self.path)?;
+            sender.send(body.as_bytes())?;
+            Ok(())
+        };
+
+        let backoff = ExponentialBackoff {
+            current_interval: SEND_RETRY_DELAY,
+            initial_interval: SEND_RETRY_DELAY,
+            max_elapsed_time: Some(MAX_ELAPSED_TIME),
+            ..ExponentialBackoff::default()
+        };
+        let notify = |err, _| println!("IO error: {}", err);
+        retry_notify(backoff, send_data, notify).await?;
+
+        Ok(())
     }
 
     pub async fn pop(&self) -> Result<Option<LocalQueueMessage>> {
-        match self.receiver.try_lock() {
-            Ok(ref mut receiver) => {
-                let data = receiver
-                    .recv_timeout(tokio::time::delay_for(Duration::from_secs(1)))
-                    .await?;
+        let receive_data = || async {
+            let mut receiver = yaque::Receiver::open(&self.path)?;
+            let data = receiver
+                .recv_timeout(tokio::time::delay_for(Duration::from_secs(1)))
+                .await?;
 
-                Ok(data.map(|data| LocalQueueMessage {
-                    data: data.into_inner(),
-                }))
-            }
-            Err(_) => bail!("cant enqueue"),
-        }
+            Ok(data.map(|data| LocalQueueMessage {
+                data: data.into_inner(),
+            }))
+        };
+
+        let backoff = ExponentialBackoff {
+            current_interval: SEND_RETRY_DELAY,
+            initial_interval: SEND_RETRY_DELAY,
+            max_elapsed_time: Some(MAX_ELAPSED_TIME),
+            ..ExponentialBackoff::default()
+        };
+        let notify = |err, _| println!("IO error: {}", err);
+        let result = retry_notify(backoff, receive_data, notify).await?;
+
+        Ok(result)
     }
 
     // pub async fn pop(&mut self) -> Result<Option<Message>> {

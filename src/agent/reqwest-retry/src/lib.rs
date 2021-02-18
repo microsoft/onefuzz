@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use backoff::{self, future::FutureOperation, ExponentialBackoff};
+use backoff::{self, future::retry_notify, ExponentialBackoff};
 use reqwest::{Response, StatusCode};
 use std::{
     sync::atomic::{AtomicI32, Ordering},
@@ -99,17 +99,16 @@ pub async fn send_retry_reqwest<
             Result::<Response, backoff::Error<anyhow::Error>>::Ok(error_mapper(response)?)
         }
     };
-    let result = op
-        .retry_notify(
-            ExponentialBackoff {
-                current_interval: retry_period,
-                initial_interval: retry_period,
-                max_elapsed_time: Some(max_elapsed_time),
-                ..ExponentialBackoff::default()
-            },
-            |err, _| println!("Transient error: {}", err),
-        )
-        .await?;
+
+    let backoff_settings = ExponentialBackoff {
+        current_interval: retry_period,
+        initial_interval: retry_period,
+        max_elapsed_time: Some(max_elapsed_time),
+        ..ExponentialBackoff::default()
+    };
+
+    let notify = |err, _| println!("Transient error: {}", err);
+    let result = retry_notify(backoff_settings, op, notify).await?;
     Ok(result)
 }
 
