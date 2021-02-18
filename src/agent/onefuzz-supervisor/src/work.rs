@@ -120,7 +120,7 @@ impl IWorkQueue for WorkQueue {
 impl_downcast!(IWorkQueue);
 
 pub struct Message {
-    pub queue_message: QueueMessage,
+    pub queue_message: Option<QueueMessage>,
     pub work_set: WorkSet,
 }
 
@@ -174,7 +174,7 @@ impl WorkQueue {
         let work_set: WorkSet = queue_message.get()?;
         // let receipt = Receipt(msg.);
         let msg = Message {
-            queue_message,
+            queue_message: Some(queue_message) ,
             work_set,
         };
 
@@ -182,18 +182,22 @@ impl WorkQueue {
     }
 
     pub async fn claim(&mut self, message: Message) -> Result<WorkSet> {
-        match &message.queue_message.delete().await {
-            Err(err) => {
-                if is_auth_error(err) {
-                    self.renew().await?;
-                    let url = self._registration.dynamic_config.work_queue.clone();
-                    message.queue_message.update_url(url).delete().await?;
-                    Ok(message.work_set)
-                } else {
-                    bail!("{}", err)
+        if let Some(queue_message) = message.queue_message{
+            match queue_message.delete().await {
+                Err(err) => {
+                    if is_auth_error(&err) {
+                        self.renew().await?;
+                        let url = self._registration.dynamic_config.work_queue.clone();
+                        queue_message.update_url(url).delete().await?;
+                        Ok(message.work_set)
+                    } else {
+                        bail!("{}", err)
+                    }
                 }
+                Ok(_) => Ok(message.work_set),
             }
-            Ok(_) => Ok(message.work_set),
+        } else {
+            Ok(message.work_set)
         }
     }
 }
