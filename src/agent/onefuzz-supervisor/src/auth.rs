@@ -115,7 +115,10 @@ impl ClientCredentials {
             let url = Url::parse(&self.resource.clone())?;
             let host = url.host_str().unwrap();
             let instance: Vec<&str> = host.split('.').collect();
-            (String::from("common"), format!("https://{}/{}/", &domain, instance[0]))
+            (
+                String::from("common"),
+                format!("https://{}/{}/", &domain, instance[0]),
+            )
         } else {
             (self.tenant.clone(), self.resource.clone())
         };

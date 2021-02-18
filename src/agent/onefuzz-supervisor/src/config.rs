@@ -69,7 +69,8 @@ impl StaticConfig {
                     .to_string()
                     .trim_end_matches('/')
                     .to_owned();
-                let managed = ManagedIdentityCredentials::new(resource, config.multi_tenant_domain.clone());
+                let managed =
+                    ManagedIdentityCredentials::new(resource, config.multi_tenant_domain.clone());
                 managed.into()
             }
         };
