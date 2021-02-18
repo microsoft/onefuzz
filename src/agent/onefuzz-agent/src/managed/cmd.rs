@@ -23,7 +23,10 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 }
 
 fn init_telemetry(config: &CommonConfig) {
-    onefuzz_telemetry::set_appinsights_clients(config.instrumentation_key, config.telemetry_key);
+    onefuzz_telemetry::set_appinsights_clients(
+        config.instance_telemetry_key,
+        config.microsoft_telemetry_key,
+    );
 }
 
 pub fn args(name: &str) -> App<'static, 'static> {

@@ -26,11 +26,13 @@ pub struct CommonConfig {
 
     pub instance_id: Uuid,
 
-    pub instrumentation_key: Option<Uuid>,
-
     pub heartbeat_queue: Option<Url>,
 
-    pub telemetry_key: Option<Uuid>,
+    #[serde(alias = "instrumentation_key")]
+    pub instance_telemetry_key: Option<Uuid>,
+
+    #[serde(alias = "telemetry_key")]
+    pub microsoft_telemetry_key: Option<Uuid>,
 
     #[serde(default)]
     pub setup_dir: PathBuf,
