@@ -364,10 +364,10 @@ class Client:
             if self.multi_tenant_domain:
                 authority = COMMON_AUTHORITY
             else:
-                authority = ONEFUZZ_CLI_AUTHORITY
+                authority = app_info.authority
             self.cli_config = {
                 "client_id": app_info.client_id,
-                "authority": app_info.authority,
+                "authority": authority,
             }
 
         else:
