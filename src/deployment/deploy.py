@@ -367,7 +367,7 @@ class Client:
                 authority = ONEFUZZ_CLI_AUTHORITY
             self.cli_config = {
                 "client_id": app_info.client_id,
-                "authority": authority,
+                "authority": app_info.authority,
             }
 
         else:
