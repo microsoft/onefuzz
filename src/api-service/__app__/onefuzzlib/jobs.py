@@ -7,13 +7,17 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
-from onefuzztypes.enums import JobState, TaskState
+from onefuzztypes.enums import ErrorCode, JobState, TaskState
 from onefuzztypes.events import EventJobCreated, EventJobStopped
+from onefuzztypes.models import Error
 from onefuzztypes.models import Job as BASE_JOB
 
 from .events import send_event
 from .orm import MappingIntStrAny, ORMMixin, QueryFilter
 from .tasks.main import Task
+
+JOB_LOG_PREFIX = "jobs: "
+JOB_NEVER_STARTED_DURATION: timedelta = timedelta(days=30)
 
 
 class Job(BASE_JOB, ORMMixin):
@@ -36,6 +40,34 @@ class Job(BASE_JOB, ORMMixin):
             query={"state": JobState.available()}, raw_unchecked_filter=time_filter
         )
 
+    @classmethod
+    def stop_never_started_jobs(cls) -> None:
+        time_filter = "Timestamp lt datetime'%s'" % (
+            (datetime.utcnow() - JOB_NEVER_STARTED_DURATION).isoformat()
+        )
+        for job in cls.search(
+            query={
+                "state": [JobState.enabled],
+            },
+            raw_unchecked_filter=time_filter,
+        ):
+            # if the job has started, leave it be
+            if job.end_time is not None:
+                continue
+
+            for task in Task.search(query={"job_id": [job.job_id]}):
+                task.mark_failed(
+                    Error(
+                        code=ErrorCode.TASK_FAILED,
+                        errors=["job never not start"],
+                    )
+                )
+
+            logging.info(
+                JOB_LOG_PREFIX + "stopping job that never started: %s", job.job_id
+            )
+            job.stopping()
+
     def save_exclude(self) -> Optional[MappingIntStrAny]:
         return {"task_info": ...}
 
@@ -47,13 +79,13 @@ class Job(BASE_JOB, ORMMixin):
         }
 
     def init(self) -> None:
-        logging.info("init job: %s", self.job_id)
+        logging.info(JOB_LOG_PREFIX + "init: %s", self.job_id)
         self.state = JobState.enabled
         self.save()
 
     def stopping(self) -> None:
         self.state = JobState.stopping
-        logging.info("stopping job: %s", self.job_id)
+        logging.info(JOB_LOG_PREFIX + "stopping: %s", self.job_id)
         not_stopped = [
             task
             for task in Task.search(query={"job_id": [self.job_id]})
