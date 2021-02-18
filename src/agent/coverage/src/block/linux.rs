@@ -33,12 +33,11 @@ pub struct Recorder {
 
 impl Recorder {
     pub fn new(module_filter: Filter, symbol_filter: SymbolFilter) -> Self {
-        #![allow(clippy::field_reassign_with_default)]
-
-        let mut recorder = Recorder::default();
-        recorder.module_filter = module_filter;
-        recorder.symbol_filter = symbol_filter;
-        recorder
+        Self {
+            module_filter,
+            symbol_filter,
+            ..Self::default()
+        }
     }
 
     pub fn record(&mut self, cmd: Command) -> Result<()> {
