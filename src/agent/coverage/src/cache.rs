@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::collections::{HashMap, BTreeSet};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeSet, HashMap};
 
 use crate::code::{ModuleIndex, ModulePath};
 use crate::disasm::ModuleDisassembler;
-
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ModuleCache {

@@ -41,8 +41,8 @@ struct Opt {
 fn main() -> Result<()> {
     use std::process::Command;
 
-    use coverage::code::{CmdFilter, CmdFilterSpec};
     use coverage::block::linux::Recorder;
+    use coverage::code::{CmdFilter, CmdFilterSpec};
 
     env_logger::init();
 
@@ -86,7 +86,11 @@ fn main() -> Result<()> {
                 let sym_offset = block.offset - sym.image_offset;
                 log::debug!(
                     "  [{}] {}+{:x} ({}+{:x})",
-                    marker, name, block.offset, sym.name, sym_offset,
+                    marker,
+                    name,
+                    block.offset,
+                    sym.name,
+                    sym_offset,
                 );
             } else {
                 log::debug!("  [{}] {}+{:x}", marker, name, block.offset);

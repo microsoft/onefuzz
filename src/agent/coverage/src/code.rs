@@ -126,11 +126,15 @@ impl ModuleIndex {
                     None => {
                         log::error!("symbol not found in symbol string table: {:?}", sym);
                         continue;
-                    },
+                    }
                     Some(Err(err)) => {
-                        log::error!("unable to parse symbol name: sym = {:?}, err = {}", sym, err);
+                        log::error!(
+                            "unable to parse symbol name: sym = {:?}, err = {}",
+                            sym,
+                            err
+                        );
                         continue;
-                    },
+                    }
                     Some(Ok(name)) => name.to_owned(),
                 };
 
@@ -182,7 +186,11 @@ impl ModuleIndex {
             }
         }
 
-        Ok(Self { path, base_va, symbols })
+        Ok(Self {
+            path,
+            base_va,
+            symbols,
+        })
     }
 }
 
@@ -200,7 +208,6 @@ impl SymbolIndex {
     /// Find the symbol metadata for the image-relative `offset`.
     pub fn find(&self, offset: u64) -> Option<&Symbol> {
         self.index.find(offset)
-
     }
 }
 

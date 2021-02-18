@@ -43,7 +43,11 @@ impl CommandBlockCov {
                 block.count += 1;
             }
         } else {
-            log::error!("trying to increment coverage for breakpoint at {}+{:x}", path, offset);
+            log::error!(
+                "trying to increment coverage for breakpoint at {}+{:x}",
+                path,
+                offset
+            );
         }
 
         Ok(())
@@ -62,7 +66,7 @@ pub struct ModuleCov {
 impl ModuleCov {
     pub fn new(offsets: impl Iterator<Item = u64>) -> Self {
         let blocks = offsets.map(|o| (o, BlockCov::new(o))).collect();
-        Self { blocks}
+        Self { blocks }
     }
 }
 

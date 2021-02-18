@@ -110,7 +110,11 @@ impl Recorder {
     fn on_breakpoint(&mut self, tracee: &mut Tracee) -> Result<()> {
         let mut regs = tracee.registers()?;
 
-        log::trace!("hit breakpoint: pc = {:x}, pid = {}", regs.rip - 1, tracee.pid);
+        log::trace!(
+            "hit breakpoint: pc = {:x}, pid = {}",
+            regs.rip - 1,
+            tracee.pid
+        );
 
         // Adjust for synthetic `int3`.
         let pc = regs.rip - 1;
@@ -160,7 +164,10 @@ impl Recorder {
         let mut allowed_blocks = vec![];
 
         for symbol in info.module.symbols.iter() {
-            if self.symbol_filter.is_allowed(&info.module.path, &symbol.name) {
+            if self
+                .symbol_filter
+                .is_allowed(&info.module.path, &symbol.name)
+            {
                 for offset in info.blocks.range(symbol.range()) {
                     allowed_blocks.push(*offset);
                 }
@@ -168,11 +175,13 @@ impl Recorder {
         }
 
         // Initialize module coverage info.
-        let new = self.coverage.insert(image.path(), allowed_blocks.iter().copied());
+        let new = self
+            .coverage
+            .insert(image.path(), allowed_blocks.iter().copied());
 
         // If module coverage is already initialized, we're done.
         if !new {
-            return Ok(())
+            return Ok(());
         }
 
         // Set breakpoints by module block entry points.

@@ -66,13 +66,19 @@ where
     /// entry. Returns `true` if inserted, `false` otherwise.
     pub fn insert(&mut self, region: R) -> bool {
         if let Some(existing) = self.find(region.base()) {
-            log::error!("existing region contains start of new region: {:x?}", existing);
+            log::error!(
+                "existing region contains start of new region: {:x?}",
+                existing
+            );
             return false;
         }
 
         if let Some(existing) = self.find(region.last()) {
-            log::error!("existing region contains end of new region: {:x?}", existing);
-            return false
+            log::error!(
+                "existing region contains end of new region: {:x?}",
+                existing
+            );
+            return false;
         }
 
         self.regions.insert(region.base(), region);
@@ -107,7 +113,6 @@ pub trait Region {
         // bounds. In particular, we will not return a value less than `base` or underflow
         // if `base` is 0.
         end - 1
-
     }
 
     /// Return a `Range` object that describes the region positions.
