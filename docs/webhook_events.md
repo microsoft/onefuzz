@@ -15,6 +15,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     },
     "event_id": "00000000-0000-0000-0000-000000000000",
     "event_type": "ping",
+    "instance_id": "00000000-0000-0000-0000-000000000000",
+    "instance_name": "example",
     "webhook_id": "00000000-0000-0000-0000-000000000000"
 }
 ```
@@ -2927,6 +2929,15 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "event_type": {
             "$ref": "#/definitions/EventType"
         },
+        "instance_id": {
+            "format": "uuid",
+            "title": "Instance Id",
+            "type": "string"
+        },
+        "instance_name": {
+            "title": "Instance Name",
+            "type": "string"
+        },
         "webhook_id": {
             "format": "uuid",
             "title": "Webhook Id",
@@ -2936,6 +2947,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "required": [
         "event_type",
         "event",
+        "instance_id",
+        "instance_name",
         "webhook_id"
     ],
     "title": "WebhookMessage",

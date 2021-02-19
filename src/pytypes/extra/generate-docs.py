@@ -210,6 +210,8 @@ def main():
         event_id=UUID(int=0),
         event_type=EventType.ping,
         event=EventPing(ping_id=UUID(int=0)),
+        instance_id=UUID(int=0),
+        instance_name="example",
     )
 
     layer(
