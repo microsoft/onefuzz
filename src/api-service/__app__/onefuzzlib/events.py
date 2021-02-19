@@ -10,6 +10,7 @@ from typing import Optional
 
 from onefuzztypes.events import Event, EventMessage, get_event_type
 
+from .azure.creds import get_instance_id, get_instance_name
 from .webhooks import Webhook
 
 EVENTS: Queue = Queue()
@@ -35,6 +36,11 @@ def get_events() -> Optional[str]:
 def send_event(event: Event) -> None:
     event_type = get_event_type(event)
     logging.info("sending event: %s - %s", event_type, event)
-    event_message = EventMessage(event_type=event_type, event=event)
+    event_message = EventMessage(
+        event_type=event_type,
+        event=event,
+        instance_id=get_instance_id(),
+        instance_name=get_instance_name(),
+    )
     EVENTS.put(event_message)
     Webhook.send_event(event_message)
