@@ -102,6 +102,7 @@ def main():
                 object_id=UUID(int=0),
                 upn="example@contoso.com",
             ),
+            task_tags={},
         ),
         EventTaskFailed(
             job_id=UUID(int=0),
@@ -112,9 +113,10 @@ def main():
                 object_id=UUID(int=0),
                 upn="example@contoso.com",
             ),
+            task_tags={},
         ),
         EventTaskStateUpdated(
-            job_id=UUID(int=0), task_id=UUID(int=0), state=TaskState.init
+            job_id=UUID(int=0), task_id=UUID(int=0), state=TaskState.init, task_tags={}
         ),
         EventProxyCreated(region=Region("eastus")),
         EventProxyDeleted(region=Region("eastus")),

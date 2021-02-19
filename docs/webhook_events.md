@@ -1510,6 +1510,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
     },
     "job_id": "00000000-0000-0000-0000-000000000000",
     "task_id": "00000000-0000-0000-0000-000000000000",
+    "task_tags": {},
     "user_info": {
         "application_id": "00000000-0000-0000-0000-000000000000",
         "object_id": "00000000-0000-0000-0000-000000000000",
@@ -1607,6 +1608,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "Task Id",
             "type": "string"
         },
+        "task_tags": {
+            "additionalProperties": {
+                "type": "string"
+            },
+            "title": "Task Tags",
+            "type": "object"
+        },
         "user_info": {
             "$ref": "#/definitions/UserInfo"
         }
@@ -1614,7 +1622,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "required": [
         "job_id",
         "task_id",
-        "error"
+        "error",
+        "task_tags"
     ],
     "title": "EventTaskFailed",
     "type": "object"
@@ -1629,7 +1638,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
 {
     "job_id": "00000000-0000-0000-0000-000000000000",
     "state": "init",
-    "task_id": "00000000-0000-0000-0000-000000000000"
+    "task_id": "00000000-0000-0000-0000-000000000000",
+    "task_tags": {}
 }
 ```
 
@@ -1672,12 +1682,20 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "format": "uuid",
             "title": "Task Id",
             "type": "string"
+        },
+        "task_tags": {
+            "additionalProperties": {
+                "type": "string"
+            },
+            "title": "Task Tags",
+            "type": "object"
         }
     },
     "required": [
         "job_id",
         "task_id",
-        "state"
+        "state",
+        "task_tags"
     ],
     "title": "EventTaskStateUpdated",
     "type": "object"
@@ -1692,6 +1710,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 {
     "job_id": "00000000-0000-0000-0000-000000000000",
     "task_id": "00000000-0000-0000-0000-000000000000",
+    "task_tags": {},
     "user_info": {
         "application_id": "00000000-0000-0000-0000-000000000000",
         "object_id": "00000000-0000-0000-0000-000000000000",
@@ -1738,13 +1757,21 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "Task Id",
             "type": "string"
         },
+        "task_tags": {
+            "additionalProperties": {
+                "type": "string"
+            },
+            "title": "Task Tags",
+            "type": "object"
+        },
         "user_info": {
             "$ref": "#/definitions/UserInfo"
         }
     },
     "required": [
         "job_id",
-        "task_id"
+        "task_id",
+        "task_tags"
     ],
     "title": "EventTaskStopped",
     "type": "object"
@@ -2290,6 +2317,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Task Id",
                     "type": "string"
                 },
+                "task_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Tags",
+                    "type": "object"
+                },
                 "user_info": {
                     "$ref": "#/definitions/UserInfo"
                 }
@@ -2297,7 +2331,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "required": [
                 "job_id",
                 "task_id",
-                "error"
+                "error",
+                "task_tags"
             ],
             "title": "EventTaskFailed",
             "type": "object"
@@ -2322,12 +2357,20 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "format": "uuid",
                     "title": "Task Id",
                     "type": "string"
+                },
+                "task_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Tags",
+                    "type": "object"
                 }
             },
             "required": [
                 "job_id",
                 "task_id",
-                "state"
+                "state",
+                "task_tags"
             ],
             "title": "EventTaskStateUpdated",
             "type": "object"
@@ -2345,13 +2388,21 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Task Id",
                     "type": "string"
                 },
+                "task_tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Task Tags",
+                    "type": "object"
+                },
                 "user_info": {
                     "$ref": "#/definitions/UserInfo"
                 }
             },
             "required": [
                 "job_id",
-                "task_id"
+                "task_id",
+                "task_tags"
             ],
             "title": "EventTaskStopped",
             "type": "object"

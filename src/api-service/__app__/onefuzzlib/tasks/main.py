@@ -192,7 +192,10 @@ class Task(BASE_TASK, ORMMixin):
         self.set_state(TaskState.stopping, send=False)
         send_event(
             EventTaskStopped(
-                job_id=self.job_id, task_id=self.task_id, user_info=self.user_info
+                job_id=self.job_id,
+                task_id=self.task_id,
+                user_info=self.user_info,
+                task_tags=self.config.tags,
             )
         )
 
@@ -212,6 +215,7 @@ class Task(BASE_TASK, ORMMixin):
                 task_id=self.task_id,
                 error=error,
                 user_info=self.user_info,
+                task_tags=self.config.tags,
             )
         )
 
@@ -306,5 +310,6 @@ class Task(BASE_TASK, ORMMixin):
                 task_id=self.task_id,
                 state=self.state,
                 end_time=self.end_time,
+                task_tags=self.config.tags,
             )
         )
