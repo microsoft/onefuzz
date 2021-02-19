@@ -33,7 +33,7 @@ def _build_container_name(
     build: str,
     platform: OS,
 ) -> Container:
-    if container_type == ContainerType.setup:
+    if container_type in [ContainerType.setup, ContainerType.coverage]:
         guid = onefuzz.utils.namespaced_guid(
             project,
             name,
