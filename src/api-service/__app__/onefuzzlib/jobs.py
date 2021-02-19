@@ -42,19 +42,21 @@ class Job(BASE_JOB, ORMMixin):
 
     @classmethod
     def stop_never_started_jobs(cls) -> None:
-        time_filter = "Timestamp lt datetime'%s'" % (
-            (datetime.utcnow() - JOB_NEVER_STARTED_DURATION).isoformat()
+        # Note, the "not(end_time...)" with end_time set long before the use of
+        # OneFuzz enables identifying those without end_time being set.
+        last_timestamp = (datetime.utcnow() - JOB_NEVER_STARTED_DURATION).isoformat()
+
+        time_filter = (
+            f"Timestamp lt datetime'{last_timestamp}' and "
+            "not(end_time ge datetime'2000-01-11T00:00:00.0Z')"
         )
+
         for job in cls.search(
             query={
                 "state": [JobState.enabled],
             },
             raw_unchecked_filter=time_filter,
         ):
-            # if the job has started, leave it be
-            if job.end_time is not None:
-                continue
-
             for task in Task.search(query={"job_id": [job.job_id]}):
                 task.mark_failed(
                     Error(
