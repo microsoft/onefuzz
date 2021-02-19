@@ -117,5 +117,5 @@ def github_issue(
         handler.process()
     except GitHubException as err:
         fail_task(report, err)
-    except ValueErorr as err:
+    except ValueError as err:
         fail_task(report, err)
