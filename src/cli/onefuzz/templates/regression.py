@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
 from onefuzztypes.models import Job, NotificationConfig
-from onefuzztypes.primitives import Container, Directory, File, PoolName
+from onefuzztypes.primitives import Directory, File, PoolName
 
 from onefuzz.api import Command
 
@@ -29,9 +29,8 @@ class Regression(Command):
         build: str,
         pool_name: PoolName,
         *,
-        crashes: Container = None,
-        input_reports: Container = None,
-        inputs: Optional[Directory] = None,
+        reports: Optional[List[str]] = None,
+        crashes: Optional[List[File]] = None,
         target_exe: File = File("fuzz.exe"),
         tags: Optional[Dict[str, str]] = None,
         notification_config: Optional[NotificationConfig] = None,
@@ -41,7 +40,6 @@ class Regression(Command):
         target_options: Optional[List[str]] = None,
         dryrun: bool = False,
         duration: int = 24,
-        report_list: Optional[List[str]] = None,
         crash_report_timeout: Optional[int] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         check_retry_count: Optional[int] = None,
@@ -52,8 +50,8 @@ class Regression(Command):
         """
         generic regression task
 
-        :param Container input_reports: Specify the container of the crash reports used in the regression
-        :param Container crashes: Specify the container of the input files of the crashes
+        :param File inputs: Specify a directory of inptus to use in the regression task
+        :param str reports: Specify specific report names to verify in the regression task
         :param bool fail_on_repro: Specify wether or not to throw an exception if a repro was generated
         :param bool delete_input_container: Specify wether or not to delete the input container
         """
@@ -64,25 +62,23 @@ class Regression(Command):
             name,
             build,
             pool_name,
-            crashes,
-            input_reports,
-            inputs,
-            target_exe,
-            tags,
-            notification_config,
-            target_env,
-            setup_dir,
-            reboot_after_setup,
-            target_options,
-            dryrun,
-            duration,
-            report_list,
-            crash_report_timeout,
-            debug,
-            check_retry_count,
-            check_fuzzer_help,
-            fail_on_repro,
-            delete_input_container,
+            crashes=crashes,
+            reports=reports,
+            target_exe=target_exe,
+            tags=tags,
+            notification_config=notification_config,
+            target_env=target_env,
+            setup_dir=setup_dir,
+            reboot_after_setup=reboot_after_setup,
+            target_options=target_options,
+            dryrun=dryrun,
+            duration=duration,
+            crash_report_timeout=crash_report_timeout,
+            debug=debug,
+            check_retry_count=check_retry_count,
+            check_fuzzer_help=check_fuzzer_help,
+            fail_on_repro=fail_on_repro,
+            delete_input_container=delete_input_container,
         )
 
     def libfuzzer(
@@ -92,9 +88,8 @@ class Regression(Command):
         build: str,
         pool_name: PoolName,
         *,
-        crashes: Container = None,
-        input_reports: Container = None,
-        inputs: Optional[Directory] = None,
+        reports: Optional[List[str]] = None,
+        crashes: Optional[List[File]] = None,
         target_exe: File = File("fuzz.exe"),
         tags: Optional[Dict[str, str]] = None,
         notification_config: Optional[NotificationConfig] = None,
@@ -104,7 +99,6 @@ class Regression(Command):
         target_options: Optional[List[str]] = None,
         dryrun: bool = False,
         duration: int = 24,
-        report_list: Optional[List[str]] = None,
         crash_report_timeout: Optional[int] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         check_retry_count: Optional[int] = None,
@@ -116,8 +110,8 @@ class Regression(Command):
         """
         generic regression task
 
-        :param Container input_reports: Specify the container of the crash reports used in the regression
-        :param Container crashes: Specify the container of the input files of the crashes
+        :param File inputs: Specify a directory of inptus to use in the regression task
+        :param str reports: Specify specific report names to verify in the regression task
         :param bool fail_on_repro: Specify wether or not to throw an exception if a repro was generated
         :param bool delete_input_container: Specify wether or not to delete the input container
         """
@@ -128,25 +122,23 @@ class Regression(Command):
             name,
             build,
             pool_name,
-            crashes,
-            input_reports,
-            inputs,
-            target_exe,
-            tags,
-            notification_config,
-            target_env,
-            setup_dir,
-            reboot_after_setup,
-            target_options,
-            dryrun,
-            duration,
-            report_list,
-            crash_report_timeout,
-            debug,
-            check_retry_count,
-            check_fuzzer_help,
-            fail_on_repro,
-            delete_input_container,
+            crashes=crashes,
+            reports=reports,
+            target_exe=target_exe,
+            tags=tags,
+            notification_config=notification_config,
+            target_env=target_env,
+            setup_dir=setup_dir,
+            reboot_after_setup=reboot_after_setup,
+            target_options=target_options,
+            dryrun=dryrun,
+            duration=duration,
+            crash_report_timeout=crash_report_timeout,
+            debug=debug,
+            check_retry_count=check_retry_count,
+            check_fuzzer_help=check_fuzzer_help,
+            fail_on_repro=fail_on_repro,
+            delete_input_container=delete_input_container,
         )
 
     def _create_job(
@@ -156,9 +148,9 @@ class Regression(Command):
         name: str,
         build: str,
         pool_name: PoolName,
-        crashes: Container = None,
-        input_reports: Container = None,
-        inputs: Optional[Directory] = None,
+        *,
+        crashes: Optional[List[File]] = None,
+        reports: Optional[List[str]] = None,
         target_exe: File = File("fuzz.exe"),
         tags: Optional[Dict[str, str]] = None,
         notification_config: Optional[NotificationConfig] = None,
@@ -168,7 +160,6 @@ class Regression(Command):
         target_options: Optional[List[str]] = None,
         dryrun: bool = False,
         duration: int = 24,
-        report_list: Optional[List[str]] = None,
         crash_report_timeout: Optional[int] = None,
         debug: Optional[List[TaskDebugFlag]] = None,
         check_retry_count: Optional[int] = None,
@@ -176,11 +167,6 @@ class Regression(Command):
         fail_on_repro: bool = False,
         delete_input_container: bool = True,
     ) -> Optional[Job]:
-
-        if not ((crashes and input_reports) or inputs):
-            self.logger.error(
-                "please specify either the 'crash' and 'input_reports' parameters or the 'inputs' parameter"
-            )
 
         if dryrun:
             return None
@@ -198,7 +184,7 @@ class Regression(Command):
             target_exe=target_exe,
         )
 
-        if inputs:
+        if crashes:
             helper.containers[
                 ContainerType.readonly_inputs
             ] = helper.get_unique_container_name(ContainerType.readonly_inputs)
@@ -207,30 +193,31 @@ class Regression(Command):
             ContainerType.setup,
             ContainerType.reports,
             ContainerType.no_repro,
+            ContainerType.regression_reports,
         )
 
         helper.create_containers()
-        helper.setup_notifications(notification_config)
-        if inputs:
-            helper.upload_inputs(inputs, read_only=True)
+        if crashes:
+            for file in crashes:
+                self.onefuzz.containers.files.upload_file(
+                    helper.containers[ContainerType.unique_inputs], file
+                )
 
+        helper.setup_notifications(notification_config)
         containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
+            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
             (ContainerType.reports, helper.containers[ContainerType.reports]),
             (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
+            (
+                ContainerType.unique_reports,
+                helper.containers[ContainerType.unique_reports],
+            ),
+            (
+                ContainerType.regression_reports,
+                helper.containers[ContainerType.regression_reports],
+            ),
         ]
-
-        if crashes:
-            if self.onefuzz.containers.get(crashes):
-                containers.append((ContainerType.crashes, crashes))
-            else:
-                self.logger.error(f"invalid crash container {crashes}")
-
-        if input_reports:
-            if self.onefuzz.containers.get("input_reports"):
-                containers.append((ContainerType.input_reports, input_reports))
-            else:
-                self.logger.error(f"invalid crash container {input_reports}")
 
         helper.upload_setup(setup_dir, target_exe)
         target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
@@ -252,7 +239,7 @@ class Regression(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             check_fuzzer_help=check_fuzzer_help,
-            report_list=report_list,
+            report_list=reports,
         )
         helper.wait_for_stopping = fail_on_repro
 
@@ -267,7 +254,7 @@ class Regression(Command):
 
             repro_count = len(
                 self.onefuzz.containers.files.list(
-                    helper.containers[ContainerType.reports],
+                    helper.containers[ContainerType.regression_reports],
                     prefix=str(regression_task.task_id),
                 ).files
             )

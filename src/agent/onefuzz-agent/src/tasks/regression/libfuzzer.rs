@@ -29,16 +29,14 @@ pub struct Config {
     #[serde(default)]
     pub target_env: HashMap<String, String>,
 
-    pub inputs: Option<SyncedDir>,
+    pub crashes: SyncedDir,
+    pub regression_reports: SyncedDir,
+    
+    pub report_list: Option<Vec<String>>,
 
-    pub input_reports: Option<SyncedDir>,
-    pub crashes: Option<SyncedDir>,
-
-    #[serde(default)]
-    pub report_list: Vec<String>,
-
-    pub no_repro: Option<SyncedDir>,
+    pub unique_reports: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
+    pub no_repro: Option<SyncedDir>,
 
     pub target_timeout: Option<u64>,
 

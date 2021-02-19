@@ -434,10 +434,14 @@ TASK_DEFINITIONS = {
                 permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
             ContainerDefinition(
-                type=ContainerType.input_reports,
+                type=ContainerType.regression_reports,
                 compare=Compare.Equal,
                 value=1,
-                permissions=[ContainerPermission.Read, ContainerPermission.List],
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
             ),
             ContainerDefinition(
                 type=ContainerType.crashes,
@@ -449,16 +453,16 @@ TASK_DEFINITIONS = {
                 type=ContainerType.reports,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Write],
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
             ContainerDefinition(
                 type=ContainerType.no_repro,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Write],
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
             ContainerDefinition(
-                type=ContainerType.inputs,
+                type=ContainerType.readonly_inputs,
                 compare=Compare.AtMost,
                 value=1,
                 permissions=[
@@ -487,10 +491,14 @@ TASK_DEFINITIONS = {
                 permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
             ContainerDefinition(
-                type=ContainerType.input_reports,
+                type=ContainerType.regression_reports,
                 compare=Compare.Equal,
                 value=1,
-                permissions=[ContainerPermission.Read, ContainerPermission.List],
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
             ),
             ContainerDefinition(
                 type=ContainerType.crashes,
@@ -502,16 +510,16 @@ TASK_DEFINITIONS = {
                 type=ContainerType.reports,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Write],
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
             ContainerDefinition(
                 type=ContainerType.no_repro,
                 compare=Compare.AtMost,
                 value=1,
-                permissions=[ContainerPermission.Write],
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
             ContainerDefinition(
-                type=ContainerType.inputs,
+                type=ContainerType.readonly_inputs,
                 compare=Compare.AtMost,
                 value=1,
                 permissions=[
