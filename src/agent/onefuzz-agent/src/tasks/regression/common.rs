@@ -3,10 +3,9 @@
 
 use crate::tasks::{
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
-    report::crash_report::{CrashReport, CrashTestResult},
-    utils::download_input,
+    report::crash_report::{parse_report_file, CrashTestResult, RegressionReport},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::syncdir::SyncedDir;
 use reqwest::Url;
@@ -23,117 +22,143 @@ pub trait RegressionHandler {
         input: PathBuf,
         input_url: Option<Url>,
     ) -> Result<CrashTestResult>;
-
-    /// Saves a regression
-    /// * `crash_result` - crash result to save
-    /// * `original_report` - original report used to generate the report
-    async fn save_regression(
-        &self,
-        crash_result: CrashTestResult,
-        original_report: Option<CrashReport>,
-    ) -> Result<()>;
 }
 
 /// Runs the regression task
-/// * `heartbeat_client` - heartbeat client
-/// * `input_reports` - location of the reports used in this regression run
-/// * `report_list` - list of report file names selected to be used in the regression
-/// * `crashes` - location of the crash files referenced by the reports in input_reports
-/// * `inputs` - location of the input files
-/// * `handler` - regression handler
 pub async fn run(
     heartbeat_client: Option<TaskHeartbeatClient>,
-    input_reports: &Option<SyncedDir>,
-    report_list: &[String],
-    crashes: &Option<SyncedDir>,
-    inputs: &Option<SyncedDir>,
+    regression_reports: &SyncedDir,
+    crashes: &SyncedDir,
+    reports: &Option<SyncedDir>,
+    unique_reports: &Option<SyncedDir>,
+    no_repro: &Option<SyncedDir>,
+    report_list: &Option<Vec<String>>,
+    readonly_inputs: &Option<SyncedDir>,
     handler: &impl RegressionHandler,
 ) -> Result<()> {
     info!("Starting generic regression task");
-    if let (Some(input_reports), Some(crashes)) = (input_reports, crashes) {
-        handle_crash_reports(
-            &heartbeat_client,
-            &input_reports,
-            report_list,
-            &crashes,
+    handle_crash_reports(
+        handler,
+        crashes,
+        reports,
+        unique_reports,
+        no_repro,
+        report_list,
+        &regression_reports,
+        &heartbeat_client,
+    )
+    .await?;
+
+    if let Some(readonly_inputs) = &readonly_inputs {
+        handle_inputs(
             handler,
+            readonly_inputs,
+            &regression_reports,
+            &heartbeat_client,
         )
         .await?;
-    }
-
-    if let Some(inputs) = &inputs {
-        handle_inputs(&inputs, &heartbeat_client, handler).await?;
     }
 
     Ok(())
 }
 
 /// Run the regression on the files in the 'inputs' location
-/// * `heartbeat_client` - heartbeat client
-/// * `inputs` - location of the input files
 /// * `handler` - regression handler
+/// * `readonly_inputs` - location of the input files
+/// * `regression_reports` - where reports should be saved
+/// * `heartbeat_client` - heartbeat client
 pub async fn handle_inputs(
-    inputs: &SyncedDir,
-    heartbeat_client: &Option<TaskHeartbeatClient>,
     handler: &impl RegressionHandler,
+    readonly_inputs: &SyncedDir,
+    regression_reports: &SyncedDir,
+    heartbeat_client: &Option<TaskHeartbeatClient>,
 ) -> Result<()> {
-    inputs.sync_pull().await?;
-    let mut input_files = tokio::fs::read_dir(&inputs.path).await?;
+    readonly_inputs.sync_pull().await?;
+    let mut input_files = tokio::fs::read_dir(&readonly_inputs.path).await?;
     while let Some(file) = input_files.next_entry().await? {
         heartbeat_client.alive();
-        let input_url = inputs.url.clone().and_then(|container_url| {
+        let input_url = readonly_inputs.url.clone().and_then(|container_url| {
             let os_file_name = file.file_name();
             let file_name = os_file_name.to_str()?;
             container_url.url().join(file_name).ok()
         });
 
-        let report = handler.get_crash_result(file.path(), input_url).await?;
-        handler.save_regression(report, None).await?;
+        let crash_test_result = handler.get_crash_result(file.path(), input_url).await?;
+        RegressionReport {
+            crash_test_result,
+            original_crash_test_result: None,
+        }
+        .save(None, regression_reports)
+        .await?
     }
 
     Ok(())
 }
 
-/// Run the regression on the reports in the 'inputs_reports' location
-/// * `heartbeat_client` - heartbeat client
-/// * `input_reports` - location of the reports used in this regression run
-/// * `report_list` - list of report file names selected to be used in the regression
-/// * `crashes` - location of the crash files referenced by the reports in input_reports
 pub async fn handle_crash_reports(
-    heartbeat_client: &Option<TaskHeartbeatClient>,
-    input_reports: &SyncedDir,
-    report_list: &[String],
-    crashes: &SyncedDir,
     handler: &impl RegressionHandler,
+    crashes: &SyncedDir,
+    reports: &Option<SyncedDir>,
+    unique_reports: &Option<SyncedDir>,
+    no_repro: &Option<SyncedDir>,
+    report_list: &Option<Vec<String>>,
+    regression_reports: &SyncedDir,
+    heartbeat_client: &Option<TaskHeartbeatClient>,
 ) -> Result<()> {
-    if report_list.is_empty() {
-        input_reports.sync_pull().await?;
-    } else {
-        for file in report_list {
-            let input_url = input_reports
-                .url
-                .clone()
-                .ok_or_else(|| format_err!("no input url"))?
-                .blob(file);
-            download_input(input_url.url(), &input_reports.path).await?;
+    // without crash report containers, skip this method
+    if reports.is_none() && unique_reports.is_none() && no_repro.is_none() {
+        return Ok(());
+    }
+
+    crashes.init_pull().await?;
+
+    for possible_dir in [reports, no_repro, unique_reports].iter() {
+        if let Some(possible_dir) = possible_dir {
+            possible_dir.init_pull().await?;
+
+            let mut report_files = tokio::fs::read_dir(&possible_dir.path).await?;
+            while let Some(file) = report_files.next_entry().await? {
+                heartbeat_client.alive();
+                let file_path = file.path();
+                if !file_path.is_file() {
+                    continue;
+                }
+
+                let file_name = file_path
+                    .file_name()
+                    .ok_or_else(|| format_err!("missing filename"))?
+                    .to_string_lossy()
+                    .to_string();
+
+                if let Some(report_list) = &report_list {
+                    if !report_list.contains(&file_name) {
+                        continue;
+                    }
+                }
+
+                let original_crash_test_result = parse_report_file(file.path())
+                    .await
+                    .with_context(|| format!("unable to parse crash report: {}", file_name))?;
+
+                let input_blob = match &original_crash_test_result {
+                    CrashTestResult::CrashReport(x) => x.input_blob.clone(),
+                    CrashTestResult::NoRepro(x) => x.input_blob.clone(),
+                }
+                .ok_or_else(|| format_err!("crash report is missing input blob: {}", file_name))?;
+
+                let input_url = crashes.url.clone().map(|x| x.blob(&input_blob.name).url());
+                let input = crashes.path.join(&input_blob.name);
+                let crash_test_result = handler.get_crash_result(input, input_url).await?;
+
+                RegressionReport {
+                    crash_test_result,
+                    original_crash_test_result: Some(original_crash_test_result),
+                }
+                .save(Some(file_name), regression_reports)
+                .await?
+            }
         }
     }
 
-    let mut report_files = tokio::fs::read_dir(&input_reports.path).await?;
-    while let Some(file) = report_files.next_entry().await? {
-        heartbeat_client.alive();
-        let crash_report_str = std::fs::read_to_string(file.path())?;
-        let crash_report: CrashReport = serde_json::from_str(&crash_report_str)?;
-        let input_url = crash_report.input_blob.clone().and_then(|input_blob| {
-            let crashes_url = crashes.url.clone()?;
-            Some(crashes_url.blob(input_blob.name).url())
-        });
-        if let Some(input_url) = input_url {
-            let input = download_input(input_url.clone(), &crashes.path).await?;
-            let report = handler.get_crash_result(input, Some(input_url)).await?;
-
-            handler.save_regression(report, Some(crash_report)).await?;
-        }
-    }
     Ok(())
 }
