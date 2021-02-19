@@ -11,8 +11,8 @@ from onefuzztypes.events import EventPing, EventType
 
 
 class TestWebhookHmac(unittest.TestCase):
-    @patch("__app__.onefuzzlib.azure.creds.get_instance_id")
-    @patch("__app__.onefuzzlib.azure.creds.get_instance_name")
+    @patch("__app__.onefuzzlib.webhooks.get_instance_id")
+    @patch("__app__.onefuzzlib.webhooks.get_instance_name")
     def test_webhook_hmac(self, mock_name: MagicMock, mock_id: MagicMock) -> None:
         mock_name.return_value = "example"
         mock_id.return_value = UUID(int=3)
