@@ -225,7 +225,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 return
 
             logging.info(
-                SCALESET_LOG_PREFIX + "creating scaleset scalset_id:%s",
+                SCALESET_LOG_PREFIX + "creating scaleset. scaleset_id:%s",
                 self.scaleset_id,
             )
             extensions = fuzz_extensions(pool, self)
