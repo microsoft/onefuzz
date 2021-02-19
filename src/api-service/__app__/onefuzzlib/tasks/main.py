@@ -195,7 +195,7 @@ class Task(BASE_TASK, ORMMixin):
                 job_id=self.job_id,
                 task_id=self.task_id,
                 user_info=self.user_info,
-                task_tags=self.config.tags,
+                config=self.config,
             )
         )
 
@@ -215,7 +215,7 @@ class Task(BASE_TASK, ORMMixin):
                 task_id=self.task_id,
                 error=error,
                 user_info=self.user_info,
-                task_tags=self.config.tags,
+                config=self.config,
             )
         )
 
@@ -310,6 +310,6 @@ class Task(BASE_TASK, ORMMixin):
                 task_id=self.task_id,
                 state=self.state,
                 end_time=self.end_time,
-                task_tags=self.config.tags,
+                config=self.config,
             )
         )

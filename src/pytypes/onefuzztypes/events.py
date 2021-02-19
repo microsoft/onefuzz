@@ -5,7 +5,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Extra, Field
@@ -25,7 +25,7 @@ class EventTaskStopped(BaseEvent):
     job_id: UUID
     task_id: UUID
     user_info: Optional[UserInfo]
-    task_tags: Dict[str, str]
+    config: TaskConfig
 
 
 class EventTaskFailed(BaseEvent):
@@ -33,7 +33,7 @@ class EventTaskFailed(BaseEvent):
     task_id: UUID
     error: Error
     user_info: Optional[UserInfo]
-    task_tags: Dict[str, str]
+    config: TaskConfig
 
 
 class EventJobCreated(BaseEvent):
@@ -60,7 +60,7 @@ class EventTaskStateUpdated(BaseEvent):
     task_id: UUID
     state: TaskState
     end_time: Optional[datetime]
-    task_tags: Dict[str, str]
+    config: TaskConfig
 
 
 class EventPing(BaseResponse):
