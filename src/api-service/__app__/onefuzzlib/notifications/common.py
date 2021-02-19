@@ -40,10 +40,10 @@ class Render:
         self.filename = filename
         task = Task.get(report.job_id, report.task_id)
         if not task:
-            raise ValueError
+            raise ValueError(f"invalid task {report.task_id}")
         job = Job.get(report.job_id)
         if not job:
-            raise ValueError
+            raise ValueError(f"invalid job {report.job_id}")
 
         self.task_config = task.config
         self.job_config = job.config
