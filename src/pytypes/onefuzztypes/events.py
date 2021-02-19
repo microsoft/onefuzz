@@ -226,3 +226,5 @@ class EventMessage(BaseEvent):
     event_id: UUID = Field(default_factory=uuid4)
     event_type: EventType
     event: Event
+    instance_id: UUID
+    instance_name: str
