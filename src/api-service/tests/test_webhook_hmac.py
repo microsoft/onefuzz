@@ -3,7 +3,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import os
 import unittest
 from unittest.mock import MagicMock, patch
 from uuid import UUID
@@ -12,9 +11,10 @@ from onefuzztypes.events import EventPing, EventType
 
 
 class TestWebhookHmac(unittest.TestCase):
-    @patch.dict(os.environ, {"ONEFUZZ_INSTANCE_NAME": "example"})
     @patch("__app__.onefuzzlib.azure.creds.get_instance_id")
-    def test_webhook_hmac(self, mock_id: MagicMock) -> None:
+    @patch("__app__.onefuzzlib.azure.creds.get_instance_name")
+    def test_webhook_hmac(self, mock_name: MagicMock, mock_id: MagicMock) -> None:
+        mock_name.return_value = "example"
         mock_id.return_value = UUID(int=3)
 
         # late import to enable the patch to function
