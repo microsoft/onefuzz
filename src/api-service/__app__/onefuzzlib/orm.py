@@ -40,8 +40,8 @@ from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
 from typing_extensions import Protocol
 
-from ..onefuzzlib.secrets import save_to_keyvault
 from .azure.table import get_client
+from .secrets import save_to_keyvault
 from .telemetry import track_event_filtered
 from .updates import queue_update
 
