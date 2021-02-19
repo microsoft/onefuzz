@@ -29,7 +29,7 @@ pub async fn run(
     heartbeat_client: Option<TaskHeartbeatClient>,
     regression_reports: &SyncedDir,
     crashes: &SyncedDir,
-    report_dirs: Vec<&Option<SyncedDir>>,
+    report_dirs: &[&SyncedDir],
     report_list: &Option<Vec<String>>,
     readonly_inputs: &Option<SyncedDir>,
     handler: &impl RegressionHandler,
@@ -94,69 +94,61 @@ pub async fn handle_inputs(
 pub async fn handle_crash_reports(
     handler: &impl RegressionHandler,
     crashes: &SyncedDir,
-    report_dirs: Vec<&Option<SyncedDir>>,
+    report_dirs: &[&SyncedDir],
     report_list: &Option<Vec<String>>,
     regression_reports: &SyncedDir,
     heartbeat_client: &Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     // without crash report containers, skip this method
-    let mut has_dir = false;
-    for report_dir in &report_dirs {
-        if report_dir.is_some() {
-            has_dir = true;
-        }
-    }
-    if !has_dir {
+    if report_dirs.is_empty() {
         return Ok(());
     }
 
     crashes.init_pull().await?;
 
-    for possible_dir in report_dirs.iter() {
-        if let Some(possible_dir) = possible_dir {
-            possible_dir.init_pull().await?;
+    for possible_dir in report_dirs {
+        possible_dir.init_pull().await?;
 
-            let mut report_files = tokio::fs::read_dir(&possible_dir.path).await?;
-            while let Some(file) = report_files.next_entry().await? {
-                heartbeat_client.alive();
-                let file_path = file.path();
-                if !file_path.is_file() {
+        let mut report_files = tokio::fs::read_dir(&possible_dir.path).await?;
+        while let Some(file) = report_files.next_entry().await? {
+            heartbeat_client.alive();
+            let file_path = file.path();
+            if !file_path.is_file() {
+                continue;
+            }
+
+            let file_name = file_path
+                .file_name()
+                .ok_or_else(|| format_err!("missing filename"))?
+                .to_string_lossy()
+                .to_string();
+
+            if let Some(report_list) = &report_list {
+                if !report_list.contains(&file_name) {
                     continue;
                 }
-
-                let file_name = file_path
-                    .file_name()
-                    .ok_or_else(|| format_err!("missing filename"))?
-                    .to_string_lossy()
-                    .to_string();
-
-                if let Some(report_list) = &report_list {
-                    if !report_list.contains(&file_name) {
-                        continue;
-                    }
-                }
-
-                let original_crash_test_result = parse_report_file(file.path())
-                    .await
-                    .with_context(|| format!("unable to parse crash report: {}", file_name))?;
-
-                let input_blob = match &original_crash_test_result {
-                    CrashTestResult::CrashReport(x) => x.input_blob.clone(),
-                    CrashTestResult::NoRepro(x) => x.input_blob.clone(),
-                }
-                .ok_or_else(|| format_err!("crash report is missing input blob: {}", file_name))?;
-
-                let input_url = crashes.url.clone().map(|x| x.blob(&input_blob.name).url());
-                let input = crashes.path.join(&input_blob.name);
-                let crash_test_result = handler.get_crash_result(input, input_url).await?;
-
-                RegressionReport {
-                    crash_test_result,
-                    original_crash_test_result: Some(original_crash_test_result),
-                }
-                .save(Some(file_name), regression_reports)
-                .await?
             }
+
+            let original_crash_test_result = parse_report_file(file.path())
+                .await
+                .with_context(|| format!("unable to parse crash report: {}", file_name))?;
+
+            let input_blob = match &original_crash_test_result {
+                CrashTestResult::CrashReport(x) => x.input_blob.clone(),
+                CrashTestResult::NoRepro(x) => x.input_blob.clone(),
+            }
+            .ok_or_else(|| format_err!("crash report is missing input blob: {}", file_name))?;
+
+            let input_url = crashes.url.clone().map(|x| x.blob(&input_blob.name).url());
+            let input = crashes.path.join(&input_blob.name);
+            let crash_test_result = handler.get_crash_result(input, input_url).await?;
+
+            RegressionReport {
+                crash_test_result,
+                original_crash_test_result: Some(original_crash_test_result),
+            }
+            .save(Some(file_name), regression_reports)
+            .await?
         }
     }
 
