@@ -29,9 +29,7 @@ pub async fn run(
     heartbeat_client: Option<TaskHeartbeatClient>,
     regression_reports: &SyncedDir,
     crashes: &SyncedDir,
-    reports: &Option<SyncedDir>,
-    unique_reports: &Option<SyncedDir>,
-    no_repro: &Option<SyncedDir>,
+    report_dirs: Vec<&Option<SyncedDir>>,
     report_list: &Option<Vec<String>>,
     readonly_inputs: &Option<SyncedDir>,
     handler: &impl RegressionHandler,
@@ -40,9 +38,7 @@ pub async fn run(
     handle_crash_reports(
         handler,
         crashes,
-        reports,
-        unique_reports,
-        no_repro,
+        report_dirs,
         report_list,
         &regression_reports,
         &heartbeat_client,
@@ -98,21 +94,25 @@ pub async fn handle_inputs(
 pub async fn handle_crash_reports(
     handler: &impl RegressionHandler,
     crashes: &SyncedDir,
-    reports: &Option<SyncedDir>,
-    unique_reports: &Option<SyncedDir>,
-    no_repro: &Option<SyncedDir>,
+    report_dirs: Vec<&Option<SyncedDir>>,
     report_list: &Option<Vec<String>>,
     regression_reports: &SyncedDir,
     heartbeat_client: &Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     // without crash report containers, skip this method
-    if reports.is_none() && unique_reports.is_none() && no_repro.is_none() {
+    let mut has_dir = false;
+    for report_dir in &report_dirs {
+        if report_dir.is_some() {
+            has_dir = true;
+        }
+    }
+    if !has_dir {
         return Ok(());
     }
 
     crashes.init_pull().await?;
 
-    for possible_dir in [reports, no_repro, unique_reports].iter() {
+    for possible_dir in report_dirs.iter() {
         if let Some(possible_dir) = possible_dir {
             possible_dir.init_pull().await?;
 

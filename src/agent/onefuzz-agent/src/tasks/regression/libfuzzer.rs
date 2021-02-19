@@ -79,14 +79,17 @@ impl LibFuzzerRegressionTask {
 
     pub async fn run(&self) -> Result<()> {
         info!("Starting libfuzzer regression task");
+
         let heartbeat_client = self.config.common.init_heartbeat().await?;
         common::run(
             heartbeat_client,
             &self.config.regression_reports,
             &self.config.crashes,
-            &self.config.reports,
-            &self.config.unique_reports,
-            &self.config.no_repro,
+            vec![
+                &self.config.reports,
+                &self.config.unique_reports,
+                &self.config.no_repro,
+            ],
             &self.config.report_list,
             &self.config.readonly_inputs,
             self,
