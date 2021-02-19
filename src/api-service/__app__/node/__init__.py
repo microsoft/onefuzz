@@ -85,7 +85,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
 def patch(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(NodeGet, req)
     if isinstance(request, Error):
-        return not_ok(request, context="NodeRestart")
+        return not_ok(request, context="NodeReimage")
 
     node = Node.get_by_machine_id(request.machine_id)
     if not node:
@@ -94,7 +94,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
             context=request.machine_id,
         )
 
-    node.stop()
+    node.stop(done=True)
     if node.debug_keep_node:
         node.debug_keep_node = False
         node.save()
