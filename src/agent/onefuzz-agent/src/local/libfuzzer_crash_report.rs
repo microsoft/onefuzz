@@ -51,10 +51,7 @@ pub fn build_report_config(
     let input_queue =
         Url::from_file_path(queue_file.path()).map_err(|_| anyhow!("invalid file path"))?;
 
-    let file_monitor = tokio::spawn(monitor_folder_into_queue(
-        crashes,
-        input_queue.clone(),
-    ));
+    let file_monitor = tokio::spawn(monitor_folder_into_queue(crashes, input_queue.clone()));
 
     let common = build_common_config(args)?;
     let config = Config {
