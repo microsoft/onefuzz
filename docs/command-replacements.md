@@ -21,8 +21,8 @@ The following values are replaced with the specific values at runtime.
 * `{reports_dir}`: Path to the directory to write crash reports
 * `{crashes_account}`: Azure Storage Account name for the `crashes` container
 * `{crashes_container}`: Container name for the `crashes` container
-* `{microsoft_telemetry_key}`: Application Insights key used for [non-attributable telemetry](telemetry.md) collection.
-* `{instance_telemetry_key}`: Application Insights key used for instance-owned telemetry and logging (See [OneFuzz Telemetry](telemetry.md).
+* `{microsoft_telemetry_key}`: Application Insights key used for collecting [non-attributable telemetry](telemetry.md) to improve OneFuzz.
+* `{instance_telemetry_key}`: Application Insights key used for private, instance-owned telemetry and logging (See [OneFuzz Telemetry](telemetry.md).
 
 ## Example
 
@@ -50,7 +50,7 @@ These are currently used in the following tasks:
 * libfuzzer\_merge: `target_exe`, `target_options`, `input_corpus`
 * libfuzzer\_coverage: None
 * generic\_analysis: `input`, `target_exe`, `target_options`, `analyzer_exe`,
-  `anayzer_options`, `output_dir`, `tools_dir`, `job_id`, `task_id`,
+  `analyzer_options`, `output_dir`, `tools_dir`, `job_id`, `task_id`,
   `crashes_account`, `crashes_container`, `reports_dir`, `microsoft_telemetry_key`, `instance_telemetry_key`
 * generic\_generator: `generated_inputs`, `input_corpus`, `tools_dir`,
   `generator_exe`, `generator_options`, `target_exe`, `target_options`,
