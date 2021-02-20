@@ -7,28 +7,24 @@ use anyhow::Result;
 use reqwest::Url;
 use serde::{de, Serialize, Serializer};
 
-
 #[derive(Clone, Eq, PartialEq)]
 pub enum BlobUrl {
     AzureBlob(Url),
-    LocalFile(Url)
+    LocalFile(Url),
 }
 
 #[derive(Clone, Eq, PartialEq)]
-pub struct AzureBlob
-{
+pub struct AzureBlob {
     url: Url,
 }
 
 impl BlobUrl {
     pub fn new(url: Url) -> Result<Self> {
-        if possible_blob_storage_url(&url, false)
-            {Ok(Self::AzureBlob(url))}
-        else if url.scheme().to_lowercase() == "file"
-            {
-                Ok(Self::LocalFile(url))
-            }
-        else {
+        if possible_blob_storage_url(&url, false) {
+            Ok(Self::AzureBlob(url))
+        } else if url.scheme().to_lowercase() == "file" {
+            Ok(Self::LocalFile(url))
+        } else {
             bail!("Invalid blob URL: {}", url)
         }
     }
@@ -41,32 +37,27 @@ impl BlobUrl {
 
     pub fn url(&self) -> &Url {
         match self {
-            Self::LocalFile(url ) | Self::AzureBlob(url ) => url
+            Self::LocalFile(url) | Self::AzureBlob(url) => url,
         }
     }
 
     pub fn account(&self) -> Option<String> {
         match self {
-            Self::AzureBlob(url ) =>
-            Some(
-                url
-                    .domain()
-                    .unwrap()
-                    .split('.')
-                    .next()
-                    .unwrap()
-                    .to_owned(),
-            ),
-            Self::LocalFile(_ ) => None
+            Self::AzureBlob(url) => {
+                Some(url.domain().unwrap().split('.').next().unwrap().to_owned())
+            }
+            Self::LocalFile(_) => None,
         }
     }
 
     pub fn container(&self) -> Option<String> {
         match self {
-            Self::AzureBlob(url ) =>
-                // Segment existence checked in ctor, so we can unwrap.
-                Some(url.path_segments().unwrap().next().unwrap().to_owned()),
-            Self::LocalFile(_) => None
+            Self::AzureBlob(url) =>
+            // Segment existence checked in ctor, so we can unwrap.
+            {
+                Some(url.path_segments().unwrap().next().unwrap().to_owned())
+            }
+            Self::LocalFile(_) => None,
         }
     }
 
@@ -75,7 +66,10 @@ impl BlobUrl {
             .url()
             .path_segments()
             .unwrap()
-            .skip(match self {Self::AzureBlob(_) => 1, _ => 0 })
+            .skip(match self {
+                Self::AzureBlob(_) => 1,
+                _ => 0,
+            })
             .map(|s| s.to_owned())
             .collect();
         name_segments.join("/")
@@ -98,7 +92,7 @@ impl fmt::Display for BlobUrl {
                 self.container().unwrap_or_default(),
                 self.name()
             ),
-            Self::LocalFile(url) => write!(f, "{}", url)
+            Self::LocalFile(url) => write!(f, "{}", url),
         }
     }
 }

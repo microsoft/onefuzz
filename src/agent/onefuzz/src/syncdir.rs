@@ -106,7 +106,10 @@ impl SyncedDir {
         let mut monitor = DirectoryMonitor::new(self.path.clone());
         monitor.start()?;
 
-        let mut uploader = self.url.as_ref().map(|x| BlobUploader::new(x.url().clone()));
+        let mut uploader = self
+            .url
+            .as_ref()
+            .map(|x| BlobUploader::new(x.url().clone()));
 
         while let Some(item) = monitor.next().await {
             event!(event.clone(); EventData::Path = item.display().to_string());
