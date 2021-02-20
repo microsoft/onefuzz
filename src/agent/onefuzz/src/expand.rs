@@ -12,7 +12,7 @@ pub enum ExpandedValue<'a> {
     Path(String),
     Scalar(String),
     List(&'a [String]),
-    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Option<ExpandedValue<'a>>>),
+    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Option<ExpandedValue<'a>> + Send>),
 }
 
 #[derive(PartialEq, Eq, Hash, EnumIter)]

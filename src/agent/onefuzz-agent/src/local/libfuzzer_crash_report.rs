@@ -66,7 +66,7 @@ pub fn build_report_config(
         check_fuzzer_help,
         input_queue: Some(input_queue),
         check_queue,
-        crashes: Some(crashes.into()),
+        crashes: None,
         reports,
         no_repro,
         unique_reports,

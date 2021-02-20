@@ -22,7 +22,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let fuzz_config = build_fuzz_config(args)?;
     let fuzzer = LibFuzzerFuzzTask::new(fuzz_config)?;
     fuzzer.check_libfuzzer().await?;
-    let fuzz_task = spawn(async move { fuzzer.run().await });
+    let fuzz_task = spawn(async move { fuzzer.managed_run().await });
 
     let (report_config, _) = build_report_config(args)?;
     let mut report = ReportTask::new(report_config);
@@ -30,8 +30,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     if args.is_present(COVERAGE_DIR) {
         let coverage_config = build_coverage_config(args, true)?;
-        let coverage = CoverageTask::new(coverage_config);
-        let coverage_task = spawn(async move { coverage.local_run().await });
+        let mut coverage = CoverageTask::new(coverage_config);
+        let coverage_task = spawn(async move { coverage.managed_run().await });
 
         let result = tokio::try_join!(fuzz_task, report_task, coverage_task)?;
         result.0?;

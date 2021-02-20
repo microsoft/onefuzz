@@ -57,11 +57,7 @@ impl ReportTask {
     }
 
     pub async fn managed_run(&mut self) -> Result<()> {
-        let crashes = match &self.config.crashes {
-            Some(x) => x,
-            None => bail!("missing crashes directory"),
-        };
-        crashes.init().await?;
+        info!("Starting libFuzzer crash report task");
 
         if let Some(unique_reports) = &self.config.unique_reports {
             unique_reports.init().await?;
