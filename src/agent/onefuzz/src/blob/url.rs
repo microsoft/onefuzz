@@ -321,7 +321,7 @@ mod tests {
         into_urls(&[
             // Not valid HTTPS URLs.
             "data:text/plain,hello",
-            "file:///a/b/c",
+            // "file:///a/b/c",
             // Valid HTTP URLs, but invalid as storage URLs.
             "https://127.0.0.1",
             "https://localhost",
