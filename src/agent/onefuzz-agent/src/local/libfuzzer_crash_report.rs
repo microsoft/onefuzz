@@ -20,6 +20,7 @@ use tempfile::tempdir;
 
 pub fn build_report_config(
     args: &clap::ArgMatches<'_>,
+    batch_process: bool,
 ) -> Result<(Config, JoinHandle<Result<()>>)> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -51,7 +52,10 @@ pub fn build_report_config(
     let input_queue =
         Url::from_file_path(queue_file.path()).map_err(|_| anyhow!("invalid file path"))?;
 
-    let file_monitor = tokio::spawn(monitor_folder_into_queue(crashes, input_queue.clone()));
+    let file_monitor = tokio::spawn(monitor_folder_into_queue(
+        crashes.clone(),
+        input_queue.clone(),
+    ));
 
     let common = build_common_config(args)?;
     let config = Config {
@@ -63,7 +67,11 @@ pub fn build_report_config(
         check_fuzzer_help,
         input_queue: Some(input_queue),
         check_queue,
-        crashes: None,
+        crashes: if batch_process {
+            Some(crashes.into())
+        } else {
+            None
+        },
         reports,
         no_repro,
         unique_reports,
@@ -73,7 +81,7 @@ pub fn build_report_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let (config, file_monitor) = build_report_config(args)?;
+    let (config, file_monitor) = build_report_config(args, true)?;
     let _run_handle = tokio::task::spawn(file_monitor);
     ReportTask::new(config).managed_run().await
 
