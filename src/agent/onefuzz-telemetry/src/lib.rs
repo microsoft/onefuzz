@@ -136,7 +136,7 @@ impl EventData {
         }
     }
 
-    pub fn can_share(&self) -> bool {
+    pub fn can_share_with_microsoft(&self) -> bool {
         match self {
             // TODO: Request CELA review of Version, as having this for central stats
             //       would be useful to track uptake of new releases
@@ -323,7 +323,7 @@ pub fn property(client_type: ClientType, key: impl AsRef<str>) -> Option<String>
 pub fn set_property(entry: EventData) {
     let (key, value) = entry.as_values();
 
-    if entry.can_share() {
+    if entry.can_share_with_microsoft() {
         if let Some(mut client) = client_mut(ClientType::Microsoft) {
             client
                 .context_mut()
@@ -368,7 +368,7 @@ pub fn track_event(event: Event, properties: Vec<EventData>) {
         let props = evt.properties_mut();
 
         for property in &properties {
-            if property.can_share() {
+            if property.can_share_with_microsoft() {
                 let (name, val) = property.as_values();
                 props.insert(name.to_string(), val);
             }
