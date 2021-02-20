@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::{fmt, path::PathBuf};
+use std::fmt;
 
 use anyhow::Result;
 use reqwest::Url;
