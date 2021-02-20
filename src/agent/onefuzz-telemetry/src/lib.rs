@@ -4,6 +4,7 @@
 use serde::{Deserialize, Serialize};
 use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
 use uuid::Uuid;
+use std::fmt;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
 
@@ -11,24 +12,28 @@ pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Ve
 #[serde(transparent)]
 pub struct MicrosoftTelemetryKey(Uuid);
 impl MicrosoftTelemetryKey {
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
-    }
-
     pub fn new(value: Uuid) -> Self {
         Self { 0: value }
+    }
+}
+
+impl fmt::Display for MicrosoftTelemetryKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct InstanceTelemetryKey(Uuid);
 impl InstanceTelemetryKey {
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
-    }
-
     pub fn new(value: Uuid) -> Self {
         Self { 0: value }
+    }
+}
+
+impl fmt::Display for InstanceTelemetryKey{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
