@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
 use uuid::Uuid;
-use std::fmt;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
 
@@ -31,7 +31,7 @@ impl InstanceTelemetryKey {
     }
 }
 
-impl fmt::Display for InstanceTelemetryKey{
+impl fmt::Display for InstanceTelemetryKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
     }
