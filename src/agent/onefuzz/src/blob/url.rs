@@ -1,22 +1,36 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::fmt;
+use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use reqwest::Url;
 use serde::{de, Serialize, Serializer};
 
+
 #[derive(Clone, Eq, PartialEq)]
-pub struct BlobUrl {
+pub enum BlobUrl {
+    AzureBlob(Url),
+    LocalFile(Url)
+}
+
+#[derive(Clone, Eq, PartialEq)]
+pub struct AzureBlob
+{
     url: Url,
-    pub is_azure_blob: bool,
 }
 
 impl BlobUrl {
     pub fn new(url: Url) -> Result<Self> {
-        let is_azure_blob = possible_blob_storage_url(&url, false);
-        Ok(Self { url, is_azure_blob })
+        if possible_blob_storage_url(&url, false)
+            {Ok(Self::AzureBlob(url))}
+        else if url.scheme().to_lowercase() == "file"
+            {
+                Ok(Self::LocalFile(url))
+            }
+        else {
+            bail!("Invalid blob URL: {}", url)
+        }
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
@@ -25,42 +39,43 @@ impl BlobUrl {
         Self::new(url)
     }
 
-    pub fn url(&self) -> Url {
-        self.url.clone()
+    pub fn url(&self) -> &Url {
+        match self {
+            Self::LocalFile(url ) | Self::AzureBlob(url ) => url
+        }
     }
 
     pub fn account(&self) -> Option<String> {
-        if self.is_azure_blob {
-            // Ctor checks that domain has at least one subdomain.
+        match self {
+            Self::AzureBlob(url ) =>
             Some(
-                self.url
+                url
                     .domain()
                     .unwrap()
                     .split('.')
                     .next()
                     .unwrap()
                     .to_owned(),
-            )
-        } else {
-            None
+            ),
+            Self::LocalFile(_ ) => None
         }
     }
 
     pub fn container(&self) -> Option<String> {
-        if self.is_azure_blob {
-            // Segment existence checked in ctor, so we can unwrap.
-            Some(self.url.path_segments().unwrap().next().unwrap().to_owned())
-        } else {
-            None
+        match self {
+            Self::AzureBlob(url ) =>
+                // Segment existence checked in ctor, so we can unwrap.
+                Some(url.path_segments().unwrap().next().unwrap().to_owned()),
+            Self::LocalFile(_) => None
         }
     }
 
     pub fn name(&self) -> String {
         let name_segments: Vec<_> = self
-            .url
+            .url()
             .path_segments()
             .unwrap()
-            .skip(if self.is_azure_blob { 1 } else { 0 })
+            .skip(match self {Self::AzureBlob(_) => 1, _ => 0 })
             .map(|s| s.to_owned())
             .collect();
         name_segments.join("/")
@@ -75,16 +90,15 @@ impl fmt::Debug for BlobUrl {
 
 impl fmt::Display for BlobUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.is_azure_blob {
-            write!(
+        match self {
+            Self::AzureBlob(_) => write!(
                 f,
                 "{}:{}/{}",
                 self.account().unwrap_or_default(),
                 self.container().unwrap_or_default(),
                 self.name()
-            )
-        } else {
-            write!(f, "{}", self.url)
+            ),
+            Self::LocalFile(url) => write!(f, "{}", url)
         }
     }
 }
@@ -112,8 +126,8 @@ impl BlobContainerUrl {
         Self::new(url)
     }
 
-    pub fn url(&self) -> Url {
-        self.url.clone()
+    pub fn url(&self) -> &Url {
+        &self.url
     }
 
     pub fn account(&self) -> String {
@@ -161,7 +175,7 @@ impl From<BlobContainerUrl> for Url {
     }
 }
 
-fn redact_query_sas_sig(url: Url) -> Url {
+fn redact_query_sas_sig(url: &Url) -> Url {
     let mut redacted = url.clone();
     redacted.set_query(None);
 

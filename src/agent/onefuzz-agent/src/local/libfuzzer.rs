@@ -24,7 +24,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     fuzzer.check_libfuzzer().await?;
     let fuzz_task = spawn(async move { fuzzer.managed_run().await });
 
-    let (report_config, _) = build_report_config(args, false)?;
+    let (report_config, file_monitor) = build_report_config(args, false)?;
+    let _run_handle = tokio::task::spawn(file_monitor);
     let mut report = ReportTask::new(report_config);
     let report_task = spawn(async move { report.managed_run().await });
 

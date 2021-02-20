@@ -122,7 +122,7 @@ impl<M> InputPoller<M> {
                 let dir_relative = input_path.strip_prefix(&dir_path)?;
                 dir_relative.display().to_string()
             };
-            let url = to_process.try_url().map(|x| x.blob(blob_name).url()).ok();
+            let url = to_process.try_url().map(|x| x.blob(blob_name).url().clone()).ok();
 
             processor.process(url, &path).await?;
         }
