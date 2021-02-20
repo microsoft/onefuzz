@@ -25,9 +25,11 @@ pub struct StaticConfig {
 
     pub onefuzz_url: Url,
 
+    // TODO: remove the alias once the service has been updated to match
     #[serde(alias = "instrumentation_key")]
     pub instance_telemetry_key: Option<Uuid>,
 
+    // TODO: remove the alias once the service has been updated to match
     #[serde(alias = "telemetry_key")]
     pub microsoft_telemetry_key: Option<Uuid>,
 

@@ -6,6 +6,9 @@ use uuid::Uuid;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
 
+pub type MicrosoftTelemetryKey = Uuid;
+pub type InstanceTelemetryKey = Uuid;
+
 pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
 pub enum ClientType {
     Instance,
@@ -261,7 +264,10 @@ mod global {
     }
 }
 
-pub fn set_appinsights_clients(instance_key: Option<Uuid>, microsoft_key: Option<Uuid>) {
+pub fn set_appinsights_clients(
+    instance_key: Option<InstanceTelemetryKey>,
+    microsoft_key: Option<MicrosoftTelemetryKey>,
+) {
     let instance_client = instance_key.map(|k| TelemetryClient::new(k.to_string()));
     let microsoft_client = microsoft_key.map(|k| TelemetryClient::new(k.to_string()));
     global::set_clients(instance_client, microsoft_client);
