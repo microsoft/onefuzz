@@ -53,7 +53,11 @@ pub async fn spawn(config: Config) -> Result<()> {
     config.analysis.init().await?;
     config.tools.init_pull().await?;
 
-    // setup reports
+    // the tempdir is always created, however, the reports_path and
+    // reports_monitor_future are only created if we have one of the three
+    // report SyncedDir. The idea is that the option for where to write reports
+    // is only available for target option / env expansion if one of the reports
+    // SyncedDir is provided.
     let reports_dir = tempdir()?;
     let (reports_path, reports_monitor_future) =
         if config.unique_reports.is_some() || config.reports.is_some() || config.no_repro.is_some()
