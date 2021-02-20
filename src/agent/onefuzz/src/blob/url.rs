@@ -376,8 +376,8 @@ mod tests {
         for url in valid_blob_urls() {
             let url = BlobUrl::new(url).expect("invalid blob URL");
 
-            assert_eq!(url.account(), "myaccount");
-            assert_eq!(url.container(), "mycontainer");
+            assert_eq!(url.account(), Some("myaccount".into()));
+            assert_eq!(url.container(), Some("mycontainer".into()));
             assert_eq!(url.name(), "myblob");
         }
     }
@@ -389,8 +389,8 @@ mod tests {
 
         let url = BlobUrl::new(url).expect("invalid blob URL");
 
-        assert_eq!(url.account(), "myaccount");
-        assert_eq!(url.container(), "mycontainer");
+        assert_eq!(url.account(), Some("myaccount".into()));
+        assert_eq!(url.container(), Some("mycontainer".into()));
         assert_eq!(url.name(), "mydir/myblob");
     }
 
