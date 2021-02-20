@@ -24,8 +24,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
 fn init_telemetry(config: &CommonConfig) {
     onefuzz_telemetry::set_appinsights_clients(
-        config.instance_telemetry_key,
-        config.microsoft_telemetry_key,
+        config.instance_telemetry_key.clone(),
+        config.microsoft_telemetry_key.clone(),
     );
 }
 

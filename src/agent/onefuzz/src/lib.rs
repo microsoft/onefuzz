@@ -8,9 +8,6 @@ extern crate anyhow;
 extern crate lazy_static;
 
 #[macro_use]
-extern crate serde;
-
-#[macro_use]
 extern crate onefuzz_telemetry;
 
 pub mod asan;

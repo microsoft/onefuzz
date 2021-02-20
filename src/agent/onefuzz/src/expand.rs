@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
+use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use std::path::{Path, PathBuf};
 use std::{collections::HashMap, hash::Hash};
 use strum::IntoEnumIterator;
@@ -259,15 +260,15 @@ impl<'a> Expand<'a> {
         self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value))
     }
 
-    pub fn microsoft_telemetry_key(self, arg: &Uuid) -> Self {
-        let value = arg.to_hyphenated().to_string();
+    pub fn microsoft_telemetry_key(self, arg: &MicrosoftTelemetryKey) -> Self {
+        let value = arg.to_string();
         self.set_value(
             PlaceHolder::MicrosoftTelemetryKey,
             ExpandedValue::Scalar(value),
         )
     }
-    pub fn instance_telemetry_key(self, arg: &Uuid) -> Self {
-        let value = arg.to_hyphenated().to_string();
+    pub fn instance_telemetry_key(self, arg: &InstanceTelemetryKey) -> Self {
+        let value = arg.to_string();
         self.set_value(
             PlaceHolder::InstanceTelemetryKey,
             ExpandedValue::Scalar(value),

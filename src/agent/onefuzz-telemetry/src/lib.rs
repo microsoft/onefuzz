@@ -1,13 +1,36 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use serde::{Deserialize, Serialize};
 use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
 use uuid::Uuid;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
 
-pub type MicrosoftTelemetryKey = Uuid;
-pub type InstanceTelemetryKey = Uuid;
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(transparent)]
+pub struct MicrosoftTelemetryKey(Uuid);
+impl MicrosoftTelemetryKey {
+    pub fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+
+    pub fn new(value: Uuid) -> Self {
+        Self { 0: value }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct InstanceTelemetryKey(Uuid);
+impl InstanceTelemetryKey {
+    pub fn to_string(&self) -> String {
+        self.0.to_string()
+    }
+
+    pub fn new(value: Uuid) -> Self {
+        Self { 0: value }
+    }
+}
 
 pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
 pub enum ClientType {

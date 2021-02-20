@@ -6,8 +6,6 @@ extern crate async_trait;
 #[macro_use]
 extern crate downcast_rs;
 #[macro_use]
-extern crate serde;
-#[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate anyhow;
@@ -227,7 +225,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 
 fn init_telemetry(config: &StaticConfig) {
     telemetry::set_appinsights_clients(
-        config.instance_telemetry_key,
-        config.microsoft_telemetry_key,
+        config.instance_telemetry_key.clone(),
+        config.microsoft_telemetry_key.clone(),
     );
 }
