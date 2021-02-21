@@ -8,7 +8,7 @@ import logging
 from typing import List, Optional, Tuple
 from uuid import UUID
 
-from onefuzztypes.enums import ErrorCode, NodeState, TaskState
+from onefuzztypes.enums import ErrorCode, NodeState, PoolState, ScalesetState, TaskState
 from onefuzztypes.events import (
     EventNodeCreated,
     EventNodeDeleted,
@@ -241,6 +241,9 @@ class Node(BASE_NODE, ORMMixin):
         return False
 
     def can_process_new_work(self) -> bool:
+        from .pools import Pool
+        from .scalesets import Scaleset
+
         if self.is_outdated():
             logging.info(
                 "can_schedule agent and service versions differ, stopping node. "
@@ -277,6 +280,42 @@ class Node(BASE_NODE, ORMMixin):
         if self.could_shrink_scaleset():
             self.set_halt()
             logging.info("node scheduled to shrink.  machine_id:%s", self.machine_id)
+            return False
+
+        if self.scaleset_id:
+            scaleset = Scaleset.get_by_id(self.scaleset_id)
+            if isinstance(scaleset, Error):
+                logging.info(
+                    "can_schedule - invalid scaleset.  scaleset_id:%s machine_id:%s",
+                    self.scaleset_id,
+                    self.machine_id,
+                )
+                return False
+
+            if scaleset.state not in ScalesetState.available():
+                logging.info(
+                    "can_schedule - scaleset not available for work. "
+                    "scaleset_id:%s machine_id:%s",
+                    self.scaleset_id,
+                    self.machine_id,
+                )
+                return False
+
+        pool = Pool.get_by_name(self.pool_name)
+        if isinstance(pool, Error):
+            logging.info(
+                "can_schedule - invalid pool. " "pool_name:%s machine_id:%s",
+                self.pool_name,
+                self.machine_id,
+            )
+            return False
+        if pool.state not in PoolState.available():
+            logging.info(
+                "can_schedule - pool is not available for work. "
+                "pool_name:%s machine_id:%s",
+                self.pool_name,
+                self.machine_id,
+            )
             return False
 
         return True
