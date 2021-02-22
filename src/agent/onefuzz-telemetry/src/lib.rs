@@ -13,7 +13,7 @@ pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Ve
 pub struct MicrosoftTelemetryKey(Uuid);
 impl MicrosoftTelemetryKey {
     pub fn new(value: Uuid) -> Self {
-        Self { 0: value }
+        Self(value)
     }
 }
 
@@ -27,7 +27,7 @@ impl fmt::Display for MicrosoftTelemetryKey {
 pub struct InstanceTelemetryKey(Uuid);
 impl InstanceTelemetryKey {
     pub fn new(value: Uuid) -> Self {
-        Self { 0: value }
+        Self(value)
     }
 }
 
