@@ -70,29 +70,4 @@ impl LocalQueueClient {
 
         Ok(result)
     }
-
-    // pub async fn pop(&mut self) -> Result<Option<Message>> {
-    //     let result = self.receiver.recv().await?;
-
-    //     String::from_utf8(&*result);
-    //     let x = result.as_ref();
-    //     let msg = Message::parse(&text);
-
-    //     let msg = if let Some(msg) = msg {
-    //         msg
-    //     } else {
-    //         return Ok(None);
-    //     };
-
-    //     let msg = if msg.data.is_empty() { None } else { Some(msg) };
-
-    //     Ok(msg)
-
-    // }
-
-    // pub async fn delete(&mut self, receipt: impl Into<Receipt>) -> Result<()> {
-    //     match self {
-    //         QueueClient::AzureQueue(queue_client) => queue_client.delete(receipt).await
-    //     }
-    // }
 }

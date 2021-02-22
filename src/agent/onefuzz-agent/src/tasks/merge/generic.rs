@@ -73,7 +73,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
                     error
                 );
             } else {
-                //debug!("will delete popped message with id = {}", msg.id());
+                debug!("will delete popped message with id = {}", msg.id());
 
                 msg.delete().await?;
 

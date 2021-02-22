@@ -109,7 +109,7 @@ async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Resul
         info!("downloaded input to {}", input_path.display());
         sync_and_merge(config.clone(), vec![tmp_dir], true, true).await?;
 
-        //debug!("will delete popped message with id = {}", msg.id());
+        debug!("will delete popped message with id = {}", msg.id());
 
         msg.delete().await?;
         // input_queue.delete(msg).await?;
