@@ -405,6 +405,10 @@ class Client:
             except Exception as err:
                 error = err
                 as_repr = repr(err)
+                # Modeled after Azure-CLI.  See:
+                # https://github.com/Azure/azure-cli/blob/
+                #   3a2f6009cff788fde3b0170823c9129f187b2812/src/azure-cli-core/
+                #   azure/cli/core/commands/arm.py#L1086
                 if (
                     "PrincipalNotFound" in as_repr
                     and "does not exist in the directory" in as_repr

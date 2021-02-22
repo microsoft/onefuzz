@@ -235,6 +235,11 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
             return add_application_password_impl(app_object_id)
         except GraphQueryError as err:
             error = err
+            # modeled after AZ-CLI's handling of missing application
+            # See: https://github.com/Azure/azure-cli/blob/
+            #   e015d5bcba0c2d21dc42189daa43dc1eb82d2485/src/azure-cli/
+            #   azure/cli/command_modules/util/tests/
+            #   latest/test_rest.py#L191-L192
             if "Request_ResourceNotFound" in repr(err):
                 logging.info("app unavailable in AAD, unable to create password yet")
             else:
