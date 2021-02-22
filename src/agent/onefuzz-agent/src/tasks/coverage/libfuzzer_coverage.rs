@@ -93,20 +93,6 @@ impl CoverageTask {
         Self { config, poller }
     }
 
-    pub async fn local_run(&self) -> Result<()> {
-        let mut processor = CoverageProcessor::new(self.config.clone()).await?;
-
-        self.config.coverage.init().await?;
-        for synced_dir in &self.config.readonly_inputs {
-            synced_dir.init().await?;
-            self.record_corpus_coverage(&mut processor, &synced_dir)
-                .await?;
-        }
-        processor.report_total().await?;
-
-        Ok(())
-    }
-
     async fn check_libfuzzer(&self) -> Result<()> {
         if self.config.check_fuzzer_help {
             let fuzzer = LibFuzzer::new(

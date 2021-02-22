@@ -3,10 +3,9 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, monitor_folder_into_queue,
-        CmdType, CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE,
-        NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
-        UNIQUE_REPORTS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_FUZZER_HELP,
+        CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV,
+        TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
     tasks::report::libfuzzer_report::{Config, ReportTask},
 };
@@ -14,14 +13,11 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use reqwest::Url;
 use std::path::PathBuf;
-use tokio::task::JoinHandle;
-
-use tempfile::tempdir;
 
 pub fn build_report_config(
     args: &clap::ArgMatches<'_>,
-    batch_process: bool,
-) -> Result<(Config, JoinHandle<Result<()>>)> {
+    input_queue: Option<Url>,
+) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
@@ -47,15 +43,11 @@ pub fn build_report_config(
 
     let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
 
-    let queue_file = tempdir()?;
-
-    let input_queue =
-        Url::from_file_path(queue_file.path()).map_err(|_| anyhow!("invalid file path"))?;
-
-    let file_monitor = tokio::spawn(monitor_folder_into_queue(
-        crashes.clone(),
-        input_queue.clone(),
-    ));
+    let crashes = if input_queue.is_none() {
+        Some(crashes.into())
+    } else {
+        None
+    };
 
     let common = build_common_config(args)?;
     let config = Config {
@@ -65,27 +57,20 @@ pub fn build_report_config(
         target_timeout,
         check_retry_count,
         check_fuzzer_help,
-        input_queue: Some(input_queue),
+        input_queue,
         check_queue,
-        crashes: if batch_process {
-            Some(crashes.into())
-        } else {
-            None
-        },
+        crashes,
         reports,
         no_repro,
         unique_reports,
         common,
     };
-    Ok((config, file_monitor))
+    Ok(config)
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let (config, file_monitor) = build_report_config(args, true)?;
-    let _run_handle = tokio::task::spawn(file_monitor);
+    let config = build_report_config(args, None)?;
     ReportTask::new(config).managed_run().await
-
-    // let run = tokio::try_join!(run_handle, file_monitor)?;
 }
 
 pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {

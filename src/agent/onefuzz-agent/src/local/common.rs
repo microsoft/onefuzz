@@ -10,6 +10,7 @@ use std::{
 };
 use tokio::stream::StreamExt;
 
+use tempfile::tempdir;
 use uuid::Uuid;
 
 pub const SETUP_DIR: &str = "setup_dir";
@@ -183,14 +184,42 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
     Ok(config)
 }
 
-pub async fn monitor_folder_into_queue(path: impl AsRef<Path>, queue_url: Url) -> Result<()> {
-    let queue = storage_queue::QueueClient::new(queue_url.clone())?;
+/// Information about a local path being monitored
+/// A new notification will be received on the queue url
+/// For each new file added to the directory
+pub struct DirectoryMonitorQueue {
+    pub directory_path: PathBuf,
+    pub queue_url: Url,
+    pub handle: tokio::task::JoinHandle<std::result::Result<(), anyhow::Error>>,
+}
 
-    let mut monitor = DirectoryMonitor::new(PathBuf::from(path.as_ref()));
-    monitor.start()?;
-    while let Some(crash) = monitor.next().await {
-        let file_url = Url::from_file_path(crash).map_err(|_| anyhow!("invalid file path"))?;
-        queue.enqueue(file_url).await?
+impl DirectoryMonitorQueue {
+    pub async fn start_monitoring(directory_path: impl AsRef<Path>) -> Result<Self> {
+        let directory_path = PathBuf::from(directory_path.as_ref());
+        let queue_file = tempdir()?;
+        let queue_url =
+            Url::from_file_path(queue_file.path()).map_err(|_| anyhow!("invalid file path"))?;
+
+        let queue_url_clone = queue_url.clone();
+        let directory_path_clone = directory_path.clone();
+        let handle: tokio::task::JoinHandle<std::result::Result<(), anyhow::Error>> =
+            tokio::spawn(async move {
+                let queue = storage_queue::QueueClient::new(queue_url_clone.clone())?;
+
+                let mut monitor = DirectoryMonitor::new(directory_path_clone.clone());
+                monitor.start()?;
+                while let Some(crash) = monitor.next().await {
+                    let file_url =
+                        Url::from_file_path(crash).map_err(|_| anyhow!("invalid file path"))?;
+                    queue.enqueue(file_url).await?
+                }
+                Ok(())
+            });
+
+        Ok(DirectoryMonitorQueue {
+            directory_path,
+            queue_url,
+            handle,
+        })
     }
-    Ok(())
 }

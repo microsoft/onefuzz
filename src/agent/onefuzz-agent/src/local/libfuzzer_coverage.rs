@@ -10,9 +10,14 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use reqwest::Url;
 use std::path::PathBuf;
 
-pub fn build_coverage_config(args: &clap::ArgMatches<'_>, local_job: bool) -> Result<Config> {
+pub fn build_coverage_config(
+    args: &clap::ArgMatches<'_>,
+    local_job: bool,
+    input_queue: Option<Url>,
+) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
@@ -35,7 +40,7 @@ pub fn build_coverage_config(args: &clap::ArgMatches<'_>, local_job: bool) -> Re
         target_env,
         target_options,
         check_fuzzer_help,
-        input_queue: None,
+        input_queue,
         readonly_inputs,
         coverage,
         common,
@@ -45,10 +50,10 @@ pub fn build_coverage_config(args: &clap::ArgMatches<'_>, local_job: bool) -> Re
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_coverage_config(args, false)?;
+    let config = build_coverage_config(args, false, None)?;
 
-    let task = CoverageTask::new(config);
-    task.local_run().await
+    let mut task = CoverageTask::new(config);
+    task.managed_run().await
 }
 
 pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
