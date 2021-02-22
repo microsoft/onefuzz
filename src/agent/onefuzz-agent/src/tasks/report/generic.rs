@@ -10,10 +10,7 @@ use crate::tasks::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use futures::stream::StreamExt;
-use onefuzz::{
-    blob::BlobUrl, input_tester::Tester, monitor::DirectoryMonitor, sha256, syncdir::SyncedDir,
-};
+use onefuzz::{blob::BlobUrl, input_tester::Tester, sha256, syncdir::SyncedDir};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
@@ -63,30 +60,6 @@ impl ReportTask {
     pub fn new(config: Config) -> Self {
         let poller = InputPoller::new();
         Self { config, poller }
-    }
-
-    pub async fn local_run(&self) -> Result<()> {
-        let mut processor = GenericReportProcessor::new(&self.config, None);
-
-        info!("Starting generic crash report task");
-        let crashes = match &self.config.crashes {
-            Some(x) => x,
-            None => bail!("missing crashes directory"),
-        };
-
-        let mut read_dir = tokio::fs::read_dir(&crashes.path).await?;
-        while let Some(crash) = read_dir.next().await {
-            processor.process(None, &crash?.path()).await?;
-        }
-
-        if self.config.check_queue {
-            let mut monitor = DirectoryMonitor::new(&crashes.path);
-            monitor.start()?;
-            while let Some(crash) = monitor.next().await {
-                processor.process(None, &crash).await?;
-            }
-        }
-        Ok(())
     }
 
     pub async fn managed_run(&mut self) -> Result<()> {

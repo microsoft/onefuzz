@@ -24,8 +24,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let crash_report_input_monitor =
         DirectoryMonitorQueue::start_monitoring(crash_dir.clone()).await?;
     let report_config = build_report_config(args, Some(crash_report_input_monitor.queue_url))?;
-    let report = ReportTask::new(report_config);
-    let report_task = spawn(async move { report.local_run().await });
+    let report_task = spawn(async move { ReportTask::new(report_config).managed_run().await });
 
     let result = tokio::try_join!(fuzz_task, report_task, crash_report_input_monitor.handle)?;
     result.0?;

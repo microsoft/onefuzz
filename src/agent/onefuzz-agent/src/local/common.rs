@@ -40,6 +40,11 @@ pub const GENERATOR_EXE: &str = "generator_exe";
 pub const GENERATOR_ENV: &str = "generator_env";
 pub const GENERATOR_OPTIONS: &str = "generator_options";
 
+pub const ANALYZER_EXE: &str = "analyzer_exe";
+pub const ANALYZER_OPTIONS: &str = "analyzer_options";
+pub const ANALYZER_ENV: &str = "analyzer_env";
+pub const ANALYSIS_DIR: &str = "analysis_dir";
+
 pub enum CmdType {
     Target,
     Generator,
@@ -82,6 +87,15 @@ pub fn add_cmd_options(
     app
 }
 
+pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
+    let mut env = HashMap::new();
+    for opt in args.values_of_lossy(name).unwrap_or_default() {
+        let (k, v) = parse_key_value(opt)?;
+        env.insert(k, v);
+    }
+    Ok(env)
+}
+
 pub fn get_cmd_exe(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Result<String> {
     let name = match cmd_type {
         CmdType::Target => TARGET_EXE,
@@ -112,13 +126,7 @@ pub fn get_cmd_env(
         // CmdType::Supervisor => SUPERVISOR_ENV,
         CmdType::Generator => GENERATOR_ENV,
     };
-
-    let mut env = HashMap::new();
-    for opt in args.values_of_lossy(env_name).unwrap_or_default() {
-        let (k, v) = parse_key_value(opt)?;
-        env.insert(k, v);
-    }
-    Ok(env)
+    get_hash_map(args, env_name)
 }
 
 pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
