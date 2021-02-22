@@ -384,16 +384,36 @@ class Client:
                 mode=DeploymentMode.incremental, template=template, parameters=params
             )
         )
-        result = client.deployments.create_or_update(
-            self.resource_group, gen_guid(), deployment
-        ).result()
-        if result.properties.provisioning_state != "Succeeded":
-            logger.error(
-                "error deploying: %s",
-                json.dumps(result.as_dict(), indent=4, sort_keys=True),
-            )
-            sys.exit(1)
-        self.results["deploy"] = result.properties.outputs
+        count = 0
+        tries = 10
+        error: Optional[Exception] = None
+        while count < tries:
+            count += 1
+
+            try:
+                result = client.deployments.create_or_update(
+                    self.resource_group, gen_guid(), deployment
+                ).result()
+                if result.properties.provisioning_state != "Succeeded":
+                    logger.error(
+                        "error deploying: %s",
+                        json.dumps(result.as_dict(), indent=4, sort_keys=True),
+                    )
+                    sys.exit(1)
+                self.results["deploy"] = result.properties.outputs
+                return
+            except Exception as err:
+                error = err
+                as_repr = repr(err)
+                if (
+                    "PrincipalNotFound" in as_repr
+                    and "does not exist in the directory" in as_repr
+                ):
+                    logging.info("application principal not available in AAD yet")
+        if error:
+            raise error
+        else:
+            raise Exception("unknown error deploying")
 
     def assign_scaleset_identity_role(self) -> None:
         if self.upgrade:

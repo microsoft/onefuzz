@@ -235,7 +235,10 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
             return add_application_password_impl(app_object_id)
         except GraphQueryError as err:
             error = err
-            logging.warning("unable to create app password: %s", err.message)
+            if "Request_ResourceNotFound" in repr(err):
+                logging.info("app unavailable in AAD, unable to create password yet")
+            else:
+                logging.warning("unable to create app password: %s", err.message)
         time.sleep(wait_duration)
     if error:
         raise error
