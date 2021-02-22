@@ -3,6 +3,7 @@
 
 use crate::{
     local::{
+        common::DirectoryMonitorQueue,
         generic_crash_report::{build_report_config, build_shared_args as build_crash_args},
         generic_generator::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
@@ -15,14 +16,18 @@ use tokio::task::spawn;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let fuzz_config = build_fuzz_config(args)?;
+    let crash_dir = fuzz_config.crashes.path.clone();
+
     let fuzzer = GeneratorTask::new(fuzz_config);
     let fuzz_task = spawn(async move { fuzzer.run().await });
 
-    let report_config = build_report_config(args)?;
+    let crash_report_input_monitor =
+        DirectoryMonitorQueue::start_monitoring(crash_dir.clone()).await?;
+    let report_config = build_report_config(args, Some(crash_report_input_monitor.queue_url))?;
     let report = ReportTask::new(report_config);
     let report_task = spawn(async move { report.local_run().await });
 
-    let result = tokio::try_join!(fuzz_task, report_task)?;
+    let result = tokio::try_join!(fuzz_task, report_task, crash_report_input_monitor.handle)?;
     result.0?;
     result.1?;
 
