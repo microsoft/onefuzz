@@ -1,15 +1,46 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::sync::{LockResult, RwLockReadGuard, RwLockWriteGuard};
 use uuid::Uuid;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(transparent)]
+pub struct MicrosoftTelemetryKey(Uuid);
+impl MicrosoftTelemetryKey {
+    pub fn new(value: Uuid) -> Self {
+        Self(value)
+    }
+}
+
+impl fmt::Display for MicrosoftTelemetryKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct InstanceTelemetryKey(Uuid);
+impl InstanceTelemetryKey {
+    pub fn new(value: Uuid) -> Self {
+        Self(value)
+    }
+}
+
+impl fmt::Display for InstanceTelemetryKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 pub type TelemetryClient = appinsights::TelemetryClient<appinsights::InMemoryChannel>;
 pub enum ClientType {
     Instance,
-    Shared,
+    Microsoft,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -133,7 +164,7 @@ impl EventData {
         }
     }
 
-    pub fn can_share(&self) -> bool {
+    pub fn can_share_with_microsoft(&self) -> bool {
         match self {
             // TODO: Request CELA review of Version, as having this for central stats
             //       would be useful to track uptake of new releases
@@ -184,12 +215,12 @@ mod global {
     #[derive(Default)]
     pub struct Clients {
         instance: Option<RwLock<TelemetryClient>>,
-        shared: Option<RwLock<TelemetryClient>>,
+        microsoft: Option<RwLock<TelemetryClient>>,
     }
 
     pub static mut CLIENTS: Clients = Clients {
         instance: None,
-        shared: None,
+        microsoft: None,
     };
     const UNSET: usize = 0;
     const SETTING: usize = 1;
@@ -197,7 +228,7 @@ mod global {
 
     static STATE: AtomicUsize = AtomicUsize::new(UNSET);
 
-    pub fn set_clients(instance: Option<TelemetryClient>, shared: Option<TelemetryClient>) {
+    pub fn set_clients(instance: Option<TelemetryClient>, microsoft: Option<TelemetryClient>) {
         use Ordering::SeqCst;
 
         let last_state = STATE.compare_and_swap(UNSET, SETTING, SeqCst);
@@ -214,7 +245,7 @@ mod global {
 
         unsafe {
             CLIENTS.instance = instance.map(RwLock::new);
-            CLIENTS.shared = shared.map(RwLock::new);
+            CLIENTS.microsoft = microsoft.map(RwLock::new);
         }
 
         STATE.store(SET, SeqCst);
@@ -223,7 +254,7 @@ mod global {
     pub fn client_lock(client_type: ClientType) -> Option<&'static RwLock<TelemetryClient>> {
         match client_type {
             ClientType::Instance => unsafe { CLIENTS.instance.as_ref() },
-            ClientType::Shared => unsafe { CLIENTS.shared.as_ref() },
+            ClientType::Microsoft => unsafe { CLIENTS.microsoft.as_ref() },
         }
     }
 
@@ -243,13 +274,13 @@ mod global {
         assert_eq!(last_state, SET, "unexpected telemetry client state");
 
         let instance = unsafe { CLIENTS.instance.take() };
-        let shared = unsafe { CLIENTS.shared.take() };
+        let microsoft = unsafe { CLIENTS.microsoft.take() };
 
         STATE.store(UNSET, SeqCst);
 
         let mut clients = Vec::new();
 
-        for client in vec![instance, shared] {
+        for client in vec![instance, microsoft] {
             if let Some(client) = client {
                 match client.into_inner() {
                     Ok(c) => clients.push(c),
@@ -261,10 +292,13 @@ mod global {
     }
 }
 
-pub fn set_appinsights_clients(ikey: Option<Uuid>, tkey: Option<Uuid>) {
-    let instance_client = ikey.map(|k| TelemetryClient::new(k.to_string()));
-    let shared_client = tkey.map(|k| TelemetryClient::new(k.to_string()));
-    global::set_clients(instance_client, shared_client);
+pub fn set_appinsights_clients(
+    instance_key: Option<InstanceTelemetryKey>,
+    microsoft_key: Option<MicrosoftTelemetryKey>,
+) {
+    let instance_client = instance_key.map(|k| TelemetryClient::new(k.to_string()));
+    let microsoft_client = microsoft_key.map(|k| TelemetryClient::new(k.to_string()));
+    global::set_clients(instance_client, microsoft_client);
 }
 
 /// Try to submit any pending telemetry with a blocking call.
@@ -317,8 +351,8 @@ pub fn property(client_type: ClientType, key: impl AsRef<str>) -> Option<String>
 pub fn set_property(entry: EventData) {
     let (key, value) = entry.as_values();
 
-    if entry.can_share() {
-        if let Some(mut client) = client_mut(ClientType::Shared) {
+    if entry.can_share_with_microsoft() {
+        if let Some(mut client) = client_mut(ClientType::Microsoft) {
             client
                 .context_mut()
                 .properties_mut()
@@ -357,12 +391,12 @@ pub fn track_event(event: Event, properties: Vec<EventData>) {
         client.track(evt);
     }
 
-    if let Some(client) = client(ClientType::Shared) {
+    if let Some(client) = client(ClientType::Microsoft) {
         let mut evt = appinsights::telemetry::EventTelemetry::new(event.as_str());
         let props = evt.properties_mut();
 
         for property in &properties {
-            if property.can_share() {
+            if property.can_share_with_microsoft() {
                 let (name, val) = property.as_values();
                 props.insert(name.to_string(), val);
             }
