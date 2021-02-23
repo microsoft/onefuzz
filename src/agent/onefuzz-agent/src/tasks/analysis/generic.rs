@@ -38,7 +38,7 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
-pub async fn spawn(config: Config) -> Result<()> {
+pub async fn run(config: Config) -> Result<()> {
     let tmp_dir = PathBuf::from(format!("./{}/tmp", config.common.task_id));
     let tmp = OwnedDir::new(tmp_dir);
     tmp.reset().await?;
