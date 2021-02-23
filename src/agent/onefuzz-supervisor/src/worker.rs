@@ -3,7 +3,7 @@
 
 use std::{
     path::{Path, PathBuf},
-    process::{Child, Command, Stdio},
+    process::{Child, Command},
 };
 
 use anyhow::{Context as AnyhowContext, Result};
