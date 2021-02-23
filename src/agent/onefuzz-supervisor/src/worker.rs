@@ -228,8 +228,6 @@ impl IWorkerRunner for WorkerRunner {
         cmd.arg("managed");
         cmd.arg("config.json");
         cmd.arg(setup_dir);
-        cmd.stderr(Stdio::piped());
-        cmd.stdout(Stdio::piped());
 
         let child = cmd.spawn().context("onefuzz-agent failed to start")?;
         let child = Box::new(child);
