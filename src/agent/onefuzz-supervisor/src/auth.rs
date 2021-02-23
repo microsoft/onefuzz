@@ -115,7 +115,7 @@ impl ClientCredentials {
             let url = Url::parse(&self.resource.clone())?;
             let host = url
                 .host_str()
-                .ok_or_else(|| anyhow::format_err!("resource URL does not have a host string: {}", url)))?;
+                .ok_or_else(|| anyhow::format_err!("resource URL does not have a host string: {}", url))?;
             let instance: Vec<&str> = host.split('.').collect();
             (
                 String::from("common"),
