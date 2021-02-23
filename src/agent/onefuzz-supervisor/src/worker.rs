@@ -251,8 +251,14 @@ struct RedirectedChild {
 
 impl RedirectedChild {
     pub fn new(mut child: Child) -> Result<Self> {
-        let stderr = child.stderr.take().ok_or_else(|| format_err!("onefuzz-agent stderr not piped"))?;
-        let stdout = child.stdout.take().ok_or_else(|| format_err!("onefuzz-agent stdout not piped"))?;
+        let stderr = child
+            .stderr
+            .take()
+            .ok_or_else(|| format_err!("onefuzz-agent stderr not piped"))?;
+        let stdout = child
+            .stdout
+            .take()
+            .ok_or_else(|| format_err!("onefuzz-agent stdout not piped"))?;
         let streams = Some(StreamReaderThreads::new(stderr, stdout));
         Ok(Self { child, streams })
     }
@@ -305,8 +311,16 @@ impl StreamReaderThreads {
     }
 
     pub fn join(self) -> Result<CapturedStreams> {
-        let stderr = self.stderr.join().map_err(|_| format_err!("stderr tail thread panicked"))?.to_string_lossy();
-        let stdout = self.stdout.join().map_err(|_| format_err!("stdout tail thread panicked"))?.to_string_lossy();
+        let stderr = self
+            .stderr
+            .join()
+            .map_err(|_| format_err!("stderr tail thread panicked"))?
+            .to_string_lossy();
+        let stdout = self
+            .stdout
+            .join()
+            .map_err(|_| format_err!("stdout tail thread panicked"))?
+            .to_string_lossy();
 
         Ok(CapturedStreams { stderr, stdout })
     }
@@ -317,7 +331,9 @@ impl IWorkerChild for RedirectedChild {
         let output = if let Some(exit_status) = self.child.try_wait()? {
             let exit_status = exit_status.into();
             let streams = self.streams.take();
-            let streams = streams.ok_or_else(|| format_err!("onefuzz-agent streams not captured"))?.join()?;
+            let streams = streams
+                .ok_or_else(|| format_err!("onefuzz-agent streams not captured"))?
+                .join()?;
 
             Some(Output {
                 exit_status,
@@ -388,7 +404,6 @@ impl std::io::Write for CircularBuffer {
         Ok(())
     }
 }
-
 
 #[cfg(test)]
 pub mod double;
