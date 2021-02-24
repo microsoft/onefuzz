@@ -169,20 +169,21 @@ impl SendRetry for reqwest::RequestBuilder {
     }
 }
 
-// TODO: convert to feature-gated integration test.
-// #[cfg(test)]
-// mod test {
-//     use super::*;
+#[cfg(test)]
+mod test {
+    use super::*;
 
-//     #[tokio::test]
-//     async fn empty_stack() -> Result<()> {
-//         let resp = reqwest::Client::new()
-//             .get("http://localhost:5000/api/testGet")
-//             .send_retry_default()
-//             .await?;
-//         println!("{:?}", resp);
+    // TODO: convert to feature-gated integration test.
+    #[ignore]
+    #[tokio::test]
+    async fn empty_stack() -> Result<()> {
+        let resp = reqwest::Client::new()
+            .get("http://localhost:5000/api/testGet")
+            .send_retry_default()
+            .await?;
+        println!("{:?}", resp);
 
-//         assert!(resp.error_for_status().is_err());
-//         Ok(())
-//     }
-// }
+        assert!(resp.error_for_status().is_err());
+        Ok(())
+    }
+}
