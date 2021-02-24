@@ -353,7 +353,10 @@ class Client:
                     app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
                 )
                 set_app_audience(app.object_id, "AzureADMultipleOrgs")
-            elif not self.multi_tenant_domain and app.sign_in_audience == "AzureADMultipleOrgs":
+            elif (
+                not self.multi_tenant_domain
+                and app.sign_in_audience == "AzureADMultipleOrgs"
+            ):
                 set_app_audience(app.object_id, "AzureADMyOrg")
                 url = "https://%s.azurewebsites.net" % self.application_name
                 client.applications.patch(
