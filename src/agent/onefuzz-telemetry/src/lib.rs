@@ -207,7 +207,7 @@ mod global {
             Ok(SET) => panic!("tried to reset telemetry client"),
             Ok(UNSET) => {}
             Ok(state) => panic!("unknown telemetry client state while setting: {}", state),
-            Err(err) => panic!("failed to set telemetry client state: {}", err),
+            Err(state) => panic!("failed to set telemetry client state: {}", state),
         }
 
         unsafe {
@@ -235,7 +235,7 @@ mod global {
             Ok(SET) => {}
             Ok(UNSET) => panic!("tried to take unset telemetry client"),
             Ok(state) => panic!("unknown telemetry client state while taking: {}", state),
-            Err(err) => panic!("failed to take telemetry client state: {}", err),
+            Err(state) => panic!("failed to take telemetry client state: {}", state),
         }
 
         let instance = unsafe { CLIENTS.instance.take() };
