@@ -56,12 +56,21 @@ impl CrashLog {
             })
             .collect();
 
-        let llvm_test_one_input = Some(String::from("LLVMFuzzerTestOneInput"));
-        if minimized_stack_details.is_empty() {
+        // if we don't have a minimized stack, if one of these functions is on
+        // the stack, use it
+        for entry in &[
+            "LLVMFuzzerTestOneInput",
+            "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+            "main",
+        ] {
+            if !minimized_stack_details.is_empty() {
+                break;
+            }
+            let value = Some(String::from(*entry));
             minimized_stack_details = full_stack_details
                 .iter()
                 .filter_map(|x| {
-                    if x.function_name == llvm_test_one_input {
+                    if x.function_name == value {
                         Some(x.clone())
                     } else {
                         None

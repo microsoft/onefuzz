@@ -105,8 +105,21 @@
     "main",
     "__libc_start_main"
   ],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x444f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6",
+      "address": 4476817,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "file_name": "/src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
+      "file_line": 292,
+      "module_path": null,
+      "module_offset": null
+    }
+  ],
+  "minimized_stack": [
+    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)"
+  ],
   "scariness_score": null,
   "scariness_description": null
 }

@@ -57,8 +57,21 @@
     "main",
     "__libc_start_main"
   ],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
+  "minimized_stack_details": [
+    {
+      "line": "#2 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)",
+      "address": 4659282,
+      "function_name": "main",
+      "function_offset": null,
+      "file_name": null,
+      "file_line": null,
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4659282
+    }
+  ],
+  "minimized_stack": [
+    "main"
+  ],
   "scariness_score": null,
   "scariness_description": null
 }

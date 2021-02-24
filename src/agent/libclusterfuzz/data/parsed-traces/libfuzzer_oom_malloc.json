@@ -81,8 +81,21 @@
     "main",
     "__libc_start_main"
   ],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x915a48 in main /src/llvm/lib/Fuzzer/FuzzerMain.cpp:21:10",
+      "address": 9525832,
+      "function_name": "main",
+      "function_offset": 10,
+      "file_name": "/src/llvm/lib/Fuzzer/FuzzerMain.cpp",
+      "file_line": 21,
+      "module_path": null,
+      "module_offset": null
+    }
+  ],
+  "minimized_stack": [
+    "main"
+  ],
   "scariness_score": null,
   "scariness_description": null
 }

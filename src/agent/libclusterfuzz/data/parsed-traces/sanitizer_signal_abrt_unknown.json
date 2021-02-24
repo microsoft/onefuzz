@@ -21,8 +21,21 @@
   "full_stack_names": [
     "main"
   ],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
+  "minimized_stack_details": [
+    {
+      "line": "#5 0x5122e3 in main /src/libfuzzer/afl/afl_driver.cpp:287:7",
+      "address": 5317347,
+      "function_name": "main",
+      "function_offset": 7,
+      "file_name": "/src/libfuzzer/afl/afl_driver.cpp",
+      "file_line": 287,
+      "module_path": null,
+      "module_offset": null
+    }
+  ],
+  "minimized_stack": [
+    "main"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }
