@@ -344,6 +344,9 @@ class Client:
                     app.object_id, ApplicationUpdateParameters(app_roles=app_roles)
                 )
 
+            if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
+                assign_multi_tenant_auth(app.object_id)
+
             creds = list(client.applications.list_password_credentials(app.object_id))
             client.applications.update_password_credentials(app.object_id, creds)
 

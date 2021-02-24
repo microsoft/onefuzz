@@ -505,18 +505,29 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
 
 
 def assign_multi_tenant_auth(objectId: str) -> None:
-
+    http_body = {"signInAudience": "AzureADMultipleOrgs"}
     try:
         query_microsoft_graph(
             method="PATCH",
             resource="applications/%s" % objectId,
-            body={"signInAudience": "AzureADMultipleOrgs"},
+            body=http_body,
         )
-    except adal.AdalError:
-        raise Exception(
-            "error setting signInAudience in ad application %s: %s"
-            % (objectId, adal.AdalError)
+    except GraphQueryError:
+        query = (
+            "az rest --method patch --url "
+            "https://graph.microsoft.com/v1.0/applications/%s "
+            "--body '%s' --headers \"Content-Type\"=application/json"
+            % (objectId, http_body)
         )
+        logger.warning(
+            "execute the following query in the azure portal bash shell and run deploy.py again : \n%s"
+            % query
+        )
+        err_str = (
+            "Unable to set signInAudience using Microsoft Graph Query API. "
+            + "The user must enable Multitenant in the Application using azure bash shell or the AAD web portal."
+        )
+        raise Exception(err_str)
 
 
 def main() -> None:
