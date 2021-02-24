@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-appinsights = "0.1.4"
+appinsights = "0.1"
 log = "0.4"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 

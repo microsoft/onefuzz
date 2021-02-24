@@ -161,7 +161,7 @@ impl<M> InputPoller<M> {
         loop {
             match self.state() {
                 State::Polled(None) => {
-                    verbose!("Input queue empty, sleeping");
+                    debug!("Input queue empty, sleeping");
                     delay_with_jitter(POLL_INTERVAL).await;
                 }
                 State::Downloaded(_msg, _url, input, _tempdir) => {
@@ -241,7 +241,7 @@ impl<M> InputPoller<M> {
             (Parsed(msg, url), Download(downloader)) => {
                 let download_dir = tempdir()?;
                 if self.seen_in_batch(&url).await? {
-                    verbose!("url was seen during batch processing: {:?}", url);
+                    debug!("url was seen during batch processing: {:?}", url);
                     self.set_state(Processed(msg));
                 } else {
                     let input = downloader

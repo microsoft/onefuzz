@@ -33,6 +33,9 @@ def is_agent(token_data: UserInfo) -> bool:
         principal_id: UUID = get_scaleset_principal_id()
         return principal_id == token_data.object_id
 
+    if not token_data.application_id:
+        return False
+
     pools = Pool.search(query={"client_id": [token_data.application_id]})
     if len(pools) > 0:
         return True

@@ -18,6 +18,7 @@ from onefuzztypes.events import (
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm, UserInfo
+from onefuzztypes.primitives import PoolName
 
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
@@ -165,7 +166,7 @@ class Task(BASE_TASK, ORMMixin):
         return task
 
     @classmethod
-    def get_tasks_by_pool_name(cls, pool_name: str) -> List["Task"]:
+    def get_tasks_by_pool_name(cls, pool_name: PoolName) -> List["Task"]:
         tasks = cls.search_states(states=TaskState.available())
         if not tasks:
             return []
@@ -191,7 +192,10 @@ class Task(BASE_TASK, ORMMixin):
         self.set_state(TaskState.stopping, send=False)
         send_event(
             EventTaskStopped(
-                job_id=self.job_id, task_id=self.task_id, user_info=self.user_info
+                job_id=self.job_id,
+                task_id=self.task_id,
+                user_info=self.user_info,
+                config=self.config,
             )
         )
 
@@ -211,6 +215,7 @@ class Task(BASE_TASK, ORMMixin):
                 task_id=self.task_id,
                 error=error,
                 user_info=self.user_info,
+                config=self.config,
             )
         )
 
@@ -305,5 +310,6 @@ class Task(BASE_TASK, ORMMixin):
                 task_id=self.task_id,
                 state=self.state,
                 end_time=self.end_time,
+                config=self.config,
             )
         )

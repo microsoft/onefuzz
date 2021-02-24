@@ -137,7 +137,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
                 .evaluate_value(stats_file)?,
         )
     } else {
-        verbose!("no stats file to monitor");
+        debug!("no stats file to monitor");
         None
     };
 
@@ -192,6 +192,11 @@ async fn start_supervisor(
         })
         .set_optional_ref(&config.target_options, |expand, target_options| {
             expand.target_options(target_options)
+        })
+        .set_optional_ref(&config.crashes.url, |tester, url| {
+            tester
+                .crashes_account(&url.account())
+                .crashes_container(&url.container())
         });
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;

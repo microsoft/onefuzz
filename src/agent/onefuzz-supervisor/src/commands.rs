@@ -44,7 +44,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
             .await?;
     }
 
-    verbose!("removing Authenticated Users permissions from administrators_authorized_keys");
+    debug!("removing Authenticated Users permissions from administrators_authorized_keys");
     let result = Command::new("icacls.exe")
         .arg(&admin_auth_keys_path)
         .arg("/remove")
@@ -65,7 +65,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         );
     }
 
-    verbose!("removing inheritance");
+    debug!("removing inheritance");
     let result = Command::new("icacls.exe")
         .arg(&admin_auth_keys_path)
         .arg("/inheritance:r")
@@ -85,7 +85,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         );
     }
 
-    verbose!("copying ACL from ssh_host_dsa_key");
+    debug!("copying ACL from ssh_host_dsa_key");
     let result = Command::new("powershell.exe")
         .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
         .arg(format!(
@@ -132,11 +132,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
     let mut ssh_path = home_path.join(".ssh");
     if !ssh_path.exists() {
-        verbose!("creating ssh directory: {}", ssh_path.display());
+        debug!("creating ssh directory: {}", ssh_path.display());
         fs::create_dir_all(&ssh_path).await?;
     }
 
-    verbose!("setting ssh permissions");
+    debug!("setting ssh permissions");
     let result = Command::new("chmod")
         .arg("700")
         .arg(&ssh_path)
@@ -160,7 +160,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
             .await?;
     }
 
-    verbose!("setting authorized_keys permissions");
+    debug!("setting authorized_keys permissions");
     let result = Command::new("chmod")
         .arg("600")
         .arg(&ssh_path)

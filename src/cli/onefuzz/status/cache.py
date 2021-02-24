@@ -36,7 +36,7 @@ from onefuzztypes.models import (
     TaskContainers,
     UserInfo,
 )
-from onefuzztypes.primitives import Container
+from onefuzztypes.primitives import Container, PoolName
 from pydantic import BaseModel
 
 MESSAGE = Tuple[datetime, EventType, str]
@@ -49,7 +49,7 @@ DAYS = 24 * HOURS
 # status-top only representation of a Node
 class MiniNode(BaseModel):
     machine_id: UUID
-    pool_name: str
+    pool_name: PoolName
     state: NodeState
 
 

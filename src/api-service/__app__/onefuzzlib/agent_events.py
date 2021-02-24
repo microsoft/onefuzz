@@ -25,9 +25,9 @@ from onefuzztypes.models import (
     WorkerRunningEvent,
 )
 
-from ..onefuzzlib.task_event import TaskEvent
-from ..onefuzzlib.tasks.main import Task
-from ..onefuzzlib.workers.nodes import Node, NodeTasks
+from .task_event import TaskEvent
+from .tasks.main import Task
+from .workers.nodes import Node, NodeTasks
 
 MAX_OUTPUT_SIZE = 4096
 

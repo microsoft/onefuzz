@@ -12,6 +12,23 @@ pub enum ClientType {
     Shared,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum Role {
+    Agent,
+    Proxy,
+    Supervisor,
+}
+
+impl Role {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Agent => "agent",
+            Self::Proxy => "proxy",
+            Self::Supervisor => "supervisor",
+        }
+    }
+}
+
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug)]
 pub enum Event {
@@ -75,6 +92,7 @@ pub enum EventData {
     CoverageMaxDepth(u64),
     ToolName(String),
     Region(String),
+    Role(Role),
 }
 
 impl EventData {
@@ -111,6 +129,7 @@ impl EventData {
             Self::Coverage(x) => ("coverage", x.to_string()),
             Self::ToolName(x) => ("tool_name", x.to_owned()),
             Self::Region(x) => ("region", x.to_owned()),
+            Self::Role(x) => ("role", x.as_str().to_owned()),
         }
     }
 
@@ -149,6 +168,7 @@ impl EventData {
             Self::Coverage(_) => true,
             Self::ToolName(_) => true,
             Self::Region(_) => false,
+            Self::Role(_) => false,
         }
     }
 }
@@ -180,17 +200,15 @@ mod global {
     pub fn set_clients(instance: Option<TelemetryClient>, shared: Option<TelemetryClient>) {
         use Ordering::SeqCst;
 
-        let last_state = STATE.compare_and_swap(UNSET, SETTING, SeqCst);
+        let result = STATE.compare_exchange(UNSET, SETTING, SeqCst, SeqCst);
 
-        if last_state == SETTING {
-            panic!("race while setting telemetry client");
+        match result {
+            Ok(SETTING) => panic!("race while setting telemetry client"),
+            Ok(SET) => panic!("tried to reset telemetry client"),
+            Ok(UNSET) => {}
+            Ok(state) => panic!("unknown telemetry client state while setting: {}", state),
+            Err(state) => panic!("failed to set telemetry client state: {}", state),
         }
-
-        if last_state == SET {
-            panic!("tried to reset telemetry client");
-        }
-
-        assert_eq!(last_state, UNSET, "unexpected telemetry client state");
 
         unsafe {
             CLIENTS.instance = instance.map(RwLock::new);
@@ -210,17 +228,15 @@ mod global {
     pub fn take_clients() -> Vec<TelemetryClient> {
         use Ordering::SeqCst;
 
-        let last_state = STATE.compare_and_swap(SET, SETTING, SeqCst);
+        let result = STATE.compare_exchange(SET, SETTING, SeqCst, SeqCst);
 
-        if last_state == SETTING {
-            panic!("race while taking telemetry client");
+        match result {
+            Ok(SETTING) => panic!("race while taking telemetry client"),
+            Ok(SET) => {}
+            Ok(UNSET) => panic!("tried to take unset telemetry client"),
+            Ok(state) => panic!("unknown telemetry client state while taking: {}", state),
+            Err(state) => panic!("failed to take telemetry client state: {}", state),
         }
-
-        if last_state == UNSET {
-            panic!("tried to take unset telemetry client");
-        }
-
-        assert_eq!(last_state, SET, "unexpected telemetry client state");
 
         let instance = unsafe { CLIENTS.instance.take() };
         let shared = unsafe { CLIENTS.shared.take() };
@@ -398,7 +414,7 @@ macro_rules! log {
 }
 
 #[macro_export]
-macro_rules! verbose {
+macro_rules! debug {
     ($($tt: tt)*) => {{
         let msg = format!($($tt)*);
         onefuzz_telemetry::log!(onefuzz_telemetry::Verbose, msg);
