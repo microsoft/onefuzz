@@ -514,7 +514,7 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
 
 def set_app_audience(objectId: str, audience: str) -> None:
     # typical audience values: AzureADMyOrg, AzureADMultipleOrgs
-    http_body = {"signInAudienceXXX": audience}
+    http_body = {"signInAudience": audience}
     try:
         query_microsoft_graph(
             method="PATCH",
