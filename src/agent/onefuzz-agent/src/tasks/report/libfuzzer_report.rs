@@ -32,12 +32,15 @@ pub struct Config {
     pub reports: Option<SyncedDir>,
     pub unique_reports: Option<SyncedDir>,
     pub no_repro: Option<SyncedDir>,
-
+    
     #[serde(default = "default_bool_true")]
     pub check_fuzzer_help: bool,
 
     #[serde(default)]
     pub check_retry_count: u64,
+    
+    #[serde(default)]
+    pub minimized_stack_depth: Option<usize>,
 
     #[serde(default = "default_bool_true")]
     pub check_queue: bool,
@@ -172,6 +175,7 @@ impl AsanProcessor {
                     &self.config.target_exe,
                     input_blob,
                     input_sha256,
+                    self.config.minimized_stack_depth,
                 );
                 Ok(CrashTestResult::CrashReport(crash_report))
             }

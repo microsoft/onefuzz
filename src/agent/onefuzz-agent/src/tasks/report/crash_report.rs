@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use tokio::fs;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 pub struct CrashReport {
     pub input_sha256: String,
 
@@ -35,8 +35,12 @@ pub struct CrashReport {
     pub crash_site: String,
 
     pub call_stack: Vec<String>,
-
     pub call_stack_sha256: String,
+   
+    #[serde(default)]
+    pub minimized_stack: Vec<String>,
+    #[serde(default)]
+    pub minimized_stack_sha256: Option<String>,
 
     pub asan_log: Option<String>,
 
@@ -166,8 +170,14 @@ impl CrashReport {
         executable: impl Into<PathBuf>,
         input_blob: Option<InputBlob>,
         input_sha256: String,
+        minimized_stack_depth: Option<usize>,
     ) -> Self {
         let call_stack_sha256 = crash_log.call_stack_sha256();
+        let minimized_stack_sha256 = if crash_log.minimized_stack.is_empty() {
+            None
+        } else {
+            Some(crash_log.minimized_stack_sha256(minimized_stack_depth))
+        };
         Self {
             input_sha256,
             input_blob,
@@ -175,6 +185,8 @@ impl CrashReport {
             crash_type: crash_log.fault_type,
             crash_site: crash_log.summary,
             call_stack_sha256,
+            minimized_stack: crash_log.minimized_stack,
+            minimized_stack_sha256,
             call_stack: crash_log.call_stack,
             asan_log: Some(crash_log.text),
             scariness_score: crash_log.scariness_score,

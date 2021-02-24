@@ -98,11 +98,11 @@ impl CrashLog {
     }
 
     pub fn call_stack_sha256(&self) -> String {
-        digest_iter(&self.call_stack)
+        digest_iter(&self.call_stack, None)
     }
 
-    pub fn minimized_stack_sha256(&self) -> String {
-        digest_iter(&self.minimized_stack)
+    pub fn minimized_stack_sha256(&self, depth: Option<usize>) -> String {
+        digest_iter(&self.minimized_stack, depth)
     }
 }
 
@@ -124,11 +124,17 @@ pub fn parse_call_stack(text: &str) -> Result<Vec<StackEntry>> {
     asan::parse_asan_call_stack(text)
 }
 
-fn digest_iter(data: impl IntoIterator<Item = impl AsRef<[u8]>>) -> String {
+fn digest_iter(data: impl IntoIterator<Item = impl AsRef<[u8]>>, depth: Option<usize>) -> String {
     let mut ctx = Sha256::new();
 
-    for frame in data {
-        ctx.update(frame);
+    if let Some(depth) = depth {
+        for frame in data.into_iter().take(depth) {
+            ctx.update(frame);
+        }
+    } else {
+        for frame in data {
+            ctx.update(frame);
+        }
     }
 
     hex::encode(ctx.finalize())

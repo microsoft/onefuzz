@@ -50,6 +50,7 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
         check_retry_count,
         check_queue,
         crashes,
+        minimized_stack_depth: None,
         input_queue: None,
         no_repro,
         reports,

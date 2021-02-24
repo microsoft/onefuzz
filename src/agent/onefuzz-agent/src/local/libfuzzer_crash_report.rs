@@ -45,6 +45,7 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
         target_timeout,
         check_retry_count,
         check_fuzzer_help,
+        minimized_stack_depth: None,
         input_queue: None,
         check_queue,
         crashes,
