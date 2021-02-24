@@ -200,7 +200,7 @@ mod global {
     pub fn set_clients(instance: Option<TelemetryClient>, shared: Option<TelemetryClient>) {
         use Ordering::SeqCst;
 
-        let last_state = STATE.compare_and_swap(UNSET, SETTING, SeqCst);
+        let last_state = STATE.compare_exchange(UNSET, SETTING, SeqCst, SeqCst);
 
         if last_state == SETTING {
             panic!("race while setting telemetry client");
@@ -230,7 +230,7 @@ mod global {
     pub fn take_clients() -> Vec<TelemetryClient> {
         use Ordering::SeqCst;
 
-        let last_state = STATE.compare_and_swap(SET, SETTING, SeqCst);
+        let last_state = STATE.compare_exchange(SET, SETTING, SeqCst, SeqCst);
 
         if last_state == SETTING {
             panic!("race while taking telemetry client");
