@@ -21,6 +21,7 @@ from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
 from pydantic import BaseModel
 
 from .__version__ import __version__
+from .azure.creds import get_instance_id, get_instance_name
 from .azure.queue import queue_object
 from .azure.storage import StorageType
 from .orm import ORMMixin
@@ -169,13 +170,22 @@ class Webhook(BASE_WEBHOOK, ORMMixin):
             event_id=event_message.event_id,
             event_type=event_message.event_type,
             event=event_message.event,
+            instance_id=event_message.instance_id,
+            instance_name=event_message.instance_name,
         )
         message.save()
         message.queue_webhook()
 
     def ping(self) -> EventPing:
         ping = EventPing(ping_id=uuid4())
-        self._add_event(EventMessage(event_type=EventType.ping, event=ping))
+        self._add_event(
+            EventMessage(
+                event_type=EventType.ping,
+                event=ping,
+                instance_id=get_instance_id(),
+                instance_name=get_instance_name(),
+            )
+        )
         return ping
 
     def send(self, message_log: WebhookMessageLog) -> bool:
@@ -213,7 +223,12 @@ def build_message(
 ) -> Tuple[bytes, Optional[str]]:
     data = (
         WebhookMessage(
-            webhook_id=webhook_id, event_id=event_id, event_type=event_type, event=event
+            webhook_id=webhook_id,
+            event_id=event_id,
+            event_type=event_type,
+            event=event,
+            instance_id=get_instance_id(),
+            instance_name=get_instance_name(),
         )
         .json(sort_keys=True, exclude_none=True)
         .encode()

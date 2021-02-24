@@ -25,6 +25,7 @@ class EventTaskStopped(BaseEvent):
     job_id: UUID
     task_id: UUID
     user_info: Optional[UserInfo]
+    config: TaskConfig
 
 
 class EventTaskFailed(BaseEvent):
@@ -32,6 +33,7 @@ class EventTaskFailed(BaseEvent):
     task_id: UUID
     error: Error
     user_info: Optional[UserInfo]
+    config: TaskConfig
 
 
 class EventJobCreated(BaseEvent):
@@ -58,6 +60,7 @@ class EventTaskStateUpdated(BaseEvent):
     task_id: UUID
     state: TaskState
     end_time: Optional[datetime]
+    config: TaskConfig
 
 
 class EventPing(BaseResponse):
@@ -223,3 +226,5 @@ class EventMessage(BaseEvent):
     event_id: UUID = Field(default_factory=uuid4)
     event_type: EventType
     event: Event
+    instance_id: UUID
+    instance_name: str
