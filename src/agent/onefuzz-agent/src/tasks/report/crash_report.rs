@@ -4,7 +4,6 @@
 use anyhow::{Context, Result};
 use futures::StreamExt;
 use onefuzz::{
-    asan::AsanLog,
     blob::{BlobClient, BlobUrl},
     fs::exists,
     monitor::DirectoryMonitor,
@@ -17,6 +16,7 @@ use onefuzz_telemetry::{
 use reqwest::{StatusCode, Url};
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
+use stacktrace_parser::CrashLog;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 use uuid::Uuid;
@@ -160,24 +160,25 @@ impl From<BlobUrl> for InputBlob {
 
 impl CrashReport {
     pub fn new(
-        asan_log: AsanLog,
+        crash_log: CrashLog,
         task_id: Uuid,
         job_id: Uuid,
         executable: impl Into<PathBuf>,
         input_blob: Option<InputBlob>,
         input_sha256: String,
     ) -> Self {
+        let call_stack_sha256 = crash_log.call_stack_sha256();
         Self {
             input_sha256,
             input_blob,
             executable: executable.into(),
-            crash_type: asan_log.fault_type().into(),
-            crash_site: asan_log.summary().into(),
-            call_stack: asan_log.call_stack().to_vec(),
-            call_stack_sha256: asan_log.call_stack_sha256(),
-            asan_log: Some(asan_log.text().to_string()),
-            scariness_score: asan_log.scariness_score(),
-            scariness_description: asan_log.scariness_description().to_owned(),
+            crash_type: crash_log.fault_type,
+            crash_site: crash_log.summary,
+            call_stack_sha256,
+            call_stack: crash_log.call_stack,
+            asan_log: Some(crash_log.text),
+            scariness_score: crash_log.scariness_score,
+            scariness_description: crash_log.scariness_description,
             task_id,
             job_id,
         }

@@ -1235,6 +1235,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7282d924be3275cec7f6756ff4121987bc6481325397dde6ba3e7802b1a8b1c"
 
 [[package]]
+name = "libclusterfuzz"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "regex",
+]
+
+[[package]]
 name = "libproc"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1570,6 +1578,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sha2",
+ "stacktrace-parser",
  "storage-queue",
  "strum",
  "strum_macros",
@@ -1603,6 +1612,7 @@ dependencies = [
  "reqwest-retry",
  "serde",
  "serde_json",
+ "stacktrace-parser",
  "storage-queue",
  "tempfile",
  "tokio",
@@ -2388,6 +2398,17 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "stacktrace-parser"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "hex",
+ "libclusterfuzz",
+ "regex",
+ "sha2",
+]
 
 [[package]]
 name = "static_assertions"
