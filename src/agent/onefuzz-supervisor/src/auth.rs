@@ -113,9 +113,9 @@ impl ClientCredentials {
     pub async fn access_token(&self) -> Result<AccessToken> {
         let (authority, resource) = if let Some(domain) = &self.multi_tenant_domain {
             let url = Url::parse(&self.resource.clone())?;
-            let host = url
-                .host_str()
-                .ok_or_else(|| anyhow::format_err!("resource URL does not have a host string: {}", url))?;
+            let host = url.host_str().ok_or_else(|| {
+                anyhow::format_err!("resource URL does not have a host string: {}", url)
+            })?;
             let instance: Vec<&str> = host.split('.').collect();
             (
                 String::from("common"),
