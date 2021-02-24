@@ -262,6 +262,14 @@ mod tests {
                 )
             })?;
 
+            if !parsed.call_stack.is_empty() {
+                assert!(
+                    !parsed.minimized_stack.is_empty(),
+                    "minimized call stack got reduced to nothing {}",
+                    path.display()
+                );
+            }
+
             let mut expected_path = expected_dir.join(&file_name);
             expected_path.set_extension("json");
             if !expected_path.is_file() {

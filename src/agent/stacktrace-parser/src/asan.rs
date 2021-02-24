@@ -11,6 +11,8 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
 
     let base = r"\s*#(?P<frame>\d+)\s+0x(?P<address>[0-9a-fA-F]+)\s";
     let entries = &[
+        // "in libc.so.6"
+        r"in (?P<module_path_3>[a-z0-9.]+)$",
         // "module::func(char *args) (/path/to/bin+0x123)"
         r"in (?P<func_1>.*) \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
         // "in foo /path:16:17"
@@ -74,6 +76,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                 let module_path = captures
                     .name("module_path_1")
                     .or(captures.name("module_path_2"))
+                    .or(captures.name("module_path_3"))
                     .map(|x| x.as_str().to_string());
 
                 let module_offset = match captures
@@ -225,6 +228,15 @@ mod tests {
                     source_file_path: Some("/path/to/source.c".to_string()),
                     source_file_name: Some("source.c".to_string()),
                     source_file_line: Some(67),
+                    ..Default::default()
+                }],
+            ),
+            (
+                r"#0 0x3 in libc.so.6",
+                vec![StackEntry {
+                    line: r"#0 0x3 in libc.so.6".to_string(),
+                    address: Some(3),
+                    module_path: Some("libc.so.6".to_string()),
                     ..Default::default()
                 }],
             ),
