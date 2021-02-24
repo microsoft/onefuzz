@@ -198,17 +198,15 @@ mod global {
     pub fn set_clients(instance: Option<TelemetryClient>, shared: Option<TelemetryClient>) {
         use Ordering::SeqCst;
 
-        let last_state = STATE.compare_and_swap(UNSET, SETTING, SeqCst);
+        let result = STATE.compare_exchange(UNSET, SETTING, SeqCst, SeqCst);
 
-        if last_state == SETTING {
-            panic!("race while setting telemetry client");
+        match result {
+            Ok(SETTING) => panic!("race while setting telemetry client"),
+            Ok(SET) => panic!("tried to reset telemetry client"),
+            Ok(UNSET) => {}
+            Ok(state) => panic!("unknown telemetry client state while setting: {}", state),
+            Err(state) => panic!("failed to set telemetry client state: {}", state),
         }
-
-        if last_state == SET {
-            panic!("tried to reset telemetry client");
-        }
-
-        assert_eq!(last_state, UNSET, "unexpected telemetry client state");
 
         unsafe {
             CLIENTS.instance = instance.map(RwLock::new);
@@ -228,17 +226,15 @@ mod global {
     pub fn take_clients() -> Vec<TelemetryClient> {
         use Ordering::SeqCst;
 
-        let last_state = STATE.compare_and_swap(SET, SETTING, SeqCst);
+        let result = STATE.compare_exchange(SET, SETTING, SeqCst, SeqCst);
 
-        if last_state == SETTING {
-            panic!("race while taking telemetry client");
+        match result {
+            Ok(SETTING) => panic!("race while taking telemetry client"),
+            Ok(SET) => {}
+            Ok(UNSET) => panic!("tried to take unset telemetry client"),
+            Ok(state) => panic!("unknown telemetry client state while taking: {}", state),
+            Err(state) => panic!("failed to take telemetry client state: {}", state),
         }
-
-        if last_state == UNSET {
-            panic!("tried to take unset telemetry client");
-        }
-
-        assert_eq!(last_state, SET, "unexpected telemetry client state");
 
         let instance = unsafe { CLIENTS.instance.take() };
         let shared = unsafe { CLIENTS.shared.take() };
