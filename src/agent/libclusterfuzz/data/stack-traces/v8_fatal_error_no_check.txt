@@ -1,4 +1,0 @@
-#
-# Fatal error in v8::HandleScope::CreateHandle()
-# Cannot create a handle without a HandleScope
-#

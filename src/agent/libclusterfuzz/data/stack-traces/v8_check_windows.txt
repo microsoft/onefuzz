@@ -1,4 +1,0 @@
-#
-# Fatal error in ..\..\v8\src\objects-debug.cc, line 1234
-# Check failed: !field_type->NowStable().
-#

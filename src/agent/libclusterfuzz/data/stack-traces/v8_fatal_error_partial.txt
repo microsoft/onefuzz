@@ -1,2 +1,0 @@
-#
-# Fatal error in ../../src/objects-inl.h, line 2244

@@ -1,4 +1,0 @@
-#
-# Fatal error in ../../src/arm/simulator-arm.cc, line 3715
-# something that isn't supported yet
-#
