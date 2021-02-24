@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::StackEntry;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use regex::Regex;
 
 pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
@@ -119,7 +119,17 @@ pub(crate) fn parse_asan_runtime_error(text: &str) -> Option<(String, String, St
     Some((summary.into(), sanitizer.into(), fault_type.into()))
 }
 
-pub(crate) fn parse_summary(text: &str) -> Option<(String, String, String)> {
+pub(crate) fn parse_asan_abort_error(text: &str) -> Option<(String, String, String)> {
+    let pattern = r"==\d+==\s*(ERROR|WARNING): (?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): (?P<fault_type>ABRT|access-violation|deadly signal|use-of-uninitialized-value|stack-overflow)[^\n]*)";
+    let re = Regex::new(pattern).ok()?;
+    let captures = re.captures(text)?;
+    let summary = captures.name("summary")?.as_str().trim();
+    let sanitizer = captures.name("sanitizer")?.as_str().trim();
+    let fault_type = captures.name("fault_type")?.as_str().trim();
+    Some((summary.into(), sanitizer.into(), fault_type.into()))
+}
+
+pub(crate) fn parse_summary_base(text: &str) -> Option<(String, String, String)> {
     let pattern = r"SUMMARY: ((\w+): (data race|deadly signal|odr-violation|[^ \n]+).*)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
@@ -127,6 +137,20 @@ pub(crate) fn parse_summary(text: &str) -> Option<(String, String, String)> {
     let sanitizer = captures.get(2)?.as_str().trim();
     let fault_type = captures.get(3)?.as_str().trim();
     Some((summary.into(), sanitizer.into(), fault_type.into()))
+}
+
+pub(crate) fn parse_summary(text: &str) -> Result<(String, String, String)> {
+    if let Some((summary, sanitizer, fault_type)) = parse_summary_base(&text) {
+        return Ok((summary, sanitizer, fault_type));
+    }
+    if let Some((summary, sanitizer, fault_type)) = parse_asan_abort_error(&text) {
+        return Ok((summary, sanitizer, fault_type));
+    }
+    if let Some((summary, sanitizer, fault_type)) = parse_asan_runtime_error(&text) {
+        return Ok((summary, sanitizer, fault_type));
+    }
+
+    bail!("unable to parse crash log summary")
 }
 
 #[cfg(test)]

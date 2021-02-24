@@ -32,10 +32,6 @@ HEADER = """
 
 """
 
-# TODO: when clusterfuzz #2557 is merged, this should be removed
-def clean(value: str) -> str:
-    return value.replace('\\@', '@')
-
 for name in sorted(dir(constants)):
     if all(x in string.ascii_uppercase + "_" for x in name):
         entry = getattr(constants, name)
@@ -46,7 +42,7 @@ for name in sorted(dir(constants)):
 
 for_rust = {
     "STACK_FRAME_IGNORE_REGEXES": [
-        f'r"{clean(x)}"' for x in data["STACK_FRAME_IGNORE_REGEXES"]
+        f'r"{x}"' for x in data["STACK_FRAME_IGNORE_REGEXES"]
     ],
 }
 

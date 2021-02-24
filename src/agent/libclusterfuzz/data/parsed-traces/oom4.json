@@ -1,0 +1,263 @@
+{
+  "text": "Running: /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/2865ac1ef97c5b82fcbb58bb6e4880f5d2cddf24a003c886d7ac6510dcfuzz-0\n==7320==ERROR: MemorySanitizer: requested allocation size 0x3ff00000000 exceeds maximum supported size of 0x200000000\n#0 0x35c73d in __interceptor_malloc third_party/llvm/compiler-rt/lib/msan/msan_interceptors.cc:907:3\n#1 0x5f2af9 in opj_j2k_update_image_data third_party/pdfium/third_party/libopenjpeg20/j2k.c:9184:50\n#2 0x5f0a40 in opj_j2k_decode_tiles third_party/pdfium/third_party/libopenjpeg20/j2k.c:10734:15\n#3 0x5c4230 in opj_j2k_exec third_party/pdfium/third_party/libopenjpeg20/j2k.c:8090:33\n#4 0x5d5991 in opj_j2k_decode third_party/pdfium/third_party/libopenjpeg20/j2k.c:11019:11\n#5 0x5c1a9d in opj_decode third_party/pdfium/third_party/libopenjpeg20/openjpeg.c:483:16\n#6 0x5b2b76 in CJPX_Decoder::Init(unsigned char const*, unsigned int) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:526:11\n#7 0x5b5c9c in CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:652:19\n#8 0x3aa1fb in LLVMFuzzerTestOneInput third_party/pdfium/testing/fuzzers/pdf_jpx_fuzzer.cc:23:16\n#9 0x3eac69 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:526:13\n#10 0x3bc9d0 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:280:6\n#11 0x3c7634 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:707:9\n#12 0x40a250 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10\n#13 0x7f41340d382f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291\n==7320==HINT: if you don't care about these errors you may set =allocator_may_return_null=1\nSUMMARY: MemorySanitizer: allocation-size-too-big (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-msan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-569934/pdf_jpx_fuzzer+0x35c73d)\n",
+  "sanitizer": "MemorySanitizer",
+  "summary": "MemorySanitizer: allocation-size-too-big (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-msan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-569934/pdf_jpx_fuzzer+0x35c73d)",
+  "fault_type": "allocation-size-too-big",
+  "call_stack": [
+    "#0 0x35c73d in __interceptor_malloc third_party/llvm/compiler-rt/lib/msan/msan_interceptors.cc:907:3",
+    "#1 0x5f2af9 in opj_j2k_update_image_data third_party/pdfium/third_party/libopenjpeg20/j2k.c:9184:50",
+    "#2 0x5f0a40 in opj_j2k_decode_tiles third_party/pdfium/third_party/libopenjpeg20/j2k.c:10734:15",
+    "#3 0x5c4230 in opj_j2k_exec third_party/pdfium/third_party/libopenjpeg20/j2k.c:8090:33",
+    "#4 0x5d5991 in opj_j2k_decode third_party/pdfium/third_party/libopenjpeg20/j2k.c:11019:11",
+    "#5 0x5c1a9d in opj_decode third_party/pdfium/third_party/libopenjpeg20/openjpeg.c:483:16",
+    "#6 0x5b2b76 in CJPX_Decoder::Init(unsigned char const*, unsigned int) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:526:11",
+    "#7 0x5b5c9c in CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:652:19",
+    "#8 0x3aa1fb in LLVMFuzzerTestOneInput third_party/pdfium/testing/fuzzers/pdf_jpx_fuzzer.cc:23:16",
+    "#9 0x3eac69 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:526:13",
+    "#10 0x3bc9d0 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:280:6",
+    "#11 0x3c7634 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:707:9",
+    "#12 0x40a250 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+    "#13 0x7f41340d382f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x35c73d in __interceptor_malloc third_party/llvm/compiler-rt/lib/msan/msan_interceptors.cc:907:3",
+      "address": 3524413,
+      "function_name": "__interceptor_malloc",
+      "function_offset": 3,
+      "file_name": "third_party/llvm/compiler-rt/lib/msan/msan_interceptors.cc",
+      "file_line": 907,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#1 0x5f2af9 in opj_j2k_update_image_data third_party/pdfium/third_party/libopenjpeg20/j2k.c:9184:50",
+      "address": 6236921,
+      "function_name": "opj_j2k_update_image_data",
+      "function_offset": 50,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/j2k.c",
+      "file_line": 9184,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#2 0x5f0a40 in opj_j2k_decode_tiles third_party/pdfium/third_party/libopenjpeg20/j2k.c:10734:15",
+      "address": 6228544,
+      "function_name": "opj_j2k_decode_tiles",
+      "function_offset": 15,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/j2k.c",
+      "file_line": 10734,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#3 0x5c4230 in opj_j2k_exec third_party/pdfium/third_party/libopenjpeg20/j2k.c:8090:33",
+      "address": 6046256,
+      "function_name": "opj_j2k_exec",
+      "function_offset": 33,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/j2k.c",
+      "file_line": 8090,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#4 0x5d5991 in opj_j2k_decode third_party/pdfium/third_party/libopenjpeg20/j2k.c:11019:11",
+      "address": 6117777,
+      "function_name": "opj_j2k_decode",
+      "function_offset": 11,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/j2k.c",
+      "file_line": 11019,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#5 0x5c1a9d in opj_decode third_party/pdfium/third_party/libopenjpeg20/openjpeg.c:483:16",
+      "address": 6036125,
+      "function_name": "opj_decode",
+      "function_offset": 16,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/openjpeg.c",
+      "file_line": 483,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#6 0x5b2b76 in CJPX_Decoder::Init(unsigned char const*, unsigned int) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:526:11",
+      "address": 5974902,
+      "function_name": "CJPX_Decoder::Init(unsigned char const*, unsigned int)",
+      "function_offset": 11,
+      "file_name": "third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp",
+      "file_line": 526,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#7 0x5b5c9c in CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:652:19",
+      "address": 5987484,
+      "function_name": "CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*)",
+      "function_offset": 19,
+      "file_name": "third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp",
+      "file_line": 652,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#8 0x3aa1fb in LLVMFuzzerTestOneInput third_party/pdfium/testing/fuzzers/pdf_jpx_fuzzer.cc:23:16",
+      "address": 3842555,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 16,
+      "file_name": "third_party/pdfium/testing/fuzzers/pdf_jpx_fuzzer.cc",
+      "file_line": 23,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#9 0x3eac69 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:526:13",
+      "address": 4107369,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "file_name": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "file_line": 526,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#10 0x3bc9d0 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:280:6",
+      "address": 3918288,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "file_name": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "file_line": 280,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#11 0x3c7634 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:707:9",
+      "address": 3962420,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "file_name": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "file_line": 707,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#12 0x40a250 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+      "address": 4235856,
+      "function_name": "main",
+      "function_offset": 10,
+      "file_name": "third_party/libFuzzer/src/FuzzerMain.cpp",
+      "file_line": 20,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#13 0x7f41340d382f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291",
+      "address": 139918022883375,
+      "function_name": "__libc_start_main",
+      "function_offset": null,
+      "file_name": "/build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c",
+      "file_line": 291,
+      "module_path": null,
+      "module_offset": null
+    }
+  ],
+  "full_stack_names": [
+    "__interceptor_malloc",
+    "opj_j2k_update_image_data",
+    "opj_j2k_decode_tiles",
+    "opj_j2k_exec",
+    "opj_j2k_decode",
+    "opj_decode",
+    "CJPX_Decoder::Init(unsigned char const*, unsigned int)",
+    "CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*)",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x5f2af9 in opj_j2k_update_image_data third_party/pdfium/third_party/libopenjpeg20/j2k.c:9184:50",
+      "address": 6236921,
+      "function_name": "opj_j2k_update_image_data",
+      "function_offset": 50,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/j2k.c",
+      "file_line": 9184,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#2 0x5f0a40 in opj_j2k_decode_tiles third_party/pdfium/third_party/libopenjpeg20/j2k.c:10734:15",
+      "address": 6228544,
+      "function_name": "opj_j2k_decode_tiles",
+      "function_offset": 15,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/j2k.c",
+      "file_line": 10734,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#3 0x5c4230 in opj_j2k_exec third_party/pdfium/third_party/libopenjpeg20/j2k.c:8090:33",
+      "address": 6046256,
+      "function_name": "opj_j2k_exec",
+      "function_offset": 33,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/j2k.c",
+      "file_line": 8090,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#4 0x5d5991 in opj_j2k_decode third_party/pdfium/third_party/libopenjpeg20/j2k.c:11019:11",
+      "address": 6117777,
+      "function_name": "opj_j2k_decode",
+      "function_offset": 11,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/j2k.c",
+      "file_line": 11019,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#5 0x5c1a9d in opj_decode third_party/pdfium/third_party/libopenjpeg20/openjpeg.c:483:16",
+      "address": 6036125,
+      "function_name": "opj_decode",
+      "function_offset": 16,
+      "file_name": "third_party/pdfium/third_party/libopenjpeg20/openjpeg.c",
+      "file_line": 483,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#6 0x5b2b76 in CJPX_Decoder::Init(unsigned char const*, unsigned int) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:526:11",
+      "address": 5974902,
+      "function_name": "CJPX_Decoder::Init(unsigned char const*, unsigned int)",
+      "function_offset": 11,
+      "file_name": "third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp",
+      "file_line": 526,
+      "module_path": null,
+      "module_offset": null
+    },
+    {
+      "line": "#7 0x5b5c9c in CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:652:19",
+      "address": 5987484,
+      "function_name": "CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*)",
+      "function_offset": 19,
+      "file_name": "third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp",
+      "file_line": 652,
+      "module_path": null,
+      "module_offset": null
+    }
+  ],
+  "minimized_stack": [
+    "opj_j2k_update_image_data",
+    "opj_j2k_decode_tiles",
+    "opj_j2k_exec",
+    "opj_j2k_decode",
+    "opj_decode",
+    "CJPX_Decoder::Init(unsigned char const*, unsigned int)",
+    "CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*)"
+  ],
+  "scariness_score": null,
+  "scariness_description": null
+}

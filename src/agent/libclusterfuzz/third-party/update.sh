@@ -2,10 +2,12 @@
 
 set -ex
 
+
 cd $(dirname "$(readlink -f "$0")")
-if [ ! -f constants.py ]; then
-curl -o constants.py https://raw.githubusercontent.com/google/clusterfuzz/master/src/python/lib/clusterfuzz/stacktraces/constants.py
-fi
+git clone --depth 1 https://github.com/google/clusterfuzz clusterfuzz-src
+mv clusterfuzz-src/src/python/lib/clusterfuzz/stacktraces/constants.py .
+mkdir -p ../data/stack-traces
+cp clusterfuzz-src/src/python/tests/core/crash_analysis/stack_parsing/stack_analyzer_data/*.txt ../data/stack-traces/
 python build.py
-rm -rf constants.py __pycache__ */__pycache__
+rm -rf constants.py __pycache__ */__pycache__ clusterfuzz-src
 (cd ../; cargo fmt)
