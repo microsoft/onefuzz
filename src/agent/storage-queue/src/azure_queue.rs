@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
+use bytes::buf::BufExt;
 use reqwest::{Client, Url};
 use reqwest_retry::SendRetry;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -138,8 +139,18 @@ impl AzureQueueClient {
             .send_retry_default()
             .await?
             .error_for_status()?;
-        let text = response.text().await?;
-        let msg: AzureQueueMessageList = serde_xml_rs::from_str(&text)?;
+
+        let buf = {
+            let buf = response.bytes().await?;
+            //remove the byte order mark if present
+            if buf.slice(0..3).to_vec() == [0xef, 0xbb, 0xbf] {
+                buf.slice(3..)
+            } else {
+                buf
+            }
+        };
+
+        let msg: AzureQueueMessageList = serde_xml_rs::from_reader(buf.reader())?;
 
         let m = msg.queue_message.map(|msg| AzureQueueMessage {
             messages_url: Some(self.messages_url.clone()),

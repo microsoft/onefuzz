@@ -14,10 +14,11 @@ derivative = "2.2.0"
 regex = "1.4"
 reqwest = { version = "0.10", features = ["json", "stream"] }
 reqwest-retry = { path = "../reqwest-retry" }
-serde = "1.0"
+serde = { version = "1.0", features = ["derive"]}
 serde_derive = "1.0"
 serde_json = "1.0"
 serde-xml-rs = "0.4"
 tokio = { version = "0.2", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 yaque = "0.5.0-pre3"
+bytes = "0.5"
