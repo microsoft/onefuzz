@@ -15,8 +15,9 @@
       "address": 5362909,
       "function_name": "malloc",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
       "module_offset": 5362909
     },
@@ -25,8 +26,9 @@
       "address": 4397975,
       "function_name": "operator new(unsigned long)",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
       "module_offset": 4397975
     },
@@ -35,8 +37,9 @@
       "address": 4659282,
       "function_name": "main",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
       "module_offset": 4659282
     },
@@ -45,8 +48,9 @@
       "address": 139836329073558,
       "function_name": "__libc_start_main",
       "function_offset": null,
-      "file_name": "/build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c",
-      "file_line": 310,
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c",
+      "source_file_line": 310,
       "module_path": null,
       "module_offset": null
     }
@@ -63,8 +67,9 @@
       "address": 4659282,
       "function_name": "main",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
       "module_offset": 4659282
     }

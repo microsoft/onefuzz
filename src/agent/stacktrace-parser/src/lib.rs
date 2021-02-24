@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use libclusterfuzz::get_stack_filter;
+use regex::RegexSet;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -14,8 +15,9 @@ pub struct StackEntry {
     pub address: Option<u64>,
     pub function_name: Option<String>,
     pub function_offset: Option<u64>,
-    pub file_name: Option<String>,
-    pub file_line: Option<u64>,
+    pub source_file_name: Option<String>,
+    pub source_file_path: Option<String>,
+    pub source_file_line: Option<u64>,
     pub module_path: Option<String>,
     pub module_offset: Option<u64>,
 }
@@ -35,6 +37,34 @@ pub struct CrashLog {
     pub scariness_description: Option<String>,
 }
 
+fn function_without_args(func: &str) -> String {
+    let split: Vec<_> = func.splitn(2, '(').collect();
+    split[0].to_string()
+}
+
+fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntry> {
+    let mut entry = entry.clone();
+    if let Some(name) = &entry.function_name {
+        // mirror Clusterfuzz's replacing LLVMFuzzerTestOneInput
+        // with the fuzzer filename
+        //
+        // Ref: https://github.com/google/clusterfuzz/blob/
+        //    a6bb73e4988f4a7064e990a0a78cc6bc812ef741/src/python/
+        //    lib/clusterfuzz/stacktraces/__init__.py#L1362-L1373
+        if name == "LLVMFuzzerTestOneInput" {
+            if let Some(file_name) = &entry.source_file_name {
+                entry.function_name = Some(file_name.to_string());
+                return Some(entry);
+            }
+        }
+        if stack_filter.is_match(name) {
+            return None;
+        }
+    }
+
+    Some(entry)
+}
+
 impl CrashLog {
     pub fn parse(text: String) -> Result<Self> {
         let (summary, sanitizer, fault_type) = parse_summary(&text)?;
@@ -46,14 +76,7 @@ impl CrashLog {
 
         let mut minimized_stack_details: Vec<StackEntry> = full_stack_details
             .iter()
-            .filter_map(|x| {
-                if let Some(name) = &x.function_name {
-                    if stack_filter.is_match(name) {
-                        return None;
-                    }
-                }
-                Some(x.clone())
-            })
+            .filter_map(|x| filter_funcs(x, &stack_filter))
             .collect();
 
         // if we don't have a minimized stack, if one of these functions is on
@@ -86,7 +109,7 @@ impl CrashLog {
 
         let minimized_stack: Vec<String> = minimized_stack_details
             .iter()
-            .filter_map(|x| x.function_name.as_ref().map(|x| x.clone()))
+            .filter_map(|x| x.function_name.as_ref().map(|x| function_without_args(x)))
             .collect();
 
         let log = Self {
@@ -196,7 +219,7 @@ mod tests {
 
             let expected_data = fs::read_to_string(&expected_path)?;
             let expected: CrashLog = serde_json::from_str(&expected_data)?;
-            assert_eq!(parsed, expected, "{}", path.display());
+            assert_eq!(expected, parsed, "{}", path.display());
         }
         Ok(())
     }

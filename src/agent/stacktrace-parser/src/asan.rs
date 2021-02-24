@@ -14,9 +14,9 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
         // "module::func(char *args) (/path/to/bin+0x123)"
         r"in (?P<func_1>.*) \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
         // "in foo /path:16:17"
-        r"in (?P<func_2>.*) (?P<file_name_1>[^ ]+):(?P<file_line_1>\d+):(?P<function_offset_1>\d+)",
+        r"in (?P<func_2>.*) (?P<file_path_1>[^ ]+):(?P<file_line_1>\d+):(?P<function_offset_1>\d+)",
         // "in foo /path:16"
-        r"in (?P<func_3>.*) (?P<file_name_2>[^ ]+):(?P<file_line_2>\d+)",
+        r"in (?P<func_3>.*) (?P<file_path_2>[^ ]+):(?P<file_line_2>\d+)",
         // "  (/path/to/bin+0x123)"
         r" \((?P<module_path_2>[^+]+)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)",
     ];
@@ -48,12 +48,14 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .or(captures.name("func_3"))
                     .map(|x| x.as_str().to_string());
 
-                let file_name = captures
-                    .name("file_name_1")
-                    .or(captures.name("file_name_2"))
+                let source_file_path = captures
+                    .name("file_path_1")
+                    .or(captures.name("file_path_2"))
                     .map(|x| x.as_str().to_string());
 
-                let file_line = match captures
+                let source_file_name = source_file_path.as_ref().map(|x| get_call_stack_file_name(x));
+
+                let source_file_line = match captures
                     .name("file_line_1")
                     .or(captures.name("file_line_2"))
                     .map(|x| x.as_str())
@@ -85,8 +87,9 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     line,
                     address,
                     function_name,
-                    file_name,
-                    file_line,
+                    source_file_path,
+                    source_file_name,
+                    source_file_line,
                     module_path,
                     module_offset,
                     function_offset,
@@ -151,6 +154,23 @@ pub(crate) fn parse_summary(text: &str) -> Result<(String, String, String)> {
     }
 
     bail!("unable to parse crash log summary")
+}
+
+// Unfortunately, we can't just use Path's split as we want to
+// parse stack frames from OSes other than OS the app is running
+// on
+fn get_call_stack_file_name(file_path: &str) -> String {
+    let split: Vec<_> = file_path.rsplitn(2, '/').collect();
+    if split.len() == 2 {
+        return split[0].to_string();
+    }
+
+    let split: Vec<_> = file_path.rsplitn(2, '\\').collect();
+    if split.len() == 2 {
+        return split[0].to_string();
+    }
+
+    file_path.to_string()
 }
 
 #[cfg(test)]

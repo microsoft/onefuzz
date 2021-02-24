@@ -18,8 +18,9 @@
       "address": 5403765,
       "function_name": "LLVMFuzzerTestOneInput",
       "function_offset": 51,
-      "file_name": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
-      "file_line": 45,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
+      "source_file_line": 45,
       "module_path": null,
       "module_offset": null
     },
@@ -28,8 +29,9 @@
       "address": 4389690,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4389690
     },
@@ -38,8 +40,9 @@
       "address": 4321159,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4321159
     },
@@ -48,8 +51,9 @@
       "address": 4344737,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4344737
     },
@@ -58,8 +62,9 @@
       "address": 4504946,
       "function_name": "main",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4504946
     },
@@ -68,8 +73,9 @@
       "address": 140458435656598,
       "function_name": "__libc_start_main",
       "function_offset": null,
-      "file_name": "/build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c",
-      "file_line": 310,
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c",
+      "source_file_line": 310,
       "module_path": null,
       "module_offset": null
     },
@@ -78,8 +84,9 @@
       "address": 4315257,
       "function_name": "_start",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4315257
     }
@@ -97,16 +104,17 @@
     {
       "line": "#0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51",
       "address": 5403765,
-      "function_name": "LLVMFuzzerTestOneInput",
+      "function_name": "fuzz.c",
       "function_offset": 51,
-      "file_name": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
-      "file_line": 45,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
+      "source_file_line": 45,
       "module_path": null,
       "module_offset": null
     }
   ],
   "minimized_stack": [
-    "LLVMFuzzerTestOneInput"
+    "fuzz.c"
   ],
   "scariness_score": null,
   "scariness_description": null

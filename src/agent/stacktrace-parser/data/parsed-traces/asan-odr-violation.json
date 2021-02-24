@@ -13,8 +13,9 @@
       "address": 93825010854861,
       "function_name": "__asan_register_globals",
       "function_offset": 3,
-      "file_name": "/b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_globals.cpp",
-      "file_line": 360,
+      "source_file_name": "asan_globals.cpp",
+      "source_file_path": "/b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_globals.cpp",
+      "source_file_line": 360,
       "module_path": null,
       "module_offset": null
     },
@@ -23,8 +24,9 @@
       "address": 140735752360587,
       "function_name": "asan.module_ctor",
       "function_offset": null,
-      "file_name": null,
-      "file_line": null,
+      "source_file_name": null,
+      "source_file_path": null,
+      "source_file_line": null,
       "module_path": "/onefuzz/blob-containers/oft-setup-b9607df0891452adabf9aab8954aa772/libviews.so",
       "module_offset": 11543179
     }
