@@ -12,20 +12,28 @@ mod asan;
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct StackEntry {
     pub line: String,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub address: Option<u64>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub function_name: Option<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub function_offset: Option<u64>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_file_name: Option<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_file_path: Option<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_file_line: Option<u64>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub module_path: Option<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub module_offset: Option<u64>,
 }
@@ -36,20 +44,28 @@ pub struct CrashLog {
     pub sanitizer: String,
     pub summary: String,
     pub fault_type: String,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub call_stack: Vec<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub full_stack_details: Vec<StackEntry>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub full_stack_names: Vec<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub minimized_stack_details: Vec<StackEntry>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub minimized_stack: Vec<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub minimized_stack_function_names: Vec<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_score: Option<u32>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_description: Option<String>,
 }

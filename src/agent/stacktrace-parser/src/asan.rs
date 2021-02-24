@@ -178,7 +178,8 @@ fn get_call_stack_file_name(file_path: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{parse_asan_call_stack, StackEntry};
-    use anyhow::Result;
+    use anyhow::{Context, Result};
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_asan_stack_line() -> Result<()> {
@@ -221,16 +222,18 @@ mod tests {
                     address: Some(291),
                     function_name: Some("from_file".to_string()),
                     function_offset: Some(12),
-                    file_name: Some("/path/to/source.c".to_string()),
-                    file_line: Some(67),
+                    source_file_path: Some("/path/to/source.c".to_string()),
+                    source_file_name: Some("source.c".to_string()),
+                    source_file_line: Some(67),
                     ..Default::default()
                 }],
             ),
         ];
 
         for (data, expected) in test_cases {
-            let got = parse_asan_call_stack(data)?;
-            assert_eq!(got, expected);
+            let parsed = parse_asan_call_stack(data.clone())
+                .with_context(|| format!("parsing asan stack failed {}", data))?;
+            assert_eq!(expected, parsed);
         }
 
         Ok(())
