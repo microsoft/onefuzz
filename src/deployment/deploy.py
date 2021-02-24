@@ -65,7 +65,7 @@ from data_migration import migrate
 from registration import (
     OnefuzzAppRole,
     add_application_password,
-    assign_multi_tenant_auth,
+    set_app_audience,
     assign_scaleset_role,
     authorize_application,
     register_application,
@@ -312,7 +312,7 @@ class Client:
             if self.multi_tenant_domain:
                 # signInAudience must be set using Microsoft Graph REST API and not Azure AD due to issue:
                 # https://github.com/Azure/azure-cli/issues/14086 requires Microsoft Graph REST API v1.0
-                assign_multi_tenant_auth(app.object_id)
+                set_app_audience(app.object_id, "AzureADMultipleOrgs")
 
             logger.info("creating service principal")
             service_principal_params = ServicePrincipalCreateParameters(
@@ -345,7 +345,22 @@ class Client:
                 )
 
             if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
-                assign_multi_tenant_auth(app.object_id)
+                url = "https://%s/%s" % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                )
+                client.applications.patch(
+                    app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+                )
+                set_app_audience(app.object_id, "AzureADMultipleOrgs")
+            elif not self.multi_tenant_domain and app.sign_in_audience == "AzureADMultipleOrgs":
+                set_app_audience(app.object_id, "AzureADMyOrg")
+                url = "https://%s.azurewebsites.net" % self.application_name
+                client.applications.patch(
+                    app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+                )
+            else:
+                logger.debug("No change to App Registration signInAudence setting")
 
             creds = list(client.applications.list_password_credentials(app.object_id))
             client.applications.update_password_credentials(app.object_id, creds)
@@ -431,16 +446,40 @@ class Client:
                 mode=DeploymentMode.incremental, template=template, parameters=params
             )
         )
-        result = client.deployments.create_or_update(
-            self.resource_group, gen_guid(), deployment
-        ).result()
-        if result.properties.provisioning_state != "Succeeded":
-            logger.error(
-                "error deploying: %s",
-                json.dumps(result.as_dict(), indent=4, sort_keys=True),
-            )
-            sys.exit(1)
-        self.results["deploy"] = result.properties.outputs
+        count = 0
+        tries = 10
+        error: Optional[Exception] = None
+        while count < tries:
+            count += 1
+
+            try:
+                result = client.deployments.create_or_update(
+                    self.resource_group, gen_guid(), deployment
+                ).result()
+                if result.properties.provisioning_state != "Succeeded":
+                    logger.error(
+                        "error deploying: %s",
+                        json.dumps(result.as_dict(), indent=4, sort_keys=True),
+                    )
+                    sys.exit(1)
+                self.results["deploy"] = result.properties.outputs
+                return
+            except Exception as err:
+                error = err
+                as_repr = repr(err)
+                # Modeled after Azure-CLI.  See:
+                # https://github.com/Azure/azure-cli/blob/
+                #   3a2f6009cff788fde3b0170823c9129f187b2812/src/azure-cli-core/
+                #   azure/cli/core/commands/arm.py#L1086
+                if (
+                    "PrincipalNotFound" in as_repr
+                    and "does not exist in the directory" in as_repr
+                ):
+                    logging.info("application principal not available in AAD yet")
+        if error:
+            raise error
+        else:
+            raise Exception("unknown error deploying")
 
     def assign_scaleset_identity_role(self) -> None:
         if self.upgrade:

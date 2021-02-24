@@ -235,7 +235,15 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
             return add_application_password_impl(app_object_id)
         except GraphQueryError as err:
             error = err
-            logging.warning("unable to create app password: %s", err.message)
+            # modeled after AZ-CLI's handling of missing application
+            # See: https://github.com/Azure/azure-cli/blob/
+            #   e015d5bcba0c2d21dc42189daa43dc1eb82d2485/src/azure-cli/
+            #   azure/cli/command_modules/util/tests/
+            #   latest/test_rest.py#L191-L192
+            if "Request_ResourceNotFound" in repr(err):
+                logging.info("app unavailable in AAD, unable to create password yet")
+            else:
+                logging.warning("unable to create app password: %s", err.message)
         time.sleep(wait_duration)
     if error:
         raise error
@@ -504,8 +512,9 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
         assign_scaleset_role_manually(onefuzz_instance_name, scaleset_name)
 
 
-def assign_multi_tenant_auth(objectId: str) -> None:
-    http_body = {"signInAudience": "AzureADMultipleOrgs"}
+def set_app_audience(objectId: str, audience: str) -> None:
+    # typical audience values: AzureADMyOrg, AzureADMultipleOrgs
+    http_body = {"signInAudienceXXX": audience}
     try:
         query_microsoft_graph(
             method="PATCH",
@@ -524,8 +533,10 @@ def assign_multi_tenant_auth(objectId: str) -> None:
             % query
         )
         err_str = (
-            "Unable to set signInAudience using Microsoft Graph Query API. "
-            + "The user must enable Multitenant in the Application using azure bash shell or the AAD web portal."
+            "Unable to set signInAudience using Microsoft Graph Query API. \n"
+            + "The user must enable single/multi tenancy in the 'Authentication' blade of the "
+            + "Application Registration in the AAD web portal, or use the azure bash shell "
+            + "using the command given above."
         )
         raise Exception(err_str)
 
