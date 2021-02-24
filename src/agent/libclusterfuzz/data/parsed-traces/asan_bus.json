@@ -31,200 +31,174 @@
       "address": 4544529517,
       "function_name": "gl::GLApiBase::glBlitFramebufferFn(int, int, int, int, int, int, int, int, unsigned int, unsigned int)",
       "function_offset": 3,
-      "file_name": "ui/gl/gl_bindings_autogen_gl.cc",
-      "file_line": 2627,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gl_bindings_autogen_gl.cc",
+      "source_file_path": "ui/gl/gl_bindings_autogen_gl.cc",
+      "source_file_line": 2627
     },
     {
       "line": "#15 0x1103dd3f7 in gpu::gles2::GLES2DecoderImpl::DoBlitFramebufferCHROMIUM(int, int, int, int, int, int, int, int, unsigned int, unsigned int) gpu/command_buffer/service/gles2_cmd_decoder.cc:8327:5",
       "address": 4567454711,
       "function_name": "gpu::gles2::GLES2DecoderImpl::DoBlitFramebufferCHROMIUM(int, int, int, int, int, int, int, int, unsigned int, unsigned int)",
       "function_offset": 5,
-      "file_name": "gpu/command_buffer/service/gles2_cmd_decoder.cc",
-      "file_line": 8327,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gles2_cmd_decoder.cc",
+      "source_file_path": "gpu/command_buffer/service/gles2_cmd_decoder.cc",
+      "source_file_line": 8327
     },
     {
       "line": "#16 0x11036c86f in gpu::gles2::GLES2DecoderImpl::HandleBlitFramebufferCHROMIUM(unsigned int, void const volatile*) gpu/command_buffer/service/gles2_cmd_decoder_autogen.h:4135:3",
       "address": 4566993007,
       "function_name": "gpu::gles2::GLES2DecoderImpl::HandleBlitFramebufferCHROMIUM(unsigned int, void const volatile*)",
       "function_offset": 3,
-      "file_name": "gpu/command_buffer/service/gles2_cmd_decoder_autogen.h",
-      "file_line": 4135,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gles2_cmd_decoder_autogen.h",
+      "source_file_path": "gpu/command_buffer/service/gles2_cmd_decoder_autogen.h",
+      "source_file_line": 4135
     },
     {
       "line": "#17 0x1103c180e in gpu::error::Error gpu::gles2::GLES2DecoderImpl::DoCommandsImpl<false>(unsigned int, void const volatile*, int, int*) gpu/command_buffer/service/gles2_cmd_decoder.cc:5276:18",
       "address": 4567341070,
       "function_name": "gpu::error::Error gpu::gles2::GLES2DecoderImpl::DoCommandsImpl<false>(unsigned int, void const volatile*, int, int*)",
       "function_offset": 18,
-      "file_name": "gpu/command_buffer/service/gles2_cmd_decoder.cc",
-      "file_line": 5276,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gles2_cmd_decoder.cc",
+      "source_file_path": "gpu/command_buffer/service/gles2_cmd_decoder.cc",
+      "source_file_line": 5276
     },
     {
       "line": "#18 0x110291647 in ProcessCommands gpu/command_buffer/service/command_buffer_service.cc:231:17",
       "address": 4566095431,
       "function_name": "ProcessCommands",
       "function_offset": 17,
-      "file_name": "gpu/command_buffer/service/command_buffer_service.cc",
-      "file_line": 231,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "command_buffer_service.cc",
+      "source_file_path": "gpu/command_buffer/service/command_buffer_service.cc",
+      "source_file_line": 231
     },
     {
       "line": "#19 0x110291647 in gpu::CommandBufferService::Flush(int) gpu/command_buffer/service/command_buffer_service.cc:86",
       "address": 4566095431,
       "function_name": "gpu::CommandBufferService::Flush(int)",
-      "function_offset": null,
-      "file_name": "gpu/command_buffer/service/command_buffer_service.cc",
-      "file_line": 86,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "command_buffer_service.cc",
+      "source_file_path": "gpu/command_buffer/service/command_buffer_service.cc",
+      "source_file_line": 86
     },
     {
       "line": "#20 0x111498e03 in gpu::GpuCommandBufferStub::OnAsyncFlush(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&) gpu/ipc/service/gpu_command_buffer_stub.cc:973:20",
       "address": 4585000451,
       "function_name": "gpu::GpuCommandBufferStub::OnAsyncFlush(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&)",
       "function_offset": 20,
-      "file_name": "gpu/ipc/service/gpu_command_buffer_stub.cc",
-      "file_line": 973,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_command_buffer_stub.cc",
+      "source_file_path": "gpu/ipc/service/gpu_command_buffer_stub.cc",
+      "source_file_line": 973
     },
     {
       "line": "#21 0x1114984df in DispatchToMethodImpl<gpu::GpuCommandBufferStub *, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), const std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > &, 0, 1, 2, 3> base/tuple.h:77:3",
       "address": 4584998111,
       "function_name": "DispatchToMethodImpl<gpu::GpuCommandBufferStub *, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), const std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > &, 0, 1, 2, 3>",
       "function_offset": 3,
-      "file_name": "base/tuple.h",
-      "file_line": 77,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tuple.h",
+      "source_file_path": "base/tuple.h",
+      "source_file_line": 77
     },
     {
       "line": "#22 0x1114984df in DispatchToMethod<gpu::GpuCommandBufferStub *, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), const std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > &> base/tuple.h:84",
       "address": 4584998111,
       "function_name": "DispatchToMethod<gpu::GpuCommandBufferStub *, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), const std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > &>",
-      "function_offset": null,
-      "file_name": "base/tuple.h",
-      "file_line": 84,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tuple.h",
+      "source_file_path": "base/tuple.h",
+      "source_file_line": 84
     },
     {
       "line": "#23 0x1114984df in DispatchToMethod<gpu::GpuCommandBufferStub, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), void, std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > > ipc/ipc_message_templates.h:26",
       "address": 4584998111,
       "function_name": "DispatchToMethod<gpu::GpuCommandBufferStub, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), void, std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > >",
-      "function_offset": null,
-      "file_name": "ipc/ipc_message_templates.h",
-      "file_line": 26,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "ipc_message_templates.h",
+      "source_file_path": "ipc/ipc_message_templates.h",
+      "source_file_line": 26
     },
     {
       "line": "#24 0x1114984df in bool IPC::MessageT<GpuCommandBufferMsg_AsyncFlush_Meta, std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > >, void>::Dispatch<gpu::GpuCommandBufferStub, gpu::GpuCommandBufferStub, void, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&)>(IPC::Message const*, gpu::GpuCommandBufferStub*, gpu::GpuCommandBufferStub*, void*, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&)) ipc/ipc_message_templates.h:121",
       "address": 4584998111,
       "function_name": "bool IPC::MessageT<GpuCommandBufferMsg_AsyncFlush_Meta, std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > >, void>::Dispatch<gpu::GpuCommandBufferStub, gpu::GpuCommandBufferStub, void, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&)>(IPC::Message const*, gpu::GpuCommandBufferStub*, gpu::GpuCommandBufferStub*, void*, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&))",
-      "function_offset": null,
-      "file_name": "ipc/ipc_message_templates.h",
-      "file_line": 121,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "ipc_message_templates.h",
+      "source_file_path": "ipc/ipc_message_templates.h",
+      "source_file_line": 121
     },
     {
       "line": "#25 0x111492fbb in gpu::GpuCommandBufferStub::OnMessageReceived(IPC::Message const&) gpu/ipc/service/gpu_command_buffer_stub.cc:303:5",
       "address": 4584976315,
       "function_name": "gpu::GpuCommandBufferStub::OnMessageReceived(IPC::Message const&)",
       "function_offset": 5,
-      "file_name": "gpu/ipc/service/gpu_command_buffer_stub.cc",
-      "file_line": 303,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_command_buffer_stub.cc",
+      "source_file_path": "gpu/ipc/service/gpu_command_buffer_stub.cc",
+      "source_file_line": 303
     },
     {
       "line": "#26 0x111457821 in HandleMessageHelper gpu/ipc/service/gpu_channel.cc:985:23",
       "address": 4584732705,
       "function_name": "HandleMessageHelper",
       "function_offset": 23,
-      "file_name": "gpu/ipc/service/gpu_channel.cc",
-      "file_line": 985,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_channel.cc",
+      "source_file_path": "gpu/ipc/service/gpu_channel.cc",
+      "source_file_line": 985
     },
     {
       "line": "#27 0x111457821 in gpu::GpuChannel::HandleMessageOnQueue() gpu/ipc/service/gpu_channel.cc:960",
       "address": 4584732705,
       "function_name": "gpu::GpuChannel::HandleMessageOnQueue()",
-      "function_offset": null,
-      "file_name": "gpu/ipc/service/gpu_channel.cc",
-      "file_line": 960,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_channel.cc",
+      "source_file_path": "gpu/ipc/service/gpu_channel.cc",
+      "source_file_line": 960
     },
     {
       "line": "#28 0x10e1089d2 in Run base/callback.h:91:12",
       "address": 4530932178,
       "function_name": "Run",
       "function_offset": 12,
-      "file_name": "base/callback.h",
-      "file_line": 91,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 91
     },
     {
       "line": "#29 0x10e1089d2 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask*) base/debug/task_annotator.cc:59",
       "address": 4530932178,
       "function_name": "base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask*)",
-      "function_offset": null,
-      "file_name": "base/debug/task_annotator.cc",
-      "file_line": 59,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 59
     },
     {
       "line": "#30 0x10e1888a2 in base::MessageLoop::RunTask(base::PendingTask*) base/message_loop/message_loop.cc:414:19",
       "address": 4531456162,
       "function_name": "base::MessageLoop::RunTask(base::PendingTask*)",
       "function_offset": 19,
-      "file_name": "base/message_loop/message_loop.cc",
-      "file_line": 414,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 414
     },
     {
       "line": "#31 0x10e189978 in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask) base/message_loop/message_loop.cc:425:5",
       "address": 4531460472,
       "function_name": "base::MessageLoop::DeferOrRunPendingTask(base::PendingTask)",
       "function_offset": 5,
-      "file_name": "base/message_loop/message_loop.cc",
-      "file_line": 425,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 425
     },
     {
       "line": "#32 0x10e18a3fe in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:513:13",
       "address": 4531463166,
       "function_name": "base::MessageLoop::DoWork()",
       "function_offset": 13,
-      "file_name": "base/message_loop/message_loop.cc",
-      "file_line": 513,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 513
     },
     {
       "line": "#33 0x10e198922 in base::MessagePumpCFRunLoopBase::RunWork() base/message_loop/message_pump_mac.mm:421:30",
       "address": 4531521826,
       "function_name": "base::MessagePumpCFRunLoopBase::RunWork()",
       "function_offset": 30,
-      "file_name": "base/message_loop/message_pump_mac.mm",
-      "file_line": 421,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "message_pump_mac.mm",
+      "source_file_path": "base/message_loop/message_pump_mac.mm",
+      "source_file_line": 421
     }
   ],
   "full_stack_names": [
@@ -255,200 +229,174 @@
       "address": 4544529517,
       "function_name": "gl::GLApiBase::glBlitFramebufferFn(int, int, int, int, int, int, int, int, unsigned int, unsigned int)",
       "function_offset": 3,
-      "file_name": "ui/gl/gl_bindings_autogen_gl.cc",
-      "file_line": 2627,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gl_bindings_autogen_gl.cc",
+      "source_file_path": "ui/gl/gl_bindings_autogen_gl.cc",
+      "source_file_line": 2627
     },
     {
       "line": "#15 0x1103dd3f7 in gpu::gles2::GLES2DecoderImpl::DoBlitFramebufferCHROMIUM(int, int, int, int, int, int, int, int, unsigned int, unsigned int) gpu/command_buffer/service/gles2_cmd_decoder.cc:8327:5",
       "address": 4567454711,
       "function_name": "gpu::gles2::GLES2DecoderImpl::DoBlitFramebufferCHROMIUM(int, int, int, int, int, int, int, int, unsigned int, unsigned int)",
       "function_offset": 5,
-      "file_name": "gpu/command_buffer/service/gles2_cmd_decoder.cc",
-      "file_line": 8327,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gles2_cmd_decoder.cc",
+      "source_file_path": "gpu/command_buffer/service/gles2_cmd_decoder.cc",
+      "source_file_line": 8327
     },
     {
       "line": "#16 0x11036c86f in gpu::gles2::GLES2DecoderImpl::HandleBlitFramebufferCHROMIUM(unsigned int, void const volatile*) gpu/command_buffer/service/gles2_cmd_decoder_autogen.h:4135:3",
       "address": 4566993007,
       "function_name": "gpu::gles2::GLES2DecoderImpl::HandleBlitFramebufferCHROMIUM(unsigned int, void const volatile*)",
       "function_offset": 3,
-      "file_name": "gpu/command_buffer/service/gles2_cmd_decoder_autogen.h",
-      "file_line": 4135,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gles2_cmd_decoder_autogen.h",
+      "source_file_path": "gpu/command_buffer/service/gles2_cmd_decoder_autogen.h",
+      "source_file_line": 4135
     },
     {
       "line": "#17 0x1103c180e in gpu::error::Error gpu::gles2::GLES2DecoderImpl::DoCommandsImpl<false>(unsigned int, void const volatile*, int, int*) gpu/command_buffer/service/gles2_cmd_decoder.cc:5276:18",
       "address": 4567341070,
       "function_name": "gpu::error::Error gpu::gles2::GLES2DecoderImpl::DoCommandsImpl<false>(unsigned int, void const volatile*, int, int*)",
       "function_offset": 18,
-      "file_name": "gpu/command_buffer/service/gles2_cmd_decoder.cc",
-      "file_line": 5276,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gles2_cmd_decoder.cc",
+      "source_file_path": "gpu/command_buffer/service/gles2_cmd_decoder.cc",
+      "source_file_line": 5276
     },
     {
       "line": "#18 0x110291647 in ProcessCommands gpu/command_buffer/service/command_buffer_service.cc:231:17",
       "address": 4566095431,
       "function_name": "ProcessCommands",
       "function_offset": 17,
-      "file_name": "gpu/command_buffer/service/command_buffer_service.cc",
-      "file_line": 231,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "command_buffer_service.cc",
+      "source_file_path": "gpu/command_buffer/service/command_buffer_service.cc",
+      "source_file_line": 231
     },
     {
       "line": "#19 0x110291647 in gpu::CommandBufferService::Flush(int) gpu/command_buffer/service/command_buffer_service.cc:86",
       "address": 4566095431,
       "function_name": "gpu::CommandBufferService::Flush(int)",
-      "function_offset": null,
-      "file_name": "gpu/command_buffer/service/command_buffer_service.cc",
-      "file_line": 86,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "command_buffer_service.cc",
+      "source_file_path": "gpu/command_buffer/service/command_buffer_service.cc",
+      "source_file_line": 86
     },
     {
       "line": "#20 0x111498e03 in gpu::GpuCommandBufferStub::OnAsyncFlush(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&) gpu/ipc/service/gpu_command_buffer_stub.cc:973:20",
       "address": 4585000451,
       "function_name": "gpu::GpuCommandBufferStub::OnAsyncFlush(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&)",
       "function_offset": 20,
-      "file_name": "gpu/ipc/service/gpu_command_buffer_stub.cc",
-      "file_line": 973,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_command_buffer_stub.cc",
+      "source_file_path": "gpu/ipc/service/gpu_command_buffer_stub.cc",
+      "source_file_line": 973
     },
     {
       "line": "#21 0x1114984df in DispatchToMethodImpl<gpu::GpuCommandBufferStub *, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), const std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > &, 0, 1, 2, 3> base/tuple.h:77:3",
       "address": 4584998111,
       "function_name": "DispatchToMethodImpl<gpu::GpuCommandBufferStub *, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), const std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > &, 0, 1, 2, 3>",
       "function_offset": 3,
-      "file_name": "base/tuple.h",
-      "file_line": 77,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tuple.h",
+      "source_file_path": "base/tuple.h",
+      "source_file_line": 77
     },
     {
       "line": "#22 0x1114984df in DispatchToMethod<gpu::GpuCommandBufferStub *, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), const std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > &> base/tuple.h:84",
       "address": 4584998111,
       "function_name": "DispatchToMethod<gpu::GpuCommandBufferStub *, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), const std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > &>",
-      "function_offset": null,
-      "file_name": "base/tuple.h",
-      "file_line": 84,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tuple.h",
+      "source_file_path": "base/tuple.h",
+      "source_file_line": 84
     },
     {
       "line": "#23 0x1114984df in DispatchToMethod<gpu::GpuCommandBufferStub, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), void, std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > > ipc/ipc_message_templates.h:26",
       "address": 4584998111,
       "function_name": "DispatchToMethod<gpu::GpuCommandBufferStub, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, const std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > &, const std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > &), void, std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > > >",
-      "function_offset": null,
-      "file_name": "ipc/ipc_message_templates.h",
-      "file_line": 26,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "ipc_message_templates.h",
+      "source_file_path": "ipc/ipc_message_templates.h",
+      "source_file_line": 26
     },
     {
       "line": "#24 0x1114984df in bool IPC::MessageT<GpuCommandBufferMsg_AsyncFlush_Meta, std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > >, void>::Dispatch<gpu::GpuCommandBufferStub, gpu::GpuCommandBufferStub, void, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&)>(IPC::Message const*, gpu::GpuCommandBufferStub*, gpu::GpuCommandBufferStub*, void*, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&)) ipc/ipc_message_templates.h:121",
       "address": 4584998111,
       "function_name": "bool IPC::MessageT<GpuCommandBufferMsg_AsyncFlush_Meta, std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > >, void>::Dispatch<gpu::GpuCommandBufferStub, gpu::GpuCommandBufferStub, void, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&)>(IPC::Message const*, gpu::GpuCommandBufferStub*, gpu::GpuCommandBufferStub*, void*, void (gpu::GpuCommandBufferStub::*)(int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> > const&, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > const&))",
-      "function_offset": null,
-      "file_name": "ipc/ipc_message_templates.h",
-      "file_line": 121,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "ipc_message_templates.h",
+      "source_file_path": "ipc/ipc_message_templates.h",
+      "source_file_line": 121
     },
     {
       "line": "#25 0x111492fbb in gpu::GpuCommandBufferStub::OnMessageReceived(IPC::Message const&) gpu/ipc/service/gpu_command_buffer_stub.cc:303:5",
       "address": 4584976315,
       "function_name": "gpu::GpuCommandBufferStub::OnMessageReceived(IPC::Message const&)",
       "function_offset": 5,
-      "file_name": "gpu/ipc/service/gpu_command_buffer_stub.cc",
-      "file_line": 303,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_command_buffer_stub.cc",
+      "source_file_path": "gpu/ipc/service/gpu_command_buffer_stub.cc",
+      "source_file_line": 303
     },
     {
       "line": "#26 0x111457821 in HandleMessageHelper gpu/ipc/service/gpu_channel.cc:985:23",
       "address": 4584732705,
       "function_name": "HandleMessageHelper",
       "function_offset": 23,
-      "file_name": "gpu/ipc/service/gpu_channel.cc",
-      "file_line": 985,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_channel.cc",
+      "source_file_path": "gpu/ipc/service/gpu_channel.cc",
+      "source_file_line": 985
     },
     {
       "line": "#27 0x111457821 in gpu::GpuChannel::HandleMessageOnQueue() gpu/ipc/service/gpu_channel.cc:960",
       "address": 4584732705,
       "function_name": "gpu::GpuChannel::HandleMessageOnQueue()",
-      "function_offset": null,
-      "file_name": "gpu/ipc/service/gpu_channel.cc",
-      "file_line": 960,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_channel.cc",
+      "source_file_path": "gpu/ipc/service/gpu_channel.cc",
+      "source_file_line": 960
     },
     {
       "line": "#28 0x10e1089d2 in Run base/callback.h:91:12",
       "address": 4530932178,
       "function_name": "Run",
       "function_offset": 12,
-      "file_name": "base/callback.h",
-      "file_line": 91,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 91
     },
     {
       "line": "#29 0x10e1089d2 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask*) base/debug/task_annotator.cc:59",
       "address": 4530932178,
       "function_name": "base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask*)",
-      "function_offset": null,
-      "file_name": "base/debug/task_annotator.cc",
-      "file_line": 59,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 59
     },
     {
       "line": "#30 0x10e1888a2 in base::MessageLoop::RunTask(base::PendingTask*) base/message_loop/message_loop.cc:414:19",
       "address": 4531456162,
       "function_name": "base::MessageLoop::RunTask(base::PendingTask*)",
       "function_offset": 19,
-      "file_name": "base/message_loop/message_loop.cc",
-      "file_line": 414,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 414
     },
     {
       "line": "#31 0x10e189978 in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask) base/message_loop/message_loop.cc:425:5",
       "address": 4531460472,
       "function_name": "base::MessageLoop::DeferOrRunPendingTask(base::PendingTask)",
       "function_offset": 5,
-      "file_name": "base/message_loop/message_loop.cc",
-      "file_line": 425,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 425
     },
     {
       "line": "#32 0x10e18a3fe in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:513:13",
       "address": 4531463166,
       "function_name": "base::MessageLoop::DoWork()",
       "function_offset": 13,
-      "file_name": "base/message_loop/message_loop.cc",
-      "file_line": 513,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 513
     },
     {
       "line": "#33 0x10e198922 in base::MessagePumpCFRunLoopBase::RunWork() base/message_loop/message_pump_mac.mm:421:30",
       "address": 4531521826,
       "function_name": "base::MessagePumpCFRunLoopBase::RunWork()",
       "function_offset": 30,
-      "file_name": "base/message_loop/message_pump_mac.mm",
-      "file_line": 421,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "message_pump_mac.mm",
+      "source_file_path": "base/message_loop/message_pump_mac.mm",
+      "source_file_line": 421
     }
   ],
   "minimized_stack": [
@@ -472,6 +420,28 @@
     "base::MessageLoop::DeferOrRunPendingTask(base::PendingTask)",
     "base::MessageLoop::DoWork()",
     "base::MessagePumpCFRunLoopBase::RunWork()"
+  ],
+  "minimized_stack_function_names": [
+    "gl::GLApiBase::glBlitFramebufferFn",
+    "gpu::gles2::GLES2DecoderImpl::DoBlitFramebufferCHROMIUM",
+    "gpu::gles2::GLES2DecoderImpl::HandleBlitFramebufferCHROMIUM",
+    "gpu::error::Error gpu::gles2::GLES2DecoderImpl::DoCommandsImpl<false>",
+    "ProcessCommands",
+    "gpu::CommandBufferService::Flush",
+    "gpu::GpuCommandBufferStub::OnAsyncFlush",
+    "DispatchToMethodImpl<gpu::GpuCommandBufferStub *, void ",
+    "DispatchToMethod<gpu::GpuCommandBufferStub *, void ",
+    "DispatchToMethod<gpu::GpuCommandBufferStub, void ",
+    "bool IPC::MessageT<GpuCommandBufferMsg_AsyncFlush_Meta, std::__1::tuple<int, unsigned int, std::__1::vector<ui::LatencyInfo, std::__1::allocator<ui::LatencyInfo> >, std::__1::vector<gpu::SyncToken, std::__1::allocator<gpu::SyncToken> > >, void>::Dispatch<gpu::GpuCommandBufferStub, gpu::GpuCommandBufferStub, void, void ",
+    "gpu::GpuCommandBufferStub::OnMessageReceived",
+    "HandleMessageHelper",
+    "gpu::GpuChannel::HandleMessageOnQueue",
+    "Run",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpCFRunLoopBase::RunWork"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

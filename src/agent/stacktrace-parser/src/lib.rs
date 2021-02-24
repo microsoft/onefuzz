@@ -12,13 +12,21 @@ mod asan;
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct StackEntry {
     pub line: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub address: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub function_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub function_offset: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub source_file_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub source_file_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub source_file_line: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub module_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub module_offset: Option<u64>,
 }
 
@@ -28,16 +36,38 @@ pub struct CrashLog {
     pub sanitizer: String,
     pub summary: String,
     pub fault_type: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub call_stack: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub full_stack_details: Vec<StackEntry>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub full_stack_names: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub minimized_stack_details: Vec<StackEntry>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub minimized_stack: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub minimized_stack_function_names: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_score: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_description: Option<String>,
 }
 
 fn function_without_args(func: &str) -> String {
+    // TODO: This is an extremely niave approach to splitting arguments.k It
+    // doesn't handle C++ well.  As an example:
+    //
+    // This turns this:
+    // "base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run",
+    //
+    // Into this:
+    // "base::internal::RunnableAdapter<void "
+    //
+    // However, given this is intended to enable de-duplicating crash reports
+    // with ClusterFuzz, this is going to stay this way for now. This is used to
+    // fill in `minimized_stack_functions_names`. The unstripped version will be
+    // in `minimized_stack`.
     let split: Vec<_> = func.splitn(2, '(').collect();
     split[0].to_string()
 }
@@ -109,7 +139,12 @@ impl CrashLog {
 
         let minimized_stack: Vec<String> = minimized_stack_details
             .iter()
-            .filter_map(|x| x.function_name.as_ref().map(|x| function_without_args(x)))
+            .filter_map(|x| x.function_name.clone())
+            .collect();
+
+        let minimized_stack_function_names: Vec<String> = minimized_stack
+            .iter()
+            .map(|x| function_without_args(x))
             .collect();
 
         let log = Self {
@@ -123,6 +158,7 @@ impl CrashLog {
             full_stack_details,
             full_stack_names,
             minimized_stack,
+            minimized_stack_function_names,
             minimized_stack_details,
         };
 
@@ -135,6 +171,10 @@ impl CrashLog {
 
     pub fn minimized_stack_sha256(&self, depth: Option<usize>) -> String {
         digest_iter(&self.minimized_stack, depth)
+    }
+
+    pub fn minimized_stack_function_names_sha256(&self, depth: Option<usize>) -> String {
+        digest_iter(&self.minimized_stack_function_names, depth)
     }
 }
 

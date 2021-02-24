@@ -42,6 +42,11 @@ pub struct CrashReport {
     #[serde(default)]
     pub minimized_stack_sha256: Option<String>,
 
+    #[serde(default)]
+    pub minimized_stack_function_names: Vec<String>,
+    #[serde(default)]
+    pub minimized_stack_function_names_sha256: Option<String>,
+
     pub asan_log: Option<String>,
 
     pub task_id: Uuid,
@@ -178,6 +183,13 @@ impl CrashReport {
         } else {
             Some(crash_log.minimized_stack_sha256(minimized_stack_depth))
         };
+
+        let minimized_stack_function_names_sha256 =
+            if crash_log.minimized_stack_function_names.is_empty() {
+                None
+            } else {
+                Some(crash_log.minimized_stack_function_names_sha256(minimized_stack_depth))
+            };
         Self {
             input_sha256,
             input_blob,
@@ -187,6 +199,8 @@ impl CrashReport {
             call_stack_sha256,
             minimized_stack: crash_log.minimized_stack,
             minimized_stack_sha256,
+            minimized_stack_function_names: crash_log.minimized_stack_function_names,
+            minimized_stack_function_names_sha256,
             call_stack: crash_log.call_stack,
             asan_log: Some(crash_log.text),
             scariness_score: crash_log.scariness_score,

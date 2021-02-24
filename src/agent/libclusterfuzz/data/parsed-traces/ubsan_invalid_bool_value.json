@@ -20,90 +20,81 @@
       "address": 4411245,
       "function_name": "tsm_screen_tab_left",
       "function_offset": 8,
-      "file_name": "/src/libtsm/src/tsm/tsm-screen.c",
-      "file_line": 1321,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tsm-screen.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-screen.c",
+      "source_file_line": 1321
     },
     {
       "line": "#1 0x438eb7 in parse_data /src/libtsm/src/tsm/tsm-vte.c:0:3",
       "address": 4427447,
       "function_name": "parse_data",
       "function_offset": 3,
-      "file_name": "/src/libtsm/src/tsm/tsm-vte.c",
-      "file_line": 0,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tsm-vte.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-vte.c",
+      "source_file_line": 0
     },
     {
       "line": "#2 0x438b19 in tsm_vte_input /src/libtsm/src/tsm/tsm-vte.c:0:4",
       "address": 4426521,
       "function_name": "tsm_vte_input",
       "function_offset": 4,
-      "file_name": "/src/libtsm/src/tsm/tsm-vte.c",
-      "file_line": 0,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tsm-vte.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-vte.c",
+      "source_file_line": 0
     },
     {
       "line": "#3 0x42e3ad in LLVMFuzzerTestOneInput /src/libtsm_fuzzer.c:44:3",
       "address": 4383661,
       "function_name": "LLVMFuzzerTestOneInput",
       "function_offset": 3,
-      "file_name": "/src/libtsm_fuzzer.c",
-      "file_line": 44,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "libtsm_fuzzer.c",
+      "source_file_path": "/src/libtsm_fuzzer.c",
+      "source_file_line": 44
     },
     {
       "line": "#4 0x4509d4 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13",
       "address": 4524500,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
       "function_offset": 13,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 550,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 550
     },
     {
       "line": "#5 0x450cfa in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3",
       "address": 4525306,
       "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
       "function_offset": 3,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 501,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 501
     },
     {
       "line": "#6 0x4451ad in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6",
       "address": 4477357,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
       "function_offset": 6,
-      "file_name": "/src/libfuzzer/FuzzerDriver.cpp",
-      "file_line": 268,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 268
     },
     {
       "line": "#7 0x447139 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:517:9",
       "address": 4485433,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
       "function_offset": 9,
-      "file_name": "/src/libfuzzer/FuzzerDriver.cpp",
-      "file_line": 517,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 517
     },
     {
       "line": "#8 0x444ebc in main /src/libfuzzer/FuzzerMain.cpp:20:10",
       "address": 4476604,
       "function_name": "main",
       "function_offset": 10,
-      "file_name": "/src/libfuzzer/FuzzerMain.cpp",
-      "file_line": 20,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
     }
   ],
   "full_stack_names": [
@@ -123,37 +114,48 @@
       "address": 4411245,
       "function_name": "tsm_screen_tab_left",
       "function_offset": 8,
-      "file_name": "/src/libtsm/src/tsm/tsm-screen.c",
-      "file_line": 1321,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tsm-screen.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-screen.c",
+      "source_file_line": 1321
     },
     {
       "line": "#1 0x438eb7 in parse_data /src/libtsm/src/tsm/tsm-vte.c:0:3",
       "address": 4427447,
       "function_name": "parse_data",
       "function_offset": 3,
-      "file_name": "/src/libtsm/src/tsm/tsm-vte.c",
-      "file_line": 0,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tsm-vte.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-vte.c",
+      "source_file_line": 0
     },
     {
       "line": "#2 0x438b19 in tsm_vte_input /src/libtsm/src/tsm/tsm-vte.c:0:4",
       "address": 4426521,
       "function_name": "tsm_vte_input",
       "function_offset": 4,
-      "file_name": "/src/libtsm/src/tsm/tsm-vte.c",
-      "file_line": 0,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "tsm-vte.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-vte.c",
+      "source_file_line": 0
+    },
+    {
+      "line": "#3 0x42e3ad in LLVMFuzzerTestOneInput /src/libtsm_fuzzer.c:44:3",
+      "address": 4383661,
+      "function_name": "libtsm_fuzzer.c",
+      "function_offset": 3,
+      "source_file_name": "libtsm_fuzzer.c",
+      "source_file_path": "/src/libtsm_fuzzer.c",
+      "source_file_line": 44
     }
   ],
   "minimized_stack": [
     "tsm_screen_tab_left",
     "parse_data",
-    "tsm_vte_input"
+    "tsm_vte_input",
+    "libtsm_fuzzer.c"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "tsm_screen_tab_left",
+    "parse_data",
+    "tsm_vte_input",
+    "libtsm_fuzzer.c"
+  ]
 }

@@ -11,18 +11,12 @@
       "line": "#0 0x55a0c2ff2761 in runtime.raise /syzkaller/go/gc/src/runtime/sys_linux_amd64.s:165",
       "address": 94148954629985,
       "function_name": "runtime.raise",
-      "function_offset": null,
-      "file_name": "/syzkaller/go/gc/src/runtime/sys_linux_amd64.s",
-      "file_line": 165,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "sys_linux_amd64.s",
+      "source_file_path": "/syzkaller/go/gc/src/runtime/sys_linux_amd64.s",
+      "source_file_line": 165
     }
   ],
   "full_stack_names": [
     "runtime.raise"
-  ],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
-  "scariness_score": null,
-  "scariness_description": null
+  ]
 }

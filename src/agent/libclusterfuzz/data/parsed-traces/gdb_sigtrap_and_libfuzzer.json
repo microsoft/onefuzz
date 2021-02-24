@@ -15,51 +15,41 @@
       "line": "#2  0x000000000000cdc0 in xymodem_trnasfer (target_addr=0x2022000, max_sz=<optimized out>, prot_type=1) at usbdev/protocol_xymodem.c:362",
       "address": 52672,
       "function_name": "xymodem_trnasfer (target_addr=0x2022000, max_sz=<optimized out>, prot_type=1) at",
-      "function_offset": null,
-      "file_name": "usbdev/protocol_xymodem.c",
-      "file_line": 362,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "protocol_xymodem.c",
+      "source_file_path": "usbdev/protocol_xymodem.c",
+      "source_file_line": 362
     },
     {
       "line": "#3  0x0000000000002060 in LoadImageFromUsb30 (uTargetAddr=<optimized out>, uSizeLimit=<optimized out>, req_type=3239010) at usbdev/usbdev_api.c:267",
       "address": 8288,
       "function_name": "LoadImageFromUsb30 (uTargetAddr=<optimized out>, uSizeLimit=<optimized out>, req_type=3239010) at",
-      "function_offset": null,
-      "file_name": "usbdev/usbdev_api.c",
-      "file_line": 267,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "usbdev_api.c",
+      "source_file_path": "usbdev/usbdev_api.c",
+      "source_file_line": 267
     },
     {
       "line": "#4  0x0000000000001fec in LoadBL1FromUsb30 () at usbdev/usbdev_api.c:225",
       "address": 8172,
       "function_name": "LoadBL1FromUsb30 () at",
-      "function_offset": null,
-      "file_name": "usbdev/usbdev_api.c",
-      "file_line": 225,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "usbdev_api.c",
+      "source_file_path": "usbdev/usbdev_api.c",
+      "source_file_line": 225
     },
     {
       "line": "#5  0x0000000000004514 in Main () at boot/main.c:94",
       "address": 17684,
       "function_name": "Main () at",
-      "function_offset": null,
-      "file_name": "boot/main.c",
-      "file_line": 94,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "main.c",
+      "source_file_path": "boot/main.c",
+      "source_file_line": 94
     },
     {
       "line": "#6  0x0000000000000044 in GPIO_SetPudBits (SFR_Address=<optimized out>, base=<optimized out>, mask=<optimized out>, value=<optimized out>) at gpio/gpio.c:38",
       "address": 68,
       "function_name": "GPIO_SetPudBits (SFR_Address=<optimized out>, base=<optimized out>, mask=<optimized out>, value=<optimized out>) at",
-      "function_offset": null,
-      "file_name": "gpio/gpio.c",
-      "file_line": 38,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpio.c",
+      "source_file_path": "gpio/gpio.c",
+      "source_file_line": 38
     }
   ],
   "full_stack_names": [
@@ -74,51 +64,41 @@
       "line": "#2  0x000000000000cdc0 in xymodem_trnasfer (target_addr=0x2022000, max_sz=<optimized out>, prot_type=1) at usbdev/protocol_xymodem.c:362",
       "address": 52672,
       "function_name": "xymodem_trnasfer (target_addr=0x2022000, max_sz=<optimized out>, prot_type=1) at",
-      "function_offset": null,
-      "file_name": "usbdev/protocol_xymodem.c",
-      "file_line": 362,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "protocol_xymodem.c",
+      "source_file_path": "usbdev/protocol_xymodem.c",
+      "source_file_line": 362
     },
     {
       "line": "#3  0x0000000000002060 in LoadImageFromUsb30 (uTargetAddr=<optimized out>, uSizeLimit=<optimized out>, req_type=3239010) at usbdev/usbdev_api.c:267",
       "address": 8288,
       "function_name": "LoadImageFromUsb30 (uTargetAddr=<optimized out>, uSizeLimit=<optimized out>, req_type=3239010) at",
-      "function_offset": null,
-      "file_name": "usbdev/usbdev_api.c",
-      "file_line": 267,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "usbdev_api.c",
+      "source_file_path": "usbdev/usbdev_api.c",
+      "source_file_line": 267
     },
     {
       "line": "#4  0x0000000000001fec in LoadBL1FromUsb30 () at usbdev/usbdev_api.c:225",
       "address": 8172,
       "function_name": "LoadBL1FromUsb30 () at",
-      "function_offset": null,
-      "file_name": "usbdev/usbdev_api.c",
-      "file_line": 225,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "usbdev_api.c",
+      "source_file_path": "usbdev/usbdev_api.c",
+      "source_file_line": 225
     },
     {
       "line": "#5  0x0000000000004514 in Main () at boot/main.c:94",
       "address": 17684,
       "function_name": "Main () at",
-      "function_offset": null,
-      "file_name": "boot/main.c",
-      "file_line": 94,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "main.c",
+      "source_file_path": "boot/main.c",
+      "source_file_line": 94
     },
     {
       "line": "#6  0x0000000000000044 in GPIO_SetPudBits (SFR_Address=<optimized out>, base=<optimized out>, mask=<optimized out>, value=<optimized out>) at gpio/gpio.c:38",
       "address": 68,
       "function_name": "GPIO_SetPudBits (SFR_Address=<optimized out>, base=<optimized out>, mask=<optimized out>, value=<optimized out>) at",
-      "function_offset": null,
-      "file_name": "gpio/gpio.c",
-      "file_line": 38,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpio.c",
+      "source_file_path": "gpio/gpio.c",
+      "source_file_line": 38
     }
   ],
   "minimized_stack": [
@@ -128,6 +108,11 @@
     "Main () at",
     "GPIO_SetPudBits (SFR_Address=<optimized out>, base=<optimized out>, mask=<optimized out>, value=<optimized out>) at"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "xymodem_trnasfer ",
+    "LoadImageFromUsb30 ",
+    "LoadBL1FromUsb30 ",
+    "Main ",
+    "GPIO_SetPudBits "
+  ]
 }

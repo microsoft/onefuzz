@@ -30,201 +30,179 @@
       "line": "#0 0x7efeaef2f427 in gsignal /build/glibc-LK5gWL/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
       "address": 139632321950759,
       "function_name": "gsignal",
-      "function_offset": null,
-      "file_name": "/build/glibc-LK5gWL/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
-      "file_line": 54,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/glibc-LK5gWL/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
     },
     {
       "line": "#1 0x7efeaef31029 in abort /build/glibc-LK5gWL/glibc-2.23/stdlib/abort.c:89",
       "address": 139632321957929,
       "function_name": "abort",
-      "function_offset": null,
-      "file_name": "/build/glibc-LK5gWL/glibc-2.23/stdlib/abort.c",
-      "file_line": 89,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "abort.c",
+      "source_file_path": "/build/glibc-LK5gWL/glibc-2.23/stdlib/abort.c",
+      "source_file_line": 89
     },
     {
       "line": "#2 0x55fcb95018b6 in std::sys::unix::abort_internal::h61fc255319305c43 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/sys/unix/mod.rs:167:14",
       "address": 94543929153718,
       "function_name": "std::sys::unix::abort_internal::h61fc255319305c43",
       "function_offset": 14,
-      "file_name": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/sys/unix/mod.rs",
-      "file_line": 167,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "mod.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/sys/unix/mod.rs",
+      "source_file_line": 167
     },
     {
       "line": "#3 0x55fcb94e9c75 in std::process::abort::hc04628a00aa4543a /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/process.rs:1623:5",
       "address": 94543929056373,
       "function_name": "std::process::abort::hc04628a00aa4543a",
       "function_offset": 5,
-      "file_name": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/process.rs",
-      "file_line": 1623,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "process.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/process.rs",
+      "source_file_line": 1623
     },
     {
       "line": "#4 0x55fcb94f03cd in rust_oom /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/alloc.rs:282:5",
       "address": 94543929082829,
       "function_name": "rust_oom",
       "function_offset": 5,
-      "file_name": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/alloc.rs",
-      "file_line": 282,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "alloc.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/alloc.rs",
+      "source_file_line": 282
     },
     {
       "line": "#5 0x55fcb951b876 in alloc::alloc::handle_alloc_error::hf3b29e2cf0b4ae46 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/alloc.rs:307:14",
       "address": 94543929260150,
       "function_name": "alloc::alloc::handle_alloc_error::hf3b29e2cf0b4ae46",
       "function_offset": 14,
-      "file_name": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/alloc.rs",
-      "file_line": 307,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "alloc.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/alloc.rs",
+      "source_file_line": 307
     },
     {
       "line": "#6 0x55fcb92ea65b in alloc::raw_vec::RawVec$LT$T$C$A$GT$::reserve::hf99060ff0a84a3be /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/raw_vec.rs:269:47",
       "address": 94543926961755,
       "function_name": "alloc::raw_vec::RawVec$LT$T$C$A$GT$::reserve::hf99060ff0a84a3be",
       "function_offset": 47,
-      "file_name": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/raw_vec.rs",
-      "file_line": 269,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "raw_vec.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/raw_vec.rs",
+      "source_file_line": 269
     },
     {
       "line": "#7 0x55fcb92ea65b in alloc::vec::Vec$LT$T$GT$::reserve::h76c1ff3ca24d558b /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/vec.rs:500:9",
       "address": 94543926961755,
       "function_name": "alloc::vec::Vec$LT$T$GT$::reserve::h76c1ff3ca24d558b",
       "function_offset": 9,
-      "file_name": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/vec.rs",
-      "file_line": 500,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "vec.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/vec.rs",
+      "source_file_line": 500
     },
     {
       "line": "#8 0x55fcb92ea65b in mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c mp4parse-rust/mp4parse/src/fallible.rs:283:13",
       "address": 94543926961755,
       "function_name": "mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c",
       "function_offset": 13,
-      "file_name": "mp4parse-rust/mp4parse/src/fallible.rs",
-      "file_line": 283,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 283
     },
     {
       "line": "#9 0x55fcb92ea65b in mp4parse::fallible::try_read_up_to::h64a356817b37893a mp4parse-rust/mp4parse/src/fallible.rs:75:5",
       "address": 94543926961755,
       "function_name": "mp4parse::fallible::try_read_up_to::h64a356817b37893a",
       "function_offset": 5,
-      "file_name": "mp4parse-rust/mp4parse/src/fallible.rs",
-      "file_line": 75,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 75
     },
     {
       "line": "#10 0x55fcb92f69a4 in _$LT$mp4parse..BMFFBox$LT$T$GT$$u20$as$u20$mp4parse..fallible..TryRead$GT$::try_read_to_end::h37ff3f8c67f3ab87 mp4parse-rust/mp4parse/src/fallible.rs:48:9",
       "address": 94543927011748,
       "function_name": "_$LT$mp4parse..BMFFBox$LT$T$GT$$u20$as$u20$mp4parse..fallible..TryRead$GT$::try_read_to_end::h37ff3f8c67f3ab87",
       "function_offset": 9,
-      "file_name": "mp4parse-rust/mp4parse/src/fallible.rs",
-      "file_line": 48,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 48
     },
     {
       "line": "#11 0x55fcb92f69a4 in mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3 mp4parse-rust/mp4parse/src/fallible.rs:41:17",
       "address": 94543927011748,
       "function_name": "mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3",
       "function_offset": 17,
-      "file_name": "mp4parse-rust/mp4parse/src/fallible.rs",
-      "file_line": 41,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 41
     },
     {
       "line": "#12 0x55fcb93196ff in mp4parse::read_iloc::hcabc592b0f73799c mp4parse-rust/mp4parse/src/lib.rs:1484:16",
       "address": 94543927154431,
       "function_name": "mp4parse::read_iloc::hcabc592b0f73799c",
       "function_offset": 16,
-      "file_name": "mp4parse-rust/mp4parse/src/lib.rs",
-      "file_line": 1484,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1484
     },
     {
       "line": "#13 0x55fcb9299568 in mp4parse::read_avif_meta::h6463196551ec8476 mp4parse-rust/mp4parse/src/lib.rs:1340:35",
       "address": 94543926629736,
       "function_name": "mp4parse::read_avif_meta::h6463196551ec8476",
       "function_offset": 35,
-      "file_name": "mp4parse-rust/mp4parse/src/lib.rs",
-      "file_line": 1340,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1340
     },
     {
       "line": "#14 0x55fcb930161d in mp4parse::read_avif::h085d003469ed626b mp4parse-rust/mp4parse/src/lib.rs:1249:40",
       "address": 94543927055901,
       "function_name": "mp4parse::read_avif::h085d003469ed626b",
       "function_offset": 40,
-      "file_name": "mp4parse-rust/mp4parse/src/lib.rs",
-      "file_line": 1249,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1249
     },
     {
       "line": "#15 0x55fcb9396625 in _$LT$mp4parse_capi..Mp4parseAvifParser$u20$as$u20$mp4parse_capi..ContextParser$GT$::read::h3b7d4d3db512bcae mp4parse-rust/mp4parse_capi/src/lib.rs:377:9",
       "address": 94543927666213,
       "function_name": "_$LT$mp4parse_capi..Mp4parseAvifParser$u20$as$u20$mp4parse_capi..ContextParser$GT$::read::h3b7d4d3db512bcae",
       "function_offset": 9,
-      "file_name": "mp4parse-rust/mp4parse_capi/src/lib.rs",
-      "file_line": 377,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 377
     },
     {
       "line": "#16 0x55fcb9396625 in mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785 mp4parse-rust/mp4parse_capi/src/lib.rs:482:5",
       "address": 94543927666213,
       "function_name": "mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785",
       "function_offset": 5,
-      "file_name": "mp4parse-rust/mp4parse_capi/src/lib.rs",
-      "file_line": 482,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 482
     },
     {
       "line": "#17 0x55fcb9395c07 in mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730 mp4parse-rust/mp4parse_capi/src/lib.rs:467:15",
       "address": 94543927663623,
       "function_name": "mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730",
       "function_offset": 15,
-      "file_name": "mp4parse-rust/mp4parse_capi/src/lib.rs",
-      "file_line": 467,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 467
     },
     {
       "line": "#18 0x55fcb9395c07 in mp4parse_avif_new mp4parse-rust/mp4parse_capi/src/lib.rs:451:5",
       "address": 94543927663623,
       "function_name": "mp4parse_avif_new",
       "function_offset": 5,
-      "file_name": "mp4parse-rust/mp4parse_capi/src/lib.rs",
-      "file_line": 451,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 451
     },
     {
       "line": "#19 0x55fcb921f598 in rust_fuzzer_test_input mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs:28:12",
       "address": 94543926130072,
       "function_name": "rust_fuzzer_test_input",
       "function_offset": 12,
-      "file_name": "mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs",
-      "file_line": 28,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "avif.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs",
+      "source_file_line": 28
     }
   ],
   "full_stack_names": [
@@ -255,100 +233,90 @@
       "address": 94543926961755,
       "function_name": "mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c",
       "function_offset": 13,
-      "file_name": "mp4parse-rust/mp4parse/src/fallible.rs",
-      "file_line": 283,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 283
     },
     {
       "line": "#9 0x55fcb92ea65b in mp4parse::fallible::try_read_up_to::h64a356817b37893a mp4parse-rust/mp4parse/src/fallible.rs:75:5",
       "address": 94543926961755,
       "function_name": "mp4parse::fallible::try_read_up_to::h64a356817b37893a",
       "function_offset": 5,
-      "file_name": "mp4parse-rust/mp4parse/src/fallible.rs",
-      "file_line": 75,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 75
     },
     {
       "line": "#11 0x55fcb92f69a4 in mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3 mp4parse-rust/mp4parse/src/fallible.rs:41:17",
       "address": 94543927011748,
       "function_name": "mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3",
       "function_offset": 17,
-      "file_name": "mp4parse-rust/mp4parse/src/fallible.rs",
-      "file_line": 41,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 41
     },
     {
       "line": "#12 0x55fcb93196ff in mp4parse::read_iloc::hcabc592b0f73799c mp4parse-rust/mp4parse/src/lib.rs:1484:16",
       "address": 94543927154431,
       "function_name": "mp4parse::read_iloc::hcabc592b0f73799c",
       "function_offset": 16,
-      "file_name": "mp4parse-rust/mp4parse/src/lib.rs",
-      "file_line": 1484,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1484
     },
     {
       "line": "#13 0x55fcb9299568 in mp4parse::read_avif_meta::h6463196551ec8476 mp4parse-rust/mp4parse/src/lib.rs:1340:35",
       "address": 94543926629736,
       "function_name": "mp4parse::read_avif_meta::h6463196551ec8476",
       "function_offset": 35,
-      "file_name": "mp4parse-rust/mp4parse/src/lib.rs",
-      "file_line": 1340,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1340
     },
     {
       "line": "#14 0x55fcb930161d in mp4parse::read_avif::h085d003469ed626b mp4parse-rust/mp4parse/src/lib.rs:1249:40",
       "address": 94543927055901,
       "function_name": "mp4parse::read_avif::h085d003469ed626b",
       "function_offset": 40,
-      "file_name": "mp4parse-rust/mp4parse/src/lib.rs",
-      "file_line": 1249,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1249
     },
     {
       "line": "#16 0x55fcb9396625 in mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785 mp4parse-rust/mp4parse_capi/src/lib.rs:482:5",
       "address": 94543927666213,
       "function_name": "mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785",
       "function_offset": 5,
-      "file_name": "mp4parse-rust/mp4parse_capi/src/lib.rs",
-      "file_line": 482,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 482
     },
     {
       "line": "#17 0x55fcb9395c07 in mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730 mp4parse-rust/mp4parse_capi/src/lib.rs:467:15",
       "address": 94543927663623,
       "function_name": "mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730",
       "function_offset": 15,
-      "file_name": "mp4parse-rust/mp4parse_capi/src/lib.rs",
-      "file_line": 467,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 467
     },
     {
       "line": "#18 0x55fcb9395c07 in mp4parse_avif_new mp4parse-rust/mp4parse_capi/src/lib.rs:451:5",
       "address": 94543927663623,
       "function_name": "mp4parse_avif_new",
       "function_offset": 5,
-      "file_name": "mp4parse-rust/mp4parse_capi/src/lib.rs",
-      "file_line": 451,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 451
     },
     {
       "line": "#19 0x55fcb921f598 in rust_fuzzer_test_input mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs:28:12",
       "address": 94543926130072,
       "function_name": "rust_fuzzer_test_input",
       "function_offset": 12,
-      "file_name": "mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs",
-      "file_line": 28,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "avif.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs",
+      "source_file_line": 28
     }
   ],
   "minimized_stack": [
@@ -363,6 +331,16 @@
     "mp4parse_avif_new",
     "rust_fuzzer_test_input"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c",
+    "mp4parse::fallible::try_read_up_to::h64a356817b37893a",
+    "mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3",
+    "mp4parse::read_iloc::hcabc592b0f73799c",
+    "mp4parse::read_avif_meta::h6463196551ec8476",
+    "mp4parse::read_avif::h085d003469ed626b",
+    "mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785",
+    "mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730",
+    "mp4parse_avif_new",
+    "rust_fuzzer_test_input"
+  ]
 }

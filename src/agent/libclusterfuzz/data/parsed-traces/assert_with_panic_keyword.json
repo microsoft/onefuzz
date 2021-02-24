@@ -26,161 +26,142 @@
       "line": "#0 0x7f37f8b21427 in gsignal /build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
       "address": 139878372348967,
       "function_name": "gsignal",
-      "function_offset": null,
-      "file_name": "/build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
-      "file_line": 54,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
     },
     {
       "line": "#1 0x7f37f8b23029 in abort /build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c:89",
       "address": 139878372356137,
       "function_name": "abort",
-      "function_offset": null,
-      "file_name": "/build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c",
-      "file_line": 89,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "abort.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c",
+      "source_file_line": 89
     },
     {
       "line": "#2 0x8295ea in Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) /source/common/upstream/cluster_manager_impl.cc:259:7",
       "address": 8558058,
       "function_name": "Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&)",
       "function_offset": 7,
-      "file_name": "/source/common/upstream/cluster_manager_impl.cc",
-      "file_line": 259,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "cluster_manager_impl.cc",
+      "source_file_path": "/source/common/upstream/cluster_manager_impl.cc",
+      "source_file_line": 259
     },
     {
       "line": "#3 0x66356c in Envoy::Upstream::ValidationClusterManager::ValidationClusterManager(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) /source/server/config_validation/cluster_manager.cc:41:7",
       "address": 6698348,
       "function_name": "Envoy::Upstream::ValidationClusterManager::ValidationClusterManager(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&)",
       "function_offset": 7,
-      "file_name": "/source/server/config_validation/cluster_manager.cc",
-      "file_line": 41,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "cluster_manager.cc",
+      "source_file_path": "/source/server/config_validation/cluster_manager.cc",
+      "source_file_line": 41
     },
     {
       "line": "#4 0x6632d9 in Envoy::Upstream::ValidationClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&) /source/server/config_validation/cluster_manager.cc:21:32",
       "address": 6697689,
       "function_name": "Envoy::Upstream::ValidationClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&)",
       "function_offset": 32,
-      "file_name": "/source/server/config_validation/cluster_manager.cc",
-      "file_line": 21,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "cluster_manager.cc",
+      "source_file_path": "/source/server/config_validation/cluster_manager.cc",
+      "source_file_line": 21
     },
     {
       "line": "#5 0x1df71c7 in Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&) /source/server/configuration_impl.cc:57:46",
       "address": 31420871,
       "function_name": "Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&)",
       "function_offset": 46,
-      "file_name": "/source/server/configuration_impl.cc",
-      "file_line": 57,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "configuration_impl.cc",
+      "source_file_path": "/source/server/configuration_impl.cc",
+      "source_file_line": 57
     },
     {
       "line": "#6 0x659f24 in Envoy::Server::ValidationInstance::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) /source/server/config_validation/server.cc:93:16",
       "address": 6659876,
       "function_name": "Envoy::Server::ValidationInstance::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&)",
       "function_offset": 16,
-      "file_name": "/source/server/config_validation/server.cc",
-      "file_line": 93,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "server.cc",
+      "source_file_path": "/source/server/config_validation/server.cc",
+      "source_file_line": 93
     },
     {
       "line": "#7 0x658384 in Envoy::Server::ValidationInstance::ValidationInstance(Envoy::Server::Options&, Envoy::Event::TimeSystem&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Stats::IsolatedStoreImpl&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&) /source/server/config_validation/server.cc:49:5",
       "address": 6652804,
       "function_name": "Envoy::Server::ValidationInstance::ValidationInstance(Envoy::Server::Options&, Envoy::Event::TimeSystem&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Stats::IsolatedStoreImpl&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&)",
       "function_offset": 5,
-      "file_name": "/source/server/config_validation/server.cc",
-      "file_line": 49,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "server.cc",
+      "source_file_path": "/source/server/config_validation/server.cc",
+      "source_file_line": 49
     },
     {
       "line": "#8 0x657071 in Envoy::Server::validateConfig(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) /source/server/config_validation/server.cc:27:24",
       "address": 6647921,
       "function_name": "Envoy::Server::validateConfig(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&)",
       "function_offset": 24,
-      "file_name": "/source/server/config_validation/server.cc",
-      "file_line": 27,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "server.cc",
+      "source_file_path": "/source/server/config_validation/server.cc",
+      "source_file_line": 27
     },
     {
       "line": "#9 0x636f65 in Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) /test/server/config_validation/config_fuzz_test.cc:29:5",
       "address": 6516581,
       "function_name": "Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&)",
       "function_offset": 5,
-      "file_name": "/test/server/config_validation/config_fuzz_test.cc",
-      "file_line": 29,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "config_fuzz_test.cc",
+      "source_file_path": "/test/server/config_validation/config_fuzz_test.cc",
+      "source_file_line": 29
     },
     {
       "line": "#10 0x6368e4 in LLVMFuzzerTestOneInput /test/server/config_validation/config_fuzz_test.cc:16:1",
       "address": 6514916,
       "function_name": "LLVMFuzzerTestOneInput",
       "function_offset": 1,
-      "file_name": "/test/server/config_validation/config_fuzz_test.cc",
-      "file_line": 16,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "config_fuzz_test.cc",
+      "source_file_path": "/test/server/config_validation/config_fuzz_test.cc",
+      "source_file_line": 16
     },
     {
       "line": "#11 0x2da0578 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:570:15",
       "address": 47842680,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
       "function_offset": 15,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 570,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 570
     },
     {
       "line": "#12 0x2d7df6d in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6",
       "address": 47701869,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
       "function_offset": 6,
-      "file_name": "/src/libfuzzer/FuzzerDriver.cpp",
-      "file_line": 280,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 280
     },
     {
       "line": "#13 0x2d897e3 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:713:9",
       "address": 47749091,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
       "function_offset": 9,
-      "file_name": "/src/libfuzzer/FuzzerDriver.cpp",
-      "file_line": 713,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 713
     },
     {
       "line": "#14 0x2d7d5ec in main /src/libfuzzer/FuzzerMain.cpp:20:10",
       "address": 47699436,
       "function_name": "main",
       "function_offset": 10,
-      "file_name": "/src/libfuzzer/FuzzerMain.cpp",
-      "file_line": 20,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
     },
     {
       "line": "#15 0x7f37f8b0c82f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291",
       "address": 139878372263983,
       "function_name": "__libc_start_main",
-      "function_offset": null,
-      "file_name": "/build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c",
-      "file_line": 291,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
     }
   ],
   "full_stack_names": [
@@ -207,80 +188,81 @@
       "address": 8558058,
       "function_name": "Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&)",
       "function_offset": 7,
-      "file_name": "/source/common/upstream/cluster_manager_impl.cc",
-      "file_line": 259,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "cluster_manager_impl.cc",
+      "source_file_path": "/source/common/upstream/cluster_manager_impl.cc",
+      "source_file_line": 259
     },
     {
       "line": "#3 0x66356c in Envoy::Upstream::ValidationClusterManager::ValidationClusterManager(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) /source/server/config_validation/cluster_manager.cc:41:7",
       "address": 6698348,
       "function_name": "Envoy::Upstream::ValidationClusterManager::ValidationClusterManager(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&)",
       "function_offset": 7,
-      "file_name": "/source/server/config_validation/cluster_manager.cc",
-      "file_line": 41,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "cluster_manager.cc",
+      "source_file_path": "/source/server/config_validation/cluster_manager.cc",
+      "source_file_line": 41
     },
     {
       "line": "#4 0x6632d9 in Envoy::Upstream::ValidationClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&) /source/server/config_validation/cluster_manager.cc:21:32",
       "address": 6697689,
       "function_name": "Envoy::Upstream::ValidationClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&)",
       "function_offset": 32,
-      "file_name": "/source/server/config_validation/cluster_manager.cc",
-      "file_line": 21,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "cluster_manager.cc",
+      "source_file_path": "/source/server/config_validation/cluster_manager.cc",
+      "source_file_line": 21
     },
     {
       "line": "#5 0x1df71c7 in Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&) /source/server/configuration_impl.cc:57:46",
       "address": 31420871,
       "function_name": "Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&)",
       "function_offset": 46,
-      "file_name": "/source/server/configuration_impl.cc",
-      "file_line": 57,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "configuration_impl.cc",
+      "source_file_path": "/source/server/configuration_impl.cc",
+      "source_file_line": 57
     },
     {
       "line": "#6 0x659f24 in Envoy::Server::ValidationInstance::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) /source/server/config_validation/server.cc:93:16",
       "address": 6659876,
       "function_name": "Envoy::Server::ValidationInstance::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&)",
       "function_offset": 16,
-      "file_name": "/source/server/config_validation/server.cc",
-      "file_line": 93,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "server.cc",
+      "source_file_path": "/source/server/config_validation/server.cc",
+      "source_file_line": 93
     },
     {
       "line": "#7 0x658384 in Envoy::Server::ValidationInstance::ValidationInstance(Envoy::Server::Options&, Envoy::Event::TimeSystem&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Stats::IsolatedStoreImpl&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&) /source/server/config_validation/server.cc:49:5",
       "address": 6652804,
       "function_name": "Envoy::Server::ValidationInstance::ValidationInstance(Envoy::Server::Options&, Envoy::Event::TimeSystem&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Stats::IsolatedStoreImpl&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&)",
       "function_offset": 5,
-      "file_name": "/source/server/config_validation/server.cc",
-      "file_line": 49,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "server.cc",
+      "source_file_path": "/source/server/config_validation/server.cc",
+      "source_file_line": 49
     },
     {
       "line": "#8 0x657071 in Envoy::Server::validateConfig(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) /source/server/config_validation/server.cc:27:24",
       "address": 6647921,
       "function_name": "Envoy::Server::validateConfig(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&)",
       "function_offset": 24,
-      "file_name": "/source/server/config_validation/server.cc",
-      "file_line": 27,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "server.cc",
+      "source_file_path": "/source/server/config_validation/server.cc",
+      "source_file_line": 27
     },
     {
       "line": "#9 0x636f65 in Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) /test/server/config_validation/config_fuzz_test.cc:29:5",
       "address": 6516581,
       "function_name": "Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&)",
       "function_offset": 5,
-      "file_name": "/test/server/config_validation/config_fuzz_test.cc",
-      "file_line": 29,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "config_fuzz_test.cc",
+      "source_file_path": "/test/server/config_validation/config_fuzz_test.cc",
+      "source_file_line": 29
+    },
+    {
+      "line": "#10 0x6368e4 in LLVMFuzzerTestOneInput /test/server/config_validation/config_fuzz_test.cc:16:1",
+      "address": 6514916,
+      "function_name": "config_fuzz_test.cc",
+      "function_offset": 1,
+      "source_file_name": "config_fuzz_test.cc",
+      "source_file_path": "/test/server/config_validation/config_fuzz_test.cc",
+      "source_file_line": 16
     }
   ],
   "minimized_stack": [
@@ -291,7 +273,19 @@
     "Envoy::Server::ValidationInstance::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&)",
     "Envoy::Server::ValidationInstance::ValidationInstance(Envoy::Server::Options&, Envoy::Event::TimeSystem&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Stats::IsolatedStoreImpl&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&)",
     "Envoy::Server::validateConfig(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&)",
-    "Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&)"
+    "Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&)",
+    "config_fuzz_test.cc"
+  ],
+  "minimized_stack_function_names": [
+    "Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl",
+    "Envoy::Upstream::ValidationClusterManager::ValidationClusterManager",
+    "Envoy::Upstream::ValidationClusterManagerFactory::clusterManagerFromProto",
+    "Envoy::Server::Configuration::MainImpl::initialize",
+    "Envoy::Server::ValidationInstance::initialize",
+    "Envoy::Server::ValidationInstance::ValidationInstance",
+    "Envoy::Server::validateConfig",
+    "Envoy::Server::TestOneProtoInput",
+    "config_fuzz_test.cc"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

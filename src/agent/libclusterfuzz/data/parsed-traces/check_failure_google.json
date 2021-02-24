@@ -14,9 +14,6 @@
       "line": "#0 0x7f91eacc0601 in raise (/usr/grte/v4/lib64/libc.so.6+0xfffff)",
       "address": 140264686224897,
       "function_name": "raise",
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/grte/v4/lib64/libc.so.6",
       "module_offset": 1048575
     },
@@ -24,9 +21,6 @@
       "line": "#1 0x7f91eacc231f in abort (/usr/grte/v4/lib64/libc.so.6+0xfffff)",
       "address": 140264686232351,
       "function_name": "abort",
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/grte/v4/lib64/libc.so.6",
       "module_offset": 1048575
     },
@@ -35,20 +29,18 @@
       "address": 94620070973410,
       "function_name": "Frame(int)",
       "function_offset": 3,
-      "file_name": "file/path.cc",
-      "file_line": 130,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "path.cc",
+      "source_file_path": "file/path.cc",
+      "source_file_line": 130
     },
     {
       "line": "#8 0x560e73b7d819 in LLVMFuzzerTestOneInput file/path.cc:10:1",
       "address": 94620070959129,
       "function_name": "LLVMFuzzerTestOneInput",
       "function_offset": 1,
-      "file_name": "file/path.cc",
-      "file_line": 10,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "path.cc",
+      "source_file_path": "file/path.cc",
+      "source_file_line": 10
     }
   ],
   "full_stack_names": [
@@ -63,14 +55,27 @@
       "address": 94620070973410,
       "function_name": "Frame(int)",
       "function_offset": 3,
-      "file_name": "file/path.cc",
-      "file_line": 130,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "path.cc",
+      "source_file_path": "file/path.cc",
+      "source_file_line": 130
+    },
+    {
+      "line": "#8 0x560e73b7d819 in LLVMFuzzerTestOneInput file/path.cc:10:1",
+      "address": 94620070959129,
+      "function_name": "path.cc",
+      "function_offset": 1,
+      "source_file_name": "path.cc",
+      "source_file_path": "file/path.cc",
+      "source_file_line": 10
     }
   ],
   "minimized_stack": [
-    "Frame(int)"
+    "Frame(int)",
+    "path.cc"
+  ],
+  "minimized_stack_function_names": [
+    "Frame",
+    "path.cc"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

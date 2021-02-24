@@ -21,100 +21,90 @@
       "address": 94502125673904,
       "function_name": "HF_strcmp",
       "function_offset": 26,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
-      "file_line": 17,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memorycmp.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
+      "source_file_line": 17
     },
     {
       "line": "#1 0x55f2fda19d8c in __wrap_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:146:12",
       "address": 94502125673868,
       "function_name": "__wrap_strcmp",
       "function_offset": 12,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
-      "file_line": 146,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memorycmp.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
+      "source_file_line": 146
     },
     {
       "line": "#2 0x55f2fd41dfc6 in function1 file1.c:486:12",
       "address": 94502119399366,
       "function_name": "function1",
       "function_offset": 12,
-      "file_name": "file1.c",
-      "file_line": 486,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "file1.c",
+      "source_file_path": "file1.c",
+      "source_file_line": 486
     },
     {
       "line": "#3 0x55f2fd3392b1 in function2 file2.c:349:12",
       "address": 94502118462129,
       "function_name": "function2",
       "function_offset": 12,
-      "file_name": "file2.c",
-      "file_line": 349,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "file2.c",
+      "source_file_path": "file2.c",
+      "source_file_line": 349
     },
     {
       "line": "#4 0x55f2fd4593b5 in function3 file3.c:906:21",
       "address": 94502119642037,
       "function_name": "function3",
       "function_offset": 21,
-      "file_name": "file3.c",
-      "file_line": 906,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "file3.c",
+      "source_file_path": "file3.c",
+      "source_file_line": 906
     },
     {
       "line": "#5 0x55f2fd21672b in LLVMFuzzerTestOneInput /proc/self/cwd/fuzzer/fuzzer.cc:10:16",
       "address": 94502117271339,
       "function_name": "LLVMFuzzerTestOneInput",
       "function_offset": 16,
-      "file_name": "/proc/self/cwd/fuzzer/fuzzer.cc",
-      "file_line": 10,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "fuzzer.cc",
+      "source_file_path": "/proc/self/cwd/fuzzer/fuzzer.cc",
+      "source_file_line": 10
     },
     {
       "line": "#6 0x55f2fda1a7c8 in HonggfuzzRunOneInput /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:60:15",
       "address": 94502125676488,
       "function_name": "HonggfuzzRunOneInput",
       "function_offset": 15,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
-      "file_line": 60,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 60
     },
     {
       "line": "#7 0x55f2fda1a713 in HonggfuzzRunFromFile /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:99:5",
       "address": 94502125676307,
       "function_name": "HonggfuzzRunFromFile",
       "function_offset": 5,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
-      "file_line": 99,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 99
     },
     {
       "line": "#8 0x55f2fda1a5e7 in HonggfuzzMain /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:109:16",
       "address": 94502125676007,
       "function_name": "HonggfuzzMain",
       "function_offset": 16,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
-      "file_line": 109,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 109
     },
     {
       "line": "#8 0x55f2fda1a7b8 in main /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:124:12",
       "address": 94502125676472,
       "function_name": "main",
       "function_offset": 12,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
-      "file_line": 124,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 124
     }
   ],
   "full_stack_names": [
@@ -135,80 +125,81 @@
       "address": 94502125673904,
       "function_name": "HF_strcmp",
       "function_offset": 26,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
-      "file_line": 17,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memorycmp.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
+      "source_file_line": 17
     },
     {
       "line": "#1 0x55f2fda19d8c in __wrap_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:146:12",
       "address": 94502125673868,
       "function_name": "__wrap_strcmp",
       "function_offset": 12,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
-      "file_line": 146,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memorycmp.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
+      "source_file_line": 146
     },
     {
       "line": "#2 0x55f2fd41dfc6 in function1 file1.c:486:12",
       "address": 94502119399366,
       "function_name": "function1",
       "function_offset": 12,
-      "file_name": "file1.c",
-      "file_line": 486,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "file1.c",
+      "source_file_path": "file1.c",
+      "source_file_line": 486
     },
     {
       "line": "#3 0x55f2fd3392b1 in function2 file2.c:349:12",
       "address": 94502118462129,
       "function_name": "function2",
       "function_offset": 12,
-      "file_name": "file2.c",
-      "file_line": 349,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "file2.c",
+      "source_file_path": "file2.c",
+      "source_file_line": 349
     },
     {
       "line": "#4 0x55f2fd4593b5 in function3 file3.c:906:21",
       "address": 94502119642037,
       "function_name": "function3",
       "function_offset": 21,
-      "file_name": "file3.c",
-      "file_line": 906,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "file3.c",
+      "source_file_path": "file3.c",
+      "source_file_line": 906
+    },
+    {
+      "line": "#5 0x55f2fd21672b in LLVMFuzzerTestOneInput /proc/self/cwd/fuzzer/fuzzer.cc:10:16",
+      "address": 94502117271339,
+      "function_name": "fuzzer.cc",
+      "function_offset": 16,
+      "source_file_name": "fuzzer.cc",
+      "source_file_path": "/proc/self/cwd/fuzzer/fuzzer.cc",
+      "source_file_line": 10
     },
     {
       "line": "#6 0x55f2fda1a7c8 in HonggfuzzRunOneInput /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:60:15",
       "address": 94502125676488,
       "function_name": "HonggfuzzRunOneInput",
       "function_offset": 15,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
-      "file_line": 60,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 60
     },
     {
       "line": "#7 0x55f2fda1a713 in HonggfuzzRunFromFile /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:99:5",
       "address": 94502125676307,
       "function_name": "HonggfuzzRunFromFile",
       "function_offset": 5,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
-      "file_line": 99,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 99
     },
     {
       "line": "#8 0x55f2fda1a5e7 in HonggfuzzMain /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:109:16",
       "address": 94502125676007,
       "function_name": "HonggfuzzMain",
       "function_offset": 16,
-      "file_name": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
-      "file_line": 109,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 109
     }
   ],
   "minimized_stack": [
@@ -217,6 +208,18 @@
     "function1",
     "function2",
     "function3",
+    "fuzzer.cc",
+    "HonggfuzzRunOneInput",
+    "HonggfuzzRunFromFile",
+    "HonggfuzzMain"
+  ],
+  "minimized_stack_function_names": [
+    "HF_strcmp",
+    "__wrap_strcmp",
+    "function1",
+    "function2",
+    "function3",
+    "fuzzer.cc",
     "HonggfuzzRunOneInput",
     "HonggfuzzRunFromFile",
     "HonggfuzzMain"

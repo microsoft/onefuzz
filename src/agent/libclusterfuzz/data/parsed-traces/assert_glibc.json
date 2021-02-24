@@ -12,9 +12,6 @@
       "line": "#0 0x7faed4efa417 in gsignal (/lib/x86_64-linux-gnu/libc.so.6+0x35417)",
       "address": 140388873511959,
       "function_name": "gsignal",
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 218135
     },
@@ -22,9 +19,6 @@
       "line": "#1 0x7faed4efc019 in abort (/lib/x86_64-linux-gnu/libc.so.6+0x37019)",
       "address": 140388873519129,
       "function_name": "abort",
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 225305
     }
@@ -33,8 +27,6 @@
     "gsignal",
     "abort"
   ],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

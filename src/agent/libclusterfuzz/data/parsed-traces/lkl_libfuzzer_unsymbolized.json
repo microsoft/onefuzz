@@ -12,21 +12,17 @@
       "line": "#4 0x568f3f in panic http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/tools/lkl/lib/posix-host.c#191;lkl/tools/lkl/lib/posix-host.c;:2",
       "address": 5672767,
       "function_name": "panic",
-      "function_offset": null,
-      "file_name": "http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/tools/lkl/lib/posix-host.c#191;lkl/tools/lkl/lib/posix-host.c;",
-      "file_line": 2,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "posix-host.c;",
+      "source_file_path": "http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/tools/lkl/lib/posix-host.c#191;lkl/tools/lkl/lib/posix-host.c;",
+      "source_file_line": 2
     },
     {
       "line": "#5 0x56f3f0 in lkl_panic_blink http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/arch/lkl/kernel/setup.c#27;lkl/arch/lkl/kernel/setup.c;:2",
       "address": 5698544,
       "function_name": "lkl_panic_blink",
-      "function_offset": null,
-      "file_name": "http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/arch/lkl/kernel/setup.c#27;lkl/arch/lkl/kernel/setup.c;",
-      "file_line": 2,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "setup.c;",
+      "source_file_path": "http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/arch/lkl/kernel/setup.c#27;lkl/arch/lkl/kernel/setup.c;",
+      "source_file_line": 2
     }
   ],
   "full_stack_names": [
@@ -38,16 +34,15 @@
       "line": "#5 0x56f3f0 in lkl_panic_blink http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/arch/lkl/kernel/setup.c#27;lkl/arch/lkl/kernel/setup.c;:2",
       "address": 5698544,
       "function_name": "lkl_panic_blink",
-      "function_offset": null,
-      "file_name": "http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/arch/lkl/kernel/setup.c#27;lkl/arch/lkl/kernel/setup.c;",
-      "file_line": 2,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "setup.c;",
+      "source_file_path": "http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/arch/lkl/kernel/setup.c#27;lkl/arch/lkl/kernel/setup.c;",
+      "source_file_line": 2
     }
   ],
   "minimized_stack": [
     "lkl_panic_blink"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "lkl_panic_blink"
+  ]
 }

@@ -15,40 +15,34 @@
       "address": 94399929686323,
       "function_name": "__interceptor_malloc",
       "function_offset": 3,
-      "file_name": "third_party/llvm/compiler-rt/lib/asan/asan_malloc_linux.cc",
-      "file_line": 88,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "asan_malloc_linux.cc",
+      "source_file_path": "third_party/llvm/compiler-rt/lib/asan/asan_malloc_linux.cc",
+      "source_file_line": 88
     },
     {
       "line": "#1 0x55db44461003 in PartitionAllocGenericFlags base/allocator/partition_allocator/partition_alloc.h:947:18",
       "address": 94400231641091,
       "function_name": "PartitionAllocGenericFlags",
       "function_offset": 18,
-      "file_name": "base/allocator/partition_allocator/partition_alloc.h",
-      "file_line": 947,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "partition_alloc.h",
+      "source_file_path": "base/allocator/partition_allocator/partition_alloc.h",
+      "source_file_line": 947
     },
     {
       "line": "#2 0x55db44461003 in AllocateMemoryWithFlags third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc:111",
       "address": 94400231641091,
       "function_name": "AllocateMemoryWithFlags",
-      "function_offset": null,
-      "file_name": "third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc",
-      "file_line": 111,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "array_buffer_contents.cc",
+      "source_file_path": "third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc",
+      "source_file_line": 111
     },
     {
       "line": "#3 0x55db44461003 in WTF::ArrayBufferContents::AllocateMemoryOrNull(unsigned long, WTF::ArrayBufferContents::InitializationPolicy) third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc:121",
       "address": 94400231641091,
       "function_name": "WTF::ArrayBufferContents::AllocateMemoryOrNull(unsigned long, WTF::ArrayBufferContents::InitializationPolicy)",
-      "function_offset": null,
-      "file_name": "third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc",
-      "file_line": 121,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "array_buffer_contents.cc",
+      "source_file_path": "third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc",
+      "source_file_line": 121
     }
   ],
   "full_stack_names": [
@@ -62,16 +56,15 @@
       "line": "#2 0x55db44461003 in AllocateMemoryWithFlags third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc:111",
       "address": 94400231641091,
       "function_name": "AllocateMemoryWithFlags",
-      "function_offset": null,
-      "file_name": "third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc",
-      "file_line": 111,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "array_buffer_contents.cc",
+      "source_file_path": "third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc",
+      "source_file_line": 111
     }
   ],
   "minimized_stack": [
     "AllocateMemoryWithFlags"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "AllocateMemoryWithFlags"
+  ]
 }

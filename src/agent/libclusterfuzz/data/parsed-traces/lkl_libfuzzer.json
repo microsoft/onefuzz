@@ -19,208 +19,124 @@
     {
       "line": "#0 0x554630  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x554630)",
       "address": 5588528,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5588528
     },
     {
       "line": "#1 0x4fffc8  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x4fffc8)",
       "address": 5242824,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5242824
     },
     {
       "line": "#2 0x4e53b3  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x4e53b3)",
       "address": 5133235,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5133235
     },
     {
       "line": "#3 0x7f2a8c59d13f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1413f)",
       "address": 139820720050495,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
       "module_offset": 82239
     },
     {
       "line": "#4 0x7f2a8c299db0  (/lib/x86_64-linux-gnu/libc.so.6+0x3bdb0)",
       "address": 139820716891568,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 245168
     },
     {
       "line": "#5 0x7f2a8c283536  (/lib/x86_64-linux-gnu/libc.so.6+0x25536)",
       "address": 139820716799286,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 152886
     },
     {
       "line": "#6 0x7f2a8c28340e  (/lib/x86_64-linux-gnu/libc.so.6+0x2540e)",
       "address": 139820716798990,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 152590
     },
     {
       "line": "#7 0x7f2a8c2925b1  (/lib/x86_64-linux-gnu/libc.so.6+0x345b1)",
       "address": 139820716860849,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 214449
     },
     {
       "line": "#8 0x557fff  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x557fff)",
       "address": 5603327,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5603327
     },
     {
       "line": "#9 0x55e560  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x55e560)",
       "address": 5629280,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5629280
     }
   ],
-  "full_stack_names": [],
   "minimized_stack_details": [
     {
       "line": "#0 0x554630  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x554630)",
       "address": 5588528,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5588528
     },
     {
       "line": "#1 0x4fffc8  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x4fffc8)",
       "address": 5242824,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5242824
     },
     {
       "line": "#2 0x4e53b3  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x4e53b3)",
       "address": 5133235,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5133235
     },
     {
       "line": "#3 0x7f2a8c59d13f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1413f)",
       "address": 139820720050495,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
       "module_offset": 82239
     },
     {
       "line": "#4 0x7f2a8c299db0  (/lib/x86_64-linux-gnu/libc.so.6+0x3bdb0)",
       "address": 139820716891568,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 245168
     },
     {
       "line": "#5 0x7f2a8c283536  (/lib/x86_64-linux-gnu/libc.so.6+0x25536)",
       "address": 139820716799286,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 152886
     },
     {
       "line": "#6 0x7f2a8c28340e  (/lib/x86_64-linux-gnu/libc.so.6+0x2540e)",
       "address": 139820716798990,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 152590
     },
     {
       "line": "#7 0x7f2a8c2925b1  (/lib/x86_64-linux-gnu/libc.so.6+0x345b1)",
       "address": 139820716860849,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 214449
     },
     {
       "line": "#8 0x557fff  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x557fff)",
       "address": 5603327,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5603327
     },
     {
       "line": "#9 0x55e560  (/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer+0x55e560)",
       "address": 5629280,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/usr/local/google/home/xuanxing/Source/Android/_kernels/android12-5.4-lkl/out/android12-5.4-lkl/dist/fuzzers/hid_fuzzer/hid-fuzzer",
       "module_offset": 5629280
     }
-  ],
-  "minimized_stack": [],
-  "scariness_score": null,
-  "scariness_description": null
+  ]
 }

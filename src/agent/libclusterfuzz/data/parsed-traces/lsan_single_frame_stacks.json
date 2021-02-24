@@ -11,11 +11,9 @@
       "line": "#0 0x7f1d1174876b in f(unsigned long) /usr/include/blah.h:88",
       "address": 139762823628651,
       "function_name": "f(unsigned long)",
-      "function_offset": null,
-      "file_name": "/usr/include/blah.h",
-      "file_line": 88,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "blah.h",
+      "source_file_path": "/usr/include/blah.h",
+      "source_file_line": 88
     }
   ],
   "full_stack_names": [
@@ -26,16 +24,15 @@
       "line": "#0 0x7f1d1174876b in f(unsigned long) /usr/include/blah.h:88",
       "address": 139762823628651,
       "function_name": "f(unsigned long)",
-      "function_offset": null,
-      "file_name": "/usr/include/blah.h",
-      "file_line": 88,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "blah.h",
+      "source_file_path": "/usr/include/blah.h",
+      "source_file_line": 88
     }
   ],
   "minimized_stack": [
     "f(unsigned long)"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "f"
+  ]
 }

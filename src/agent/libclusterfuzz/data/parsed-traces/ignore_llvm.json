@@ -45,340 +45,286 @@
       "address": 4569783933,
       "function_name": "size",
       "function_offset": 55,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
-      "file_line": 807,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "__hash_table",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
+      "source_file_line": 807
     },
     {
       "line": "#1 0x110615e7d in bucket_count /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table:1122",
       "address": 4569783933,
       "function_name": "bucket_count",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
-      "file_line": 1122,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "__hash_table",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
+      "source_file_line": 1122
     },
     {
       "line": "#2 0x110615e7d in __emplace_unique_key_args<cc::BeginFrameSource *, const std::__1::piecewise_construct_t &, std::__1::tuple<cc::BeginFrameSource *const &>, std::__1::tuple<> > /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table:1953",
       "address": 4569783933,
       "function_name": "__emplace_unique_key_args<cc::BeginFrameSource *, const std::__1::piecewise_construct_t &, std::__1::tuple<cc::BeginFrameSource *const &>, std::__1::tuple<> >",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
-      "file_line": 1953,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "__hash_table",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
+      "source_file_line": 1953
     },
     {
       "line": "#3 0x110615e7d in std::__1::unordered_map<cc::BeginFrameSource*, unsigned int, std::__1::hash<cc::BeginFrameSource*>, std::__1::equal_to<cc::BeginFrameSource*>, std::__1::allocator<std::__1::pair<cc::BeginFrameSource* const, unsigned int> > >::operator[](cc::BeginFrameSource* const&) /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/unordered_map:1422",
       "address": 4569783933,
       "function_name": "std::__1::unordered_map<cc::BeginFrameSource*, unsigned int, std::__1::hash<cc::BeginFrameSource*>, std::__1::equal_to<cc::BeginFrameSource*>, std::__1::allocator<std::__1::pair<cc::BeginFrameSource* const, unsigned int> > >::operator[](cc::BeginFrameSource* const&)",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/unordered_map",
-      "file_line": 1422,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "unordered_map",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/unordered_map",
+      "source_file_line": 1422
     },
     {
       "line": "#4 0x1106164b8 in cc::SurfaceManager::UnregisterBeginFrameSource(cc::BeginFrameSource*) /b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/surface_manager.cc:196:24",
       "address": 4569785528,
       "function_name": "cc::SurfaceManager::UnregisterBeginFrameSource(cc::BeginFrameSource*)",
       "function_offset": 24,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/surface_manager.cc",
-      "file_line": 196,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "surface_manager.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/surface_manager.cc",
+      "source_file_line": 196
     },
     {
       "line": "#5 0x1105b76f5 in cc::Display::~Display() /b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc:57:25",
       "address": 4569396981,
       "function_name": "cc::Display::~Display()",
       "function_offset": 25,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
-      "file_line": 57,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "display.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
+      "source_file_line": 57
     },
     {
       "line": "#6 0x1105b7f2a in ~Display /b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc:53:21",
       "address": 4569399082,
       "function_name": "~Display",
       "function_offset": 21,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
-      "file_line": 53,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "display.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
+      "source_file_line": 53
     },
     {
       "line": "#7 0x1105b7f2a in cc::Display::~Display() /b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc:53",
       "address": 4569399082,
       "function_name": "cc::Display::~Display()",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
-      "file_line": 53,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "display.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
+      "source_file_line": 53
     },
     {
       "line": "#8 0x10ba9498e in operator() /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2565:13",
       "address": 4490611086,
       "function_name": "operator()",
       "function_offset": 13,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2565,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2565
     },
     {
       "line": "#9 0x10ba9498e in reset /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2771",
       "address": 4490611086,
       "function_name": "reset",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2771,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2771
     },
     {
       "line": "#10 0x10ba9498e in ~unique_ptr /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2739",
       "address": 4490611086,
       "function_name": "~unique_ptr",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2739,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2739
     },
     {
       "line": "#11 0x10ba9498e in ~unique_ptr /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2739",
       "address": 4490611086,
       "function_name": "~unique_ptr",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2739,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2739
     },
     {
       "line": "#12 0x10ba9498e in ~PerCompositorData /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:165",
       "address": 4490611086,
       "function_name": "~PerCompositorData",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 165,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 165
     },
     {
       "line": "#13 0x10ba9498e in ~PerCompositorData /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:165",
       "address": 4490611086,
       "function_name": "~PerCompositorData",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 165,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 165
     },
     {
       "line": "#14 0x10ba9498e in operator() /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2565",
       "address": 4490611086,
       "function_name": "operator()",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2565,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2565
     },
     {
       "line": "#15 0x10ba9498e in reset /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2771",
       "address": 4490611086,
       "function_name": "reset",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2771,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2771
     },
     {
       "line": "#16 0x10ba9498e in ~unique_ptr /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2739",
       "address": 4490611086,
       "function_name": "~unique_ptr",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2739,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2739
     },
     {
       "line": "#17 0x10ba9498e in ~unique_ptr /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2739",
       "address": 4490611086,
       "function_name": "~unique_ptr",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2739,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2739
     },
     {
       "line": "#18 0x10ba9498e in ~pair /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility:296",
       "address": 4490611086,
       "function_name": "~pair",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility",
-      "file_line": 296,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "utility",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility",
+      "source_file_line": 296
     },
     {
       "line": "#19 0x10ba9498e in ~pair /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility:296",
       "address": 4490611086,
       "function_name": "~pair",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility",
-      "file_line": 296,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "utility",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility",
+      "source_file_line": 296
     },
     {
       "line": "#20 0x10ba9498e in __destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > > /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1699",
       "address": 4490611086,
       "function_name": "__destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > >",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 1699,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 1699
     },
     {
       "line": "#21 0x10ba9498e in destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > > /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1562",
       "address": 4490611086,
       "function_name": "destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > >",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 1562,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 1562
     },
     {
       "line": "#22 0x10ba9498e in std::__1::__tree<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::__map_value_compare<ui::Compositor*, std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::less<ui::Compositor*>, true>, std::__1::allocator<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > > >::destroy(std::__1::__tree_node<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, void*>*) /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__tree:1793",
       "address": 4490611086,
       "function_name": "std::__1::__tree<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::__map_value_compare<ui::Compositor*, std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::less<ui::Compositor*>, true>, std::__1::allocator<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > > >::destroy(std::__1::__tree_node<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, void*>*)",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__tree",
-      "file_line": 1793,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "__tree",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__tree",
+      "source_file_line": 1793
     },
     {
       "line": "#23 0x10ba882fe in ~GpuProcessTransportFactory /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:190:59",
       "address": 4490560254,
       "function_name": "~GpuProcessTransportFactory",
       "function_offset": 59,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 190,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 190
     },
     {
       "line": "#24 0x10ba882fe in ~GpuProcessTransportFactory /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:190",
       "address": 4490560254,
       "function_name": "~GpuProcessTransportFactory",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 190,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 190
     },
     {
       "line": "#25 0x10ba882fe in non-virtual thunk to content::GpuProcessTransportFactory::~GpuProcessTransportFactory() /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:190",
       "address": 4490560254,
       "function_name": "non-virtual thunk to content::GpuProcessTransportFactory::~GpuProcessTransportFactory()",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 190,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 190
     },
     {
       "line": "#26 0x10ba98a09 in content::ImageTransportFactory::Terminate() /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/image_transport_factory.cc:50:3",
       "address": 4490627593,
       "function_name": "content::ImageTransportFactory::Terminate()",
       "function_offset": 3,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/image_transport_factory.cc",
-      "file_line": 50,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "image_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/image_transport_factory.cc",
+      "source_file_line": 50
     },
     {
       "line": "#27 0x10aacbae3 in content::BrowserMainLoop::ShutdownThreadsAndCleanUp() /b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_loop.cc:1027:5",
       "address": 4474059491,
       "function_name": "content::BrowserMainLoop::ShutdownThreadsAndCleanUp()",
       "function_offset": 5,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_loop.cc",
-      "file_line": 1027,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "browser_main_loop.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_loop.cc",
+      "source_file_line": 1027
     },
     {
       "line": "#28 0x10aad70a7 in content::BrowserMainRunnerImpl::Shutdown() /b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_runner.cc:211:19",
       "address": 4474106023,
       "function_name": "content::BrowserMainRunnerImpl::Shutdown()",
       "function_offset": 19,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_runner.cc",
-      "file_line": 211,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "browser_main_runner.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_runner.cc",
+      "source_file_line": 211
     },
     {
       "line": "#29 0x10be5663c in LayoutTestBrowserMain(content::MainFunctionParams const&, std::__1::unique_ptr<content::BrowserMainRunner, std::__1::default_delete<content::BrowserMainRunner> > const&) /b/c/b/Mac_ASAN_Release_Media/src/content/shell/browser/layout_test/layout_test_browser_main.cc:149:16",
       "address": 4494550588,
       "function_name": "LayoutTestBrowserMain(content::MainFunctionParams const&, std::__1::unique_ptr<content::BrowserMainRunner, std::__1::default_delete<content::BrowserMainRunner> > const&)",
       "function_offset": 16,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/shell/browser/layout_test/layout_test_browser_main.cc",
-      "file_line": 149,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "layout_test_browser_main.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/shell/browser/layout_test/layout_test_browser_main.cc",
+      "source_file_line": 149
     },
     {
       "line": "#30 0x10bdb32b7 in content::ShellMainDelegate::RunProcess(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&) /b/c/b/Mac_ASAN_Release_Media/src/content/shell/app/shell_main_delegate.cc:294:16",
       "address": 4493882039,
       "function_name": "content::ShellMainDelegate::RunProcess(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&)",
       "function_offset": 16,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/shell/app/shell_main_delegate.cc",
-      "file_line": 294,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "shell_main_delegate.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/shell/app/shell_main_delegate.cc",
+      "source_file_line": 294
     },
     {
       "line": "#31 0x10a80434e in content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) /b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc:405:35",
       "address": 4471145294,
       "function_name": "content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*)",
       "function_offset": 35,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc",
-      "file_line": 405,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc",
+      "source_file_line": 405
     },
     {
       "line": "#32 0x10a80702c in content::ContentMainRunnerImpl::Run() /b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc:786:12",
       "address": 4471156780,
       "function_name": "content::ContentMainRunnerImpl::Run()",
       "function_offset": 12,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc",
-      "file_line": 786,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc",
+      "source_file_line": 786
     },
     {
       "line": "#33 0x10a803613 in content::ContentMain(content::ContentMainParams const&) /b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main.cc:20:28",
       "address": 4471141907,
       "function_name": "content::ContentMain(content::ContentMainParams const&)",
       "function_offset": 28,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main.cc",
-      "file_line": 20,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main.cc",
+      "source_file_line": 20
     }
   ],
   "full_stack_names": [
@@ -423,320 +369,269 @@
       "address": 4569783933,
       "function_name": "size",
       "function_offset": 55,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
-      "file_line": 807,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "__hash_table",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
+      "source_file_line": 807
     },
     {
       "line": "#1 0x110615e7d in bucket_count /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table:1122",
       "address": 4569783933,
       "function_name": "bucket_count",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
-      "file_line": 1122,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "__hash_table",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
+      "source_file_line": 1122
     },
     {
       "line": "#2 0x110615e7d in __emplace_unique_key_args<cc::BeginFrameSource *, const std::__1::piecewise_construct_t &, std::__1::tuple<cc::BeginFrameSource *const &>, std::__1::tuple<> > /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table:1953",
       "address": 4569783933,
       "function_name": "__emplace_unique_key_args<cc::BeginFrameSource *, const std::__1::piecewise_construct_t &, std::__1::tuple<cc::BeginFrameSource *const &>, std::__1::tuple<> >",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
-      "file_line": 1953,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "__hash_table",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__hash_table",
+      "source_file_line": 1953
     },
     {
       "line": "#3 0x110615e7d in std::__1::unordered_map<cc::BeginFrameSource*, unsigned int, std::__1::hash<cc::BeginFrameSource*>, std::__1::equal_to<cc::BeginFrameSource*>, std::__1::allocator<std::__1::pair<cc::BeginFrameSource* const, unsigned int> > >::operator[](cc::BeginFrameSource* const&) /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/unordered_map:1422",
       "address": 4569783933,
       "function_name": "std::__1::unordered_map<cc::BeginFrameSource*, unsigned int, std::__1::hash<cc::BeginFrameSource*>, std::__1::equal_to<cc::BeginFrameSource*>, std::__1::allocator<std::__1::pair<cc::BeginFrameSource* const, unsigned int> > >::operator[](cc::BeginFrameSource* const&)",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/unordered_map",
-      "file_line": 1422,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "unordered_map",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/unordered_map",
+      "source_file_line": 1422
     },
     {
       "line": "#4 0x1106164b8 in cc::SurfaceManager::UnregisterBeginFrameSource(cc::BeginFrameSource*) /b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/surface_manager.cc:196:24",
       "address": 4569785528,
       "function_name": "cc::SurfaceManager::UnregisterBeginFrameSource(cc::BeginFrameSource*)",
       "function_offset": 24,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/surface_manager.cc",
-      "file_line": 196,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "surface_manager.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/surface_manager.cc",
+      "source_file_line": 196
     },
     {
       "line": "#5 0x1105b76f5 in cc::Display::~Display() /b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc:57:25",
       "address": 4569396981,
       "function_name": "cc::Display::~Display()",
       "function_offset": 25,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
-      "file_line": 57,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "display.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
+      "source_file_line": 57
     },
     {
       "line": "#6 0x1105b7f2a in ~Display /b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc:53:21",
       "address": 4569399082,
       "function_name": "~Display",
       "function_offset": 21,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
-      "file_line": 53,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "display.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
+      "source_file_line": 53
     },
     {
       "line": "#7 0x1105b7f2a in cc::Display::~Display() /b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc:53",
       "address": 4569399082,
       "function_name": "cc::Display::~Display()",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
-      "file_line": 53,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "display.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/cc/surfaces/display.cc",
+      "source_file_line": 53
     },
     {
       "line": "#9 0x10ba9498e in reset /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2771",
       "address": 4490611086,
       "function_name": "reset",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2771,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2771
     },
     {
       "line": "#10 0x10ba9498e in ~unique_ptr /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2739",
       "address": 4490611086,
       "function_name": "~unique_ptr",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2739,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2739
     },
     {
       "line": "#11 0x10ba9498e in ~unique_ptr /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2739",
       "address": 4490611086,
       "function_name": "~unique_ptr",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2739,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2739
     },
     {
       "line": "#12 0x10ba9498e in ~PerCompositorData /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:165",
       "address": 4490611086,
       "function_name": "~PerCompositorData",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 165,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 165
     },
     {
       "line": "#13 0x10ba9498e in ~PerCompositorData /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:165",
       "address": 4490611086,
       "function_name": "~PerCompositorData",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 165,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 165
     },
     {
       "line": "#15 0x10ba9498e in reset /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2771",
       "address": 4490611086,
       "function_name": "reset",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2771,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2771
     },
     {
       "line": "#16 0x10ba9498e in ~unique_ptr /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2739",
       "address": 4490611086,
       "function_name": "~unique_ptr",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2739,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2739
     },
     {
       "line": "#17 0x10ba9498e in ~unique_ptr /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:2739",
       "address": 4490611086,
       "function_name": "~unique_ptr",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 2739,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 2739
     },
     {
       "line": "#18 0x10ba9498e in ~pair /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility:296",
       "address": 4490611086,
       "function_name": "~pair",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility",
-      "file_line": 296,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "utility",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility",
+      "source_file_line": 296
     },
     {
       "line": "#19 0x10ba9498e in ~pair /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility:296",
       "address": 4490611086,
       "function_name": "~pair",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility",
-      "file_line": 296,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "utility",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/utility",
+      "source_file_line": 296
     },
     {
       "line": "#20 0x10ba9498e in __destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > > /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1699",
       "address": 4490611086,
       "function_name": "__destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > >",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 1699,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 1699
     },
     {
       "line": "#21 0x10ba9498e in destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > > /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1562",
       "address": 4490611086,
       "function_name": "destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > >",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
-      "file_line": 1562,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "memory",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 1562
     },
     {
       "line": "#22 0x10ba9498e in std::__1::__tree<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::__map_value_compare<ui::Compositor*, std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::less<ui::Compositor*>, true>, std::__1::allocator<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > > >::destroy(std::__1::__tree_node<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, void*>*) /b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__tree:1793",
       "address": 4490611086,
       "function_name": "std::__1::__tree<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::__map_value_compare<ui::Compositor*, std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::less<ui::Compositor*>, true>, std::__1::allocator<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > > >::destroy(std::__1::__tree_node<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, void*>*)",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__tree",
-      "file_line": 1793,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "__tree",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__tree",
+      "source_file_line": 1793
     },
     {
       "line": "#23 0x10ba882fe in ~GpuProcessTransportFactory /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:190:59",
       "address": 4490560254,
       "function_name": "~GpuProcessTransportFactory",
       "function_offset": 59,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 190,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 190
     },
     {
       "line": "#24 0x10ba882fe in ~GpuProcessTransportFactory /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:190",
       "address": 4490560254,
       "function_name": "~GpuProcessTransportFactory",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 190,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 190
     },
     {
       "line": "#25 0x10ba882fe in non-virtual thunk to content::GpuProcessTransportFactory::~GpuProcessTransportFactory() /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc:190",
       "address": 4490560254,
       "function_name": "non-virtual thunk to content::GpuProcessTransportFactory::~GpuProcessTransportFactory()",
-      "function_offset": null,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
-      "file_line": 190,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "gpu_process_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/gpu_process_transport_factory.cc",
+      "source_file_line": 190
     },
     {
       "line": "#26 0x10ba98a09 in content::ImageTransportFactory::Terminate() /b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/image_transport_factory.cc:50:3",
       "address": 4490627593,
       "function_name": "content::ImageTransportFactory::Terminate()",
       "function_offset": 3,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/image_transport_factory.cc",
-      "file_line": 50,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "image_transport_factory.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/compositor/image_transport_factory.cc",
+      "source_file_line": 50
     },
     {
       "line": "#27 0x10aacbae3 in content::BrowserMainLoop::ShutdownThreadsAndCleanUp() /b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_loop.cc:1027:5",
       "address": 4474059491,
       "function_name": "content::BrowserMainLoop::ShutdownThreadsAndCleanUp()",
       "function_offset": 5,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_loop.cc",
-      "file_line": 1027,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "browser_main_loop.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_loop.cc",
+      "source_file_line": 1027
     },
     {
       "line": "#28 0x10aad70a7 in content::BrowserMainRunnerImpl::Shutdown() /b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_runner.cc:211:19",
       "address": 4474106023,
       "function_name": "content::BrowserMainRunnerImpl::Shutdown()",
       "function_offset": 19,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_runner.cc",
-      "file_line": 211,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "browser_main_runner.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/browser/browser_main_runner.cc",
+      "source_file_line": 211
     },
     {
       "line": "#29 0x10be5663c in LayoutTestBrowserMain(content::MainFunctionParams const&, std::__1::unique_ptr<content::BrowserMainRunner, std::__1::default_delete<content::BrowserMainRunner> > const&) /b/c/b/Mac_ASAN_Release_Media/src/content/shell/browser/layout_test/layout_test_browser_main.cc:149:16",
       "address": 4494550588,
       "function_name": "LayoutTestBrowserMain(content::MainFunctionParams const&, std::__1::unique_ptr<content::BrowserMainRunner, std::__1::default_delete<content::BrowserMainRunner> > const&)",
       "function_offset": 16,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/shell/browser/layout_test/layout_test_browser_main.cc",
-      "file_line": 149,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "layout_test_browser_main.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/shell/browser/layout_test/layout_test_browser_main.cc",
+      "source_file_line": 149
     },
     {
       "line": "#30 0x10bdb32b7 in content::ShellMainDelegate::RunProcess(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&) /b/c/b/Mac_ASAN_Release_Media/src/content/shell/app/shell_main_delegate.cc:294:16",
       "address": 4493882039,
       "function_name": "content::ShellMainDelegate::RunProcess(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&)",
       "function_offset": 16,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/shell/app/shell_main_delegate.cc",
-      "file_line": 294,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "shell_main_delegate.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/shell/app/shell_main_delegate.cc",
+      "source_file_line": 294
     },
     {
       "line": "#31 0x10a80434e in content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) /b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc:405:35",
       "address": 4471145294,
       "function_name": "content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*)",
       "function_offset": 35,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc",
-      "file_line": 405,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc",
+      "source_file_line": 405
     },
     {
       "line": "#32 0x10a80702c in content::ContentMainRunnerImpl::Run() /b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc:786:12",
       "address": 4471156780,
       "function_name": "content::ContentMainRunnerImpl::Run()",
       "function_offset": 12,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc",
-      "file_line": 786,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main_runner.cc",
+      "source_file_line": 786
     },
     {
       "line": "#33 0x10a803613 in content::ContentMain(content::ContentMainParams const&) /b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main.cc:20:28",
       "address": 4471141907,
       "function_name": "content::ContentMain(content::ContentMainParams const&)",
       "function_offset": 28,
-      "file_name": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main.cc",
-      "file_line": 20,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main.cc",
+      "source_file_path": "/b/c/b/Mac_ASAN_Release_Media/src/content/app/content_main.cc",
+      "source_file_line": 20
     }
   ],
   "minimized_stack": [
@@ -772,6 +667,40 @@
     "content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*)",
     "content::ContentMainRunnerImpl::Run()",
     "content::ContentMain(content::ContentMainParams const&)"
+  ],
+  "minimized_stack_function_names": [
+    "size",
+    "bucket_count",
+    "__emplace_unique_key_args<cc::BeginFrameSource *, const std::__1::piecewise_construct_t &, std::__1::tuple<cc::BeginFrameSource *const &>, std::__1::tuple<> >",
+    "std::__1::unordered_map<cc::BeginFrameSource*, unsigned int, std::__1::hash<cc::BeginFrameSource*>, std::__1::equal_to<cc::BeginFrameSource*>, std::__1::allocator<std::__1::pair<cc::BeginFrameSource* const, unsigned int> > >::operator[]",
+    "cc::SurfaceManager::UnregisterBeginFrameSource",
+    "cc::Display::~Display",
+    "~Display",
+    "cc::Display::~Display",
+    "reset",
+    "~unique_ptr",
+    "~unique_ptr",
+    "~PerCompositorData",
+    "~PerCompositorData",
+    "reset",
+    "~unique_ptr",
+    "~unique_ptr",
+    "~pair",
+    "~pair",
+    "__destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > >",
+    "destroy<std::__1::pair<ui::Compositor *const, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > >",
+    "std::__1::__tree<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::__map_value_compare<ui::Compositor*, std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > >, std::__1::less<ui::Compositor*>, true>, std::__1::allocator<std::__1::__value_type<ui::Compositor*, std::__1::unique_ptr<content::GpuProcessTransportFactory::PerCompositorData, std::__1::default_delete<content::GpuProcessTransportFactory::PerCompositorData> > > > >::destroy",
+    "~GpuProcessTransportFactory",
+    "~GpuProcessTransportFactory",
+    "non-virtual thunk to content::GpuProcessTransportFactory::~GpuProcessTransportFactory",
+    "content::ImageTransportFactory::Terminate",
+    "content::BrowserMainLoop::ShutdownThreadsAndCleanUp",
+    "content::BrowserMainRunnerImpl::Shutdown",
+    "LayoutTestBrowserMain",
+    "content::ShellMainDelegate::RunProcess",
+    "content::RunNamedProcessTypeMain",
+    "content::ContentMainRunnerImpl::Run",
+    "content::ContentMain"
   ],
   "scariness_score": 51,
   "scariness_description": "8-byte-read-heap-use-after-free"

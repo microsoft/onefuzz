@@ -20,18 +20,12 @@
       "function_offset": 51,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
-      "source_file_line": 45,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 45
     },
     {
       "line": "#1 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)",
       "address": 4389690,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4389690
     },
@@ -39,10 +33,6 @@
       "line": "#2 0x41ef87 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41ef87)",
       "address": 4321159,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4321159
     },
@@ -50,10 +40,6 @@
       "line": "#3 0x424ba1 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x424ba1)",
       "address": 4344737,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4344737
     },
@@ -61,10 +47,6 @@
       "line": "#4 0x44bd72 in main (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x44bd72)",
       "address": 4504946,
       "function_name": "main",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4504946
     },
@@ -72,21 +54,14 @@
       "line": "#5 0x7fbf0729bb96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310",
       "address": 140458435656598,
       "function_name": "__libc_start_main",
-      "function_offset": null,
       "source_file_name": "libc-start.c",
       "source_file_path": "/build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c",
-      "source_file_line": 310,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 310
     },
     {
       "line": "#6 0x41d879 in _start (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41d879)",
       "address": 4315257,
       "function_name": "_start",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
       "module_offset": 4315257
     }
@@ -108,14 +83,13 @@
       "function_offset": 51,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
-      "source_file_line": 45,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 45
     }
   ],
   "minimized_stack": [
     "fuzz.c"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "fuzz.c"
+  ]
 }

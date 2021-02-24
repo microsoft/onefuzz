@@ -16,61 +16,54 @@
       "line": "#0 0x7f96fbdfec36 in gsignal /build/eglibc-oGUzwX/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56",
       "address": 140286447578166,
       "function_name": "gsignal",
-      "function_offset": null,
-      "file_name": "/build/eglibc-oGUzwX/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c",
-      "file_line": 56,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/eglibc-oGUzwX/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 56
     },
     {
       "line": "#1 0x6c7e47 in base::debug::BreakDebugger() base/debug/debugger_posix.cc:249:3",
       "address": 7110215,
       "function_name": "base::debug::BreakDebugger()",
       "function_offset": 3,
-      "file_name": "base/debug/debugger_posix.cc",
-      "file_line": 249,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "debugger_posix.cc",
+      "source_file_path": "base/debug/debugger_posix.cc",
+      "source_file_line": 249
     },
     {
       "line": "#2 0x5ed74e in logging::LogMessage::~LogMessage() base/logging.cc:748:7",
       "address": 6215502,
       "function_name": "logging::LogMessage::~LogMessage()",
       "function_offset": 7,
-      "file_name": "base/logging.cc",
-      "file_line": 748,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "logging.cc",
+      "source_file_path": "base/logging.cc",
+      "source_file_line": 748
     },
     {
       "line": "#3 0xe099d8 in url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper() url/url_canon_icu.cc:104:7",
       "address": 14719448,
       "function_name": "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper()",
       "function_offset": 7,
-      "file_name": "url/url_canon_icu.cc",
-      "file_line": 104,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "url_canon_icu.cc",
+      "source_file_path": "url/url_canon_icu.cc",
+      "source_file_line": 104
     },
     {
       "line": "#4 0xe09601 in base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:69:27",
       "address": 14718465,
       "function_name": "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
       "function_offset": 27,
-      "file_name": "base/lazy_instance.h",
-      "file_line": 69,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lazy_instance.h",
+      "source_file_path": "base/lazy_instance.h",
+      "source_file_line": 69
     },
     {
       "line": "#5 0xe092bd in base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:98:12",
       "address": 14717629,
       "function_name": "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
       "function_offset": 12,
-      "file_name": "base/lazy_instance.h",
-      "file_line": 98,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lazy_instance.h",
+      "source_file_path": "base/lazy_instance.h",
+      "source_file_line": 98
     }
   ],
   "full_stack_names": [
@@ -87,36 +80,38 @@
       "address": 14719448,
       "function_name": "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper()",
       "function_offset": 7,
-      "file_name": "url/url_canon_icu.cc",
-      "file_line": 104,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "url_canon_icu.cc",
+      "source_file_path": "url/url_canon_icu.cc",
+      "source_file_line": 104
     },
     {
       "line": "#4 0xe09601 in base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:69:27",
       "address": 14718465,
       "function_name": "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
       "function_offset": 27,
-      "file_name": "base/lazy_instance.h",
-      "file_line": 69,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lazy_instance.h",
+      "source_file_path": "base/lazy_instance.h",
+      "source_file_line": 69
     },
     {
       "line": "#5 0xe092bd in base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:98:12",
       "address": 14717629,
       "function_name": "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
       "function_offset": 12,
-      "file_name": "base/lazy_instance.h",
-      "file_line": 98,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "lazy_instance.h",
+      "source_file_path": "base/lazy_instance.h",
+      "source_file_line": 98
     }
   ],
   "minimized_stack": [
     "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper()",
     "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
     "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)"
+  ],
+  "minimized_stack_function_names": [
+    "url::",
+    "base::DefaultLazyInstanceTraits<url::",
+    "base::internal::LeakyLazyInstanceTraits<url::"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

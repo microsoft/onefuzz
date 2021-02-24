@@ -20,101 +20,81 @@
       "line": "#0 0x13458f6b in base::debug::BreakDebugger C:\\b\\c\\b\\win_asan_release_media\\src\\base\\debug\\debugger_win.cc:18",
       "address": 323325803,
       "function_name": "base::debug::BreakDebugger",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\base\\debug\\debugger_win.cc",
-      "file_line": 18,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "debugger_win.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\base\\debug\\debugger_win.cc",
+      "source_file_line": 18
     },
     {
       "line": "#1 0x1321cea6 in logging::LogMessage::~LogMessage C:\\b\\c\\b\\win_asan_release_media\\src\\base\\logging.cc:783",
       "address": 320982694,
       "function_name": "logging::LogMessage::~LogMessage",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\base\\logging.cc",
-      "file_line": 783,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "logging.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\base\\logging.cc",
+      "source_file_line": 783
     },
     {
       "line": "#2 0x1b23f3a8 in WTF::Vector<blink::Member<blink::MimeClassInfo>,0,blink::HeapAllocator>::at C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\wtf\\Vector.h:1007",
       "address": 455340968,
       "function_name": "WTF::Vector<blink::Member<blink::MimeClassInfo>,0,blink::HeapAllocator>::at",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\wtf\\Vector.h",
-      "file_line": 1007,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "Vector.h",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\wtf\\Vector.h",
+      "source_file_line": 1007
     },
     {
       "line": "#3 0x1b23cd90 in blink::PluginInfo::GetMimeClassInfo C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\plugins\\PluginData.cpp:56",
       "address": 455331216,
       "function_name": "blink::PluginInfo::GetMimeClassInfo",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\plugins\\PluginData.cpp",
-      "file_line": 56,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "PluginData.cpp",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\plugins\\PluginData.cpp",
+      "source_file_line": 56
     },
     {
       "line": "#4 0x1d60fc91 in blink::DOMPlugin::item C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\modules\\plugins\\DOMPlugin.cpp:54",
       "address": 492895377,
       "function_name": "blink::DOMPlugin::item",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\modules\\plugins\\DOMPlugin.cpp",
-      "file_line": 54,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "DOMPlugin.cpp",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\modules\\plugins\\DOMPlugin.cpp",
+      "source_file_line": 54
     },
     {
       "line": "#5 0x1d8cd8db in blink::V8Plugin::itemMethodCallback C:\\b\\c\\b\\win_asan_release_media\\src\\out\\release\\gen\\blink\\bindings\\modules\\v8\\V8Plugin.cpp:177",
       "address": 495769819,
       "function_name": "blink::V8Plugin::itemMethodCallback",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\out\\release\\gen\\blink\\bindings\\modules\\v8\\V8Plugin.cpp",
-      "file_line": 177,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "V8Plugin.cpp",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\out\\release\\gen\\blink\\bindings\\modules\\v8\\V8Plugin.cpp",
+      "source_file_line": 177
     },
     {
       "line": "#6 0x10bd3915 in v8::internal::FunctionCallbackArguments::Call C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\api-arguments.cc:25",
       "address": 280836373,
       "function_name": "v8::internal::FunctionCallbackArguments::Call",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\api-arguments.cc",
-      "file_line": 25,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "api-arguments.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\api-arguments.cc",
+      "source_file_line": 25
     },
     {
       "line": "#7 0x10e22d04 in v8::internal::`anonymous namespace'::HandleApiCallHelper<0> C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc:112",
       "address": 283258116,
       "function_name": "v8::internal::`anonymous namespace'::HandleApiCallHelper<0>",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
-      "file_line": 112,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
+      "source_file_line": 112
     },
     {
       "line": "#8 0x10e1fa41 in v8::internal::Builtin_Impl_HandleApiCall C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc:142",
       "address": 283245121,
       "function_name": "v8::internal::Builtin_Impl_HandleApiCall",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
-      "file_line": 142,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
+      "source_file_line": 142
     },
     {
       "line": "#9 0x10e1eea1 in v8::internal::Builtin_HandleApiCall C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc:130",
       "address": 283242145,
       "function_name": "v8::internal::Builtin_HandleApiCall",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
-      "file_line": 130,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
+      "source_file_line": 130
     }
   ],
   "full_stack_names": [
@@ -134,74 +114,69 @@
       "line": "#3 0x1b23cd90 in blink::PluginInfo::GetMimeClassInfo C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\plugins\\PluginData.cpp:56",
       "address": 455331216,
       "function_name": "blink::PluginInfo::GetMimeClassInfo",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\plugins\\PluginData.cpp",
-      "file_line": 56,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "PluginData.cpp",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\plugins\\PluginData.cpp",
+      "source_file_line": 56
     },
     {
       "line": "#4 0x1d60fc91 in blink::DOMPlugin::item C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\modules\\plugins\\DOMPlugin.cpp:54",
       "address": 492895377,
       "function_name": "blink::DOMPlugin::item",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\modules\\plugins\\DOMPlugin.cpp",
-      "file_line": 54,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "DOMPlugin.cpp",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\modules\\plugins\\DOMPlugin.cpp",
+      "source_file_line": 54
     },
     {
       "line": "#5 0x1d8cd8db in blink::V8Plugin::itemMethodCallback C:\\b\\c\\b\\win_asan_release_media\\src\\out\\release\\gen\\blink\\bindings\\modules\\v8\\V8Plugin.cpp:177",
       "address": 495769819,
       "function_name": "blink::V8Plugin::itemMethodCallback",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\out\\release\\gen\\blink\\bindings\\modules\\v8\\V8Plugin.cpp",
-      "file_line": 177,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "V8Plugin.cpp",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\out\\release\\gen\\blink\\bindings\\modules\\v8\\V8Plugin.cpp",
+      "source_file_line": 177
     },
     {
       "line": "#6 0x10bd3915 in v8::internal::FunctionCallbackArguments::Call C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\api-arguments.cc:25",
       "address": 280836373,
       "function_name": "v8::internal::FunctionCallbackArguments::Call",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\api-arguments.cc",
-      "file_line": 25,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "api-arguments.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\api-arguments.cc",
+      "source_file_line": 25
     },
     {
       "line": "#7 0x10e22d04 in v8::internal::`anonymous namespace'::HandleApiCallHelper<0> C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc:112",
       "address": 283258116,
       "function_name": "v8::internal::`anonymous namespace'::HandleApiCallHelper<0>",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
-      "file_line": 112,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
+      "source_file_line": 112
     },
     {
       "line": "#8 0x10e1fa41 in v8::internal::Builtin_Impl_HandleApiCall C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc:142",
       "address": 283245121,
       "function_name": "v8::internal::Builtin_Impl_HandleApiCall",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
-      "file_line": 142,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
+      "source_file_line": 142
     },
     {
       "line": "#9 0x10e1eea1 in v8::internal::Builtin_HandleApiCall C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc:130",
       "address": 283242145,
       "function_name": "v8::internal::Builtin_HandleApiCall",
-      "function_offset": null,
-      "file_name": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
-      "file_line": 130,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc",
+      "source_file_line": 130
     }
   ],
   "minimized_stack": [
+    "blink::PluginInfo::GetMimeClassInfo",
+    "blink::DOMPlugin::item",
+    "blink::V8Plugin::itemMethodCallback",
+    "v8::internal::FunctionCallbackArguments::Call",
+    "v8::internal::`anonymous namespace'::HandleApiCallHelper<0>",
+    "v8::internal::Builtin_Impl_HandleApiCall",
+    "v8::internal::Builtin_HandleApiCall"
+  ],
+  "minimized_stack_function_names": [
     "blink::PluginInfo::GetMimeClassInfo",
     "blink::DOMPlugin::item",
     "blink::V8Plugin::itemMethodCallback",

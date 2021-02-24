@@ -3,11 +3,6 @@
   "sanitizer": "AddressSanitizer",
   "summary": "AddressSanitizer: ILL",
   "fault_type": "ILL",
-  "call_stack": [],
-  "full_stack_details": [],
-  "full_stack_names": [],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

@@ -11,18 +11,12 @@
       "line": "#1 0x7f3b4ed87839 in __GI___strdup /build/buildd/eglibc-2.19/string/strdup.c:42",
       "address": 139892702607417,
       "function_name": "__GI___strdup",
-      "function_offset": null,
-      "file_name": "/build/buildd/eglibc-2.19/string/strdup.c",
-      "file_line": 42,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "strdup.c",
+      "source_file_path": "/build/buildd/eglibc-2.19/string/strdup.c",
+      "source_file_line": 42
     }
   ],
   "full_stack_names": [
     "__GI___strdup"
-  ],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
-  "scariness_score": null,
-  "scariness_description": null
+  ]
 }

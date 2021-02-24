@@ -24,130 +24,116 @@
       "address": 4721706,
       "function_name": "xmlFAParseCharClassEsc",
       "function_offset": 14,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 4883,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 4883
     },
     {
       "line": "#1 0x480474 in xmlFAParseAtom /src/libxml2/xmlregexp.c:5299:2",
       "address": 4719732,
       "function_name": "xmlFAParseAtom",
       "function_offset": 2,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5299,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5299
     },
     {
       "line": "#2 0x48031d in xmlFAParsePiece /src/libxml2/xmlregexp.c:5316:11",
       "address": 4719389,
       "function_name": "xmlFAParsePiece",
       "function_offset": 11,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5316,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5316
     },
     {
       "line": "#3 0x480219 in xmlFAParseBranch /src/libxml2/xmlregexp.c:5342:11",
       "address": 4719129,
       "function_name": "xmlFAParseBranch",
       "function_offset": 11,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5342,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5342
     },
     {
       "line": "#4 0x4794ef in xmlFAParseRegExp /src/libxml2/xmlregexp.c:5377:5",
       "address": 4691183,
       "function_name": "xmlFAParseRegExp",
       "function_offset": 5,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5377,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5377
     },
     {
       "line": "#5 0x479227 in xmlRegexpCompile /src/libxml2/xmlregexp.c:5473:5",
       "address": 4690471,
       "function_name": "xmlRegexpCompile",
       "function_offset": 5,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5473,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5473
     },
     {
       "line": "#6 0x42d8ca in LLVMFuzzerTestOneInput /src/libxml2_xml_regexp_compile_fuzzer.cc:29:20",
       "address": 4380874,
       "function_name": "LLVMFuzzerTestOneInput",
       "function_offset": 20,
-      "file_name": "/src/libxml2_xml_regexp_compile_fuzzer.cc",
-      "file_line": 29,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "libxml2_xml_regexp_compile_fuzzer.cc",
+      "source_file_path": "/src/libxml2_xml_regexp_compile_fuzzer.cc",
+      "source_file_line": 29
     },
     {
       "line": "#7 0x43caed in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:458:13",
       "address": 4442861,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
       "function_offset": 13,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 458,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 458
     },
     {
       "line": "#8 0x43cec7 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:397:3",
       "address": 4443847,
       "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
       "function_offset": 3,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 397,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 397
     },
     {
       "line": "#9 0x42e008 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6",
       "address": 4382728,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
       "function_offset": 6,
-      "file_name": "/src/libfuzzer/FuzzerDriver.cpp",
-      "file_line": 268,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 268
     },
     {
       "line": "#10 0x4324a8 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:683:9",
       "address": 4400296,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
       "function_offset": 9,
-      "file_name": "/src/libfuzzer/FuzzerDriver.cpp",
-      "file_line": 683,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 683
     },
     {
       "line": "#11 0x42dc6c in main /src/libfuzzer/FuzzerMain.cpp:20:10",
       "address": 4381804,
       "function_name": "main",
       "function_offset": 10,
-      "file_name": "/src/libfuzzer/FuzzerMain.cpp",
-      "file_line": 20,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
     },
     {
       "line": "#12 0x7f051628282f in __libc_start_main /build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c:291",
       "address": 139659823294511,
       "function_name": "__libc_start_main",
-      "function_offset": null,
-      "file_name": "/build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c",
-      "file_line": 291,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
     }
   ],
   "full_stack_names": [
@@ -171,60 +157,63 @@
       "address": 4721706,
       "function_name": "xmlFAParseCharClassEsc",
       "function_offset": 14,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 4883,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 4883
     },
     {
       "line": "#1 0x480474 in xmlFAParseAtom /src/libxml2/xmlregexp.c:5299:2",
       "address": 4719732,
       "function_name": "xmlFAParseAtom",
       "function_offset": 2,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5299,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5299
     },
     {
       "line": "#2 0x48031d in xmlFAParsePiece /src/libxml2/xmlregexp.c:5316:11",
       "address": 4719389,
       "function_name": "xmlFAParsePiece",
       "function_offset": 11,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5316,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5316
     },
     {
       "line": "#3 0x480219 in xmlFAParseBranch /src/libxml2/xmlregexp.c:5342:11",
       "address": 4719129,
       "function_name": "xmlFAParseBranch",
       "function_offset": 11,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5342,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5342
     },
     {
       "line": "#4 0x4794ef in xmlFAParseRegExp /src/libxml2/xmlregexp.c:5377:5",
       "address": 4691183,
       "function_name": "xmlFAParseRegExp",
       "function_offset": 5,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5377,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5377
     },
     {
       "line": "#5 0x479227 in xmlRegexpCompile /src/libxml2/xmlregexp.c:5473:5",
       "address": 4690471,
       "function_name": "xmlRegexpCompile",
       "function_offset": 5,
-      "file_name": "/src/libxml2/xmlregexp.c",
-      "file_line": 5473,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "xmlregexp.c",
+      "source_file_path": "/src/libxml2/xmlregexp.c",
+      "source_file_line": 5473
+    },
+    {
+      "line": "#6 0x42d8ca in LLVMFuzzerTestOneInput /src/libxml2_xml_regexp_compile_fuzzer.cc:29:20",
+      "address": 4380874,
+      "function_name": "libxml2_xml_regexp_compile_fuzzer.cc",
+      "function_offset": 20,
+      "source_file_name": "libxml2_xml_regexp_compile_fuzzer.cc",
+      "source_file_path": "/src/libxml2_xml_regexp_compile_fuzzer.cc",
+      "source_file_line": 29
     }
   ],
   "minimized_stack": [
@@ -233,8 +222,16 @@
     "xmlFAParsePiece",
     "xmlFAParseBranch",
     "xmlFAParseRegExp",
-    "xmlRegexpCompile"
+    "xmlRegexpCompile",
+    "libxml2_xml_regexp_compile_fuzzer.cc"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "xmlFAParseCharClassEsc",
+    "xmlFAParseAtom",
+    "xmlFAParsePiece",
+    "xmlFAParseBranch",
+    "xmlFAParseRegExp",
+    "xmlRegexpCompile",
+    "libxml2_xml_regexp_compile_fuzzer.cc"
+  ]
 }

@@ -25,140 +25,126 @@
       "address": 139626336108034,
       "function_name": "WTF::RawPtr<blink::HTMLInputElement>::operator*() const",
       "function_offset": 36,
-      "file_name": "third_party/WebKit/Source/wtf/RawPtr.h",
-      "file_line": 118,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "RawPtr.h",
+      "source_file_path": "third_party/WebKit/Source/wtf/RawPtr.h",
+      "source_file_line": 118
     },
     {
       "line": "#1 0x7efd4a29f60e in blink::InputTypeView::element() const third_party/WebKit/Source/core/html/forms/InputTypeView.h:129:48",
       "address": 139626336089614,
       "function_name": "blink::InputTypeView::element() const",
       "function_offset": 48,
-      "file_name": "third_party/WebKit/Source/core/html/forms/InputTypeView.h",
-      "file_line": 129,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "InputTypeView.h",
+      "source_file_path": "third_party/WebKit/Source/core/html/forms/InputTypeView.h",
+      "source_file_line": 129
     },
     {
       "line": "#2 0x7efd4a2f08d2 in blink::TextFieldInputType::didSetValueByUserEdit(blink::TextFieldInputType::ValueChangeState) third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp:502:10",
       "address": 139626336422098,
       "function_name": "blink::TextFieldInputType::didSetValueByUserEdit(blink::TextFieldInputType::ValueChangeState)",
       "function_offset": 10,
-      "file_name": "third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp",
-      "file_line": 502,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "TextFieldInputType.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp",
+      "source_file_line": 502
     },
     {
       "line": "#3 0x7efd4a2f0814 in blink::TextFieldInputType::subtreeHasChanged() third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp:497:5",
       "address": 139626336421908,
       "function_name": "blink::TextFieldInputType::subtreeHasChanged()",
       "function_offset": 5,
-      "file_name": "third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp",
-      "file_line": 497,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "TextFieldInputType.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp",
+      "source_file_line": 497
     },
     {
       "line": "#4 0x7efd4a189606 in blink::HTMLInputElement::subtreeHasChanged() third_party/WebKit/Source/core/html/HTMLInputElement.cpp:525:5",
       "address": 139626334950918,
       "function_name": "blink::HTMLInputElement::subtreeHasChanged()",
       "function_offset": 5,
-      "file_name": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
-      "file_line": 525,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "HTMLInputElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
+      "source_file_line": 525
     },
     {
       "line": "#5 0x7efd4a24d587 in blink::HTMLTextFormControlElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/html/HTMLTextFormControlElement.cpp:240:5",
       "address": 139626335753607,
       "function_name": "blink::HTMLTextFormControlElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&)",
       "function_offset": 5,
-      "file_name": "third_party/WebKit/Source/core/html/HTMLTextFormControlElement.cpp",
-      "file_line": 240,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "HTMLTextFormControlElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/HTMLTextFormControlElement.cpp",
+      "source_file_line": 240
     },
     {
       "line": "#6 0x7efd4a199788 in blink::HTMLInputElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/html/HTMLInputElement.cpp:1827:5",
       "address": 139626335016840,
       "function_name": "blink::HTMLInputElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&)",
       "function_offset": 5,
-      "file_name": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
-      "file_line": 1827,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "HTMLInputElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
+      "source_file_line": 1827
     },
     {
       "line": "#7 0x7efd4bfbbeda in blink::HTMLInputElementV8Internal::setRangeText2Method(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp:1868:5",
       "address": 139626366615258,
       "function_name": "blink::HTMLInputElementV8Internal::setRangeText2Method(v8::FunctionCallbackInfo<v8::Value> const&)",
       "function_offset": 5,
-      "file_name": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
-      "file_line": 1868,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "V8HTMLInputElement.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
+      "source_file_line": 1868
     },
     {
       "line": "#8 0x7efd4bfbb06b in blink::HTMLInputElementV8Internal::setRangeTextMethod(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp:1887:13",
       "address": 139626366611563,
       "function_name": "blink::HTMLInputElementV8Internal::setRangeTextMethod(v8::FunctionCallbackInfo<v8::Value> const&)",
       "function_offset": 13,
-      "file_name": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
-      "file_line": 1887,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "V8HTMLInputElement.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
+      "source_file_line": 1887
     },
     {
       "line": "#9 0x7efd4bfb99f6 in blink::HTMLInputElementV8Internal::setRangeTextMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp:1918:5",
       "address": 139626366605814,
       "function_name": "blink::HTMLInputElementV8Internal::setRangeTextMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&)",
       "function_offset": 5,
-      "file_name": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
-      "file_line": 1918,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "V8HTMLInputElement.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
+      "source_file_line": 1918
     },
     {
       "line": "#10 0x7efd487ade01 in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/arguments.cc:33:3",
       "address": 139626307837441,
       "function_name": "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
       "function_offset": 3,
-      "file_name": "v8/src/arguments.cc",
-      "file_line": 33,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "arguments.cc",
+      "source_file_path": "v8/src/arguments.cc",
+      "source_file_line": 33
     },
     {
       "line": "#11 0x7efd47c15785 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>) v8/src/builtins.cc:1979:34",
       "address": 139626295678853,
       "function_name": "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>)",
       "function_offset": 34,
-      "file_name": "v8/src/builtins.cc",
-      "file_line": 1979,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 1979
     },
     {
       "line": "#12 0x7efd47c3c463 in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*) v8/src/builtins.cc:2003:3",
       "address": 139626295837795,
       "function_name": "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*)",
       "function_offset": 3,
-      "file_name": "v8/src/builtins.cc",
-      "file_line": 2003,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 2003
     },
     {
       "line": "#13 0x7efd47c1869f in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins.cc:2000:1",
       "address": 139626295690911,
       "function_name": "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)",
       "function_offset": 1,
-      "file_name": "v8/src/builtins.cc",
-      "file_line": 2000,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 2000
     }
   ],
   "full_stack_names": [
@@ -183,130 +169,117 @@
       "address": 139626336089614,
       "function_name": "blink::InputTypeView::element() const",
       "function_offset": 48,
-      "file_name": "third_party/WebKit/Source/core/html/forms/InputTypeView.h",
-      "file_line": 129,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "InputTypeView.h",
+      "source_file_path": "third_party/WebKit/Source/core/html/forms/InputTypeView.h",
+      "source_file_line": 129
     },
     {
       "line": "#2 0x7efd4a2f08d2 in blink::TextFieldInputType::didSetValueByUserEdit(blink::TextFieldInputType::ValueChangeState) third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp:502:10",
       "address": 139626336422098,
       "function_name": "blink::TextFieldInputType::didSetValueByUserEdit(blink::TextFieldInputType::ValueChangeState)",
       "function_offset": 10,
-      "file_name": "third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp",
-      "file_line": 502,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "TextFieldInputType.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp",
+      "source_file_line": 502
     },
     {
       "line": "#3 0x7efd4a2f0814 in blink::TextFieldInputType::subtreeHasChanged() third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp:497:5",
       "address": 139626336421908,
       "function_name": "blink::TextFieldInputType::subtreeHasChanged()",
       "function_offset": 5,
-      "file_name": "third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp",
-      "file_line": 497,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "TextFieldInputType.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp",
+      "source_file_line": 497
     },
     {
       "line": "#4 0x7efd4a189606 in blink::HTMLInputElement::subtreeHasChanged() third_party/WebKit/Source/core/html/HTMLInputElement.cpp:525:5",
       "address": 139626334950918,
       "function_name": "blink::HTMLInputElement::subtreeHasChanged()",
       "function_offset": 5,
-      "file_name": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
-      "file_line": 525,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "HTMLInputElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
+      "source_file_line": 525
     },
     {
       "line": "#5 0x7efd4a24d587 in blink::HTMLTextFormControlElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/html/HTMLTextFormControlElement.cpp:240:5",
       "address": 139626335753607,
       "function_name": "blink::HTMLTextFormControlElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&)",
       "function_offset": 5,
-      "file_name": "third_party/WebKit/Source/core/html/HTMLTextFormControlElement.cpp",
-      "file_line": 240,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "HTMLTextFormControlElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/HTMLTextFormControlElement.cpp",
+      "source_file_line": 240
     },
     {
       "line": "#6 0x7efd4a199788 in blink::HTMLInputElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/html/HTMLInputElement.cpp:1827:5",
       "address": 139626335016840,
       "function_name": "blink::HTMLInputElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&)",
       "function_offset": 5,
-      "file_name": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
-      "file_line": 1827,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "HTMLInputElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
+      "source_file_line": 1827
     },
     {
       "line": "#7 0x7efd4bfbbeda in blink::HTMLInputElementV8Internal::setRangeText2Method(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp:1868:5",
       "address": 139626366615258,
       "function_name": "blink::HTMLInputElementV8Internal::setRangeText2Method(v8::FunctionCallbackInfo<v8::Value> const&)",
       "function_offset": 5,
-      "file_name": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
-      "file_line": 1868,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "V8HTMLInputElement.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
+      "source_file_line": 1868
     },
     {
       "line": "#8 0x7efd4bfbb06b in blink::HTMLInputElementV8Internal::setRangeTextMethod(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp:1887:13",
       "address": 139626366611563,
       "function_name": "blink::HTMLInputElementV8Internal::setRangeTextMethod(v8::FunctionCallbackInfo<v8::Value> const&)",
       "function_offset": 13,
-      "file_name": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
-      "file_line": 1887,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "V8HTMLInputElement.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
+      "source_file_line": 1887
     },
     {
       "line": "#9 0x7efd4bfb99f6 in blink::HTMLInputElementV8Internal::setRangeTextMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp:1918:5",
       "address": 139626366605814,
       "function_name": "blink::HTMLInputElementV8Internal::setRangeTextMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&)",
       "function_offset": 5,
-      "file_name": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
-      "file_line": 1918,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "V8HTMLInputElement.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp",
+      "source_file_line": 1918
     },
     {
       "line": "#10 0x7efd487ade01 in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/arguments.cc:33:3",
       "address": 139626307837441,
       "function_name": "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
       "function_offset": 3,
-      "file_name": "v8/src/arguments.cc",
-      "file_line": 33,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "arguments.cc",
+      "source_file_path": "v8/src/arguments.cc",
+      "source_file_line": 33
     },
     {
       "line": "#11 0x7efd47c15785 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>) v8/src/builtins.cc:1979:34",
       "address": 139626295678853,
       "function_name": "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>)",
       "function_offset": 34,
-      "file_name": "v8/src/builtins.cc",
-      "file_line": 1979,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 1979
     },
     {
       "line": "#12 0x7efd47c3c463 in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*) v8/src/builtins.cc:2003:3",
       "address": 139626295837795,
       "function_name": "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*)",
       "function_offset": 3,
-      "file_name": "v8/src/builtins.cc",
-      "file_line": 2003,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 2003
     },
     {
       "line": "#13 0x7efd47c1869f in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins.cc:2000:1",
       "address": 139626295690911,
       "function_name": "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)",
       "function_offset": 1,
-      "file_name": "v8/src/builtins.cc",
-      "file_line": 2000,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 2000
     }
   ],
   "minimized_stack": [
@@ -324,6 +297,19 @@
     "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*)",
     "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "blink::InputTypeView::element",
+    "blink::TextFieldInputType::didSetValueByUserEdit",
+    "blink::TextFieldInputType::subtreeHasChanged",
+    "blink::HTMLInputElement::subtreeHasChanged",
+    "blink::HTMLTextFormControlElement::setRangeText",
+    "blink::HTMLInputElement::setRangeText",
+    "blink::HTMLInputElementV8Internal::setRangeText2Method",
+    "blink::HTMLInputElementV8Internal::setRangeTextMethod",
+    "blink::HTMLInputElementV8Internal::setRangeTextMethodCallback",
+    "v8::internal::FunctionCallbackArguments::Call",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::Builtin_Impl_HandleApiCall",
+    "v8::internal::Builtin_HandleApiCall"
+  ]
 }

@@ -12,17 +12,12 @@
       "address": 2935005959,
       "function_name": "__strlen_chk",
       "function_offset": 16,
-      "file_name": "bionic/libc/bionic/fortify.cpp",
-      "file_line": 313,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "fortify.cpp",
+      "source_file_path": "bionic/libc/bionic/fortify.cpp",
+      "source_file_line": 313
     }
   ],
   "full_stack_names": [
     "__strlen_chk"
-  ],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
-  "scariness_score": null,
-  "scariness_description": null
+  ]
 }

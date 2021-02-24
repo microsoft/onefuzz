@@ -11,18 +11,14 @@
       "line": "#0 0x5c1eb0 in runtime.raise /tmp/go-fuzz-build988081626/goroot/src/runtime/sys_linux_amd64.s:149",
       "address": 6037168,
       "function_name": "runtime.raise",
-      "function_offset": null,
-      "file_name": "/tmp/go-fuzz-build988081626/goroot/src/runtime/sys_linux_amd64.s",
-      "file_line": 149,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "sys_linux_amd64.s",
+      "source_file_path": "/tmp/go-fuzz-build988081626/goroot/src/runtime/sys_linux_amd64.s",
+      "source_file_line": 149
     }
   ],
   "full_stack_names": [
     "runtime.raise"
   ],
-  "minimized_stack_details": [],
-  "minimized_stack": [],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

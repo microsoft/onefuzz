@@ -27,158 +27,138 @@
       "address": 94020933980010,
       "function_name": "__interceptor_pthread_create",
       "function_offset": 3,
-      "file_name": "/b/swarming/w/ir/k/src/third_party/llvm/compiler-rt/lib/asan/asan_interceptors.cc",
-      "file_line": 209,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "asan_interceptors.cc",
+      "source_file_path": "/b/swarming/w/ir/k/src/third_party/llvm/compiler-rt/lib/asan/asan_interceptors.cc",
+      "source_file_line": 209
     },
     {
       "line": "#1 0x5582ff6ebecf in base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority) base/threading/platform_thread_posix.cc:120:13",
       "address": 94021119557327,
       "function_name": "base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority)",
       "function_offset": 13,
-      "file_name": "base/threading/platform_thread_posix.cc",
-      "file_line": 120,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "platform_thread_posix.cc",
+      "source_file_path": "base/threading/platform_thread_posix.cc",
+      "source_file_line": 120
     },
     {
       "line": "#2 0x5582ff5c14b9 in base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*) base/task/task_scheduler/scheduler_worker.cc:79:3",
       "address": 94021118334137,
       "function_name": "base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*)",
       "function_offset": 3,
-      "file_name": "base/task/task_scheduler/scheduler_worker.cc",
-      "file_line": 79,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker.cc",
+      "source_file_line": 79
     },
     {
       "line": "#3 0x5582ff5be171 in operator() base/task/task_scheduler/scheduler_worker_pool_impl.cc:187:15",
       "address": 94021118321009,
       "function_name": "operator()",
       "function_offset": 15,
-      "file_name": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
-      "file_line": 187,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 187
     },
     {
       "line": "#4 0x5582ff5be171 in ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)> base/task/task_scheduler/scheduler_worker_pool_impl.cc:152",
       "address": 94021118321009,
       "function_name": "ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)>",
-      "function_offset": null,
-      "file_name": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
-      "file_line": 152,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 152
     },
     {
       "line": "#5 0x5582ff5be171 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl() base/task/task_scheduler/scheduler_worker_pool_impl.cc:186",
       "address": 94021118321009,
       "function_name": "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl()",
-      "function_offset": null,
-      "file_name": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
-      "file_line": 186,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 186
     },
     {
       "line": "#6 0x5582ff5b5c47 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor() base/task/task_scheduler/scheduler_worker_pool_impl.cc:105:30",
       "address": 94021118286919,
       "function_name": "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor()",
       "function_offset": 30,
-      "file_name": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
-      "file_line": 105,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 105
     },
     {
       "line": "#7 0x5582ff5b5a57 in base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>) base/task/task_scheduler/scheduler_worker_pool_impl.cc:435:1",
       "address": 94021118286423,
       "function_name": "base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>)",
       "function_offset": 1,
-      "file_name": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
-      "file_line": 435,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 435
     },
     {
       "line": "#8 0x5582ff59ec04 in base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*) base/task/task_scheduler/task_scheduler_impl.cc:142:21",
       "address": 94021118192644,
       "function_name": "base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*)",
       "function_offset": 21,
-      "file_name": "base/task/task_scheduler/task_scheduler_impl.cc",
-      "file_line": 142,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "task_scheduler_impl.cc",
+      "source_file_path": "base/task/task_scheduler/task_scheduler_impl.cc",
+      "source_file_line": 142
     },
     {
       "line": "#9 0x5582f7f9791b in content::StartBrowserTaskScheduler() content/browser/startup_helper.cc:95:39",
       "address": 94020994431259,
       "function_name": "content::StartBrowserTaskScheduler()",
       "function_offset": 39,
-      "file_name": "content/browser/startup_helper.cc",
-      "file_line": 95,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "startup_helper.cc",
+      "source_file_path": "content/browser/startup_helper.cc",
+      "source_file_line": 95
     },
     {
       "line": "#10 0x5582fe2d95d1 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:924:7",
       "address": 94021098509777,
       "function_name": "content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool)",
       "function_offset": 7,
-      "file_name": "content/app/content_main_runner_impl.cc",
-      "file_line": 924,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 924
     },
     {
       "line": "#11 0x5582fe2d8edb in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
       "address": 94021098507995,
       "function_name": "content::ContentMainRunnerImpl::Run(bool)",
       "function_offset": 12,
-      "file_name": "content/app/content_main_runner_impl.cc",
-      "file_line": 878,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 878
     },
     {
       "line": "#12 0x5582fe4401c6 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:415:29",
       "address": 94021099979206,
       "function_name": "service_manager::Main(service_manager::MainParams const&)",
       "function_offset": 29,
-      "file_name": "services/service_manager/embedder/main.cc",
-      "file_line": 415,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "main.cc",
+      "source_file_path": "services/service_manager/embedder/main.cc",
+      "source_file_line": 415
     },
     {
       "line": "#13 0x5582fe2d2d3c in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
       "address": 94021098483004,
       "function_name": "content::ContentMain(content::ContentMainParams const&)",
       "function_offset": 10,
-      "file_name": "content/app/content_main.cc",
-      "file_line": 19,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
     },
     {
       "line": "#14 0x5582f4635c2e in ChromeMain chrome/app/chrome_main.cc:103:12",
       "address": 94020934261806,
       "function_name": "ChromeMain",
       "function_offset": 12,
-      "file_name": "chrome/app/chrome_main.cc",
-      "file_line": 103,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 103
     },
     {
       "line": "#15 0x7f954dbb92b0 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x202b0)",
       "address": 140279230993072,
       "function_name": "__libc_start_main",
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 131760
     }
@@ -207,130 +187,115 @@
       "address": 94021119557327,
       "function_name": "base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority)",
       "function_offset": 13,
-      "file_name": "base/threading/platform_thread_posix.cc",
-      "file_line": 120,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "platform_thread_posix.cc",
+      "source_file_path": "base/threading/platform_thread_posix.cc",
+      "source_file_line": 120
     },
     {
       "line": "#2 0x5582ff5c14b9 in base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*) base/task/task_scheduler/scheduler_worker.cc:79:3",
       "address": 94021118334137,
       "function_name": "base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*)",
       "function_offset": 3,
-      "file_name": "base/task/task_scheduler/scheduler_worker.cc",
-      "file_line": 79,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker.cc",
+      "source_file_line": 79
     },
     {
       "line": "#4 0x5582ff5be171 in ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)> base/task/task_scheduler/scheduler_worker_pool_impl.cc:152",
       "address": 94021118321009,
       "function_name": "ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)>",
-      "function_offset": null,
-      "file_name": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
-      "file_line": 152,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 152
     },
     {
       "line": "#5 0x5582ff5be171 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl() base/task/task_scheduler/scheduler_worker_pool_impl.cc:186",
       "address": 94021118321009,
       "function_name": "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl()",
-      "function_offset": null,
-      "file_name": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
-      "file_line": 186,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 186
     },
     {
       "line": "#6 0x5582ff5b5c47 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor() base/task/task_scheduler/scheduler_worker_pool_impl.cc:105:30",
       "address": 94021118286919,
       "function_name": "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor()",
       "function_offset": 30,
-      "file_name": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
-      "file_line": 105,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 105
     },
     {
       "line": "#7 0x5582ff5b5a57 in base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>) base/task/task_scheduler/scheduler_worker_pool_impl.cc:435:1",
       "address": 94021118286423,
       "function_name": "base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>)",
       "function_offset": 1,
-      "file_name": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
-      "file_line": 435,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 435
     },
     {
       "line": "#8 0x5582ff59ec04 in base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*) base/task/task_scheduler/task_scheduler_impl.cc:142:21",
       "address": 94021118192644,
       "function_name": "base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*)",
       "function_offset": 21,
-      "file_name": "base/task/task_scheduler/task_scheduler_impl.cc",
-      "file_line": 142,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "task_scheduler_impl.cc",
+      "source_file_path": "base/task/task_scheduler/task_scheduler_impl.cc",
+      "source_file_line": 142
     },
     {
       "line": "#9 0x5582f7f9791b in content::StartBrowserTaskScheduler() content/browser/startup_helper.cc:95:39",
       "address": 94020994431259,
       "function_name": "content::StartBrowserTaskScheduler()",
       "function_offset": 39,
-      "file_name": "content/browser/startup_helper.cc",
-      "file_line": 95,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "startup_helper.cc",
+      "source_file_path": "content/browser/startup_helper.cc",
+      "source_file_line": 95
     },
     {
       "line": "#10 0x5582fe2d95d1 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:924:7",
       "address": 94021098509777,
       "function_name": "content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool)",
       "function_offset": 7,
-      "file_name": "content/app/content_main_runner_impl.cc",
-      "file_line": 924,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 924
     },
     {
       "line": "#11 0x5582fe2d8edb in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
       "address": 94021098507995,
       "function_name": "content::ContentMainRunnerImpl::Run(bool)",
       "function_offset": 12,
-      "file_name": "content/app/content_main_runner_impl.cc",
-      "file_line": 878,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 878
     },
     {
       "line": "#12 0x5582fe4401c6 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:415:29",
       "address": 94021099979206,
       "function_name": "service_manager::Main(service_manager::MainParams const&)",
       "function_offset": 29,
-      "file_name": "services/service_manager/embedder/main.cc",
-      "file_line": 415,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "main.cc",
+      "source_file_path": "services/service_manager/embedder/main.cc",
+      "source_file_line": 415
     },
     {
       "line": "#13 0x5582fe2d2d3c in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
       "address": 94021098483004,
       "function_name": "content::ContentMain(content::ContentMainParams const&)",
       "function_offset": 10,
-      "file_name": "content/app/content_main.cc",
-      "file_line": 19,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
     },
     {
       "line": "#14 0x5582f4635c2e in ChromeMain chrome/app/chrome_main.cc:103:12",
       "address": 94020934261806,
       "function_name": "ChromeMain",
       "function_offset": 12,
-      "file_name": "chrome/app/chrome_main.cc",
-      "file_line": 103,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 103
     }
   ],
   "minimized_stack": [
@@ -346,6 +311,21 @@
     "content::ContentMainRunnerImpl::Run(bool)",
     "service_manager::Main(service_manager::MainParams const&)",
     "content::ContentMain(content::ContentMainParams const&)",
+    "ChromeMain"
+  ],
+  "minimized_stack_function_names": [
+    "base::",
+    "base::internal::SchedulerWorker::Start",
+    "ForEachWorker<",
+    "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl",
+    "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor",
+    "base::internal::SchedulerWorkerPoolImpl::Start",
+    "base::internal::TaskSchedulerImpl::Start",
+    "content::StartBrowserTaskScheduler",
+    "content::ContentMainRunnerImpl::RunServiceManager",
+    "content::ContentMainRunnerImpl::Run",
+    "service_manager::Main",
+    "content::ContentMain",
     "ChromeMain"
   ],
   "scariness_score": 45,

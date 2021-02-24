@@ -24,38 +24,31 @@
       "address": 5188327,
       "function_name": "__sanitizer_print_stack_trace",
       "function_offset": 3,
-      "file_name": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/asan/asan_stack.cc",
-      "file_line": 38,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "asan_stack.cc",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/asan/asan_stack.cc",
+      "source_file_line": 38
     },
     {
       "line": "#1 0x42f0f6 in fuzzer::Fuzzer::CrashCallback() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:233:5",
       "address": 4387062,
       "function_name": "fuzzer::Fuzzer::CrashCallback()",
       "function_offset": 5,
-      "file_name": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "file_line": 233,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 233
     },
     {
       "line": "#2 0x42f0bf in fuzzer::Fuzzer::StaticCrashSignalCallback() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:206:6",
       "address": 4387007,
       "function_name": "fuzzer::Fuzzer::StaticCrashSignalCallback()",
       "function_offset": 6,
-      "file_name": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "file_line": 206,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 206
     },
     {
       "line": "#3 0x7fa27237a39f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1239f)",
       "address": 140335677678495,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
       "module_offset": 74655
     },
@@ -63,9 +56,6 @@
       "line": "#4 0x51a44a in LLVMFuzzerTestOneInput (/src/a.out+0x51a44a)",
       "address": 5350474,
       "function_name": "LLVMFuzzerTestOneInput",
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/src/a.out",
       "module_offset": 5350474
     },
@@ -74,68 +64,59 @@
       "address": 4392476,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
       "function_offset": 13,
-      "file_name": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "file_line": 515,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 515
     },
     {
       "line": "#6 0x42fe7b in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:440:3",
       "address": 4390523,
       "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*)",
       "function_offset": 3,
-      "file_name": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "file_line": 440,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 440
     },
     {
       "line": "#7 0x43183d in fuzzer::Fuzzer::MutateAndTestOne() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:648:19",
       "address": 4397117,
       "function_name": "fuzzer::Fuzzer::MutateAndTestOne()",
       "function_offset": 19,
-      "file_name": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "file_line": 648,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 648
     },
     {
       "line": "#8 0x432235 in fuzzer::Fuzzer::Loop(std::vector<std::string, fuzzer::fuzzer_allocator<std::string> > const&) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:775:5",
       "address": 4399669,
       "function_name": "fuzzer::Fuzzer::Loop(std::vector<std::string, fuzzer::fuzzer_allocator<std::string> > const&)",
       "function_offset": 5,
-      "file_name": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
-      "file_line": 775,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 775
     },
     {
       "line": "#9 0x4270b3 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:754:6",
       "address": 4354227,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
       "function_offset": 6,
-      "file_name": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
-      "file_line": 754,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 754
     },
     {
       "line": "#10 0x44a012 in main /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10",
       "address": 4497426,
       "function_name": "main",
       "function_offset": 10,
-      "file_name": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp",
-      "file_line": 20,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
     },
     {
       "line": "#11 0x7fa2719a852a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2352a)",
       "address": 140335667381546,
       "function_name": "__libc_start_main",
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
       "module_offset": 144682
     },
@@ -143,9 +124,6 @@
       "line": "#12 0x41fda9 in _start (/src/a.out+0x41fda9)",
       "address": 4324777,
       "function_name": "_start",
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/src/a.out",
       "module_offset": 4324777
     }
@@ -168,15 +146,8 @@
     {
       "line": "#3 0x7fa27237a39f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1239f)",
       "address": 140335677678495,
-      "function_name": null,
-      "function_offset": null,
-      "file_name": null,
-      "file_line": null,
       "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
       "module_offset": 74655
     }
-  ],
-  "minimized_stack": [],
-  "scariness_score": null,
-  "scariness_description": null
+  ]
 }

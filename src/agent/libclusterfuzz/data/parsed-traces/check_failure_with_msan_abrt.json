@@ -27,171 +27,151 @@
       "line": "#0 0x7f60199c7427 in gsignal /build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
       "address": 140050723271719,
       "function_name": "gsignal",
-      "function_offset": null,
-      "file_name": "/build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
-      "file_line": 54,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
     },
     {
       "line": "#1 0x7f60199c9029 in abort /build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c:89",
       "address": 140050723278889,
       "function_name": "abort",
-      "function_offset": null,
-      "file_name": "/build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c",
-      "file_line": 89,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "abort.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c",
+      "source_file_line": 89
     },
     {
       "line": "#2 0x386f63 in base::debug::BreakDebugger() base/debug/debugger_posix.cc:258:3",
       "address": 3698531,
       "function_name": "base::debug::BreakDebugger()",
       "function_offset": 3,
-      "file_name": "base/debug/debugger_posix.cc",
-      "file_line": 258,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "debugger_posix.cc",
+      "source_file_path": "base/debug/debugger_posix.cc",
+      "source_file_line": 258
     },
     {
       "line": "#3 0x3818c6 in logging::LogMessage::~LogMessage() base/logging.cc:855:7",
       "address": 3676358,
       "function_name": "logging::LogMessage::~LogMessage()",
       "function_offset": 7,
-      "file_name": "base/logging.cc",
-      "file_line": 855,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "logging.cc",
+      "source_file_path": "base/logging.cc",
+      "source_file_line": 855
     },
     {
       "line": "#4 0x3e770c in base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>,   std::__1::allocator<char> > >::operator[](unsigned long) const base/strings/string_piece.h:223:5",
       "address": 4093708,
       "function_name": "base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>,   std::__1::allocator<char> > >::operator[](unsigned long) const",
       "function_offset": 5,
-      "file_name": "base/strings/string_piece.h",
-      "file_line": 223,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "string_piece.h",
+      "source_file_path": "base/strings/string_piece.h",
+      "source_file_line": 223
     },
     {
       "line": "#5 0x36c7b0 in base::internal::JSONParser::ConsumeStringRaw(base::internal::JSONParser::StringBuilder*) base/json/json_parser.cc:515:15",
       "address": 3590064,
       "function_name": "base::internal::JSONParser::ConsumeStringRaw(base::internal::JSONParser::StringBuilder*)",
       "function_offset": 15,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 515,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 515
     },
     {
       "line": "#6 0x36a8fd in base::internal::JSONParser::ConsumeString() base/json/json_parser.cc:453:8",
       "address": 3582205,
       "function_name": "base::internal::JSONParser::ConsumeString()",
       "function_offset": 8,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 453,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 453
     },
     {
       "line": "#7 0x368bce in base::internal::JSONParser::ParseToken(base::internal::JSONParser::Token) base/json/json_parser.cc:320:14",
       "address": 3574734,
       "function_name": "base::internal::JSONParser::ParseToken(base::internal::JSONParser::Token)",
       "function_offset": 14,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 320,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 320
     },
     {
       "line": "#8 0x365c2d in base::internal::JSONParser::ParseNextToken() base/json/json_parser.cc:310:10",
       "address": 3562541,
       "function_name": "base::internal::JSONParser::ParseNextToken()",
       "function_offset": 10,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 310,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 310
     },
     {
       "line": "#9 0x364fae in base::internal::JSONParser::Parse(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >) base/json/json_parser.cc:100:24",
       "address": 3559342,
       "function_name": "base::internal::JSONParser::Parse(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >)",
       "function_offset": 24,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 100,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 100
     },
     {
       "line": "#10 0x36381f in base::JSONReader::ReadAndReturnError(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, int, int*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, int*, int*) base/json/json_reader.cc:68:33",
       "address": 3553311,
       "function_name": "base::JSONReader::ReadAndReturnError(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, int, int*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, int*, int*)",
       "function_offset": 33,
-      "file_name": "base/json/json_reader.cc",
-      "file_line": 68,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_reader.cc",
+      "source_file_path": "base/json/json_reader.cc",
+      "source_file_line": 68
     },
     {
       "line": "#11 0x2d5b20 in LLVMFuzzerTestOneInput base/json/json_reader_fuzzer.cc:24:3",
       "address": 2972448,
       "function_name": "LLVMFuzzerTestOneInput",
       "function_offset": 3,
-      "file_name": "base/json/json_reader_fuzzer.cc",
-      "file_line": 24,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_reader_fuzzer.cc",
+      "source_file_path": "base/json/json_reader_fuzzer.cc",
+      "source_file_line": 24
     },
     {
       "line": "#12 0x30b449 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:515:13",
       "address": 3191881,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
       "function_offset": 13,
-      "file_name": "third_party/libFuzzer/src/FuzzerLoop.cpp",
-      "file_line": 515,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 515
     },
     {
       "line": "#13 0x2d6e80 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:280:6",
       "address": 2977408,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
       "function_offset": 6,
-      "file_name": "third_party/libFuzzer/src/FuzzerDriver.cpp",
-      "file_line": 280,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 280
     },
     {
       "line": "#14 0x2e2474 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:703:9",
       "address": 3023988,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
       "function_offset": 9,
-      "file_name": "third_party/libFuzzer/src/FuzzerDriver.cpp",
-      "file_line": 703,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 703
     },
     {
       "line": "#15 0x32b360 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
       "address": 3322720,
       "function_name": "main",
       "function_offset": 10,
-      "file_name": "third_party/libFuzzer/src/FuzzerMain.cpp",
-      "file_line": 20,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerMain.cpp",
+      "source_file_line": 20
     },
     {
       "line": "#16 0x7f60199b282f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291",
       "address": 140050723186735,
       "function_name": "__libc_start_main",
-      "function_offset": null,
-      "file_name": "/build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c",
-      "file_line": 291,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
     }
   ],
   "full_stack_names": [
@@ -219,70 +199,72 @@
       "address": 4093708,
       "function_name": "base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>,   std::__1::allocator<char> > >::operator[](unsigned long) const",
       "function_offset": 5,
-      "file_name": "base/strings/string_piece.h",
-      "file_line": 223,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "string_piece.h",
+      "source_file_path": "base/strings/string_piece.h",
+      "source_file_line": 223
     },
     {
       "line": "#5 0x36c7b0 in base::internal::JSONParser::ConsumeStringRaw(base::internal::JSONParser::StringBuilder*) base/json/json_parser.cc:515:15",
       "address": 3590064,
       "function_name": "base::internal::JSONParser::ConsumeStringRaw(base::internal::JSONParser::StringBuilder*)",
       "function_offset": 15,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 515,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 515
     },
     {
       "line": "#6 0x36a8fd in base::internal::JSONParser::ConsumeString() base/json/json_parser.cc:453:8",
       "address": 3582205,
       "function_name": "base::internal::JSONParser::ConsumeString()",
       "function_offset": 8,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 453,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 453
     },
     {
       "line": "#7 0x368bce in base::internal::JSONParser::ParseToken(base::internal::JSONParser::Token) base/json/json_parser.cc:320:14",
       "address": 3574734,
       "function_name": "base::internal::JSONParser::ParseToken(base::internal::JSONParser::Token)",
       "function_offset": 14,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 320,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 320
     },
     {
       "line": "#8 0x365c2d in base::internal::JSONParser::ParseNextToken() base/json/json_parser.cc:310:10",
       "address": 3562541,
       "function_name": "base::internal::JSONParser::ParseNextToken()",
       "function_offset": 10,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 310,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 310
     },
     {
       "line": "#9 0x364fae in base::internal::JSONParser::Parse(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >) base/json/json_parser.cc:100:24",
       "address": 3559342,
       "function_name": "base::internal::JSONParser::Parse(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >)",
       "function_offset": 24,
-      "file_name": "base/json/json_parser.cc",
-      "file_line": 100,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_parser.cc",
+      "source_file_path": "base/json/json_parser.cc",
+      "source_file_line": 100
     },
     {
       "line": "#10 0x36381f in base::JSONReader::ReadAndReturnError(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, int, int*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, int*, int*) base/json/json_reader.cc:68:33",
       "address": 3553311,
       "function_name": "base::JSONReader::ReadAndReturnError(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, int, int*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, int*, int*)",
       "function_offset": 33,
-      "file_name": "base/json/json_reader.cc",
-      "file_line": 68,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "json_reader.cc",
+      "source_file_path": "base/json/json_reader.cc",
+      "source_file_line": 68
+    },
+    {
+      "line": "#11 0x2d5b20 in LLVMFuzzerTestOneInput base/json/json_reader_fuzzer.cc:24:3",
+      "address": 2972448,
+      "function_name": "json_reader_fuzzer.cc",
+      "function_offset": 3,
+      "source_file_name": "json_reader_fuzzer.cc",
+      "source_file_path": "base/json/json_reader_fuzzer.cc",
+      "source_file_line": 24
     }
   ],
   "minimized_stack": [
@@ -292,8 +274,17 @@
     "base::internal::JSONParser::ParseToken(base::internal::JSONParser::Token)",
     "base::internal::JSONParser::ParseNextToken()",
     "base::internal::JSONParser::Parse(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >)",
-    "base::JSONReader::ReadAndReturnError(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, int, int*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, int*, int*)"
+    "base::JSONReader::ReadAndReturnError(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, int, int*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, int*, int*)",
+    "json_reader_fuzzer.cc"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>,   std::__1::allocator<char> > >::operator[]",
+    "base::internal::JSONParser::ConsumeStringRaw",
+    "base::internal::JSONParser::ConsumeString",
+    "base::internal::JSONParser::ParseToken",
+    "base::internal::JSONParser::ParseNextToken",
+    "base::internal::JSONParser::Parse",
+    "base::JSONReader::ReadAndReturnError",
+    "json_reader_fuzzer.cc"
+  ]
 }

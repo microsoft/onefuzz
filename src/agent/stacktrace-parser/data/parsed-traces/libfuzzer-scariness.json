@@ -22,18 +22,12 @@
       "function_offset": 32,
       "source_file_name": "simple.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c",
-      "source_file_line": 58,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 58
     },
     {
       "line": "#1 0x43b271 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43b271)",
       "address": 4436593,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
       "module_offset": 4436593
     },
@@ -41,10 +35,6 @@
       "line": "#2 0x43a9a5 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43a9a5)",
       "address": 4434341,
       "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
       "module_offset": 4434341
     },
@@ -52,10 +42,6 @@
       "line": "#3 0x43cf9b in fuzzer::Fuzzer::MutateAndTestOne() (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43cf9b)",
       "address": 4444059,
       "function_name": "fuzzer::Fuzzer::MutateAndTestOne()",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
       "module_offset": 4444059
     },
@@ -63,10 +49,6 @@
       "line": "#4 0x43dd15 in fuzzer::Fuzzer::Loop(std::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43dd15)",
       "address": 4447509,
       "function_name": "fuzzer::Fuzzer::Loop(std::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
       "module_offset": 4447509
     },
@@ -74,10 +56,6 @@
       "line": "#5 0x42999b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x42999b)",
       "address": 4364699,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
       "module_offset": 4364699
     },
@@ -85,10 +63,6 @@
       "line": "#6 0x4557a2 in main (/tmp/xx/linux-libfuzzer/fuzz.exe+0x4557a2)",
       "address": 4544418,
       "function_name": "main",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
       "module_offset": 4544418
     },
@@ -99,18 +73,12 @@
       "function_offset": 16,
       "source_file_name": "libc-start.c",
       "source_file_path": "/build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c",
-      "source_file_line": 308,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 308
     },
     {
       "line": "#8 0x41db59 in _start (/tmp/xx/linux-libfuzzer/fuzz.exe+0x41db59)",
       "address": 4315993,
       "function_name": "_start",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
       "module_offset": 4315993
     }
@@ -134,12 +102,13 @@
       "function_offset": 32,
       "source_file_name": "simple.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c",
-      "source_file_line": 58,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 58
     }
   ],
   "minimized_stack": [
+    "simple.c"
+  ],
+  "minimized_stack_function_names": [
     "simple.c"
   ],
   "scariness_score": 10,

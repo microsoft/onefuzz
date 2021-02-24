@@ -27,160 +27,144 @@
       "address": 8406682,
       "function_name": "xmlNewDocElementContent",
       "function_offset": 34,
-      "file_name": "/src/libxml2/valid.c",
-      "file_line": 952,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "valid.c",
+      "source_file_path": "/src/libxml2/valid.c",
+      "source_file_line": 952
     },
     {
       "line": "#2 0x6c92c9 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6262:11",
       "address": 7115465,
       "function_name": "xmlParseElementMixedContentDecl",
       "function_offset": 11,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 6262,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6262
     },
     {
       "line": "#3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16",
       "address": 7142883,
       "function_name": "xmlParseElementContentDecl",
       "function_offset": 16,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 6677,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6677
     },
     {
       "line": "#4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12",
       "address": 7154326,
       "function_name": "xmlParseElementDecl",
       "function_offset": 12,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 6745,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6745
     },
     {
       "line": "#5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4",
       "address": 7159187,
       "function_name": "xmlParseMarkupDecl",
       "function_offset": 4,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 6997,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6997
     },
     {
       "line": "#6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6",
       "address": 7441592,
       "function_name": "xmlParseInternalSubset",
       "function_offset": 6,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 8473,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 8473
     },
     {
       "line": "#7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6",
       "address": 7434562,
       "function_name": "xmlParseDocument",
       "function_offset": 6,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 10921,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 10921
     },
     {
       "line": "#8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5",
       "address": 7624144,
       "function_name": "xmlDoRead",
       "function_offset": 5,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 15432,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 15432
     },
     {
       "line": "#9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13",
       "address": 7625266,
       "function_name": "xmlReadMemory",
       "function_offset": 13,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 15518,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 15518
     },
     {
       "line": "#10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18",
       "address": 5319574,
       "function_name": "LLVMFuzzerTestOneInput",
       "function_offset": 18,
-      "file_name": "/src/libxml2_xml_read_memory_fuzzer.cc",
-      "file_line": 17,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "libxml2_xml_read_memory_fuzzer.cc",
+      "source_file_path": "/src/libxml2_xml_read_memory_fuzzer.cc",
+      "source_file_line": 17
     },
     {
       "line": "#11 0x589918 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13",
       "address": 5806360,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
       "function_offset": 13,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 550,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 550
     },
     {
       "line": "#12 0x58a664 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3",
       "address": 5809764,
       "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
       "function_offset": 3,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 501,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 501
     },
     {
       "line": "#13 0x5912b5 in fuzzer::Fuzzer::MutateAndTestOne() /src/libfuzzer/FuzzerLoop.cpp:757:30",
       "address": 5837493,
       "function_name": "fuzzer::Fuzzer::MutateAndTestOne()",
       "function_offset": 30,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 757,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 757
     },
     {
       "line": "#14 0x592323 in fuzzer::Fuzzer::Loop() /src/libfuzzer/FuzzerLoop.cpp:791:5",
       "address": 5841699,
       "function_name": "fuzzer::Fuzzer::Loop()",
       "function_offset": 5,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 791,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 791
     },
     {
       "line": "#15 0x521899 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:567:6",
       "address": 5380249,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
       "function_offset": 6,
-      "file_name": "/src/libfuzzer/FuzzerDriver.cpp",
-      "file_line": 567,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 567
     },
     {
       "line": "#16 0x512dd8 in main /src/libfuzzer/FuzzerMain.cpp:20:10",
       "address": 5320152,
       "function_name": "main",
       "function_offset": 10,
-      "file_name": "/src/libfuzzer/FuzzerMain.cpp",
-      "file_line": 20,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
     }
   ],
   "full_stack_names": [
@@ -207,90 +191,90 @@
       "address": 8406682,
       "function_name": "xmlNewDocElementContent",
       "function_offset": 34,
-      "file_name": "/src/libxml2/valid.c",
-      "file_line": 952,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "valid.c",
+      "source_file_path": "/src/libxml2/valid.c",
+      "source_file_line": 952
     },
     {
       "line": "#2 0x6c92c9 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6262:11",
       "address": 7115465,
       "function_name": "xmlParseElementMixedContentDecl",
       "function_offset": 11,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 6262,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6262
     },
     {
       "line": "#3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16",
       "address": 7142883,
       "function_name": "xmlParseElementContentDecl",
       "function_offset": 16,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 6677,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6677
     },
     {
       "line": "#4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12",
       "address": 7154326,
       "function_name": "xmlParseElementDecl",
       "function_offset": 12,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 6745,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6745
     },
     {
       "line": "#5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4",
       "address": 7159187,
       "function_name": "xmlParseMarkupDecl",
       "function_offset": 4,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 6997,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6997
     },
     {
       "line": "#6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6",
       "address": 7441592,
       "function_name": "xmlParseInternalSubset",
       "function_offset": 6,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 8473,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 8473
     },
     {
       "line": "#7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6",
       "address": 7434562,
       "function_name": "xmlParseDocument",
       "function_offset": 6,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 10921,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 10921
     },
     {
       "line": "#8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5",
       "address": 7624144,
       "function_name": "xmlDoRead",
       "function_offset": 5,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 15432,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 15432
     },
     {
       "line": "#9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13",
       "address": 7625266,
       "function_name": "xmlReadMemory",
       "function_offset": 13,
-      "file_name": "/src/libxml2/parser.c",
-      "file_line": 15518,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 15518
+    },
+    {
+      "line": "#10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18",
+      "address": 5319574,
+      "function_name": "libxml2_xml_read_memory_fuzzer.cc",
+      "function_offset": 18,
+      "source_file_name": "libxml2_xml_read_memory_fuzzer.cc",
+      "source_file_path": "/src/libxml2_xml_read_memory_fuzzer.cc",
+      "source_file_line": 17
     }
   ],
   "minimized_stack": [
@@ -302,8 +286,19 @@
     "xmlParseInternalSubset",
     "xmlParseDocument",
     "xmlDoRead",
-    "xmlReadMemory"
+    "xmlReadMemory",
+    "libxml2_xml_read_memory_fuzzer.cc"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "xmlNewDocElementContent",
+    "xmlParseElementMixedContentDecl",
+    "xmlParseElementContentDecl",
+    "xmlParseElementDecl",
+    "xmlParseMarkupDecl",
+    "xmlParseInternalSubset",
+    "xmlParseDocument",
+    "xmlDoRead",
+    "xmlReadMemory",
+    "libxml2_xml_read_memory_fuzzer.cc"
+  ]
 }

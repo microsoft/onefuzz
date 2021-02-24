@@ -31,211 +31,186 @@
       "line": "#0 0x7fe9a5149427 in gsignal /build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
       "address": 140641473696807,
       "function_name": "gsignal",
-      "function_offset": null,
-      "file_name": "/build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
-      "file_line": 54,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
     },
     {
       "line": "#1 0x9da929d in logging::LogMessage::~LogMessage() ../../base/logging.cc:855:7",
       "address": 165319325,
       "function_name": "logging::LogMessage::~LogMessage()",
       "function_offset": 7,
-      "file_name": "../../base/logging.cc",
-      "file_line": 855,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "logging.cc",
+      "source_file_path": "../../base/logging.cc",
+      "source_file_line": 855
     },
     {
       "line": "#2 0x1097fee8 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::TextIteratorBehavior const&) ../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc:207:3",
       "address": 278396648,
       "function_name": "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::TextIteratorBehavior const&)",
       "function_offset": 3,
-      "file_name": "../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc",
-      "file_line": 207,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "text_iterator.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc",
+      "source_file_line": 207
     },
     {
       "line": "#3 0x10986d18 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::RangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::TextIteratorBehavior const&) ../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc:908:40",
       "address": 278424856,
       "function_name": "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::RangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::TextIteratorBehavior const&)",
       "function_offset": 40,
-      "file_name": "../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc",
-      "file_line": 908,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "text_iterator.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc",
+      "source_file_line": 908
     },
     {
       "line": "#4 0x10aecd15 in blink::TextOffsetMapping::ComputeTextOffset(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&) const ../../third_party/blink/renderer/core/editing/text_offset_mapping.cc:104:10",
       "address": 279891221,
       "function_name": "blink::TextOffsetMapping::ComputeTextOffset(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&) const",
       "function_offset": 10,
-      "file_name": "../../third_party/blink/renderer/core/editing/text_offset_mapping.cc",
-      "file_line": 104,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "text_offset_mapping.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/text_offset_mapping.cc",
+      "source_file_line": 104
     },
     {
       "line": "#5 0x10aea348 in NextWordPositionInternal ../../third_party/blink/renderer/core/editing/visible_units_word.cc:92:47",
       "address": 279880520,
       "function_name": "NextWordPositionInternal",
       "function_offset": 47,
-      "file_name": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
-      "file_line": 92,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "visible_units_word.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
+      "source_file_line": 92
     },
     {
       "line": "#6 0x10aea348 in blink::NextWordPosition(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&) ../../third_party/blink/renderer/core/editing/visible_units_word.cc:184",
       "address": 279880520,
       "function_name": "blink::NextWordPosition(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&)",
-      "function_offset": null,
-      "file_name": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
-      "file_line": 184,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "visible_units_word.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
+      "source_file_line": 184
     },
     {
       "line": "#7 0x10aea88a in NextWordPosition ../../third_party/blink/renderer/core/editing/visible_units_word.cc:195:7",
       "address": 279881866,
       "function_name": "NextWordPosition",
       "function_offset": 7,
-      "file_name": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
-      "file_line": 195,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "visible_units_word.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
+      "source_file_line": 195
     },
     {
       "line": "#8 0x10aea88a in blink::NextWordPosition(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) ../../third_party/blink/renderer/core/editing/visible_units_word.cc:203",
       "address": 279881866,
       "function_name": "blink::NextWordPosition(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&)",
-      "function_offset": null,
-      "file_name": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
-      "file_line": 203,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "visible_units_word.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
+      "source_file_line": 203
     },
     {
       "line": "#9 0x10a28ca1 in blink::SelectionModifier::NextWordPositionForPlatform(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:234:7",
       "address": 279088289,
       "function_name": "blink::SelectionModifier::NextWordPositionForPlatform(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&)",
       "function_offset": 7,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 234,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 234
     },
     {
       "line": "#10 0x10a29a24 in blink::SelectionModifier::ModifyExtendingForwardInternal(blink::TextGranularity) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:315:14",
       "address": 279091748,
       "function_name": "blink::SelectionModifier::ModifyExtendingForwardInternal(blink::TextGranularity)",
       "function_offset": 14,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 315,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 315
     },
     {
       "line": "#11 0x10a2bf81 in blink::SelectionModifier::ModifyExtendingForward(blink::TextGranularity) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:346:31",
       "address": 279101313,
       "function_name": "blink::SelectionModifier::ModifyExtendingForward(blink::TextGranularity)",
       "function_offset": 31,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 346,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 346
     },
     {
       "line": "#12 0x10a30474 in blink::SelectionModifier::ComputeModifyPosition(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:619:16",
       "address": 279118964,
       "function_name": "blink::SelectionModifier::ComputeModifyPosition(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity)",
       "function_offset": 16,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 619,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 619
     },
     {
       "line": "#13 0x10a30821 in blink::SelectionModifier::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:648:7",
       "address": 279119905,
       "function_name": "blink::SelectionModifier::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity)",
       "function_offset": 7,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 648,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 648
     },
     {
       "line": "#14 0x10944e42 in blink::FrameSelection::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity, blink::SetSelectionBy) ../../third_party/blink/renderer/core/editing/frame_selection.cc:350:26",
       "address": 278154818,
       "function_name": "blink::FrameSelection::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity, blink::SetSelectionBy)",
       "function_offset": 26,
-      "file_name": "../../third_party/blink/renderer/core/editing/frame_selection.cc",
-      "file_line": 350,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "frame_selection.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/frame_selection.cc",
+      "source_file_line": 350
     },
     {
       "line": "#15 0x108e95bb in blink::DOMSelection::modify(WTF::String const&, WTF::String const&, WTF::String const&) ../../third_party/blink/renderer/core/editing/dom_selection.cc:457:27",
       "address": 277779899,
       "function_name": "blink::DOMSelection::modify(WTF::String const&, WTF::String const&, WTF::String const&)",
       "function_offset": 27,
-      "file_name": "../../third_party/blink/renderer/core/editing/dom_selection.cc",
-      "file_line": 457,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "dom_selection.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/dom_selection.cc",
+      "source_file_line": 457
     },
     {
       "line": "#16 0xef6932b in modifyMethod gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc:466:9",
       "address": 251040555,
       "function_name": "modifyMethod",
       "function_offset": 9,
-      "file_name": "gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc",
-      "file_line": 466,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "v8_selection.cc",
+      "source_file_path": "gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc",
+      "source_file_line": 466
     },
     {
       "line": "#17 0xef6932b in blink::V8Selection::modifyMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc:666",
       "address": 251040555,
       "function_name": "blink::V8Selection::modifyMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&)",
-      "function_offset": null,
-      "file_name": "gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc",
-      "file_line": 666,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "v8_selection.cc",
+      "source_file_path": "gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc",
+      "source_file_line": 666
     },
     {
       "line": "#18 0x58c2b91 in v8::internal::FunctionCallbackArguments::Call(v8::internal::CallHandlerInfo*) ../../v8/src/api-arguments-inl.h:93:3",
       "address": 93072273,
       "function_name": "v8::internal::FunctionCallbackArguments::Call(v8::internal::CallHandlerInfo*)",
       "function_offset": 3,
-      "file_name": "../../v8/src/api-arguments-inl.h",
-      "file_line": 93,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "api-arguments-inl.h",
+      "source_file_path": "../../v8/src/api-arguments-inl.h",
+      "source_file_line": 93
     },
     {
       "line": "#19 0x58bfd83 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) ../../v8/src/builtins/builtins-api.cc:107:36",
       "address": 93060483,
       "function_name": "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments)",
       "function_offset": 36,
-      "file_name": "../../v8/src/builtins/builtins-api.cc",
-      "file_line": 107,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "../../v8/src/builtins/builtins-api.cc",
+      "source_file_line": 107
     },
     {
       "line": "#20 0x58bd3bb in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) ../../v8/src/builtins/builtins-api.cc:137:5",
       "address": 93049787,
       "function_name": "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*)",
       "function_offset": 5,
-      "file_name": "../../v8/src/builtins/builtins-api.cc",
-      "file_line": 137,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "../../v8/src/builtins/builtins-api.cc",
+      "source_file_line": 137
     }
   ],
   "full_stack_names": [
@@ -267,190 +242,168 @@
       "address": 278396648,
       "function_name": "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::TextIteratorBehavior const&)",
       "function_offset": 3,
-      "file_name": "../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc",
-      "file_line": 207,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "text_iterator.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc",
+      "source_file_line": 207
     },
     {
       "line": "#3 0x10986d18 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::RangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::TextIteratorBehavior const&) ../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc:908:40",
       "address": 278424856,
       "function_name": "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::RangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::TextIteratorBehavior const&)",
       "function_offset": 40,
-      "file_name": "../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc",
-      "file_line": 908,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "text_iterator.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/iterators/text_iterator.cc",
+      "source_file_line": 908
     },
     {
       "line": "#4 0x10aecd15 in blink::TextOffsetMapping::ComputeTextOffset(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&) const ../../third_party/blink/renderer/core/editing/text_offset_mapping.cc:104:10",
       "address": 279891221,
       "function_name": "blink::TextOffsetMapping::ComputeTextOffset(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&) const",
       "function_offset": 10,
-      "file_name": "../../third_party/blink/renderer/core/editing/text_offset_mapping.cc",
-      "file_line": 104,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "text_offset_mapping.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/text_offset_mapping.cc",
+      "source_file_line": 104
     },
     {
       "line": "#5 0x10aea348 in NextWordPositionInternal ../../third_party/blink/renderer/core/editing/visible_units_word.cc:92:47",
       "address": 279880520,
       "function_name": "NextWordPositionInternal",
       "function_offset": 47,
-      "file_name": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
-      "file_line": 92,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "visible_units_word.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
+      "source_file_line": 92
     },
     {
       "line": "#6 0x10aea348 in blink::NextWordPosition(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&) ../../third_party/blink/renderer/core/editing/visible_units_word.cc:184",
       "address": 279880520,
       "function_name": "blink::NextWordPosition(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&)",
-      "function_offset": null,
-      "file_name": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
-      "file_line": 184,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "visible_units_word.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
+      "source_file_line": 184
     },
     {
       "line": "#7 0x10aea88a in NextWordPosition ../../third_party/blink/renderer/core/editing/visible_units_word.cc:195:7",
       "address": 279881866,
       "function_name": "NextWordPosition",
       "function_offset": 7,
-      "file_name": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
-      "file_line": 195,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "visible_units_word.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
+      "source_file_line": 195
     },
     {
       "line": "#8 0x10aea88a in blink::NextWordPosition(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) ../../third_party/blink/renderer/core/editing/visible_units_word.cc:203",
       "address": 279881866,
       "function_name": "blink::NextWordPosition(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&)",
-      "function_offset": null,
-      "file_name": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
-      "file_line": 203,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "visible_units_word.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/visible_units_word.cc",
+      "source_file_line": 203
     },
     {
       "line": "#9 0x10a28ca1 in blink::SelectionModifier::NextWordPositionForPlatform(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:234:7",
       "address": 279088289,
       "function_name": "blink::SelectionModifier::NextWordPositionForPlatform(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&)",
       "function_offset": 7,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 234,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 234
     },
     {
       "line": "#10 0x10a29a24 in blink::SelectionModifier::ModifyExtendingForwardInternal(blink::TextGranularity) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:315:14",
       "address": 279091748,
       "function_name": "blink::SelectionModifier::ModifyExtendingForwardInternal(blink::TextGranularity)",
       "function_offset": 14,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 315,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 315
     },
     {
       "line": "#11 0x10a2bf81 in blink::SelectionModifier::ModifyExtendingForward(blink::TextGranularity) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:346:31",
       "address": 279101313,
       "function_name": "blink::SelectionModifier::ModifyExtendingForward(blink::TextGranularity)",
       "function_offset": 31,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 346,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 346
     },
     {
       "line": "#12 0x10a30474 in blink::SelectionModifier::ComputeModifyPosition(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:619:16",
       "address": 279118964,
       "function_name": "blink::SelectionModifier::ComputeModifyPosition(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity)",
       "function_offset": 16,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 619,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 619
     },
     {
       "line": "#13 0x10a30821 in blink::SelectionModifier::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity) ../../third_party/blink/renderer/core/editing/selection_modifier.cc:648:7",
       "address": 279119905,
       "function_name": "blink::SelectionModifier::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity)",
       "function_offset": 7,
-      "file_name": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
-      "file_line": 648,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "selection_modifier.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/selection_modifier.cc",
+      "source_file_line": 648
     },
     {
       "line": "#14 0x10944e42 in blink::FrameSelection::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity, blink::SetSelectionBy) ../../third_party/blink/renderer/core/editing/frame_selection.cc:350:26",
       "address": 278154818,
       "function_name": "blink::FrameSelection::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity, blink::SetSelectionBy)",
       "function_offset": 26,
-      "file_name": "../../third_party/blink/renderer/core/editing/frame_selection.cc",
-      "file_line": 350,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "frame_selection.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/frame_selection.cc",
+      "source_file_line": 350
     },
     {
       "line": "#15 0x108e95bb in blink::DOMSelection::modify(WTF::String const&, WTF::String const&, WTF::String const&) ../../third_party/blink/renderer/core/editing/dom_selection.cc:457:27",
       "address": 277779899,
       "function_name": "blink::DOMSelection::modify(WTF::String const&, WTF::String const&, WTF::String const&)",
       "function_offset": 27,
-      "file_name": "../../third_party/blink/renderer/core/editing/dom_selection.cc",
-      "file_line": 457,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "dom_selection.cc",
+      "source_file_path": "../../third_party/blink/renderer/core/editing/dom_selection.cc",
+      "source_file_line": 457
     },
     {
       "line": "#16 0xef6932b in modifyMethod gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc:466:9",
       "address": 251040555,
       "function_name": "modifyMethod",
       "function_offset": 9,
-      "file_name": "gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc",
-      "file_line": 466,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "v8_selection.cc",
+      "source_file_path": "gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc",
+      "source_file_line": 466
     },
     {
       "line": "#17 0xef6932b in blink::V8Selection::modifyMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc:666",
       "address": 251040555,
       "function_name": "blink::V8Selection::modifyMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&)",
-      "function_offset": null,
-      "file_name": "gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc",
-      "file_line": 666,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "v8_selection.cc",
+      "source_file_path": "gen/third_party/blink/renderer/bindings/core/v8/v8_selection.cc",
+      "source_file_line": 666
     },
     {
       "line": "#18 0x58c2b91 in v8::internal::FunctionCallbackArguments::Call(v8::internal::CallHandlerInfo*) ../../v8/src/api-arguments-inl.h:93:3",
       "address": 93072273,
       "function_name": "v8::internal::FunctionCallbackArguments::Call(v8::internal::CallHandlerInfo*)",
       "function_offset": 3,
-      "file_name": "../../v8/src/api-arguments-inl.h",
-      "file_line": 93,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "api-arguments-inl.h",
+      "source_file_path": "../../v8/src/api-arguments-inl.h",
+      "source_file_line": 93
     },
     {
       "line": "#19 0x58bfd83 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) ../../v8/src/builtins/builtins-api.cc:107:36",
       "address": 93060483,
       "function_name": "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments)",
       "function_offset": 36,
-      "file_name": "../../v8/src/builtins/builtins-api.cc",
-      "file_line": 107,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "../../v8/src/builtins/builtins-api.cc",
+      "source_file_line": 107
     },
     {
       "line": "#20 0x58bd3bb in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) ../../v8/src/builtins/builtins-api.cc:137:5",
       "address": 93049787,
       "function_name": "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*)",
       "function_offset": 5,
-      "file_name": "../../v8/src/builtins/builtins-api.cc",
-      "file_line": 137,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "../../v8/src/builtins/builtins-api.cc",
+      "source_file_line": 137
     }
   ],
   "minimized_stack": [
@@ -473,6 +426,27 @@
     "v8::internal::FunctionCallbackArguments::Call(v8::internal::CallHandlerInfo*)",
     "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments)",
     "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*)"
+  ],
+  "minimized_stack_function_names": [
+    "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::TextIteratorAlgorithm",
+    "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::RangeLength",
+    "blink::TextOffsetMapping::ComputeTextOffset",
+    "NextWordPositionInternal",
+    "blink::NextWordPosition",
+    "NextWordPosition",
+    "blink::NextWordPosition",
+    "blink::SelectionModifier::NextWordPositionForPlatform",
+    "blink::SelectionModifier::ModifyExtendingForwardInternal",
+    "blink::SelectionModifier::ModifyExtendingForward",
+    "blink::SelectionModifier::ComputeModifyPosition",
+    "blink::SelectionModifier::Modify",
+    "blink::FrameSelection::Modify",
+    "blink::DOMSelection::modify",
+    "modifyMethod",
+    "blink::V8Selection::modifyMethodCallback",
+    "v8::internal::FunctionCallbackArguments::Call",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::Builtin_Impl_HandleApiCall"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

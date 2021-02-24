@@ -20,90 +20,79 @@
       "address": 4545496,
       "function_name": "operator[]",
       "function_offset": 5,
-      "file_name": "/usr/local/include/c++/v1/vector",
-      "file_line": 1498,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "vector",
+      "source_file_path": "/usr/local/include/c++/v1/vector",
+      "source_file_line": 1498
     },
     {
       "line": "#1 0x455bd8 in woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*) /src/woff2/src/woff2_dec.cc:1302",
       "address": 4545496,
       "function_name": "woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*)",
-      "function_offset": null,
-      "file_name": "/src/woff2/src/woff2_dec.cc",
-      "file_line": 1302,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "woff2_dec.cc",
+      "source_file_path": "/src/woff2/src/woff2_dec.cc",
+      "source_file_line": 1302
     },
     {
       "line": "#2 0x4557a3 in LLVMFuzzerTestOneInput /src/woff2/src/convert_woff2ttf_fuzzer.cc:11:3",
       "address": 4544419,
       "function_name": "LLVMFuzzerTestOneInput",
       "function_offset": 3,
-      "file_name": "/src/woff2/src/convert_woff2ttf_fuzzer.cc",
-      "file_line": 11,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "convert_woff2ttf_fuzzer.cc",
+      "source_file_path": "/src/woff2/src/convert_woff2ttf_fuzzer.cc",
+      "source_file_line": 11
     },
     {
       "line": "#3 0x43b80d in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:458:13",
       "address": 4438029,
       "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
       "function_offset": 13,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 458,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 458
     },
     {
       "line": "#4 0x43bbe7 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:397:3",
       "address": 4439015,
       "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
       "function_offset": 3,
-      "file_name": "/src/libfuzzer/FuzzerLoop.cpp",
-      "file_line": 397,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 397
     },
     {
       "line": "#5 0x42cd18 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6",
       "address": 4377880,
       "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
       "function_offset": 6,
-      "file_name": "/src/libfuzzer/FuzzerDriver.cpp",
-      "file_line": 268,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 268
     },
     {
       "line": "#6 0x4311b8 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:683:9",
       "address": 4395448,
       "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
       "function_offset": 9,
-      "file_name": "/src/libfuzzer/FuzzerDriver.cpp",
-      "file_line": 683,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 683
     },
     {
       "line": "#7 0x42c97c in main /src/libfuzzer/FuzzerMain.cpp:20:10",
       "address": 4376956,
       "function_name": "main",
       "function_offset": 10,
-      "file_name": "/src/libfuzzer/FuzzerMain.cpp",
-      "file_line": 20,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
     },
     {
       "line": "#8 0x7f95cd12f82f in __libc_start_main /build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c:291",
       "address": 140281367427119,
       "function_name": "__libc_start_main",
-      "function_offset": null,
-      "file_name": "/build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c",
-      "file_line": 291,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
     }
   ],
   "full_stack_names": [
@@ -122,16 +111,26 @@
       "line": "#1 0x455bd8 in woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*) /src/woff2/src/woff2_dec.cc:1302",
       "address": 4545496,
       "function_name": "woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*)",
-      "function_offset": null,
-      "file_name": "/src/woff2/src/woff2_dec.cc",
-      "file_line": 1302,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "woff2_dec.cc",
+      "source_file_path": "/src/woff2/src/woff2_dec.cc",
+      "source_file_line": 1302
+    },
+    {
+      "line": "#2 0x4557a3 in LLVMFuzzerTestOneInput /src/woff2/src/convert_woff2ttf_fuzzer.cc:11:3",
+      "address": 4544419,
+      "function_name": "convert_woff2ttf_fuzzer.cc",
+      "function_offset": 3,
+      "source_file_name": "convert_woff2ttf_fuzzer.cc",
+      "source_file_path": "/src/woff2/src/convert_woff2ttf_fuzzer.cc",
+      "source_file_line": 11
     }
   ],
   "minimized_stack": [
-    "woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*)"
+    "woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*)",
+    "convert_woff2ttf_fuzzer.cc"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "woff2::ConvertWOFF2ToTTF",
+    "convert_woff2ttf_fuzzer.cc"
+  ]
 }

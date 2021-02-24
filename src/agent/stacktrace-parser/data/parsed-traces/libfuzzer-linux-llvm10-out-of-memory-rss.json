@@ -14,10 +14,6 @@
       "line": "#0 0x51d4dd in malloc (/home/user/src/onefuzz/src/agent/fuzz.exe+0x51d4dd)",
       "address": 5362909,
       "function_name": "malloc",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
       "module_offset": 5362909
     },
@@ -25,10 +21,6 @@
       "line": "#1 0x431b97 in operator new(unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x431b97)",
       "address": 4397975,
       "function_name": "operator new(unsigned long)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
       "module_offset": 4397975
     },
@@ -36,10 +28,6 @@
       "line": "#2 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)",
       "address": 4659282,
       "function_name": "main",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
       "module_offset": 4659282
     },
@@ -47,12 +35,9 @@
       "line": "#3 0x7f2e2eb89b96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310",
       "address": 139836329073558,
       "function_name": "__libc_start_main",
-      "function_offset": null,
       "source_file_name": "libc-start.c",
       "source_file_path": "/build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c",
-      "source_file_line": 310,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 310
     }
   ],
   "full_stack_names": [
@@ -66,10 +51,6 @@
       "line": "#2 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)",
       "address": 4659282,
       "function_name": "main",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
       "module_offset": 4659282
     }
@@ -77,6 +58,7 @@
   "minimized_stack": [
     "main"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "main"
+  ]
 }

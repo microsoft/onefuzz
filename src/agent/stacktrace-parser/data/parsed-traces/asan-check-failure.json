@@ -22,10 +22,6 @@
       "line": "#0 0x49a92e in __asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)",
       "address": 4827438,
       "function_name": "__asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
       "module_offset": 4827438
     },
@@ -33,10 +29,6 @@
       "line": "#1 0x4aef3f in __sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)",
       "address": 4910911,
       "function_name": "__sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
       "module_offset": 4910911
     },
@@ -44,10 +36,6 @@
       "line": "#2 0x423516 in __asan::GetShadowAddressInformation(unsigned long, __asan::ShadowAddressDescription*) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)",
       "address": 4338966,
       "function_name": "__asan::GetShadowAddressInformation(unsigned long, __asan::ShadowAddressDescription*)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
       "module_offset": 4338966
     },
@@ -55,10 +43,6 @@
       "line": "#3 0x4245b6 in __asan::AddressDescription::AddressDescription(unsigned long, unsigned long, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)",
       "address": 4343222,
       "function_name": "__asan::AddressDescription::AddressDescription(unsigned long, unsigned long, bool)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
       "module_offset": 4343222
     },
@@ -66,10 +50,6 @@
       "line": "#4 0x4261b2 in __asan::ErrorGeneric::ErrorGeneric(unsigned int, unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)",
       "address": 4350386,
       "function_name": "__asan::ErrorGeneric::ErrorGeneric(unsigned int, unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
       "module_offset": 4350386
     },
@@ -77,10 +57,6 @@
       "line": "#5 0x498180 in __asan::ReportGenericError(unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned int, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)",
       "address": 4817280,
       "function_name": "__asan::ReportGenericError(unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned int, bool)",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
       "module_offset": 4817280
     },
@@ -88,10 +64,6 @@
       "line": "#6 0x47ef01 in strncpy (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)",
       "address": 4714241,
       "function_name": "strncpy",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
       "module_offset": 4714241
     },
@@ -102,9 +74,7 @@
       "function_offset": 3,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 21,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 21
     },
     {
       "line": "#8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12",
@@ -113,9 +83,7 @@
       "function_offset": 12,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 67,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 67
     },
     {
       "line": "#9 0x4c274d in main /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:81:12",
@@ -124,29 +92,20 @@
       "function_offset": 12,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 81,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 81
     },
     {
       "line": "#10 0x7ffff6e22bf6 in __libc_start_main /build/glibc-S7xCS9/glibc-2.27/csu/../csu/libc-start.c:310",
       "address": 140737335405558,
       "function_name": "__libc_start_main",
-      "function_offset": null,
       "source_file_name": "libc-start.c",
       "source_file_path": "/build/glibc-S7xCS9/glibc-2.27/csu/../csu/libc-start.c",
-      "source_file_line": 310,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 310
     },
     {
       "line": "#11 0x41ab39 in _start (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)",
       "address": 4303673,
       "function_name": "_start",
-      "function_offset": null,
-      "source_file_name": null,
-      "source_file_path": null,
-      "source_file_line": null,
       "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
       "module_offset": 4303673
     }
@@ -173,9 +132,7 @@
       "function_offset": 3,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 21,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 21
     },
     {
       "line": "#8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12",
@@ -184,15 +141,15 @@
       "function_offset": 12,
       "source_file_name": "fuzz.c",
       "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
-      "source_file_line": 67,
-      "module_path": null,
-      "module_offset": null
+      "source_file_line": 67
     }
   ],
   "minimized_stack": [
     "check",
     "from_file"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "check",
+    "from_file"
+  ]
 }

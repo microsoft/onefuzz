@@ -12,10 +12,9 @@
       "address": 5317347,
       "function_name": "main",
       "function_offset": 7,
-      "file_name": "/src/libfuzzer/afl/afl_driver.cpp",
-      "file_line": 287,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "afl_driver.cpp",
+      "source_file_path": "/src/libfuzzer/afl/afl_driver.cpp",
+      "source_file_line": 287
     }
   ],
   "full_stack_names": [
@@ -27,13 +26,15 @@
       "address": 5317347,
       "function_name": "main",
       "function_offset": 7,
-      "file_name": "/src/libfuzzer/afl/afl_driver.cpp",
-      "file_line": 287,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "afl_driver.cpp",
+      "source_file_path": "/src/libfuzzer/afl/afl_driver.cpp",
+      "source_file_line": 287
     }
   ],
   "minimized_stack": [
+    "main"
+  ],
+  "minimized_stack_function_names": [
     "main"
   ],
   "scariness_score": 10,

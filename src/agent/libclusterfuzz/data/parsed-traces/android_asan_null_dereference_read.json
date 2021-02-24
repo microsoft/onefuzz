@@ -14,41 +14,34 @@
       "line": "#0 0xb2011bf4 in _JavaVM::AttachCurrentThread(_JNIEnv**, void*) libnativehelper/include/nativehelper/jni.h:1060",
       "address": 2986417140,
       "function_name": "_JavaVM::AttachCurrentThread(_JNIEnv**, void*)",
-      "function_offset": null,
-      "file_name": "libnativehelper/include/nativehelper/jni.h",
-      "file_line": 1060,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "jni.h",
+      "source_file_path": "libnativehelper/include/nativehelper/jni.h",
+      "source_file_line": 1060
     },
     {
       "line": "#1 0xb2011bf4 in javaAttachThread frameworks/base/core/jni/AndroidRuntime.cpp:1131",
       "address": 2986417140,
       "function_name": "javaAttachThread",
-      "function_offset": null,
-      "file_name": "frameworks/base/core/jni/AndroidRuntime.cpp",
-      "file_line": 1131,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "AndroidRuntime.cpp",
+      "source_file_path": "frameworks/base/core/jni/AndroidRuntime.cpp",
+      "source_file_line": 1131
     },
     {
       "line": "#2 0xb2011bf4 in android::AndroidRuntime::javaThreadShell(void*) frameworks/base/core/jni/AndroidRuntime.cpp:1169",
       "address": 2986417140,
       "function_name": "android::AndroidRuntime::javaThreadShell(void*)",
-      "function_offset": null,
-      "file_name": "frameworks/base/core/jni/AndroidRuntime.cpp",
-      "file_line": 1169,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "AndroidRuntime.cpp",
+      "source_file_path": "frameworks/base/core/jni/AndroidRuntime.cpp",
+      "source_file_line": 1169
     },
     {
       "line": "#3 0xb1e188a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16",
       "address": 2984347817,
       "function_name": "thread_data_t::trampoline(thread_data_t const*)",
       "function_offset": 16,
-      "file_name": "system/core/libutils/Threads.cpp",
-      "file_line": 99,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "Threads.cpp",
+      "source_file_path": "system/core/libutils/Threads.cpp",
+      "source_file_line": 99
     }
   ],
   "full_stack_names": [
@@ -62,41 +55,34 @@
       "line": "#0 0xb2011bf4 in _JavaVM::AttachCurrentThread(_JNIEnv**, void*) libnativehelper/include/nativehelper/jni.h:1060",
       "address": 2986417140,
       "function_name": "_JavaVM::AttachCurrentThread(_JNIEnv**, void*)",
-      "function_offset": null,
-      "file_name": "libnativehelper/include/nativehelper/jni.h",
-      "file_line": 1060,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "jni.h",
+      "source_file_path": "libnativehelper/include/nativehelper/jni.h",
+      "source_file_line": 1060
     },
     {
       "line": "#1 0xb2011bf4 in javaAttachThread frameworks/base/core/jni/AndroidRuntime.cpp:1131",
       "address": 2986417140,
       "function_name": "javaAttachThread",
-      "function_offset": null,
-      "file_name": "frameworks/base/core/jni/AndroidRuntime.cpp",
-      "file_line": 1131,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "AndroidRuntime.cpp",
+      "source_file_path": "frameworks/base/core/jni/AndroidRuntime.cpp",
+      "source_file_line": 1131
     },
     {
       "line": "#2 0xb2011bf4 in android::AndroidRuntime::javaThreadShell(void*) frameworks/base/core/jni/AndroidRuntime.cpp:1169",
       "address": 2986417140,
       "function_name": "android::AndroidRuntime::javaThreadShell(void*)",
-      "function_offset": null,
-      "file_name": "frameworks/base/core/jni/AndroidRuntime.cpp",
-      "file_line": 1169,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "AndroidRuntime.cpp",
+      "source_file_path": "frameworks/base/core/jni/AndroidRuntime.cpp",
+      "source_file_line": 1169
     },
     {
       "line": "#3 0xb1e188a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16",
       "address": 2984347817,
       "function_name": "thread_data_t::trampoline(thread_data_t const*)",
       "function_offset": 16,
-      "file_name": "system/core/libutils/Threads.cpp",
-      "file_line": 99,
-      "module_path": null,
-      "module_offset": null
+      "source_file_name": "Threads.cpp",
+      "source_file_path": "system/core/libutils/Threads.cpp",
+      "source_file_line": 99
     }
   ],
   "minimized_stack": [
@@ -105,6 +91,10 @@
     "android::AndroidRuntime::javaThreadShell(void*)",
     "thread_data_t::trampoline(thread_data_t const*)"
   ],
-  "scariness_score": null,
-  "scariness_description": null
+  "minimized_stack_function_names": [
+    "_JavaVM::AttachCurrentThread",
+    "javaAttachThread",
+    "android::AndroidRuntime::javaThreadShell",
+    "thread_data_t::trampoline"
+  ]
 }
