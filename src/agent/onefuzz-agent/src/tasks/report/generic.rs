@@ -50,7 +50,7 @@ pub struct Config {
     #[serde(default = "default_bool_true")]
     pub check_queue: bool,
 
-        #[serde(default)]
+    #[serde(default)]
     pub minimized_stack_depth: Option<usize>,
 
     #[serde(flatten)]

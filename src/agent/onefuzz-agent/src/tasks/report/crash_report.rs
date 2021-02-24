@@ -36,7 +36,7 @@ pub struct CrashReport {
 
     pub call_stack: Vec<String>,
     pub call_stack_sha256: String,
-   
+
     #[serde(default)]
     pub minimized_stack: Vec<String>,
     #[serde(default)]
