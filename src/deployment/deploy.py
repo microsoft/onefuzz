@@ -65,10 +65,10 @@ from data_migration import migrate
 from registration import (
     OnefuzzAppRole,
     add_application_password,
-    set_app_audience,
     assign_scaleset_role,
     authorize_application,
     register_application,
+    set_app_audience,
     update_pool_registration,
 )
 
