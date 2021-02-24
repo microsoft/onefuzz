@@ -194,7 +194,7 @@ impl IWorkerRunner for WorkerRunner {
     async fn run(&mut self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
         let working_dir = work.working_dir()?;
 
-        verbose!("worker working dir = {}", working_dir.display());
+        debug!("worker working dir = {}", working_dir.display());
 
         fs::create_dir_all(&working_dir).await.with_context(|| {
             format!(
@@ -203,7 +203,7 @@ impl IWorkerRunner for WorkerRunner {
             )
         })?;
 
-        verbose!("created worker working dir: {}", working_dir.display());
+        debug!("created worker working dir: {}", working_dir.display());
 
         let config_path = work.config_path()?;
 
@@ -211,7 +211,7 @@ impl IWorkerRunner for WorkerRunner {
             .await
             .with_context(|| format!("unable to save task config: {}", config_path.display()))?;
 
-        verbose!(
+        debug!(
             "wrote worker config to config_path = {}",
             config_path.display()
         );
@@ -231,7 +231,7 @@ impl IWorkerRunner for WorkerRunner {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
-        let child = cmd.spawn()?;
+        let child = cmd.spawn().context("onefuzz-agent failed to start")?;
         let child = Box::new(child);
 
         Ok(child)

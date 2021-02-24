@@ -328,11 +328,11 @@ class Client:
 
         (password_id, password) = self.create_password(app.object_id)
 
-        cli_app = client.applications.list(filter="appId eq '%s'" % ONEFUZZ_CLI_APP)
+        cli_app = list(
+            client.applications.list(filter="appId eq '%s'" % ONEFUZZ_CLI_APP)
+        )
 
-        onefuzz_cli_app_uuid = uuid.UUID(ONEFUZZ_CLI_APP)
-
-        if not cli_app:
+        if len(cli_app) == 0:
             logger.info(
                 "Could not find the default CLI application under the current "
                 "subscription, creating a new one"
@@ -346,7 +346,7 @@ class Client:
             }
 
         else:
-            authorize_application(onefuzz_cli_app_uuid, app.app_id)
+            authorize_application(uuid.UUID(ONEFUZZ_CLI_APP), app.app_id)
 
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password
@@ -384,16 +384,40 @@ class Client:
                 mode=DeploymentMode.incremental, template=template, parameters=params
             )
         )
-        result = client.deployments.create_or_update(
-            self.resource_group, gen_guid(), deployment
-        ).result()
-        if result.properties.provisioning_state != "Succeeded":
-            logger.error(
-                "error deploying: %s",
-                json.dumps(result.as_dict(), indent=4, sort_keys=True),
-            )
-            sys.exit(1)
-        self.results["deploy"] = result.properties.outputs
+        count = 0
+        tries = 10
+        error: Optional[Exception] = None
+        while count < tries:
+            count += 1
+
+            try:
+                result = client.deployments.create_or_update(
+                    self.resource_group, gen_guid(), deployment
+                ).result()
+                if result.properties.provisioning_state != "Succeeded":
+                    logger.error(
+                        "error deploying: %s",
+                        json.dumps(result.as_dict(), indent=4, sort_keys=True),
+                    )
+                    sys.exit(1)
+                self.results["deploy"] = result.properties.outputs
+                return
+            except Exception as err:
+                error = err
+                as_repr = repr(err)
+                # Modeled after Azure-CLI.  See:
+                # https://github.com/Azure/azure-cli/blob/
+                #   3a2f6009cff788fde3b0170823c9129f187b2812/src/azure-cli-core/
+                #   azure/cli/core/commands/arm.py#L1086
+                if (
+                    "PrincipalNotFound" in as_repr
+                    and "does not exist in the directory" in as_repr
+                ):
+                    logging.info("application principal not available in AAD yet")
+        if error:
+            raise error
+        else:
+            raise Exception("unknown error deploying")
 
     def assign_scaleset_identity_role(self) -> None:
         if self.upgrade:

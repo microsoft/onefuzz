@@ -4,3 +4,4 @@ pytest
 isort
 vulture
 black
+bandit

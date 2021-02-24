@@ -237,12 +237,12 @@ impl Coordinator {
         let mut response = self.client.execute(request).await?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
-            verbose!("access token expired, renewing");
+            debug!("access token expired, renewing");
 
             // If we didn't succeed due to authorization, refresh our token,
             self.token = self.registration.config.credentials.access_token().await?;
 
-            verbose!("retrying request after refreshing access token");
+            debug!("retrying request after refreshing access token");
 
             // And try one more time.
             let request = self.build_request(request_type)?;
@@ -322,7 +322,7 @@ impl Coordinator {
             task_id,
         };
 
-        verbose!("checking if able to schedule task ID = {}", task_id);
+        debug!("checking if able to schedule task ID = {}", task_id);
 
         let mut url = self.registration.config.onefuzz_url.clone();
         url.set_path("/api/agents/can_schedule");

@@ -12,7 +12,7 @@ from pydantic import BaseModel, Extra, Field
 
 from .enums import OS, Architecture, NodeState, TaskState
 from .models import AutoScaleConfig, Error, JobConfig, Report, TaskConfig, UserInfo
-from .primitives import Container, Region
+from .primitives import Container, PoolName, Region
 from .responses import BaseResponse
 
 
@@ -25,6 +25,7 @@ class EventTaskStopped(BaseEvent):
     job_id: UUID
     task_id: UUID
     user_info: Optional[UserInfo]
+    config: TaskConfig
 
 
 class EventTaskFailed(BaseEvent):
@@ -32,6 +33,7 @@ class EventTaskFailed(BaseEvent):
     task_id: UUID
     error: Error
     user_info: Optional[UserInfo]
+    config: TaskConfig
 
 
 class EventJobCreated(BaseEvent):
@@ -58,6 +60,7 @@ class EventTaskStateUpdated(BaseEvent):
     task_id: UUID
     state: TaskState
     end_time: Optional[datetime]
+    config: TaskConfig
 
 
 class EventPing(BaseResponse):
@@ -66,7 +69,7 @@ class EventPing(BaseResponse):
 
 class EventScalesetCreated(BaseEvent):
     scaleset_id: UUID
-    pool_name: str
+    pool_name: PoolName
     vm_sku: str
     image: str
     region: Region
@@ -75,21 +78,21 @@ class EventScalesetCreated(BaseEvent):
 
 class EventScalesetFailed(BaseEvent):
     scaleset_id: UUID
-    pool_name: str
+    pool_name: PoolName
     error: Error
 
 
 class EventScalesetDeleted(BaseEvent):
     scaleset_id: UUID
-    pool_name: str
+    pool_name: PoolName
 
 
 class EventPoolDeleted(BaseEvent):
-    pool_name: str
+    pool_name: PoolName
 
 
 class EventPoolCreated(BaseEvent):
-    pool_name: str
+    pool_name: PoolName
     os: OS
     arch: Architecture
     managed: bool
@@ -112,19 +115,19 @@ class EventProxyFailed(BaseEvent):
 class EventNodeCreated(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
-    pool_name: str
+    pool_name: PoolName
 
 
 class EventNodeDeleted(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
-    pool_name: str
+    pool_name: PoolName
 
 
 class EventNodeStateUpdated(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
-    pool_name: str
+    pool_name: PoolName
     state: NodeState
 
 
@@ -223,3 +226,5 @@ class EventMessage(BaseEvent):
     event_id: UUID = Field(default_factory=uuid4)
     event_type: EventType
     event: Event
+    instance_id: UUID
+    instance_name: str

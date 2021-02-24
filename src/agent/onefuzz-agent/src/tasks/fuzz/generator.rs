@@ -6,7 +6,7 @@ use crate::tasks::{
     heartbeat::*,
     utils::{self, default_bool_true},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use onefuzz::{
     expand::Expand,
@@ -15,8 +15,8 @@ use onefuzz::{
     process::monitor_process,
     sha256,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
-    telemetry::Event::new_result,
 };
+use onefuzz_telemetry::Event::new_result;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::{
@@ -96,12 +96,13 @@ impl GeneratorTask {
             &self.config.target_exe,
             &self.config.target_options,
             &self.config.target_env,
-            &self.config.target_timeout,
-            self.config.check_asan_log,
-            false,
-            self.config.check_debugger,
-            self.config.check_retry_count,
-        );
+        )
+        .check_asan_log(self.config.check_asan_log)
+        .check_debugger(self.config.check_debugger)
+        .check_retry_count(self.config.check_retry_count)
+        .set_optional(self.config.target_timeout, |tester, timeout| {
+            tester.timeout(timeout)
+        });
 
         loop {
             for corpus_dir in &self.config.readonly_inputs {
@@ -126,7 +127,7 @@ impl GeneratorTask {
         while let Some(file) = read_dir.next().await {
             let file = file?;
 
-            verbose!("testing input: {:?}", file);
+            debug!("testing input: {:?}", file);
 
             let destination_file = if self.config.rename_output {
                 let hash = sha256::digest_file(file.path()).await?;
@@ -138,7 +139,7 @@ impl GeneratorTask {
             let destination_file = self.config.crashes.path.join(destination_file);
             if tester.is_crash(file.path()).await? {
                 fs::rename(file.path(), &destination_file).await?;
-                verbose!("crash found {}", destination_file.display());
+                debug!("crash found {}", destination_file.display());
             }
         }
         Ok(())
@@ -150,17 +151,17 @@ impl GeneratorTask {
         output_dir: impl AsRef<Path>,
     ) -> Result<()> {
         utils::reset_tmp_dir(&output_dir).await?;
-        let mut generator = {
-            let mut expand = Expand::new();
-            expand
+        let (mut generator, generator_path) = {
+            let expand = Expand::new()
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
                 .generator_exe(&self.config.generator_exe)
-                .generator_options(&self.config.generator_options);
-
-            if let Some(tools) = &self.config.tools {
-                expand.tools_dir(&tools.path);
-            }
+                .generator_options(&self.config.generator_options)
+                .job_id(&self.config.common.job_id)
+                .task_id(&self.config.common.task_id)
+                .set_optional_ref(&self.config.tools, |expand, tools| {
+                    expand.tools_dir(&tools.path)
+                });
 
             let generator_path = expand.evaluate_value(&self.config.generator_exe)?;
 
@@ -179,11 +180,13 @@ impl GeneratorTask {
             for (k, v) in &self.config.generator_env {
                 generator.env(k, expand.evaluate_value(v)?);
             }
-            generator
+            (generator, generator_path)
         };
 
         info!("Generating test cases with {:?}", generator);
-        let output = generator.spawn()?;
+        let output = generator
+            .spawn()
+            .with_context(|| format!("generator failed to start: {}", generator_path))?;
         monitor_process(output, "generator".to_string(), true, None).await?;
 
         Ok(())

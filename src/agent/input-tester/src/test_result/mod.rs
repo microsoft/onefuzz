@@ -343,17 +343,11 @@ impl ExitStatus {
     }
 
     pub fn is_normal_exit(&self) -> bool {
-        match self {
-            ExitStatus::Code(_) => true,
-            _ => false,
-        }
+        matches!(self, ExitStatus::Code(_))
     }
 
     pub fn is_timeout(&self) -> bool {
-        match self {
-            ExitStatus::Timeout(_) => true,
-            _ => false,
-        }
+        matches!(self, ExitStatus::Timeout(_))
     }
 }
 

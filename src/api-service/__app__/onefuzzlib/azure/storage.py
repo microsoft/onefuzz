@@ -9,12 +9,11 @@ import random
 from enum import Enum
 from typing import List, Tuple, cast
 
-from azure.identity import DefaultAzureCredential
 from azure.mgmt.storage import StorageManagementClient
 from memoization import cached
 from msrestazure.tools import parse_resource_id
 
-from .creds import get_base_resource_group, get_subscription
+from .creds import get_base_resource_group, get_identity, get_subscription
 
 
 class StorageType(Enum):
@@ -25,7 +24,7 @@ class StorageType(Enum):
 @cached
 def get_mgmt_client() -> StorageManagementClient:
     return StorageManagementClient(
-        credential=DefaultAzureCredential(), subscription_id=get_subscription()
+        credential=get_identity(), subscription_id=get_subscription()
     )
 
 
@@ -86,7 +85,9 @@ def choose_account(storage_type: StorageType) -> str:
     # Use a random secondary storage account if any are available.  This
     # reduces IOP contention for the Storage Queues, which are only available
     # on primary accounts
-    return random.choice(accounts[1:])
+    #
+    # security note: this is not used as a security feature
+    return random.choice(accounts[1:])  # nosec
 
 
 @cached
@@ -115,5 +116,5 @@ def corpus_accounts() -> List[str]:
 
         results.append(account.id)
 
-    logging.info("corpus accounts: %s", corpus_accounts)
+    logging.info("corpus accounts: %s", results)
     return results

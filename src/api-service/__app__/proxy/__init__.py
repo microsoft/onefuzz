@@ -13,10 +13,10 @@ from onefuzztypes.responses import BoolResult, ProxyGetResult
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.events import get_events
-from ..onefuzzlib.pools import Scaleset
 from ..onefuzzlib.proxy import Proxy
 from ..onefuzzlib.proxy_forward import ProxyForward
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.scalesets import Scaleset
 
 
 def get_result(proxy_forward: ProxyForward, proxy: Optional[Proxy]) -> ProxyGetResult:

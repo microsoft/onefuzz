@@ -10,10 +10,10 @@ use onefuzz::{
     process::ExitStatus,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     system,
-    telemetry::{
-        Event::{new_coverage, new_result, process_stats, runtime_stats},
-        EventData,
-    },
+};
+use onefuzz_telemetry::{
+    Event::{new_coverage, new_result, process_stats, runtime_stats},
+    EventData,
 };
 use serde::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
@@ -80,6 +80,11 @@ impl LibFuzzerFuzzTask {
         }
     }
 
+    pub async fn managed_run(&self) -> Result<()> {
+        self.check_libfuzzer().await?;
+        self.run().await
+    }
+
     pub async fn run(&self) -> Result<()> {
         self.init_directories().await?;
 
@@ -95,6 +100,19 @@ impl LibFuzzerFuzzTask {
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
         futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
+        Ok(())
+    }
+
+    pub async fn check_libfuzzer(&self) -> Result<()> {
+        if self.config.check_fuzzer_help {
+            let fuzzer = LibFuzzer::new(
+                &self.config.target_exe,
+                &self.config.target_options,
+                &self.config.target_env,
+                &self.config.common.setup_dir,
+            );
+            fuzzer.check_help().await?;
+        }
         Ok(())
     }
 
@@ -150,7 +168,7 @@ impl LibFuzzerFuzzTask {
         let crash_dir = tempdir()?;
         let run_id = Uuid::new_v4();
 
-        verbose!("starting fuzzer run, run_id = {}", run_id);
+        debug!("starting fuzzer run, run_id = {}", run_id);
 
         let mut inputs = vec![&self.config.inputs.path];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {

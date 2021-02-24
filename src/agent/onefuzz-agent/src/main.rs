@@ -3,12 +3,11 @@
 
 #[macro_use]
 extern crate anyhow;
-
-#[macro_use]
-extern crate onefuzz;
-
 #[macro_use]
 extern crate clap;
+#[macro_use]
+extern crate onefuzz_telemetry;
+extern crate onefuzz;
 
 use anyhow::Result;
 use clap::{App, ArgMatches, SubCommand};
@@ -49,10 +48,10 @@ fn main() -> Result<()> {
 
 async fn run(args: ArgMatches<'_>) -> Result<()> {
     match args.subcommand() {
-        (LICENSE_CMD, Some(_)) => return licenses(),
-        (DEBUG_CMD, Some(sub)) => return debug::cmd::run(sub).await,
-        (LOCAL_CMD, Some(sub)) => return local::cmd::run(sub).await,
-        (MANAGED_CMD, Some(sub)) => return managed::cmd::run(sub).await,
+        (LICENSE_CMD, Some(_)) => licenses(),
+        (DEBUG_CMD, Some(sub)) => debug::cmd::run(sub).await,
+        (LOCAL_CMD, Some(sub)) => local::cmd::run(sub).await,
+        (MANAGED_CMD, Some(sub)) => managed::cmd::run(sub).await,
         _ => {
             anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
         }

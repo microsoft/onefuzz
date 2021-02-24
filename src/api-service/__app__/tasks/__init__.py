@@ -12,12 +12,12 @@ from onefuzztypes.responses import BoolResult
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.jobs import Job
-from ..onefuzzlib.pools import NodeTasks
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.task_event import TaskEvent
 from ..onefuzzlib.tasks.config import TaskConfigError, check_config
 from ..onefuzzlib.tasks.main import Task
 from ..onefuzzlib.user_credentials import parse_jwt_token
+from ..onefuzzlib.workers.nodes import NodeTasks
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:

@@ -8,7 +8,7 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.mgmt.compute.models import (
     ResourceSku,
     ResourceSkuRestrictionsType,
@@ -46,16 +46,17 @@ def list_vmss(name: UUID) -> Optional[List[str]]:
 def delete_vmss(name: UUID) -> bool:
     resource_group = get_base_resource_group()
     compute_client = get_compute_client()
-    try:
-        compute_client.virtual_machine_scale_sets.begin_delete(
-            resource_group, str(name)
-        )
-    except ResourceNotFoundError:
-        return True
-    except CloudError as err:
-        logging.error("cloud error deleting vmss: %s (%s)", name, err)
+    response = compute_client.virtual_machine_scale_sets.begin_delete(
+        resource_group, str(name)
+    )
 
-    return False
+    # https://docs.microsoft.com/en-us/python/api/azure-core/
+    #   azure.core.polling.lropoller?view=azure-python#status--
+    #
+    # status returns a str, however mypy thinks this is an Any.
+    #
+    # Checked by hand that the result is Succeeded in practice
+    return bool(response.status() == "Succeeded")
 
 
 def get_vmss(name: UUID) -> Optional[Any]:
@@ -64,7 +65,7 @@ def get_vmss(name: UUID) -> Optional[Any]:
     compute_client = get_compute_client()
     try:
         return compute_client.virtual_machine_scale_sets.get(resource_group, str(name))
-    except (ResourceNotFoundError, CloudError) as err:
+    except ResourceNotFoundError as err:
         logging.debug("vm does not exist %s", err)
 
     return None
@@ -132,7 +133,7 @@ def check_can_update(name: UUID) -> Any:
     if vmss is None:
         raise UnableToUpdate
 
-    if vmss.provisioning_state != "Succeeded":
+    if vmss.provisioning_state == "Updating":
         raise UnableToUpdate
 
     return vmss
@@ -320,6 +321,12 @@ def create_vmss(
         compute_client.virtual_machine_scale_sets.begin_create_or_update(
             resource_group, name, params
         )
+    except ResourceExistsError as err:
+        if "SkuNotAvailable" in repr(err):
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED, errors=["creating vmss: %s" % err]
+            )
+        raise err
     except (ResourceNotFoundError, CloudError) as err:
         if "The request failed due to conflict with a concurrent request" in repr(err):
             logging.debug(

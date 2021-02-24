@@ -5,6 +5,7 @@
 
 import inspect
 import json
+import logging
 from datetime import datetime
 from enum import Enum
 from typing import (
@@ -39,8 +40,8 @@ from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
 from typing_extensions import Protocol
 
-from ..onefuzzlib.secrets import save_to_keyvault
 from .azure.table import get_client
+from .secrets import save_to_keyvault
 from .telemetry import track_event_filtered
 from .updates import queue_update
 
@@ -85,6 +86,11 @@ def process_state_update(obj: HasState) -> None:
     func = getattr(obj, obj.state.name, None)
     if func is None:
         return
+
+    get_keys = getattr(obj, "get_keys", None)
+    if get_keys is not None:
+        logging.info("processing state update: %s - %s", get_keys(), obj.state.name)
+
     func()
 
 

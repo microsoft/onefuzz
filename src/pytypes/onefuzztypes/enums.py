@@ -57,6 +57,7 @@ class TaskFeature(Enum):
     stats_file = "stats_file"
     stats_format = "stats_format"
     target_exe = "target_exe"
+    target_exe_optional = "target_exe_optional"
     target_env = "target_env"
     target_options = "target_options"
     analyzer_exe = "analyzer_exe"
@@ -106,6 +107,10 @@ class JobState(Enum):
         set of states that indicate work is needed during eventing
         """
         return [cls.init, cls.stopping]
+
+    @classmethod
+    def shutting_down(cls) -> List["JobState"]:
+        return [cls.stopping, cls.stopped]
 
 
 class TaskState(Enum):

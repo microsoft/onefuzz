@@ -1,0 +1,14 @@
+[package]
+name = "onefuzz-telemetry"
+version = "0.1.0"
+authors = ["fuzzing@microsoft.com"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+appinsights = "0.1"
+log = "0.4"
+uuid = { version = "0.8", features = ["serde", "v4"] }
+
+[dev-dependencies]
+tokio = { version = "0.2" }
