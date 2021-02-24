@@ -293,6 +293,7 @@ class Client:
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
+                sign_in_audience="AzureADMultipleOrgs",
                 identifier_uris=[url],
                 reply_urls=[url + "/.auth/login/aad/callback"],
                 optional_claims=OptionalClaims(id_token=[], access_token=[]),
@@ -308,11 +309,6 @@ class Client:
             )
 
             app = client.applications.create(params)
-
-            if self.multi_tenant_domain:
-                # signInAudience must be set using Microsoft Graph REST API and not Azure AD due to issue:
-                # https://github.com/Azure/azure-cli/issues/14086 requires Microsoft Graph REST API v1.0
-                set_app_audience(app.object_id, "AzureADMultipleOrgs")
 
             logger.info("creating service principal")
             service_principal_params = ServicePrincipalCreateParameters(
@@ -344,26 +340,26 @@ class Client:
                     app.object_id, ApplicationUpdateParameters(app_roles=app_roles)
                 )
 
-            if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
-                url = "https://%s/%s" % (
-                    self.multi_tenant_domain,
-                    self.application_name,
-                )
-                client.applications.patch(
-                    app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
-                )
-                set_app_audience(app.object_id, "AzureADMultipleOrgs")
-            elif (
-                not self.multi_tenant_domain
-                and app.sign_in_audience == "AzureADMultipleOrgs"
-            ):
-                set_app_audience(app.object_id, "AzureADMyOrg")
-                url = "https://%s.azurewebsites.net" % self.application_name
-                client.applications.patch(
-                    app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
-                )
-            else:
-                logger.debug("No change to App Registration signInAudence setting")
+        if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
+            url = "https://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+            client.applications.patch(
+                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+            )
+            set_app_audience(app.object_id, "AzureADMultipleOrgs")
+        elif (
+            not self.multi_tenant_domain
+            and app.sign_in_audience == "AzureADMultipleOrgs"
+        ):
+            set_app_audience(app.object_id, "AzureADMyOrg")
+            url = "https://%s.azurewebsites.net" % self.application_name
+            client.applications.patch(
+                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+            )
+        else:
+            logger.debug("No change to App Registration signInAudence setting")
 
             creds = list(client.applications.list_password_credentials(app.object_id))
             client.applications.update_password_credentials(app.object_id, creds)
