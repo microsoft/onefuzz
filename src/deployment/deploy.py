@@ -293,7 +293,6 @@ class Client:
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
-                sign_in_audience="AzureADMultipleOrgs",
                 identifier_uris=[url],
                 reply_urls=[url + "/.auth/login/aad/callback"],
                 optional_claims=OptionalClaims(id_token=[], access_token=[]),
