@@ -53,7 +53,9 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .or(captures.name("file_path_2"))
                     .map(|x| x.as_str().to_string());
 
-                let source_file_name = source_file_path.as_ref().map(|x| get_call_stack_file_name(x));
+                let source_file_name = source_file_path
+                    .as_ref()
+                    .map(|x| get_call_stack_file_name(x));
 
                 let source_file_line = match captures
                     .name("file_line_1")
