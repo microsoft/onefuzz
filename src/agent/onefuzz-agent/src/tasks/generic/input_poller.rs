@@ -27,6 +27,23 @@ pub enum State<M> {
     Processed(M),
 }
 
+impl<M: PartialEq> PartialEq for State<M> {
+    fn eq(&self, other: &State<M>) -> bool {
+        use State::*;
+
+        match (self, other) {
+            (Ready, Ready) => true,
+            (Polled(l), Polled(r)) => l == r,
+            (Parsed(l0, l1), Parsed(r0, r1)) => l0 == r0 && l1 == r1,
+            (Downloaded(l0, l1, l2, l3), Downloaded(r0, r1, r2, r3)) => {
+                l0 == r0 && l1 == r1 && l2 == r2 && l3.path() == r3.path()
+            }
+            (Processed(l), Processed(r)) => l == r,
+            _ => false,
+        }
+    }
+}
+
 impl<M> fmt::Display for State<M> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
