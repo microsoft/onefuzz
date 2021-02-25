@@ -15,7 +15,7 @@ pub enum BlobUrl {
 
 impl BlobUrl {
     pub fn new(url: Url) -> Result<Self> {
-        if let Some(path) = url.to_file_path().ok() {
+        if let Ok(path) = url.to_file_path() {
             Ok(Self::LocalFile(path))
         } else if possible_blob_storage_url(&url, false) {
             Ok(Self::AzureBlob(url))
