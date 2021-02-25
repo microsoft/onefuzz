@@ -148,8 +148,8 @@ def build_filters(
             for x in values:
                 if not isinstance(x, bool):
                     raise TypeError("unexpected type")
-                parts.append("%s eq %s" % (field_name, str(x).lower))
-        if isinstance(values[0], int):
+                parts.append("%s eq %s" % (field_name, str(x).lower()))
+        elif isinstance(values[0], int):
             parts = []
             for x in values:
                 if not isinstance(x, int):
