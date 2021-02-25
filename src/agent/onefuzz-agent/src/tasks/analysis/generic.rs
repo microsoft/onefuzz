@@ -129,9 +129,7 @@ async fn _copy(input_url: BlobUrl, destination_folder: &OwnedDir) -> Result<Path
         BlobUrl::AzureBlob(input_url) => {
             az_copy::copy(input_url.as_ref(), destination_path.clone(), false).await?
         }
-        BlobUrl::LocalFile(input_url) => {
-            copy(input_url.as_ref(), destination_path.clone(), false).await?
-        }
+        BlobUrl::LocalFile(path) => copy(path, destination_path.clone(), false).await?,
     }
     Ok(destination_path)
 }

@@ -10,13 +10,13 @@ use serde::{de, Serialize, Serializer};
 #[derive(Clone, Eq, PartialEq)]
 pub enum BlobUrl {
     AzureBlob(Url),
-    LocalFile(Url),
+    LocalFile(PathBuf),
 }
 
 impl BlobUrl {
     pub fn new(url: Url) -> Result<Self> {
-        if url.scheme().to_lowercase() == "file" {
-            Ok(Self::LocalFile(url))
+        if let Some(path) = url.to_file_path().ok() {
+            Ok(Self::LocalFile(path))
         } else if possible_blob_storage_url(&url, false) {
             Ok(Self::AzureBlob(url))
         } else {
@@ -30,9 +30,12 @@ impl BlobUrl {
         Self::new(url)
     }
 
-    pub fn url(&self) -> &Url {
+    pub fn url(&self) -> Url {
         match self {
-            Self::LocalFile(url) | Self::AzureBlob(url) => url,
+            Self::LocalFile(path) => {
+                Url::from_file_path(path).expect("Could not convert path to url")
+            }
+            Self::AzureBlob(url) => url.clone(),
         }
     }
 
@@ -73,7 +76,7 @@ impl BlobUrl {
 
 impl fmt::Debug for BlobUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", redact_query_sas_sig(self.url()))
+        write!(f, "{}", redact_query_sas_sig(&self.url()))
     }
 }
 
@@ -87,7 +90,7 @@ impl fmt::Display for BlobUrl {
                 self.container().unwrap_or_default(),
                 self.name()
             ),
-            Self::LocalFile(url) => write!(f, "{}", url),
+            Self::LocalFile(path) => write!(f, "{}", path.display()),
         }
     }
 }

@@ -179,16 +179,13 @@ pub async fn _sync(
     delete_dst: bool,
     recursive: bool,
 ) -> Result<()> {
-    //Robocopy C:\UserFolder C:\FolderBackup /e
     // rsync -zvh
-
-    let args = if recursive { "-zhr" } else { "-zh" };
 
     let mut cmd = Command::new("rsync");
     cmd.kill_on_drop(true)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .arg("-zh");
+        .arg(if recursive { "-zhr" } else { "-zh" });
 
     if delete_dst {
         cmd.arg("--delete");
