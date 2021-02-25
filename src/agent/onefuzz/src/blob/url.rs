@@ -15,13 +15,14 @@ pub enum BlobUrl {
 
 impl BlobUrl {
     pub fn new(url: Url) -> Result<Self> {
-        if let Ok(path) = url.to_file_path() {
-            Ok(Self::LocalFile(path))
-        } else if possible_blob_storage_url(&url, false) {
-            Ok(Self::AzureBlob(url))
-        } else {
-            bail!("Invalid blob URL: {}", url)
+        if possible_blob_storage_url(&url, false) {
+            if let Ok(path) = url.to_file_path() {
+                return Ok(Self::LocalFile(path));
+            } else {
+                return Ok(Self::AzureBlob(url));
+            }
         }
+        bail!("Invalid blob URL: {}", url)
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
@@ -391,6 +392,7 @@ mod tests {
     #[test]
     fn test_blob_url() {
         for url in invalid_blob_urls() {
+            println!("{:?}", url);
             assert!(BlobUrl::new(url).is_err());
         }
 
