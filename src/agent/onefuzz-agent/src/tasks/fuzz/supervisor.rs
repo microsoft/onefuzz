@@ -314,7 +314,17 @@ mod tests {
             supervisor_input_marker,
             target_exe,
             target_options,
-            ..Default::default()
+            inputs: corpus_dir.clone(),
+            crashes: crashes.clone(),
+            tools: None,
+            wait_for_files: None,
+            stats_file: None,
+            stats_format: None,
+            ensemble_sync_delay: None,
+            reports: None,
+            unique_reports: None,
+            no_repro: None,
+            common: CommonConfig::default()
         };
 
         let process = start_supervisor(runtime_dir, &config, &crashes, &corpus_dir, reports_dir)
