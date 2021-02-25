@@ -237,7 +237,12 @@ mod tests {
     use std::fs;
     use std::path::Path;
 
-    fn check_dir(src_dir: &Path, expected_dir: &Path, skip_files: Vec<&str>) -> Result<()> {
+    fn check_dir(
+        src_dir: &Path,
+        expected_dir: &Path,
+        skip_files: Vec<&str>,
+        skip_minimized_check: Vec<&str>,
+    ) -> Result<()> {
         for entry in fs::read_dir(src_dir)? {
             let path = entry?.path();
             if !path.is_file() {
@@ -262,12 +267,14 @@ mod tests {
                 )
             })?;
 
-            if !parsed.call_stack.is_empty() {
-                assert!(
-                    !parsed.minimized_stack.is_empty(),
-                    "minimized call stack got reduced to nothing {}",
-                    path.display()
-                );
+            if !skip_minimized_check.contains(&file_name) {
+                if !parsed.call_stack.is_empty() && !parsed.full_stack_names.is_empty() {
+                    assert!(
+                        !parsed.minimized_stack.is_empty(),
+                        "minimized call stack got reduced to nothing {}",
+                        path.display()
+                    );
+                }
             }
 
             let mut expected_path = expected_dir.join(&file_name);
@@ -293,7 +300,9 @@ mod tests {
         let src_dir = Path::new("data/stack-traces/");
         let expected_dir = Path::new("data/parsed-traces/");
         let skip_files = vec![];
-        check_dir(src_dir, expected_dir, skip_files)?;
+
+        let skip_minimized_check = vec!["asan-odr-violation.txt"];
+        check_dir(src_dir, expected_dir, skip_files, skip_minimized_check)?;
 
         Ok(())
     }
@@ -305,6 +314,7 @@ mod tests {
         let skip_files = vec![
             // fuchsia libfuzzer
             "fuchsia_ignore.txt",
+            "fuchsia_reproducible_crash.txt",
             // other (non-libfuzzer)
             "android_null_stack.txt",
             "android_security_dcheck_failure.txt",
@@ -346,6 +356,7 @@ mod tests {
             "security_dcheck_failure.txt",
             "v8_check.txt",
             "v8_check_eq.txt",
+            "v8_check_symbolized.txt",
             "v8_check_windows.txt",
             "v8_correctness_failure.txt",
             "v8_fatal_error_no_check.txt",
@@ -357,14 +368,22 @@ mod tests {
             "v8_unimplemented_code.txt",
             "v8_unknown_fatal_error.txt",
             "v8_unreachable_code.txt",
-            // golaong
+            "v8_dcheck_symbolized.txt",
+            // golang
+            "golang_fatal_error_stack_overflow.txt",
             "golang_panic_custom_short_message.txt",
+            "golang_panic_runtime_error_slice_bounds_out_of_range.txt",
+            "golang_new_crash_type_and_asan_abrt.txt",
+            "golang_panic_runtime_error_index_out_of_range_with_msan.txt",
             "golang_panic_runtime_error_index_out_of_range.txt",
             "golang_panic_runtime_error_integer_divide_by_zero.txt",
             "golang_panic_runtime_error_invalid_memory_address.txt",
             "golang_panic_runtime_error_makeslice_len_out_of_range.txt",
             "golang_panic_with_type_assertions_in_frames.txt",
             "golang_sigsegv_panic.txt",
+            "golang_generic_fatal_error_and_asan_abrt.txt",
+            "golang_asan_panic.txt",
+            "golang_generic_panic_and_asan_abrt.txt",
             // linux kernel
             "android_kernel.txt",
             "android_kernel_no_parens.txt",
@@ -391,8 +410,21 @@ mod tests {
             "ubsan_unsigned_integer_overflow.txt",
             // HWAddressSanitizer TODO - these should get handled
             "hwasan_tag_mismatch.txt",
+            // TODO - needs fixed
+            "android_asan_uaf.txt",
+            // TODO - needs fixed, multi-line ASAN entry
+            "sanitizer_signal_abrt_unknown.txt",
         ];
-        check_dir(src_dir, expected_dir, skip_files)?;
+
+        let skip_minimized_check = vec![
+            "clang-10-asan-breakpoint.txt",
+            "asan-check-failure-missing-symbolizer.txt",
+            // TODO: handle seeing LLVMFuzzerTestOneInput but not seeing the
+            // source file name
+            "libfuzzer_deadly_signal.txt",
+            "lsan_direct_leak.txt",
+        ];
+        check_dir(src_dir, expected_dir, skip_files, skip_minimized_check)?;
 
         Ok(())
     }

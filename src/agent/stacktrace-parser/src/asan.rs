@@ -11,8 +11,6 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
 
     let base = r"\s*#(?P<frame>\d+)\s+0x(?P<address>[0-9a-fA-F]+)\s";
     let entries = &[
-        // "in libc.so.6"
-        r"in (?P<module_path_3>[a-z0-9.]+)$",
         // "module::func(char *args) (/path/to/bin+0x123)"
         r"in (?P<func_1>.*) \((?P<module_path_1>[^+]+)\+0x(?P<module_offset_1>[0-9a-fA-F]+)\)",
         // "in foo /path:16:17"
@@ -20,7 +18,11 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
         // "in foo /path:16"
         r"in (?P<func_3>.*) (?P<file_path_2>[^ ]+):(?P<file_line_2>\d+)",
         // "  (/path/to/bin+0x123)"
-        r" \((?P<module_path_2>[^+]+)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)",
+        r" \((?P<module_path_2>.*)\+0x(?P<module_offset_2>[0-9a-fA-F]+)\)$",
+        // "in libc.so.6"
+        r"in (?P<module_path_3>[a-z0-9.]+)$",
+        // "in _objc_terminate()"
+        r"in (?P<func_4>.*)",
     ];
 
     let asan_re = format!("^{}(?:{})$", base, entries.join("|"));
@@ -48,6 +50,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     .name("func_1")
                     .or(captures.name("func_2"))
                     .or(captures.name("func_3"))
+                    .or(captures.name("func_4"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_path = captures
@@ -240,6 +243,16 @@ mod tests {
                     ..Default::default()
                 }],
             ),
+            (
+                r"#10 0x55  (/usr/lib/libc++abi.dylib:x86_64+0x10)",
+                vec![StackEntry {
+                    line: r"#10 0x55  (/usr/lib/libc++abi.dylib:x86_64+0x10)".to_string(),
+                    address: Some(0x55),
+                    module_path: Some("/usr/lib/libc++abi.dylib:x86_64".to_string()),
+                    module_offset: Some(0x10),
+                    ..Default::default()
+                }],
+            )
         ];
 
         for (data, expected) in test_cases {
