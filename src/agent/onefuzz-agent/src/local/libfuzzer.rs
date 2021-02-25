@@ -3,24 +3,30 @@
 
 use crate::{
     local::{
-        common::{DirectoryMonitorQueue, COVERAGE_DIR},
+        common::{build_common_config, DirectoryMonitorQueue, COVERAGE_DIR},
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
         libfuzzer_crash_report::{build_report_config, build_shared_args as build_crash_args},
         libfuzzer_fuzz::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
     tasks::{
-        coverage::libfuzzer_coverage::CoverageTask, fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask,
-        report::libfuzzer_report::ReportTask,
+        config::CommonConfig, coverage::libfuzzer_coverage::CoverageTask,
+        fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask, report::libfuzzer_report::ReportTask,
     },
 };
 use anyhow::Result;
 use clap::{App, SubCommand};
 use std::collections::HashSet;
 use tokio::task::spawn;
+use uuid::Uuid;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let fuzz_config = build_fuzz_config(args)?;
-    let crash_dir = fuzz_config.crashes.path.clone();
+    let common = build_common_config(args)?;
+    let fuzz_config = build_fuzz_config(args, common.clone())?;
+    let crash_dir = fuzz_config
+        .crashes
+        .url
+        .as_file_path()
+        .expect("invalid crash dir remote location");
 
     let fuzzer = LibFuzzerFuzzTask::new(fuzz_config)?;
     fuzzer.check_libfuzzer().await?;
@@ -28,14 +34,29 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     let crash_report_input_monitor =
         DirectoryMonitorQueue::start_monitoring(crash_dir.clone()).await?;
-    let report_config = build_report_config(args, Some(crash_report_input_monitor.queue_url))?;
+
+    let report_config = build_report_config(
+        args,
+        Some(crash_report_input_monitor.queue_url),
+        CommonConfig {
+            task_id: Uuid::new_v4(),
+            ..common.clone()
+        },
+    )?;
     let mut report = ReportTask::new(report_config);
     let report_task = spawn(async move { report.managed_run().await });
 
     if args.is_present(COVERAGE_DIR) {
         let coverage_input_monitor = DirectoryMonitorQueue::start_monitoring(crash_dir).await?;
-        let coverage_config =
-            build_coverage_config(args, true, Some(coverage_input_monitor.queue_url))?;
+        let coverage_config = build_coverage_config(
+            args,
+            true,
+            Some(coverage_input_monitor.queue_url),
+            CommonConfig {
+                task_id: Uuid::new_v4(),
+                ..common
+            },
+        )?;
         let mut coverage = CoverageTask::new(coverage_config);
         let coverage_task = spawn(async move { coverage.managed_run().await });
 

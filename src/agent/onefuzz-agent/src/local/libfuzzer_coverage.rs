@@ -7,7 +7,10 @@ use crate::{
         get_synced_dirs, CmdType, CHECK_FUZZER_HELP, COVERAGE_DIR, INPUTS_DIR, READONLY_INPUTS,
         TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
     },
-    tasks::coverage::libfuzzer_coverage::{Config, CoverageTask},
+    tasks::{
+        config::CommonConfig,
+        coverage::libfuzzer_coverage::{Config, CoverageTask},
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
@@ -17,19 +20,24 @@ pub fn build_coverage_config(
     args: &clap::ArgMatches<'_>,
     local_job: bool,
     input_queue: Option<Url>,
+    common: CommonConfig,
 ) -> Result<Config> {
-    let common = build_common_config(args)?;
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
 
     let readonly_inputs = if local_job {
-        vec![get_synced_dir(INPUTS_DIR, common.task_id, args)?]
+        vec![get_synced_dir(
+            INPUTS_DIR,
+            common.job_id,
+            common.task_id,
+            args,
+        )?]
     } else {
-        get_synced_dirs(READONLY_INPUTS, common.task_id, args)?
+        get_synced_dirs(READONLY_INPUTS, common.job_id, common.task_id, args)?
     };
 
-    let coverage = get_synced_dir(COVERAGE_DIR, common.task_id, args)?;
+    let coverage = get_synced_dir(COVERAGE_DIR, common.job_id, common.task_id, args)?;
     let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
 
     let config = Config {
@@ -47,7 +55,8 @@ pub fn build_coverage_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_coverage_config(args, false, None)?;
+    let common = build_common_config(args)?;
+    let config = build_coverage_config(args, false, None, common)?;
 
     let mut task = CoverageTask::new(config);
     task.managed_run().await

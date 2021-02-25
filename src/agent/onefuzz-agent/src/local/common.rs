@@ -121,14 +121,17 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
 }
 
 fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
-    match value_t!(args, name, String) {
-        Ok(x) => Uuid::parse_str(&x)
-            .map_err(|x| format_err!("invalid {}.  uuid expected.  {})", name, x)),
-        Err(_) => Ok(Uuid::nil()),
-    }
+    value_t!(args, name, String).map(|x| {
+        Uuid::parse_str(&x).map_err(|x| format_err!("invalid {}.  uuid expected.  {})", name, x))
+    })?
 }
 
-pub fn get_synced_dirs(name: &str, task_id: Uuid, args: &ArgMatches<'_>) -> Result<Vec<SyncedDir>> {
+pub fn get_synced_dirs(
+    name: &str,
+    job_id: Uuid,
+    task_id: Uuid,
+    args: &ArgMatches<'_>,
+) -> Result<Vec<SyncedDir>> {
     let current_dir = std::env::current_dir()?;
     let dirs = value_t!(args, name, PathBuf)?
         .iter()
@@ -136,7 +139,7 @@ pub fn get_synced_dirs(name: &str, task_id: Uuid, args: &ArgMatches<'_>) -> Resu
         .map(|(index, remote_path)| {
             let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
             let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
-            let path = current_dir.join(format!("{}/{}_{}", task_id, name, index));
+            let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
             SyncedDir {
                 url: remote_blob_url,
                 path,
@@ -146,11 +149,16 @@ pub fn get_synced_dirs(name: &str, task_id: Uuid, args: &ArgMatches<'_>) -> Resu
     Ok(dirs)
 }
 
-pub fn get_synced_dir(name: &str, task_id: Uuid, args: &ArgMatches<'_>) -> Result<SyncedDir> {
+pub fn get_synced_dir(
+    name: &str,
+    job_id: Uuid,
+    task_id: Uuid,
+    args: &ArgMatches<'_>,
+) -> Result<SyncedDir> {
     let remote_path = value_t!(args, name, PathBuf)?;
     let remote_url = Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
     let remote_blob_url = BlobContainerUrl::new(remote_url)?;
-    let path = std::env::current_dir()?.join(format!("{}/{}", task_id, name));
+    let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
     Ok(SyncedDir {
         url: remote_blob_url,
         path,
@@ -158,9 +166,9 @@ pub fn get_synced_dir(name: &str, task_id: Uuid, args: &ArgMatches<'_>) -> Resul
 }
 
 pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
-    let job_id = get_uuid("job_id", args)?;
-    let task_id = get_uuid("task_id", args)?;
-    let instance_id = get_uuid("instance_id", args)?;
+    let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
+    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| Uuid::new_v4());
+    let instance_id = get_uuid("instance_id", args).unwrap_or_else(|_| Uuid::nil());
 
     let setup_dir = if args.is_present(SETUP_DIR) {
         value_t!(args, SETUP_DIR, PathBuf)?

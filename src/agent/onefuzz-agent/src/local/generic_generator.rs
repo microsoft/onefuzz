@@ -8,14 +8,16 @@ use crate::{
         GENERATOR_EXE, GENERATOR_OPTIONS, READONLY_INPUTS, RENAME_OUTPUT, TARGET_ENV, TARGET_EXE,
         TARGET_OPTIONS, TARGET_TIMEOUT, TOOLS_DIR,
     },
-    tasks::fuzz::generator::{Config, GeneratorTask},
+    tasks::{
+        config::CommonConfig,
+        fuzz::generator::{Config, GeneratorTask},
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 
-pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
-    let common = build_common_config(args)?;
-    let crashes = get_synced_dir(CRASHES_DIR, common.task_id, args)?;
+pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> Result<Config> {
+    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?;
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_options = get_cmd_arg(CmdType::Target, args);
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -23,7 +25,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     let generator_exe = get_cmd_exe(CmdType::Generator, args)?;
     let generator_options = get_cmd_arg(CmdType::Generator, args);
     let generator_env = get_cmd_env(CmdType::Generator, args)?;
-    let readonly_inputs = get_synced_dirs(READONLY_INPUTS, common.task_id, args)?;
+    let readonly_inputs = get_synced_dirs(READONLY_INPUTS, common.job_id, common.task_id, args)?;
 
     let rename_output = args.is_present(RENAME_OUTPUT);
     let check_asan_log = args.is_present(CHECK_ASAN_LOG);
@@ -31,7 +33,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
     let target_timeout = Some(value_t!(args, TARGET_TIMEOUT, u64)?);
 
-    let tools = get_synced_dir(TOOLS_DIR, common.task_id, args).ok();
+    let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args).ok();
 
     let ensemble_sync_delay = None;
 
@@ -58,7 +60,8 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_fuzz_config(args)?;
+    let common = build_common_config(args)?;
+    let config = build_fuzz_config(args, common)?;
     GeneratorTask::new(config).run().await
 }
 

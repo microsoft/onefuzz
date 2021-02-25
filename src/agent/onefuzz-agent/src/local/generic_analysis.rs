@@ -7,7 +7,10 @@ use crate::{
         ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, TARGET_ENV,
         TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR,
     },
-    tasks::analysis::generic::{run as run_analysis, Config},
+    tasks::{
+        analysis::generic::{run as run_analysis, Config},
+        config::CommonConfig,
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
@@ -16,18 +19,17 @@ use reqwest::Url;
 pub fn build_analysis_config(
     args: &clap::ArgMatches<'_>,
     input_queue: Option<Url>,
+    common: CommonConfig,
 ) -> Result<Config> {
-    let common = build_common_config(args)?;
-
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_options = get_cmd_arg(CmdType::Target, args);
 
     let analyzer_exe = value_t!(args, ANALYZER_EXE, String)?;
     let analyzer_options = args.values_of_lossy(ANALYZER_OPTIONS).unwrap_or_default();
     let analyzer_env = get_hash_map(args, ANALYZER_ENV)?;
-    let analysis = get_synced_dir(ANALYSIS_DIR, common.task_id, args)?;
-    let tools = get_synced_dir(TOOLS_DIR, common.task_id, args)?;
-    let crashes = get_synced_dir(CRASHES_DIR, common.task_id, args).ok();
+    let analysis = get_synced_dir(ANALYSIS_DIR, common.job_id, common.task_id, args)?;
+    let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args)?;
+    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args).ok();
 
     let config = Config {
         target_exe,
@@ -46,7 +48,8 @@ pub fn build_analysis_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_analysis_config(args, None)?;
+    let common = build_common_config(args)?;
+    let config = build_analysis_config(args, None, common)?;
     run_analysis(config).await
 }
 

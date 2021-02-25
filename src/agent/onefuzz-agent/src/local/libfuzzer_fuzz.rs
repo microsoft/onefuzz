@@ -7,17 +7,19 @@ use crate::{
         CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
         TARGET_WORKERS,
     },
-    tasks::fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
+    tasks::{
+        config::CommonConfig,
+        fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 
 const DISABLE_EXPECT_CRASH_ON_FAILURE: &str = "disable_expect_crash_on_failure";
 
-pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
-    let common = build_common_config(args)?;
-    let crashes = get_synced_dir(CRASHES_DIR, common.task_id, args)?;
-    let inputs = get_synced_dir(INPUTS_DIR, common.task_id, args)?;
+pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> Result<Config> {
+    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?;
+    let inputs = get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?;
 
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -48,7 +50,8 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_fuzz_config(args)?;
+    let common = build_common_config(args)?;
+    let config = build_fuzz_config(args, common)?;
     LibFuzzerFuzzTask::new(config)?.run().await
 }
 

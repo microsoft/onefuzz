@@ -7,7 +7,10 @@ use crate::{
         CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR,
         REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
-    tasks::report::libfuzzer_report::{Config, ReportTask},
+    tasks::{
+        config::CommonConfig,
+        report::libfuzzer_report::{Config, ReportTask},
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
@@ -16,18 +19,19 @@ use reqwest::Url;
 pub fn build_report_config(
     args: &clap::ArgMatches<'_>,
     input_queue: Option<Url>,
+    common: CommonConfig,
 ) -> Result<Config> {
-    let common = build_common_config(args)?;
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
 
-    let crashes = get_synced_dir(CRASHES_DIR, common.task_id, args).ok();
-    let reports = get_synced_dir(REPORTS_DIR, common.task_id, args).ok();
+    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args).ok();
+    let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args).ok();
 
-    let no_repro = get_synced_dir(NO_REPRO_DIR, common.task_id, args).ok();
+    let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args).ok();
 
-    let unique_reports = get_synced_dir(UNIQUE_REPORTS_DIR, common.task_id, args).ok();
+    let unique_reports =
+        get_synced_dir(UNIQUE_REPORTS_DIR, common.job_id, common.task_id, args).ok();
 
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
 
@@ -58,7 +62,8 @@ pub fn build_report_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_report_config(args, None)?;
+    let common = build_common_config(args)?;
+    let config = build_report_config(args, None, common)?;
     ReportTask::new(config).managed_run().await
 }
 
