@@ -173,6 +173,8 @@ impl SendRetry for reqwest::RequestBuilder {
 mod test {
     use super::*;
 
+    // TODO: convert to feature-gated integration test.
+    #[ignore]
     #[tokio::test]
     async fn empty_stack() -> Result<()> {
         let resp = reqwest::Client::new()
