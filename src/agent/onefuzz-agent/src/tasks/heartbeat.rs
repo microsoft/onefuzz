@@ -26,6 +26,7 @@ struct Heartbeat {
 #[derive(Clone)]
 pub struct TaskContext {
     task_id: Uuid,
+    job_id: Uuid,
     machine_id: Uuid,
     machine_name: String,
 }

@@ -516,7 +516,7 @@ class Job(BaseModel):
 
 class TaskHeartbeatEntry(BaseModel):
     task_id: UUID
-    job_id: UUID
+    job_id: Optional[UUID]
     machine_id: UUID
     data: List[Dict[str, HeartbeatType]]
 
