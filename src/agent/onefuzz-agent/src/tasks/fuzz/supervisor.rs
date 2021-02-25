@@ -8,6 +8,7 @@ use crate::tasks::{
     report::crash_report::monitor_reports,
     stats::common::{monitor_stats, StatsFormat},
     utils::CheckNotify,
+
 };
 use anyhow::{Context, Error, Result};
 use onefuzz::{
@@ -251,6 +252,8 @@ mod tests {
     #[cfg_attr(not(feature = "integration_test"), ignore)]
     async fn test_fuzzer_linux() {
         use std::env;
+        use reqwest::Url;
+        use onefuzz::blob::BlobContainerUrl;
 
         let runtime_dir = tempfile::tempdir().unwrap();
 
@@ -273,14 +276,14 @@ mod tests {
 
         let fault_dir_temp = tempfile::tempdir().unwrap();
         let crashes = SyncedDir {
-            path: fault_dir_temp.path().into(),
-            url: None,
+            path: tempfile::tempdir().unwrap().path().into(),
+            url: BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap()).unwrap(),
         };
 
         let corpus_dir_temp = tempfile::tempdir().unwrap();
         let corpus_dir = SyncedDir {
-            path: corpus_dir_temp.path().into(),
-            url: None,
+            path: tempfile::tempdir().unwrap().path().into(),
+            url: BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap()).unwrap(),
         };
         let seed_file_name = corpus_dir.path.join("seed.txt");
         tokio::fs::write(seed_file_name, "xyz").await.unwrap();

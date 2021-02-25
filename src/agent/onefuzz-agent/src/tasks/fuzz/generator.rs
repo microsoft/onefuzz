@@ -198,6 +198,7 @@ mod tests {
     async fn test_radamsa_linux() -> anyhow::Result<()> {
         use super::{Config, GeneratorTask};
         use crate::tasks::config::CommonConfig;
+        use onefuzz::blob::BlobContainerUrl;
         use onefuzz::syncdir::SyncedDir;
         use reqwest::Url;
         use std::collections::HashMap;
