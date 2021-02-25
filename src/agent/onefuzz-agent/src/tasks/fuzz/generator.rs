@@ -192,11 +192,8 @@ impl GeneratorTask {
 }
 
 mod tests {
-    use std::path::PathBuf;
-
-    use onefuzz::blob::{BlobContainerUrl, BlobUrl};
-
     #[tokio::test]
+    #[cfg(target_os = "linux")]
     #[ignore]
     async fn test_radamsa_linux() -> anyhow::Result<()> {
         use super::{Config, GeneratorTask};
