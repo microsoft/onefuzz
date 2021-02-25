@@ -70,7 +70,10 @@ impl WorkSet {
     }
 
     pub fn setup_dir(&self) -> Result<PathBuf> {
-        let setup_dir = self.setup_url.container();
+        let (setup_dir, _) = self
+            .setup_url
+            .get_account_container()
+            .ok_or_else(|| anyhow!("Invalid container Url"))?;
         Ok(onefuzz::fs::onefuzz_root()?
             .join("blob-containers")
             .join(setup_dir))

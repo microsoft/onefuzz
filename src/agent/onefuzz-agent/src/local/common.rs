@@ -2,7 +2,7 @@ use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
 use clap::{App, Arg, ArgMatches};
-use onefuzz::monitor::DirectoryMonitor;
+use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use reqwest::Url;
 use std::{
     collections::HashMap,
@@ -49,42 +49,6 @@ pub enum CmdType {
     Target,
     Generator,
     // Supervisor,
-}
-
-pub fn add_cmd_options(
-    cmd_type: CmdType,
-    exe: bool,
-    arg: bool,
-    env: bool,
-    mut app: App<'static, 'static>,
-) -> App<'static, 'static> {
-    let (exe_name, env_name, arg_name) = match cmd_type {
-        CmdType::Target => (TARGET_EXE, TARGET_ENV, TARGET_OPTIONS),
-        // CmdType::Supervisor => (SUPERVISOR_EXE, SUPERVISOR_ENV, SUPERVISOR_OPTIONS),
-        CmdType::Generator => (GENERATOR_EXE, GENERATOR_ENV, GENERATOR_OPTIONS),
-    };
-
-    if exe {
-        app = app.arg(Arg::with_name(exe_name).takes_value(true).required(true));
-    }
-    if env {
-        app = app.arg(
-            Arg::with_name(env_name)
-                .long(env_name)
-                .takes_value(true)
-                .multiple(true),
-        )
-    }
-    if arg {
-        app = app.arg(
-            Arg::with_name(arg_name)
-                .long(arg_name)
-                .takes_value(true)
-                .value_delimiter(" ")
-                .help("Use a quoted string with space separation to denote multiple arguments"),
-        )
-    }
-    app
 }
 
 pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
@@ -162,6 +126,35 @@ fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
             .map_err(|x| format_err!("invalid {}.  uuid expected.  {})", name, x)),
         Err(_) => Ok(Uuid::nil()),
     }
+}
+
+pub fn get_synced_dirs(name: &str, task_id: Uuid, args: &ArgMatches<'_>) -> Result<Vec<SyncedDir>> {
+    let current_dir = std::env::current_dir()?;
+    let dirs = value_t!(args, name, PathBuf)?
+        .iter()
+        .enumerate()
+        .map(|(index, remote_path)| {
+            let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
+            let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
+            let path = current_dir.join(format!("{}/{}_{}", task_id, name, index));
+            SyncedDir {
+                url: remote_blob_url,
+                path,
+            }
+        })
+        .collect();
+    Ok(dirs)
+}
+
+pub fn get_synced_dir(name: &str, task_id: Uuid, args: &ArgMatches<'_>) -> Result<SyncedDir> {
+    let remote_path = value_t!(args, name, PathBuf)?;
+    let remote_url = Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
+    let remote_blob_url = BlobContainerUrl::new(remote_url)?;
+    let path = std::env::current_dir()?.join(format!("{}/{}", task_id, name));
+    Ok(SyncedDir {
+        url: remote_blob_url,
+        path,
+    })
 }
 
 pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {

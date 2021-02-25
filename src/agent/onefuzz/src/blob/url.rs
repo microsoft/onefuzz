@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::fmt;
+use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use reqwest::Url;
@@ -13,17 +13,12 @@ pub enum BlobUrl {
     LocalFile(Url),
 }
 
-#[derive(Clone, Eq, PartialEq)]
-pub struct AzureBlob {
-    url: Url,
-}
-
 impl BlobUrl {
     pub fn new(url: Url) -> Result<Self> {
-        if possible_blob_storage_url(&url, false) {
-            Ok(Self::AzureBlob(url))
-        } else if url.scheme().to_lowercase() == "file" {
+        if url.scheme().to_lowercase() == "file" {
             Ok(Self::LocalFile(url))
+        } else if possible_blob_storage_url(&url, false) {
+            Ok(Self::AzureBlob(url))
         } else {
             bail!("Invalid blob URL: {}", url)
         }
@@ -108,10 +103,14 @@ pub struct BlobContainerUrl {
 impl BlobContainerUrl {
     pub fn new(url: Url) -> Result<Self> {
         if !possible_blob_container_url(&url) {
-            bail!("Invalid container URL: {}", url);
+            bail!("Invalid container URL 1: {}", url);
         }
 
         Ok(Self { url })
+    }
+
+    pub fn as_file_path(&self) -> Option<PathBuf> {
+        self.url.to_file_path().ok()
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
@@ -124,20 +123,22 @@ impl BlobContainerUrl {
         &self.url
     }
 
-    pub fn account(&self) -> String {
-        // Ctor checks that domain has at least one subdomain.
-        self.url
-            .domain()
-            .unwrap()
-            .split('.')
-            .next()
-            .unwrap()
-            .to_owned()
-    }
-
-    pub fn container(&self) -> String {
-        // Segment existence checked in ctor, so we can unwrap.
-        self.url.path_segments().unwrap().next().unwrap().to_owned()
+    pub fn get_account_container(&self) -> Option<(String, String)> {
+        if self.as_file_path().is_some() {
+            None
+        } else {
+            // Ctor checks that domain has at least one subdomain.
+            let account = self
+                .url
+                .domain()
+                .unwrap()
+                .split('.')
+                .next()
+                .unwrap()
+                .to_owned();
+            let container = self.url.path_segments().unwrap().next().unwrap().to_owned();
+            Some((account, container))
+        }
     }
 
     pub fn blob(&self, name: impl AsRef<str>) -> BlobUrl {
@@ -159,7 +160,13 @@ impl fmt::Debug for BlobContainerUrl {
 
 impl fmt::Display for BlobContainerUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}", self.account(), self.container())
+        if let Some(file_path) = self.as_file_path() {
+            write!(f, "{:?}", file_path)
+        } else if let Some((account, container)) = self.get_account_container() {
+            write!(f, "{}:{}", account, container)
+        } else {
+            panic!("invalid blob url")
+        }
     }
 }
 
@@ -184,7 +191,10 @@ fn redact_query_sas_sig(url: &Url) -> Url {
 
 // Weak check of necessary conditions for a storage blob or container URL.
 fn possible_blob_storage_url(url: &Url, container: bool) -> bool {
-    // Must use `https` URI scheme.
+    if url.scheme() == "file" {
+        return true;
+    }
+
     if url.scheme() != "https" {
         return false;
     }
@@ -369,9 +379,9 @@ mod tests {
 
         for url in valid_container_urls() {
             let url = BlobContainerUrl::new(url).expect("invalid blob container URL");
-
-            assert_eq!(url.account(), "myaccount");
-            assert_eq!(url.container(), "mycontainer");
+            let (account, container) = url.get_account_container().expect("invalid url");
+            assert_eq!(account, "myaccount");
+            assert_eq!(container, "mycontainer");
         }
     }
 

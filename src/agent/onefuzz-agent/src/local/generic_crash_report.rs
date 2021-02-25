@@ -3,37 +3,30 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_ASAN_LOG,
-        CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
+        CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR,
+        REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
     tasks::report::generic::{Config, ReportTask},
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use reqwest::Url;
-use std::path::PathBuf;
 
 pub fn build_report_config(
     args: &clap::ArgMatches<'_>,
     input_queue: Option<Url>,
 ) -> Result<Config> {
+    let common = build_common_config(args)?;
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
 
-    let crashes = Some(value_t!(args, CRASHES_DIR, PathBuf)?.into());
-    let reports = if args.is_present(REPORTS_DIR) {
-        Some(value_t!(args, REPORTS_DIR, PathBuf)?).map(|x| x.into())
-    } else {
-        None
-    };
-    let no_repro = if args.is_present(NO_REPRO_DIR) {
-        Some(value_t!(args, NO_REPRO_DIR, PathBuf)?).map(|x| x.into())
-    } else {
-        None
-    };
-    let unique_reports = Some(value_t!(args, UNIQUE_REPORTS_DIR, PathBuf)?.into());
+    let crashes = Some(get_synced_dir(CRASHES_DIR, common.task_id, args)?);
+    let reports = get_synced_dir(REPORTS_DIR, common.task_id, args).ok();
+    let no_repro = get_synced_dir(NO_REPRO_DIR, common.task_id, args).ok();
+
+    let unique_reports = Some(get_synced_dir(UNIQUE_REPORTS_DIR, common.task_id, args)?);
 
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
 
@@ -41,8 +34,6 @@ pub fn build_report_config(
     let check_queue = !args.is_present(DISABLE_CHECK_QUEUE);
     let check_asan_log = args.is_present(CHECK_ASAN_LOG);
     let check_debugger = !args.is_present("disable_check_debugger");
-
-    let common = build_common_config(args)?;
 
     let config = Config {
         target_exe,

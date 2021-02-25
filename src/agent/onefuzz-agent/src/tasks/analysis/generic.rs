@@ -6,8 +6,11 @@ use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
-    expand::Expand, fs::set_executable, fs::OwnedDir, jitter::delay_with_jitter,
-    process::monitor_process, syncdir::SyncedDir,
+    expand::Expand,
+    fs::{copy, set_executable, OwnedDir},
+    jitter::delay_with_jitter,
+    process::monitor_process,
+    syncdir::SyncedDir,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -102,10 +105,7 @@ async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
                 };
 
                 if !already_checked(&config, &input_url).await? {
-                    let file_name = input_url.name();
-                    let mut destination_path = PathBuf::from(tmp_dir.path());
-                    destination_path.push(file_name);
-                    az_copy::copy(input_url.url().as_ref(), &destination_path, false).await?;
+                    let destination_path = _copy(input_url, &tmp_dir).await?;
 
                     run_tool(destination_path, &config).await?;
                     config.analysis.sync_push().await?
@@ -121,6 +121,21 @@ async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
     Ok(())
 }
 
+async fn _copy(input_url: BlobUrl, destination_folder: &OwnedDir) -> Result<PathBuf> {
+    let file_name = input_url.name();
+    let mut destination_path = PathBuf::from(destination_folder.path());
+    destination_path.push(file_name);
+    match input_url {
+        BlobUrl::AzureBlob(input_url) => {
+            az_copy::copy(input_url.as_ref(), destination_path.clone(), false).await?
+        }
+        BlobUrl::LocalFile(input_url) => {
+            copy(input_url.as_ref(), destination_path.clone(), false).await?
+        }
+    }
+    Ok(destination_path)
+}
+
 pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
     let expand = Expand::new()
         .input_path(&input)
@@ -134,13 +149,12 @@ pub async fn run_tool(input: impl AsRef<Path>, config: &Config) -> Result<()> {
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
         .set_optional_ref(&config.crashes, |tester, crashes| {
-            if let Some(url) = &crashes.url {
-                tester
-                    .crashes_account(&url.account())
-                    .crashes_container(&url.container())
-            } else {
-                tester
-            }
+            tester.set_optional_ref(
+                &crashes.url.get_account_container(),
+                |tester, (account, container)| {
+                    tester.crashes_account(account).crashes_container(container)
+                },
+            )
         });
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;

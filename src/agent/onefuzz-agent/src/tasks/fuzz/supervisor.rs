@@ -31,7 +31,7 @@ use tokio::{
     sync::Notify,
 };
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize)]
 pub struct SupervisorConfig {
     pub inputs: SyncedDir,
     pub crashes: SyncedDir,
@@ -193,11 +193,12 @@ async fn start_supervisor(
         .set_optional_ref(&config.target_options, |expand, target_options| {
             expand.target_options(target_options)
         })
-        .set_optional_ref(&config.crashes.url, |tester, url| {
-            tester
-                .crashes_account(&url.account())
-                .crashes_container(&url.container())
-        });
+        .set_optional_ref(
+            &config.crashes.url.get_account_container(),
+            |tester, (account, container)| {
+                tester.crashes_account(account).crashes_container(container)
+            },
+        );
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
     let mut cmd = Command::new(supervisor_path);

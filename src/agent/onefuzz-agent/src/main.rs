@@ -20,7 +20,6 @@ mod tasks;
 
 const LICENSE_CMD: &str = "licenses";
 const LOCAL_CMD: &str = "local";
-const DEBUG_CMD: &str = "debug";
 const MANAGED_CMD: &str = "managed";
 
 fn main() -> Result<()> {
@@ -37,7 +36,6 @@ fn main() -> Result<()> {
         .version(built_version.as_str())
         .subcommand(managed::cmd::args(MANAGED_CMD))
         .subcommand(local::cmd::args(LOCAL_CMD))
-        .subcommand(debug::cmd::args(DEBUG_CMD))
         .subcommand(SubCommand::with_name(LICENSE_CMD).about("display third-party licenses"));
 
     let matches = app.get_matches();
@@ -49,7 +47,6 @@ fn main() -> Result<()> {
 async fn run(args: ArgMatches<'_>) -> Result<()> {
     match args.subcommand() {
         (LICENSE_CMD, Some(_)) => licenses(),
-        (DEBUG_CMD, Some(sub)) => debug::cmd::run(sub).await,
         (LOCAL_CMD, Some(sub)) => local::cmd::run(sub).await,
         (MANAGED_CMD, Some(sub)) => managed::cmd::run(sub).await,
         _ => {

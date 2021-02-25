@@ -3,11 +3,13 @@
 
 use anyhow::{Context, Result};
 use futures::stream::StreamExt;
-use std::path::{Path, PathBuf};
-#[cfg(target_os = "linux")]
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
+
 use std::process::Stdio;
 use tokio::fs;
-#[cfg(target_os = "linux")]
 use tokio::process::Command;
 
 const ONEFUZZ_ROOT_ENV: &str = "ONEFUZZ_ROOT";
@@ -168,6 +170,110 @@ impl OwnedDir {
     pub async fn exists(&self) -> Result<bool> {
         exists(self.path()).await
     }
+}
+
+#[cfg(target_os = "linux")]
+pub async fn _sync(
+    src: impl AsRef<OsStr>,
+    dst: impl AsRef<OsStr>,
+    delete_dst: bool,
+    recursive: bool,
+) -> Result<()> {
+    //Robocopy C:\UserFolder C:\FolderBackup /e
+    // rsync -zvh
+
+    let args = if recursive { "-zhr" } else { "-zh" };
+
+    let mut cmd = Command::new("rsync");
+    cmd.kill_on_drop(true)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .arg("-zh");
+
+    if delete_dst {
+        cmd.arg("--delete");
+    }
+    cmd.arg(&src).arg(&dst);
+
+    let output = cmd
+        .spawn()
+        .context("rsync failed to start")?
+        .wait_with_output()
+        .await
+        .context("rsync failed to run")?;
+
+    if !output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        anyhow::bail!(
+            "sync failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?}",
+            src.as_ref(),
+            dst.as_ref(),
+            stdout,
+            stderr
+        );
+    }
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+pub async fn _sync(
+    src: impl AsRef<OsStr>,
+    dst: impl AsRef<OsStr>,
+    delete_dst: bool,
+    recursive: bool,
+) -> Result<()> {
+    //Robocopy C:\UserFolder C:\FolderBackup /e
+    let mut cmd = Command::new("robocopy");
+    cmd.kill_on_drop(true)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .arg(&src)
+        .arg(&dst);
+
+    if recursive {
+        cmd.arg("/e");
+    }
+
+    if delete_dst {
+        cmd.arg("/purge");
+    }
+
+    let output = cmd
+        .spawn()
+        .context("robocopy failed to start")?
+        .wait_with_output()
+        .await
+        .context("robocopy failed to run")?;
+
+    if let Some(code) = output.status.code() {
+        // any value >= 8 indicates that there was at least one failure during the copy operation
+        // https://ss64.com/nt/robocopy-exit.html
+        if code >= 8 {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+
+            anyhow::bail!(
+                "sync failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?} exist Status {:?}",
+                src.as_ref(),
+                dst.as_ref(),
+                stdout,
+                stderr,
+                output.status
+            );
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, delete_dst: bool) -> Result<()> {
+    _sync(src, dst, delete_dst, true).await
+}
+
+pub async fn copy(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, recur: bool) -> Result<()> {
+    _sync(src, dst, false, recur).await
 }
 
 #[cfg(test)]
