@@ -32,7 +32,11 @@ pub struct TaskContext {
 
 pub type TaskHeartbeatClient = HeartbeatClient<TaskContext, HeartbeatData>;
 
-pub async fn init_task_heartbeat(queue_url: Url, task_id: Uuid, job_id: Uuid) -> Result<TaskHeartbeatClient> {
+pub async fn init_task_heartbeat(
+    queue_url: Url,
+    task_id: Uuid,
+    job_id: Uuid,
+) -> Result<TaskHeartbeatClient> {
     let machine_id = get_machine_id().await?;
     let machine_name = get_machine_name().await?;
     let hb = HeartbeatClient::init_heartbeat(
