@@ -191,86 +191,81 @@ impl GeneratorTask {
     }
 }
 
-// mod tests {
-//     use std::path::PathBuf;
+mod tests {
+    use std::path::PathBuf;
 
-//     use onefuzz::blob::{BlobContainerUrl, BlobUrl};
+    use onefuzz::blob::{BlobContainerUrl, BlobUrl};
 
-//     #[tokio::test]
+    #[tokio::test]
+    #[ignore]
+    async fn test_radamsa_linux() -> anyhow::Result<()> {
+        use super::{Config, GeneratorTask};
+        use crate::tasks::config::CommonConfig;
+        use onefuzz::syncdir::SyncedDir;
+        use reqwest::Url;
+        use std::collections::HashMap;
+        use std::env;
+        use tempfile::tempdir;
 
-//     #[ignore]
-//     async fn test_radamsa_linux() -> anyhow::Result<()> {
-//         use super::{Config, GeneratorTask};
-//         use crate::tasks::config::CommonConfig;
-//         use onefuzz::syncdir::SyncedDir;
-//         use std::collections::HashMap;
-//         use std::env;
-//         use tempfile::tempdir;
-//         use reqwest::Url;
+        let crashes_temp = tempfile::tempdir()?;
+        let crashes: &std::path::Path = crashes_temp.path();
 
-//         let crashes_temp = tempfile::tempdir()?;
-//         let crashes: &std::path::Path = crashes_temp.path();
+        let inputs_temp = tempfile::tempdir()?;
+        let inputs: &std::path::Path = inputs_temp.path();
+        let input_file = inputs.join("seed.txt");
+        tokio::fs::write(input_file, "test").await?;
 
-//         let inputs_temp = tempfile::tempdir()?;
-//         let inputs: &std::path::Path = inputs_temp.path();
-//         let input_file = inputs.join("seed.txt");
-//         tokio::fs::write(input_file, "test").await?;
+        let generator_options: Vec<String> = vec![
+            "-o",
+            "{generated_inputs}/input-%n-%s",
+            "-n",
+            "100",
+            "-r",
+            "{input_corpus}",
+        ]
+        .iter()
+        .map(|p| p.to_string())
+        .collect();
 
-//         let generator_options: Vec<String> = vec![
-//             "-o",
-//             "{generated_inputs}/input-%n-%s",
-//             "-n",
-//             "100",
-//             "-r",
-//             "{input_corpus}",
-//         ]
-//         .iter()
-//         .map(|p| p.to_string())
-//         .collect();
+        let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX")?;
+        let radamsa_as_path = std::path::Path::new(&radamsa_path);
+        let radamsa_dir = radamsa_as_path.parent().unwrap();
 
-//         let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX")?;
-//         let radamsa_as_path = std::path::Path::new(&radamsa_path);
-//         let radamsa_dir = radamsa_as_path.parent().unwrap();
-//         let readonly_input = SyncedDir {
-//             path: tempfile::tempdir().unwrap().path().into(),
-//             url:  BlobContainerUrl::parse(inputs.as_ref())?,
-//         };
+        let config = Config {
+            generator_exe: String::from("{tools_dir}/radamsa"),
+            generator_options,
+            readonly_inputs: vec![SyncedDir {
+                path: tempfile::tempdir().unwrap().path().into(),
+                url: BlobContainerUrl::parse(Url::from_directory_path(inputs).unwrap())?,
+            }],
+            crashes: SyncedDir {
+                path: tempfile::tempdir().unwrap().path().into(),
+                url: BlobContainerUrl::parse(Url::from_directory_path(crashes).unwrap())?,
+            },
+            tools: Some(SyncedDir {
+                path: tempfile::tempdir().unwrap().path().into(),
+                url: BlobContainerUrl::parse(Url::from_directory_path(radamsa_dir).unwrap())?,
+            }),
+            target_exe: Default::default(),
+            target_env: Default::default(),
+            target_options: Default::default(),
+            target_timeout: None,
+            check_asan_log: false,
+            check_debugger: false,
+            rename_output: false,
+            ensemble_sync_delay: None,
+            generator_env: HashMap::default(),
+            check_retry_count: 0,
+            common: CommonConfig::default(),
+        };
+        let task = GeneratorTask::new(config);
 
-//         let config = Config {
-//             generator_exe: String::from("{tools_dir}/radamsa"),
-//             generator_options,
-//             readonly_inputs: vec![
-//                 //readonly_input
-//             ],
-//             crashes: SyncedDir {
-//                 path: tempfile::tempdir().unwrap().path().into(),
-//                 url:  BlobContainerUrl::parse(crashes.as_ref())?,
-//             },
-//             tools: Some(SyncedDir {
-//                 path: tempfile::tempdir().unwrap().path().into(),
-//                 url:  BlobContainerUrl::parse(radamsa_dir.as_ref())?,
+        let generated_inputs = tempdir()?;
+        task.generate_inputs(inputs.to_path_buf(), generated_inputs.path())
+            .await?;
 
-//             }),
-//             target_exe: Default::default(),
-//             target_env: Default::default(),
-//             target_options: Default::default(),
-//             target_timeout: None,
-//             check_asan_log: false,
-//             check_debugger: false,
-//             rename_output: false,
-//             ensemble_sync_delay: None,
-//             generator_env: HashMap::default(),
-//             check_retry_count: 0,
-//             common: CommonConfig::default(),
-//         };
-//         let task = GeneratorTask::new(config);
-
-//         let generated_inputs = tempdir()?;
-//         task.generate_inputs(inputs.to_path_buf(), generated_inputs.path())
-//             .await?;
-
-//         let count = std::fs::read_dir(generated_inputs.path())?.count();
-//         assert_eq!(count, 100, "No inputs generated");
-//         Ok(())
-//     }
-// }
+        let count = std::fs::read_dir(generated_inputs.path())?.count();
+        assert_eq!(count, 100, "No inputs generated");
+        Ok(())
+    }
+}
