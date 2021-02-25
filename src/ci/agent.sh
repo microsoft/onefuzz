@@ -31,6 +31,7 @@ cd src/agent
 cargo fmt -- --check
 # RUSTSEC-2020-0016: a dependency net2 (pulled in from tokio) is deprecated
 # RUSTSEC-2020-0036: a dependency failure (pulled from proc-maps) is deprecated
+# RUSTSEC-2020-0095: a dependency difference (pulled from pretty_assertions) is unmaintained.  The next release of pretty_assertions should fix this.
 cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2020-0095
 cargo-license -j > data/licenses.json
 cargo build --release --locked
