@@ -115,7 +115,7 @@ impl CrashLog {
     pub fn parse(text: String) -> Result<Self> {
         let (summary, sanitizer, fault_type) = parse_summary(&text)?;
         let full_stack_details = parse_call_stack(&text).unwrap_or_else(|_| Default::default());
-        let (scariness_score, scariness_description) = parse_scariness(&text)?;
+        let (scariness_score, scariness_description) = parse_scariness(&text);
 
         let call_stack = full_stack_details.iter().map(|x| x.line.clone()).collect();
         let stack_filter = get_stack_filter()?;
@@ -150,7 +150,7 @@ impl CrashLog {
 
         let full_stack_names: Vec<String> = full_stack_details
             .iter()
-            .filter_map(|x| x.function_name.as_ref().map(|x| x.clone()))
+            .filter_map(|x| x.function_name.as_ref().cloned())
             .collect();
 
         let minimized_stack: Vec<String> = minimized_stack_details
@@ -199,12 +199,13 @@ fn parse_summary(text: &str) -> Result<(String, String, String)> {
     asan::parse_summary(&text)
 }
 
-fn parse_scariness(text: &str) -> Result<(Option<u32>, Option<String>)> {
-    let (scariness_score, scariness_description) = match asan::parse_scariness(&text) {
+fn parse_scariness(text: &str) -> (Option<u32>, Option<String>) {
+    // eventually, this should be updated to support multiple callstack formats,
+    // including building this value
+    match asan::parse_scariness(&text) {
         Some((x, y)) => (Some(x), Some(y)),
         None => (None, None),
-    };
-    Ok((scariness_score, scariness_description))
+    }
 }
 
 pub fn parse_call_stack(text: &str) -> Result<Vec<StackEntry>> {

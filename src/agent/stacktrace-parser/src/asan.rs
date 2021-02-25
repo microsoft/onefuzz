@@ -48,14 +48,14 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
 
                 let function_name = captures
                     .name("func_1")
-                    .or(captures.name("func_2"))
-                    .or(captures.name("func_3"))
-                    .or(captures.name("func_4"))
+                    .or_else(|| captures.name("func_2"))
+                    .or_else(|| captures.name("func_3"))
+                    .or_else(|| captures.name("func_4"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_path = captures
                     .name("file_path_1")
-                    .or(captures.name("file_path_2"))
+                    .or_else(|| captures.name("file_path_2"))
                     .map(|x| x.as_str().to_string());
 
                 let source_file_name = source_file_path
@@ -64,7 +64,7 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
 
                 let source_file_line = match captures
                     .name("file_line_1")
-                    .or(captures.name("file_line_2"))
+                    .or_else(|| captures.name("file_line_2"))
                     .map(|x| x.as_str())
                 {
                     Some(x) => Some(x.parse()?),
@@ -78,13 +78,13 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
 
                 let module_path = captures
                     .name("module_path_1")
-                    .or(captures.name("module_path_2"))
-                    .or(captures.name("module_path_3"))
+                    .or_else(|| captures.name("module_path_2"))
+                    .or_else(|| captures.name("module_path_3"))
                     .map(|x| x.as_str().to_string());
 
                 let module_offset = match captures
                     .name("module_offset_1")
-                    .or(captures.name("module_offset_2"))
+                    .or_else(|| captures.name("module_offset_2"))
                     .map(|x| x.as_str())
                 {
                     Some(x) => Some(u64::from_str_radix(x, 16)?),
