@@ -67,27 +67,28 @@ def typed(depth: int, title: str, content: str, data_type: str) -> None:
 
 
 def main():
+    task_config = TaskConfig(
+        job_id=UUID(int=0),
+        task=TaskDetails(
+            type=TaskType.libfuzzer_fuzz,
+            duration=1,
+            target_exe="fuzz.exe",
+            target_env={},
+            target_options=[],
+        ),
+        containers=[
+            TaskContainers(name="my-setup", type=ContainerType.setup),
+            TaskContainers(name="my-inputs", type=ContainerType.inputs),
+            TaskContainers(name="my-crashes", type=ContainerType.crashes),
+        ],
+        tags={},
+    )
     examples = [
         EventPing(ping_id=UUID(int=0)),
         EventTaskCreated(
             job_id=UUID(int=0),
             task_id=UUID(int=0),
-            config=TaskConfig(
-                job_id=UUID(int=0),
-                task=TaskDetails(
-                    type=TaskType.libfuzzer_fuzz,
-                    duration=1,
-                    target_exe="fuzz.exe",
-                    target_env={},
-                    target_options=[],
-                ),
-                containers=[
-                    TaskContainers(name="my-setup", type=ContainerType.setup),
-                    TaskContainers(name="my-inputs", type=ContainerType.inputs),
-                    TaskContainers(name="my-crashes", type=ContainerType.crashes),
-                ],
-                tags={},
-            ),
+            config=task_config,
             user_info=UserInfo(
                 application_id=UUID(int=0),
                 object_id=UUID(int=0),
@@ -102,6 +103,7 @@ def main():
                 object_id=UUID(int=0),
                 upn="example@contoso.com",
             ),
+            config=task_config,
         ),
         EventTaskFailed(
             job_id=UUID(int=0),
@@ -112,9 +114,13 @@ def main():
                 object_id=UUID(int=0),
                 upn="example@contoso.com",
             ),
+            config=task_config,
         ),
         EventTaskStateUpdated(
-            job_id=UUID(int=0), task_id=UUID(int=0), state=TaskState.init
+            job_id=UUID(int=0),
+            task_id=UUID(int=0),
+            state=TaskState.init,
+            config=task_config,
         ),
         EventProxyCreated(region=Region("eastus")),
         EventProxyDeleted(region=Region("eastus")),
@@ -210,6 +216,8 @@ def main():
         event_id=UUID(int=0),
         event_type=EventType.ping,
         event=EventPing(ping_id=UUID(int=0)),
+        instance_id=UUID(int=0),
+        instance_name="example",
     )
 
     layer(

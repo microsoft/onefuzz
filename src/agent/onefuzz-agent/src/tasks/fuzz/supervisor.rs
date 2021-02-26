@@ -226,7 +226,7 @@ mod tests {
     use super::*;
     use crate::tasks::stats::afl::read_stats;
     use onefuzz::process::monitor_process;
-    use onefuzz::telemetry::EventData;
+    use onefuzz_telemetry::EventData;
     use std::collections::HashMap;
     use std::time::Instant;
 
