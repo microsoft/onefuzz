@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 
-int LLVMFuzzerTestOneInput(const u_int8_t *data, size_t len) {
+extern "C" int LLVMFuzzerTestOneInput(const u_int8_t *data, size_t len) {
   int cnt = 0;
 
   if (len < 4) {
@@ -55,10 +55,6 @@ int LLVMFuzzerTestOneInput(const u_int8_t *data, size_t len) {
       case '7': {
         // fpe
         int x = 0; int y = 123 / x;
-        break;
-      }
-      case '8': {
-        abort();
         break;
       }
     }

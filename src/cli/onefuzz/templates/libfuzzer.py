@@ -509,7 +509,7 @@ class Libfuzzer(Command):
         inputs: Optional[Directory] = None,
         reboot_after_setup: bool = False,
         duration: int = 24,
-        target_workers: Optional[int] = None,
+        target_workers: Optional[int] = 1,
         target_options: Optional[List[str]] = None,
         target_env: Optional[Dict[str, str]] = None,
         tags: Optional[Dict[str, str]] = None,
@@ -519,8 +519,9 @@ class Libfuzzer(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         colocate_all_tasks: bool = False,
-        crash_report_timeout: Optional[int] = None,
-        check_retry_count: Optional[int] = None,
+        crash_report_timeout: Optional[int] = 1,
+        check_retry_count: Optional[int] = 300,
+        check_fuzzer_help: bool = True,
     ) -> Optional[Job]:
 
         """
@@ -535,6 +536,12 @@ class Libfuzzer(Command):
 
         if target_options is None:
             target_options = []
+
+        # disable detect_leaks, as this is non-functional on cross-compile targets
+        if target_env is None:
+            target_env = {}
+        target_env['ASAN_OPTIONS'] = target_env.get('ASAN_OPTIONS', '') + ":detect_leaks=0"
+
 
         helper = JobHelper(
             self.onefuzz,
@@ -579,8 +586,9 @@ class Libfuzzer(Command):
                 with open(setup_path, "w") as handle:
                     sysroot_filename = os.path.basename(sysroot)
                     handle.write(
-                        "#!/bin/bash\nset -ex\n"
-                        "sudo apt-get install -y qemu-user libasan5-arm64-cross\n"
+                        "#!/bin/bash\n"
+                        "set -ex\n"
+                        "sudo apt-get install -y qemu-user g++-aarch64-linux-gnu libasan5-arm64-cross\n"
                         'cd $(dirname "$(readlink -f "$0")")\n'
                         "mkdir -p sysroot\n"
                         "tar -C sysroot -zxvf %s\n" % sysroot_filename
@@ -637,6 +645,7 @@ class Libfuzzer(Command):
             ensemble_sync_delay=ensemble_sync_delay,
             check_fuzzer_help=False,
             expect_crash_on_failure=False,
+            check_fuzzer_help=True,
         )
 
         report_containers = [
@@ -670,6 +679,7 @@ class Libfuzzer(Command):
             colocate=colocate_all_tasks,
             check_fuzzer_help=False,
             expect_crash_on_failure=False,
+            check_fuzzer_help=True,
         )
 
         self.logger.info("done creating tasks")
