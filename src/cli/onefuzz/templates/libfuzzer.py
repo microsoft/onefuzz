@@ -528,7 +528,9 @@ class Libfuzzer(Command):
         libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
         """
 
-        self.logger.warning("qemu_user jobs are a preview feature and may change in the future")
+        self.logger.warning(
+            "qemu_user jobs are a preview feature and may change in the future"
+        )
 
         pool = self.onefuzz.pools.get(pool_name)
         if pool.os != OS.linux:
@@ -542,8 +544,9 @@ class Libfuzzer(Command):
         # disable detect_leaks, as this is non-functional on cross-compile targets
         if target_env is None:
             target_env = {}
-        target_env['ASAN_OPTIONS'] = target_env.get('ASAN_OPTIONS', '') + ":detect_leaks=0"
-
+        target_env["ASAN_OPTIONS"] = (
+            target_env.get("ASAN_OPTIONS", "") + ":detect_leaks=0"
+        )
 
         helper = JobHelper(
             self.onefuzz,
