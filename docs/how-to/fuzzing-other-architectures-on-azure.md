@@ -21,7 +21,7 @@ As such, a `libfuzzer qemu_user` template is available, which only uses the `lib
 
 ## Example
 
-Let's build a simple `aarch64` target using GCC as a cross-compiler (See [our example](../../src/integration-tests/libfuzzer-aarch64-crosscompile/)
+Let's build a simple `aarch64` target using GCC as a cross-compiler (See [our example](../../src/integration-tests/libfuzzer-aarch64-crosscompile/)).
 
 1. Make sure you have QEMU and the appropriate cross compiler installed:
   ```bash
