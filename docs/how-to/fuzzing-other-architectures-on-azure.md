@@ -10,7 +10,7 @@ TL/DR: check out our [libfuzzer-aarch64-crosscompile example](../../src/integrat
 
 ## Issues using qemu_user based LibFuzzer in OneFuzz
 
-There are a few notable limitations using qemu-user based libFuzzer targets on OneFuzz
+There are a few notable limitations when using `qemu-user` based libFuzzer targets in OneFuzz.
 1. Live reproduction of crashes does not work.
 2. The `libfuzzer-coverage` task does not work.
 3. Only Linux is supported at this time.

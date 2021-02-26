@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 all: check
 
 
@@ -22,7 +25,7 @@ check: fuzz.exe
 fuzz: check
 	ASAN_OPTIONS=:detect_leaks=0 qemu-aarch64 -L /usr/aarch64-linux-gnu ./fuzz.exe
 
-.PHONY: clean
+.PHONY: check clean fuzz
 
 clean:
 	rm -rf fuzz.exe fuzz-libs compiler-rt

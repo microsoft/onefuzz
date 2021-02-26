@@ -534,7 +534,7 @@ class Libfuzzer(Command):
 
         pool = self.onefuzz.pools.get(pool_name)
         if pool.os != OS.linux:
-            raise Exception("libfuzzer qemu-user jobs are only compatable on linux")
+            raise Exception("libfuzzer qemu-user jobs are only compatible with Linux")
 
         self._check_is_libfuzzer(target_exe)
 

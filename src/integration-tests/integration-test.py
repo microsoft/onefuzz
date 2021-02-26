@@ -42,7 +42,7 @@ BUILD = "0"
 class TemplateType(Enum):
     libfuzzer = "libfuzzer"
     libfuzzer_dotnet = "libfuzzer_dotnet"
-    libfuzzer_qemu = "libfuzzer_qemu"
+    libfuzzer_qemu_user = "libfuzzer_qemu_user"
     afl = "afl"
     radamsa = "radamsa"
 
@@ -87,7 +87,7 @@ TARGETS: Dict[str, Integration] = {
         wait_for_files=[ContainerType.inputs, ContainerType.crashes],
     ),
     "linux-libfuzzer-aarch64-crosscompile": Integration(
-        template=TemplateType.libfuzzer_qemu,
+        template=TemplateType.libfuzzer_qemu_user,
         os=OS.linux,
         target_exe="fuzz.exe",
         inputs="inputs",
@@ -248,7 +248,7 @@ class TestOnefuzz:
                     duration=1,
                     vm_count=1,
                 )
-            elif config.template == TemplateType.libfuzzer_qemu:
+            elif config.template == TemplateType.libfuzzer_qemu_user:
                 job = self.of.template.libfuzzer.qemu_user(
                     self.project,
                     target,
