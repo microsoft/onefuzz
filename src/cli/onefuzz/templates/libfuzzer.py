@@ -525,8 +525,10 @@ class Libfuzzer(Command):
     ) -> Optional[Job]:
 
         """
-        libfuzzer tasks, wrapped via qemu-user
+        libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
         """
+
+        self.logger.warning("qemu_user jobs are a preview feature and may change in the future")
 
         pool = self.onefuzz.pools.get(pool_name)
         if pool.os != OS.linux:
@@ -643,9 +645,8 @@ class Libfuzzer(Command):
             tags=tags,
             debug=debug,
             ensemble_sync_delay=ensemble_sync_delay,
-            check_fuzzer_help=False,
             expect_crash_on_failure=False,
-            check_fuzzer_help=True,
+            check_fuzzer_help=check_fuzzer_help,
         )
 
         report_containers = [
@@ -677,9 +678,8 @@ class Libfuzzer(Command):
             check_retry_count=check_retry_count,
             debug=debug,
             colocate=colocate_all_tasks,
-            check_fuzzer_help=False,
             expect_crash_on_failure=False,
-            check_fuzzer_help=True,
+            check_fuzzer_help=check_fuzzer_help,
         )
 
         self.logger.info("done creating tasks")
