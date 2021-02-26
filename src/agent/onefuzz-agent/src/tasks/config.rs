@@ -47,7 +47,7 @@ impl CommonConfig {
     pub async fn init_heartbeat(&self) -> Result<Option<TaskHeartbeatClient>> {
         match &self.heartbeat_queue {
             Some(url) => {
-                let hb = init_task_heartbeat(url.clone(), self.task_id).await?;
+                let hb = init_task_heartbeat(url.clone(), self.task_id, self.job_id).await?;
                 Ok(Some(hb))
             }
             None => Ok(None),
