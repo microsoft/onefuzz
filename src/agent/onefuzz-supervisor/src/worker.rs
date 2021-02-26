@@ -285,6 +285,9 @@ impl StreamReaderThreads {
             let mut tmp = [0u8; MAX_TAIL_LEN];
 
             while let Ok(count) = stderr.read(&mut tmp) {
+                if count == 0 {
+                    break;
+                }
                 if let Err(err) = std::io::copy(&mut &tmp[..count], &mut buf) {
                     log::error!("error copying to circular buffer: {}", err);
                     break;
@@ -299,6 +302,10 @@ impl StreamReaderThreads {
             let mut tmp = [0u8; MAX_TAIL_LEN];
 
             while let Ok(count) = stdout.read(&mut tmp) {
+                if count == 0 {
+                    break;
+                }
+
                 if let Err(err) = std::io::copy(&mut &tmp[..count], &mut buf) {
                     log::error!("error copying to circular buffer: {}", err);
                     break;
