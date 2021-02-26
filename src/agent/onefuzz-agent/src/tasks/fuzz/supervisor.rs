@@ -193,6 +193,12 @@ async fn start_supervisor(
         .set_optional_ref(&config.target_options, |expand, target_options| {
             expand.target_options(target_options)
         })
+        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
+            tester.microsoft_telemetry_key(&key)
+        })
+        .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
+            tester.instance_telemetry_key(&key)
+        })
         .set_optional_ref(&config.crashes.url, |tester, url| {
             tester
                 .crashes_account(&url.account())

@@ -18,6 +18,11 @@ The following values are replaced with the specific values at runtime.
 * `{setup_dir}` : Path to the setup directory
 * `{job_id}`: UUID that indicates the Job ID
 * `{task_id}`: UUID that indicates the Task ID
+* `{reports_dir}`: Path to the directory to write crash reports
+* `{crashes_account}`: Azure Storage Account name for the `crashes` container
+* `{crashes_container}`: Container name for the `crashes` container
+* `{microsoft_telemetry_key}`: Application Insights key used for collecting [non-attributable telemetry](telemetry.md) to improve OneFuzz.
+* `{instance_telemetry_key}`: Application Insights key used for private, instance-owned telemetry and logging (See [OneFuzz Telemetry](telemetry.md).
 
 ## Example
 
@@ -45,13 +50,14 @@ These are currently used in the following tasks:
 * libfuzzer\_merge: `target_exe`, `target_options`, `input_corpus`
 * libfuzzer\_coverage: None
 * generic\_analysis: `input`, `target_exe`, `target_options`, `analyzer_exe`,
-  `anayzer_options`, `output_dir`, `tools_dir`, `job_id`, `task_id`
+  `analyzer_options`, `output_dir`, `tools_dir`, `job_id`, `task_id`,
+  `crashes_account`, `crashes_container`, `reports_dir`, `microsoft_telemetry_key`, `instance_telemetry_key`
 * generic\_generator: `generated_inputs`, `input_corpus`, `tools_dir`,
   `generator_exe`, `generator_options`, `target_exe`, `target_options`,
-  `input`, `job_id`, `task_id`
+  `input`, `job_id`, `task_id`, `microsoft_telemetry_key`, `instance_telemetry_key`
 * generic\_supervisor: `crashes`, `runtime_dir`, `target_exe`, `target_options`,
   `input_corpus`, `input`, `supervisor_exe`, `supervisor_options`, `tools_dir`,
-  `job_id`, `task_id`
+  `job_id`, `task_id`, `crashes_account`, `crashes_container`, `reports_dir`, `microsoft_telemetry_key`, `instance_telemetry_key`
 * generic\_merge: `input`, `input_corpus`, `output_dir`, `target_exe`,
   `target_options`, `supervisor_exe`, `supervisor_options`, `tools_dir`,
-  `job_id`, `task_id`
+  `job_id`, `task_id`, `microsoft_telemetry_key`, `instance_telemetry_key`
