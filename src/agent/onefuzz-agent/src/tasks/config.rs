@@ -5,7 +5,10 @@
 use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, report};
 use anyhow::Result;
 use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
-use onefuzz_telemetry::{self as telemetry, Event::task_start, EventData, Role};
+use onefuzz_telemetry::{
+    self as telemetry, Event::task_start, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey,
+    Role,
+};
 use reqwest::Url;
 use serde::{self, Deserialize};
 use std::path::PathBuf;
@@ -26,11 +29,15 @@ pub struct CommonConfig {
 
     pub instance_id: Uuid,
 
-    pub instrumentation_key: Option<Uuid>,
-
     pub heartbeat_queue: Option<Url>,
 
-    pub telemetry_key: Option<Uuid>,
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "instrumentation_key")]
+    pub instance_telemetry_key: Option<InstanceTelemetryKey>,
+
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "telemetry_key")]
+    pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
 
     #[serde(default)]
     pub setup_dir: PathBuf,
