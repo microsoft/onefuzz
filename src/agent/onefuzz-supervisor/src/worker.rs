@@ -235,8 +235,7 @@ impl IWorkerRunner for WorkerRunner {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
-        let child = cmd.spawn().context("onefuzz-agent failed to start")?;
-        Ok(Box::new(RedirectedChild::new(child)?))
+        Ok(Box::new(RedirectedChild::spawn(cmd)?))
     }
 }
 
@@ -250,16 +249,18 @@ struct RedirectedChild {
 }
 
 impl RedirectedChild {
-    pub fn new(mut child: Child) -> Result<Self> {
-        let stderr = child
-            .stderr
-            .take()
-            .ok_or_else(|| format_err!("onefuzz-agent stderr not piped"))?;
-        let stdout = child
-            .stdout
-            .take()
-            .ok_or_else(|| format_err!("onefuzz-agent stdout not piped"))?;
+    pub fn spawn(mut cmd: Command) -> Result<Self> {
+        // Make sure we capture the child's output streams.
+        cmd.stderr(Stdio::piped());
+        cmd.stdout(Stdio::piped());
+
+        let mut child = cmd.spawn().context("onefuzz-agent failed to start")?;
+
+        // Guaranteed by the above.
+        let stderr = child.stderr.take().unwrap();
+        let stdout = child.stdout.take().unwrap();
         let streams = Some(StreamReaderThreads::new(stderr, stdout));
+
         Ok(Self { child, streams })
     }
 }
