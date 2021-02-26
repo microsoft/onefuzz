@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-
 use std::{
     path::{Path, PathBuf},
     process::{Child, ChildStderr, ChildStdout, Command, Stdio},
@@ -12,6 +11,7 @@ use downcast_rs::Downcast;
 use onefuzz::process::{ExitStatus, Output};
 use tokio::fs;
 
+use crate::buffer::TailBuffer;
 use crate::work::*;
 
 // Max length of captured output streams from worker child processes.
@@ -266,8 +266,8 @@ impl RedirectedChild {
 
 /// Worker threads that tail the redirected output streams of a running child process.
 struct StreamReaderThreads {
-    stderr: JoinHandle<CircularBuffer>,
-    stdout: JoinHandle<CircularBuffer>,
+    stderr: JoinHandle<TailBuffer>,
+    stdout: JoinHandle<TailBuffer>,
 }
 
 struct CapturedStreams {
@@ -280,7 +280,7 @@ impl StreamReaderThreads {
         use std::io::Read;
 
         let stderr = thread::spawn(move || {
-            let mut buf = CircularBuffer::new(MAX_TAIL_LEN);
+            let mut buf = TailBuffer::new(MAX_TAIL_LEN);
             let mut tmp = [0u8; MAX_TAIL_LEN];
 
             while let Ok(count) = stderr.read(&mut tmp) {
@@ -294,7 +294,7 @@ impl StreamReaderThreads {
         });
 
         let stdout = thread::spawn(move || {
-            let mut buf = CircularBuffer::new(MAX_TAIL_LEN);
+            let mut buf = TailBuffer::new(MAX_TAIL_LEN);
             let mut tmp = [0u8; MAX_TAIL_LEN];
 
             while let Ok(count) = stdout.read(&mut tmp) {
@@ -359,48 +359,6 @@ impl IWorkerChild for RedirectedChild {
             }
         }
 
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CircularBuffer {
-    data: Vec<u8>,
-    capacity: usize,
-}
-
-impl CircularBuffer {
-    pub fn new(capacity: usize) -> Self {
-        let data = Vec::with_capacity(capacity);
-        Self { data, capacity }
-    }
-
-    pub fn data(&self) -> &[u8] {
-        &self.data
-    }
-
-    pub fn to_string_lossy(&self) -> String {
-        String::from_utf8_lossy(&self.data).to_string()
-    }
-}
-
-impl std::io::Write for CircularBuffer {
-    fn write(&mut self, new_data: &[u8]) -> std::io::Result<usize> {
-        // Write the new data to the internal buffer, allocating internally as needed.
-        self.data.extend(new_data);
-
-        // Shift and truncate the buffer if it is too big.
-        if self.data.len() > self.capacity {
-            let lo = self.data.len() - self.capacity;
-            let range = lo..self.data.len();
-            self.data.copy_within(range, 0);
-            self.data.truncate(self.capacity);
-        }
-
-        Ok(new_data.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
         Ok(())
     }
 }

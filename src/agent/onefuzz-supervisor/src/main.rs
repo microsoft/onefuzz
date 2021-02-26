@@ -31,6 +31,7 @@ use structopt::StructOpt;
 
 pub mod agent;
 pub mod auth;
+pub mod buffer;
 pub mod commands;
 pub mod config;
 pub mod coordinator;
