@@ -259,3 +259,32 @@ sys.stderr.write('C' * 65536 + 'D' * 4000)";
     let stderr: String = repeat('C').take(96).chain(repeat('D').take(4000)).collect();
     assert_eq!(captured.stderr, stderr);
 }
+
+#[cfg(target_os = "windows")]
+#[test]
+fn test_redirected_child() {
+    use std::iter::repeat;
+    use std::process::Command;
+
+    // Only write to stdout.
+    let script = "Write-Output ('A' * 65536  + 'B' * 4000)";
+
+    let mut cmd = Command::new("powershell.exe");
+    cmd.args(&[
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Unrestricted",
+        "-Command",
+        script,
+    ]);
+
+    let mut redirected = RedirectedChild::spawn(cmd).unwrap();
+    redirected.child.wait().unwrap();
+    let captured = redirected.streams.unwrap().join().unwrap();
+
+    let mut stdout: String = repeat('A').take(94).chain(repeat('B').take(4000)).collect();
+    stdout.push_str("\r\n");
+    assert_eq!(captured.stdout, stdout);
+
+    assert_eq!(captured.stderr, "");
+}
