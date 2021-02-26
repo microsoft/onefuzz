@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{bail, Context, Result};
 use reqwest::{Client, Url};
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
@@ -47,8 +47,11 @@ impl QueueClient {
             .post(self.messages_url())
             .body(body)
             .send_retry_default()
-            .await?;
-        let _ = r.error_for_status()?;
+            .await
+            .context("storage queue enqueue failed")?;
+        let _ = r
+            .error_for_status()
+            .context("storage queue enqueue failed")?;
         Ok(())
     }
 
@@ -57,15 +60,23 @@ impl QueueClient {
             .http
             .get(self.messages_url())
             .send_retry_default()
-            .await?
-            .error_for_status()?;
-        let text = response.text().await?;
+            .await
+            .context("storage queue delete failed")?
+            .error_for_status()
+            .context("storage queue pop failed")?;
+        let text = response
+            .text()
+            .await
+            .context("unable to parse response text")?;
         let msg = Message::parse(&text);
 
         let msg = if let Some(msg) = msg {
             msg
         } else {
-            return Ok(None);
+            if is_empty_message(&text) {
+                return Ok(None);
+            }
+            bail!("unable to parse response text body");
         };
 
         let msg = if msg.data.is_empty() { None } else { Some(msg) };
@@ -79,8 +90,10 @@ impl QueueClient {
         self.http
             .delete(url)
             .send_retry_default()
-            .await?
-            .error_for_status()?;
+            .await
+            .context("storage queue delete failed")?
+            .error_for_status()
+            .context("storage queue delete failed")?;
         Ok(())
     }
 
@@ -145,9 +158,14 @@ impl Message {
     }
 
     pub fn get<'a, T: serde::de::Deserialize<'a>>(&'a self) -> Result<T> {
-        let data = serde_json::from_slice(&self.data)?;
+        let data =
+            serde_json::from_slice(&self.data).context("get storage queue message failed")?;
         Ok(data)
     }
+}
+
+fn is_empty_message(text: &str) -> bool {
+    text.contains(r"<QueueMessagesList></QueueMessagesList>")
 }
 
 fn parse_message_id(text: &str) -> Option<Uuid> {
