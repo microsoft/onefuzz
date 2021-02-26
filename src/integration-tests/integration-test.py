@@ -42,6 +42,7 @@ BUILD = "0"
 class TemplateType(Enum):
     libfuzzer = "libfuzzer"
     libfuzzer_dotnet = "libfuzzer_dotnet"
+    libfuzzer_qemu = "libfuzzer_qemu"
     afl = "afl"
     radamsa = "radamsa"
 
@@ -57,6 +58,7 @@ class Integration(BaseModel):
     check_asan_log: Optional[bool] = Field(default=False)
     disable_check_debugger: Optional[bool] = Field(default=False)
     reboot_after_setup: Optional[bool] = Field(default=False)
+    test_repro: Optional[bool] = Field(default=True)
 
 
 TARGETS: Dict[str, Integration] = {
@@ -83,6 +85,15 @@ TARGETS: Dict[str, Integration] = {
         inputs="inputs",
         use_setup=True,
         wait_for_files=[ContainerType.inputs, ContainerType.crashes],
+    ),
+    "linux-libfuzzer-aarch64-crosscompile": Integration(
+        template=TemplateType.libfuzzer_qemu,
+        os=OS.linux,
+        target_exe="fuzz.exe",
+        inputs="inputs",
+        use_setup=True,
+        wait_for_files=[ContainerType.inputs, ContainerType.crashes],
+        test_repro=False,
     ),
     "linux-libfuzzer-rust": Integration(
         template=TemplateType.libfuzzer,
@@ -234,6 +245,17 @@ class TestOnefuzz:
                     target_harness=config.target_exe,
                     inputs=inputs,
                     setup_dir=setup,
+                    duration=1,
+                    vm_count=1,
+                )
+            elif config.template == TemplateType.libfuzzer_qemu:
+                job = self.of.template.libfuzzer.qemu_user(
+                    self.project,
+                    target,
+                    BUILD,
+                    self.pools[config.os].name,
+                    inputs=inputs,
+                    target_exe=target_exe,
                     duration=1,
                     vm_count=1,
                 )
@@ -407,6 +429,10 @@ class TestOnefuzz:
         has_cdb = bool(which("cdb.exe"))
         has_gdb = bool(which("gdb"))
         for job_id in self.successful_jobs:
+            if not TARGETS[self.target_jobs[job_id]].test_repro:
+                self.logger.info("skipping repro for %s", self.target_jobs[job_id])
+                continue
+
             if self.job_os[job_id] == OS.linux and not has_gdb:
                 self.logger.warning(
                     "missing gdb in path, not launching repro: %s",

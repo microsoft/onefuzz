@@ -583,7 +583,7 @@ class Libfuzzer(Command):
 
         helper.create_containers()
 
-        wrapper_name = File(target_exe + "-wrapper.sh")
+        wrapper_name = File(os.path.basename(target_exe) + "-wrapper.sh")
 
         with tempfile.TemporaryDirectory() as tempdir:
             if sysroot:
