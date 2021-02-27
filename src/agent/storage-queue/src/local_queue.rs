@@ -80,7 +80,7 @@ impl FileQueueClient {
                 .map_err(|_| anyhow::anyhow!("unable to pop message"))?;
 
             let message = data.map(|d| LocalQueueMessage { data: d.to_vec() });
-            return Ok(message);
+            Ok(message)
         };
 
         let backoff = ExponentialBackoff {
