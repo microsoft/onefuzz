@@ -76,7 +76,7 @@ impl QueueClient {
             if is_empty_message(&text) {
                 return Ok(None);
             }
-            bail!("unable to parse response text body");
+            bail!("unable to parse response text body: {}", text);
         };
 
         let msg = if msg.data.is_empty() { None } else { Some(msg) };
