@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{self, Result};
+use anyhow::{anyhow, Result};
 use backoff::{future::retry_notify, ExponentialBackoff};
 use queue_file::QueueFile;
 use serde::Serialize;
@@ -30,7 +30,7 @@ impl FileQueueClient {
     pub fn new(queue_url: PathBuf) -> Result<Self> {
         let queue = Arc::new(Mutex::new(
             queue_file::QueueFile::open(queue_url.clone())
-                .expect(&format!("cannot open queue file {:?}", queue_url)),
+                .map_err(|err| anyhow!("cannot open queue file {:?} : {}", queue_url, err))?,
         ));
 
         Ok(FileQueueClient {

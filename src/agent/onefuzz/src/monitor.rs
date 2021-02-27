@@ -50,7 +50,7 @@ impl DirectoryMonitor {
     }
 
     pub fn poll_file(&mut self) -> Poll<Option<PathBuf>> {
-        let poll = match self.rx.try_recv() {
+        match self.rx.try_recv() {
             Ok(DebouncedEvent::Create(path)) => Poll::Ready(Some(path)),
             Ok(DebouncedEvent::Remove(path)) => {
                 if path == self.dir {
@@ -75,9 +75,7 @@ impl DirectoryMonitor {
                 self.stop().ok();
                 Poll::Ready(None)
             }
-        };
-
-        poll
+        }
     }
 }
 

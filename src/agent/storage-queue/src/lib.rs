@@ -51,7 +51,7 @@ impl QueueClient {
                 Url::from_file_path(queue_client.as_ref().path.clone())
                     .map_err(|_| anyhow!("invalid queue url"))
             }
-            QueueClient::Channel(queue_client) => Ok(queue_client.url.clone()),
+            QueueClient::Channel(queue_client) => Ok(queue_client.url),
         }
     }
 
