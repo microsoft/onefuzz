@@ -12,7 +12,6 @@ use onefuzz::{
     process::monitor_process,
     syncdir::SyncedDir,
 };
-use reqwest::Url;
 use serde::Deserialize;
 use std::process::Stdio;
 use std::{
@@ -31,7 +30,7 @@ pub struct Config {
 
     pub target_exe: PathBuf,
     pub target_options: Vec<String>,
-    pub input_queue: Option<Url>,
+    pub input_queue: Option<QueueClient>,
     pub crashes: Option<SyncedDir>,
 
     pub analysis: SyncedDir,
@@ -88,9 +87,7 @@ async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
 
 async fn poll_inputs(config: &Config, tmp_dir: OwnedDir) -> Result<()> {
     let heartbeat = config.common.init_heartbeat().await?;
-    if let Some(queue) = &config.input_queue {
-        let input_queue = QueueClient::new(queue.clone())?;
-
+    if let Some(input_queue) = &config.input_queue {
         loop {
             heartbeat.alive();
             if let Some(message) = input_queue.pop().await? {

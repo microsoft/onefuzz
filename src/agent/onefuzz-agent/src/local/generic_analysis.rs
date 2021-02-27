@@ -14,11 +14,11 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use reqwest::Url;
+use storage_queue::QueueClient;
 
 pub fn build_analysis_config(
     args: &clap::ArgMatches<'_>,
-    input_queue: Option<Url>,
+    input_queue: Option<QueueClient>,
     common: CommonConfig,
 ) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();

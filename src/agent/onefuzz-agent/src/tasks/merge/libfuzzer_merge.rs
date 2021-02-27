@@ -34,7 +34,7 @@ pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
-    pub input_queue: Option<Url>,
+    pub input_queue: Option<QueueClient>,
     pub inputs: Vec<SyncedDir>,
     pub unique_inputs: SyncedDir,
     pub preserve_existing_outputs: bool,
@@ -58,10 +58,9 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     }
 
     config.unique_inputs.init().await?;
-    if let Some(url) = config.input_queue.clone() {
+    if let Some(queue) = config.input_queue.clone() {
         loop {
-            let queue = QueueClient::new(url.clone())?;
-            if let Err(error) = process_message(config.clone(), queue).await {
+            if let Err(error) = process_message(config.clone(), queue.clone()).await {
                 error!(
                     "failed to process latest message from notification queue: {}",
                     error

@@ -15,7 +15,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use storage_queue::Message;
+use storage_queue::{Message, QueueClient};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -24,7 +24,7 @@ pub struct Config {
     // TODO:  options are not yet used for crash reporting
     pub target_options: Vec<String>,
     pub target_timeout: Option<u64>,
-    pub input_queue: Option<Url>,
+    pub input_queue: Option<QueueClient>,
     pub crashes: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
     pub unique_reports: Option<SyncedDir>,
@@ -76,8 +76,8 @@ impl ReportTask {
         }
 
         if self.config.check_queue {
-            if let Some(queue) = &self.config.input_queue {
-                let callback = CallbackImpl::new(queue.clone(), processor)?;
+            if let Some(url) = &self.config.input_queue {
+                let callback = CallbackImpl::new(url.clone(), processor)?;
                 self.poller.run(callback).await?;
             }
         }

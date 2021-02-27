@@ -33,11 +33,11 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let fuzz_task = spawn(async move { fuzzer.managed_run().await });
 
     let crash_report_input_monitor =
-        DirectoryMonitorQueue::start_monitoring(crash_dir.clone()).await?;
+        DirectoryMonitorQueue::start_monitoring(crash_dir.clone(), common.job_id).await?;
 
     let report_config = build_report_config(
         args,
-        Some(crash_report_input_monitor.queue_url),
+        Some(crash_report_input_monitor.queue_client),
         CommonConfig {
             task_id: Uuid::new_v4(),
             ..common.clone()
@@ -47,11 +47,12 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let report_task = spawn(async move { report.managed_run().await });
 
     if args.is_present(COVERAGE_DIR) {
-        let coverage_input_monitor = DirectoryMonitorQueue::start_monitoring(crash_dir).await?;
+        let coverage_input_monitor =
+            DirectoryMonitorQueue::start_monitoring(crash_dir, common.job_id).await?;
         let coverage_config = build_coverage_config(
             args,
             true,
-            Some(coverage_input_monitor.queue_url),
+            Some(coverage_input_monitor.queue_client),
             CommonConfig {
                 task_id: Uuid::new_v4(),
                 ..common

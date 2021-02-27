@@ -3,7 +3,7 @@
 
 use anyhow::{anyhow, Result};
 use reqwest::Url;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -12,11 +12,23 @@ pub mod azure_queue;
 pub mod local_queue;
 
 use azure_queue::{AzureQueueClient, AzureQueueMessage};
-use local_queue::{LocalQueueClient, LocalQueueMessage};
+use local_queue::{ChannelQueueClient, FileQueueClient, LocalQueueMessage};
 
+#[derive(Debug, Clone)]
 pub enum QueueClient {
     AzureQueue(AzureQueueClient),
-    LocalQueue(Box<LocalQueueClient>),
+    FileQueueClient(Box<FileQueueClient>),
+    Channel(ChannelQueueClient),
+}
+
+impl<'de> Deserialize<'de> for QueueClient {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Url::deserialize(deserializer)
+            .map(|u| QueueClient::new(u).expect("Unable to create queue client"))
+    }
 }
 
 impl QueueClient {
@@ -25,8 +37,8 @@ impl QueueClient {
             let path = queue_url
                 .to_file_path()
                 .map_err(|_| anyhow!("invalid local path"))?;
-            let local_queue = LocalQueueClient::new(path)?;
-            Ok(QueueClient::LocalQueue(Box::new(local_queue)))
+            let local_queue = FileQueueClient::new(path)?;
+            Ok(QueueClient::FileQueueClient(Box::new(local_queue)))
         } else {
             Ok(QueueClient::AzureQueue(AzureQueueClient::new(queue_url)))
         }
@@ -35,17 +47,19 @@ impl QueueClient {
     pub fn get_url(self) -> Result<Url> {
         match self {
             QueueClient::AzureQueue(queue_client) => Ok(queue_client.messages_url),
-            QueueClient::LocalQueue(queue_client) => {
+            QueueClient::FileQueueClient(queue_client) => {
                 Url::from_file_path(queue_client.as_ref().path.clone())
                     .map_err(|_| anyhow!("invalid queue url"))
             }
+            QueueClient::Channel(queue_client) => Ok(queue_client.url.clone()),
         }
     }
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
         match self {
             QueueClient::AzureQueue(queue_client) => queue_client.enqueue(data).await,
-            QueueClient::LocalQueue(queue_client) => queue_client.enqueue(data).await,
+            QueueClient::FileQueueClient(queue_client) => queue_client.enqueue(data).await,
+            QueueClient::Channel(queue_client) => queue_client.enqueue(data).await,
         }
     }
 
@@ -55,7 +69,11 @@ impl QueueClient {
                 let message = queue_client.pop().await?;
                 Ok(message.map(Message::QueueMessage))
             }
-            QueueClient::LocalQueue(queue_client) => {
+            QueueClient::FileQueueClient(queue_client) => {
+                let message = queue_client.pop().await?;
+                Ok(message.map(Message::LocalQueueMessage))
+            }
+            QueueClient::Channel(queue_client) => {
                 let message = queue_client.pop().await?;
                 Ok(message.map(Message::LocalQueueMessage))
             }
@@ -66,15 +84,6 @@ impl QueueClient {
 pub enum Message {
     QueueMessage(AzureQueueMessage),
     LocalQueueMessage(LocalQueueMessage),
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Receipt {
-    // Unique ID of the associated queue message.
-    pub message_id: Uuid,
-
-    // Opaque data that licenses message deletion.
-    pub pop_receipt: String,
 }
 
 impl Message {

@@ -17,7 +17,7 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-use storage_queue::Message;
+use storage_queue::{Message, QueueClient};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -29,7 +29,7 @@ pub struct Config {
     #[serde(default)]
     pub target_env: HashMap<String, String>,
 
-    pub input_queue: Option<Url>,
+    pub input_queue: Option<QueueClient>,
     pub crashes: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
     pub unique_reports: Option<SyncedDir>,

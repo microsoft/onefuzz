@@ -100,7 +100,7 @@ struct AzureQueueMessageList {
     pub queue_message: Option<AzureQueueMessage>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AzureQueueClient {
     pub http: Client,
     pub messages_url: Url,
