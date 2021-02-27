@@ -6,8 +6,6 @@ extern crate async_trait;
 #[macro_use]
 extern crate downcast_rs;
 #[macro_use]
-extern crate serde;
-#[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate anyhow;
@@ -30,6 +28,7 @@ use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use structopt::StructOpt;
 
 pub mod agent;
+pub mod buffer;
 pub mod commands;
 pub mod config;
 pub mod coordinator;
@@ -225,7 +224,8 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 }
 
 fn init_telemetry(config: &StaticConfig) {
-    let inst_key = config.instrumentation_key;
-    let tele_key = config.telemetry_key;
-    telemetry::set_appinsights_clients(inst_key, tele_key);
+    telemetry::set_appinsights_clients(
+        config.instance_telemetry_key.clone(),
+        config.microsoft_telemetry_key.clone(),
+    );
 }

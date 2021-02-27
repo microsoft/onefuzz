@@ -6,8 +6,6 @@
 import json
 import logging
 import os
-import shutil
-import subprocess  # nosec
 import tempfile
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -24,6 +22,7 @@ from onefuzztypes.primitives import Container, Directory
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
+from .azcopy import azcopy_sync
 from .backend import wait
 from .rdp import rdp_connect
 from .ssh import ssh_connect
@@ -338,12 +337,6 @@ class DebugJob(Command):
     def download_files(self, job_id: UUID_EXPANSION, output: Directory) -> None:
         """ Download the containers by container type for each task in the specified job """
 
-        azcopy = os.environ.get("AZCOPY") or shutil.which("azcopy")
-        if not azcopy:
-            raise Exception(
-                "unable to find 'azcopy' in path or AZCOPY environment variable"
-            )
-
         to_download = {}
         tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
         if not tasks:
@@ -363,9 +356,7 @@ class DebugJob(Command):
             # security note: the src for azcopy comes from the server which is
             # trusted in this context, while the destination is provided by the
             # user
-            subprocess.check_output(  # nosec
-                [azcopy, "sync", to_download[name], outdir]
-            )
+            azcopy_sync(to_download[name], outdir)
 
 
 class DebugLog(Command):

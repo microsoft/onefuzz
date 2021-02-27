@@ -185,13 +185,11 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
     };
 
     let config = CommonConfig {
-        heartbeat_queue: None,
-        instrumentation_key: None,
-        telemetry_key: None,
         job_id,
         task_id,
         instance_id,
         setup_dir,
+        ..Default::default()
     };
     Ok(config)
 }

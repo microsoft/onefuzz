@@ -42,6 +42,9 @@ pub fn build_analysis_config(
         analysis,
         tools,
         common,
+        reports: None,
+        unique_reports: None,
+        no_repro: None,
     };
 
     Ok(config)

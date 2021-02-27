@@ -1723,6 +1723,7 @@ version = "0.1.0"
 dependencies = [
  "appinsights",
  "log",
+ "serde",
  "tokio",
  "uuid",
 ]
@@ -2008,6 +2009,16 @@ dependencies = [
  "hex",
  "lazy_static",
  "libc",
+]
+
+[[package]]
+name = "queue-file"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82adc209678e4bb644900ccf43dc11e041a940e1f0c332a66985d01e02ca7451"
+dependencies = [
+ "bytes 0.5.6",
+ "snafu",
 ]
 
 [[package]]
@@ -2453,6 +2464,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "snafu"
+version = "0.6.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eab12d3c261b2308b0d80c26fffb58d17eba81a4be97890101f416b478c79ca7"
+dependencies = [
+ "doc-comment",
+ "snafu-derive",
+]
+
+[[package]]
+name = "snafu-derive"
+version = "0.6.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1508efa03c362e23817f96cde18abed596a25219a8b2c66e8db33c03543d315b"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote 1.0.9",
+ "syn 1.0.60",
+]
+
+[[package]]
 name = "socket2"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2485,6 +2517,7 @@ dependencies = [
  "base64",
  "bytes 0.5.6",
  "derivative",
+ "queue-file",
  "regex",
  "reqwest",
  "reqwest-retry",
