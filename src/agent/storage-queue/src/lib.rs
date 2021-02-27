@@ -166,6 +166,7 @@ impl Message {
 
 fn is_empty_message(text: &str) -> bool {
     text.contains(r"<QueueMessagesList></QueueMessagesList>")
+        || text.contains(r"<QueueMessagesList />")
 }
 
 fn parse_message_id(text: &str) -> Option<Uuid> {
