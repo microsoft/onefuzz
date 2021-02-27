@@ -22,7 +22,7 @@ fn to_backoff_response(
 ) -> Result<Response, backoff::Error<anyhow::Error>> {
     fn is_transient_socket_error(error: &reqwest::Error) -> bool {
         let source = error.source();
-        while let Some(err) = source {
+        if let Some(err) = source {
             if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
                 match io_error.kind() {
                     ErrorKind::ConnectionAborted
@@ -173,6 +173,8 @@ impl SendRetry for reqwest::RequestBuilder {
 mod test {
     use super::*;
 
+    // TODO: convert to feature-gated integration test.
+    #[ignore]
     #[tokio::test]
     async fn empty_stack() -> Result<()> {
         let resp = reqwest::Client::new()

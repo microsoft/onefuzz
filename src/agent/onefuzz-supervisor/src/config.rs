@@ -6,6 +6,7 @@ use onefuzz::{
     http::{is_auth_error_code, ResponseExt},
     jitter::delay_with_jitter,
 };
+use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use reqwest_retry::SendRetry;
 use std::{
     path::{Path, PathBuf},
@@ -25,9 +26,13 @@ pub struct StaticConfig {
 
     pub onefuzz_url: Url,
 
-    pub instrumentation_key: Option<Uuid>,
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "instrumentation_key")]
+    pub instance_telemetry_key: Option<InstanceTelemetryKey>,
 
-    pub telemetry_key: Option<Uuid>,
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "telemetry_key")]
+    pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
 
     pub heartbeat_queue: Option<Url>,
 
@@ -43,9 +48,13 @@ struct RawStaticConfig {
 
     pub onefuzz_url: Url,
 
-    pub instrumentation_key: Option<Uuid>,
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "instrumentation_key")]
+    pub instance_telemetry_key: Option<InstanceTelemetryKey>,
 
-    pub telemetry_key: Option<Uuid>,
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "telemetry_key")]
+    pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
 
     pub heartbeat_queue: Option<Url>,
 
@@ -73,8 +82,8 @@ impl StaticConfig {
             credentials,
             pool_name: config.pool_name,
             onefuzz_url: config.onefuzz_url,
-            instrumentation_key: config.instrumentation_key,
-            telemetry_key: config.telemetry_key,
+            microsoft_telemetry_key: config.microsoft_telemetry_key,
+            instance_telemetry_key: config.instance_telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
             instance_id: config.instance_id,
         };
@@ -103,17 +112,19 @@ impl StaticConfig {
             None
         };
 
-        let instrumentation_key = if let Ok(key) = std::env::var("ONEFUZZ_INSTRUMENTATION_KEY") {
-            Some(Uuid::parse_str(&key)?)
-        } else {
-            None
-        };
+        let instance_telemetry_key =
+            if let Ok(key) = std::env::var("ONEFUZZ_INSTANCE_TELEMETRY_KEY") {
+                Some(InstanceTelemetryKey::new(Uuid::parse_str(&key)?))
+            } else {
+                None
+            };
 
-        let telemetry_key = if let Ok(key) = std::env::var("ONEFUZZ_TELEMETRY_KEY") {
-            Some(Uuid::parse_str(&key)?)
-        } else {
-            None
-        };
+        let microsoft_telemetry_key =
+            if let Ok(key) = std::env::var("ONEFUZZ_MICROSOFT_TELEMETRY_KEY") {
+                Some(MicrosoftTelemetryKey::new(Uuid::parse_str(&key)?))
+            } else {
+                None
+            };
 
         let credentials =
             ClientCredentials::new(client_id, client_secret, onefuzz_url.to_string(), tenant)
@@ -124,8 +135,8 @@ impl StaticConfig {
             credentials,
             pool_name,
             onefuzz_url,
-            instrumentation_key,
-            telemetry_key,
+            instance_telemetry_key,
+            microsoft_telemetry_key,
             heartbeat_queue,
         })
     }

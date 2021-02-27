@@ -140,7 +140,13 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         .setup_dir(&config.common.setup_dir)
         .tools_dir(&config.tools.path)
         .job_id(&config.common.job_id)
-        .task_id(&config.common.task_id);
+        .task_id(&config.common.task_id)
+        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
+            tester.microsoft_telemetry_key(&key)
+        })
+        .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
+            tester.instance_telemetry_key(&key)
+        });
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
 

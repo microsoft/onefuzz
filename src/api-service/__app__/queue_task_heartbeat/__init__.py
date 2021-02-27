@@ -30,7 +30,7 @@ def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
             task.heartbeat = datetime.utcnow()
             task.save()
     except ValidationError:
-        logging.error("invalid task heartbat: %s", raw)
+        logging.error("invalid task heartbeat: %s", raw)
 
     events = get_events()
     if events:
