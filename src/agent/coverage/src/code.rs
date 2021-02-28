@@ -174,16 +174,18 @@ impl ModuleIndex {
                 // which we can use to index into `data`.
                 let sym_file_offset = section.sh_offset + sym_section_offset;
 
-                let entry = Symbol {
-                    name,
-                    file_offset: sym_file_offset,
-                    image_offset,
-                    size: sym.st_size,
-                };
+                let symbol = Symbol::new(name, sym_file_offset, image_offset, sym.st_size);
 
-                let inserted = symbols.index.insert(entry.clone());
-                if !inserted {
-                    log::error!("failed to insert symbol index entry: {:x?}", entry);
+                match symbol {
+                    Ok(entry) => {
+                        let inserted = symbols.index.insert(entry.clone());
+                        if !inserted {
+                            log::error!("failed to insert symbol index entry: {:x?}", entry);
+                        }
+                    }
+                    Err(err) => {
+                        log::error!("invalid symbol: err = {}", err);
+                    }
                 }
             }
         }
