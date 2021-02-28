@@ -111,14 +111,14 @@ impl Recorder {
     fn on_breakpoint(&mut self, tracee: &mut Tracee) -> Result<()> {
         let mut regs = tracee.registers()?;
 
-        log::trace!(
-            "hit breakpoint: pc = {:x}, pid = {}",
-            regs.rip - 1,
-            tracee.pid
-        );
-
         // Adjust for synthetic `int3`.
         let pc = regs.rip - 1;
+
+        log::trace!(
+            "hit breakpoint: pc = {:x}, pid = {}",
+            pc,
+            tracee.pid
+        );
 
         if self.breakpoints.clear(tracee, pc)? {
             let images = self
