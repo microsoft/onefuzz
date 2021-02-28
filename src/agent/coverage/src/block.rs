@@ -23,18 +23,21 @@ pub struct CommandBlockCov {
 }
 
 impl CommandBlockCov {
-    /// Return early with `false` if the module did not need to be inserted.
-    ///
-    /// Else initializes the block coverage map for the module.
+    /// Returns `true` if the module was newly-inserted (which initializes its
+    /// block coverage map). Otherwise, returns `false`, and no re-computation
+    /// is performed.
     pub fn insert(&mut self, path: &ModulePath, offsets: impl Iterator<Item = u64>) -> bool {
-        if self.modules.contains_key(path) {
-            return false;
+        use std::collections::btree_map::Entry;
+
+        match self.modules.entry(path.clone()) {
+            Entry::Occupied(_entry) => {
+                false
+            },
+            Entry::Vacant(entry) => {
+                entry.insert(ModuleCov::new(offsets));
+                true
+            },
         }
-
-        let cov = ModuleCov::new(offsets);
-        self.modules.insert(path.clone(), cov);
-
-        true
     }
 
     pub fn increment(&mut self, path: &ModulePath, offset: u64) -> Result<()> {
