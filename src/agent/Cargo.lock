@@ -399,6 +399,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "debugger",
+ "dunce",
  "env_logger",
  "fixedbitset",
  "goblin",

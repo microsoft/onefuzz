@@ -43,7 +43,7 @@ impl ModulePath {
     }
 
     pub fn existing(path: impl AsRef<Path>) -> Result<Self> {
-        let path = path.as_ref().canonicalize()?;
+        let path = dunce::canonicalize(path)?;
         Self::new(path)
     }
 
