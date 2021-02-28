@@ -30,13 +30,11 @@ impl CommandBlockCov {
         use std::collections::btree_map::Entry;
 
         match self.modules.entry(path.clone()) {
-            Entry::Occupied(_entry) => {
-                false
-            },
+            Entry::Occupied(_entry) => false,
             Entry::Vacant(entry) => {
                 entry.insert(ModuleCov::new(offsets));
                 true
-            },
+            }
         }
     }
 

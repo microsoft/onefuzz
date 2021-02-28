@@ -78,7 +78,11 @@ fn main() -> Result<()> {
 
             let marker = if block.count == 0 { " " } else { "x" };
 
-            let module = recorder.modules.cached.get(module_path).expect("unreachable: module with coverage not in recorder cache");
+            let module = recorder
+                .modules
+                .cached
+                .get(module_path)
+                .expect("unreachable: module with coverage not in recorder cache");
 
             if let Some(sym) = module.module.symbols.find(block.offset) {
                 let sym_offset = block.offset - sym.image_offset;

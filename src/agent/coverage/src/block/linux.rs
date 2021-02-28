@@ -114,11 +114,7 @@ impl Recorder {
         // Adjust for synthetic `int3`.
         let pc = regs.rip - 1;
 
-        log::trace!(
-            "hit breakpoint: pc = {:x}, pid = {}",
-            pc,
-            tracee.pid
-        );
+        log::trace!("hit breakpoint: pc = {:x}, pid = {}", pc, tracee.pid);
 
         if self.breakpoints.clear(tracee, pc)? {
             let images = self
@@ -153,7 +149,10 @@ impl Recorder {
         log::info!("module load: {}", image.path());
 
         // Fetch disassembled module info via cache.
-        let info = self.modules.fetch(image.path())?.ok_or_else(|| format_err!("unable to fetch info for module: {}", image.path()))?;
+        let info = self
+            .modules
+            .fetch(image.path())?
+            .ok_or_else(|| format_err!("unable to fetch info for module: {}", image.path()))?;
 
         // Collect blocks allowed by the symbol filter.
         let mut allowed_blocks = vec![];

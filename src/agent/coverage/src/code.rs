@@ -248,7 +248,12 @@ impl Symbol {
             bail!("symbol size must not overflow image offset");
         }
 
-        Ok(Self { name, file_offset, image_offset, size })
+        Ok(Self {
+            name,
+            file_offset,
+            image_offset,
+            size,
+        })
     }
 
     pub fn file_range(&self) -> Range<u64> {

@@ -24,7 +24,11 @@ impl<'a> ModuleDisassembler<'a> {
 
         for symbol in self.module.symbols.iter() {
             if let Err(err) = self.insert_symbol_blocks(&mut blocks, symbol) {
-                log::error!("error disassembling blocks for symbol, err = {}, symbol = {:x?}", err, symbol);
+                log::error!(
+                    "error disassembling blocks for symbol, err = {}, symbol = {:x?}",
+                    err,
+                    symbol
+                );
             }
         }
 
@@ -44,7 +48,11 @@ impl<'a> ModuleDisassembler<'a> {
         let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
 
         // Compute the VA of the symbol, assuming preferred module base VA.
-        let va = self.module.base_va.checked_add(symbol.image_offset).ok_or_else(|| format_err!("symbol image offset overflows base VA"))?;
+        let va = self
+            .module
+            .base_va
+            .checked_add(symbol.image_offset)
+            .ok_or_else(|| format_err!("symbol image offset overflows base VA"))?;
         decoder.set_ip(va);
 
         // Function entry is a leader.
