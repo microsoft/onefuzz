@@ -23,19 +23,20 @@ impl<'a> ModuleDisassembler<'a> {
         let mut blocks = BTreeSet::new();
 
         for symbol in self.module.symbols.iter() {
-            let sym_blocks = self.find_symbol_blocks(symbol);
-            blocks.extend(sym_blocks);
+            self.insert_symbol_blocks(&mut blocks, symbol);
         }
 
         blocks
     }
 
     /// Find all entry points for blocks contained within the region of `symbol`.
-    pub fn find_symbol_blocks(&self, symbol: &Symbol) -> BTreeSet<u64> {
+    fn insert_symbol_blocks(&self, blocks: &mut BTreeSet<u64>, symbol: &Symbol) {
         // Slice the symbol's instruction data from the module file data.
-        let data = match self.data.get(symbol.file_range_usize()) {
-            Some(data) => data,
-            None => return BTreeSet::new(),
+        let data = if let Some(data) = self.data.get(symbol.file_range_usize()) {
+            data
+        } else {
+            log::error!("data cannot contain file region for symbol = {:?}", symbol);
+            return;
         };
 
         // Initialize a decoder for the current symbol.
@@ -45,12 +46,8 @@ impl<'a> ModuleDisassembler<'a> {
         let va = self.module.base_va + symbol.image_offset;
         decoder.set_ip(va);
 
-        // Contains virtual addrs of block entry points, assuming `module` is
-        // loaded at `module.base_va`.
-        let mut leaders = BTreeSet::new();
-
         // Function entry is a leader.
-        leaders.insert(va);
+        blocks.insert(symbol.image_offset);
 
         let mut inst = Instruction::default();
         while decoder.can_decode() {
@@ -61,7 +58,7 @@ impl<'a> ModuleDisassembler<'a> {
 
                 // The branch target is a leader, if it is intra-procedural.
                 if symbol.contains_image_offset(offset) {
-                    leaders.insert(target_va);
+                    blocks.insert(offset);
                 }
 
                 // Only mark the fallthrough instruction as a leader if the branch is conditional.
@@ -78,14 +75,12 @@ impl<'a> ModuleDisassembler<'a> {
                         // We decoded the current instruction, so the decoder offset is
                         // set to the next instruction.
                         let next = decoder.ip() as u64;
-                        leaders.insert(next);
+                        let next_offset = next - self.module.base_va;
+                        blocks.insert(next_offset);
                     }
                 }
             }
         }
-
-        // Compute VAs to image offsets.
-        leaders.iter().map(|va| va - self.module.base_va).collect()
     }
 }
 
