@@ -12,14 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Agent/Proxy/Supervisor: Renamed the Application Insights token names used for telemetry to `microsoft_telemetry_key` and `instance_telemetry_key` and the function that gated telemetry sharing to `can_share_with_microsoft` to make the telemetry implementation easier to understand. [#587](https://github.com/microsoft/onefuzz/pull/587)
-* Deployment: Updated multiple Python dependencies. [#596](https://github.com/microsoft/onefuzz/pull/426)
+* Deployment: Updated multiple Python dependencies. [#596](https://github.com/microsoft/onefuzz/pull/596)
 * Service: Updated multiple Python dependencies. Addresses potential security issue [CVE-2020-28493](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-28493) [#595](https://github.com/microsoft/onefuzz/pull/595)
-* Service: No longer allows a node that is part of a scaleset or pool that is scheduled to be shut down. [#583](https://github.com/microsoft/onefuzz/pull/583)
+* Service: Don't let nodes run new tasks if they are part of a scaleset or pool that is scheduled to be shut down. [#583](https://github.com/microsoft/onefuzz/pull/583)
 
 ### Fixed
 * Service: Fixed the queries used to identify nodes running outdated OneFuzz releases. [#597](https://github.com/microsoft/onefuzz/pull/597)
-* Agent: Fixed an issue that would stop an agent or supervisor from performing work in upon HTTPS request has failed in certain conditions. [#603](https://github.com/microsoft/onefuzz/pull/603)
-* Agent: Fixed an issue that would stop a task if the task printed significant amount of data to STDOUT or STDERR.  [#588](https://github.com/microsoft/onefuzz/pull/588)
+* Agent: Fixed an issue that would stop an agent or supervisor from performing work if an HTTPS request has failed in certain conditions. [#603](https://github.com/microsoft/onefuzz/pull/603)
+* Agent: Fixed an issue that would stop a task if the task printed a significant amount of data to STDOUT or STDERR.  [#588](https://github.com/microsoft/onefuzz/pull/588)
 * Deployment: Address deployment failures relating to cross-region Azure Active Directory resource creation delays. [#585](https://github.com/microsoft/onefuzz/pull/585)
 
 ## 2.6.0
