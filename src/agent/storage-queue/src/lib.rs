@@ -51,7 +51,7 @@ impl QueueClient {
             .context("storage queue enqueue failed")?;
         let _ = r
             .error_for_status()
-            .context("storage queue enqueue failed")?;
+            .context("storage queue enqueue failed with error")?;
         Ok(())
     }
 
@@ -61,9 +61,9 @@ impl QueueClient {
             .get(self.messages_url())
             .send_retry_default()
             .await
-            .context("storage queue delete failed")?
+            .context("storage queue pop failed")?
             .error_for_status()
-            .context("storage queue pop failed")?;
+            .context("storage queue pop failed with error")?;
         let text = response
             .text()
             .await
@@ -165,7 +165,9 @@ impl Message {
 }
 
 fn is_empty_message(text: &str) -> bool {
-    text.contains(r"<QueueMessagesList></QueueMessagesList>")
+    regex::Regex::new(r".*<QueueMessagesList>[\s\n\r]*</QueueMessagesList>")
+        .unwrap()
+        .is_match(&text)
         || text.contains(r"<QueueMessagesList />")
 }
 

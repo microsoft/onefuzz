@@ -149,7 +149,7 @@ impl WorkQueue {
         self.registration
             .renew()
             .await
-            .context("unable to renew registration")?;
+            .context("unable to renew registration in workqueue")?;
         let url = self.registration.dynamic_config.work_queue.clone();
         self.queue = QueueClient::new(url);
         Ok(())
@@ -162,7 +162,9 @@ impl WorkQueue {
         // it was just due to a stale SAS URL.
         if let Err(err) = &msg {
             if is_auth_error(err) {
-                self.renew().await.context("unable to renew registration")?;
+                self.renew()
+                    .await
+                    .context("unable to renew registration in poll")?;
                 msg = self.queue.pop().await;
             }
         }
