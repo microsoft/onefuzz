@@ -97,6 +97,7 @@ pub struct ModuleIndex {
 }
 
 impl ModuleIndex {
+    #[cfg(target_os = "linux")]
     pub fn parse_elf(path: ModulePath, data: &[u8]) -> Result<Self> {
         use elf::program_header::PT_LOAD;
 

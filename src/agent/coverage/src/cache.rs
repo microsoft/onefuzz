@@ -45,6 +45,7 @@ pub struct ModuleInfo {
 }
 
 impl ModuleInfo {
+    #[cfg(target_os = "linux")]
     pub fn new_elf(path: &ModulePath) -> Result<Self> {
         let data = std::fs::read(path)?;
         let module = ModuleIndex::parse_elf(path.clone(), &data)?;
