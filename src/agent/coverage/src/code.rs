@@ -263,7 +263,11 @@ pub struct SymbolFilter {
     /// Pre-compiled regex set for fast matching.
     regexes: RegexSet,
 
-    /// Maps module name regexes to filters for symbol names.
+    /// Maps module names (via regexes) to filters for the symbol names provided
+    /// by the matched module(s).
+    ///
+    /// The integer key to this map is an index into the `regexes` field, and so
+    /// identifies a (module-matching) regex in that set.
     filters: BTreeMap<usize, Filter>,
 }
 
