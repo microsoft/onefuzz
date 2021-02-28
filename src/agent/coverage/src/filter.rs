@@ -36,18 +36,17 @@ pub struct Allow {
 }
 
 impl Allow {
-    /// Build a filter that allows all names.
-    pub fn all() -> Self {
-        let regexes = RegexSet::new(&[".*"]).unwrap();
-        Self { regexes }
-    }
-
     /// Build a filter that allows only the given patterns.
     ///
     /// If `exprs` is empty, then no names will be allowed.
     pub fn new(exprs: &[impl AsRef<str>]) -> Result<Self> {
         let regexes = RegexSet::new(exprs)?;
         Ok(Self { regexes })
+    }
+
+    /// Build a filter that allows all names.
+    pub fn all() -> Self {
+        Self::new(&[".*"]).expect("error constructing filter from static, valid regex")
     }
 
     /// Returns `true` if `name` is allowed.
@@ -71,19 +70,18 @@ pub struct Deny {
 }
 
 impl Deny {
-    /// Build a filter that allows all names.
-    pub fn none() -> Self {
-        let empty: &[&str] = &[];
-        let regexes = RegexSet::new(empty).unwrap();
-        Self { regexes }
-    }
-
     /// Build a filter that denies only the given patterns.
     ///
     /// If `exprs` is empty, then no names will be denied.
     pub fn new(exprs: &[impl AsRef<str>]) -> Result<Self> {
         let regexes = RegexSet::new(exprs)?;
         Ok(Self { regexes })
+    }
+
+    /// Build a filter that allows all names.
+    pub fn none() -> Self {
+        let empty: &[&str] = &[];
+        Self::new(empty).expect("error constructing filter from static, empty regex set")
     }
 
     /// Returns `true` if `name` is allowed.
