@@ -235,6 +235,12 @@ impl Symbol {
         lo..hi
     }
 
+    pub fn file_range_usize(&self) -> Range<usize> {
+        let lo = self.file_offset as usize;
+        let hi = lo + (self.size as usize);
+        lo..hi
+    }
+
     pub fn image_range(&self) -> Range<u64> {
         let lo = self.image_offset;
         let hi = lo + self.size;

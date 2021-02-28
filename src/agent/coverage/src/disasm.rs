@@ -33,10 +33,9 @@ impl<'a> ModuleDisassembler<'a> {
     /// Find all entry points for blocks contained within the region of `symbol`.
     pub fn find_symbol_blocks(&self, symbol: &Symbol) -> BTreeSet<u64> {
         // Slice the symbol's instruction data from the module file data.
-        let data = {
-            let lo = symbol.file_offset as usize;
-            let hi = lo + (symbol.size as usize);
-            &self.data[lo..hi]
+        let data = match self.data.get(symbol.file_range_usize()) {
+            Some(data) => data,
+            None => return BTreeSet::new(),
         };
 
         // Initialize a decoder for the current symbol.
