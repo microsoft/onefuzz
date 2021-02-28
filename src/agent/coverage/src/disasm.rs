@@ -3,7 +3,7 @@
 
 use std::collections::BTreeSet;
 
-use anyhow::Result;
+use anyhow::{bail, format_err, Result};
 use iced_x86::{Decoder, DecoderOptions, Instruction};
 
 use crate::code::{ModuleIndex, Symbol};
@@ -23,27 +23,28 @@ impl<'a> ModuleDisassembler<'a> {
         let mut blocks = BTreeSet::new();
 
         for symbol in self.module.symbols.iter() {
-            self.insert_symbol_blocks(&mut blocks, symbol);
+            if let Err(err) = self.insert_symbol_blocks(&mut blocks, symbol) {
+                log::error!("error disassembling blocks for symbol, err = {}, symbol = {:x?}", err, symbol);
+            }
         }
 
         blocks
     }
 
     /// Find all entry points for blocks contained within the region of `symbol`.
-    fn insert_symbol_blocks(&self, blocks: &mut BTreeSet<u64>, symbol: &Symbol) {
+    fn insert_symbol_blocks(&self, blocks: &mut BTreeSet<u64>, symbol: &Symbol) -> Result<()> {
         // Slice the symbol's instruction data from the module file data.
         let data = if let Some(data) = self.data.get(symbol.file_range_usize()) {
             data
         } else {
-            log::error!("data cannot contain file region for symbol = {:?}", symbol);
-            return;
+            bail!("data cannot contain file region for symbol");
         };
 
         // Initialize a decoder for the current symbol.
         let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
 
         // Compute the VA of the symbol, assuming preferred module base VA.
-        let va = self.module.base_va + symbol.image_offset;
+        let va = self.module.base_va.checked_add(symbol.image_offset).ok_or_else(|| format_err!("symbol image offset overflows base VA"))?;
         decoder.set_ip(va);
 
         // Function entry is a leader.
@@ -81,6 +82,8 @@ impl<'a> ModuleDisassembler<'a> {
                 }
             }
         }
+
+        Ok(())
     }
 }
 
