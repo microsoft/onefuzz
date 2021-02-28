@@ -5,6 +5,7 @@ use std::borrow::Borrow;
 use std::collections::{BTreeMap, HashMap};
 use std::ffi::OsStr;
 use std::fmt;
+use std::ops::Range;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, format_err, Result};
@@ -228,16 +229,24 @@ pub struct Symbol {
 }
 
 impl Symbol {
-    pub fn contains_file_offset(&self, offset: u64) -> bool {
+    pub fn file_range(&self) -> Range<u64> {
         let lo = self.file_offset;
         let hi = lo + self.size;
-        (lo..hi).contains(&offset)
+        lo..hi
+    }
+
+    pub fn image_range(&self) -> Range<u64> {
+        let lo = self.image_offset;
+        let hi = lo + self.size;
+        lo..hi
+    }
+
+    pub fn contains_file_offset(&self, offset: u64) -> bool {
+        self.file_range().contains(&offset)
     }
 
     pub fn contains_image_offset(&self, offset: u64) -> bool {
-        let lo = self.image_offset;
-        let hi = lo + self.size;
-        (lo..hi).contains(&offset)
+        self.image_range().contains(&offset)
     }
 }
 
