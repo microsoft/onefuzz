@@ -200,7 +200,7 @@ class JobHelper:
 
             self.logger.info("uploading inputs from zip: `%s`" % path)
             self.onefuzz.containers.files.upload_dir(
-                self.containers[ContainerType.inputs], tmp_dir
+                self.containers[ContainerType.inputs], Directory(tmp_dir)
             )
 
     @classmethod

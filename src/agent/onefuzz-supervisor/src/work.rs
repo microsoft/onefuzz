@@ -146,7 +146,10 @@ impl WorkQueue {
     }
 
     async fn renew(&mut self) -> Result<()> {
-        self.registration.renew().await?;
+        self.registration
+            .renew()
+            .await
+            .context("unable to renew registration in workqueue")?;
         let url = self.registration.dynamic_config.work_queue.clone();
         self.queue = QueueClient::new(url);
         Ok(())
@@ -159,25 +162,27 @@ impl WorkQueue {
         // it was just due to a stale SAS URL.
         if let Err(err) = &msg {
             if is_auth_error(err) {
-                self.renew().await?;
+                self.renew()
+                    .await
+                    .context("unable to renew registration in poll")?;
                 msg = self.queue.pop().await;
             }
         }
 
         // Now we've had a chance to ensure our SAS URL is fresh. For any other
         // error, including another auth error, bail.
-        let msg = msg?;
+        let msg = msg.context("unable to check work queue")?;
 
-        if msg.is_none() {
-            return Ok(None);
-        }
-
-        let msg = msg.unwrap();
-        let work_set = serde_json::from_slice(msg.data())?;
-        let receipt = Receipt(msg.receipt);
-        let msg = Message { receipt, work_set };
-
-        Ok(Some(msg))
+        let result = match msg {
+            Some(msg) => {
+                let work_set =
+                    serde_json::from_slice(msg.data()).context("unable to parse WorkSet")?;
+                let receipt = Receipt(msg.receipt);
+                Some(Message { receipt, work_set })
+            }
+            None => None,
+        };
+        Ok(result)
     }
 
     pub async fn claim(&mut self, receipt: Receipt) -> Result<()> {
@@ -189,8 +194,11 @@ impl WorkQueue {
         // it was just due to a stale SAS URL.
         if let Err(err) = &result {
             if is_auth_error(err) {
-                self.renew().await?;
-                self.queue.delete(receipt).await?;
+                self.renew().await.context("unable to renew registration")?;
+                self.queue
+                    .delete(receipt)
+                    .await
+                    .context("unable to claim work from queue")?;
             }
         }
 

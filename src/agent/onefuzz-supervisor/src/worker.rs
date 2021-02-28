@@ -1,17 +1,21 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-
 use std::{
     path::{Path, PathBuf},
-    process::{Child, Command, Stdio},
+    process::{Child, ChildStderr, ChildStdout, Command, Stdio},
+    thread::{self, JoinHandle},
 };
 
-use anyhow::{Context as AnyhowContext, Result};
+use anyhow::{format_err, Context as AnyhowContext, Result};
 use downcast_rs::Downcast;
 use onefuzz::process::{ExitStatus, Output};
 use tokio::fs;
 
+use crate::buffer::TailBuffer;
 use crate::work::*;
+
+// Max length of captured output streams from worker child processes.
+const MAX_TAIL_LEN: usize = 4096;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -231,24 +235,118 @@ impl IWorkerRunner for WorkerRunner {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
-        let child = cmd.spawn().context("onefuzz-agent failed to start")?;
-        let child = Box::new(child);
-
-        Ok(child)
+        Ok(Box::new(RedirectedChild::spawn(cmd)?))
     }
 }
 
-impl IWorkerChild for Child {
+/// Child process with redirected output streams, tailed by two worker threads.
+struct RedirectedChild {
+    /// The child process.
+    child: Child,
+
+    /// Worker threads which continuously read from the redirected streams.
+    streams: Option<StreamReaderThreads>,
+}
+
+impl RedirectedChild {
+    pub fn spawn(mut cmd: Command) -> Result<Self> {
+        // Make sure we capture the child's output streams.
+        cmd.stderr(Stdio::piped());
+        cmd.stdout(Stdio::piped());
+
+        let mut child = cmd.spawn().context("onefuzz-agent failed to start")?;
+
+        // Guaranteed by the above.
+        let stderr = child.stderr.take().unwrap();
+        let stdout = child.stdout.take().unwrap();
+        let streams = Some(StreamReaderThreads::new(stderr, stdout));
+
+        Ok(Self { child, streams })
+    }
+}
+
+/// Worker threads that tail the redirected output streams of a running child process.
+struct StreamReaderThreads {
+    stderr: JoinHandle<TailBuffer>,
+    stdout: JoinHandle<TailBuffer>,
+}
+
+struct CapturedStreams {
+    stderr: String,
+    stdout: String,
+}
+
+impl StreamReaderThreads {
+    pub fn new(mut stderr: ChildStderr, mut stdout: ChildStdout) -> Self {
+        use std::io::Read;
+
+        let stderr = thread::spawn(move || {
+            let mut buf = TailBuffer::new(MAX_TAIL_LEN);
+            let mut tmp = [0u8; MAX_TAIL_LEN];
+
+            while let Ok(count) = stderr.read(&mut tmp) {
+                if count == 0 {
+                    break;
+                }
+                if let Err(err) = std::io::copy(&mut &tmp[..count], &mut buf) {
+                    log::error!("error copying to circular buffer: {}", err);
+                    break;
+                }
+            }
+
+            buf
+        });
+
+        let stdout = thread::spawn(move || {
+            let mut buf = TailBuffer::new(MAX_TAIL_LEN);
+            let mut tmp = [0u8; MAX_TAIL_LEN];
+
+            while let Ok(count) = stdout.read(&mut tmp) {
+                if count == 0 {
+                    break;
+                }
+
+                if let Err(err) = std::io::copy(&mut &tmp[..count], &mut buf) {
+                    log::error!("error copying to circular buffer: {}", err);
+                    break;
+                }
+            }
+
+            buf
+        });
+
+        Self { stderr, stdout }
+    }
+
+    pub fn join(self) -> Result<CapturedStreams> {
+        let stderr = self
+            .stderr
+            .join()
+            .map_err(|_| format_err!("stderr tail thread panicked"))?
+            .to_string_lossy();
+        let stdout = self
+            .stdout
+            .join()
+            .map_err(|_| format_err!("stdout tail thread panicked"))?
+            .to_string_lossy();
+
+        Ok(CapturedStreams { stderr, stdout })
+    }
+}
+
+impl IWorkerChild for RedirectedChild {
     fn try_wait(&mut self) -> Result<Option<Output>> {
-        let output = if let Some(exit_status) = self.try_wait()? {
+        let output = if let Some(exit_status) = self.child.try_wait()? {
             let exit_status = exit_status.into();
-            let stderr = read_to_string(&mut self.stderr)?;
-            let stdout = read_to_string(&mut self.stdout)?;
+            let streams = self.streams.take();
+            let streams = streams
+                .ok_or_else(|| format_err!("onefuzz-agent streams not captured"))?
+                .join()?;
 
             Some(Output {
                 exit_status,
-                stderr,
-                stdout,
+                stderr: streams.stderr,
+                stdout: streams.stdout,
             })
         } else {
             None
@@ -260,7 +358,7 @@ impl IWorkerChild for Child {
     fn kill(&mut self) -> Result<()> {
         use std::io::ErrorKind;
 
-        let killed = self.kill();
+        let killed = self.child.kill();
 
         if let Err(err) = &killed {
             if let ErrorKind::InvalidInput = err.kind() {
@@ -271,15 +369,6 @@ impl IWorkerChild for Child {
 
         Ok(())
     }
-}
-
-fn read_to_string(stream: &mut Option<impl std::io::Read>) -> Result<String> {
-    let mut data = Vec::new();
-    if let Some(stream) = stream {
-        stream.read_to_end(&mut data)?;
-    }
-
-    Ok(String::from_utf8_lossy(&data).into_owned())
 }
 
 #[cfg(test)]
