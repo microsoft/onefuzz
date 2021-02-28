@@ -229,15 +229,41 @@ pub struct Symbol {
 }
 
 impl Symbol {
+    pub fn new(name: String, file_offset: u64, image_offset: u64, size: u64) -> Result<Self> {
+        if name.is_empty() {
+            bail!("symbol name cannot be empty");
+        }
+
+        if size == 0 {
+            bail!("symbol size must be nonzero");
+        }
+
+        if file_offset.checked_add(size).is_none() {
+            bail!("symbol size must not overflow file offset");
+        }
+
+        if image_offset.checked_add(size).is_none() {
+            bail!("symbol size must not overflow image offset");
+        }
+
+        Ok(Self { name, file_offset, image_offset, size })
+    }
+
     pub fn file_range(&self) -> Range<u64> {
         let lo = self.file_offset;
+
+        // Overflow checked in constructor.
         let hi = lo + self.size;
+
         lo..hi
     }
 
     pub fn file_range_usize(&self) -> Range<usize> {
         let lo = self.file_offset as usize;
+
+        // Overflow checked in constructor.
         let hi = lo + (self.size as usize);
+
         lo..hi
     }
 
