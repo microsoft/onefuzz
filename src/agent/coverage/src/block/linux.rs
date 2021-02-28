@@ -153,13 +153,7 @@ impl Recorder {
         log::info!("module load: {}", image.path());
 
         // Fetch disassembled module info via cache.
-        let info = self.modules.fetch(image.path())?;
-
-        if info.is_none() {
-            anyhow::bail!("unable to fetch info for module: {}", image.path());
-        }
-
-        let info = info.unwrap();
+        let info = self.modules.fetch(image.path()).ok_or_else(|| format_err!("unable to fetch info for module: {}", image.path()))?;
 
         // Collect blocks allowed by the symbol filter.
         let mut allowed_blocks = vec![];
