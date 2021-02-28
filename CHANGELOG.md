@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI: Added `onefuzz containers files download_dir` to enable downloading the contents of a container.  [#598](https://github.com/microsoft/onefuzz/pull/598)
 * Agent: Added `microsoft_telemetry_key` and `instance_telemetry_key` and expanded the availability `reports_dir` in [configuration value expansion](docs/command-replacements.md). [#561](https://github.com/microsoft/onefuzz/pull/561)
 * Agent/Service: Added `job_id` to agent-based heartbeats. [#594](https://github.com/microsoft/onefuzz/pull/594)
+* Agent/Proxy/Supervisor: Added additional context to error conditions during Storage Queue interactions and service interactions to improve debugging.  [#601](https://github.com/microsoft/onefuzz/pull/601)
 
 ### Changed
 * Agent/Proxy/Supervisor: Renamed the Application Insights token names used for telemetry to `microsoft_telemetry_key` and `instance_telemetry_key` and the function that gated telemetry sharing to `can_share_with_microsoft` to make the telemetry implementation easier to understand. [#587](https://github.com/microsoft/onefuzz/pull/587)
