@@ -10,9 +10,15 @@ mod intel;
 pub mod pe;
 
 pub mod block;
+
+#[cfg(target_os = "linux")]
 pub mod cache;
+
 pub mod code;
+
+#[cfg(target_os = "linux")]
 pub mod disasm;
+
 pub mod filter;
 mod region;
 

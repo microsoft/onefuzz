@@ -8,8 +8,7 @@ use std::fmt;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, format_err, Result};
-use goblin::elf;
+use anyhow::{bail, Result};
 use regex::RegexSet;
 use serde::{Deserialize, Serialize};
 
@@ -100,7 +99,8 @@ pub struct ModuleIndex {
 impl ModuleIndex {
     #[cfg(target_os = "linux")]
     pub fn parse_elf(path: ModulePath, data: &[u8]) -> Result<Self> {
-        use elf::program_header::PT_LOAD;
+        use anyhow::format_err;
+        use goblin::elf::{self, program_header::PT_LOAD};
 
         let object = elf::Elf::parse(data)?;
 
