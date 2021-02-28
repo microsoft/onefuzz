@@ -56,7 +56,7 @@ impl ModulePath {
     }
 
     pub fn name(&self) -> &OsStr {
-        // Unwrap checked in ctor.
+        // Unwrap checked in constructor.
         self.path.file_name().unwrap()
     }
 
@@ -289,7 +289,7 @@ impl SymbolFilter {
         //
         // If many rules would apply, the first rule is used.
         if let Some(idx) = rules.iter().next() {
-            // Guaranteed by ctor.
+            // Guaranteed by constructor.
             let filter = self.filters.get(&idx).unwrap();
 
             filter.is_allowed(name)
