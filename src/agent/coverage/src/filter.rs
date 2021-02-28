@@ -100,7 +100,7 @@ mod regex_set {
     use std::fmt;
 
     use regex::RegexSet;
-    use serde::de::{Deserializer, SeqAccess, Visitor};
+    use serde::de::{self, Deserializer, SeqAccess, Visitor};
     use serde::ser::{SerializeSeq, Serializer};
 
     pub fn serialize<S>(regexes: &RegexSet, ser: S) -> Result<S::Ok, S::Error>
@@ -134,7 +134,7 @@ mod regex_set {
                 patterns.push(p);
             }
 
-            let regexes = RegexSet::new(patterns).unwrap();
+            let regexes = RegexSet::new(patterns).map_err(de::Error::custom)?;
 
             Ok(regexes)
         }
