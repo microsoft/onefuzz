@@ -173,9 +173,9 @@ pub enum EventData {
     MissedInstructionCode(IntelInstructionCode),
     #[cfg(feature = "intel_instructions")]
     MissedInstructionMnemonic(IntelInstructionMnemonic),
-#[cfg(feature = "z3")]
+    #[cfg(feature = "z3")]
     Z3ErrorCode(Z3ErrorCode),
-#[cfg(feature = "z3")]
+    #[cfg(feature = "z3")]
     Z3ErrorString(String),
     SymexTimeout(u64),
 }
@@ -215,9 +215,9 @@ impl EventData {
             Self::ToolName(x) => ("tool_name", x.to_owned()),
             Self::Region(x) => ("region", x.to_owned()),
             Self::Role(x) => ("role", x.as_str().to_owned()),
-    #[cfg(feature = "intel_instructions")]
+            #[cfg(feature = "intel_instructions")]
             Self::MissedInstructionCode(x) => ("missed_instruction_code", format!("{:?}", x)),
-    #[cfg(feature = "intel_instructions")]
+            #[cfg(feature = "intel_instructions")]
             Self::MissedInstructionMnemonic(x) => {
                 ("missed_instruction_mnemonic", format!("{:?}", x))
             }
@@ -251,9 +251,9 @@ impl EventData {
                 ("divergence_path_expected_index", x.to_string())
             }
             Self::DivergancePathActualIndex(x) => ("divergence_path_actual_index", x.to_string()),
-#[cfg(feature = "z3")]
+            #[cfg(feature = "z3")]
             Self::Z3ErrorCode(x) => ("z3_error_code", z3_error_as_str(x).to_owned()),
-#[cfg(feature = "z3")]
+            #[cfg(feature = "z3")]
             Self::Z3ErrorString(x) => ("z3_error_string", x.to_owned()),
             Self::SymexTimeout(x) => ("symex_timeout", x.to_string()),
         }
@@ -316,13 +316,13 @@ impl EventData {
             Self::DivergancePathLength(_) => true,
             Self::DivergancePathExpectedIndex(_) => true,
             Self::DivergancePathActualIndex(_) => true,
-    #[cfg(feature = "intel_instructions")]
+            #[cfg(feature = "intel_instructions")]
             Self::MissedInstructionCode(_) => true,
-    #[cfg(feature = "intel_instructions")]
+            #[cfg(feature = "intel_instructions")]
             Self::MissedInstructionMnemonic(_) => true,
-#[cfg(feature = "z3")]
+            #[cfg(feature = "z3")]
             Self::Z3ErrorCode(_) => true,
-#[cfg(feature = "z3")]
+            #[cfg(feature = "z3")]
             Self::Z3ErrorString(_) => false,
             Self::SymexTimeout(_) => true,
         }
