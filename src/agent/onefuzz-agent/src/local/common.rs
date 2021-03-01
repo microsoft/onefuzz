@@ -45,6 +45,9 @@ pub const ANALYZER_EXE: &str = "analyzer_exe";
 pub const ANALYZER_OPTIONS: &str = "analyzer_options";
 pub const ANALYZER_ENV: &str = "analyzer_env";
 pub const ANALYSIS_DIR: &str = "analysis_dir";
+pub const ANALYSIS_INPUTS: &str = "analysis_inputs";
+pub const ANALYSIS_UNIQUE_INPUTS: &str = "analysis_unique_inputs";
+pub const PRESERVE_EXISTING_OUTPUTS: &str = "preserve_existing_outputs";
 
 // pub const UNIQUE_INPUTS: &str = "unique_inputs";
 

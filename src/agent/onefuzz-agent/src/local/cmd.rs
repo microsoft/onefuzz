@@ -6,7 +6,8 @@ use clap::{App, SubCommand};
 
 use crate::local::{
     common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
-    libfuzzer, libfuzzer_coverage, libfuzzer_crash_report, libfuzzer_fuzz, radamsa,
+    libfuzzer, libfuzzer_coverage, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge,
+    radamsa,
 };
 
 const RADAMSA: &str = "radamsa";
@@ -14,6 +15,7 @@ const LIBFUZZER: &str = "libfuzzer";
 const LIBFUZZER_FUZZ: &str = "libfuzzer-fuzz";
 const LIBFUZZER_CRASH_REPORT: &str = "libfuzzer-crash-report";
 const LIBFUZZER_COVERAGE: &str = "libfuzzer-coverage";
+const LIBFUZZER_MERGE: &str = "libfuzzer_merge";
 const GENERIC_CRASH_REPORT: &str = "generic-crash-report";
 const GENERIC_GENERATOR: &str = "generic-generator";
 const GENERIC_ANALYSIS: &str = "generic-analysis";
@@ -25,6 +27,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         (LIBFUZZER_FUZZ, Some(sub)) => libfuzzer_fuzz::run(sub).await,
         (LIBFUZZER_COVERAGE, Some(sub)) => libfuzzer_coverage::run(sub).await,
         (LIBFUZZER_CRASH_REPORT, Some(sub)) => libfuzzer_crash_report::run(sub).await,
+        (LIBFUZZER_MERGE, Some(sub)) => libfuzzer_merge::run(sub).await,
         (GENERIC_ANALYSIS, Some(sub)) => generic_analysis::run(sub).await,
         (GENERIC_CRASH_REPORT, Some(sub)) => generic_crash_report::run(sub).await,
         (GENERIC_GENERATOR, Some(sub)) => generic_generator::run(sub).await,
@@ -43,6 +46,7 @@ pub fn args(name: &str) -> App<'static, 'static> {
         .subcommand(add_common_config(libfuzzer_coverage::args(
             LIBFUZZER_COVERAGE,
         )))
+        .subcommand(add_common_config(libfuzzer_merge::args(LIBFUZZER_MERGE)))
         .subcommand(add_common_config(libfuzzer_crash_report::args(
             LIBFUZZER_CRASH_REPORT,
         )))

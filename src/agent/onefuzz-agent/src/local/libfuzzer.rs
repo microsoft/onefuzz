@@ -3,16 +3,19 @@
 
 use crate::{
     local::{
-        common::{build_common_config, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR, UNIQUE_REPORTS_DIR},
+        common::{
+            build_common_config, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR,
+            UNIQUE_REPORTS_DIR,
+        },
         generic_analysis::build_analysis_config,
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
         libfuzzer_crash_report::{build_report_config, build_shared_args as build_crash_args},
         libfuzzer_fuzz::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
     tasks::{
-        config::CommonConfig, coverage::libfuzzer_coverage::CoverageTask,
-        fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask, report::libfuzzer_report::ReportTask,
-        analysis::generic::run as run_analysis
+        analysis::generic::run as run_analysis, config::CommonConfig,
+        coverage::libfuzzer_coverage::CoverageTask, fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask,
+        report::libfuzzer_report::ReportTask,
     },
 };
 use anyhow::Result;
@@ -90,7 +93,6 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
         task_handles.push(analysis_task);
         task_handles.push(analysis_input_monitor.handle);
-
     }
 
     try_join_all(task_handles).await?;

@@ -4,8 +4,8 @@
 use crate::{
     local::common::{
         build_common_config, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
-        ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, NO_REPRO_DIR, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, REPORTS_DIR, TOOLS_DIR, UNIQUE_REPORTS_DIR
+        ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, NO_REPRO_DIR,
+        REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR, UNIQUE_REPORTS_DIR,
     },
     tasks::{
         analysis::generic::{run as run_analysis, Config},
