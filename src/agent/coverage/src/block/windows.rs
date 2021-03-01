@@ -94,7 +94,7 @@ impl BlockCoverageHandler {
         dbg.quit_debugging();
     }
 
-    fn try_on_create_process(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
+    fn handle_on_create_process(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
         dbg.target().sym_initialize()?;
 
         log::info!(
@@ -108,7 +108,7 @@ impl BlockCoverageHandler {
         Ok(())
     }
 
-    fn try_on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
+    fn handle_on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) {
         log::info!(
             "dll loaded: {}, {} bytes",
             module.path().display(),
@@ -116,11 +116,9 @@ impl BlockCoverageHandler {
         );
 
         self.add_module(dbg, module);
-
-        Ok(())
     }
 
-    fn try_on_breakpoint(&mut self, dbg: &mut Debugger, bp: BreakpointId) -> Result<()> {
+    fn handle_on_breakpoint(&mut self, dbg: &mut Debugger, bp: BreakpointId) -> Result<()> {
         let (pc, _sym) = self.pc(dbg)?;
 
         if let Some(&(m, b)) = self.bp_to_block.get(&bp) {
@@ -139,38 +137,32 @@ impl BlockCoverageHandler {
         Ok(())
     }
 
-    fn try_on_poll(&mut self, dbg: &mut Debugger) -> Result<()> {
+    fn handle_on_poll(&mut self, dbg: &mut Debugger) {
         if !self.timed_out && self.started.elapsed() > self.max_duration {
             self.timed_out = true;
             dbg.quit_debugging();
         }
-
-        Ok(())
     }
 }
 
 impl DebugEventHandler for BlockCoverageHandler {
     fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
-        if self.try_on_create_process(dbg, module).is_err() {
+        if self.handle_on_create_process(dbg, module).is_err() {
             self.stop(dbg);
         }
     }
 
     fn on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) {
-        if self.try_on_load_dll(dbg, module).is_err() {
-            self.stop(dbg);
-        }
+        self.handle_on_load_dll(dbg, module);
     }
 
     fn on_breakpoint(&mut self, dbg: &mut Debugger, bp: BreakpointId) {
-        if self.try_on_breakpoint(dbg, bp).is_err() {
+        if self.handle_on_breakpoint(dbg, bp).is_err() {
             self.stop(dbg);
         }
     }
 
     fn on_poll(&mut self, dbg: &mut Debugger) {
-        if self.try_on_poll(dbg).is_err() {
-            self.stop(dbg);
-        }
+        self.handle_on_poll(dbg);
     }
 }
