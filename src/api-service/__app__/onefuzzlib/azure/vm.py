@@ -77,7 +77,6 @@ def create_vm(
         "os_profile": {
             "computer_name": "node",
             "admin_username": "onefuzz",
-            "admin_password": password,
         },
         "hardware_profile": {"vm_size": vm_sku},
         "storage_profile": {"image_reference": image_ref},
@@ -88,7 +87,11 @@ def create_vm(
     if isinstance(image_os, Error):
         return image_os
 
+    if image_os == OS.windows:
+        params["virtual_machine_profile"]["os_profile"]["admin_password"] = password
+
     if image_os == OS.linux:
+
         params["os_profile"]["linux_configuration"] = {
             "disable_password_authentication": True,
             "ssh": {
