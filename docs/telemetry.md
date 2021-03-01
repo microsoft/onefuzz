@@ -227,11 +227,12 @@ The following information is recorded for Salvo related tasks:
   tracked for constraint solving while symbolically executing the program.
 * DivergenceRate - A float64 representing the ratio of inputs that did not
   branch as expected divided by the number of inputs fuzzed.
-* DivergenceDetails - A tuple of three u32 values representing details about a
-  specific divergence including:
-  * The path length.
-  * The expected index for divergence.
-  * The actual index for divergence.
+* DivergencePathLength - A u32 that indicates the length of execution path
+  divergence.
+* DivergencePathExpectedIndex - A u32 that indicates the expected index for
+  divergence.
+* DivergencePathActualIndex - A u32 that indicates the actual index for
+  divergence.
 * MissedInstructionCode - The Intel Instruction code for an instruction that
   was not modelled during symbolic execution but may have been input tainted.
   Examples include `Cmovs_r16_rm16` and `Movq_mm_rm64`.  For the full list, see
