@@ -104,6 +104,10 @@ def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
 
         return
 
+    # Azure Blob Store uses virtualized directory structures.  As such, we need
+    # the paths to already be canonicalized.  As an example, accessing the blob
+    # store path "./foo" generates an exception, but "foo" and "foo/bar" do
+    # not.
     if (
         posixpath.relpath(config.task.target_exe) != config.task.target_exe
         or ntpath.relpath(config.task.target_exe) != config.task.target_exe
