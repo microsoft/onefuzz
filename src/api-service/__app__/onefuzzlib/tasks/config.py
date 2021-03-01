@@ -4,7 +4,9 @@
 # Licensed under the MIT License.
 
 import logging
+import ntpath
 import os
+import posixpath
 from typing import Dict, List, Optional
 from uuid import UUID
 
@@ -101,6 +103,12 @@ def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
             return
 
         return
+
+    if (
+        posixpath.relpath(config.task.target_exe) != config.task.target_exe
+        or ntpath.relpath(config.task.target_exe) != config.task.target_exe
+    ):
+        raise TaskConfigError("target_exe must be a canonicalized relative path")
 
     container = [x for x in config.containers if x.type == ContainerType.setup][0]
     if not blob_exists(container.name, config.task.target_exe, StorageType.corpus):
