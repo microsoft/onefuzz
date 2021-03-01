@@ -45,6 +45,9 @@ cargo test --release --manifest-path ./onefuzz-agent/Cargo.toml
 
 cargo test --release --manifest-path ./onefuzz/Cargo.toml
 
+# TODO: once Salvo is integrated, this can get deleted
+cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
+
 cp target/release/onefuzz-agent* ../../artifacts/agent
 cp target/release/onefuzz-supervisor* ../../artifacts/agent
 
