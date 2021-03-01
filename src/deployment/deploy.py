@@ -337,8 +337,11 @@ class Client:
 
             if len(cli_app) == 0:
                 logger.error(
-                    "Invalid client id {}. Please verify that the application "
-                    "registration exist under the current subscription"
+                    (
+                        "Invalid client id {}."
+                        + " Please verify that the application registration"
+                        + " exists under the current subscription"
+                    )
                     % self.cli_app_id
                 )
                 sys.exit(1)
