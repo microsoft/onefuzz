@@ -35,8 +35,8 @@ nodes and the service API running in the Azure Functions instance.
 
 1. The rust library [onefuzz::telemetry](../src/agent/onefuzz-telemetry/src/lib.rs)
    provides a detailed set of telemetry types, as well as the function
-   `can_share`, which gates if a given telemetry field should be sent to the
-   Microsoft central telemetry instance.
+   `can_share_with_microsoft`, which gates if a given telemetry field should be
+   sent to the Microsoft central telemetry instance.
 1. The Python library
    [onefuzzlib.telemetry](../src/api-service/__app__/onefuzzlib/telemetry.py)
    provides a filtering mechanism to identify a per-object set of filtering

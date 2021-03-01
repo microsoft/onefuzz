@@ -215,13 +215,27 @@ class Files(Endpoint):
         client = self._get_client(container)
         client.upload_file(file_path, blob_name)
 
-    def upload_dir(self, container: primitives.Container, dir_path: str) -> None:
+    def upload_dir(
+        self, container: primitives.Container, dir_path: primitives.Directory
+    ) -> None:
         """ uploads a directory to a container """
 
         self.logger.debug("uploading directory to container %s:%s", container, dir_path)
 
         client = self._get_client(container)
         client.upload_dir(dir_path)
+
+    def download_dir(
+        self, container: primitives.Container, dir_path: primitives.Directory
+    ) -> None:
+        """ downloads a container to a directory """
+
+        self.logger.debug(
+            "downloading container to directory %s:%s", container, dir_path
+        )
+
+        client = self._get_client(container)
+        client.download_dir(dir_path)
 
 
 class Versions(Endpoint):
