@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use bytes::buf::BufExt;
 use reqwest::{Client, Url};
 use reqwest_retry::SendRetry;
@@ -78,8 +78,10 @@ impl AzureQueueMessage {
             let http = Client::new();
             http.delete(url)
                 .send_retry_default()
-                .await?
-                .error_for_status()?;
+                .await
+                .context("storage queue delete failed")?
+                .error_for_status()
+                .context("storage queue delete failed")?;
         }
 
         Ok(())
@@ -127,8 +129,11 @@ impl AzureQueueClient {
             .post(self.messages_url.clone())
             .body(body)
             .send_retry_default()
-            .await?;
-        let _ = r.error_for_status()?;
+            .await
+            .context("storage queue enqueue failed")?;
+        let _ = r
+            .error_for_status()
+            .context("storage queue enqueue failed with error")?;
         Ok(())
     }
 
@@ -137,8 +142,10 @@ impl AzureQueueClient {
             .http
             .get(self.messages_url.clone())
             .send_retry_default()
-            .await?
-            .error_for_status()?;
+            .await
+            .context("storage queue pop failed")?
+            .error_for_status()
+            .context("storage queue pop failed with error")?;
 
         let buf = {
             let buf = response.bytes().await?;

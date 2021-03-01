@@ -16,6 +16,7 @@ pub const MAX_SEND_ATTEMPTS: i32 = 5;
 pub const MAX_RECEIVE_ATTEMPTS: i32 = 5;
 pub const MAX_ELAPSED_TIME: Duration = Duration::from_secs(2 * 60);
 
+#[derive(Debug)]
 pub struct LocalQueueMessage {
     pub data: Vec<u8>,
 }

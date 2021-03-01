@@ -122,6 +122,7 @@ impl IWorkQueue for WorkQueue {
 
 impl_downcast!(IWorkQueue);
 
+#[derive(Debug)]
 pub struct Message {
     pub queue_message: Option<QueueMessage>,
     pub work_set: WorkSet,
@@ -147,7 +148,10 @@ impl WorkQueue {
     }
 
     async fn renew(&mut self) -> Result<()> {
-        self._registration.renew().await?;
+        self._registration
+            .renew()
+            .await
+            .context("unable to renew registration in workqueue")?;
         let url = self._registration.dynamic_config.work_queue.clone();
         self.queue = QueueClient::new(url)?;
         Ok(())
@@ -160,7 +164,9 @@ impl WorkQueue {
         // it was just due to a stale SAS URL.
         if let Err(err) = &msg {
             if is_auth_error(err) {
-                self.renew().await?;
+                self.renew()
+                    .await
+                    .context("unable to renew registration in poll")?;
                 msg = self.queue.pop().await;
             }
         }
@@ -189,9 +195,13 @@ impl WorkQueue {
             match queue_message.delete().await {
                 Err(err) => {
                     if is_auth_error(&err) {
-                        self.renew().await?;
+                        self.renew().await.context("unable to renew registration")?;
                         let url = self._registration.dynamic_config.work_queue.clone();
-                        queue_message.update_url(url).delete().await?;
+                        queue_message
+                            .update_url(url)
+                            .delete()
+                            .await
+                            .context("unable to claim work from queue")?;
                         Ok(message.work_set)
                     } else {
                         bail!("{}", err)

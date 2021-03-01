@@ -81,6 +81,7 @@ impl QueueClient {
     }
 }
 
+#[derive(Debug)]
 pub enum Message {
     QueueMessage(AzureQueueMessage),
     LocalQueueMessage(LocalQueueMessage),

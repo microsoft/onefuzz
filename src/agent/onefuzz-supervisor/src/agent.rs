@@ -123,7 +123,7 @@ impl Agent {
         let msg = self.work_queue.poll().await?;
 
         let next = if let Some(msg) = msg {
-            //debug!("received work set message: {:?}", msg);
+            info!("received work set message: {:?}", msg);
 
             let can_schedule = self.coordinator.can_schedule(&msg.work_set).await?;
 
@@ -183,6 +183,7 @@ impl Agent {
                 state.into()
             }
         } else {
+            info!("no work available");
             self.sleep().await;
             state.into()
         };
