@@ -45,7 +45,12 @@ pub fn z3_error_as_str(code: &Z3ErrorCode) -> &'static str {
         Z3ErrorCode::ParserError => "ParserError",
         Z3ErrorCode::NoParser => "NoParser",
         Z3ErrorCode::InvalidPattern => "InvalidPattern",
-        _ => "unknown",
+        Z3ErrorCode::MemoutFail => "MemoutFail",
+        Z3ErrorCode::FileAccessError => "FileAccessError",
+        Z3ErrorCode::InternalFatal => "InternalFatal",
+        Z3ErrorCode::InvalidUsage => "InvalidUsage",
+        Z3ErrorCode::DecRefError => "DecRefError",
+        Z3ErrorCode::Exception => "Exception",
     }
 }
 
