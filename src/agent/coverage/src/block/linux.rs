@@ -100,7 +100,7 @@ impl Recorder {
         for (_base, image) in &events.loaded {
             let pathname = image.path().path_lossy();
 
-            if self.module_filter.is_allowed(pathname) {
+            if self.module_filter.includes(pathname) {
                 self.on_module_load(tracee, image)?;
             }
         }
@@ -160,7 +160,7 @@ impl Recorder {
         for symbol in info.module.symbols.iter() {
             if self
                 .symbol_filter
-                .is_allowed(&info.module.path, &symbol.name)
+                .includes(&info.module.path, &symbol.name)
             {
                 for offset in info.blocks.range(symbol.range()) {
                     allowed_blocks.push(*offset);

@@ -335,7 +335,7 @@ impl SymbolFilter {
         Ok(Self { regexes, filters })
     }
 
-    pub fn is_allowed(&self, module: &ModulePath, name: &str) -> bool {
+    pub fn includes(&self, module: &ModulePath, name: &str) -> bool {
         let rules = self.regexes.matches(&module.path_lossy());
 
         // Check if there is some symbol rule for the module path.
@@ -345,9 +345,9 @@ impl SymbolFilter {
             // Guaranteed by constructor.
             let filter = self.filters.get(&idx).unwrap();
 
-            filter.is_allowed(name)
+            filter.includes(name)
         } else {
-            // If no module-level rule exists, allow by default.
+            // If no module-level rule exists, include by default.
             true
         }
     }
