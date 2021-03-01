@@ -583,13 +583,15 @@ class Libfuzzer(Command):
 
         helper.create_containers()
 
-        wrapper_name = File(os.path.basename(target_exe) + "-wrapper.sh")
+        target_exe_blob_name = helper.target_exe_blob_name(target_exe, None)
+
+        wrapper_name = File(target_exe_blob_name + "-wrapper.sh")
 
         with tempfile.TemporaryDirectory() as tempdir:
             if sysroot:
                 setup_path = File(os.path.join(tempdir, "setup.sh"))
                 with open(setup_path, "w") as handle:
-                    sysroot_filename = os.path.basename(sysroot)
+                    sysroot_filename = helper.target_exe_blob_name(sysroot, None)
                     handle.write(
                         "#!/bin/bash\n"
                         "set -ex\n"
@@ -605,7 +607,7 @@ class Libfuzzer(Command):
                         "#!/bin/bash\n"
                         'SETUP_DIR=$(dirname "$(readlink -f "$0")")\n'
                         "qemu-%s -L $SETUP_DIR/sysroot $SETUP_DIR/%s $*"
-                        % (arch.name, os.path.basename(target_exe))
+                        % (arch.name, target_exe_blob_name)
                     )
                 upload_files = [setup_path, wrapper_path, sysroot]
             else:
@@ -623,7 +625,7 @@ class Libfuzzer(Command):
                         "#!/bin/bash\n"
                         'SETUP_DIR=$(dirname "$(readlink -f "$0")")\n'
                         "qemu-%s -L /usr/%s-linux-gnu $SETUP_DIR/%s $*"
-                        % (arch.name, arch.name, os.path.basename(target_exe))
+                        % (arch.name, arch.name, target_exe_blob_name)
                     )
                 upload_files = [setup_path, wrapper_path]
             helper.upload_setup(None, target_exe, upload_files)
