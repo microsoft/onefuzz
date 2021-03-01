@@ -4,8 +4,8 @@
 use crate::{
     local::common::{
         build_common_config, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
-        ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR,
+        ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, NO_REPRO_DIR, TARGET_ENV,
+        TARGET_EXE, TARGET_OPTIONS, REPORTS_DIR, TOOLS_DIR, UNIQUE_REPORTS_DIR
     },
     tasks::{
         analysis::generic::{run as run_analysis, Config},
@@ -30,6 +30,10 @@ pub fn build_analysis_config(
     let analysis = get_synced_dir(ANALYSIS_DIR, common.job_id, common.task_id, args)?;
     let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args)?;
     let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args).ok();
+    let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args).ok();
+    let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args).ok();
+    let unique_reports =
+        get_synced_dir(UNIQUE_REPORTS_DIR, common.job_id, common.task_id, args).ok();
 
     let config = Config {
         target_exe,
@@ -42,9 +46,9 @@ pub fn build_analysis_config(
         analysis,
         tools,
         common,
-        reports: None,
-        unique_reports: None,
-        no_repro: None,
+        reports,
+        unique_reports,
+        no_repro,
     };
 
     Ok(config)

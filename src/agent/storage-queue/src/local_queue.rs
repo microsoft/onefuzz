@@ -20,6 +20,7 @@ pub struct LocalQueueMessage {
     pub data: Vec<u8>,
 }
 
+/// File backed queue
 #[derive(Debug, Clone)]
 pub struct FileQueueClient {
     queue: Arc<Mutex<QueueFile>>,
@@ -100,6 +101,7 @@ use tokio::sync::mpsc::{
     error::TryRecvError, unbounded_channel, UnboundedReceiver, UnboundedSender,
 };
 
+/// Queue based on mpsc channel
 #[derive(Debug, Clone)]
 pub struct ChannelQueueClient {
     sender: Arc<Mutex<UnboundedSender<Vec<u8>>>>,
