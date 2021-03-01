@@ -15,7 +15,7 @@ if sccache --help; then
 fi
 
 # only set CARGO_INCREMENTAL on non-release builds
-# 
+#
 # This speeds up build time, but makes the resulting binaries slightly slower.
 # https://doc.rust-lang.org/cargo/reference/profiles.html?highlight=incremental#incremental
 if [ "${GITHUB_REF}" != "" ]; then
@@ -38,8 +38,11 @@ cargo clippy --release -- -D warnings
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
 cargo test --release --manifest-path ./onefuzz-supervisor/Cargo.toml
-# TODO: re-enable
+
+# TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-agent/Cargo.toml --features integration_test -- --nocapture
+cargo test --release --manifest-path ./onefuzz-agent/Cargo.toml
+
 cargo test --release --manifest-path ./onefuzz/Cargo.toml
 
 cp target/release/onefuzz-agent* ../../artifacts/agent

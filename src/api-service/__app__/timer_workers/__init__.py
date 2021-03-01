@@ -50,6 +50,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     # get to empty scalesets, which can safely be deleted.
 
     Node.mark_outdated_nodes()
+    Node.cleanup_busy_nodes_without_work()
     nodes = Node.search_states(states=NodeState.needs_work())
     for node in sorted(nodes, key=lambda x: x.machine_id):
         logging.info("update node: %s", node.machine_id)

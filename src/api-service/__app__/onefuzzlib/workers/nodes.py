@@ -8,7 +8,7 @@ import logging
 from typing import List, Optional, Tuple
 from uuid import UUID
 
-from onefuzztypes.enums import ErrorCode, NodeState
+from onefuzztypes.enums import ErrorCode, NodeState, PoolState, ScalesetState, TaskState
 from onefuzztypes.events import (
     EventNodeCreated,
     EventNodeDeleted,
@@ -18,7 +18,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.models import Node as BASE_NODE
 from onefuzztypes.models import NodeAssignment, NodeCommand, NodeCommandAddSshKey
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
-from onefuzztypes.models import Result, StopNodeCommand
+from onefuzztypes.models import Result, StopNodeCommand, StopTaskNodeCommand
 from onefuzztypes.primitives import PoolName
 from pydantic import Field
 
@@ -135,6 +135,14 @@ class Node(BASE_NODE, ORMMixin):
                 node.to_reimage()
 
     @classmethod
+    def cleanup_busy_nodes_without_work(cls) -> None:
+        # There is a potential race condition if multiple `Node.stop_task` calls
+        # are made concurrently.  By performing this check regularly, any nodes
+        # that hit this race condition will get cleaned up.
+        for node in cls.search_states(states=[NodeState.busy]):
+            node.stop_if_complete()
+
+    @classmethod
     def get_by_machine_id(cls, machine_id: UUID) -> Optional["Node"]:
         nodes = cls.search(query={"machine_id": [machine_id]})
         if not nodes:
@@ -178,13 +186,39 @@ class Node(BASE_NODE, ORMMixin):
         # gracefully
         nodes = NodeTasks.get_nodes_by_task_id(task_id)
         for node in nodes:
-            if node.state not in NodeState.ready_for_reset():
+            node.send_message(
+                NodeCommand(stop_task=StopTaskNodeCommand(task_id=task_id))
+            )
+
+            if not node.stop_if_complete():
                 logging.info(
-                    "stopping machine_id:%s running task:%s",
-                    node.machine_id,
+                    "nodes: stopped task on node, "
+                    "but not reimaging due to other tasks: task_id:%s machine_id:%s",
                     task_id,
+                    node.machine_id,
                 )
-                node.stop()
+
+    def stop_if_complete(self) -> bool:
+        # returns True on stopping the node and False if this doesn't stop the node
+        from ..tasks.main import Task
+
+        node_tasks = NodeTasks.get_by_machine_id(self.machine_id)
+        for node_task in node_tasks:
+            task = Task.get_by_task_id(node_task.task_id)
+            # ignore invalid tasks when deciding if the node should be
+            # shutdown
+            if isinstance(task, Error):
+                continue
+
+            if task.state not in TaskState.shutting_down():
+                return False
+
+        logging.info(
+            "node: stopping busy node with all tasks complete: %s",
+            self.machine_id,
+        )
+        self.stop()
+        return True
 
     def mark_tasks_stopped_early(self) -> None:
         from ..tasks.main import Task
@@ -207,6 +241,9 @@ class Node(BASE_NODE, ORMMixin):
         return False
 
     def can_process_new_work(self) -> bool:
+        from .pools import Pool
+        from .scalesets import Scaleset
+
         if self.is_outdated():
             logging.info(
                 "can_schedule agent and service versions differ, stopping node. "
@@ -245,6 +282,42 @@ class Node(BASE_NODE, ORMMixin):
             logging.info("node scheduled to shrink.  machine_id:%s", self.machine_id)
             return False
 
+        if self.scaleset_id:
+            scaleset = Scaleset.get_by_id(self.scaleset_id)
+            if isinstance(scaleset, Error):
+                logging.info(
+                    "can_schedule - invalid scaleset.  scaleset_id:%s machine_id:%s",
+                    self.scaleset_id,
+                    self.machine_id,
+                )
+                return False
+
+            if scaleset.state not in ScalesetState.available():
+                logging.info(
+                    "can_schedule - scaleset not available for work. "
+                    "scaleset_id:%s machine_id:%s",
+                    self.scaleset_id,
+                    self.machine_id,
+                )
+                return False
+
+        pool = Pool.get_by_name(self.pool_name)
+        if isinstance(pool, Error):
+            logging.info(
+                "can_schedule - invalid pool. " "pool_name:%s machine_id:%s",
+                self.pool_name,
+                self.machine_id,
+            )
+            return False
+        if pool.state not in PoolState.available():
+            logging.info(
+                "can_schedule - pool is not available for work. "
+                "pool_name:%s machine_id:%s",
+                self.pool_name,
+                self.machine_id,
+            )
+            return False
+
         return True
 
     def is_outdated(self) -> bool:
@@ -281,8 +354,8 @@ class Node(BASE_NODE, ORMMixin):
         )
         return None
 
-    def stop(self) -> None:
-        self.to_reimage()
+    def stop(self, done: bool = False) -> None:
+        self.to_reimage(done=done)
         self.send_message(NodeCommand(stop=StopNodeCommand()))
 
     def set_shutdown(self) -> None:

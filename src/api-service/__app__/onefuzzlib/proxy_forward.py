@@ -16,7 +16,7 @@ from pydantic import Field
 from .azure.ip import get_scaleset_instance_ip
 from .orm import ORMMixin, QueryFilter
 
-PORT_RANGES = range(6000, 7000)
+PORT_RANGES = range(28000, 32000)
 
 
 # This isn't intended to ever be shared to the client, hence not being in
