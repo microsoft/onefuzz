@@ -114,11 +114,12 @@ class Client:
         third_party: str,
         arm_template: str,
         workbook_data: str,
-        create_registration: bool,
+        create_pool_registration: bool,
         migrations: List[str],
         export_appinsights: bool,
         log_service_principal: bool,
         upgrade: bool,
+        cli_app_id: Optional[str],
     ):
         self.resource_group = resource_group
         self.arm_template = arm_template
@@ -129,7 +130,7 @@ class Client:
         self.tools = tools
         self.instance_specific = instance_specific
         self.third_party = third_party
-        self.create_registration = create_registration
+        self.create_pool_registration = create_pool_registration
         self.upgrade = upgrade
         self.results: Dict = {
             "client_id": client_id,
@@ -142,6 +143,7 @@ class Client:
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.log_service_principal = log_service_principal
+        self.cli_app_id = cli_app_id
 
         machine = platform.machine()
         system = platform.system()
@@ -328,17 +330,37 @@ class Client:
 
         (password_id, password) = self.create_password(app.object_id)
 
-        cli_app = list(
-            client.applications.list(filter="appId eq '%s'" % ONEFUZZ_CLI_APP)
-        )
+        if self.cli_app_id:
+            cli_app = list(
+                client.applications.list(filter="appId eq '%s'" % self.cli_app_id)
+            )
+
+            if len(cli_app) == 0:
+                logger.error(
+                    "Invalid client id {}. Please verify that the application "
+                    "registration exist under the current subscription"
+                    % self.cli_app_id
+                )
+                sys.exit(1)
+        else:
+            cli_app = list(
+                client.applications.list(filter="appId eq '%s'" % ONEFUZZ_CLI_APP)
+            )
+            cli_registration_name = "onefuzz-cli"
+            if len(cli_app) == 0:
+                cli_app = list(
+                    client.applications.list(
+                        filter="appName eq '%s'" % cli_registration_name
+                    )
+                )
 
         if len(cli_app) == 0:
             logger.info(
-                "Could not find the default CLI application under the current "
+                "Could not find an existing CLI application under the current "
                 "subscription, creating a new one"
             )
             app_info = register_application(
-                "onefuzz-cli", self.application_name, OnefuzzAppRole.CliClient
+                cli_registration_name, self.application_name, OnefuzzAppRole.CliClient
             )
             self.cli_config = {
                 "client_id": app_info.client_id,
@@ -346,7 +368,11 @@ class Client:
             }
 
         else:
-            authorize_application(uuid.UUID(ONEFUZZ_CLI_APP), app.app_id)
+            cli_app_id = cli_app[0].app_id
+            logger.info(
+                "Authorizing application {} to access the onefuzz instance" % cli_app_id
+            )
+            authorize_application(uuid.UUID(cli_app_id), app.app_id)
 
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password
@@ -718,7 +744,7 @@ class Client:
                     raise error
 
     def update_registration(self) -> None:
-        if not self.create_registration:
+        if not self.create_pool_registration:
             return
         update_pool_registration(self.application_name)
 
@@ -810,6 +836,7 @@ def main() -> None:
     )
     parser.add_argument("--client_id")
     parser.add_argument("--client_secret")
+    parser.add_argument("--cli_app_id")
     parser.add_argument(
         "--start_at",
         default=states[0][0],
@@ -867,11 +894,12 @@ def main() -> None:
         third_party=args.third_party,
         arm_template=args.arm_template,
         workbook_data=args.workbook_data,
-        create_registration=args.create_pool_registration,
+        create_pool_registration=args.create_pool_registration,
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
         log_service_principal=args.log_service_principal,
         upgrade=args.upgrade,
+        cli_app_id=args.cli_app_id,
     )
     if args.verbose:
         level = logging.DEBUG
