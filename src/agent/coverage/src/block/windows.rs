@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#![allow(clippy::unnecessary_wraps)]
+
 use std::collections::BTreeMap;
 use std::process::Command;
 use std::time::{Duration, Instant};
