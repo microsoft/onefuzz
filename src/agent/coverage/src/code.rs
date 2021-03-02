@@ -318,7 +318,7 @@ struct ModuleRuleDef {
 enum RuleDef {
     Include { include: bool },
     Exclude { exclude: bool },
-    Filter(Filter),
+    Filter(Box<Filter>),
 }
 
 #[derive(Clone, Debug)]
@@ -333,7 +333,7 @@ enum Rule {
 
     /// The entire module should be tracked and parsed, with a filter applied to
     /// its symbols.
-    FilterSymbols(Filter),
+    FilterSymbols(Box<Filter>),
 }
 
 #[derive(Clone, Debug)]
