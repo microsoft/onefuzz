@@ -186,7 +186,8 @@ mod test {
         reqwest::Client::new()
             .get("https://www.microsoft.com")
             .send_retry_default()
-            .await?.error_for_status()?;
+            .await?
+            .error_for_status()?;
 
         Ok(())
     }
