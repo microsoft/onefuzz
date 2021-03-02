@@ -10,7 +10,7 @@ import urllib.parse
 from typing import Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import ResourceExistsError
 from azure.storage.blob import (
     BlobClient,
     BlobSasPermissions,
