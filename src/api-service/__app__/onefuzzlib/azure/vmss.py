@@ -324,9 +324,10 @@ def create_vmss(
             resource_group, name, params
         )
     except ResourceExistsError as err:
-        if "SkuNotAvailable" in repr(err):
+        err_str = str(err)
+        if "SkuNotAvailable" in err_str or "OperationNotAllowed" in err_str:
             return Error(
-                code=ErrorCode.VM_CREATE_FAILED, errors=["creating vmss: %s" % err]
+                code=ErrorCode.VM_CREATE_FAILED, errors=[f"creating vmss: {err_str}"]
             )
         raise err
     except (ResourceNotFoundError, CloudError) as err:
