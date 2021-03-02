@@ -70,9 +70,9 @@ impl WorkSet {
     }
 
     pub fn setup_dir(&self) -> Result<PathBuf> {
-        let (setup_dir, _) = self
+        let setup_dir = self
             .setup_url
-            .get_account_container()
+            .account()
             .ok_or_else(|| anyhow!("Invalid container Url"))?;
         Ok(onefuzz::fs::onefuzz_root()?
             .join("blob-containers")
@@ -128,9 +128,6 @@ pub struct Message {
     pub work_set: WorkSet,
 }
 
-// #[derive(Clone, Debug, Eq, PartialEq)]
-// pub struct Receipt(pub storage_queue::Receipt);
-
 pub struct WorkQueue {
     queue: QueueClient,
     _registration: Registration,
@@ -181,7 +178,6 @@ impl WorkQueue {
 
         let queue_message = msg.unwrap();
         let work_set: WorkSet = queue_message.get()?;
-        // let receipt = Receipt(msg.);
         let msg = Message {
             queue_message: Some(queue_message),
             work_set,

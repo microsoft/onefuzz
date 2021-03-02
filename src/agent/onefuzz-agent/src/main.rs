@@ -13,7 +13,6 @@ use anyhow::Result;
 use clap::{App, ArgMatches, SubCommand};
 use std::io::{stdout, Write};
 
-mod debug;
 mod local;
 mod managed;
 mod tasks;

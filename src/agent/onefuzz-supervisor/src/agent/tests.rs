@@ -47,7 +47,6 @@ impl Fixture {
     }
 
     pub fn message(&self) -> Message {
-        // let receipt = self.receipt();
         let work_set = self.work_set();
 
         Message {
@@ -55,15 +54,6 @@ impl Fixture {
             queue_message: None,
         }
     }
-
-    // pub fn receipt(&self) -> Receipt {
-    //     let message_id = "6a0bc779-a1a8-4112-93cd-eb0d77529aa3".parse().unwrap();
-
-    //     Receipt(storage_queue::Receipt {
-    //         message_id,
-    //         pop_receipt: "abc".into(),
-    //     })
-    // }
 
     pub fn work_set(&self) -> WorkSet {
         WorkSet {

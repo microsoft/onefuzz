@@ -122,11 +122,9 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
 
 async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
     let result = if let Some(crashes) = &config.crashes {
-        // let url = crashes.try_url()?;
-        // url.account() == input.account()
-        //     && url.container() == input.container()
-        //     &&
-        crashes.path.join(input.name()).exists()
+        crashes.url.account() == input.account()
+            && crashes.url.container() == input.container()
+            && crashes.path.join(input.name()).exists()
     } else {
         false
     };
@@ -211,9 +209,14 @@ pub async fn run_tool(
         })
         .set_optional_ref(&config.crashes, |tester, crashes| {
             tester.set_optional_ref(
-                &crashes.url.get_account_container(),
-                |tester, (account, container)| {
-                    tester.crashes_account(account).crashes_container(container)
+                &crashes.url.account(),
+                |tester, account| {
+                    tester.crashes_account(account)
+                },
+            ).set_optional_ref(
+                &crashes.url.container(),
+                |tester, container| {
+                    tester.crashes_container(container)
                 },
             )
         });

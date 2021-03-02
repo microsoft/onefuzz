@@ -51,9 +51,8 @@ impl BlobUrl {
 
     pub fn container(&self) -> Option<String> {
         match self {
-            Self::AzureBlob(url) =>
-            // Segment existence checked in ctor, so we can unwrap.
-            {
+            Self::AzureBlob(url) => {
+                // Segment existence checked in ctor, so we can unwrap.
                 Some(url.path_segments().unwrap().next().unwrap().to_owned())
             }
             Self::LocalFile(_) => None,
@@ -127,21 +126,28 @@ impl BlobContainerUrl {
         &self.url
     }
 
-    pub fn get_account_container(&self) -> Option<(String, String)> {
+    pub fn account(&self) -> Option<String> {
         if self.as_file_path().is_some() {
             None
         } else {
             // Ctor checks that domain has at least one subdomain.
-            let account = self
-                .url
-                .domain()
-                .unwrap()
-                .split('.')
-                .next()
-                .unwrap()
-                .to_owned();
-            let container = self.url.path_segments().unwrap().next().unwrap().to_owned();
-            Some((account, container))
+            Some(
+                self.url
+                    .domain()
+                    .unwrap()
+                    .split('.')
+                    .next()
+                    .unwrap()
+                    .to_owned(),
+            )
+        }
+    }
+
+    pub fn container(&self) -> Option<String> {
+        if self.as_file_path().is_some() {
+            None
+        } else {
+            Some(self.url.path_segments().unwrap().next().unwrap().to_owned())
         }
     }
 
@@ -166,7 +172,7 @@ impl fmt::Display for BlobContainerUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(file_path) = self.as_file_path() {
             write!(f, "{:?}", file_path)
-        } else if let Some((account, container)) = self.get_account_container() {
+        } else if let (Some(account), Some(container)) = (self.account(), self.container()) {
             write!(f, "{}:{}", account, container)
         } else {
             panic!("invalid blob url")
@@ -335,7 +341,6 @@ mod tests {
         into_urls(&[
             // Not valid HTTPS URLs.
             "data:text/plain,hello",
-            // "file:///a/b/c",
             // Valid HTTP URLs, but invalid as storage URLs.
             "https://127.0.0.1",
             "https://localhost",
@@ -383,9 +388,8 @@ mod tests {
 
         for url in valid_container_urls() {
             let url = BlobContainerUrl::new(url).expect("invalid blob container URL");
-            let (account, container) = url.get_account_container().expect("invalid url");
-            assert_eq!(account, "myaccount");
-            assert_eq!(container, "mycontainer");
+            assert_eq!(url.account(), Some("myaccount".into()));
+            assert_eq!(url.container(), Some("mycontainer".into()));
         }
     }
 

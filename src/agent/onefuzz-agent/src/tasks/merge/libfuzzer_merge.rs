@@ -111,7 +111,6 @@ async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Resul
         debug!("will delete popped message with id = {}", msg.id());
 
         msg.delete().await?;
-        // input_queue.delete(msg).await?;
 
         debug!(
             "Attempting to delete {} from the candidate container",

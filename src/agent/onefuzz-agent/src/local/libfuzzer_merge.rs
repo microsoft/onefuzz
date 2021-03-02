@@ -50,15 +50,6 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     spawn(std::sync::Arc::new(config)).await
 }
 
-// pub target_exe: PathBuf,
-// pub target_env: HashMap<String, String>,
-// pub target_options: Vec<String>,
-// pub input_queue: Option<QueueClient>,
-// pub inputs: Vec<SyncedDir>,
-// pub unique_inputs: SyncedDir,
-// pub preserve_existing_outputs: bool,
-// pub check_fuzzer_help: bool,
-
 pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
     vec![
         Arg::with_name(TARGET_EXE)

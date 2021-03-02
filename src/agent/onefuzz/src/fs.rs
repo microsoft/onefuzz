@@ -179,8 +179,6 @@ pub async fn _sync(
     delete_dst: bool,
     recursive: bool,
 ) -> Result<()> {
-    // rsync -zvh
-
     let mut cmd = Command::new("rsync");
     cmd.kill_on_drop(true)
         .stdout(Stdio::piped())
@@ -221,7 +219,6 @@ pub async fn _sync(
     delete_dst: bool,
     recursive: bool,
 ) -> Result<()> {
-    //Robocopy C:\UserFolder C:\FolderBackup /e
     let mut cmd = Command::new("robocopy");
     cmd.kill_on_drop(true)
         .stdout(Stdio::piped())

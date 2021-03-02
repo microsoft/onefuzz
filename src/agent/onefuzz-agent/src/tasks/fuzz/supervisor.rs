@@ -200,9 +200,14 @@ async fn start_supervisor(
             tester.instance_telemetry_key(&key)
         })
         .set_optional_ref(
-            &config.crashes.url.get_account_container(),
-            |tester, (account, container)| {
-                tester.crashes_account(account).crashes_container(container)
+            &config.crashes.url.account(),
+            |tester, account| {
+                tester.crashes_account(account)
+            },
+        ).set_optional_ref(
+            &config.crashes.url.container(),
+            |tester, container| {
+                tester.crashes_container(container)
             },
         );
 

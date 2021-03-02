@@ -108,10 +108,7 @@ impl Message {
     pub async fn delete(&self) -> Result<()> {
         match self {
             Message::QueueMessage(message) => Ok(message.delete().await?),
-            Message::LocalQueueMessage(_) => {
-                // message.data.commit();
-                Ok(())
-            }
+            Message::LocalQueueMessage(_) => Ok(()),
         }
     }
 
@@ -135,7 +132,6 @@ impl Message {
     pub fn id(&self) -> Uuid {
         match self {
             Message::QueueMessage(message) => message.message_id,
-            // todo: add meaning full id if possible
             Message::LocalQueueMessage(_message) => Uuid::default(),
         }
     }

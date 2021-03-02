@@ -201,12 +201,6 @@ impl SyncedDir {
     }
 }
 
-// impl From<PathBuf> for SyncedDir {
-//     fn from(path: PathBuf) -> Self {
-//         Self { path, url: None }
-//     }
-// }
-
 pub async fn continuous_sync(
     dirs: &[SyncedDir],
     operation: SyncOperation,

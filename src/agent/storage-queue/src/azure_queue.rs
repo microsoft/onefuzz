@@ -8,7 +8,6 @@ use reqwest_retry::SendRetry;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
-// use derivative::Derivative;
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
 
