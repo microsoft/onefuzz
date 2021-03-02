@@ -81,8 +81,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     }
 
     if args.is_present(ANALYZER_EXE) {
-        let analysis_input_monitor =
-            DirectoryMonitorQueue::start_monitoring(crash_dir).await?;
+        let analysis_input_monitor = DirectoryMonitorQueue::start_monitoring(crash_dir).await?;
         let analysis_config = build_analysis_config(
             args,
             Some(analysis_input_monitor.queue_client),
