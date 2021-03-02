@@ -43,9 +43,7 @@ fn to_backoff_response(
 ) -> Result<Response, backoff::Error<anyhow::Error>> {
     match result {
         Err(error) => {
-            if error.is_connect() {
-                Err(backoff::Error::Transient(anyhow::Error::from(error)))
-            } else if is_transient_socket_error(&error) {
+            if error.is_connect() || is_transient_socket_error(&error) {
                 Err(backoff::Error::Transient(anyhow::Error::from(error)))
             } else {
                 Err(backoff::Error::Permanent(anyhow::Error::from(error)))
