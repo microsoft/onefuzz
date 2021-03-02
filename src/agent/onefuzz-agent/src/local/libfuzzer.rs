@@ -45,7 +45,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     task_handles.push(fuzz_task);
     if args.is_present(UNIQUE_REPORTS_DIR) {
         let crash_report_input_monitor =
-            DirectoryMonitorQueue::start_monitoring(crash_dir.clone(), common.job_id).await?;
+            DirectoryMonitorQueue::start_monitoring(crash_dir.clone()).await?;
 
         let report_config = build_report_config(
             args,
@@ -63,7 +63,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     if args.is_present(COVERAGE_DIR) {
         let coverage_input_monitor =
-            DirectoryMonitorQueue::start_monitoring(crash_dir.clone(), common.job_id).await?;
+            DirectoryMonitorQueue::start_monitoring(crash_dir.clone()).await?;
         let coverage_config = build_coverage_config(
             args,
             true,
@@ -82,7 +82,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     if args.is_present(ANALYZER_EXE) {
         let analysis_input_monitor =
-            DirectoryMonitorQueue::start_monitoring(crash_dir, common.job_id).await?;
+            DirectoryMonitorQueue::start_monitoring(crash_dir).await?;
         let analysis_config = build_analysis_config(
             args,
             Some(analysis_input_monitor.queue_client),

@@ -28,7 +28,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let fuzz_task = spawn(async move { fuzzer.run().await });
 
     let crash_report_input_monitor =
-        DirectoryMonitorQueue::start_monitoring(crash_dir, common.job_id).await?;
+        DirectoryMonitorQueue::start_monitoring(crash_dir).await?;
     let report_config = build_report_config(
         args,
         Some(crash_report_input_monitor.queue_client),

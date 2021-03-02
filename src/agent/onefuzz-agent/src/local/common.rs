@@ -209,7 +209,7 @@ pub struct DirectoryMonitorQueue {
 }
 
 impl DirectoryMonitorQueue {
-    pub async fn start_monitoring(directory_path: impl AsRef<Path>, job_id: Uuid) -> Result<Self> {
+    pub async fn start_monitoring(directory_path: impl AsRef<Path>) -> Result<Self> {
         let directory_path = PathBuf::from(directory_path.as_ref());
         let directory_path_clone = directory_path.clone();
         let queue_client = storage_queue::QueueClient::Channel(
