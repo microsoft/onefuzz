@@ -211,9 +211,6 @@ pub struct DirectoryMonitorQueue {
 impl DirectoryMonitorQueue {
     pub async fn start_monitoring(directory_path: impl AsRef<Path>, job_id: Uuid) -> Result<Self> {
         let directory_path = PathBuf::from(directory_path.as_ref());
-        let current_dir = std::env::current_dir()?;
-        let queue_dir = current_dir.join(format!("{}", job_id));
-        tokio::fs::create_dir_all(&queue_dir).await?;
         let directory_path_clone = directory_path.clone();
         let queue_client = storage_queue::QueueClient::Channel(
             storage_queue::local_queue::ChannelQueueClient::new()?,
