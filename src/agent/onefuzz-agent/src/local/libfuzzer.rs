@@ -22,9 +22,7 @@ use anyhow::Result;
 use clap::{App, SubCommand};
 use futures::future::try_join_all;
 use std::collections::HashSet;
-use tokio::{
-    task::spawn,
-};
+use tokio::task::spawn;
 use uuid::Uuid;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
