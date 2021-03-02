@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 use std::borrow::Borrow;
-use std::collections::{BTreeMap, HashMap};
 use std::ffi::OsStr;
 use std::fmt;
 use std::ops::Range;
@@ -302,83 +301,125 @@ impl Region for Symbol {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(transparent)]
-pub struct SymbolFilterSpec {
-    filters: HashMap<String, Filter>,
+pub struct CmdFilterDef {
+    defs: Vec<ModuleRuleDef>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct ModuleRuleDef {
+    pub module: String,
+
+    #[serde(flatten)]
+    pub rule: RuleDef,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+enum RuleDef {
+    Include { include: bool },
+    Exclude { exclude: bool },
+    Filter(Filter),
 }
 
 #[derive(Clone, Debug)]
-pub struct SymbolFilter {
-    /// Pre-compiled regex set for fast matching.
-    regexes: RegexSet,
-
-    /// Maps module names (via regexes) to filters for the symbol names provided
-    /// by the matched module(s).
+enum Rule {
+    /// Asserts that the entire sould be be tracked (and its symbols included),
+    /// or ignored, and its symbols excluded.
     ///
-    /// The integer key to this map is an index into the `regexes` field, and so
-    /// identifies a (module-matching) regex in that set.
-    filters: BTreeMap<usize, Filter>,
+    /// The implied symbol tracking behavior could be encoded by a filter, but a
+    /// distinction at this level lets us avoid parsing modules that we want to
+    /// ignore.
+    IncludeModule(bool),
+
+    /// The entire module should be tracked and parsed, with a filter applied to
+    /// its symbols.
+    FilterSymbols(Filter),
 }
 
-impl SymbolFilter {
-    pub fn new(mut spec: SymbolFilterSpec) -> Result<Self> {
-        let regexes = RegexSet::new(spec.filters.keys())?;
-
-        let mut filters = BTreeMap::default();
-
-        for (idx, pat) in regexes.patterns().iter().enumerate() {
-            // Guaranteed by construction.
-            let filter = spec.filters.remove(pat).unwrap();
-
-            filters.insert(idx, filter);
-        }
-
-        Ok(Self { regexes, filters })
-    }
-
-    pub fn includes(&self, module: &ModulePath, name: &str) -> bool {
-        let rules = self.regexes.matches(&module.path_lossy());
-
-        // Check if there is some symbol rule for the module path.
-        //
-        // If many rules would apply, the first rule is used.
-        if let Some(idx) = rules.iter().next() {
-            // Guaranteed by constructor.
-            let filter = self.filters.get(&idx).unwrap();
-
-            filter.includes(name)
-        } else {
-            // If no module-level rule exists, include by default.
-            true
-        }
-    }
-}
-
-impl Default for SymbolFilter {
-    fn default() -> Self {
-        let spec = SymbolFilterSpec::default();
-
-        // Cannot fail when spec is empty.
-        SymbolFilter::new(spec).unwrap()
-    }
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct CmdFilterSpec {
-    pub modules: Filter,
-    pub symbols: SymbolFilterSpec,
-}
-
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct CmdFilter {
-    pub modules: Filter,
-    pub symbols: SymbolFilter,
+    regexes: RegexSet,
+    rules: Vec<Rule>,
 }
 
 impl CmdFilter {
-    pub fn new(spec: CmdFilterSpec) -> Result<Self> {
-        let modules = spec.modules;
-        let symbols = SymbolFilter::new(spec.symbols)?;
+    pub fn new(cmd: CmdFilterDef) -> Result<Self> {
+        let mut modules = vec![];
+        let mut rules = vec![];
 
-        Ok(Self { modules, symbols })
+        for def in cmd.defs {
+            modules.push(def.module);
+
+            let rule = match def.rule {
+                RuleDef::Exclude { exclude } => {
+                    Rule::IncludeModule(!exclude)
+                },
+                RuleDef::Include { include } => {
+                    Rule::IncludeModule(include)
+                },
+                RuleDef::Filter(filter) => {
+                    Rule::FilterSymbols(filter)
+                },
+            };
+
+            rules.push(rule);
+        }
+
+        let regexes = RegexSet::new(&modules)?;
+
+        Ok(Self { regexes, rules })
+    }
+    pub fn includes_module(&self, module: &ModulePath) -> bool {
+        match self.regexes.matches(&module.path_lossy()).iter().next() {
+            Some(index) => {
+                // In-bounds by construction.
+                match &self.rules[index] {
+                    Rule::IncludeModule(included) => {
+                        *included
+                    },
+                    Rule::FilterSymbols(_) => {
+                        // A filtered module is implicitly tracked.
+                        true
+                    },
+                }
+            }
+            None => {
+                // Track modules by default.
+                true
+            }
+        }
+    }
+
+    pub fn includes_symbol(&self, module: &ModulePath, symbol: impl AsRef<str>) -> bool {
+        match self.regexes.matches(&module.path_lossy()).iter().next() {
+            Some(index) => {
+                // In-bounds by construction.
+                match &self.rules[index] {
+                    Rule::IncludeModule(included) => {
+                        *included
+                    }
+                    Rule::FilterSymbols(filter) => {
+                        filter.includes(symbol.as_ref())
+                    }
+                }
+            }
+            None => {
+                // Include symbols by default.
+                true
+            }
+        }
     }
 }
+
+impl Default for CmdFilter {
+    fn default() -> Self {
+        let def = CmdFilterDef::default();
+
+        // An empty set of filter definitions has no regexes, which means when
+        // constructing, we never internally risk compiling an invalid regex.
+        Self::new(def).expect("unreachable")
+    }
+}
+
+#[cfg(test)]
+mod tests;

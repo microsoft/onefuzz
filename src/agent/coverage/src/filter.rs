@@ -61,6 +61,12 @@ impl Default for Include {
     }
 }
 
+impl From<Include> for Filter {
+    fn from(include: Include) -> Self {
+        Self::Include(include)
+    }
+}
+
 /// Filter that excludes only those names which match a specific pattern.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -93,6 +99,12 @@ impl Exclude {
 impl Default for Exclude {
     fn default() -> Self {
         Self::none()
+    }
+}
+
+impl From<Exclude> for Filter {
+    fn from(exclude: Exclude) -> Self {
+        Self::Exclude(exclude)
     }
 }
 
