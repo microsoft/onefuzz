@@ -10,6 +10,7 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
+use tokio::time::delay_for;
 use uuid::Uuid;
 
 use std::task::Poll;
@@ -49,7 +50,8 @@ pub const ANALYSIS_INPUTS: &str = "analysis_inputs";
 pub const ANALYSIS_UNIQUE_INPUTS: &str = "analysis_unique_inputs";
 pub const PRESERVE_EXISTING_OUTPUTS: &str = "preserve_existing_outputs";
 
-// pub const UNIQUE_INPUTS: &str = "unique_inputs";
+const WAIT_FOR_DIR_ATTEMPTS: i32 = 5;
+const WAIT_FOR_DIR_DELAY: Duration = Duration::from_secs(1);
 
 pub enum CmdType {
     Target,
@@ -242,4 +244,16 @@ impl DirectoryMonitorQueue {
             handle,
         })
     }
+}
+
+pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
+    for _ in 0..WAIT_FOR_DIR_ATTEMPTS {
+        if path.as_ref().exists() {
+            return Ok(());
+        } else {
+            delay_for(WAIT_FOR_DIR_DELAY).await
+        }
+    }
+
+    bail!("path '{:?}' does not exisit", path.as_ref())
 }

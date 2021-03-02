@@ -81,10 +81,6 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
             .long(INPUTS_DIR)
             .takes_value(true)
             .multiple(true),
-        Arg::with_name(INPUTS_DIR)
-            .long(INPUTS_DIR)
-            .takes_value(true)
-            .multiple(true),
     ]
 }
 

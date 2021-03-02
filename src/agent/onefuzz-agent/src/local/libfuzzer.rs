@@ -4,7 +4,7 @@
 use crate::{
     local::{
         common::{
-            build_common_config, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR,
+            build_common_config, wait_for_dir, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR,
             UNIQUE_REPORTS_DIR,
         },
         generic_analysis::build_analysis_config,
@@ -22,7 +22,9 @@ use anyhow::Result;
 use clap::{App, SubCommand};
 use futures::future::try_join_all;
 use std::collections::HashSet;
-use tokio::task::spawn;
+use tokio::{
+    task::spawn,
+};
 use uuid::Uuid;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
@@ -39,6 +41,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let mut task_handles = vec![];
 
     let fuzz_task = spawn(async move { fuzzer.managed_run().await });
+
+    wait_for_dir(&crash_dir).await?;
 
     task_handles.push(fuzz_task);
     if args.is_present(UNIQUE_REPORTS_DIR) {
