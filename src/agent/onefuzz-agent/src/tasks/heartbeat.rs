@@ -26,18 +26,24 @@ struct Heartbeat {
 #[derive(Clone)]
 pub struct TaskContext {
     task_id: Uuid,
+    job_id: Uuid,
     machine_id: Uuid,
     machine_name: String,
 }
 
 pub type TaskHeartbeatClient = HeartbeatClient<TaskContext, HeartbeatData>;
 
-pub async fn init_task_heartbeat(queue_url: Url, task_id: Uuid) -> Result<TaskHeartbeatClient> {
+pub async fn init_task_heartbeat(
+    queue_url: Url,
+    task_id: Uuid,
+    job_id: Uuid,
+) -> Result<TaskHeartbeatClient> {
     let machine_id = get_machine_id().await?;
     let machine_name = get_machine_name().await?;
     let hb = HeartbeatClient::init_heartbeat(
         TaskContext {
             task_id,
+            job_id,
             machine_id,
             machine_name,
         },
