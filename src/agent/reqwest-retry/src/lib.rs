@@ -182,6 +182,16 @@ mod test {
     use super::*;
 
     #[tokio::test]
+    async fn retry_should_pass() -> Result<()> {
+        reqwest::Client::new()
+            .get("https://www.microsoft.com")
+            .send_retry_default()
+            .await?.error_for_status()?;
+
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn retry_should_fail() -> Result<()> {
         let resp = reqwest::Client::new()
             .get("http://localhost:81/test.txt")
