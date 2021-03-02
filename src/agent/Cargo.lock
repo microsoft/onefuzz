@@ -406,6 +406,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "debugger",
+ "dunce",
  "env_logger",
  "fixedbitset",
  "goblin",
@@ -415,7 +416,10 @@ dependencies = [
  "pdb",
  "pete",
  "procfs",
+ "regex",
  "serde",
+ "serde_json",
+ "structopt",
  "uuid",
  "winapi 0.3.9",
 ]
@@ -2225,6 +2229,7 @@ dependencies = [
  "async-trait",
  "backoff",
  "log",
+ "onefuzz-telemetry",
  "reqwest",
  "tokio",
 ]
