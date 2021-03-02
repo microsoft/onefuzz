@@ -208,17 +208,13 @@ pub async fn run_tool(
             tester.reports_dir(&reports_dir)
         })
         .set_optional_ref(&config.crashes, |tester, crashes| {
-            tester.set_optional_ref(
-                &crashes.url.account(),
-                |tester, account| {
+            tester
+                .set_optional_ref(&crashes.url.account(), |tester, account| {
                     tester.crashes_account(account)
-                },
-            ).set_optional_ref(
-                &crashes.url.container(),
-                |tester, container| {
+                })
+                .set_optional_ref(&crashes.url.container(), |tester, container| {
                     tester.crashes_container(container)
-                },
-            )
+                })
         });
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
