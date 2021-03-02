@@ -135,7 +135,7 @@ class NodeSearch(BaseRequest):
     machine_id: Optional[UUID]
     state: Optional[List[NodeState]]
     scaleset_id: Optional[UUID]
-    pool_name: Optional[str]
+    pool_name: Optional[PoolName]
 
 
 class NodeGet(BaseRequest):

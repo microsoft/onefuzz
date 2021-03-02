@@ -11,8 +11,8 @@ from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.events import get_events
-from ..onefuzzlib.pools import Node, NodeTasks
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.nodes import Node, NodeTasks
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -85,7 +85,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
 def patch(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(NodeGet, req)
     if isinstance(request, Error):
-        return not_ok(request, context="NodeRestart")
+        return not_ok(request, context="NodeReimage")
 
     node = Node.get_by_machine_id(request.machine_id)
     if not node:
@@ -94,7 +94,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
             context=request.machine_id,
         )
 
-    node.stop()
+    node.stop(done=True)
     if node.debug_keep_node:
         node.debug_keep_node = False
         node.save()

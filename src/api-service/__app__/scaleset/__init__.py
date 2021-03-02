@@ -18,8 +18,9 @@ from ..onefuzzlib.azure.creds import get_base_region, get_regions
 from ..onefuzzlib.azure.vmss import list_available_skus
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.events import get_events
-from ..onefuzzlib.pools import Pool, Scaleset
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.pools import Pool
+from ..onefuzzlib.workers.scalesets import Scaleset
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:

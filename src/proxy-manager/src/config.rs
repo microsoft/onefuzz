@@ -3,12 +3,16 @@
 
 use crate::proxy;
 use anyhow::Result;
+use onefuzz_telemetry::{
+    set_appinsights_clients, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey, Role,
+};
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::PathBuf};
 use storage_queue::QueueClient;
 use thiserror::Error;
 use url::Url;
+use uuid::Uuid;
 
 #[derive(Error, Debug)]
 pub enum ProxyError {
@@ -40,6 +44,16 @@ pub struct Forward {
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct ConfigData {
+    pub instance_id: Uuid,
+
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "instrumentation_key")]
+    pub instance_telemetry_key: Option<InstanceTelemetryKey>,
+
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "telemetry_key")]
+    pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
+
     pub region: String,
     pub url: Url,
     pub notification: Url,
@@ -67,6 +81,16 @@ impl Config {
         let r = BufReader::new(f);
         let data: ConfigData =
             serde_json::from_reader(r).map_err(|source| ProxyError::ParseError { source })?;
+
+        set_appinsights_clients(
+            data.instance_telemetry_key.clone(),
+            data.microsoft_telemetry_key.clone(),
+        );
+
+        onefuzz_telemetry::set_property(EventData::Region(data.region.to_owned()));
+        onefuzz_telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
+        onefuzz_telemetry::set_property(EventData::InstanceId(data.instance_id));
+        onefuzz_telemetry::set_property(EventData::Role(Role::Proxy));
 
         Ok(Self {
             config_path,
@@ -118,6 +142,7 @@ impl Config {
     }
 
     pub async fn notify(&self) -> Result<()> {
+        info!("notifying service of proxy update");
         let client = QueueClient::new(self.data.notification.clone());
 
         client

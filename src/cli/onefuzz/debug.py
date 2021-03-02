@@ -6,8 +6,6 @@
 import json
 import logging
 import os
-import shutil
-import subprocess  # nosec
 import tempfile
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -20,10 +18,11 @@ from azure.applicationinsights.models import QueryBody
 from azure.common.client_factory import get_azure_cli_credentials
 from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, NodeAssignment, Report, Task
-from onefuzztypes.primitives import Directory
+from onefuzztypes.primitives import Container, Directory
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
+from .azcopy import azcopy_sync
 from .backend import wait
 from .rdp import rdp_connect
 from .ssh import ssh_connect
@@ -105,9 +104,9 @@ class DebugScaleset(Command):
             scaleset_id, machine_id, port, duration=duration
         )
         if proxy.ip is None:
-            return (False, "waiting on proxy", None)
+            return (False, "waiting on proxy ip", None)
 
-        return (True, "waiting on proxy", (proxy.ip, proxy.forward.src_port))
+        return (True, "waiting on proxy port", (proxy.ip, proxy.forward.src_port))
 
     def rdp(
         self,
@@ -338,12 +337,6 @@ class DebugJob(Command):
     def download_files(self, job_id: UUID_EXPANSION, output: Directory) -> None:
         """ Download the containers by container type for each task in the specified job """
 
-        azcopy = os.environ.get("AZCOPY") or shutil.which("azcopy")
-        if not azcopy:
-            raise Exception(
-                "unable to find 'azcopy' in path or AZCOPY environment variable"
-            )
-
         to_download = {}
         tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
         if not tasks:
@@ -363,9 +356,7 @@ class DebugJob(Command):
             # security note: the src for azcopy comes from the server which is
             # trusted in this context, while the destination is provided by the
             # user
-            subprocess.check_output(  # nosec
-                [azcopy, "sync", to_download[name], outdir]
-            )
+            azcopy_sync(to_download[name], outdir)
 
 
 class DebugLog(Command):
@@ -583,13 +574,13 @@ class DebugNotification(Command):
 
     def _get_container(
         self, task: Task, container_type: ContainerType
-    ) -> Optional[str]:
+    ) -> Optional[Container]:
         for container in task.config.containers:
             if container.type == container_type:
                 return container.name
         return None
 
-    def _get_storage_account(self, container_name: str) -> str:
+    def _get_storage_account(self, container_name: Container) -> str:
         sas_url = self.onefuzz.containers.get(container_name).sas_url
         _, netloc, _, _, _, _ = urlparse(sas_url)
         return netloc.split(".")[0]

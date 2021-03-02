@@ -195,7 +195,7 @@ impl AsanProcessor {
 #[async_trait]
 impl Processor for AsanProcessor {
     async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
-        verbose!("processing libfuzzer crash url:{:?} path:{:?}", url, input);
+        debug!("processing libfuzzer crash url:{:?} path:{:?}", url, input);
         let report = self.test_input(url, input).await?;
         report
             .save(

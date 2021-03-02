@@ -37,7 +37,7 @@ from .primitives import Container, PoolName, Region
 
 
 class UserInfo(BaseModel):
-    application_id: UUID
+    application_id: Optional[UUID]
     object_id: Optional[UUID]
     upn: Optional[str]
 
@@ -334,7 +334,7 @@ class ClientCredentials(BaseModel):
 class AgentConfig(BaseModel):
     client_credentials: Optional[ClientCredentials]
     onefuzz_url: str
-    pool_name: str
+    pool_name: PoolName
     heartbeat_queue: Optional[str]
     instrumentation_key: Optional[str]
     telemetry_key: Optional[str]
@@ -403,6 +403,9 @@ class ProxyConfig(BaseModel):
     notification: str
     region: Region
     forwards: List[Forward]
+    instrumentation_key: Optional[str]
+    telemetry_key: Optional[str]
+    instance_id: UUID
 
 
 class ProxyHeartbeat(BaseModel):
@@ -513,6 +516,7 @@ class Job(BaseModel):
 
 class TaskHeartbeatEntry(BaseModel):
     task_id: UUID
+    job_id: Optional[UUID]
     machine_id: UUID
     data: List[Dict[str, HeartbeatType]]
 

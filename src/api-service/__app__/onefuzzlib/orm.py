@@ -40,8 +40,8 @@ from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field
 from typing_extensions import Protocol
 
-from ..onefuzzlib.secrets import save_to_keyvault
 from .azure.table import get_client
+from .secrets import save_to_keyvault
 from .telemetry import track_event_filtered
 from .updates import queue_update
 
@@ -148,8 +148,8 @@ def build_filters(
             for x in values:
                 if not isinstance(x, bool):
                     raise TypeError("unexpected type")
-                parts.append("%s eq %s" % (field_name, str(x).lower))
-        if isinstance(values[0], int):
+                parts.append("%s eq %s" % (field_name, str(x).lower()))
+        elif isinstance(values[0], int):
             parts = []
             for x in values:
                 if not isinstance(x, int):

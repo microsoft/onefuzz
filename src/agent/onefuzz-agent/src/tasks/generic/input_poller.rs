@@ -27,6 +27,23 @@ pub enum State<M> {
     Processed(M),
 }
 
+impl<M: PartialEq> PartialEq for State<M> {
+    fn eq(&self, other: &State<M>) -> bool {
+        use State::*;
+
+        match (self, other) {
+            (Ready, Ready) => true,
+            (Polled(l), Polled(r)) => l == r,
+            (Parsed(l0, l1), Parsed(r0, r1)) => l0 == r0 && l1 == r1,
+            (Downloaded(l0, l1, l2, l3), Downloaded(r0, r1, r2, r3)) => {
+                l0 == r0 && l1 == r1 && l2 == r2 && l3.path() == r3.path()
+            }
+            (Processed(l), Processed(r)) => l == r,
+            _ => false,
+        }
+    }
+}
+
 impl<M> fmt::Display for State<M> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -111,10 +128,8 @@ impl<M> InputPoller<M> {
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
-            info!("Processing batch-downloaded input {:?}", file);
-
-            let file = file?;
-            let path = file.path();
+            let path = file?.path();
+            info!("Processing batch-downloaded input: {}", path.display());
 
             // Compute the file name relative to the synced directory, and thus the
             // container.
@@ -161,11 +176,11 @@ impl<M> InputPoller<M> {
         loop {
             match self.state() {
                 State::Polled(None) => {
-                    verbose!("Input queue empty, sleeping");
+                    debug!("Input queue empty, sleeping");
                     delay_with_jitter(POLL_INTERVAL).await;
                 }
                 State::Downloaded(_msg, _url, input, _tempdir) => {
-                    info!("Processing downloaded input: {:?}", input);
+                    info!("Processing downloaded input: {}", input.display());
                 }
                 _ => {}
             }
@@ -241,7 +256,7 @@ impl<M> InputPoller<M> {
             (Parsed(msg, url), Download(downloader)) => {
                 let download_dir = tempdir()?;
                 if self.seen_in_batch(&url).await? {
-                    verbose!("url was seen during batch processing: {:?}", url);
+                    debug!("url was seen during batch processing: {:?}", url);
                     self.set_state(Processed(msg));
                 } else {
                     let input = downloader

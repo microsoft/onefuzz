@@ -8,7 +8,7 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.mgmt.compute.models import (
     ResourceSku,
     ResourceSkuRestrictionsType,
@@ -321,6 +321,13 @@ def create_vmss(
         compute_client.virtual_machine_scale_sets.begin_create_or_update(
             resource_group, name, params
         )
+    except ResourceExistsError as err:
+        err_str = str(err)
+        if "SkuNotAvailable" in err_str or "OperationNotAllowed" in err_str:
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED, errors=[f"creating vmss: {err_str}"]
+            )
+        raise err
     except (ResourceNotFoundError, CloudError) as err:
         if "The request failed due to conflict with a concurrent request" in repr(err):
             logging.debug(

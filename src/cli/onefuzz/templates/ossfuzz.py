@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Tuple
 
 from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag
 from onefuzztypes.models import NotificationConfig
-from onefuzztypes.primitives import File
+from onefuzztypes.primitives import File, PoolName
 
 from onefuzz.api import Command
 from onefuzz.backend import container_file_path
@@ -110,7 +110,7 @@ class OssFuzz(Command):
         self,
         project: str,
         build: str,
-        pool_name: str,
+        pool_name: PoolName,
         duration: int = 24,
         tags: Optional[Dict[str, str]] = None,
         dryrun: bool = False,
