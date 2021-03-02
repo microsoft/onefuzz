@@ -14,5 +14,6 @@ azure-applicationinsights==0.1.0
 tenacity==6.3.1
 docstring_parser==0.7.3
 azure-cli-core==2.20.0
+cryptography<3.4,>=3.2
 # onefuzztypes version is set during build
 onefuzztypes==0.0.0
