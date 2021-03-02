@@ -36,11 +36,7 @@ def get_events() -> Optional[str]:
 def send_event(event: Event) -> None:
     event_type = get_event_type(event)
 
-    extra = {
-        "event_type": event_type,
-        "custom_dimensions": json.loads(event.json(exclude_none=True)),
-    }
-    logging.info("event:%s", event_type, extra=extra)
+    logging.info("sending event: %s - %s", event_type, event)
 
     event_message = EventMessage(
         event_type=event_type,
