@@ -8,10 +8,11 @@ import logging
 from datetime import datetime
 
 import azure.functions as func
+from onefuzztypes.events import EventTaskHeartbeat
 from onefuzztypes.models import Error, TaskHeartbeatEntry
 from pydantic import ValidationError
 
-from ..onefuzzlib.events import get_events
+from ..onefuzzlib.events import get_events, send_event
 from ..onefuzzlib.tasks.main import Task
 
 
@@ -29,6 +30,11 @@ def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
         if task:
             task.heartbeat = datetime.utcnow()
             task.save()
+            send_event(
+                EventTaskHeartbeat(
+                    job_id=task.job_id, task_id=task.task_id, config=task.config
+                )
+            )
     except ValidationError:
         logging.error("invalid task heartbeat: %s", raw)
 
