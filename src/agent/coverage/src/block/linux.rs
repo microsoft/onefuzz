@@ -31,7 +31,10 @@ pub struct Recorder {
 
 impl Recorder {
     pub fn new(filter: CmdFilter) -> Self {
-        Self { filter, ..Self::default() }
+        Self {
+            filter,
+            ..Self::default()
+        }
     }
 
     pub fn record(&mut self, cmd: Command) -> Result<()> {

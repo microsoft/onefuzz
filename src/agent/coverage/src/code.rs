@@ -351,15 +351,9 @@ impl CmdFilter {
             modules.push(def.module);
 
             let rule = match def.rule {
-                RuleDef::Exclude { exclude } => {
-                    Rule::IncludeModule(!exclude)
-                },
-                RuleDef::Include { include } => {
-                    Rule::IncludeModule(include)
-                },
-                RuleDef::Filter(filter) => {
-                    Rule::FilterSymbols(filter)
-                },
+                RuleDef::Exclude { exclude } => Rule::IncludeModule(!exclude),
+                RuleDef::Include { include } => Rule::IncludeModule(include),
+                RuleDef::Filter(filter) => Rule::FilterSymbols(filter),
             };
 
             rules.push(rule);
@@ -374,13 +368,11 @@ impl CmdFilter {
             Some(index) => {
                 // In-bounds by construction.
                 match &self.rules[index] {
-                    Rule::IncludeModule(included) => {
-                        *included
-                    },
+                    Rule::IncludeModule(included) => *included,
                     Rule::FilterSymbols(_) => {
                         // A filtered module is implicitly tracked.
                         true
-                    },
+                    }
                 }
             }
             None => {
@@ -395,12 +387,8 @@ impl CmdFilter {
             Some(index) => {
                 // In-bounds by construction.
                 match &self.rules[index] {
-                    Rule::IncludeModule(included) => {
-                        *included
-                    }
-                    Rule::FilterSymbols(filter) => {
-                        filter.includes(symbol.as_ref())
-                    }
+                    Rule::IncludeModule(included) => *included,
+                    Rule::FilterSymbols(filter) => filter.includes(symbol.as_ref()),
                 }
             }
             None => {
