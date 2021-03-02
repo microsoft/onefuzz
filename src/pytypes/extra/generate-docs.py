@@ -47,6 +47,8 @@ from onefuzztypes.events import (
     EventNodeStateUpdated,
     EventNodeCreated,
     EventNodeDeleted,
+    EventNodeHeartbeat,
+    EventTaskHeartbeat,
     get_event_type,
     EventType,
 )
@@ -194,6 +196,8 @@ def main():
             ),
         ),
         EventFileAdded(container=Container("container-name"), filename="example.txt"),
+        EventNodeHeartbeat(machine_id=UUID(int=0), pool_name="example"),
+        EventTaskHeartbeat(task_id=UUID(int=0), job_id=UUID(int=0), config=task_config),
     ]
 
     for event in Event.__args__:
