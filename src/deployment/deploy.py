@@ -338,7 +338,7 @@ class Client:
             if len(cli_app) == 0:
                 logger.error(
                     (
-                        "Invalid client id {}."
+                        "Invalid client id %s."
                         + " Please verify that the application registration"
                         + " exists under the current subscription"
                     )
@@ -353,7 +353,7 @@ class Client:
             if len(cli_app) == 0:
                 cli_app = list(
                     client.applications.list(
-                        filter="appName eq '%s'" % cli_registration_name
+                        filter="displayName eq '%s'" % cli_registration_name
                     )
                 )
 
@@ -373,7 +373,7 @@ class Client:
         else:
             cli_app_id = cli_app[0].app_id
             logger.info(
-                "Authorizing application {} to access the onefuzz instance" % cli_app_id
+                "Authorizing application '%s' to access the onefuzz instance" % cli_app_id
             )
             authorize_application(uuid.UUID(cli_app_id), app.app_id)
 
