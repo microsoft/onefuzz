@@ -231,6 +231,8 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
     wait_duration = 10
     while count < tries:
         count += 1
+        if count > 1:
+            logging.info("retrying app password creation")
         try:
             password = add_application_password_impl(app_object_id)
             logging.info("app password created")
