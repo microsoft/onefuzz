@@ -313,6 +313,11 @@ struct ModuleRuleDef {
     pub rule: RuleDef,
 }
 
+/// User-facing encoding of a module-tracking rule.
+///
+/// We use an intermediate type to expose a rich and easily-updated user-facing
+/// format for expressing rules, while decoupling the `serde` machinery from the
+/// normalized type used for business logic.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 enum RuleDef {
@@ -321,10 +326,11 @@ enum RuleDef {
     Filter(Box<Filter>),
 }
 
+/// A normalized encoding of a module-tracking rule.
 #[derive(Clone, Debug)]
 enum Rule {
-    /// Asserts that the entire sould be be tracked (and its symbols included),
-    /// or ignored, and its symbols excluded.
+    /// Asserts that the entire module should be be tracked (and its symbols
+    /// included), or ignored, and its symbols excluded.
     ///
     /// The implied symbol tracking behavior could be encoded by a filter, but a
     /// distinction at this level lets us avoid parsing modules that we want to
@@ -336,6 +342,7 @@ enum Rule {
     FilterSymbols(Box<Filter>),
 }
 
+/// Module and symbol-tracking rules to be applied to a command.
 #[derive(Clone, Debug)]
 pub struct CmdFilter {
     regexes: RegexSet,
