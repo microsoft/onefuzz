@@ -19,7 +19,6 @@ use serde::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
 use tempfile::tempdir;
 use tokio::{
-    fs::rename,
     io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
     task,
@@ -143,7 +142,7 @@ impl LibFuzzerFuzzTask {
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
             while let Some(Ok(entry)) = entries.next().await {
                 let destination_path = self.config.inputs.path.clone().join(entry.file_name());
-                tokio::fs::rename(&entry.path(), &destination_path)
+                tokio::fs::copy(&entry.path(), &destination_path)
                     .await
                     .with_context(|| {
                         format!(
@@ -235,7 +234,7 @@ impl LibFuzzerFuzzTask {
         for file in &files {
             if let Some(filename) = file.file_name() {
                 let dest = self.config.crashes.path.join(filename);
-                rename(file, dest).await?;
+                tokio::fs::copy(file, dest).await?;
             }
         }
 
