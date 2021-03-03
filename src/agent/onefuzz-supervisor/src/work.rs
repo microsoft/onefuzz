@@ -140,7 +140,7 @@ impl WorkQueue {
 
         Ok(Self {
             queue,
-            registration: registration,
+            registration,
         })
     }
 

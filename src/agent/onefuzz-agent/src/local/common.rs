@@ -222,8 +222,8 @@ impl DirectoryMonitorQueue {
                 monitor.start()?;
                 loop {
                     match monitor.poll_file() {
-                        Poll::Ready(Some(crash)) => {
-                            let file_url = Url::from_file_path(crash)
+                        Poll::Ready(Some(file_path)) => {
+                            let file_url = Url::from_file_path(file_path)
                                 .map_err(|_| anyhow!("invalid file path"))?;
                             queue.enqueue(file_url).await?;
                         }
