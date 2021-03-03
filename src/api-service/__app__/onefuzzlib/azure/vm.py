@@ -88,7 +88,7 @@ def create_vm(
         return image_os
 
     if image_os == OS.windows:
-        params["virtual_machine_profile"]["os_profile"]["admin_password"] = password
+        params["os_profile"]["admin_password"] = password
 
     if image_os == OS.linux:
 
