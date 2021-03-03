@@ -63,8 +63,8 @@ impl SyncedDir {
     }
 
     pub async fn init(&self) -> Result<()> {
-        if let Some(path) = self.url.as_file_path() {
-            fs::create_dir_all(path).await?;
+        if let Some(remote_path) = self.url.as_file_path() {
+            fs::create_dir_all(remote_path).await?;
         }
 
         match fs::metadata(&self.path).await {
