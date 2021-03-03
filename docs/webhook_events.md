@@ -1177,7 +1177,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "input_reports",
                 "regression_reports"
             ],
             "title": "ContainerType"
@@ -1620,7 +1619,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "input_reports",
                 "regression_reports"
             ],
             "title": "ContainerType"
@@ -2103,7 +2101,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
-                "unique_reports"
+                "unique_reports",
+                "regression_reports"
             ],
             "title": "ContainerType"
         },
@@ -2276,6 +2275,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Rename Output",
                     "type": "boolean"
                 },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
                 "stats_file": {
                     "title": "Stats File",
                     "type": "string"
@@ -2374,11 +2380,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
+                "libfuzzer_regression",
                 "generic_analysis",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -2503,7 +2511,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "input_reports",
                 "regression_reports"
             ],
             "title": "ContainerType"
@@ -2940,7 +2947,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "input_reports",
                 "regression_reports"
             ],
             "title": "ContainerType"
@@ -3406,7 +3412,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "tools",
                 "unique_inputs",
                 "unique_reports",
-                "input_reports",
                 "regression_reports"
             ],
             "title": "ContainerType"
