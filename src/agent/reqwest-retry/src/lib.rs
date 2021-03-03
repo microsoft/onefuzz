@@ -4,6 +4,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use backoff::{self, future::FutureOperation, ExponentialBackoff};
+use onefuzz_telemetry::warn;
 use reqwest::{Response, StatusCode};
 use std::{
     sync::atomic::{AtomicI32, Ordering},
@@ -16,30 +17,33 @@ use std::io::ErrorKind;
 const DEFAULT_RETRY_PERIOD: Duration = Duration::from_secs(2);
 const MAX_ELAPSED_TIME: Duration = Duration::from_secs(30);
 const MAX_RETRY_ATTEMPTS: i32 = 5;
+const MAX_RETRY_ERROR_MESSAGE: &str = "Maximum number of attempts reached for this request";
+
+fn is_transient_socket_error(error: &reqwest::Error) -> bool {
+    let source = error.source();
+    if let Some(err) = source {
+        if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
+            match io_error.kind() {
+                ErrorKind::ConnectionAborted
+                | ErrorKind::ConnectionReset
+                | ErrorKind::ConnectionRefused
+                | ErrorKind::TimedOut
+                | ErrorKind::NotConnected => {
+                    return true;
+                }
+                _ => (),
+            }
+        }
+    }
+    false
+}
 
 fn to_backoff_response(
     result: Result<Response, reqwest::Error>,
 ) -> Result<Response, backoff::Error<anyhow::Error>> {
-    fn is_transient_socket_error(error: &reqwest::Error) -> bool {
-        let source = error.source();
-        while let Some(err) = source {
-            if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
-                match io_error.kind() {
-                    ErrorKind::ConnectionAborted
-                    | ErrorKind::ConnectionReset
-                    | ErrorKind::ConnectionRefused
-                    | ErrorKind::TimedOut
-                    | ErrorKind::NotConnected => return true,
-                    _ => (),
-                }
-            }
-        }
-        false
-    }
-
     match result {
         Err(error) => {
-            if is_transient_socket_error(&error) {
+            if error.is_connect() || is_transient_socket_error(&error) {
                 Err(backoff::Error::Transient(anyhow::Error::from(error)))
             } else {
                 Err(backoff::Error::Permanent(anyhow::Error::from(error)))
@@ -91,12 +95,14 @@ pub async fn send_retry_reqwest<
     let op = || async {
         if counter.fetch_add(1, Ordering::SeqCst) >= max_retry {
             Result::<Response, backoff::Error<anyhow::Error>>::Err(backoff::Error::Permanent(
-                anyhow::Error::msg("Maximum number of attempts reached for this request"),
+                anyhow::Error::msg(MAX_RETRY_ERROR_MESSAGE),
             ))
         } else {
             let request = build_request().map_err(backoff::Error::Permanent)?;
             let response = request.send().await;
-            Result::<Response, backoff::Error<anyhow::Error>>::Ok(error_mapper(response)?)
+            let mapped = error_mapper(response)?;
+
+            Result::<Response, backoff::Error<anyhow::Error>>::Ok(mapped)
         }
     };
     let result = op
@@ -107,7 +113,7 @@ pub async fn send_retry_reqwest<
                 max_elapsed_time: Some(max_elapsed_time),
                 ..ExponentialBackoff::default()
             },
-            |err, _| println!("Transient error: {}", err),
+            |err, _| warn!("transient http error: {}", err),
         )
         .await?;
     Ok(result)
@@ -174,14 +180,36 @@ mod test {
     use super::*;
 
     #[tokio::test]
-    async fn empty_stack() -> Result<()> {
-        let resp = reqwest::Client::new()
-            .get("http://localhost:5000/api/testGet")
+    async fn retry_should_pass() -> Result<()> {
+        reqwest::Client::new()
+            .get("https://www.microsoft.com")
             .send_retry_default()
-            .await?;
-        println!("{:?}", resp);
+            .await?
+            .error_for_status()?;
 
-        assert!(resp.error_for_status().is_err());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn retry_should_fail() -> Result<()> {
+        let invalid_url = "http://localhost:81/test.txt";
+        let resp = reqwest::Client::new()
+            .get(invalid_url)
+            .send_retry(
+                Duration::from_secs(1),
+                Duration::from_secs(3),
+                3i32,
+                to_backoff_response,
+            )
+            .await;
+
+        if let Err(err) = &resp {
+            let as_text = format!("{}", err);
+            assert!(as_text.contains("Maximum number of attempts reached for this request"));
+        } else {
+            bail!("response to {} was expected to fail", invalid_url);
+        }
+
         Ok(())
     }
 }

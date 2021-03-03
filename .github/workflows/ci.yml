@@ -297,8 +297,13 @@ jobs:
           find artifacts
           mkdir release-artifacts
           cp -r src/runtime-tools src/deployment/tools
-          cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
-          cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
+          if [ -f artifacts/azcopy/NOTICE.txt ]; then
+              cp artifacts/azcopy/azcopy artifacts/azcopy/NOTICE.txt src/deployment/tools/linux
+              cp artifacts/azcopy/azcopy.exe artifacts/azcopy/NOTICE.txt src/deployment/tools/win64
+          else
+              cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
+              cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
+          fi
           cp artifacts/agent/onefuzz-supervisor.exe src/deployment/tools/win64/
           cp artifacts/agent/onefuzz-agent.exe src/deployment/tools/win64/
           cp artifacts/agent/onefuzz_supervisor.pdb src/deployment/tools/win64/
