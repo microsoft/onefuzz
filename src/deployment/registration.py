@@ -232,7 +232,9 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
     while count < tries:
         count += 1
         try:
-            return add_application_password_impl(app_object_id)
+            password = add_application_password_impl(app_object_id)
+            logging.info("app password created")
+            return password
         except GraphQueryError as err:
             error = err
             # modeled after AZ-CLI's handling of missing application
