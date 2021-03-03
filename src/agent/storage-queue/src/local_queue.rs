@@ -44,7 +44,7 @@ impl FileQueueClient {
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
         let send_data = || async {
             let mut buffer = Vec::new();
-            serde_xml_rs::to_writer(&mut buffer, &data)
+            serde_json::to_writer(&mut buffer, &data)
                 .map_err(|_| anyhow::anyhow!("unable to deserialize"))?;
             let mut locked_q = self
                 .queue
@@ -126,7 +126,7 @@ impl ChannelQueueClient {
             .lock()
             .map_err(|_| anyhow::anyhow!("unable to acquire lock"))?;
         let mut buffer = Vec::new();
-        serde_xml_rs::to_writer(&mut buffer, &data)
+        serde_json::to_writer(&mut buffer, &data)
             .map_err(|_| anyhow::anyhow!("unable to deserialize"))?;
         sender.send(buffer)?;
         Ok(())
