@@ -14,6 +14,7 @@ use tokio::time::delay_for;
 use uuid::Uuid;
 
 use std::task::Poll;
+use path_absolutize::*;
 
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
@@ -145,6 +146,8 @@ pub fn get_synced_dirs(
         .iter()
         .enumerate()
         .map(|(index, remote_path)| {
+            let path = PathBuf::from(remote_path);
+            let remote_path = path.absolutize().unwrap();
             let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
             let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
             let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
@@ -163,7 +166,7 @@ pub fn get_synced_dir(
     task_id: Uuid,
     args: &ArgMatches<'_>,
 ) -> Result<SyncedDir> {
-    let remote_path = value_t!(args, name, PathBuf)?;
+    let remote_path = value_t!(args, name, PathBuf)?.absolutize()?.into_owned();
     let remote_url = Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
     let remote_blob_url = BlobContainerUrl::new(remote_url)?;
     let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
