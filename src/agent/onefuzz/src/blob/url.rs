@@ -113,7 +113,11 @@ impl BlobContainerUrl {
     }
 
     pub fn as_file_path(&self) -> Option<PathBuf> {
-        self.url.to_file_path().ok()
+        self.url.to_file_path()
+        .ok()
+        // adding a trailing to indicate that the path is a folder
+        // this affect the file copy operation on linux
+        .map(|path| path.join(""))
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
