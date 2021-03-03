@@ -184,17 +184,19 @@ class Regression(Command):
             target_exe=target_exe,
         )
 
+        helper.define_containers(
+            ContainerType.setup,
+            ContainerType.crashes,
+            ContainerType.reports,
+            ContainerType.no_repro,
+            ContainerType.unique_reports,
+            ContainerType.regression_reports,
+        )
+
         if crashes:
             helper.containers[
                 ContainerType.readonly_inputs
             ] = helper.get_unique_container_name(ContainerType.readonly_inputs)
-
-        helper.define_containers(
-            ContainerType.setup,
-            ContainerType.reports,
-            ContainerType.no_repro,
-            ContainerType.regression_reports,
-        )
 
         helper.create_containers()
         if crashes:
@@ -204,6 +206,7 @@ class Regression(Command):
                 )
 
         helper.setup_notifications(notification_config)
+
         containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.crashes, helper.containers[ContainerType.crashes]),
