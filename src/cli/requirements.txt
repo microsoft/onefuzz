@@ -8,7 +8,7 @@ dataclasses~=0.6
 pydantic~=1.7.3 --no-binary=pydantic
 memoization~=0.3.1
 msrestazure==0.6.4
-azure-storage-blob~=12.3
+azure-storage-blob~=12.8
 azure-applicationinsights==0.1.0
 tenacity==6.3.1
 docstring_parser==0.7.3
