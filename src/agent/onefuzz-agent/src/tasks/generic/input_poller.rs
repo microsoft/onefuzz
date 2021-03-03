@@ -128,10 +128,8 @@ impl<M> InputPoller<M> {
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
-            info!("Processing batch-downloaded input {:?}", file);
-
-            let file = file?;
-            let path = file.path();
+            let path = file?.path();
+            info!("Processing batch-downloaded input: {}", path.display());
 
             // Compute the file name relative to the synced directory, and thus the
             // container.
@@ -182,7 +180,7 @@ impl<M> InputPoller<M> {
                     delay_with_jitter(POLL_INTERVAL).await;
                 }
                 State::Downloaded(_msg, _url, input, _tempdir) => {
-                    info!("Processing downloaded input: {:?}", input);
+                    info!("Processing downloaded input: {}", input.display());
                 }
                 _ => {}
             }

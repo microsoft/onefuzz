@@ -10,7 +10,7 @@ import urllib.parse
 from typing import Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import ResourceExistsError
 from azure.storage.blob import (
     BlobClient,
     BlobSasPermissions,
@@ -74,11 +74,8 @@ def find_container(
     # increased IOP rates, this should be a slight optimization
     for account in reversed(accounts):
         client = get_blob_service(account).get_container_client(container)
-        try:
-            client.get_container_properties()
+        if client.exists():
             return client
-        except ResourceNotFoundError:
-            continue
     return None
 
 
