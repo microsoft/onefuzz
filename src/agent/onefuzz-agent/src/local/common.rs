@@ -13,8 +13,8 @@ use std::{
 use tokio::time::delay_for;
 use uuid::Uuid;
 
-use std::task::Poll;
 use path_absolutize::*;
+use std::task::Poll;
 
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
@@ -208,7 +208,7 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
 pub struct DirectoryMonitorQueue {
     pub directory_path: PathBuf,
     pub queue_client: storage_queue::QueueClient,
-    pub handle: tokio::task::JoinHandle<std::result::Result<(), anyhow::Error>>,
+    pub handle: tokio::task::JoinHandle<()>,
 }
 
 impl DirectoryMonitorQueue {
@@ -219,24 +219,24 @@ impl DirectoryMonitorQueue {
             storage_queue::local_queue::ChannelQueueClient::new()?,
         );
         let queue = queue_client.clone();
-        let handle: tokio::task::JoinHandle<std::result::Result<(), anyhow::Error>> =
-            tokio::spawn(async move {
-                let mut monitor = DirectoryMonitor::new(directory_path_clone.clone());
-                monitor.start()?;
-                loop {
-                    match monitor.poll_file() {
-                        Poll::Ready(Some(file_path)) => {
-                            let file_url = Url::from_file_path(file_path)
-                                .map_err(|_| anyhow!("invalid file path"))?;
-                            queue.enqueue(file_url).await?;
-                        }
-                        Poll::Ready(None) => break,
-                        Poll::Pending => delay_with_jitter(Duration::from_secs(1)).await,
+        let handle: tokio::task::JoinHandle<()> = tokio::spawn(async move {
+            let mut monitor = DirectoryMonitor::new(directory_path_clone.clone());
+            monitor.start().unwrap();
+            loop {
+                match monitor.poll_file() {
+                    Poll::Ready(Some(file_path)) => {
+                        let file_url = Url::from_file_path(file_path)
+                            .map_err(|_| anyhow!("invalid file path"))
+                            .unwrap();
+                        queue.enqueue(file_url).await.unwrap();
                     }
+                    Poll::Ready(None) => break,
+                    Poll::Pending => delay_with_jitter(Duration::from_secs(1)).await,
                 }
+            }
 
-                Ok(())
-            });
+            ()
+        });
 
         Ok(DirectoryMonitorQueue {
             directory_path,

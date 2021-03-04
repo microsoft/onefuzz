@@ -38,7 +38,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     fuzzer.check_libfuzzer().await?;
     let mut task_handles = vec![];
 
-    let fuzz_task = spawn(async move { fuzzer.managed_run().await });
+    let fuzz_task = spawn(async move { fuzzer.managed_run().await.unwrap() });
 
     wait_for_dir(&crash_dir).await?;
 
@@ -56,7 +56,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
             },
         )?;
         let mut report = ReportTask::new(report_config);
-        let report_task = spawn(async move { report.managed_run().await });
+        let report_task = spawn(async move { report.managed_run().await.unwrap() });
         task_handles.push(report_task);
         task_handles.push(crash_report_input_monitor.handle);
     }
@@ -74,7 +74,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
             },
         )?;
         let mut coverage = CoverageTask::new(coverage_config);
-        let coverage_task = spawn(async move { coverage.managed_run().await });
+        let coverage_task = spawn(async move { coverage.managed_run().await.unwrap() });
 
         task_handles.push(coverage_task);
         task_handles.push(coverage_input_monitor.handle);
@@ -90,7 +90,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
                 ..common
             },
         )?;
-        let analysis_task = spawn(async move { run_analysis(analysis_config).await });
+        let analysis_task = spawn(async move { run_analysis(analysis_config).await.unwrap() });
 
         task_handles.push(analysis_task);
         task_handles.push(analysis_input_monitor.handle);
