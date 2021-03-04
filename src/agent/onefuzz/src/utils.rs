@@ -22,6 +22,8 @@ impl CheckNotify for tokio::sync::Notify {
     }
 }
 
+/// wait on all join handles until they all return a success value or
+/// the first failure.
 pub async fn try_wait_all_join_handles(
     handles: Vec<tokio::task::JoinHandle<Result<()>>>,
 ) -> Result<()> {
