@@ -11,6 +11,7 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, SubCommand};
+use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
 use tokio::task::spawn;
 use uuid::Uuid;
@@ -38,9 +39,12 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     )?;
     let report_task = spawn(async move { ReportTask::new(report_config).managed_run().await });
 
-    let result = tokio::try_join!(fuzz_task, report_task, crash_report_input_monitor.handle)?;
-    result.0?;
-    result.1?;
+    try_wait_all_join_handles(vec![
+        fuzz_task,
+        report_task,
+        crash_report_input_monitor.handle,
+    ])
+    .await?;
 
     Ok(())
 }

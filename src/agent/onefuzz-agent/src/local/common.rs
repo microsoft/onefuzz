@@ -142,22 +142,22 @@ pub fn get_synced_dirs(
     args: &ArgMatches<'_>,
 ) -> Result<Vec<SyncedDir>> {
     let current_dir = std::env::current_dir()?;
-    let dirs = value_t!(args, name, PathBuf)?
+    let dirs: Result<Vec<SyncedDir>> = value_t!(args, name, PathBuf)?
         .iter()
         .enumerate()
         .map(|(index, remote_path)| {
             let path = PathBuf::from(remote_path);
-            let remote_path = path.absolutize().unwrap();
+            let remote_path = path.absolutize()?;
             let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
             let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
             let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
-            SyncedDir {
+            Ok(SyncedDir {
                 url: remote_blob_url,
                 path,
-            }
+            })
         })
         .collect();
-    Ok(dirs)
+    Ok(dirs?)
 }
 
 pub fn get_synced_dir(
@@ -208,7 +208,7 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
 pub struct DirectoryMonitorQueue {
     pub directory_path: PathBuf,
     pub queue_client: storage_queue::QueueClient,
-    pub handle: tokio::task::JoinHandle<()>,
+    pub handle: tokio::task::JoinHandle<Result<()>>,
 }
 
 impl DirectoryMonitorQueue {
@@ -219,21 +219,21 @@ impl DirectoryMonitorQueue {
             storage_queue::local_queue::ChannelQueueClient::new()?,
         );
         let queue = queue_client.clone();
-        let handle: tokio::task::JoinHandle<()> = tokio::spawn(async move {
+        let handle: tokio::task::JoinHandle<Result<()>> = tokio::spawn(async move {
             let mut monitor = DirectoryMonitor::new(directory_path_clone.clone());
-            monitor.start().unwrap();
+            monitor.start()?;
             loop {
                 match monitor.poll_file() {
                     Poll::Ready(Some(file_path)) => {
                         let file_url = Url::from_file_path(file_path)
-                            .map_err(|_| anyhow!("invalid file path"))
-                            .unwrap();
-                        queue.enqueue(file_url).await.unwrap();
+                            .map_err(|_| anyhow!("invalid file path"))?;
+                        queue.enqueue(file_url).await?;
                     }
                     Poll::Ready(None) => break,
                     Poll::Pending => delay_with_jitter(Duration::from_secs(1)).await,
                 }
             }
+            Ok(())
         });
 
         Ok(DirectoryMonitorQueue {
