@@ -234,8 +234,6 @@ impl DirectoryMonitorQueue {
                     Poll::Pending => delay_with_jitter(Duration::from_secs(1)).await,
                 }
             }
-
-            ()
         });
 
         Ok(DirectoryMonitorQueue {

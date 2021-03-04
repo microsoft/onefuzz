@@ -27,7 +27,8 @@ impl<'de> Deserialize<'de> for QueueClient {
         D: Deserializer<'de>,
     {
         Url::deserialize(deserializer)
-            .map(|u| QueueClient::new(u).expect("Unable to create queue client"))
+            .map(QueueClient::new)?
+            .map_err(serde::de::Error::custom)
     }
 }
 
