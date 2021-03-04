@@ -170,7 +170,7 @@ impl WorkQueue {
 
         // Now we've had a chance to ensure our SAS URL is fresh. For any other
         // error, including another auth error, bail.
-        let msg = msg?;
+        let msg = msg.context("failed to pop message")?;
 
         if msg.is_none() {
             return Ok(None);
