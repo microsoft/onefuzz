@@ -149,7 +149,7 @@ impl SyncedDir {
                     .ok_or_else(|| anyhow!("invalid file path"))?;
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
-                    bail!(
+                    warn!(
                         "Couldn't upload file.  source:{:?} destination:{:?} err:{}",
                         item,
                         destination,
