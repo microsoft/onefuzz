@@ -162,7 +162,7 @@ impl SyncedDir {
                 event!(event.clone(); EventData::Path = item.display().to_string());
 
                 if let Err(err) = uploader.upload(item.clone()).await {
-                    bail!(
+                    warn!(
                         "Couldn't upload file.  path:{} dir:{} err:{}",
                         item.display(),
                         self.path.display(),
