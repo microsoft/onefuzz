@@ -151,9 +151,7 @@ impl SyncedDir {
                 if let Err(err) = fs::copy(&item, &destination).await {
                     warn!(
                         "Couldn't upload file.  source:{:?} destination:{:?} err:{}",
-                        item,
-                        destination,
-                        err
+                        item, destination, err
                     );
                 }
             }

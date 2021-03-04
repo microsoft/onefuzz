@@ -1664,6 +1664,7 @@ dependencies = [
  "anyhow",
  "appinsights",
  "async-trait",
+ "backoff",
  "clap",
  "env_logger",
  "futures",

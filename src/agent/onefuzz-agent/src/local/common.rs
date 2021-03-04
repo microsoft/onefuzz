@@ -10,9 +10,9 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
-use tokio::time::delay_for;
 use uuid::Uuid;
 
+use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use path_absolutize::*;
 use std::task::Poll;
 
@@ -51,7 +51,7 @@ pub const ANALYSIS_INPUTS: &str = "analysis_inputs";
 pub const ANALYSIS_UNIQUE_INPUTS: &str = "analysis_unique_inputs";
 pub const PRESERVE_EXISTING_OUTPUTS: &str = "preserve_existing_outputs";
 
-const WAIT_FOR_DIR_ATTEMPTS: i32 = 5;
+const WAIT_FOR_MAX_WAIT: Duration = Duration::from_secs(10);
 const WAIT_FOR_DIR_DELAY: Duration = Duration::from_secs(1);
 
 pub enum CmdType {
@@ -245,13 +245,23 @@ impl DirectoryMonitorQueue {
 }
 
 pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
-    for _ in 0..WAIT_FOR_DIR_ATTEMPTS {
+    let op = || async {
         if path.as_ref().exists() {
-            return Ok(());
+            Ok(())
         } else {
-            delay_for(WAIT_FOR_DIR_DELAY).await
+            Err(BackoffError::Transient(anyhow::anyhow!(
+                "path '{:?}' does not exisit",
+                path.as_ref()
+            )))
         }
-    }
-
-    bail!("path '{:?}' does not exisit", path.as_ref())
+    };
+    retry(
+        ExponentialBackoff {
+            max_elapsed_time: Some(WAIT_FOR_MAX_WAIT),
+            max_interval: WAIT_FOR_DIR_DELAY,
+            ..ExponentialBackoff::default()
+        },
+        op,
+    )
+    .await
 }
