@@ -8,9 +8,7 @@ this time. Microsoft uses this data to identify coverage growth and enables
 reverse engineers to identify areas in the applications that need
 investigation.
 
-If you need source-level coverage, re-compile your libfuzzer target with with
-`--coverage` and use
-[llvm-cov](https://llvm.org/docs/CommandGuide/llvm-cov.html).
+For developer-focused coverage, use [source-based coverage](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html).
 
 ## Implementation Details
 
