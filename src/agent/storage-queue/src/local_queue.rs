@@ -16,9 +16,14 @@ pub const MAX_SEND_ATTEMPTS: i32 = 5;
 pub const MAX_RECEIVE_ATTEMPTS: i32 = 5;
 pub const MAX_ELAPSED_TIME: Duration = Duration::from_secs(2 * 60);
 
-#[derive(Debug)]
 pub struct LocalQueueMessage {
     pub data: Vec<u8>,
+}
+
+impl std::fmt::Debug for LocalQueueMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", std::str::from_utf8(&self.data).unwrap())
+    }
 }
 
 /// File backed queue
@@ -44,7 +49,7 @@ impl FileQueueClient {
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
         let send_data = || async {
             let mut buffer = Vec::new();
-            serde_json::to_writer(&mut buffer, &data)
+            serde_xml_rs::to_writer(&mut buffer, &data)
                 .map_err(|_| anyhow::anyhow!("unable to deserialize"))?;
             let mut locked_q = self
                 .queue
@@ -126,7 +131,7 @@ impl ChannelQueueClient {
             .lock()
             .map_err(|_| anyhow::anyhow!("unable to acquire lock"))?;
         let mut buffer = Vec::new();
-        serde_json::to_writer(&mut buffer, &data)
+        serde_xml_rs::to_writer(&mut buffer, &data)
             .map_err(|_| anyhow::anyhow!("unable to deserialize"))?;
         sender.send(buffer)?;
         Ok(())
