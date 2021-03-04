@@ -280,15 +280,17 @@ mod tests {
         let reports_dir = reports_dir_temp.path().into();
 
         let fault_dir_temp = tempfile::tempdir().unwrap();
+        let crashes_local = tempfile::tempdir().unwrap();
+        let corpus_dir_local = tempfile::tempdir().unwrap();
         let crashes = SyncedDir {
-            path: tempfile::tempdir().unwrap().path().into(),
+            path: crashes_local,
             url: BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap())
                 .unwrap(),
         };
 
         let corpus_dir_temp = tempfile::tempdir().unwrap();
         let corpus_dir = SyncedDir {
-            path: tempfile::tempdir().unwrap().path().into(),
+            path: corpus_dir_local,
             url: BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
                 .unwrap(),
         };

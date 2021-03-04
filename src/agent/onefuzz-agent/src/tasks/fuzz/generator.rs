@@ -236,19 +236,22 @@ mod tests {
         let radamsa_as_path = std::path::Path::new(&radamsa_path);
         let radamsa_dir = radamsa_as_path.parent().unwrap();
 
+        let readonly_inputs_local = tempfile::tempdir().unwrap().path().into();
+        let crashes_local = tempfile::tempdir().unwrap().path().into();
+        let tools_local = tempfile::tempdir().unwrap().path().into();
         let config = Config {
             generator_exe: String::from("{tools_dir}/radamsa"),
             generator_options,
             readonly_inputs: vec![SyncedDir {
-                path: tempfile::tempdir().unwrap().path().into(),
+                path: readonly_inputs_local,
                 url: BlobContainerUrl::parse(Url::from_directory_path(inputs).unwrap())?,
             }],
             crashes: SyncedDir {
-                path: tempfile::tempdir().unwrap().path().into(),
+                path: crashes_local,
                 url: BlobContainerUrl::parse(Url::from_directory_path(crashes).unwrap())?,
             },
             tools: Some(SyncedDir {
-                path: tempfile::tempdir().unwrap().path().into(),
+                path: tools_local,
                 url: BlobContainerUrl::parse(Url::from_directory_path(radamsa_dir).unwrap())?,
             }),
             target_exe: Default::default(),
