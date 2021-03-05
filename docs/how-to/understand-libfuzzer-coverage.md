@@ -3,7 +3,7 @@
 The `libfuzzer_coverage` task in OneFuzz provides coverage data from
 libFuzzer targets by extracting compiler-based coverage at runtime.
 
-The extracted data isn't directly mappable to developer consumable data a
+The extracted data isn't directly mappable to developer-consumable data at
 this time. Microsoft uses this data to identify coverage growth and enables
 reverse engineers to identify areas in the applications that need
 investigation.
@@ -13,7 +13,7 @@ For developer-focused coverage, use [source-based coverage](https://clang.llvm.o
 ## Implementation Details
 
 For each input in the corpus, the fuzzing target is run using a platform
-specific debugging script which extracts a per-module `sancov` tables. The
+specific debugging script which extracts a per-module `sancov` table. The
 per-input `sancov` files are summaries for each module, as well as a total
 for the target.
 
@@ -91,4 +91,4 @@ What is shown here is:
 * A per-input summary of all of the per-module sancov gathered for the input.  This is stored as `inputs/SHA256_OF_INPUT.cov`
 * A summary of all of the coverage thus far, as `total.cov`
 
-> NOTE: The `inputs/SHA256_OF_INPUT.cov` and `total.cov` are built by naively concatenating the per-module inputs.  The result is primarily useful for understanding coverage growth in general, but doesn't easily map back to code easily.
+> NOTE: The `inputs/SHA256_OF_INPUT.cov` and `total.cov` are built by naively concatenating the per-module inputs.  The result is primarily useful for understanding coverage growth in general, but doesn't easily map back to source code.
