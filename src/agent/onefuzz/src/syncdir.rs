@@ -35,12 +35,13 @@ pub struct SyncedDir {
 
 impl SyncedDir {
     pub async fn sync(&self, operation: SyncOperation, delete_dst: bool) -> Result<()> {
-        let dir = &self.path;
-        if let Some(file_path) = self.url.as_file_path() {
-            debug!("syncing {:?} {}", operation, file_path.display());
+        // Adding a trailing '/' to specify a copy of the dir content on linux
+        let dir = &self.path.join("");
+        if let Some(dest) = self.url.as_file_path() {
+            debug!("syncing {:?} {}", operation, dest.display());
             match operation {
-                SyncOperation::Push => sync(dir, file_path, delete_dst).await,
-                SyncOperation::Pull => sync(file_path, dir, delete_dst).await,
+                SyncOperation::Push => sync(dir, dest, delete_dst).await,
+                SyncOperation::Pull => sync(dest, dir, delete_dst).await,
             }
         } else {
             let url = self.url.url();
