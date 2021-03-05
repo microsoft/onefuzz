@@ -1,0 +1,13 @@
+{
+  "Registrations": [
+    {
+      "Component": {
+        "Type": "git",
+        "Git": {
+          "RepositoryUrl": "https://github.com/google/clusterfuzz",
+          "CommitHash": "d85aed776d120e6df26aa1cd0335fc7a53d76816"
+        }
+      }
+    }
+  ]
+}
