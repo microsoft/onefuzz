@@ -2,11 +2,10 @@
   "Registrations": [
     {
       "Component": {
-        "Type": "python",
-        "Other": {
-          "Name": "clusterfuzz",
-          "Version": "2.4.0",
-          "DownloadUrl": "https://github.com/google/clusterfuzz/archive/v2.4.0.zip"
+        "Type": "git",
+        "Git": {
+          "RepositoryUrl": "https://github.com/google/clusterfuzz",
+          "CommitHash": "d85aed776d120e6df26aa1cd0335fc7a53d76816"
         }
       }
     }
