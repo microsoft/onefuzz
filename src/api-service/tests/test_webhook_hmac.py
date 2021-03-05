@@ -4,22 +4,32 @@
 # Licensed under the MIT License.
 
 import unittest
+from unittest.mock import MagicMock, patch
 from uuid import UUID
 
 from onefuzztypes.events import EventPing, EventType
 
-from __app__.onefuzzlib.webhooks import build_message
-
 
 class TestWebhookHmac(unittest.TestCase):
-    def test_webhook_hmac(self) -> None:
+    @patch("__app__.onefuzzlib.webhooks.get_instance_id")
+    @patch("__app__.onefuzzlib.webhooks.get_instance_name")
+    def test_webhook_hmac(self, mock_name: MagicMock, mock_id: MagicMock) -> None:
+        mock_name.return_value = "example"
+        mock_id.return_value = UUID(int=3)
+
+        # late import to enable the patch to function
+        from __app__.onefuzzlib.webhooks import build_message
+
         webhook_id = UUID(int=0)
         event_id = UUID(int=1)
         event_type = EventType.ping
         event = EventPing(ping_id=UUID(int=2))
 
         data, digest = build_message(
-            webhook_id=webhook_id, event_id=event_id, event_type=event_type, event=event
+            webhook_id=webhook_id,
+            event_id=event_id,
+            event_type=event_type,
+            event=event,
         )
 
         expected = (
@@ -27,16 +37,19 @@ class TestWebhookHmac(unittest.TestCase):
             b'"event": {"ping_id": "00000000-0000-0000-0000-000000000002"}, '
             b'"event_id": "00000000-0000-0000-0000-000000000001", '
             b'"event_type": "ping", '
+            b'"instance_id": "00000000-0000-0000-0000-000000000003", '
+            b'"instance_name": "example", '
             b'"webhook_id": "00000000-0000-0000-0000-000000000000"'
             b"}"
         )
 
         expected_digest = (
-            "3502f83237ce006b7f6cfa40b89c0295009e3ccb0a1e62ce1d689700c2c6e698"
-            "61c0de81e011495c2ca89fbf99485b841cee257bcfba326a3edc66f39dc1feec"
+            "2f0610d708d9938dc053200cd2242b4cca4e9bb7227e5e662f28307f57c7fc9b"
+            "d1ffcab6fff9f409b3fb856db4f358be9078ec0b64874efac2b8f065211e2a14"
         )
 
         print(repr(expected))
+        print(repr(data))
         self.assertEqual(data, expected)
         self.assertEqual(digest, None)
 

@@ -192,6 +192,17 @@ async fn start_supervisor(
         })
         .set_optional_ref(&config.target_options, |expand, target_options| {
             expand.target_options(target_options)
+        })
+        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
+            tester.microsoft_telemetry_key(&key)
+        })
+        .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
+            tester.instance_telemetry_key(&key)
+        })
+        .set_optional_ref(&config.crashes.url, |tester, url| {
+            tester
+                .crashes_account(&url.account())
+                .crashes_container(&url.container())
         });
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
@@ -221,7 +232,7 @@ mod tests {
     use super::*;
     use crate::tasks::stats::afl::read_stats;
     use onefuzz::process::monitor_process;
-    use onefuzz::telemetry::EventData;
+    use onefuzz_telemetry::EventData;
     use std::collections::HashMap;
     use std::time::Instant;
 
