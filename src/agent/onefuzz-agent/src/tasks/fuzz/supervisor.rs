@@ -280,8 +280,8 @@ mod tests {
         let reports_dir = reports_dir_temp.path().into();
 
         let fault_dir_temp = tempfile::tempdir().unwrap();
-        let crashes_local = tempfile::tempdir().unwrap();
-        let corpus_dir_local = tempfile::tempdir().unwrap();
+        let crashes_local = tempfile::tempdir().unwrap().path().into();
+        let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
         let crashes = SyncedDir {
             path: crashes_local,
             url: BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap())
