@@ -1,0 +1,14 @@
+{
+  "Registrations": [
+    {
+      "Component": {
+        "Type": "python",
+        "Other": {
+          "Name": "clusterfuzz",
+          "Version": "2.4.0",
+          "DownloadUrl": "https://github.com/google/clusterfuzz/archive/v2.4.0.zip"
+        }
+      }
+    }
+  ]
+}
