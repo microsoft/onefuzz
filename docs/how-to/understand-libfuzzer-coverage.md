@@ -29,7 +29,7 @@ for the target.
 
 ## Understanding the coverage
 
-Launching an [../../src/integration-tests/libfuzzer](example libfuzzer),
+Launching an [example libfuzzer](../../src/integration-tests/libfuzzer),
 we'll see something like this:
 
 ```
