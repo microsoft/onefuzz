@@ -106,7 +106,7 @@ pub struct BlobContainerUrl {
 impl BlobContainerUrl {
     pub fn new(url: Url) -> Result<Self> {
         if !possible_blob_container_url(&url) {
-            bail!("Invalid container URL 1: {}", url);
+            bail!("Invalid container URL: {}", url);
         }
 
         Ok(Self { url })
