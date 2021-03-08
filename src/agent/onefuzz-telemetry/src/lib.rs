@@ -440,50 +440,46 @@ macro_rules! event {
 
 #[macro_export]
 macro_rules! log {
-    ($level: expr, $msg: expr) => {{
+    ($level: expr, $($arg: tt)+) => {{
         if onefuzz_telemetry::should_log(&$level) {
-            onefuzz_telemetry::log_message($level, $msg.to_string());
+            let msg = format!("{}", format_args!($($arg)+));
+            onefuzz_telemetry::log_message($level, msg.to_string());
         }
     }};
 }
 
 #[macro_export]
 macro_rules! debug {
-    ($($tt: tt)*) => {{
-        let msg = format!($($tt)*);
-        onefuzz_telemetry::log!(onefuzz_telemetry::Verbose, msg);
+    ($($arg: tt)+) => {{
+        onefuzz_telemetry::log!(onefuzz_telemetry::Verbose, $($arg)+);
     }}
 }
 
 #[macro_export]
 macro_rules! info {
-    ($($tt: tt)*) => {{
-        let msg = format!($($tt)*);
-        onefuzz_telemetry::log!(onefuzz_telemetry::Information, msg);
+    ($($arg: tt)+) => {{
+        onefuzz_telemetry::log!(onefuzz_telemetry::Information, $($arg)+);
     }}
 }
 
 #[macro_export]
 macro_rules! warn {
-    ($($tt: tt)*) => {{
-        let msg = format!($($tt)*);
-        onefuzz_telemetry::log!(onefuzz_telemetry::Warning, msg);
+    ($($arg: tt)+) => {{
+        onefuzz_telemetry::log!(onefuzz_telemetry::Warning, $($arg)+);
     }}
 }
 
 #[macro_export]
 macro_rules! error {
-    ($($tt: tt)*) => {{
-        let msg = format!($($tt)*);
-        onefuzz_telemetry::log!(onefuzz_telemetry::Error, msg);
+    ($($arg: tt)+) => {{
+        onefuzz_telemetry::log!(onefuzz_telemetry::Error, $($arg)+);
     }}
 }
 
 #[macro_export]
 macro_rules! critical {
-    ($($tt: tt)*) => {{
-        let msg = format!($($tt)*);
-        onefuzz_telemetry::log!(onefuzz_telemetry::Critical, msg);
+    ($($arg: tt)+) => {{
+        onefuzz_telemetry::log!(onefuzz_telemetry::Critical, $($arg)+);
     }}
 }
 

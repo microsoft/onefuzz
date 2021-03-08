@@ -29,7 +29,10 @@ def fail_task(report: Report, error: Exception) -> None:
     task = Task.get(report.job_id, report.task_id)
     if task:
         task.mark_failed(
-            Error(code=ErrorCode.NOTIFICATION_FAILURE, errors=[str(error)])
+            Error(
+                code=ErrorCode.NOTIFICATION_FAILURE,
+                errors=["notification failed", str(error)],
+            )
         )
 
 
