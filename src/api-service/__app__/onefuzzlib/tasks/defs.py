@@ -456,6 +456,12 @@ TASK_DEFINITIONS = {
                 permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
             ContainerDefinition(
+                type=ContainerType.unique_reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
                 type=ContainerType.no_repro,
                 compare=Compare.AtMost,
                 value=1,
@@ -503,6 +509,12 @@ TASK_DEFINITIONS = {
             ContainerDefinition(
                 type=ContainerType.crashes,
                 compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.unique_reports,
+                compare=Compare.AtMost,
                 value=1,
                 permissions=[ContainerPermission.Read, ContainerPermission.List],
             ),
