@@ -7,9 +7,11 @@ use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::Synced
 use reqwest::Url;
 use std::{
     collections::HashMap,
+    env::current_dir,
     path::{Path, PathBuf},
     time::Duration,
 };
+use backoff::{future::retry, ExponentialBackoff, Error as BackoffError};
 use uuid::Uuid;
 
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
@@ -58,6 +60,21 @@ pub enum CmdType {
     Target,
     Generator,
     // Supervisor,
+}
+
+#[derive(Clone, Debug)]
+pub struct LocalContext {
+    pub cleanup_on_drop: bool,
+    pub job_path: PathBuf,
+    pub common_config: CommonConfig,
+}
+
+impl Drop for LocalContext {
+    fn drop(&mut self) {
+        if self.cleanup_on_drop {
+            std::fs::remove_dir_all(&self.job_path).unwrap();
+        }
+    }
 }
 
 pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
@@ -127,6 +144,12 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
             .takes_value(true)
             .required(false),
     )
+    .arg(
+        Arg::with_name("cleanup")
+            .long("cleanup")
+            .takes_value(true)
+            .required(false),
+    )
 }
 
 fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
@@ -176,7 +199,7 @@ pub fn get_synced_dir(
     })
 }
 
-pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
+pub fn build_local_context(args: &ArgMatches<'_>) -> Result<LocalContext> {
     let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
     let task_id = get_uuid("task_id", args).unwrap_or_else(|_| Uuid::new_v4());
     let instance_id = get_uuid("instance_id", args).unwrap_or_else(|_| Uuid::nil());
@@ -192,14 +215,21 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
         PathBuf::default()
     };
 
-    let config = CommonConfig {
+    let common_config = CommonConfig {
         job_id,
         task_id,
         instance_id,
         setup_dir,
         ..Default::default()
     };
-    Ok(config)
+    let current_dir = current_dir()?;
+    let job_path = current_dir.join(format!("{}", job_id));
+    let cleanup_on_drop = value_t!(args, "cleanup", bool).unwrap_or_default();
+    Ok(LocalContext {
+        cleanup_on_drop,
+        job_path,
+        common_config,
+    })
 }
 
 /// Information about a local path being monitored
@@ -249,19 +279,11 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
         if path.as_ref().exists() {
             Ok(())
         } else {
-            Err(BackoffError::Transient(anyhow::anyhow!(
-                "path '{:?}' does not exisit",
-                path.as_ref()
-            )))
+            Err(BackoffError::Transient(anyhow::anyhow!("path '{:?}' does not exisit", path.as_ref())))
         }
     };
-    retry(
-        ExponentialBackoff {
-            max_elapsed_time: Some(WAIT_FOR_MAX_WAIT),
-            max_interval: WAIT_FOR_DIR_DELAY,
-            ..ExponentialBackoff::default()
-        },
-        op,
-    )
-    .await
+    retry( ExponentialBackoff {
+        max_elapsed_time: Some(WAIT_FOR_MAX_WAIT),
+        max_interval: WAIT_FOR_DIR_DELAY,
+        ..ExponentialBackoff::default()}, op).await
 }

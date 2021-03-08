@@ -4,7 +4,7 @@
 use crate::{
     local::{
         common::{
-            build_common_config, wait_for_dir, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR,
+            build_local_context, wait_for_dir, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR,
             UNIQUE_REPORTS_DIR,
         },
         generic_analysis::build_analysis_config,
@@ -27,8 +27,8 @@ use tokio::task::spawn;
 use uuid::Uuid;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
-    let fuzz_config = build_fuzz_config(args, common.clone())?;
+    let context = build_local_context(args)?;
+    let fuzz_config = build_fuzz_config(args, context.common_config.clone())?;
     let crash_dir = fuzz_config
         .crashes
         .url
@@ -53,7 +53,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
             Some(crash_report_input_monitor.queue_client),
             CommonConfig {
                 task_id: Uuid::new_v4(),
-                ..common.clone()
+                ..context.common_config.clone()
             },
         )?;
         let mut report = ReportTask::new(report_config);
@@ -71,7 +71,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
             Some(coverage_input_monitor.queue_client),
             CommonConfig {
                 task_id: Uuid::new_v4(),
-                ..common.clone()
+                ..context.common_config.clone()
             },
         )?;
         let mut coverage = CoverageTask::new(coverage_config);
@@ -88,7 +88,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
             Some(analysis_input_monitor.queue_client),
             CommonConfig {
                 task_id: Uuid::new_v4(),
-                ..common
+                ..context.common_config.clone()
             },
         )?;
         let analysis_task = spawn(async move { run_analysis(analysis_config).await });

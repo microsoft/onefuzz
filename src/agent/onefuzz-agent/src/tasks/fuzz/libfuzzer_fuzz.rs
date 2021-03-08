@@ -195,8 +195,13 @@ impl LibFuzzerFuzzTask {
             &self.config.common.setup_dir,
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
+        let running_id = running.id();
 
-        let sys_info = task::spawn(report_fuzzer_sys_info(worker_id, run_id, running.id()));
+        let sys_info = task::spawn(async move {
+            report_fuzzer_sys_info(worker_id, run_id, running_id)
+                .await
+                .unwrap()
+        });
 
         // Splitting borrow.
         let stderr = running
