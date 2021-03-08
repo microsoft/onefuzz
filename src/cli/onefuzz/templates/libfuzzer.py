@@ -4,6 +4,8 @@
 # Licensed under the MIT License.
 
 import os
+import tempfile
+from enum import Enum
 from typing import Dict, List, Optional
 
 from onefuzztypes.enums import OS, ContainerType, TaskDebugFlag, TaskType
@@ -15,6 +17,10 @@ from onefuzz.api import Command
 from . import JobHelper
 
 LIBFUZZER_MAGIC_STRING = b"ERROR: libFuzzer"
+
+
+class QemuArch(Enum):
+    aarch64 = "aarch64"
 
 
 class Libfuzzer(Command):
@@ -516,6 +522,202 @@ class Libfuzzer(Command):
             ensemble_sync_delay=ensemble_sync_delay,
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
+        )
+
+        self.logger.info("done creating tasks")
+        helper.wait()
+        return helper.job
+
+    def qemu_user(
+        self,
+        project: str,
+        name: str,
+        build: str,
+        pool_name: PoolName,
+        *,
+        arch: QemuArch = QemuArch.aarch64,
+        target_exe: File = File("fuzz.exe"),
+        sysroot: Optional[File] = None,
+        vm_count: int = 1,
+        inputs: Optional[Directory] = None,
+        reboot_after_setup: bool = False,
+        duration: int = 24,
+        target_workers: Optional[int] = 1,
+        target_options: Optional[List[str]] = None,
+        target_env: Optional[Dict[str, str]] = None,
+        tags: Optional[Dict[str, str]] = None,
+        wait_for_running: bool = False,
+        wait_for_files: Optional[List[ContainerType]] = None,
+        existing_inputs: Optional[Container] = None,
+        debug: Optional[List[TaskDebugFlag]] = None,
+        ensemble_sync_delay: Optional[int] = None,
+        colocate_all_tasks: bool = False,
+        crash_report_timeout: Optional[int] = 1,
+        check_retry_count: Optional[int] = 300,
+        check_fuzzer_help: bool = True,
+    ) -> Optional[Job]:
+
+        """
+        libfuzzer tasks, wrapped via qemu-user (PREVIEW FEATURE)
+        """
+
+        self.logger.warning(
+            "qemu_user jobs are a preview feature and may change in the future"
+        )
+
+        pool = self.onefuzz.pools.get(pool_name)
+        if pool.os != OS.linux:
+            raise Exception("libfuzzer qemu-user jobs are only compatible with Linux")
+
+        self._check_is_libfuzzer(target_exe)
+
+        if target_options is None:
+            target_options = []
+
+        # disable detect_leaks, as this is non-functional on cross-compile targets
+        if target_env is None:
+            target_env = {}
+        target_env["ASAN_OPTIONS"] = (
+            target_env.get("ASAN_OPTIONS", "") + ":detect_leaks=0"
+        )
+
+        helper = JobHelper(
+            self.onefuzz,
+            self.logger,
+            project,
+            name,
+            build,
+            duration,
+            pool_name=pool_name,
+            target_exe=target_exe,
+        )
+
+        helper.add_tags(tags)
+        helper.define_containers(
+            ContainerType.setup,
+            ContainerType.inputs,
+            ContainerType.crashes,
+            ContainerType.reports,
+            ContainerType.unique_reports,
+            ContainerType.no_repro,
+        )
+
+        if existing_inputs:
+            self.onefuzz.containers.get(existing_inputs)
+            helper.containers[ContainerType.inputs] = existing_inputs
+        else:
+            helper.define_containers(ContainerType.inputs)
+
+        fuzzer_containers = [
+            (ContainerType.setup, helper.containers[ContainerType.setup]),
+            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
+            (ContainerType.inputs, helper.containers[ContainerType.inputs]),
+        ]
+
+        helper.create_containers()
+
+        target_exe_blob_name = helper.target_exe_blob_name(target_exe, None)
+
+        wrapper_name = File(target_exe_blob_name + "-wrapper.sh")
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            if sysroot:
+                setup_path = File(os.path.join(tempdir, "setup.sh"))
+                with open(setup_path, "w") as handle:
+                    sysroot_filename = helper.target_exe_blob_name(sysroot, None)
+                    handle.write(
+                        "#!/bin/bash\n"
+                        "set -ex\n"
+                        "sudo apt-get install -y qemu-user g++-aarch64-linux-gnu libasan5-arm64-cross\n"
+                        'cd $(dirname "$(readlink -f "$0")")\n'
+                        "mkdir -p sysroot\n"
+                        "tar -C sysroot -zxvf %s\n" % sysroot_filename
+                    )
+
+                wrapper_path = File(os.path.join(tempdir, wrapper_name))
+                with open(wrapper_path, "w") as handle:
+                    handle.write(
+                        "#!/bin/bash\n"
+                        'SETUP_DIR=$(dirname "$(readlink -f "$0")")\n'
+                        "qemu-%s -L $SETUP_DIR/sysroot $SETUP_DIR/%s $*"
+                        % (arch.name, target_exe_blob_name)
+                    )
+                upload_files = [setup_path, wrapper_path, sysroot]
+            else:
+                setup_path = File(os.path.join(tempdir, "setup.sh"))
+                with open(setup_path, "w") as handle:
+                    handle.write(
+                        "#!/bin/bash\n"
+                        "set -ex\n"
+                        "sudo apt-get install -y qemu-user g++-aarch64-linux-gnu libasan5-arm64-cross\n"
+                    )
+
+                wrapper_path = File(os.path.join(tempdir, wrapper_name))
+                with open(wrapper_path, "w") as handle:
+                    handle.write(
+                        "#!/bin/bash\n"
+                        'SETUP_DIR=$(dirname "$(readlink -f "$0")")\n'
+                        "qemu-%s -L /usr/%s-linux-gnu $SETUP_DIR/%s $*"
+                        % (arch.name, arch.name, target_exe_blob_name)
+                    )
+                upload_files = [setup_path, wrapper_path]
+            helper.upload_setup(None, target_exe, upload_files)
+
+        if inputs:
+            helper.upload_inputs(inputs)
+        helper.wait_on(wait_for_files, wait_for_running)
+
+        self.logger.info("creating libfuzzer_fuzz task")
+        fuzzer_task = self.onefuzz.tasks.create(
+            helper.job.job_id,
+            TaskType.libfuzzer_fuzz,
+            wrapper_name,
+            fuzzer_containers,
+            pool_name=pool_name,
+            reboot_after_setup=reboot_after_setup,
+            duration=duration,
+            vm_count=vm_count,
+            target_options=target_options,
+            target_env=target_env,
+            target_workers=target_workers,
+            tags=tags,
+            debug=debug,
+            ensemble_sync_delay=ensemble_sync_delay,
+            expect_crash_on_failure=False,
+            check_fuzzer_help=check_fuzzer_help,
+        )
+
+        report_containers = [
+            (ContainerType.setup, helper.containers[ContainerType.setup]),
+            (ContainerType.crashes, helper.containers[ContainerType.crashes]),
+            (ContainerType.reports, helper.containers[ContainerType.reports]),
+            (
+                ContainerType.unique_reports,
+                helper.containers[ContainerType.unique_reports],
+            ),
+            (ContainerType.no_repro, helper.containers[ContainerType.no_repro]),
+        ]
+
+        self.logger.info("creating libfuzzer_crash_report task")
+        self.onefuzz.tasks.create(
+            helper.job.job_id,
+            TaskType.libfuzzer_crash_report,
+            wrapper_name,
+            report_containers,
+            pool_name=pool_name,
+            duration=duration,
+            vm_count=1,
+            reboot_after_setup=reboot_after_setup,
+            target_options=target_options,
+            target_env=target_env,
+            tags=tags,
+            prereq_tasks=[fuzzer_task.task_id],
+            target_timeout=crash_report_timeout,
+            check_retry_count=check_retry_count,
+            debug=debug,
+            colocate=colocate_all_tasks,
+            expect_crash_on_failure=False,
+            check_fuzzer_help=check_fuzzer_help,
         )
 
         self.logger.info("done creating tasks")
