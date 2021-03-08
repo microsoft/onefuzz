@@ -252,6 +252,26 @@ class Report(BaseModel):
     scariness_description: Optional[str]
 
 
+class NoReproReport(BaseModel):
+    input_sha256: str
+    input_blob: Optional[BlobRef]
+    executable: str
+    task_id: UUID
+    job_id: UUID
+    tries: int
+    error: Optional[str]
+
+
+class CrashTestResult(BaseModel):
+    crash_report: Optional[Report]
+    no_repro: Optional[NoReproReport]
+
+
+class ReproductionReport(BaseModel):
+    crash_test_result: CrashTestResult
+    original_crash_test_result: Optional[CrashTestResult]
+
+
 class ADODuplicateTemplate(BaseModel):
     increment: List[str]
     comment: Optional[str]
