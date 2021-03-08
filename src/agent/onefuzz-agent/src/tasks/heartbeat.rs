@@ -18,6 +18,7 @@ pub enum HeartbeatData {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct Heartbeat {
     task_id: Uuid,
+    job_id: Uuid,
     machine_id: Uuid,
     machine_name: String,
     data: Vec<HeartbeatData>,
