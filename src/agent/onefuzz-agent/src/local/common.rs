@@ -13,7 +13,7 @@ use std::{
 use uuid::Uuid;
 
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
-use path_absolutize::*;
+use path_absolutize::Absolutize;
 use std::task::Poll;
 
 pub const SETUP_DIR: &str = "setup_dir";
