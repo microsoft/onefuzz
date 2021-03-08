@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Agent: Clarified batch-processing logs.  [#622](https://github.com/microsoft/onefuzz/pull/622)
 * Agent/Proxy: Updated multiple rust dependencies. [#624](https://github.com/microsoft/onefuzz/pull/624)
-* Service/CLI/Contrib: Updated multiple python dependencies.  [#607](https://github.com/microsoft/onefuzz/pull/607), [#608](https://github.com/microsoft/onefuzz/pull/608), [#610](https://github.com/microsoft/onefuzz/pull/610), [#611](https://github.com/microsoft/onefuzz/pull/611), [#612](https://github.com/microsoft/onefuzz/pull/612), [#625](https://github.com/microsoft/onefuzz/pull/625), [#626](https://github.com/microsoft/onefuzz/pull/626), [#630](https://github.com/microsoft/onefuzz/pull/630)
+* Service/CLI/Contrib: Updated multiple python dependencies.  [#607](https://github.com/microsoft/onefuzz/pull/607), [#608](https://github.com/microsoft/onefuzz/pull/608), [#610](https://github.com/microsoft/onefuzz/pull/610), [#611](https://github.com/microsoft/onefuzz/pull/611), [#612](https://github.com/microsoft/onefuzz/pull/612), [#625](https://github.com/microsoft/onefuzz/pull/625), [#626](https://github.com/microsoft/onefuzz/pull/626), [#630](https://github.com/microsoft/onefuzz/pull/630), [#640](https://github.com/microsoft/onefuzz/pull/640)
 * Service: Update task configuration to verify `target_exe` is a canonicalized relative path. [#613](https://github.com/microsoft/onefuzz/pull/613)
 * Deployment/Agent: Updated AFL++ to 3.10c.  [#609](https://github.com/microsoft/onefuzz/pull/609)
 * Deployment: Clarify application password creation succeeded after earlier failures.  [#629](https://github.com/microsoft/onefuzz/pull/629)
