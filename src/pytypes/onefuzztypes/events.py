@@ -11,7 +11,15 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Extra, Field
 
 from .enums import OS, Architecture, NodeState, TaskState
-from .models import AutoScaleConfig, Error, JobConfig, Report, TaskConfig, UserInfo
+from .models import (
+    AutoScaleConfig,
+    Error,
+    JobConfig,
+    RegressionReport,
+    Report,
+    TaskConfig,
+    UserInfo,
+)
 from .primitives import Container, PoolName, Region
 from .responses import BaseResponse
 
@@ -149,6 +157,12 @@ class EventCrashReported(BaseEvent):
     filename: str
 
 
+class EventRegressionReported(BaseEvent):
+    regression_report: RegressionReport
+    container: Container
+    filename: str
+
+
 class EventFileAdded(BaseEvent):
     container: Container
     filename: str
@@ -176,6 +190,7 @@ Event = Union[
     EventTaskStopped,
     EventTaskHeartbeat,
     EventCrashReported,
+    EventRegressionReported,
     EventFileAdded,
 ]
 
@@ -200,6 +215,7 @@ class EventType(Enum):
     task_state_updated = "task_state_updated"
     task_stopped = "task_stopped"
     crash_reported = "crash_reported"
+    regression_reported = "regression_reported"
     file_added = "file_added"
     task_heartbeat = "task_heartbeat"
     node_heartbeat = "node_heartbeat"
@@ -227,6 +243,7 @@ EventTypeMap = {
     EventType.task_heartbeat: EventTaskHeartbeat,
     EventType.task_stopped: EventTaskStopped,
     EventType.crash_reported: EventCrashReported,
+    EventType.regression_reported: EventRegressionReported,
     EventType.file_added: EventFileAdded,
 }
 

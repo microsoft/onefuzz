@@ -267,7 +267,7 @@ class CrashTestResult(BaseModel):
     no_repro: Optional[NoReproReport]
 
 
-class ReproductionReport(BaseModel):
+class RegressionReport(BaseModel):
     crash_test_result: CrashTestResult
     original_crash_test_result: Optional[CrashTestResult]
 
