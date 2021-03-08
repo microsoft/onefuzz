@@ -327,7 +327,7 @@ jobs:
         name: release-artifacts
         path: release-artifacts
   build-integration-tests-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
     - run: |
@@ -363,6 +363,12 @@ jobs:
           export AFL_CC_PATH=$PWD/AFL/afl-clang
           (cd trivial-crash ; make clean; make CC=$AFL_CC_PATH)
           cp -r trivial-crash/fuzz.exe trivial-crash/seeds artifacts/linux-trivial-crash-afl
+
+          # libfuzzer cross-compiled to aarch64
+          mkdir -p artifacts/linux-libfuzzer-aarch64-crosscompile
+          (cd libfuzzer-aarch64-crosscompile; make)
+          cp -r libfuzzer-aarch64-crosscompile/fuzz.exe libfuzzer-aarch64-crosscompile/inputs artifacts/linux-libfuzzer-aarch64-crosscompile
+
     - uses: actions/upload-artifact@v2.2.2
       with:
         name: integration-test-artifacts
