@@ -64,7 +64,6 @@ class Libfuzzer(Command):
         regression_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
             (ContainerType.crashes, containers[ContainerType.crashes]),
-            (ContainerType.reports, containers[ContainerType.reports]),
             (ContainerType.unique_reports, containers[ContainerType.unique_reports]),
             (ContainerType.no_repro, containers[ContainerType.no_repro]),
             (
