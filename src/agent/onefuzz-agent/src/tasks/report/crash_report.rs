@@ -65,6 +65,7 @@ pub struct NoCrash {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CrashTestResult {
     CrashReport(CrashReport),
     NoRepro(NoCrash),
