@@ -132,7 +132,7 @@ class Task(BASE_TASK, ORMMixin):
         ProxyForward.remove_forward(self.task_id)
         delete_queue(str(self.task_id), StorageType.corpus)
         Node.stop_task(self.task_id)
-        self.set_state(TaskState.stopped)
+        self.set_state(TaskState.stopped, send=False)
 
         job = Job.get(self.job_id)
         if job:
@@ -194,7 +194,15 @@ class Task(BASE_TASK, ORMMixin):
             )
             return
 
-        self.set_state(TaskState.stopping)
+        self.set_state(TaskState.stopping, send=False)
+        send_event(
+            EventTaskStopped(
+                job_id=self.job_id,
+                task_id=self.task_id,
+                user_info=self.user_info,
+                config=self.config,
+            )
+        )
 
     def mark_failed(self, error: Error) -> None:
         if self.state in [TaskState.stopped, TaskState.stopping]:
@@ -204,7 +212,17 @@ class Task(BASE_TASK, ORMMixin):
             return
 
         self.error = error
-        self.set_state(TaskState.stopping)
+        self.set_state(TaskState.stopping, send=False)
+
+        send_event(
+            EventTaskFailed(
+                job_id=self.job_id,
+                task_id=self.task_id,
+                error=error,
+                user_info=self.user_info,
+                config=self.config,
+            )
+        )
 
     def get_pool(self) -> Optional[Pool]:
         if self.config.pool:
@@ -281,40 +299,22 @@ class Task(BASE_TASK, ORMMixin):
     def key_fields(cls) -> Tuple[str, str]:
         return ("job_id", "task_id")
 
-    def set_state(self, state: TaskState) -> None:
+    def set_state(self, state: TaskState, send: bool = True) -> None:
+        if self.state == state:
+            return
+
         self.state = state
         if self.state in [TaskState.running, TaskState.setting_up]:
             self.on_start()
 
         self.save()
 
-        if self.state == TaskState.stopped:
-            if self.error:
-                send_event(
-                    EventTaskFailed(
-                        job_id=self.job_id,
-                        task_id=self.task_id,
-                        error=self.error,
-                        user_info=self.user_info,
-                        config=self.config,
-                    )
-                )
-            else:
-                send_event(
-                    EventTaskStopped(
-                        job_id=self.job_id,
-                        task_id=self.task_id,
-                        user_info=self.user_info,
-                        config=self.config,
-                    )
-                )
-        else:
-            send_event(
-                EventTaskStateUpdated(
-                    job_id=self.job_id,
-                    task_id=self.task_id,
-                    state=self.state,
-                    end_time=self.end_time,
-                    config=self.config,
-                )
+        send_event(
+            EventTaskStateUpdated(
+                job_id=self.job_id,
+                task_id=self.task_id,
+                state=self.state,
+                end_time=self.end_time,
+                config=self.config,
             )
+        )
