@@ -219,6 +219,19 @@ class Task(BASE_TASK, ORMMixin):
             )
         )
 
+        self.mark_dependants_failed()
+
+    def mark_dependants_failed(self) -> None:
+        for task in Task.search(query={"job_id": [self.job_id]}):
+            if task.config.prereq_tasks:
+                if self.task_id in task.config.prereq_tasks:
+                    task.mark_failed(
+                        Error(
+                            code=ErrorCode.TASK_FAILED,
+                            errors=["prerequisite task failed"],
+                        )
+                    )
+
     def get_pool(self) -> Optional[Pool]:
         if self.config.pool:
             pool = Pool.get_by_name(self.config.pool.pool_name)
