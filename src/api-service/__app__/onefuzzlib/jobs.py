@@ -85,6 +85,20 @@ class Job(BASE_JOB, ORMMixin):
         self.state = JobState.enabled
         self.save()
 
+    def stop_if_all_done(self) -> None:
+        not_stopped = [
+            task
+            for task in Task.search(query={"job_id": [self.job_id]})
+            if task.state != TaskState.stopped
+        ]
+        if not_stopped:
+            return
+
+        logging.info(
+            JOB_LOG_PREFIX + "stopping job as all tasks are stopped: %s", self.job_id
+        )
+        self.stopping()
+
     def stopping(self) -> None:
         self.state = JobState.stopping
         logging.info(JOB_LOG_PREFIX + "stopping: %s", self.job_id)

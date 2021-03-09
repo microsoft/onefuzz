@@ -126,12 +126,17 @@ class Task(BASE_TASK, ORMMixin):
 
     def stopping(self) -> None:
         # TODO: we need to 'unschedule' this task from the existing pools
+        from ..jobs import Job
 
         logging.info("stopping task: %s:%s", self.job_id, self.task_id)
         ProxyForward.remove_forward(self.task_id)
         delete_queue(str(self.task_id), StorageType.corpus)
         Node.stop_task(self.task_id)
-        self.set_state(TaskState.stopped, send=False)
+        self.set_state(TaskState.stopped)
+
+        job = Job.get(self.job_id)
+        if job:
+            job.stop_if_all_done()
 
     @classmethod
     def search_states(
@@ -189,15 +194,7 @@ class Task(BASE_TASK, ORMMixin):
             )
             return
 
-        self.set_state(TaskState.stopping, send=False)
-        send_event(
-            EventTaskStopped(
-                job_id=self.job_id,
-                task_id=self.task_id,
-                user_info=self.user_info,
-                config=self.config,
-            )
-        )
+        self.set_state(TaskState.stopping)
 
     def mark_failed(self, error: Error) -> None:
         if self.state in [TaskState.stopped, TaskState.stopping]:
@@ -207,17 +204,7 @@ class Task(BASE_TASK, ORMMixin):
             return
 
         self.error = error
-        self.set_state(TaskState.stopping, send=False)
-
-        send_event(
-            EventTaskFailed(
-                job_id=self.job_id,
-                task_id=self.task_id,
-                error=error,
-                user_info=self.user_info,
-                config=self.config,
-            )
-        )
+        self.set_state(TaskState.stopping)
 
     def get_pool(self) -> Optional[Pool]:
         if self.config.pool:
@@ -294,22 +281,40 @@ class Task(BASE_TASK, ORMMixin):
     def key_fields(cls) -> Tuple[str, str]:
         return ("job_id", "task_id")
 
-    def set_state(self, state: TaskState, send: bool = True) -> None:
-        if self.state == state:
-            return
-
+    def set_state(self, state: TaskState) -> None:
         self.state = state
         if self.state in [TaskState.running, TaskState.setting_up]:
             self.on_start()
 
         self.save()
 
-        send_event(
-            EventTaskStateUpdated(
-                job_id=self.job_id,
-                task_id=self.task_id,
-                state=self.state,
-                end_time=self.end_time,
-                config=self.config,
+        if self.state == TaskState.stopped:
+            if self.error:
+                send_event(
+                    EventTaskFailed(
+                        job_id=self.job_id,
+                        task_id=self.task_id,
+                        error=self.error,
+                        user_info=self.user_info,
+                        config=self.config,
+                    )
+                )
+            else:
+                send_event(
+                    EventTaskStopped(
+                        job_id=self.job_id,
+                        task_id=self.task_id,
+                        user_info=self.user_info,
+                        config=self.config,
+                    )
+                )
+        else:
+            send_event(
+                EventTaskStateUpdated(
+                    job_id=self.job_id,
+                    task_id=self.task_id,
+                    state=self.state,
+                    end_time=self.end_time,
+                    config=self.config,
+                )
             )
-        )
