@@ -97,10 +97,10 @@ fn test_include_exclude() {
 macro_rules! from_json {
     ($tt: tt) => {{
         let text = stringify!($tt);
-        let def: CmdFilterDef = serde_json::from_str(text)
-            .expect("static test data was invalid JSON");
+        let def: CmdFilterDef =
+            serde_json::from_str(text).expect("static test data was invalid JSON");
         CmdFilter::new(def).expect("static test JSON was invalid")
-    }}
+    }};
 }
 
 fn module(s: &str) -> ModulePath {
