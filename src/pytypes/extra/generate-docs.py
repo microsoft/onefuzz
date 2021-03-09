@@ -40,6 +40,7 @@ from onefuzztypes.events import (
     EventTaskStateUpdated,
     EventTaskStopped,
     EventType,
+    JobTaskStopped,
     get_event_type,
 )
 from onefuzztypes.models import (
@@ -171,6 +172,19 @@ def main() -> None:
                 build="build 1",
                 duration=24,
             ),
+            task_info=[
+                JobTaskStopped(
+                    task_id=UUID(int=0),
+                    task_type=TaskType.libfuzzer_fuzz,
+                    error=Error(
+                        code=ErrorCode.TASK_FAILED, errors=["example error message"]
+                    ),
+                ),
+                JobTaskStopped(
+                    task_id=UUID(int=1),
+                    task_type=TaskType.libfuzzer_coverage,
+                ),
+            ],
         ),
         EventNodeCreated(machine_id=UUID(int=0), pool_name=PoolName("example")),
         EventNodeDeleted(machine_id=UUID(int=0), pool_name=PoolName("example")),
