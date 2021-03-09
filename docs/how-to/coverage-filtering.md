@@ -21,14 +21,14 @@ A `<module-include>` looks like:
 ```
 {
   "module": <regex>,
-  "include": <bool | Array<regex>>
+  "include": <Boolean | Array<regex>>
 }
 ```
 And a `<module-exclude>` looks like:
 ```
 {
   "module": <regex>,
-  "exclude": <bool | Array<regex>>
+  "exclude": <Boolean | Array<regex>>
 }
 ```
 
