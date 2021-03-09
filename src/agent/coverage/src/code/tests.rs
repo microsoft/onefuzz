@@ -78,3 +78,18 @@ fn test_module_filter_def_exclude_filter() {
         panic!("expected a `Filter` rule");
     }
 }
+
+#[test]
+fn test_include_exclude() {
+    let include_false = Rule::from(RuleDef::Include { include: false });
+    assert!(matches!(include_false, Rule::IncludeModule(false)));
+
+    let exclude_true = Rule::from(RuleDef::Exclude { exclude: true });
+    assert!(matches!(exclude_true, Rule::IncludeModule(false)));
+
+    let include_true = Rule::from(RuleDef::Include { include: true });
+    assert!(matches!(include_true, Rule::IncludeModule(true)));
+
+    let exclude_false = Rule::from(RuleDef::Exclude { exclude: false });
+    assert!(matches!(exclude_false, Rule::IncludeModule(true)));
+}
