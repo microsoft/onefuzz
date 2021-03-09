@@ -8,69 +8,75 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Filter {
-    Allow(Allow),
-    Deny(Deny),
+    Include(Include),
+    Exclude(Exclude),
 }
 
 impl Filter {
-    pub fn is_allowed(&self, name: impl AsRef<str>) -> bool {
+    pub fn includes(&self, name: impl AsRef<str>) -> bool {
         match self {
-            Self::Allow(f) => f.is_allowed(name),
-            Self::Deny(f) => f.is_allowed(name),
+            Self::Include(f) => f.includes(name),
+            Self::Exclude(f) => f.includes(name),
         }
     }
 }
 
 impl Default for Filter {
     fn default() -> Self {
-        Self::Allow(Allow::all())
+        Self::Include(Include::all())
     }
 }
 
-/// Filter that allows only those names which match a specific pattern.
+/// Filter that includes only those names which match a specific pattern.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
-pub struct Allow {
+pub struct Include {
     #[serde(with = "self::regex_set")]
     regexes: RegexSet,
 }
 
-impl Allow {
-    /// Build a filter that allows only the given patterns.
+impl Include {
+    /// Build a filter that includes only the given patterns.
     ///
-    /// If `exprs` is empty, then no names will be allowed.
+    /// If `exprs` is empty, then no names will be included.
     pub fn new(exprs: &[impl AsRef<str>]) -> Result<Self> {
         let regexes = RegexSet::new(exprs)?;
         Ok(Self { regexes })
     }
 
-    /// Build a filter that allows all names.
+    /// Build a filter that includes all names.
     pub fn all() -> Self {
         Self::new(&[".*"]).expect("error constructing filter from static, valid regex")
     }
 
-    /// Returns `true` if `name` is allowed.
-    pub fn is_allowed(&self, name: impl AsRef<str>) -> bool {
+    /// Returns `true` if `name` is included.
+    pub fn includes(&self, name: impl AsRef<str>) -> bool {
         self.regexes.is_match(name.as_ref())
     }
 }
 
-impl Default for Allow {
+impl Default for Include {
     fn default() -> Self {
         Self::all()
     }
 }
 
-/// Filter that denies names which match a specific pattern.
+impl From<Include> for Filter {
+    fn from(include: Include) -> Self {
+        Self::Include(include)
+    }
+}
+
+/// Filter that excludes only those names which match a specific pattern.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
-pub struct Deny {
+pub struct Exclude {
     #[serde(with = "self::regex_set")]
     regexes: RegexSet,
 }
 
-impl Deny {
-    /// Build a filter that denies only the given patterns.
+impl Exclude {
+    /// Build a filter that excludes only the given patterns.
     ///
     /// If `exprs` is empty, then no names will be denied.
     pub fn new(exprs: &[impl AsRef<str>]) -> Result<Self> {
@@ -78,21 +84,27 @@ impl Deny {
         Ok(Self { regexes })
     }
 
-    /// Build a filter that allows all names.
+    /// Build a filter that includes all names.
     pub fn none() -> Self {
         let empty: &[&str] = &[];
         Self::new(empty).expect("error constructing filter from static, empty regex set")
     }
 
-    /// Returns `true` if `name` is allowed.
-    pub fn is_allowed(&self, name: impl AsRef<str>) -> bool {
+    /// Returns `true` if `name` is included.
+    pub fn includes(&self, name: impl AsRef<str>) -> bool {
         !self.regexes.is_match(name.as_ref())
     }
 }
 
-impl Default for Deny {
+impl Default for Exclude {
     fn default() -> Self {
         Self::none()
+    }
+}
+
+impl From<Exclude> for Filter {
+    fn from(exclude: Exclude) -> Self {
+        Self::Exclude(exclude)
     }
 }
 
