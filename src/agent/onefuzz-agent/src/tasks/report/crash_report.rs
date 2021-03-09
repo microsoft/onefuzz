@@ -83,17 +83,19 @@ impl RegressionReport {
         report_name: Option<String>,
         regression_reports: &SyncedDir,
     ) -> Result<()> {
-        match &self.crash_test_result {
+        let (event, name) = match &self.crash_test_result {
             CrashTestResult::CrashReport(report) => {
                 let name = report_name.unwrap_or_else(|| report.unique_blob_name());
-                if upload_or_save_local(&self, &name, regression_reports).await? {
-                    event!(regression_report; EventData::Path = name);
-                }
+                (regression_report, name)
             }
             CrashTestResult::NoRepro(report) => {
                 let name = report_name.unwrap_or_else(|| report.blob_name());
-                event!(regression_unable_to_reproduce; EventData::Path = name);
+                (regression_unable_to_reproduce, name)
             }
+        };
+
+        if upload_or_save_local(&self, &name, regression_reports).await? {
+            event!(event; EventData::Path = name);
         }
         Ok(())
     }
