@@ -37,13 +37,10 @@ cargo build --release --locked
 cargo clippy --release -- -D warnings
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
-cargo test --release --manifest-path ./onefuzz-supervisor/Cargo.toml
+cargo test --release --workspace
 
 # TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-agent/Cargo.toml --features integration_test -- --nocapture
-cargo test --release --manifest-path ./onefuzz-agent/Cargo.toml
-
-cargo test --release --manifest-path ./onefuzz/Cargo.toml
 
 cp target/release/onefuzz-agent* ../../artifacts/agent
 cp target/release/onefuzz-supervisor* ../../artifacts/agent
