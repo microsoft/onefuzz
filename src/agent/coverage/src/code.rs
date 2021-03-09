@@ -342,6 +342,16 @@ enum Rule {
     FilterSymbols(Box<Filter>),
 }
 
+impl From<RuleDef> for Rule {
+    fn from(def: RuleDef) -> Self {
+        match def {
+            RuleDef::Exclude { exclude } => Rule::IncludeModule(!exclude),
+            RuleDef::Include { include } => Rule::IncludeModule(include),
+            RuleDef::Filter(filter) => Rule::FilterSymbols(filter),
+        }
+    }
+}
+
 /// Module and symbol-tracking rules to be applied to a command.
 #[derive(Clone, Debug)]
 pub struct CmdFilter {
@@ -356,14 +366,7 @@ impl CmdFilter {
 
         for def in cmd.defs {
             modules.push(def.module);
-
-            let rule = match def.rule {
-                RuleDef::Exclude { exclude } => Rule::IncludeModule(!exclude),
-                RuleDef::Include { include } => Rule::IncludeModule(include),
-                RuleDef::Filter(filter) => Rule::FilterSymbols(filter),
-            };
-
-            rules.push(rule);
+            rules.push(def.rule.into());
         }
 
         let regexes = RegexSet::new(&modules)?;
