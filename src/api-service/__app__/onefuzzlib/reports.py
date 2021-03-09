@@ -47,7 +47,7 @@ def parse_report_or_regression(
         return Report.parse_obj(data)
     except ValidationError as err:
         logging.error(
-            f"unable tp parse report ({file_path}) as a report or regression. "
+            f"unable to parse report ({file_path}) as a report or regression. "
             f"regression error: {regression_err} report error: {err}"
         )
         return None

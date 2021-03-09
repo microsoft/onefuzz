@@ -28,8 +28,7 @@ class TestReportParse(unittest.TestCase):
 
         with self.assertLogs(level="WARNING") as logs:
             self.assertIsNone(parse_report_or_regression(json.dumps(invalid)))
-
-        self.assertTrue(any(["unable to parse report" in x for x in logs.output]))
+            self.assertTrue(any(["unable to parse report" in x for x in logs.output]))
 
 
 if __name__ == "__main__":
