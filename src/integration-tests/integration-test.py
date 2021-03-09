@@ -165,7 +165,9 @@ class TestOnefuzz:
             self.logger.info("creating scaleset for pool: %s", name)
             self.of.scalesets.create(name, pool_size, region=region)
 
-    def launch(self, path: Directory, *, os_list: List[OS], targets: List[str]) -> None:
+    def launch(
+        self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
+    ) -> None:
         """ Launch all of the fuzzing templates """
         for target, config in TARGETS.items():
             if target not in targets:
@@ -197,7 +199,7 @@ class TestOnefuzz:
                     target_exe=target_exe,
                     inputs=inputs,
                     setup_dir=setup,
-                    duration=1,
+                    duration=duration,
                     vm_count=1,
                     reboot_after_setup=config.reboot_after_setup or False,
                 )
@@ -212,7 +214,7 @@ class TestOnefuzz:
                     target_harness=config.target_exe,
                     inputs=inputs,
                     setup_dir=setup,
-                    duration=1,
+                    duration=duration,
                     vm_count=1,
                 )
             elif config.template == TemplateType.libfuzzer_qemu_user:
@@ -223,7 +225,7 @@ class TestOnefuzz:
                     self.pools[config.os].name,
                     inputs=inputs,
                     target_exe=target_exe,
-                    duration=1,
+                    duration=duration,
                     vm_count=1,
                 )
             elif config.template == TemplateType.radamsa:
@@ -237,7 +239,7 @@ class TestOnefuzz:
                     setup_dir=setup,
                     check_asan_log=config.check_asan_log or False,
                     disable_check_debugger=config.disable_check_debugger or False,
-                    duration=1,
+                    duration=duration,
                     vm_count=1,
                 )
             elif config.template == TemplateType.afl:
@@ -249,7 +251,7 @@ class TestOnefuzz:
                     target_exe=target_exe,
                     inputs=inputs,
                     setup_dir=setup,
-                    duration=1,
+                    duration=duration,
                     vm_count=1,
                 )
             else:
@@ -647,6 +649,7 @@ class Run(Command):
         os_list: List[OS] = [OS.linux, OS.windows],
         targets: List[str] = list(TARGETS.keys()),
         test_id: Optional[UUID] = None,
+        duration: int = 1,
     ) -> UUID:
         if test_id is None:
             test_id = uuid4()
@@ -655,7 +658,7 @@ class Run(Command):
         self.onefuzz.__setup__(endpoint=endpoint)
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
         tester.setup(region=region, pool_size=pool_size, os_list=os_list)
-        tester.launch(samples, os_list=os_list, targets=targets)
+        tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
         return test_id
 
     def cleanup(self, test_id: UUID, *, endpoint: Optional[str]) -> None:
@@ -673,6 +676,7 @@ class Run(Command):
         os_list: List[OS] = [OS.linux, OS.windows],
         targets: List[str] = list(TARGETS.keys()),
         skip_repro: bool = False,
+        duration: int = 1,
     ) -> None:
         success = True
 
@@ -687,6 +691,7 @@ class Run(Command):
                 os_list=os_list,
                 targets=targets,
                 test_id=test_id,
+                duration=duration,
             )
             self.check_jobs(
                 test_id, endpoint=endpoint, poll=True, stop_on_complete_check=True
