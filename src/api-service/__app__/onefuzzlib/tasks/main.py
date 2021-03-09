@@ -199,7 +199,9 @@ class Task(BASE_TASK, ORMMixin):
             )
         )
 
-    def mark_failed(self, error: Error) -> None:
+    def mark_failed(
+        self, error: Error, tasks_in_job: Optional[List["Task"]] = None
+    ) -> None:
         if self.state in [TaskState.stopped, TaskState.stopping]:
             logging.debug(
                 "ignoring post-task stop failures for %s:%s", self.job_id, self.task_id
@@ -219,17 +221,23 @@ class Task(BASE_TASK, ORMMixin):
             )
         )
 
-        self.mark_dependants_failed()
+        self.mark_dependants_failed(tasks_in_job=tasks_in_job)
 
-    def mark_dependants_failed(self) -> None:
-        for task in Task.search(query={"job_id": [self.job_id]}):
+    def mark_dependants_failed(
+        self, tasks_in_job: Optional[List["Task"]] = None
+    ) -> None:
+        if tasks_in_job is None:
+            tasks_in_job = Task.search(query={"job_id": [self.job_id]})
+
+        for task in tasks_in_job:
             if task.config.prereq_tasks:
                 if self.task_id in task.config.prereq_tasks:
                     task.mark_failed(
                         Error(
                             code=ErrorCode.TASK_FAILED,
                             errors=["prerequisite task failed"],
-                        )
+                        ),
+                        tasks_in_job,
                     )
 
     def get_pool(self) -> Optional[Pool]:
