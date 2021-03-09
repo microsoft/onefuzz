@@ -346,7 +346,23 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "name": "example name",
         "project": "example project"
     },
-    "job_id": "00000000-0000-0000-0000-000000000000"
+    "job_id": "00000000-0000-0000-0000-000000000000",
+    "task_info": [
+        {
+            "error": {
+                "code": 468,
+                "errors": [
+                    "example error message"
+                ]
+            },
+            "task_id": "00000000-0000-0000-0000-000000000000",
+            "task_type": "libfuzzer_fuzz"
+        },
+        {
+            "task_id": "00000000-0000-0000-0000-000000000001",
+            "task_type": "libfuzzer_coverage"
+        }
+    ]
 }
 ```
 
@@ -356,6 +372,54 @@ Each event will be submitted via HTTP POST to the user provided URL.
 {
     "additionalProperties": false,
     "definitions": {
+        "Error": {
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/ErrorCode"
+                },
+                "errors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Errors",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "code",
+                "errors"
+            ],
+            "title": "Error",
+            "type": "object"
+        },
+        "ErrorCode": {
+            "description": "An enumeration.",
+            "enum": [
+                450,
+                451,
+                452,
+                453,
+                454,
+                455,
+                456,
+                457,
+                458,
+                459,
+                460,
+                461,
+                462,
+                463,
+                464,
+                465,
+                467,
+                468,
+                469,
+                470,
+                471,
+                472
+            ],
+            "title": "ErrorCode"
+        },
         "JobConfig": {
             "properties": {
                 "build": {
@@ -383,6 +447,44 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "JobConfig",
             "type": "object"
+        },
+        "JobTaskStopped": {
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/Error"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                },
+                "task_type": {
+                    "$ref": "#/definitions/TaskType"
+                }
+            },
+            "required": [
+                "task_id",
+                "task_type"
+            ],
+            "title": "JobTaskStopped",
+            "type": "object"
+        },
+        "TaskType": {
+            "description": "An enumeration.",
+            "enum": [
+                "libfuzzer_fuzz",
+                "libfuzzer_coverage",
+                "libfuzzer_crash_report",
+                "libfuzzer_merge",
+                "libfuzzer_regression",
+                "generic_analysis",
+                "generic_supervisor",
+                "generic_merge",
+                "generic_generator",
+                "generic_crash_report",
+                "generic_regression"
+            ],
+            "title": "TaskType"
         },
         "UserInfo": {
             "properties": {
@@ -413,6 +515,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "format": "uuid",
             "title": "Job Id",
             "type": "string"
+        },
+        "task_info": {
+            "items": {
+                "$ref": "#/definitions/JobTaskStopped"
+            },
+            "title": "Task Info",
+            "type": "array"
         },
         "user_info": {
             "$ref": "#/definitions/UserInfo"
@@ -3808,6 +3917,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Job Id",
                     "type": "string"
                 },
+                "task_info": {
+                    "items": {
+                        "$ref": "#/definitions/JobTaskStopped"
+                    },
+                    "title": "Task Info",
+                    "type": "array"
+                },
                 "user_info": {
                     "$ref": "#/definitions/UserInfo"
                 }
@@ -4336,6 +4452,27 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "duration"
             ],
             "title": "JobConfig",
+            "type": "object"
+        },
+        "JobTaskStopped": {
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/Error"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                },
+                "task_type": {
+                    "$ref": "#/definitions/TaskType"
+                }
+            },
+            "required": [
+                "task_id",
+                "task_type"
+            ],
+            "title": "JobTaskStopped",
             "type": "object"
         },
         "NoReproReport": {

@@ -5,12 +5,12 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Union
+from typing import List, Optional, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Extra, Field
 
-from .enums import OS, Architecture, NodeState, TaskState
+from .enums import OS, Architecture, NodeState, TaskState, TaskType
 from .models import (
     AutoScaleConfig,
     Error,
@@ -50,10 +50,17 @@ class EventJobCreated(BaseEvent):
     user_info: Optional[UserInfo]
 
 
+class JobTaskStopped(BaseModel):
+    task_id: UUID
+    task_type: TaskType
+    error: Optional[Error]
+
+
 class EventJobStopped(BaseEvent):
     job_id: UUID
     config: JobConfig
     user_info: Optional[UserInfo]
+    task_info: Optional[List[JobTaskStopped]]
 
 
 class EventTaskCreated(BaseEvent):
