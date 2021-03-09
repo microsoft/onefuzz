@@ -105,7 +105,7 @@ the (implicit) default rule could be written as:
 ```
 It is never necessary to write a rule equivalent to this.
 However, this observation hints at how we can invert the default behavior!
-If you want to exclude modules by default, then we can add this rule to
+If you want to exclude all modules by default, then we can add this rule to
 the _end_ of our filter list:
 ```json
 {
@@ -114,4 +114,4 @@ the _end_ of our filter list:
 }
 ```
 As long as this is the last rule in our list, then any module not
-filtered by some earlier rule will batch this `"module"` regex, and thus be excluded.
+filtered by some earlier rule will match this `"module"` regex, and thus be excluded.
