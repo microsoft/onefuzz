@@ -1,5 +1,8 @@
 # Coverage Filtering
 
+**ATTENTION:** This document describes an upcoming feature,
+which is not yet released.
+
 Coverage recording for uninstrumented targets can be configured by a
 user-provided _filter list_. By default, and if no list is provided, block
 coverage is recorded for all runtime-observed modules and their identifiable
