@@ -9,7 +9,7 @@ function symbols.
 
 The filter list is a JSON file that satisfies the following schema:
 
-```json
+```
 [
   <module-include | module-exclude>*
 ]
@@ -18,14 +18,14 @@ The filter list is a JSON file that satisfies the following schema:
 The filter list an array of objects that describe per-module rules.
 
 A `<module-include>` looks like:
-```json
+```
 {
   "module": <regex>,
   "include": <bool | Array<regex>>
 }
 ```
 And a `<module-exclude>` looks like:
-```json
+```
 {
   "module": <regex>,
   "exclude": <bool | Array<regex>>
