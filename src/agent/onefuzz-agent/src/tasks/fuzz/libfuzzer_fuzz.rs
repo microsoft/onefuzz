@@ -147,7 +147,7 @@ impl LibFuzzerFuzzTask {
                     .await
                     .with_context(|| {
                         format!(
-                            "unable to move crashing input into results directory: {} - {}?",
+                            "unable to move crashing input into results directory: {} - {}",
                             entry.path().display(),
                             destination_path.display()
                         )
