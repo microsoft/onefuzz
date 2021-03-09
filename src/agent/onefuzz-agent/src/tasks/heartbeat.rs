@@ -54,6 +54,7 @@ pub async fn init_task_heartbeat(
             let task_id = context.state.task_id;
             let machine_id = context.state.machine_id;
             let machine_name = context.state.machine_name.clone();
+            let job_id = context.state.job_id;
 
             let data = HeartbeatClient::<TaskContext, _>::drain_current_messages(context.clone());
             let _ = context
