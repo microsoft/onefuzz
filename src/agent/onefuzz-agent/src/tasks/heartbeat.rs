@@ -61,6 +61,7 @@ pub async fn init_task_heartbeat(
                 .enqueue(Heartbeat {
                     task_id,
                     data,
+                    job_id,
                     machine_id,
                     machine_name,
                 })
