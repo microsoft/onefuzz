@@ -88,6 +88,3 @@ def send_event(event: Event) -> None:
     )
     EVENTS.put(event_message)
     Webhook.send_event(event_message)
-
-if __name__ == "__main__":
-    print("hello")
