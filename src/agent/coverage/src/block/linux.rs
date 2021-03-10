@@ -11,8 +11,7 @@ use procfs::process::{MMapPath, MemoryMap, Process};
 
 use crate::block::CommandBlockCov;
 use crate::cache::ModuleCache;
-use crate::code::{ModulePath, SymbolFilter};
-use crate::filter::Filter;
+use crate::code::{CmdFilter, ModulePath};
 use crate::region::Region;
 
 pub fn record(cmd: Command) -> Result<CommandBlockCov> {
@@ -27,15 +26,13 @@ pub struct Recorder {
     pub coverage: CommandBlockCov,
     images: Option<Images>,
     pub modules: ModuleCache,
-    pub module_filter: Filter,
-    pub symbol_filter: SymbolFilter,
+    filter: CmdFilter,
 }
 
 impl Recorder {
-    pub fn new(module_filter: Filter, symbol_filter: SymbolFilter) -> Self {
+    pub fn new(filter: CmdFilter) -> Self {
         Self {
-            module_filter,
-            symbol_filter,
+            filter,
             ..Self::default()
         }
     }
@@ -98,9 +95,7 @@ impl Recorder {
         let events = images.update()?;
 
         for (_base, image) in &events.loaded {
-            let pathname = image.path().path_lossy();
-
-            if self.module_filter.is_allowed(pathname) {
+            if self.filter.includes_module(image.path()) {
                 self.on_module_load(tracee, image)?;
             }
         }
@@ -158,10 +153,7 @@ impl Recorder {
         let mut allowed_blocks = vec![];
 
         for symbol in info.module.symbols.iter() {
-            if self
-                .symbol_filter
-                .is_allowed(&info.module.path, &symbol.name)
-            {
+            if self.filter.includes_symbol(&info.module.path, &symbol.name) {
                 for offset in info.blocks.range(symbol.range()) {
                     allowed_blocks.push(*offset);
                 }
