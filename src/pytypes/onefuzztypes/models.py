@@ -252,6 +252,26 @@ class Report(BaseModel):
     scariness_description: Optional[str]
 
 
+class NoReproReport(BaseModel):
+    input_sha256: str
+    input_blob: Optional[BlobRef]
+    executable: str
+    task_id: UUID
+    job_id: UUID
+    tries: int
+    error: Optional[str]
+
+
+class CrashTestResult(BaseModel):
+    crash_report: Optional[Report]
+    no_repro: Optional[NoReproReport]
+
+
+class RegressionReport(BaseModel):
+    crash_test_result: CrashTestResult
+    original_crash_test_result: Optional[CrashTestResult]
+
+
 class ADODuplicateTemplate(BaseModel):
     increment: List[str]
     comment: Optional[str]
@@ -392,7 +412,7 @@ class TaskUnitConfig(BaseModel):
     tools: CONTAINER_DEF
     unique_inputs: CONTAINER_DEF
     unique_reports: CONTAINER_DEF
-    input_reports: CONTAINER_DEF
+    regression_reports: CONTAINER_DEF
 
 
 class Forward(BaseModel):

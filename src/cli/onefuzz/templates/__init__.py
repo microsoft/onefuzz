@@ -40,6 +40,12 @@ def _build_container_name(
             build=build,
             platform=platform.name,
         )
+    elif container_type == ContainerType.regression_reports:
+        guid = onefuzz.utils.namespaced_guid(
+            project,
+            name,
+            build=build,
+        )
     else:
         guid = onefuzz.utils.namespaced_guid(project, name)
 

@@ -65,6 +65,7 @@ pub struct NoCrash {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CrashTestResult {
     CrashReport(CrashReport),
     NoRepro(NoCrash),
@@ -72,8 +73,32 @@ pub enum CrashTestResult {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RegressionReport {
-    crash_result: CrashTestResult,
-    original_report: Option<CrashReport>,
+    pub crash_test_result: CrashTestResult,
+    pub original_crash_test_result: Option<CrashTestResult>,
+}
+
+impl RegressionReport {
+    pub async fn save(
+        self,
+        report_name: Option<String>,
+        regression_reports: &SyncedDir,
+    ) -> Result<()> {
+        let (event, name) = match &self.crash_test_result {
+            CrashTestResult::CrashReport(report) => {
+                let name = report_name.unwrap_or_else(|| report.unique_blob_name());
+                (regression_report, name)
+            }
+            CrashTestResult::NoRepro(report) => {
+                let name = report_name.unwrap_or_else(|| report.blob_name());
+                (regression_unable_to_reproduce, name)
+            }
+        };
+
+        if upload_or_save_local(&self, &name, regression_reports).await? {
+            event!(event; EventData::Path = name);
+        }
+        Ok(())
+    }
 }
 
 // Conditionally upload a report, if it would not be a duplicate.
@@ -114,7 +139,7 @@ async fn upload_or_save_local<T: Serialize>(
 }
 
 impl CrashTestResult {
-    ///  Saves teh crash result as a crash report
+    ///  Saves the crash result as a crash report
     /// * `unique_reports` - location to save the deduplicated report if the bug was reproduced
     /// * `reports` - location to save the report if the bug was reproduced
     /// * `no_repro` - location to save the report if the bug was not reproduced
@@ -147,50 +172,6 @@ impl CrashTestResult {
                     let name = report.blob_name();
                     if upload_or_save_local(&report, &name, no_repro).await? {
                         event!(new_unable_to_reproduce; EventData::Path = name);
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-
-    ///  Saves teh crash result as a regression report
-    /// * `original_report` - optional original crash report used in this regression
-    /// * `reports` - location to save the report if the bug was reproduced
-    /// * `no_repro` - location to save the report if the bug was not reproduced
-    /// * `prefix` - prefix of the report file name
-    pub async fn save_regression(
-        self,
-        original_report: Option<CrashReport>,
-        reports: &Option<SyncedDir>,
-        no_repro: &Option<SyncedDir>,
-        prefix: impl AsRef<str>,
-    ) -> Result<()> {
-        match self {
-            Self::CrashReport(report) => {
-                // Use SHA-256 of call stack as dedupe key.
-                if let Some(reports) = reports {
-                    let name = format!("{}{}", prefix.as_ref(), report.unique_blob_name());
-                    let report = RegressionReport {
-                        crash_result: Self::CrashReport(report),
-                        original_report,
-                    };
-
-                    if upload_or_save_local(&report, &name, reports).await? {
-                        event!(regression_report; EventData::Path = name);
-                    }
-                }
-            }
-
-            Self::NoRepro(report) => {
-                if let Some(no_repro) = no_repro {
-                    let name = format!("{}{}", prefix.as_ref(), report.blob_name());
-                    let report = RegressionReport {
-                        crash_result: Self::NoRepro(report),
-                        original_report,
-                    };
-                    if upload_or_save_local(&report, &name, no_repro).await? {
-                        event!(regression_unable_to_reproduce; EventData::Path = name);
                     }
                 }
             }
@@ -256,7 +237,7 @@ impl NoCrash {
     }
 }
 
-async fn parse_report_file(path: PathBuf) -> Result<CrashTestResult> {
+pub async fn parse_report_file(path: PathBuf) -> Result<CrashTestResult> {
     let raw = std::fs::read_to_string(&path)
         .with_context(|| format_err!("unable to open crash report: {}", path.display()))?;
 

@@ -210,7 +210,7 @@ class ContainerType(Enum):
     tools = "tools"
     unique_inputs = "unique_inputs"
     unique_reports = "unique_reports"
-    input_reports = "input_reports"
+    regression_reports = "regression_reports"
 
     @classmethod
     def reset_defaults(cls) -> List["ContainerType"]:
@@ -223,8 +223,9 @@ class ContainerType(Enum):
             cls.readonly_inputs,
             cls.reports,
             cls.setup,
-            cls.unique_reports,
             cls.unique_inputs,
+            cls.unique_reports,
+            cls.regression_reports,
         ]
 
     @classmethod

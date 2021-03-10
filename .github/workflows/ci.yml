@@ -340,6 +340,10 @@ jobs:
           (cd libfuzzer ; make )
           cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer
 
+          mkdir -p artifacts/linux-libfuzzer-regression
+          (cd libfuzzer-regression ; make )
+          cp -r libfuzzer-regression/broken.exe libfuzzer-regression/fixed.exe libfuzzer-regression/seeds artifacts/linux-libfuzzer-regression
+
           mkdir -p artifacts/linux-trivial-crash
           (cd trivial-crash ; make )
           cp -r trivial-crash/fuzz.exe trivial-crash/seeds artifacts/linux-trivial-crash

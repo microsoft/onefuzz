@@ -3,10 +3,7 @@
 
 use crate::tasks::{
     config::CommonConfig,
-    report::{
-        crash_report::{CrashReport, CrashTestResult},
-        generic,
-    },
+    report::{crash_report::CrashTestResult, generic},
     utils::default_bool_true,
 };
 use anyhow::Result;
@@ -28,18 +25,15 @@ pub struct Config {
     #[serde(default)]
     pub target_env: HashMap<String, String>,
 
-    pub inputs: Option<SyncedDir>,
-
-    pub input_reports: Option<SyncedDir>,
-    pub crashes: Option<SyncedDir>,
-
-    #[serde(default)]
-    pub report_list: Vec<String>,
-
-    pub no_repro: Option<SyncedDir>,
-    pub reports: Option<SyncedDir>,
-
     pub target_timeout: Option<u64>,
+
+    pub crashes: SyncedDir,
+    pub regression_reports: SyncedDir,
+    pub report_list: Option<Vec<String>>,
+    pub reports: Option<SyncedDir>,
+    pub unique_reports: Option<SyncedDir>,
+    pub no_repro: Option<SyncedDir>,
+    pub readonly_inputs: Option<SyncedDir>,
 
     #[serde(default)]
     pub check_asan_log: bool,
@@ -79,21 +73,6 @@ impl RegressionHandler for GenericRegressionTask {
         };
         generic::test_input(args).await
     }
-
-    async fn save_regression(
-        &self,
-        crash_result: CrashTestResult,
-        original_report: Option<CrashReport>,
-    ) -> Result<()> {
-        crash_result
-            .save_regression(
-                original_report,
-                &self.config.reports,
-                &self.config.no_repro,
-                format!("{}/", self.config.common.task_id),
-            )
-            .await
-    }
 }
 
 impl GenericRegressionTask {
@@ -104,12 +83,24 @@ impl GenericRegressionTask {
     pub async fn run(&self) -> Result<()> {
         info!("Starting generic regression task");
         let heartbeat_client = self.config.common.init_heartbeat().await?;
+
+        let mut report_dirs = vec![];
+        for dir in &[
+            &self.config.reports,
+            &self.config.unique_reports,
+            &self.config.no_repro,
+        ] {
+            if let Some(dir) = dir {
+                report_dirs.push(dir);
+            }
+        }
         common::run(
             heartbeat_client,
-            &self.config.input_reports,
-            &self.config.report_list,
+            &self.config.regression_reports,
             &self.config.crashes,
-            &self.config.inputs,
+            &report_dirs,
+            &self.config.report_list,
+            &self.config.readonly_inputs,
             self,
         )
         .await?;
