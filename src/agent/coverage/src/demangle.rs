@@ -37,6 +37,7 @@ impl MsvcDemangler {
 
 impl Default for MsvcDemangler {
     fn default() -> Self {
+        // Equivalent to `undname 0x1000`.
         let flags = msvc_demangler::DemangleFlags::NAME_ONLY;
         Self { flags }
     }
