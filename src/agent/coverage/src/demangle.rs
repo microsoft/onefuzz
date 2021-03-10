@@ -93,6 +93,9 @@ mod tests {
             let name = d.demangle(mangled).expect(&format!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
+
+        assert!(d.demangle("main").is_err());
+        assert!(d.demangle("_some_function").is_err());
     }
 
     #[test]
@@ -130,6 +133,9 @@ mod tests {
             let name = d.demangle(mangled).expect(&format!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
+
+        assert!(d.demangle("main").is_err());
+        assert!(d.demangle("_some_function").is_err());
     }
 
     #[test]
@@ -151,5 +157,8 @@ mod tests {
             let name = d.demangle(mangled).expect(&format!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
+
+        assert!(d.demangle("main").is_err());
+        assert!(d.demangle("_some_function").is_err());
     }
 }
