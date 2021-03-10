@@ -6,9 +6,26 @@
 import json
 import logging
 from queue import Empty, Queue
-from typing import Optional
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union
+)
+from uuid import uuid4, UUID
+from pydantic import BaseModel, Field
 
-from onefuzztypes.events import Event, EventMessage, get_event_type
+from onefuzztypes.enums import OS, Architecture, ContainerType, TaskType
+from onefuzztypes.models import TaskConfig, TaskContainers, TaskDetails, TaskPool, UserInfo, SecretData
+from onefuzztypes.events import Event, EventMessage, EventType, get_event_type, EventTaskCreated
+from onefuzztypes.primitives import Container, PoolName
 
 from .azure.creds import get_instance_id, get_instance_name
 from .webhooks import Webhook
@@ -33,12 +50,13 @@ def get_events() -> Optional[str]:
         return None
 
 
-def log_event(event: Event, event_type: EventType) -> None:
+def log_event(event: Event, event_type: EventType) -> Event:
     
     clone_event = event.copy(deep=True)
     log_event_recurs(clone_event)
     logging.info("sending event: %s - %s", event_type, clone_event)
     
+    return clone_event
 
 def log_event_recurs(clone_event: Event, visited: Set[int] = set()) -> Event: 
 
