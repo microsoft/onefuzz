@@ -39,6 +39,13 @@ WINDOWS_POOL = "linux-test"
 BUILD = "0"
 
 
+class TaskTestState(Enum):
+    not_running = "not_running"
+    running = "running"
+    stopped = "stopped"
+    failed = "failed"
+
+
 class TemplateType(Enum):
     libfuzzer = "libfuzzer"
     libfuzzer_dotnet = "libfuzzer_dotnet"
@@ -262,11 +269,7 @@ class TestOnefuzz:
 
     def check_task(
         self, job: Job, task: Task, scalesets: List[Scaleset]
-    ) -> Optional[bool]:
-        # None = not done yet
-        # True = passed
-        # False = failed
-
+    ) -> TaskTestState:
         # Check if the scaleset the task is assigned is OK
         for scaleset in scalesets:
             if (
@@ -281,7 +284,7 @@ class TestOnefuzz:
                     scaleset.state.name,
                     scaleset.error,
                 )
-                return False
+                return TaskTestState.failed
 
         task = self.of.tasks.get(task.task_id)
 
@@ -293,12 +296,15 @@ class TestOnefuzz:
                 task.config.task.type.name,
                 task.error,
             )
-            return False
+            return TaskTestState.failed
 
-        if task.state == TaskState.stopped:
-            return True
+        if task.state in [TaskState.stopped, TaskState.stopping]:
+            return TaskTestState.stopped
 
-        return None
+        if task.state == TaskState.running:
+            return TaskTestState.running
+
+        return TaskTestState.not_running
 
     def check_jobs(
         self, poll: bool = False, stop_on_complete_check: bool = False
@@ -340,6 +346,9 @@ class TestOnefuzz:
 
         def check_jobs_impl() -> Tuple[bool, str, bool]:
             self.cleared = False
+            failed_jobs: Set[UUID] = set()
+            job_task_states: Dict[UUID, Set[TaskTestState]] = {}
+
             for job_id in check_containers:
                 finished_containers: Set[Container] = set()
                 for (container_name, container_impl) in check_containers[
@@ -358,44 +367,58 @@ class TestOnefuzz:
                 for container_name in finished_containers:
                     del check_containers[job_id][container_name]
 
-            if job_tasks:
-                scalesets = self.of.scalesets.list()
-                for job_id in job_tasks:
-                    finished_tasks: Set[UUID] = set()
-                    for task in job_tasks[job_id]:
-                        if job_id not in jobs:
-                            continue
-                        task_result = self.check_task(jobs[job_id], task, scalesets)
-                        if task_result is None:
-                            continue
-                        if not task_result:
-                            self.success = False
+            scalesets = self.of.scalesets.list()
+            for job_id in job_tasks:
+                finished_tasks: Set[UUID] = set()
+                job_task_states[job_id] = set()
+
+                for task in job_tasks[job_id]:
+                    if job_id not in jobs:
+                        continue
+
+                    task_result = self.check_task(jobs[job_id], task, scalesets)
+                    if task_result == TaskTestState.failed:
+                        self.success = False
+                        failed_jobs.add(job_id)
+                    elif task_result == TaskTestState.stopped:
                         finished_tasks.add(task.task_id)
-                    job_tasks[job_id] = [
-                        x for x in job_tasks[job_id] if x.task_id not in finished_tasks
-                    ]
+                    else:
+                        job_task_states[job_id].add(task_result)
+                job_tasks[job_id] = [
+                    x for x in job_tasks[job_id] if x.task_id not in finished_tasks
+                ]
 
             to_remove: Set[UUID] = set()
             for job in jobs.values():
-                if not check_containers[job.job_id]:
-                    self.logger.info(
-                        "found files in all containers for %s", job.config.name
-                    )
-                    to_remove.add(job.job_id)
-
-                if job_tasks[job.job_id]:
+                # stop tracking failed jobs
+                if job.job_id in failed_jobs:
+                    if job.job_id in check_containers:
+                        del check_containers[job.job_id]
+                    if job.job_id in job_tasks:
+                        del job_tasks[job.job_id]
                     continue
 
-                if check_containers[job.job_id]:
-                    self.logger.error(
-                        "%s failed.  all tasks stopped, but still waiting on files: %s",
-                        job.config.name,
-                        ",".join(check_containers[job.job_id].keys()),
-                    )
-                    self.success = False
-                else:
-                    self.logger.info("%s succeeded", job.config.name)
-                to_remove.add(job.job_id)
+                # stop checking containers once all the containers for the job
+                # have checked out.
+                if job.job_id in check_containers:
+                    if not check_containers[job.job_id]:
+                        clear()
+                        self.logger.info(
+                            "found files in all containers for %s", job.config.name
+                        )
+                        del check_containers[job.job_id]
+
+                if job.job_id not in check_containers:
+                    if job.job_id in job_task_states:
+                        if set([TaskTestState.running]).issuperset(
+                            job_task_states[job.job_id]
+                        ):
+                            del job_tasks[job.job_id]
+
+                if job.job_id not in job_tasks and job.job_id not in check_containers:
+                    clear()
+                    self.logger.info("%s completed", job.config.name)
+                    to_remove.add(job.job_id)
 
             for job_id in to_remove:
                 if stop_on_complete_check:
