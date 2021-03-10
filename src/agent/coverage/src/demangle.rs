@@ -23,12 +23,10 @@ impl Demangler {
             Demangler::Itanium => {
                 use cpp_demangle::{DemangleOptions, Symbol};
 
-                let options = DemangleOptions::new()
-                    .no_params()
-                    .no_return_type();
+                let options = DemangleOptions::new().no_params().no_return_type();
                 let symbol = Symbol::new(raw)?;
                 symbol.demangle(&options)?
-            },
+            }
             Demangler::Msvc => {
                 let flags = msvc_demangler::DemangleFlags::NAME_ONLY;
                 msvc_demangler::demangle(raw, flags)?
@@ -39,7 +37,7 @@ impl Demangler {
 
                 // Alternate formatter discards trailing hash.
                 format!("{:#}", name)
-            },
+            }
         };
 
         Ok(demangled)
@@ -90,7 +88,9 @@ mod tests {
         let d = Demangler::Itanium;
 
         for (mangled, demangled) in test_cases {
-            let name = d.demangle(mangled).expect(&format!("demangling error: {}", mangled));
+            let name = d
+                .demangle(mangled)
+                .expect(&format!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
 
@@ -130,7 +130,9 @@ mod tests {
         let d = Demangler::Msvc;
 
         for (mangled, demangled) in test_cases {
-            let name = d.demangle(mangled).expect(&format!("demangling error: {}", mangled));
+            let name = d
+                .demangle(mangled)
+                .expect(&format!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
 
@@ -154,7 +156,9 @@ mod tests {
         let d = Demangler::Rustc;
 
         for (mangled, demangled) in test_cases {
-            let name = d.demangle(mangled).expect(&format!("demangling error: {}", mangled));
+            let name = d
+                .demangle(mangled)
+                .expect(&format!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
 
