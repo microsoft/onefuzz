@@ -160,7 +160,7 @@ impl Recorder {
             let symbol_name = self
                 .demangler
                 .demangle(&symbol.name)
-                .unwrap_or(symbol.name.clone());
+                .unwrap_or_else(|| symbol.name.clone());
 
             // Check the maybe-demangled against the coverage filter.
             if self.filter.includes_symbol(&info.module.path, symbol_name) {
