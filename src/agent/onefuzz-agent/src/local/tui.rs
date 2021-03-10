@@ -1,0 +1,175 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+use crossterm::event::{self, Event};
+use onefuzz::utils::try_wait_all_join_handles;
+use std::{
+    io::{self, Stdout},
+    sync::Arc,
+    time::Duration,
+};
+use tokio::{
+    sync::{mpsc, Mutex},
+    task::JoinHandle,
+    time::Instant,
+};
+use tui::{
+    backend::CrosstermBackend,
+    layout::{Constraint, Corner, Direction, Layout},
+    text::{Span, Spans},
+    widgets::{Block, Borders},
+    widgets::{List, ListItem},
+    Terminal,
+};
+
+use anyhow::Result;
+
+use arraydeque::{ArrayDeque, Wrapping};
+use async_trait::async_trait;
+
+const BUFFER_SIZE: usize = 100;
+const TICK_RATE: Duration = Duration::from_millis(250);
+
+pub struct TerminalUi {
+    pub task_events: Arc<Mutex<mpsc::UnboundedSender<String>>>,
+    task_event_receiver: Arc<Mutex<mpsc::UnboundedReceiver<String>>>,
+    log_event_receiver: Arc<Mutex<mpsc::UnboundedReceiver<String>>>,
+    terminal: Mutex<Terminal<CrosstermBackend<Stdout>>>,
+}
+
+#[derive(Debug)]
+enum TerminalEvent {
+    Input(Event),
+    Tick,
+}
+
+trait TakeAvailable<T> {
+    fn take_available(&mut self, size: usize) -> Result<Vec<T>>;
+}
+
+#[async_trait]
+impl<T: Send + Sync> TakeAvailable<T> for mpsc::UnboundedReceiver<T> {
+    fn take_available(&mut self, size: usize) -> Result<Vec<T>> {
+        let mut result = vec![];
+        loop {
+            match self.try_recv() {
+                Ok(v) => {
+                    result.push(v);
+                    if result.len() >= size {
+                        break;
+                    }
+                }
+                Err(mpsc::error::TryRecvError::Closed) => bail!("channel closed"),
+                Err(mpsc::error::TryRecvError::Empty) => break,
+            }
+        }
+        Ok(result)
+    }
+}
+
+impl TerminalUi {
+    pub fn init() -> Result<Self> {
+        //let x = env_logger::Env::default().default_filter_or("info");
+        let (task_event_sender, task_event_receiver) = mpsc::unbounded_channel();
+        let (log_event_sender, log_event_receiver) = mpsc::unbounded_channel();
+        //format!("{}", record.args())). )
+        let log_event_sender = Arc::new(Mutex::new(log_event_sender));
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+            .format(move |_buf, record| {
+                let sender_lock = log_event_sender.try_lock().map_err(|err| {
+                    std::io::Error::new(std::io::ErrorKind::Other, err.to_string())
+                })?;
+                sender_lock
+                    .send(format!("{}", record.args()))
+                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))
+            })
+            .init();
+        let stdout = io::stdout();
+        let backend = CrosstermBackend::new(stdout);
+        let terminal = Mutex::new(Terminal::new(backend)?);
+
+        Ok(Self {
+            task_events: Arc::new(Mutex::new(task_event_sender)),
+            task_event_receiver: Arc::new(Mutex::new(task_event_receiver)),
+            log_event_receiver: Arc::new(Mutex::new(log_event_receiver)),
+            terminal,
+        })
+    }
+
+    fn read_events() -> Result<(
+        mpsc::UnboundedReceiver<TerminalEvent>,
+        JoinHandle<Result<()>>,
+    )> {
+        //let mut log_data: ArrayDeque<[String; BUFFER_SIZE], Wrapping> = ArrayDeque::new();
+        let (ui_event_tx, ui_event_rx) = mpsc::unbounded_channel();
+        let join_handle: JoinHandle<Result<()>> = tokio::spawn(async move {
+            let mut last_tick = Instant::now();
+            loop {
+                // poll for tick rate duration, if no events, sent tick event.
+                let timeout = TICK_RATE
+                    .checked_sub(last_tick.elapsed())
+                    .unwrap_or_else(|| Duration::from_secs(0));
+                if event::poll(timeout).unwrap() {
+                    let event = event::read()?;
+                    ui_event_tx.send(TerminalEvent::Input(event))?;
+                }
+                if last_tick.elapsed() >= TICK_RATE {
+                    ui_event_tx.send(TerminalEvent::Tick)?;
+                    last_tick = Instant::now();
+                }
+            }
+        });
+
+        Ok((ui_event_rx, join_handle))
+    }
+
+    async fn ui_loop(self, mut ui_event_rx: mpsc::UnboundedReceiver<TerminalEvent>) -> Result<()> {
+        loop {
+            match ui_event_rx.recv().await {
+                Some(TerminalEvent::Tick) => {
+                    let log_data = {
+                        let mut log_receiver = self.log_event_receiver.lock().await;
+                        log_receiver.take_available(10)?
+                    };
+
+                    let _event_data = {
+                        let mut event_receiver = self.task_event_receiver.lock().await;
+                        event_receiver.take_available(10)?
+                    };
+
+                    self.terminal.lock().await.draw(|f| {
+                        let chunks = Layout::default()
+                            .direction(Direction::Vertical)
+                            .constraints(
+                                [Constraint::Percentage(25), Constraint::Percentage(75)].as_ref(),
+                            )
+                            .split(f.size());
+
+                        let log_items = log_data
+                            .iter()
+                            .map(|log| ListItem::new(Spans::from(vec![Span::raw(log)])))
+                            .collect::<Vec<_>>();
+
+                        let log_list = List::new(log_items)
+                            .block(Block::default().borders(Borders::ALL).title("List"))
+                            .start_corner(Corner::BottomLeft);
+
+                        f.render_widget(log_list, chunks[1]);
+                    })?;
+                }
+                Some(TerminalEvent::Input(_)) => (),
+                None => break,
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn run(self) -> Result<()> {
+        let _log_data: ArrayDeque<[String; BUFFER_SIZE], Wrapping> = ArrayDeque::new();
+        let (ui_event_rx, ui_event_handle) = Self::read_events()?;
+        self.terminal.lock().await.clear()?;
+        let ui_loop = tokio::spawn(self.ui_loop(ui_event_rx));
+
+        try_wait_all_join_handles(vec![ui_event_handle, ui_loop]).await
+    }
+}

@@ -12,3 +12,4 @@ pub mod libfuzzer_crash_report;
 pub mod libfuzzer_fuzz;
 pub mod libfuzzer_merge;
 pub mod radamsa;
+pub mod tui;

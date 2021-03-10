@@ -37,8 +37,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
             ..context.common_config.clone()
         },
     )?;
-    let report_task =
-        spawn(async move { ReportTask::new(report_config).managed_run().await.unwrap() });
+    let report_task = spawn(async move { ReportTask::new(report_config).managed_run().await });
 
     try_wait_all_join_handles(vec![
         fuzz_task,

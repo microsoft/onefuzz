@@ -1,6 +1,7 @@
 use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
+use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use onefuzz::jitter::delay_with_jitter;
 use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
@@ -11,7 +12,6 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
-use backoff::{future::retry, ExponentialBackoff, Error as BackoffError};
 use uuid::Uuid;
 
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
@@ -279,11 +279,19 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
         if path.as_ref().exists() {
             Ok(())
         } else {
-            Err(BackoffError::Transient(anyhow::anyhow!("path '{:?}' does not exisit", path.as_ref())))
+            Err(BackoffError::Transient(anyhow::anyhow!(
+                "path '{:?}' does not exisit",
+                path.as_ref()
+            )))
         }
     };
-    retry( ExponentialBackoff {
-        max_elapsed_time: Some(WAIT_FOR_MAX_WAIT),
-        max_interval: WAIT_FOR_DIR_DELAY,
-        ..ExponentialBackoff::default()}, op).await
+    retry(
+        ExponentialBackoff {
+            max_elapsed_time: Some(WAIT_FOR_MAX_WAIT),
+            max_interval: WAIT_FOR_DIR_DELAY,
+            ..ExponentialBackoff::default()
+        },
+        op,
+    )
+    .await
 }
