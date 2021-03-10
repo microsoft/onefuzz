@@ -17,14 +17,27 @@ from typing import (
     Tuple,
     Type,
     TypeVar,
-    Union
+    Union,
 )
 from uuid import uuid4, UUID
 from pydantic import BaseModel, Field
 
 from onefuzztypes.enums import OS, Architecture, ContainerType, TaskType
-from onefuzztypes.models import TaskConfig, TaskContainers, TaskDetails, TaskPool, UserInfo, SecretData
-from onefuzztypes.events import Event, EventMessage, EventType, get_event_type, EventTaskCreated
+from onefuzztypes.models import (
+    TaskConfig,
+    TaskContainers,
+    TaskDetails,
+    TaskPool,
+    UserInfo,
+    SecretData,
+)
+from onefuzztypes.events import (
+    Event,
+    EventMessage,
+    EventType,
+    get_event_type,
+    EventTaskCreated,
+)
 from onefuzztypes.primitives import Container, PoolName
 
 from .azure.creds import get_instance_id, get_instance_name
@@ -51,49 +64,51 @@ def get_events() -> Optional[str]:
 
 
 def log_event(event: Event, event_type: EventType) -> Event:
-    
+
     clone_event = event.copy(deep=True)
     log_event_recurs(clone_event)
     logging.info("sending event: %s - %s", event_type, clone_event)
-    
+
     return clone_event
 
-def log_event_recurs(clone_event: Event, visited: Set[int] = set()) -> Event: 
+
+def log_event_recurs(clone_event: Event, visited: Set[int] = set()) -> Event:
 
     if id(clone_event) in visited:
-        return 
+        return
 
     visited.add(id(clone_event))
 
     for field in clone_event.__fields__:
         field_data = getattr(clone_event, field)
-        
+
         if isinstance(field_data, UserInfo):
-        
+
             field_data = None
 
         elif isinstance(field_data, List):
-            
+
             if len(field_data) > 0 and not isinstance(field_data[0], BaseModel):
-                continue 
+                continue
             for data in field_data:
                 log_event_recurs(data, visited)
 
         elif isinstance(field_data, dict):
-            
+
             for key in field_data:
                 if not isinstance(field_data[key], BaseModel):
                     continue
                 log_event_recurs(field_data[key], visited)
 
-        else: 
+        else:
 
             if isinstance(field_data, BaseModel):
                 log_event_recurs(field_data, visited)
-        
+
         setattr(clone_event, field, field_data)
 
     return clone_event
+
 
 def send_event(event: Event) -> None:
     event_type = get_event_type(event)
