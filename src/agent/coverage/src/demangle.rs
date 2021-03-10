@@ -55,6 +55,7 @@ impl RustcDemangler {
     }
 }
 
+/// Demangler that tries to demangle a raw name against each known scheme.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Demangler {
     itanium: ItaniumDemangler,
@@ -63,6 +64,15 @@ pub struct Demangler {
 }
 
 impl Demangler {
+    /// Try to demangle a raw name according to a set of known schemes.
+    ///
+    /// The following schemes are tried in-order:
+    ///   1. rustc
+    ///   2. Itanium
+    ///   3. MSVC
+    ///
+    /// The first scheme to provide some demangling is used. If the name does
+    /// not parse against any of the known schemes, return `None`.
     pub fn demangle(&self, raw: impl AsRef<str>) -> Option<String> {
         let raw = raw.as_ref();
 
