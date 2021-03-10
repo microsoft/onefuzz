@@ -3,44 +3,86 @@
 
 use anyhow::{format_err, Result};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Demangler {
-    /// Itanium C++ ABI mangling
-    Itanium,
+#[derive(Clone, Copy, Debug)]
+pub struct ItaniumDemangler {
+    options: cpp_demangle::DemangleOptions,
+}
 
-    /// MSVC decorated names
-    Msvc,
+impl ItaniumDemangler {
+    pub fn try_demangle(&self, raw: impl AsRef<str>) -> Result<String> {
+        let symbol = cpp_demangle::Symbol::new(raw.as_ref())?;
+        Ok(symbol.demangle(&self.options)?)
+    }
+}
 
-    /// Rustc name mangling
-    Rustc,
+impl Default for ItaniumDemangler {
+    fn default() -> Self {
+        let options = cpp_demangle::DemangleOptions::new()
+            .no_params()
+            .no_return_type();
+        Self { options }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct MsvcDemangler {
+    flags: msvc_demangler::DemangleFlags,
+}
+
+impl MsvcDemangler {
+    pub fn try_demangle(&self, raw: impl AsRef<str>) -> Result<String> {
+        Ok(msvc_demangler::demangle(raw.as_ref(), self.flags)?)
+    }
+}
+
+impl Default for MsvcDemangler {
+    fn default() -> Self {
+        let flags = msvc_demangler::DemangleFlags::NAME_ONLY;
+        Self { flags }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct RustcDemangler;
+
+impl RustcDemangler {
+    pub fn try_demangle(&self, raw: impl AsRef<str>) -> Result<String> {
+        let name = rustc_demangle::try_demangle(raw.as_ref())
+            .map_err(|_| format_err!("unable to demangle rustc name"))?;
+
+        // Alternate formatter discards trailing hash.
+        Ok(format!("{:#}", name))
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Demangler {
+    itanium: ItaniumDemangler,
+    msvc: MsvcDemangler,
+    rustc: RustcDemangler,
 }
 
 impl Demangler {
-    pub fn demangle(&self, raw: impl AsRef<str>) -> Result<String> {
+    pub fn demangle(&self, raw: impl AsRef<str>) -> Option<String> {
         let raw = raw.as_ref();
 
-        let demangled = match self {
-            Demangler::Itanium => {
-                use cpp_demangle::{DemangleOptions, Symbol};
+        // Try `rustc` demangling first.
+        //
+        // Ensures that if a name _also_ demangles against the Itanium scheme,
+        // we are sure to remove the hash suffix from the demangled name.
+        if let Ok(demangled) = self.rustc.try_demangle(raw) {
+            return Some(demangled);
+        }
 
-                let options = DemangleOptions::new().no_params().no_return_type();
-                let symbol = Symbol::new(raw)?;
-                symbol.demangle(&options)?
-            }
-            Demangler::Msvc => {
-                let flags = msvc_demangler::DemangleFlags::NAME_ONLY;
-                msvc_demangler::demangle(raw, flags)?
-            }
-            Demangler::Rustc => {
-                let name = rustc_demangle::try_demangle(raw)
-                    .map_err(|_| format_err!("unable to demangle rustc name"))?;
+        if let Ok(demangled) = self.itanium.try_demangle(raw) {
+            return Some(demangled);
+        }
 
-                // Alternate formatter discards trailing hash.
-                format!("{:#}", name)
-            }
-        };
+        if let Ok(demangled) = self.msvc.try_demangle(raw) {
+            return Some(demangled);
+        }
 
-        Ok(demangled)
+        None
     }
 }
 
@@ -85,17 +127,17 @@ mod tests {
             ),
         ];
 
-        let d = Demangler::Itanium;
+        let demangler = Demangler::default();
 
         for (mangled, demangled) in test_cases {
-            let name = d
+            let name = demangler
                 .demangle(mangled)
                 .expect(&format!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
 
-        assert!(d.demangle("main").is_err());
-        assert!(d.demangle("_some_function").is_err());
+        assert!(demangler.demangle("main").is_none());
+        assert!(demangler.demangle("_some_function").is_none());
     }
 
     #[test]
@@ -127,17 +169,17 @@ mod tests {
             ),
         ];
 
-        let d = Demangler::Msvc;
+        let demangler = Demangler::default();
 
         for (mangled, demangled) in test_cases {
-            let name = d
+            let name = demangler
                 .demangle(mangled)
                 .expect(&format!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
 
-        assert!(d.demangle("main").is_err());
-        assert!(d.demangle("_some_function").is_err());
+        assert!(demangler.demangle("main").is_none());
+        assert!(demangler.demangle("_some_function").is_none());
     }
 
     #[test]
@@ -153,16 +195,16 @@ mod tests {
             ),
         ];
 
-        let d = Demangler::Rustc;
+        let demangler = Demangler::default();
 
         for (mangled, demangled) in test_cases {
-            let name = d
+            let name = demangler
                 .demangle(mangled)
                 .expect(&format!("demangling error: {}", mangled));
             assert_eq!(&name, demangled);
         }
 
-        assert!(d.demangle("main").is_err());
-        assert!(d.demangle("_some_function").is_err());
+        assert!(demangler.demangle("main").is_none());
+        assert!(demangler.demangle("_some_function").is_none());
     }
 }
