@@ -18,7 +18,7 @@ from onefuzztypes.models import (
 from onefuzztypes.events import get_event_type, EventTaskCreated
 from onefuzztypes.primitives import Container, PoolName
 
-from __app__.onefuzzlib.events import log_event
+from __app__.onefuzzlib.events import filter_event
 
 
 class TestSecretFilter(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestSecretFilter(unittest.TestCase):
         task_id = uuid4()
         application_id = uuid4()
         object_id = uuid4()
-        upn = "testalias@microsoft.com"
+        upn = "testalias@contoso.com"
 
         user_info = UserInfo(
             application_id=application_id, object_id=object_id, upn=upn
@@ -67,7 +67,7 @@ class TestSecretFilter(unittest.TestCase):
 
         test_event_type = get_event_type(test_event)
 
-        scrubbed_test_event = log_event(test_event, test_event_type)
+        scrubbed_test_event = filter_event(test_event, test_event_type)
 
         self.assertEqual(scrubbed_test_event, control_test_event)
 
