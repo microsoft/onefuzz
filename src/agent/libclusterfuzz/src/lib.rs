@@ -18,11 +18,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use anyhow::{Context, Result};
+#[macro_use]
+extern crate lazy_static;
+
 use regex::RegexSet;
 
 mod generated;
 
-pub fn get_stack_filter() -> Result<RegexSet> {
-    RegexSet::new(generated::STACK_FRAME_IGNORE_REGEXES).context("failed to build stack_filter")
+pub fn get_stack_filter() -> &'static RegexSet {
+    // NOTE: this is build upon first use, but we've verified these will compile
+    // using unit tests
+    lazy_static! {
+        static ref RE: RegexSet = RegexSet::new(generated::STACK_FRAME_IGNORE_REGEXES)
+            .expect("libclusterfuzz regex compile error");
+    }
+    &RE
+}
+
+#[cfg(test)]
+mod tests {
+    use super::get_stack_filter;
+
+    #[test]
+    fn test_stack_filter() {
+        assert!(get_stack_filter().is_match("abort"));
+        assert!(!get_stack_filter().is_match("ContosoSaysHi"));
+    }
 }

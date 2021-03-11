@@ -118,7 +118,7 @@ impl CrashLog {
         let (scariness_score, scariness_description) = parse_scariness(&text);
 
         let call_stack = full_stack_details.iter().map(|x| x.line.clone()).collect();
-        let stack_filter = get_stack_filter()?;
+        let stack_filter = get_stack_filter();
 
         let mut minimized_stack_details: Vec<StackEntry> = full_stack_details
             .iter()

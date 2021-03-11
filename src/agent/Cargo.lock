@@ -1251,6 +1251,7 @@ name = "libclusterfuzz"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "lazy_static",
  "regex",
 ]
 
