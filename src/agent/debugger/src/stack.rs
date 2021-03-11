@@ -223,10 +223,8 @@ pub fn get_stack(
 
     let mut stack = vec![];
 
-    dbghlp.stackwalk_ex(process_handle, thread_handle, |frame_context, frame| {
-        // The program counter is the return address, potentially outside of the function
-        // performing the call. We subtract 1 to ensure the address is within the call.
-        let program_counter = frame_context.program_counter().saturating_sub(1);
+    dbghlp.stackwalk_ex(process_handle, thread_handle, |frame| {
+        let program_counter = frame.AddrPC.Offset;
 
         let debug_stack_frame = if resolve_symbols {
             if let Ok(module_info) = dbghlp.sym_get_module_info(process_handle, program_counter) {
