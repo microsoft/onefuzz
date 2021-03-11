@@ -699,7 +699,7 @@ impl Debugger {
         dbghlp.stackwalk_ex(
             self.target.process_handle(),
             self.target.current_thread_handle(),
-            |_frame_context, frame| {
+            |frame| {
                 return_address = frame.AddrReturn;
                 stack_pointer = frame.AddrStack;
 
