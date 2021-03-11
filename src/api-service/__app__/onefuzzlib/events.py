@@ -6,10 +6,9 @@
 import json
 import logging
 from queue import Empty, Queue
-from typing import (List, Optional, Set)
+from typing import List, Optional, Set
 
-from onefuzztypes.events import (Event, EventMessage,
-                                 EventType, get_event_type)
+from onefuzztypes.events import Event, EventMessage, EventType, get_event_type
 from onefuzztypes.models import UserInfo
 from pydantic import BaseModel
 
