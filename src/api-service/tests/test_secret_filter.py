@@ -8,6 +8,7 @@ import unittest
 from uuid import uuid4
 
 from onefuzztypes.enums import ContainerType, TaskType
+from onefuzztypes.events import EventTaskCreated, get_event_type
 from onefuzztypes.models import (
     TaskConfig,
     TaskContainers,
@@ -15,7 +16,6 @@ from onefuzztypes.models import (
     TaskPool,
     UserInfo,
 )
-from onefuzztypes.events import get_event_type, EventTaskCreated
 from onefuzztypes.primitives import Container, PoolName
 
 from __app__.onefuzzlib.events import filter_event
