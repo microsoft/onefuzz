@@ -8,7 +8,7 @@ import logging
 from queue import Empty, Queue
 from typing import List, Optional, Set
 
-from onefuzztypes.events import Event, EventMessage, EventType, get_event_type
+from onefuzztypes.events import Event, EventMessage, EventType, get_event_type, BaseEvent
 from onefuzztypes.models import UserInfo
 from pydantic import BaseModel
 
@@ -60,7 +60,7 @@ def filter_event_recurs(clone_event: Event, visited: Set[int] = set()) -> Event:
 
         elif isinstance(field_data, List):
 
-            if len(field_data) > 0 and not isinstance(field_data[0], BaseModel):
+            if len(field_data) > 0 and not isinstance(field_data[0], BaseEvent):
                 continue
             for data in field_data:
                 filter_event_recurs(data, visited)
@@ -68,13 +68,13 @@ def filter_event_recurs(clone_event: Event, visited: Set[int] = set()) -> Event:
         elif isinstance(field_data, dict):
 
             for key in field_data:
-                if not isinstance(field_data[key], BaseModel):
+                if not isinstance(field_data[key], BaseEvent):
                     continue
                 filter_event_recurs(field_data[key], visited)
 
         else:
 
-            if isinstance(field_data, BaseModel):
+            if isinstance(field_data, BaseEvent):
                 filter_event_recurs(field_data, visited)
 
         setattr(clone_event, field, field_data)
