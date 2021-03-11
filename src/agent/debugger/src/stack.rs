@@ -112,11 +112,7 @@ impl Display for DebugStackFrame {
         match self {
             DebugStackFrame::Frame { function, location } => {
                 if let Some(file_info) = &location.file_info {
-                    write!(
-                        formatter,
-                        "{} {}:{}",
-                        function, file_info.file, file_info.line
-                    )
+                    write!(formatter, "{} {}", function, file_info)
                 } else {
                     write!(formatter, "{}+0x{:x}", function, location.displacement)
                 }
