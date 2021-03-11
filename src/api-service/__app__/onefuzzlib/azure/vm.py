@@ -20,8 +20,7 @@ from .compute import get_compute_client
 from .creds import get_base_resource_group
 from .disk import delete_disk, list_disks
 from .image import get_os
-from .ip import (create_public_nic, delete_ip, delete_nic, get_ip,
-                 get_public_nic)
+from .ip import create_public_nic, delete_ip, delete_nic, get_ip, get_public_nic
 
 
 def get_vm(name: str) -> Optional[VirtualMachine]:

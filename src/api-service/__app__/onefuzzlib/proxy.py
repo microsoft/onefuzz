@@ -10,10 +10,14 @@ from typing import List, Optional, Tuple
 
 from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import ErrorCode, VmState
-from onefuzztypes.events import (EventProxyCreated, EventProxyDeleted,
-                                 EventProxyFailed)
-from onefuzztypes.models import (Authentication, Error, Forward, ProxyConfig,
-                                 ProxyHeartbeat)
+from onefuzztypes.events import EventProxyCreated, EventProxyDeleted, EventProxyFailed
+from onefuzztypes.models import (
+    Authentication,
+    Error,
+    Forward,
+    ProxyConfig,
+    ProxyHeartbeat,
+)
 from onefuzztypes.primitives import Container, Region
 from pydantic import Field
 

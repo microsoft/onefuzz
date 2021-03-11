@@ -8,15 +8,21 @@ from typing import Iterator, List, Optional
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
-from azure.devops.exceptions import (AzureDevOpsAuthenticationError,
-                                     AzureDevOpsClientError,
-                                     AzureDevOpsClientRequestError,
-                                     AzureDevOpsServiceError)
-from azure.devops.v6_0.work_item_tracking.models import (CommentCreate,
-                                                         JsonPatchOperation,
-                                                         Wiql, WorkItem)
-from azure.devops.v6_0.work_item_tracking.work_item_tracking_client import \
-    WorkItemTrackingClient
+from azure.devops.exceptions import (
+    AzureDevOpsAuthenticationError,
+    AzureDevOpsClientError,
+    AzureDevOpsClientRequestError,
+    AzureDevOpsServiceError,
+)
+from azure.devops.v6_0.work_item_tracking.models import (
+    CommentCreate,
+    JsonPatchOperation,
+    Wiql,
+    WorkItem,
+)
+from azure.devops.v6_0.work_item_tracking.work_item_tracking_client import (
+    WorkItemTrackingClient,
+)
 from memoization import cached
 from onefuzztypes.models import ADOTemplate, Report
 from onefuzztypes.primitives import Container

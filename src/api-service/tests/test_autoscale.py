@@ -8,8 +8,7 @@ from unittest.mock import MagicMock, patch
 from uuid import UUID
 
 from onefuzztypes.enums import OS, Architecture, ContainerType, TaskType
-from onefuzztypes.models import (TaskConfig, TaskContainers, TaskDetails,
-                                 TaskPool)
+from onefuzztypes.models import TaskConfig, TaskContainers, TaskDetails, TaskPool
 from onefuzztypes.primitives import Container, PoolName
 
 from __app__.onefuzzlib.autoscale import autoscale_pool, get_vm_count

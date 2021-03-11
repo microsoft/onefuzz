@@ -10,13 +10,11 @@ import posixpath
 from typing import Dict, List, Optional
 from uuid import UUID
 
-from onefuzztypes.enums import (Compare, ContainerPermission, ContainerType,
-                                TaskFeature)
+from onefuzztypes.enums import Compare, ContainerPermission, ContainerType, TaskFeature
 from onefuzztypes.models import TaskConfig, TaskDefinition, TaskUnitConfig
 from onefuzztypes.primitives import Container
 
-from ..azure.containers import (blob_exists, container_exists,
-                                get_container_sas_url)
+from ..azure.containers import blob_exists, container_exists, get_container_sas_url
 from ..azure.creds import get_instance_id
 from ..azure.queue import get_queue_sas
 from ..azure.storage import StorageType

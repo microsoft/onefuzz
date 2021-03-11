@@ -8,14 +8,15 @@ import logging
 from typing import List, Optional, Tuple
 from uuid import UUID
 
-from onefuzztypes.enums import (ErrorCode, NodeState, PoolState, ScalesetState,
-                                TaskState)
-from onefuzztypes.events import (EventNodeCreated, EventNodeDeleted,
-                                 EventNodeStateUpdated)
+from onefuzztypes.enums import ErrorCode, NodeState, PoolState, ScalesetState, TaskState
+from onefuzztypes.events import (
+    EventNodeCreated,
+    EventNodeDeleted,
+    EventNodeStateUpdated,
+)
 from onefuzztypes.models import Error
 from onefuzztypes.models import Node as BASE_NODE
-from onefuzztypes.models import (NodeAssignment, NodeCommand,
-                                 NodeCommandAddSshKey)
+from onefuzztypes.models import NodeAssignment, NodeCommand, NodeCommandAddSshKey
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Result, StopNodeCommand, StopTaskNodeCommand
 from onefuzztypes.primitives import PoolName

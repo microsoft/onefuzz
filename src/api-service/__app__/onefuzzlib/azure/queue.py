@@ -11,13 +11,15 @@ from typing import List, Optional, Type, TypeVar, Union
 from uuid import UUID
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
-from azure.storage.queue import (QueueSasPermissions, QueueServiceClient,
-                                 generate_queue_sas)
+from azure.storage.queue import (
+    QueueSasPermissions,
+    QueueServiceClient,
+    generate_queue_sas,
+)
 from memoization import cached
 from pydantic import BaseModel
 
-from .storage import (StorageType, get_primary_account,
-                      get_storage_account_name_key)
+from .storage import StorageType, get_primary_account, get_storage_account_name_key
 
 QueueNameType = Union[str, UUID]
 

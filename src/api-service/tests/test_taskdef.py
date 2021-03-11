@@ -5,10 +5,14 @@
 
 import unittest
 
-from onefuzztypes.enums import (Compare, ContainerPermission, ContainerType,
-                                TaskFeature, TaskType)
-from onefuzztypes.models import (ContainerDefinition, TaskDefinition,
-                                 VmDefinition)
+from onefuzztypes.enums import (
+    Compare,
+    ContainerPermission,
+    ContainerType,
+    TaskFeature,
+    TaskType,
+)
+from onefuzztypes.models import ContainerDefinition, TaskDefinition, VmDefinition
 
 from __app__.onefuzzlib.tasks.defs import TASK_DEFINITIONS
 

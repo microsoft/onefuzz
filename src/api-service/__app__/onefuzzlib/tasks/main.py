@@ -9,8 +9,12 @@ from typing import List, Optional, Tuple, Union
 from uuid import UUID
 
 from onefuzztypes.enums import ErrorCode, TaskState
-from onefuzztypes.events import (EventTaskCreated, EventTaskFailed,
-                                 EventTaskStateUpdated, EventTaskStopped)
+from onefuzztypes.events import (
+    EventTaskCreated,
+    EventTaskFailed,
+    EventTaskStateUpdated,
+    EventTaskStopped,
+)
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm, UserInfo

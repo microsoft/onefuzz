@@ -11,8 +11,7 @@ from onefuzztypes.enums import OS, AgentMode
 from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
 from onefuzztypes.primitives import Container, Extension, Region
 
-from .azure.containers import (get_container_sas_url, get_file_sas_url,
-                               save_blob)
+from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
 from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas

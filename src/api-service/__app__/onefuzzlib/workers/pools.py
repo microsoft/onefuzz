@@ -8,13 +8,16 @@ import logging
 from typing import List, Optional, Tuple, Union
 from uuid import UUID
 
-from onefuzztypes.enums import (OS, Architecture, ErrorCode, PoolState,
-                                ScalesetState)
+from onefuzztypes.enums import OS, Architecture, ErrorCode, PoolState, ScalesetState
 from onefuzztypes.events import EventPoolCreated, EventPoolDeleted
 from onefuzztypes.models import AutoScaleConfig, Error
 from onefuzztypes.models import Pool as BASE_POOL
-from onefuzztypes.models import (ScalesetSummary, WorkSet, WorkSetSummary,
-                                 WorkUnitSummary)
+from onefuzztypes.models import (
+    ScalesetSummary,
+    WorkSet,
+    WorkSetSummary,
+    WorkUnitSummary,
+)
 from onefuzztypes.primitives import PoolName
 
 from ..azure.queue import create_queue, delete_queue, peek_queue, queue_object

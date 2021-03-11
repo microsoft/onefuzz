@@ -3,10 +3,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from onefuzztypes.enums import (Compare, ContainerPermission, ContainerType,
-                                TaskFeature, TaskType)
-from onefuzztypes.models import (ContainerDefinition, TaskDefinition,
-                                 VmDefinition)
+from onefuzztypes.enums import (
+    Compare,
+    ContainerPermission,
+    ContainerType,
+    TaskFeature,
+    TaskType,
+)
+from onefuzztypes.models import ContainerDefinition, TaskDefinition, VmDefinition
 
 # all tasks are required to have a 'setup' container
 TASK_DEFINITIONS = {

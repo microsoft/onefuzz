@@ -8,14 +8,33 @@ import json
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import (Any, Callable, Dict, List, Mapping, Optional, Set, Tuple,
-                    Type, TypeVar, Union)
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 from uuid import UUID
 
 from azure.common import AzureConflictHttpError, AzureMissingResourceHttpError
-from onefuzztypes.enums import (ErrorCode, JobState, NodeState, PoolState,
-                                ScalesetState, TaskState, TelemetryEvent,
-                                UpdateType, VmState)
+from onefuzztypes.enums import (
+    ErrorCode,
+    JobState,
+    NodeState,
+    PoolState,
+    ScalesetState,
+    TaskState,
+    TelemetryEvent,
+    UpdateType,
+    VmState,
+)
 from onefuzztypes.models import Error, SecretData
 from onefuzztypes.primitives import Container, PoolName, Region
 from pydantic import BaseModel, Field

@@ -9,8 +9,11 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
 from onefuzztypes.enums import ErrorCode, NodeState, PoolState, ScalesetState
-from onefuzztypes.events import (EventScalesetCreated, EventScalesetDeleted,
-                                 EventScalesetFailed)
+from onefuzztypes.events import (
+    EventScalesetCreated,
+    EventScalesetDeleted,
+    EventScalesetFailed,
+)
 from onefuzztypes.models import Error
 from onefuzztypes.models import Scaleset as BASE_SCALESET
 from onefuzztypes.models import ScalesetNodeState
@@ -21,13 +24,26 @@ from ..__version__ import __version__
 from ..azure.auth import build_auth
 from ..azure.image import get_os
 from ..azure.network import Network
-from ..azure.queue import (clear_queue, create_queue, delete_queue,
-                           queue_object, remove_first_message)
+from ..azure.queue import (
+    clear_queue,
+    create_queue,
+    delete_queue,
+    queue_object,
+    remove_first_message,
+)
 from ..azure.storage import StorageType
-from ..azure.vmss import (UnableToUpdate, create_vmss, delete_vmss,
-                          delete_vmss_nodes, get_vmss, get_vmss_size,
-                          list_instance_ids, reimage_vmss_nodes, resize_vmss,
-                          update_extensions)
+from ..azure.vmss import (
+    UnableToUpdate,
+    create_vmss,
+    delete_vmss,
+    delete_vmss_nodes,
+    get_vmss,
+    get_vmss_size,
+    list_instance_ids,
+    reimage_vmss_nodes,
+    resize_vmss,
+    update_extensions,
+)
 from ..events import send_event
 from ..extension import fuzz_extensions
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
