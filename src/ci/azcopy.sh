@@ -7,10 +7,10 @@ set -ex
 
 mkdir -p artifacts/azcopy
 
-wget -O azcopy.zip https://aka.ms/downloadazcopy-v10-windows
+wget --retry-connrefused -t 30 --waitretry=5 -O azcopy.zip https://aka.ms/downloadazcopy-v10-windows
 unzip azcopy.zip
 mv azcopy_windows*/* artifacts/azcopy/
 
-wget -O azcopy.tgz https://aka.ms/downloadazcopy-v10-linux
+wget --retry-connrefused -t 30 --waitretry=5 -O azcopy.tgz https://aka.ms/downloadazcopy-v10-linux
 tar zxvf azcopy.tgz
 mv azcopy_linux_amd64*/* artifacts/azcopy/
