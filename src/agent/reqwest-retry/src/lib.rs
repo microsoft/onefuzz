@@ -192,22 +192,22 @@ mod test {
 
     #[tokio::test]
     async fn retry_should_fail() -> Result<()> {
-        let invalid_url = "http://localhost:81/test.txt";
+        let invalid_url = "http://127.0.0.1:81/test.txt";
         let resp = reqwest::Client::new()
             .get(invalid_url)
             .send_retry(
                 Duration::from_secs(1),
-                Duration::from_secs(3),
-                3i32,
+                Duration::from_secs(300),
+                2i32,
                 to_backoff_response,
             )
             .await;
 
         if let Err(err) = &resp {
             let as_text = format!("{}", err);
-            assert!(as_text.contains("Maximum number of attempts reached for this request"));
+            assert!(as_text.contains(MAX_RETRY_ERROR_MESSAGE));
         } else {
-            bail!("response to {} was expected to fail", invalid_url);
+            anyhow::bail!("response to {} was expected to fail", invalid_url);
         }
 
         Ok(())

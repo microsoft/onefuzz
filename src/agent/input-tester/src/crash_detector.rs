@@ -423,6 +423,7 @@ mod tests {
             test_process(
                 r"C:\windows\system32\WindowsPowerShell\v1.0\powershell.exe",
                 &vec!["/nop".to_string(), "/c".to_string(), $script.to_string()],
+                &HashMap::default(),
                 $timeout,
                 /*ignore first chance exceptions*/ true,
                 None,
