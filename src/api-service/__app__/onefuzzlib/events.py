@@ -8,7 +8,13 @@ import logging
 from queue import Empty, Queue
 from typing import List, Optional, Set
 
-from onefuzztypes.events import Event, EventMessage, EventType, get_event_type, BaseEvent
+from onefuzztypes.events import (
+    BaseEvent,
+    Event,
+    EventMessage,
+    EventType,
+    get_event_type,
+)
 from onefuzztypes.models import UserInfo
 
 from .azure.creds import get_instance_id, get_instance_name
