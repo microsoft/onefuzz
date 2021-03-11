@@ -69,7 +69,7 @@ pub async fn handle_inputs(
     regression_reports: &SyncedDir,
     heartbeat_client: &Option<TaskHeartbeatClient>,
 ) -> Result<()> {
-    readonly_inputs.sync_pull().await?;
+    readonly_inputs.init_pull().await?;
     let mut input_files = tokio::fs::read_dir(&readonly_inputs.path).await?;
     while let Some(file) = input_files.next_entry().await? {
         heartbeat_client.alive();
