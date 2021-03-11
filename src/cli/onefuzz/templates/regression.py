@@ -56,7 +56,7 @@ class Regression(Command):
         check_fuzzer_help: bool = True,
         delete_input_container: bool = True,
         check_regressions: bool = False,
-    ) -> Optional[Job]:
+    ) -> None:
         """
         generic regression task
 
@@ -66,7 +66,7 @@ class Regression(Command):
         :param bool delete_input_container: Specify wether or not to delete the input container
         """
 
-        return self._create_job(
+        self._create_job(
             TaskType.generic_regression,
             project,
             name,
@@ -115,7 +115,7 @@ class Regression(Command):
         check_fuzzer_help: bool = True,
         delete_input_container: bool = True,
         check_regressions: bool = False,
-    ) -> Optional[Job]:
+    ) -> None:
 
         """
         generic regression task
@@ -126,7 +126,7 @@ class Regression(Command):
         :param bool delete_input_container: Specify wether or not to delete the input container
         """
 
-        return self._create_job(
+        self._create_job(
             TaskType.libfuzzer_regression,
             project,
             name,
@@ -176,7 +176,7 @@ class Regression(Command):
         check_fuzzer_help: bool = True,
         delete_input_container: bool = True,
         check_regressions: bool = False,
-    ) -> Optional[Job]:
+    ) -> None:
 
         if dryrun:
             return None
@@ -282,5 +282,3 @@ class Regression(Command):
             and ContainerType.readonly_inputs in helper.containers
         ):
             helper.delete_container(helper.containers[ContainerType.readonly_inputs])
-
-        return helper.job
