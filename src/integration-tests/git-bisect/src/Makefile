@@ -10,4 +10,4 @@ fuzz.exe: fuzz.c
 .PHONY: clean
 
 clean:
-	rm -f fuzz.exe
+	@rm -f fuzz.exe
