@@ -145,9 +145,8 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
             .required(false),
     )
     .arg(
-        Arg::with_name("cleanup")
-            .long("cleanup")
-            .takes_value(true)
+        Arg::with_name("keep_job_dir")
+            .long("keep_job_dir")
             .required(false),
     )
 }
@@ -224,7 +223,7 @@ pub fn build_local_context(args: &ArgMatches<'_>) -> Result<LocalContext> {
     };
     let current_dir = current_dir()?;
     let job_path = current_dir.join(format!("{}", job_id));
-    let cleanup_on_drop = value_t!(args, "cleanup", bool).unwrap_or_default();
+    let cleanup_on_drop = !args.is_present("keep_job_dir");
     Ok(LocalContext {
         cleanup_on_drop,
         job_path,
