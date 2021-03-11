@@ -7,13 +7,11 @@ import json
 import logging
 from queue import Empty, Queue
 from typing import (List, Optional, Set)
-from uuid import uuid4
 
-from onefuzztypes.enums import ContainerType
 from onefuzztypes.events import (Event, EventMessage,
                                  EventType, get_event_type)
 from onefuzztypes.models import UserInfo
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from .azure.creds import get_instance_id, get_instance_name
 from .webhooks import Webhook
