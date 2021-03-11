@@ -13,11 +13,6 @@ from onefuzztypes.primitives import Container, Directory, File, PoolName
 from onefuzz.api import Command
 
 from . import JobHelper
-from .template_error import TemplateError
-
-# Special exit code value used by git bisect to determine if a commit should be skipped
-# https://git-scm.com/docs/git-bisect#_bisect_run
-GIT_BISSECT_SKIP_CODE = 125
 
 
 class Regression(Command):
