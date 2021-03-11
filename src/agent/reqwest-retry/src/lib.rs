@@ -205,9 +205,7 @@ mod test {
 
         if let Err(err) = &resp {
             let as_text = format!("{}", err);
-            assert!(
-                as_text.contains("Maximum number of attempts reached for this request")
-            );
+            assert!(as_text.contains(MAX_RETRY_ERROR_MESSAGE));
         } else {
             anyhow::bail!("response to {} was expected to fail", invalid_url);
         }
