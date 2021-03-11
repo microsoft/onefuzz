@@ -8,14 +8,9 @@ import logging
 from queue import Empty, Queue
 from typing import List, Optional, Set
 
-from onefuzztypes.events import (
-    BaseEvent,
-    Event,
-    EventMessage,
-    EventType,
-    get_event_type,
-)
+from onefuzztypes.events import Event, EventMessage, EventType, get_event_type
 from onefuzztypes.models import UserInfo
+from pydantic import BaseModel
 
 from .azure.creds import get_instance_id, get_instance_name
 from .webhooks import Webhook
@@ -49,10 +44,10 @@ def filter_event(event: Event, event_type: EventType) -> Event:
     return clone_event
 
 
-def filter_event_recurs(clone_event: Event, visited: Set[int] = set()) -> Event:
+def filter_event_recurs(clone_event: BaseModel, visited: Set[int] = set()) -> Event:
 
     if id(clone_event) in visited:
-        return
+        return clone_event
 
     visited.add(id(clone_event))
 
@@ -65,7 +60,7 @@ def filter_event_recurs(clone_event: Event, visited: Set[int] = set()) -> Event:
 
         elif isinstance(field_data, List):
 
-            if len(field_data) > 0 and not isinstance(field_data[0], BaseEvent):
+            if len(field_data) > 0 and not isinstance(field_data[0], BaseModel):
                 continue
             for data in field_data:
                 filter_event_recurs(data, visited)
@@ -73,13 +68,13 @@ def filter_event_recurs(clone_event: Event, visited: Set[int] = set()) -> Event:
         elif isinstance(field_data, dict):
 
             for key in field_data:
-                if not isinstance(field_data[key], BaseEvent):
+                if not isinstance(field_data[key], BaseModel):
                     continue
                 filter_event_recurs(field_data[key], visited)
 
         else:
 
-            if isinstance(field_data, BaseEvent):
+            if isinstance(field_data, BaseModel):
                 filter_event_recurs(field_data, visited)
 
         setattr(clone_event, field, field_data)
