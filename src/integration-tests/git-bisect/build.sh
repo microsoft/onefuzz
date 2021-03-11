@@ -3,6 +3,7 @@
 set -e
 
 git init test
+(cd test; git config user.name "Example"; git config user.email example@contoso.com)
 (cp src/Makefile test; cd test; git add Makefile)
 for i in $(seq 0 8); do
     cp src/fuzz.c test/fuzz.c
