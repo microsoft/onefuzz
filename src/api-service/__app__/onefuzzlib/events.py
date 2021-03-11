@@ -17,6 +17,7 @@ from .webhooks import Webhook
 
 EVENTS: Queue = Queue()
 
+
 def get_events() -> Optional[str]:
     events = []
 
