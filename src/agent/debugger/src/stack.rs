@@ -18,11 +18,17 @@ use crate::dbghelp::{self, DebugHelpGuard, ModuleInfo, SymLineInfo};
 
 const UNKNOWN_MODULE: &str = "<UnknownModule>";
 
-/// The file and line number for frame in the calls stack.
+/// The file and line number for frames in the call stack.
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub struct FileInfo {
     pub file: String,
     pub line: u32,
+}
+
+impl Display for FileInfo {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{}:{}", self.file, self.line)
+    }
 }
 
 impl From<&SymLineInfo> for FileInfo {
@@ -67,7 +73,7 @@ impl DebugFunctionLocation {
 impl Display for DebugFunctionLocation {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         if let Some(file_info) = &self.file_info {
-            write!(formatter, "{}:{}", file_info.file, file_info.line)?;
+            write!(formatter, "{}", file_info)?;
         } else {
             write!(formatter, "0x{:x}", self.displacement)?;
         }

@@ -103,16 +103,16 @@ macro_rules! from_json {
     }};
 }
 
-#[cfg(windows)]
-const EXE: &str = "c:\\bin\\fuzz.exe";
+#[cfg(target_os = "windows")]
+const EXE: &str = r"c:\bin\fuzz.exe";
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
 const EXE: &str = "/bin/fuzz.exe";
 
-#[cfg(windows)]
-const LIB: &str = "c:\\lib\\libpthread.dll";
+#[cfg(target_os = "windows")]
+const LIB: &str = r"c:\lib\libpthread.dll";
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
 const LIB: &str = "/lib/libpthread.so.0";
 
 fn module(s: &str) -> ModulePath {
