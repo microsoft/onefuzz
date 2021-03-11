@@ -54,7 +54,7 @@ class Run(Command):
             raise Exception(f"unexpected regression containers: {results}")
         container = list(results.keys())[0]
 
-        # expect one and only one file in the container 
+        # expect one and only one file in the container
         if len(results[container]) != 1:
             raise Exception(f"unexpected regression container output: {results}")
         file = results[container][0]
@@ -68,13 +68,12 @@ class Run(Command):
         if report.crash_test_result.crash_report is not None:
             self.logger.info("regression report has crash report")
             return True
-        
+
         if report.crash_test_result.no_repro is not None:
             self.logger.info("regression report has no-repro")
             return False
 
         raise Exception(f"unexpected report: {report}")
-
 
     def _run_job(
         self, test_id: UUID, pool: PoolName, target: str, exe: File, build: int

@@ -3,11 +3,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import json
 from typing import Dict, List, Optional
 
 from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
-from onefuzztypes.models import Job, NotificationConfig
-from onefuzztypes.primitives import Directory, File, PoolName
+from onefuzztypes.models import Job, NotificationConfig, RegressionReport
+from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
 
@@ -21,6 +22,22 @@ GIT_BISSECT_SKIP_CODE = 125
 
 class Regression(Command):
     """ Regression job """
+
+    def _check_regression(self, container: Container, file: File) -> bool:
+        content = self.onefuzz.containers.files.get(Container(container), file)
+        as_str = content.decode()
+        as_obj = json.loads(as_str)
+        report = RegressionReport.parse_obj(as_obj)
+
+        if report.crash_test_result.crash_report is not None:
+            self.logger.error("regression: %s %s", container, file)
+            return True
+
+        if report.crash_test_result.no_repro is not None:
+            self.logger.info("no repro: %s %s", container, file)
+            return False
+
+        raise Exception("invalid crash report")
 
     def generic(
         self,
@@ -44,15 +61,15 @@ class Regression(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         check_retry_count: Optional[int] = None,
         check_fuzzer_help: bool = True,
-        fail_on_repro: bool = False,
         delete_input_container: bool = True,
+        check_regressions: bool = False,
     ) -> Optional[Job]:
         """
         generic regression task
 
         :param File inputs: Specify a directory of inptus to use in the regression task
         :param str reports: Specify specific report names to verify in the regression task
-        :param bool fail_on_repro: Specify wether or not to throw an exception if a repro was generated
+        :param bool check_regressions: Specify if exceptions shoudl be through on finding crash regressions
         :param bool delete_input_container: Specify wether or not to delete the input container
         """
 
@@ -77,8 +94,8 @@ class Regression(Command):
             debug=debug,
             check_retry_count=check_retry_count,
             check_fuzzer_help=check_fuzzer_help,
-            fail_on_repro=fail_on_repro,
             delete_input_container=delete_input_container,
+            check_regressions=check_regressions,
         )
 
     def libfuzzer(
@@ -103,8 +120,8 @@ class Regression(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         check_retry_count: Optional[int] = None,
         check_fuzzer_help: bool = True,
-        fail_on_repro: bool = False,
         delete_input_container: bool = True,
+        check_regressions: bool = False,
     ) -> Optional[Job]:
 
         """
@@ -112,7 +129,7 @@ class Regression(Command):
 
         :param File inputs: Specify a directory of inptus to use in the regression task
         :param str reports: Specify specific report names to verify in the regression task
-        :param bool fail_on_repro: Specify wether or not to throw an exception if a repro was generated
+        :param bool check_regressions: Specify if exceptions shoudl be through on finding crash regressions
         :param bool delete_input_container: Specify wether or not to delete the input container
         """
 
@@ -137,8 +154,8 @@ class Regression(Command):
             debug=debug,
             check_retry_count=check_retry_count,
             check_fuzzer_help=check_fuzzer_help,
-            fail_on_repro=fail_on_repro,
             delete_input_container=delete_input_container,
+            check_regressions=check_regressions,
         )
 
     def _create_job(
@@ -164,8 +181,8 @@ class Regression(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         check_retry_count: Optional[int] = None,
         check_fuzzer_help: bool = True,
-        fail_on_repro: bool = False,
         delete_input_container: bool = True,
+        check_regressions: bool = False,
     ) -> Optional[Job]:
 
         if dryrun:
@@ -193,20 +210,6 @@ class Regression(Command):
             ContainerType.regression_reports,
         )
 
-        if crashes:
-            helper.containers[
-                ContainerType.readonly_inputs
-            ] = helper.get_unique_container_name(ContainerType.readonly_inputs)
-
-        helper.create_containers()
-        if crashes:
-            for file in crashes:
-                self.onefuzz.containers.files.upload_file(
-                    helper.containers[ContainerType.unique_inputs], file
-                )
-
-        helper.setup_notifications(notification_config)
-
         containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
             (ContainerType.crashes, helper.containers[ContainerType.crashes]),
@@ -222,11 +225,31 @@ class Regression(Command):
             ),
         ]
 
+        if crashes:
+            helper.containers[
+                ContainerType.readonly_inputs
+            ] = helper.get_unique_container_name(ContainerType.readonly_inputs)
+            containers.append(
+                (
+                    ContainerType.readonly_inputs,
+                    helper.containers[ContainerType.readonly_inputs],
+                )
+            )
+
+        helper.create_containers()
+        if crashes:
+            for file in crashes:
+                self.onefuzz.containers.files.upload_file(
+                    helper.containers[ContainerType.readonly_inputs], file
+                )
+
+        helper.setup_notifications(notification_config)
+
         helper.upload_setup(setup_dir, target_exe)
         target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
 
         self.logger.info("creating regression task")
-        regression_task = self.onefuzz.tasks.create(
+        task = self.onefuzz.tasks.create(
             helper.job.job_id,
             task_type,
             target_exe_blob_name,
@@ -244,27 +267,22 @@ class Regression(Command):
             check_fuzzer_help=check_fuzzer_help,
             report_list=reports,
         )
-        helper.wait_for_stopping = fail_on_repro
+        helper.wait_for_stopped = check_regressions
 
         self.logger.info("done creating tasks")
         helper.wait()
 
-        if fail_on_repro:
-            if helper.job.error:
-                raise TemplateError(
-                    "unable to run the the regression", GIT_BISSECT_SKIP_CODE
-                )
+        if check_regressions:
+            task = self.onefuzz.tasks.get(task.task_id)
+            if task.error:
+                raise Exception("task failed: %s", task.error)
 
-            repro_count = len(
-                self.onefuzz.containers.files.list(
-                    helper.containers[ContainerType.regression_reports],
-                    prefix=str(regression_task.task_id),
-                ).files
-            )
-            if repro_count > 0:
-                raise TemplateError("Failure detected", -1)
-            else:
-                self.logger.info("No Failure detected")
+            container = helper.containers[ContainerType.regression_reports]
+            for filename in self.onefuzz.containers.files.list(container).files:
+                self.logger.info("checking file: %s", filename)
+                if self._check_regression(container, File(filename)):
+                    raise TemplateError("Failure detected", -1)
+            self.logger.info("no regressions")
 
         if (
             delete_input_container

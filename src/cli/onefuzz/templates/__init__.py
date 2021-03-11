@@ -94,7 +94,7 @@ class JobHelper:
                 )
 
         self.wait_for_running: bool = False
-        self.wait_for_stopping: bool = False
+        self.wait_for_stopped: bool = False
         self.containers: Dict[ContainerType, Container] = {}
         self.tags: Dict[str, str] = {"project": project, "name": name, "build": build}
         if job is None:
@@ -304,7 +304,7 @@ class JobHelper:
         JobMonitor(self.onefuzz, self.job).wait(
             wait_for_running=self.wait_for_running,
             wait_for_files=self.to_monitor,
-            wait_for_stopping=self.wait_for_stopping,
+            wait_for_stopped=self.wait_for_stopped,
         )
 
     def target_exe_blob_name(
