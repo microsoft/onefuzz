@@ -35,7 +35,6 @@ from msrest.serialization import Model
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, ValidationError
 
-
 LOGGER = logging.getLogger("cli")
 
 JMES_HELP = (
