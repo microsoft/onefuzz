@@ -2,6 +2,8 @@
 
 set -e
 
+rm -rf test
+
 git init test
 (cd test; git config user.name "Example"; git config user.email example@contoso.com)
 (cp src/Makefile test; cd test; git add Makefile)
