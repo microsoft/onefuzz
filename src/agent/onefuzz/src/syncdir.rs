@@ -5,6 +5,7 @@ use crate::{
     az_copy,
     blob::{BlobClient, BlobContainerUrl},
     fs::{exists, sync},
+    http::ResponseExt,
     jitter::delay_with_jitter,
     monitor::DirectoryMonitor,
     uploader::BlobUploader,
@@ -121,15 +122,17 @@ impl SyncedDir {
                 }
             }
             None => {
+                let url = self.url.blob(name).url();
                 let blob = BlobClient::new();
                 let result = blob
-                    .put(self.url.url().clone())
+                    .put(url.clone())
                     .json(data)
                     // Conditional PUT, only if-not-exists.
                     // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
                     .header("If-None-Match", "*")
                     .send_retry_default()
                     .await?;
+
                 Ok(result.status() == StatusCode::CREATED)
             }
         }
