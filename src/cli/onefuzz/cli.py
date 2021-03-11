@@ -35,7 +35,6 @@ from msrest.serialization import Model
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, ValidationError
 
-from .templates.template_error import TemplateError
 
 LOGGER = logging.getLogger("cli")
 
@@ -554,10 +553,6 @@ def execute_api(api: Any, api_types: List[Any], version: str) -> int:
 
     try:
         result = call_func(args.func, args)
-    except TemplateError as err:
-        LOGGER.error(err.message)
-        log_exception(args, err)
-        return err.status_code
     except Exception as err:
         log_exception(args, err)
         return 1
