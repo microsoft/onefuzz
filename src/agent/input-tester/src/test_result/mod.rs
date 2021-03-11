@@ -10,7 +10,7 @@ pub mod verifier_stop;
 
 use std::{fmt, path::Path};
 
-use debugger::stack;
+use debugger::stack::{DebugStack, DebugStackFrame};
 use log::error;
 use win_util::process;
 use winapi::um::{
@@ -169,14 +169,15 @@ pub fn new_exception_description(
 pub fn new_exception(
     process_handle: HANDLE,
     exception: &EXCEPTION_DEBUG_INFO,
-    stack: stack::DebugStack,
+    stack: DebugStack,
 ) -> Exception {
+    let stack_hash = stack.stable_hash();
     Exception {
         exception_code: exception.ExceptionRecord.ExceptionCode,
         description: new_exception_description(process_handle, &exception.ExceptionRecord),
-        stack_hash: stack.stable_hash(),
+        stack_hash,
         first_chance: exception.dwFirstChance != 0,
-        stack_frames: stack.frames().iter().map(|f| f.into()).collect(),
+        stack_frames: stack.frames,
     }
 }
 
@@ -193,94 +194,6 @@ pub fn new_test_result(
         test_stdout: debugger_result.stdout,
         test_stderr: debugger_result.stderr,
         exit_status: debugger_result.exit_status,
-    }
-}
-
-/// The file and line number for frame in the calls stack.
-#[derive(Clone)]
-pub struct FileInfo {
-    pub file: String,
-    pub line: u32,
-}
-
-/// The location within a function for a call stack entry.
-#[derive(Clone)]
-pub enum DebugFunctionLocation {
-    /// If symbol information is available, we use the file/line numbers for stability across builds.
-    FileInfo(FileInfo),
-    /// If no symbol information is available, the offset within the function is used.
-    Displacement(u64),
-}
-
-impl fmt::Display for DebugFunctionLocation {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            DebugFunctionLocation::FileInfo(file_info) => {
-                write!(formatter, "{}:{}", file_info.file, file_info.line)
-            }
-            DebugFunctionLocation::Displacement(disp) => write!(formatter, "0x{:x}", disp),
-        }
-    }
-}
-
-impl<'a> From<&'a stack::DebugFunctionLocation> for DebugFunctionLocation {
-    fn from(location: &'a stack::DebugFunctionLocation) -> Self {
-        match location {
-            stack::DebugFunctionLocation::Line { file, line } => {
-                DebugFunctionLocation::FileInfo(FileInfo {
-                    file: file.to_string(),
-                    line: *line,
-                })
-            }
-
-            stack::DebugFunctionLocation::Offset { disp } => {
-                DebugFunctionLocation::Displacement(*disp)
-            }
-        }
-    }
-}
-
-/// A stack frame for reporting where an exception or other bug occurs.
-#[derive(Clone)]
-pub enum DebugStackFrame {
-    Frame {
-        /// The name of the function (if available via symbols or exports) or possibly something else like a
-        /// (possibly synthetic) module name.
-        function: String,
-
-        /// Location details such as file/line (if symbols are available) or offset
-        location: DebugFunctionLocation,
-    },
-
-    CorruptFrame,
-}
-
-impl fmt::Display for DebugStackFrame {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            DebugStackFrame::Frame { function, location } => {
-                formatter.write_str(function)?;
-                match location {
-                    DebugFunctionLocation::FileInfo(file_info) => {
-                        write!(formatter, " {}:{}", file_info.file, file_info.line)
-                    }
-                    DebugFunctionLocation::Displacement(disp) => write!(formatter, "+0x{:x}", disp),
-                }
-            }
-            DebugStackFrame::CorruptFrame => formatter.write_str("<corrupt frame(s)>"),
-        }
-    }
-}
-
-impl<'a> From<&'a stack::DebugStackFrame> for DebugStackFrame {
-    fn from(frame: &'a stack::DebugStackFrame) -> Self {
-        match frame {
-            stack::DebugStackFrame::Frame { function, location } => DebugStackFrame::Frame {
-                function: function.to_string(),
-                location: location.into(),
-            },
-            stack::DebugStackFrame::CorruptFrame => DebugStackFrame::CorruptFrame,
-        }
     }
 }
 

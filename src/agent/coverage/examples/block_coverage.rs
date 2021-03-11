@@ -42,15 +42,15 @@ fn main() -> Result<()> {
     use std::process::Command;
 
     use coverage::block::linux::Recorder;
-    use coverage::code::{CmdFilter, CmdFilterSpec};
+    use coverage::code::{CmdFilter, CmdFilterDef};
 
     env_logger::init();
 
     let opt = Opt::from_args();
     let filter = if let Some(path) = &opt.filter {
         let data = std::fs::read(path)?;
-        let spec: CmdFilterSpec = serde_json::from_slice(&data)?;
-        CmdFilter::new(spec)?
+        let def: CmdFilterDef = serde_json::from_slice(&data)?;
+        CmdFilter::new(def)?
     } else {
         CmdFilter::default()
     };
@@ -58,7 +58,7 @@ fn main() -> Result<()> {
     let mut cmd = Command::new(&opt.cmd[0]);
     cmd.args(&opt.cmd[1..]);
 
-    let mut recorder = Recorder::new(filter.modules, filter.symbols);
+    let mut recorder = Recorder::new(filter);
     recorder.record(cmd)?;
 
     for (module_path, cov) in recorder.coverage.iter() {
