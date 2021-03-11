@@ -274,7 +274,7 @@ class Regression(Command):
             for filename in self.onefuzz.containers.files.list(container).files:
                 self.logger.info("checking file: %s", filename)
                 if self._check_regression(container, File(filename)):
-                    raise Exception("regression identified: %s", filename)
+                    raise Exception(f"regression identified: {filename}")
             self.logger.info("no regressions")
 
         if (
