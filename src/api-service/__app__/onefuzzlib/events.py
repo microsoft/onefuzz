@@ -10,7 +10,6 @@ from typing import List, Optional, Set
 
 from onefuzztypes.events import Event, EventMessage, EventType, get_event_type, BaseEvent
 from onefuzztypes.models import UserInfo
-from pydantic import BaseModel
 
 from .azure.creds import get_instance_id, get_instance_name
 from .webhooks import Webhook
