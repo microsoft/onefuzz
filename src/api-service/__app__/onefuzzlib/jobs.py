@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
 from onefuzztypes.enums import ErrorCode, JobState, TaskState
-from onefuzztypes.events import EventJobCreated, EventJobStopped
+from onefuzztypes.events import EventJobCreated, EventJobStopped, JobTaskStopped
 from onefuzztypes.models import Error
 from onefuzztypes.models import Job as BASE_JOB
 
@@ -85,23 +85,43 @@ class Job(BASE_JOB, ORMMixin):
         self.state = JobState.enabled
         self.save()
 
-    def stopping(self) -> None:
-        self.state = JobState.stopping
-        logging.info(JOB_LOG_PREFIX + "stopping: %s", self.job_id)
+    def stop_if_all_done(self) -> None:
         not_stopped = [
             task
             for task in Task.search(query={"job_id": [self.job_id]})
             if task.state != TaskState.stopped
         ]
+        if not_stopped:
+            return
+
+        logging.info(
+            JOB_LOG_PREFIX + "stopping job as all tasks are stopped: %s", self.job_id
+        )
+        self.stopping()
+
+    def stopping(self) -> None:
+        self.state = JobState.stopping
+        logging.info(JOB_LOG_PREFIX + "stopping: %s", self.job_id)
+        tasks = Task.search(query={"job_id": [self.job_id]})
+        not_stopped = [task for task in tasks if task.state != TaskState.stopped]
 
         if not_stopped:
             for task in not_stopped:
                 task.mark_stopping()
         else:
             self.state = JobState.stopped
+            task_info = [
+                JobTaskStopped(
+                    task_id=x.task_id, error=x.error, task_type=x.config.task.type
+                )
+                for x in tasks
+            ]
             send_event(
                 EventJobStopped(
-                    job_id=self.job_id, config=self.config, user_info=self.user_info
+                    job_id=self.job_id,
+                    config=self.config,
+                    user_info=self.user_info,
+                    task_info=task_info,
                 )
             )
         self.save()
