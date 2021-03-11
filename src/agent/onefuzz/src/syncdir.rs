@@ -5,7 +5,6 @@ use crate::{
     az_copy,
     blob::{BlobClient, BlobContainerUrl},
     fs::{exists, sync},
-    http::ResponseExt,
     jitter::delay_with_jitter,
     monitor::DirectoryMonitor,
     uploader::BlobUploader,
@@ -131,7 +130,8 @@ impl SyncedDir {
                     // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
                     .header("If-None-Match", "*")
                     .send_retry_default()
-                    .await?;
+                    .await
+                    .context("Uploading blob")?;
 
                 Ok(result.status() == StatusCode::CREATED)
             }
