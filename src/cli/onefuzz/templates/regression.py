@@ -30,11 +30,9 @@ class Regression(Command):
         report = RegressionReport.parse_obj(as_obj)
 
         if report.crash_test_result.crash_report is not None:
-            self.logger.error("regression: %s %s", container, file)
             return True
 
         if report.crash_test_result.no_repro is not None:
-            self.logger.info("no repro: %s %s", container, file)
             return False
 
         raise Exception("invalid crash report")
@@ -281,7 +279,7 @@ class Regression(Command):
             for filename in self.onefuzz.containers.files.list(container).files:
                 self.logger.info("checking file: %s", filename)
                 if self._check_regression(container, File(filename)):
-                    raise TemplateError("Failure detected", -1)
+                    raise Exception("regression identified: %s", filename)
             self.logger.info("no regressions")
 
         if (
