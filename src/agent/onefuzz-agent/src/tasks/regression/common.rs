@@ -73,13 +73,24 @@ pub async fn handle_inputs(
     let mut input_files = tokio::fs::read_dir(&readonly_inputs.path).await?;
     while let Some(file) = input_files.next_entry().await? {
         heartbeat_client.alive();
-        let input_url = readonly_inputs.url.clone().and_then(|container_url| {
-            let os_file_name = file.file_name();
-            let file_name = os_file_name.to_str()?;
-            container_url.url().join(file_name).ok()
-        });
 
-        let crash_test_result = handler.get_crash_result(file.path(), input_url).await?;
+        let file_path = file.path();
+        if !file_path.is_file() {
+            continue;
+        }
+
+        let file_name = file_path
+            .file_name()
+            .ok_or_else(|| format_err!("missing filename"))?
+            .to_string_lossy()
+            .to_string();
+
+        let input_url = readonly_inputs
+            .url
+            .as_ref()
+            .and_then(|container_url| container_url.url().join(&file_name).ok());
+
+        let crash_test_result = handler.get_crash_result(file_path, input_url).await?;
         RegressionReport {
             crash_test_result,
             original_crash_test_result: None,
