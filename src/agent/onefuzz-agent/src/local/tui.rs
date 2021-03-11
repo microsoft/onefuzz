@@ -53,7 +53,7 @@ trait TakeAvailable<T> {
 impl<T: Send + Sync> TakeAvailable<T> for mpsc::UnboundedReceiver<T> {
     fn take_available(&mut self, size: usize) -> Result<Vec<T>> {
         let mut result = vec![];
-        while let Ok(v ) = self.try_recv() {
+        while let Ok(v) = self.try_recv() {
             result.push(v);
             if result.len() >= size {
                 break;
