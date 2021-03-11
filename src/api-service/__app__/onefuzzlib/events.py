@@ -44,7 +44,7 @@ def filter_event(event: Event, event_type: EventType) -> Event:
     return clone_event
 
 
-def filter_event_recurs(clone_event: BaseModel, visited: Set[int] = set()) -> Event:
+def filter_event_recurs(clone_event: BaseModel, visited: Set[int] = set()) -> BaseModel:
 
     if id(clone_event) in visited:
         return clone_event
