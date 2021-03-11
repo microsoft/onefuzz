@@ -7,7 +7,7 @@ import json
 from typing import Dict, List, Optional
 
 from onefuzztypes.enums import ContainerType, TaskDebugFlag, TaskType
-from onefuzztypes.models import Job, NotificationConfig, RegressionReport
+from onefuzztypes.models import NotificationConfig, RegressionReport
 from onefuzztypes.primitives import Container, Directory, File, PoolName
 
 from onefuzz.api import Command
