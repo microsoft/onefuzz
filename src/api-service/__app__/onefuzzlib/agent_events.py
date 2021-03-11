@@ -7,23 +7,12 @@ import logging
 from typing import Optional, cast
 from uuid import UUID
 
-from onefuzztypes.enums import (
-    ErrorCode,
-    NodeState,
-    NodeTaskState,
-    TaskDebugFlag,
-    TaskState,
-)
-from onefuzztypes.models import (
-    Error,
-    NodeDoneEventData,
-    NodeSettingUpEventData,
-    NodeStateUpdate,
-    Result,
-    WorkerDoneEvent,
-    WorkerEvent,
-    WorkerRunningEvent,
-)
+from onefuzztypes.enums import (ErrorCode, NodeState, NodeTaskState,
+                                TaskDebugFlag, TaskState)
+from onefuzztypes.models import (Error, NodeDoneEventData,
+                                 NodeSettingUpEventData, NodeStateUpdate,
+                                 Result, WorkerDoneEvent, WorkerEvent,
+                                 WorkerRunningEvent)
 
 from .task_event import TaskEvent
 from .tasks.main import Task

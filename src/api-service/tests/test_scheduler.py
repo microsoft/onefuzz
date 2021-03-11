@@ -8,7 +8,8 @@ from typing import Dict, Generator, List, TypeVar
 from uuid import UUID, uuid4
 
 from onefuzztypes.enums import OS, ContainerType, TaskType
-from onefuzztypes.models import TaskConfig, TaskContainers, TaskDetails, TaskPool
+from onefuzztypes.models import (TaskConfig, TaskContainers, TaskDetails,
+                                 TaskPool)
 from onefuzztypes.primitives import Container, PoolName
 
 from __app__.onefuzzlib.tasks.main import Task

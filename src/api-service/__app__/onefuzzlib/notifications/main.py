@@ -11,14 +11,8 @@ from memoization import cached
 from onefuzztypes import models
 from onefuzztypes.enums import ErrorCode, TaskState
 from onefuzztypes.events import EventCrashReported, EventFileAdded
-from onefuzztypes.models import (
-    ADOTemplate,
-    Error,
-    GithubIssueTemplate,
-    NotificationTemplate,
-    Result,
-    TeamsTemplate,
-)
+from onefuzztypes.models import (ADOTemplate, Error, GithubIssueTemplate,
+                                 NotificationTemplate, Result, TeamsTemplate)
 from onefuzztypes.primitives import Container
 
 from ..azure.containers import container_exists, get_file_sas_url

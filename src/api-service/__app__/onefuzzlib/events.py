@@ -6,39 +6,17 @@
 import json
 import logging
 from queue import Empty, Queue
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
-from uuid import uuid4, UUID
-from pydantic import BaseModel, Field
+from typing import (Any, Callable, Dict, List, Mapping, Optional, Set, Tuple,
+                    Type, TypeVar, Union)
+from uuid import UUID, uuid4
 
 from onefuzztypes.enums import OS, Architecture, ContainerType, TaskType
-from onefuzztypes.models import (
-    TaskConfig,
-    TaskContainers,
-    TaskDetails,
-    TaskPool,
-    UserInfo,
-    SecretData,
-)
-from onefuzztypes.events import (
-    Event,
-    EventMessage,
-    EventType,
-    get_event_type,
-    EventTaskCreated,
-)
+from onefuzztypes.events import (Event, EventMessage, EventTaskCreated,
+                                 EventType, get_event_type)
+from onefuzztypes.models import (SecretData, TaskConfig, TaskContainers,
+                                 TaskDetails, TaskPool, UserInfo)
 from onefuzztypes.primitives import Container, PoolName
+from pydantic import BaseModel, Field
 
 from .azure.creds import get_instance_id, get_instance_name
 from .webhooks import Webhook

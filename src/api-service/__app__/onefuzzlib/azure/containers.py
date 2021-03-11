@@ -11,25 +11,16 @@ from typing import Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
 from azure.core.exceptions import ResourceExistsError
-from azure.storage.blob import (
-    BlobClient,
-    BlobSasPermissions,
-    BlobServiceClient,
-    ContainerClient,
-    ContainerSasPermissions,
-    generate_blob_sas,
-    generate_container_sas,
-)
+from azure.storage.blob import (BlobClient, BlobSasPermissions,
+                                BlobServiceClient, ContainerClient,
+                                ContainerSasPermissions, generate_blob_sas,
+                                generate_container_sas)
 from memoization import cached
 from onefuzztypes.primitives import Container
 
-from .storage import (
-    StorageType,
-    choose_account,
-    get_accounts,
-    get_storage_account_name_key,
-    get_storage_account_name_key_by_name,
-)
+from .storage import (StorageType, choose_account, get_accounts,
+                      get_storage_account_name_key,
+                      get_storage_account_name_key_by_name)
 
 
 def get_url(account_name: str) -> str:

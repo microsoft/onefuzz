@@ -10,11 +10,9 @@ from uuid import UUID
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.mgmt.compute.models import (
-    ResourceSku,
-    ResourceSkuRestrictionsType,
+    ResourceSku, ResourceSkuRestrictionsType,
     VirtualMachineScaleSetVMInstanceIDs,
-    VirtualMachineScaleSetVMInstanceRequiredIDs,
-)
+    VirtualMachineScaleSetVMInstanceRequiredIDs)
 from memoization import cached
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
