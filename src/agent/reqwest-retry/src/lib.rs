@@ -197,7 +197,7 @@ mod test {
             .get(invalid_url)
             .send_retry(
                 Duration::from_secs(1),
-                Duration::from_secs(120),
+                Duration::from_secs(300),
                 2i32,
                 to_backoff_response,
             )
