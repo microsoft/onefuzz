@@ -103,6 +103,18 @@ macro_rules! from_json {
     }};
 }
 
+#[cfg(target_os = "windows")]
+const EXE: &str = r"c:\bin\fuzz.exe";
+
+#[cfg(target_os = "linux")]
+const EXE: &str = "/bin/fuzz.exe";
+
+#[cfg(target_os = "windows")]
+const LIB: &str = r"c:\lib\libpthread.dll";
+
+#[cfg(target_os = "linux")]
+const LIB: &str = "/lib/libpthread.so.0";
+
 fn module(s: &str) -> ModulePath {
     ModulePath::new(s.into()).unwrap()
 }
@@ -112,7 +124,8 @@ fn test_cmd_filter_empty_def() {
     let filter = from_json!([]);
 
     // All modules and symbols are included by default.
-    let exe = module("/bin/fuzz.exe");
+
+    let exe = module(EXE);
     assert!(filter.includes_module(&exe));
     assert!(filter.includes_symbol(&exe, "main"));
     assert!(filter.includes_symbol(&exe, "_start"));
@@ -120,7 +133,7 @@ fn test_cmd_filter_empty_def() {
     assert!(filter.includes_symbol(&exe, "__asan_memcpy"));
     assert!(filter.includes_symbol(&exe, "__asan_load8"));
 
-    let lib = module("/lib/libpthread.so.0");
+    let lib = module(LIB);
     assert!(filter.includes_module(&lib));
     assert!(filter.includes_symbol(&lib, "pthread_join"));
     assert!(filter.includes_symbol(&lib, "pthread_yield"));
@@ -136,7 +149,7 @@ fn test_cmd_filter_module_include_list() {
     ]);
 
     // The filtered module and its matching symbols are included.
-    let exe = module("/bin/fuzz.exe");
+    let exe = module(EXE);
     assert!(filter.includes_module(&exe));
     assert!(!filter.includes_symbol(&exe, "_start"));
     assert!(filter.includes_symbol(&exe, "main"));
@@ -145,7 +158,7 @@ fn test_cmd_filter_module_include_list() {
     assert!(!filter.includes_symbol(&exe, "__asan_load8"));
 
     // Other modules and their symbols are included by default.
-    let lib = module("/lib/libpthread.so.0");
+    let lib = module(LIB);
     assert!(filter.includes_module(&lib));
     assert!(filter.includes_symbol(&lib, "pthread_join"));
     assert!(filter.includes_symbol(&lib, "pthread_yield"));
@@ -163,7 +176,7 @@ fn test_cmd_filter_exclude_list() {
     ]);
 
     // The filtered module is included, and its matching symbols are excluded.
-    let exe = module("/bin/fuzz.exe");
+    let exe = module(EXE);
     assert!(filter.includes_module(&exe));
     assert!(!filter.includes_symbol(&exe, "_start"));
     assert!(filter.includes_symbol(&exe, "main"));
@@ -173,7 +186,7 @@ fn test_cmd_filter_exclude_list() {
     assert!(!filter.includes_symbol(&exe, "_start"));
 
     // Other modules and their symbols are included by default.
-    let lib = module("/lib/libpthread.so.0");
+    let lib = module(LIB);
     assert!(filter.includes_module(&lib));
     assert!(filter.includes_symbol(&lib, "pthread_join"));
     assert!(filter.includes_symbol(&lib, "pthread_yield"));
@@ -197,7 +210,7 @@ fn test_cmd_filter_include_list_and_exclude_default() {
     ]);
 
     // The filtered module is included, and only matching rules are included.
-    let exe = module("/bin/fuzz.exe");
+    let exe = module(EXE);
     assert!(filter.includes_module(&exe));
     assert!(!filter.includes_symbol(&exe, "_start"));
     assert!(filter.includes_symbol(&exe, "main"));
@@ -206,7 +219,7 @@ fn test_cmd_filter_include_list_and_exclude_default() {
     assert!(!filter.includes_symbol(&exe, "__asan_load8"));
 
     // Other modules and their symbols are excluded by default.
-    let lib = module("/lib/libpthread.so.0");
+    let lib = module(LIB);
     assert!(!filter.includes_module(&lib));
     assert!(!filter.includes_symbol(&lib, "pthread_yield"));
     assert!(!filter.includes_symbol(&lib, "pthread_join"));
