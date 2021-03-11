@@ -35,11 +35,15 @@ def get_events() -> Optional[str]:
         return None
 
 
+def log_event(event: Event, event_type: EventType) -> None:
+    scrubbed_event = filter_event(event, event_type)
+    logging.info("sending event: %s - %s", event_type, scrubbed_event)
+
+
 def filter_event(event: Event, event_type: EventType) -> Event:
 
     clone_event = event.copy(deep=True)
     filter_event_recurs(clone_event)
-    logging.info("sending event: %s - %s", event_type, clone_event)
 
     return clone_event
 
