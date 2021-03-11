@@ -126,6 +126,7 @@ jobs:
         set -ex
         cd contrib/webhook-teams-service
         python -m pip install --upgrade pip isort black mypy flake8
+        pip install -r requirements.txt
         mypy webhook
         black webhook --check
         isort --profile black webhook
