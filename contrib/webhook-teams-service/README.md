@@ -1,8 +1,8 @@
 # Webhooks Endpoint Example
 
-This example endpoint takes any incoming [OneFuzz webhook](https://github.com/microsoft/onefuzz/blob/main/docs/webhooks.md) and submits it to Microsoft Teams.  
+This example endpoint takes any incoming [OneFuzz webhook](../../docs/webhooks.md) and submits it to Microsoft Teams.  
 
-Check out [Webhook Events Details](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md) for the schema of all supported events.
+Check out [Webhook Events Details](../../docs/webhook_events.md) for the schema of all supported events.
 
 ## Creating an Azure Function
 
