@@ -173,7 +173,7 @@ impl OwnedDir {
 }
 
 #[cfg(target_os = "linux")]
-pub async fn _sync(
+pub async fn sync_impl(
     src: impl AsRef<OsStr>,
     dst: impl AsRef<OsStr>,
     delete_dst: bool,
@@ -213,7 +213,7 @@ pub async fn _sync(
 }
 
 #[cfg(target_os = "windows")]
-pub async fn _sync(
+pub async fn sync_impl(
     src: impl AsRef<OsStr>,
     dst: impl AsRef<OsStr>,
     delete_dst: bool,
@@ -263,11 +263,11 @@ pub async fn _sync(
 }
 
 pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, delete_dst: bool) -> Result<()> {
-    _sync(src, dst, delete_dst, true).await
+    sync_impl(src, dst, delete_dst, true).await
 }
 
 pub async fn copy(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, recur: bool) -> Result<()> {
-    _sync(src, dst, false, recur).await
+    sync_impl(src, dst, false, recur).await
 }
 
 #[cfg(test)]
