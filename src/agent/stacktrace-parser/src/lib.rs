@@ -114,7 +114,7 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
 impl CrashLog {
     pub fn parse(text: String) -> Result<Self> {
         let (summary, sanitizer, fault_type) = parse_summary(&text)?;
-        let full_stack_details = parse_call_stack(&text).unwrap_or_else(|_| Default::default());
+        let full_stack_details = parse_call_stack(&text).unwrap_or_default();
         let (scariness_score, scariness_description) = parse_scariness(&text);
 
         let call_stack = full_stack_details.iter().map(|x| x.line.clone()).collect();
