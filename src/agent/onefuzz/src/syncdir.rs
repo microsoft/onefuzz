@@ -153,10 +153,18 @@ impl SyncedDir {
                     .ok_or_else(|| anyhow!("invalid file path"))?;
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
-                    warn!(
-                        "Couldn't upload file.  source:{:?} destination:{:?} err:{}",
+                    let error_message = format!(
+                        "Couldn't upload file.  path:{:?} dir:{:?} err:{}",
                         item, destination, err
                     );
+
+                    if !item.exists() {
+                        // guarding against cases where a temporary file was detected
+                        // but was deleted before the copy
+                        warn!("{}", error_message);
+                        continue;
+                    }
+                    bail!("{}", error_message);
                 }
             }
         } else {
@@ -166,12 +174,20 @@ impl SyncedDir {
                 event!(event.clone(); EventData::Path = item.display().to_string());
 
                 if let Err(err) = uploader.upload(item.clone()).await {
-                    warn!(
+                    let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{}",
                         item.display(),
                         self.path.display(),
                         err
                     );
+
+                    if !item.exists() {
+                        // guarding against cases where a temporary file was detected
+                        // but was deleted before the upload
+                        warn!("{}", error_message);
+                        continue;
+                    }
+                    bail!("{}", error_message);
                 }
             }
         }
