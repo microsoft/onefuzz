@@ -1,19 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{format_err, Result};
-use goblin::elf;
-use iced_x86::{Decoder, DecoderOptions, Instruction};
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
-use serde::{Deserialize, Serialize};
 
-use crate::block::ModuleCov;
+use crate::block::CommandBlockCov;
+use crate::cache::ModuleCache;
+use crate::code::{CmdFilter, ModulePath};
+use crate::demangle::Demangler;
+use crate::region::Region;
 
 pub fn record(cmd: Command) -> Result<CommandBlockCov> {
     let mut recorder = Recorder::default();
@@ -24,11 +24,21 @@ pub fn record(cmd: Command) -> Result<CommandBlockCov> {
 #[derive(Default, Debug)]
 pub struct Recorder {
     breakpoints: Breakpoints,
-    coverage: CommandBlockCov,
+    pub coverage: CommandBlockCov,
+    demangler: Demangler,
     images: Option<Images>,
+    pub modules: ModuleCache,
+    filter: CmdFilter,
 }
 
 impl Recorder {
+    pub fn new(filter: CmdFilter) -> Self {
+        Self {
+            filter,
+            ..Self::default()
+        }
+    }
+
     pub fn record(&mut self, cmd: Command) -> Result<()> {
         use pete::ptracer::Options;
 
@@ -87,7 +97,9 @@ impl Recorder {
         let events = images.update()?;
 
         for (_base, image) in &events.loaded {
-            self.on_module_load(tracee, image)?;
+            if self.filter.includes_module(image.path()) {
+                self.on_module_load(tracee, image)?;
+            }
         }
 
         Ok(())
@@ -96,10 +108,10 @@ impl Recorder {
     fn on_breakpoint(&mut self, tracee: &mut Tracee) -> Result<()> {
         let mut regs = tracee.registers()?;
 
-        log::trace!("hit breakpoint: {:x} (~{})", regs.rip - 1, tracee.pid);
-
         // Adjust for synthetic `int3`.
         let pc = regs.rip - 1;
+
+        log::trace!("hit breakpoint: pc = {:x}, pid = {}", pc, tracee.pid);
 
         if self.breakpoints.clear(tracee, pc)? {
             let images = self
@@ -110,7 +122,8 @@ impl Recorder {
                 .find_va_image(pc)
                 .ok_or_else(|| format_err!("unable to find image for va = {:x}", pc))?;
 
-            self.coverage.increment(&image, pc)?;
+            let offset = image.va_to_offset(pc);
+            self.coverage.increment(image.path(), offset)?;
 
             // Execute clobbered instruction on restart.
             regs.rip = pc;
@@ -130,60 +143,48 @@ impl Recorder {
     }
 
     fn on_module_load(&mut self, tracee: &mut Tracee, image: &ModuleImage) -> Result<()> {
-        log::info!("module load: {}", image.path().display());
+        log::info!("module load: {}", image.path());
 
-        let blocks = find_module_blocks(image.path())?;
+        // Fetch disassembled module info via cache.
+        let info = self
+            .modules
+            .fetch(image.path())?
+            .ok_or_else(|| format_err!("unable to fetch info for module: {}", image.path()))?;
 
-        log::debug!("found {} blocks", blocks.len());
+        // Collect blocks allowed by the symbol filter.
+        let mut allowed_blocks = vec![];
 
-        if blocks.is_empty() {
-            // This almost certainly means the binary was stripped of symbols.
-            log::warn!("no blocks for module, not setting breakpoints");
+        for symbol in info.module.symbols.iter() {
+            // Try to demangle the symbol name for filtering. If no demangling
+            // is found, fall back to the raw name.
+            let symbol_name = self
+                .demangler
+                .demangle(&symbol.name)
+                .unwrap_or_else(|| symbol.name.clone());
+
+            // Check the maybe-demangled against the coverage filter.
+            if self.filter.includes_symbol(&info.module.path, symbol_name) {
+                for offset in info.blocks.range(symbol.range()) {
+                    allowed_blocks.push(*offset);
+                }
+            }
+        }
+
+        // Initialize module coverage info.
+        let new = self
+            .coverage
+            .insert(image.path(), allowed_blocks.iter().copied());
+
+        // If module coverage is already initialized, we're done.
+        if !new {
             return Ok(());
         }
 
-        let new = self.coverage.add_module(image, &blocks)?;
-
-        if new {
-            for b in blocks {
-                let va = image.offset_to_va(b.offset);
-                log::trace!("set breakpoint: {:x} (~{})", va, tracee.pid);
-                self.breakpoints.set(tracee, va)?;
-            }
-        }
-
-        Ok(())
-    }
-}
-
-/// Block coverage for a command invocation.
-///
-/// Organized by module.
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct CommandBlockCov {
-    pub modules: BTreeMap<PathBuf, ModuleCov>,
-}
-
-impl CommandBlockCov {
-    pub fn add_module(&mut self, image: &ModuleImage, blocks: &[Block]) -> Result<bool> {
-        if self.modules.contains_key(image.path()) {
-            return Ok(false);
-        }
-
-        let blocks = blocks.iter().map(|b| b.offset);
-        let cov = ModuleCov::new(image.path(), blocks);
-
-        self.modules.insert(image.path().to_owned(), cov);
-
-        Ok(true)
-    }
-
-    pub fn increment(&mut self, image: &ModuleImage, va: u64) -> Result<()> {
-        if let Some(cov) = self.modules.get_mut(image.path()) {
-            let offset = image.va_to_offset(va);
-            if let Some(block) = cov.blocks.get_mut(&offset) {
-                block.count += 1;
-            }
+        // Set breakpoints by module block entry points.
+        for offset in &allowed_blocks {
+            let va = image.offset_to_va(*offset);
+            self.breakpoints.set(tracee, va)?;
+            log::trace!("set breakpoint, va = {:x}, pid = {}", va, tracee.pid);
         }
 
         Ok(())
@@ -245,13 +246,17 @@ impl Images {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ModuleImage {
     map: MemoryMap,
+    path: ModulePath,
 }
 
 impl ModuleImage {
     pub fn new(map: MemoryMap) -> Result<Self> {
-        if let MMapPath::Path(..) = &map.pathname {
+        if let MMapPath::Path(path) = &map.pathname {
             if map.perms.contains('x') {
-                Ok(ModuleImage { map })
+                // Copy the path into a wrapper type that encodes extra guarantees.
+                let path = ModulePath::new(path.clone())?;
+
+                Ok(ModuleImage { map, path })
             } else {
                 anyhow::bail!("memory mapping is not executable");
             }
@@ -261,17 +266,11 @@ impl ModuleImage {
     }
 
     pub fn name(&self) -> &OsStr {
-        // File name existence guaranteed by how we acquired the `Path`.
-        self.path().file_name().unwrap()
+        self.path.name()
     }
 
-    pub fn path(&self) -> &Path {
-        if let MMapPath::Path(path) = &self.map.pathname {
-            return &path;
-        }
-
-        // Enforced by ctor.
-        unreachable!()
+    pub fn path(&self) -> &ModulePath {
+        &self.path
     }
 
     pub fn map(&self) -> &MemoryMap {
@@ -364,154 +363,6 @@ impl Breakpoints {
         };
 
         Ok(cleared)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Block {
-    pub offset: u64,
-}
-
-pub fn find_module_blocks(module: &Path) -> Result<Vec<Block>> {
-    use elf::program_header::PT_LOAD;
-
-    let data = std::fs::read(module)?;
-    let object = elf::Elf::parse(&data)?;
-
-    // Calculate the module base address as the lowest preferred VA of any loadable segment.
-    //
-    // https://refspecs.linuxbase.org/elf/gabi4+/ch5.pheader.html#base_address
-    let base_va = object
-        .program_headers
-        .iter()
-        .filter(|h| h.p_type == PT_LOAD)
-        .map(|h| h.p_vaddr)
-        .min()
-        .ok_or_else(|| format_err!("no loadable segments for ELF object ({})", module.display()))?;
-
-    let mut leaders = BTreeSet::new();
-
-    for sym in object.syms.iter() {
-        if sym.st_size == 0 {
-            continue;
-        }
-
-        if sym.is_function() {
-            let section = object
-                .section_headers
-                .get(sym.st_shndx)
-                .cloned()
-                .ok_or_else(|| format_err!("invalid section table index for symbol"))?;
-            let sym_leaders = find_symbol_block_leaders(&data, section, sym)?;
-            leaders.extend(sym_leaders);
-        }
-    }
-
-    // Translate leader VAs to blocks, with block entry points represented as offsets
-    // from the module image base.
-    let mut blocks = vec![];
-
-    for va in leaders {
-        // Calculate image offsets (RVAs).
-        let offset = va - base_va;
-        blocks.push(Block { offset });
-    }
-
-    Ok(blocks)
-}
-
-/// From the raw file data and containing section header, find the virtual addrs for the
-/// block leaders of the function `sym`.
-///
-/// Assumes `sym` is a function symbol (has type `STT_FUNC`) with nonzero size.
-pub fn find_symbol_block_leaders(
-    data: &[u8],
-    section: elf::SectionHeader,
-    sym: elf::Sym,
-) -> Result<BTreeSet<u64>> {
-    // For executables and shared objects, `st_value` contains the VA of the symbol.
-    //
-    // https://refspecs.linuxbase.org/elf/gabi4+/ch4.symtab.html#symbol_value
-    let sym_va = sym.st_value;
-
-    // If mapped into a segment, `sh_addr` contains the VA of the section image, consistent with
-    // the `p_vaddr` of the segment.
-    //
-    // https://refspecs.linuxbase.org/elf/gabi4+/ch4.sheader.html#section_header
-    let section_va = section.sh_addr;
-
-    // The offset of the symbol, relative to the section (both in-file and when mapped).
-    let sym_section_offset = sym_va - section_va;
-
-    // We have the file offset for the section, and the offset of the symbol
-    // relative to the section. From these, calculate the file offset for the
-    // symbol, which we can use to index into `data`.
-    let sym_file_offset = section.sh_offset + sym_section_offset;
-
-    // Extract symbol's instruction data from file.
-    let sym_data = {
-        let lo = sym_file_offset as usize;
-        // Checked by caller: `st_size` is nonzero.
-        let hi = lo + (sym.st_size as usize);
-        &data[lo..hi]
-    };
-
-    let mut decoder = Decoder::new(64, sym_data, DecoderOptions::NONE);
-    decoder.set_ip(sym_va);
-
-    // Contains leaders with VAs, assuming section load address.
-    let mut leaders = BTreeSet::new();
-
-    // Function entry is a leader.
-    leaders.insert(sym_va);
-
-    let mut inst = Instruction::default();
-    while decoder.can_decode() {
-        decoder.decode_out(&mut inst);
-
-        if let Some((target, conditional)) = branch_target(&inst) {
-            // The branch target is a leader.
-            leaders.insert(target);
-
-            // Only mark the next instruction as a leader if the branch is conditional.
-            // This will give an invalid basic block decomposition if the leaders we emit
-            // are used as delimiters. In particular, blocks that end with a `jmp` will be
-            // too large, and have an unconditional branch mid-block.
-            //
-            // However, we only care about the leaders as block entry points, so we can
-            // set software breakpoints. These maybe-unreachable leaders are a liability
-            // wrt mutating the running process' code, so we discard them for now.
-            if conditional {
-                // The next instruction is a leader, if it exists.
-                if decoder.can_decode() {
-                    // We decoded the current instruction, so the decoder offset is
-                    // set to the next instruction.
-                    let next = decoder.ip() as u64;
-                    leaders.insert(next);
-                }
-            }
-        }
-    }
-
-    Ok(leaders)
-}
-
-// Returns the virtual address of a branch target, if present, with a flag that
-// is true when the branch is conditional.
-fn branch_target(inst: &iced_x86::Instruction) -> Option<(u64, bool)> {
-    use iced_x86::FlowControl;
-
-    match inst.flow_control() {
-        FlowControl::ConditionalBranch => Some((inst.near_branch_target(), true)),
-        FlowControl::UnconditionalBranch => Some((inst.near_branch_target(), false)),
-        FlowControl::Call
-        | FlowControl::Exception
-        | FlowControl::IndirectBranch
-        | FlowControl::IndirectCall
-        | FlowControl::Interrupt
-        | FlowControl::Next
-        | FlowControl::Return
-        | FlowControl::XbeginXabortXend => None,
     }
 }
 

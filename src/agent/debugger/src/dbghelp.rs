@@ -514,7 +514,7 @@ impl DebugHelpGuard {
         }
     }
 
-    pub fn stackwalk_ex<F: FnMut(&FrameContext, &STACKFRAME_EX) -> bool>(
+    pub fn stackwalk_ex<F: FnMut(&STACKFRAME_EX) -> bool>(
         &self,
         process_handle: HANDLE,
         thread_handle: HANDLE,
@@ -550,7 +550,7 @@ impl DebugHelpGuard {
                 break;
             }
 
-            if !f(&frame_context, &frame) {
+            if !f(&frame) {
                 break;
             }
         }
