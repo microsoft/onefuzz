@@ -6,7 +6,7 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use futures::stream::StreamExt;
-use onefuzz::{az_copy, blob::url::BlobUrl};
+use onefuzz::{az_copy, blob::url::BlobUrl, fs::SyncPath};
 use onefuzz::{
     expand::Expand,
     fs::{copy, set_executable, OwnedDir},
@@ -177,7 +177,14 @@ async fn _copy(input_url: BlobUrl, destination_folder: &OwnedDir) -> Result<Path
         BlobUrl::AzureBlob(input_url) => {
             az_copy::copy(input_url.as_ref(), destination_path.clone(), false).await?
         }
-        BlobUrl::LocalFile(path) => copy(path, destination_path.clone(), false).await?,
+        BlobUrl::LocalFile(path) => {
+            copy(
+                SyncPath::file(path),
+                SyncPath::dir(destination_path.clone()),
+                false,
+            )
+            .await?
+        }
     }
     Ok(destination_path)
 }

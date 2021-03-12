@@ -116,9 +116,6 @@ impl BlobContainerUrl {
         self.url
             .to_file_path()
             .ok()
-            // adding a trailing to indicate that the path is a folder
-            // linux requires the copy/sync operations to work as expected
-            .map(|path| path.join(""))
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {

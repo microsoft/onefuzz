@@ -4,7 +4,7 @@
 use crate::{
     az_copy,
     blob::{BlobClient, BlobContainerUrl},
-    fs::{exists, sync},
+    fs::{exists, sync, SyncPath},
     jitter::delay_with_jitter,
     monitor::DirectoryMonitor,
     uploader::BlobUploader,
@@ -35,13 +35,26 @@ pub struct SyncedDir {
 
 impl SyncedDir {
     pub async fn sync(&self, operation: SyncOperation, delete_dst: bool) -> Result<()> {
-        // Adding a trailing '/' to specify a copy of the dir content on linux
         let dir = &self.path.join("");
         if let Some(dest) = self.url.as_file_path() {
             debug!("syncing {:?} {}", operation, dest.display());
             match operation {
-                SyncOperation::Push => sync(dir, dest, delete_dst).await,
-                SyncOperation::Pull => sync(dest, dir, delete_dst).await,
+                SyncOperation::Push => {
+                    sync(
+                        SyncPath::dir(dir),
+                        SyncPath::dir(dest.as_path()),
+                        delete_dst,
+                    )
+                    .await
+                }
+                SyncOperation::Pull => {
+                    sync(
+                        SyncPath::dir(dest.as_path()),
+                        SyncPath::dir(dir),
+                        delete_dst,
+                    )
+                    .await
+                }
             }
         } else {
             let url = self.url.url();

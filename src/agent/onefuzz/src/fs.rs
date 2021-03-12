@@ -262,11 +262,34 @@ pub async fn sync_impl(
     Ok(())
 }
 
-pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, delete_dst: bool) -> Result<()> {
+pub struct SyncPath {
+    path: PathBuf,
+}
+
+impl SyncPath {
+    pub fn dir(path: impl AsRef<Path>) -> SyncPath {
+        // adding a trailing to indicate that the path is a folder
+        // linux requires this for copy/sync operations to work as expected
+        let path = path.as_ref().join("");
+        Self { path }
+    }
+    pub fn file(path: impl AsRef<Path>) -> SyncPath {
+        let path = path.as_ref().into();
+        Self { path }
+    }
+}
+
+impl AsRef<OsStr> for SyncPath {
+    fn as_ref(&self) -> &OsStr {
+        self.path.as_os_str()
+    }
+}
+
+pub async fn sync(src: SyncPath, dst: SyncPath, delete_dst: bool) -> Result<()> {
     sync_impl(src, dst, delete_dst, true).await
 }
 
-pub async fn copy(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, recur: bool) -> Result<()> {
+pub async fn copy(src: SyncPath, dst: SyncPath, recur: bool) -> Result<()> {
     sync_impl(src, dst, false, recur).await
 }
 
