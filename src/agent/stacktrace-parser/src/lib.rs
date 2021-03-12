@@ -244,6 +244,16 @@ mod tests {
         skip_files: Vec<&str>,
         skip_minimized_check: Vec<&str>,
     ) -> Result<()> {
+        // TODO: once the stack trace data from clusterfuzz is added, these should be removed
+        if !src_dir.exists() {
+            eprintln!("no sources to check");
+            return Ok(());
+        }
+        if !expected_dir.exists() {
+            eprintln!("no destinations to check");
+            return Ok(());
+        }
+        
         for entry in fs::read_dir(src_dir)? {
             let path = entry?.path();
             if !path.is_file() {
