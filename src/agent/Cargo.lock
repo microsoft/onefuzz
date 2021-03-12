@@ -1674,10 +1674,12 @@ name = "onefuzz-telemetry"
 version = "0.1.0"
 dependencies = [
  "appinsights",
+ "iced-x86",
  "log",
  "serde",
  "tokio",
  "uuid",
+ "z3-sys",
 ]
 
 [[package]]
@@ -3128,3 +3130,9 @@ name = "xml-rs"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b07db065a5cf61a7e4ba64f29e67db906fb1787316516c4e6e5ff0fea1efcd8a"
+
+[[package]]
+name = "z3-sys"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afa18ba5fbd4933e41ffb440c3fd91f91fe9cdb7310cce3ddfb6648563811de0"
