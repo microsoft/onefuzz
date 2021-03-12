@@ -253,7 +253,7 @@ mod tests {
             eprintln!("no destinations to check");
             return Ok(());
         }
-        
+
         for entry in fs::read_dir(src_dir)? {
             let path = entry?.path();
             if !path.is_file() {
