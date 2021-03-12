@@ -266,7 +266,6 @@ def create_vmss(
             "os_profile": {
                 "computer_name_prefix": "node",
                 "admin_username": "onefuzz",
-                "admin_password": password,
             },
             "network_profile": {
                 "network_interface_configurations": [
@@ -287,6 +286,9 @@ def create_vmss(
     image_os = get_os(location, image)
     if isinstance(image_os, Error):
         return image_os
+
+    if image_os == OS.windows:
+        params["virtual_machine_profile"]["os_profile"]["admin_password"] = password
 
     if image_os == OS.linux:
         params["virtual_machine_profile"]["os_profile"]["linux_configuration"] = {
@@ -332,9 +334,10 @@ def create_vmss(
             resource_group, name, params
         )
     except ResourceExistsError as err:
-        if "SkuNotAvailable" in repr(err):
+        err_str = str(err)
+        if "SkuNotAvailable" in err_str or "OperationNotAllowed" in err_str:
             return Error(
-                code=ErrorCode.VM_CREATE_FAILED, errors=["creating vmss: %s" % err]
+                code=ErrorCode.VM_CREATE_FAILED, errors=[f"creating vmss: {err_str}"]
             )
         raise err
     except (ResourceNotFoundError, CloudError) as err:

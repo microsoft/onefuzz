@@ -35,8 +35,8 @@ nodes and the service API running in the Azure Functions instance.
 
 1. The rust library [onefuzz::telemetry](../src/agent/onefuzz-telemetry/src/lib.rs)
    provides a detailed set of telemetry types, as well as the function
-   `can_share`, which gates if a given telemetry field should be sent to the
-   Microsoft central telemetry instance.
+   `can_share_with_microsoft`, which gates if a given telemetry field should be
+   sent to the Microsoft central telemetry instance.
 1. The Python library
    [onefuzzlib.telemetry](../src/api-service/__app__/onefuzzlib/telemetry.py)
    provides a filtering mechanism to identify a per-object set of filtering
@@ -77,9 +77,11 @@ The following are common data types used in multiple locations:
 * Scaleset ID - A randomly generated GUID used to uniquely identify a VM
   scaleset.
 * Task Type - The type of task being executed. Examples include
-  "generic_crash_report" or "libfuzzer_coverage". For a full list, see the enum
+  `generic_crash_report` or `libfuzzer_coverage`. For a full list, see the enum
   [TaskType](../src/pytypes/onefuzztypes/enums.py).
 * OS - An enum value describing the OS used (Currently, only Windows or Linux).
+* Version - A compile-time generated string that specifies the OneFuzz version number based on [CURRENT\_RELEASE](../CURRENT_RELEASE) and the sha-1 git revision (See [example](../src/agent/onefuzz-agent/build.rs)).
+* Role - An enum value describing the role of the OneFuzz software in use.  Examples include `Agent` or `Proxy`.  For a full list, see the enum [Role](../src/agent/onefuzz-telemetry/src/lib.rs).
 
 ### Data recorded by Agents
 

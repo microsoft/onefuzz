@@ -4,6 +4,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.8.0
+### Added
+* CLI: Added support for [Aarch64](docs/how-to/fuzzing-other-architectures-on-azure.md) libFuzzer targets using the [QEMU user space emulator](https://qemu.readthedocs.io/en/latest/user/main.html). [#600](https://github.com/microsoft/onefuzz/pull/600)
+* Build: Added CodeQL pipeline. [#617](https://github.com/microsoft/onefuzz/pull/617)
+* Service: Added node and task heartbeat [events](docs/webhook_events.md).  [#621](https://github.com/microsoft/onefuzz/pull/621)
+
+### Changed
+* Agent: Clarified batch-processing logs.  [#622](https://github.com/microsoft/onefuzz/pull/622)
+* Agent/Proxy: Updated multiple rust dependencies. [#624](https://github.com/microsoft/onefuzz/pull/624)
+* Service/CLI/Contrib: Updated multiple python dependencies.  [#607](https://github.com/microsoft/onefuzz/pull/607), [#608](https://github.com/microsoft/onefuzz/pull/608), [#610](https://github.com/microsoft/onefuzz/pull/610), [#611](https://github.com/microsoft/onefuzz/pull/611), [#612](https://github.com/microsoft/onefuzz/pull/612), [#625](https://github.com/microsoft/onefuzz/pull/625), [#626](https://github.com/microsoft/onefuzz/pull/626), [#630](https://github.com/microsoft/onefuzz/pull/630), [#640](https://github.com/microsoft/onefuzz/pull/640)
+* Service: Update task configuration to verify `target_exe` is a canonicalized relative path. [#613](https://github.com/microsoft/onefuzz/pull/613)
+* Deployment/Agent: Updated AFL++ to 3.10c.  [#609](https://github.com/microsoft/onefuzz/pull/609)
+* Deployment: Clarify application password creation succeeded after earlier failures.  [#629](https://github.com/microsoft/onefuzz/pull/629)
+* Service: VM passwords are no longer set on Linux VMs.  [#620](https://github.com/microsoft/onefuzz/pull/620)
+* Service: Clarify source of task failures when notification integration marks a task as failed.  [#635](https://github.com/microsoft/onefuzz/pull/635)
+
+### Fixed
+* Agent/Proxy/Supervisor: Fixed web request retry logic when handling operating system level errors.  [#623](https://github.com/microsoft/onefuzz/pull/623)
+* Service: Handle exceptions when creating scalesets fail due to Azure VM quota issues. [#614](https://github.com/microsoft/onefuzz/pull/614)
+
+## 2.7.0
+### Added
+* CLI: Added `onefuzz containers files download_dir` to enable downloading the contents of a container.  [#598](https://github.com/microsoft/onefuzz/pull/598)
+* Agent: Added `microsoft_telemetry_key` and `instance_telemetry_key` and expanded the availability `reports_dir` in [configuration value expansion](docs/command-replacements.md). [#561](https://github.com/microsoft/onefuzz/pull/561)
+* Agent/Service: Added `job_id` to agent-based heartbeats. [#594](https://github.com/microsoft/onefuzz/pull/594)
+* Agent/Proxy/Supervisor: Added additional context to errors during Storage Queue and service interactions to improve debugging.  [#601](https://github.com/microsoft/onefuzz/pull/601)
+
+### Changed
+* Agent/Proxy/Supervisor: Renamed the Application Insights token names used for telemetry to `microsoft_telemetry_key` and `instance_telemetry_key` and the function that gated telemetry sharing to `can_share_with_microsoft` to make the telemetry implementation easier to understand. [#587](https://github.com/microsoft/onefuzz/pull/587)
+* Deployment: Updated multiple Python dependencies. [#596](https://github.com/microsoft/onefuzz/pull/596)
+* Service: Updated multiple Python dependencies. Addresses potential security issue [CVE-2020-28493](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-28493) [#595](https://github.com/microsoft/onefuzz/pull/595)
+* Service: Don't let nodes run new tasks if they are part of a scaleset or pool that is scheduled to be shut down. [#583](https://github.com/microsoft/onefuzz/pull/583)
+
+### Fixed
+* Service: Fixed the queries used to identify nodes running outdated OneFuzz releases. [#597](https://github.com/microsoft/onefuzz/pull/597)
+* Agent: Fixed an issue that would stop an agent or supervisor from performing work if an HTTPS request has failed in certain conditions. [#603](https://github.com/microsoft/onefuzz/pull/603)
+* Agent: Fixed an issue that would stop a task if the task printed a significant amount of data to STDOUT or STDERR.  [#588](https://github.com/microsoft/onefuzz/pull/588)
+* Deployment: Address deployment failures relating to cross-region Azure Active Directory resource creation delays. [#585](https://github.com/microsoft/onefuzz/pull/585)
+
 ## 2.6.0
 ### Added
 * Service: Jobs that do not start within 30 days are automatically stopped. [#565](https://github.com/microsoft/onefuzz/pull/565)

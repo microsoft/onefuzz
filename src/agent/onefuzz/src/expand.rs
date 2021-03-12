@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::sha256::digest_file_blocking;
 use anyhow::Result;
+use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use std::path::{Path, PathBuf};
 use std::{collections::HashMap, hash::Hash};
 use strum::IntoEnumIterator;
@@ -40,6 +42,9 @@ pub enum PlaceHolder {
     TaskId,
     CrashesContainer,
     CrashesAccount,
+    MicrosoftTelemetryKey,
+    InstanceTelemetryKey,
+    InputFileSha256,
 }
 
 impl PlaceHolder {
@@ -68,6 +73,9 @@ impl PlaceHolder {
             Self::TaskId => "{task_id}",
             Self::CrashesContainer => "{crashes_container}",
             Self::CrashesAccount => "{crashes_account}",
+            Self::MicrosoftTelemetryKey => "{microsoft_telemetry_key}",
+            Self::InstanceTelemetryKey => "{instance_telemetry_key}",
+            Self::InputFileSha256 => "{input_file_sha256}",
         }
         .to_string()
     }
@@ -94,7 +102,21 @@ impl<'a> Expand<'a> {
             PlaceHolder::InputFileName.get_string(),
             ExpandedValue::Mapping(Box::new(Expand::extract_file_name)),
         );
+        values.insert(
+            PlaceHolder::InputFileSha256.get_string(),
+            ExpandedValue::Mapping(Box::new(Expand::input_file_sha256)),
+        );
         Self { values }
+    }
+
+    fn input_file_sha256(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
+        match self.values.get(&PlaceHolder::Input.get_string()) {
+            Some(ExpandedValue::Path(fp)) => {
+                let file = PathBuf::from(fp);
+                digest_file_blocking(file).ok().map(ExpandedValue::Scalar)
+            }
+            _ => None,
+        }
     }
 
     fn extract_file_name_no_ext(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
@@ -253,6 +275,21 @@ impl<'a> Expand<'a> {
     pub fn job_id(self, arg: &Uuid) -> Self {
         let value = arg.to_hyphenated().to_string();
         self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value))
+    }
+
+    pub fn microsoft_telemetry_key(self, arg: &MicrosoftTelemetryKey) -> Self {
+        let value = arg.to_string();
+        self.set_value(
+            PlaceHolder::MicrosoftTelemetryKey,
+            ExpandedValue::Scalar(value),
+        )
+    }
+    pub fn instance_telemetry_key(self, arg: &InstanceTelemetryKey) -> Self {
+        let value = arg.to_string();
+        self.set_value(
+            PlaceHolder::InstanceTelemetryKey,
+            ExpandedValue::Scalar(value),
+        )
     }
 
     pub fn crashes_account(self, arg: &str) -> Self {

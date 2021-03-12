@@ -11,6 +11,18 @@ pub mod pe;
 
 pub mod block;
 
+#[cfg(target_os = "linux")]
+pub mod cache;
+
+pub mod code;
+pub mod demangle;
+
+#[cfg(target_os = "linux")]
+pub mod disasm;
+
+pub mod filter;
+mod region;
+
 use std::{
     ffi::OsString,
     fs::File,
