@@ -217,6 +217,7 @@ class Backend:
 
         LOGGER.info("Interactive device authentication succeeded")
         print("Login succeeded", flush=True)
+        self.save_cache()
         return access_token
 
     def request(
