@@ -43,6 +43,7 @@ impl BlobUrl {
     pub fn account(&self) -> Option<String> {
         match self {
             Self::AzureBlob(url) => {
+                // Ctor checks that domain has at least one subdomain.
                 Some(url.domain().unwrap().split('.').next().unwrap().to_owned())
             }
             Self::LocalFile(_) => None,
@@ -113,9 +114,7 @@ impl BlobContainerUrl {
     }
 
     pub fn as_file_path(&self) -> Option<PathBuf> {
-        self.url
-            .to_file_path()
-            .ok()
+        self.url.to_file_path().ok()
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
