@@ -3,16 +3,18 @@
 The following values are replaced with the specific values at runtime.
 
 * `{input}`: Path to the input file being processed in the current event
+* `{input_file_name}`: the input file name with the extension (available
+  wherever `input` is available)
+* `{input_file_name_no_ext}`: the input file name without the extension
+  (available wherever `input` is available)
+* `{input_file_sha256}`: the SHA256 checksum of the input file (available
+   wherever `input` is available)
 * `{crashes}`: Path to write crashes
 * `{input_corpus}`: Path to the input corpus directory
 * `{generated_inputs}`: Path to the generated inputs directory
 * `{target_exe}`: Path to the target binary
 * `{target_options}`: Target options (recursively expanded)
 * `{output_dir}` : Path to the output directory as defined by the task
-* `{input_file_name}`: the input file name with the extension (available
-  wherever `input` is available)
-* `{input_file_name_no_ext}`: the input file name without the extension
-  (available wherever `input` is available)
 * `{runtime_dir}`: Path to the runtime directory for the task
 * `{tools_dir}`: Path to the task specific `tools` directory
 * `{setup_dir}` : Path to the setup directory
