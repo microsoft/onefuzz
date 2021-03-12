@@ -12,6 +12,7 @@ use procfs::process::{MMapPath, MemoryMap, Process};
 use crate::block::CommandBlockCov;
 use crate::cache::ModuleCache;
 use crate::code::{CmdFilter, ModulePath};
+use crate::demangle::Demangler;
 use crate::region::Region;
 
 pub fn record(cmd: Command) -> Result<CommandBlockCov> {
@@ -24,6 +25,7 @@ pub fn record(cmd: Command) -> Result<CommandBlockCov> {
 pub struct Recorder {
     breakpoints: Breakpoints,
     pub coverage: CommandBlockCov,
+    demangler: Demangler,
     images: Option<Images>,
     pub modules: ModuleCache,
     filter: CmdFilter,
@@ -153,7 +155,15 @@ impl Recorder {
         let mut allowed_blocks = vec![];
 
         for symbol in info.module.symbols.iter() {
-            if self.filter.includes_symbol(&info.module.path, &symbol.name) {
+            // Try to demangle the symbol name for filtering. If no demangling
+            // is found, fall back to the raw name.
+            let symbol_name = self
+                .demangler
+                .demangle(&symbol.name)
+                .unwrap_or_else(|| symbol.name.clone());
+
+            // Check the maybe-demangled against the coverage filter.
+            if self.filter.includes_symbol(&info.module.path, symbol_name) {
                 for offset in info.blocks.range(symbol.range()) {
                     allowed_blocks.push(*offset);
                 }
