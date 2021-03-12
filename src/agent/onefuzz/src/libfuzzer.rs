@@ -211,7 +211,7 @@ impl<'a> LibFuzzer<'a> {
         let output_text = String::from_utf8_lossy(&output.stderr);
         let pat = r"MERGE-OUTER: (\d+) new files with (\d+) new features added";
         let re = regex::Regex::new(pat).unwrap();
-        match re.captures_iter(&output_text).next() {
+        let result = match re.captures_iter(&output_text).next() {
             Some(captures) => {
                 let added_files_count = captures.get(1).unwrap().as_str().parse::<i32>().unwrap();
                 let added_feature_count = captures.get(2).unwrap().as_str().parse::<i32>().unwrap();
@@ -224,7 +224,8 @@ impl<'a> LibFuzzer<'a> {
                 added_files_count: 0,
                 added_feature_count: 0,
             }),
-        }
+        };
+        result
     }
 }
 
