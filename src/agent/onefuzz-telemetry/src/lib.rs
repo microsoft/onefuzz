@@ -293,7 +293,6 @@ impl EventData {
             Self::ToolName(_) => true,
             Self::Region(_) => false,
             Self::Role(_) => true,
-
             Self::InputsFuzzed(_) => true,
             Self::SatConstraints(_) => true,
             Self::UnsatConstraints(_) => true,
