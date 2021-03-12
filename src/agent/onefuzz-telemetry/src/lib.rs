@@ -166,9 +166,7 @@ impl EventData {
 
     pub fn can_share_with_microsoft(&self) -> bool {
         match self {
-            // TODO: Request CELA review of Version, as having this for central stats
-            //       would be useful to track uptake of new releases
-            Self::Version(_) => false,
+            Self::Version(_) => true,
             Self::InstanceId(_) => true,
             Self::TaskId(_) => true,
             Self::JobId(_) => true,
@@ -199,7 +197,7 @@ impl EventData {
             Self::Coverage(_) => true,
             Self::ToolName(_) => true,
             Self::Region(_) => false,
-            Self::Role(_) => false,
+            Self::Role(_) => true,
         }
     }
 }
