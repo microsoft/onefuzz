@@ -165,10 +165,10 @@ pub enum EventData {
     MaxMemoryTaintedInstructions(u64),
     AveragePathLength(f64),
     MaxPathLength(u64),
-    DiverganceRate(f64),
-    DivergancePathLength(u32),
-    DivergancePathExpectedIndex(u32),
-    DivergancePathActualIndex(u32),
+    DivergenceRate(f64),
+    DivergencePathLength(u32),
+    DivergencePathExpectedIndex(u32),
+    DivergencePathActualIndex(u32),
     #[cfg(feature = "intel_instructions")]
     MissedInstructionCode(IntelInstructionCode),
     #[cfg(feature = "intel_instructions")]
@@ -245,12 +245,12 @@ impl EventData {
             }
             Self::AveragePathLength(x) => ("average_path_length", x.to_string()),
             Self::MaxPathLength(x) => ("max_path_length", x.to_string()),
-            Self::DiverganceRate(x) => ("divergence_rate", x.to_string()),
-            Self::DivergancePathLength(x) => ("divergence_path_length", x.to_string()),
-            Self::DivergancePathExpectedIndex(x) => {
+            Self::DivergenceRate(x) => ("divergence_rate", x.to_string()),
+            Self::DivergencePathLength(x) => ("divergence_path_length", x.to_string()),
+            Self::DivergencePathExpectedIndex(x) => {
                 ("divergence_path_expected_index", x.to_string())
             }
-            Self::DivergancePathActualIndex(x) => ("divergence_path_actual_index", x.to_string()),
+            Self::DivergencePathActualIndex(x) => ("divergence_path_actual_index", x.to_string()),
             #[cfg(feature = "z3")]
             Self::Z3ErrorCode(x) => ("z3_error_code", z3_error_as_str(x).to_owned()),
             #[cfg(feature = "z3")]
@@ -312,10 +312,10 @@ impl EventData {
             Self::MaxMemoryTaintedInstructions(_) => true,
             Self::AveragePathLength(_) => true,
             Self::MaxPathLength(_) => true,
-            Self::DiverganceRate(_) => true,
-            Self::DivergancePathLength(_) => true,
-            Self::DivergancePathExpectedIndex(_) => true,
-            Self::DivergancePathActualIndex(_) => true,
+            Self::DivergenceRate(_) => true,
+            Self::DivergencePathLength(_) => true,
+            Self::DivergencePathExpectedIndex(_) => true,
+            Self::DivergencePathActualIndex(_) => true,
             #[cfg(feature = "intel_instructions")]
             Self::MissedInstructionCode(_) => true,
             #[cfg(feature = "intel_instructions")]
