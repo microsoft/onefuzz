@@ -231,7 +231,7 @@ impl JobObject {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct JobStats {
     pub total_user_time: Duration,
     pub total_kernel_time: Duration,
