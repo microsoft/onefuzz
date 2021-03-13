@@ -27,7 +27,7 @@ impl BlobUrl {
             "https://{}.blob.core.windows.net/{}/{}",
             account, container, name
         ))?;
-        Ok(Self { url })
+        Self::new(url)
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
