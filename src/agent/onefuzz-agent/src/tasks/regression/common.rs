@@ -14,7 +14,7 @@ use std::path::PathBuf;
 /// Abstraction for handling regression reports
 #[async_trait]
 pub trait RegressionHandler {
-    /// Test the provided input ang generate a crash result
+    /// Test the provided input and generate a crash result
     /// * `input` - path to the input to test
     /// * `input_url` - input url
     async fn get_crash_result(
