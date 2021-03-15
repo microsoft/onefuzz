@@ -17,7 +17,7 @@ use onefuzz_telemetry::{
 };
 use serde::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
-use tempfile::tempdir;
+use tempfile::{tempdir_in, TempDir};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
@@ -125,6 +125,20 @@ impl LibFuzzerFuzzTask {
         Ok(())
     }
 
+    /// Creates a temporary directory in the current task directory
+    async fn create_local_temp_dir(&self) -> Result<TempDir> {
+        let task_dir = self
+            .config
+            .inputs
+            .path
+            .parent()
+            .ok_or_else(|| anyhow!("Invalid input path"))?;
+        let temp_path = task_dir.join(".temp");
+        tokio::fs::create_dir_all(&temp_path).await?;
+        let temp_dir = tempdir_in(temp_path)?;
+        Ok(temp_dir)
+    }
+
     // The fuzzer monitor coordinates a _series_ of fuzzer runs.
     //
     // A run is one session of continuous fuzzing, terminated by a fuzzing error
@@ -134,7 +148,7 @@ impl LibFuzzerFuzzTask {
         worker_id: u64,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
-        let local_input_dir = tempdir()?;
+        let local_input_dir = self.create_local_temp_dir().await?;
         loop {
             self.run_fuzzer(&local_input_dir.path(), worker_id, stats_sender)
                 .await?;
@@ -142,7 +156,7 @@ impl LibFuzzerFuzzTask {
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
             while let Some(Ok(entry)) = entries.next().await {
                 let destination_path = self.config.inputs.path.clone().join(entry.file_name());
-                tokio::fs::copy(&entry.path(), &destination_path)
+                tokio::fs::rename(&entry.path(), &destination_path)
                     .await
                     .with_context(|| {
                         format!(
@@ -164,7 +178,7 @@ impl LibFuzzerFuzzTask {
         worker_id: u64,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
-        let crash_dir = tempdir()?;
+        let crash_dir = self.create_local_temp_dir().await?;
         let run_id = Uuid::new_v4();
 
         debug!("starting fuzzer run, run_id = {}", run_id);
@@ -234,7 +248,7 @@ impl LibFuzzerFuzzTask {
         for file in &files {
             if let Some(filename) = file.file_name() {
                 let dest = self.config.crashes.path.join(filename);
-                tokio::fs::copy(file, dest).await?;
+                tokio::fs::rename(file, dest).await?;
             }
         }
 
