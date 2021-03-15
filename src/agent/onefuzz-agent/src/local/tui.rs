@@ -5,6 +5,7 @@ use crossterm::{
     event::{self, Event, KeyCode},
     terminal::enable_raw_mode,
 };
+use log::Level;
 use onefuzz::utils::try_wait_all_join_handles;
 use std::{
     io::{self, Stdout},
@@ -18,6 +19,7 @@ use tokio::{
 use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Corner, Direction, Layout},
+    style::{Color, Style},
     text::{Span, Spans},
     widgets::{Block, Borders},
     widgets::{List, ListItem},
@@ -35,7 +37,7 @@ const TICK_RATE: Duration = Duration::from_millis(250);
 pub struct TerminalUi {
     pub task_events: Arc<Mutex<mpsc::UnboundedSender<String>>>,
     task_event_receiver: Arc<Mutex<mpsc::UnboundedReceiver<String>>>,
-    log_event_receiver: Arc<Mutex<mpsc::UnboundedReceiver<String>>>,
+    log_event_receiver: Arc<Mutex<mpsc::UnboundedReceiver<(Level, String)>>>,
     terminal: Mutex<Terminal<CrosstermBackend<Stdout>>>,
 }
 
@@ -73,8 +75,9 @@ impl TerminalUi {
                 let sender_lock = log_event_sender.try_lock().map_err(|err| {
                     std::io::Error::new(std::io::ErrorKind::Other, err.to_string())
                 })?;
+                let level = record.level();
                 sender_lock
-                    .send(format!("{}", record.args()))
+                    .send((level, format!("{}", record.args())))
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))
             })
             .init();
@@ -113,7 +116,7 @@ impl TerminalUi {
     }
 
     async fn ui_loop(self, mut ui_event_rx: mpsc::UnboundedReceiver<TerminalEvent>) -> Result<()> {
-        let mut log_data: ArrayDeque<[String; BUFFER_SIZE], Wrapping> = ArrayDeque::new();
+        let mut log_data: ArrayDeque<[(Level, String); BUFFER_SIZE], Wrapping> = ArrayDeque::new();
         loop {
             match ui_event_rx.recv().await {
                 Some(TerminalEvent::Tick) => {
@@ -135,7 +138,21 @@ impl TerminalUi {
 
                         let log_items = log_data
                             .iter()
-                            .map(|log| ListItem::new(Spans::from(vec![Span::raw(log)])))
+                            .map(|(level, log)| {
+                                let style = match level {
+                                    Level::Debug => Style::default().fg(Color::Magenta),
+                                    Level::Error => Style::default().fg(Color::Red),
+                                    Level::Warn => Style::default().fg(Color::Yellow),
+                                    Level::Info => Style::default().fg(Color::Blue),
+                                    Level::Trace => Style::default(),
+                                };
+
+                                ListItem::new(Spans::from(vec![
+                                    Span::styled(format!("{:<9}", level), style),
+                                    Span::raw(" "),
+                                    Span::raw(log),
+                                ]))
+                            })
                             .collect::<Vec<_>>();
 
                         let log_list = List::new(log_items)
@@ -160,7 +177,7 @@ impl TerminalUi {
     pub async fn run(self) -> Result<()> {
         enable_raw_mode()?;
         let (ui_event_rx, ui_event_handle) = Self::read_events();
-        self.terminal.lock().await.clear()?;
+        //self.terminal.lock().await.clear()?;
         let ui_loop = tokio::spawn(self.ui_loop(ui_event_rx));
 
         try_wait_all_join_handles(vec![ui_event_handle, ui_loop]).await
