@@ -43,7 +43,6 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
             Ok(response)
         }
     };
-  
     let result = op
         .retry_notify(
             ExponentialBackoff {
