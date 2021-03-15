@@ -43,6 +43,9 @@ cargo test --release --workspace
 # TODO: re-enable integration tests.
 # cargo test --release --manifest-path ./onefuzz-agent/Cargo.toml --features integration_test -- --nocapture
 
+# TODO: once Salvo is integrated, this can get deleted
+cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
+
 cp target/release/onefuzz-agent* ../../artifacts/agent
 cp target/release/onefuzz-supervisor* ../../artifacts/agent
 
