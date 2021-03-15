@@ -88,7 +88,7 @@ def filter_event_recurs(clone_event: BaseModel, visited: Set[int] = set()) -> Ba
 
 def send_event(event: Event) -> None:
     event_type = get_event_type(event)
-    filter_event(event, event_type)
+    log_event(event, event_type)
     event_message = EventMessage(
         event_type=event_type,
         event=event,
