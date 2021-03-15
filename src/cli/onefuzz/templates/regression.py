@@ -62,7 +62,7 @@ class Regression(Command):
 
         :param File crashes: Specify crashing input files to check in the regression task
         :param str reports: Specify specific report names to verify in the regression task
-        :param bool check_regressions: Specify if exceptions should be through on finding crash regressions
+        :param bool check_regressions: Specify if exceptions should be thrown on finding crash regressions
         :param bool delete_input_container: Specify wether or not to delete the input container
         """
 
@@ -122,7 +122,7 @@ class Regression(Command):
 
         :param File crashes: Specify crashing input files to check in the regression task
         :param str reports: Specify specific report names to verify in the regression task
-        :param bool check_regressions: Specify if exceptions should be through on finding crash regressions
+        :param bool check_regressions: Specify if exceptions should be thrown on finding crash regressions
         :param bool delete_input_container: Specify wether or not to delete the input container
         """
 
