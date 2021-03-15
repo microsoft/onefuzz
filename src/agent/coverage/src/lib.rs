@@ -15,6 +15,7 @@ pub mod block;
 pub mod cache;
 
 pub mod code;
+pub mod demangle;
 
 #[cfg(target_os = "linux")]
 pub mod disasm;
