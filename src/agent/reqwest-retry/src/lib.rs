@@ -50,7 +50,7 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
                 initial_interval: retry_period,
                 ..ExponentialBackoff::default()
             },
-            |err, dur| warn!("request attempt failed at {:?}: {}", dur, err),
+            |err, dur| warn!("request attempt failed after {:?}: {}", dur, err),
         )
         .await?;
     Ok(result)
