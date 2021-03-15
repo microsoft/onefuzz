@@ -267,8 +267,10 @@ mod tests {
                 continue;
             }
 
-            let data =
+            let data_raw =
                 fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+            let data = data_raw.replace("\r\n", "\n");
+
             let parsed = CrashLog::parse(data.clone()).with_context(|| {
                 format!(
                     "parsing\n{}\n{}\n\n{}",
