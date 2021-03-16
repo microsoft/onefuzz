@@ -4,7 +4,8 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
-use reqwest::Url;
+use reqwest::{Client, Url};
+use reqwest_retry::SendRetry;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::{fs, io};
@@ -20,7 +21,9 @@ pub async fn download_input(input_url: Url, dst: impl AsRef<Path>) -> Result<Pat
         fs::copy(&input_file_path, &file_path).await?;
         Ok(file_path)
     } else {
-        let resp = reqwest::get(input_url)
+        let resp = Client::new()
+            .get(input_url)
+            .send_retry_default()
             .await?
             .error_for_status_with_body()
             .await?;
