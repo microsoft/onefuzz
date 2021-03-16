@@ -69,7 +69,8 @@ mod tests {
         buf.write_all(&[9, 10, 11, 12, 13]).unwrap();
         assert_eq!(buf.data(), &[9, 10, 11, 12, 13]);
 
-        buf.write_all(&[14, 15, 16, 17, 18, 19, 20, 21, 22]).unwrap();
+        buf.write_all(&[14, 15, 16, 17, 18, 19, 20, 21, 22])
+            .unwrap();
         assert_eq!(buf.data(), &[18, 19, 20, 21, 22]);
     }
 }
