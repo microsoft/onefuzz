@@ -231,16 +231,16 @@ impl JobObject {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct JobStats {
-    total_user_time: Duration,
-    total_kernel_time: Duration,
-    total_page_fault_count: u32,
-    total_processes: u32,
-    active_processes: u32,
-    total_terminated_processes: u32,
-    peak_job_memory_used: usize,
-    peak_process_memory_used: usize,
+    pub total_user_time: Duration,
+    pub total_kernel_time: Duration,
+    pub total_page_fault_count: u32,
+    pub total_processes: u32,
+    pub active_processes: u32,
+    pub total_terminated_processes: u32,
+    pub peak_job_memory_used: usize,
+    pub peak_process_memory_used: usize,
 }
 
 impl
