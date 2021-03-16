@@ -16,17 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Service: [task_stopped](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#task_stopped) and [task_failed](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#task_failed) now trigger once the task has stopped instead of upon entering the `stopping` state. [#651](https://github.com/microsoft/onefuzz/pull/651)
 * CLI: Authentication tokens are saved upon successful login rather than on program exit. [#665](https://github.com/microsoft/onefuzz/pull/665)
-* Service: If an task with dependant tasks fails, all of the dependant tasks are marked as failed.  [#650](https://github.com/microsoft/onefuzz/pull/650)
+* Service: If a task with dependent tasks fails, all of the dependent tasks are marked as failed.  [#650](https://github.com/microsoft/onefuzz/pull/650)
 * Agent: Fixed PC address in crash report backtraces.  [#658](https://github.com/microsoft/onefuzz/pull/658)
 * Service: Upon task completion, if all of the tasks in the associated job are completed, the job is marked as stopped.  [#649](https://github.com/microsoft/onefuzz/pull/649)
 * Deployment/Agent: Updated AFL++ to 3.11c.  [#675](https://github.com/microsoft/onefuzz/pull/675)
-* Agent/Proxy/Supervisor: Changed web request retry logic to always retry any request that fails regardless of why the request failed.  [#674](https://github.com/microsoft/onefuzz/pull/674)
+* Agent/Proxy/Supervisor: Changed web request retry logic to always retry any request that fails, regardless of why the request failed.  [#674](https://github.com/microsoft/onefuzz/pull/674)
 * Agent: Downloading files from task queues will now automatically retry on failure.  [#676](https://github.com/microsoft/onefuzz/pull/676)
-* Service: User information is now stripped from [Events](docs/webhook_events.md) before being logegd to Application Insights.  [#661](https://github.com/microsoft/onefuzz/pull/661)
+* Service: User information is now stripped from [Events](docs/webhook_events.md) before being logged to Application Insights.  [#661](https://github.com/microsoft/onefuzz/pull/661)
  
 ### Fixed
 * Service: Handle exception related to manually deleted scalesets [#672](https://github.com/microsoft/onefuzz/pull/672)
-* Agent: Fixed rust lifetime issues exposed by an update to rust regex library [#671](https://github.com/microsoft/onefuzz/pull/671)
+* Agent: Fixed Rust lifetime issues exposed by an update to Rust regex library [#671](https://github.com/microsoft/onefuzz/pull/671)
 
 ## 2.8.0
 ### Added
