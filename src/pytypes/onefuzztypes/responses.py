@@ -55,7 +55,7 @@ class ContainerDetail(BaseResponse):
 class ContainerInfo(BaseResponse):
     sas_url: str
     name: Container
-    holds: List[ContainerHoldName]
+    holds: Optional[List[ContainerHoldName]]
     metadata: Optional[Dict[str, str]]
 
 
