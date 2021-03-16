@@ -10,7 +10,7 @@ import urllib.parse
 from typing import Dict, List, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
-from azure.core.exceptions import ResourceNotFoundError, ResourceExistsError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.mgmt.storage.models import BlobContainer, LegalHold
 from azure.storage.blob import (
     BlobClient,
@@ -21,7 +21,7 @@ from azure.storage.blob import (
     generate_blob_sas,
     generate_container_sas,
 )
-##### from memoization import cached
+from memoization import cached
 from onefuzztypes.primitives import Container, ContainerHoldName
 from onefuzztypes.responses import ContainerDetail
 
@@ -41,7 +41,7 @@ def get_url(account_name: str) -> str:
     return f"https://{account_name}.blob.core.windows.net/"
 
 
-##### @cached
+@cached
 def get_blob_service(account_id: str) -> BlobServiceClient:
     logging.debug("getting blob storage client (account_id: %s)", account_id)
     account_name, account_key = get_storage_account_name_key(account_id)
