@@ -24,7 +24,7 @@ const GENERIC_ANALYSIS: &str = "generic-analysis";
 pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     let terminal = TerminalUi::init()?;
     //let tx = terminal.task_events.clone();
-    let ui_run = tokio::spawn(terminal.run());
+
     let command_run = tokio::spawn(async move {
         match args.subcommand() {
             (RADAMSA, Some(sub)) => radamsa::run(sub).await,
@@ -42,6 +42,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
         }
     });
 
+    let ui_run = tokio::spawn(terminal.run());
     try_wait_all_join_handles(vec![ui_run, command_run]).await?;
     Ok(())
 }

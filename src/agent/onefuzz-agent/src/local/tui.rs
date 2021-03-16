@@ -5,16 +5,23 @@ use crossterm::{
     event::{self, Event, KeyCode},
     terminal::enable_raw_mode,
 };
+use futures::{StreamExt, TryStreamExt};
 use log::Level;
 use onefuzz::utils::try_wait_all_join_handles;
 use std::{
+    collections::HashMap,
     io::{self, Stdout},
+    path::PathBuf,
     sync::Arc,
     time::Duration,
 };
 use tokio::{
-    sync::{mpsc, Mutex},
+    sync::{
+        mpsc::{self, UnboundedSender},
+        Mutex,
+    },
     task::JoinHandle,
+    time::delay_for,
 };
 use tui::{
     backend::CrosstermBackend,
@@ -22,7 +29,7 @@ use tui::{
     style::{Color, Style},
     text::{Span, Spans},
     widgets::{Block, Borders},
-    widgets::{List, ListItem},
+    widgets::{List, ListItem, ListState},
     Terminal,
 };
 
@@ -35,16 +42,24 @@ const BUFFER_SIZE: usize = 100;
 const TICK_RATE: Duration = Duration::from_millis(250);
 
 pub struct TerminalUi {
-    pub task_events: Arc<Mutex<mpsc::UnboundedSender<String>>>,
-    task_event_receiver: Arc<Mutex<mpsc::UnboundedReceiver<String>>>,
-    log_event_receiver: Arc<Mutex<mpsc::UnboundedReceiver<(Level, String)>>>,
-    terminal: Mutex<Terminal<CrosstermBackend<Stdout>>>,
+    pub task_events: UnboundedSender<TerminalCommand>,
+    task_event_receiver: mpsc::UnboundedReceiver<TerminalCommand>,
+    log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
+    terminal: Terminal<CrosstermBackend<Stdout>>,
 }
 
+/// Event driving the refresh of the UI
 #[derive(Debug)]
 enum TerminalEvent {
     Input(Event),
     Tick,
+    FileCount { dir: PathBuf, count: usize },
+    MonitorDir { dir: PathBuf },
+}
+
+/// Command send to the terminal
+pub enum TerminalCommand {
+    MonitorDir { dir: PathBuf },
 }
 
 trait TakeAvailable<T> {
@@ -83,103 +98,200 @@ impl TerminalUi {
             .init();
         let stdout = io::stdout();
         let backend = CrosstermBackend::new(stdout);
-        let terminal = Mutex::new(Terminal::new(backend)?);
+        let terminal = Terminal::new(backend)?;
 
         Ok(Self {
-            task_events: Arc::new(Mutex::new(task_event_sender)),
-            task_event_receiver: Arc::new(Mutex::new(task_event_receiver)),
-            log_event_receiver: Arc::new(Mutex::new(log_event_receiver)),
+            task_events: task_event_sender,
+            task_event_receiver,
+            log_event_receiver,
             terminal,
         })
     }
 
-    fn read_events() -> (
-        mpsc::UnboundedReceiver<TerminalEvent>,
-        JoinHandle<Result<()>>,
-    ) {
-        //let mut log_data: ArrayDeque<[String; BUFFER_SIZE], Wrapping> = ArrayDeque::new();
-        let (ui_event_tx, ui_event_rx) = mpsc::unbounded_channel();
-        let join_handle: JoinHandle<Result<()>> = tokio::spawn(async move {
-            let mut interval = tokio::time::interval(TICK_RATE);
-
-            loop {
-                if event::poll(Duration::from_secs(0))? {
-                    let event = event::read()?;
-                    ui_event_tx.send(TerminalEvent::Input(event))?;
-                }
-                ui_event_tx.send(TerminalEvent::Tick)?;
-                interval.tick().await;
+    async fn read_ui_events(ui_event_tx: UnboundedSender<TerminalEvent>) -> Result<()> {
+        let mut interval = tokio::time::interval(TICK_RATE);
+        loop {
+            if event::poll(Duration::from_secs(0))? {
+                let event = event::read()?;
+                ui_event_tx.send(TerminalEvent::Input(event))?;
             }
-        });
-
-        (ui_event_rx, join_handle)
+            ui_event_tx.send(TerminalEvent::Tick)?;
+            interval.tick().await;
+        }
     }
 
-    async fn ui_loop(self, mut ui_event_rx: mpsc::UnboundedReceiver<TerminalEvent>) -> Result<()> {
-        let mut log_data: ArrayDeque<[(Level, String); BUFFER_SIZE], Wrapping> = ArrayDeque::new();
+    async fn read_commands(
+        ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
+        mut external_event_rx: mpsc::UnboundedReceiver<TerminalCommand>,
+    ) -> Result<()> {
         loop {
-            match ui_event_rx.recv().await {
-                Some(TerminalEvent::Tick) => {
-                    log_data.extend_front({
-                        let mut log_receiver = self.log_event_receiver.lock().await;
-                        log_receiver.take_available(10)?.into_iter().rev()
-                    });
-                    let _event_data = {
-                        let mut event_receiver = self.task_event_receiver.lock().await;
-                        event_receiver.take_available(10)?
-                    };
-                    self.terminal.lock().await.draw(|f| {
-                        let chunks = Layout::default()
-                            .direction(Direction::Vertical)
-                            .constraints(
-                                [Constraint::Percentage(25), Constraint::Percentage(75)].as_ref(),
-                            )
-                            .split(f.size());
-
-                        let log_items = log_data
-                            .iter()
-                            .map(|(level, log)| {
-                                let style = match level {
-                                    Level::Debug => Style::default().fg(Color::Magenta),
-                                    Level::Error => Style::default().fg(Color::Red),
-                                    Level::Warn => Style::default().fg(Color::Yellow),
-                                    Level::Info => Style::default().fg(Color::Blue),
-                                    Level::Trace => Style::default(),
-                                };
-
-                                ListItem::new(Spans::from(vec![
-                                    Span::styled(format!("{:<9}", level), style),
-                                    Span::raw(" "),
-                                    Span::raw(log),
-                                ]))
-                            })
-                            .collect::<Vec<_>>();
-
-                        let log_list = List::new(log_items)
-                            .block(Block::default().borders(Borders::ALL).title("Logs"))
-                            .start_corner(Corner::BottomLeft);
-
-                        f.render_widget(log_list, chunks[1]);
-                    })?;
+            match external_event_rx.recv().await {
+                Some(TerminalCommand::MonitorDir { dir }) => {
+                    ui_event_tx.send(TerminalEvent::MonitorDir { dir })?
                 }
-                Some(TerminalEvent::Input(Event::Key(k))) => {
-                    if k.code == KeyCode::Char('q') {
-                        break;
-                    }
-                }
-
-                _ => break,
+                None => break,
             }
         }
         Ok(())
     }
 
+    async fn monitor_file_count(path: PathBuf) -> Result<()> {
+        loop {
+            let mut rd = tokio::fs::read_dir(&path).await?;
+            let mut count: usize = 0;
+
+            while let Some(Ok(entry)) = rd.next().await {
+                if entry.path().is_file() {
+                    count = count + 1;
+                }
+            }
+
+            delay_for(Duration::from_secs(5)).await;
+        }
+    }
+
+    async fn ui_loop(
+        initial_state: UILoopState,
+        ui_event_rx: mpsc::UnboundedReceiver<TerminalEvent>,
+    ) -> Result<()> {
+        ui_event_rx
+            .map(Ok)
+            .try_fold(initial_state, |ui_state, event| async {
+                match event {
+                    TerminalEvent::Tick => {
+                        let mut logs = ui_state.logs;
+                        let mut file_count_state = ui_state.file_count_state;
+                        let file_count = ui_state.file_count;
+                        let mut log_event_receiver = ui_state.log_event_receiver;
+                        let mut terminal = ui_state.terminal;
+
+                        logs.extend_front(log_event_receiver.take_available(10)?.into_iter().rev());
+                        terminal.draw(|f| {
+                            let chunks = Layout::default()
+                                .direction(Direction::Vertical)
+                                .constraints(
+                                    [Constraint::Percentage(25), Constraint::Percentage(75)]
+                                        .as_ref(),
+                                )
+                                .split(f.size());
+
+                            let files = file_count
+                                .iter()
+                                .map(|(path, count): (&PathBuf, &usize)| {
+                                    ListItem::new(Spans::from(vec![
+                                        Span::raw(path.to_string_lossy()),
+                                        Span::raw(": "),
+                                        Span::raw(format!("{}", count)),
+                                    ]))
+                                })
+                                .collect::<Vec<_>>();
+
+                            let log_list = List::new(files)
+                                .block(Block::default().borders(Borders::ALL).title("files"))
+                                .start_corner(Corner::TopLeft);
+
+                            f.render_stateful_widget(log_list, chunks[0], &mut file_count_state);
+
+                            let log_items = logs
+                                .iter()
+                                .map(|(level, log)| {
+                                    let style = match level {
+                                        Level::Debug => Style::default().fg(Color::Magenta),
+                                        Level::Error => Style::default().fg(Color::Red),
+                                        Level::Warn => Style::default().fg(Color::Yellow),
+                                        Level::Info => Style::default().fg(Color::Blue),
+                                        Level::Trace => Style::default(),
+                                    };
+
+                                    ListItem::new(Spans::from(vec![
+                                        Span::styled(format!("{:<9}", level), style),
+                                        Span::raw(" "),
+                                        Span::raw(log),
+                                    ]))
+                                })
+                                .collect::<Vec<_>>();
+
+                            let log_list = List::new(log_items)
+                                .block(Block::default().borders(Borders::ALL).title("Logs"))
+                                .start_corner(Corner::BottomLeft);
+
+                            f.render_widget(log_list, chunks[1]);
+                        })?;
+                        Ok(UILoopState {
+                            logs,
+                            file_count_state,
+                            file_count,
+                            terminal,
+                            log_event_receiver,
+                            ..ui_state
+                        })
+                    }
+                    TerminalEvent::Input(Event::Key(k)) if k.code == KeyCode::Char('q') => {
+                        bail!("exiting")
+                    }
+                    TerminalEvent::FileCount { dir, count } => {
+                        let mut file_count = ui_state.file_count;
+                        file_count.insert(dir, count);
+                        Ok(UILoopState {
+                            file_count,
+                            ..ui_state
+                        })
+                    }
+                    TerminalEvent::MonitorDir { dir } => {
+                        let file_monitor =
+                            tokio::spawn(async { Self::monitor_file_count(dir).await });
+                        let mut file_monitors = ui_state.file_monitors;
+                        file_monitors.push(file_monitor);
+                        Ok(UILoopState {
+                            file_monitors,
+                            ..ui_state
+                        })
+                    }
+                    _ => Ok(ui_state),
+                }
+            })
+            .await?;
+
+        Ok(())
+    }
+
     pub async fn run(self) -> Result<()> {
         enable_raw_mode()?;
-        let (ui_event_rx, ui_event_handle) = Self::read_events();
-        //self.terminal.lock().await.clear()?;
-        let ui_loop = tokio::spawn(self.ui_loop(ui_event_rx));
+        let (ui_event_tx, ui_event_rx) = mpsc::unbounded_channel();
+        let ui_event_handle = tokio::spawn(Self::read_ui_events(ui_event_tx.clone()));
 
-        try_wait_all_join_handles(vec![ui_event_handle, ui_loop]).await
+        let task_event_receiver = self.task_event_receiver;
+        let external_event_handle =
+            tokio::spawn(Self::read_commands(ui_event_tx, task_event_receiver));
+        let mut terminal = self.terminal;
+        terminal.clear()?;
+        let initial_state = UILoopState::new(terminal, self.log_event_receiver);
+
+        let ui_loop = tokio::spawn(Self::ui_loop(initial_state, ui_event_rx));
+        try_wait_all_join_handles(vec![ui_event_handle, ui_loop, external_event_handle]).await
+    }
+}
+struct UILoopState {
+    pub logs: ArrayDeque<[(Level, String); BUFFER_SIZE], Wrapping>,
+    pub file_count: HashMap<PathBuf, usize>,
+    pub file_count_state: ListState,
+    pub file_monitors: Vec<JoinHandle<Result<()>>>,
+    pub log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
+    pub terminal: Terminal<CrosstermBackend<Stdout>>,
+}
+
+impl UILoopState {
+    fn new(
+        terminal: Terminal<CrosstermBackend<Stdout>>,
+        log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
+    ) -> Self {
+        Self {
+            log_event_receiver,
+            logs: Default::default(),
+            file_count: Default::default(),
+            file_count_state: Default::default(),
+            file_monitors: Default::default(),
+            terminal,
+        }
     }
 }
