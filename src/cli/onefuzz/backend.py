@@ -38,6 +38,8 @@ from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
 
+from .azcopy import azcopy_sync
+
 _ACCESSTOKENCACHE_UMASK = 0o077
 
 ONEFUZZ_BASE_PATH = os.path.join("~", ".cache", "onefuzz")
@@ -215,6 +217,7 @@ class Backend:
 
         LOGGER.info("Interactive device authentication succeeded")
         print("Login succeeded", flush=True)
+        self.save_cache()
         return access_token
 
     def request(
@@ -294,6 +297,7 @@ def before_sleep(
 class ContainerWrapper:
     def __init__(self, container_url: str) -> None:
         self.client = ContainerClient.from_container_url(container_url)
+        self.container_url = container_url
 
     @retry(
         stop=stop_after_attempt(10),
@@ -319,6 +323,12 @@ class ContainerWrapper:
             if os.path.isfile(path):
                 blob_name = os.path.relpath(path, start=dir_path)
                 self.upload_file(path, blob_name)
+
+    def download_dir(self, dir_path: str) -> None:
+        # security note: the src for azcopy comes from the server which is
+        # trusted in this context, while the destination is provided by the
+        # user
+        azcopy_sync(self.container_url, dir_path)
 
     @retry(
         stop=stop_after_attempt(10),

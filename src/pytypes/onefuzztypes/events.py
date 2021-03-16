@@ -5,12 +5,12 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Union
+from typing import List, Optional, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Extra, Field
 
-from .enums import OS, Architecture, NodeState, TaskState
+from .enums import OS, Architecture, NodeState, TaskState, TaskType
 from .models import AutoScaleConfig, Error, JobConfig, Report, TaskConfig, UserInfo
 from .primitives import Container, PoolName, Region
 from .responses import BaseResponse
@@ -25,6 +25,7 @@ class EventTaskStopped(BaseEvent):
     job_id: UUID
     task_id: UUID
     user_info: Optional[UserInfo]
+    config: TaskConfig
 
 
 class EventTaskFailed(BaseEvent):
@@ -32,6 +33,7 @@ class EventTaskFailed(BaseEvent):
     task_id: UUID
     error: Error
     user_info: Optional[UserInfo]
+    config: TaskConfig
 
 
 class EventJobCreated(BaseEvent):
@@ -40,10 +42,17 @@ class EventJobCreated(BaseEvent):
     user_info: Optional[UserInfo]
 
 
+class JobTaskStopped(BaseModel):
+    task_id: UUID
+    task_type: TaskType
+    error: Optional[Error]
+
+
 class EventJobStopped(BaseEvent):
     job_id: UUID
     config: JobConfig
     user_info: Optional[UserInfo]
+    task_info: Optional[List[JobTaskStopped]]
 
 
 class EventTaskCreated(BaseEvent):
@@ -58,6 +67,13 @@ class EventTaskStateUpdated(BaseEvent):
     task_id: UUID
     state: TaskState
     end_time: Optional[datetime]
+    config: TaskConfig
+
+
+class EventTaskHeartbeat(BaseEvent):
+    job_id: UUID
+    task_id: UUID
+    config: TaskConfig
 
 
 class EventPing(BaseResponse):
@@ -115,6 +131,12 @@ class EventNodeCreated(BaseEvent):
     pool_name: PoolName
 
 
+class EventNodeHeartbeat(BaseEvent):
+    machine_id: UUID
+    scaleset_id: Optional[UUID]
+    pool_name: PoolName
+
+
 class EventNodeDeleted(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
@@ -145,6 +167,7 @@ Event = Union[
     EventNodeStateUpdated,
     EventNodeCreated,
     EventNodeDeleted,
+    EventNodeHeartbeat,
     EventPing,
     EventPoolCreated,
     EventPoolDeleted,
@@ -158,6 +181,7 @@ Event = Union[
     EventTaskStateUpdated,
     EventTaskCreated,
     EventTaskStopped,
+    EventTaskHeartbeat,
     EventCrashReported,
     EventFileAdded,
 ]
@@ -184,6 +208,8 @@ class EventType(Enum):
     task_stopped = "task_stopped"
     crash_reported = "crash_reported"
     file_added = "file_added"
+    task_heartbeat = "task_heartbeat"
+    node_heartbeat = "node_heartbeat"
 
 
 EventTypeMap = {
@@ -192,6 +218,7 @@ EventTypeMap = {
     EventType.node_created: EventNodeCreated,
     EventType.node_deleted: EventNodeDeleted,
     EventType.node_state_updated: EventNodeStateUpdated,
+    EventType.node_heartbeat: EventNodeHeartbeat,
     EventType.ping: EventPing,
     EventType.pool_created: EventPoolCreated,
     EventType.pool_deleted: EventPoolDeleted,
@@ -204,6 +231,7 @@ EventTypeMap = {
     EventType.task_created: EventTaskCreated,
     EventType.task_failed: EventTaskFailed,
     EventType.task_state_updated: EventTaskStateUpdated,
+    EventType.task_heartbeat: EventTaskHeartbeat,
     EventType.task_stopped: EventTaskStopped,
     EventType.crash_reported: EventCrashReported,
     EventType.file_added: EventFileAdded,
@@ -223,3 +251,5 @@ class EventMessage(BaseEvent):
     event_id: UUID = Field(default_factory=uuid4)
     event_type: EventType
     event: Event
+    instance_id: UUID
+    instance_name: str

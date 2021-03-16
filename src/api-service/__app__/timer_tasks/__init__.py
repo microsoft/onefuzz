@@ -38,6 +38,8 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
 
     schedule_tasks()
 
+    Job.stop_never_started_jobs()
+
     events = get_events()
     if events:
         dashboard.set(events)
