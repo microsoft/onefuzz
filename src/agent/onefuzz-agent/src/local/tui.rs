@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::local::common::UiEvent;
+use anyhow::Result;
 use crossterm::{
     event::{self, Event, KeyCode},
     terminal::enable_raw_mode,
@@ -9,6 +11,7 @@ use futures::{StreamExt, TryStreamExt};
 use log::Level;
 use onefuzz::utils::try_wait_all_join_handles;
 use std::{
+    cmp::Ordering,
     collections::HashMap,
     io::{self, Stdout},
     path::PathBuf,
@@ -21,7 +24,6 @@ use tokio::{
         Mutex,
     },
     task::JoinHandle,
-    time::delay_for,
 };
 use tui::{
     backend::CrosstermBackend,
@@ -33,17 +35,36 @@ use tui::{
     Terminal,
 };
 
-use anyhow::Result;
-
 use arraydeque::{ArrayDeque, Wrapping};
 use async_trait::async_trait;
+use thiserror;
+
+#[derive(Debug, thiserror::Error)]
+enum UILoopError {
+    #[error("program exiting")]
+    Exit,
+    #[error("error")]
+    Anyhow(anyhow::Error),
+}
+
+impl From<anyhow::Error> for UILoopError {
+    fn from(e: anyhow::Error) -> Self {
+        Self::Anyhow(e)
+    }
+}
+
+impl From<std::io::Error> for UILoopError {
+    fn from(e: std::io::Error) -> Self {
+        Self::Anyhow(e.into())
+    }
+}
 
 const BUFFER_SIZE: usize = 100;
 const TICK_RATE: Duration = Duration::from_millis(250);
 
 pub struct TerminalUi {
-    pub task_events: UnboundedSender<TerminalCommand>,
-    task_event_receiver: mpsc::UnboundedReceiver<TerminalCommand>,
+    pub task_events: UnboundedSender<UiEvent>,
+    task_event_receiver: mpsc::UnboundedReceiver<UiEvent>,
     log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
     terminal: Terminal<CrosstermBackend<Stdout>>,
 }
@@ -54,12 +75,6 @@ enum TerminalEvent {
     Input(Event),
     Tick,
     FileCount { dir: PathBuf, count: usize },
-    MonitorDir { dir: PathBuf },
-}
-
-/// Command send to the terminal
-pub enum TerminalCommand {
-    MonitorDir { dir: PathBuf },
 }
 
 trait TakeAvailable<T> {
@@ -122,12 +137,12 @@ impl TerminalUi {
 
     async fn read_commands(
         ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
-        mut external_event_rx: mpsc::UnboundedReceiver<TerminalCommand>,
+        mut external_event_rx: mpsc::UnboundedReceiver<UiEvent>,
     ) -> Result<()> {
         loop {
             match external_event_rx.recv().await {
-                Some(TerminalCommand::MonitorDir { dir }) => {
-                    ui_event_tx.send(TerminalEvent::MonitorDir { dir })?
+                Some(UiEvent::FileCount { dir, count }) => {
+                    ui_event_tx.send(TerminalEvent::FileCount { dir, count })?
                 }
                 None => break,
             }
@@ -135,26 +150,11 @@ impl TerminalUi {
         Ok(())
     }
 
-    async fn monitor_file_count(path: PathBuf) -> Result<()> {
-        loop {
-            let mut rd = tokio::fs::read_dir(&path).await?;
-            let mut count: usize = 0;
-
-            while let Some(Ok(entry)) = rd.next().await {
-                if entry.path().is_file() {
-                    count = count + 1;
-                }
-            }
-
-            delay_for(Duration::from_secs(5)).await;
-        }
-    }
-
     async fn ui_loop(
         initial_state: UILoopState,
         ui_event_rx: mpsc::UnboundedReceiver<TerminalEvent>,
     ) -> Result<()> {
-        ui_event_rx
+        let loop_result = ui_event_rx
             .map(Ok)
             .try_fold(initial_state, |ui_state, event| async {
                 match event {
@@ -175,11 +175,27 @@ impl TerminalUi {
                                 )
                                 .split(f.size());
 
-                            let files = file_count
+                            let mut sorted_file_count = file_count.iter().collect::<Vec<_>>();
+
+                            sorted_file_count.sort_by(|(p1, _), (p2, _)| {
+                                if p1 == p2 {
+                                    Ordering::Equal
+                                } else if p1 > p2 {
+                                    Ordering::Greater
+                                } else {
+                                    Ordering::Less
+                                }
+                            });
+
+                            let files = sorted_file_count
                                 .iter()
-                                .map(|(path, count): (&PathBuf, &usize)| {
+                                .map(|(path, count)| {
                                     ListItem::new(Spans::from(vec![
-                                        Span::raw(path.to_string_lossy()),
+                                        Span::raw(
+                                            path.file_name()
+                                                .map(|f| f.to_string_lossy())
+                                                .unwrap_or_default(),
+                                        ),
                                         Span::raw(": "),
                                         Span::raw(format!("{}", count)),
                                     ]))
@@ -227,7 +243,9 @@ impl TerminalUi {
                         })
                     }
                     TerminalEvent::Input(Event::Key(k)) if k.code == KeyCode::Char('q') => {
-                        bail!("exiting")
+                        Err(UILoopError::Exit)
+
+                        //bail!(UILoopError::Exit)
                     }
                     TerminalEvent::FileCount { dir, count } => {
                         let mut file_count = ui_state.file_count;
@@ -237,22 +255,14 @@ impl TerminalUi {
                             ..ui_state
                         })
                     }
-                    TerminalEvent::MonitorDir { dir } => {
-                        let file_monitor =
-                            tokio::spawn(async { Self::monitor_file_count(dir).await });
-                        let mut file_monitors = ui_state.file_monitors;
-                        file_monitors.push(file_monitor);
-                        Ok(UILoopState {
-                            file_monitors,
-                            ..ui_state
-                        })
-                    }
                     _ => Ok(ui_state),
                 }
             })
-            .await?;
-
-        Ok(())
+            .await;
+        match loop_result {
+            Err(UILoopError::Exit) | Ok(_) => Ok(()),
+            Err(UILoopError::Anyhow(e)) => Err(e),
+        }
     }
 
     pub async fn run(self) -> Result<()> {
@@ -266,11 +276,11 @@ impl TerminalUi {
         let mut terminal = self.terminal;
         terminal.clear()?;
         let initial_state = UILoopState::new(terminal, self.log_event_receiver);
-
         let ui_loop = tokio::spawn(Self::ui_loop(initial_state, ui_event_rx));
         try_wait_all_join_handles(vec![ui_event_handle, ui_loop, external_event_handle]).await
     }
 }
+
 struct UILoopState {
     pub logs: ArrayDeque<[(Level, String); BUFFER_SIZE], Wrapping>,
     pub file_count: HashMap<PathBuf, usize>,

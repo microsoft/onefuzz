@@ -32,6 +32,7 @@ path-absolutize = "3.0.6"
 reqwest-retry = { path = "../reqwest-retry" }
 storage-queue = { path = "../storage-queue" }
 tempfile = "3.2"
+thiserror = "1.0"
 tokio = { version = "0.2", features = ["full"] }
 tokio-util = { version = "0.3", features = ["full"] }
 tokio-stream = "0.1.3"

@@ -23,12 +23,11 @@ const GENERIC_ANALYSIS: &str = "generic-analysis";
 
 pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     let terminal = TerminalUi::init()?;
-    //let tx = terminal.task_events.clone();
-
+    let event_sender = terminal.task_events.clone();
     let command_run = tokio::spawn(async move {
         match args.subcommand() {
             (RADAMSA, Some(sub)) => radamsa::run(sub).await,
-            (LIBFUZZER, Some(sub)) => libfuzzer::run(sub).await,
+            (LIBFUZZER, Some(sub)) => libfuzzer::run(sub, event_sender).await,
             (LIBFUZZER_FUZZ, Some(sub)) => libfuzzer_fuzz::run(sub).await,
             (LIBFUZZER_COVERAGE, Some(sub)) => libfuzzer_coverage::run(sub).await,
             (LIBFUZZER_CRASH_REPORT, Some(sub)) => libfuzzer_crash_report::run(sub).await,

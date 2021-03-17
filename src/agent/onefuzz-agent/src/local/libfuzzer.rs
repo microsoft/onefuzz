@@ -4,8 +4,8 @@
 use crate::{
     local::{
         common::{
-            build_local_context, wait_for_dir, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR,
-            UNIQUE_REPORTS_DIR,
+            build_local_context, monitor_file_urls, spawn_file_count_monitor, wait_for_dir,
+            DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR, UNIQUE_REPORTS_DIR,
         },
         generic_analysis::build_analysis_config,
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
@@ -23,12 +23,27 @@ use clap::{App, SubCommand};
 
 use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
-use tokio::task::spawn;
+use tokio::{sync::mpsc::UnboundedSender, task::spawn};
+use tokio_stream::iter;
 use uuid::Uuid;
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
+use super::common::UiEvent;
+
+pub async fn run(
+    args: &clap::ArgMatches<'_>,
+    event_sender: UnboundedSender<UiEvent>,
+) -> Result<()> {
+    let mut task_handles = vec![];
     let context = build_local_context(args)?;
     let fuzz_config = build_fuzz_config(args, context.common_config.clone())?;
+
+    task_handles.append(&mut monitor_file_urls(
+        &[
+            fuzz_config.crashes.url.as_file_path(),
+            fuzz_config.inputs.url.as_file_path(),
+        ],
+        event_sender.clone(),
+    ));
     let crash_dir = fuzz_config
         .crashes
         .url
@@ -37,13 +52,13 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
     let fuzzer = LibFuzzerFuzzTask::new(fuzz_config)?;
     fuzzer.check_libfuzzer().await?;
-    let mut task_handles = vec![];
 
     let fuzz_task = spawn(async move { fuzzer.managed_run().await });
 
     wait_for_dir(&crash_dir).await?;
 
     task_handles.push(fuzz_task);
+
     if args.is_present(UNIQUE_REPORTS_DIR) {
         let crash_report_input_monitor =
             DirectoryMonitorQueue::start_monitoring(crash_dir.clone()).await?;
@@ -56,8 +71,27 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
                 ..context.common_config.clone()
             },
         )?;
+        task_handles.append(&mut monitor_file_urls(
+            &[
+                report_config
+                    .no_repro
+                    .clone()
+                    .and_then(|u| u.url.as_file_path()),
+                report_config
+                    .reports
+                    .clone()
+                    .and_then(|u| u.url.as_file_path()),
+                report_config
+                    .unique_reports
+                    .clone()
+                    .and_then(|u| u.url.as_file_path()),
+            ],
+            event_sender.clone(),
+        ));
+
         let mut report = ReportTask::new(report_config);
         let report_task = spawn(async move { report.managed_run().await });
+
         task_handles.push(report_task);
         task_handles.push(crash_report_input_monitor.handle);
     }

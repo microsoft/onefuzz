@@ -1741,6 +1741,7 @@ dependencies = [
  "serde_json",
  "storage-queue",
  "tempfile",
+ "thiserror",
  "tokio 0.2.25",
  "tokio-stream",
  "tokio-util",
@@ -2851,7 +2852,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8190d04c665ea9e6b6a0dc45523ade572c088d2e6566244c1122671dbf4ae3a"
 dependencies = [
  "autocfg",
- "pin-project-lite 0.2.5",
+ "pin-project-lite 0.2.6",
 ]
 
 [[package]]
@@ -2872,7 +2873,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1981ad97df782ab506a1f43bf82c967326960d278acf3bf8279809648c3ff3ea"
 dependencies = [
  "futures-core",
- "pin-project-lite 0.2.5",
+ "pin-project-lite 0.2.6",
  "tokio 1.2.0",
 ]
 

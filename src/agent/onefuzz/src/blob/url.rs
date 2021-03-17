@@ -163,6 +163,12 @@ impl BlobContainerUrl {
     }
 }
 
+impl AsRef<Url> for BlobContainerUrl {
+    fn as_ref(&self) -> &Url {
+        self.url()
+    }
+}
+
 impl fmt::Debug for BlobContainerUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", redact_query_sas_sig(self.url()))

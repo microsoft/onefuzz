@@ -3,7 +3,7 @@
 
 use crate::{
     local::{
-        common::{build_local_context, DirectoryMonitorQueue},
+        common::{build_local_context, DirectoryMonitorQueue, UiEvent},
         generic_crash_report::{build_report_config, build_shared_args as build_crash_args},
         generic_generator::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
@@ -14,6 +14,7 @@ use clap::{App, SubCommand};
 use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
 use tokio::task::spawn;
+
 use uuid::Uuid;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {

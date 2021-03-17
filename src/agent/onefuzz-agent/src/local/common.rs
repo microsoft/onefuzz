@@ -12,6 +12,8 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
+use tokio::stream::StreamExt;
+use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle, time::delay_for};
 use uuid::Uuid;
 
 use path_absolutize::Absolutize;
@@ -71,7 +73,9 @@ pub struct LocalContext {
 impl Drop for LocalContext {
     fn drop(&mut self) {
         if self.cleanup_on_drop {
-            std::fs::remove_dir_all(&self.job_path).unwrap();
+            if self.job_path.exists() {
+                std::fs::remove_dir_all(&self.job_path).unwrap();
+            }
         }
     }
 }
@@ -292,4 +296,45 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
         op,
     )
     .await
+}
+
+pub fn spawn_file_count_monitor(
+    dir: PathBuf,
+    sender: UnboundedSender<UiEvent>,
+) -> JoinHandle<Result<()>> {
+    tokio::spawn(async move {
+        wait_for_dir(&dir).await?;
+
+        loop {
+            let mut rd = tokio::fs::read_dir(&dir).await?;
+            let mut count: usize = 0;
+
+            while let Some(Ok(entry)) = rd.next().await {
+                if entry.path().is_file() {
+                    count = count + 1;
+                }
+            }
+
+            sender.send(UiEvent::FileCount {
+                dir: dir.clone(),
+                count,
+            })?;
+            delay_for(Duration::from_secs(5)).await;
+        }
+    })
+}
+
+pub fn monitor_file_urls(
+    urls: &[Option<impl AsRef<Path>>],
+    event_sender: UnboundedSender<UiEvent>,
+) -> Vec<JoinHandle<Result<()>>> {
+    urls.iter()
+        .filter_map(|x| x.as_ref())
+        .map(|path| spawn_file_count_monitor(path.as_ref().into(), event_sender.clone()))
+        .collect::<Vec<_>>()
+}
+
+#[derive(Debug)]
+pub enum UiEvent {
+    FileCount { dir: PathBuf, count: usize },
 }
