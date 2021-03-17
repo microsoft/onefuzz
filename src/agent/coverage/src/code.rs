@@ -195,6 +195,16 @@ impl ModuleIndex {
             symbols,
         })
     }
+
+    #[cfg(target_os = "windows")]
+    pub fn index_pe(path: ModulePath, pe: &goblin::pe::PE) -> Self {
+        let base_va = pe.image_base as u64;
+
+        // Not yet implemented.
+        let symbols = SymbolIndex::default();
+
+        Self { path, base_va, symbols }
+    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]

@@ -10,10 +10,7 @@ mod intel;
 pub mod pe;
 
 pub mod block;
-
-#[cfg(target_os = "linux")]
 pub mod cache;
-
 pub mod code;
 pub mod demangle;
 
