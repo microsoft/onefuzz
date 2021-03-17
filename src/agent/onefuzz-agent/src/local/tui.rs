@@ -125,11 +125,9 @@ impl TerminalUi {
         loop {
             if event::poll(Duration::from_secs(0))? {
                 let event = event::read()?;
-                ui_event_tx
-                    .send(TerminalEvent::Input(event))?;
+                ui_event_tx.send(TerminalEvent::Input(event))?;
             } else {
-                ui_event_tx
-                    .send(TerminalEvent::Tick)?;
+                ui_event_tx.send(TerminalEvent::Tick)?;
                 interval.tick().await;
             }
         }
@@ -325,7 +323,12 @@ impl TerminalUi {
 
         let (ui_event_tx, ui_event_rx) = mpsc::unbounded_channel();
         let ui_event_tx_clone = ui_event_tx.clone();
-        let ui_event_handle = tokio::spawn(async { Self::read_ui_events(ui_event_tx_clone).await.context("reading Events")? ; Ok(()) });
+        let ui_event_handle = tokio::spawn(async {
+            Self::read_ui_events(ui_event_tx_clone)
+                .await
+                .context("reading Events")?;
+            Ok(())
+        });
 
         let task_event_receiver = self.task_event_receiver;
         let external_event_handle =
@@ -333,7 +336,9 @@ impl TerminalUi {
         terminal.clear()?;
         let initial_state = UILoopState::new(terminal, self.log_event_receiver);
         let ui_loop = tokio::spawn(Self::ui_loop(initial_state, ui_event_rx));
-        try_wait_all_join_handles(vec![ui_event_handle, ui_loop, external_event_handle]).await.context("***** run handle")
+        try_wait_all_join_handles(vec![ui_event_handle, ui_loop, external_event_handle])
+            .await
+            .context("***** run handle")
     }
 }
 
