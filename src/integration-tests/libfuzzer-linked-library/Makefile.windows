@@ -1,0 +1,23 @@
+CC=clang
+
+.PHONY: all clean test
+
+all: fuzz.exe
+
+CFLAGS=-g3 -fsanitize=address
+
+fuzz.exe: main.o bad1.dll bad2.dll
+	$(CC) -fsanitize=fuzzer,address main.o -o fuzz.exe -L. -lbad1 -lbad2
+
+bad1.dll: bad1.o
+	$(CC) $(CFLAGS) -shared -o bad1.dll bad1.o
+
+bad2.dll: bad2.o
+	$(CC) $(CFLAGS) -shared -o bad2.dll bad2.o
+
+
+test: all
+	LD_LIBRARY_PATH=. ./fuzz.exe
+
+clean:
+	rm -f *.dll *.exe *.exp *.pdb *.o *.lib
