@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::{
+    env::{get_path_with_directory, PATH},
     expand::Expand,
     input_tester::{TestResult, Tester},
 };
@@ -50,6 +51,7 @@ impl<'a> LibFuzzer<'a> {
         let mut cmd = Command::new(&self.exe);
 
         cmd.kill_on_drop(true)
+            .env(PATH, get_path_with_directory(&self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
@@ -100,6 +102,7 @@ impl<'a> LibFuzzer<'a> {
 
         let mut cmd = Command::new(&self.exe);
         cmd.kill_on_drop(true)
+            .env(PATH, get_path_with_directory(&self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdout(Stdio::null())
             .stderr(Stdio::piped());
@@ -181,6 +184,7 @@ impl<'a> LibFuzzer<'a> {
         let mut cmd = Command::new(&self.exe);
 
         cmd.kill_on_drop(true)
+            .env(PATH, get_path_with_directory(&self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
