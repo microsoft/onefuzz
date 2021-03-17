@@ -3,22 +3,14 @@
 
 use anyhow::{Context, Result};
 use futures::StreamExt;
-use onefuzz::{
-    asan::AsanLog,
-    blob::{BlobClient, BlobUrl},
-    fs::exists,
-    monitor::DirectoryMonitor,
-    syncdir::SyncedDir,
-};
+use onefuzz::{asan::AsanLog, blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use onefuzz_telemetry::{
     Event::{new_report, new_unable_to_reproduce, new_unique_report},
     EventData,
 };
-use reqwest::{StatusCode, Url};
-use reqwest_retry::SendRetry;
+
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use tokio::fs;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -66,41 +58,12 @@ pub enum CrashTestResult {
     NoRepro(NoCrash),
 }
 
-// Conditionally upload a report, if it would not be a duplicate.
-async fn upload<T: Serialize>(report: &T, url: Url) -> Result<bool> {
-    let blob = BlobClient::new();
-    let result = blob
-        .put(url)
-        .json(report)
-        // Conditional PUT, only if-not-exists.
-        // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
-        .header("If-None-Match", "*")
-        .send_retry_default()
-        .await?;
-    Ok(result.status() == StatusCode::CREATED)
-}
-
 async fn upload_or_save_local<T: Serialize>(
     report: &T,
     dest_name: &str,
     container: &SyncedDir,
 ) -> Result<bool> {
-    match &container.url {
-        Some(blob_url) => {
-            let url = blob_url.blob(dest_name).url();
-            upload(report, url).await
-        }
-        None => {
-            let path = container.path.join(dest_name);
-            if !exists(&path).await? {
-                let data = serde_json::to_vec(&report)?;
-                fs::write(path, data).await?;
-                Ok(true)
-            } else {
-                Ok(false)
-            }
-        }
-    }
+    container.upload(dest_name, report).await
 }
 
 impl CrashTestResult {
@@ -143,8 +106,8 @@ impl CrashTestResult {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InputBlob {
-    pub account: String,
-    pub container: String,
+    pub account: Option<String>,
+    pub container: Option<String>,
     pub name: String,
 }
 
