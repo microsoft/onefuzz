@@ -60,7 +60,7 @@ mod tests {
         assert_eq!(buf.write(&[]), Ok(0));
         assert_eq!(buf.data(), &[1, 2, 3]);
 
-        assert_eq!(buf.write(&[4, 5]), Ok(2));        
+        assert_eq!(buf.write(&[4, 5]), Ok(2));
         assert_eq!(buf.data(), &[1, 2, 3, 4, 5]);
 
         assert_eq!(buf.write(&[6, 7, 8]), Ok(3));
