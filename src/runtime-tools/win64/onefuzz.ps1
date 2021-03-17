@@ -149,3 +149,13 @@ function Set-Restart {
   $config.restart = 'true'
   Write-OnefuzzConfig($config)
 }
+
+function Install-VCRedist {
+  log "Installing VC Redist"
+  $x64Release = 'https://aka.ms/vs/15/release/VC_redist.x64.exe'
+  $x86Release = 'https://aka.ms/vs/15/release/VC_redist.x86.exe'
+  Invoke-WebRequest -Uri $x64Release -OutFile "C:\onefuzz\vcredist_x64.exe"
+  Invoke-WebRequest -Uri $x86Release -OutFile "C:\onefuzz\vcredist_x86.exe"
+  C:\onefuzz\vcredist_x64.exe /install /q /norestart
+  C:\onefuzz\vcredist_x86.exe /install /q /norestart
+}
