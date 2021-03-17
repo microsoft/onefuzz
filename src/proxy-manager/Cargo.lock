@@ -1377,7 +1377,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "backoff",
- "log",
+ "onefuzz-telemetry",
  "reqwest",
 ]
 
