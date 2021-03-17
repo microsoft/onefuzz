@@ -200,7 +200,7 @@ impl Config {
                     .await
             }
             Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
-            Config::GenericAnalysis(config) => analysis::generic::spawn(config).await,
+            Config::GenericAnalysis(config) => analysis::generic::run(config).await,
             Config::GenericGenerator(config) => {
                 fuzz::generator::GeneratorTask::new(config).run().await
             }

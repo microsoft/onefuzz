@@ -10,17 +10,14 @@ use crate::tasks::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use futures::stream::StreamExt;
-use onefuzz::{
-    blob::BlobUrl, input_tester::Tester, monitor::DirectoryMonitor, sha256, syncdir::SyncedDir,
-};
+use onefuzz::{blob::BlobUrl, input_tester::Tester, sha256, syncdir::SyncedDir};
 use reqwest::Url;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-use storage_queue::Message;
+use storage_queue::{Message, QueueClient};
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
@@ -33,7 +30,7 @@ pub struct Config {
     #[serde(default)]
     pub target_env: HashMap<String, String>,
 
-    pub input_queue: Option<Url>,
+    pub input_queue: Option<QueueClient>,
     pub crashes: Option<SyncedDir>,
     pub reports: Option<SyncedDir>,
     pub unique_reports: Option<SyncedDir>,
@@ -66,30 +63,6 @@ impl ReportTask {
         Self { config, poller }
     }
 
-    pub async fn local_run(&self) -> Result<()> {
-        let mut processor = GenericReportProcessor::new(&self.config, None);
-
-        info!("Starting generic crash report task");
-        let crashes = match &self.config.crashes {
-            Some(x) => x,
-            None => bail!("missing crashes directory"),
-        };
-
-        let mut read_dir = tokio::fs::read_dir(&crashes.path).await?;
-        while let Some(crash) = read_dir.next().await {
-            processor.process(None, &crash?.path()).await?;
-        }
-
-        if self.config.check_queue {
-            let mut monitor = DirectoryMonitor::new(&crashes.path);
-            monitor.start()?;
-            while let Some(crash) = monitor.next().await {
-                processor.process(None, &crash).await?;
-            }
-        }
-        Ok(())
-    }
-
     pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting generic crash report task");
         let heartbeat_client = self.config.common.init_heartbeat().await?;
@@ -103,7 +76,7 @@ impl ReportTask {
         info!("processing crashes from queue");
         if self.config.check_queue {
             if let Some(queue) = &self.config.input_queue {
-                let callback = CallbackImpl::new(queue.clone(), processor);
+                let callback = CallbackImpl::new(queue.clone(), processor)?;
                 self.poller.run(callback).await?;
             }
         }

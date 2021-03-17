@@ -64,10 +64,8 @@ impl GeneratorTask {
     pub async fn run(&self) -> Result<()> {
         self.config.crashes.init().await?;
         if let Some(tools) = &self.config.tools {
-            if tools.url.is_some() {
-                tools.init_pull().await?;
-                set_executable(&tools.path).await?;
-            }
+            tools.init_pull().await?;
+            set_executable(&tools.path).await?;
         }
 
         let hb_client = self.config.common.init_heartbeat().await?;
@@ -207,17 +205,18 @@ mod tests {
     async fn test_radamsa_linux() -> anyhow::Result<()> {
         use super::{Config, GeneratorTask};
         use crate::tasks::config::CommonConfig;
+        use onefuzz::blob::BlobContainerUrl;
         use onefuzz::syncdir::SyncedDir;
+        use reqwest::Url;
         use std::collections::HashMap;
         use std::env;
-        use std::path::Path;
         use tempfile::tempdir;
 
         let crashes_temp = tempfile::tempdir()?;
-        let crashes = crashes_temp.path();
+        let crashes: &std::path::Path = crashes_temp.path();
 
-        let inputs_temp = tempfile::tempdir().unwrap();
-        let inputs = inputs_temp.path();
+        let inputs_temp = tempfile::tempdir()?;
+        let inputs: &std::path::Path = inputs_temp.path();
         let input_file = inputs.join("seed.txt");
         tokio::fs::write(input_file, "test").await?;
 
@@ -234,23 +233,26 @@ mod tests {
         .collect();
 
         let radamsa_path = env::var("ONEFUZZ_TEST_RADAMSA_LINUX")?;
-        let radamsa_as_path = Path::new(&radamsa_path);
+        let radamsa_as_path = std::path::Path::new(&radamsa_path);
         let radamsa_dir = radamsa_as_path.parent().unwrap();
 
+        let readonly_inputs_local = tempfile::tempdir().unwrap().path().into();
+        let crashes_local = tempfile::tempdir().unwrap().path().into();
+        let tools_local = tempfile::tempdir().unwrap().path().into();
         let config = Config {
             generator_exe: String::from("{tools_dir}/radamsa"),
             generator_options,
             readonly_inputs: vec![SyncedDir {
-                path: inputs.to_path_buf(),
-                url: None,
+                path: readonly_inputs_local,
+                url: BlobContainerUrl::parse(Url::from_directory_path(inputs).unwrap())?,
             }],
             crashes: SyncedDir {
-                path: crashes.to_path_buf(),
-                url: None,
+                path: crashes_local,
+                url: BlobContainerUrl::parse(Url::from_directory_path(crashes).unwrap())?,
             },
             tools: Some(SyncedDir {
-                path: radamsa_dir.to_path_buf(),
-                url: None,
+                path: tools_local,
+                url: BlobContainerUrl::parse(Url::from_directory_path(radamsa_dir).unwrap())?,
             }),
             target_exe: Default::default(),
             target_env: Default::default(),

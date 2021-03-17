@@ -6,12 +6,14 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use futures::stream::StreamExt;
-use onefuzz::{az_copy, blob::url::BlobUrl};
+use onefuzz::{az_copy, blob::url::BlobUrl, fs::SyncPath};
 use onefuzz::{
-    expand::Expand, fs::set_executable, fs::OwnedDir, jitter::delay_with_jitter,
-    process::monitor_process, syncdir::SyncedDir,
+    expand::Expand,
+    fs::{copy, set_executable, OwnedDir},
+    jitter::delay_with_jitter,
+    process::monitor_process,
+    syncdir::SyncedDir,
 };
-use reqwest::Url;
 use serde::Deserialize;
 use std::process::Stdio;
 use std::{
@@ -31,7 +33,7 @@ pub struct Config {
 
     pub target_exe: PathBuf,
     pub target_options: Vec<String>,
-    pub input_queue: Option<Url>,
+    pub input_queue: Option<QueueClient>,
     pub crashes: Option<SyncedDir>,
 
     pub analysis: SyncedDir,
@@ -45,7 +47,7 @@ pub struct Config {
     pub common: CommonConfig,
 }
 
-pub async fn spawn(config: Config) -> Result<()> {
+pub async fn run(config: Config) -> Result<()> {
     let tmp_dir = PathBuf::from(format!("./{}/tmp", config.common.task_id));
     let tmp = OwnedDir::new(tmp_dir);
     tmp.reset().await?;
@@ -120,9 +122,8 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
 
 async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
     let result = if let Some(crashes) = &config.crashes {
-        let url = crashes.try_url()?;
-        url.account() == input.account()
-            && url.container() == input.container()
+        crashes.url.account() == input.account()
+            && crashes.url.container() == input.container()
             && crashes.path.join(input.name()).exists()
     } else {
         false
@@ -137,13 +138,13 @@ async fn poll_inputs(
     reports_dir: &Option<PathBuf>,
 ) -> Result<()> {
     let heartbeat = config.common.init_heartbeat().await?;
-    if let Some(queue) = &config.input_queue {
-        let mut input_queue = QueueClient::new(queue.clone());
-
+    if let Some(input_queue) = &config.input_queue {
         loop {
             heartbeat.alive();
             if let Some(message) = input_queue.pop().await? {
-                let input_url = match BlobUrl::parse(str::from_utf8(message.data())?) {
+                let input_url = message.parse(|data| BlobUrl::parse(str::from_utf8(data)?));
+
+                let input_url = match input_url {
                     Ok(url) => url,
                     Err(err) => {
                         error!("could not parse input URL from queue message: {}", err);
@@ -152,15 +153,12 @@ async fn poll_inputs(
                 };
 
                 if !already_checked(&config, &input_url).await? {
-                    let file_name = input_url.name();
-                    let mut destination_path = PathBuf::from(tmp_dir.path());
-                    destination_path.push(file_name);
-                    az_copy::copy(input_url.url().as_ref(), &destination_path, false).await?;
+                    let destination_path = _copy(input_url, &tmp_dir).await?;
 
                     run_tool(destination_path, &config, &reports_dir).await?;
                     config.analysis.sync_push().await?
                 }
-                input_queue.delete(message).await?;
+                message.delete().await?;
             } else {
                 warn!("no new candidate inputs found, sleeping");
                 delay_with_jitter(EMPTY_QUEUE_DELAY).await;
@@ -169,6 +167,26 @@ async fn poll_inputs(
     }
 
     Ok(())
+}
+
+async fn _copy(input_url: BlobUrl, destination_folder: &OwnedDir) -> Result<PathBuf> {
+    let file_name = input_url.name();
+    let mut destination_path = PathBuf::from(destination_folder.path());
+    destination_path.push(file_name);
+    match input_url {
+        BlobUrl::AzureBlob(input_url) => {
+            az_copy::copy(input_url.as_ref(), destination_path.clone(), false).await?
+        }
+        BlobUrl::LocalFile(path) => {
+            copy(
+                SyncPath::file(path),
+                SyncPath::dir(destination_path.clone()),
+                false,
+            )
+            .await?
+        }
+    }
+    Ok(destination_path)
 }
 
 pub async fn run_tool(
@@ -197,13 +215,13 @@ pub async fn run_tool(
             tester.reports_dir(&reports_dir)
         })
         .set_optional_ref(&config.crashes, |tester, crashes| {
-            if let Some(url) = &crashes.url {
-                tester
-                    .crashes_account(&url.account())
-                    .crashes_container(&url.container())
-            } else {
-                tester
-            }
+            tester
+                .set_optional_ref(&crashes.url.account(), |tester, account| {
+                    tester.crashes_account(account)
+                })
+                .set_optional_ref(&crashes.url.container(), |tester, container| {
+                    tester.crashes_container(container)
+                })
         });
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;

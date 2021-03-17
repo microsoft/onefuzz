@@ -68,7 +68,7 @@ pub async fn init_task_heartbeat(
                 })
                 .await;
         },
-    );
+    )?;
     Ok(hb)
 }
 

@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::auth::Secret;
 use anyhow::{Context, Result};
-use onefuzz::machine_id::get_scaleset_name;
+use onefuzz::{auth::Secret, machine_id::get_scaleset_name};
 use std::process::Stdio;
 use tokio::{fs, io::AsyncWriteExt, process::Command};
 
