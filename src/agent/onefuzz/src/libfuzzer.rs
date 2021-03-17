@@ -177,12 +177,16 @@ impl<'a> LibFuzzer<'a> {
         let mut options = self.options.to_owned();
         options.push("{input}".to_string());
 
-        let tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
+        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
             .check_asan_stderr(true)
             .check_retry_count(retry)
-            .add_setup_to_ld_library_path(true)
             .add_setup_to_path(true)
             .set_optional(timeout, |tester, timeout| tester.timeout(timeout));
+
+        if cfg!(target_family = "unix") {
+            tester = tester.add_setup_to_ld_library_path(true);
+        }
+
         tester.test_input(test_input.as_ref()).await
     }
 
