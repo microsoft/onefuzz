@@ -44,9 +44,9 @@ impl std::io::Write for TailBuffer {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Write;
-    use anyhow::Result;
     use super::*;
+    use anyhow::Result;
+    use std::io::Write;
 
     #[test]
     fn test_tail_buffer() -> Result<()> {
