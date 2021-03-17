@@ -28,7 +28,6 @@ use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use structopt::StructOpt;
 
 pub mod agent;
-pub mod auth;
 pub mod buffer;
 pub mod commands;
 pub mod config;
@@ -209,7 +208,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     let scheduler = reboot_context.into();
     debug!("loaded scheduler: {}", scheduler);
 
-    let work_queue = work::WorkQueue::new(registration.clone());
+    let work_queue = work::WorkQueue::new(registration.clone())?;
 
     let agent_heartbeat = match config.heartbeat_queue {
         Some(url) => Some(init_agent_heartbeat(url).await?),

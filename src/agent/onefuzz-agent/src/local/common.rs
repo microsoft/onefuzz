@@ -2,9 +2,19 @@ use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
 use clap::{App, Arg, ArgMatches};
-use std::{collections::HashMap, path::PathBuf};
-
+use onefuzz::jitter::delay_with_jitter;
+use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use reqwest::Url;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 use uuid::Uuid;
+
+use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
+use path_absolutize::Absolutize;
+use std::task::Poll;
 
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
@@ -33,46 +43,30 @@ pub const GENERATOR_EXE: &str = "generator_exe";
 pub const GENERATOR_ENV: &str = "generator_env";
 pub const GENERATOR_OPTIONS: &str = "generator_options";
 
+pub const ANALYZER_EXE: &str = "analyzer_exe";
+pub const ANALYZER_OPTIONS: &str = "analyzer_options";
+pub const ANALYZER_ENV: &str = "analyzer_env";
+pub const ANALYSIS_DIR: &str = "analysis_dir";
+pub const ANALYSIS_INPUTS: &str = "analysis_inputs";
+pub const ANALYSIS_UNIQUE_INPUTS: &str = "analysis_unique_inputs";
+pub const PRESERVE_EXISTING_OUTPUTS: &str = "preserve_existing_outputs";
+
+const WAIT_FOR_MAX_WAIT: Duration = Duration::from_secs(10);
+const WAIT_FOR_DIR_DELAY: Duration = Duration::from_secs(1);
+
 pub enum CmdType {
     Target,
     Generator,
     // Supervisor,
 }
 
-pub fn add_cmd_options(
-    cmd_type: CmdType,
-    exe: bool,
-    arg: bool,
-    env: bool,
-    mut app: App<'static, 'static>,
-) -> App<'static, 'static> {
-    let (exe_name, env_name, arg_name) = match cmd_type {
-        CmdType::Target => (TARGET_EXE, TARGET_ENV, TARGET_OPTIONS),
-        // CmdType::Supervisor => (SUPERVISOR_EXE, SUPERVISOR_ENV, SUPERVISOR_OPTIONS),
-        CmdType::Generator => (GENERATOR_EXE, GENERATOR_ENV, GENERATOR_OPTIONS),
-    };
-
-    if exe {
-        app = app.arg(Arg::with_name(exe_name).takes_value(true).required(true));
+pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
+    let mut env = HashMap::new();
+    for opt in args.values_of_lossy(name).unwrap_or_default() {
+        let (k, v) = parse_key_value(opt)?;
+        env.insert(k, v);
     }
-    if env {
-        app = app.arg(
-            Arg::with_name(env_name)
-                .long(env_name)
-                .takes_value(true)
-                .multiple(true),
-        )
-    }
-    if arg {
-        app = app.arg(
-            Arg::with_name(arg_name)
-                .long(arg_name)
-                .takes_value(true)
-                .value_delimiter(" ")
-                .help("Use a quoted string with space separation to denote multiple arguments"),
-        )
-    }
-    app
+    Ok(env)
 }
 
 pub fn get_cmd_exe(cmd_type: CmdType, args: &clap::ArgMatches<'_>) -> Result<String> {
@@ -105,13 +99,7 @@ pub fn get_cmd_env(
         // CmdType::Supervisor => SUPERVISOR_ENV,
         CmdType::Generator => GENERATOR_ENV,
     };
-
-    let mut env = HashMap::new();
-    for opt in args.values_of_lossy(env_name).unwrap_or_default() {
-        let (k, v) = parse_key_value(opt)?;
-        env.insert(k, v);
-    }
-    Ok(env)
+    get_hash_map(args, env_name)
 }
 
 pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
@@ -142,17 +130,56 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
 }
 
 fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
-    match value_t!(args, name, String) {
-        Ok(x) => Uuid::parse_str(&x)
-            .map_err(|x| format_err!("invalid {}.  uuid expected.  {})", name, x)),
-        Err(_) => Ok(Uuid::nil()),
-    }
+    value_t!(args, name, String).map(|x| {
+        Uuid::parse_str(&x).map_err(|x| format_err!("invalid {}.  uuid expected.  {})", name, x))
+    })?
+}
+
+pub fn get_synced_dirs(
+    name: &str,
+    job_id: Uuid,
+    task_id: Uuid,
+    args: &ArgMatches<'_>,
+) -> Result<Vec<SyncedDir>> {
+    let current_dir = std::env::current_dir()?;
+    let dirs: Result<Vec<SyncedDir>> = value_t!(args, name, PathBuf)?
+        .iter()
+        .enumerate()
+        .map(|(index, remote_path)| {
+            let path = PathBuf::from(remote_path);
+            let remote_path = path.absolutize()?;
+            let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
+            let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
+            let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
+            Ok(SyncedDir {
+                url: remote_blob_url,
+                path,
+            })
+        })
+        .collect();
+    Ok(dirs?)
+}
+
+pub fn get_synced_dir(
+    name: &str,
+    job_id: Uuid,
+    task_id: Uuid,
+    args: &ArgMatches<'_>,
+) -> Result<SyncedDir> {
+    let remote_path = value_t!(args, name, PathBuf)?.absolutize()?.into_owned();
+    let remote_url = Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
+    let remote_blob_url = BlobContainerUrl::new(remote_url)?;
+    let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
+    Ok(SyncedDir {
+        url: remote_blob_url,
+        path,
+    })
 }
 
 pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
-    let job_id = get_uuid("job_id", args)?;
-    let task_id = get_uuid("task_id", args)?;
-    let instance_id = get_uuid("instance_id", args)?;
+    let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
+    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| Uuid::new_v4());
+    let instance_id = get_uuid("instance_id", args).unwrap_or_else(|_| Uuid::nil());
 
     let setup_dir = if args.is_present(SETUP_DIR) {
         value_t!(args, SETUP_DIR, PathBuf)?
@@ -173,4 +200,68 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
         ..Default::default()
     };
     Ok(config)
+}
+
+/// Information about a local path being monitored
+/// A new notification will be received on the queue url
+/// For each new file added to the directory
+pub struct DirectoryMonitorQueue {
+    pub directory_path: PathBuf,
+    pub queue_client: storage_queue::QueueClient,
+    pub handle: tokio::task::JoinHandle<Result<()>>,
+}
+
+impl DirectoryMonitorQueue {
+    pub async fn start_monitoring(directory_path: impl AsRef<Path>) -> Result<Self> {
+        let directory_path = PathBuf::from(directory_path.as_ref());
+        let directory_path_clone = directory_path.clone();
+        let queue_client = storage_queue::QueueClient::Channel(
+            storage_queue::local_queue::ChannelQueueClient::new()?,
+        );
+        let queue = queue_client.clone();
+        let handle: tokio::task::JoinHandle<Result<()>> = tokio::spawn(async move {
+            let mut monitor = DirectoryMonitor::new(directory_path_clone.clone());
+            monitor.start()?;
+            loop {
+                match monitor.poll_file() {
+                    Poll::Ready(Some(file_path)) => {
+                        let file_url = Url::from_file_path(file_path)
+                            .map_err(|_| anyhow!("invalid file path"))?;
+                        queue.enqueue(file_url).await?;
+                    }
+                    Poll::Ready(None) => break,
+                    Poll::Pending => delay_with_jitter(Duration::from_secs(1)).await,
+                }
+            }
+            Ok(())
+        });
+
+        Ok(DirectoryMonitorQueue {
+            directory_path,
+            queue_client,
+            handle,
+        })
+    }
+}
+
+pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
+    let op = || async {
+        if path.as_ref().exists() {
+            Ok(())
+        } else {
+            Err(BackoffError::Transient(anyhow::anyhow!(
+                "path '{:?}' does not exisit",
+                path.as_ref()
+            )))
+        }
+    };
+    retry(
+        ExponentialBackoff {
+            max_elapsed_time: Some(WAIT_FOR_MAX_WAIT),
+            max_interval: WAIT_FOR_DIR_DELAY,
+            ..ExponentialBackoff::default()
+        },
+        op,
+    )
+    .await
 }

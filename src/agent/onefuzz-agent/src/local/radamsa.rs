@@ -3,28 +3,48 @@
 
 use crate::{
     local::{
+        common::{build_common_config, DirectoryMonitorQueue},
         generic_crash_report::{build_report_config, build_shared_args as build_crash_args},
         generic_generator::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
-    tasks::{fuzz::generator::GeneratorTask, report::generic::ReportTask},
+    tasks::{config::CommonConfig, fuzz::generator::GeneratorTask, report::generic::ReportTask},
 };
 use anyhow::Result;
 use clap::{App, SubCommand};
+use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
 use tokio::task::spawn;
+use uuid::Uuid;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let fuzz_config = build_fuzz_config(args)?;
+    let common = build_common_config(args)?;
+    let fuzz_config = build_fuzz_config(args, common.clone())?;
+    let crash_dir = fuzz_config
+        .crashes
+        .url
+        .as_file_path()
+        .expect("invalid crash dir remote location");
+
     let fuzzer = GeneratorTask::new(fuzz_config);
     let fuzz_task = spawn(async move { fuzzer.run().await });
 
-    let report_config = build_report_config(args)?;
-    let report = ReportTask::new(report_config);
-    let report_task = spawn(async move { report.local_run().await });
+    let crash_report_input_monitor = DirectoryMonitorQueue::start_monitoring(crash_dir).await?;
+    let report_config = build_report_config(
+        args,
+        Some(crash_report_input_monitor.queue_client),
+        CommonConfig {
+            task_id: Uuid::new_v4(),
+            ..common
+        },
+    )?;
+    let report_task = spawn(async move { ReportTask::new(report_config).managed_run().await });
 
-    let result = tokio::try_join!(fuzz_task, report_task)?;
-    result.0?;
-    result.1?;
+    try_wait_all_join_handles(vec![
+        fuzz_task,
+        report_task,
+        crash_report_input_monitor.handle,
+    ])
+    .await?;
 
     Ok(())
 }

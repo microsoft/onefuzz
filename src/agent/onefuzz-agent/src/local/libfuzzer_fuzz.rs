@@ -3,20 +3,23 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_FUZZER_HELP,
-        CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
+        CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
+        TARGET_WORKERS,
     },
-    tasks::fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
+    tasks::{
+        config::CommonConfig,
+        fuzz::libfuzzer_fuzz::{Config, LibFuzzerFuzzTask},
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use std::path::PathBuf;
 
 const DISABLE_EXPECT_CRASH_ON_FAILURE: &str = "disable_expect_crash_on_failure";
 
-pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
-    let crashes = value_t!(args, CRASHES_DIR, PathBuf)?.into();
-    let inputs = value_t!(args, INPUTS_DIR, PathBuf)?.into();
+pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> Result<Config> {
+    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?;
+    let inputs = get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?;
 
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -28,7 +31,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     let expect_crash_on_failure = !args.is_present(DISABLE_EXPECT_CRASH_ON_FAILURE);
 
     let ensemble_sync_delay = None;
-    let common = build_common_config(args)?;
+
     let config = Config {
         inputs,
         readonly_inputs,
@@ -47,7 +50,8 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_fuzz_config(args)?;
+    let common = build_common_config(args)?;
+    let config = build_fuzz_config(args, common)?;
     LibFuzzerFuzzTask::new(config)?.run().await
 }
 
