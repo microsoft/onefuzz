@@ -152,7 +152,7 @@ fn find_blocks(
     blocks: &mut FixedBitSet,
     address_map: &AddressMap,
     pe: &PE,
-    mmap: &Mmap,
+    data: &[u8],
     functions_only: bool,
 ) -> Result<()> {
     let file_alignment = pe
@@ -217,7 +217,7 @@ fn find_blocks(
 
                 intel::find_blocks(
                     bitness,
-                    &mmap[file_offset..file_offset + (code_len as usize)],
+                    &data[file_offset..file_offset + (code_len as usize)],
                     rva.0,
                     blocks,
                 );
@@ -228,12 +228,12 @@ fn find_blocks(
     Ok(())
 }
 
-pub fn process_image<P: AsRef<Path>>(image_path: P, functions_only: bool) -> Result<FixedBitSet> {
-    let file = File::open(image_path.as_ref())?;
-    let mmap = unsafe { Mmap::map(&file)? };
-
-    let pe = PE::parse(mmap.as_ref())?;
-
+pub fn process_module(
+    pe_path: impl AsRef<Path>,
+    data: &[u8],
+    pe: &PE,
+    functions_only: bool,
+) -> Result<FixedBitSet> {
     if let Some(DebugData {
         image_debug_directory: _,
         codeview_pdb70_debug_info: Some(cv),
@@ -248,13 +248,13 @@ pub fn process_image<P: AsRef<Path>>(image_path: P, functions_only: bool) -> Res
             anyhow::bail!(
                 "pdb `{}` doesn't match image `{}`",
                 pdb_path,
-                image_path.as_ref().display()
+                pe_path.as_ref().display()
             );
         }
 
         let address_map = pdb.address_map()?;
 
-        let mut blocks = FixedBitSet::with_capacity(mmap.len());
+        let mut blocks = FixedBitSet::with_capacity(data.len());
 
         let proc_sym_info = collect_proc_symbols(&mut pdb.global_symbols()?.iter())?;
         find_blocks(
@@ -262,7 +262,7 @@ pub fn process_image<P: AsRef<Path>>(image_path: P, functions_only: bool) -> Res
             &mut blocks,
             &address_map,
             &pe,
-            &mmap,
+            data,
             functions_only,
         )?;
 
@@ -277,7 +277,7 @@ pub fn process_image<P: AsRef<Path>>(image_path: P, functions_only: bool) -> Res
                     &mut blocks,
                     &address_map,
                     &pe,
-                    &mmap,
+                    data,
                     functions_only,
                 )?;
             }
@@ -287,4 +287,14 @@ pub fn process_image<P: AsRef<Path>>(image_path: P, functions_only: bool) -> Res
     }
 
     anyhow::bail!("PE missing codeview pdb debug info")
+}
+
+pub fn process_image(path: impl AsRef<Path>, functions_only: bool) -> Result<FixedBitSet> {
+    let file = File::open(path.as_ref())?;
+    let mmap = unsafe {
+        Mmap::map(&file)?
+    };
+    let pe = PE::parse(&mmap)?;
+
+    process_module(path, &mmap, &pe, functions_only)
 }
