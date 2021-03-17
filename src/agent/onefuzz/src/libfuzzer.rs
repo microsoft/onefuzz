@@ -58,6 +58,13 @@ impl<'a> LibFuzzer<'a> {
             .stderr(Stdio::piped())
             .arg("-help=1");
 
+        if cfg!(target_family = "unix") {
+            cmd.env(
+                LD_LIBRARY_PATH,
+                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
+            );
+        }
+
         let expand = Expand::new()
             .target_exe(&self.exe)
             .target_options(&self.options)
@@ -173,6 +180,8 @@ impl<'a> LibFuzzer<'a> {
         let tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
             .check_asan_stderr(true)
             .check_retry_count(retry)
+            .add_setup_to_ld_library_path(true)
+            .add_setup_to_path(true)
             .set_optional(timeout, |tester, timeout| tester.timeout(timeout));
         tester.test_input(test_input.as_ref()).await
     }
@@ -197,6 +206,13 @@ impl<'a> LibFuzzer<'a> {
             .stderr(Stdio::piped())
             .arg("-merge=1")
             .arg(corpus_dir.as_ref());
+
+        if cfg!(target_family = "unix") {
+            cmd.env(
+                LD_LIBRARY_PATH,
+                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
+            );
+        }
 
         for dir in corpus_dirs {
             cmd.arg(dir.as_ref());
