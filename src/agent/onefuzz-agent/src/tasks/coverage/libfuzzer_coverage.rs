@@ -49,7 +49,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use storage_queue::Message;
+use storage_queue::{Message, QueueClient};
 use tokio::fs;
 
 const TOTAL_COVERAGE: &str = "total.cov";
@@ -59,7 +59,7 @@ pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
-    pub input_queue: Option<Url>,
+    pub input_queue: Option<QueueClient>,
     pub readonly_inputs: Vec<SyncedDir>,
     pub coverage: SyncedDir,
 
@@ -91,20 +91,6 @@ impl CoverageTask {
         let config = Arc::new(config);
         let poller = InputPoller::new();
         Self { config, poller }
-    }
-
-    pub async fn local_run(&self) -> Result<()> {
-        let mut processor = CoverageProcessor::new(self.config.clone()).await?;
-
-        self.config.coverage.init().await?;
-        for synced_dir in &self.config.readonly_inputs {
-            synced_dir.init().await?;
-            self.record_corpus_coverage(&mut processor, &synced_dir)
-                .await?;
-        }
-        processor.report_total().await?;
-
-        Ok(())
     }
 
     async fn check_libfuzzer(&self) -> Result<()> {
@@ -160,7 +146,7 @@ impl CoverageTask {
         // If a queue has been provided, poll it for new coverage.
         if let Some(queue) = &self.config.input_queue {
             info!("polling queue for new coverage");
-            let callback = CallbackImpl::new(queue.clone(), processor);
+            let callback = CallbackImpl::new(queue.clone(), processor)?;
             self.poller.run(callback).await?;
         }
 

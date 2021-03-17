@@ -50,7 +50,7 @@ pub async fn init_agent_heartbeat(queue_url: Url) -> Result<AgentHeartbeatClient
                 })
                 .await;
         },
-    );
+    )?;
     Ok(hb)
 }
 

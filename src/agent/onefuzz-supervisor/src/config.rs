@@ -3,6 +3,7 @@
 
 use anyhow::{Context, Result};
 use onefuzz::{
+    auth::{ClientCredentials, Credentials, ManagedIdentityCredentials},
     http::{is_auth_error_code, ResponseExt},
     jitter::delay_with_jitter,
 };
@@ -15,8 +16,6 @@ use std::{
 use tokio::fs;
 use url::Url;
 use uuid::Uuid;
-
-use crate::auth::{ClientCredentials, Credentials, ManagedIdentityCredentials};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct StaticConfig {

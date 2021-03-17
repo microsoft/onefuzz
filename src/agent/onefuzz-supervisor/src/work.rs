@@ -6,12 +6,11 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use downcast_rs::Downcast;
-use onefuzz::{blob::BlobContainerUrl, http::is_auth_error};
-use storage_queue::QueueClient;
+use onefuzz::{auth::Secret, blob::BlobContainerUrl, http::is_auth_error};
+use storage_queue::{Message as QueueMessage, QueueClient};
 use tokio::fs;
 use uuid::Uuid;
 
-use crate::auth::Secret;
 use crate::config::Registration;
 
 pub type JobId = Uuid;
@@ -71,7 +70,10 @@ impl WorkSet {
     }
 
     pub fn setup_dir(&self) -> Result<PathBuf> {
-        let setup_dir = self.setup_url.container();
+        let setup_dir = self
+            .setup_url
+            .account()
+            .ok_or_else(|| anyhow!("Invalid container Url"))?;
         Ok(onefuzz::fs::onefuzz_root()?
             .join("blob-containers")
             .join(setup_dir))
@@ -104,7 +106,7 @@ impl WorkUnit {
 pub trait IWorkQueue: Downcast {
     async fn poll(&mut self) -> Result<Option<Message>>;
 
-    async fn claim(&mut self, receipt: Receipt) -> Result<()>;
+    async fn claim(&mut self, message: Message) -> Result<WorkSet>;
 }
 
 #[async_trait]
@@ -113,21 +115,18 @@ impl IWorkQueue for WorkQueue {
         self.poll().await
     }
 
-    async fn claim(&mut self, receipt: Receipt) -> Result<()> {
-        self.claim(receipt).await
+    async fn claim(&mut self, message: Message) -> Result<WorkSet> {
+        self.claim(message).await
     }
 }
 
 impl_downcast!(IWorkQueue);
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub struct Message {
-    pub receipt: Receipt,
+    pub queue_message: Option<QueueMessage>,
     pub work_set: WorkSet,
 }
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Receipt(pub storage_queue::Receipt);
 
 pub struct WorkQueue {
     queue: QueueClient,
@@ -135,14 +134,14 @@ pub struct WorkQueue {
 }
 
 impl WorkQueue {
-    pub fn new(registration: Registration) -> Self {
+    pub fn new(registration: Registration) -> Result<Self> {
         let url = registration.dynamic_config.work_queue.clone();
-        let queue = QueueClient::new(url);
+        let queue = QueueClient::new(url)?;
 
-        Self {
+        Ok(Self {
             queue,
             registration,
-        }
+        })
     }
 
     async fn renew(&mut self) -> Result<()> {
@@ -151,7 +150,7 @@ impl WorkQueue {
             .await
             .context("unable to renew registration in workqueue")?;
         let url = self.registration.dynamic_config.work_queue.clone();
-        self.queue = QueueClient::new(url);
+        self.queue = QueueClient::new(url)?;
         Ok(())
     }
 
@@ -171,38 +170,44 @@ impl WorkQueue {
 
         // Now we've had a chance to ensure our SAS URL is fresh. For any other
         // error, including another auth error, bail.
-        let msg = msg.context("unable to check work queue")?;
+        let msg = msg.context("failed to pop message")?;
 
-        let result = match msg {
-            Some(msg) => {
-                let work_set =
-                    serde_json::from_slice(msg.data()).context("unable to parse WorkSet")?;
-                let receipt = Receipt(msg.receipt);
-                Some(Message { receipt, work_set })
-            }
-            None => None,
-        };
-        Ok(result)
-    }
-
-    pub async fn claim(&mut self, receipt: Receipt) -> Result<()> {
-        let receipt = receipt.0;
-
-        let result = self.queue.delete(receipt.clone()).await;
-
-        // If we had an auth err, renew our registration and retry once, in case
-        // it was just due to a stale SAS URL.
-        if let Err(err) = &result {
-            if is_auth_error(err) {
-                self.renew().await.context("unable to renew registration")?;
-                self.queue
-                    .delete(receipt)
-                    .await
-                    .context("unable to claim work from queue")?;
-            }
+        if msg.is_none() {
+            return Ok(None);
         }
 
-        Ok(())
+        let queue_message = msg.unwrap();
+        let work_set: WorkSet = queue_message.get()?;
+        let msg = Message {
+            queue_message: Some(queue_message),
+            work_set,
+        };
+
+        Ok(Some(msg))
+    }
+
+    pub async fn claim(&mut self, message: Message) -> Result<WorkSet> {
+        if let Some(queue_message) = message.queue_message {
+            match queue_message.delete().await {
+                Err(err) => {
+                    if is_auth_error(&err) {
+                        self.renew().await.context("unable to renew registration")?;
+                        let url = self.registration.dynamic_config.work_queue.clone();
+                        queue_message
+                            .update_url(url)
+                            .delete()
+                            .await
+                            .context("unable to claim work from queue")?;
+                        Ok(message.work_set)
+                    } else {
+                        bail!("{}", err)
+                    }
+                }
+                Ok(_) => Ok(message.work_set),
+            }
+        } else {
+            Ok(message.work_set)
+        }
     }
 }
 
