@@ -271,7 +271,7 @@ impl<'a> Tester<'a> {
             if self.add_setup_to_ld_library_path {
                 let new_path = match env.get(LD_LIBRARY_PATH) {
                     Some(v) => update_path(v.clone().into(), &setup_dir)?,
-                    None => get_path_with_directory(PATH, &setup_dir)?,
+                    None => get_path_with_directory(LD_LIBRARY_PATH, &setup_dir)?,
                 };
                 env.insert(
                     LD_LIBRARY_PATH.to_string(),
