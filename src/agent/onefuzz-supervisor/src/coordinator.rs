@@ -3,12 +3,11 @@
 
 use anyhow::Result;
 use downcast_rs::Downcast;
-use onefuzz::{http::ResponseExt, process::Output};
+use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
 use reqwest::{Client, Request, Response, StatusCode};
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::auth::AccessToken;
 use crate::commands::SshKeyInfo;
 use crate::config::Registration;
 use crate::work::{TaskId, WorkSet};

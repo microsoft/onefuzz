@@ -3,7 +3,7 @@
 
 use anyhow::{format_err, Result};
 use async_trait::async_trait;
-use backoff::{self, future::FutureOperation, ExponentialBackoff};
+use backoff::{self, future::retry_notify, ExponentialBackoff};
 use onefuzz_telemetry::warn;
 use reqwest::Response;
 use std::{
@@ -43,16 +43,16 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
             Ok(response)
         }
     };
-    let result = op
-        .retry_notify(
-            ExponentialBackoff {
-                current_interval: retry_period,
-                initial_interval: retry_period,
-                ..ExponentialBackoff::default()
-            },
-            |err, dur| warn!("request attempt failed after {:?}: {}", dur, err),
-        )
-        .await?;
+    let result = retry_notify(
+        ExponentialBackoff {
+            current_interval: retry_period,
+            initial_interval: retry_period,
+            ..ExponentialBackoff::default()
+        },
+        op,
+        |err, dur| warn!("request attempt failed after {:?}: {}", dur, err),
+    )
+    .await?;
     Ok(result)
 }
 

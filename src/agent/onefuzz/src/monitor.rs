@@ -9,6 +9,7 @@ use futures::{
     task::{self, Poll},
 };
 use notify::{DebouncedEvent, Watcher};
+use std::sync::mpsc::TryRecvError;
 
 pub struct DirectoryMonitor {
     dir: PathBuf,
@@ -47,15 +48,9 @@ impl DirectoryMonitor {
         self.watcher.unwatch(self.dir.clone())?;
         Ok(())
     }
-}
 
-impl Stream for DirectoryMonitor {
-    type Item = PathBuf;
-
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Option<Self::Item>> {
-        use std::sync::mpsc::TryRecvError;
-
-        let poll = match self.rx.try_recv() {
+    pub fn poll_file(&mut self) -> Poll<Option<PathBuf>> {
+        match self.rx.try_recv() {
             Ok(DebouncedEvent::Create(path)) => Poll::Ready(Some(path)),
             Ok(DebouncedEvent::Remove(path)) => {
                 if path == self.dir {
@@ -80,10 +75,16 @@ impl Stream for DirectoryMonitor {
                 self.stop().ok();
                 Poll::Ready(None)
             }
-        };
+        }
+    }
+}
 
+impl Stream for DirectoryMonitor {
+    type Item = PathBuf;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Option<Self::Item>> {
+        let poll = self.poll_file();
         cx.waker().wake_by_ref();
-
         poll
     }
 }

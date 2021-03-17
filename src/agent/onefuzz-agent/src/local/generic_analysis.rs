@@ -3,68 +3,61 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
-        CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR,
-        REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
+        ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, NO_REPRO_DIR,
+        REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR, UNIQUE_REPORTS_DIR,
     },
     tasks::{
+        analysis::generic::{run as run_analysis, Config},
         config::CommonConfig,
-        report::libfuzzer_report::{Config, ReportTask},
     },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use storage_queue::QueueClient;
 
-pub fn build_report_config(
+pub fn build_analysis_config(
     args: &clap::ArgMatches<'_>,
     input_queue: Option<QueueClient>,
     common: CommonConfig,
 ) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
-    let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
 
+    let analyzer_exe = value_t!(args, ANALYZER_EXE, String)?;
+    let analyzer_options = args.values_of_lossy(ANALYZER_OPTIONS).unwrap_or_default();
+    let analyzer_env = get_hash_map(args, ANALYZER_ENV)?;
+    let analysis = get_synced_dir(ANALYSIS_DIR, common.job_id, common.task_id, args)?;
+    let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args)?;
     let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args).ok();
     let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args).ok();
-
     let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args).ok();
-
     let unique_reports =
         get_synced_dir(UNIQUE_REPORTS_DIR, common.job_id, common.task_id, args).ok();
 
-    let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
-
-    let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
-
-    let check_queue = !args.is_present(DISABLE_CHECK_QUEUE);
-
-    let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
-
-    let crashes = if input_queue.is_none() { crashes } else { None };
-
     let config = Config {
         target_exe,
-        target_env,
         target_options,
-        target_timeout,
-        check_retry_count,
-        check_fuzzer_help,
-        input_queue,
-        check_queue,
         crashes,
-        reports,
-        no_repro,
-        unique_reports,
+        input_queue,
+        analyzer_exe,
+        analyzer_options,
+        analyzer_env,
+        analysis,
+        tools,
         common,
+        reports,
+        unique_reports,
+        no_repro,
     };
+
     Ok(config)
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let common = build_common_config(args)?;
-    let config = build_report_config(args, None, common)?;
-    ReportTask::new(config).managed_run().await
+    let config = build_analysis_config(args, None, common)?;
+    run_analysis(config).await
 }
 
 pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
@@ -78,6 +71,7 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
             .takes_value(true)
             .multiple(true),
         Arg::with_name(TARGET_OPTIONS)
+            .default_value("{input}")
             .long(TARGET_OPTIONS)
             .takes_value(true)
             .value_delimiter(" ")
@@ -86,36 +80,25 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
             .long(CRASHES_DIR)
             .takes_value(true)
             .required(true),
-        Arg::with_name(REPORTS_DIR)
-            .long(REPORTS_DIR)
-            .takes_value(true)
-            .required(false),
-        Arg::with_name(NO_REPRO_DIR)
-            .long(NO_REPRO_DIR)
-            .takes_value(true)
-            .required(false),
-        Arg::with_name(UNIQUE_REPORTS_DIR)
-            .long(UNIQUE_REPORTS_DIR)
+        Arg::with_name(ANALYZER_EXE)
             .takes_value(true)
             .required(true),
-        Arg::with_name(TARGET_TIMEOUT)
+        Arg::with_name(ANALYZER_OPTIONS)
             .takes_value(true)
-            .long(TARGET_TIMEOUT),
-        Arg::with_name(CHECK_RETRY_COUNT)
+            .value_delimiter(" ")
+            .help("Use a quoted string with space separation to denote multiple arguments"),
+        Arg::with_name(ANALYZER_ENV)
             .takes_value(true)
-            .long(CHECK_RETRY_COUNT)
-            .default_value("0"),
-        Arg::with_name(DISABLE_CHECK_QUEUE)
-            .takes_value(false)
-            .long(DISABLE_CHECK_QUEUE),
-        Arg::with_name(CHECK_FUZZER_HELP)
-            .takes_value(false)
-            .long(CHECK_FUZZER_HELP),
+            .multiple(true),
+        Arg::with_name(ANALYSIS_DIR)
+            .takes_value(true)
+            .required(true),
+        Arg::with_name(TOOLS_DIR).takes_value(true).required(false),
     ]
 }
 
 pub fn args(name: &'static str) -> App<'static, 'static> {
     SubCommand::with_name(name)
-        .about("execute a local-only libfuzzer crash report task")
+        .about("execute a local-only generic analysis")
         .args(&build_shared_args())
 }
