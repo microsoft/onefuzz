@@ -54,22 +54,22 @@ mod tests {
 
         assert!(buf.data().is_empty());
 
-        buf.write_all(&[1, 2, 3]).unwrap();
+        assert_eq!(buf.write(&[1, 2, 3]), Ok(3));
         assert_eq!(buf.data(), &[1, 2, 3]);
 
-        buf.write_all(&[]).unwrap();
+        assert_eq!(buf.write(&[]), Ok(0));
         assert_eq!(buf.data(), &[1, 2, 3]);
 
-        buf.write_all(&[4, 5]).unwrap();
+        assert_eq!(buf.write(&[4, 5]), Ok(2));        
         assert_eq!(buf.data(), &[1, 2, 3, 4, 5]);
 
-        buf.write_all(&[6, 7, 8]).unwrap();
+        assert_eq!(buf.write(&[6, 7, 8]), Ok(3));
         assert_eq!(buf.data(), &[4, 5, 6, 7, 8]);
 
-        buf.write_all(&[9, 10, 11, 12, 13]).unwrap();
+        assert_eq!(buf.write(&[9, 10, 11, 12, 13]), Ok(5));
         assert_eq!(buf.data(), &[9, 10, 11, 12, 13]);
 
-        buf.write_all(&[14, 15, 16, 17, 18, 19, 20, 21, 22])
+        assert_eq!(buf.write(&[14, 15, 16, 17, 18, 19, 20, 21, 22]), Ok(9));
             .unwrap();
         assert_eq!(buf.data(), &[18, 19, 20, 21, 22]);
     }
