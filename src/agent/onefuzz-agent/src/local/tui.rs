@@ -2,10 +2,11 @@
 // Licensed under the MIT License.
 
 use crate::local::common::UiEvent;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use crossterm::{
-    event::{self, Event, KeyCode},
-    terminal::enable_raw_mode,
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use futures::{StreamExt, TryStreamExt};
 use log::Level;
@@ -13,7 +14,8 @@ use onefuzz::utils::try_wait_all_join_handles;
 use std::{
     cmp::Ordering,
     collections::HashMap,
-    io::{self, Stdout},
+    error::Error,
+    io::{self, Stdout, Write},
     path::PathBuf,
     sync::Arc,
     time::Duration,
@@ -28,7 +30,7 @@ use tokio::{
 use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Corner, Direction, Layout},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders},
     widgets::{List, ListItem, ListState},
@@ -66,7 +68,6 @@ pub struct TerminalUi {
     pub task_events: UnboundedSender<UiEvent>,
     task_event_receiver: mpsc::UnboundedReceiver<UiEvent>,
     log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
-    terminal: Terminal<CrosstermBackend<Stdout>>,
 }
 
 /// Event driving the refresh of the UI
@@ -111,15 +112,11 @@ impl TerminalUi {
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))
             })
             .init();
-        let stdout = io::stdout();
-        let backend = CrosstermBackend::new(stdout);
-        let terminal = Terminal::new(backend)?;
 
         Ok(Self {
             task_events: task_event_sender,
             task_event_receiver,
             log_event_receiver,
-            terminal,
         })
     }
 
@@ -128,10 +125,13 @@ impl TerminalUi {
         loop {
             if event::poll(Duration::from_secs(0))? {
                 let event = event::read()?;
-                ui_event_tx.send(TerminalEvent::Input(event))?;
+                ui_event_tx
+                    .send(TerminalEvent::Input(event))?;
+            } else {
+                ui_event_tx
+                    .send(TerminalEvent::Tick)?;
+                interval.tick().await;
             }
-            ui_event_tx.send(TerminalEvent::Tick)?;
-            interval.tick().await;
         }
     }
 
@@ -204,6 +204,7 @@ impl TerminalUi {
 
                             let log_list = List::new(files)
                                 .block(Block::default().borders(Borders::ALL).title("files"))
+                                .highlight_style(Style::default().add_modifier(Modifier::BOLD))
                                 .start_corner(Corner::TopLeft);
 
                             f.render_stateful_widget(log_list, chunks[0], &mut file_count_state);
@@ -243,10 +244,57 @@ impl TerminalUi {
                         })
                     }
                     TerminalEvent::Input(Event::Key(k)) if k.code == KeyCode::Char('q') => {
+                        let mut terminal = ui_state.terminal;
+                        disable_raw_mode().map_err(|e| anyhow!("{:?}", e))?;
+                        execute!(
+                            terminal.backend_mut(),
+                            LeaveAlternateScreen,
+                            DisableMouseCapture
+                        )
+                        .map_err(|e| anyhow!("{:?}", e))?;
+                        terminal.show_cursor()?;
                         Err(UILoopError::Exit)
-
-                        //bail!(UILoopError::Exit)
                     }
+                    TerminalEvent::Input(Event::Key(k)) if k.code == KeyCode::Down => {
+                        let mut file_count_state = ui_state.file_count_state;
+                        let count = ui_state.file_count.len();
+                        let i = file_count_state
+                            .selected()
+                            .map(|i| {
+                                if count == 0 {
+                                    0
+                                } else {
+                                    (i + count + 1) % count
+                                }
+                            })
+                            .unwrap_or_default();
+
+                        file_count_state.select(Some(i));
+                        Ok(UILoopState {
+                            file_count_state,
+                            ..ui_state
+                        })
+                    }
+                    TerminalEvent::Input(Event::Key(k)) if k.code == KeyCode::Up => {
+                        let mut file_count_state = ui_state.file_count_state;
+                        let count = ui_state.file_count.len();
+                        let i = file_count_state
+                            .selected()
+                            .map(|i| {
+                                if count == 0 {
+                                    0
+                                } else {
+                                    (i + count - 1) % count
+                                }
+                            })
+                            .unwrap_or_default();
+                        file_count_state.select(Some(i));
+                        Ok(UILoopState {
+                            file_count_state,
+                            ..ui_state
+                        })
+                    }
+
                     TerminalEvent::FileCount { dir, count } => {
                         let mut file_count = ui_state.file_count;
                         file_count.insert(dir, count);
@@ -259,6 +307,7 @@ impl TerminalUi {
                 }
             })
             .await;
+
         match loop_result {
             Err(UILoopError::Exit) | Ok(_) => Ok(()),
             Err(UILoopError::Anyhow(e)) => Err(e),
@@ -267,17 +316,24 @@ impl TerminalUi {
 
     pub async fn run(self) -> Result<()> {
         enable_raw_mode()?;
+
+        let mut stdout = io::stdout();
+        execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+
+        let backend = CrosstermBackend::new(stdout);
+        let mut terminal = Terminal::new(backend)?;
+
         let (ui_event_tx, ui_event_rx) = mpsc::unbounded_channel();
-        let ui_event_handle = tokio::spawn(Self::read_ui_events(ui_event_tx.clone()));
+        let ui_event_tx_clone = ui_event_tx.clone();
+        let ui_event_handle = tokio::spawn(async { Self::read_ui_events(ui_event_tx_clone).await.context("reading Events")? ; Ok(()) });
 
         let task_event_receiver = self.task_event_receiver;
         let external_event_handle =
             tokio::spawn(Self::read_commands(ui_event_tx, task_event_receiver));
-        let mut terminal = self.terminal;
         terminal.clear()?;
         let initial_state = UILoopState::new(terminal, self.log_event_receiver);
         let ui_loop = tokio::spawn(Self::ui_loop(initial_state, ui_event_rx));
-        try_wait_all_join_handles(vec![ui_event_handle, ui_loop, external_event_handle]).await
+        try_wait_all_join_handles(vec![ui_event_handle, ui_loop, external_event_handle]).await.context("***** run handle")
     }
 }
 
