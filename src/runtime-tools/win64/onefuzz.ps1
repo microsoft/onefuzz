@@ -158,4 +158,5 @@ function Install-VCRedist {
   Invoke-WebRequest -Uri $x86Release -OutFile "C:\onefuzz\vcredist_x86.exe"
   C:\onefuzz\vcredist_x64.exe /install /q /norestart
   C:\onefuzz\vcredist_x86.exe /install /q /norestart
+  log "Installing VC Redist: Done"
 }
