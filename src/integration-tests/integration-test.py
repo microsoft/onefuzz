@@ -88,6 +88,32 @@ TARGETS: Dict[str, Integration] = {
         },
         reboot_after_setup=True,
     ),
+    "linux-libfuzzer-dlopen": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.linux,
+        target_exe="fuzz.exe",
+        inputs="seeds",
+        wait_for_files={
+            ContainerType.unique_reports: 1,
+            ContainerType.coverage: 1,
+            ContainerType.inputs: 2,
+        },
+        reboot_after_setup=True,
+        use_setup=True,
+    ),
+    "linux-libfuzzer-linked-library": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.linux,
+        target_exe="fuzz.exe",
+        inputs="seeds",
+        wait_for_files={
+            ContainerType.unique_reports: 1,
+            ContainerType.coverage: 1,
+            ContainerType.inputs: 2,
+        },
+        reboot_after_setup=True,
+        use_setup=True,
+    ),
     "linux-libfuzzer-dotnet": Integration(
         template=TemplateType.libfuzzer_dotnet,
         os=OS.linux,
@@ -139,6 +165,18 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.unique_reports: 1,
             ContainerType.coverage: 1,
         },
+    ),
+    "windows-libfuzzer-linked-library": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.windows,
+        target_exe="fuzz.exe",
+        inputs="seeds",
+        wait_for_files={
+            ContainerType.inputs: 2,
+            ContainerType.unique_reports: 1,
+            ContainerType.coverage: 1,
+        },
+        use_setup=True,
     ),
     "windows-trivial-crash": Integration(
         template=TemplateType.radamsa,
