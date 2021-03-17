@@ -11,7 +11,7 @@ int (*fuzz_func)(const uint8_t *data, size_t size);
 
 int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    printf("initilize\n");
+    printf("initialize\n");
     void *handle;
     int (*b)(void);
     char *error;
