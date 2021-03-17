@@ -100,9 +100,7 @@ fn url_input_name(url: &Url) -> String {
 }
 
 fn fixture() -> InputPoller<Msg> {
-    let task = InputPoller::new();
-
-    task
+    InputPoller::new()
 }
 
 fn url_fixture(msg: Msg) -> Url {

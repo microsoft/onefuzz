@@ -121,9 +121,7 @@ impl<M> InputPoller<M> {
         to_process: &SyncedDir,
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
-        if to_process.url.is_some() {
-            to_process.init_pull().await?;
-        }
+        to_process.init_pull().await?;
         info!("batch processing directory: {}", to_process.path.display());
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;

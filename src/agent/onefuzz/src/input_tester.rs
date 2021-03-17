@@ -5,6 +5,7 @@
 
 use crate::{
     asan::{add_asan_log_env, check_asan_path, check_asan_string},
+    env::{get_path_with_directory, update_path, LD_LIBRARY_PATH, PATH},
     expand::Expand,
     process::run_cmd,
 };
@@ -26,6 +27,8 @@ pub struct Tester<'a> {
     check_asan_stderr: bool,
     check_debugger: bool,
     check_retry_count: u64,
+    add_setup_to_ld_library_path: bool,
+    add_setup_to_path: bool,
 }
 
 #[derive(Debug)]
@@ -59,6 +62,8 @@ impl<'a> Tester<'a> {
             check_asan_stderr: false,
             check_debugger: false,
             check_retry_count: 0,
+            add_setup_to_ld_library_path: false,
+            add_setup_to_path: false,
         }
     }
 
@@ -93,6 +98,20 @@ impl<'a> Tester<'a> {
     pub fn check_retry_count(self, value: u64) -> Self {
         Self {
             check_retry_count: value,
+            ..self
+        }
+    }
+
+    pub fn add_setup_to_ld_library_path(self, value: bool) -> Self {
+        Self {
+            add_setup_to_ld_library_path: value,
+            ..self
+        }
+    }
+
+    pub fn add_setup_to_path(self, value: bool) -> Self {
+        Self {
+            add_setup_to_path: value,
             ..self
         }
     }
@@ -240,6 +259,25 @@ impl<'a> Tester<'a> {
             let mut env: HashMap<String, String> = HashMap::new();
             for (k, v) in self.environ {
                 env.insert(k.clone(), expand.evaluate_value(v)?);
+            }
+
+            let setup_dir = &self.setup_dir.to_path_buf();
+            if self.add_setup_to_path {
+                let new_path = match env.get(PATH) {
+                    Some(v) => update_path(v.clone().into(), &setup_dir)?,
+                    None => get_path_with_directory(PATH, &setup_dir)?,
+                };
+                env.insert(PATH.to_string(), new_path.to_string_lossy().to_string());
+            }
+            if self.add_setup_to_ld_library_path {
+                let new_path = match env.get(LD_LIBRARY_PATH) {
+                    Some(v) => update_path(v.clone().into(), &setup_dir)?,
+                    None => get_path_with_directory(LD_LIBRARY_PATH, &setup_dir)?,
+                };
+                env.insert(
+                    LD_LIBRARY_PATH.to_string(),
+                    new_path.to_string_lossy().to_string(),
+                );
             }
 
             if let Some(asan_dir) = &asan_dir {
