@@ -45,31 +45,32 @@ impl std::io::Write for TailBuffer {
 #[cfg(test)]
 mod tests {
     use std::io::Write;
-
+    use anyhow::Result;
     use super::*;
 
     #[test]
-    fn test_tail_buffer() {
+    fn test_tail_buffer() -> Result<()> {
         let mut buf = TailBuffer::new(5);
 
         assert!(buf.data().is_empty());
 
-        assert_eq!(buf.write(&[1, 2, 3]), Ok(3));
+        assert_eq!(buf.write(&[1, 2, 3])?, 3);
         assert_eq!(buf.data(), &[1, 2, 3]);
 
-        assert_eq!(buf.write(&[]), Ok(0));
+        assert_eq!(buf.write(&[])?, 0);
         assert_eq!(buf.data(), &[1, 2, 3]);
 
-        assert_eq!(buf.write(&[4, 5]), Ok(2));
+        assert_eq!(buf.write(&[4, 5])?, 2);
         assert_eq!(buf.data(), &[1, 2, 3, 4, 5]);
 
-        assert_eq!(buf.write(&[6, 7, 8]), Ok(3));
+        assert_eq!(buf.write(&[6, 7, 8])?, 3);
         assert_eq!(buf.data(), &[4, 5, 6, 7, 8]);
 
-        assert_eq!(buf.write(&[9, 10, 11, 12, 13]), Ok(5));
+        assert_eq!(buf.write(&[9, 10, 11, 12, 13])?, 5);
         assert_eq!(buf.data(), &[9, 10, 11, 12, 13]);
 
-        assert_eq!(buf.write(&[14, 15, 16, 17, 18, 19, 20, 21, 22]), Ok(9));
+        assert_eq!(buf.write(&[14, 15, 16, 17, 18, 19, 20, 21, 22])?, 9);
         assert_eq!(buf.data(), &[18, 19, 20, 21, 22]);
+        Ok(())
     }
 }
