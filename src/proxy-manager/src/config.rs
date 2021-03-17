@@ -143,7 +143,7 @@ impl Config {
 
     pub async fn notify(&self) -> Result<()> {
         info!("notifying service of proxy update");
-        let client = QueueClient::new(self.data.notification.clone());
+        let client = QueueClient::new(self.data.notification.clone())?;
 
         client
             .enqueue(NotifyResponse {
