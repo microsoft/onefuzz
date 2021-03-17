@@ -263,7 +263,7 @@ mod tests {
         let runtime_dir = tempfile::tempdir().unwrap();
 
         let supervisor_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {
-            x.into()
+            x
         } else {
             warn!("Unable to test AFL integration");
             return;
