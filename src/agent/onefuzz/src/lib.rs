@@ -13,6 +13,7 @@ extern crate onefuzz_telemetry;
 pub mod asan;
 pub mod az_copy;
 pub mod blob;
+pub mod env;
 pub mod expand;
 pub mod fs;
 pub mod heartbeat;
