@@ -4,10 +4,10 @@ CC=clang
 
 all: fuzz.exe
 
-CFLAGS=-g3 -fsanitize=address
+CFLAGS=-g3 -fsanitize=address,fuzzer
 
 fuzz.exe: main.o bad1.dll bad2.dll
-	$(CC) -fsanitize=fuzzer,address main.o -o fuzz.exe -L. -lbad1 -lbad2
+	$(CC) $(CFLAGS) main.o -o fuzz.exe -L. -lbad1 -lbad2
 
 bad1.dll: bad1.o
 	$(CC) $(CFLAGS) -shared -o bad1.dll bad1.o
