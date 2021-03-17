@@ -281,7 +281,6 @@ mod tests {
 
         assert_eq!(parsed.iters(), 2097152);
 
-        let error_margin = std::f64::EPSILON;
         let expected: f64 = 699050.0;
         let execs_sec = parsed.execs_sec();
         assert!(execs_sec.is_finite());
