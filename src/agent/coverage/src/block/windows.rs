@@ -15,15 +15,12 @@ use debugger::{
 use crate::{AppCoverageBlocks, ModuleCoverageBlocks};
 
 pub fn record(cmd: Command) -> Result<AppCoverageBlocks> {
-    let mut handler = BlockCoverageHandler::new();
-
-    let (mut dbg, _child) = Debugger::init(cmd, &mut handler)?;
-    dbg.run(&mut handler)?;
-
-    Ok(handler.coverage)
+    let mut recorder = Recorder::new();
+    recorder.record(cmd)?;
+    Ok(recorder.coverage)
 }
 
-pub struct BlockCoverageHandler {
+pub struct Recorder {
     bp_to_block: BTreeMap<BreakpointId, (usize, usize)>,
     coverage: AppCoverageBlocks,
     started: Instant,
@@ -31,7 +28,7 @@ pub struct BlockCoverageHandler {
     timed_out: bool,
 }
 
-impl BlockCoverageHandler {
+impl Recorder {
     pub fn new() -> Self {
         let coverage = AppCoverageBlocks::new();
         let bp_to_block = BTreeMap::default();
@@ -46,6 +43,12 @@ impl BlockCoverageHandler {
             started,
             timed_out,
         }
+    }
+
+    pub fn record(&mut self, cmd: Command) -> Result<()> {
+        let (mut dbg, _child) = Debugger::init(cmd, self)?;
+        dbg.run(self)?;
+        Ok(())
     }
 
     pub fn pc(&self, dbg: &mut Debugger) -> Result<(u64, Option<SymInfo>)> {
@@ -145,7 +148,7 @@ impl BlockCoverageHandler {
     }
 }
 
-impl DebugEventHandler for BlockCoverageHandler {
+impl DebugEventHandler for Recorder {
     fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
         if self.handle_on_create_process(dbg, module).is_err() {
             self.stop(dbg);
