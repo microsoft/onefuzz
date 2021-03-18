@@ -39,6 +39,7 @@ tempfile = "3.2"
 process_control = "3.0"
 reqwest-retry = { path = "../reqwest-retry"}
 onefuzz-telemetry = { path = "../onefuzz-telemetry"}
+stacktrace-parser = { path = "../stacktrace-parser" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winreg = "0.8"

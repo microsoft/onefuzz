@@ -369,7 +369,7 @@ impl<'a> Expand<'a> {
 #[cfg(test)]
 mod tests {
     use super::Expand;
-    use anyhow::Result;
+    use anyhow::{Context, Result};
     use std::path::Path;
 
     #[test]
@@ -415,8 +415,8 @@ mod tests {
         ];
 
         // The paths need to exist for canonicalization.
-        let input_path = "data/libfuzzer-asan-log.txt";
-        let input_corpus_dir = "data";
+        let input_path = "src/lib.rs";
+        let input_corpus_dir = "src";
         let generated_inputs_dir = "src";
 
         let result = Expand::new()
@@ -430,7 +430,7 @@ mod tests {
         let expected_input_corpus = input_corpus_path.to_string_lossy();
         let generated_inputs_path = dunce::canonicalize(generated_inputs_dir)?;
         let expected_generated_inputs = generated_inputs_path.to_string_lossy();
-        let input_full_path = dunce::canonicalize(input_path)?;
+        let input_full_path = dunce::canonicalize(input_path).context("canonicalize failed")?;
         let expected_input = input_full_path.to_string_lossy();
         let expected_options = format!(
             "inner {} then {} {}",
@@ -447,7 +447,7 @@ mod tests {
                 "c",
                 &expected_options,
                 "d",
-                "libfuzzer-asan-log",
+                "lib",
                 &expected_input,
                 &expected_input
             ]
