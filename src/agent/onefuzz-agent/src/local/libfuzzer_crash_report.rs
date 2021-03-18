@@ -50,6 +50,7 @@ pub fn build_report_config(
         target_timeout,
         check_retry_count,
         check_fuzzer_help,
+        minimized_stack_depth: None,
         input_queue,
         check_queue,
         crashes,

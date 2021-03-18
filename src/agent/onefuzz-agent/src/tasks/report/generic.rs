@@ -47,6 +47,9 @@ pub struct Config {
     #[serde(default = "default_bool_true")]
     pub check_queue: bool,
 
+    #[serde(default)]
+    pub minimized_stack_depth: Option<usize>,
+
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -132,6 +135,7 @@ impl<'a> GenericReportProcessor<'a> {
                 &self.config.target_exe,
                 input_blob,
                 input_sha256,
+                self.config.minimized_stack_depth,
             );
             Ok(CrashTestResult::CrashReport(crash_report))
         } else if let Some(crash) = test_report.crash {
@@ -144,11 +148,9 @@ impl<'a> GenericReportProcessor<'a> {
                 crash_type: crash.crash_type,
                 crash_site: crash.crash_site,
                 call_stack_sha256,
-                asan_log: None,
-                scariness_score: None,
-                scariness_description: None,
                 task_id,
                 job_id,
+                ..Default::default()
             };
 
             Ok(CrashTestResult::CrashReport(crash_report))

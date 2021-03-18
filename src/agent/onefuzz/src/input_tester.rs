@@ -4,12 +4,13 @@
 #![allow(clippy::len_zero)]
 
 use crate::{
-    asan::{add_asan_log_env, check_asan_path, check_asan_string, AsanLog},
+    asan::{add_asan_log_env, check_asan_path, check_asan_string},
     env::{get_path_with_directory, update_path, LD_LIBRARY_PATH, PATH},
     expand::Expand,
     process::run_cmd,
 };
 use anyhow::{Error, Result};
+use stacktrace_parser::CrashLog;
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
@@ -40,7 +41,7 @@ pub struct Crash {
 #[derive(Debug)]
 pub struct TestResult {
     pub crash: Option<Crash>,
-    pub asan_log: Option<AsanLog>,
+    pub asan_log: Option<CrashLog>,
     pub error: Option<Error>,
 }
 

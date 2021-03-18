@@ -1,0 +1,6 @@
+{
+  "text": "==================\nWARNING: ThreadSanitizer: data race (pid=4659)\n  Write of size 4 at 0x000001109278 by thread T1:\n    #0 Thread1 /home/user/fuzz-targets/tiny_race.c:4:10 (tiny_race.exe+0x4ac607)\n\n  Previous write of size 4 at 0x000001109278 by main thread:\n    #0 main /home/user/fuzz-targets/tiny_race.c:10:10 (tiny_race.exe+0x4ac64e)\n\n  Location is global 'Global' of size 4 at 0x000001109278 (tiny_race.exe+0x000001109278)\n\n  Thread T1 (tid=4661, running) created by main thread at:\n    #0 pthread_create <null> (tiny_race.exe+0x422fe5)\n    #1 main /home/user/fuzz-targets/tiny_race.c:9:3 (tiny_race.exe+0x4ac644)\n\nSUMMARY: ThreadSanitizer: data race /home/user/fuzz-targets/tiny_race.c:4:10 in Thread1\n==================\nThreadSanitizer: reported 1 warnings",
+  "sanitizer": "ThreadSanitizer",
+  "summary": "ThreadSanitizer: data race /home/user/fuzz-targets/tiny_race.c:4:10 in Thread1",
+  "fault_type": "data race"
+}
