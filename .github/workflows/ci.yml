@@ -366,6 +366,14 @@ jobs:
           (cd libfuzzer-dotnet; make)
           cp -r libfuzzer-dotnet/my-fuzzer libfuzzer-dotnet/inputs artifacts/linux-libfuzzer-dotnet/
 
+          mkdir -p artifacts/linux-libfuzzer-dlopen
+          (cd libfuzzer-dlopen; make)
+          cp -r libfuzzer-dlopen/{fuzz.exe,*.so,seeds} artifacts/linux-libfuzzer-dlopen/
+
+          mkdir -p artifacts/linux-libfuzzer-linked-library
+          (cd libfuzzer-linked-library; make)
+          cp -r libfuzzer-linked-library/{fuzz.exe,*.so,seeds} artifacts/linux-libfuzzer-linked-library/
+
           mkdir -p artifacts/linux-trivial-crash-asan
           (cd trivial-crash ; make clean; make CFLAGS='-fsanitize=address -fno-omit-frame-pointer')
           cp -r trivial-crash/fuzz.exe trivial-crash/seeds artifacts/linux-trivial-crash-asan
@@ -415,6 +423,12 @@ jobs:
           cd trivial-crash
           make
           cp fuzz.exe,fuzz.pdb,seeds ../artifacts/windows-trivial-crash -Recurse
+          cd ../
+
+          mkdir artifacts/windows-libfuzzer-linked-library
+          cd libfuzzer-linked-library
+          make -f Makefile.windows
+          cp fuzz.exe,fuzz.pdb,bad1.dll,bad1.pdb,bad2.dll,bad2.pdb,seeds ../artifacts/windows-libfuzzer-linked-library -Recurse
           cd ../
 
           mkdir artifacts/windows-trivial-crash-asan

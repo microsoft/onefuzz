@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::{
-    env::{get_path_with_directory, PATH},
+    env::{get_path_with_directory, LD_LIBRARY_PATH, PATH},
     expand::Expand,
     input_tester::{TestResult, Tester},
 };
@@ -51,12 +51,19 @@ impl<'a> LibFuzzer<'a> {
         let mut cmd = Command::new(&self.exe);
 
         cmd.kill_on_drop(true)
-            .env(PATH, get_path_with_directory(&self.setup_dir)?)
+            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .arg("-help=1");
+
+        if cfg!(target_family = "unix") {
+            cmd.env(
+                LD_LIBRARY_PATH,
+                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
+            );
+        }
 
         let expand = Expand::new()
             .target_exe(&self.exe)
@@ -102,7 +109,7 @@ impl<'a> LibFuzzer<'a> {
 
         let mut cmd = Command::new(&self.exe);
         cmd.kill_on_drop(true)
-            .env(PATH, get_path_with_directory(&self.setup_dir)?)
+            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdout(Stdio::null())
             .stderr(Stdio::piped());
@@ -115,6 +122,13 @@ impl<'a> LibFuzzer<'a> {
         // Pass custom option arguments.
         for o in expand.evaluate(self.options)? {
             cmd.arg(o);
+        }
+
+        if cfg!(target_family = "unix") {
+            cmd.env(
+                LD_LIBRARY_PATH,
+                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
+            );
         }
 
         // check if a max_time is already set
@@ -163,10 +177,16 @@ impl<'a> LibFuzzer<'a> {
         let mut options = self.options.to_owned();
         options.push("{input}".to_string());
 
-        let tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
+        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
             .check_asan_stderr(true)
             .check_retry_count(retry)
+            .add_setup_to_path(true)
             .set_optional(timeout, |tester, timeout| tester.timeout(timeout));
+
+        if cfg!(target_family = "unix") {
+            tester = tester.add_setup_to_ld_library_path(true);
+        }
+
         tester.test_input(test_input.as_ref()).await
     }
 
@@ -184,12 +204,19 @@ impl<'a> LibFuzzer<'a> {
         let mut cmd = Command::new(&self.exe);
 
         cmd.kill_on_drop(true)
-            .env(PATH, get_path_with_directory(&self.setup_dir)?)
+            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .arg("-merge=1")
             .arg(corpus_dir.as_ref());
+
+        if cfg!(target_family = "unix") {
+            cmd.env(
+                LD_LIBRARY_PATH,
+                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
+            );
+        }
 
         for dir in corpus_dirs {
             cmd.arg(dir.as_ref());
