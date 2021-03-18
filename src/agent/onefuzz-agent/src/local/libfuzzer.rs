@@ -4,7 +4,7 @@
 use crate::{
     local::{
         common::{
-            build_local_context, monitor_file_urls, spawn_file_count_monitor, wait_for_dir,
+            build_local_context, monitor_file_urls, wait_for_dir,
             DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR, UNIQUE_REPORTS_DIR,
         },
         generic_analysis::build_analysis_config,
@@ -24,7 +24,6 @@ use clap::{App, SubCommand};
 use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
 use tokio::{sync::mpsc::UnboundedSender, task::spawn};
-use tokio_stream::iter;
 use uuid::Uuid;
 
 use super::common::UiEvent;

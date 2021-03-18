@@ -3,7 +3,7 @@
 
 use crate::{
     local::{
-        common::{build_local_context, DirectoryMonitorQueue, UiEvent},
+        common::{build_local_context, DirectoryMonitorQueue},
         generic_crash_report::{build_report_config, build_shared_args as build_crash_args},
         generic_generator::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
