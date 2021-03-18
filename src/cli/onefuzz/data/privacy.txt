@@ -1,6 +1,3 @@
-
-Privacy Statement:
-
 The software may collect information about you and your use of the software and
 send it to Microsoft. Microsoft may use this information to provide services
 and improve our products and services. You may turn off the telemetry as
@@ -15,5 +12,3 @@ use of the software operates as your consent to these practices.
 
 Instructions on how to turn off telemetry:
 * https://github.com/microsoft/onefuzz/blob/main/docs/telemetry.md#how-to-disable-sending-telemetry-to-microsoft
-
-
