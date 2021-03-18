@@ -7,7 +7,7 @@ use crate::{
             build_common_config, wait_for_dir, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR,
             UNIQUE_REPORTS_DIR,
         },
-        generic_analysis::build_analysis_config,
+        generic_analysis::{build_analysis_config, build_shared_args as build_analysis_args},
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
         libfuzzer_crash_report::{build_report_config, build_shared_args as build_crash_args},
         libfuzzer_fuzz::{build_fuzz_config, build_shared_args as build_fuzz_args},
@@ -109,6 +109,7 @@ pub fn args(name: &'static str) -> App<'static, 'static> {
     for args in &[
         build_fuzz_args(),
         build_crash_args(),
+        build_analysis_args(false),
         build_coverage_args(true),
     ] {
         for arg in args {
