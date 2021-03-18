@@ -170,6 +170,7 @@ class TaskDetails(BaseModel):
     target_timeout: Optional[int]
     ensemble_sync_delay: Optional[int]
     preserve_existing_outputs: Optional[bool]
+    report_list: Optional[List[str]]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:
@@ -237,7 +238,7 @@ class BlobRef(BaseModel):
 
 class Report(BaseModel):
     input_url: Optional[str]
-    input_blob: BlobRef
+    input_blob: Optional[BlobRef]
     executable: str
     crash_type: str
     crash_site: str
@@ -249,6 +250,26 @@ class Report(BaseModel):
     job_id: UUID
     scariness_score: Optional[int]
     scariness_description: Optional[str]
+
+
+class NoReproReport(BaseModel):
+    input_sha256: str
+    input_blob: Optional[BlobRef]
+    executable: str
+    task_id: UUID
+    job_id: UUID
+    tries: int
+    error: Optional[str]
+
+
+class CrashTestResult(BaseModel):
+    crash_report: Optional[Report]
+    no_repro: Optional[NoReproReport]
+
+
+class RegressionReport(BaseModel):
+    crash_test_result: CrashTestResult
+    original_crash_test_result: Optional[CrashTestResult]
 
 
 class ADODuplicateTemplate(BaseModel):
@@ -377,6 +398,7 @@ class TaskUnitConfig(BaseModel):
     stats_file: Optional[str]
     stats_format: Optional[StatsFormat]
     ensemble_sync_delay: Optional[int]
+    report_list: Optional[List[str]]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes
@@ -390,6 +412,7 @@ class TaskUnitConfig(BaseModel):
     tools: CONTAINER_DEF
     unique_inputs: CONTAINER_DEF
     unique_reports: CONTAINER_DEF
+    regression_reports: CONTAINER_DEF
 
 
 class Forward(BaseModel):

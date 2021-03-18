@@ -31,6 +31,7 @@ from onefuzztypes.events import (
     EventProxyCreated,
     EventProxyDeleted,
     EventProxyFailed,
+    EventRegressionReported,
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
@@ -45,8 +46,10 @@ from onefuzztypes.events import (
 )
 from onefuzztypes.models import (
     BlobRef,
+    CrashTestResult,
     Error,
     JobConfig,
+    RegressionReport,
     Report,
     TaskConfig,
     TaskContainers,
@@ -86,6 +89,24 @@ def main() -> None:
             TaskContainers(name=Container("my-crashes"), type=ContainerType.crashes),
         ],
         tags={},
+    )
+    report = Report(
+        input_blob=BlobRef(
+            account="contoso-storage-account",
+            container=Container("crashes"),
+            name="input.txt",
+        ),
+        executable="fuzz.exe",
+        crash_type="example crash report type",
+        crash_site="example crash site",
+        call_stack=["#0 line", "#1 line", "#2 line"],
+        call_stack_sha256=ZERO_SHA256,
+        input_sha256=EMPTY_SHA256,
+        asan_log="example asan log",
+        task_id=UUID(int=0),
+        job_id=UUID(int=0),
+        scariness_score=10,
+        scariness_description="example-scariness",
     )
     examples: List[Event] = [
         EventPing(ping_id=UUID(int=0)),
@@ -193,27 +214,18 @@ def main() -> None:
             pool_name=PoolName("example"),
             state=NodeState.setting_up,
         ),
+        EventRegressionReported(
+            regression_report=RegressionReport(
+                crash_test_result=CrashTestResult(crash_report=report),
+                original_crash_test_result=CrashTestResult(crash_report=report),
+            ),
+            container=Container("container-name"),
+            filename="example.json",
+        ),
         EventCrashReported(
             container=Container("container-name"),
             filename="example.json",
-            report=Report(
-                input_blob=BlobRef(
-                    account="contoso-storage-account",
-                    container=Container("crashes"),
-                    name="input.txt",
-                ),
-                executable="fuzz.exe",
-                crash_type="example crash report type",
-                crash_site="example crash site",
-                call_stack=["#0 line", "#1 line", "#2 line"],
-                call_stack_sha256=ZERO_SHA256,
-                input_sha256=EMPTY_SHA256,
-                asan_log="example asan log",
-                task_id=UUID(int=0),
-                job_id=UUID(int=0),
-                scariness_score=10,
-                scariness_description="example-scariness",
-            ),
+            report=report,
         ),
         EventFileAdded(container=Container("container-name"), filename="example.txt"),
         EventNodeHeartbeat(machine_id=UUID(int=0), pool_name=PoolName("example")),
