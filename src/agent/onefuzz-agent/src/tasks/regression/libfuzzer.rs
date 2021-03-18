@@ -51,13 +51,9 @@ pub struct LibFuzzerRegressionTask {
 
 #[async_trait]
 impl RegressionHandler for LibFuzzerRegressionTask {
-    async fn get_crash_result(
-        &self,
-        input: PathBuf,
-        input_url: Option<Url>,
-    ) -> Result<CrashTestResult> {
+    async fn get_crash_result(&self, input: PathBuf, input_url: Url) -> Result<CrashTestResult> {
         let args = libfuzzer_report::TestInputArgs {
-            input_url,
+            input_url: Some(input_url),
             input: &input,
             target_exe: &self.config.target_exe,
             target_options: &self.config.target_options,
