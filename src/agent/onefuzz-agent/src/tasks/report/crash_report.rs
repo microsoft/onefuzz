@@ -3,7 +3,7 @@
 
 use anyhow::{Context, Result};
 use futures::StreamExt;
-use onefuzz::{asan::AsanLog, blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use onefuzz::{blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use onefuzz_telemetry::{
     Event::{
         new_report, new_unable_to_reproduce, new_unique_report, regression_report,
@@ -11,12 +11,12 @@ use onefuzz_telemetry::{
     },
     EventData,
 };
-
 use serde::{Deserialize, Serialize};
+use stacktrace_parser::CrashLog;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 pub struct CrashReport {
     pub input_sha256: String,
 
@@ -30,8 +30,17 @@ pub struct CrashReport {
     pub crash_site: String,
 
     pub call_stack: Vec<String>,
-
     pub call_stack_sha256: String,
+
+    #[serde(default)]
+    pub minimized_stack: Vec<String>,
+    #[serde(default)]
+    pub minimized_stack_sha256: Option<String>,
+
+    #[serde(default)]
+    pub minimized_stack_function_names: Vec<String>,
+    #[serde(default)]
+    pub minimized_stack_function_names_sha256: Option<String>,
 
     pub asan_log: Option<String>,
 
@@ -162,24 +171,42 @@ impl From<BlobUrl> for InputBlob {
 
 impl CrashReport {
     pub fn new(
-        asan_log: AsanLog,
+        crash_log: CrashLog,
         task_id: Uuid,
         job_id: Uuid,
         executable: impl Into<PathBuf>,
         input_blob: Option<InputBlob>,
         input_sha256: String,
+        minimized_stack_depth: Option<usize>,
     ) -> Self {
+        let call_stack_sha256 = crash_log.call_stack_sha256();
+        let minimized_stack_sha256 = if crash_log.minimized_stack.is_empty() {
+            None
+        } else {
+            Some(crash_log.minimized_stack_sha256(minimized_stack_depth))
+        };
+
+        let minimized_stack_function_names_sha256 =
+            if crash_log.minimized_stack_function_names.is_empty() {
+                None
+            } else {
+                Some(crash_log.minimized_stack_function_names_sha256(minimized_stack_depth))
+            };
         Self {
             input_sha256,
             input_blob,
             executable: executable.into(),
-            crash_type: asan_log.fault_type().into(),
-            crash_site: asan_log.summary().into(),
-            call_stack: asan_log.call_stack().to_vec(),
-            call_stack_sha256: asan_log.call_stack_sha256(),
-            asan_log: Some(asan_log.text().to_string()),
-            scariness_score: asan_log.scariness_score(),
-            scariness_description: asan_log.scariness_description().to_owned(),
+            crash_type: crash_log.fault_type,
+            crash_site: crash_log.summary,
+            call_stack_sha256,
+            minimized_stack: crash_log.minimized_stack,
+            minimized_stack_sha256,
+            minimized_stack_function_names: crash_log.minimized_stack_function_names,
+            minimized_stack_function_names_sha256,
+            call_stack: crash_log.call_stack,
+            asan_log: Some(crash_log.text),
+            scariness_score: crash_log.scariness_score,
+            scariness_description: crash_log.scariness_description,
             task_id,
             job_id,
         }

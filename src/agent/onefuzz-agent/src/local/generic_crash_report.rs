@@ -58,6 +58,7 @@ pub fn build_report_config(
         check_retry_count,
         check_queue,
         crashes,
+        minimized_stack_depth: None,
         input_queue,
         no_repro,
         reports,

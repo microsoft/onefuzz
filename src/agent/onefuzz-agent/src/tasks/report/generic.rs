@@ -48,6 +48,9 @@ pub struct Config {
     #[serde(default = "default_bool_true")]
     pub check_queue: bool,
 
+    #[serde(default)]
+    pub minimized_stack_depth: Option<usize>,
+
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -97,6 +100,7 @@ pub struct TestInputArgs<'a> {
     pub check_retry_count: u64,
     pub check_asan_log: bool,
     pub check_debugger: bool,
+    pub minimized_stack_depth: Option<usize>,
 }
 
 pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
@@ -123,14 +127,15 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
 
     let test_report = tester.test_input(args.input).await?;
 
-    if let Some(asan_log) = test_report.asan_log {
+    if let Some(crash_log) = test_report.asan_log {
         let crash_report = CrashReport::new(
-            asan_log,
+            crash_log,
             task_id,
             job_id,
             args.target_exe,
             input_blob,
             input_sha256,
+            args.minimized_stack_depth,
         );
         Ok(CrashTestResult::CrashReport(crash_report))
     } else if let Some(crash) = test_report.crash {
@@ -148,6 +153,10 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
             scariness_description: None,
             task_id,
             job_id,
+            minimized_stack: vec![],
+            minimized_stack_sha256: None,
+            minimized_stack_function_names: vec![],
+            minimized_stack_function_names_sha256: None,
         };
 
         Ok(CrashTestResult::CrashReport(crash_report))
@@ -199,6 +208,7 @@ impl<'a> GenericReportProcessor<'a> {
             check_retry_count: self.config.check_retry_count,
             check_asan_log: self.config.check_asan_log,
             check_debugger: self.config.check_debugger,
+            minimized_stack_depth: self.config.minimized_stack_depth,
         };
         let result = test_input(args).await?;
 

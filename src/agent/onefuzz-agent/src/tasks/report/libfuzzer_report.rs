@@ -39,6 +39,9 @@ pub struct Config {
     #[serde(default)]
     pub check_retry_count: u64,
 
+    #[serde(default)]
+    pub minimized_stack_depth: Option<usize>,
+
     #[serde(default = "default_bool_true")]
     pub check_queue: bool,
 
@@ -99,6 +102,7 @@ pub struct TestInputArgs<'a> {
     pub job_id: uuid::Uuid,
     pub target_timeout: Option<u64>,
     pub check_retry_count: u64,
+    pub minimized_stack_depth: Option<usize>,
 }
 
 pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
@@ -125,14 +129,15 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         .await?;
 
     match test_report.asan_log {
-        Some(asan_log) => {
+        Some(crash_log) => {
             let crash_report = CrashReport::new(
-                asan_log,
+                crash_log,
                 task_id,
                 job_id,
                 args.target_exe,
                 input_blob,
                 input_sha256,
+                args.minimized_stack_depth,
             );
             Ok(CrashTestResult::CrashReport(crash_report))
         }
@@ -184,6 +189,7 @@ impl AsanProcessor {
             job_id: self.config.common.job_id,
             target_timeout: self.config.target_timeout,
             check_retry_count: self.config.check_retry_count,
+            minimized_stack_depth: self.config.minimized_stack_depth,
         };
         let result = test_input(args).await?;
 
