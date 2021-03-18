@@ -40,9 +40,9 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
             Ok(x) => Ok(x),
             Err(x) => {
                 if attempt_count >= max_retry {
-                    return Err(backoff::Error::Permanent(x));
+                    Err(backoff::Error::Permanent(x))
                 } else {
-                    return Err(backoff::Error::Transient(x));
+                    Err(backoff::Error::Transient(x))
                 }
             }
         }
