@@ -67,7 +67,6 @@ class BackendConfig(BaseModel):
     endpoint: Optional[str]
     features: Set[str] = Field(default_factory=set)
     tenant_domain: Optional[str]
-    seen_privacy_statement: Optional[bool]
 
 
 class Backend:
