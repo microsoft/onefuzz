@@ -11,7 +11,9 @@ use onefuzz::syncdir::SyncedDir;
 use reqwest::Url;
 use std::path::PathBuf;
 
-/// Abstraction for handling regression reports
+/// Defines implementation-provided callbacks for all implementers of regression tasks.
+///
+/// Shared regression task behavior is implemented in this module.
 #[async_trait]
 pub trait RegressionHandler {
     /// Test the provided input and generate a crash result
