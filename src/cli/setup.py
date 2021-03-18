@@ -45,6 +45,6 @@ setuptools.setup(
     zip_safe=False,
     include_package_data=True,
     package_data={
-        "": ["*.md", "*.txt", "onefuzz/data/licenses.json", "onefuzz/data/privacy.txt"]
+        "": ["*.md", "*.txt", "data/licenses.json", "data/privacy.txt"]
     },
 )
