@@ -13,6 +13,7 @@ from enum import Enum
 from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
+import sys
 
 import pkg_resources
 import semver
@@ -1528,10 +1529,20 @@ class Onefuzz:
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates._load_cache()
 
+        if not self._backend.config.seen_privacy_statement:
+            print(self.privacy_statement().decode(), file=sys.stderr)
+            self.config(seen_privacy_statement=True)
+
+
     def licenses(self) -> object:
         """ Return third-party licenses used by this package """
         stream = pkg_resources.resource_stream(__name__, "data/licenses.json")
         return json.load(stream)
+
+    def privacy_statement(self) -> bytes:
+        """ Return OneFuzz privacy statement """
+        stream = pkg_resources.resource_stream(__name__, "data/privacy.txt")
+        return stream.read()
 
     def logout(self) -> None:
         """ Logout of Onefuzz """
@@ -1559,6 +1570,7 @@ class Onefuzz:
         client_secret: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         tenant_domain: Optional[str] = None,
+        seen_privacy_statement: Optional[bool] = None,
     ) -> BackendConfig:
         """ Configure onefuzz CLI """
         self.logger.debug("set config")
@@ -1587,6 +1599,9 @@ class Onefuzz:
             self._backend.enable_feature(enable_feature.name)
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
+        if seen_privacy_statement is not None:
+            self._backend.config.seen_privacy_statement = seen_privacy_statement
+
         self._backend.app = None
         self._backend.save_config()
 
