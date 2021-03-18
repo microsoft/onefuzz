@@ -238,7 +238,7 @@ class BlobRef(BaseModel):
 
 class Report(BaseModel):
     input_url: Optional[str]
-    input_blob: BlobRef
+    input_blob: Optional[BlobRef]
     executable: str
     crash_type: str
     crash_site: str

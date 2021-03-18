@@ -169,7 +169,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "required": [
-                "input_blob",
                 "executable",
                 "crash_type",
                 "crash_site",
@@ -1252,7 +1251,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "required": [
-                "input_blob",
                 "executable",
                 "crash_type",
                 "crash_site",
@@ -4615,7 +4613,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "required": [
-                "input_blob",
                 "executable",
                 "crash_type",
                 "crash_site",
