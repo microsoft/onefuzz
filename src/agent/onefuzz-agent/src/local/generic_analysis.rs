@@ -60,7 +60,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     run_analysis(config).await
 }
 
-pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
+pub fn build_shared_args(required_task: bool) -> Vec<Arg<'static, 'static>> {
     vec![
         Arg::with_name(TARGET_EXE)
             .long(TARGET_EXE)
@@ -68,37 +68,47 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
             .required(true),
         Arg::with_name(TARGET_ENV)
             .long(TARGET_ENV)
+            .requires(TARGET_EXE)
             .takes_value(true)
             .multiple(true),
         Arg::with_name(TARGET_OPTIONS)
-            .default_value("{input}")
             .long(TARGET_OPTIONS)
             .takes_value(true)
+            .default_value("{input}")
             .value_delimiter(" ")
             .help("Use a quoted string with space separation to denote multiple arguments"),
         Arg::with_name(CRASHES_DIR)
             .long(CRASHES_DIR)
-            .takes_value(true)
-            .required(true),
-        Arg::with_name(ANALYZER_EXE)
-            .takes_value(true)
-            .required(true),
+            .takes_value(true),
         Arg::with_name(ANALYZER_OPTIONS)
+            .long(ANALYZER_OPTIONS)
+            .requires(ANALYZER_EXE)
             .takes_value(true)
             .value_delimiter(" ")
             .help("Use a quoted string with space separation to denote multiple arguments"),
         Arg::with_name(ANALYZER_ENV)
+            .long(ANALYZER_ENV)
+            .requires(ANALYZER_EXE)
             .takes_value(true)
             .multiple(true),
-        Arg::with_name(ANALYSIS_DIR)
+        Arg::with_name(TOOLS_DIR).long(TOOLS_DIR).takes_value(true),
+        Arg::with_name(ANALYZER_EXE)
+            .long(ANALYZER_EXE)
             .takes_value(true)
-            .required(true),
-        Arg::with_name(TOOLS_DIR).takes_value(true).required(false),
+            .requires(ANALYSIS_DIR)
+            .requires(CRASHES_DIR)
+            .required(required_task),
+        Arg::with_name(ANALYSIS_DIR)
+            .long(ANALYSIS_DIR)
+            .takes_value(true)
+            .requires(ANALYZER_EXE)
+            .requires(CRASHES_DIR)
+            .required(required_task),
     ]
 }
 
 pub fn args(name: &'static str) -> App<'static, 'static> {
     SubCommand::with_name(name)
         .about("execute a local-only generic analysis")
-        .args(&build_shared_args())
+        .args(&build_shared_args(true))
 }
