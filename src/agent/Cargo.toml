@@ -11,6 +11,8 @@ members = [
     "reqwest-retry",
     "storage-queue",
     "win-util",
+    "libclusterfuzz",
+    "stacktrace-parser",
 ]
 
 [profile.release]
