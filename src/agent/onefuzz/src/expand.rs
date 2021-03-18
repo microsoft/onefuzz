@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::sha256::digest_file_blocking;
 use anyhow::Result;
 use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use std::path::{Path, PathBuf};
@@ -13,7 +14,7 @@ pub enum ExpandedValue<'a> {
     Path(String),
     Scalar(String),
     List(&'a [String]),
-    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Option<ExpandedValue<'a>>>),
+    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Option<ExpandedValue<'a>> + Send>),
 }
 
 #[derive(PartialEq, Eq, Hash, EnumIter)]
@@ -43,6 +44,7 @@ pub enum PlaceHolder {
     CrashesAccount,
     MicrosoftTelemetryKey,
     InstanceTelemetryKey,
+    InputFileSha256,
 }
 
 impl PlaceHolder {
@@ -73,6 +75,7 @@ impl PlaceHolder {
             Self::CrashesAccount => "{crashes_account}",
             Self::MicrosoftTelemetryKey => "{microsoft_telemetry_key}",
             Self::InstanceTelemetryKey => "{instance_telemetry_key}",
+            Self::InputFileSha256 => "{input_file_sha256}",
         }
         .to_string()
     }
@@ -99,7 +102,21 @@ impl<'a> Expand<'a> {
             PlaceHolder::InputFileName.get_string(),
             ExpandedValue::Mapping(Box::new(Expand::extract_file_name)),
         );
+        values.insert(
+            PlaceHolder::InputFileSha256.get_string(),
+            ExpandedValue::Mapping(Box::new(Expand::input_file_sha256)),
+        );
         Self { values }
+    }
+
+    fn input_file_sha256(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
+        match self.values.get(&PlaceHolder::Input.get_string()) {
+            Some(ExpandedValue::Path(fp)) => {
+                let file = PathBuf::from(fp);
+                digest_file_blocking(file).ok().map(ExpandedValue::Scalar)
+            }
+            _ => None,
+        }
     }
 
     fn extract_file_name_no_ext(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {

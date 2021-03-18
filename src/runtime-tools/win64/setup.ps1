@@ -67,6 +67,7 @@ function Install-OnefuzzSetup {
   Install-LLVM
   Enable-SSH
   Install-OnBoot
+  Install-VCRedist
   log "onefuzz: setup done"
 }
 

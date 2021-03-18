@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.9.0
+### Added
+* Contrib: Added sample Webhook Service [#666](https://github.com/microsoft/onefuzz/pull/666)
+* Agent: Add OneFuzz version and Software role to telemetry [#586](https://github.com/microsoft/onefuzz/pull/586)
+* Agent: Add multiple telemetry data types for the upcoming functionality [#619](https://github.com/microsoft/onefuzz/pull/619)
+* Agent: Added `input_file_sha256` to [configuration value expansion](docs/command-replacements.md). [#641](https://github.com/microsoft/onefuzz/pull/641)
+* Agent: Added `job_id` to Task Heartbeat [#646](https://github.com/microsoft/onefuzz/pull/646)
+* Service: Added task information to [job_stopped](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#job_stopped) events [#648](https://github.com/microsoft/onefuzz/pull/648)
+ 
+### Changed
+* Service: [task_stopped](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#task_stopped) and [task_failed](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#task_failed) now trigger once the task has stopped instead of upon entering the `stopping` state. [#651](https://github.com/microsoft/onefuzz/pull/651)
+* CLI: Authentication tokens are saved upon successful login rather than on program exit. [#665](https://github.com/microsoft/onefuzz/pull/665)
+* Service: If a task with dependent tasks fails, all of the dependent tasks are marked as failed.  [#650](https://github.com/microsoft/onefuzz/pull/650)
+* Agent: Fixed PC address in crash report backtraces.  [#658](https://github.com/microsoft/onefuzz/pull/658)
+* Service: Upon task completion, if all of the tasks in the associated job are completed, the job is marked as stopped.  [#649](https://github.com/microsoft/onefuzz/pull/649)
+* Deployment/Agent: Updated AFL++ to 3.11c.  [#675](https://github.com/microsoft/onefuzz/pull/675)
+* Agent/Proxy/Supervisor: Changed web request retry logic to always retry any request that fails, regardless of why the request failed.  [#674](https://github.com/microsoft/onefuzz/pull/674)
+* Agent: Downloading files from task queues will now automatically retry on failure.  [#676](https://github.com/microsoft/onefuzz/pull/676)
+* Service: User information is now stripped from [Events](docs/webhook_events.md) before being logged to Application Insights.  [#661](https://github.com/microsoft/onefuzz/pull/661)
+ 
+### Fixed
+* Service: Handle exception related to manually deleted scalesets [#672](https://github.com/microsoft/onefuzz/pull/672)
+* Agent: Fixed Rust lifetime issues exposed by an update to Rust regex library [#671](https://github.com/microsoft/onefuzz/pull/671)
+
+## 2.8.0
+### Added
+* CLI: Added support for [Aarch64](docs/how-to/fuzzing-other-architectures-on-azure.md) libFuzzer targets using the [QEMU user space emulator](https://qemu.readthedocs.io/en/latest/user/main.html). [#600](https://github.com/microsoft/onefuzz/pull/600)
+* Build: Added CodeQL pipeline. [#617](https://github.com/microsoft/onefuzz/pull/617)
+* Service: Added node and task heartbeat [events](docs/webhook_events.md).  [#621](https://github.com/microsoft/onefuzz/pull/621)
+
+### Changed
+* Agent: Clarified batch-processing logs.  [#622](https://github.com/microsoft/onefuzz/pull/622)
+* Agent/Proxy: Updated multiple rust dependencies. [#624](https://github.com/microsoft/onefuzz/pull/624)
+* Service/CLI/Contrib: Updated multiple python dependencies.  [#607](https://github.com/microsoft/onefuzz/pull/607), [#608](https://github.com/microsoft/onefuzz/pull/608), [#610](https://github.com/microsoft/onefuzz/pull/610), [#611](https://github.com/microsoft/onefuzz/pull/611), [#612](https://github.com/microsoft/onefuzz/pull/612), [#625](https://github.com/microsoft/onefuzz/pull/625), [#626](https://github.com/microsoft/onefuzz/pull/626), [#630](https://github.com/microsoft/onefuzz/pull/630), [#640](https://github.com/microsoft/onefuzz/pull/640)
+* Service: Update task configuration to verify `target_exe` is a canonicalized relative path. [#613](https://github.com/microsoft/onefuzz/pull/613)
+* Deployment/Agent: Updated AFL++ to 3.10c.  [#609](https://github.com/microsoft/onefuzz/pull/609)
+* Deployment: Clarify application password creation succeeded after earlier failures.  [#629](https://github.com/microsoft/onefuzz/pull/629)
+* Service: VM passwords are no longer set on Linux VMs.  [#620](https://github.com/microsoft/onefuzz/pull/620)
+* Service: Clarify source of task failures when notification integration marks a task as failed.  [#635](https://github.com/microsoft/onefuzz/pull/635)
+
+### Fixed
+* Agent/Proxy/Supervisor: Fixed web request retry logic when handling operating system level errors.  [#623](https://github.com/microsoft/onefuzz/pull/623)
+* Service: Handle exceptions when creating scalesets fail due to Azure VM quota issues. [#614](https://github.com/microsoft/onefuzz/pull/614)
+
 ## 2.7.0
 ### Added
 * CLI: Added `onefuzz containers files download_dir` to enable downloading the contents of a container.  [#598](https://github.com/microsoft/onefuzz/pull/598)

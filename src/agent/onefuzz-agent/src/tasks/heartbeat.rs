@@ -18,6 +18,7 @@ pub enum HeartbeatData {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct Heartbeat {
     task_id: Uuid,
+    job_id: Uuid,
     machine_id: Uuid,
     machine_name: String,
     data: Vec<HeartbeatData>,
@@ -53,6 +54,7 @@ pub async fn init_task_heartbeat(
             let task_id = context.state.task_id;
             let machine_id = context.state.machine_id;
             let machine_name = context.state.machine_name.clone();
+            let job_id = context.state.job_id;
 
             let data = HeartbeatClient::<TaskContext, _>::drain_current_messages(context.clone());
             let _ = context
@@ -60,12 +62,13 @@ pub async fn init_task_heartbeat(
                 .enqueue(Heartbeat {
                     task_id,
                     data,
+                    job_id,
                     machine_id,
                     machine_name,
                 })
                 .await;
         },
-    );
+    )?;
     Ok(hb)
 }
 

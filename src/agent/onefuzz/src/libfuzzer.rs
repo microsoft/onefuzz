@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::{
+    env::{get_path_with_directory, LD_LIBRARY_PATH, PATH},
     expand::Expand,
     input_tester::{TestResult, Tester},
 };
@@ -50,11 +51,19 @@ impl<'a> LibFuzzer<'a> {
         let mut cmd = Command::new(&self.exe);
 
         cmd.kill_on_drop(true)
+            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .arg("-help=1");
+
+        if cfg!(target_family = "unix") {
+            cmd.env(
+                LD_LIBRARY_PATH,
+                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
+            );
+        }
 
         let expand = Expand::new()
             .target_exe(&self.exe)
@@ -100,6 +109,7 @@ impl<'a> LibFuzzer<'a> {
 
         let mut cmd = Command::new(&self.exe);
         cmd.kill_on_drop(true)
+            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdout(Stdio::null())
             .stderr(Stdio::piped());
@@ -112,6 +122,13 @@ impl<'a> LibFuzzer<'a> {
         // Pass custom option arguments.
         for o in expand.evaluate(self.options)? {
             cmd.arg(o);
+        }
+
+        if cfg!(target_family = "unix") {
+            cmd.env(
+                LD_LIBRARY_PATH,
+                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
+            );
         }
 
         // check if a max_time is already set
@@ -160,10 +177,16 @@ impl<'a> LibFuzzer<'a> {
         let mut options = self.options.to_owned();
         options.push("{input}".to_string());
 
-        let tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
+        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
             .check_asan_stderr(true)
             .check_retry_count(retry)
+            .add_setup_to_path(true)
             .set_optional(timeout, |tester, timeout| tester.timeout(timeout));
+
+        if cfg!(target_family = "unix") {
+            tester = tester.add_setup_to_ld_library_path(true);
+        }
+
         tester.test_input(test_input.as_ref()).await
     }
 
@@ -181,11 +204,19 @@ impl<'a> LibFuzzer<'a> {
         let mut cmd = Command::new(&self.exe);
 
         cmd.kill_on_drop(true)
+            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .arg("-merge=1")
             .arg(corpus_dir.as_ref());
+
+        if cfg!(target_family = "unix") {
+            cmd.env(
+                LD_LIBRARY_PATH,
+                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
+            );
+        }
 
         for dir in corpus_dirs {
             cmd.arg(dir.as_ref());
@@ -211,7 +242,8 @@ impl<'a> LibFuzzer<'a> {
         let output_text = String::from_utf8_lossy(&output.stderr);
         let pat = r"MERGE-OUTER: (\d+) new files with (\d+) new features added";
         let re = regex::Regex::new(pat).unwrap();
-        match re.captures_iter(&output_text).next() {
+        let captures = re.captures_iter(&output_text).next();
+        match captures {
             Some(captures) => {
                 let added_files_count = captures.get(1).unwrap().as_str().parse::<i32>().unwrap();
                 let added_feature_count = captures.get(2).unwrap().as_str().parse::<i32>().unwrap();
@@ -279,6 +311,10 @@ mod tests {
             .expect("no captures");
 
         assert_eq!(parsed.iters(), 2097152);
-        assert_eq!(parsed.execs_sec(), 699050.0_f64);
+
+        let expected: f64 = 699050.0;
+        let execs_sec = parsed.execs_sec();
+        assert!(execs_sec.is_finite());
+        assert!((execs_sec - expected).abs() < f64::EPSILON);
     }
 }
