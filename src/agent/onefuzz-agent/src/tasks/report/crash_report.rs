@@ -5,7 +5,10 @@ use anyhow::{Context, Result};
 use futures::StreamExt;
 use onefuzz::{blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use onefuzz_telemetry::{
-    Event::{new_report, new_unable_to_reproduce, new_unique_report},
+    Event::{
+        new_report, new_unable_to_reproduce, new_unique_report, regression_report,
+        regression_unable_to_reproduce,
+    },
     EventData,
 };
 use serde::{Deserialize, Serialize};
@@ -46,6 +49,7 @@ pub struct CrashReport {
     pub job_id: Uuid,
 
     pub scariness_score: Option<u32>,
+
     pub scariness_description: Option<String>,
 }
 
@@ -62,9 +66,40 @@ pub struct NoCrash {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CrashTestResult {
     CrashReport(CrashReport),
     NoRepro(NoCrash),
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RegressionReport {
+    pub crash_test_result: CrashTestResult,
+    pub original_crash_test_result: Option<CrashTestResult>,
+}
+
+impl RegressionReport {
+    pub async fn save(
+        self,
+        report_name: Option<String>,
+        regression_reports: &SyncedDir,
+    ) -> Result<()> {
+        let (event, name) = match &self.crash_test_result {
+            CrashTestResult::CrashReport(report) => {
+                let name = report_name.unwrap_or_else(|| report.unique_blob_name());
+                (regression_report, name)
+            }
+            CrashTestResult::NoRepro(report) => {
+                let name = report_name.unwrap_or_else(|| report.blob_name());
+                (regression_unable_to_reproduce, name)
+            }
+        };
+
+        if upload_or_save_local(&self, &name, regression_reports).await? {
+            event!(event; EventData::Path = name);
+        }
+        Ok(())
+    }
 }
 
 async fn upload_or_save_local<T: Serialize>(
@@ -76,6 +111,10 @@ async fn upload_or_save_local<T: Serialize>(
 }
 
 impl CrashTestResult {
+    ///  Saves the crash result as a crash report
+    /// * `unique_reports` - location to save the deduplicated report if the bug was reproduced
+    /// * `reports` - location to save the report if the bug was reproduced
+    /// * `no_repro` - location to save the report if the bug was not reproduced
     pub async fn save(
         &self,
         unique_reports: &Option<SyncedDir>,
@@ -113,7 +152,7 @@ impl CrashTestResult {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct InputBlob {
     pub account: Option<String>,
     pub container: Option<String>,
@@ -188,7 +227,7 @@ impl NoCrash {
     }
 }
 
-async fn parse_report_file(path: PathBuf) -> Result<CrashTestResult> {
+pub async fn parse_report_file(path: PathBuf) -> Result<CrashTestResult> {
     let raw = std::fs::read_to_string(&path)
         .with_context(|| format_err!("unable to open crash report: {}", path.display()))?;
 
