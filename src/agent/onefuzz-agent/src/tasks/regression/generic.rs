@@ -42,6 +42,9 @@ pub struct Config {
     #[serde(default)]
     pub check_retry_count: u64,
 
+    #[serde(default)]
+    pub minimized_stack_depth: Option<usize>,
+
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -66,6 +69,7 @@ impl RegressionHandler for GenericRegressionTask {
             check_retry_count: self.config.check_retry_count,
             check_asan_log: self.config.check_asan_log,
             check_debugger: self.config.check_debugger,
+            minimized_stack_depth: self.config.minimized_stack_depth,
         };
         generic::test_input(args).await
     }
