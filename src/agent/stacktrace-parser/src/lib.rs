@@ -71,7 +71,7 @@ pub struct CrashLog {
 }
 
 fn function_without_args(func: &str) -> String {
-    // TODO: This is an extremely niave approach to splitting arguments.k It
+    // TODO: This is an extremely niave approach to splitting arguments. It
     // doesn't handle C++ well.  As an example:
     //
     // This turns this:
@@ -84,8 +84,7 @@ fn function_without_args(func: &str) -> String {
     // with ClusterFuzz, this is going to stay this way for now. This is used to
     // fill in `minimized_stack_functions_names`. The unstripped version will be
     // in `minimized_stack`.
-    let split: Vec<_> = func.splitn(2, '(').collect();
-    split[0].to_string()
+    func.splitn(2, '(').next().expect("splitn should always return at least one item").to_string()
 }
 
 fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntry> {
