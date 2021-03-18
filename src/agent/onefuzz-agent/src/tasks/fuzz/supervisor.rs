@@ -4,7 +4,7 @@
 #![allow(clippy::too_many_arguments)]
 use crate::tasks::{
     config::{CommonConfig, ContainerType},
-    heartbeat::*,
+    heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     report::crash_report::monitor_reports,
     stats::common::{monitor_stats, StatsFormat},
     utils::CheckNotify,

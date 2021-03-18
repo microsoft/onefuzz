@@ -78,11 +78,21 @@ class JobMonitor:
             None,
         )
 
+    def is_stopped(self) -> Tuple[bool, str, Any]:
+        tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
+        waiting = [
+            "%s:%s" % (x.config.task.type.name, x.state.name)
+            for x in tasks
+            if x.state != TaskState.stopped
+        ]
+        return (not waiting, "waiting on: %s" % ", ".join(sorted(waiting)), None)
+
     def wait(
         self,
         *,
         wait_for_running: Optional[bool] = False,
         wait_for_files: Optional[Dict[Container, int]] = None,
+        wait_for_stopped: Optional[bool] = False,
     ) -> None:
         if wait_for_running:
             wait(self.is_running)
@@ -92,3 +102,7 @@ class JobMonitor:
             self.containers = wait_for_files
             wait(self.has_files)
             self.onefuzz.logger.info("new files found")
+
+        if wait_for_stopped:
+            wait(self.is_stopped)
+            self.onefuzz.logger.info("tasks stopped")
