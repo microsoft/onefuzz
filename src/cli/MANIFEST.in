@@ -1,5 +1,4 @@
 include LICENSE
 include *.txt
 include *.md
-include onefuzz/data/privacy.txt
 graft examples
