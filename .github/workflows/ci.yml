@@ -430,6 +430,12 @@ jobs:
           make -f Makefile.windows
           cp fuzz.exe,fuzz.pdb,bad1.dll,bad1.pdb,bad2.dll,bad2.pdb,seeds ../artifacts/windows-libfuzzer-linked-library -Recurse
           cd ../
+          
+          mkdir artifacts/windows-libfuzzer-load-library
+          cd libfuzzer-load-library
+          make
+          cp fuzz.exe,fuzz.pdb,bad.dll,bad.pdb,seeds ../artifacts/windows-libfuzzer-load-library -Recurse
+          cd ../
 
           mkdir artifacts/windows-trivial-crash-asan
           cd trivial-crash
