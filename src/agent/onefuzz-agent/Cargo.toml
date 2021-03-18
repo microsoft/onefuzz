@@ -33,6 +33,7 @@ onefuzz = { path = "../onefuzz" }
 storage-queue = { path = "../storage-queue" }
 reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
+stacktrace-parser = { path = "../stacktrace-parser" }
 path-absolutize = "3.0.6"
 
 [dev-dependencies]

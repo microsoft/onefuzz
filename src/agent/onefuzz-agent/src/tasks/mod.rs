@@ -8,6 +8,7 @@ pub mod fuzz;
 pub mod generic;
 pub mod heartbeat;
 pub mod merge;
+pub mod regression;
 pub mod report;
 pub mod stats;
 pub mod utils;
