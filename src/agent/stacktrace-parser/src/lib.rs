@@ -84,7 +84,10 @@ fn function_without_args(func: &str) -> String {
     // with ClusterFuzz, this is going to stay this way for now. This is used to
     // fill in `minimized_stack_functions_names`. The unstripped version will be
     // in `minimized_stack`.
-    func.splitn(2, '(').next().expect("splitn should always return at least one item").to_string()
+    func.splitn(2, '(')
+        .next()
+        .expect("splitn should always return at least one item")
+        .to_string()
 }
 
 fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntry> {
