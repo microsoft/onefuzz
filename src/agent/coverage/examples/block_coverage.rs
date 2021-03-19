@@ -10,7 +10,7 @@ use structopt::StructOpt;
 struct Opt {
     #[cfg(target_os = "linux")]
     #[structopt(short, long)]
-    filter: Option<PathBuf>,
+    filter: Option<std::path::PathBuf>,
 
     #[structopt(min_values = 1)]
     cmd: Vec<String>,
