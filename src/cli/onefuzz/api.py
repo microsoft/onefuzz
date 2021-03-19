@@ -6,6 +6,7 @@
 import json
 import logging
 import os
+import pkgutil
 import re
 import subprocess  # nosec
 import uuid
@@ -14,7 +15,6 @@ from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
-import pkg_resources
 import semver
 from memoization import cached
 from onefuzztypes import (
@@ -1530,8 +1530,17 @@ class Onefuzz:
 
     def licenses(self) -> object:
         """ Return third-party licenses used by this package """
-        stream = pkg_resources.resource_stream(__name__, "data/licenses.json")
-        return json.load(stream)
+        data = pkgutil.get_data("onefuzz", "data/licenses.json")
+        if data is None:
+            raise Exception("missing licenses.json")
+        return json.loads(data)
+
+    def privacy_statement(self) -> bytes:
+        """ Return OneFuzz privacy statement """
+        data = pkgutil.get_data("onefuzz", "data/privacy.txt")
+        if data is None:
+            raise Exception("missing licenses.json")
+        return data
 
     def logout(self) -> None:
         """ Logout of Onefuzz """
