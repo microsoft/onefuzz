@@ -56,6 +56,18 @@ impl Recorder {
         Ok(())
     }
 
+    pub fn coverage(&self) -> &CommandBlockCov {
+        &self.coverage
+    }
+
+    pub fn time_out(&self) -> bool {
+        self.timed_out
+    }
+
+    pub fn timeout(&self) -> Duration {
+        self.timeout
+    }
+
     fn handle_on_create_process(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
         log::debug!("process created: {}", module.path().display());
 
