@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{format_err, Result};
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use backoff::{self, future::retry_notify, ExponentialBackoff};
 use onefuzz_telemetry::warn;
@@ -29,18 +29,22 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
 ) -> Result<Response> {
     let counter = AtomicUsize::new(0);
     let op = || async {
-        if counter.fetch_add(1, Ordering::SeqCst) >= max_retry {
-            Err(backoff::Error::Permanent(format_err!(
-                "request failed after {} attempts",
-                max_retry
-            )))
-        } else {
-            let request = build_request().map_err(backoff::Error::Permanent)?;
-            let response = request
-                .send()
-                .await
-                .map_err(|e| backoff::Error::Transient(anyhow::Error::from(e)))?;
-            Ok(response)
+        let attempt_count = counter.fetch_add(1, Ordering::SeqCst);
+        let request = build_request().map_err(backoff::Error::Permanent)?;
+        let result = request
+            .send()
+            .await
+            .with_context(|| format!("request attempt {} failed", attempt_count + 1));
+
+        match result {
+            Ok(x) => Ok(x),
+            Err(x) => {
+                if attempt_count >= max_retry {
+                    Err(backoff::Error::Permanent(x))
+                } else {
+                    Err(backoff::Error::Transient(x))
+                }
+            }
         }
     };
     let result = retry_notify(
@@ -50,7 +54,7 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
             ..ExponentialBackoff::default()
         },
         op,
-        |err, dur| warn!("request attempt failed after {:?}: {}", dur, err),
+        |err, dur| warn!("request attempt failed after {:?}: {:?}", dur, err),
     )
     .await?;
     Ok(result)
@@ -109,8 +113,8 @@ mod test {
             .await;
 
         if let Err(err) = &resp {
-            let as_text = format!("{}", err);
-            assert!(as_text.contains("request failed after"));
+            let as_text = format!("{:?}", err);
+            assert!(as_text.contains("request attempt 4 failed"));
         } else {
             anyhow::bail!("response to {} was expected to fail", invalid_url);
         }
