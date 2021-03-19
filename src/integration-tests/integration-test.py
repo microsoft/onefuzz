@@ -178,6 +178,18 @@ TARGETS: Dict[str, Integration] = {
         },
         use_setup=True,
     ),
+    "windows-libfuzzer-load-library": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.windows,
+        target_exe="fuzz.exe",
+        inputs="seeds",
+        wait_for_files={
+            ContainerType.inputs: 2,
+            ContainerType.unique_reports: 1,
+            ContainerType.coverage: 1,
+        },
+        use_setup=True,
+    ),
     "windows-trivial-crash": Integration(
         template=TemplateType.radamsa,
         os=OS.windows,
