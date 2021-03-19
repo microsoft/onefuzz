@@ -4,6 +4,7 @@
 use anyhow::{Context, Result};
 use backoff::{self, future::retry_notify, ExponentialBackoff};
 use std::ffi::OsStr;
+use std::fmt;
 use std::process::Stdio;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
@@ -12,13 +13,28 @@ use tokio::process::Command;
 const RETRY_INTERVAL: Duration = Duration::from_secs(5);
 const RETRY_COUNT: usize = 5;
 
-async fn az_impl(mode: &str, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
-    let mut cmd = Command::new("azcopy");
+#[derive(Clone, Copy)]
+enum Mode {
+    Copy,
+    Sync,
+}
 
+impl fmt::Display for Mode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let as_str = match self {
+            Mode::Copy => "copy",
+            Mode::Sync => "sync",
+        };
+        write!(f, "{}", as_str)
+    }
+}
+
+async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
+    let mut cmd = Command::new("azcopy");
     cmd.kill_on_drop(true)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .arg(&mode)
+        .arg(mode.to_string())
         .arg(&src)
         .arg(&dst)
         .args(args);
@@ -33,7 +49,7 @@ async fn az_impl(mode: &str, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!(
-            "{} failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?}",
+            "azcopy {} failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?}",
             mode,
             src,
             dst,
@@ -45,7 +61,7 @@ async fn az_impl(mode: &str, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
     Ok(())
 }
 
-async fn retry_az_impl(mode: &str, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
+async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
     let counter = AtomicUsize::new(0);
 
     let operation = || async {
@@ -54,7 +70,7 @@ async fn retry_az_impl(mode: &str, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
             .await
             .with_context(|| format!("azcopy {} attempt {} failed", mode, attempt_count + 1));
         match result {
-            Ok(x) => Ok(x),
+            Ok(()) => Ok(()),
             Err(x) => {
                 if attempt_count >= RETRY_COUNT {
                     Err(backoff::Error::Permanent(x))
@@ -85,7 +101,7 @@ pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, delete_dst: bo
         vec![]
     };
 
-    retry_az_impl("sync", src.as_ref(), dst.as_ref(), &args).await
+    retry_az_impl(Mode::Sync, src.as_ref(), dst.as_ref(), &args).await
 }
 
 pub async fn copy(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, recursive: bool) -> Result<()> {
@@ -95,5 +111,5 @@ pub async fn copy(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, recursive: boo
         vec![]
     };
 
-    retry_az_impl("copy", src.as_ref(), dst.as_ref(), &args).await
+    retry_az_impl(Mode::Copy, src.as_ref(), dst.as_ref(), &args).await
 }
