@@ -1596,7 +1596,6 @@ class Onefuzz:
             self._backend.enable_feature(enable_feature.name)
         if tenant_domain is not None:
             self._backend.config.tenant_domain = tenant_domain
-
         self._backend.app = None
         self._backend.save_config()
 
