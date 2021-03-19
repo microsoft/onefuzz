@@ -4,7 +4,7 @@
 #![allow(clippy::too_many_arguments)]
 use crate::tasks::{
     config::{CommonConfig, ContainerType},
-    heartbeat::*,
+    heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     report::crash_report::monitor_reports,
     stats::common::{monitor_stats, StatsFormat},
     utils::CheckNotify,
@@ -31,7 +31,7 @@ use tokio::{
     sync::Notify,
 };
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize)]
 pub struct SupervisorConfig {
     pub inputs: SyncedDir,
     pub crashes: SyncedDir,
@@ -199,10 +199,11 @@ async fn start_supervisor(
         .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
             tester.instance_telemetry_key(&key)
         })
-        .set_optional_ref(&config.crashes.url, |tester, url| {
-            tester
-                .crashes_account(&url.account())
-                .crashes_container(&url.container())
+        .set_optional_ref(&config.crashes.url.account(), |tester, account| {
+            tester.crashes_account(account)
+        })
+        .set_optional_ref(&config.crashes.url.container(), |tester, container| {
+            tester.crashes_container(container)
         });
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
@@ -255,12 +256,14 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[cfg_attr(not(feature = "integration_test"), ignore)]
     async fn test_fuzzer_linux() {
+        use onefuzz::blob::BlobContainerUrl;
+        use reqwest::Url;
         use std::env;
 
         let runtime_dir = tempfile::tempdir().unwrap();
 
         let supervisor_exe = if let Ok(x) = env::var("ONEFUZZ_TEST_AFL_LINUX_FUZZER") {
-            x.into()
+            x
         } else {
             warn!("Unable to test AFL integration");
             return;
@@ -277,15 +280,19 @@ mod tests {
         let reports_dir = reports_dir_temp.path().into();
 
         let fault_dir_temp = tempfile::tempdir().unwrap();
+        let crashes_local = tempfile::tempdir().unwrap().path().into();
+        let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
         let crashes = SyncedDir {
-            path: fault_dir_temp.path().into(),
-            url: None,
+            path: crashes_local,
+            url: BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap())
+                .unwrap(),
         };
 
         let corpus_dir_temp = tempfile::tempdir().unwrap();
         let corpus_dir = SyncedDir {
-            path: corpus_dir_temp.path().into(),
-            url: None,
+            path: corpus_dir_local,
+            url: BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
+                .unwrap(),
         };
         let seed_file_name = corpus_dir.path.join("seed.txt");
         tokio::fs::write(seed_file_name, "xyz").await.unwrap();
@@ -316,7 +323,17 @@ mod tests {
             supervisor_input_marker,
             target_exe,
             target_options,
-            ..Default::default()
+            inputs: corpus_dir.clone(),
+            crashes: crashes.clone(),
+            tools: None,
+            wait_for_files: None,
+            stats_file: None,
+            stats_format: None,
+            ensemble_sync_delay: None,
+            reports: None,
+            unique_reports: None,
+            no_repro: None,
+            common: CommonConfig::default(),
         };
 
         let process = start_supervisor(runtime_dir, &config, &crashes, &corpus_dir, reports_dir)

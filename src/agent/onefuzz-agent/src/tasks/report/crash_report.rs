@@ -3,25 +3,20 @@
 
 use anyhow::{Context, Result};
 use futures::StreamExt;
-use onefuzz::{
-    asan::AsanLog,
-    blob::{BlobClient, BlobUrl},
-    fs::exists,
-    monitor::DirectoryMonitor,
-    syncdir::SyncedDir,
-};
+use onefuzz::{blob::BlobUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use onefuzz_telemetry::{
-    Event::{new_report, new_unable_to_reproduce, new_unique_report},
+    Event::{
+        new_report, new_unable_to_reproduce, new_unique_report, regression_report,
+        regression_unable_to_reproduce,
+    },
     EventData,
 };
-use reqwest::{StatusCode, Url};
-use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
+use stacktrace_parser::CrashLog;
 use std::path::{Path, PathBuf};
-use tokio::fs;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 pub struct CrashReport {
     pub input_sha256: String,
 
@@ -35,8 +30,17 @@ pub struct CrashReport {
     pub crash_site: String,
 
     pub call_stack: Vec<String>,
-
     pub call_stack_sha256: String,
+
+    #[serde(default)]
+    pub minimized_stack: Vec<String>,
+    #[serde(default)]
+    pub minimized_stack_sha256: Option<String>,
+
+    #[serde(default)]
+    pub minimized_stack_function_names: Vec<String>,
+    #[serde(default)]
+    pub minimized_stack_function_names_sha256: Option<String>,
 
     pub asan_log: Option<String>,
 
@@ -45,6 +49,7 @@ pub struct CrashReport {
     pub job_id: Uuid,
 
     pub scariness_score: Option<u32>,
+
     pub scariness_description: Option<String>,
 }
 
@@ -61,23 +66,40 @@ pub struct NoCrash {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CrashTestResult {
     CrashReport(CrashReport),
     NoRepro(NoCrash),
 }
 
-// Conditionally upload a report, if it would not be a duplicate.
-async fn upload<T: Serialize>(report: &T, url: Url) -> Result<bool> {
-    let blob = BlobClient::new();
-    let result = blob
-        .put(url)
-        .json(report)
-        // Conditional PUT, only if-not-exists.
-        // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
-        .header("If-None-Match", "*")
-        .send_retry_default()
-        .await?;
-    Ok(result.status() == StatusCode::CREATED)
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RegressionReport {
+    pub crash_test_result: CrashTestResult,
+    pub original_crash_test_result: Option<CrashTestResult>,
+}
+
+impl RegressionReport {
+    pub async fn save(
+        self,
+        report_name: Option<String>,
+        regression_reports: &SyncedDir,
+    ) -> Result<()> {
+        let (event, name) = match &self.crash_test_result {
+            CrashTestResult::CrashReport(report) => {
+                let name = report_name.unwrap_or_else(|| report.unique_blob_name());
+                (regression_report, name)
+            }
+            CrashTestResult::NoRepro(report) => {
+                let name = report_name.unwrap_or_else(|| report.blob_name());
+                (regression_unable_to_reproduce, name)
+            }
+        };
+
+        if upload_or_save_local(&self, &name, regression_reports).await? {
+            event!(event; EventData::Path = name);
+        }
+        Ok(())
+    }
 }
 
 async fn upload_or_save_local<T: Serialize>(
@@ -85,25 +107,14 @@ async fn upload_or_save_local<T: Serialize>(
     dest_name: &str,
     container: &SyncedDir,
 ) -> Result<bool> {
-    match &container.url {
-        Some(blob_url) => {
-            let url = blob_url.blob(dest_name).url();
-            upload(report, url).await
-        }
-        None => {
-            let path = container.path.join(dest_name);
-            if !exists(&path).await? {
-                let data = serde_json::to_vec(&report)?;
-                fs::write(path, data).await?;
-                Ok(true)
-            } else {
-                Ok(false)
-            }
-        }
-    }
+    container.upload(dest_name, report).await
 }
 
 impl CrashTestResult {
+    ///  Saves the crash result as a crash report
+    /// * `unique_reports` - location to save the deduplicated report if the bug was reproduced
+    /// * `reports` - location to save the report if the bug was reproduced
+    /// * `no_repro` - location to save the report if the bug was not reproduced
     pub async fn save(
         &self,
         unique_reports: &Option<SyncedDir>,
@@ -141,10 +152,10 @@ impl CrashTestResult {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct InputBlob {
-    pub account: String,
-    pub container: String,
+    pub account: Option<String>,
+    pub container: Option<String>,
     pub name: String,
 }
 
@@ -160,24 +171,42 @@ impl From<BlobUrl> for InputBlob {
 
 impl CrashReport {
     pub fn new(
-        asan_log: AsanLog,
+        crash_log: CrashLog,
         task_id: Uuid,
         job_id: Uuid,
         executable: impl Into<PathBuf>,
         input_blob: Option<InputBlob>,
         input_sha256: String,
+        minimized_stack_depth: Option<usize>,
     ) -> Self {
+        let call_stack_sha256 = crash_log.call_stack_sha256();
+        let minimized_stack_sha256 = if crash_log.minimized_stack.is_empty() {
+            None
+        } else {
+            Some(crash_log.minimized_stack_sha256(minimized_stack_depth))
+        };
+
+        let minimized_stack_function_names_sha256 =
+            if crash_log.minimized_stack_function_names.is_empty() {
+                None
+            } else {
+                Some(crash_log.minimized_stack_function_names_sha256(minimized_stack_depth))
+            };
         Self {
             input_sha256,
             input_blob,
             executable: executable.into(),
-            crash_type: asan_log.fault_type().into(),
-            crash_site: asan_log.summary().into(),
-            call_stack: asan_log.call_stack().to_vec(),
-            call_stack_sha256: asan_log.call_stack_sha256(),
-            asan_log: Some(asan_log.text().to_string()),
-            scariness_score: asan_log.scariness_score(),
-            scariness_description: asan_log.scariness_description().to_owned(),
+            crash_type: crash_log.fault_type,
+            crash_site: crash_log.summary,
+            call_stack_sha256,
+            minimized_stack: crash_log.minimized_stack,
+            minimized_stack_sha256,
+            minimized_stack_function_names: crash_log.minimized_stack_function_names,
+            minimized_stack_function_names_sha256,
+            call_stack: crash_log.call_stack,
+            asan_log: Some(crash_log.text),
+            scariness_score: crash_log.scariness_score,
+            scariness_description: crash_log.scariness_description,
             task_id,
             job_id,
         }
@@ -198,7 +227,7 @@ impl NoCrash {
     }
 }
 
-async fn parse_report_file(path: PathBuf) -> Result<CrashTestResult> {
+pub async fn parse_report_file(path: PathBuf) -> Result<CrashTestResult> {
     let raw = std::fs::read_to_string(&path)
         .with_context(|| format_err!("unable to open crash report: {}", path.display()))?;
 

@@ -1,24 +1,37 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::fmt;
+use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use reqwest::Url;
 use serde::{de, Serialize, Serializer};
 
 #[derive(Clone, Eq, PartialEq)]
-pub struct BlobUrl {
-    url: Url,
+pub enum BlobUrl {
+    AzureBlob(Url),
+    LocalFile(PathBuf),
 }
 
 impl BlobUrl {
     pub fn new(url: Url) -> Result<Self> {
-        if !possible_blob_storage_url(&url, false) {
-            bail!("Invalid blob URL: {}", url);
+        if possible_blob_storage_url(&url, false) {
+            if let Ok(path) = url.to_file_path() {
+                return Ok(Self::LocalFile(path));
+            } else {
+                return Ok(Self::AzureBlob(url));
+            }
         }
+        bail!("Invalid blob URL: {}", url)
+    }
 
-        Ok(Self { url })
+    pub fn from_blob_info(account: &str, container: &str, name: &str) -> Result<Self> {
+        // format https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#resource-uri-syntax
+        let url = Url::parse(&format!(
+            "https://{}.blob.core.windows.net/{}/{}",
+            account, container, name
+        ))?;
+        Self::new(url)
     }
 
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
@@ -28,47 +41,67 @@ impl BlobUrl {
     }
 
     pub fn url(&self) -> Url {
-        self.url.clone()
+        match self {
+            Self::LocalFile(path) => {
+                Url::from_file_path(path).expect("Could not convert path to url")
+            }
+            Self::AzureBlob(url) => url.clone(),
+        }
     }
 
-    pub fn account(&self) -> String {
-        // Ctor checks that domain has at least one subdomain.
-        self.url
-            .domain()
-            .unwrap()
-            .split('.')
-            .next()
-            .unwrap()
-            .to_owned()
+    pub fn account(&self) -> Option<String> {
+        match self {
+            Self::AzureBlob(url) => {
+                // Ctor checks that domain has at least one subdomain.
+                Some(url.domain().unwrap().split('.').next().unwrap().to_owned())
+            }
+            Self::LocalFile(_) => None,
+        }
     }
 
-    pub fn container(&self) -> String {
-        // Segment existence checked in ctor, so we can unwrap.
-        self.url.path_segments().unwrap().next().unwrap().to_owned()
+    pub fn container(&self) -> Option<String> {
+        match self {
+            Self::AzureBlob(url) => {
+                // Segment existence checked in ctor, so we can unwrap.
+                Some(url.path_segments().unwrap().next().unwrap().to_owned())
+            }
+            Self::LocalFile(_) => None,
+        }
     }
 
     pub fn name(&self) -> String {
         let name_segments: Vec<_> = self
-            .url
+            .url()
             .path_segments()
             .unwrap()
-            .skip(1)
+            .skip(match self {
+                Self::AzureBlob(_) => 1,
+                _ => 0,
+            })
             .map(|s| s.to_owned())
             .collect();
-
         name_segments.join("/")
     }
 }
 
 impl fmt::Debug for BlobUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", redact_query_sas_sig(self.url()))
+        write!(f, "{}", redact_query_sas_sig(&self.url()))
     }
 }
 
 impl fmt::Display for BlobUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}/{}", self.account(), self.container(), self.name())
+        match self {
+            Self::AzureBlob(_) => write!(
+                f,
+                "{}:{}/{}",
+                self.account().unwrap_or_default(),
+                self.container().unwrap_or_default(),
+                self.name()
+            ),
+            Self::LocalFile(path) => write!(f, "{}", path.display()),
+        }
     }
 }
 
@@ -89,30 +122,43 @@ impl BlobContainerUrl {
         Ok(Self { url })
     }
 
+    pub fn as_file_path(&self) -> Option<PathBuf> {
+        self.url.to_file_path().ok()
+    }
+
     pub fn parse(url: impl AsRef<str>) -> Result<Self> {
         let url = Url::parse(url.as_ref())?;
 
         Self::new(url)
     }
 
-    pub fn url(&self) -> Url {
-        self.url.clone()
+    pub fn url(&self) -> &Url {
+        &self.url
     }
 
-    pub fn account(&self) -> String {
-        // Ctor checks that domain has at least one subdomain.
-        self.url
-            .domain()
-            .unwrap()
-            .split('.')
-            .next()
-            .unwrap()
-            .to_owned()
+    pub fn account(&self) -> Option<String> {
+        if self.as_file_path().is_some() {
+            None
+        } else {
+            // Ctor checks that domain has at least one subdomain.
+            Some(
+                self.url
+                    .domain()
+                    .unwrap()
+                    .split('.')
+                    .next()
+                    .unwrap()
+                    .to_owned(),
+            )
+        }
     }
 
-    pub fn container(&self) -> String {
-        // Segment existence checked in ctor, so we can unwrap.
-        self.url.path_segments().unwrap().next().unwrap().to_owned()
+    pub fn container(&self) -> Option<String> {
+        if self.as_file_path().is_some() {
+            None
+        } else {
+            Some(self.url.path_segments().unwrap().next().unwrap().to_owned())
+        }
     }
 
     pub fn blob(&self, name: impl AsRef<str>) -> BlobUrl {
@@ -134,7 +180,13 @@ impl fmt::Debug for BlobContainerUrl {
 
 impl fmt::Display for BlobContainerUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}", self.account(), self.container())
+        if let Some(file_path) = self.as_file_path() {
+            write!(f, "{:?}", file_path)
+        } else if let (Some(account), Some(container)) = (self.account(), self.container()) {
+            write!(f, "{}:{}", account, container)
+        } else {
+            panic!("invalid blob url")
+        }
     }
 }
 
@@ -144,7 +196,7 @@ impl From<BlobContainerUrl> for Url {
     }
 }
 
-fn redact_query_sas_sig(url: Url) -> Url {
+fn redact_query_sas_sig(url: &Url) -> Url {
     let mut redacted = url.clone();
     redacted.set_query(None);
 
@@ -159,7 +211,10 @@ fn redact_query_sas_sig(url: Url) -> Url {
 
 // Weak check of necessary conditions for a storage blob or container URL.
 fn possible_blob_storage_url(url: &Url, container: bool) -> bool {
-    // Must use `https` URI scheme.
+    if url.scheme() == "file" {
+        return true;
+    }
+
     if url.scheme() != "https" {
         return false;
     }
@@ -296,7 +351,6 @@ mod tests {
         into_urls(&[
             // Not valid HTTPS URLs.
             "data:text/plain,hello",
-            "file:///a/b/c",
             // Valid HTTP URLs, but invalid as storage URLs.
             "https://127.0.0.1",
             "https://localhost",
@@ -344,23 +398,23 @@ mod tests {
 
         for url in valid_container_urls() {
             let url = BlobContainerUrl::new(url).expect("invalid blob container URL");
-
-            assert_eq!(url.account(), "myaccount");
-            assert_eq!(url.container(), "mycontainer");
+            assert_eq!(url.account(), Some("myaccount".into()));
+            assert_eq!(url.container(), Some("mycontainer".into()));
         }
     }
 
     #[test]
     fn test_blob_url() {
         for url in invalid_blob_urls() {
+            println!("{:?}", url);
             assert!(BlobUrl::new(url).is_err());
         }
 
         for url in valid_blob_urls() {
             let url = BlobUrl::new(url).expect("invalid blob URL");
 
-            assert_eq!(url.account(), "myaccount");
-            assert_eq!(url.container(), "mycontainer");
+            assert_eq!(url.account(), Some("myaccount".into()));
+            assert_eq!(url.container(), Some("mycontainer".into()));
             assert_eq!(url.name(), "myblob");
         }
     }
@@ -372,8 +426,8 @@ mod tests {
 
         let url = BlobUrl::new(url).expect("invalid blob URL");
 
-        assert_eq!(url.account(), "myaccount");
-        assert_eq!(url.container(), "mycontainer");
+        assert_eq!(url.account(), Some("myaccount".into()));
+        assert_eq!(url.container(), Some("mycontainer".into()));
         assert_eq!(url.name(), "mydir/myblob");
     }
 

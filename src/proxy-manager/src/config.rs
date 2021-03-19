@@ -143,7 +143,7 @@ impl Config {
 
     pub async fn notify(&self) -> Result<()> {
         info!("notifying service of proxy update");
-        let client = QueueClient::new(self.data.notification.clone());
+        let client = QueueClient::new(self.data.notification.clone())?;
 
         client
             .enqueue(NotifyResponse {
@@ -154,18 +154,14 @@ impl Config {
         Ok(())
     }
 
-    pub async fn update(&mut self) -> Result<bool> {
+    pub async fn update(&mut self) -> Result<()> {
         if self.fetch().await? {
             info!("config updated");
             self.save().await?;
+            proxy::update(&self.data).await?;
+            self.notify().await?;
         }
 
-        let notified = if proxy::update(&self.data).await? {
-            self.notify().await?;
-            true
-        } else {
-            false
-        };
-        Ok(notified)
+        Ok(())
     }
 }

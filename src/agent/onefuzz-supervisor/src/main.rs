@@ -14,8 +14,8 @@ extern crate onefuzz_telemetry;
 extern crate onefuzz;
 
 use crate::{
-    config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::*, work::WorkSet,
-    worker::WorkerEvent,
+    config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,
+    work::WorkSet, worker::WorkerEvent,
 };
 use std::path::PathBuf;
 
@@ -28,13 +28,13 @@ use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use structopt::StructOpt;
 
 pub mod agent;
-pub mod auth;
 pub mod buffer;
 pub mod commands;
 pub mod config;
 pub mod coordinator;
 pub mod debug;
 pub mod done;
+pub mod failure;
 pub mod heartbeat;
 pub mod reboot;
 pub mod scheduler;
@@ -109,6 +109,9 @@ fn run(opt: RunOpt) -> Result<()> {
 
     if let Err(err) = &result {
         error!("error running supervisor agent: {}", err);
+        if let Err(err) = failure::save_failure(err) {
+            error!("unable to save failure log: {}", err);
+        }
     }
 
     telemetry::try_flush_and_close();
@@ -135,13 +138,16 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
     // failed, then exit as a failure.
 
     if let Some(work) = WorkSet::load_from_fs_context().await? {
-        let failure = "onefuzz-supervisor failed to launch task due to pre-existing config";
+        let failure = match failure::read_failure() {
+            Ok(value) => format!("onefuzz-supervisor failed: {}", value),
+            Err(_) => "onefuzz-supervisor failed".into(),
+        };
 
         for unit in &work.work_units {
             let event = WorkerEvent::Done {
                 task_id: unit.task_id,
                 stdout: "".to_string(),
-                stderr: failure.to_string(),
+                stderr: failure.clone(),
                 exit_status: ExitStatus {
                     code: Some(1),
                     signal: None,
@@ -152,7 +158,7 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
         }
 
         let event = StateUpdateEvent::Done {
-            error: Some(failure.to_string()),
+            error: Some(failure),
             script_output: None,
         };
         coordinator.emit_event(event.into()).await?;
@@ -160,7 +166,10 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
         // force set done semaphore, as to not prevent the supervisor continuing
         // to report the workset as failed.
         done::set_done_lock().await?;
-        anyhow::bail!("error starting due to pre-existing workset");
+        anyhow::bail!(
+            "failed to start due to pre-existing workset config: {}",
+            WorkSet::context_path()?.display()
+        );
     }
 
     Ok(())
@@ -199,7 +208,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     let scheduler = reboot_context.into();
     debug!("loaded scheduler: {}", scheduler);
 
-    let work_queue = work::WorkQueue::new(registration.clone());
+    let work_queue = work::WorkQueue::new(registration.clone())?;
 
     let agent_heartbeat = match config.heartbeat_queue {
         Some(url) => Some(init_agent_heartbeat(url).await?),

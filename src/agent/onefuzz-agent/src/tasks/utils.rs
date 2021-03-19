@@ -4,7 +4,8 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
-use reqwest::Url;
+use reqwest::{Client, Url};
+use reqwest_retry::SendRetry;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::{fs, io};
@@ -13,24 +14,34 @@ pub async fn download_input(input_url: Url, dst: impl AsRef<Path>) -> Result<Pat
     let file_name = input_url.path_segments().unwrap().last().unwrap();
     let file_path = dst.as_ref().join(file_name);
 
-    let resp = reqwest::get(input_url)
-        .await?
-        .error_for_status_with_body()
-        .await?;
+    if input_url.scheme().to_lowercase() == "file" {
+        let input_file_path = input_url
+            .to_file_path()
+            .map_err(|_| anyhow!("Invalid file Url"))?;
+        fs::copy(&input_file_path, &file_path).await?;
+        Ok(file_path)
+    } else {
+        let resp = Client::new()
+            .get(input_url)
+            .send_retry_default()
+            .await?
+            .error_for_status_with_body()
+            .await?;
 
-    let body = resp.bytes().await?;
-    let mut body = body.as_ref();
+        let body = resp.bytes().await?;
+        let mut body = body.as_ref();
 
-    let file = fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .open(&file_path)
-        .await?;
-    let mut writer = io::BufWriter::new(file);
+        let file = fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(&file_path)
+            .await?;
+        let mut writer = io::BufWriter::new(file);
 
-    io::copy(&mut body, &mut writer).await?;
+        io::copy(&mut body, &mut writer).await?;
 
-    Ok(file_path)
+        Ok(file_path)
+    }
 }
 
 pub async fn reset_tmp_dir(tmp_dir: impl AsRef<Path>) -> Result<()> {
