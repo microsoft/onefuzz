@@ -7,9 +7,10 @@ import json
 import os
 import tempfile
 import zipfile
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from uuid import uuid4
 
-from onefuzztypes.enums import OS, ContainerType
+from onefuzztypes.enums import OS, ContainerType, TaskState
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
@@ -38,6 +39,12 @@ def _build_container_name(
             name,
             build=build,
             platform=platform.name,
+        )
+    elif container_type == ContainerType.regression_reports:
+        guid = onefuzz.utils.namespaced_guid(
+            project,
+            name,
+            build=build,
         )
     else:
         guid = onefuzz.utils.namespaced_guid(project, name)
@@ -87,6 +94,7 @@ class JobHelper:
                 )
 
         self.wait_for_running: bool = False
+        self.wait_for_stopped: bool = False
         self.containers: Dict[ContainerType, Container] = {}
         self.tags: Dict[str, str] = {"project": project, "name": name, "build": build}
         if job is None:
@@ -116,12 +124,24 @@ class JobHelper:
                 self.platform,
             )
 
+    def get_unique_container_name(self, container_type: ContainerType) -> Container:
+        return Container(
+            "oft-%s-%s"
+            % (
+                container_type.name.replace("_", "-"),
+                uuid4().hex,
+            )
+        )
+
     def create_containers(self) -> None:
         for (container_type, container_name) in self.containers.items():
             self.logger.info("using container: %s", container_name)
             self.onefuzz.containers.create(
                 container_name, metadata={"container_type": container_type.name}
             )
+
+    def delete_container(self, container_name: Container) -> None:
+        self.onefuzz.containers.delete(container_name)
 
     def setup_notifications(self, config: Optional[NotificationConfig]) -> None:
         if not config:
@@ -233,9 +253,58 @@ class JobHelper:
         }
         self.wait_for_running = wait_for_running
 
+    def check_current_job(self) -> Job:
+        job = self.onefuzz.jobs.get(self.job.job_id)
+        if job.state in ["stopped", "stopping"]:
+            raise StoppedEarly("job unexpectedly stopped early")
+
+        errors = []
+        for task in self.onefuzz.tasks.list(job_id=self.job.job_id):
+            if task.state in ["stopped", "stopping"]:
+                if task.error:
+                    errors.append("%s: %s" % (task.config.task.type, task.error))
+                else:
+                    errors.append("%s" % task.config.task.type)
+
+        if errors:
+            raise StoppedEarly("tasks stopped unexpectedly.\n%s" % "\n".join(errors))
+        return job
+
+    def get_waiting(self) -> List[str]:
+        tasks = self.onefuzz.tasks.list(job_id=self.job.job_id)
+        waiting = [
+            "%s:%s" % (x.config.task.type.name, x.state.name)
+            for x in tasks
+            if x.state not in TaskState.has_started()
+        ]
+        return waiting
+
+    def is_running(self) -> Tuple[bool, str, Any]:
+        waiting = self.get_waiting()
+        return (not waiting, "waiting on: %s" % ", ".join(sorted(waiting)), None)
+
+    def has_files(self) -> Tuple[bool, str, Any]:
+        self.check_current_job()
+
+        new = {
+            x: len(self.onefuzz.containers.files.list(x).files)
+            for x in self.to_monitor.keys()
+        }
+
+        for container in new:
+            if new[container] > self.to_monitor[container]:
+                del self.to_monitor[container]
+        return (
+            not self.to_monitor,
+            "waiting for new files: %s" % ", ".join(self.to_monitor.keys()),
+            None,
+        )
+
     def wait(self) -> None:
         JobMonitor(self.onefuzz, self.job).wait(
-            wait_for_running=self.wait_for_running, wait_for_files=self.to_monitor
+            wait_for_running=self.wait_for_running,
+            wait_for_files=self.to_monitor,
+            wait_for_stopped=self.wait_for_stopped,
         )
 
     def target_exe_blob_name(

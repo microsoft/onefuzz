@@ -4,13 +4,18 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from github3 import login
 from github3.exceptions import GitHubException
 from github3.issues import Issue
 from onefuzztypes.enums import GithubIssueSearchMatch
-from onefuzztypes.models import GithubAuth, GithubIssueTemplate, Report
+from onefuzztypes.models import (
+    GithubAuth,
+    GithubIssueTemplate,
+    RegressionReport,
+    Report,
+)
 from onefuzztypes.primitives import Container
 
 from ..secrets import get_secret_obj
@@ -107,9 +112,17 @@ def github_issue(
     config: GithubIssueTemplate,
     container: Container,
     filename: str,
-    report: Optional[Report],
+    report: Optional[Union[Report, RegressionReport]],
 ) -> None:
     if report is None:
+        return
+    if isinstance(report, RegressionReport):
+        logging.info(
+            "github issue integration does not support regression reports. "
+            "container:%s filename:%s",
+            container,
+            filename,
+        )
         return
 
     try:

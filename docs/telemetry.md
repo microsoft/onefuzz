@@ -184,7 +184,7 @@ recorded:
   enum [NodeTaskState](../src/pytypes/onefuzztypes/enums.py).
 
 
-### Data recorded by Salvo
+### Data recorded by an upcoming feature
 
 The following information is recorded for Salvo related tasks:
 

@@ -271,6 +271,9 @@ def repro_extensions(
     if report is None:
         raise Exception("invalid report: %s" % repro_config)
 
+    if report.input_blob is None:
+        raise Exception("unable to perform reproduction without an input blob")
+
     commands = []
     if setup_container:
         commands += [

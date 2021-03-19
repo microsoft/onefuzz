@@ -37,6 +37,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [proxy_created](#proxy_created)
 * [proxy_deleted](#proxy_deleted)
 * [proxy_failed](#proxy_failed)
+* [regression_reported](#regression_reported)
 * [scaleset_created](#scaleset_created)
 * [scaleset_deleted](#scaleset_deleted)
 * [scaleset_failed](#scaleset_failed)
@@ -168,7 +169,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "required": [
-                "input_blob",
                 "executable",
                 "crash_type",
                 "crash_site",
@@ -475,11 +475,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
+                "libfuzzer_regression",
                 "generic_analysis",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -1035,6 +1037,261 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
+### regression_reported
+
+#### Example
+
+```json
+{
+    "container": "container-name",
+    "filename": "example.json",
+    "regression_report": {
+        "crash_test_result": {
+            "crash_report": {
+                "asan_log": "example asan log",
+                "call_stack": [
+                    "#0 line",
+                    "#1 line",
+                    "#2 line"
+                ],
+                "call_stack_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+                "crash_site": "example crash site",
+                "crash_type": "example crash report type",
+                "executable": "fuzz.exe",
+                "input_blob": {
+                    "account": "contoso-storage-account",
+                    "container": "crashes",
+                    "name": "input.txt"
+                },
+                "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "job_id": "00000000-0000-0000-0000-000000000000",
+                "scariness_description": "example-scariness",
+                "scariness_score": 10,
+                "task_id": "00000000-0000-0000-0000-000000000000"
+            }
+        },
+        "original_crash_test_result": {
+            "crash_report": {
+                "asan_log": "example asan log",
+                "call_stack": [
+                    "#0 line",
+                    "#1 line",
+                    "#2 line"
+                ],
+                "call_stack_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+                "crash_site": "example crash site",
+                "crash_type": "example crash report type",
+                "executable": "fuzz.exe",
+                "input_blob": {
+                    "account": "contoso-storage-account",
+                    "container": "crashes",
+                    "name": "input.txt"
+                },
+                "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "job_id": "00000000-0000-0000-0000-000000000000",
+                "scariness_description": "example-scariness",
+                "scariness_score": 10,
+                "task_id": "00000000-0000-0000-0000-000000000000"
+            }
+        }
+    }
+}
+```
+
+#### Schema
+
+```json
+{
+    "additionalProperties": false,
+    "definitions": {
+        "BlobRef": {
+            "properties": {
+                "account": {
+                    "title": "Account",
+                    "type": "string"
+                },
+                "container": {
+                    "title": "Container",
+                    "type": "string"
+                },
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "account",
+                "container",
+                "name"
+            ],
+            "title": "BlobRef",
+            "type": "object"
+        },
+        "CrashTestResult": {
+            "properties": {
+                "crash_report": {
+                    "$ref": "#/definitions/Report"
+                },
+                "no_repro": {
+                    "$ref": "#/definitions/NoReproReport"
+                }
+            },
+            "title": "CrashTestResult",
+            "type": "object"
+        },
+        "NoReproReport": {
+            "properties": {
+                "error": {
+                    "title": "Error",
+                    "type": "string"
+                },
+                "executable": {
+                    "title": "Executable",
+                    "type": "string"
+                },
+                "input_blob": {
+                    "$ref": "#/definitions/BlobRef"
+                },
+                "input_sha256": {
+                    "title": "Input Sha256",
+                    "type": "string"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                },
+                "tries": {
+                    "title": "Tries",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "input_sha256",
+                "executable",
+                "task_id",
+                "job_id",
+                "tries"
+            ],
+            "title": "NoReproReport",
+            "type": "object"
+        },
+        "RegressionReport": {
+            "properties": {
+                "crash_test_result": {
+                    "$ref": "#/definitions/CrashTestResult"
+                },
+                "original_crash_test_result": {
+                    "$ref": "#/definitions/CrashTestResult"
+                }
+            },
+            "required": [
+                "crash_test_result"
+            ],
+            "title": "RegressionReport",
+            "type": "object"
+        },
+        "Report": {
+            "properties": {
+                "asan_log": {
+                    "title": "Asan Log",
+                    "type": "string"
+                },
+                "call_stack": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Call Stack",
+                    "type": "array"
+                },
+                "call_stack_sha256": {
+                    "title": "Call Stack Sha256",
+                    "type": "string"
+                },
+                "crash_site": {
+                    "title": "Crash Site",
+                    "type": "string"
+                },
+                "crash_type": {
+                    "title": "Crash Type",
+                    "type": "string"
+                },
+                "executable": {
+                    "title": "Executable",
+                    "type": "string"
+                },
+                "input_blob": {
+                    "$ref": "#/definitions/BlobRef"
+                },
+                "input_sha256": {
+                    "title": "Input Sha256",
+                    "type": "string"
+                },
+                "input_url": {
+                    "title": "Input Url",
+                    "type": "string"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "scariness_description": {
+                    "title": "Scariness Description",
+                    "type": "string"
+                },
+                "scariness_score": {
+                    "title": "Scariness Score",
+                    "type": "integer"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "executable",
+                "crash_type",
+                "crash_site",
+                "call_stack",
+                "call_stack_sha256",
+                "input_sha256",
+                "task_id",
+                "job_id"
+            ],
+            "title": "Report",
+            "type": "object"
+        }
+    },
+    "properties": {
+        "container": {
+            "title": "Container",
+            "type": "string"
+        },
+        "filename": {
+            "title": "Filename",
+            "type": "string"
+        },
+        "regression_report": {
+            "$ref": "#/definitions/RegressionReport"
+        }
+    },
+    "required": [
+        "regression_report",
+        "container",
+        "filename"
+    ],
+    "title": "EventRegressionReported",
+    "type": "object"
+}
+```
+
 ### scaleset_created
 
 #### Example
@@ -1288,7 +1545,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
-                "unique_reports"
+                "unique_reports",
+                "regression_reports"
             ],
             "title": "ContainerType"
         },
@@ -1461,6 +1719,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Rename Output",
                     "type": "boolean"
                 },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
                 "stats_file": {
                     "title": "Stats File",
                     "type": "string"
@@ -1559,11 +1824,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
+                "libfuzzer_regression",
                 "generic_analysis",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -1720,7 +1987,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
-                "unique_reports"
+                "unique_reports",
+                "regression_reports"
             ],
             "title": "ContainerType"
         },
@@ -1941,6 +2209,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Rename Output",
                     "type": "boolean"
                 },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
                 "stats_file": {
                     "title": "Stats File",
                     "type": "string"
@@ -2039,11 +2314,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
+                "libfuzzer_regression",
                 "generic_analysis",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -2193,7 +2470,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
-                "unique_reports"
+                "unique_reports",
+                "regression_reports"
             ],
             "title": "ContainerType"
         },
@@ -2366,6 +2644,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Rename Output",
                     "type": "boolean"
                 },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
                 "stats_file": {
                     "title": "Stats File",
                     "type": "string"
@@ -2464,11 +2749,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
+                "libfuzzer_regression",
                 "generic_analysis",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -2592,7 +2879,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
-                "unique_reports"
+                "unique_reports",
+                "regression_reports"
             ],
             "title": "ContainerType"
         },
@@ -2765,6 +3053,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Rename Output",
                     "type": "boolean"
                 },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
                 "stats_file": {
                     "title": "Stats File",
                     "type": "string"
@@ -2877,11 +3172,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
+                "libfuzzer_regression",
                 "generic_analysis",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -3018,7 +3315,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
-                "unique_reports"
+                "unique_reports",
+                "regression_reports"
             ],
             "title": "ContainerType"
         },
@@ -3191,6 +3489,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Rename Output",
                     "type": "boolean"
                 },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
                 "stats_file": {
                     "title": "Stats File",
                     "type": "string"
@@ -3289,11 +3594,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
+                "libfuzzer_regression",
                 "generic_analysis",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -3478,9 +3785,22 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "setup",
                 "tools",
                 "unique_inputs",
-                "unique_reports"
+                "unique_reports",
+                "regression_reports"
             ],
             "title": "ContainerType"
+        },
+        "CrashTestResult": {
+            "properties": {
+                "crash_report": {
+                    "$ref": "#/definitions/Report"
+                },
+                "no_repro": {
+                    "$ref": "#/definitions/NoReproReport"
+                }
+            },
+            "title": "CrashTestResult",
+            "type": "object"
         },
         "Error": {
             "properties": {
@@ -3831,6 +4151,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventProxyFailed",
             "type": "object"
         },
+        "EventRegressionReported": {
+            "additionalProperties": false,
+            "properties": {
+                "container": {
+                    "title": "Container",
+                    "type": "string"
+                },
+                "filename": {
+                    "title": "Filename",
+                    "type": "string"
+                },
+                "regression_report": {
+                    "$ref": "#/definitions/RegressionReport"
+                }
+            },
+            "required": [
+                "regression_report",
+                "container",
+                "filename"
+            ],
+            "title": "EventRegressionReported",
+            "type": "object"
+        },
         "EventScalesetCreated": {
             "additionalProperties": false,
             "properties": {
@@ -4084,6 +4427,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "task_state_updated",
                 "task_stopped",
                 "crash_reported",
+                "regression_reported",
                 "file_added",
                 "task_heartbeat",
                 "node_heartbeat"
@@ -4139,6 +4483,48 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "JobTaskStopped",
             "type": "object"
         },
+        "NoReproReport": {
+            "properties": {
+                "error": {
+                    "title": "Error",
+                    "type": "string"
+                },
+                "executable": {
+                    "title": "Executable",
+                    "type": "string"
+                },
+                "input_blob": {
+                    "$ref": "#/definitions/BlobRef"
+                },
+                "input_sha256": {
+                    "title": "Input Sha256",
+                    "type": "string"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "task_id": {
+                    "format": "uuid",
+                    "title": "Task Id",
+                    "type": "string"
+                },
+                "tries": {
+                    "title": "Tries",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "input_sha256",
+                "executable",
+                "task_id",
+                "job_id",
+                "tries"
+            ],
+            "title": "NoReproReport",
+            "type": "object"
+        },
         "NodeState": {
             "description": "An enumeration.",
             "enum": [
@@ -4161,6 +4547,21 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "linux"
             ],
             "title": "OS"
+        },
+        "RegressionReport": {
+            "properties": {
+                "crash_test_result": {
+                    "$ref": "#/definitions/CrashTestResult"
+                },
+                "original_crash_test_result": {
+                    "$ref": "#/definitions/CrashTestResult"
+                }
+            },
+            "required": [
+                "crash_test_result"
+            ],
+            "title": "RegressionReport",
+            "type": "object"
         },
         "Report": {
             "properties": {
@@ -4222,7 +4623,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "required": [
-                "input_blob",
                 "executable",
                 "crash_type",
                 "crash_site",
@@ -4404,6 +4804,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Rename Output",
                     "type": "boolean"
                 },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
                 "stats_file": {
                     "title": "Stats File",
                     "type": "string"
@@ -4516,11 +4923,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
+                "libfuzzer_regression",
                 "generic_analysis",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
-                "generic_crash_report"
+                "generic_crash_report",
+                "generic_regression"
             ],
             "title": "TaskType"
         },
@@ -4647,6 +5056,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventCrashReported"
+                },
+                {
+                    "$ref": "#/definitions/EventRegressionReported"
                 },
                 {
                     "$ref": "#/definitions/EventFileAdded"
