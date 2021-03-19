@@ -210,8 +210,8 @@ class TestOnefuzz:
         self.pools: Dict[OS, Pool] = {}
         self.test_id = test_id
         self.project = f"test-{self.test_id}"
-        self.start_log_marker = f"integration-test-injection-start-{self.test_id}"
-        self.stop_log_marker = f"integration-test-injection-stop-{self.test_id}"
+        self.start_log_marker = f"integration-test-injection-error-start-{self.test_id}"
+        self.stop_log_marker = f"integration-test-injection-error-stop-{self.test_id}"
 
     def setup(
         self,
@@ -728,7 +728,7 @@ class TestOnefuzz:
             self.stop_log_marker, limit=1, timespan="PT1H"
         )
         return (
-            len(logs["PrimaryResult"]) > 0,
+            len(logs) > 0,
             "waiting for application insight logs to flush",
             True,
         )
@@ -742,11 +742,11 @@ class TestOnefuzz:
         wait(self.check_log_end_marker, frequency=5.0)
         self.logger.info("application insights log flushed")
 
-        logs = self.of.debug.logs.keyword("error", limit=100, timespan="PT2H")
+        logs = self.of.debug.logs.keyword("error", limit=100000, timespan="PT3H")
 
         seen_errors = False
         seen_stop = False
-        for entry in logs["PrimaryResult"]:
+        for entry in logs:
             entry_as_str = json.dumps(entry, sort_keys=True)
             if not seen_stop:
                 if self.stop_log_marker in entry_as_str:
@@ -756,16 +756,20 @@ class TestOnefuzz:
             if self.start_log_marker in entry_as_str:
                 break
 
-            # TODO: temporarily ignore blobnotfound and queue not found errors.
-            # see issue 141 for details
-            if "ErrorCode: BlobNotFound" in entry_as_str or (
-                "queue.core.windows.net" in entry_as_str
-                and "404 Not Found" in entry_as_str
+            # ignore logging.info coming from Azure Functions
+            if entry.get("customDimensions", {}).get("LogLevel") == "Information":
+                continue
+
+            # ignore warnings coming from the rust code, only be concerned about errors
+            if (
+                entry.get("severityLevel") == 2
+                and entry.get("sdkVersion") == "rust:0.1.5"
             ):
                 continue
 
             seen_errors = True
-            self.logger.error("error log: %s", entry_as_str)
+
+            self.logger.error("error log: %s", entry.get("message"))
 
         if seen_errors:
             raise Exception("logs included errors")
