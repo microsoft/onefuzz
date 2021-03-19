@@ -203,7 +203,11 @@ impl ModuleIndex {
         // Not yet implemented.
         let symbols = SymbolIndex::default();
 
-        Self { path, base_va, symbols }
+        Self {
+            path,
+            base_va,
+            symbols,
+        }
     }
 }
 

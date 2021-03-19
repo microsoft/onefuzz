@@ -88,14 +88,19 @@ impl Recorder {
                 if let Ok(sym) = dbg.get_symbol(pc) {
                     log::trace!(
                         "{:>16x}: {}+{:x} ({}+{:x})",
-                        pc, name, offset, sym.symbol(), sym.displacement(),
+                        pc,
+                        name,
+                        offset,
+                        sym.symbol(),
+                        sym.displacement(),
                     );
                 } else {
                     log::trace!("{:>16x}: {}+{:x}", pc, name, offset);
                 }
             }
 
-            self.coverage.increment(breakpoint.module, breakpoint.offset)?;
+            self.coverage
+                .increment(breakpoint.module, breakpoint.offset)?;
         } else {
             log::error!("hit breakpoint without data: {}", id.0);
         }
@@ -121,16 +126,17 @@ impl Recorder {
                     return Ok(());
                 }
 
-                self.breakpoints.set(dbg, module, info.blocks.iter().copied())?;
+                self.breakpoints
+                    .set(dbg, module, info.blocks.iter().copied())?;
 
                 log::debug!("set {} breakpoints for module {}", info.blocks.len(), path);
-            },
+            }
             Ok(None) => {
                 log::warn!("could not find module: {}", path);
-            },
+            }
             Err(err) => {
                 log::warn!("could not disassemble module {}: {:?}", path, err);
-            },
+            }
         }
 
         Ok(())

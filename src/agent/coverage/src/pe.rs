@@ -291,9 +291,7 @@ pub fn process_module(
 
 pub fn process_image(path: impl AsRef<Path>, functions_only: bool) -> Result<FixedBitSet> {
     let file = File::open(path.as_ref())?;
-    let mmap = unsafe {
-        Mmap::map(&file)?
-    };
+    let mmap = unsafe { Mmap::map(&file)? };
     let pe = PE::parse(&mmap)?;
 
     process_module(path, &mmap, &pe, functions_only)

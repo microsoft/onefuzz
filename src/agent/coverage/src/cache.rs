@@ -65,9 +65,7 @@ impl ModuleInfo {
     #[cfg(target_os = "windows")]
     pub fn new_pe(path: &ModulePath) -> Result<Self> {
         let file = std::fs::File::open(path)?;
-        let data = unsafe {
-            memmap2::Mmap::map(&file)?
-        };
+        let data = unsafe { memmap2::Mmap::map(&file)? };
 
         let pe = goblin::pe::PE::parse(&data)?;
         let module = ModuleIndex::index_pe(path.clone(), &pe);
