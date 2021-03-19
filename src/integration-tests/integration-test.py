@@ -17,6 +17,8 @@
 #    checks on each of the created items for the stage.  This batch processing
 #    allows testing multiple components concurrently.
 
+import datetime
+import json
 import logging
 import os
 import re
@@ -26,6 +28,7 @@ from shutil import which
 from typing import Dict, List, Optional, Set, Tuple
 from uuid import UUID, uuid4
 
+import requests
 from onefuzz.api import Command, Onefuzz
 from onefuzz.backend import ContainerWrapper, wait
 from onefuzz.cli import execute_api
@@ -207,6 +210,8 @@ class TestOnefuzz:
         self.pools: Dict[OS, Pool] = {}
         self.test_id = test_id
         self.project = f"test-{self.test_id}"
+        self.start_log_marker = f"integration-test-injection-start-{self.test_id}"
+        self.stop_log_marker = f"integration-test-injection-stop-{self.test_id}"
 
     def setup(
         self,
@@ -215,6 +220,7 @@ class TestOnefuzz:
         pool_size: int,
         os_list: List[OS],
     ) -> None:
+        self.inject_log(self.start_log_marker)
         for entry in os_list:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
             self.logger.info("creating pool: %s:%s", entry.name, name)
@@ -686,6 +692,84 @@ class TestOnefuzz:
         if errors:
             raise Exception("cleanup failed")
 
+    def inject_log(self, message: str) -> None:
+        # This is an *extremely* minimal implementation of the Application Insights rest
+        # API, as discussed here:
+        #
+        # https://apmtips.com/posts/2017-10-27-send-metric-to-application-insights/
+
+        key = self.of.info.get().insights_instrumentation_key
+        assert key is not None, "instrumentation key required for integration testing"
+
+        data = {
+            "data": {
+                "baseData": {
+                    "message": message,
+                    "severityLevel": "Information",
+                    "ver": 2,
+                },
+                "baseType": "MessageData",
+            },
+            "iKey": key,
+            "name": "Microsoft.ApplicationInsights.Message",
+            "time": datetime.datetime.now(datetime.timezone.utc)
+            .astimezone()
+            .isoformat(),
+        }
+
+        requests.post(
+            "https://dc.services.visualstudio.com/v2/track", json=data
+        ).raise_for_status()
+
+    def check_log_end_marker(
+        self,
+    ) -> Tuple[bool, str, bool]:
+        logs = self.of.debug.logs.keyword(
+            self.stop_log_marker, limit=1, timespan="PT1H"
+        )
+        return (
+            len(logs["PrimaryResult"]) > 0,
+            "waiting for application insight logs to flush",
+            True,
+        )
+
+    def check_logs_for_errors(self) -> None:
+        # only check for errors that exist between the start and stop markers
+        # also, only check for the most recent 100 errors within the last 2
+        # hours
+
+        self.inject_log(self.stop_log_marker)
+        wait(self.check_log_end_marker, frequency=5.0)
+        self.logger.info("application insights log flushed")
+
+        logs = self.of.debug.logs.keyword("error", limit=100, timespan="PT2H")
+
+        seen_errors = False
+        seen_stop = False
+        for entry in logs["PrimaryResult"]:
+            entry_as_str = json.dumps(entry, sort_keys=True)
+            if not seen_stop:
+                if self.stop_log_marker in entry_as_str:
+                    seen_stop = True
+                continue
+
+            if self.start_log_marker in entry_as_str:
+                break
+
+            # TODO: temporarily ignore blobnotfound and queue not found errors.
+            # see issue 141 for details
+            if "ErrorCode: BlobNotFound" in entry_as_str or (
+                "queue.core.windows.net" in entry_as_str
+                and "404 Not Found" in entry_as_str
+            ):
+                continue
+
+            seen_errors = True
+            self.logger.error("error log: %s", entry_as_str)
+
+        if seen_errors:
+            raise Exception("logs included errors")
+
 
 class Run(Command):
     def check_jobs(
@@ -739,6 +823,11 @@ class Run(Command):
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
         tester.cleanup()
 
+    def check_logs(self, test_id: UUID, *, endpoint: Optional[str]) -> None:
+        self.onefuzz.__setup__(endpoint=endpoint)
+        tester = TestOnefuzz(self.onefuzz, self.logger, test_id=test_id)
+        tester.check_logs_for_errors()
+
     def test(
         self,
         samples: Directory,
@@ -774,6 +863,9 @@ class Run(Command):
                 self.logger.warning("not testing crash repro")
             else:
                 self.check_repros(test_id, endpoint=endpoint)
+
+            self.check_logs(test_id, endpoint=endpoint)
+
         except Exception as e:
             self.logger.error("testing failed: %s", repr(e))
             error = e
