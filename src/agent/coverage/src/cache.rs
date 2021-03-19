@@ -70,10 +70,7 @@ impl ModuleInfo {
         };
 
         let pe = goblin::pe::PE::parse(&data)?;
-
         let module = ModuleIndex::index_pe(path.clone(), &pe);
-
-
         let offsets = crate::pe::process_module(path, &data, &pe, false)?;
         let blocks = offsets.ones().map(|off| off as u64).collect();
 
