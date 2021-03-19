@@ -61,7 +61,7 @@ ERROR:cli:command failed: regression identified: fd9407fb53266d6d97aae521313e35d
 ❯
 ```
 
-let's verify this doesn't on a crash on a known good build, in our case, the first commit:
+let's verify this doesn't crash on a known good build, in our case, the first commit:
 ```
 ❯ git checkout $(git log --format=%H |tail -n 1)
 Note: switching to '4238a2ad85437bcead1f234e74bce7ae82919703'.
