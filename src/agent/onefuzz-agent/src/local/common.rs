@@ -179,7 +179,13 @@ pub fn get_synced_dir(
 
 pub fn build_common_config(args: &ArgMatches<'_>, generate_task_id: bool) -> Result<CommonConfig> {
     let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
-    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| if generate_task_id { Uuid::new_v4() } else { Uuid::nil() });
+    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
+        if generate_task_id {
+            Uuid::new_v4()
+        } else {
+            Uuid::nil()
+        }
+    });
     let instance_id = get_uuid("instance_id", args).unwrap_or_else(|_| Uuid::nil());
 
     let setup_dir = if args.is_present(SETUP_DIR) {
