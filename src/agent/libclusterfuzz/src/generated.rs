@@ -201,4 +201,8 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     r"^syslog::LogMessage",
     r"^print_address_description",
     r"^_etext",
+    r".*libc\.so",
+    r".*libc\+\+\.so",
+    r".*libc\+\+_shared\.so",
+    r".*libstdc\+\+\.so",
 ];
