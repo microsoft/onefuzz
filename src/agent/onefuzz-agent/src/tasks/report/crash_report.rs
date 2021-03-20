@@ -32,14 +32,14 @@ pub struct CrashReport {
     pub call_stack: Vec<String>,
     pub call_stack_sha256: String,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub minimized_stack: Vec<String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub minimized_stack_sha256: Option<String>,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub minimized_stack_function_names: Vec<String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub minimized_stack_function_names_sha256: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
