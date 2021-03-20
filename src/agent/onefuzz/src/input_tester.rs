@@ -143,22 +143,41 @@ impl<'a> Tester<'a> {
             let call_stack: Vec<_> = exception
                 .stack_frames
                 .iter()
-                .map(|f| f.to_string())
+                .map(|f| match &f {
+                    debugger::stack::DebugStackFrame::CorruptFrame => StackEntry {
+                        line: f.to_string(),
+                        ..Default::default()
+                    },
+                    debugger::stack::DebugStackFrame::Frame{ function, location} => StackEntry {
+                        line: f.to_string(),
+                        function_name: Some(function.to_owned()), // TODO: this includes both the module & symbol
+                        address: Some(location.displacement),
+                        module_offset: None,
+                        module_path: None,
+                        source_file_line: location.file_info.as_ref().map(|x| x.line.into()),
+                        source_file_name: location.file_info.as_ref().map(|x| x.file.to_string()),
+                        source_file_path: None,
+                        function_offset: None,
+                    },
+                })
                 .collect();
 
             let crash_site = if let Some(frame) = call_stack.get(0) {
-                frame.to_string()
+                frame.line.to_owned()
             } else {
                 CRASH_SITE_UNAVAILABLE.to_owned()
             };
 
             let fault_type = exception.description.to_string();
-            Some(CrashLog::new(
-                    text, summary, sanitizer, fault_type, None, None, call_stack,
-                )?)
+            let text = "".to_string();
+            let sanitizer = fault_type.to_string();
+            let summary = crash_site;
 
+            Some(CrashLog::new(
+                text, summary, sanitizer, fault_type, None, None, call_stack,
+            )?)
         } else {
-            bail!("{}", report.exit_status);
+            None
         };
 
         Ok(crash)
