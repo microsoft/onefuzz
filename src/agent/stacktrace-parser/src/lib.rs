@@ -114,19 +114,21 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
 }
 
 impl CrashLog {
-    pub fn parse(text: String) -> Result<Self> {
-        let (summary, sanitizer, fault_type) = parse_summary(&text)?;
-        let full_stack_details = parse_call_stack(&text).unwrap_or_default();
-        let (scariness_score, scariness_description) = parse_scariness(&text);
-
-        let call_stack = full_stack_details.iter().map(|x| x.line.clone()).collect();
+    pub fn new(
+        text: String,
+        summary: String,
+        sanitizer: String,
+        fault_type: String,
+        scariness_score: Option<u32>,
+        scariness_description: Option<String>,
+        stack: Vec<StackEntry>,
+    ) -> Result<Self> {
         let stack_filter = get_stack_filter();
-
-        let mut minimized_stack_details: Vec<StackEntry> = full_stack_details
+        let call_stack = stack.iter().map(|x| x.line.clone()).collect();
+        let mut minimized_stack_details: Vec<StackEntry> = stack
             .iter()
             .filter_map(|x| filter_funcs(x, &stack_filter))
             .collect();
-
         // if we don't have a minimized stack, if one of these functions is on
         // the stack, use it
         for entry in &[
@@ -138,7 +140,7 @@ impl CrashLog {
                 break;
             }
             let value = Some(String::from(*entry));
-            minimized_stack_details = full_stack_details
+            minimized_stack_details = stack
                 .iter()
                 .filter_map(|x| {
                     if x.function_name == value {
@@ -150,7 +152,7 @@ impl CrashLog {
                 .collect();
         }
 
-        let full_stack_names: Vec<String> = full_stack_details
+        let full_stack_names: Vec<String> = stack
             .iter()
             .filter_map(|x| x.function_name.as_ref().cloned())
             .collect();
@@ -165,7 +167,7 @@ impl CrashLog {
             .map(|x| function_without_args(x))
             .collect();
 
-        let log = Self {
+        Ok(Self {
             text,
             sanitizer,
             summary,
@@ -173,14 +175,27 @@ impl CrashLog {
             call_stack,
             scariness_score,
             scariness_description,
-            full_stack_details,
+            full_stack_details: stack,
             full_stack_names,
             minimized_stack,
             minimized_stack_function_names,
             minimized_stack_details,
-        };
+        })
+    }
 
-        Ok(log)
+    pub fn parse(text: String) -> Result<Self> {
+        let (summary, sanitizer, fault_type) = parse_summary(&text)?;
+        let stack = parse_call_stack(&text).unwrap_or_default();
+        let (scariness_score, scariness_description) = parse_scariness(&text);
+        Self::new(
+            text,
+            summary,
+            sanitizer,
+            fault_type,
+            scariness_score,
+            scariness_description,
+            stack,
+        )
     }
 
     pub fn call_stack_sha256(&self) -> String {
