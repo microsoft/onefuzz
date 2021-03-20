@@ -233,7 +233,7 @@ impl Coordinator {
         &mut self,
         request_type: RequestType<'a>,
     ) -> Result<Response> {
-        let request = self.build_request(request_type.clone())?;
+        let request = self.get_request_builder(request_type.clone());
         let mut response = request
             .send_retry(
                 vec![StatusCode::UNAUTHORIZED],
@@ -251,7 +251,7 @@ impl Coordinator {
             debug!("retrying request after refreshing access token");
 
             // And try one more time.
-            let request = self.build_request(request_type)?;
+            let request = self.get_request_builder(request_type);
             response = request.send_retry_default().await?;
         };
 
@@ -262,7 +262,7 @@ impl Coordinator {
         Ok(response)
     }
 
-    fn build_request(&self, request_type: RequestType<'_>) -> Result<RequestBuilder> {
+    fn get_request_builder(&self, request_type: RequestType<'_>) -> RequestBuilder {
         match request_type {
             RequestType::PollCommands => self.poll_commands_request(),
             RequestType::ClaimCommand(message_id) => self.claim_command_request(message_id),
@@ -271,7 +271,7 @@ impl Coordinator {
         }
     }
 
-    fn poll_commands_request(&self) -> Result<RequestBuilder> {
+    fn poll_commands_request(&self) -> RequestBuilder {
         let request = PollCommandsRequest {
             machine_id: self.registration.machine_id,
         };
@@ -283,10 +283,10 @@ impl Coordinator {
             .bearer_auth(self.token.secret().expose_ref())
             .json(&request);
 
-        Ok(request_builder)
+        request_builder
     }
 
-    fn claim_command_request(&self, message_id: String) -> Result<RequestBuilder> {
+    fn claim_command_request(&self, message_id: String) -> RequestBuilder {
         let request = ClaimNodeCommandRequest {
             machine_id: self.registration.machine_id,
             message_id,
@@ -299,10 +299,10 @@ impl Coordinator {
             .bearer_auth(self.token.secret().expose_ref())
             .json(&request);
 
-        Ok(request_builder)
+        request_builder
     }
 
-    fn emit_event_request(&self, event: &NodeEventEnvelope) -> Result<RequestBuilder> {
+    fn emit_event_request(&self, event: &NodeEventEnvelope) -> RequestBuilder {
         let url = self.registration.dynamic_config.events_url.clone();
         let request_builder = self
             .client
@@ -310,10 +310,10 @@ impl Coordinator {
             .bearer_auth(self.token.secret().expose_ref())
             .json(event);
 
-        Ok(request_builder)
+        request_builder
     }
 
-    fn can_schedule_request(&self, work_set: &WorkSet) -> Result<RequestBuilder> {
+    fn can_schedule_request(&self, work_set: &WorkSet) -> RequestBuilder {
         // Temporary: assume one work unit per work set.
         //
         // In the future, we will probably want the same behavior, but we will
@@ -335,7 +335,7 @@ impl Coordinator {
             .bearer_auth(self.token.secret().expose_ref())
             .json(&can_schedule);
 
-        Ok(request_builder)
+        request_builder
     }
 }
 
