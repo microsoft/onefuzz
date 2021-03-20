@@ -5,25 +5,26 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use backoff::{self, future::retry_notify, ExponentialBackoff};
 use onefuzz_telemetry::warn;
-use reqwest::Response;
+use reqwest::{Response, StatusCode};
 use std::{
     sync::atomic::{AtomicUsize, Ordering},
     time::Duration,
 };
 
-const DEFAULT_RETRY_PERIOD: Duration = Duration::from_secs(5);
-const MAX_RETRY_ATTEMPTS: usize = 5;
+pub const DEFAULT_RETRY_PERIOD: Duration = Duration::from_secs(5);
+pub const MAX_RETRY_ATTEMPTS: usize = 5;
 
 pub async fn send_retry_reqwest_default<
     F: Fn() -> Result<reqwest::RequestBuilder> + Send + Sync,
 >(
     build_request: F,
 ) -> Result<Response> {
-    send_retry_reqwest(build_request, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS).await
+    send_retry_reqwest(build_request, [], DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS).await
 }
 
 pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Send + Sync>(
     build_request: F,
+    fail_fast_status: impl AsRef<[StatusCode]>,
     retry_period: Duration,
     max_retry: usize,
 ) -> Result<Response> {
@@ -37,7 +38,6 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
             .with_context(|| format!("request attempt {} failed", attempt_count + 1));
 
         match result {
-            Ok(x) => Ok(x),
             Err(x) => {
                 if attempt_count >= max_retry {
                     Err(backoff::Error::Permanent(x))
@@ -45,6 +45,20 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
                     Err(backoff::Error::Transient(x))
                 }
             }
+            Ok(x) => match x.error_for_status() {
+                Ok(x) => Ok(x),
+                Err(e) => {
+                    let fail_fast = e
+                        .status()
+                        .map(|s| fail_fast_status.as_ref().contains(&s))
+                        .unwrap_or_default();
+                    if attempt_count >= max_retry || fail_fast {
+                        Err(backoff::Error::Permanent(e.into()))
+                    } else {
+                        Err(backoff::Error::Transient(e.into()))
+                    }
+                }
+            },
         }
     };
     let result = retry_notify(
@@ -62,24 +76,35 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
 
 #[async_trait]
 pub trait SendRetry {
-    async fn send_retry(self, retry_period: Duration, max_retry: usize) -> Result<Response>;
+    async fn send_retry(
+        self,
+        fail_fast_status: Vec<StatusCode>,
+        retry_period: Duration,
+        max_retry: usize,
+    ) -> Result<Response>;
     async fn send_retry_default(self) -> Result<Response>;
 }
 
 #[async_trait]
 impl SendRetry for reqwest::RequestBuilder {
     async fn send_retry_default(self) -> Result<Response> {
-        self.send_retry(DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS)
+        self.send_retry(vec![], DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS)
             .await
     }
 
-    async fn send_retry(self, retry_period: Duration, max_retry: usize) -> Result<Response> {
+    async fn send_retry(
+        self,
+        fail_fast_status: Vec<StatusCode>,
+        retry_period: Duration,
+        max_retry: usize,
+    ) -> Result<Response> {
         let result = send_retry_reqwest(
             || {
                 self.try_clone().ok_or_else(|| {
                     anyhow::Error::msg("This request cannot be retried because it cannot be cloned")
                 })
             },
+            fail_fast_status,
             retry_period,
             max_retry,
         )
@@ -109,7 +134,7 @@ mod test {
         let invalid_url = "http://127.0.0.1:81/test.txt";
         let resp = reqwest::Client::new()
             .get(invalid_url)
-            .send_retry(Duration::from_millis(1), 3)
+            .send_retry(vec![], Duration::from_millis(1), 3)
             .await;
 
         if let Err(err) = &resp {
