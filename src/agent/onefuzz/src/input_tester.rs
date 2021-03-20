@@ -148,7 +148,7 @@ impl<'a> Tester<'a> {
                         line: f.to_string(),
                         ..Default::default()
                     },
-                    debugger::stack::DebugStackFrame::Frame{ function, location} => StackEntry {
+                    debugger::stack::DebugStackFrame::Frame { function, location } => StackEntry {
                         line: f.to_string(),
                         function_name: Some(function.to_owned()), // TODO: this includes both the module & symbol
                         address: Some(location.displacement),
