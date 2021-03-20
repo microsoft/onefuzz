@@ -429,7 +429,6 @@ mod tests {
             "android_asan_uaf.txt",
             // TODO - needs fixed, multi-line ASAN entry
             "sanitizer_signal_abrt_unknown.txt",
-
             // java (from jazzer)
             "java_severity_medium_exception.txt",
         ];
