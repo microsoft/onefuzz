@@ -42,14 +42,17 @@ pub struct CrashReport {
     #[serde(default)]
     pub minimized_stack_function_names_sha256: Option<String>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub asan_log: Option<String>,
 
     pub task_id: Uuid,
 
     pub job_id: Uuid,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_score: Option<u32>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_description: Option<String>,
 }
 
@@ -62,6 +65,7 @@ pub struct NoCrash {
     pub task_id: Uuid,
     pub job_id: Uuid,
     pub tries: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
 }
 

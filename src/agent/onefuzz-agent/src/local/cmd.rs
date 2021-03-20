@@ -7,7 +7,7 @@ use clap::{App, SubCommand};
 use crate::local::{
     common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
     libfuzzer, libfuzzer_coverage, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge,
-    radamsa,
+    radamsa, test_input, test_input_libfuzzer,
 };
 
 const RADAMSA: &str = "radamsa";
@@ -19,6 +19,8 @@ const LIBFUZZER_MERGE: &str = "libfuzzer-merge";
 const GENERIC_CRASH_REPORT: &str = "generic-crash-report";
 const GENERIC_GENERATOR: &str = "generic-generator";
 const GENERIC_ANALYSIS: &str = "generic-analysis";
+const TEST_INPUT: &str = "test-input";
+const TEST_INPUT_LIBFUZZER: &str = "test-input-libfuzzer";
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     match args.subcommand() {
@@ -31,6 +33,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         (GENERIC_ANALYSIS, Some(sub)) => generic_analysis::run(sub).await,
         (GENERIC_CRASH_REPORT, Some(sub)) => generic_crash_report::run(sub).await,
         (GENERIC_GENERATOR, Some(sub)) => generic_generator::run(sub).await,
+        (TEST_INPUT, Some(sub)) => test_input::run(sub).await,
+        (TEST_INPUT_LIBFUZZER, Some(sub)) => test_input_libfuzzer::run(sub).await,
         _ => {
             anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
         }
@@ -57,4 +61,8 @@ pub fn args(name: &str) -> App<'static, 'static> {
             GENERIC_GENERATOR,
         )))
         .subcommand(add_common_config(generic_analysis::args(GENERIC_ANALYSIS)))
+        .subcommand(add_common_config(test_input::args(TEST_INPUT)))
+        .subcommand(add_common_config(test_input_libfuzzer::args(
+            TEST_INPUT_LIBFUZZER,
+        )))
 }

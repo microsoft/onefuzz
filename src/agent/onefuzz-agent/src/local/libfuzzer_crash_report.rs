@@ -63,7 +63,7 @@ pub fn build_report_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
+    let common = build_common_config(args, true)?;
     let config = build_report_config(args, None, common)?;
     ReportTask::new(config).managed_run().await
 }
