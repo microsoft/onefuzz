@@ -1,0 +1,6 @@
+{
+  "text": "panic: parse //%B9%B9%B9%B9%B9%01%00%00%00%00%00%00%00%B9%B9%B9%B9%B9%B9%B9%B9%B9%B9%B9%B9%B9%B9%B9: invalid URL escape \"%01\"\n\ngoroutine 17 [running, locked to thread]:\ngithub.com/dvyukov/go-fuzz-corpus/url.Fuzz(0x6030001458a0, 0x20, 0x20, 0x10c0000c8ea0)\n        /tmp/go-fuzz-build242808228/gopath/src/github.com/dvyukov/go-fuzz-corpus/url/main.go:24 +0x3d5\nmain.fuzzer_run(0x6030001458a0, 0x20, 0x20)\n        /tmp/go-fuzz-build242808228/gopath/src/github.com/dvyukov/go-fuzz-corpus/url/go.fuzz.main/main.go:13 +0x41\nmain._cgoexpwrap_9bd49841752b_fuzzer_run(0x6030001458a0, 0x20, 0x20)\n        _cgo_gotypes.go:45 +0x41\n==158476== ERROR: libFuzzer: deadly signal\n",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: deadly signal",
+  "fault_type": "deadly signal"
+}
