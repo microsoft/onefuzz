@@ -88,20 +88,27 @@ impl From<ModulePath> for PathBuf {
     }
 }
 
+/// Index over an executable module and its symbols.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct ModuleIndex {
+    /// Absolute path to the module's backing file.
     pub path: ModulePath,
+
+    /// Preferred virtual address of the module's base image.
     pub base_va: u64,
+
+    /// Index over the module's symbols.
     pub symbols: SymbolIndex,
 }
 
 impl ModuleIndex {
+    /// Build a new index over a parsed ELF module.
     #[cfg(target_os = "linux")]
-    pub fn parse_elf(path: ModulePath, data: &[u8]) -> Result<Self> {
+    pub fn index_elf(path: ModulePath, object: &goblin::elf::Elf) -> Result<Self> {
         use anyhow::format_err;
-        use goblin::elf::{self, program_header::PT_LOAD};
+        use goblin::elf::program_header::PT_LOAD;
 
-        let object = elf::Elf::parse(data)?;
+        let elf = elf::Elf::parse(data)?;
 
         // Calculate the module base address as the lowest preferred VA of any loadable segment.
         //
@@ -153,7 +160,7 @@ impl ModuleIndex {
                 // A symbol is defined relative to some section, identified by `st_shndx`, an index
                 // into the section header table. We'll use the section header to compute the file
                 // offset of the symbol.
-                let section = object
+                let section = elf
                     .section_headers
                     .get(sym.st_shndx)
                     .cloned()
@@ -196,6 +203,7 @@ impl ModuleIndex {
         })
     }
 
+    /// Build a new index over a parsed PE module.
     #[cfg(target_os = "windows")]
     pub fn index_pe(path: ModulePath, pe: &goblin::pe::PE) -> Self {
         let base_va = pe.image_base as u64;
