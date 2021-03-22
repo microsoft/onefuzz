@@ -18,7 +18,10 @@ use coverage::{
     block::windows::Recorder as BlockCoverageRecorder,
     cache::ModuleCache,
 };
-use debugger::debugger::{DebugEventHandler, Debugger};
+use debugger::{
+    debugger::{BreakpointId, DebugEventHandler, Debugger},
+    target::Module,
+};
 use log::{debug, error, trace};
 use win_util::{
     pipe_handle::{pipe, PipeReaderNonBlocking},
@@ -134,7 +137,7 @@ struct CrashDetectorEventHandler<'a> {
     stderr_buffer: Vec<u8>,
     debugger_output: String,
     exceptions: Vec<Exception>,
-    _coverage: Option<BlockCoverageRecorder<'a>>,
+    coverage: Option<BlockCoverageRecorder<'a>>,
 }
 
 impl<'a> CrashDetectorEventHandler<'a> {
@@ -144,7 +147,7 @@ impl<'a> CrashDetectorEventHandler<'a> {
         ignore_first_chance_exceptions: bool,
         start_time: Instant,
         max_duration: Duration,
-        _coverage: Option<BlockCoverageRecorder<'a>>,
+        coverage: Option<BlockCoverageRecorder<'a>>,
     ) -> Self {
         Self {
             start_time,
@@ -158,7 +161,7 @@ impl<'a> CrashDetectorEventHandler<'a> {
             stderr_buffer: vec![],
             debugger_output: String::new(),
             exceptions: vec![],
-            _coverage,
+            coverage,
         }
     }
 }
@@ -267,6 +270,33 @@ impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
             self.any_target_terminated = true;
 
             debugger.quit_debugging();
+        }
+    }
+
+    fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
+        if let Some(coverage) = &mut self.coverage {
+            if let Err(err) = coverage.on_create_process(dbg, module) {
+                error!("error recording coverage on create process: {:?}", err);
+                dbg.quit_debugging();
+            }
+        }
+    }
+
+    fn on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) {
+        if let Some(coverage) = &mut self.coverage {
+            if let Err(err) = coverage.on_load_dll(dbg, module) {
+                error!("error recording coverage on load DLL: {:?}", err);
+                dbg.quit_debugging();
+            }
+        }
+    }
+
+    fn on_breakpoint(&mut self, dbg: &mut Debugger, bp: BreakpointId) {
+        if let Some(coverage) = &mut self.coverage {
+            if let Err(err) = coverage.on_breakpoint(dbg, bp) {
+                error!("error recording coverage on breakpoint: {:?}", err);
+                dbg.quit_debugging();
+            }
         }
     }
 }
