@@ -14,10 +14,7 @@ use std::{
 };
 
 use anyhow::Result;
-use coverage::{
-    block::windows::Recorder as BlockCoverageRecorder,
-    cache::ModuleCache,
-};
+use coverage::{block::windows::Recorder as BlockCoverageRecorder, cache::ModuleCache};
 use debugger::{
     debugger::{BreakpointId, DebugEventHandler, Debugger},
     target::Module,

@@ -37,7 +37,12 @@ impl<'a> RecorderEventHandler<'a> {
         let started = Instant::now();
         let timed_out = false;
 
-        Self { recorder, started, timed_out, timeout }
+        Self {
+            recorder,
+            started,
+            timed_out,
+            timeout,
+        }
     }
 
     pub fn time_out(&self) -> bool {
@@ -78,7 +83,11 @@ impl<'a> Recorder<'a> {
         let breakpoints = Breakpoints::default();
         let coverage = CommandBlockCov::default();
 
-        Self { breakpoints, cache, coverage }
+        Self {
+            breakpoints,
+            cache,
+            coverage,
+        }
     }
 
     pub fn coverage(&self) -> &CommandBlockCov {
@@ -167,8 +176,6 @@ impl<'a> Recorder<'a> {
 
         Ok(())
     }
-
-
 }
 
 impl<'a> DebugEventHandler for RecorderEventHandler<'a> {
