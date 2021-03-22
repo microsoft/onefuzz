@@ -148,11 +148,13 @@ impl<'a> Recorder<'a> {
             self.coverage
                 .increment(breakpoint.module, breakpoint.offset)?;
         } else {
-            if let Ok(pc) = dbg.read_program_counter() {
-                log::error!("hit breakpoint without data, id = {}, pc = {:x}", id.0, pc);
+            let pc = if let Ok(pc) = dbg.read_program_counter() {
+                format!("{:x}", pc)
             } else {
-                log::error!("hit breakpoint without data: id = {}, pc = ???", id.0);
-            }
+                "???".into()
+            };
+
+            log::error!("hit breakpoint without data, id = {}, pc = {}", id.0, pc);
         }
 
         Ok(())
