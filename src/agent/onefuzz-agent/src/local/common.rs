@@ -177,6 +177,10 @@ pub fn get_synced_dir(
     })
 }
 
+// NOTE: generate_task_id is intended to change the default behavior for local
+// fuzzing tasks from generating random task id to using UUID::nil(). This
+// enables making the one-shot crash report generation, which isn't really a task,
+// consistent across multiple runs.
 pub fn build_common_config(args: &ArgMatches<'_>, generate_task_id: bool) -> Result<CommonConfig> {
     let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
     let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
