@@ -16,23 +16,24 @@ use crate::cache::ModuleCache;
 use crate::code::ModulePath;
 
 pub fn record(cmd: Command) -> Result<CommandBlockCov> {
-    let recorder = Recorder::default();
+    let mut cache = ModuleCache::default();
+    let recorder = Recorder::new(&mut cache);
     let timeout = Duration::from_secs(5);
     let mut handler = RecorderEventHandler::new(recorder, timeout);
     handler.run(cmd)?;
     Ok(handler.recorder.into_coverage())
 }
 
-#[derive(Clone, Debug)]
-pub struct RecorderEventHandler {
-    recorder: Recorder,
+#[derive(Debug)]
+pub struct RecorderEventHandler<'a> {
+    recorder: Recorder<'a>,
     started: Instant,
     timed_out: bool,
     timeout: Duration,
 }
 
-impl RecorderEventHandler {
-    pub fn new(recorder: Recorder, timeout: Duration) -> Self {
+impl<'a> RecorderEventHandler<'a> {
+    pub fn new(recorder: Recorder<'a>, timeout: Duration) -> Self {
         let started = Instant::now();
         let timed_out = false;
 
@@ -65,14 +66,21 @@ impl RecorderEventHandler {
     }
 }
 
-#[derive(Clone, Debug, Default)]
-pub struct Recorder {
+#[derive(Debug)]
+pub struct Recorder<'a> {
     breakpoints: Breakpoints,
-    cache: ModuleCache,
+    cache: &'a mut ModuleCache,
     coverage: CommandBlockCov,
 }
 
-impl Recorder {
+impl<'a> Recorder<'a> {
+    pub fn new(cache: &'a mut ModuleCache) -> Self {
+        let breakpoints = Breakpoints::default();
+        let coverage = CommandBlockCov::default();
+
+        Self { breakpoints, cache, coverage }
+    }
+
     pub fn coverage(&self) -> &CommandBlockCov {
         &self.coverage
     }
@@ -163,7 +171,7 @@ impl Recorder {
 
 }
 
-impl DebugEventHandler for RecorderEventHandler {
+impl<'a> DebugEventHandler for RecorderEventHandler<'a> {
     fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
         if self.recorder.on_create_process(dbg, module).is_err() {
             self.stop(dbg);
