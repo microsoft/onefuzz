@@ -98,8 +98,12 @@ function dumpCounters(results_dir, should_disable_sympath) {
     // Disable FCE from sanitizers.
     execute("sxd av");
 
-    // Run to exit break in `ntdll!NtTerminateProcess`.
-    execute("g");
+    // run until LLVMFuzzerTestOneInput
+    execute("bm *!LLVMFuzzerTestOneInput")
+    execute("g")
+
+    // run until return from this context
+    execute("pt")
 
     let found = false;
     host.currentProcess.Modules.All(function (module) {
