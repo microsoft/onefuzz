@@ -74,7 +74,13 @@ impl<'a> RecorderEventHandler<'a> {
 #[derive(Debug)]
 pub struct Recorder<'a> {
     breakpoints: Breakpoints,
+
+    // Reference to allow in-memory reuse across runs.
     cache: &'a mut ModuleCache,
+
+    // Note: this could also be a reference to enable reuse across runs, to
+    // support implicit calculation of total coverage for a corpus. For now,
+    // assume callers will merge this into a separate struct when needed.
     coverage: CommandBlockCov,
 }
 
@@ -202,9 +208,17 @@ impl<'a> DebugEventHandler for RecorderEventHandler<'a> {
     }
 }
 
+/// Relates opaque, runtime-generated breakpoint IDs to their corresponding
+/// location, via module and offset.
 #[derive(Clone, Debug, Default)]
 struct Breakpoints {
+    // Breakpoint-associated module paths, referenced by index to save space and
+    // avoid copying.
     modules: Vec<ModulePath>,
+
+    // Map of breakpoint IDs to data which pick out an code location. For a
+    // value `(module, offset)`, `module` is an index into `self.modules`, and
+    // `offset` is a VA offset relative to the module base.
     registered: BTreeMap<BreakpointId, (usize, u64)>,
 }
 
@@ -241,6 +255,7 @@ impl Breakpoints {
     }
 }
 
+/// Code location data associated with an opaque breakpoint ID.
 #[derive(Clone, Copy, Debug)]
 pub struct BreakpointData<'a> {
     pub module: &'a ModulePath,
