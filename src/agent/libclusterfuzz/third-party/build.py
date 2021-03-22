@@ -51,9 +51,11 @@ for name in dir(constants):
         data[name] = entry
 
 for_rust = {
-    "STACK_FRAME_IGNORE_REGEXES": [
-        f'r"{x}"' for x in data["STACK_FRAME_IGNORE_REGEXES"]
-    ],
+    # since we always assume symbolication, combine these
+    "STACK_FRAME_IGNORE_REGEXES": (
+        [f'r"{x}"' for x in data["STACK_FRAME_IGNORE_REGEXES"]]
+        + [f'r"{x}"' for x in data["STACK_FRAME_IGNORE_REGEXES_IF_SYMBOLIZED"]]
+    ),
 }
 
 with open("../src/generated.rs", "w") as handle:
@@ -66,4 +68,4 @@ with open("../src/generated.rs", "w") as handle:
             value = for_rust[key]
             handle.write(f"pub const {key}: &str = {value};")
         else:
-            raise Exception('unsupported for_rust type')
+            raise Exception("unsupported for_rust type")

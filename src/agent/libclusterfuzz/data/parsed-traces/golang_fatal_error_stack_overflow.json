@@ -1,0 +1,24 @@
+{
+  "text": "runtime: goroutine stack exceeds 1000000000-byte limit\nfatal error: stack overflow\n\nruntime stack:\nruntime.throw(0x60f619, 0xe)\n/home/sdk/goroot/go/src/runtime/panic.go:619 +0x81\nruntime.newstack()\n/home/sdk/goroot/go/src/runtime/stack.go:1054 +0x71f\nruntime.morestack()\n/home/sdk/goroot/go/src/runtime/asm_amd64.s:480 +0x89\n\ngoroutine 34 [running]:\ngithub.com/google/syzkaller/pkg/ast.(*scanner).next(0xc420158000)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/scanner.go:271 +0x218 fp=0xc446ec03a8 sp=0xc446ec03a0 pc=0x5035c8\ngithub.com/google/syzkaller/pkg/ast.(*scanner).scanIdent(0xc420158000, 0xc4201502ea, 0x8, 0x492488, 0x1, 0x492489, 0x0, 0x0, 0x0)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/scanner.go:253 +0x2c fp=0xc446ec03f8 sp=0xc446ec03a8 pc=0x5031ac\ngithub.com/google/syzkaller/pkg/ast.(*scanner).Scan(0xc420158000, 0x50269b, 0xd, 0xc4201502ea, 0xc4201502ea, 0x8, 0x492488, 0x1, 0x492489)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/scanner.go:160 +0x3ab fp=0xc446ec04c8 sp=0xc446ec03f8 pc=0x50269b\ngithub.com/google/syzkaller/pkg/ast.(*parser).next(0xc466ebfce0)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/parser.go:154 +0x4b fp=0xc446ec0548 sp=0xc446ec04c8 pc=0x4fecfb\ngithub.com/google/syzkaller/pkg/ast.(*parser).tryConsume(0xc466ebfce0, 0xd, 0xc4201502ea)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/parser.go:166 +0x48 fp=0xc446ec0560 sp=0xc446ec0548 pc=0x4fee88\ngithub.com/google/syzkaller/pkg/ast.(*parser).parseTypeList(0xc466ebfce0, 0x13, 0x0, 0x492487)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/parser.go:446 +0x38 fp=0xc446ec05d0 sp=0xc446ec0560 pc=0x501498\ngithub.com/google/syzkaller/pkg/ast.(*parser).parseType(0xc466ebfce0, 0xd)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/parser.go:440 +0xd4 fp=0xc446ec0640 sp=0xc446ec05d0 pc=0x5011b4\ngithub.com/google/syzkaller/pkg/ast.(*parser).parseTypeList(0xc466ebfce0, 0x13, 0x0, 0x492485)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/parser.go:447 +0x53 fp=0xc446ec06b0 sp=0xc446ec0640 pc=0x5014b3\ngithub.com/google/syzkaller/pkg/ast.(*parser).parseType(0xc466ebfce0, 0xd)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/parser.go:440 +0xd4 fp=0xc446ec0720 sp=0xc446ec06b0 pc=0x5011b4\ngithub.com/google/syzkaller/pkg/ast.(*parser).parseTypeList(0xc466ebfce0, 0x13, 0x0, 0x492483)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/parser.go:447 +0x53 fp=0xc446ec0790 sp=0xc446ec0720 pc=0x5014b3\ngithub.com/google/syzkaller/pkg/ast.(*parser).parseType(0xc466ebfce0, 0xd)\n/home/sdk/gopath/src/github.com/google/syzkaller/pkg/ast/parser.go:440 +0xd4 fp=0xc446ec0800 sp=0xc446ec0790 pc=0x5011b4\n...additional frames elided...\nAddressSanitizer:DEADLYSIGNAL\n=================================================================\n==1==ERROR: AddressSanitizer: ABRT on unknown address 0x000000000001 (pc 0x0000005c1eb1 bp 0x7fff2cb506c8 sp 0x7fff2cb506b0 T0)\nSCARINESS: 10 (signal)\n    #0 0x5c1eb0 in runtime.raise /tmp/go-fuzz-build988081626/goroot/src/runtime/sys_linux_amd64.s:149\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ABRT (/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_syzkaller_74016d8d932a99eb2395761e6f76a07b59ae7a87/revisions/compiler_fuzzer+0x5c1eb0)\n==1==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT (/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_syzkaller_74016d8d932a99eb2395761e6f76a07b59ae7a87/revisions/compiler_fuzzer+0x5c1eb0)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x5c1eb0 in runtime.raise /tmp/go-fuzz-build988081626/goroot/src/runtime/sys_linux_amd64.s:149"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x5c1eb0 in runtime.raise /tmp/go-fuzz-build988081626/goroot/src/runtime/sys_linux_amd64.s:149",
+      "address": 6037168,
+      "function_name": "runtime.raise",
+      "source_file_name": "sys_linux_amd64.s",
+      "source_file_path": "/tmp/go-fuzz-build988081626/goroot/src/runtime/sys_linux_amd64.s",
+      "source_file_line": 149
+    }
+  ],
+  "full_stack_names": [
+    "runtime.raise"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}
