@@ -3,7 +3,7 @@
 
 #![allow(clippy::large_enum_variant)]
 use crate::tasks::{
-    analysis, coverage, fuzz,
+    analysis, coverage, crash_reproduction, fuzz,
     heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
     merge, regression, report,
 };
@@ -94,6 +94,9 @@ pub enum Config {
 
     #[serde(alias = "generic_regression")]
     GenericRegression(regression::generic::Config),
+
+    #[serde(alias = "crash_reproduction")]
+    CrashReproduction(crash_reproduction::generic::Config),
 }
 
 impl Config {
@@ -121,6 +124,7 @@ impl Config {
             Config::GenericSupervisor(c) => &mut c.common,
             Config::GenericGenerator(c) => &mut c.common,
             Config::GenericRegression(c) => &mut c.common,
+            Config::CrashReproduction(c) => &mut c.common,
         }
     }
 
@@ -137,6 +141,7 @@ impl Config {
             Config::GenericSupervisor(c) => &c.common,
             Config::GenericGenerator(c) => &c.common,
             Config::GenericRegression(c) => &c.common,
+            Config::CrashReproduction(c) => &c.common,
         }
     }
 
@@ -153,6 +158,7 @@ impl Config {
             Config::GenericSupervisor(_) => "generic_supervisor",
             Config::GenericGenerator(_) => "generic_generator",
             Config::GenericRegression(_) => "generic_regression",
+            Config::CrashReproduction(_) => "crash_reproduction",
         };
 
         match self {
@@ -219,6 +225,7 @@ impl Config {
                     .run()
                     .await
             }
+            Config::CrashReproduction(config) => crash_reproduction::generic::run(config).await,
         }
     }
 }
