@@ -337,6 +337,10 @@ impl<'a> Tester<'a> {
             error = result.1;
             let output = result.2;
 
+            // order of operations for checking for crashes:
+            // 1. if we ran under a debugger, and that caught a crash
+            // 2. if we have an ASAN log in our temp directory
+            // 3. if we have an ASAN log to STDERR
             if crash_log.is_none() {
                 crash_log = if let Some(asan_dir) = &asan_dir {
                     check_asan_path(asan_dir.path()).await?
