@@ -110,6 +110,12 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
         }
     }
 
+    if let Some(name) = &entry.module_path {
+        if stack_filter.is_match(name) {
+            return None;
+        }
+    }
+
     Some(entry)
 }
 
@@ -124,7 +130,6 @@ impl CrashLog {
         stack: Vec<StackEntry>,
     ) -> Result<Self> {
         let stack_filter = get_stack_filter();
-        let call_stack = stack.iter().map(|x| x.line.clone()).collect();
         let mut minimized_stack_details: Vec<StackEntry> = stack
             .iter()
             .filter_map(|x| filter_funcs(x, &stack_filter))
@@ -152,20 +157,11 @@ impl CrashLog {
                 .collect();
         }
 
-        let full_stack_names: Vec<String> = stack
-            .iter()
-            .filter_map(|x| x.function_name.as_ref().cloned())
-            .collect();
+        let call_stack = stack_lines(&stack);
+        let full_stack_names = stack_names(&stack);
 
-        let minimized_stack: Vec<String> = minimized_stack_details
-            .iter()
-            .filter_map(|x| x.function_name.clone())
-            .collect();
-
-        let minimized_stack_function_names: Vec<String> = minimized_stack
-            .iter()
-            .map(|x| function_without_args(x))
-            .collect();
+        let minimized_stack = stack_lines(&minimized_stack_details);
+        let minimized_stack_function_names = stack_names(&minimized_stack_details);
 
         Ok(Self {
             text,
@@ -209,6 +205,18 @@ impl CrashLog {
     pub fn minimized_stack_function_names_sha256(&self, depth: Option<usize>) -> String {
         digest_iter(&self.minimized_stack_function_names, depth)
     }
+}
+
+fn stack_lines(stack: &[StackEntry]) -> Vec<String> {
+    stack.iter().map(|x| x.line.clone()).collect()
+}
+
+fn stack_names(stack: &[StackEntry]) -> Vec<String> {
+    stack
+        .iter()
+        .filter_map(|x| x.function_name.as_ref())
+        .map(|x| function_without_args(x))
+        .collect()
 }
 
 fn parse_summary(text: &str) -> Result<(String, String, String)> {

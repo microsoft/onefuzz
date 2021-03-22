@@ -246,8 +246,6 @@ impl<'a> Tester<'a> {
                     })
                     .collect();
 
-                println!("GOT {:?}", call_stack);
-
                 let crash_type = crash.signal.to_string();
 
                 let crash_site = if let Some(frame) = crash_thread.callstack.get(0) {
