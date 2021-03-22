@@ -10,7 +10,7 @@ import subprocess  # nosec
 import tempfile
 from asyncio.subprocess import PIPE
 from contextlib import contextmanager
-from typing import Generator, Optional
+from typing import Generator, List, Optional
 
 
 def get_local_tmp() -> Optional[str]:
@@ -52,54 +52,88 @@ def temp_file(
         logging.debug("cleaning up file %s", full_path)
 
 
+def build_ssh_command_args(
+    *,
+    ip: str,
+    private_key_path: Optional[str] = None,
+    proxy: Optional[str] = None,
+    port: Optional[int] = None,
+    command: Optional[str] = None,
+) -> List[str]:
+    cmd = [
+        "ssh",
+        "onefuzz@%s" % ip,
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-o",
+        "StrictHostKeyChecking=no",
+    ]
+
+    if private_key_path:
+        cmd += ["-i", private_key_path]
+    if proxy:
+        cmd += ["-L", proxy]
+    if port:
+        cmd += ["-p", str(port)]
+
+    log_level = logging.getLogger("nsv-backend").getEffectiveLevel()
+    if log_level <= logging.DEBUG:
+        cmd += ["-v"]
+
+    if command:
+        cmd += [command]
+    return cmd
+
+
 @contextmanager
 def build_ssh_command(
     ip: str,
-    private_key: str,
     *,
+    private_key_path: Optional[str] = None,
+    private_key: Optional[str] = None,
     proxy: Optional[str] = None,
     port: Optional[int] = None,
     command: Optional[str] = None,
 ) -> Generator:
-    with temp_file("id_rsa", private_key, set_owner_only=True) as ssh_key:
-        cmd = [
-            "ssh",
-            "onefuzz@%s" % ip,
-            "-i",
-            ssh_key,
-            "-o",
-            "UserKnownHostsFile=/dev/null",
-            "-o",
-            "StrictHostKeyChecking=no",
-        ]
+    if private_key is not None and private_key_path is not None:
+        raise Exception("private_key and private_key_path are mutually exclusive")
 
-        if proxy:
-            cmd += ["-L", proxy]
-        if port:
-            cmd += ["-p", str(port)]
-
-        log_level = logging.getLogger("nsv-backend").getEffectiveLevel()
-        if log_level <= logging.DEBUG:
-            cmd += ["-v"]
-
-        if command:
-            cmd += [command]
-
-        yield cmd
+    if private_key is not None:
+        with temp_file("id_rsa", private_key, set_owner_only=True) as private_key_path:
+            yield build_ssh_command_args(
+                ip=ip,
+                proxy=proxy,
+                port=port,
+                command=command,
+                private_key_path=private_key_path,
+            )
+    yield build_ssh_command_args(
+        ip=ip,
+        proxy=proxy,
+        port=port,
+        command=command,
+        private_key_path=private_key_path,
+    )
 
 
 @contextmanager
 def ssh_connect(
     ip: str,
-    private_key: str,
     *,
+    private_key_path: Optional[str] = None,
+    private_key: Optional[str] = None,
     proxy: Optional[str] = None,
     call: bool = False,
     port: Optional[int] = None,
     command: Optional[str] = None,
 ) -> Generator:
     with build_ssh_command(
-        ip, private_key, proxy=proxy, port=port, command=command
+        ip,
+        private_key=private_key,
+        private_key_path=private_key_path,
+        proxy=proxy,
+        port=port,
+        command=command,
     ) as cmd:
         logging.info("launching ssh: %s", " ".join(cmd))
 

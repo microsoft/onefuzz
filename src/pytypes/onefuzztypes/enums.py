@@ -157,6 +157,7 @@ class TaskType(Enum):
     generic_generator = "generic_generator"
     generic_crash_report = "generic_crash_report"
     generic_regression = "generic_regression"
+    crash_reproduction = "crash_reproduction"
 
 
 class VmState(Enum):

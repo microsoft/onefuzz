@@ -58,7 +58,7 @@ class DebugRepro(Command):
         if repro.auth is None:
             raise Exception("missing Auth: %s" % repro)
 
-        with ssh_connect(repro.ip, repro.auth.private_key, call=True):
+        with ssh_connect(repro.ip, private_key=repro.auth.private_key, call=True):
             pass
 
     def rdp(self, vm_id: str) -> None:
@@ -166,7 +166,11 @@ class DebugScaleset(Command):
             raise Exception("auth is not available for scaleset")
 
         with ssh_connect(
-            ip, scaleset.auth.private_key, port=port, call=True, command=command
+            ip,
+            private_key=scaleset.auth.private_key,
+            port=port,
+            call=True,
+            command=command,
         ):
             return
 

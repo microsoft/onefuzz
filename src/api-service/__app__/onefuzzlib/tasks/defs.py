@@ -541,4 +541,34 @@ TASK_DEFINITIONS = {
             ),
         ],
     ),
+    TaskType.crash_reproduction: TaskDefinition(
+        features=[
+            TaskFeature.analyzer_exe,
+            TaskFeature.analyzer_env,
+            TaskFeature.analyzer_options,
+            TaskFeature.target_exe,
+            TaskFeature.target_options,
+        ],
+        vm=VmDefinition(compare=Compare.AtLeast, value=1),
+        containers=[
+            ContainerDefinition(
+                type=ContainerType.setup,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.crashes,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.tools,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+        ],
+    ),
 }

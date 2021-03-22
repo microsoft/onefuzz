@@ -55,6 +55,7 @@ UUID_RE = r"^[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}\Z"
 
 class PreviewFeature(Enum):
     job_templates = "job_templates"
+    crash_repro_task = "crash_repro_task"
 
 
 def is_uuid(value: str) -> bool:
@@ -479,6 +480,189 @@ class Containers(Endpoint):
                 self.delete(container.name)
 
 
+class LiveRepro(Endpoint):
+    """ Live debug a crash using pools - PREVIEW FEATURE """
+    def run(
+        self,
+        project: str,
+        target: str,
+        build: str,
+        pool_name: primitives.PoolName,
+        *,
+        target_exe: primitives.File = primitives.File("fuzz.exe"),
+        target_options: List[str] = None,
+        public_key_path: primitives.File = primitives.File(
+            os.path.expanduser("~/.ssh/id_rsa.pub")
+        ),
+        private_key_path: Optional[primitives.File] = None,
+        duration: int = 24,
+        tags: Optional[Dict[str, str]] = None,
+        debug_command: Optional[str] = None,
+        analyzer_env: Optional[Dict[str, str]] = {"ASAN_OPTIONS": "abort_on_error=1"},
+        analyzer_exe: Optional[str] = None,
+        analyzer_options: Optional[List[str]] = ["{target_exe}", "{input}"],
+    ) -> Optional[str]:
+        self.onefuzz._warn_preview(PreviewFeature.crash_repro_task)
+
+        pool = self.onefuzz.pools.get(pool_name)
+        if not pool.managed:
+            raise Exception("live repro is only supported on managed pools")
+
+        if analyzer_exe is None:
+            if pool.os == enums.OS.windows:
+                analyzer_exe = "cdb.exe"
+            else:
+                analyzer_exe = "gdbserver"
+
+        job = self.onefuzz.jobs.create(project, target, build, duration=duration)
+        task_config = models.TaskConfig(
+            job_id=job.job_id,
+            pool=pool,
+            containers=[],
+            colocate=False,
+            tags=tags,
+            task=models.TaskDetails(
+                duration=duration,
+                type=enums.TaskType.crash_reproduction,
+                target_exe=target_exe,
+                target_options=target_options,
+                analyzer_exe=analyzer_exe,
+                analyzer_env=analyzer_env,
+                analyzer_options=analyzer_options,
+            ),
+        )
+        task = self.onefuzz.tasks.create_with_config(task_config)
+        task_id = task.task_id
+
+        def missing_node() -> Tuple[bool, str, models.Task]:
+            task = self.onefuzz.tasks.get(task_id)
+            return (
+                bool(task.nodes),
+                "waiting task to be assigned to node",
+                task,
+            )
+
+        task = wait(missing_node)
+        if not task.nodes:
+            raise Exception("missing nodes")
+        node_assignment = task.nodes[0]
+        if not node_assignment.scaleset_id:
+            raise Exception("task got assigned to unmanaged pool")
+        node_id = node_assignment.node_id
+
+        proxy = self.onefuzz.scaleset_proxy.create(
+            node_assignment.scaleset_id, node_id, 22, duration=duration
+        )
+
+        with open(public_key_path, "r") as handle:
+            self.onefuzz.nodes.add_ssh_key(node_id, public_key=handle.read())
+
+        def wait_for_key() -> Tuple[bool, str, models.Node]:
+            node = self.onefuzz.nodes.get(node_id)
+            return (not bool(node.tasks), "waiting for node to add ssh key", node)
+
+        node = wait(wait_for_key)
+
+        def missing_ip() -> Tuple[bool, str, responses.ProxyGetResult]:
+            if node.scaleset_id is None:
+                raise Exception("node got assigned to unmanaged node")
+
+            proxy = self.onefuzz.scaleset_proxy.get(
+                node.scaleset_id, node.machine_id, 22
+            )
+            return (proxy.ip is None, "waiting for proxy", proxy)
+
+        proxy = wait(missing_ip)
+        if not proxy.ip:
+            raise Exception("missing ip")
+
+        cmd = {enums.OS.linux: self._dbg_linux, enums.OS.windows: self._dbg_windows}
+        return cmd[pool.os](
+            proxy.ip,
+            proxy.forward.src_port,
+            private_key_path=private_key_path,
+            debug_command=debug_command,
+        )
+
+    def _dbg_linux(
+        self,
+        ip: str,
+        port: int,
+        *,
+        debug_command: Optional[str],
+        private_key_path: Optional[primitives.File],
+    ) -> Optional[str]:
+        """ Launch gdb with GDB script that includes 'target remote | ssh ...' """
+
+        with ssh_connect(
+            ip, port=port, proxy=REPRO_SSH_FORWARD, private_key_path=private_key_path
+        ):
+            gdb_script = ["target remote localhost:1337"]
+            if debug_command:
+                gdb_script += [debug_command, "quit"]
+
+            with temp_file("gdb.script", "\n".join(gdb_script)) as gdb_script_path:
+                dbg = ["gdb", "--silent", "--command", gdb_script_path]
+
+                if debug_command:
+                    dbg += ["--batch"]
+
+                    try:
+                        # security note: dbg is built from content coming from
+                        # the server, which is trusted in this context.
+                        return subprocess.run(  # nosec
+                            dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                        ).stdout.decode(errors="ignore")
+                    except subprocess.CalledProcessError as err:
+                        self.logger.error(
+                            "debug failed: %s", err.output.decode(errors="ignore")
+                        )
+                        raise err
+                else:
+                    # security note: dbg is built from content coming from the
+                    # server, which is trusted in this context.
+                    subprocess.call(dbg)  # nosec
+        return None
+
+    def _dbg_windows(
+        self,
+        ip: str,
+        port: int,
+        *,
+        debug_command: Optional[str],
+        private_key_path: Optional[primitives.File],
+    ) -> Optional[str]:
+        """ Setup an SSH tunnel, then connect via CDB over SSH tunnel """
+        bind_all = which("wslpath") is not None
+        proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
+        with ssh_connect(ip, port=port, private_key_path=private_key_path, proxy=proxy):
+            dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
+            if debug_command:
+                dbg_script = [debug_command, "qq"]
+                with temp_file("db.script", "\r\n".join(dbg_script)) as dbg_script_path:
+                    dbg += ["-cf", _wsl_path(dbg_script_path)]
+
+                    logging.debug("launching: %s", dbg)
+                    try:
+                        # security note: dbg is built from content coming from the server,
+                        # which is trusted in this context.
+                        return subprocess.run(  # nosec
+                            dbg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                        ).stdout.decode(errors="ignore")
+                    except subprocess.CalledProcessError as err:
+                        self.logger.error(
+                            "debug failed: %s", err.output.decode(errors="ignore")
+                        )
+                        raise err
+            else:
+                logging.debug("launching: %s", dbg)
+                # security note:  dbg is built from content coming from the
+                # server, which is trusted in this context.
+                subprocess.call(dbg)  # nosec
+
+        return None
+
+
 class Repro(Endpoint):
     """ Interact with Reproduction VMs """
 
@@ -537,7 +721,7 @@ class Repro(Endpoint):
             raise Exception("vm setup failed: %s" % repro.state)
 
         with build_ssh_command(
-            repro.ip, repro.auth.private_key, command="-T"
+            repro.ip, private_key=repro.auth.private_key, command="-T"
         ) as ssh_cmd:
 
             gdb_script = [
@@ -585,7 +769,7 @@ class Repro(Endpoint):
 
         bind_all = which("wslpath") is not None and repro.os == enums.OS.windows
         proxy = "*:" + REPRO_SSH_FORWARD if bind_all else REPRO_SSH_FORWARD
-        with ssh_connect(repro.ip, repro.auth.private_key, proxy=proxy):
+        with ssh_connect(repro.ip, private_key=repro.auth.private_key, proxy=proxy):
             dbg = ["cdb.exe", "-remote", "tcp:port=1337,server=localhost"]
             if debug_command:
                 dbg_script = [debug_command, "qq"]
@@ -1512,6 +1696,9 @@ class Onefuzz:
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates = JobTemplates(self)
+
+        if self._backend.is_feature_enabled(PreviewFeature.crash_repro_task.name):
+            self.live_repro = LiveRepro(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
