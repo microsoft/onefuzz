@@ -104,16 +104,14 @@ pub struct ModuleIndex {
 impl ModuleIndex {
     /// Build a new index over a parsed ELF module.
     #[cfg(target_os = "linux")]
-    pub fn index_elf(path: ModulePath, object: &goblin::elf::Elf) -> Result<Self> {
+    pub fn index_elf(path: ModulePath, elf: &goblin::elf::Elf) -> Result<Self> {
         use anyhow::format_err;
         use goblin::elf::program_header::PT_LOAD;
-
-        let elf = elf::Elf::parse(data)?;
 
         // Calculate the module base address as the lowest preferred VA of any loadable segment.
         //
         // https://refspecs.linuxbase.org/elf/gabi4+/ch5.pheader.html#base_address
-        let base_va = object
+        let base_va = elf
             .program_headers
             .iter()
             .filter(|h| h.p_type == PT_LOAD)
@@ -123,14 +121,14 @@ impl ModuleIndex {
 
         let mut symbols = SymbolIndex::default();
 
-        for sym in object.syms.iter() {
+        for sym in elf.syms.iter() {
             if sym.st_size == 0 {
                 log::debug!("skipping size 0 symbol: {:x?}", sym);
                 continue;
             }
 
             if sym.is_function() {
-                let name = match object.strtab.get(sym.st_name) {
+                let name = match elf.strtab.get(sym.st_name) {
                     None => {
                         log::error!("symbol not found in symbol string table: {:?}", sym);
                         continue;
