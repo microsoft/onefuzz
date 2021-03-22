@@ -94,11 +94,11 @@
   ],
   "full_stack_names": [
     "__sanitizer_print_stack_trace",
-    "fuzzer::PrintStackTrace()",
-    "fuzzer::Fuzzer::CrashOnOverwrittenData()",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::CrashOnOverwrittenData",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -115,7 +115,7 @@
     }
   ],
   "minimized_stack": [
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)"
+    "#4 0x444f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6"
   ],
   "minimized_stack_function_names": [
     "fuzzer::RunOneTest"

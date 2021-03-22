@@ -17,7 +17,7 @@
     }
   ],
   "full_stack_names": [
-    "f(unsigned long)"
+    "f"
   ],
   "minimized_stack_details": [
     {
@@ -30,7 +30,7 @@
     }
   ],
   "minimized_stack": [
-    "f(unsigned long)"
+    "#0 0x7f1d1174876b in f(unsigned long) /usr/include/blah.h:88"
   ],
   "minimized_stack_function_names": [
     "f"

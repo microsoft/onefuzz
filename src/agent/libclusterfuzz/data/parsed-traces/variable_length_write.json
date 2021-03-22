@@ -24,7 +24,7 @@
   ],
   "full_stack_names": [
     "__asan_memset",
-    "SomeFunction(TYPE*, TYPE const&, int)"
+    "SomeFunction"
   ],
   "minimized_stack_details": [
     {
@@ -37,7 +37,7 @@
     }
   ],
   "minimized_stack": [
-    "SomeFunction(TYPE*, TYPE const&, int)"
+    "#1 0x7f05d5ad4f3c in SomeFunction(TYPE*, TYPE const&, int) /usr/include/header.h:123"
   ],
   "minimized_stack_function_names": [
     "SomeFunction"

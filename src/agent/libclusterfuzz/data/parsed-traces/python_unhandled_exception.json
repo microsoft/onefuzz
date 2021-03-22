@@ -105,11 +105,11 @@
   "full_stack_names": [
     "raise",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*)",
-    "fuzzer::Fuzzer::ReadAndExecuteSeedCorpora(std::__u::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&)",
-    "fuzzer::Fuzzer::Loop(std::__u::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::Fuzzer::ReadAndExecuteSeedCorpora",
+    "fuzzer::Fuzzer::Loop",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -126,7 +126,7 @@
     }
   ],
   "minimized_stack": [
-    "python_fuzzer_impl.cc"
+    "#1 0x5629075d5730 in LLVMFuzzerTestOneInput security/fuzzing/blaze/python_fuzzer_impl.cc:111:5"
   ],
   "minimized_stack_function_names": [
     "python_fuzzer_impl.cc"

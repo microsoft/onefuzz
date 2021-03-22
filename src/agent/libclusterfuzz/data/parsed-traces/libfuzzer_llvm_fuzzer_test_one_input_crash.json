@@ -116,9 +116,9 @@
     "__assert_fail_base",
     "__assert_fail",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -135,7 +135,7 @@
     }
   ],
   "minimized_stack": [
-    "deflate_set_dictionary_fuzzer.cc"
+    "#4 0x3404db in LLVMFuzzerTestOneInput third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc:35:5"
   ],
   "minimized_stack_function_names": [
     "deflate_set_dictionary_fuzzer.cc"
