@@ -143,8 +143,9 @@ pub fn get_synced_dirs(
     args: &ArgMatches<'_>,
 ) -> Result<Vec<SyncedDir>> {
     let current_dir = std::env::current_dir()?;
-    let dirs: Result<Vec<SyncedDir>> = value_t!(args, name, PathBuf)?
-        .iter()
+    let dirs: Result<Vec<SyncedDir>> = args
+        .values_of_os(name)
+        .ok_or_else(|| anyhow!("argument '{}' not specified", name))?
         .enumerate()
         .map(|(index, remote_path)| {
             let path = PathBuf::from(remote_path);
@@ -261,7 +262,7 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
             Ok(())
         } else {
             Err(BackoffError::Transient(anyhow::anyhow!(
-                "path '{:?}' does not exisit",
+                "path '{:?}' does not exist",
                 path.as_ref()
             )))
         }
