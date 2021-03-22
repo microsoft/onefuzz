@@ -50,7 +50,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
+    let common = build_common_config(args, true)?;
     let config = build_fuzz_config(args, common)?;
     LibFuzzerFuzzTask::new(config)?.run().await
 }
