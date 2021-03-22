@@ -98,7 +98,9 @@ function dumpCounters(results_dir, should_disable_sympath) {
     // Disable FCE from sanitizers.
     execute("sxd av");
 
-    // run until LLVMFuzzerTestOneInput
+    // Run until `LLVMFuzzerTestOneInput()`.
+    // This makes us unlikely to have unloaded any modules that the user dynamically loaded,
+    // and so we will still be able to dump the coverage tables for those modules.
     execute("bm *!LLVMFuzzerTestOneInput")
     execute("g")
 
