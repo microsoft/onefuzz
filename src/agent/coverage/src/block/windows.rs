@@ -127,11 +127,9 @@ impl<'a> Recorder<'a> {
     pub fn on_breakpoint(&mut self, dbg: &mut Debugger, id: BreakpointId) -> Result<()> {
         if let Some(breakpoint) = self.breakpoints.get(id) {
             if log::max_level() == log::Level::Trace {
-                use iced_x86::Register::RIP;
-
                 let name = breakpoint.module.name().to_string_lossy();
                 let offset = breakpoint.offset;
-                let pc = dbg.read_register_u64(RIP)?;
+                let pc = dbg.read_program_counter()?;
 
                 if let Ok(sym) = dbg.get_symbol(pc) {
                     log::trace!(
@@ -150,7 +148,11 @@ impl<'a> Recorder<'a> {
             self.coverage
                 .increment(breakpoint.module, breakpoint.offset)?;
         } else {
-            log::error!("hit breakpoint without data: {}", id.0);
+            if let Ok(pc) = dbg.read_program_counter() {
+                log::error!("hit breakpoint without data, id = {}, pc = {:x}", id.0, pc);
+            } else {
+                log::error!("hit breakpoint without data: id = {}, pc = ???", id.0);
+            }
         }
 
         Ok(())
