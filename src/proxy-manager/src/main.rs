@@ -44,7 +44,7 @@ async fn run_loop(mut proxy_config: Config) -> Result<()> {
 async fn run(proxy_config: Config) -> Result<()> {
     let result = run_loop(proxy_config).await;
     if let Err(err) = &result {
-        error!("run loop failed: {}", err);
+        error!("run loop failed: {:?}", err);
     }
     onefuzz_telemetry::try_flush_and_close();
     result
