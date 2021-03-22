@@ -14,6 +14,10 @@ use std::{
 };
 
 use anyhow::Result;
+use coverage::{
+    block::windows::Recorder as BlockCoverageRecorder,
+    cache::ModuleCache,
+};
 use debugger::debugger::{DebugEventHandler, Debugger};
 use log::{debug, error, trace};
 use win_util::{
@@ -118,7 +122,7 @@ impl DebuggerResult {
     }
 }
 
-struct CrashDetectorEventHandler {
+struct CrashDetectorEventHandler<'a> {
     start_time: Instant,
     max_duration: Duration,
     ignore_first_chance_exceptions: bool,
@@ -130,15 +134,17 @@ struct CrashDetectorEventHandler {
     stderr_buffer: Vec<u8>,
     debugger_output: String,
     exceptions: Vec<Exception>,
+    _coverage: Option<BlockCoverageRecorder<'a>>,
 }
 
-impl<'a> CrashDetectorEventHandler {
+impl<'a> CrashDetectorEventHandler<'a> {
     pub fn new(
         stdout: PipeReaderNonBlocking,
         stderr: PipeReaderNonBlocking,
         ignore_first_chance_exceptions: bool,
         start_time: Instant,
         max_duration: Duration,
+        _coverage: Option<BlockCoverageRecorder<'a>>,
     ) -> Self {
         Self {
             start_time,
@@ -152,6 +158,7 @@ impl<'a> CrashDetectorEventHandler {
             stderr_buffer: vec![],
             debugger_output: String::new(),
             exceptions: vec![],
+            _coverage,
         }
     }
 }
@@ -181,7 +188,7 @@ fn is_vcpp_notification(exception: &EXCEPTION_DEBUG_INFO, target_process_handle:
     false
 }
 
-impl DebugEventHandler for CrashDetectorEventHandler {
+impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
     fn on_exception(
         &mut self,
         debugger: &mut Debugger,
@@ -266,12 +273,13 @@ impl DebugEventHandler for CrashDetectorEventHandler {
 
 /// This function runs the application under a debugger to detect any crashes in
 /// the process or any children processes.
-pub fn test_process(
+pub fn test_process<'a>(
     app_path: impl AsRef<OsStr>,
     args: &[impl AsRef<OsStr>],
     env: &HashMap<String, String>,
     max_duration: Duration,
     ignore_first_chance_exceptions: bool,
+    cache: Option<&'a mut ModuleCache>,
 ) -> Result<DebuggerResult> {
     debug!("Running: {}", logging::command_invocation(&app_path, args));
 
@@ -289,6 +297,7 @@ pub fn test_process(
         command.env(k, v);
     }
 
+    let recorder = cache.map(BlockCoverageRecorder::new);
     let start_time = Instant::now();
     let mut event_handler = CrashDetectorEventHandler::new(
         stdout_reader,
@@ -296,6 +305,7 @@ pub fn test_process(
         ignore_first_chance_exceptions,
         start_time,
         max_duration,
+        recorder,
     );
     let (mut debugger, mut child) = Debugger::init(command, &mut event_handler)?;
     debugger.run(&mut event_handler)?;
@@ -364,6 +374,7 @@ mod tests {
                 &HashMap::default(),
                 $timeout,
                 /*ignore first chance exceptions*/ true,
+                None,
             )
             .unwrap()
         }};

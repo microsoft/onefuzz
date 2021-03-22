@@ -137,6 +137,7 @@ impl<'a> Tester<'a> {
             &env,
             self.timeout,
             IGNORE_FIRST_CHANCE_EXCEPTIONS,
+            None,
         )?;
 
         let crash = if let Some(exception) = report.exceptions.last() {

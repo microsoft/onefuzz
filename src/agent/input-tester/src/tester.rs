@@ -129,6 +129,7 @@ impl Tester {
             &self.driver_env,
             Duration::from_secs(self.max_run_s),
             self.ignore_first_chance_exceptions,
+            None,
         )
         .and_then(|result| {
             let result = InputTestResult::new(result, PathBuf::from(input_path.as_ref()));
