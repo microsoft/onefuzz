@@ -32,6 +32,7 @@ pub const CHECK_ASAN_LOG: &str = "check_asan_log";
 pub const TOOLS_DIR: &str = "tools_dir";
 pub const RENAME_OUTPUT: &str = "rename_output";
 pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
+pub const DISABLE_CHECK_DEBUGGER: &str = "disable_check_debugger";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
@@ -176,9 +177,19 @@ pub fn get_synced_dir(
     })
 }
 
-pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
+// NOTE: generate_task_id is intended to change the default behavior for local
+// fuzzing tasks from generating random task id to using UUID::nil(). This
+// enables making the one-shot crash report generation, which isn't really a task,
+// consistent across multiple runs.
+pub fn build_common_config(args: &ArgMatches<'_>, generate_task_id: bool) -> Result<CommonConfig> {
     let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
-    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| Uuid::new_v4());
+    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
+        if generate_task_id {
+            Uuid::new_v4()
+        } else {
+            Uuid::nil()
+        }
+    });
     let instance_id = get_uuid("instance_id", args).unwrap_or_else(|_| Uuid::nil());
 
     let setup_dir = if args.is_present(SETUP_DIR) {

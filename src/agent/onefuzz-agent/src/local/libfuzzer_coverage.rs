@@ -55,7 +55,7 @@ pub fn build_coverage_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
+    let common = build_common_config(args, true)?;
     let config = build_coverage_config(args, false, None, common)?;
 
     let mut task = CoverageTask::new(config);
