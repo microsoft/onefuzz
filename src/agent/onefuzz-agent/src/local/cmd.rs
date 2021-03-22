@@ -7,7 +7,7 @@ use clap::{App, SubCommand};
 use crate::local::{
     common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
     libfuzzer, libfuzzer_coverage, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge,
-    radamsa, test_input, libfuzzer_test_input,
+    libfuzzer_test_input, radamsa, test_input,
 };
 
 const RADAMSA: &str = "radamsa";
