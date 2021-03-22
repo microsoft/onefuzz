@@ -4,8 +4,9 @@
 use crate::{
     local::common::{
         build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
-        CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR,
-        REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_DEBUGGER,
+        DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
+        TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
     tasks::{
         config::CommonConfig,
@@ -46,7 +47,7 @@ pub fn build_report_config(
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
     let check_queue = !args.is_present(DISABLE_CHECK_QUEUE);
     let check_asan_log = args.is_present(CHECK_ASAN_LOG);
-    let check_debugger = !args.is_present("disable_check_debugger");
+    let check_debugger = !args.is_present(DISABLE_CHECK_DEBUGGER);
 
     let config = Config {
         target_exe,
@@ -70,7 +71,7 @@ pub fn build_report_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
+    let common = build_common_config(args, true)?;
     let config = build_report_config(args, None, common)?;
     ReportTask::new(config).managed_run().await
 }
@@ -121,9 +122,9 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
         Arg::with_name(CHECK_ASAN_LOG)
             .takes_value(false)
             .long(CHECK_ASAN_LOG),
-        Arg::with_name("disable_check_debugger")
+        Arg::with_name(DISABLE_CHECK_DEBUGGER)
             .takes_value(false)
-            .long("disable_check_debugger"),
+            .long(DISABLE_CHECK_DEBUGGER),
     ]
 }
 

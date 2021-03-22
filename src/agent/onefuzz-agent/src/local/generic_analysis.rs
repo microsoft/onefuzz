@@ -55,7 +55,7 @@ pub fn build_analysis_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
+    let common = build_common_config(args, true)?;
     let config = build_analysis_config(args, None, common)?;
     run_analysis(config).await
 }
