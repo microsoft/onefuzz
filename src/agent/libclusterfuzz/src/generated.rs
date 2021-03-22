@@ -26,6 +26,8 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     r"^pthread_kill$",
     r"^raise$",
     r"^tgkill$",
+    r"^__chk_fail$",
+    r"^__fortify_fail$",
     r"^(|__)aeabi_",
     r"^(|__)memcmp",
     r"^(|__)memcpy",
