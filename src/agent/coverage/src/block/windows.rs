@@ -16,48 +16,27 @@ use crate::cache::ModuleCache;
 use crate::code::ModulePath;
 
 pub fn record(cmd: Command) -> Result<CommandBlockCov> {
+    let recorder = Recorder::default();
     let timeout = Duration::from_secs(5);
-    let mut recorder = Recorder::new(timeout);
-    recorder.record(cmd)?;
-    Ok(recorder.coverage)
+    let mut handler = RecorderEventHandler::new(recorder, timeout);
+    handler.run(cmd)?;
+    Ok(handler.recorder.into_coverage())
 }
 
 #[derive(Clone, Debug)]
-pub struct Recorder {
-    breakpoints: Breakpoints,
-    cache: ModuleCache,
-    coverage: CommandBlockCov,
+pub struct RecorderEventHandler {
+    recorder: Recorder,
     started: Instant,
     timed_out: bool,
     timeout: Duration,
 }
 
-impl Recorder {
-    pub fn new(timeout: Duration) -> Self {
-        let breakpoints = Breakpoints::default();
-        let cache = ModuleCache::default();
-        let coverage = CommandBlockCov::default();
+impl RecorderEventHandler {
+    pub fn new(recorder: Recorder, timeout: Duration) -> Self {
         let started = Instant::now();
         let timed_out = false;
 
-        Self {
-            breakpoints,
-            cache,
-            coverage,
-            started,
-            timed_out,
-            timeout,
-        }
-    }
-
-    pub fn record(&mut self, cmd: Command) -> Result<()> {
-        let (mut dbg, _child) = Debugger::init(cmd, self)?;
-        dbg.run(self)?;
-        Ok(())
-    }
-
-    pub fn coverage(&self) -> &CommandBlockCov {
-        &self.coverage
+        Self { recorder, started, timed_out, timeout }
     }
 
     pub fn time_out(&self) -> bool {
@@ -68,7 +47,41 @@ impl Recorder {
         self.timeout
     }
 
-    fn handle_on_create_process(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
+    pub fn run(&mut self, cmd: Command) -> Result<()> {
+        let (mut dbg, _child) = Debugger::init(cmd, self)?;
+        dbg.run(self)?;
+        Ok(())
+    }
+
+    fn on_poll(&mut self, dbg: &mut Debugger) {
+        if !self.timed_out && self.started.elapsed() > self.timeout {
+            self.timed_out = true;
+            dbg.quit_debugging();
+        }
+    }
+
+    fn stop(&self, dbg: &mut Debugger) {
+        dbg.quit_debugging();
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Recorder {
+    breakpoints: Breakpoints,
+    cache: ModuleCache,
+    coverage: CommandBlockCov,
+}
+
+impl Recorder {
+    pub fn coverage(&self) -> &CommandBlockCov {
+        &self.coverage
+    }
+
+    pub fn into_coverage(self) -> CommandBlockCov {
+        self.coverage
+    }
+
+    pub fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
         log::debug!("process created: {}", module.path().display());
 
         if let Err(err) = dbg.target().sym_initialize() {
@@ -82,13 +95,13 @@ impl Recorder {
         self.insert_module(dbg, module)
     }
 
-    fn handle_on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
+    pub fn on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
         log::debug!("DLL loaded: {}", module.path().display());
 
         self.insert_module(dbg, module)
     }
 
-    fn handle_on_breakpoint(&mut self, dbg: &mut Debugger, id: BreakpointId) -> Result<()> {
+    pub fn on_breakpoint(&mut self, dbg: &mut Debugger, id: BreakpointId) -> Result<()> {
         if let Some(breakpoint) = self.breakpoints.get(id) {
             if log::max_level() == log::Level::Trace {
                 use iced_x86::Register::RIP;
@@ -120,13 +133,6 @@ impl Recorder {
         Ok(())
     }
 
-    fn handle_on_poll(&mut self, dbg: &mut Debugger) {
-        if !self.timed_out && self.started.elapsed() > self.timeout {
-            self.timed_out = true;
-            dbg.quit_debugging();
-        }
-    }
-
     fn insert_module(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
         let path = ModulePath::new(module.path().to_owned())?;
 
@@ -154,32 +160,30 @@ impl Recorder {
         Ok(())
     }
 
-    fn stop(&self, dbg: &mut Debugger) {
-        dbg.quit_debugging();
-    }
+
 }
 
-impl DebugEventHandler for Recorder {
+impl DebugEventHandler for RecorderEventHandler {
     fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
-        if self.handle_on_create_process(dbg, module).is_err() {
+        if self.recorder.on_create_process(dbg, module).is_err() {
             self.stop(dbg);
         }
     }
 
     fn on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) {
-        if self.handle_on_load_dll(dbg, module).is_err() {
+        if self.recorder.on_load_dll(dbg, module).is_err() {
             self.stop(dbg);
         }
     }
 
     fn on_breakpoint(&mut self, dbg: &mut Debugger, bp: BreakpointId) {
-        if self.handle_on_breakpoint(dbg, bp).is_err() {
+        if self.recorder.on_breakpoint(dbg, bp).is_err() {
             self.stop(dbg);
         }
     }
 
     fn on_poll(&mut self, dbg: &mut Debugger) {
-        self.handle_on_poll(dbg);
+        self.on_poll(dbg);
     }
 }
 
