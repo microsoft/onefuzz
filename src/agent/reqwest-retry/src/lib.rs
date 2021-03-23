@@ -31,7 +31,7 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
     let counter = AtomicUsize::new(0);
     let op = || async {
         let attempt_count = counter.fetch_add(1, Ordering::SeqCst);
-        let request = build_request().map_err(backoff::Error::Permanent)?;
+        let request = build_request().map_err(|err| backoff::Error::Permanent(Err(err)))?;
         let result = request
             .send()
             .await
@@ -40,25 +40,23 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
         match result {
             Err(x) => {
                 if attempt_count >= max_retry {
-                    Err(backoff::Error::Permanent(x))
+                    Err(backoff::Error::Permanent(Err(x)))
                 } else {
-                    Err(backoff::Error::Transient(x))
+                    Err(backoff::Error::Transient(Err(x)))
                 }
             }
-            Ok(x) => match x.error_for_status() {
-                Ok(x) => Ok(x),
-                Err(e) => {
-                    let fail_fast = e
-                        .status()
-                        .map(|s| fail_fast_status.as_ref().contains(&s))
-                        .unwrap_or_default();
+            Ok(x) => {
+                if x.status().is_success() {
+                    Ok(x)
+                } else {
+                    let fail_fast = fail_fast_status.as_ref().contains(&x.status());
                     if attempt_count >= max_retry || fail_fast {
-                        Err(backoff::Error::Permanent(e.into()))
+                        Err(backoff::Error::Permanent(Ok(x)))
                     } else {
-                        Err(backoff::Error::Transient(e.into()))
+                        Err(backoff::Error::Transient(Ok(x)))
                     }
                 }
-            },
+            }
         }
     };
     let result = retry_notify(
@@ -68,10 +66,21 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
             ..ExponentialBackoff::default()
         },
         op,
-        |err, dur| warn!("request attempt failed after {:?}: {:?}", dur, err),
+        |err: Result<Response, anyhow::Error>, dur| match err {
+            Ok(response) => {
+                if let Err(err) = response.error_for_status() {
+                    warn!("request attempt failed after {:?}: {:?}", dur, err)
+                }
+            }
+            err => warn!("request attempt failed after {:?}: {:?}", dur, err),
+        },
     )
-    .await?;
-    Ok(result)
+    .await;
+
+    match result {
+        Ok(response) | Err(Ok(response)) => Ok(response),
+        Err(Err(err)) => Err(err),
+    }
 }
 
 #[async_trait]
