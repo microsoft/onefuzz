@@ -13,7 +13,7 @@ use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use onefuzz_telemetry::{Event, EventData};
 use reqwest::StatusCode;
-use reqwest_retry::SendRetry;
+use reqwest_retry::{SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, str, time::Duration};
 use tokio::fs;
@@ -142,7 +142,11 @@ impl SyncedDir {
                     // Conditional PUT, only if-not-exists.
                     // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
                     .header("If-None-Match", "*")
-                    .send_retry_default()
+                    .send_retry(
+                        vec![StatusCode::CONFLICT],
+                        DEFAULT_RETRY_PERIOD,
+                        MAX_RETRY_ATTEMPTS,
+                    )
                     .await
                     .context("Uploading blob")?;
 
