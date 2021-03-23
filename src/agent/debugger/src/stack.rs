@@ -309,7 +309,7 @@ mod test {
 
     macro_rules! frame {
         ($name: expr, disp: $disp: expr) => {
-            DebugStackFrame::new($name.to_string(), DebugFunctionLocation::new($disp))
+            DebugStackFrame::new($name.to_string(), DebugFunctionLocation::new($disp), None, None)
         };
 
         ($name: expr, disp: $disp: expr, line: ($file: expr, $line: expr)) => {
@@ -322,6 +322,7 @@ mod test {
                         line: $line,
                     },
                 ),
+                None, None,
             )
         };
     }
@@ -337,7 +338,7 @@ mod test {
 
         // Hard coded hash constant is what we want to ensure
         // the hash function is relatively stable.
-        assert_eq!(stack.stable_hash(), 4643290346391834992);
+        assert_eq!(stack.stable_hash(), 7581155446307191472);
     }
 
     #[test]
