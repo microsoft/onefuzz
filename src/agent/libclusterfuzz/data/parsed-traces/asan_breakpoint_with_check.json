@@ -168,13 +168,13 @@
     }
   ],
   "minimized_stack": [
-    "blink::PluginInfo::GetMimeClassInfo",
-    "blink::DOMPlugin::item",
-    "blink::V8Plugin::itemMethodCallback",
-    "v8::internal::FunctionCallbackArguments::Call",
-    "v8::internal::`anonymous namespace'::HandleApiCallHelper<0>",
-    "v8::internal::Builtin_Impl_HandleApiCall",
-    "v8::internal::Builtin_HandleApiCall"
+    "#3 0x1b23cd90 in blink::PluginInfo::GetMimeClassInfo C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\platform\\plugins\\PluginData.cpp:56",
+    "#4 0x1d60fc91 in blink::DOMPlugin::item C:\\b\\c\\b\\win_asan_release_media\\src\\third_party\\WebKit\\Source\\modules\\plugins\\DOMPlugin.cpp:54",
+    "#5 0x1d8cd8db in blink::V8Plugin::itemMethodCallback C:\\b\\c\\b\\win_asan_release_media\\src\\out\\release\\gen\\blink\\bindings\\modules\\v8\\V8Plugin.cpp:177",
+    "#6 0x10bd3915 in v8::internal::FunctionCallbackArguments::Call C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\api-arguments.cc:25",
+    "#7 0x10e22d04 in v8::internal::`anonymous namespace'::HandleApiCallHelper<0> C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc:112",
+    "#8 0x10e1fa41 in v8::internal::Builtin_Impl_HandleApiCall C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc:142",
+    "#9 0x10e1eea1 in v8::internal::Builtin_HandleApiCall C:\\b\\c\\b\\win_asan_release_media\\src\\v8\\src\\builtins\\builtins-api.cc:130"
   ],
   "minimized_stack_function_names": [
     "blink::PluginInfo::GetMimeClassInfo",

@@ -14,7 +14,7 @@
     }
   ],
   "full_stack_names": [
-    "foo_function(unsigned char const*, unsigned long) ../../out/default/../../examples/fuzzer/toy.cc:12 <<application>>+0xacf4c"
+    "foo_function"
   ],
   "minimized_stack_details": [
     {
@@ -24,7 +24,7 @@
     }
   ],
   "minimized_stack": [
-    "foo_function(unsigned char const*, unsigned long) ../../out/default/../../examples/fuzzer/toy.cc:12 <<application>>+0xacf4c"
+    "#0    0x000071dc39153f4c in foo_function(unsigned char const*, unsigned long) ../../out/default/../../examples/fuzzer/toy.cc:12 <<application>>+0xacf4c"
   ],
   "minimized_stack_function_names": [
     "foo_function"

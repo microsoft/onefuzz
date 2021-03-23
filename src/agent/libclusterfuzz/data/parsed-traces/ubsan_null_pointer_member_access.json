@@ -150,10 +150,10 @@
     "xmlFAParseRegExp",
     "xmlRegexpCompile",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -224,13 +224,13 @@
     }
   ],
   "minimized_stack": [
-    "xmlFAParseCharClassEsc",
-    "xmlFAParseAtom",
-    "xmlFAParsePiece",
-    "xmlFAParseBranch",
-    "xmlFAParseRegExp",
-    "xmlRegexpCompile",
-    "libxml2_xml_regexp_compile_fuzzer.cc"
+    "#0 0x480c2a in xmlFAParseCharClassEsc /src/libxml2/xmlregexp.c:4883:14",
+    "#1 0x480474 in xmlFAParseAtom /src/libxml2/xmlregexp.c:5299:2",
+    "#2 0x48031d in xmlFAParsePiece /src/libxml2/xmlregexp.c:5316:11",
+    "#3 0x480219 in xmlFAParseBranch /src/libxml2/xmlregexp.c:5342:11",
+    "#4 0x4794ef in xmlFAParseRegExp /src/libxml2/xmlregexp.c:5377:5",
+    "#5 0x479227 in xmlRegexpCompile /src/libxml2/xmlregexp.c:5473:5",
+    "#6 0x42d8ca in LLVMFuzzerTestOneInput /src/libxml2_xml_regexp_compile_fuzzer.cc:29:20"
   ],
   "minimized_stack_function_names": [
     "xmlFAParseCharClassEsc",

@@ -91,9 +91,9 @@
   "full_stack_names": [
     "v8::internal::`anonymous namespace'::GenerateSourceString",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const *,unsigned __int64)",
-    "fuzzer::RunOneTest(class fuzzer::Fuzzer *,char const *,unsigned __int64)",
-    "fuzzer::FuzzerDriver(int *,char * * *,int (*)(unsigned char const *,unsigned __int64))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__scrt_common_main_seh",
     "BaseThreadInitThunk",
@@ -120,8 +120,8 @@
     }
   ],
   "minimized_stack": [
-    "v8::internal::`anonymous namespace'::GenerateSourceString",
-    "regexp-builtins.cc"
+    "#0 0x7ff6bfabe9d8 in v8::internal::`anonymous namespace'::GenerateSourceString C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc:294:25",
+    "#1 0x7ff6bfaa3909 in LLVMFuzzerTestOneInput C:\\b\\s\\w\\ir\\cache\\builder\\src\\v8\\test\\fuzzer\\regexp-builtins.cc:442:3"
   ],
   "minimized_stack_function_names": [
     "v8::internal::`anonymous namespace'::GenerateSourceString",

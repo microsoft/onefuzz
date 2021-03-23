@@ -98,15 +98,15 @@
     }
   ],
   "full_stack_names": [
-    "content::BrowserMessageFilter::Send(IPC::Message*)",
-    "ChromeNetBenchmarkingMessageFilter::OnMessageReceived(IPC::Message const&)",
-    "content::BrowserMessageFilter::Internal::OnMessageReceived(IPC::Message const&)",
-    "IPC::MessageFilterRouter::TryFilters(IPC::Message const&)",
-    "IPC::ChannelProxy::Context::TryFilters(IPC::Message const&)",
-    "IPC::ChannelProxy::Context::OnMessageReceived(IPC::Message const&)",
-    "IPC::internal::ChannelReader::DispatchInputData(char const*, int)",
-    "IPC::internal::ChannelReader::ProcessIncomingMessages()",
-    "IPC::ChannelPosix::OnFileCanReadWithoutBlocking(int)"
+    "content::BrowserMessageFilter::Send",
+    "ChromeNetBenchmarkingMessageFilter::OnMessageReceived",
+    "content::BrowserMessageFilter::Internal::OnMessageReceived",
+    "IPC::MessageFilterRouter::TryFilters",
+    "IPC::ChannelProxy::Context::TryFilters",
+    "IPC::ChannelProxy::Context::OnMessageReceived",
+    "IPC::internal::ChannelReader::DispatchInputData",
+    "IPC::internal::ChannelReader::ProcessIncomingMessages",
+    "IPC::ChannelPosix::OnFileCanReadWithoutBlocking"
   ],
   "minimized_stack_details": [
     {
@@ -192,15 +192,15 @@
     }
   ],
   "minimized_stack": [
-    "content::BrowserMessageFilter::Send(IPC::Message*)",
-    "ChromeNetBenchmarkingMessageFilter::OnMessageReceived(IPC::Message const&)",
-    "content::BrowserMessageFilter::Internal::OnMessageReceived(IPC::Message const&)",
-    "IPC::MessageFilterRouter::TryFilters(IPC::Message const&)",
-    "IPC::ChannelProxy::Context::TryFilters(IPC::Message const&)",
-    "IPC::ChannelProxy::Context::OnMessageReceived(IPC::Message const&)",
-    "IPC::internal::ChannelReader::DispatchInputData(char const*, int)",
-    "IPC::internal::ChannelReader::ProcessIncomingMessages()",
-    "IPC::ChannelPosix::OnFileCanReadWithoutBlocking(int)"
+    "#0 0x7fcf2c332fe2 in content::BrowserMessageFilter::Send(IPC::Message*) content/public/browser/browser_message_filter.cc:144:12",
+    "#1 0x7fcf1efb30a4 in ChromeNetBenchmarkingMessageFilter::OnMessageReceived(IPC::Message const&) ipc/ipc_message_utils.h:904:5",
+    "#2 0x7fcf2c334dc1 in content::BrowserMessageFilter::Internal::OnMessageReceived(IPC::Message const&) content/public/browser/browser_message_filter.cc:89:15",
+    "#3 0x7fcf227e6cb1 in IPC::MessageFilterRouter::TryFilters(IPC::Message const&) ipc/message_filter_router.cc:18:9",
+    "#4 0x7fcf227b32ab in IPC::ChannelProxy::Context::TryFilters(IPC::Message const&) ipc/ipc_channel_proxy.cc:75:7",
+    "#5 0x7fcf227b374c in IPC::ChannelProxy::Context::OnMessageReceived(IPC::Message const&) ipc/ipc_channel_proxy.cc:92:8",
+    "#6 0x7fcf227c0431 in IPC::internal::ChannelReader::DispatchInputData(char const*, int) ipc/ipc_channel_reader.cc:96:9",
+    "#7 0x7fcf227bf95b in IPC::internal::ChannelReader::ProcessIncomingMessages() ipc/ipc_channel_reader.cc:32:10",
+    "#8 0x7fcf227a4f4e in IPC::ChannelPosix::OnFileCanReadWithoutBlocking(int) ipc/ipc_channel_posix.cc:708:10"
   ],
   "minimized_stack_function_names": [
     "content::BrowserMessageFilter::Send",

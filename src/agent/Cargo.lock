@@ -1658,6 +1658,7 @@ dependencies = [
  "base64",
  "bytes 0.5.6",
  "cpp_demangle",
+ "debugger",
  "dunce",
  "futures",
  "hex",

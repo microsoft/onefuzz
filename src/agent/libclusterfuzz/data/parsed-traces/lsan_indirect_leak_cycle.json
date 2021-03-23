@@ -191,11 +191,11 @@
     "xmlDoRead",
     "xmlReadMemory",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::MutateAndTestOne()",
-    "fuzzer::Fuzzer::Loop()",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::Fuzzer::MutateAndTestOne",
+    "fuzzer::Fuzzer::Loop",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main"
   ],
@@ -292,16 +292,16 @@
     }
   ],
   "minimized_stack": [
-    "xmlNewDocElementContent",
-    "xmlParseElementMixedContentDecl",
-    "xmlParseElementContentDecl",
-    "xmlParseElementDecl",
-    "xmlParseMarkupDecl",
-    "xmlParseInternalSubset",
-    "xmlParseDocument",
-    "xmlDoRead",
-    "xmlReadMemory",
-    "libxml2_xml_read_memory_fuzzer.cc"
+    "#1 0x80469a in xmlNewDocElementContent /src/libxml2/valid.c:952:34",
+    "#2 0x6c92c9 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6262:11",
+    "#3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16",
+    "#4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12",
+    "#5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4",
+    "#6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6",
+    "#7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6",
+    "#8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5",
+    "#9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13",
+    "#10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18"
   ],
   "minimized_stack_function_names": [
     "xmlNewDocElementContent",
