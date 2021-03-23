@@ -83,26 +83,23 @@ impl Display for DebugFunctionLocation {
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub enum DebugStackFrame {
     Frame {
-        function: String,
+        module_name: String,
         location: DebugFunctionLocation,
         symbol: Option<String>,
-        module_name: Option<String>,
     },
     CorruptFrame,
 }
 
 impl DebugStackFrame {
     pub fn new(
-        function: String,
+        module_name: String,
         location: DebugFunctionLocation,
         symbol: Option<String>,
-        module_name: Option<String>,
     ) -> DebugStackFrame {
         DebugStackFrame::Frame {
-            function,
+            module_name,
             location,
             symbol,
-            module_name,
         }
     }
 
@@ -122,12 +119,17 @@ impl Display for DebugStackFrame {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         match self {
             DebugStackFrame::Frame {
-                function, location, ..
+                module_name, location, symbol
             } => {
-                if let Some(file_info) = &location.file_info {
-                    write!(formatter, "{} {}", function, file_info)
+                if let Some(symbol) = symbol {
+                    write!(formatter, "{}!{}", module_name, symbol)?;
                 } else {
-                    write!(formatter, "{}+0x{:x}", function, location.displacement)
+                    write!(formatter, "{}", module_name)?;
+                }
+                if let Some(file_info) = &location.file_info {
+                    write!(formatter, " {}", file_info)
+                } else {
+                    write!(formatter, "+0x{:x}", location.displacement)
                 }
             }
             DebugStackFrame::CorruptFrame => formatter.write_str("<corrupt frame(s)>"),
@@ -158,7 +160,7 @@ impl DebugStack {
         // Corrupted stacks and jit can result in stacks that vary from run to run, so we exclude
         // those frames and anything below them for a more stable hash.
         let first_unstable_frame = self.frames.iter().position(|f| match f {
-            DebugStackFrame::Frame { function, .. } => function == UNKNOWN_MODULE,
+            DebugStackFrame::Frame { module_name , .. } => module_name == UNKNOWN_MODULE,
             DebugStackFrame::CorruptFrame => true,
         });
 
@@ -200,8 +202,6 @@ fn get_function_location_in_module(
     if let Ok(sym_info) =
         dbghlp.sym_from_inline_context(process_handle, program_counter, inline_context)
     {
-        let function = format!("{}!{}", module_name, sym_info.symbol());
-
         let sym_line_info =
             dbghlp.sym_get_file_and_line(process_handle, program_counter, inline_context);
 
@@ -216,16 +216,15 @@ fn get_function_location_in_module(
         };
 
         DebugStackFrame::new(
-            function,
+            module_name,
             location,
             Some(sym_info.symbol().to_owned()),
-            Some(module_name),
         )
     } else {
         // No function - assume we have an exe with no pdb (so no exports). This should be
         // common, so we won't report an error. We do want a nice(ish) location though.
         let location = DebugFunctionLocation::new(program_counter - module_info.base_address());
-        DebugStackFrame::new(module_name.clone(), location, None, Some(module_name))
+        DebugStackFrame::new(module_name, location, None)
     }
 }
 
@@ -243,7 +242,7 @@ fn get_frame_with_unknown_module(process_handle: HANDLE, program_counter: u64) -
                     .expect("logic error computing fake rva");
 
                 let location = DebugFunctionLocation::new(offset);
-                DebugStackFrame::new(UNKNOWN_MODULE.into(), location, None, None)
+                DebugStackFrame::new(UNKNOWN_MODULE.into(), location, None)
             } else {
                 DebugStackFrame::corrupt_frame()
             }
@@ -308,26 +307,24 @@ mod test {
     use super::*;
 
     macro_rules! frame {
-        ($name: expr, disp: $disp: expr) => {
+        ($module: expr, disp: $location: expr) => {
             DebugStackFrame::new(
-                $name.to_string(),
-                DebugFunctionLocation::new($disp),
-                None,
+                $module.to_string(),
+                DebugFunctionLocation::new($location),
                 None,
             )
         };
 
-        ($name: expr, disp: $disp: expr, line: ($file: expr, $line: expr)) => {
+        ($module: expr, disp: $location: expr, line: ($file: expr, $line: expr)) => {
             DebugStackFrame::new(
-                $name.to_string(),
+                $module.to_string(),
                 DebugFunctionLocation::new_with_file_info(
-                    $disp,
+                    $location,
                     FileInfo {
                         file: $file.to_string(),
                         line: $line,
                     },
                 ),
-                None,
                 None,
             )
         };

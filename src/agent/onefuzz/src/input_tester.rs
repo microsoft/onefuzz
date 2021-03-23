@@ -149,16 +149,15 @@ impl<'a> Tester<'a> {
                         ..Default::default()
                     },
                     debugger::stack::DebugStackFrame::Frame {
-                        function,
+                        module_name,
                         location,
                         symbol,
-                        module_name,
                     } => StackEntry {
                         line: f.to_string(),
-                        function_name: symbol.to_owned().or_else(|| Some(function.to_owned())),
+                        function_name: symbol.to_owned(),
                         address: Some(location.displacement),
                         module_offset: None,
-                        module_path: module_name.to_owned(),
+                        module_path: Some(module_name.to_owned()),
                         source_file_line: location.file_info.as_ref().map(|x| x.line.into()),
                         source_file_name: location
                             .file_info
