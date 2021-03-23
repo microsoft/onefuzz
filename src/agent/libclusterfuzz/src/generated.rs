@@ -207,4 +207,5 @@ pub const STACK_FRAME_IGNORE_REGEXES: &[&str] = &[
     r".*libc\+\+\.so",
     r".*libc\+\+_shared\.so",
     r".*libstdc\+\+\.so",
+    r".*libc-.*\.so",
 ];
