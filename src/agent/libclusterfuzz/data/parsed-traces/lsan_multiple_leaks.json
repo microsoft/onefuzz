@@ -23,8 +23,8 @@
     }
   ],
   "full_stack_names": [
-    "operator new[](unsigned long)",
-    "pepper::AutoBuffer::AllocateBuffer(unsigned long)"
+    "operator new[]",
+    "pepper::AutoBuffer::AllocateBuffer"
   ],
   "minimized_stack_details": [
     {
@@ -37,7 +37,7 @@
     }
   ],
   "minimized_stack": [
-    "pepper::AutoBuffer::AllocateBuffer(unsigned long)"
+    "#1 0x7f1bb40eebec in pepper::AutoBuffer::AllocateBuffer(unsigned long) /home/rtcbldr/ws/St_Make/code/flash/platform/pepper/base/pep_auto_buffer.cpp:69"
   ],
   "minimized_stack_function_names": [
     "pepper::AutoBuffer::AllocateBuffer"

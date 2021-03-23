@@ -153,12 +153,12 @@
     "opj_j2k_exec",
     "opj_j2k_decode",
     "opj_decode",
-    "CJPX_Decoder::Init(unsigned char const*, unsigned int)",
-    "CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*)",
+    "CJPX_Decoder::Init",
+    "CCodec_JpxModule::CreateDecoder",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main"
   ],
@@ -237,14 +237,14 @@
     }
   ],
   "minimized_stack": [
-    "opj_j2k_update_image_data",
-    "opj_j2k_decode_tiles",
-    "opj_j2k_exec",
-    "opj_j2k_decode",
-    "opj_decode",
-    "CJPX_Decoder::Init(unsigned char const*, unsigned int)",
-    "CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*)",
-    "pdf_jpx_fuzzer.cc"
+    "#1 0x5f2af9 in opj_j2k_update_image_data third_party/pdfium/third_party/libopenjpeg20/j2k.c:9184:50",
+    "#2 0x5f0a40 in opj_j2k_decode_tiles third_party/pdfium/third_party/libopenjpeg20/j2k.c:10734:15",
+    "#3 0x5c4230 in opj_j2k_exec third_party/pdfium/third_party/libopenjpeg20/j2k.c:8090:33",
+    "#4 0x5d5991 in opj_j2k_decode third_party/pdfium/third_party/libopenjpeg20/j2k.c:11019:11",
+    "#5 0x5c1a9d in opj_decode third_party/pdfium/third_party/libopenjpeg20/openjpeg.c:483:16",
+    "#6 0x5b2b76 in CJPX_Decoder::Init(unsigned char const*, unsigned int) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:526:11",
+    "#7 0x5b5c9c in CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*) third_party/pdfium/core/fxcodec/codec/fx_codec_jpx_opj.cpp:652:19",
+    "#8 0x3aa1fb in LLVMFuzzerTestOneInput third_party/pdfium/testing/fuzzers/pdf_jpx_fuzzer.cc:23:16"
   ],
   "minimized_stack_function_names": [
     "opj_j2k_update_image_data",

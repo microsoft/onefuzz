@@ -160,9 +160,9 @@
     "ast_resolve",
     "g_variant_parse",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -215,11 +215,11 @@
     }
   ],
   "minimized_stack": [
-    "ast_array_get_pattern",
-    "array_get_pattern",
-    "ast_resolve",
-    "g_variant_parse",
-    "fuzz_variant_text.c"
+    "#4 0x46c316 in ast_array_get_pattern /src/glib/glib/gvariant-parser.c:709:15",
+    "#5 0x46bb76 in array_get_pattern /src/glib/glib/gvariant-parser.c:889:13",
+    "#6 0x467ef9 in ast_resolve /src/glib/glib/gvariant-parser.c:595:13",
+    "#7 0x467967 in g_variant_parse /src/glib/glib/gvariant-parser.c:2395:18",
+    "#8 0x4336ce in LLVMFuzzerTestOneInput /src/glib/fuzzing/fuzz_variant_text.c:12:13"
   ],
   "minimized_stack_function_names": [
     "ast_array_get_pattern",

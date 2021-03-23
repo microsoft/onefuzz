@@ -123,9 +123,9 @@
     }
   ],
   "minimized_stack": [
-    "GetHandleVerifier+0x31e95",
-    "GetHandleVerifier+0x306c7",
-    "GetHandleVerifier+0x4b480"
+    "#3 0x7ff7c6b5f7b5 in GetHandleVerifier+0x31e95 (c:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_x64_e8abf88e7a5ec8bcd0cd391cfae402f143e8ddb2\\revisions\\asan-win32-release_x64-547370\\content_shell.exe+0x5eaf7b5)",
+    "#4 0x7ff7c6b5dfe7 in GetHandleVerifier+0x306c7 (c:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_x64_e8abf88e7a5ec8bcd0cd391cfae402f143e8ddb2\\revisions\\asan-win32-release_x64-547370\\content_shell.exe+0x5eadfe7)",
+    "#5 0x7ff7c6b78da0 in GetHandleVerifier+0x4b480 (c:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_x64_e8abf88e7a5ec8bcd0cd391cfae402f143e8ddb2\\revisions\\asan-win32-release_x64-547370\\content_shell.exe+0x5ec8da0)"
   ],
   "minimized_stack_function_names": [
     "GetHandleVerifier+0x31e95",

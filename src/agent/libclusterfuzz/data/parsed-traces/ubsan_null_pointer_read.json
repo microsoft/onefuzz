@@ -123,15 +123,15 @@
     }
   ],
   "full_stack_names": [
-    "SHPReadOGRObject(SHPInfo*, int, tagSHPObject*)",
-    "SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*)",
-    "OGRShapeLayer::GetNextFeature()",
+    "SHPReadOGRObject",
+    "SHPReadOGRFeature",
+    "OGRShapeLayer::GetNextFeature",
     "OGR_L_GetNextFeature",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -184,11 +184,11 @@
     }
   ],
   "minimized_stack": [
-    "SHPReadOGRObject(SHPInfo*, int, tagSHPObject*)",
-    "SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*)",
-    "OGRShapeLayer::GetNextFeature()",
-    "OGR_L_GetNextFeature",
-    "shape_fuzzer.cpp"
+    "#0 0x1466597 in SHPReadOGRObject(SHPInfo*, int, tagSHPObject*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:184:49",
+    "#1 0x14685c7 in SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:1217:26",
+    "#2 0x1257a83 in OGRShapeLayer::GetNextFeature() /src/gdal/gdal/ogr/ogrsf_frmts/shape/ogrshapelayer.cpp:843:33",
+    "#3 0x4c01ce in OGR_L_GetNextFeature /src/gdal/gdal/ogr/ogrsf_frmts/generic/ogrlayer.cpp:549:48",
+    "#4 0x4392ef in LLVMFuzzerTestOneInput /src/gdal/gdal/fuzzers/shape_fuzzer.cpp:53:32"
   ],
   "minimized_stack_function_names": [
     "SHPReadOGRObject",

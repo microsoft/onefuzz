@@ -58,11 +58,11 @@
   "full_stack_names": [
     "<libclang_rt.asan.so>+0x56d71",
     "<libclang_rt.asan.so>+0x56d9e",
-    "fuzzer::PrintStackTrace() <<application>>+0x21d355",
-    "fuzzer::Fuzzer::CrashCallback() <<application>>+0x2036a9",
-    "fuzzer::(anonymous namespace)::StaticCrashHandler() ../recipe_cleanup/clang4jtbYR/llvm_build_dir/tools/clang/stage2-bins/runtimes/runtimes-x86_64-unknown-fuchsia-bins/compiler-rt/lib/fuzzer/FuzzerUtilFuchsia.cpp:186 <<application>>+0x21d425",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::CrashCallback",
+    "fuzzer::",
     "CrashTrampolineAsm <<application>>+0x21d415",
     "libc_io_functions_not_implemented_use_fdio_instead ../../out/clusterfuchsia-8880822439957731232.zircon/../../zircon/third_party/ulib/scudo/fuchsia.cc:34 <libc.so>+0x6eaa8",
-    "fx_logger::VLogWrite(int, char const*, char const*, __va_list_tag*, bool) ../../out/clusterfuchsia-8880822439957731232.zircon/../../zircon/system/ulib/syslog/fx_logger.cc:223 <libsyslog.so>+0x8e90"
+    "fx_logger::VLogWrite"
   ]
 }

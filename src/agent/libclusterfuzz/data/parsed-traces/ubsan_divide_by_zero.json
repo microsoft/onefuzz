@@ -172,10 +172,10 @@
     "avcodec_send_packet",
     "compat_decode",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -264,15 +264,15 @@
     }
   ],
   "minimized_stack": [
-    "mpeg_decode_postinit",
-    "decode_chunks",
-    "mpeg_decode_frame",
-    "decode_simple_internal",
-    "decode_simple_receive_frame",
-    "decode_receive_frame_internal",
-    "avcodec_send_packet",
-    "compat_decode",
-    "target_dec_fuzzer.c"
+    "#0 0x54bf8b in mpeg_decode_postinit /src/ffmpeg/libavcodec/mpeg12dec.c:1245:49",
+    "#1 0x542d2e in decode_chunks /src/ffmpeg/libavcodec/mpeg12dec.c:2536:23",
+    "#2 0x53deca in mpeg_decode_frame /src/ffmpeg/libavcodec/mpeg12dec.c:2826:11",
+    "#3 0x53571c in decode_simple_internal /src/ffmpeg/libavcodec/decode.c:414:15",
+    "#4 0x534f51 in decode_simple_receive_frame /src/ffmpeg/libavcodec/decode.c:617:15",
+    "#5 0x525f72 in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:635:15",
+    "#6 0x524a2d in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:675:15",
+    "#7 0x5268d3 in compat_decode /src/ffmpeg/libavcodec/decode.c:730:15",
+    "#8 0x5185e7 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:213:23"
   ],
   "minimized_stack_function_names": [
     "mpeg_decode_postinit",

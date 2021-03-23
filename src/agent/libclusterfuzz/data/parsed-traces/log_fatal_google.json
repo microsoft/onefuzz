@@ -46,7 +46,7 @@
   "full_stack_names": [
     "raise",
     "abort",
-    "Frame(int)",
+    "Frame",
     "LLVMFuzzerTestOneInput"
   ],
   "minimized_stack_details": [
@@ -70,8 +70,8 @@
     }
   ],
   "minimized_stack": [
-    "Frame(int)",
-    "path.cc"
+    "#10 0x5585f338030f in Frame(int) file/path.cc:87:9",
+    "#11 0x5585f33815b2 in LLVMFuzzerTestOneInput file/path.cc:98:1"
   ],
   "minimized_stack_function_names": [
     "Frame",
