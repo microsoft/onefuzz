@@ -119,7 +119,9 @@ impl Display for DebugStackFrame {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         match self {
             DebugStackFrame::Frame {
-                module_name, location, symbol
+                module_name,
+                location,
+                symbol,
             } => {
                 if let Some(symbol) = symbol {
                     write!(formatter, "{}!{}", module_name, symbol)?;
@@ -160,7 +162,7 @@ impl DebugStack {
         // Corrupted stacks and jit can result in stacks that vary from run to run, so we exclude
         // those frames and anything below them for a more stable hash.
         let first_unstable_frame = self.frames.iter().position(|f| match f {
-            DebugStackFrame::Frame { module_name , .. } => module_name == UNKNOWN_MODULE,
+            DebugStackFrame::Frame { module_name, .. } => module_name == UNKNOWN_MODULE,
             DebugStackFrame::CorruptFrame => true,
         });
 
@@ -215,11 +217,7 @@ fn get_function_location_in_module(
             _ => DebugFunctionLocation::new(displacement),
         };
 
-        DebugStackFrame::new(
-            module_name,
-            location,
-            Some(sym_info.symbol().to_owned()),
-        )
+        DebugStackFrame::new(module_name, location, Some(sym_info.symbol().to_owned()))
     } else {
         // No function - assume we have an exe with no pdb (so no exports). This should be
         // common, so we won't report an error. We do want a nice(ish) location though.
