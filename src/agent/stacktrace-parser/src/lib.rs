@@ -110,23 +110,30 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
         }
     }
 
+    if let Some(name) = &entry.module_path {
+        if stack_filter.is_match(name) {
+            return None;
+        }
+    }
+
     Some(entry)
 }
 
 impl CrashLog {
-    pub fn parse(text: String) -> Result<Self> {
-        let (summary, sanitizer, fault_type) = parse_summary(&text)?;
-        let full_stack_details = parse_call_stack(&text).unwrap_or_default();
-        let (scariness_score, scariness_description) = parse_scariness(&text);
-
-        let call_stack = full_stack_details.iter().map(|x| x.line.clone()).collect();
+    pub fn new(
+        text: String,
+        summary: String,
+        sanitizer: String,
+        fault_type: String,
+        scariness_score: Option<u32>,
+        scariness_description: Option<String>,
+        stack: Vec<StackEntry>,
+    ) -> Result<Self> {
         let stack_filter = get_stack_filter();
-
-        let mut minimized_stack_details: Vec<StackEntry> = full_stack_details
+        let mut minimized_stack_details: Vec<StackEntry> = stack
             .iter()
             .filter_map(|x| filter_funcs(x, &stack_filter))
             .collect();
-
         // if we don't have a minimized stack, if one of these functions is on
         // the stack, use it
         for entry in &[
@@ -138,7 +145,7 @@ impl CrashLog {
                 break;
             }
             let value = Some(String::from(*entry));
-            minimized_stack_details = full_stack_details
+            minimized_stack_details = stack
                 .iter()
                 .filter_map(|x| {
                     if x.function_name == value {
@@ -150,22 +157,13 @@ impl CrashLog {
                 .collect();
         }
 
-        let full_stack_names: Vec<String> = full_stack_details
-            .iter()
-            .filter_map(|x| x.function_name.as_ref().cloned())
-            .collect();
+        let call_stack = stack_lines(&stack);
+        let full_stack_names = stack_names(&stack);
 
-        let minimized_stack: Vec<String> = minimized_stack_details
-            .iter()
-            .filter_map(|x| x.function_name.clone())
-            .collect();
+        let minimized_stack = stack_lines(&minimized_stack_details);
+        let minimized_stack_function_names = stack_names(&minimized_stack_details);
 
-        let minimized_stack_function_names: Vec<String> = minimized_stack
-            .iter()
-            .map(|x| function_without_args(x))
-            .collect();
-
-        let log = Self {
+        Ok(Self {
             text,
             sanitizer,
             summary,
@@ -173,14 +171,27 @@ impl CrashLog {
             call_stack,
             scariness_score,
             scariness_description,
-            full_stack_details,
+            full_stack_details: stack,
             full_stack_names,
             minimized_stack,
             minimized_stack_function_names,
             minimized_stack_details,
-        };
+        })
+    }
 
-        Ok(log)
+    pub fn parse(text: String) -> Result<Self> {
+        let (summary, sanitizer, fault_type) = parse_summary(&text)?;
+        let stack = parse_call_stack(&text).unwrap_or_default();
+        let (scariness_score, scariness_description) = parse_scariness(&text);
+        Self::new(
+            text,
+            summary,
+            sanitizer,
+            fault_type,
+            scariness_score,
+            scariness_description,
+            stack,
+        )
     }
 
     pub fn call_stack_sha256(&self) -> String {
@@ -194,6 +205,18 @@ impl CrashLog {
     pub fn minimized_stack_function_names_sha256(&self, depth: Option<usize>) -> String {
         digest_iter(&self.minimized_stack_function_names, depth)
     }
+}
+
+fn stack_lines(stack: &[StackEntry]) -> Vec<String> {
+    stack.iter().map(|x| x.line.clone()).collect()
+}
+
+fn stack_names(stack: &[StackEntry]) -> Vec<String> {
+    stack
+        .iter()
+        .filter_map(|x| x.function_name.as_ref())
+        .map(|x| function_without_args(x))
+        .collect()
 }
 
 fn parse_summary(text: &str) -> Result<(String, String, String)> {

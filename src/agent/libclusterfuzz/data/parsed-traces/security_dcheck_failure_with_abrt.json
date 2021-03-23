@@ -97,14 +97,14 @@
   ],
   "full_stack_names": [
     "gsignal",
-    "logging::LogMessage::~LogMessage()",
-    "blink::SVGElement::RemovedFrom(blink::ContainerNode*)",
-    "blink::ContainerNode::NotifyNodeRemoved(blink::Node&)",
-    "blink::ContainerNode::RemoveChildren(blink::SubtreeModificationAction)",
-    "blink::ReplaceChildrenWithFragment(blink::ContainerNode*, blink::DocumentFragment*, blink::ExceptionState&)",
-    "blink::Element::setInnerHTML(WTF::String const&, blink::ExceptionState&)",
+    "logging::LogMessage::~LogMessage",
+    "blink::SVGElement::RemovedFrom",
+    "blink::ContainerNode::NotifyNodeRemoved",
+    "blink::ContainerNode::RemoveChildren",
+    "blink::ReplaceChildrenWithFragment",
+    "blink::Element::setInnerHTML",
     "innerHTMLAttributeSetter",
-    "blink::V8Element::innerHTMLAttributeSetterCallback(v8::FunctionCallbackInfo<v8::Value> const&)"
+    "blink::V8Element::innerHTMLAttributeSetterCallback"
   ],
   "minimized_stack_details": [
     {
@@ -171,13 +171,13 @@
     }
   ],
   "minimized_stack": [
-    "blink::SVGElement::RemovedFrom(blink::ContainerNode*)",
-    "blink::ContainerNode::NotifyNodeRemoved(blink::Node&)",
-    "blink::ContainerNode::RemoveChildren(blink::SubtreeModificationAction)",
-    "blink::ReplaceChildrenWithFragment(blink::ContainerNode*, blink::DocumentFragment*, blink::ExceptionState&)",
-    "blink::Element::setInnerHTML(WTF::String const&, blink::ExceptionState&)",
-    "innerHTMLAttributeSetter",
-    "blink::V8Element::innerHTMLAttributeSetterCallback(v8::FunctionCallbackInfo<v8::Value> const&)"
+    "#2 0x7f2517714f19 in blink::SVGElement::RemovedFrom(blink::ContainerNode*) third_party/WebKit/Source/core/svg/SVGElement.cpp:441:3",
+    "#3 0x7f251c4b5cda in blink::ContainerNode::NotifyNodeRemoved(blink::Node&) third_party/WebKit/Source/core/dom/ContainerNode.cpp:842:10",
+    "#4 0x7f251c4b627b in blink::ContainerNode::RemoveChildren(blink::SubtreeModificationAction) third_party/WebKit/Source/core/dom/ContainerNode.cpp:721:9",
+    "#5 0x7f251cb22de9 in blink::ReplaceChildrenWithFragment(blink::ContainerNode*, blink::DocumentFragment*, blink::ExceptionState&) third_party/WebKit/Source/core/editing/serializers/Serialization.cpp:706:19",
+    "#6 0x7f251c5feba8 in blink::Element::setInnerHTML(WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/dom/Element.cpp:2914:5",
+    "#7 0x7f251b5dc3cf in innerHTMLAttributeSetter out/Release/gen/blink/bindings/core/v8/V8Element.cpp:337:9",
+    "#8 0x7f251b5dc3cf in blink::V8Element::innerHTMLAttributeSetterCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Element.cpp:2139"
   ],
   "minimized_stack_function_names": [
     "blink::SVGElement::RemovedFrom",

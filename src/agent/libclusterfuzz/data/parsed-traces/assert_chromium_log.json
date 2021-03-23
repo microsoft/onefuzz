@@ -107,13 +107,13 @@
   ],
   "full_stack_names": [
     "gsignal",
-    "logging::LogMessage::~LogMessage()",
+    "logging::LogMessage::~LogMessage",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::MutateAndTestOne()",
-    "fuzzer::Fuzzer::Loop()",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::Fuzzer::MutateAndTestOne",
+    "fuzzer::Fuzzer::Loop",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main"
   ],
@@ -129,7 +129,7 @@
     }
   ],
   "minimized_stack": [
-    "correctness_fuzzer.cc"
+    "#2 0x4f3cb5 in LLVMFuzzerTestOneInput base/json/correctness_fuzzer.cc:51:3"
   ],
   "minimized_stack_function_names": [
     "correctness_fuzzer.cc"

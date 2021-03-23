@@ -128,7 +128,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         .repro(args.input, args.target_timeout, args.check_retry_count)
         .await?;
 
-    match test_report.asan_log {
+    match test_report.crash_log {
         Some(crash_log) => {
             let crash_report = CrashReport::new(
                 crash_log,

@@ -85,11 +85,11 @@
   ],
   "full_stack_names": [
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*)",
-    "fuzzer::Fuzzer::MutateAndTestOne()",
-    "fuzzer::Fuzzer::Loop(std::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::Fuzzer::MutateAndTestOne",
+    "fuzzer::Fuzzer::Loop",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -106,7 +106,7 @@
     }
   ],
   "minimized_stack": [
-    "simple.c"
+    "#0 0x4fd773 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32"
   ],
   "minimized_stack_function_names": [
     "simple.c"

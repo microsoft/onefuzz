@@ -55,16 +55,8 @@
   ],
   "full_stack_names": [
     "__sanitizer_print_stack_trace",
-    "fuzzer::PrintStackTrace()",
-    "fuzzer::Fuzzer::CrashCallback()",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::CrashCallback",
     "runtime.raise"
-  ],
-  "minimized_stack_details": [
-    {
-      "line": "#3 0x7faa7c80b38f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1138f)",
-      "address": 140370209977231,
-      "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
-      "module_offset": 70543
-    }
   ]
 }

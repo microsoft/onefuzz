@@ -132,17 +132,17 @@
   ],
   "full_stack_names": [
     "__sanitizer_print_stack_trace",
-    "fuzzer::PrintStackTrace()",
-    "fuzzer::Fuzzer::HandleMalloc(unsigned long)",
-    "fuzzer::MallocHook(void const volatile*, unsigned long)",
-    "__sanitizer::RunMallocHooks(void const*, unsigned long)",
-    "__asan::Allocator::Allocate(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType, bool)",
-    "__asan::asan_malloc(unsigned long, __sanitizer::BufferedStackTrace*)",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::HandleMalloc",
+    "fuzzer::MallocHook",
+    "__sanitizer::RunMallocHooks",
+    "__asan::Allocator::Allocate",
+    "__asan::asan_malloc",
     "malloc",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -159,7 +159,7 @@
     }
   ],
   "minimized_stack": [
-    "fuzz.c"
+    "#8 0x54cc24 in LLVMFuzzerTestOneInput /home/user/src/onefuzz/src/agent/fuzz.c:9:18"
   ],
   "minimized_stack_function_names": [
     "fuzz.c"
