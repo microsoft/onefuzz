@@ -312,6 +312,17 @@ libfuzzer_linux = JobTemplate(
             ],
         ),
         UserField(
+            name="minimized_stack_depth",
+            help="Number of frames to include in the minimized stack",
+            type=UserFieldType.Int,
+            locations=[
+                UserFieldLocation(
+                    op=UserFieldOperation.replace,
+                    path="/tasks/1/task/minimized_stack_depth",
+                ),
+            ],
+        ),
+        UserField(
             name="tags",
             help=TAGS_HELP,
             type=UserFieldType.DictStr,
