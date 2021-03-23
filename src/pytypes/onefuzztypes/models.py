@@ -171,6 +171,7 @@ class TaskDetails(BaseModel):
     ensemble_sync_delay: Optional[int]
     preserve_existing_outputs: Optional[bool]
     report_list: Optional[List[str]]
+    minimized_stack_depth: Optional[int]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:
@@ -250,6 +251,10 @@ class Report(BaseModel):
     job_id: UUID
     scariness_score: Optional[int]
     scariness_description: Optional[str]
+    minimized_stack: Optional[List[str]]
+    minimized_stack_sha256: Optional[str]
+    minimized_stack_function_names: Optional[List[str]]
+    minimized_stack_function_names_sha256: Optional[str]
 
 
 class NoReproReport(BaseModel):
@@ -399,6 +404,7 @@ class TaskUnitConfig(BaseModel):
     stats_format: Optional[StatsFormat]
     ensemble_sync_delay: Optional[int]
     report_list: Optional[List[str]]
+    minimized_stack_depth: Optional[int]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes
