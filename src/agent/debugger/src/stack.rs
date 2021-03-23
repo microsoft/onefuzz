@@ -309,7 +309,12 @@ mod test {
 
     macro_rules! frame {
         ($name: expr, disp: $disp: expr) => {
-            DebugStackFrame::new($name.to_string(), DebugFunctionLocation::new($disp), None, None)
+            DebugStackFrame::new(
+                $name.to_string(),
+                DebugFunctionLocation::new($disp),
+                None,
+                None,
+            )
         };
 
         ($name: expr, disp: $disp: expr, line: ($file: expr, $line: expr)) => {
@@ -322,7 +327,8 @@ mod test {
                         line: $line,
                     },
                 ),
-                None, None,
+                None,
+                None,
             )
         };
     }
