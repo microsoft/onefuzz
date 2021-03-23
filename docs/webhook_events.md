@@ -1746,6 +1746,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -2236,6 +2240,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -2671,6 +2679,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -3079,6 +3091,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
                 },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
@@ -3515,6 +3531,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
                 },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
@@ -4847,6 +4867,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
                 },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
