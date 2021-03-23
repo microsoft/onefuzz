@@ -17,10 +17,10 @@ const LIBFUZZER_CRASH_REPORT: &str = "libfuzzer-crash-report";
 const LIBFUZZER_COVERAGE: &str = "libfuzzer-coverage";
 const LIBFUZZER_MERGE: &str = "libfuzzer-merge";
 const LIBFUZZER_TEST_INPUT: &str = "libfuzzer-test-input";
-const GENERIC_CRASH_REPORT: &str = "generic-crash-report";
-const GENERIC_GENERATOR: &str = "generic-generator";
-const GENERIC_ANALYSIS: &str = "generic-analysis";
-const GENERIC_TEST_INPUT: &str = "generic-test-input";
+const GENERIC_CRASH_REPORT: &str = "crash-report";
+const GENERIC_GENERATOR: &str = "generator";
+const GENERIC_ANALYSIS: &str = "analysis";
+const GENERIC_TEST_INPUT: &str = "test-input";
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     match args.subcommand() {
