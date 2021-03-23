@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 
 use crate::code::{ModuleIndex, ModulePath};
-use crate::disasm::ModuleDisassembler;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ModuleCache {
@@ -28,8 +27,16 @@ impl ModuleCache {
         Ok(self.cached.get(path))
     }
 
+    #[cfg(target_os = "linux")]
     pub fn insert(&mut self, path: &ModulePath) -> Result<()> {
         let entry = ModuleInfo::new_elf(path)?;
+        self.cached.insert(path.clone(), entry);
+        Ok(())
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn insert(&mut self, path: &ModulePath) -> Result<()> {
+        let entry = ModuleInfo::new_pe(path)?;
         self.cached.insert(path.clone(), entry);
         Ok(())
     }
@@ -48,9 +55,23 @@ impl ModuleInfo {
     #[cfg(target_os = "linux")]
     pub fn new_elf(path: &ModulePath) -> Result<Self> {
         let data = std::fs::read(path)?;
-        let module = ModuleIndex::parse_elf(path.clone(), &data)?;
-        let disasm = ModuleDisassembler::new(&module, &data)?;
+        let elf = goblin::elf::Elf::parse(&data)?;
+        let module = ModuleIndex::index_elf(path.clone(), &elf)?;
+        let disasm = crate::disasm::ModuleDisassembler::new(&module, &data)?;
         let blocks = disasm.find_blocks();
+
+        Ok(Self { module, blocks })
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn new_pe(path: &ModulePath) -> Result<Self> {
+        let file = std::fs::File::open(path)?;
+        let data = unsafe { memmap2::Mmap::map(&file)? };
+
+        let pe = goblin::pe::PE::parse(&data)?;
+        let module = ModuleIndex::index_pe(path.clone(), &pe);
+        let offsets = crate::pe::process_module(path, &data, &pe, false)?;
+        let blocks = offsets.ones().map(|off| off as u64).collect();
 
         Ok(Self { module, blocks })
     }
