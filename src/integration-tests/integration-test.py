@@ -18,7 +18,6 @@
 #    allows testing multiple components concurrently.
 
 import datetime
-import json
 import logging
 import os
 import re
@@ -735,8 +734,9 @@ class TestOnefuzz:
 
     def check_logs_for_errors(self) -> None:
         # only check for errors that exist between the start and stop markers
-        # also, only check for the most recent 100 errors within the last 2
-        # hours
+        # also, only check for the most recent 100 errors within the last 3
+        # hours. The records are scanned through in reverse chronological
+        # order.
 
         self.inject_log(self.stop_log_marker)
         wait(self.check_log_end_marker, frequency=5.0)
@@ -747,29 +747,28 @@ class TestOnefuzz:
         seen_errors = False
         seen_stop = False
         for entry in logs:
-            entry_as_str = json.dumps(entry, sort_keys=True)
             if not seen_stop:
-                if self.stop_log_marker in entry_as_str:
+                if self.stop_log_marker in entry.get("message", ""):
                     seen_stop = True
                 continue
 
-            if self.start_log_marker in entry_as_str:
+            if self.start_log_marker in entry.get("message", ""):
                 break
 
             # ignore logging.info coming from Azure Functions
             if entry.get("customDimensions", {}).get("LogLevel") == "Information":
                 continue
 
-            # ignore warnings coming from the rust code, only be concerned about errors
+            # ignore warnings coming from the rust code, only be concerned
+            # about errors
             if (
                 entry.get("severityLevel") == 2
                 and entry.get("sdkVersion") == "rust:0.1.5"
             ):
                 continue
 
+            self.logger.error("error log: %s", entry)
             seen_errors = True
-
-            self.logger.error("error log: %s", entry.get("message"))
 
         if seen_errors:
             raise Exception("logs included errors")
