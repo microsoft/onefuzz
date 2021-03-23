@@ -68,7 +68,7 @@
     }
   ],
   "minimized_stack": [
-    "lkl_panic_blink"
+    "#5 0x56f3f0 in lkl_panic_blink http://go/pakernel/lkl/+/1f26d55c741b80d2e99e529795a7f3ae34ac77a8/arch/lkl/kernel/setup.c#27;lkl/arch/lkl/kernel/setup.c;:2"
   ],
   "minimized_stack_function_names": [
     "lkl_panic_blink"

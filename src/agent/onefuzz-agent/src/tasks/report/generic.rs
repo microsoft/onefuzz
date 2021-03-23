@@ -127,7 +127,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
 
     let test_report = tester.test_input(args.input).await?;
 
-    if let Some(crash_log) = test_report.asan_log {
+    if let Some(crash_log) = test_report.crash_log {
         let crash_report = CrashReport::new(
             crash_log,
             task_id,
@@ -137,28 +137,6 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
             input_sha256,
             args.minimized_stack_depth,
         );
-        Ok(CrashTestResult::CrashReport(crash_report))
-    } else if let Some(crash) = test_report.crash {
-        let call_stack_sha256 = sha256::digest_iter(&crash.call_stack);
-        let crash_report = CrashReport {
-            input_blob,
-            input_sha256,
-            executable: PathBuf::from(args.target_exe),
-            call_stack: crash.call_stack,
-            crash_type: crash.crash_type,
-            crash_site: crash.crash_site,
-            call_stack_sha256,
-            asan_log: None,
-            scariness_score: None,
-            scariness_description: None,
-            task_id,
-            job_id,
-            minimized_stack: vec![],
-            minimized_stack_sha256: None,
-            minimized_stack_function_names: vec![],
-            minimized_stack_function_names_sha256: None,
-        };
-
         Ok(CrashTestResult::CrashReport(crash_report))
     } else {
         let no_repro = NoCrash {

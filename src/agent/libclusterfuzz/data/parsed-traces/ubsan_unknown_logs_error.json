@@ -72,9 +72,9 @@
     }
   ],
   "minimized_stack": [
-    "a",
-    "b",
-    "c"
+    "#0 0x564ca63e03d4 in a ../../file:1234:1",
+    "#1 0x564ca63de001 in b ../../file:1234:1",
+    "#2 0x564ca63d2426 in c ../../file:1234:1"
   ],
   "minimized_stack_function_names": [
     "a",

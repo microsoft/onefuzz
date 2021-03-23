@@ -75,10 +75,10 @@
     "__interceptor_malloc",
     "PartitionAllocGenericFlags",
     "AllocateMemoryWithFlags",
-    "WTF::ArrayBufferContents::AllocateMemoryOrNull(unsigned long, WTF::ArrayBufferContents::InitializationPolicy)",
-    "v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) v8/src/objects.cc",
-    "v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool)",
-    "v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*)"
+    "WTF::ArrayBufferContents::AllocateMemoryOrNull",
+    "v8::internal::JSArrayBuffer::SetupAllocatingData",
+    "v8::internal::",
+    "v8::internal::Builtin_Impl_ArrayBufferConstructor"
   ],
   "minimized_stack_details": [
     {
@@ -114,10 +114,10 @@
     }
   ],
   "minimized_stack": [
-    "AllocateMemoryWithFlags",
-    "v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) v8/src/objects.cc",
-    "v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool)",
-    "v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*)"
+    "#2 0x55db44461003 in AllocateMemoryWithFlags third_party/blink/renderer/platform/wtf/typed_arrays/array_buffer_contents.cc:111",
+    "#4 0x55db38743024 in v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) v8/src/objects.cc",
+    "#5 0x55db377b1006 in v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool) v8/src/builtins/builtins-arraybuffer.cc:43:8",
+    "#6 0x55db377ac88a in v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) v8/src/builtins/builtins-arraybuffer.cc:76:12"
   ],
   "minimized_stack_function_names": [
     "AllocateMemoryWithFlags",

@@ -130,24 +130,31 @@
   ],
   "full_stack_names": [
     "__sanitizer_print_stack_trace",
-    "fuzzer::Fuzzer::CrashCallback()",
-    "fuzzer::Fuzzer::StaticCrashSignalCallback()",
+    "fuzzer::Fuzzer::CrashCallback",
+    "fuzzer::Fuzzer::StaticCrashSignalCallback",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*)",
-    "fuzzer::Fuzzer::MutateAndTestOne()",
-    "fuzzer::Fuzzer::Loop(std::vector<std::string, fuzzer::fuzzer_allocator<std::string> > const&)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::Fuzzer::MutateAndTestOne",
+    "fuzzer::Fuzzer::Loop",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
   ],
   "minimized_stack_details": [
     {
-      "line": "#3 0x7fa27237a39f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1239f)",
-      "address": 140335677678495,
-      "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
-      "module_offset": 74655
+      "line": "#4 0x51a44a in LLVMFuzzerTestOneInput (/src/a.out+0x51a44a)",
+      "address": 5350474,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "module_path": "/src/a.out",
+      "module_offset": 5350474
     }
+  ],
+  "minimized_stack": [
+    "#4 0x51a44a in LLVMFuzzerTestOneInput (/src/a.out+0x51a44a)"
+  ],
+  "minimized_stack_function_names": [
+    "LLVMFuzzerTestOneInput"
   ]
 }
