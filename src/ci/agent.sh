@@ -10,9 +10,9 @@ exists() {
 }
 
 # only set RUSTC_WRAPPER if sccache exists
-if sccache --help; then
-    export RUSTC_WRAPPER=$(which sccache)
-fi
+#if sccache --help; then
+#    export RUSTC_WRAPPER=$(which sccache)
+#fi
 
 # only set CARGO_INCREMENTAL on non-release builds
 #
