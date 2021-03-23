@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.10.0
+### Added
+* Agent/CLI/Service: Added regression testing tasks, including enabling [git bisect using OneFuzz](docs/how-to/git-bisect-a-crash.md).  [#664](https://github.com/microsoft/onefuzz/pull/664), [#691](https://github.com/microsoft/onefuzz/pull/691)
+* Agent/CLI/Service: Added minimized call stack functionality using a [rust port](src/agent/libclusterfuzz) of [clusterfuzz stack trace parsing](https://github.com/google/clusterfuzz/tree/master/src/python/lib). [#591](https://github.com/microsoft/onefuzz/pull/591), [#705](https://github.com/microsoft/onefuzz/pull/705), [#706](https://github.com/microsoft/onefuzz/pull/706), [#707](https://github.com/microsoft/onefuzz/pull/707), [#714](https://github.com/microsoft/onefuzz/pull/714), [#715](https://github.com/microsoft/onefuzz/pull/715), [#719](https://github.com/microsoft/onefuzz/pull/719)
+* CLI: Added `onefuzz privacy_statement` command which displays OneFuzz's privacy statement. [#695](https://github.com/microsoft/onefuzz/pull/695)
+* Agent: Added installation of the `x86` and `x86_64` Visual Studio C++ redistributable runtimes on Windows nodes.  [#686](https://github.com/microsoft/onefuzz/pull/686)
+
+### Changed
+* Agent/Proxy/Supervisor: Changed web request retry logic to include the underlying failure upon giving up retrying a request. [#696](https://github.com/microsoft/onefuzz/pull/696)
+* Supervisor: Added automatic web request retry logic when communicating to the service. [#704](https://github.com/microsoft/onefuzz/pull/704)
+* CLI/Service: Updated python dependencies.  [#698](https://github.com/microsoft/onefuzz/pull/698), [#687](https://github.com/microsoft/onefuzz/pull/687)
+* Supervisor: Clarified log message when the supervisor unexpectedly exits. [#685](https://github.com/microsoft/onefuzz/pull/685)
+* Proxy: Simplified service communication logic. [#683](https://github.com/microsoft/onefuzz/pull/683)
+* Proxy: Increased log verbosity on proxy failure. [#702](https://github.com/microsoft/onefuzz/pull/702)
+* Agent: Increased setup script timestamp resolution. [#709](https://github.com/microsoft/onefuzz/pull/709)
+* Agent: Continued development related to an upcoming feature. [#508](https://github.com/microsoft/onefuzz/pull/508), [#688](https://github.com/microsoft/onefuzz/pull/688), [#703](https://github.com/microsoft/onefuzz/pull/703), [#710](https://github.com/microsoft/onefuzz/pull/710), [#711](https://github.com/microsoft/onefuzz/pull/711)
+
+### Fixed
+* Agent: Fixed support for libFuzzer targets that use shared objects or DLLs from the setup container. [#680](https://github.com/microsoft/onefuzz/pull/680), [#681](https://github.com/microsoft/onefuzz/pull/681), [#682](https://github.com/microsoft/onefuzz/pull/682), [#689](https://github.com/microsoft/onefuzz/pull/689), [#713](https://github.com/microsoft/onefuzz/pull/713)
+
 ## 2.9.0
 ### Added
 * Contrib: Added sample Webhook Service [#666](https://github.com/microsoft/onefuzz/pull/666)
