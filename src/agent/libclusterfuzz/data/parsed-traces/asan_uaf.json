@@ -148,20 +148,20 @@
     }
   ],
   "full_stack_names": [
-    "WTF::RawPtr<blink::HTMLInputElement>::operator*() const",
-    "blink::InputTypeView::element() const",
-    "blink::TextFieldInputType::didSetValueByUserEdit(blink::TextFieldInputType::ValueChangeState)",
-    "blink::TextFieldInputType::subtreeHasChanged()",
-    "blink::HTMLInputElement::subtreeHasChanged()",
-    "blink::HTMLTextFormControlElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&)",
-    "blink::HTMLInputElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&)",
-    "blink::HTMLInputElementV8Internal::setRangeText2Method(v8::FunctionCallbackInfo<v8::Value> const&)",
-    "blink::HTMLInputElementV8Internal::setRangeTextMethod(v8::FunctionCallbackInfo<v8::Value> const&)",
-    "blink::HTMLInputElementV8Internal::setRangeTextMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&)",
-    "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>)",
-    "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*)",
-    "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)"
+    "WTF::RawPtr<blink::HTMLInputElement>::operator*",
+    "blink::InputTypeView::element",
+    "blink::TextFieldInputType::didSetValueByUserEdit",
+    "blink::TextFieldInputType::subtreeHasChanged",
+    "blink::HTMLInputElement::subtreeHasChanged",
+    "blink::HTMLTextFormControlElement::setRangeText",
+    "blink::HTMLInputElement::setRangeText",
+    "blink::HTMLInputElementV8Internal::setRangeText2Method",
+    "blink::HTMLInputElementV8Internal::setRangeTextMethod",
+    "blink::HTMLInputElementV8Internal::setRangeTextMethodCallback",
+    "v8::internal::FunctionCallbackArguments::Call",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::Builtin_Impl_HandleApiCall",
+    "v8::internal::Builtin_HandleApiCall"
   ],
   "minimized_stack_details": [
     {
@@ -283,19 +283,19 @@
     }
   ],
   "minimized_stack": [
-    "blink::InputTypeView::element() const",
-    "blink::TextFieldInputType::didSetValueByUserEdit(blink::TextFieldInputType::ValueChangeState)",
-    "blink::TextFieldInputType::subtreeHasChanged()",
-    "blink::HTMLInputElement::subtreeHasChanged()",
-    "blink::HTMLTextFormControlElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&)",
-    "blink::HTMLInputElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&)",
-    "blink::HTMLInputElementV8Internal::setRangeText2Method(v8::FunctionCallbackInfo<v8::Value> const&)",
-    "blink::HTMLInputElementV8Internal::setRangeTextMethod(v8::FunctionCallbackInfo<v8::Value> const&)",
-    "blink::HTMLInputElementV8Internal::setRangeTextMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&)",
-    "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>)",
-    "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*)",
-    "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)"
+    "#1 0x7efd4a29f60e in blink::InputTypeView::element() const third_party/WebKit/Source/core/html/forms/InputTypeView.h:129:48",
+    "#2 0x7efd4a2f08d2 in blink::TextFieldInputType::didSetValueByUserEdit(blink::TextFieldInputType::ValueChangeState) third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp:502:10",
+    "#3 0x7efd4a2f0814 in blink::TextFieldInputType::subtreeHasChanged() third_party/WebKit/Source/core/html/forms/TextFieldInputType.cpp:497:5",
+    "#4 0x7efd4a189606 in blink::HTMLInputElement::subtreeHasChanged() third_party/WebKit/Source/core/html/HTMLInputElement.cpp:525:5",
+    "#5 0x7efd4a24d587 in blink::HTMLTextFormControlElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/html/HTMLTextFormControlElement.cpp:240:5",
+    "#6 0x7efd4a199788 in blink::HTMLInputElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/html/HTMLInputElement.cpp:1827:5",
+    "#7 0x7efd4bfbbeda in blink::HTMLInputElementV8Internal::setRangeText2Method(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp:1868:5",
+    "#8 0x7efd4bfbb06b in blink::HTMLInputElementV8Internal::setRangeTextMethod(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp:1887:13",
+    "#9 0x7efd4bfb99f6 in blink::HTMLInputElementV8Internal::setRangeTextMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8HTMLInputElement.cpp:1918:5",
+    "#10 0x7efd487ade01 in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/arguments.cc:33:3",
+    "#11 0x7efd47c15785 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>) v8/src/builtins.cc:1979:34",
+    "#12 0x7efd47c3c463 in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*) v8/src/builtins.cc:2003:3",
+    "#13 0x7efd47c1869f in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins.cc:2000:1"
   ],
   "minimized_stack_function_names": [
     "blink::InputTypeView::element",

@@ -86,13 +86,13 @@
     }
   ],
   "full_stack_names": [
-    "_JavaVM::AttachCurrentThread(_JNIEnv**, void*)",
+    "_JavaVM::AttachCurrentThread",
     "javaAttachThread",
-    "android::AndroidRuntime::javaThreadShell(void*)",
-    "thread_data_t::trampoline(thread_data_t const*)",
-    "__asan::AsanThread::ThreadStart(unsigned long, __sanitizer::atomic_uintptr_t*)",
-    "asan_thread_start(void*)",
-    "__pthread_start(void*)",
+    "android::AndroidRuntime::javaThreadShell",
+    "thread_data_t::trampoline",
+    "__asan::AsanThread::ThreadStart",
+    "asan_thread_start",
+    "__pthread_start",
     "__start_thread",
     "__bionic_clone"
   ],
@@ -158,13 +158,13 @@
     }
   ],
   "minimized_stack": [
-    "_JavaVM::AttachCurrentThread(_JNIEnv**, void*)",
-    "javaAttachThread",
-    "android::AndroidRuntime::javaThreadShell(void*)",
-    "thread_data_t::trampoline(thread_data_t const*)",
-    "__pthread_start(void*)",
-    "__start_thread",
-    "__bionic_clone"
+    "#0 0xa843fbf4 in _JavaVM::AttachCurrentThread(_JNIEnv**, void*) libnativehelper/include/nativehelper/jni.h:1060",
+    "#1 0xa843fbf4 in javaAttachThread frameworks/base/core/jni/AndroidRuntime.cpp:1131",
+    "#2 0xa843fbf4 in android::AndroidRuntime::javaThreadShell(void*) frameworks/base/core/jni/AndroidRuntime.cpp:1169",
+    "#3 0xa83bc8a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16",
+    "#6 0xa9a7f404 in __pthread_start(void*) bionic/libc/bionic/pthread_create.cpp:198:18",
+    "#7 0xa9a2a610 in __start_thread bionic/libc/bionic/clone.cpp:41:16",
+    "#8 0xa9a283c6 in __bionic_clone bionic/libc/arch-x86/bionic/__bionic_clone.S:54"
   ],
   "minimized_stack_function_names": [
     "_JavaVM::AttachCurrentThread",

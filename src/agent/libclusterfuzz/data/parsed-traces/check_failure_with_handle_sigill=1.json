@@ -108,16 +108,16 @@
     }
   ],
   "full_stack_names": [
-    "v8::base::OS::Abort()",
+    "v8::base::OS::Abort",
     "V8_Fatal",
-    "v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int)",
-    "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*)",
-    "v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*)",
-    "v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&)",
-    "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments)",
-    "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*)",
-    "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)"
+    "v8::internal::Vector<unsigned char const>::Vector",
+    "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes",
+    "v8::",
+    "v8::",
+    "v8::internal::FunctionCallbackArguments::Call",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::Builtin_Impl_HandleApiCall",
+    "v8::internal::Builtin_HandleApiCall"
   ],
   "minimized_stack_details": [
     {
@@ -194,14 +194,14 @@
     }
   ],
   "minimized_stack": [
-    "v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int)",
-    "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*)",
-    "v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*)",
-    "v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&)",
-    "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
-    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments)",
-    "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*)",
-    "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)"
+    "#2 0x7fe99db4b548 in v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int) v8/src/vector.h:24:5",
+    "#3 0x7fe99dbe8d02 in v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*) v8/src/wasm/wasm-module.h:219:9",
+    "#4 0x7fe99ed56d83 in v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*) v8/src/wasm/wasm-js.cc:155:10",
+    "#5 0x7fe99ed50b07 in v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&) v8/src/wasm/wasm-js.cc:201:16",
+    "#6 0x7fe99db640df in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/api-arguments.cc:25:3",
+    "#7 0x7fe99dd50efd in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) v8/src/builtins/builtins-api.cc:111:36",
+    "#8 0x7fe99dd4f11f in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:140:5",
+    "#9 0x7fe99dd4e8a3 in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:128:1"
   ],
   "minimized_stack_function_names": [
     "v8::internal::Vector<unsigned char const>::Vector",

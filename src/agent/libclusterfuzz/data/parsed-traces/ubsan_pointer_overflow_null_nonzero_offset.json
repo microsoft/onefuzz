@@ -115,14 +115,14 @@
     }
   ],
   "full_stack_names": [
-    "courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*)",
-    "courgette::DisassemblerWin32::ExtractAbs32Locations()",
-    "courgette::Disassembler::CreateProgram(bool)",
-    "courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool)",
+    "courgette::DisassemblerWin32::ParseRelocs",
+    "courgette::DisassemblerWin32::ExtractAbs32Locations",
+    "courgette::Disassembler::CreateProgram",
+    "courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -175,11 +175,11 @@
     }
   ],
   "minimized_stack": [
-    "courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*)",
-    "courgette::DisassemblerWin32::ExtractAbs32Locations()",
-    "courgette::Disassembler::CreateProgram(bool)",
-    "courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool)",
-    "courgette_fuzzer.cc"
+    "#0 0x56431fe9163e in courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*) courgette/disassembler_win32.cc:241:44",
+    "#1 0x56431fe91ed9 in courgette::DisassemblerWin32::ExtractAbs32Locations() courgette/disassembler_win32.cc:369:8",
+    "#2 0x56431fe67c67 in courgette::Disassembler::CreateProgram(bool) courgette/disassembler.cc:59:17",
+    "#3 0x56431fe62d5f in courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool) courgette/courgette_flow.cc:116:33",
+    "#4 0x56431fcd0e20 in LLVMFuzzerTestOneInput testing/libfuzzer/fuzzers/courgette_fuzzer.cc:17:8"
   ],
   "minimized_stack_function_names": [
     "courgette::DisassemblerWin32::ParseRelocs",

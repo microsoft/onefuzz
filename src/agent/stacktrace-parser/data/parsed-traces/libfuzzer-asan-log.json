@@ -68,9 +68,9 @@
   ],
   "full_stack_names": [
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -87,7 +87,7 @@
     }
   ],
   "minimized_stack": [
-    "fuzz.c"
+    "#0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51"
   ],
   "minimized_stack_function_names": [
     "fuzz.c"

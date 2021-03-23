@@ -74,12 +74,12 @@
   ],
   "full_stack_names": [
     "gsignal",
-    "base::debug::BreakDebugger()",
-    "logging::LogMessage::~LogMessage()",
-    "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper()",
-    "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
-    "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
-    "base::LazyInstance<url::(anonymous namespace)::UIDNAWrapper, base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UI"
+    "base::debug::BreakDebugger",
+    "logging::LogMessage::~LogMessage",
+    "url::",
+    "base::DefaultLazyInstanceTraits<url::",
+    "base::internal::LeakyLazyInstanceTraits<url::",
+    "base::LazyInstance<url::"
   ],
   "minimized_stack_details": [
     {
@@ -116,10 +116,10 @@
     }
   ],
   "minimized_stack": [
-    "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper()",
-    "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
-    "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*)",
-    "base::LazyInstance<url::(anonymous namespace)::UIDNAWrapper, base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UI"
+    "#3 0xe099d8 in url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper() url/url_canon_icu.cc:104:7",
+    "#4 0xe09601 in base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:69:27",
+    "#5 0xe092bd in base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) base/lazy_instance.h:98:12",
+    "#6 0xe09240 in base::LazyInstance<url::(anonymous namespace)::UIDNAWrapper, base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UI"
   ],
   "minimized_stack_function_names": [
     "url::",

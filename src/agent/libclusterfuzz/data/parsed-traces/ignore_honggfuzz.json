@@ -220,15 +220,15 @@
     }
   ],
   "minimized_stack": [
-    "HF_strcmp",
-    "__wrap_strcmp",
-    "function1",
-    "function2",
-    "function3",
-    "fuzzer.cc",
-    "HonggfuzzRunOneInput",
-    "HonggfuzzRunFromFile",
-    "HonggfuzzMain"
+    "#0 0x55f2fda19db0 in HF_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:17:26",
+    "#1 0x55f2fda19d8c in __wrap_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:146:12",
+    "#2 0x55f2fd41dfc6 in function1 file1.c:486:12",
+    "#3 0x55f2fd3392b1 in function2 file2.c:349:12",
+    "#4 0x55f2fd4593b5 in function3 file3.c:906:21",
+    "#5 0x55f2fd21672b in LLVMFuzzerTestOneInput /proc/self/cwd/fuzzer/fuzzer.cc:10:16",
+    "#6 0x55f2fda1a7c8 in HonggfuzzRunOneInput /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:60:15",
+    "#7 0x55f2fda1a713 in HonggfuzzRunFromFile /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:99:5",
+    "#8 0x55f2fda1a5e7 in HonggfuzzMain /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:109:16"
   ],
   "minimized_stack_function_names": [
     "HF_strcmp",

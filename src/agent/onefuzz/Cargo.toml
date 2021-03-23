@@ -44,6 +44,7 @@ stacktrace-parser = { path = "../stacktrace-parser" }
 [target.'cfg(target_os = "windows")'.dependencies]
 winreg = "0.8"
 input-tester = { path = "../input-tester" }
+debugger = { path = "../debugger" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 cpp_demangle = "0.3"

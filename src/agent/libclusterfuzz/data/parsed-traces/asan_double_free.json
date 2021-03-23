@@ -92,13 +92,13 @@
     }
   ],
   "full_stack_names": [
-    "operator delete(void*)",
+    "operator delete",
     "clear",
-    "CPDF_DocPageData::Clear(int)",
-    "CPDF_DocPageData::~CPDF_DocPageData()",
-    "CPDF_Document::~CPDF_Document()",
-    "CPDF_Document::~CPDF_Document()",
-    "RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+    "CPDF_DocPageData::Clear",
+    "CPDF_DocPageData::~CPDF_DocPageData",
+    "CPDF_Document::~CPDF_Document",
+    "CPDF_Document::~CPDF_Document",
+    "RenderPdf",
     "main",
     "__libc_start_main"
   ],
@@ -158,12 +158,12 @@
     }
   ],
   "minimized_stack": [
-    "clear",
-    "CPDF_DocPageData::Clear(int)",
-    "CPDF_DocPageData::~CPDF_DocPageData()",
-    "CPDF_Document::~CPDF_Document()",
-    "CPDF_Document::~CPDF_Document()",
-    "RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)"
+    "#1 0x29f0bb3 in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5",
+    "#2 0x29f0bb3 in CPDF_DocPageData::Clear(int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:60",
+    "#3 0x29f0168 in CPDF_DocPageData::~CPDF_DocPageData() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:36:3",
+    "#4 0x2a2e1bb in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:422:3",
+    "#5 0x2a2e46a in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:421:33",
+    "#6 0x4ff389 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:794:3"
   ],
   "minimized_stack_function_names": [
     "clear",

@@ -128,10 +128,10 @@
     "print_cert",
     "gnutls_x509_crt_print",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -175,10 +175,10 @@
     }
   ],
   "minimized_stack": [
-    "_gnutls_buffer_append_printf",
-    "print_cert",
-    "gnutls_x509_crt_print",
-    "gnutls_x509_parser_fuzzer.cc"
+    "#1 0x477d65 in _gnutls_buffer_append_printf /src/gnutls/lib/str.c:331:2",
+    "#2 0x461045 in print_cert /src/gnutls/lib/x509/output.c:1398:4",
+    "#3 0x45eee9 in gnutls_x509_crt_print /src/gnutls/lib/x509/output.c:1905:3",
+    "#4 0x45e3ec in LLVMFuzzerTestOneInput /src/gnutls/devel/fuzz/gnutls_x509_parser_fuzzer.cc:40:15"
   ],
   "minimized_stack_function_names": [
     "_gnutls_buffer_append_printf",
