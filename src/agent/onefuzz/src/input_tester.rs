@@ -169,12 +169,11 @@ impl<'a> Tester<'a> {
             };
 
             let fault_type = exception.description.to_string();
-            let text = "".to_string();
             let sanitizer = fault_type.to_string();
             let summary = crash_site;
 
             Some(CrashLog::new(
-                text, summary, sanitizer, fault_type, None, None, call_stack,
+                None, summary, sanitizer, fault_type, None, None, call_stack,
             )?)
         } else {
             None
@@ -254,13 +253,12 @@ impl<'a> Tester<'a> {
                     CRASH_SITE_UNAVAILABLE.to_owned()
                 };
 
-                let text = "".to_string();
                 let summary = crash_site;
                 let sanitizer = crash_type.clone();
                 let fault_type = crash_type;
 
                 Some(CrashLog::new(
-                    text, summary, sanitizer, fault_type, None, None, call_stack,
+                    None, summary, sanitizer, fault_type, None, None, call_stack,
                 )?)
             } else {
                 None
