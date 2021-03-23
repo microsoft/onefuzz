@@ -155,7 +155,7 @@ impl<'a> Tester<'a> {
                         module_name,
                     } => StackEntry {
                         line: f.to_string(),
-                        function_name: symbol.to_owned().or(Some(function.to_owned())),
+                        function_name: symbol.to_owned().or_else(|| Some(function.to_owned())),
                         address: Some(location.displacement),
                         module_offset: None,
                         module_path: module_name.to_owned(),
