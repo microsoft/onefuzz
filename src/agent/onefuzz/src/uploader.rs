@@ -6,7 +6,9 @@ use std::path::Path;
 use anyhow::Result;
 use futures::stream::TryStreamExt;
 use reqwest as r;
-use reqwest_retry::{send_retry_reqwest_default, SendRetry};
+use reqwest_retry::{
+    send_retry_reqwest_default, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS,
+};
 use serde::Serialize;
 use tokio::{fs, io};
 use tokio_util::codec;
@@ -41,9 +43,19 @@ impl BlobUploader {
         };
 
         // Check if the file already exists before uploading
-        let head = self.client.head(url.clone()).send_retry_default().await?;
-        if head.status() == reqwest::StatusCode::OK {
-            return Ok(head);
+        if let Ok(head) = self
+            .client
+            .head(url.clone())
+            .send_retry(
+                vec![reqwest::StatusCode::NOT_FOUND],
+                DEFAULT_RETRY_PERIOD,
+                MAX_RETRY_ATTEMPTS,
+            )
+            .await
+        {
+            if head.status() == reqwest::StatusCode::OK {
+                return Ok(head);
+            }
         }
 
         let content_length = format!("{}", file_len);
