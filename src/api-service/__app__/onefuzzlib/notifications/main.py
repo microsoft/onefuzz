@@ -112,7 +112,6 @@ def new_files(container: Container, filename: str) -> None:
 
     notifications = get_notifications(container)
     if notifications:
-        logging.info("notifications for %s %s %s", container, filename, notifications)
         done = []
         for notification in notifications:
             # ignore duplicate configurations
