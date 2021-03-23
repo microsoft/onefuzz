@@ -747,12 +747,13 @@ class TestOnefuzz:
         seen_errors = False
         seen_stop = False
         for entry in logs:
+            message = entry.get("message", "")
             if not seen_stop:
-                if self.stop_log_marker in entry.get("message", ""):
+                if self.stop_log_marker in message:
                     seen_stop = True
                 continue
 
-            if self.start_log_marker in entry.get("message", ""):
+            if self.start_log_marker in message:
                 break
 
             # ignore logging.info coming from Azure Functions
@@ -764,6 +765,15 @@ class TestOnefuzz:
             if (
                 entry.get("severityLevel") == 2
                 and entry.get("sdkVersion") == "rust:0.1.5"
+            ):
+                continue
+
+            # ignore resource not found warnings from azure-functions layer,
+            # which relate to azure-retry issues
+            if (
+                message.startswith("Client-Request-ID=")
+                and "ResourceNotFound" in message
+                and entry.get("sdkVersion", "").startswith("azurefunctions")
             ):
                 continue
 
