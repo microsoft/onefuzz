@@ -154,6 +154,28 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Job Id",
                     "type": "string"
                 },
+                "minimized_stack": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack",
+                    "type": "array"
+                },
+                "minimized_stack_function_names": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Names",
+                    "type": "array"
+                },
+                "minimized_stack_function_names_sha256": {
+                    "title": "Minimized Stack Function Names Sha256",
+                    "type": "string"
+                },
+                "minimized_stack_sha256": {
+                    "title": "Minimized Stack Sha256",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -1234,6 +1256,28 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "minimized_stack": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack",
+                    "type": "array"
+                },
+                "minimized_stack_function_names": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Names",
+                    "type": "array"
+                },
+                "minimized_stack_function_names_sha256": {
+                    "title": "Minimized Stack Function Names Sha256",
+                    "type": "string"
+                },
+                "minimized_stack_sha256": {
+                    "title": "Minimized Stack Sha256",
                     "type": "string"
                 },
                 "scariness_description": {
@@ -4596,6 +4640,28 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "job_id": {
                     "format": "uuid",
                     "title": "Job Id",
+                    "type": "string"
+                },
+                "minimized_stack": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack",
+                    "type": "array"
+                },
+                "minimized_stack_function_names": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Names",
+                    "type": "array"
+                },
+                "minimized_stack_function_names_sha256": {
+                    "title": "Minimized Stack Function Names Sha256",
+                    "type": "string"
+                },
+                "minimized_stack_sha256": {
+                    "title": "Minimized Stack Sha256",
                     "type": "string"
                 },
                 "scariness_description": {

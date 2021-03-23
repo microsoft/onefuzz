@@ -250,6 +250,10 @@ class Report(BaseModel):
     job_id: UUID
     scariness_score: Optional[int]
     scariness_description: Optional[str]
+    minimized_stack: Optional[List[str]]
+    minimized_stack_sha256: Optional[str]
+    minimized_stack_function_names: Optional[List[str]]
+    minimized_stack_function_names_sha256: Optional[str]
 
 
 class NoReproReport(BaseModel):
