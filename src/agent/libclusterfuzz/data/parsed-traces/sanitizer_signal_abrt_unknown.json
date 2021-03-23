@@ -43,20 +43,16 @@
   ],
   "minimized_stack_details": [
     {
-      "line": "#0 0x7f24b70be417 in gsignal",
-      "address": 139795666560023,
-      "module_path": "gsignal"
-    },
-    {
-      "line": "#1 0x7f24b70c0019 in abort",
-      "address": 139795666567193,
-      "module_path": "abort"
-    },
-    {
-      "line": "#2 0x7f24b70b6bd6 in libc.so.6",
-      "address": 139795666529238,
-      "module_path": "libc.so.6"
+      "line": "#4 0x512b27 in LLVMFuzzerTestOneInput",
+      "address": 5319463,
+      "function_name": "LLVMFuzzerTestOneInput"
     }
+  ],
+  "minimized_stack": [
+    "#4 0x512b27 in LLVMFuzzerTestOneInput"
+  ],
+  "minimized_stack_function_names": [
+    "LLVMFuzzerTestOneInput"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

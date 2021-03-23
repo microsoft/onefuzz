@@ -12,12 +12,5 @@
       "address": 2936234631,
       "module_path": "strlen"
     }
-  ],
-  "minimized_stack_details": [
-    {
-      "line": "#0 0xaf036287 in strlen",
-      "address": 2936234631,
-      "module_path": "strlen"
-    }
   ]
 }

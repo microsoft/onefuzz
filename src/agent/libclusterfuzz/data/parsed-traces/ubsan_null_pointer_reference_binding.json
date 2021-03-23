@@ -103,12 +103,12 @@
   ],
   "full_stack_names": [
     "operator[]",
-    "woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*)",
+    "woff2::ConvertWOFF2ToTTF",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -133,8 +133,8 @@
     }
   ],
   "minimized_stack": [
-    "woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*)",
-    "convert_woff2ttf_fuzzer.cc"
+    "#1 0x455bd8 in woff2::ConvertWOFF2ToTTF(unsigned char const*, unsigned long, woff2::WOFF2Out*) /src/woff2/src/woff2_dec.cc:1302",
+    "#2 0x4557a3 in LLVMFuzzerTestOneInput /src/woff2/src/convert_woff2ttf_fuzzer.cc:11:3"
   ],
   "minimized_stack_function_names": [
     "woff2::ConvertWOFF2ToTTF",

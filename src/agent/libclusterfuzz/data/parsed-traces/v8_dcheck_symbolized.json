@@ -14,7 +14,7 @@
     }
   ],
   "full_stack_names": [
-    "v8::base::OS::Abort()"
+    "v8::base::OS::Abort"
   ],
   "scariness_score": 10,
   "scariness_description": "signal"

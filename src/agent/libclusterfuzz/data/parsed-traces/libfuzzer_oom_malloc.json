@@ -65,10 +65,10 @@
     }
   ],
   "full_stack_names": [
-    "operator new(unsigned long)",
-    "fuzzer::Fuzzer::InitializeTraceState()",
-    "fuzzer::Fuzzer::Fuzzer(int (*)(unsigned char const*, unsigned long), fuzzer::MutationDispatcher&, fuzzer::Fuzzer::FuzzingOptions)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "operator new",
+    "fuzzer::Fuzzer::InitializeTraceState",
+    "fuzzer::Fuzzer::Fuzzer",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main"
   ],
@@ -84,7 +84,7 @@
     }
   ],
   "minimized_stack": [
-    "main"
+    "#4 0x915a48 in main /src/llvm/lib/Fuzzer/FuzzerMain.cpp:21:10"
   ],
   "minimized_stack_function_names": [
     "main"

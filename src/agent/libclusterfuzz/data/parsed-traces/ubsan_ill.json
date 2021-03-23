@@ -107,14 +107,14 @@
     }
   ],
   "full_stack_names": [
-    "boom_internal()",
-    "boom_intermediate()",
-    "boom()",
+    "boom_internal",
+    "boom_intermediate",
+    "boom",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main"
   ],
@@ -157,10 +157,10 @@
     }
   ],
   "minimized_stack": [
-    "boom_internal()",
-    "boom_intermediate()",
-    "boom()",
-    "wasm-code.cc"
+    "#1 0x4f6b78 in boom_internal() v8/test/fuzzer/wasm-code.cc:76:7",
+    "#2 0x4f6c08 in boom_intermediate() v8/test/fuzzer/wasm-code.cc:83:14",
+    "#3 0x4f6c38 in boom() v8/test/fuzzer/wasm-code.cc:87:7",
+    "#4 0x4f6cd3 in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-code.cc:100:6"
   ],
   "minimized_stack_function_names": [
     "boom_internal",

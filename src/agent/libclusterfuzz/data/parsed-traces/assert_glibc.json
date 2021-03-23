@@ -143,11 +143,6 @@
   ],
   "minimized_stack_details": [
     {
-      "line": "#0 0x7faed4ef2bd6 in libc.so.6",
-      "address": 140388873481174,
-      "module_path": "libc.so.6"
-    },
-    {
       "line": "#4 0x550d27 in DuplicateRecordAndInsertInterval /src/libchewing/src/tree.c:860:5",
       "address": 5573927,
       "function_name": "DuplicateRecordAndInsertInterval",
@@ -230,15 +225,15 @@
     }
   ],
   "minimized_stack": [
-    "DuplicateRecordAndInsertInterval",
-    "DoDpPhrasing",
-    "Phrasing",
-    "CallPhrasing",
-    "chewing_handle_Default",
-    "chewing_handle_Space",
-    "type_single_keystroke",
-    "stress_main",
-    "chewing_default_fuzzer.c"
+    "#4 0x550d27 in DuplicateRecordAndInsertInterval /src/libchewing/src/tree.c:860:5",
+    "#5 0x5490c1 in DoDpPhrasing /src/libchewing/src/tree.c:977:19",
+    "#6 0x5447a9 in Phrasing /src/libchewing/src/tree.c:1019:9",
+    "#7 0x532cfc in CallPhrasing /src/libchewing/src/chewingutil.c:746:5",
+    "#8 0x51ca3c in chewing_handle_Default /src/libchewing/src/chewingio.c:1601:9",
+    "#9 0x51aaaf in chewing_handle_Space /src/libchewing/src/chewingio.c:811:16",
+    "#10 0x50fd2d in type_single_keystroke /src/libchewing/test/testhelper.c:174:13",
+    "#11 0x50ed82 in stress_main /src/libchewing/test/stress.c:222:7",
+    "#12 0x50ce27 in LLVMFuzzerTestOneInput /src/chewing_default_fuzzer.c:12:3"
   ],
   "minimized_stack_function_names": [
     "DuplicateRecordAndInsertInterval",

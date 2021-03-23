@@ -89,11 +89,11 @@
   "full_stack_names": [
     "__sanitizer_print_stack_trace",
     "ExitCallback",
-    "fuzzer::Fuzzer::StaticExitCallback()",
+    "fuzzer::Fuzzer::StaticExitCallback",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::ShuffleAndMinimize(std::vector<std::vector<unsigned char, std::allocator<unsigned char> >, std::allocator<std::vector<unsigned char, std::allocator<unsigned char> > > >*)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::ShuffleAndMinimize",
+    "fuzzer::FuzzerDriver",
     "main"
   ],
   "minimized_stack_details": [
@@ -108,7 +108,7 @@
     }
   ],
   "minimized_stack": [
-    "clearsilver_fuzzer_file.cc"
+    "#3 0x4f6a63 in LLVMFuzzerTestOneInput third_party/clearsilver/clearsilver_fuzzer_file.cc:4:16"
   ],
   "minimized_stack_function_names": [
     "clearsilver_fuzzer_file.cc"

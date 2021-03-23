@@ -114,10 +114,10 @@
     "parse_data",
     "tsm_vte_input",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
-    "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
-    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
-    "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__libc_start_main",
     "_start"
@@ -161,10 +161,10 @@
     }
   ],
   "minimized_stack": [
-    "tsm_screen_tab_left",
-    "parse_data",
-    "tsm_vte_input",
-    "libtsm_fuzzer.c"
+    "#0 0x434f6d in tsm_screen_tab_left /src/libtsm/src/tsm/tsm-screen.c:1321:8",
+    "#1 0x438eb7 in parse_data /src/libtsm/src/tsm/tsm-vte.c:0:3",
+    "#2 0x438b19 in tsm_vte_input /src/libtsm/src/tsm/tsm-vte.c:0:4",
+    "#3 0x42e3ad in LLVMFuzzerTestOneInput /src/libtsm_fuzzer.c:44:3"
   ],
   "minimized_stack_function_names": [
     "tsm_screen_tab_left",
