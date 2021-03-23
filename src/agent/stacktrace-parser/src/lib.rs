@@ -40,7 +40,7 @@ pub struct StackEntry {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct CrashLog {
-    pub text: String,
+    pub text: Option<String>,
     pub sanitizer: String,
     pub summary: String,
     pub fault_type: String,
@@ -121,7 +121,7 @@ fn filter_funcs(entry: &StackEntry, stack_filter: &RegexSet) -> Option<StackEntr
 
 impl CrashLog {
     pub fn new(
-        text: String,
+        text: Option<String>,
         summary: String,
         sanitizer: String,
         fault_type: String,
@@ -184,7 +184,7 @@ impl CrashLog {
         let stack = parse_call_stack(&text).unwrap_or_default();
         let (scariness_score, scariness_description) = parse_scariness(&text);
         Self::new(
-            text,
+             Some(text),
             summary,
             sanitizer,
             fault_type,
