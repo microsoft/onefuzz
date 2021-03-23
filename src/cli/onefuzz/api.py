@@ -848,6 +848,7 @@ class Tasks(Endpoint):
         preserve_existing_outputs: bool = False,
         colocate: bool = False,
         report_list: Optional[List[str]] = None,
+        minimized_stack_depth: Optional[int] = None,
     ) -> models.Task:
         """
         Create a task
@@ -912,6 +913,7 @@ class Tasks(Endpoint):
                 wait_for_files=task_wait_for_files,
                 report_list=report_list,
                 preserve_existing_outputs=preserve_existing_outputs,
+                minimized_stack_depth=minimized_stack_depth,
             ),
         )
 
