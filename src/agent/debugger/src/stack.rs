@@ -341,7 +341,7 @@ mod test {
 
         // Hard coded hash constant is what we want to ensure
         // the hash function is relatively stable.
-        assert_eq!(stack.stable_hash(), 7581155446307191472);
+        assert_eq!(stack.stable_hash(), 13075142555051297168);
     }
 
     #[test]
