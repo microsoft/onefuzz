@@ -106,6 +106,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_timeout,
             TaskFeature.check_retry_count,
             TaskFeature.check_fuzzer_help,
+            TaskFeature.minimized_stack_depth,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -378,6 +379,7 @@ TASK_DEFINITIONS = {
             TaskFeature.check_asan_log,
             TaskFeature.check_debugger,
             TaskFeature.check_retry_count,
+            TaskFeature.minimized_stack_depth,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -424,6 +426,7 @@ TASK_DEFINITIONS = {
             TaskFeature.check_debugger,
             TaskFeature.check_retry_count,
             TaskFeature.report_list,
+            TaskFeature.minimized_stack_depth,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -487,6 +490,7 @@ TASK_DEFINITIONS = {
             TaskFeature.check_fuzzer_help,
             TaskFeature.check_retry_count,
             TaskFeature.report_list,
+            TaskFeature.minimized_stack_depth,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
