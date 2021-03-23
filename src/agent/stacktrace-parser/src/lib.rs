@@ -184,7 +184,7 @@ impl CrashLog {
         let stack = parse_call_stack(&text).unwrap_or_default();
         let (scariness_score, scariness_description) = parse_scariness(&text);
         Self::new(
-             Some(text),
+            Some(text),
             summary,
             sanitizer,
             fault_type,
