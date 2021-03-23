@@ -300,22 +300,33 @@ class Client:
                 service_principal_type="Application",
                 app_id=app.app_id,
             )
-            try:
-                client.service_principals.create(service_principal_params)
-            except GraphErrorException as err:
-                # work around timing issue when creating service principal
-                # https://github.com/Azure/azure-cli/issues/14767
-                if (
-                    "service principal being created must in the local tenant"
-                    not in str(err)
-                ):
-                    raise err
-                logging.warning(
-                    "creating service principal failed with an error that occurs "
-                    "due to AAD race conditions.  retrying after delay"
-                )
-                time.sleep(60)
-                client.service_principals.create(service_principal_params)
+
+            def try_sp_create() -> None:
+                error: Optional[Exception] = None
+                for _ in range(10):
+                    try:
+                        client.service_principals.create(service_principal_params)
+                        return
+                    except GraphErrorException as err:
+                        # work around timing issue when creating service principal
+                        # https://github.com/Azure/azure-cli/issues/14767
+                        if (
+                            "service principal being created must in the local tenant"
+                            not in str(err)
+                        ):
+                            raise err
+                    logging.warning(
+                        "creating service principal failed with an error that occurs "
+                        "due to AAD race conditions"
+                    )
+                    time.sleep(60)
+                if error is None:
+                    raise Exception("service principal creation failed")
+                else:
+                    raise error
+
+            try_sp_create()
+
         else:
             app = existing[0]
             existing_role_values = [app_role.value for app_role in app.app_roles]
