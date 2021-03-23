@@ -208,7 +208,7 @@ impl CrashReport {
             minimized_stack_function_names: crash_log.minimized_stack_function_names,
             minimized_stack_function_names_sha256,
             call_stack: crash_log.call_stack,
-            asan_log: Some(crash_log.text),
+            asan_log: crash_log.text,
             scariness_score: crash_log.scariness_score,
             scariness_description: crash_log.scariness_description,
             task_id,
