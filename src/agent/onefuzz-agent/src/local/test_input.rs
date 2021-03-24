@@ -11,9 +11,15 @@ use crate::{
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
+use tokio::sync::mpsc::UnboundedSender;
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let context = build_local_context(args, false)?;
+use super::common::UiEvent;
+
+pub async fn run(
+    args: &clap::ArgMatches<'_>,
+    event_sender: Option<UnboundedSender<UiEvent>>,
+) -> Result<()> {
+    let context = build_local_context(args, false, event_sender)?;
 
     let target_exe = value_t!(args, TARGET_EXE, PathBuf)?;
     let target_env = get_cmd_env(CmdType::Target, args)?;

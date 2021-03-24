@@ -4,9 +4,10 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR,
-        DISABLE_CHECK_DEBUGGER, GENERATOR_ENV, GENERATOR_EXE, GENERATOR_OPTIONS, READONLY_INPUTS,
-        RENAME_OUTPUT, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, TOOLS_DIR,
+        get_synced_dirs, CmdType, SyncCountDirMonitor, CHECK_ASAN_LOG, CHECK_RETRY_COUNT,
+        CRASHES_DIR, DISABLE_CHECK_DEBUGGER, GENERATOR_ENV, GENERATOR_EXE, GENERATOR_OPTIONS,
+        READONLY_INPUTS, RENAME_OUTPUT, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
+        TOOLS_DIR,
     },
     tasks::{
         config::CommonConfig,
@@ -15,9 +16,17 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use tokio::sync::mpsc::UnboundedSender;
 
-pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> Result<Config> {
-    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?;
+use super::common::UiEvent;
+
+pub fn build_fuzz_config(
+    args: &clap::ArgMatches<'_>,
+    common: CommonConfig,
+    event_sender: Option<UnboundedSender<UiEvent>>,
+) -> Result<Config> {
+    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?
+        .monitor_count(&event_sender)?;
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_options = get_cmd_arg(CmdType::Target, args);
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -59,9 +68,12 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let context = build_local_context(args, true)?;
-    let config = build_fuzz_config(args, context.common_config.clone())?;
+pub async fn run(
+    args: &clap::ArgMatches<'_>,
+    event_sender: Option<UnboundedSender<UiEvent>>,
+) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone())?;
+    let config = build_fuzz_config(args, context.common_config.clone(), event_sender)?;
     GeneratorTask::new(config).run().await
 }
 

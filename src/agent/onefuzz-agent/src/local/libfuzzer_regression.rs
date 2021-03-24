@@ -4,7 +4,7 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
-        CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR, NO_REPRO_DIR,
+        UiEvent, CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR, NO_REPRO_DIR,
         REGRESSION_REPORTS_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
         TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
@@ -15,6 +15,7 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use tokio::sync::mpsc::UnboundedSender;
 
 const REPORT_NAMES: &str = "report_names";
 
@@ -64,8 +65,11 @@ pub fn build_regression_config(
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let context = build_local_context(args, true)?;
+pub async fn run(
+    args: &clap::ArgMatches<'_>,
+    event_sender: Option<UnboundedSender<UiEvent>>,
+) -> Result<()> {
+    let context = build_local_context(args, true, event_sender)?;
     let config = build_regression_config(args, context.common_config.clone())?;
     LibFuzzerRegressionTask::new(config).run().await
 }
