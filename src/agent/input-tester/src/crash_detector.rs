@@ -9,17 +9,16 @@ use std::{
     fs,
     io::Write,
     path::Path,
-    process::{Command, Output},
+    process::{Command, Output, Stdio},
     time::{Duration, Instant},
 };
 
 use anyhow::Result;
-use coverage::AppCoverageBlocks;
+use coverage::{block::windows::Recorder as BlockCoverageRecorder, cache::ModuleCache};
 use debugger::{
-    debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger},
+    debugger::{BreakpointId, DebugEventHandler, Debugger},
     target::Module,
 };
-use fnv::FnvHashMap;
 use log::{debug, error, trace};
 use win_util::{
     pipe_handle::{pipe, PipeReaderNonBlocking},
@@ -135,18 +134,17 @@ struct CrashDetectorEventHandler<'a> {
     stderr_buffer: Vec<u8>,
     debugger_output: String,
     exceptions: Vec<Exception>,
-    id_to_block: Option<FnvHashMap<BreakpointId, (usize, usize)>>,
-    coverage_map: Option<&'a mut AppCoverageBlocks>,
+    coverage: Option<BlockCoverageRecorder<'a>>,
 }
 
 impl<'a> CrashDetectorEventHandler<'a> {
     pub fn new(
-        coverage_map: Option<&'a mut AppCoverageBlocks>,
         stdout: PipeReaderNonBlocking,
         stderr: PipeReaderNonBlocking,
         ignore_first_chance_exceptions: bool,
         start_time: Instant,
         max_duration: Duration,
+        coverage: Option<BlockCoverageRecorder<'a>>,
     ) -> Self {
         Self {
             start_time,
@@ -160,45 +158,8 @@ impl<'a> CrashDetectorEventHandler<'a> {
             stderr_buffer: vec![],
             debugger_output: String::new(),
             exceptions: vec![],
-            id_to_block: None,
-            coverage_map,
+            coverage,
         }
-    }
-}
-
-/// Register the coverage breakpoints and build a mapping from `BreakpointId` to the pair
-/// (module index, block index).
-///
-/// The debugger passes a `BreakpointId` to the `on_breakpoint` callback - the same id returned
-/// when the breakpoint is registered.
-///
-/// This mapping is convenient so that we do not need to track module load addresses and later
-/// map between breakpoint address and module/rva pairs.
-fn prepare_coverage_breakpoints(
-    debugger: &mut Debugger,
-    coverage_map: &Option<&mut AppCoverageBlocks>,
-) -> Option<FnvHashMap<BreakpointId, (usize, usize)>> {
-    if let Some(coverage_map) = coverage_map {
-        let mut id_to_block = fnv::FnvHashMap::default();
-        for (m, module) in coverage_map.modules().iter().enumerate() {
-            let name = module.name();
-            for (i, block) in module.blocks().iter().enumerate() {
-                // For better performance, we can skip registering breakpoints that have
-                // been hit as we only care about new coverage.
-                if !block.hit() {
-                    let id = debugger.register_breakpoint(
-                        name,
-                        block.rva() as u64,
-                        BreakpointType::OneTime,
-                    );
-
-                    id_to_block.insert(id, (m, i));
-                }
-            }
-        }
-        Some(id_to_block)
-    } else {
-        None
     }
 }
 
@@ -281,10 +242,6 @@ impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
         DBG_EXCEPTION_NOT_HANDLED
     }
 
-    fn on_create_process(&mut self, debugger: &mut Debugger, _module: &Module) {
-        prepare_coverage_breakpoints(debugger, &self.coverage_map);
-    }
-
     fn on_output_debug_string(&mut self, _debugger: &mut Debugger, message: String) {
         self.debugger_output.push_str(&message);
     }
@@ -313,12 +270,29 @@ impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
         }
     }
 
-    fn on_breakpoint(&mut self, _debugger: &mut Debugger, id: BreakpointId) {
-        if let Some(id_to_block) = &self.id_to_block {
-            if let Some(&(mod_idx, block_idx)) = id_to_block.get(&id) {
-                if let Some(coverage_map) = &mut self.coverage_map {
-                    coverage_map.report_block_hit(mod_idx, block_idx);
-                }
+    fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
+        if let Some(coverage) = &mut self.coverage {
+            if let Err(err) = coverage.on_create_process(dbg, module) {
+                error!("error recording coverage on create process: {:?}", err);
+                dbg.quit_debugging();
+            }
+        }
+    }
+
+    fn on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) {
+        if let Some(coverage) = &mut self.coverage {
+            if let Err(err) = coverage.on_load_dll(dbg, module) {
+                error!("error recording coverage on load DLL: {:?}", err);
+                dbg.quit_debugging();
+            }
+        }
+    }
+
+    fn on_breakpoint(&mut self, dbg: &mut Debugger, bp: BreakpointId) {
+        if let Some(coverage) = &mut self.coverage {
+            if let Err(err) = coverage.on_breakpoint(dbg, bp) {
+                error!("error recording coverage on breakpoint: {:?}", err);
+                dbg.quit_debugging();
             }
         }
     }
@@ -326,13 +300,13 @@ impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
 
 /// This function runs the application under a debugger to detect any crashes in
 /// the process or any children processes.
-pub fn test_process(
+pub fn test_process<'a>(
     app_path: impl AsRef<OsStr>,
     args: &[impl AsRef<OsStr>],
     env: &HashMap<String, String>,
     max_duration: Duration,
     ignore_first_chance_exceptions: bool,
-    coverage_map: Option<&mut AppCoverageBlocks>,
+    cache: Option<&'a mut ModuleCache>,
 ) -> Result<DebuggerResult> {
     debug!("Running: {}", logging::command_invocation(&app_path, args));
 
@@ -351,14 +325,15 @@ pub fn test_process(
         command.env(k, v);
     }
 
+    let recorder = cache.map(BlockCoverageRecorder::new);
     let start_time = Instant::now();
     let mut event_handler = CrashDetectorEventHandler::new(
-        coverage_map,
         stdout_reader,
         stderr_reader,
         ignore_first_chance_exceptions,
         start_time,
         max_duration,
+        recorder,
     );
     let (mut debugger, mut child) = Debugger::init(command, &mut event_handler)?;
     debugger.run(&mut event_handler)?;

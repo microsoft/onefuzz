@@ -348,6 +348,12 @@ def build_task_config(
             else True
         )
 
+    if TaskFeature.report_list in definition.features:
+        config.report_list = task_config.task.report_list
+
+    if TaskFeature.minimized_stack_depth in definition.features:
+        config.minimized_stack_depth = task_config.task.minimized_stack_depth
+
     if TaskFeature.expect_crash_on_failure in definition.features:
         config.expect_crash_on_failure = (
             task_config.task.expect_crash_on_failure

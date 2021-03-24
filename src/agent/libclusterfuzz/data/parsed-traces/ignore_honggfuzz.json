@@ -1,0 +1,246 @@
+{
+  "text": "AddressSanitizer:DEADLYSIGNAL\n=================================================================\n==3921205==ERROR: AddressSanitizer: SEGV on unknown address (pc 0x55f2fda19db0 bp 0x7fff42342520 sp 0x7fff42342500 T0)\n==3921205==The signal is caused by a READ memory access.\n==3921205==Hint: this fault was caused by a dereference of a high value address (see register values below).  Dissassemble the provided pc to learn which register was used.\nSCARINESS: 20 (wild-addr-read)\n    #0 0x55f2fda19db0 in HF_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:17:26\n    #1 0x55f2fda19d8c in __wrap_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:146:12\n    #2 0x55f2fd41dfc6 in function1 file1.c:486:12\n    #3 0x55f2fd3392b1 in function2 file2.c:349:12\n    #4 0x55f2fd4593b5 in function3 file3.c:906:21\n    #5 0x55f2fd21672b in LLVMFuzzerTestOneInput /proc/self/cwd/fuzzer/fuzzer.cc:10:16\n    #6 0x55f2fda1a7c8 in HonggfuzzRunOneInput /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:60:15\n    #7 0x55f2fda1a713 in HonggfuzzRunFromFile /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:99:5\n    #8 0x55f2fda1a5e7 in HonggfuzzMain /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:109:16\n    #8 0x55f2fda1a7b8 in main /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:124:12\n    #10 0x7f147a0e6bbc in __libc_start_main\n    #11 0x55f2fd165488 in _start src/sysdeps/x86_64/start.S:108\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: SEGV (/mnt/scratch0/clusterfuzz/bot/builds/path_to_the-fuzzer_77651789446b3c3a04b9f492ff141f003d437347/revisions/some-fuzzer+0xe28db0)\n==3921205==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: SEGV (/mnt/scratch0/clusterfuzz/bot/builds/path_to_the-fuzzer_77651789446b3c3a04b9f492ff141f003d437347/revisions/some-fuzzer+0xe28db0)",
+  "fault_type": "SEGV",
+  "call_stack": [
+    "#0 0x55f2fda19db0 in HF_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:17:26",
+    "#1 0x55f2fda19d8c in __wrap_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:146:12",
+    "#2 0x55f2fd41dfc6 in function1 file1.c:486:12",
+    "#3 0x55f2fd3392b1 in function2 file2.c:349:12",
+    "#4 0x55f2fd4593b5 in function3 file3.c:906:21",
+    "#5 0x55f2fd21672b in LLVMFuzzerTestOneInput /proc/self/cwd/fuzzer/fuzzer.cc:10:16",
+    "#6 0x55f2fda1a7c8 in HonggfuzzRunOneInput /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:60:15",
+    "#7 0x55f2fda1a713 in HonggfuzzRunFromFile /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:99:5",
+    "#8 0x55f2fda1a5e7 in HonggfuzzMain /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:109:16",
+    "#8 0x55f2fda1a7b8 in main /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:124:12",
+    "#10 0x7f147a0e6bbc in __libc_start_main",
+    "#11 0x55f2fd165488 in _start src/sysdeps/x86_64/start.S:108"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x55f2fda19db0 in HF_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:17:26",
+      "address": 94502125673904,
+      "function_name": "HF_strcmp",
+      "function_offset": 26,
+      "source_file_name": "memorycmp.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
+      "source_file_line": 17
+    },
+    {
+      "line": "#1 0x55f2fda19d8c in __wrap_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:146:12",
+      "address": 94502125673868,
+      "function_name": "__wrap_strcmp",
+      "function_offset": 12,
+      "source_file_name": "memorycmp.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
+      "source_file_line": 146
+    },
+    {
+      "line": "#2 0x55f2fd41dfc6 in function1 file1.c:486:12",
+      "address": 94502119399366,
+      "function_name": "function1",
+      "function_offset": 12,
+      "source_file_name": "file1.c",
+      "source_file_path": "file1.c",
+      "source_file_line": 486
+    },
+    {
+      "line": "#3 0x55f2fd3392b1 in function2 file2.c:349:12",
+      "address": 94502118462129,
+      "function_name": "function2",
+      "function_offset": 12,
+      "source_file_name": "file2.c",
+      "source_file_path": "file2.c",
+      "source_file_line": 349
+    },
+    {
+      "line": "#4 0x55f2fd4593b5 in function3 file3.c:906:21",
+      "address": 94502119642037,
+      "function_name": "function3",
+      "function_offset": 21,
+      "source_file_name": "file3.c",
+      "source_file_path": "file3.c",
+      "source_file_line": 906
+    },
+    {
+      "line": "#5 0x55f2fd21672b in LLVMFuzzerTestOneInput /proc/self/cwd/fuzzer/fuzzer.cc:10:16",
+      "address": 94502117271339,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 16,
+      "source_file_name": "fuzzer.cc",
+      "source_file_path": "/proc/self/cwd/fuzzer/fuzzer.cc",
+      "source_file_line": 10
+    },
+    {
+      "line": "#6 0x55f2fda1a7c8 in HonggfuzzRunOneInput /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:60:15",
+      "address": 94502125676488,
+      "function_name": "HonggfuzzRunOneInput",
+      "function_offset": 15,
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 60
+    },
+    {
+      "line": "#7 0x55f2fda1a713 in HonggfuzzRunFromFile /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:99:5",
+      "address": 94502125676307,
+      "function_name": "HonggfuzzRunFromFile",
+      "function_offset": 5,
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 99
+    },
+    {
+      "line": "#8 0x55f2fda1a5e7 in HonggfuzzMain /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:109:16",
+      "address": 94502125676007,
+      "function_name": "HonggfuzzMain",
+      "function_offset": 16,
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 109
+    },
+    {
+      "line": "#8 0x55f2fda1a7b8 in main /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:124:12",
+      "address": 94502125676472,
+      "function_name": "main",
+      "function_offset": 12,
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 124
+    },
+    {
+      "line": "#10 0x7f147a0e6bbc in __libc_start_main",
+      "address": 139725923838908,
+      "function_name": "__libc_start_main"
+    },
+    {
+      "line": "#11 0x55f2fd165488 in _start src/sysdeps/x86_64/start.S:108",
+      "address": 94502116545672,
+      "function_name": "_start",
+      "source_file_name": "start.S",
+      "source_file_path": "src/sysdeps/x86_64/start.S",
+      "source_file_line": 108
+    }
+  ],
+  "full_stack_names": [
+    "HF_strcmp",
+    "__wrap_strcmp",
+    "function1",
+    "function2",
+    "function3",
+    "LLVMFuzzerTestOneInput",
+    "HonggfuzzRunOneInput",
+    "HonggfuzzRunFromFile",
+    "HonggfuzzMain",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x55f2fda19db0 in HF_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:17:26",
+      "address": 94502125673904,
+      "function_name": "HF_strcmp",
+      "function_offset": 26,
+      "source_file_name": "memorycmp.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
+      "source_file_line": 17
+    },
+    {
+      "line": "#1 0x55f2fda19d8c in __wrap_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:146:12",
+      "address": 94502125673868,
+      "function_name": "__wrap_strcmp",
+      "function_offset": 12,
+      "source_file_name": "memorycmp.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c",
+      "source_file_line": 146
+    },
+    {
+      "line": "#2 0x55f2fd41dfc6 in function1 file1.c:486:12",
+      "address": 94502119399366,
+      "function_name": "function1",
+      "function_offset": 12,
+      "source_file_name": "file1.c",
+      "source_file_path": "file1.c",
+      "source_file_line": 486
+    },
+    {
+      "line": "#3 0x55f2fd3392b1 in function2 file2.c:349:12",
+      "address": 94502118462129,
+      "function_name": "function2",
+      "function_offset": 12,
+      "source_file_name": "file2.c",
+      "source_file_path": "file2.c",
+      "source_file_line": 349
+    },
+    {
+      "line": "#4 0x55f2fd4593b5 in function3 file3.c:906:21",
+      "address": 94502119642037,
+      "function_name": "function3",
+      "function_offset": 21,
+      "source_file_name": "file3.c",
+      "source_file_path": "file3.c",
+      "source_file_line": 906
+    },
+    {
+      "line": "#5 0x55f2fd21672b in LLVMFuzzerTestOneInput /proc/self/cwd/fuzzer/fuzzer.cc:10:16",
+      "address": 94502117271339,
+      "function_name": "fuzzer.cc",
+      "function_offset": 16,
+      "source_file_name": "fuzzer.cc",
+      "source_file_path": "/proc/self/cwd/fuzzer/fuzzer.cc",
+      "source_file_line": 10
+    },
+    {
+      "line": "#6 0x55f2fda1a7c8 in HonggfuzzRunOneInput /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:60:15",
+      "address": 94502125676488,
+      "function_name": "HonggfuzzRunOneInput",
+      "function_offset": 15,
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 60
+    },
+    {
+      "line": "#7 0x55f2fda1a713 in HonggfuzzRunFromFile /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:99:5",
+      "address": 94502125676307,
+      "function_name": "HonggfuzzRunFromFile",
+      "function_offset": 5,
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 99
+    },
+    {
+      "line": "#8 0x55f2fda1a5e7 in HonggfuzzMain /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:109:16",
+      "address": 94502125676007,
+      "function_name": "HonggfuzzMain",
+      "function_offset": 16,
+      "source_file_name": "persistent.c",
+      "source_file_path": "/proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c",
+      "source_file_line": 109
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x55f2fda19db0 in HF_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:17:26",
+    "#1 0x55f2fda19d8c in __wrap_strcmp /proc/self/cwd/third_party/honggfuzz/libhfuzz/memorycmp.c:146:12",
+    "#2 0x55f2fd41dfc6 in function1 file1.c:486:12",
+    "#3 0x55f2fd3392b1 in function2 file2.c:349:12",
+    "#4 0x55f2fd4593b5 in function3 file3.c:906:21",
+    "#5 0x55f2fd21672b in LLVMFuzzerTestOneInput /proc/self/cwd/fuzzer/fuzzer.cc:10:16",
+    "#6 0x55f2fda1a7c8 in HonggfuzzRunOneInput /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:60:15",
+    "#7 0x55f2fda1a713 in HonggfuzzRunFromFile /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:99:5",
+    "#8 0x55f2fda1a5e7 in HonggfuzzMain /proc/self/cwd/third_party/honggfuzz/libhfuzz/persistent.c:109:16"
+  ],
+  "minimized_stack_function_names": [
+    "HF_strcmp",
+    "__wrap_strcmp",
+    "function1",
+    "function2",
+    "function3",
+    "fuzzer.cc",
+    "HonggfuzzRunOneInput",
+    "HonggfuzzRunFromFile",
+    "HonggfuzzMain"
+  ],
+  "scariness_score": 20,
+  "scariness_description": "wild-addr-read"
+}

@@ -59,7 +59,39 @@ class Libfuzzer(Command):
         colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = True,
+        minimized_stack_depth: Optional[int] = None,
     ) -> None:
+
+        regression_containers = [
+            (ContainerType.setup, containers[ContainerType.setup]),
+            (ContainerType.crashes, containers[ContainerType.crashes]),
+            (ContainerType.unique_reports, containers[ContainerType.unique_reports]),
+            (
+                ContainerType.regression_reports,
+                containers[ContainerType.regression_reports],
+            ),
+        ]
+
+        self.logger.info("creating libfuzzer_regression task")
+        regression_task = self.onefuzz.tasks.create(
+            job.job_id,
+            TaskType.libfuzzer_regression,
+            target_exe,
+            regression_containers,
+            pool_name=pool_name,
+            duration=duration,
+            vm_count=1,
+            reboot_after_setup=reboot_after_setup,
+            target_options=target_options,
+            target_env=target_env,
+            tags=tags,
+            target_timeout=crash_report_timeout,
+            check_retry_count=check_retry_count,
+            check_fuzzer_help=check_fuzzer_help,
+            debug=debug,
+            colocate=colocate_all_tasks or colocate_secondary_tasks,
+            minimized_stack_depth=minimized_stack_depth,
+        )
 
         fuzzer_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
@@ -92,7 +124,7 @@ class Libfuzzer(Command):
             expect_crash_on_failure=expect_crash_on_failure,
         )
 
-        prereq_tasks = [fuzzer_task.task_id]
+        prereq_tasks = [fuzzer_task.task_id, regression_task.task_id]
 
         coverage_containers = [
             (ContainerType.setup, containers[ContainerType.setup]),
@@ -145,6 +177,7 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
+            minimized_stack_depth=minimized_stack_depth,
         )
 
     def basic(
@@ -178,6 +211,7 @@ class Libfuzzer(Command):
         colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = True,
+        minimized_stack_depth: Optional[int] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -219,6 +253,7 @@ class Libfuzzer(Command):
             ContainerType.no_repro,
             ContainerType.coverage,
             ContainerType.unique_inputs,
+            ContainerType.regression_reports,
         )
 
         if existing_inputs:
@@ -257,6 +292,7 @@ class Libfuzzer(Command):
             colocate_secondary_tasks=colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
+            minimized_stack_depth=minimized_stack_depth,
         )
 
         self.logger.info("done creating tasks")

@@ -7,7 +7,7 @@ use crate::{
             build_local_context, monitor_file_urls, wait_for_dir, DirectoryMonitorQueue,
             ANALYZER_EXE, COVERAGE_DIR, UNIQUE_REPORTS_DIR,
         },
-        generic_analysis::build_analysis_config,
+        generic_analysis::{build_analysis_config, build_shared_args as build_analysis_args},
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
         libfuzzer_crash_report::{build_report_config, build_shared_args as build_crash_args},
         libfuzzer_fuzz::{build_fuzz_config, build_shared_args as build_fuzz_args},
@@ -33,7 +33,7 @@ pub async fn run(
     event_sender: Option<UnboundedSender<UiEvent>>,
 ) -> Result<()> {
     let mut task_handles = vec![];
-    let context = build_local_context(args)?;
+    let context = build_local_context(args, true)?;
     let fuzz_config = build_fuzz_config(args, context.common_config.clone())?;
     if let Some(event_sender) = event_sender.clone() {
         task_handles.append(&mut monitor_file_urls(
@@ -162,6 +162,7 @@ pub fn args(name: &'static str) -> App<'static, 'static> {
     for args in &[
         build_fuzz_args(),
         build_crash_args(),
+        build_analysis_args(false),
         build_coverage_args(true),
     ] {
         for arg in args {

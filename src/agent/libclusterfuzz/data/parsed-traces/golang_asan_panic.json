@@ -1,0 +1,62 @@
+{
+  "text": "panic: asn1: string not valid UTF-8\n\ngoroutine 17 [running, locked to thread]:\ngithub.com/dvyukov/go-fuzz-corpus/asn1.Fuzz(0x603000009100, 0x16, 0x16, 0x7ffd132f5368)\n  /src/go/packages/src/github.com/dvyukov/go-fuzz-corpus/asn1/asn1.go:46 +0x994\nmain.LLVMFuzzerTestOneInput(0x603000009100, 0x16, 0x9d2410)\n  github.com/dvyukov/go-fuzz-corpus/asn1/go.fuzz.main/main.go:35 +0x66\nmain._cgoexpwrap_0a73695ed89a_LLVMFuzzerTestOneInput(0x603000009100, 0x16, 0x27a5b0)\n  _cgo_gotypes.go:64 +0x37\n==42108== ERROR: libFuzzer: deadly signal\n    #0 0x49f071 in __sanitizer_print_stack_trace /src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp:86:3\n    #1 0x56236d in fuzzer::PrintStackTrace() /src/libfuzzer/FuzzerUtil.cpp:205:5\n    #2 0x511cae in fuzzer::Fuzzer::CrashCallback() /src/libfuzzer/FuzzerLoop.cpp:232:3\n    #3 0x7faa7c80b38f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1138f)\n    #4 0x5c8a90 in runtime.raise runtime/sys_linux_amd64.s:149\n\nNOTE: libFuzzer has rudimentary signal handlers.\n      Combine libFuzzer with AddressSanitizer or similar for better crash reports.\nSUMMARY: libFuzzer: deadly signal\n==42108==WARNING: ASan is ignoring requested __asan_handle_no_return: stack top: 0x7ffd132f9000; bottom 0x10c00015b000; size: 0x6f3d1319e000 (122308104151040)\nFalse positive error reports may follow\nFor details see https://github.com/google/sanitizers/issues/189\n",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: deadly signal",
+  "fault_type": "deadly signal",
+  "call_stack": [
+    "#0 0x49f071 in __sanitizer_print_stack_trace /src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp:86:3",
+    "#1 0x56236d in fuzzer::PrintStackTrace() /src/libfuzzer/FuzzerUtil.cpp:205:5",
+    "#2 0x511cae in fuzzer::Fuzzer::CrashCallback() /src/libfuzzer/FuzzerLoop.cpp:232:3",
+    "#3 0x7faa7c80b38f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1138f)",
+    "#4 0x5c8a90 in runtime.raise runtime/sys_linux_amd64.s:149"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x49f071 in __sanitizer_print_stack_trace /src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp:86:3",
+      "address": 4845681,
+      "function_name": "__sanitizer_print_stack_trace",
+      "function_offset": 3,
+      "source_file_name": "asan_stack.cpp",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp",
+      "source_file_line": 86
+    },
+    {
+      "line": "#1 0x56236d in fuzzer::PrintStackTrace() /src/libfuzzer/FuzzerUtil.cpp:205:5",
+      "address": 5645165,
+      "function_name": "fuzzer::PrintStackTrace()",
+      "function_offset": 5,
+      "source_file_name": "FuzzerUtil.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerUtil.cpp",
+      "source_file_line": 205
+    },
+    {
+      "line": "#2 0x511cae in fuzzer::Fuzzer::CrashCallback() /src/libfuzzer/FuzzerLoop.cpp:232:3",
+      "address": 5315758,
+      "function_name": "fuzzer::Fuzzer::CrashCallback()",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 232
+    },
+    {
+      "line": "#3 0x7faa7c80b38f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1138f)",
+      "address": 140370209977231,
+      "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
+      "module_offset": 70543
+    },
+    {
+      "line": "#4 0x5c8a90 in runtime.raise runtime/sys_linux_amd64.s:149",
+      "address": 6064784,
+      "function_name": "runtime.raise",
+      "source_file_name": "sys_linux_amd64.s",
+      "source_file_path": "runtime/sys_linux_amd64.s",
+      "source_file_line": 149
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::CrashCallback",
+    "runtime.raise"
+  ]
+}

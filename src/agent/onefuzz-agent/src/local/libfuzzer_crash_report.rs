@@ -50,6 +50,7 @@ pub fn build_report_config(
         target_timeout,
         check_retry_count,
         check_fuzzer_help,
+        minimized_stack_depth: None,
         input_queue,
         check_queue,
         crashes,
@@ -62,7 +63,7 @@ pub fn build_report_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let context = build_local_context(args)?;
+    let context = build_local_context(args, true)?;
     let config = build_report_config(args, None, context.common_config.clone())?;
     ReportTask::new(config).managed_run().await
 }

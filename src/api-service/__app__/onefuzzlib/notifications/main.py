@@ -10,12 +10,18 @@ from uuid import UUID
 from memoization import cached
 from onefuzztypes import models
 from onefuzztypes.enums import ErrorCode, TaskState
-from onefuzztypes.events import EventCrashReported, EventFileAdded
+from onefuzztypes.events import (
+    EventCrashReported,
+    EventFileAdded,
+    EventRegressionReported,
+)
 from onefuzztypes.models import (
     ADOTemplate,
     Error,
     GithubIssueTemplate,
     NotificationTemplate,
+    RegressionReport,
+    Report,
     Result,
     TeamsTemplate,
 )
@@ -26,7 +32,7 @@ from ..azure.queue import send_message
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import ORMMixin
-from ..reports import get_report
+from ..reports import get_report_or_regression
 from ..tasks.config import get_input_container_queues
 from ..tasks.main import Task
 from .ado import notify_ado
@@ -102,11 +108,10 @@ def get_queue_tasks() -> Sequence[Tuple[Task, Sequence[str]]]:
 
 
 def new_files(container: Container, filename: str) -> None:
-    report = get_report(container, filename)
+    report = get_report_or_regression(container, filename)
 
     notifications = get_notifications(container)
     if notifications:
-        logging.info("notifications for %s %s %s", container, filename, notifications)
         done = []
         for notification in notifications:
             # ignore duplicate configurations
@@ -134,9 +139,15 @@ def new_files(container: Container, filename: str) -> None:
             )
             send_message(task.task_id, bytes(url, "utf-8"), StorageType.corpus)
 
-    if report:
+    if isinstance(report, Report):
         send_event(
             EventCrashReported(report=report, container=container, filename=filename)
+        )
+    elif isinstance(report, RegressionReport):
+        send_event(
+            EventRegressionReported(
+                regression_report=report, container=container, filename=filename
+            )
         )
     else:
         send_event(EventFileAdded(container=container, filename=filename))

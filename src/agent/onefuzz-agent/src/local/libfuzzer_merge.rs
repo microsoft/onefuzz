@@ -45,7 +45,7 @@ pub fn build_merge_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let context = build_local_context(args)?;
+    let context = build_local_context(args, true)?;
     let config = build_merge_config(args, None, context.common_config.clone())?;
     spawn(std::sync::Arc::new(config)).await
 }

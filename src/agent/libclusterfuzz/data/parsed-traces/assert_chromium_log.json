@@ -1,0 +1,139 @@
+{
+  "text": "Command: ['/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-asan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-428862/base_json_correctness_fuzzer', '-max_len=9683', '-timeout=3595', '-rss_limit_mb=1024', '-max_total_time=2350', '-print_final_stats=1', '/mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases-disk/temp/new', '/mnt/scratch0/clusterfuzz/bot/inputs/fuzzers/libfuzzer/libfuzzer_data/base_json_correctness_fuzzer']\nBot: clusterfuzz-linux-pre-0381\nTime ran: 0.165543\n\nINFO: Seed: 2687657031\nINFO: Loaded 0 modules (0 guards):\nLoading corpus dir: /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases-disk/temp/new\nLoading corpus dir: /mnt/scratch0/clusterfuzz/bot/inputs/fuzzers/libfuzzer/libfuzzer_data/base_json_correctness_fuzzer\n#0\tREAD units: 413\n#413\tINITED cov: 987 bits: 2488 indir: 33 corp: 317/58Kb exec/s: 0 rss: 67Mb\n[1101/111812:FATAL:correctness_fuzzer.cc(51)] Assert failed: parsed_output == double_parsed_output. Parser/Writer mismatch.\nInput=\"\\\"trueGGu)u\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019(\\\\u0019\\\\u00199\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0000\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019uuuuuuuuuuuuuuuuuuuuuuuur;GyGGGGGGGGGGGGGGGGGuuuuuuuuuuuuuuuuur;GyGGGGGGGGGGGGGGGGGGyGGGGGGGGGGGGGGGGGGGGGGGGGKGGGGG\\\"\"\nOutput=\"\\\"trueGGu)u\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019(\\\\u0019\\\\u00199\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019\\\\u0019uuuuuuuuuuuuuuuuuuuuuuuur;GyGGGGGGGGGGGGGGGGGuuuuuuuuuuuuuuuuur;GyGGGGGGGGGGGGGGGGGGyGGGGGGGGGGGGGGGGGGGGGGGGGKGGGGG\\\"\"\n#0 0x00000046bef1 __interceptor_backtrace\n#1 0x000000579d06 base::debug::StackTrace::StackTrace()\n#2 0x000000536e6c logging::LogMessage::~LogMessage()\n#3 0x0000004f3cb6 LLVMFuzzerTestOneInput\n#4 0x00000050eef6 fuzzer::Fuzzer::ExecuteCallback()\n#5 0x00000050f3a0 fuzzer::Fuzzer::RunOne()\n#6 0x00000051105f fuzzer::Fuzzer::MutateAndTestOne()\n#7 0x000000511498 fuzzer::Fuzzer::Loop()\n#8 0x0000004f8606 fuzzer::FuzzerDriver()\n#9 0x000000515b99 main\n#10 0x7f4873ae0f45 __libc_start_main\n#11 0x00000042081d <unknown>\n\nASAN:DEADLYSIGNAL\n=================================================================\n==11335==ERROR: AddressSanitizer: ABRT on unknown address 0x03e900002c47 (pc 0x7f4873af5c37 bp 0x7ffc18a25410 sp 0x7ffc18a252d8 T0)\nSCARINESS: 10 (signal)\n    #0 0x7f4873af5c36 in gsignal /build/eglibc-oGUzwX/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56\n    #1 0x5374e5 in logging::LogMessage::~LogMessage() base/logging.cc:748:7\n    #2 0x4f3cb5 in LLVMFuzzerTestOneInput base/json/correctness_fuzzer.cc:51:3\n    #3 0x50eef5 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:515:13\n    #4 0x50f39f in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:469:3\n    #5 0x51105e in fuzzer::Fuzzer::MutateAndTestOne() third_party/libFuzzer/src/FuzzerLoop.cpp:701:30\n    #6 0x511497 in fuzzer::Fuzzer::Loop() third_party/libFuzzer/src/FuzzerLoop.cpp:734:5\n    #7 0x4f8605 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:524:5\n    #8 0x515b98 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10\n    #9 0x7f4873ae0f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287\n\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ABRT /build/eglibc-oGUzwX/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56 in gsignal\n==11335==ABORTING\nMS: 3 ChangeBinInt-InsertByte-InsertRepeatedBytes-; base unit: f5c4b4d152d846bfc80035b822d47d9b5b233734\n0x22,0x74,0x72,0x75,0x65,0x47,0x47,0x75,0x29,0x75,0x19,0x19,0x19,0x19,0x19,0x19,0x19,0x19,0x19,0x19,0x19,0x28,0x19,0x19,0x39,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x19,0x19,0x19,0x19,0x19,0x19,0x19,0x19,0x19,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x72,0x3b,0x47,0x79,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x75,0x72,0x3b,0x47,0x79,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x79,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x47,0x4b,0x47,0x47,0x47,0x47,0x47,0x22,0x62,\n\\\"trueGGu)u\\x19\\x19\\x19\\x19\\x19\\x19\\x19\\x19\\x19\\x19\\x19(\\x19\\x199\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x19\\x19\\x19\\x19\\x19\\x19\\x19\\x19\\x19uuuuuuuuuuuuuuuuuuuuuuuur;GyGGGGGGGGGGGGGGGGGuuuuuuuuuuuuuuuuur;GyGGGGGGGGGGGGGGGGGGyGGGGGGGGGGGGGGGGGGGGGGGGGKGGGGG\\\"b\nartifact_prefix='./'; Test unit written to ./crash-a3f8c1ab8aa1486c8f0631eba08eece7a73bbbf8\nBase64: InRydWVHR3UpdRkZGRkZGRkZGRkZKBkZOQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGRkZGRkZGRkZdXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1cjtHeUdHR0dHR0dHR0dHR0dHR0dHdXV1dXV1dXV1dXV1dXV1dXVyO0d5R0dHR0dHR0dHR0dHR0dHR0dHeUdHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dLR0dHR0ciYg==\nstat::number_of_executed_units: 521\nstat::average_exec_per_sec:     0\nstat::new_units_added:          0\nstat::slowest_unit_time_sec:    0\nstat::peak_rss_mb:              67\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT /build/eglibc-oGUzwX/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56 in gsignal",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7f4873af5c36 in gsignal /build/eglibc-oGUzwX/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56",
+    "#1 0x5374e5 in logging::LogMessage::~LogMessage() base/logging.cc:748:7",
+    "#2 0x4f3cb5 in LLVMFuzzerTestOneInput base/json/correctness_fuzzer.cc:51:3",
+    "#3 0x50eef5 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:515:13",
+    "#4 0x50f39f in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:469:3",
+    "#5 0x51105e in fuzzer::Fuzzer::MutateAndTestOne() third_party/libFuzzer/src/FuzzerLoop.cpp:701:30",
+    "#6 0x511497 in fuzzer::Fuzzer::Loop() third_party/libFuzzer/src/FuzzerLoop.cpp:734:5",
+    "#7 0x4f8605 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:524:5",
+    "#8 0x515b98 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+    "#9 0x7f4873ae0f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f4873af5c36 in gsignal /build/eglibc-oGUzwX/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56",
+      "address": 139949155245110,
+      "function_name": "gsignal",
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/eglibc-oGUzwX/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 56
+    },
+    {
+      "line": "#1 0x5374e5 in logging::LogMessage::~LogMessage() base/logging.cc:748:7",
+      "address": 5469413,
+      "function_name": "logging::LogMessage::~LogMessage()",
+      "function_offset": 7,
+      "source_file_name": "logging.cc",
+      "source_file_path": "base/logging.cc",
+      "source_file_line": 748
+    },
+    {
+      "line": "#2 0x4f3cb5 in LLVMFuzzerTestOneInput base/json/correctness_fuzzer.cc:51:3",
+      "address": 5192885,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 3,
+      "source_file_name": "correctness_fuzzer.cc",
+      "source_file_path": "base/json/correctness_fuzzer.cc",
+      "source_file_line": 51
+    },
+    {
+      "line": "#3 0x50eef5 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:515:13",
+      "address": 5304053,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 515
+    },
+    {
+      "line": "#4 0x50f39f in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:469:3",
+      "address": 5305247,
+      "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 469
+    },
+    {
+      "line": "#5 0x51105e in fuzzer::Fuzzer::MutateAndTestOne() third_party/libFuzzer/src/FuzzerLoop.cpp:701:30",
+      "address": 5312606,
+      "function_name": "fuzzer::Fuzzer::MutateAndTestOne()",
+      "function_offset": 30,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 701
+    },
+    {
+      "line": "#6 0x511497 in fuzzer::Fuzzer::Loop() third_party/libFuzzer/src/FuzzerLoop.cpp:734:5",
+      "address": 5313687,
+      "function_name": "fuzzer::Fuzzer::Loop()",
+      "function_offset": 5,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 734
+    },
+    {
+      "line": "#7 0x4f8605 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:524:5",
+      "address": 5211653,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 5,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 524
+    },
+    {
+      "line": "#8 0x515b98 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+      "address": 5331864,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#9 0x7f4873ae0f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287",
+      "address": 139949155159876,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c",
+      "source_file_line": 287
+    }
+  ],
+  "full_stack_names": [
+    "gsignal",
+    "logging::LogMessage::~LogMessage",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::Fuzzer::MutateAndTestOne",
+    "fuzzer::Fuzzer::Loop",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#2 0x4f3cb5 in LLVMFuzzerTestOneInput base/json/correctness_fuzzer.cc:51:3",
+      "address": 5192885,
+      "function_name": "correctness_fuzzer.cc",
+      "function_offset": 3,
+      "source_file_name": "correctness_fuzzer.cc",
+      "source_file_path": "base/json/correctness_fuzzer.cc",
+      "source_file_line": 51
+    }
+  ],
+  "minimized_stack": [
+    "#2 0x4f3cb5 in LLVMFuzzerTestOneInput base/json/correctness_fuzzer.cc:51:3"
+  ],
+  "minimized_stack_function_names": [
+    "correctness_fuzzer.cc"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

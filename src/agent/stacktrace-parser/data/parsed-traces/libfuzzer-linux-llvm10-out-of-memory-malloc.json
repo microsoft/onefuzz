@@ -1,0 +1,167 @@
+{
+  "text": "INFO: Seed: 3452367435\nINFO: Loaded 1 modules   (12 inline 8-bit counters): 12 [0x7a1eb0, 0x7a1ebc),\nINFO: Loaded 1 PC tables (12 PCs): 12 [0x566fd8,0x567098),\n./fuzz.exe: Running 1 inputs 1 time(s) each.\nRunning: good.txt\n==25300== ERROR: libFuzzer: out-of-memory (malloc(100000000))\n   To change the out-of-memory limit use -rss_limit_mb=<N>\n\n    #0 0x526011 in __sanitizer_print_stack_trace (/home/user/src/onefuzz/src/agent/fuzz.exe+0x526011)\n    #1 0x471168 in fuzzer::PrintStackTrace() (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471168)\n    #2 0x455495 in fuzzer::Fuzzer::HandleMalloc(unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x455495)\n    #3 0x4553aa in fuzzer::MallocHook(void const volatile*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4553aa)\n    #4 0x52c337 in __sanitizer::RunMallocHooks(void const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x52c337)\n    #5 0x4a69f1 in __asan::Allocator::Allocate(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType, bool) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4a69f1)\n    #6 0x4a61c3 in __asan::asan_malloc(unsigned long, __sanitizer::BufferedStackTrace*) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4a61c3)\n    #7 0x51d53b in malloc (/home/user/src/onefuzz/src/agent/fuzz.exe+0x51d53b)\n    #8 0x54cc24 in LLVMFuzzerTestOneInput /home/user/src/onefuzz/src/agent/fuzz.c:9:18\n    #9 0x457971 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x457971)\n    #10 0x4430e2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4430e2)\n    #11 0x448b96 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x448b96)\n    #12 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)\n    #13 0x7f6b3d630b96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310\n    #14 0x41d7a9 in _start (/home/user/src/onefuzz/src/agent/fuzz.exe+0x41d7a9)\n\nSUMMARY: libFuzzer: out-of-memory",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: out-of-memory",
+  "fault_type": "out-of-memory",
+  "call_stack": [
+    "#0 0x526011 in __sanitizer_print_stack_trace (/home/user/src/onefuzz/src/agent/fuzz.exe+0x526011)",
+    "#1 0x471168 in fuzzer::PrintStackTrace() (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471168)",
+    "#2 0x455495 in fuzzer::Fuzzer::HandleMalloc(unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x455495)",
+    "#3 0x4553aa in fuzzer::MallocHook(void const volatile*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4553aa)",
+    "#4 0x52c337 in __sanitizer::RunMallocHooks(void const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x52c337)",
+    "#5 0x4a69f1 in __asan::Allocator::Allocate(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType, bool) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4a69f1)",
+    "#6 0x4a61c3 in __asan::asan_malloc(unsigned long, __sanitizer::BufferedStackTrace*) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4a61c3)",
+    "#7 0x51d53b in malloc (/home/user/src/onefuzz/src/agent/fuzz.exe+0x51d53b)",
+    "#8 0x54cc24 in LLVMFuzzerTestOneInput /home/user/src/onefuzz/src/agent/fuzz.c:9:18",
+    "#9 0x457971 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x457971)",
+    "#10 0x4430e2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4430e2)",
+    "#11 0x448b96 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x448b96)",
+    "#12 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)",
+    "#13 0x7f6b3d630b96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310",
+    "#14 0x41d7a9 in _start (/home/user/src/onefuzz/src/agent/fuzz.exe+0x41d7a9)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x526011 in __sanitizer_print_stack_trace (/home/user/src/onefuzz/src/agent/fuzz.exe+0x526011)",
+      "address": 5398545,
+      "function_name": "__sanitizer_print_stack_trace",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 5398545
+    },
+    {
+      "line": "#1 0x471168 in fuzzer::PrintStackTrace() (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471168)",
+      "address": 4657512,
+      "function_name": "fuzzer::PrintStackTrace()",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4657512
+    },
+    {
+      "line": "#2 0x455495 in fuzzer::Fuzzer::HandleMalloc(unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x455495)",
+      "address": 4543637,
+      "function_name": "fuzzer::Fuzzer::HandleMalloc(unsigned long)",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4543637
+    },
+    {
+      "line": "#3 0x4553aa in fuzzer::MallocHook(void const volatile*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4553aa)",
+      "address": 4543402,
+      "function_name": "fuzzer::MallocHook(void const volatile*, unsigned long)",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4543402
+    },
+    {
+      "line": "#4 0x52c337 in __sanitizer::RunMallocHooks(void const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x52c337)",
+      "address": 5423927,
+      "function_name": "__sanitizer::RunMallocHooks(void const*, unsigned long)",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 5423927
+    },
+    {
+      "line": "#5 0x4a69f1 in __asan::Allocator::Allocate(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType, bool) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4a69f1)",
+      "address": 4876785,
+      "function_name": "__asan::Allocator::Allocate(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType, bool)",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4876785
+    },
+    {
+      "line": "#6 0x4a61c3 in __asan::asan_malloc(unsigned long, __sanitizer::BufferedStackTrace*) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4a61c3)",
+      "address": 4874691,
+      "function_name": "__asan::asan_malloc(unsigned long, __sanitizer::BufferedStackTrace*)",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4874691
+    },
+    {
+      "line": "#7 0x51d53b in malloc (/home/user/src/onefuzz/src/agent/fuzz.exe+0x51d53b)",
+      "address": 5363003,
+      "function_name": "malloc",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 5363003
+    },
+    {
+      "line": "#8 0x54cc24 in LLVMFuzzerTestOneInput /home/user/src/onefuzz/src/agent/fuzz.c:9:18",
+      "address": 5557284,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 18,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/user/src/onefuzz/src/agent/fuzz.c",
+      "source_file_line": 9
+    },
+    {
+      "line": "#9 0x457971 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x457971)",
+      "address": 4553073,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4553073
+    },
+    {
+      "line": "#10 0x4430e2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x4430e2)",
+      "address": 4468962,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4468962
+    },
+    {
+      "line": "#11 0x448b96 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x448b96)",
+      "address": 4492182,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4492182
+    },
+    {
+      "line": "#12 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)",
+      "address": 4659282,
+      "function_name": "main",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4659282
+    },
+    {
+      "line": "#13 0x7f6b3d630b96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310",
+      "address": 140098568129430,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c",
+      "source_file_line": 310
+    },
+    {
+      "line": "#14 0x41d7a9 in _start (/home/user/src/onefuzz/src/agent/fuzz.exe+0x41d7a9)",
+      "address": 4315049,
+      "function_name": "_start",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4315049
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::HandleMalloc",
+    "fuzzer::MallocHook",
+    "__sanitizer::RunMallocHooks",
+    "__asan::Allocator::Allocate",
+    "__asan::asan_malloc",
+    "malloc",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#8 0x54cc24 in LLVMFuzzerTestOneInput /home/user/src/onefuzz/src/agent/fuzz.c:9:18",
+      "address": 5557284,
+      "function_name": "fuzz.c",
+      "function_offset": 18,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/user/src/onefuzz/src/agent/fuzz.c",
+      "source_file_line": 9
+    }
+  ],
+  "minimized_stack": [
+    "#8 0x54cc24 in LLVMFuzzerTestOneInput /home/user/src/onefuzz/src/agent/fuzz.c:9:18"
+  ],
+  "minimized_stack_function_names": [
+    "fuzz.c"
+  ]
+}

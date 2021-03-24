@@ -18,7 +18,7 @@ use tokio::task::spawn;
 use uuid::Uuid;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let context = build_local_context(args)?;
+    let context = build_local_context(args, true)?;
     let fuzz_config = build_fuzz_config(args, context.common_config.clone())?;
     let crash_dir = fuzz_config
         .crashes
