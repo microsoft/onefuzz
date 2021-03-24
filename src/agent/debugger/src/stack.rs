@@ -13,7 +13,7 @@ use serde::{Serialize, Serializer};
 use win_util::memory;
 use winapi::{shared::minwindef::DWORD, um::winnt::HANDLE};
 
-use crate::dbghelp::{self, DebugHelpGuard, ModuleInfo, SymLineInfo};
+use crate::dbghelp::{self, DebugHelpGuard, ModuleInfo, SymInfo, SymLineInfo};
 
 const UNKNOWN_MODULE: &str = "<UnknownModule>";
 
@@ -39,12 +39,18 @@ impl From<&SymLineInfo> for FileInfo {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq)]
+pub struct DebugStackFrameSymbol {
+    pub name: String,
+    pub offset: u64,
+}
+
+#[derive(Clone, Debug, Hash, PartialEq)]
 pub enum DebugStackFrame {
     Frame {
         module_name: String,
         module_offset: u64,
-        symbol: Option<String>,
-        symbol_location: Option<FileInfo>,
+        symbol: Option<DebugStackFrameSymbol>,
+        file_info: Option<FileInfo>,
     },
     CorruptFrame,
 }
@@ -53,14 +59,18 @@ impl DebugStackFrame {
     pub fn new(
         module_name: String,
         module_offset: u64,
-        symbol: Option<String>,
-        symbol_location: Option<FileInfo>,
+        symbol_info: Option<SymInfo>,
+        file_info: Option<FileInfo>,
     ) -> DebugStackFrame {
+        let symbol = symbol_info.map(|x| DebugStackFrameSymbol {
+            name: x.symbol().to_owned(),
+            offset: x.displacement(),
+        });
         DebugStackFrame::Frame {
             module_name,
             module_offset,
             symbol,
-            symbol_location,
+            file_info,
         }
     }
 
@@ -83,19 +93,22 @@ impl Display for DebugStackFrame {
                 module_name,
                 module_offset,
                 symbol,
-                symbol_location,
-            } => {
-                if let Some(symbol) = symbol {
-                    write!(formatter, "{}!{}", module_name, symbol)?;
-                } else {
-                    write!(formatter, "{}", module_name)?;
+                file_info,
+            } => match (symbol, file_info) {
+                (Some(symbol), Some(file_info)) => write!(
+                    formatter,
+                    "{}!{}+0x{:x} {}",
+                    module_name, symbol.name, symbol.offset, file_info
+                ),
+                (Some(symbol), None) => write!(
+                    formatter,
+                    "{}!{}+0x{:x}",
+                    module_name, symbol.name, symbol.offset
+                ),
+                _ => {
+                    write!(formatter, "{}+0x{:x}", module_name, module_offset)
                 }
-                if let Some(symbol_location) = &symbol_location {
-                    write!(formatter, " {}", symbol_location)
-                } else {
-                    write!(formatter, "+0x{:x}", module_offset)
-                }
-            }
+            },
             DebugStackFrame::CorruptFrame => formatter.write_str("<corrupt frame(s)>"),
         }
     }
@@ -167,23 +180,16 @@ fn get_function_location_in_module(
     if let Ok(sym_info) =
         dbghlp.sym_from_inline_context(process_handle, program_counter, inline_context)
     {
-        let sym_line_info =
-            dbghlp.sym_get_file_and_line(process_handle, program_counter, inline_context);
+        let file_info =
+            match dbghlp.sym_get_file_and_line(process_handle, program_counter, inline_context) {
+                // Don't use file/line for these magic line numbers.
+                Ok(ref sym_line_info) if !sym_line_info.is_fake_line_number() => {
+                    Some(sym_line_info.into())
+                }
+                _ => None,
+            };
 
-        let symbol_location = match sym_line_info {
-            // Don't use file/line for these magic line numbers.
-            Ok(ref sym_line_info) if !sym_line_info.is_fake_line_number() => {
-                Some(sym_line_info.into())
-            }
-            _ => None,
-        };
-
-        DebugStackFrame::new(
-            module_name,
-            module_offset,
-            Some(sym_info.symbol().to_owned()),
-            symbol_location,
-        )
+        DebugStackFrame::new(module_name, module_offset, Some(sym_info), file_info)
     } else {
         // No function - assume we have an exe with no pdb (so no exports). This should be
         // common, so we won't report an error. We do want a nice(ish) location though.
@@ -204,7 +210,7 @@ fn get_frame_with_unknown_module(process_handle: HANDLE, program_counter: u64) -
                     .checked_sub(mi.base_address())
                     .expect("logic error computing fake rva");
 
-                DebugStackFrame::new(UNKNOWN_MODULE.into(), module_offset, None, None)
+                DebugStackFrame::new(UNKNOWN_MODULE.to_owned(), module_offset, None, None)
             } else {
                 DebugStackFrame::corrupt_frame()
             }

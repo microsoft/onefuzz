@@ -152,20 +152,20 @@ impl<'a> Tester<'a> {
                         module_name,
                         module_offset,
                         symbol,
-                        symbol_location,
+                        file_info,
                     } => StackEntry {
                         line: f.to_string(),
-                        function_name: symbol.to_owned(),
+                        function_name: symbol.as_ref().map(|x| x.name.to_owned()),
+                        function_offset: symbol.as_ref().map(|x| x.offset),
                         address: None,
                         module_offset: Some(*module_offset),
                         module_path: Some(module_name.to_owned()),
-                        source_file_line: symbol_location.as_ref().map(|x| x.line.into()),
-                        source_file_name: symbol_location
+                        source_file_line: file_info.as_ref().map(|x| x.line.into()),
+                        source_file_name: file_info
                             .as_ref()
                             .map(|x| x.file.rsplit_terminator('\\').next().map(|x| x.to_owned()))
                             .flatten(),
-                        source_file_path: symbol_location.as_ref().map(|x| x.file.to_string()),
-                        function_offset: None,
+                        source_file_path: file_info.as_ref().map(|x| x.file.to_string()),
                     },
                 })
                 .collect();
