@@ -777,7 +777,10 @@ class TestOnefuzz:
             ):
                 continue
 
-            self.logger.error("error log: %s", entry)
+            if message is None:
+                self.logger.error("error log: %s", entry)
+            else:
+                self.logger.error("error log: %s", message)
             seen_errors = True
 
         if seen_errors:
