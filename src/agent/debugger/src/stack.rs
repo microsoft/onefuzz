@@ -39,53 +39,12 @@ impl From<&SymLineInfo> for FileInfo {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq)]
-pub struct DebugFunctionLocation {
-    /// File/line if available
-    ///
-    /// Should be stable - ASLR and JIT should not change source position,
-    /// but some precision is lost.
-    ///
-    /// We mitigate this loss of precision by collecting multiple samples
-    /// for the same hash bucket.
-    pub file_info: Option<FileInfo>,
-
-    /// Offset if line information not available.
-    pub displacement: u64,
-}
-
-impl DebugFunctionLocation {
-    pub fn new(displacement: u64) -> Self {
-        DebugFunctionLocation {
-            displacement,
-            file_info: None,
-        }
-    }
-
-    pub fn new_with_file_info(displacement: u64, file_info: FileInfo) -> Self {
-        DebugFunctionLocation {
-            displacement,
-            file_info: Some(file_info),
-        }
-    }
-}
-
-impl Display for DebugFunctionLocation {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-        if let Some(file_info) = &self.file_info {
-            write!(formatter, "{}", file_info)?;
-        } else {
-            write!(formatter, "0x{:x}", self.displacement)?;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug, Hash, PartialEq)]
 pub enum DebugStackFrame {
     Frame {
         module_name: String,
-        location: DebugFunctionLocation,
+        module_offset: u64,
         symbol: Option<String>,
+        symbol_location: Option<FileInfo>,
     },
     CorruptFrame,
 }
@@ -93,13 +52,15 @@ pub enum DebugStackFrame {
 impl DebugStackFrame {
     pub fn new(
         module_name: String,
-        location: DebugFunctionLocation,
+        module_offset: u64,
         symbol: Option<String>,
+        symbol_location: Option<FileInfo>,
     ) -> DebugStackFrame {
         DebugStackFrame::Frame {
             module_name,
-            location,
+            module_offset,
             symbol,
+            symbol_location,
         }
     }
 
@@ -120,18 +81,19 @@ impl Display for DebugStackFrame {
         match self {
             DebugStackFrame::Frame {
                 module_name,
-                location,
+                module_offset,
                 symbol,
+                symbol_location,
             } => {
                 if let Some(symbol) = symbol {
                     write!(formatter, "{}!{}", module_name, symbol)?;
                 } else {
                     write!(formatter, "{}", module_name)?;
                 }
-                if let Some(file_info) = &location.file_info {
-                    write!(formatter, " {}", file_info)
+                if let Some(symbol_location) = &symbol_location {
+                    write!(formatter, " {}", symbol_location)
                 } else {
-                    write!(formatter, "+0x{:x}", location.displacement)
+                    write!(formatter, "+0x{:x}", module_offset)
                 }
             }
             DebugStackFrame::CorruptFrame => formatter.write_str("<corrupt frame(s)>"),
@@ -200,6 +162,7 @@ fn get_function_location_in_module(
     inline_context: DWORD,
 ) -> DebugStackFrame {
     let module_name = module_info.name().to_string_lossy().to_string();
+    let module_offset = program_counter - module_info.base_address();
 
     if let Ok(sym_info) =
         dbghlp.sym_from_inline_context(process_handle, program_counter, inline_context)
@@ -207,22 +170,24 @@ fn get_function_location_in_module(
         let sym_line_info =
             dbghlp.sym_get_file_and_line(process_handle, program_counter, inline_context);
 
-        let displacement = sym_info.displacement();
-        let location = match sym_line_info {
+        let symbol_location = match sym_line_info {
             // Don't use file/line for these magic line numbers.
             Ok(ref sym_line_info) if !sym_line_info.is_fake_line_number() => {
-                DebugFunctionLocation::new_with_file_info(displacement, sym_line_info.into())
+                Some(sym_line_info.into())
             }
-
-            _ => DebugFunctionLocation::new(displacement),
+            _ => None,
         };
 
-        DebugStackFrame::new(module_name, location, Some(sym_info.symbol().to_owned()))
+        DebugStackFrame::new(
+            module_name,
+            module_offset,
+            Some(sym_info.symbol().to_owned()),
+            symbol_location,
+        )
     } else {
         // No function - assume we have an exe with no pdb (so no exports). This should be
         // common, so we won't report an error. We do want a nice(ish) location though.
-        let location = DebugFunctionLocation::new(program_counter - module_info.base_address());
-        DebugStackFrame::new(module_name, location, None)
+        DebugStackFrame::new(module_name, module_offset, None, None)
     }
 }
 
@@ -235,12 +200,11 @@ fn get_frame_with_unknown_module(process_handle: HANDLE, program_counter: u64) -
     match memory::get_memory_info(process_handle, program_counter) {
         Ok(mi) => {
             if mi.is_executable() {
-                let offset = program_counter
+                let module_offset = program_counter
                     .checked_sub(mi.base_address())
                     .expect("logic error computing fake rva");
 
-                let location = DebugFunctionLocation::new(offset);
-                DebugStackFrame::new(UNKNOWN_MODULE.into(), location, None)
+                DebugStackFrame::new(UNKNOWN_MODULE.into(), module_offset, None, None)
             } else {
                 DebugStackFrame::corrupt_frame()
             }
@@ -306,24 +270,18 @@ mod test {
 
     macro_rules! frame {
         ($module: expr, disp: $location: expr) => {
-            DebugStackFrame::new(
-                $module.to_string(),
-                DebugFunctionLocation::new($location),
-                None,
-            )
+            DebugStackFrame::new($module.to_string(), $location, None, None)
         };
 
         ($module: expr, disp: $location: expr, line: ($file: expr, $line: expr)) => {
             DebugStackFrame::new(
                 $module.to_string(),
-                DebugFunctionLocation::new_with_file_info(
-                    $location,
-                    FileInfo {
-                        file: $file.to_string(),
-                        line: $line,
-                    },
-                ),
+                $location,
                 None,
+                Some(FileInfo {
+                    file: $file.to_string(),
+                    line: $line,
+                }),
             )
         };
     }
@@ -339,7 +297,7 @@ mod test {
 
         // Hard coded hash constant is what we want to ensure
         // the hash function is relatively stable.
-        assert_eq!(stack.stable_hash(), 13075142555051297168);
+        assert_eq!(stack.stable_hash(), 3072338388009340488);
     }
 
     #[test]
