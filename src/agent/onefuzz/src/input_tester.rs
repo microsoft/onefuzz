@@ -11,6 +11,8 @@ use crate::{
 };
 use anyhow::{Error, Result};
 use stacktrace_parser::{CrashLog, StackEntry};
+#[cfg(target_os = "linux")]
+use std::process::Stdio;
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
