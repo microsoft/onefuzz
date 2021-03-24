@@ -155,6 +155,7 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
 
     cmd.kill_on_drop(true)
         .env_remove("RUST_LOG")
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 

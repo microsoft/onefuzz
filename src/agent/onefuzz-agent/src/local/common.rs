@@ -315,10 +315,12 @@ pub fn spawn_file_count_monitor(
                 }
             }
 
-            sender.send(UiEvent::FileCount {
+            if let Err(_) = sender.send(UiEvent::FileCount {
                 dir: dir.clone(),
                 count,
-            })?;
+            }) {
+                return Ok(());
+            }
             delay_for(Duration::from_secs(5)).await;
         }
     })

@@ -1034,6 +1034,7 @@ impl AppVerifierController {
         );
         let child = Command::new(&self.appverif_path)
             .args(args)
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()

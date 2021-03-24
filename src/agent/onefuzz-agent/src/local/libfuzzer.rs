@@ -4,8 +4,8 @@
 use crate::{
     local::{
         common::{
-            build_local_context, monitor_file_urls, wait_for_dir,
-            DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR, UNIQUE_REPORTS_DIR,
+            build_local_context, monitor_file_urls, wait_for_dir, DirectoryMonitorQueue,
+            ANALYZER_EXE, COVERAGE_DIR, UNIQUE_REPORTS_DIR,
         },
         generic_analysis::build_analysis_config,
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
@@ -107,6 +107,21 @@ pub async fn run(
                 ..context.common_config.clone()
             },
         )?;
+
+        task_handles.append(&mut monitor_file_urls(
+            &coverage_config
+                .readonly_inputs
+                .iter()
+                .cloned()
+                .map(|input| input.url.as_file_path())
+                .collect::<Vec<_>>(),
+            event_sender.clone(),
+        ));
+        task_handles.append(&mut monitor_file_urls(
+            &[coverage_config.coverage.clone().url.as_file_path()],
+            event_sender.clone(),
+        ));
+
         let mut coverage = CoverageTask::new(coverage_config);
         let coverage_task = spawn(async move { coverage.managed_run().await });
 

@@ -343,6 +343,7 @@ pub fn test_process(
     let mut command = Command::new(app_path);
     command
         .args(args)
+        .stdin(Stdio::null())
         .stdout(stdout_writer)
         .stderr(stderr_writer);
 

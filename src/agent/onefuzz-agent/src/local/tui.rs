@@ -2,28 +2,24 @@
 // Licensed under the MIT License.
 
 use crate::local::common::UiEvent;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use crossterm::{
     event::{self, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use futures::{StreamExt, TryStreamExt};
-use log::{Level};
+use log::Level;
 use onefuzz::utils::try_wait_all_join_handles;
 use std::{
     cmp::Ordering,
     collections::HashMap,
     io::{self, Stdout, Write},
     path::PathBuf,
+    thread::{self, JoinHandle},
     time::Duration,
 };
-use tokio::{
-    sync::{
-        mpsc::{self, UnboundedSender},
-    },
-    task::JoinHandle,
-};
+use tokio::sync::mpsc;
 use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Corner, Direction, Layout},
@@ -61,20 +57,6 @@ impl From<std::io::Error> for UILoopError {
 const BUFFER_SIZE: usize = 100;
 const TICK_RATE: Duration = Duration::from_millis(250);
 
-pub struct TerminalUi {
-    pub task_events: UnboundedSender<UiEvent>,
-    task_event_receiver: mpsc::UnboundedReceiver<UiEvent>,
-    log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
-}
-
-/// Event driving the refresh of the UI
-#[derive(Debug)]
-enum TerminalEvent {
-    Input(Event),
-    Tick,
-    FileCount { dir: PathBuf, count: usize },
-}
-
 trait TakeAvailable<T> {
     fn take_available(&mut self, size: usize) -> Result<Vec<T>>;
 }
@@ -93,36 +75,117 @@ impl<T: Send + Sync> TakeAvailable<T> for mpsc::UnboundedReceiver<T> {
     }
 }
 
+/// Event driving the refresh of the UI
+#[derive(Debug)]
+enum TerminalEvent {
+    Input(Event),
+    Tick,
+    FileCount { dir: PathBuf, count: usize },
+}
+
+struct UILoopState {
+    pub logs: ArrayDeque<[(Level, String); BUFFER_SIZE], Wrapping>,
+    pub file_count: HashMap<PathBuf, usize>,
+    pub file_count_state: ListState,
+    pub file_monitors: Vec<JoinHandle<Result<()>>>,
+    pub log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
+    pub terminal: Terminal<CrosstermBackend<Stdout>>,
+}
+
+impl UILoopState {
+    fn new(
+        terminal: Terminal<CrosstermBackend<Stdout>>,
+        log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
+    ) -> Self {
+        Self {
+            log_event_receiver,
+            logs: Default::default(),
+            file_count: Default::default(),
+            file_count_state: Default::default(),
+            file_monitors: Default::default(),
+            terminal,
+        }
+    }
+}
+
+pub struct TerminalUi {
+    pub task_events: mpsc::UnboundedSender<UiEvent>,
+    task_event_receiver: mpsc::UnboundedReceiver<UiEvent>,
+    ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
+    ui_event_rx: mpsc::UnboundedReceiver<TerminalEvent>,
+}
+
 impl TerminalUi {
     pub fn init() -> Result<Self> {
         let (task_event_sender, task_event_receiver) = mpsc::unbounded_channel();
-        let (log_event_sender, log_event_receiver) = mpsc::unbounded_channel();
-
-        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-            .format(move |_buf, record| {
-                log_event_sender
-                    .send((record.level(), format!("{}", record.args())))
-                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))
-            })
-            .init();
-
+        let (ui_event_tx, ui_event_rx) = mpsc::unbounded_channel();
         Ok(Self {
             task_events: task_event_sender,
             task_event_receiver,
-            log_event_receiver,
+            ui_event_tx,
+            ui_event_rx,
         })
     }
 
-    async fn read_ui_events(ui_event_tx: UnboundedSender<TerminalEvent>) -> Result<()> {
+    pub async fn run(self) -> Result<()> {
+        enable_raw_mode()?;
+        let mut stdout = io::stdout();
+        execute!(stdout, EnterAlternateScreen)?;
+
+        let backend = CrosstermBackend::new(stdout);
+        let mut terminal = Terminal::new(backend)?;
+        terminal.clear()?;
+        let (log_event_sender, log_event_receiver) = mpsc::unbounded_channel();
+        let initial_state = UILoopState::new(terminal, log_event_receiver);
+
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+            .format(move |_buf, record| {
+                let _r = log_event_sender.send((record.level(), format!("{}", record.args())));
+                Ok(())
+            })
+            .init();
+
+        let tick_event_tx_clone = self.ui_event_tx.clone();
+        let tick_event_handle =
+            tokio::spawn(async { Self::ticking(tick_event_tx_clone).await.context("ticking") });
+
+        let keyboard_ui_event_tx = self.ui_event_tx.clone();
+        let _keyboard_event_handle = Self::read_keyboard_events(keyboard_ui_event_tx);
+
+        let task_event_receiver = self.task_event_receiver;
+        let ui_event_tx = self.ui_event_tx.clone();
+        let external_event_handle =
+            tokio::spawn(Self::read_commands(ui_event_tx, task_event_receiver));
+
+        let ui_loop = tokio::spawn(Self::ui_loop(initial_state, self.ui_event_rx));
+        try_wait_all_join_handles(vec![tick_event_handle, ui_loop, external_event_handle])
+            .await
+            .context("ui_loop")?;
+        Ok(())
+    }
+
+    async fn ticking(ui_event_tx: mpsc::UnboundedSender<TerminalEvent>) -> Result<()> {
         let mut interval = tokio::time::interval(TICK_RATE);
         loop {
             interval.tick().await;
-            ui_event_tx.send (TerminalEvent::Tick)?;
-            if event::poll(Duration::from_millis(0))? {
-                let event = event::read()?;
-                ui_event_tx.send(TerminalEvent::Input(event))?;
+            if let Err(_err) = ui_event_tx.send(TerminalEvent::Tick) {
+                break;
             }
         }
+        Ok(())
+    }
+
+    fn read_keyboard_events(
+        ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
+    ) -> JoinHandle<Result<()>> {
+        thread::spawn(move || loop {
+            if event::poll(Duration::from_secs(1))? {
+                let event = event::read()?;
+                if let Err(_err) = ui_event_tx.send(TerminalEvent::Input(event.into())) {
+                    return Ok(());
+                }
+            }
+        })
     }
 
     async fn read_commands(
@@ -132,7 +195,9 @@ impl TerminalUi {
         loop {
             match external_event_rx.recv().await {
                 Some(UiEvent::FileCount { dir, count }) => {
-                    ui_event_tx.send(TerminalEvent::FileCount { dir, count })?
+                    if let Err(_) = ui_event_tx.send(TerminalEvent::FileCount { dir, count }) {
+                        break;
+                    }
                 }
                 None => break,
             }
@@ -267,11 +332,7 @@ impl TerminalUi {
     async fn on_quit(ui_state: UILoopState) -> Result<UILoopState, UILoopError> {
         let mut terminal = ui_state.terminal;
         disable_raw_mode().map_err(|e| anyhow!("{:?}", e))?;
-        execute!(
-            terminal.backend_mut(),
-            LeaveAlternateScreen
-        )
-        .map_err(|e| anyhow!("{:?}", e))?;
+        execute!(terminal.backend_mut(), LeaveAlternateScreen).map_err(|e| anyhow!("{:?}", e))?;
         terminal.show_cursor()?;
         Err(UILoopError::Exit)
     }
@@ -315,57 +376,6 @@ impl TerminalUi {
         match loop_result {
             Err(UILoopError::Exit) | Ok(_) => Ok(()),
             Err(UILoopError::Anyhow(e)) => Err(e),
-        }
-    }
-
-    pub async fn run(self) -> Result<()> {
-        enable_raw_mode()?;
-        let mut stdout = io::stdout();
-        execute!(stdout, EnterAlternateScreen)?;
-
-        let backend = CrosstermBackend::new(stdout);
-        let mut terminal = Terminal::new(backend)?;
-
-        let (ui_event_tx, ui_event_rx) = mpsc::unbounded_channel();
-        let ui_event_tx_clone = ui_event_tx.clone();
-        let ui_event_handle = tokio::spawn(async {
-            Self::read_ui_events(ui_event_tx_clone)
-                .await?;
-            Ok(())
-        });
-
-        let task_event_receiver = self.task_event_receiver;
-        let external_event_handle =
-            tokio::spawn(Self::read_commands(ui_event_tx, task_event_receiver));
-        terminal.clear()?;
-        let initial_state = UILoopState::new(terminal, self.log_event_receiver);
-        let ui_loop = tokio::spawn(Self::ui_loop(initial_state, ui_event_rx));
-        try_wait_all_join_handles(vec![ui_event_handle, ui_loop, external_event_handle])
-            .await
-    }
-}
-
-struct UILoopState {
-    pub logs: ArrayDeque<[(Level, String); BUFFER_SIZE], Wrapping>,
-    pub file_count: HashMap<PathBuf, usize>,
-    pub file_count_state: ListState,
-    pub file_monitors: Vec<JoinHandle<Result<()>>>,
-    pub log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
-    pub terminal: Terminal<CrosstermBackend<Stdout>>,
-}
-
-impl UILoopState {
-    fn new(
-        terminal: Terminal<CrosstermBackend<Stdout>>,
-        log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
-    ) -> Self {
-        Self {
-            log_event_receiver,
-            logs: Default::default(),
-            file_count: Default::default(),
-            file_count_state: Default::default(),
-            file_monitors: Default::default(),
-            terminal,
         }
     }
 }

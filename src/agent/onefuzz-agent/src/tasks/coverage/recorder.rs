@@ -123,6 +123,7 @@ impl CoverageRecorder {
                 test_input.to_string_lossy(),
                 output.to_string_lossy(),
             ))
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);
@@ -160,6 +161,7 @@ impl CoverageRecorder {
             .arg(cdb_cmd)
             .arg(&self.config.target_exe)
             .arg(test_input)
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);

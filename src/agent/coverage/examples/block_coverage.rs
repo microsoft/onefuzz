@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::path::PathBuf;
+use std::{path::PathBuf, process::Stdio};
 
 use anyhow::Result;
 use structopt::StructOpt;
@@ -56,7 +56,7 @@ fn main() -> Result<()> {
     };
 
     let mut cmd = Command::new(&opt.cmd[0]);
-    cmd.args(&opt.cmd[1..]);
+    cmd.stdin(Stdio::null()).args(&opt.cmd[1..]);
 
     let mut recorder = Recorder::new(filter);
     recorder.record(cmd)?;

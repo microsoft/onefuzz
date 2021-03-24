@@ -3,7 +3,7 @@
 
 use anyhow::Result;
 use clap::{App, SubCommand};
-use onefuzz::utils::try_wait_all_join_handles;
+use tokio::select;
 
 use crate::local::{
     common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
@@ -42,7 +42,14 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     });
 
     let ui_run = tokio::spawn(terminal.run());
-    try_wait_all_join_handles(vec![ui_run, command_run]).await?;
+    select! {
+        ui_result = ui_run => {
+            ui_result??
+        },
+        command_run_result = command_run => {
+            command_run_result??
+        }
+    };
     Ok(())
 }
 

@@ -10,7 +10,7 @@ use crate::{
     process::run_cmd,
 };
 use anyhow::{Error, Result};
-use std::{collections::HashMap, path::Path, time::Duration};
+use std::{collections::HashMap, path::Path, process::Stdio, time::Duration};
 use tempfile::tempdir;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
@@ -173,7 +173,7 @@ impl<'a> Tester<'a> {
         env: HashMap<String, String>,
     ) -> Result<Option<Crash>> {
         let mut cmd = std::process::Command::new(self.exe_path);
-        cmd.args(args);
+        cmd.args(args).stdin(Stdio::null());
         cmd.envs(&env);
 
         let (sender, receiver) = std::sync::mpsc::channel();
