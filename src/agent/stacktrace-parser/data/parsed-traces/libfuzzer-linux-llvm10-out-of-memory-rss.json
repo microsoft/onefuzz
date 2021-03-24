@@ -42,7 +42,7 @@
   ],
   "full_stack_names": [
     "malloc",
-    "operator new(unsigned long)",
+    "operator new",
     "main",
     "__libc_start_main"
   ],
@@ -56,7 +56,7 @@
     }
   ],
   "minimized_stack": [
-    "main"
+    "#2 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)"
   ],
   "minimized_stack_function_names": [
     "main"

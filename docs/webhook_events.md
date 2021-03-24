@@ -154,6 +154,28 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Job Id",
                     "type": "string"
                 },
+                "minimized_stack": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack",
+                    "type": "array"
+                },
+                "minimized_stack_function_names": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Names",
+                    "type": "array"
+                },
+                "minimized_stack_function_names_sha256": {
+                    "title": "Minimized Stack Function Names Sha256",
+                    "type": "string"
+                },
+                "minimized_stack_sha256": {
+                    "title": "Minimized Stack Sha256",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -1241,6 +1263,28 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Job Id",
                     "type": "string"
                 },
+                "minimized_stack": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack",
+                    "type": "array"
+                },
+                "minimized_stack_function_names": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Names",
+                    "type": "array"
+                },
+                "minimized_stack_function_names_sha256": {
+                    "title": "Minimized Stack Function Names Sha256",
+                    "type": "string"
+                },
+                "minimized_stack_sha256": {
+                    "title": "Minimized Stack Sha256",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -1706,6 +1750,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
                 },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
@@ -2197,6 +2245,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -2632,6 +2684,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
+                },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
                     "type": "boolean"
@@ -3040,6 +3096,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
                 },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
@@ -3476,6 +3536,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
                 },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",
@@ -4608,6 +4672,28 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Job Id",
                     "type": "string"
                 },
+                "minimized_stack": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack",
+                    "type": "array"
+                },
+                "minimized_stack_function_names": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Names",
+                    "type": "array"
+                },
+                "minimized_stack_function_names_sha256": {
+                    "title": "Minimized Stack Function Names Sha256",
+                    "type": "string"
+                },
+                "minimized_stack_sha256": {
+                    "title": "Minimized Stack Sha256",
+                    "type": "string"
+                },
                 "scariness_description": {
                     "title": "Scariness Description",
                     "type": "string"
@@ -4791,6 +4877,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
                 },
                 "preserve_existing_outputs": {
                     "title": "Preserve Existing Outputs",

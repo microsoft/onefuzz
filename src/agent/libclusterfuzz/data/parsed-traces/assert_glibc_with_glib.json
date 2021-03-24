@@ -1,0 +1,831 @@
+{
+  "text": "CRITICAL ERROR : gst_vorbis_tag_add: assertion 'g_utf8_validate (tag, -1, NULL)' failed\nUndefinedBehaviorSanitizer:DEADLYSIGNAL\n==1==ERROR: UndefinedBehaviorSanitizer: ABRT on unknown address 0x000000000001 (pc 0x7f15a7835428 bp 0x7f15a537b040 sp 0x7f15a537aef8 T3)\n    #0 0x7f15a7835427 in gsignal /build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54\n    #1 0x7f15a7837029 in abort /build/glibc-9tT8Do/glibc-2.23/stdlib/abort.c:89\n    #2 0x42fa49 in custom_logger /src/gst-ci/fuzzing/gst-discoverer.c:79:5\n    #3 0x7264cc in g_logv /work/glib-2.54.2/glib/gmessages.c:1341:11\n    #4 0x726117 in g_log /work/glib-2.54.2/glib/gmessages.c:1403:3\n    #5 0x5a0a50 in gst_tag_list_from_vorbiscomment /src/gst-plugins-base/gst-libs/gst/tag/gstvorbistag.c:484:7\n    #6 0x50438b in tag_list_from_vorbiscomment_packet /src/gst-plugins-base/ext/ogg/gstoggstream.c:385:10\n    #7 0x502c71 in extract_tags_opus /src/gst-plugins-base/ext/ogg/gstoggstream.c:2108:5\n    #8 0x4f0bd0 in gst_ogg_pad_submit_packet /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1129:5\n    #9 0x4efa99 in gst_ogg_pad_stream_out /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1289:18\n    #10 0x4ee877 in gst_ogg_pad_submit_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:2032:12\n    #11 0x4f203b in gst_ogg_demux_handle_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4547:14\n    #12 0x4f19f2 in gst_ogg_demux_chain /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4626:16\n    #13 0x6270cc in gst_pad_chain_data_unchecked /src/gstreamer/gst/gstpad.c:0:35\n    #14 0x627c69 in gst_pad_push_data /src/gstreamer/gst/gstpad.c:4471:9\n    #15 0x6279a1 in gst_pad_push /src/gstreamer/gst/gstpad.c:4590:9\n    #16 0x45bf43 in stop_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:645:7\n    #17 0x45c2c1 in gst_type_find_element_chain_do_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:979:3\n    #18 0x45ab29 in gst_type_find_element_sink_event /src/gstreamer/plugins/elements/gsttypefindelement.c:702:11\n    #19 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14\n    #20 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9\n    #21 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17\n    #22 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11\n    #23 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5\n    #24 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12\n    #25 0x6253f9 in event_forward_func /src/gstreamer/gst/gstpad.c:2992:19\n    #26 0x625165 in gst_pad_forward /src/gstreamer/gst/gstpad.c:2946:25\n    #27 0x625377 in gst_pad_event_default /src/gstreamer/gst/gstpad.c:3043:5\n    #28 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14\n    #29 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9\n    #30 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17\n    #31 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11\n    #32 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5\n    #33 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12\n    #34 0x5be78c in gst_base_src_loop /src/gstreamer/libs/gst/base/gstbasesrc.c:3002:7\n    #35 0x65a3f1 in gst_task_func /src/gstreamer/gst/gsttask.c:332:5\n    #36 0x752c72 in g_thread_pool_thread_proxy /work/glib-2.54.2/glib/gthreadpool.c:307:15\n    #37 0x751667 in g_thread_proxy /work/glib-2.54.2/glib/gthread.c:784:20\n    #38 0x7f15a7de66b9 in start_thread\n    #39 0x7f15a790682c in clone /build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/x86_64/clone.S:109\n\nUndefinedBehaviorSanitizer can not provide additional info.\nSUMMARY: UndefinedBehaviorSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35427)\n==1==ABORTING\n",
+  "sanitizer": "UndefinedBehaviorSanitizer",
+  "summary": "UndefinedBehaviorSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35427)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7f15a7835427 in gsignal /build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+    "#1 0x7f15a7837029 in abort /build/glibc-9tT8Do/glibc-2.23/stdlib/abort.c:89",
+    "#2 0x42fa49 in custom_logger /src/gst-ci/fuzzing/gst-discoverer.c:79:5",
+    "#3 0x7264cc in g_logv /work/glib-2.54.2/glib/gmessages.c:1341:11",
+    "#4 0x726117 in g_log /work/glib-2.54.2/glib/gmessages.c:1403:3",
+    "#5 0x5a0a50 in gst_tag_list_from_vorbiscomment /src/gst-plugins-base/gst-libs/gst/tag/gstvorbistag.c:484:7",
+    "#6 0x50438b in tag_list_from_vorbiscomment_packet /src/gst-plugins-base/ext/ogg/gstoggstream.c:385:10",
+    "#7 0x502c71 in extract_tags_opus /src/gst-plugins-base/ext/ogg/gstoggstream.c:2108:5",
+    "#8 0x4f0bd0 in gst_ogg_pad_submit_packet /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1129:5",
+    "#9 0x4efa99 in gst_ogg_pad_stream_out /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1289:18",
+    "#10 0x4ee877 in gst_ogg_pad_submit_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:2032:12",
+    "#11 0x4f203b in gst_ogg_demux_handle_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4547:14",
+    "#12 0x4f19f2 in gst_ogg_demux_chain /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4626:16",
+    "#13 0x6270cc in gst_pad_chain_data_unchecked /src/gstreamer/gst/gstpad.c:0:35",
+    "#14 0x627c69 in gst_pad_push_data /src/gstreamer/gst/gstpad.c:4471:9",
+    "#15 0x6279a1 in gst_pad_push /src/gstreamer/gst/gstpad.c:4590:9",
+    "#16 0x45bf43 in stop_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:645:7",
+    "#17 0x45c2c1 in gst_type_find_element_chain_do_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:979:3",
+    "#18 0x45ab29 in gst_type_find_element_sink_event /src/gstreamer/plugins/elements/gsttypefindelement.c:702:11",
+    "#19 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14",
+    "#20 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9",
+    "#21 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17",
+    "#22 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11",
+    "#23 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5",
+    "#24 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12",
+    "#25 0x6253f9 in event_forward_func /src/gstreamer/gst/gstpad.c:2992:19",
+    "#26 0x625165 in gst_pad_forward /src/gstreamer/gst/gstpad.c:2946:25",
+    "#27 0x625377 in gst_pad_event_default /src/gstreamer/gst/gstpad.c:3043:5",
+    "#28 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14",
+    "#29 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9",
+    "#30 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17",
+    "#31 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11",
+    "#32 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5",
+    "#33 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12",
+    "#34 0x5be78c in gst_base_src_loop /src/gstreamer/libs/gst/base/gstbasesrc.c:3002:7",
+    "#35 0x65a3f1 in gst_task_func /src/gstreamer/gst/gsttask.c:332:5",
+    "#36 0x752c72 in g_thread_pool_thread_proxy /work/glib-2.54.2/glib/gthreadpool.c:307:15",
+    "#37 0x751667 in g_thread_proxy /work/glib-2.54.2/glib/gthread.c:784:20",
+    "#38 0x7f15a7de66b9 in start_thread",
+    "#39 0x7f15a790682c in clone /build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/x86_64/clone.S:109"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f15a7835427 in gsignal /build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+      "address": 139730981442599,
+      "function_name": "gsignal",
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
+    },
+    {
+      "line": "#1 0x7f15a7837029 in abort /build/glibc-9tT8Do/glibc-2.23/stdlib/abort.c:89",
+      "address": 139730981449769,
+      "function_name": "abort",
+      "source_file_name": "abort.c",
+      "source_file_path": "/build/glibc-9tT8Do/glibc-2.23/stdlib/abort.c",
+      "source_file_line": 89
+    },
+    {
+      "line": "#2 0x42fa49 in custom_logger /src/gst-ci/fuzzing/gst-discoverer.c:79:5",
+      "address": 4389449,
+      "function_name": "custom_logger",
+      "function_offset": 5,
+      "source_file_name": "gst-discoverer.c",
+      "source_file_path": "/src/gst-ci/fuzzing/gst-discoverer.c",
+      "source_file_line": 79
+    },
+    {
+      "line": "#3 0x7264cc in g_logv /work/glib-2.54.2/glib/gmessages.c:1341:11",
+      "address": 7496908,
+      "function_name": "g_logv",
+      "function_offset": 11,
+      "source_file_name": "gmessages.c",
+      "source_file_path": "/work/glib-2.54.2/glib/gmessages.c",
+      "source_file_line": 1341
+    },
+    {
+      "line": "#4 0x726117 in g_log /work/glib-2.54.2/glib/gmessages.c:1403:3",
+      "address": 7495959,
+      "function_name": "g_log",
+      "function_offset": 3,
+      "source_file_name": "gmessages.c",
+      "source_file_path": "/work/glib-2.54.2/glib/gmessages.c",
+      "source_file_line": 1403
+    },
+    {
+      "line": "#5 0x5a0a50 in gst_tag_list_from_vorbiscomment /src/gst-plugins-base/gst-libs/gst/tag/gstvorbistag.c:484:7",
+      "address": 5900880,
+      "function_name": "gst_tag_list_from_vorbiscomment",
+      "function_offset": 7,
+      "source_file_name": "gstvorbistag.c",
+      "source_file_path": "/src/gst-plugins-base/gst-libs/gst/tag/gstvorbistag.c",
+      "source_file_line": 484
+    },
+    {
+      "line": "#6 0x50438b in tag_list_from_vorbiscomment_packet /src/gst-plugins-base/ext/ogg/gstoggstream.c:385:10",
+      "address": 5260171,
+      "function_name": "tag_list_from_vorbiscomment_packet",
+      "function_offset": 10,
+      "source_file_name": "gstoggstream.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggstream.c",
+      "source_file_line": 385
+    },
+    {
+      "line": "#7 0x502c71 in extract_tags_opus /src/gst-plugins-base/ext/ogg/gstoggstream.c:2108:5",
+      "address": 5254257,
+      "function_name": "extract_tags_opus",
+      "function_offset": 5,
+      "source_file_name": "gstoggstream.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggstream.c",
+      "source_file_line": 2108
+    },
+    {
+      "line": "#8 0x4f0bd0 in gst_ogg_pad_submit_packet /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1129:5",
+      "address": 5180368,
+      "function_name": "gst_ogg_pad_submit_packet",
+      "function_offset": 5,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 1129
+    },
+    {
+      "line": "#9 0x4efa99 in gst_ogg_pad_stream_out /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1289:18",
+      "address": 5175961,
+      "function_name": "gst_ogg_pad_stream_out",
+      "function_offset": 18,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 1289
+    },
+    {
+      "line": "#10 0x4ee877 in gst_ogg_pad_submit_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:2032:12",
+      "address": 5171319,
+      "function_name": "gst_ogg_pad_submit_page",
+      "function_offset": 12,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 2032
+    },
+    {
+      "line": "#11 0x4f203b in gst_ogg_demux_handle_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4547:14",
+      "address": 5185595,
+      "function_name": "gst_ogg_demux_handle_page",
+      "function_offset": 14,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 4547
+    },
+    {
+      "line": "#12 0x4f19f2 in gst_ogg_demux_chain /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4626:16",
+      "address": 5183986,
+      "function_name": "gst_ogg_demux_chain",
+      "function_offset": 16,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 4626
+    },
+    {
+      "line": "#13 0x6270cc in gst_pad_chain_data_unchecked /src/gstreamer/gst/gstpad.c:0:35",
+      "address": 6451404,
+      "function_name": "gst_pad_chain_data_unchecked",
+      "function_offset": 35,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 0
+    },
+    {
+      "line": "#14 0x627c69 in gst_pad_push_data /src/gstreamer/gst/gstpad.c:4471:9",
+      "address": 6454377,
+      "function_name": "gst_pad_push_data",
+      "function_offset": 9,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 4471
+    },
+    {
+      "line": "#15 0x6279a1 in gst_pad_push /src/gstreamer/gst/gstpad.c:4590:9",
+      "address": 6453665,
+      "function_name": "gst_pad_push",
+      "function_offset": 9,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 4590
+    },
+    {
+      "line": "#16 0x45bf43 in stop_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:645:7",
+      "address": 4570947,
+      "function_name": "stop_typefinding",
+      "function_offset": 7,
+      "source_file_name": "gsttypefindelement.c",
+      "source_file_path": "/src/gstreamer/plugins/elements/gsttypefindelement.c",
+      "source_file_line": 645
+    },
+    {
+      "line": "#17 0x45c2c1 in gst_type_find_element_chain_do_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:979:3",
+      "address": 4571841,
+      "function_name": "gst_type_find_element_chain_do_typefinding",
+      "function_offset": 3,
+      "source_file_name": "gsttypefindelement.c",
+      "source_file_path": "/src/gstreamer/plugins/elements/gsttypefindelement.c",
+      "source_file_line": 979
+    },
+    {
+      "line": "#18 0x45ab29 in gst_type_find_element_sink_event /src/gstreamer/plugins/elements/gsttypefindelement.c:702:11",
+      "address": 4565801,
+      "function_name": "gst_type_find_element_sink_event",
+      "function_offset": 11,
+      "source_file_name": "gsttypefindelement.c",
+      "source_file_path": "/src/gstreamer/plugins/elements/gsttypefindelement.c",
+      "source_file_line": 702
+    },
+    {
+      "line": "#19 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14",
+      "address": 6467377,
+      "function_name": "gst_pad_send_event_unchecked",
+      "function_offset": 14,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5633
+    },
+    {
+      "line": "#20 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9",
+      "address": 6465650,
+      "function_name": "gst_pad_push_event_unchecked",
+      "function_offset": 9,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5289
+    },
+    {
+      "line": "#21 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17",
+      "address": 6479599,
+      "function_name": "push_sticky",
+      "function_offset": 17,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3817
+    },
+    {
+      "line": "#22 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11",
+      "address": 6446731,
+      "function_name": "events_foreach",
+      "function_offset": 11,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 604
+    },
+    {
+      "line": "#23 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5",
+      "address": 6450539,
+      "function_name": "check_sticky",
+      "function_offset": 5,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3874
+    },
+    {
+      "line": "#24 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12",
+      "address": 6464185,
+      "function_name": "gst_pad_push_event",
+      "function_offset": 12,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5420
+    },
+    {
+      "line": "#25 0x6253f9 in event_forward_func /src/gstreamer/gst/gstpad.c:2992:19",
+      "address": 6444025,
+      "function_name": "event_forward_func",
+      "function_offset": 19,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 2992
+    },
+    {
+      "line": "#26 0x625165 in gst_pad_forward /src/gstreamer/gst/gstpad.c:2946:25",
+      "address": 6443365,
+      "function_name": "gst_pad_forward",
+      "function_offset": 25,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 2946
+    },
+    {
+      "line": "#27 0x625377 in gst_pad_event_default /src/gstreamer/gst/gstpad.c:3043:5",
+      "address": 6443895,
+      "function_name": "gst_pad_event_default",
+      "function_offset": 5,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3043
+    },
+    {
+      "line": "#28 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14",
+      "address": 6467377,
+      "function_name": "gst_pad_send_event_unchecked",
+      "function_offset": 14,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5633
+    },
+    {
+      "line": "#29 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9",
+      "address": 6465650,
+      "function_name": "gst_pad_push_event_unchecked",
+      "function_offset": 9,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5289
+    },
+    {
+      "line": "#30 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17",
+      "address": 6479599,
+      "function_name": "push_sticky",
+      "function_offset": 17,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3817
+    },
+    {
+      "line": "#31 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11",
+      "address": 6446731,
+      "function_name": "events_foreach",
+      "function_offset": 11,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 604
+    },
+    {
+      "line": "#32 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5",
+      "address": 6450539,
+      "function_name": "check_sticky",
+      "function_offset": 5,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3874
+    },
+    {
+      "line": "#33 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12",
+      "address": 6464185,
+      "function_name": "gst_pad_push_event",
+      "function_offset": 12,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5420
+    },
+    {
+      "line": "#34 0x5be78c in gst_base_src_loop /src/gstreamer/libs/gst/base/gstbasesrc.c:3002:7",
+      "address": 6023052,
+      "function_name": "gst_base_src_loop",
+      "function_offset": 7,
+      "source_file_name": "gstbasesrc.c",
+      "source_file_path": "/src/gstreamer/libs/gst/base/gstbasesrc.c",
+      "source_file_line": 3002
+    },
+    {
+      "line": "#35 0x65a3f1 in gst_task_func /src/gstreamer/gst/gsttask.c:332:5",
+      "address": 6661105,
+      "function_name": "gst_task_func",
+      "function_offset": 5,
+      "source_file_name": "gsttask.c",
+      "source_file_path": "/src/gstreamer/gst/gsttask.c",
+      "source_file_line": 332
+    },
+    {
+      "line": "#36 0x752c72 in g_thread_pool_thread_proxy /work/glib-2.54.2/glib/gthreadpool.c:307:15",
+      "address": 7679090,
+      "function_name": "g_thread_pool_thread_proxy",
+      "function_offset": 15,
+      "source_file_name": "gthreadpool.c",
+      "source_file_path": "/work/glib-2.54.2/glib/gthreadpool.c",
+      "source_file_line": 307
+    },
+    {
+      "line": "#37 0x751667 in g_thread_proxy /work/glib-2.54.2/glib/gthread.c:784:20",
+      "address": 7673447,
+      "function_name": "g_thread_proxy",
+      "function_offset": 20,
+      "source_file_name": "gthread.c",
+      "source_file_path": "/work/glib-2.54.2/glib/gthread.c",
+      "source_file_line": 784
+    },
+    {
+      "line": "#38 0x7f15a7de66b9 in start_thread",
+      "address": 139730987411129,
+      "function_name": "start_thread"
+    },
+    {
+      "line": "#39 0x7f15a790682c in clone /build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/x86_64/clone.S:109",
+      "address": 139730982299692,
+      "function_name": "clone",
+      "source_file_name": "clone.S",
+      "source_file_path": "/build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/x86_64/clone.S",
+      "source_file_line": 109
+    }
+  ],
+  "full_stack_names": [
+    "gsignal",
+    "abort",
+    "custom_logger",
+    "g_logv",
+    "g_log",
+    "gst_tag_list_from_vorbiscomment",
+    "tag_list_from_vorbiscomment_packet",
+    "extract_tags_opus",
+    "gst_ogg_pad_submit_packet",
+    "gst_ogg_pad_stream_out",
+    "gst_ogg_pad_submit_page",
+    "gst_ogg_demux_handle_page",
+    "gst_ogg_demux_chain",
+    "gst_pad_chain_data_unchecked",
+    "gst_pad_push_data",
+    "gst_pad_push",
+    "stop_typefinding",
+    "gst_type_find_element_chain_do_typefinding",
+    "gst_type_find_element_sink_event",
+    "gst_pad_send_event_unchecked",
+    "gst_pad_push_event_unchecked",
+    "push_sticky",
+    "events_foreach",
+    "check_sticky",
+    "gst_pad_push_event",
+    "event_forward_func",
+    "gst_pad_forward",
+    "gst_pad_event_default",
+    "gst_pad_send_event_unchecked",
+    "gst_pad_push_event_unchecked",
+    "push_sticky",
+    "events_foreach",
+    "check_sticky",
+    "gst_pad_push_event",
+    "gst_base_src_loop",
+    "gst_task_func",
+    "g_thread_pool_thread_proxy",
+    "g_thread_proxy",
+    "start_thread",
+    "clone"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#5 0x5a0a50 in gst_tag_list_from_vorbiscomment /src/gst-plugins-base/gst-libs/gst/tag/gstvorbistag.c:484:7",
+      "address": 5900880,
+      "function_name": "gst_tag_list_from_vorbiscomment",
+      "function_offset": 7,
+      "source_file_name": "gstvorbistag.c",
+      "source_file_path": "/src/gst-plugins-base/gst-libs/gst/tag/gstvorbistag.c",
+      "source_file_line": 484
+    },
+    {
+      "line": "#6 0x50438b in tag_list_from_vorbiscomment_packet /src/gst-plugins-base/ext/ogg/gstoggstream.c:385:10",
+      "address": 5260171,
+      "function_name": "tag_list_from_vorbiscomment_packet",
+      "function_offset": 10,
+      "source_file_name": "gstoggstream.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggstream.c",
+      "source_file_line": 385
+    },
+    {
+      "line": "#7 0x502c71 in extract_tags_opus /src/gst-plugins-base/ext/ogg/gstoggstream.c:2108:5",
+      "address": 5254257,
+      "function_name": "extract_tags_opus",
+      "function_offset": 5,
+      "source_file_name": "gstoggstream.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggstream.c",
+      "source_file_line": 2108
+    },
+    {
+      "line": "#8 0x4f0bd0 in gst_ogg_pad_submit_packet /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1129:5",
+      "address": 5180368,
+      "function_name": "gst_ogg_pad_submit_packet",
+      "function_offset": 5,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 1129
+    },
+    {
+      "line": "#9 0x4efa99 in gst_ogg_pad_stream_out /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1289:18",
+      "address": 5175961,
+      "function_name": "gst_ogg_pad_stream_out",
+      "function_offset": 18,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 1289
+    },
+    {
+      "line": "#10 0x4ee877 in gst_ogg_pad_submit_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:2032:12",
+      "address": 5171319,
+      "function_name": "gst_ogg_pad_submit_page",
+      "function_offset": 12,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 2032
+    },
+    {
+      "line": "#11 0x4f203b in gst_ogg_demux_handle_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4547:14",
+      "address": 5185595,
+      "function_name": "gst_ogg_demux_handle_page",
+      "function_offset": 14,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 4547
+    },
+    {
+      "line": "#12 0x4f19f2 in gst_ogg_demux_chain /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4626:16",
+      "address": 5183986,
+      "function_name": "gst_ogg_demux_chain",
+      "function_offset": 16,
+      "source_file_name": "gstoggdemux.c",
+      "source_file_path": "/src/gst-plugins-base/ext/ogg/gstoggdemux.c",
+      "source_file_line": 4626
+    },
+    {
+      "line": "#13 0x6270cc in gst_pad_chain_data_unchecked /src/gstreamer/gst/gstpad.c:0:35",
+      "address": 6451404,
+      "function_name": "gst_pad_chain_data_unchecked",
+      "function_offset": 35,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 0
+    },
+    {
+      "line": "#14 0x627c69 in gst_pad_push_data /src/gstreamer/gst/gstpad.c:4471:9",
+      "address": 6454377,
+      "function_name": "gst_pad_push_data",
+      "function_offset": 9,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 4471
+    },
+    {
+      "line": "#15 0x6279a1 in gst_pad_push /src/gstreamer/gst/gstpad.c:4590:9",
+      "address": 6453665,
+      "function_name": "gst_pad_push",
+      "function_offset": 9,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 4590
+    },
+    {
+      "line": "#16 0x45bf43 in stop_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:645:7",
+      "address": 4570947,
+      "function_name": "stop_typefinding",
+      "function_offset": 7,
+      "source_file_name": "gsttypefindelement.c",
+      "source_file_path": "/src/gstreamer/plugins/elements/gsttypefindelement.c",
+      "source_file_line": 645
+    },
+    {
+      "line": "#17 0x45c2c1 in gst_type_find_element_chain_do_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:979:3",
+      "address": 4571841,
+      "function_name": "gst_type_find_element_chain_do_typefinding",
+      "function_offset": 3,
+      "source_file_name": "gsttypefindelement.c",
+      "source_file_path": "/src/gstreamer/plugins/elements/gsttypefindelement.c",
+      "source_file_line": 979
+    },
+    {
+      "line": "#18 0x45ab29 in gst_type_find_element_sink_event /src/gstreamer/plugins/elements/gsttypefindelement.c:702:11",
+      "address": 4565801,
+      "function_name": "gst_type_find_element_sink_event",
+      "function_offset": 11,
+      "source_file_name": "gsttypefindelement.c",
+      "source_file_path": "/src/gstreamer/plugins/elements/gsttypefindelement.c",
+      "source_file_line": 702
+    },
+    {
+      "line": "#19 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14",
+      "address": 6467377,
+      "function_name": "gst_pad_send_event_unchecked",
+      "function_offset": 14,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5633
+    },
+    {
+      "line": "#20 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9",
+      "address": 6465650,
+      "function_name": "gst_pad_push_event_unchecked",
+      "function_offset": 9,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5289
+    },
+    {
+      "line": "#21 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17",
+      "address": 6479599,
+      "function_name": "push_sticky",
+      "function_offset": 17,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3817
+    },
+    {
+      "line": "#22 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11",
+      "address": 6446731,
+      "function_name": "events_foreach",
+      "function_offset": 11,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 604
+    },
+    {
+      "line": "#23 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5",
+      "address": 6450539,
+      "function_name": "check_sticky",
+      "function_offset": 5,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3874
+    },
+    {
+      "line": "#24 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12",
+      "address": 6464185,
+      "function_name": "gst_pad_push_event",
+      "function_offset": 12,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5420
+    },
+    {
+      "line": "#25 0x6253f9 in event_forward_func /src/gstreamer/gst/gstpad.c:2992:19",
+      "address": 6444025,
+      "function_name": "event_forward_func",
+      "function_offset": 19,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 2992
+    },
+    {
+      "line": "#26 0x625165 in gst_pad_forward /src/gstreamer/gst/gstpad.c:2946:25",
+      "address": 6443365,
+      "function_name": "gst_pad_forward",
+      "function_offset": 25,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 2946
+    },
+    {
+      "line": "#27 0x625377 in gst_pad_event_default /src/gstreamer/gst/gstpad.c:3043:5",
+      "address": 6443895,
+      "function_name": "gst_pad_event_default",
+      "function_offset": 5,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3043
+    },
+    {
+      "line": "#28 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14",
+      "address": 6467377,
+      "function_name": "gst_pad_send_event_unchecked",
+      "function_offset": 14,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5633
+    },
+    {
+      "line": "#29 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9",
+      "address": 6465650,
+      "function_name": "gst_pad_push_event_unchecked",
+      "function_offset": 9,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5289
+    },
+    {
+      "line": "#30 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17",
+      "address": 6479599,
+      "function_name": "push_sticky",
+      "function_offset": 17,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3817
+    },
+    {
+      "line": "#31 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11",
+      "address": 6446731,
+      "function_name": "events_foreach",
+      "function_offset": 11,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 604
+    },
+    {
+      "line": "#32 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5",
+      "address": 6450539,
+      "function_name": "check_sticky",
+      "function_offset": 5,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 3874
+    },
+    {
+      "line": "#33 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12",
+      "address": 6464185,
+      "function_name": "gst_pad_push_event",
+      "function_offset": 12,
+      "source_file_name": "gstpad.c",
+      "source_file_path": "/src/gstreamer/gst/gstpad.c",
+      "source_file_line": 5420
+    },
+    {
+      "line": "#34 0x5be78c in gst_base_src_loop /src/gstreamer/libs/gst/base/gstbasesrc.c:3002:7",
+      "address": 6023052,
+      "function_name": "gst_base_src_loop",
+      "function_offset": 7,
+      "source_file_name": "gstbasesrc.c",
+      "source_file_path": "/src/gstreamer/libs/gst/base/gstbasesrc.c",
+      "source_file_line": 3002
+    },
+    {
+      "line": "#35 0x65a3f1 in gst_task_func /src/gstreamer/gst/gsttask.c:332:5",
+      "address": 6661105,
+      "function_name": "gst_task_func",
+      "function_offset": 5,
+      "source_file_name": "gsttask.c",
+      "source_file_path": "/src/gstreamer/gst/gsttask.c",
+      "source_file_line": 332
+    },
+    {
+      "line": "#36 0x752c72 in g_thread_pool_thread_proxy /work/glib-2.54.2/glib/gthreadpool.c:307:15",
+      "address": 7679090,
+      "function_name": "g_thread_pool_thread_proxy",
+      "function_offset": 15,
+      "source_file_name": "gthreadpool.c",
+      "source_file_path": "/work/glib-2.54.2/glib/gthreadpool.c",
+      "source_file_line": 307
+    },
+    {
+      "line": "#37 0x751667 in g_thread_proxy /work/glib-2.54.2/glib/gthread.c:784:20",
+      "address": 7673447,
+      "function_name": "g_thread_proxy",
+      "function_offset": 20,
+      "source_file_name": "gthread.c",
+      "source_file_path": "/work/glib-2.54.2/glib/gthread.c",
+      "source_file_line": 784
+    },
+    {
+      "line": "#38 0x7f15a7de66b9 in start_thread",
+      "address": 139730987411129,
+      "function_name": "start_thread"
+    },
+    {
+      "line": "#39 0x7f15a790682c in clone /build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/x86_64/clone.S:109",
+      "address": 139730982299692,
+      "function_name": "clone",
+      "source_file_name": "clone.S",
+      "source_file_path": "/build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/x86_64/clone.S",
+      "source_file_line": 109
+    }
+  ],
+  "minimized_stack": [
+    "#5 0x5a0a50 in gst_tag_list_from_vorbiscomment /src/gst-plugins-base/gst-libs/gst/tag/gstvorbistag.c:484:7",
+    "#6 0x50438b in tag_list_from_vorbiscomment_packet /src/gst-plugins-base/ext/ogg/gstoggstream.c:385:10",
+    "#7 0x502c71 in extract_tags_opus /src/gst-plugins-base/ext/ogg/gstoggstream.c:2108:5",
+    "#8 0x4f0bd0 in gst_ogg_pad_submit_packet /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1129:5",
+    "#9 0x4efa99 in gst_ogg_pad_stream_out /src/gst-plugins-base/ext/ogg/gstoggdemux.c:1289:18",
+    "#10 0x4ee877 in gst_ogg_pad_submit_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:2032:12",
+    "#11 0x4f203b in gst_ogg_demux_handle_page /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4547:14",
+    "#12 0x4f19f2 in gst_ogg_demux_chain /src/gst-plugins-base/ext/ogg/gstoggdemux.c:4626:16",
+    "#13 0x6270cc in gst_pad_chain_data_unchecked /src/gstreamer/gst/gstpad.c:0:35",
+    "#14 0x627c69 in gst_pad_push_data /src/gstreamer/gst/gstpad.c:4471:9",
+    "#15 0x6279a1 in gst_pad_push /src/gstreamer/gst/gstpad.c:4590:9",
+    "#16 0x45bf43 in stop_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:645:7",
+    "#17 0x45c2c1 in gst_type_find_element_chain_do_typefinding /src/gstreamer/plugins/elements/gsttypefindelement.c:979:3",
+    "#18 0x45ab29 in gst_type_find_element_sink_event /src/gstreamer/plugins/elements/gsttypefindelement.c:702:11",
+    "#19 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14",
+    "#20 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9",
+    "#21 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17",
+    "#22 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11",
+    "#23 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5",
+    "#24 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12",
+    "#25 0x6253f9 in event_forward_func /src/gstreamer/gst/gstpad.c:2992:19",
+    "#26 0x625165 in gst_pad_forward /src/gstreamer/gst/gstpad.c:2946:25",
+    "#27 0x625377 in gst_pad_event_default /src/gstreamer/gst/gstpad.c:3043:5",
+    "#28 0x62af31 in gst_pad_send_event_unchecked /src/gstreamer/gst/gstpad.c:5633:14",
+    "#29 0x62a872 in gst_pad_push_event_unchecked /src/gstreamer/gst/gstpad.c:5289:9",
+    "#30 0x62deef in push_sticky /src/gstreamer/gst/gstpad.c:3817:17",
+    "#31 0x625e8b in events_foreach /src/gstreamer/gst/gstpad.c:604:11",
+    "#32 0x626d6b in check_sticky /src/gstreamer/gst/gstpad.c:3874:5",
+    "#33 0x62a2b9 in gst_pad_push_event /src/gstreamer/gst/gstpad.c:5420:12",
+    "#34 0x5be78c in gst_base_src_loop /src/gstreamer/libs/gst/base/gstbasesrc.c:3002:7",
+    "#35 0x65a3f1 in gst_task_func /src/gstreamer/gst/gsttask.c:332:5",
+    "#36 0x752c72 in g_thread_pool_thread_proxy /work/glib-2.54.2/glib/gthreadpool.c:307:15",
+    "#37 0x751667 in g_thread_proxy /work/glib-2.54.2/glib/gthread.c:784:20",
+    "#38 0x7f15a7de66b9 in start_thread",
+    "#39 0x7f15a790682c in clone /build/glibc-9tT8Do/glibc-2.23/sysdeps/unix/sysv/linux/x86_64/clone.S:109"
+  ],
+  "minimized_stack_function_names": [
+    "gst_tag_list_from_vorbiscomment",
+    "tag_list_from_vorbiscomment_packet",
+    "extract_tags_opus",
+    "gst_ogg_pad_submit_packet",
+    "gst_ogg_pad_stream_out",
+    "gst_ogg_pad_submit_page",
+    "gst_ogg_demux_handle_page",
+    "gst_ogg_demux_chain",
+    "gst_pad_chain_data_unchecked",
+    "gst_pad_push_data",
+    "gst_pad_push",
+    "stop_typefinding",
+    "gst_type_find_element_chain_do_typefinding",
+    "gst_type_find_element_sink_event",
+    "gst_pad_send_event_unchecked",
+    "gst_pad_push_event_unchecked",
+    "push_sticky",
+    "events_foreach",
+    "check_sticky",
+    "gst_pad_push_event",
+    "event_forward_func",
+    "gst_pad_forward",
+    "gst_pad_event_default",
+    "gst_pad_send_event_unchecked",
+    "gst_pad_push_event_unchecked",
+    "push_sticky",
+    "events_foreach",
+    "check_sticky",
+    "gst_pad_push_event",
+    "gst_base_src_loop",
+    "gst_task_func",
+    "g_thread_pool_thread_proxy",
+    "g_thread_proxy",
+    "start_thread",
+    "clone"
+  ]
+}

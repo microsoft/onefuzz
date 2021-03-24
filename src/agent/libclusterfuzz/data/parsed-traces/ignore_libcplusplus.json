@@ -1,0 +1,351 @@
+{
+  "text": "libc++abi.dylib: terminating with uncaught exception of type std::length_error: vector\nAddressSanitizer:DEADLYSIGNAL\n=================================================================\n==29939==ERROR: AddressSanitizer: ABRT on unknown address 0x7fff94dd7f06 (pc 0x7fff94dd7f06 bp 0x7fff5a49dcd0 sp 0x7fff5a49dca8 T0)\nSCARINESS: 10 (signal)\n    #0 0x7fff94dd7f05 in __pthread_kill\n    #1 0x7fff8733c6de in abort\n    #2 0x7fff8e1abc10  (/usr/lib/libc++abi.dylib:x86_64+0xc10)\n    #3 0x7fff8e1d1dfe  (/usr/lib/libc++abi.dylib:x86_64+0x26dfe)\n    #2 0x7fff86bef4a5 in _objc_terminate()\n    #5 0x7fff8e1cf00d  (/usr/lib/libc++abi.dylib:x86_64+0x2400d)\n    #6 0x7fff8e1cea79  (/usr/lib/libc++abi.dylib:x86_64+0x23a79)\n    #7 0x7fff820ec726  (/usr/lib/libc++.1.dylib:x86_64+0x3a726)\n    #3 0x1058ea0b7 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend(unsigned long) const third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1010:15\n    #4 0x1058e9bf0 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append(unsigned long) third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1087:57\n    #5 0x1058e4a36 in sfntly::BitmapSizeTable::Builder::Initialize(sfntly::ReadableFontData*) third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:465:23\n    #6 0x1058e3308 in sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders() third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:454:5\n    #7 0x1057e11bc in (anonymous namespace)::InitializeBitmapBuilder(sfntly::EbdtTable::Builder*, sfntly::EblcTable::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:324:24\n    #8 0x1057e0653 in sfntly::SetupBitmapBuilders(sfntly::Font*, sfntly::Font::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:607:8\n    #9 0x1057e40da in sfntly::SubsetterImpl::Subset(std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&, sfntly::GlyphTable*, sfntly::LocaTable*) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:776:22\n    #10 0x1057e2c4c in sfntly::SubsetterImpl::SubsetFont(unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:685:19\n    #11 0x1057df7ce in SfntlyWrapper::SubsetFont(char const*, unsigned char const*, unsigned long, unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/font_subsetter.cc:38:20\n    #12 0x10576054f in LLVMFuzzerTestOneInput third_party/sfntly/fuzzers/subset_font_fuzzer.cc:35:3\n    #13 0x10579676a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:571:15\n    #14 0x10576f876 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:280:6\n    #15 0x1057744b6 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:713:9\n    #16 0x1057b4c51 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10\n    #17 0x7fff93ca35ac in start\n==29939==Register values:\nrax = 0x0000000000000000  rbx = 0x0000000000000006  rcx = 0x00007fff5a49dca8  rdx = 0x0000000000000000\nrdi = 0x000000000000050f  rsi = 0x0000000000000006  rbp = 0x00007fff5a49dcd0  rsp = 0x00007fff5a49dca8\n r8 = 0x0000000000000001   r9 = 0x0000000000000008  r10 = 0x0000000008000000  r11 = 0x0000000000000206\nr12 = 0x00007fff5a49de30  r13 = 0x00001000217593c0  r14 = 0x00007fff72252000  r15 = 0x00007fff5a49dd10\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ABRT (/usr/lib/system/libsystem_kernel.dylib:x86_64+0x16f05)\n==29939==ABORTING",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT (/usr/lib/system/libsystem_kernel.dylib:x86_64+0x16f05)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7fff94dd7f05 in __pthread_kill",
+    "#1 0x7fff8733c6de in abort",
+    "#2 0x7fff8e1abc10  (/usr/lib/libc++abi.dylib:x86_64+0xc10)",
+    "#3 0x7fff8e1d1dfe  (/usr/lib/libc++abi.dylib:x86_64+0x26dfe)",
+    "#2 0x7fff86bef4a5 in _objc_terminate()",
+    "#5 0x7fff8e1cf00d  (/usr/lib/libc++abi.dylib:x86_64+0x2400d)",
+    "#6 0x7fff8e1cea79  (/usr/lib/libc++abi.dylib:x86_64+0x23a79)",
+    "#7 0x7fff820ec726  (/usr/lib/libc++.1.dylib:x86_64+0x3a726)",
+    "#3 0x1058ea0b7 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend(unsigned long) const third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1010:15",
+    "#4 0x1058e9bf0 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append(unsigned long) third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1087:57",
+    "#5 0x1058e4a36 in sfntly::BitmapSizeTable::Builder::Initialize(sfntly::ReadableFontData*) third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:465:23",
+    "#6 0x1058e3308 in sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders() third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:454:5",
+    "#7 0x1057e11bc in (anonymous namespace)::InitializeBitmapBuilder(sfntly::EbdtTable::Builder*, sfntly::EblcTable::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:324:24",
+    "#8 0x1057e0653 in sfntly::SetupBitmapBuilders(sfntly::Font*, sfntly::Font::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:607:8",
+    "#9 0x1057e40da in sfntly::SubsetterImpl::Subset(std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&, sfntly::GlyphTable*, sfntly::LocaTable*) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:776:22",
+    "#10 0x1057e2c4c in sfntly::SubsetterImpl::SubsetFont(unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:685:19",
+    "#11 0x1057df7ce in SfntlyWrapper::SubsetFont(char const*, unsigned char const*, unsigned long, unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/font_subsetter.cc:38:20",
+    "#12 0x10576054f in LLVMFuzzerTestOneInput third_party/sfntly/fuzzers/subset_font_fuzzer.cc:35:3",
+    "#13 0x10579676a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:571:15",
+    "#14 0x10576f876 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:280:6",
+    "#15 0x1057744b6 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:713:9",
+    "#16 0x1057b4c51 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+    "#17 0x7fff93ca35ac in start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7fff94dd7f05 in __pthread_kill",
+      "address": 140735690931973,
+      "function_name": "__pthread_kill"
+    },
+    {
+      "line": "#1 0x7fff8733c6de in abort",
+      "address": 140735461705438,
+      "module_path": "abort"
+    },
+    {
+      "line": "#2 0x7fff8e1abc10  (/usr/lib/libc++abi.dylib:x86_64+0xc10)",
+      "address": 140735577504784,
+      "module_path": "/usr/lib/libc++abi.dylib:x86_64",
+      "module_offset": 3088
+    },
+    {
+      "line": "#3 0x7fff8e1d1dfe  (/usr/lib/libc++abi.dylib:x86_64+0x26dfe)",
+      "address": 140735577660926,
+      "module_path": "/usr/lib/libc++abi.dylib:x86_64",
+      "module_offset": 159230
+    },
+    {
+      "line": "#2 0x7fff86bef4a5 in _objc_terminate()",
+      "address": 140735454049445,
+      "function_name": "_objc_terminate()"
+    },
+    {
+      "line": "#5 0x7fff8e1cf00d  (/usr/lib/libc++abi.dylib:x86_64+0x2400d)",
+      "address": 140735577649165,
+      "module_path": "/usr/lib/libc++abi.dylib:x86_64",
+      "module_offset": 147469
+    },
+    {
+      "line": "#6 0x7fff8e1cea79  (/usr/lib/libc++abi.dylib:x86_64+0x23a79)",
+      "address": 140735577647737,
+      "module_path": "/usr/lib/libc++abi.dylib:x86_64",
+      "module_offset": 146041
+    },
+    {
+      "line": "#7 0x7fff820ec726  (/usr/lib/libc++.1.dylib:x86_64+0x3a726)",
+      "address": 140735375394598,
+      "module_path": "/usr/lib/libc++.1.dylib:x86_64",
+      "module_offset": 239398
+    },
+    {
+      "line": "#3 0x1058ea0b7 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend(unsigned long) const third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1010:15",
+      "address": 4388200631,
+      "function_name": "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend(unsigned long) const",
+      "function_offset": 15,
+      "source_file_name": "vector",
+      "source_file_path": "third_party/llvm-build/Release+Asserts/include/c++/v1/vector",
+      "source_file_line": 1010
+    },
+    {
+      "line": "#4 0x1058e9bf0 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append(unsigned long) third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1087:57",
+      "address": 4388199408,
+      "function_name": "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append(unsigned long)",
+      "function_offset": 57,
+      "source_file_name": "vector",
+      "source_file_path": "third_party/llvm-build/Release+Asserts/include/c++/v1/vector",
+      "source_file_line": 1087
+    },
+    {
+      "line": "#5 0x1058e4a36 in sfntly::BitmapSizeTable::Builder::Initialize(sfntly::ReadableFontData*) third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:465:23",
+      "address": 4388178486,
+      "function_name": "sfntly::BitmapSizeTable::Builder::Initialize(sfntly::ReadableFontData*)",
+      "function_offset": 23,
+      "source_file_name": "bitmap_size_table.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc",
+      "source_file_line": 465
+    },
+    {
+      "line": "#6 0x1058e3308 in sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders() third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:454:5",
+      "address": 4388172552,
+      "function_name": "sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders()",
+      "function_offset": 5,
+      "source_file_name": "bitmap_size_table.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc",
+      "source_file_line": 454
+    },
+    {
+      "line": "#7 0x1057e11bc in (anonymous namespace)::InitializeBitmapBuilder(sfntly::EbdtTable::Builder*, sfntly::EblcTable::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:324:24",
+      "address": 4387115452,
+      "function_name": "(anonymous namespace)::InitializeBitmapBuilder(sfntly::EbdtTable::Builder*, sfntly::EblcTable::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&)",
+      "function_offset": 24,
+      "source_file_name": "subsetter_impl.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc",
+      "source_file_line": 324
+    },
+    {
+      "line": "#8 0x1057e0653 in sfntly::SetupBitmapBuilders(sfntly::Font*, sfntly::Font::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:607:8",
+      "address": 4387112531,
+      "function_name": "sfntly::SetupBitmapBuilders(sfntly::Font*, sfntly::Font::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&)",
+      "function_offset": 8,
+      "source_file_name": "subsetter_impl.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc",
+      "source_file_line": 607
+    },
+    {
+      "line": "#9 0x1057e40da in sfntly::SubsetterImpl::Subset(std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&, sfntly::GlyphTable*, sfntly::LocaTable*) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:776:22",
+      "address": 4387127514,
+      "function_name": "sfntly::SubsetterImpl::Subset(std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&, sfntly::GlyphTable*, sfntly::LocaTable*)",
+      "function_offset": 22,
+      "source_file_name": "subsetter_impl.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc",
+      "source_file_line": 776
+    },
+    {
+      "line": "#10 0x1057e2c4c in sfntly::SubsetterImpl::SubsetFont(unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:685:19",
+      "address": 4387122252,
+      "function_name": "sfntly::SubsetterImpl::SubsetFont(unsigned int const*, unsigned long, unsigned char**)",
+      "function_offset": 19,
+      "source_file_name": "subsetter_impl.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc",
+      "source_file_line": 685
+    },
+    {
+      "line": "#11 0x1057df7ce in SfntlyWrapper::SubsetFont(char const*, unsigned char const*, unsigned long, unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/font_subsetter.cc:38:20",
+      "address": 4387108814,
+      "function_name": "SfntlyWrapper::SubsetFont(char const*, unsigned char const*, unsigned long, unsigned int const*, unsigned long, unsigned char**)",
+      "function_offset": 20,
+      "source_file_name": "font_subsetter.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/font_subsetter.cc",
+      "source_file_line": 38
+    },
+    {
+      "line": "#12 0x10576054f in LLVMFuzzerTestOneInput third_party/sfntly/fuzzers/subset_font_fuzzer.cc:35:3",
+      "address": 4386587983,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 3,
+      "source_file_name": "subset_font_fuzzer.cc",
+      "source_file_path": "third_party/sfntly/fuzzers/subset_font_fuzzer.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#13 0x10579676a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:571:15",
+      "address": 4386809706,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 15,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 571
+    },
+    {
+      "line": "#14 0x10576f876 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:280:6",
+      "address": 4386650230,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 280
+    },
+    {
+      "line": "#15 0x1057744b6 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:713:9",
+      "address": 4386669750,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 713
+    },
+    {
+      "line": "#16 0x1057b4c51 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+      "address": 4386933841,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#17 0x7fff93ca35ac in start",
+      "address": 140735672890796,
+      "module_path": "start"
+    }
+  ],
+  "full_stack_names": [
+    "__pthread_kill",
+    "_objc_terminate",
+    "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend",
+    "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append",
+    "sfntly::BitmapSizeTable::Builder::Initialize",
+    "sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders",
+    "",
+    "sfntly::SetupBitmapBuilders",
+    "sfntly::SubsetterImpl::Subset",
+    "sfntly::SubsetterImpl::SubsetFont",
+    "SfntlyWrapper::SubsetFont",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#3 0x1058ea0b7 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend(unsigned long) const third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1010:15",
+      "address": 4388200631,
+      "function_name": "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend(unsigned long) const",
+      "function_offset": 15,
+      "source_file_name": "vector",
+      "source_file_path": "third_party/llvm-build/Release+Asserts/include/c++/v1/vector",
+      "source_file_line": 1010
+    },
+    {
+      "line": "#4 0x1058e9bf0 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append(unsigned long) third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1087:57",
+      "address": 4388199408,
+      "function_name": "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append(unsigned long)",
+      "function_offset": 57,
+      "source_file_name": "vector",
+      "source_file_path": "third_party/llvm-build/Release+Asserts/include/c++/v1/vector",
+      "source_file_line": 1087
+    },
+    {
+      "line": "#5 0x1058e4a36 in sfntly::BitmapSizeTable::Builder::Initialize(sfntly::ReadableFontData*) third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:465:23",
+      "address": 4388178486,
+      "function_name": "sfntly::BitmapSizeTable::Builder::Initialize(sfntly::ReadableFontData*)",
+      "function_offset": 23,
+      "source_file_name": "bitmap_size_table.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc",
+      "source_file_line": 465
+    },
+    {
+      "line": "#6 0x1058e3308 in sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders() third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:454:5",
+      "address": 4388172552,
+      "function_name": "sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders()",
+      "function_offset": 5,
+      "source_file_name": "bitmap_size_table.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc",
+      "source_file_line": 454
+    },
+    {
+      "line": "#7 0x1057e11bc in (anonymous namespace)::InitializeBitmapBuilder(sfntly::EbdtTable::Builder*, sfntly::EblcTable::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:324:24",
+      "address": 4387115452,
+      "function_name": "(anonymous namespace)::InitializeBitmapBuilder(sfntly::EbdtTable::Builder*, sfntly::EblcTable::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&)",
+      "function_offset": 24,
+      "source_file_name": "subsetter_impl.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc",
+      "source_file_line": 324
+    },
+    {
+      "line": "#8 0x1057e0653 in sfntly::SetupBitmapBuilders(sfntly::Font*, sfntly::Font::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:607:8",
+      "address": 4387112531,
+      "function_name": "sfntly::SetupBitmapBuilders(sfntly::Font*, sfntly::Font::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&)",
+      "function_offset": 8,
+      "source_file_name": "subsetter_impl.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc",
+      "source_file_line": 607
+    },
+    {
+      "line": "#9 0x1057e40da in sfntly::SubsetterImpl::Subset(std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&, sfntly::GlyphTable*, sfntly::LocaTable*) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:776:22",
+      "address": 4387127514,
+      "function_name": "sfntly::SubsetterImpl::Subset(std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&, sfntly::GlyphTable*, sfntly::LocaTable*)",
+      "function_offset": 22,
+      "source_file_name": "subsetter_impl.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc",
+      "source_file_line": 776
+    },
+    {
+      "line": "#10 0x1057e2c4c in sfntly::SubsetterImpl::SubsetFont(unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:685:19",
+      "address": 4387122252,
+      "function_name": "sfntly::SubsetterImpl::SubsetFont(unsigned int const*, unsigned long, unsigned char**)",
+      "function_offset": 19,
+      "source_file_name": "subsetter_impl.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc",
+      "source_file_line": 685
+    },
+    {
+      "line": "#11 0x1057df7ce in SfntlyWrapper::SubsetFont(char const*, unsigned char const*, unsigned long, unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/font_subsetter.cc:38:20",
+      "address": 4387108814,
+      "function_name": "SfntlyWrapper::SubsetFont(char const*, unsigned char const*, unsigned long, unsigned int const*, unsigned long, unsigned char**)",
+      "function_offset": 20,
+      "source_file_name": "font_subsetter.cc",
+      "source_file_path": "third_party/sfntly/src/cpp/src/sample/chromium/font_subsetter.cc",
+      "source_file_line": 38
+    },
+    {
+      "line": "#12 0x10576054f in LLVMFuzzerTestOneInput third_party/sfntly/fuzzers/subset_font_fuzzer.cc:35:3",
+      "address": 4386587983,
+      "function_name": "subset_font_fuzzer.cc",
+      "function_offset": 3,
+      "source_file_name": "subset_font_fuzzer.cc",
+      "source_file_path": "third_party/sfntly/fuzzers/subset_font_fuzzer.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#17 0x7fff93ca35ac in start",
+      "address": 140735672890796,
+      "module_path": "start"
+    }
+  ],
+  "minimized_stack": [
+    "#3 0x1058ea0b7 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend(unsigned long) const third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1010:15",
+    "#4 0x1058e9bf0 in std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append(unsigned long) third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1087:57",
+    "#5 0x1058e4a36 in sfntly::BitmapSizeTable::Builder::Initialize(sfntly::ReadableFontData*) third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:465:23",
+    "#6 0x1058e3308 in sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders() third_party/sfntly/src/cpp/src/sfntly/table/bitmap/bitmap_size_table.cc:454:5",
+    "#7 0x1057e11bc in (anonymous namespace)::InitializeBitmapBuilder(sfntly::EbdtTable::Builder*, sfntly::EblcTable::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:324:24",
+    "#8 0x1057e0653 in sfntly::SetupBitmapBuilders(sfntly::Font*, sfntly::Font::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:607:8",
+    "#9 0x1057e40da in sfntly::SubsetterImpl::Subset(std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&, sfntly::GlyphTable*, sfntly::LocaTable*) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:776:22",
+    "#10 0x1057e2c4c in sfntly::SubsetterImpl::SubsetFont(unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/subsetter_impl.cc:685:19",
+    "#11 0x1057df7ce in SfntlyWrapper::SubsetFont(char const*, unsigned char const*, unsigned long, unsigned int const*, unsigned long, unsigned char**) third_party/sfntly/src/cpp/src/sample/chromium/font_subsetter.cc:38:20",
+    "#12 0x10576054f in LLVMFuzzerTestOneInput third_party/sfntly/fuzzers/subset_font_fuzzer.cc:35:3",
+    "#17 0x7fff93ca35ac in start"
+  ],
+  "minimized_stack_function_names": [
+    "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend",
+    "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append",
+    "sfntly::BitmapSizeTable::Builder::Initialize",
+    "sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders",
+    "",
+    "sfntly::SetupBitmapBuilders",
+    "sfntly::SubsetterImpl::Subset",
+    "sfntly::SubsetterImpl::SubsetFont",
+    "SfntlyWrapper::SubsetFont",
+    "subset_font_fuzzer.cc"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

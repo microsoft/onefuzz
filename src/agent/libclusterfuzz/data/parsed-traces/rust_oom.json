@@ -1,0 +1,458 @@
+{
+  "text": "==1==WARNING: AddressSanitizer failed to allocate 0x202020202020200c bytes\nmemory allocation of 2314885530818453516 bytes failedAddressSanitizer:DEADLYSIGNAL\n=================================================================\n==1==ERROR: AddressSanitizer: ABRT on unknown address 0x000000000001 (pc 0x7efeaef2f428 bp 0x7ffef58fe030 sp 0x7ffef58fdd48 T0)\n    #0 0x7efeaef2f427 in gsignal /build/glibc-LK5gWL/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54\n    #1 0x7efeaef31029 in abort /build/glibc-LK5gWL/glibc-2.23/stdlib/abort.c:89\n    #2 0x55fcb95018b6 in std::sys::unix::abort_internal::h61fc255319305c43 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/sys/unix/mod.rs:167:14\n    #3 0x55fcb94e9c75 in std::process::abort::hc04628a00aa4543a /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/process.rs:1623:5\n    #4 0x55fcb94f03cd in rust_oom /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/alloc.rs:282:5\n    #5 0x55fcb951b876 in alloc::alloc::handle_alloc_error::hf3b29e2cf0b4ae46 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/alloc.rs:307:14\n    #6 0x55fcb92ea65b in alloc::raw_vec::RawVec$LT$T$C$A$GT$::reserve::hf99060ff0a84a3be /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/raw_vec.rs:269:47\n    #7 0x55fcb92ea65b in alloc::vec::Vec$LT$T$GT$::reserve::h76c1ff3ca24d558b /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/vec.rs:500:9\n    #8 0x55fcb92ea65b in mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c mp4parse-rust/mp4parse/src/fallible.rs:283:13\n    #9 0x55fcb92ea65b in mp4parse::fallible::try_read_up_to::h64a356817b37893a mp4parse-rust/mp4parse/src/fallible.rs:75:5\n    #10 0x55fcb92f69a4 in _$LT$mp4parse..BMFFBox$LT$T$GT$$u20$as$u20$mp4parse..fallible..TryRead$GT$::try_read_to_end::h37ff3f8c67f3ab87 mp4parse-rust/mp4parse/src/fallible.rs:48:9\n    #11 0x55fcb92f69a4 in mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3 mp4parse-rust/mp4parse/src/fallible.rs:41:17\n    #12 0x55fcb93196ff in mp4parse::read_iloc::hcabc592b0f73799c mp4parse-rust/mp4parse/src/lib.rs:1484:16\n    #13 0x55fcb9299568 in mp4parse::read_avif_meta::h6463196551ec8476 mp4parse-rust/mp4parse/src/lib.rs:1340:35\n    #14 0x55fcb930161d in mp4parse::read_avif::h085d003469ed626b mp4parse-rust/mp4parse/src/lib.rs:1249:40\n    #15 0x55fcb9396625 in _$LT$mp4parse_capi..Mp4parseAvifParser$u20$as$u20$mp4parse_capi..ContextParser$GT$::read::h3b7d4d3db512bcae mp4parse-rust/mp4parse_capi/src/lib.rs:377:9\n    #16 0x55fcb9396625 in mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785 mp4parse-rust/mp4parse_capi/src/lib.rs:482:5\n    #17 0x55fcb9395c07 in mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730 mp4parse-rust/mp4parse_capi/src/lib.rs:467:15\n    #18 0x55fcb9395c07 in mp4parse_avif_new mp4parse-rust/mp4parse_capi/src/lib.rs:451:5\n    #19 0x55fcb921f598 in rust_fuzzer_test_input mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs:28:12\n    #20 0x55fcb941e4a0 in __rust_try\n    #21 0x55fcb941e0df in std::panicking::try::hfc14f47abd791d38 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/panicking.rs:274:15\n    #22 0x55fcb941e0df in std::panic::catch_unwind::h3c37ac4d75f6cfa4 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/panic.rs:394:14\n    #23 0x55fcb941e0df in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs:25:22\n    #24 0x55fcb946a6f6 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:556:15\n    #25 0x55fcb941edb3 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:296:6\n    #26 0x55fcb942c252 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:776:9\n    #27 0x55fcb941ca97 in main /src/libfuzzer/FuzzerMain.cpp:19:10\n    #28 0x7efeaef1a82f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c:291\n    #29 0x55fcb916c6f8 in _start\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35427)\n==1==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35427)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7efeaef2f427 in gsignal /build/glibc-LK5gWL/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+    "#1 0x7efeaef31029 in abort /build/glibc-LK5gWL/glibc-2.23/stdlib/abort.c:89",
+    "#2 0x55fcb95018b6 in std::sys::unix::abort_internal::h61fc255319305c43 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/sys/unix/mod.rs:167:14",
+    "#3 0x55fcb94e9c75 in std::process::abort::hc04628a00aa4543a /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/process.rs:1623:5",
+    "#4 0x55fcb94f03cd in rust_oom /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/alloc.rs:282:5",
+    "#5 0x55fcb951b876 in alloc::alloc::handle_alloc_error::hf3b29e2cf0b4ae46 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/alloc.rs:307:14",
+    "#6 0x55fcb92ea65b in alloc::raw_vec::RawVec$LT$T$C$A$GT$::reserve::hf99060ff0a84a3be /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/raw_vec.rs:269:47",
+    "#7 0x55fcb92ea65b in alloc::vec::Vec$LT$T$GT$::reserve::h76c1ff3ca24d558b /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/vec.rs:500:9",
+    "#8 0x55fcb92ea65b in mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c mp4parse-rust/mp4parse/src/fallible.rs:283:13",
+    "#9 0x55fcb92ea65b in mp4parse::fallible::try_read_up_to::h64a356817b37893a mp4parse-rust/mp4parse/src/fallible.rs:75:5",
+    "#10 0x55fcb92f69a4 in _$LT$mp4parse..BMFFBox$LT$T$GT$$u20$as$u20$mp4parse..fallible..TryRead$GT$::try_read_to_end::h37ff3f8c67f3ab87 mp4parse-rust/mp4parse/src/fallible.rs:48:9",
+    "#11 0x55fcb92f69a4 in mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3 mp4parse-rust/mp4parse/src/fallible.rs:41:17",
+    "#12 0x55fcb93196ff in mp4parse::read_iloc::hcabc592b0f73799c mp4parse-rust/mp4parse/src/lib.rs:1484:16",
+    "#13 0x55fcb9299568 in mp4parse::read_avif_meta::h6463196551ec8476 mp4parse-rust/mp4parse/src/lib.rs:1340:35",
+    "#14 0x55fcb930161d in mp4parse::read_avif::h085d003469ed626b mp4parse-rust/mp4parse/src/lib.rs:1249:40",
+    "#15 0x55fcb9396625 in _$LT$mp4parse_capi..Mp4parseAvifParser$u20$as$u20$mp4parse_capi..ContextParser$GT$::read::h3b7d4d3db512bcae mp4parse-rust/mp4parse_capi/src/lib.rs:377:9",
+    "#16 0x55fcb9396625 in mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785 mp4parse-rust/mp4parse_capi/src/lib.rs:482:5",
+    "#17 0x55fcb9395c07 in mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730 mp4parse-rust/mp4parse_capi/src/lib.rs:467:15",
+    "#18 0x55fcb9395c07 in mp4parse_avif_new mp4parse-rust/mp4parse_capi/src/lib.rs:451:5",
+    "#19 0x55fcb921f598 in rust_fuzzer_test_input mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs:28:12",
+    "#20 0x55fcb941e4a0 in __rust_try",
+    "#21 0x55fcb941e0df in std::panicking::try::hfc14f47abd791d38 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/panicking.rs:274:15",
+    "#22 0x55fcb941e0df in std::panic::catch_unwind::h3c37ac4d75f6cfa4 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/panic.rs:394:14",
+    "#23 0x55fcb941e0df in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs:25:22",
+    "#24 0x55fcb946a6f6 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:556:15",
+    "#25 0x55fcb941edb3 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:296:6",
+    "#26 0x55fcb942c252 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:776:9",
+    "#27 0x55fcb941ca97 in main /src/libfuzzer/FuzzerMain.cpp:19:10",
+    "#28 0x7efeaef1a82f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c:291",
+    "#29 0x55fcb916c6f8 in _start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7efeaef2f427 in gsignal /build/glibc-LK5gWL/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+      "address": 139632321950759,
+      "function_name": "gsignal",
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/glibc-LK5gWL/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
+    },
+    {
+      "line": "#1 0x7efeaef31029 in abort /build/glibc-LK5gWL/glibc-2.23/stdlib/abort.c:89",
+      "address": 139632321957929,
+      "function_name": "abort",
+      "source_file_name": "abort.c",
+      "source_file_path": "/build/glibc-LK5gWL/glibc-2.23/stdlib/abort.c",
+      "source_file_line": 89
+    },
+    {
+      "line": "#2 0x55fcb95018b6 in std::sys::unix::abort_internal::h61fc255319305c43 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/sys/unix/mod.rs:167:14",
+      "address": 94543929153718,
+      "function_name": "std::sys::unix::abort_internal::h61fc255319305c43",
+      "function_offset": 14,
+      "source_file_name": "mod.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/sys/unix/mod.rs",
+      "source_file_line": 167
+    },
+    {
+      "line": "#3 0x55fcb94e9c75 in std::process::abort::hc04628a00aa4543a /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/process.rs:1623:5",
+      "address": 94543929056373,
+      "function_name": "std::process::abort::hc04628a00aa4543a",
+      "function_offset": 5,
+      "source_file_name": "process.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/process.rs",
+      "source_file_line": 1623
+    },
+    {
+      "line": "#4 0x55fcb94f03cd in rust_oom /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/alloc.rs:282:5",
+      "address": 94543929082829,
+      "function_name": "rust_oom",
+      "function_offset": 5,
+      "source_file_name": "alloc.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/alloc.rs",
+      "source_file_line": 282
+    },
+    {
+      "line": "#5 0x55fcb951b876 in alloc::alloc::handle_alloc_error::hf3b29e2cf0b4ae46 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/alloc.rs:307:14",
+      "address": 94543929260150,
+      "function_name": "alloc::alloc::handle_alloc_error::hf3b29e2cf0b4ae46",
+      "function_offset": 14,
+      "source_file_name": "alloc.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/alloc.rs",
+      "source_file_line": 307
+    },
+    {
+      "line": "#6 0x55fcb92ea65b in alloc::raw_vec::RawVec$LT$T$C$A$GT$::reserve::hf99060ff0a84a3be /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/raw_vec.rs:269:47",
+      "address": 94543926961755,
+      "function_name": "alloc::raw_vec::RawVec$LT$T$C$A$GT$::reserve::hf99060ff0a84a3be",
+      "function_offset": 47,
+      "source_file_name": "raw_vec.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/raw_vec.rs",
+      "source_file_line": 269
+    },
+    {
+      "line": "#7 0x55fcb92ea65b in alloc::vec::Vec$LT$T$GT$::reserve::h76c1ff3ca24d558b /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/vec.rs:500:9",
+      "address": 94543926961755,
+      "function_name": "alloc::vec::Vec$LT$T$GT$::reserve::h76c1ff3ca24d558b",
+      "function_offset": 9,
+      "source_file_name": "vec.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/liballoc/vec.rs",
+      "source_file_line": 500
+    },
+    {
+      "line": "#8 0x55fcb92ea65b in mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c mp4parse-rust/mp4parse/src/fallible.rs:283:13",
+      "address": 94543926961755,
+      "function_name": "mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c",
+      "function_offset": 13,
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 283
+    },
+    {
+      "line": "#9 0x55fcb92ea65b in mp4parse::fallible::try_read_up_to::h64a356817b37893a mp4parse-rust/mp4parse/src/fallible.rs:75:5",
+      "address": 94543926961755,
+      "function_name": "mp4parse::fallible::try_read_up_to::h64a356817b37893a",
+      "function_offset": 5,
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 75
+    },
+    {
+      "line": "#10 0x55fcb92f69a4 in _$LT$mp4parse..BMFFBox$LT$T$GT$$u20$as$u20$mp4parse..fallible..TryRead$GT$::try_read_to_end::h37ff3f8c67f3ab87 mp4parse-rust/mp4parse/src/fallible.rs:48:9",
+      "address": 94543927011748,
+      "function_name": "_$LT$mp4parse..BMFFBox$LT$T$GT$$u20$as$u20$mp4parse..fallible..TryRead$GT$::try_read_to_end::h37ff3f8c67f3ab87",
+      "function_offset": 9,
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 48
+    },
+    {
+      "line": "#11 0x55fcb92f69a4 in mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3 mp4parse-rust/mp4parse/src/fallible.rs:41:17",
+      "address": 94543927011748,
+      "function_name": "mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3",
+      "function_offset": 17,
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 41
+    },
+    {
+      "line": "#12 0x55fcb93196ff in mp4parse::read_iloc::hcabc592b0f73799c mp4parse-rust/mp4parse/src/lib.rs:1484:16",
+      "address": 94543927154431,
+      "function_name": "mp4parse::read_iloc::hcabc592b0f73799c",
+      "function_offset": 16,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1484
+    },
+    {
+      "line": "#13 0x55fcb9299568 in mp4parse::read_avif_meta::h6463196551ec8476 mp4parse-rust/mp4parse/src/lib.rs:1340:35",
+      "address": 94543926629736,
+      "function_name": "mp4parse::read_avif_meta::h6463196551ec8476",
+      "function_offset": 35,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1340
+    },
+    {
+      "line": "#14 0x55fcb930161d in mp4parse::read_avif::h085d003469ed626b mp4parse-rust/mp4parse/src/lib.rs:1249:40",
+      "address": 94543927055901,
+      "function_name": "mp4parse::read_avif::h085d003469ed626b",
+      "function_offset": 40,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1249
+    },
+    {
+      "line": "#15 0x55fcb9396625 in _$LT$mp4parse_capi..Mp4parseAvifParser$u20$as$u20$mp4parse_capi..ContextParser$GT$::read::h3b7d4d3db512bcae mp4parse-rust/mp4parse_capi/src/lib.rs:377:9",
+      "address": 94543927666213,
+      "function_name": "_$LT$mp4parse_capi..Mp4parseAvifParser$u20$as$u20$mp4parse_capi..ContextParser$GT$::read::h3b7d4d3db512bcae",
+      "function_offset": 9,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 377
+    },
+    {
+      "line": "#16 0x55fcb9396625 in mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785 mp4parse-rust/mp4parse_capi/src/lib.rs:482:5",
+      "address": 94543927666213,
+      "function_name": "mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785",
+      "function_offset": 5,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 482
+    },
+    {
+      "line": "#17 0x55fcb9395c07 in mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730 mp4parse-rust/mp4parse_capi/src/lib.rs:467:15",
+      "address": 94543927663623,
+      "function_name": "mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730",
+      "function_offset": 15,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 467
+    },
+    {
+      "line": "#18 0x55fcb9395c07 in mp4parse_avif_new mp4parse-rust/mp4parse_capi/src/lib.rs:451:5",
+      "address": 94543927663623,
+      "function_name": "mp4parse_avif_new",
+      "function_offset": 5,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 451
+    },
+    {
+      "line": "#19 0x55fcb921f598 in rust_fuzzer_test_input mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs:28:12",
+      "address": 94543926130072,
+      "function_name": "rust_fuzzer_test_input",
+      "function_offset": 12,
+      "source_file_name": "avif.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs",
+      "source_file_line": 28
+    },
+    {
+      "line": "#20 0x55fcb941e4a0 in __rust_try",
+      "address": 94543928222880,
+      "function_name": "__rust_try"
+    },
+    {
+      "line": "#21 0x55fcb941e0df in std::panicking::try::hfc14f47abd791d38 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/panicking.rs:274:15",
+      "address": 94543928221919,
+      "function_name": "std::panicking::try::hfc14f47abd791d38",
+      "function_offset": 15,
+      "source_file_name": "panicking.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/panicking.rs",
+      "source_file_line": 274
+    },
+    {
+      "line": "#22 0x55fcb941e0df in std::panic::catch_unwind::h3c37ac4d75f6cfa4 /rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/panic.rs:394:14",
+      "address": 94543928221919,
+      "function_name": "std::panic::catch_unwind::h3c37ac4d75f6cfa4",
+      "function_offset": 14,
+      "source_file_name": "panic.rs",
+      "source_file_path": "/rustc/3a7dfda40a3e798bf086bd58cc7e5e09deb808b5/src/libstd/panic.rs",
+      "source_file_line": 394
+    },
+    {
+      "line": "#23 0x55fcb941e0df in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs:25:22",
+      "address": 94543928221919,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 22,
+      "source_file_name": "lib.rs",
+      "source_file_path": "/rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs",
+      "source_file_line": 25
+    },
+    {
+      "line": "#24 0x55fcb946a6f6 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:556:15",
+      "address": 94543928534774,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 15,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 556
+    },
+    {
+      "line": "#25 0x55fcb941edb3 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:296:6",
+      "address": 94543928225203,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 296
+    },
+    {
+      "line": "#26 0x55fcb942c252 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:776:9",
+      "address": 94543928279634,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 776
+    },
+    {
+      "line": "#27 0x55fcb941ca97 in main /src/libfuzzer/FuzzerMain.cpp:19:10",
+      "address": 94543928216215,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 19
+    },
+    {
+      "line": "#28 0x7efeaef1a82f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c:291",
+      "address": 139632321865775,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
+    },
+    {
+      "line": "#29 0x55fcb916c6f8 in _start",
+      "address": 94543925397240,
+      "function_name": "_start"
+    }
+  ],
+  "full_stack_names": [
+    "gsignal",
+    "abort",
+    "std::sys::unix::abort_internal::h61fc255319305c43",
+    "std::process::abort::hc04628a00aa4543a",
+    "rust_oom",
+    "alloc::alloc::handle_alloc_error::hf3b29e2cf0b4ae46",
+    "alloc::raw_vec::RawVec$LT$T$C$A$GT$::reserve::hf99060ff0a84a3be",
+    "alloc::vec::Vec$LT$T$GT$::reserve::h76c1ff3ca24d558b",
+    "mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c",
+    "mp4parse::fallible::try_read_up_to::h64a356817b37893a",
+    "_$LT$mp4parse..BMFFBox$LT$T$GT$$u20$as$u20$mp4parse..fallible..TryRead$GT$::try_read_to_end::h37ff3f8c67f3ab87",
+    "mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3",
+    "mp4parse::read_iloc::hcabc592b0f73799c",
+    "mp4parse::read_avif_meta::h6463196551ec8476",
+    "mp4parse::read_avif::h085d003469ed626b",
+    "_$LT$mp4parse_capi..Mp4parseAvifParser$u20$as$u20$mp4parse_capi..ContextParser$GT$::read::h3b7d4d3db512bcae",
+    "mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785",
+    "mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730",
+    "mp4parse_avif_new",
+    "rust_fuzzer_test_input",
+    "__rust_try",
+    "std::panicking::try::hfc14f47abd791d38",
+    "std::panic::catch_unwind::h3c37ac4d75f6cfa4",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#8 0x55fcb92ea65b in mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c mp4parse-rust/mp4parse/src/fallible.rs:283:13",
+      "address": 94543926961755,
+      "function_name": "mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c",
+      "function_offset": 13,
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 283
+    },
+    {
+      "line": "#9 0x55fcb92ea65b in mp4parse::fallible::try_read_up_to::h64a356817b37893a mp4parse-rust/mp4parse/src/fallible.rs:75:5",
+      "address": 94543926961755,
+      "function_name": "mp4parse::fallible::try_read_up_to::h64a356817b37893a",
+      "function_offset": 5,
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 75
+    },
+    {
+      "line": "#11 0x55fcb92f69a4 in mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3 mp4parse-rust/mp4parse/src/fallible.rs:41:17",
+      "address": 94543927011748,
+      "function_name": "mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3",
+      "function_offset": 17,
+      "source_file_name": "fallible.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/fallible.rs",
+      "source_file_line": 41
+    },
+    {
+      "line": "#12 0x55fcb93196ff in mp4parse::read_iloc::hcabc592b0f73799c mp4parse-rust/mp4parse/src/lib.rs:1484:16",
+      "address": 94543927154431,
+      "function_name": "mp4parse::read_iloc::hcabc592b0f73799c",
+      "function_offset": 16,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1484
+    },
+    {
+      "line": "#13 0x55fcb9299568 in mp4parse::read_avif_meta::h6463196551ec8476 mp4parse-rust/mp4parse/src/lib.rs:1340:35",
+      "address": 94543926629736,
+      "function_name": "mp4parse::read_avif_meta::h6463196551ec8476",
+      "function_offset": 35,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1340
+    },
+    {
+      "line": "#14 0x55fcb930161d in mp4parse::read_avif::h085d003469ed626b mp4parse-rust/mp4parse/src/lib.rs:1249:40",
+      "address": 94543927055901,
+      "function_name": "mp4parse::read_avif::h085d003469ed626b",
+      "function_offset": 40,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse/src/lib.rs",
+      "source_file_line": 1249
+    },
+    {
+      "line": "#16 0x55fcb9396625 in mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785 mp4parse-rust/mp4parse_capi/src/lib.rs:482:5",
+      "address": 94543927666213,
+      "function_name": "mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785",
+      "function_offset": 5,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 482
+    },
+    {
+      "line": "#17 0x55fcb9395c07 in mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730 mp4parse-rust/mp4parse_capi/src/lib.rs:467:15",
+      "address": 94543927663623,
+      "function_name": "mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730",
+      "function_offset": 15,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 467
+    },
+    {
+      "line": "#18 0x55fcb9395c07 in mp4parse_avif_new mp4parse-rust/mp4parse_capi/src/lib.rs:451:5",
+      "address": 94543927663623,
+      "function_name": "mp4parse_avif_new",
+      "function_offset": 5,
+      "source_file_name": "lib.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/src/lib.rs",
+      "source_file_line": 451
+    },
+    {
+      "line": "#19 0x55fcb921f598 in rust_fuzzer_test_input mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs:28:12",
+      "address": 94543926130072,
+      "function_name": "rust_fuzzer_test_input",
+      "function_offset": 12,
+      "source_file_name": "avif.rs",
+      "source_file_path": "mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs",
+      "source_file_line": 28
+    },
+    {
+      "line": "#23 0x55fcb941e0df in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs:25:22",
+      "address": 94543928221919,
+      "function_name": "lib.rs",
+      "function_offset": 22,
+      "source_file_name": "lib.rs",
+      "source_file_path": "/rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs",
+      "source_file_line": 25
+    }
+  ],
+  "minimized_stack": [
+    "#8 0x55fcb92ea65b in mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c mp4parse-rust/mp4parse/src/fallible.rs:283:13",
+    "#9 0x55fcb92ea65b in mp4parse::fallible::try_read_up_to::h64a356817b37893a mp4parse-rust/mp4parse/src/fallible.rs:75:5",
+    "#11 0x55fcb92f69a4 in mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3 mp4parse-rust/mp4parse/src/fallible.rs:41:17",
+    "#12 0x55fcb93196ff in mp4parse::read_iloc::hcabc592b0f73799c mp4parse-rust/mp4parse/src/lib.rs:1484:16",
+    "#13 0x55fcb9299568 in mp4parse::read_avif_meta::h6463196551ec8476 mp4parse-rust/mp4parse/src/lib.rs:1340:35",
+    "#14 0x55fcb930161d in mp4parse::read_avif::h085d003469ed626b mp4parse-rust/mp4parse/src/lib.rs:1249:40",
+    "#16 0x55fcb9396625 in mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785 mp4parse-rust/mp4parse_capi/src/lib.rs:482:5",
+    "#17 0x55fcb9395c07 in mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730 mp4parse-rust/mp4parse_capi/src/lib.rs:467:15",
+    "#18 0x55fcb9395c07 in mp4parse_avif_new mp4parse-rust/mp4parse_capi/src/lib.rs:451:5",
+    "#19 0x55fcb921f598 in rust_fuzzer_test_input mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs:28:12",
+    "#23 0x55fcb941e0df in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs:25:22"
+  ],
+  "minimized_stack_function_names": [
+    "mp4parse::fallible::TryVec$LT$T$GT$::reserve::h1159314b25b06f7c",
+    "mp4parse::fallible::try_read_up_to::h64a356817b37893a",
+    "mp4parse::fallible::TryRead::read_into_try_vec::h1a15ad50dda088e3",
+    "mp4parse::read_iloc::hcabc592b0f73799c",
+    "mp4parse::read_avif_meta::h6463196551ec8476",
+    "mp4parse::read_avif::h085d003469ed626b",
+    "mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785",
+    "mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730",
+    "mp4parse_avif_new",
+    "rust_fuzzer_test_input",
+    "lib.rs"
+  ]
+}

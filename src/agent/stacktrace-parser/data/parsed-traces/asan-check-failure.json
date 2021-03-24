@@ -111,12 +111,12 @@
     }
   ],
   "full_stack_names": [
-    "__asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long)",
-    "__sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long)",
-    "__asan::GetShadowAddressInformation(unsigned long, __asan::ShadowAddressDescription*)",
-    "__asan::AddressDescription::AddressDescription(unsigned long, unsigned long, bool)",
-    "__asan::ErrorGeneric::ErrorGeneric(unsigned int, unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long)",
-    "__asan::ReportGenericError(unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned int, bool)",
+    "__asan::AsanCheckFailed",
+    "__sanitizer::CheckFailed",
+    "__asan::GetShadowAddressInformation",
+    "__asan::AddressDescription::AddressDescription",
+    "__asan::ErrorGeneric::ErrorGeneric",
+    "__asan::ReportGenericError",
     "strncpy",
     "check",
     "from_file",
@@ -145,8 +145,8 @@
     }
   ],
   "minimized_stack": [
-    "check",
-    "from_file"
+    "#7 0x4c2223 in check /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:21:3",
+    "#8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12"
   ],
   "minimized_stack_function_names": [
     "check",

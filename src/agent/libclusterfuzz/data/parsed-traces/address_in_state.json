@@ -1,0 +1,670 @@
+{
+  "text": "[0623/024556:ERROR:gl_surface_egl.cc(486)] eglInitialize D3D11 failed with error UNKNOWN, trying next display type\n[0623/024556:ERROR:gl_surface_egl.cc(486)] eglInitialize D3D9 failed with error UNKNOWN\n[0623/024557:ERROR:gl_surface_egl.cc(486)] eglInitialize D3D11 failed with error UNKNOWN, trying next display type\n[0623/024557:ERROR:gl_surface_egl.cc(486)] eglInitialize D3D9 failed with error UNKNOWN\n[0623/024557:ERROR:gl_surface_win.cc(170)] GLSurfaceEGL::InitializeOneOff failed.\n=================================================================\n==6512==ERROR: AddressSanitizer: access-violation on unknown address 0x00000000 (pc 0x10c2323d bp 0x0045c518 sp 0x0045c514 T0)\n    #0 0x10c2323c in GetHandleVerifier+0x15a519c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a9323c)\n    #1 0x10c18f60 in GetHandleVerifier+0x159aec0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a88f60)\n    #2 0x10c1b301 in GetHandleVerifier+0x159d261 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a8b301)\n    #3 0x12055649 in ovly_debug_event+0xf8af79 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ec5649)\n    #4 0x1204f3ec in ovly_debug_event+0xf84d1c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf3ec)\n    #5 0x1204f112 in ovly_debug_event+0xf84a42 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf112)\n    #6 0x11db641c in ovly_debug_event+0xcebd4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2c2641c)\n    #7 0x136db8d4 in ovly_debug_event+0x2611204 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x454b8d4)\n    #8 0x13700464 in ovly_debug_event+0x2635d94 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570464)\n    #9 0x136fb7dd in ovly_debug_event+0x263110d (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x456b7dd)\n    #10 0x13700fce in ovly_debug_event+0x26368fe (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570fce)\n    #11 0x13d35a97 in ovly_debug_event+0x2c6b3c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4ba5a97)\n    #12 0x13dc9bc7 in ovly_debug_event+0x2cff4f7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4c39bc7)\n    #13 0x1b6199f1 in IsSandboxedProcess+0x3a2c811 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc4899f1)\n    #14 0x16284d8f in ovly_debug_event+0x51ba6bf (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f4d8f)\n    #15 0x16280836 in ovly_debug_event+0x51b6166 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f0836)\n    #16 0x1627e4e7 in ovly_debug_event+0x51b3e17 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70ee4e7)\n    #17 0xf420e40 in ChromeMain+0x28fe40 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x290e40)\n    #18 0x1b5d11ca in IsSandboxedProcess+0x39e3fea (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc4411ca)\n    #19 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)\n    #20 0x1b74cbd4 in IsSandboxedProcess+0x3b5f9f4 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc5bcbd4)\n    #21 0x1b74b0da in IsSandboxedProcess+0x3b5defa (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc5bb0da)\n    #22 0x1b74e3b0 in IsSandboxedProcess+0x3b611d0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc5be3b0)\n    #23 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)\n    #24 0xf6776a9 in ChromeMain+0x4e66a9 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e76a9)\n    #25 0xf678c20 in ChromeMain+0x4e7c20 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e8c20)\n    #26 0xf756097 in GetHandleVerifier+0xd7ff7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c6097)\n    #27 0xf6764e6 in ChromeMain+0x4e54e6 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e64e6)\n    #28 0xf75678f in GetHandleVerifier+0xd86ef (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c678f)\n    #29 0xf675948 in ChromeMain+0x4e4948 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e5948)\n    #30 0x16573897 in ovly_debug_event+0x54a91c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x73e3897)\n    #31 0xf57505f in ChromeMain+0x3e405f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e505f)\n    #32 0xf576e4c in ChromeMain+0x3e5e4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e6e4c)\n    #33 0xf574c1b in ChromeMain+0x3e3c1b (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e4c1b)\n    #34 0xf19113f in ChromeMain+0x13f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x113f)\n    #35 0x11d976c in MainDllLoader::Launch chrome/app/client_util.cc:252\n    #36 0x11d310d in main chrome/app/chrome_exe_main_win.cc:157\n    #37 0x1384f0a in __tmainCRTStartup f:\\dd\\vctools\\crt\\crtw32\\startup\\crt0.c:255\n    #38 0x76a23379 in BaseThreadInitThunk+0x11 (C:\\Windows\\syswow64\\kernel32.dll+0x13379)\n    #39 0x77a692b1 in RtlInitializeExceptionChain+0x62 (C:\\Windows\\SysWOW64\\ntdll.dll+0x392b1)\n    #40 0x77a69284 in RtlInitializeExceptionChain+0x35 (C:\\Windows\\SysWOW64\\ntdll.dll+0x39284)",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: access-violation on unknown address 0x00000000 (pc 0x10c2323d bp 0x0045c518 sp 0x0045c514 T0)",
+  "fault_type": "access-violation",
+  "call_stack": [
+    "#0 0x10c2323c in GetHandleVerifier+0x15a519c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a9323c)",
+    "#1 0x10c18f60 in GetHandleVerifier+0x159aec0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a88f60)",
+    "#2 0x10c1b301 in GetHandleVerifier+0x159d261 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a8b301)",
+    "#3 0x12055649 in ovly_debug_event+0xf8af79 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ec5649)",
+    "#4 0x1204f3ec in ovly_debug_event+0xf84d1c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf3ec)",
+    "#5 0x1204f112 in ovly_debug_event+0xf84a42 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf112)",
+    "#6 0x11db641c in ovly_debug_event+0xcebd4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2c2641c)",
+    "#7 0x136db8d4 in ovly_debug_event+0x2611204 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x454b8d4)",
+    "#8 0x13700464 in ovly_debug_event+0x2635d94 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570464)",
+    "#9 0x136fb7dd in ovly_debug_event+0x263110d (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x456b7dd)",
+    "#10 0x13700fce in ovly_debug_event+0x26368fe (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570fce)",
+    "#11 0x13d35a97 in ovly_debug_event+0x2c6b3c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4ba5a97)",
+    "#12 0x13dc9bc7 in ovly_debug_event+0x2cff4f7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4c39bc7)",
+    "#13 0x1b6199f1 in IsSandboxedProcess+0x3a2c811 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc4899f1)",
+    "#14 0x16284d8f in ovly_debug_event+0x51ba6bf (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f4d8f)",
+    "#15 0x16280836 in ovly_debug_event+0x51b6166 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f0836)",
+    "#16 0x1627e4e7 in ovly_debug_event+0x51b3e17 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70ee4e7)",
+    "#17 0xf420e40 in ChromeMain+0x28fe40 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x290e40)",
+    "#18 0x1b5d11ca in IsSandboxedProcess+0x39e3fea (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc4411ca)",
+    "#19 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)",
+    "#20 0x1b74cbd4 in IsSandboxedProcess+0x3b5f9f4 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc5bcbd4)",
+    "#21 0x1b74b0da in IsSandboxedProcess+0x3b5defa (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc5bb0da)",
+    "#22 0x1b74e3b0 in IsSandboxedProcess+0x3b611d0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc5be3b0)",
+    "#23 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)",
+    "#24 0xf6776a9 in ChromeMain+0x4e66a9 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e76a9)",
+    "#25 0xf678c20 in ChromeMain+0x4e7c20 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e8c20)",
+    "#26 0xf756097 in GetHandleVerifier+0xd7ff7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c6097)",
+    "#27 0xf6764e6 in ChromeMain+0x4e54e6 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e64e6)",
+    "#28 0xf75678f in GetHandleVerifier+0xd86ef (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c678f)",
+    "#29 0xf675948 in ChromeMain+0x4e4948 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e5948)",
+    "#30 0x16573897 in ovly_debug_event+0x54a91c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x73e3897)",
+    "#31 0xf57505f in ChromeMain+0x3e405f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e505f)",
+    "#32 0xf576e4c in ChromeMain+0x3e5e4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e6e4c)",
+    "#33 0xf574c1b in ChromeMain+0x3e3c1b (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e4c1b)",
+    "#34 0xf19113f in ChromeMain+0x13f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x113f)",
+    "#35 0x11d976c in MainDllLoader::Launch chrome/app/client_util.cc:252",
+    "#36 0x11d310d in main chrome/app/chrome_exe_main_win.cc:157",
+    "#37 0x1384f0a in __tmainCRTStartup f:\\dd\\vctools\\crt\\crtw32\\startup\\crt0.c:255",
+    "#38 0x76a23379 in BaseThreadInitThunk+0x11 (C:\\Windows\\syswow64\\kernel32.dll+0x13379)",
+    "#39 0x77a692b1 in RtlInitializeExceptionChain+0x62 (C:\\Windows\\SysWOW64\\ntdll.dll+0x392b1)",
+    "#40 0x77a69284 in RtlInitializeExceptionChain+0x35 (C:\\Windows\\SysWOW64\\ntdll.dll+0x39284)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x10c2323c in GetHandleVerifier+0x15a519c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a9323c)",
+      "address": 281162300,
+      "function_name": "GetHandleVerifier+0x15a519c",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 27865660
+    },
+    {
+      "line": "#1 0x10c18f60 in GetHandleVerifier+0x159aec0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a88f60)",
+      "address": 281120608,
+      "function_name": "GetHandleVerifier+0x159aec0",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 27823968
+    },
+    {
+      "line": "#2 0x10c1b301 in GetHandleVerifier+0x159d261 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a8b301)",
+      "address": 281129729,
+      "function_name": "GetHandleVerifier+0x159d261",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 27833089
+    },
+    {
+      "line": "#3 0x12055649 in ovly_debug_event+0xf8af79 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ec5649)",
+      "address": 302339657,
+      "function_name": "ovly_debug_event+0xf8af79",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 49043017
+    },
+    {
+      "line": "#4 0x1204f3ec in ovly_debug_event+0xf84d1c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf3ec)",
+      "address": 302314476,
+      "function_name": "ovly_debug_event+0xf84d1c",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 49017836
+    },
+    {
+      "line": "#5 0x1204f112 in ovly_debug_event+0xf84a42 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf112)",
+      "address": 302313746,
+      "function_name": "ovly_debug_event+0xf84a42",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 49017106
+    },
+    {
+      "line": "#6 0x11db641c in ovly_debug_event+0xcebd4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2c2641c)",
+      "address": 299590684,
+      "function_name": "ovly_debug_event+0xcebd4c",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 46294044
+    },
+    {
+      "line": "#7 0x136db8d4 in ovly_debug_event+0x2611204 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x454b8d4)",
+      "address": 325957844,
+      "function_name": "ovly_debug_event+0x2611204",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 72661204
+    },
+    {
+      "line": "#8 0x13700464 in ovly_debug_event+0x2635d94 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570464)",
+      "address": 326108260,
+      "function_name": "ovly_debug_event+0x2635d94",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 72811620
+    },
+    {
+      "line": "#9 0x136fb7dd in ovly_debug_event+0x263110d (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x456b7dd)",
+      "address": 326088669,
+      "function_name": "ovly_debug_event+0x263110d",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 72792029
+    },
+    {
+      "line": "#10 0x13700fce in ovly_debug_event+0x26368fe (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570fce)",
+      "address": 326111182,
+      "function_name": "ovly_debug_event+0x26368fe",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 72814542
+    },
+    {
+      "line": "#11 0x13d35a97 in ovly_debug_event+0x2c6b3c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4ba5a97)",
+      "address": 332618391,
+      "function_name": "ovly_debug_event+0x2c6b3c7",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 79321751
+    },
+    {
+      "line": "#12 0x13dc9bc7 in ovly_debug_event+0x2cff4f7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4c39bc7)",
+      "address": 333224903,
+      "function_name": "ovly_debug_event+0x2cff4f7",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 79928263
+    },
+    {
+      "line": "#13 0x1b6199f1 in IsSandboxedProcess+0x3a2c811 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc4899f1)",
+      "address": 459381233,
+      "function_name": "IsSandboxedProcess+0x3a2c811",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 206084593
+    },
+    {
+      "line": "#14 0x16284d8f in ovly_debug_event+0x51ba6bf (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f4d8f)",
+      "address": 371740047,
+      "function_name": "ovly_debug_event+0x51ba6bf",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 118443407
+    },
+    {
+      "line": "#15 0x16280836 in ovly_debug_event+0x51b6166 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f0836)",
+      "address": 371722294,
+      "function_name": "ovly_debug_event+0x51b6166",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 118425654
+    },
+    {
+      "line": "#16 0x1627e4e7 in ovly_debug_event+0x51b3e17 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70ee4e7)",
+      "address": 371713255,
+      "function_name": "ovly_debug_event+0x51b3e17",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 118416615
+    },
+    {
+      "line": "#17 0xf420e40 in ChromeMain+0x28fe40 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x290e40)",
+      "address": 255987264,
+      "function_name": "ChromeMain+0x28fe40",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 2690624
+    },
+    {
+      "line": "#18 0x1b5d11ca in IsSandboxedProcess+0x39e3fea (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc4411ca)",
+      "address": 459084234,
+      "function_name": "IsSandboxedProcess+0x39e3fea",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 205787594
+    },
+    {
+      "line": "#19 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)",
+      "address": 259341152,
+      "function_name": "GetHandleVerifier+0xd5ac0",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 6044512
+    },
+    {
+      "line": "#20 0x1b74cbd4 in IsSandboxedProcess+0x3b5f9f4 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc5bcbd4)",
+      "address": 460639188,
+      "function_name": "IsSandboxedProcess+0x3b5f9f4",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 207342548
+    },
+    {
+      "line": "#21 0x1b74b0da in IsSandboxedProcess+0x3b5defa (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc5bb0da)",
+      "address": 460632282,
+      "function_name": "IsSandboxedProcess+0x3b5defa",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 207335642
+    },
+    {
+      "line": "#22 0x1b74e3b0 in IsSandboxedProcess+0x3b611d0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0xc5be3b0)",
+      "address": 460645296,
+      "function_name": "IsSandboxedProcess+0x3b611d0",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 207348656
+    },
+    {
+      "line": "#23 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)",
+      "address": 259341152,
+      "function_name": "GetHandleVerifier+0xd5ac0",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 6044512
+    },
+    {
+      "line": "#24 0xf6776a9 in ChromeMain+0x4e66a9 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e76a9)",
+      "address": 258438825,
+      "function_name": "ChromeMain+0x4e66a9",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 5142185
+    },
+    {
+      "line": "#25 0xf678c20 in ChromeMain+0x4e7c20 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e8c20)",
+      "address": 258444320,
+      "function_name": "ChromeMain+0x4e7c20",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 5147680
+    },
+    {
+      "line": "#26 0xf756097 in GetHandleVerifier+0xd7ff7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c6097)",
+      "address": 259350679,
+      "function_name": "GetHandleVerifier+0xd7ff7",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 6054039
+    },
+    {
+      "line": "#27 0xf6764e6 in ChromeMain+0x4e54e6 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e64e6)",
+      "address": 258434278,
+      "function_name": "ChromeMain+0x4e54e6",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 5137638
+    },
+    {
+      "line": "#28 0xf75678f in GetHandleVerifier+0xd86ef (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c678f)",
+      "address": 259352463,
+      "function_name": "GetHandleVerifier+0xd86ef",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 6055823
+    },
+    {
+      "line": "#29 0xf675948 in ChromeMain+0x4e4948 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e5948)",
+      "address": 258431304,
+      "function_name": "ChromeMain+0x4e4948",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 5134664
+    },
+    {
+      "line": "#30 0x16573897 in ovly_debug_event+0x54a91c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x73e3897)",
+      "address": 374814871,
+      "function_name": "ovly_debug_event+0x54a91c7",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 121518231
+    },
+    {
+      "line": "#31 0xf57505f in ChromeMain+0x3e405f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e505f)",
+      "address": 257380447,
+      "function_name": "ChromeMain+0x3e405f",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 4083807
+    },
+    {
+      "line": "#32 0xf576e4c in ChromeMain+0x3e5e4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e6e4c)",
+      "address": 257388108,
+      "function_name": "ChromeMain+0x3e5e4c",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 4091468
+    },
+    {
+      "line": "#33 0xf574c1b in ChromeMain+0x3e3c1b (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e4c1b)",
+      "address": 257379355,
+      "function_name": "ChromeMain+0x3e3c1b",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 4082715
+    },
+    {
+      "line": "#34 0xf19113f in ChromeMain+0x13f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x113f)",
+      "address": 253301055,
+      "function_name": "ChromeMain+0x13f",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 4415
+    },
+    {
+      "line": "#35 0x11d976c in MainDllLoader::Launch chrome/app/client_util.cc:252",
+      "address": 18716524,
+      "function_name": "MainDllLoader::Launch",
+      "source_file_name": "client_util.cc",
+      "source_file_path": "chrome/app/client_util.cc",
+      "source_file_line": 252
+    },
+    {
+      "line": "#36 0x11d310d in main chrome/app/chrome_exe_main_win.cc:157",
+      "address": 18690317,
+      "function_name": "main",
+      "source_file_name": "chrome_exe_main_win.cc",
+      "source_file_path": "chrome/app/chrome_exe_main_win.cc",
+      "source_file_line": 157
+    },
+    {
+      "line": "#37 0x1384f0a in __tmainCRTStartup f:\\dd\\vctools\\crt\\crtw32\\startup\\crt0.c:255",
+      "address": 20467466,
+      "function_name": "__tmainCRTStartup",
+      "source_file_name": "crt0.c",
+      "source_file_path": "f:\\dd\\vctools\\crt\\crtw32\\startup\\crt0.c",
+      "source_file_line": 255
+    },
+    {
+      "line": "#38 0x76a23379 in BaseThreadInitThunk+0x11 (C:\\Windows\\syswow64\\kernel32.dll+0x13379)",
+      "address": 1990341497,
+      "function_name": "BaseThreadInitThunk+0x11",
+      "module_path": "C:\\Windows\\syswow64\\kernel32.dll",
+      "module_offset": 78713
+    },
+    {
+      "line": "#39 0x77a692b1 in RtlInitializeExceptionChain+0x62 (C:\\Windows\\SysWOW64\\ntdll.dll+0x392b1)",
+      "address": 2007405233,
+      "function_name": "RtlInitializeExceptionChain+0x62",
+      "module_path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "module_offset": 234161
+    },
+    {
+      "line": "#40 0x77a69284 in RtlInitializeExceptionChain+0x35 (C:\\Windows\\SysWOW64\\ntdll.dll+0x39284)",
+      "address": 2007405188,
+      "function_name": "RtlInitializeExceptionChain+0x35",
+      "module_path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "module_offset": 234116
+    }
+  ],
+  "full_stack_names": [
+    "GetHandleVerifier+0x15a519c",
+    "GetHandleVerifier+0x159aec0",
+    "GetHandleVerifier+0x159d261",
+    "ovly_debug_event+0xf8af79",
+    "ovly_debug_event+0xf84d1c",
+    "ovly_debug_event+0xf84a42",
+    "ovly_debug_event+0xcebd4c",
+    "ovly_debug_event+0x2611204",
+    "ovly_debug_event+0x2635d94",
+    "ovly_debug_event+0x263110d",
+    "ovly_debug_event+0x26368fe",
+    "ovly_debug_event+0x2c6b3c7",
+    "ovly_debug_event+0x2cff4f7",
+    "IsSandboxedProcess+0x3a2c811",
+    "ovly_debug_event+0x51ba6bf",
+    "ovly_debug_event+0x51b6166",
+    "ovly_debug_event+0x51b3e17",
+    "ChromeMain+0x28fe40",
+    "IsSandboxedProcess+0x39e3fea",
+    "GetHandleVerifier+0xd5ac0",
+    "IsSandboxedProcess+0x3b5f9f4",
+    "IsSandboxedProcess+0x3b5defa",
+    "IsSandboxedProcess+0x3b611d0",
+    "GetHandleVerifier+0xd5ac0",
+    "ChromeMain+0x4e66a9",
+    "ChromeMain+0x4e7c20",
+    "GetHandleVerifier+0xd7ff7",
+    "ChromeMain+0x4e54e6",
+    "GetHandleVerifier+0xd86ef",
+    "ChromeMain+0x4e4948",
+    "ovly_debug_event+0x54a91c7",
+    "ChromeMain+0x3e405f",
+    "ChromeMain+0x3e5e4c",
+    "ChromeMain+0x3e3c1b",
+    "ChromeMain+0x13f",
+    "MainDllLoader::Launch",
+    "main",
+    "__tmainCRTStartup",
+    "BaseThreadInitThunk+0x11",
+    "RtlInitializeExceptionChain+0x62",
+    "RtlInitializeExceptionChain+0x35"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x10c2323c in GetHandleVerifier+0x15a519c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a9323c)",
+      "address": 281162300,
+      "function_name": "GetHandleVerifier+0x15a519c",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 27865660
+    },
+    {
+      "line": "#1 0x10c18f60 in GetHandleVerifier+0x159aec0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a88f60)",
+      "address": 281120608,
+      "function_name": "GetHandleVerifier+0x159aec0",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 27823968
+    },
+    {
+      "line": "#2 0x10c1b301 in GetHandleVerifier+0x159d261 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a8b301)",
+      "address": 281129729,
+      "function_name": "GetHandleVerifier+0x159d261",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 27833089
+    },
+    {
+      "line": "#3 0x12055649 in ovly_debug_event+0xf8af79 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ec5649)",
+      "address": 302339657,
+      "function_name": "ovly_debug_event+0xf8af79",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 49043017
+    },
+    {
+      "line": "#4 0x1204f3ec in ovly_debug_event+0xf84d1c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf3ec)",
+      "address": 302314476,
+      "function_name": "ovly_debug_event+0xf84d1c",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 49017836
+    },
+    {
+      "line": "#5 0x1204f112 in ovly_debug_event+0xf84a42 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf112)",
+      "address": 302313746,
+      "function_name": "ovly_debug_event+0xf84a42",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 49017106
+    },
+    {
+      "line": "#6 0x11db641c in ovly_debug_event+0xcebd4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2c2641c)",
+      "address": 299590684,
+      "function_name": "ovly_debug_event+0xcebd4c",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 46294044
+    },
+    {
+      "line": "#7 0x136db8d4 in ovly_debug_event+0x2611204 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x454b8d4)",
+      "address": 325957844,
+      "function_name": "ovly_debug_event+0x2611204",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 72661204
+    },
+    {
+      "line": "#8 0x13700464 in ovly_debug_event+0x2635d94 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570464)",
+      "address": 326108260,
+      "function_name": "ovly_debug_event+0x2635d94",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 72811620
+    },
+    {
+      "line": "#9 0x136fb7dd in ovly_debug_event+0x263110d (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x456b7dd)",
+      "address": 326088669,
+      "function_name": "ovly_debug_event+0x263110d",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 72792029
+    },
+    {
+      "line": "#10 0x13700fce in ovly_debug_event+0x26368fe (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570fce)",
+      "address": 326111182,
+      "function_name": "ovly_debug_event+0x26368fe",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 72814542
+    },
+    {
+      "line": "#11 0x13d35a97 in ovly_debug_event+0x2c6b3c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4ba5a97)",
+      "address": 332618391,
+      "function_name": "ovly_debug_event+0x2c6b3c7",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 79321751
+    },
+    {
+      "line": "#12 0x13dc9bc7 in ovly_debug_event+0x2cff4f7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4c39bc7)",
+      "address": 333224903,
+      "function_name": "ovly_debug_event+0x2cff4f7",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 79928263
+    },
+    {
+      "line": "#14 0x16284d8f in ovly_debug_event+0x51ba6bf (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f4d8f)",
+      "address": 371740047,
+      "function_name": "ovly_debug_event+0x51ba6bf",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 118443407
+    },
+    {
+      "line": "#15 0x16280836 in ovly_debug_event+0x51b6166 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f0836)",
+      "address": 371722294,
+      "function_name": "ovly_debug_event+0x51b6166",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 118425654
+    },
+    {
+      "line": "#16 0x1627e4e7 in ovly_debug_event+0x51b3e17 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70ee4e7)",
+      "address": 371713255,
+      "function_name": "ovly_debug_event+0x51b3e17",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 118416615
+    },
+    {
+      "line": "#17 0xf420e40 in ChromeMain+0x28fe40 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x290e40)",
+      "address": 255987264,
+      "function_name": "ChromeMain+0x28fe40",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 2690624
+    },
+    {
+      "line": "#19 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)",
+      "address": 259341152,
+      "function_name": "GetHandleVerifier+0xd5ac0",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 6044512
+    },
+    {
+      "line": "#23 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)",
+      "address": 259341152,
+      "function_name": "GetHandleVerifier+0xd5ac0",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 6044512
+    },
+    {
+      "line": "#24 0xf6776a9 in ChromeMain+0x4e66a9 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e76a9)",
+      "address": 258438825,
+      "function_name": "ChromeMain+0x4e66a9",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 5142185
+    },
+    {
+      "line": "#25 0xf678c20 in ChromeMain+0x4e7c20 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e8c20)",
+      "address": 258444320,
+      "function_name": "ChromeMain+0x4e7c20",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 5147680
+    },
+    {
+      "line": "#26 0xf756097 in GetHandleVerifier+0xd7ff7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c6097)",
+      "address": 259350679,
+      "function_name": "GetHandleVerifier+0xd7ff7",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 6054039
+    },
+    {
+      "line": "#27 0xf6764e6 in ChromeMain+0x4e54e6 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e64e6)",
+      "address": 258434278,
+      "function_name": "ChromeMain+0x4e54e6",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 5137638
+    },
+    {
+      "line": "#28 0xf75678f in GetHandleVerifier+0xd86ef (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c678f)",
+      "address": 259352463,
+      "function_name": "GetHandleVerifier+0xd86ef",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 6055823
+    },
+    {
+      "line": "#29 0xf675948 in ChromeMain+0x4e4948 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e5948)",
+      "address": 258431304,
+      "function_name": "ChromeMain+0x4e4948",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 5134664
+    },
+    {
+      "line": "#30 0x16573897 in ovly_debug_event+0x54a91c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x73e3897)",
+      "address": 374814871,
+      "function_name": "ovly_debug_event+0x54a91c7",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 121518231
+    },
+    {
+      "line": "#31 0xf57505f in ChromeMain+0x3e405f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e505f)",
+      "address": 257380447,
+      "function_name": "ChromeMain+0x3e405f",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 4083807
+    },
+    {
+      "line": "#32 0xf576e4c in ChromeMain+0x3e5e4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e6e4c)",
+      "address": 257388108,
+      "function_name": "ChromeMain+0x3e5e4c",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 4091468
+    },
+    {
+      "line": "#33 0xf574c1b in ChromeMain+0x3e3c1b (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e4c1b)",
+      "address": 257379355,
+      "function_name": "ChromeMain+0x3e3c1b",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 4082715
+    },
+    {
+      "line": "#34 0xf19113f in ChromeMain+0x13f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x113f)",
+      "address": 253301055,
+      "function_name": "ChromeMain+0x13f",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll",
+      "module_offset": 4415
+    },
+    {
+      "line": "#35 0x11d976c in MainDllLoader::Launch chrome/app/client_util.cc:252",
+      "address": 18716524,
+      "function_name": "MainDllLoader::Launch",
+      "source_file_name": "client_util.cc",
+      "source_file_path": "chrome/app/client_util.cc",
+      "source_file_line": 252
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x10c2323c in GetHandleVerifier+0x15a519c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a9323c)",
+    "#1 0x10c18f60 in GetHandleVerifier+0x159aec0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a88f60)",
+    "#2 0x10c1b301 in GetHandleVerifier+0x159d261 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x1a8b301)",
+    "#3 0x12055649 in ovly_debug_event+0xf8af79 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ec5649)",
+    "#4 0x1204f3ec in ovly_debug_event+0xf84d1c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf3ec)",
+    "#5 0x1204f112 in ovly_debug_event+0xf84a42 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2ebf112)",
+    "#6 0x11db641c in ovly_debug_event+0xcebd4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x2c2641c)",
+    "#7 0x136db8d4 in ovly_debug_event+0x2611204 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x454b8d4)",
+    "#8 0x13700464 in ovly_debug_event+0x2635d94 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570464)",
+    "#9 0x136fb7dd in ovly_debug_event+0x263110d (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x456b7dd)",
+    "#10 0x13700fce in ovly_debug_event+0x26368fe (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4570fce)",
+    "#11 0x13d35a97 in ovly_debug_event+0x2c6b3c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4ba5a97)",
+    "#12 0x13dc9bc7 in ovly_debug_event+0x2cff4f7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4c39bc7)",
+    "#14 0x16284d8f in ovly_debug_event+0x51ba6bf (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f4d8f)",
+    "#15 0x16280836 in ovly_debug_event+0x51b6166 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70f0836)",
+    "#16 0x1627e4e7 in ovly_debug_event+0x51b3e17 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x70ee4e7)",
+    "#17 0xf420e40 in ChromeMain+0x28fe40 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x290e40)",
+    "#19 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)",
+    "#23 0xf753b60 in GetHandleVerifier+0xd5ac0 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c3b60)",
+    "#24 0xf6776a9 in ChromeMain+0x4e66a9 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e76a9)",
+    "#25 0xf678c20 in ChromeMain+0x4e7c20 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e8c20)",
+    "#26 0xf756097 in GetHandleVerifier+0xd7ff7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c6097)",
+    "#27 0xf6764e6 in ChromeMain+0x4e54e6 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e64e6)",
+    "#28 0xf75678f in GetHandleVerifier+0xd86ef (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x5c678f)",
+    "#29 0xf675948 in ChromeMain+0x4e4948 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x4e5948)",
+    "#30 0x16573897 in ovly_debug_event+0x54a91c7 (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x73e3897)",
+    "#31 0xf57505f in ChromeMain+0x3e405f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e505f)",
+    "#32 0xf576e4c in ChromeMain+0x3e5e4c (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e6e4c)",
+    "#33 0xf574c1b in ChromeMain+0x3e3c1b (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x3e4c1b)",
+    "#34 0xf19113f in ChromeMain+0x13f (C:\\clusterfuzz\\bot\\builds\\chrome-test-builds_media_win32-release\\revisions\\asan-win32-release-335593\\chrome_child.dll+0x113f)",
+    "#35 0x11d976c in MainDllLoader::Launch chrome/app/client_util.cc:252"
+  ],
+  "minimized_stack_function_names": [
+    "GetHandleVerifier+0x15a519c",
+    "GetHandleVerifier+0x159aec0",
+    "GetHandleVerifier+0x159d261",
+    "ovly_debug_event+0xf8af79",
+    "ovly_debug_event+0xf84d1c",
+    "ovly_debug_event+0xf84a42",
+    "ovly_debug_event+0xcebd4c",
+    "ovly_debug_event+0x2611204",
+    "ovly_debug_event+0x2635d94",
+    "ovly_debug_event+0x263110d",
+    "ovly_debug_event+0x26368fe",
+    "ovly_debug_event+0x2c6b3c7",
+    "ovly_debug_event+0x2cff4f7",
+    "ovly_debug_event+0x51ba6bf",
+    "ovly_debug_event+0x51b6166",
+    "ovly_debug_event+0x51b3e17",
+    "ChromeMain+0x28fe40",
+    "GetHandleVerifier+0xd5ac0",
+    "GetHandleVerifier+0xd5ac0",
+    "ChromeMain+0x4e66a9",
+    "ChromeMain+0x4e7c20",
+    "GetHandleVerifier+0xd7ff7",
+    "ChromeMain+0x4e54e6",
+    "GetHandleVerifier+0xd86ef",
+    "ChromeMain+0x4e4948",
+    "ovly_debug_event+0x54a91c7",
+    "ChromeMain+0x3e405f",
+    "ChromeMain+0x3e5e4c",
+    "ChromeMain+0x3e3c1b",
+    "ChromeMain+0x13f",
+    "MainDllLoader::Launch"
+  ]
+}

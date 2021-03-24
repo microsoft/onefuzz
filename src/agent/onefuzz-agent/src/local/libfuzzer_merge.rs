@@ -45,7 +45,7 @@ pub fn build_merge_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
+    let common = build_common_config(args, true)?;
     let config = build_merge_config(args, None, common)?;
     spawn(std::sync::Arc::new(config)).await
 }
