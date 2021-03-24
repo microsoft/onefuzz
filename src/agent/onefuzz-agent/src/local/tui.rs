@@ -12,7 +12,6 @@ use futures::{StreamExt, TryStreamExt};
 use log::Level;
 use onefuzz::utils::try_wait_all_join_handles;
 use std::{
-    cmp::Ordering,
     collections::HashMap,
     io::{self, Stdout, Write},
     path::PathBuf,
@@ -32,7 +31,6 @@ use tui::{
 
 use arraydeque::{ArrayDeque, Wrapping};
 use async_trait::async_trait;
-use thiserror;
 
 #[derive(Debug, thiserror::Error)]
 enum UILoopError {
@@ -181,7 +179,7 @@ impl TerminalUi {
         thread::spawn(move || loop {
             if event::poll(Duration::from_secs(1))? {
                 let event = event::read()?;
-                if let Err(_err) = ui_event_tx.send(TerminalEvent::Input(event.into())) {
+                if let Err(_err) = ui_event_tx.send(TerminalEvent::Input(event)) {
                     return Ok(());
                 }
             }
@@ -192,14 +190,12 @@ impl TerminalUi {
         ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
         mut external_event_rx: mpsc::UnboundedReceiver<UiEvent>,
     ) -> Result<()> {
-        loop {
-            match external_event_rx.recv().await {
-                Some(UiEvent::FileCount { dir, count }) => {
-                    if let Err(_) = ui_event_tx.send(TerminalEvent::FileCount { dir, count }) {
-                        break;
-                    }
-                }
-                None => break,
+        while let Some(UiEvent::FileCount { dir, count }) = external_event_rx.recv().await {
+            if ui_event_tx
+                .send(TerminalEvent::FileCount { dir, count })
+                .is_err()
+            {
+                break;
             }
         }
         Ok(())
@@ -221,15 +217,7 @@ impl TerminalUi {
 
             let mut sorted_file_count = file_count.iter().collect::<Vec<_>>();
 
-            sorted_file_count.sort_by(|(p1, _), (p2, _)| {
-                if p1 == p2 {
-                    Ordering::Equal
-                } else if p1 > p2 {
-                    Ordering::Greater
-                } else {
-                    Ordering::Less
-                }
-            });
+            sorted_file_count.sort_by(|(p1, _), (p2, _)| p1.cmp(p2));
 
             let files = sorted_file_count
                 .iter()

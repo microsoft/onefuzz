@@ -73,10 +73,8 @@ pub struct LocalContext {
 
 impl Drop for LocalContext {
     fn drop(&mut self) {
-        if self.cleanup_on_drop {
-            if self.job_path.exists() {
-                std::fs::remove_dir_all(&self.job_path).unwrap();
-            }
+        if self.cleanup_on_drop && self.job_path.exists() {
+            std::fs::remove_dir_all(&self.job_path).unwrap();
         }
     }
 }
@@ -323,14 +321,17 @@ pub fn spawn_file_count_monitor(
 
             while let Some(Ok(entry)) = rd.next().await {
                 if entry.path().is_file() {
-                    count = count + 1;
+                    count += 1;
                 }
             }
 
-            if let Err(_) = sender.send(UiEvent::FileCount {
-                dir: dir.clone(),
-                count,
-            }) {
+            if sender
+                .send(UiEvent::FileCount {
+                    dir: dir.clone(),
+                    count,
+                })
+                .is_err()
+            {
                 return Ok(());
             }
             delay_for(Duration::from_secs(5)).await;

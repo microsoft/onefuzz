@@ -41,7 +41,7 @@ pub async fn run(
                 fuzz_config.crashes.url.as_file_path(),
                 fuzz_config.inputs.url.as_file_path(),
             ],
-            event_sender.clone(),
+            event_sender,
         ));
     }
     let crash_dir = fuzz_config
@@ -87,7 +87,7 @@ pub async fn run(
                         .clone()
                         .and_then(|u| u.url.as_file_path()),
                 ],
-                event_sender.clone(),
+                event_sender,
             ));
         }
 
@@ -122,8 +122,8 @@ pub async fn run(
                 event_sender.clone(),
             ));
             task_handles.append(&mut monitor_file_urls(
-                &[coverage_config.coverage.clone().url.as_file_path()],
-                event_sender.clone(),
+                &[coverage_config.coverage.url.as_file_path()],
+                event_sender,
             ));
         }
 
