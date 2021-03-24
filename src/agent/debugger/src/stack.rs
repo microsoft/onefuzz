@@ -88,12 +88,17 @@ impl Display for DebugStackFrame {
                 (Some(symbol), Some(file_info)) => write!(
                     formatter,
                     "{}!{}+0x{:x} {}",
-                    module_name, symbol.symbol(), symbol.displacement(), file_info
+                    module_name,
+                    symbol.symbol(),
+                    symbol.displacement(),
+                    file_info
                 ),
                 (Some(symbol), None) => write!(
                     formatter,
                     "{}!{}+0x{:x}",
-                    module_name, symbol.symbol(), symbol.displacement(),
+                    module_name,
+                    symbol.symbol(),
+                    symbol.displacement(),
                 ),
                 _ => {
                     write!(formatter, "{}+0x{:x}", module_name, module_offset)
