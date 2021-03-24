@@ -148,16 +148,24 @@ impl<'a> Tester<'a> {
                         line: f.to_string(),
                         ..Default::default()
                     },
-                    debugger::stack::DebugStackFrame::Frame { function, location } => StackEntry {
+                    debugger::stack::DebugStackFrame::Frame {
+                        module_name,
+                        module_offset,
+                        symbol,
+                        file_info,
+                    } => StackEntry {
                         line: f.to_string(),
-                        function_name: Some(function.to_owned()), // TODO: this includes both the module & symbol
-                        address: Some(location.displacement),
-                        module_offset: None,
-                        module_path: None,
-                        source_file_line: location.file_info.as_ref().map(|x| x.line.into()),
-                        source_file_name: location.file_info.as_ref().map(|x| x.file.to_string()),
-                        source_file_path: None,
-                        function_offset: None,
+                        function_name: symbol.as_ref().map(|x| x.symbol().to_owned()),
+                        function_offset: symbol.as_ref().map(|x| x.displacement()),
+                        address: None,
+                        module_offset: Some(*module_offset),
+                        module_path: Some(module_name.to_owned()),
+                        source_file_line: file_info.as_ref().map(|x| x.line.into()),
+                        source_file_name: file_info
+                            .as_ref()
+                            .map(|x| x.file.rsplit_terminator('\\').next().map(|x| x.to_owned()))
+                            .flatten(),
+                        source_file_path: file_info.as_ref().map(|x| x.file.to_string()),
                     },
                 })
                 .collect();
