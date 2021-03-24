@@ -155,8 +155,8 @@ impl<'a> Tester<'a> {
                         file_info,
                     } => StackEntry {
                         line: f.to_string(),
-                        function_name: symbol.as_ref().map(|x| x.name.to_owned()),
-                        function_offset: symbol.as_ref().map(|x| x.offset),
+                        function_name: symbol.as_ref().map(|x| x.symbol().to_owned()),
+                        function_offset: symbol.as_ref().map(|x| x.displacement()),
                         address: None,
                         module_offset: Some(*module_offset),
                         module_path: Some(module_name.to_owned()),

@@ -39,17 +39,11 @@ impl From<&SymLineInfo> for FileInfo {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq)]
-pub struct DebugStackFrameSymbol {
-    pub name: String,
-    pub offset: u64,
-}
-
-#[derive(Clone, Debug, Hash, PartialEq)]
 pub enum DebugStackFrame {
     Frame {
         module_name: String,
         module_offset: u64,
-        symbol: Option<DebugStackFrameSymbol>,
+        symbol: Option<SymInfo>,
         file_info: Option<FileInfo>,
     },
     CorruptFrame,
@@ -59,13 +53,9 @@ impl DebugStackFrame {
     pub fn new(
         module_name: String,
         module_offset: u64,
-        symbol_info: Option<SymInfo>,
+        symbol: Option<SymInfo>,
         file_info: Option<FileInfo>,
     ) -> DebugStackFrame {
-        let symbol = symbol_info.map(|x| DebugStackFrameSymbol {
-            name: x.symbol().to_owned(),
-            offset: x.displacement(),
-        });
         DebugStackFrame::Frame {
             module_name,
             module_offset,
@@ -98,12 +88,12 @@ impl Display for DebugStackFrame {
                 (Some(symbol), Some(file_info)) => write!(
                     formatter,
                     "{}!{}+0x{:x} {}",
-                    module_name, symbol.name, symbol.offset, file_info
+                    module_name, symbol.symbol(), symbol.displacement(), file_info
                 ),
                 (Some(symbol), None) => write!(
                     formatter,
                     "{}!{}+0x{:x}",
-                    module_name, symbol.name, symbol.offset
+                    module_name, symbol.symbol(), symbol.displacement(),
                 ),
                 _ => {
                     write!(formatter, "{}+0x{:x}", module_name, module_offset)
