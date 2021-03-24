@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::Result;
-use clap::{App, SubCommand};
+use clap::{App, Arg, SubCommand};
 use tokio::select;
 
 use crate::local::{
@@ -20,10 +20,16 @@ const LIBFUZZER_MERGE: &str = "libfuzzer-merge";
 const GENERIC_CRASH_REPORT: &str = "generic-crash-report";
 const GENERIC_GENERATOR: &str = "generic-generator";
 const GENERIC_ANALYSIS: &str = "generic-analysis";
+const TERMINAL_UI: &str = "tui";
 
 pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
-    let terminal = TerminalUi::init()?;
-    let event_sender = terminal.task_events.clone();
+    let terminal = if args.is_present(TERMINAL_UI) {
+        Some(TerminalUi::init()?)
+    } else {
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+        None
+    };
+    let event_sender = terminal.as_ref().map(|t| t.task_events.clone());
     let command_run = tokio::spawn(async move {
         match args.subcommand() {
             (RADAMSA, Some(sub)) => radamsa::run(sub).await,
@@ -41,21 +47,26 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
         }
     });
 
-    let ui_run = tokio::spawn(terminal.run());
-    select! {
-        ui_result = ui_run => {
-            ui_result??
-        },
-        command_run_result = command_run => {
-            command_run_result??
-        }
-    };
-    Ok(())
+    if let Some(terminal) = terminal {
+        let ui_run = tokio::spawn(terminal.run());
+        select! {
+            ui_result = ui_run => {
+                ui_result??
+            },
+            command_run_result = command_run => {
+                command_run_result??
+            }
+        };
+        Ok(())
+    } else {
+        command_run.await?
+    }
 }
 
 pub fn args(name: &str) -> App<'static, 'static> {
     SubCommand::with_name(name)
         .about("pre-release local fuzzing")
+        .arg(Arg::with_name(TERMINAL_UI).long(TERMINAL_UI).required(false))
         .subcommand(add_common_config(radamsa::args(RADAMSA)))
         .subcommand(add_common_config(libfuzzer::args(LIBFUZZER)))
         .subcommand(add_common_config(libfuzzer_fuzz::args(LIBFUZZER_FUZZ)))
