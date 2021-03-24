@@ -324,7 +324,7 @@ impl FrameContext {
                 R15 => cr.0.R15,
                 RDI => cr.0.Rdi,
                 RSI => cr.0.Rsi,
-                RBP => cr.0.Rbx,
+                RBP => cr.0.Rbp,
                 RSP => cr.0.Rsp,
                 CS | DS | ES | FS | SS => 0u64,
                 // GS points to the TEB in 64b but there is no official documented way
@@ -343,7 +343,7 @@ impl FrameContext {
                 EDX => cr.Edx as u64,
                 EDI => cr.Edi as u64,
                 ESI => cr.Esi as u64,
-                EBP => cr.Ebx as u64,
+                EBP => cr.Ebp as u64,
                 ESP => cr.Esp as u64,
                 _ => unimplemented!("Register read {:?}", reg),
             },
@@ -514,7 +514,7 @@ impl DebugHelpGuard {
         }
     }
 
-    pub fn stackwalk_ex<F: FnMut(&FrameContext, &STACKFRAME_EX) -> bool>(
+    pub fn stackwalk_ex<F: FnMut(&STACKFRAME_EX) -> bool>(
         &self,
         process_handle: HANDLE,
         thread_handle: HANDLE,
@@ -550,7 +550,7 @@ impl DebugHelpGuard {
                 break;
             }
 
-            if !f(&frame_context, &frame) {
+            if !f(&frame) {
                 break;
             }
         }

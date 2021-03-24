@@ -1,0 +1,409 @@
+{
+  "text": "abort: CSA_ASSERT failed: IsFastElementsKind(LoadElementsKind(array))\n\n\n==== JS stack trace =========================================\n\n    0: ExitFrame [pc: 0x7f2893ca6608]\n    1: StubFrame [pc: 0x7f2893d4f4d4]\n    2: StubFrame [pc: 0x7f2893d69480]\nSecurity context: 0x7e9b3a61aef1 <JSObject>#0#\n    3: sort [0x7e9b3a603799](this=0x7ea84150b091 <JSArray[101]>#1#)\n    4: /* anonymous */ [0x7e9b3a620931] [/mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/clusterfuzz-testcase-5190315991105536.js:16] [bytecode=0x7e9b3a6206e9 offset=489](this=0x7ea841501231 <JSGlobal Object>#2#)\n    5: InternalFrame [pc: 0x7f289399716c]\n    6: EntryFrame [pc: 0x7e883e982160]\n\n==== Details ================================================\n\n[0]: ExitFrame [pc: 0x7f2893ca6608]\n[1]: StubFrame [pc: 0x7f2893d4f4d4]\n[2]: StubFrame [pc: 0x7f2893d69480]\n[3]: sort [0x7e9b3a603799](this=0x7ea84150b091 <JSArray[101]>#1#) {\n// optimized frame\n--------- s o u r c e   c o d e ---------\n<No Source>\n-----------------------------------------\n}\n[4]: /* anonymous */ [0x7e9b3a620931] [/mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/clusterfuzz-testcase-5190315991105536.js:16] [bytecode=0x7e9b3a6206e9 offset=489](this=0x7ea841501231 <JSGlobal Object>#2#) {\n  // expression stack (top to bottom)\n  [11] : 0x7ea84150b091 <JSArray[101]>#1#\n  [10] : 0\n  [09] : 0x7eb11a1004d9 <undefined>\n  [08] : 0x7ea84150b091 <JSArray[101]>#1#\n  [07] : 12\n  [06] : 0x7e9b3a620479 <String[1]: A>\n  [05] : 0x7ea84150b091 <JSArray[101]>#1#\n  [04] : 0x7ea84150b519 <JSFunction (sfi = 0x7e9b3a620511)>#3#\n  [03] : 100\n  [02] : 0x7ea84150b091 <JSArray[101]>#1#\n  [01] : 0x7e9b3a603799 <JSFunction sort (sfi = 0x7ee99a68e849)>#4#\n  [00] : 0x7eb11a1004d9 <undefined>\n--------- s o u r c e   c o d e ---------\no0=[1.1,2.2,3.3];\\x0ao0['push'](undefined,null,'A',NaN,undefined,9.431092e-317);\\x0ao0['push'](undefined,o0,o0,25,'A');\\x0ao0['push'](true,'A',o0);\\x0ao0['push'](o0,undefined,undefined,'A');\\x0ao0['push']('A',o0,o0,11,2.3023e-320);\\x0ao0['push'](o0,undefined,o0,-1,'A',8);\\x0ao0['push'](-1,'A',undefined,Infinity,12);\\x0ao0[...\n\n-----------------------------------------\n}\n\n[5]: InternalFrame [pc: 0x7f289399716c]\n[6]: EntryFrame [pc: 0x7e883e982160]\n==== Key         ============================================\n\n #0# 0x7e9b3a61aef1: 0x7e9b3a61aef1 <JSObject>\n #1# 0x7ea84150b091: 0x7ea84150b091 <JSArray[101]>\n #2# 0x7ea841501231: 0x7ea841501231 <JSGlobal Object>\n #3# 0x7ea84150b519: 0x7ea84150b519 <JSFunction (sfi = 0x7e9b3a620511)>\n #4# 0x7e9b3a603799: 0x7e9b3a603799 <JSFunction sort (sfi = 0x7ee99a68e849)>\n=====================\n\nAddressSanitizer:DEADLYSIGNAL\n=================================================================\n==3195622==ERROR: AddressSanitizer: ILL on unknown address 0x7f28948306d8 (pc 0x7f28948306d8 bp 0x7ffd868ade30 sp 0x7ffd868ade30 T0)\nSCARINESS: 10 (signal)\n    #0 0x7f28948306d7 in v8::base::OS::Abort() src/base/platform/platform-posix.cc:395:5\n    #1 0x7f2892e7b1c2 in v8::internal::__RT_impl_Runtime_AbortJS(v8::internal::Arguments, v8::internal::Isolate*) src/runtime/runtime-test.cc:702:3\n    #2 0x7f2892e79ecb in v8::internal::Runtime_AbortJS(int, v8::internal::Object**, v8::internal::Isolate*) src/runtime/runtime-test.cc:692:1\n    #3 0x7f289352235a in v8::internal::Simulator::DoRuntimeCall(v8::internal::Instruction*) src/arm64/simulator-arm64.cc:490:11\n    #4 0x7f2893520fa1 in v8::internal::Simulator::ExecuteInstruction() src/arm64/simulator-arm64.h:779:5\n    #5 0x7f289351d5c0 in Run src/arm64/simulator-arm64.cc:390:5\n    #6 0x7f289351d5c0 in v8::internal::Simulator::CheckPCSComplianceAndRun() src/arm64/simulator-arm64.cc:188\n    #7 0x7f289351c5a7 in v8::internal::Simulator::CallImpl(unsigned long, v8::internal::Simulator::CallArgument*) src/arm64/simulator-arm64.cc:157:3\n    #8 0x7f2891cfa831 in Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***> src/arm64/simulator-arm64.h:725:5\n    #9 0x7f2891cfa831 in Call src/simulator.h:107\n    #10 0x7f2891cfa831 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:154\n    #11 0x7f2891cf8997 in v8::internal::(anonymous namespace)::CallInternal(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:190:10\n    #12 0x7f2891cf84a6 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution.cc:201:10\n    #13 0x7f289094c1a4 in v8::Script::Run(v8::Local<v8::Context>) src/api.cc:2110:7\n    #14 0x55baa2aaf0a6 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8.cc:534:28\n    #15 0x55baa2ace56e in v8::SourceGroup::Execute(v8::Isolate*) src/d8.cc:2480:10\n    #16 0x55baa2ad5e64 in v8::Shell::RunMain(v8::Isolate*, int, char**, bool) src/d8.cc:2948:34\n    #17 0x55baa2ada945 in v8::Shell::Main(int, char**) src/d8.cc:3498:16\n    #18 0x7f288d24a82f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/../csu/libc-start.c:291\n\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ILL src/base/platform/platform-posix.cc:395:5 in v8::base::OS::Abort()\n==3195622==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ILL src/base/platform/platform-posix.cc:395:5 in v8::base::OS::Abort()",
+  "fault_type": "ILL",
+  "call_stack": [
+    "#0 0x7f28948306d7 in v8::base::OS::Abort() src/base/platform/platform-posix.cc:395:5",
+    "#1 0x7f2892e7b1c2 in v8::internal::__RT_impl_Runtime_AbortJS(v8::internal::Arguments, v8::internal::Isolate*) src/runtime/runtime-test.cc:702:3",
+    "#2 0x7f2892e79ecb in v8::internal::Runtime_AbortJS(int, v8::internal::Object**, v8::internal::Isolate*) src/runtime/runtime-test.cc:692:1",
+    "#3 0x7f289352235a in v8::internal::Simulator::DoRuntimeCall(v8::internal::Instruction*) src/arm64/simulator-arm64.cc:490:11",
+    "#4 0x7f2893520fa1 in v8::internal::Simulator::ExecuteInstruction() src/arm64/simulator-arm64.h:779:5",
+    "#5 0x7f289351d5c0 in Run src/arm64/simulator-arm64.cc:390:5",
+    "#6 0x7f289351d5c0 in v8::internal::Simulator::CheckPCSComplianceAndRun() src/arm64/simulator-arm64.cc:188",
+    "#7 0x7f289351c5a7 in v8::internal::Simulator::CallImpl(unsigned long, v8::internal::Simulator::CallArgument*) src/arm64/simulator-arm64.cc:157:3",
+    "#8 0x7f2891cfa831 in Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***> src/arm64/simulator-arm64.h:725:5",
+    "#9 0x7f2891cfa831 in Call src/simulator.h:107",
+    "#10 0x7f2891cfa831 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:154",
+    "#11 0x7f2891cf8997 in v8::internal::(anonymous namespace)::CallInternal(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:190:10",
+    "#12 0x7f2891cf84a6 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution.cc:201:10",
+    "#13 0x7f289094c1a4 in v8::Script::Run(v8::Local<v8::Context>) src/api.cc:2110:7",
+    "#14 0x55baa2aaf0a6 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8.cc:534:28",
+    "#15 0x55baa2ace56e in v8::SourceGroup::Execute(v8::Isolate*) src/d8.cc:2480:10",
+    "#16 0x55baa2ad5e64 in v8::Shell::RunMain(v8::Isolate*, int, char**, bool) src/d8.cc:2948:34",
+    "#17 0x55baa2ada945 in v8::Shell::Main(int, char**) src/d8.cc:3498:16",
+    "#18 0x7f288d24a82f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/../csu/libc-start.c:291"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f28948306d7 in v8::base::OS::Abort() src/base/platform/platform-posix.cc:395:5",
+      "address": 139812267034327,
+      "function_name": "v8::base::OS::Abort()",
+      "function_offset": 5,
+      "source_file_name": "platform-posix.cc",
+      "source_file_path": "src/base/platform/platform-posix.cc",
+      "source_file_line": 395
+    },
+    {
+      "line": "#1 0x7f2892e7b1c2 in v8::internal::__RT_impl_Runtime_AbortJS(v8::internal::Arguments, v8::internal::Isolate*) src/runtime/runtime-test.cc:702:3",
+      "address": 139812240077250,
+      "function_name": "v8::internal::__RT_impl_Runtime_AbortJS(v8::internal::Arguments, v8::internal::Isolate*)",
+      "function_offset": 3,
+      "source_file_name": "runtime-test.cc",
+      "source_file_path": "src/runtime/runtime-test.cc",
+      "source_file_line": 702
+    },
+    {
+      "line": "#2 0x7f2892e79ecb in v8::internal::Runtime_AbortJS(int, v8::internal::Object**, v8::internal::Isolate*) src/runtime/runtime-test.cc:692:1",
+      "address": 139812240072395,
+      "function_name": "v8::internal::Runtime_AbortJS(int, v8::internal::Object**, v8::internal::Isolate*)",
+      "function_offset": 1,
+      "source_file_name": "runtime-test.cc",
+      "source_file_path": "src/runtime/runtime-test.cc",
+      "source_file_line": 692
+    },
+    {
+      "line": "#3 0x7f289352235a in v8::internal::Simulator::DoRuntimeCall(v8::internal::Instruction*) src/arm64/simulator-arm64.cc:490:11",
+      "address": 139812247053146,
+      "function_name": "v8::internal::Simulator::DoRuntimeCall(v8::internal::Instruction*)",
+      "function_offset": 11,
+      "source_file_name": "simulator-arm64.cc",
+      "source_file_path": "src/arm64/simulator-arm64.cc",
+      "source_file_line": 490
+    },
+    {
+      "line": "#4 0x7f2893520fa1 in v8::internal::Simulator::ExecuteInstruction() src/arm64/simulator-arm64.h:779:5",
+      "address": 139812247048097,
+      "function_name": "v8::internal::Simulator::ExecuteInstruction()",
+      "function_offset": 5,
+      "source_file_name": "simulator-arm64.h",
+      "source_file_path": "src/arm64/simulator-arm64.h",
+      "source_file_line": 779
+    },
+    {
+      "line": "#5 0x7f289351d5c0 in Run src/arm64/simulator-arm64.cc:390:5",
+      "address": 139812247033280,
+      "function_name": "Run",
+      "function_offset": 5,
+      "source_file_name": "simulator-arm64.cc",
+      "source_file_path": "src/arm64/simulator-arm64.cc",
+      "source_file_line": 390
+    },
+    {
+      "line": "#6 0x7f289351d5c0 in v8::internal::Simulator::CheckPCSComplianceAndRun() src/arm64/simulator-arm64.cc:188",
+      "address": 139812247033280,
+      "function_name": "v8::internal::Simulator::CheckPCSComplianceAndRun()",
+      "source_file_name": "simulator-arm64.cc",
+      "source_file_path": "src/arm64/simulator-arm64.cc",
+      "source_file_line": 188
+    },
+    {
+      "line": "#7 0x7f289351c5a7 in v8::internal::Simulator::CallImpl(unsigned long, v8::internal::Simulator::CallArgument*) src/arm64/simulator-arm64.cc:157:3",
+      "address": 139812247029159,
+      "function_name": "v8::internal::Simulator::CallImpl(unsigned long, v8::internal::Simulator::CallArgument*)",
+      "function_offset": 3,
+      "source_file_name": "simulator-arm64.cc",
+      "source_file_path": "src/arm64/simulator-arm64.cc",
+      "source_file_line": 157
+    },
+    {
+      "line": "#8 0x7f2891cfa831 in Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***> src/arm64/simulator-arm64.h:725:5",
+      "address": 139812221724721,
+      "function_name": "Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***>",
+      "function_offset": 5,
+      "source_file_name": "simulator-arm64.h",
+      "source_file_path": "src/arm64/simulator-arm64.h",
+      "source_file_line": 725
+    },
+    {
+      "line": "#9 0x7f2891cfa831 in Call src/simulator.h:107",
+      "address": 139812221724721,
+      "function_name": "Call",
+      "source_file_name": "simulator.h",
+      "source_file_path": "src/simulator.h",
+      "source_file_line": 107
+    },
+    {
+      "line": "#10 0x7f2891cfa831 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:154",
+      "address": 139812221724721,
+      "function_name": "v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target)",
+      "source_file_name": "execution.cc",
+      "source_file_path": "src/execution.cc",
+      "source_file_line": 154
+    },
+    {
+      "line": "#11 0x7f2891cf8997 in v8::internal::(anonymous namespace)::CallInternal(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:190:10",
+      "address": 139812221716887,
+      "function_name": "v8::internal::(anonymous namespace)::CallInternal(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target)",
+      "function_offset": 10,
+      "source_file_name": "execution.cc",
+      "source_file_path": "src/execution.cc",
+      "source_file_line": 190
+    },
+    {
+      "line": "#12 0x7f2891cf84a6 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution.cc:201:10",
+      "address": 139812221715622,
+      "function_name": "v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*)",
+      "function_offset": 10,
+      "source_file_name": "execution.cc",
+      "source_file_path": "src/execution.cc",
+      "source_file_line": 201
+    },
+    {
+      "line": "#13 0x7f289094c1a4 in v8::Script::Run(v8::Local<v8::Context>) src/api.cc:2110:7",
+      "address": 139812201087396,
+      "function_name": "v8::Script::Run(v8::Local<v8::Context>)",
+      "function_offset": 7,
+      "source_file_name": "api.cc",
+      "source_file_path": "src/api.cc",
+      "source_file_line": 2110
+    },
+    {
+      "line": "#14 0x55baa2aaf0a6 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8.cc:534:28",
+      "address": 94260081389734,
+      "function_name": "v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue)",
+      "function_offset": 28,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8.cc",
+      "source_file_line": 534
+    },
+    {
+      "line": "#15 0x55baa2ace56e in v8::SourceGroup::Execute(v8::Isolate*) src/d8.cc:2480:10",
+      "address": 94260081517934,
+      "function_name": "v8::SourceGroup::Execute(v8::Isolate*)",
+      "function_offset": 10,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8.cc",
+      "source_file_line": 2480
+    },
+    {
+      "line": "#16 0x55baa2ad5e64 in v8::Shell::RunMain(v8::Isolate*, int, char**, bool) src/d8.cc:2948:34",
+      "address": 94260081548900,
+      "function_name": "v8::Shell::RunMain(v8::Isolate*, int, char**, bool)",
+      "function_offset": 34,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8.cc",
+      "source_file_line": 2948
+    },
+    {
+      "line": "#17 0x55baa2ada945 in v8::Shell::Main(int, char**) src/d8.cc:3498:16",
+      "address": 94260081568069,
+      "function_name": "v8::Shell::Main(int, char**)",
+      "function_offset": 16,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8.cc",
+      "source_file_line": 3498
+    },
+    {
+      "line": "#18 0x7f288d24a82f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/../csu/libc-start.c:291",
+      "address": 139812143409199,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/csu/../csu/libc-start.c",
+      "source_file_line": 291
+    }
+  ],
+  "full_stack_names": [
+    "v8::base::OS::Abort",
+    "v8::internal::__RT_impl_Runtime_AbortJS",
+    "v8::internal::Runtime_AbortJS",
+    "v8::internal::Simulator::DoRuntimeCall",
+    "v8::internal::Simulator::ExecuteInstruction",
+    "Run",
+    "v8::internal::Simulator::CheckPCSComplianceAndRun",
+    "v8::internal::Simulator::CallImpl",
+    "Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***>",
+    "Call",
+    "v8::internal::",
+    "v8::internal::",
+    "v8::internal::Execution::Call",
+    "v8::Script::Run",
+    "v8::Shell::ExecuteString",
+    "v8::SourceGroup::Execute",
+    "v8::Shell::RunMain",
+    "v8::Shell::Main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x7f2892e7b1c2 in v8::internal::__RT_impl_Runtime_AbortJS(v8::internal::Arguments, v8::internal::Isolate*) src/runtime/runtime-test.cc:702:3",
+      "address": 139812240077250,
+      "function_name": "v8::internal::__RT_impl_Runtime_AbortJS(v8::internal::Arguments, v8::internal::Isolate*)",
+      "function_offset": 3,
+      "source_file_name": "runtime-test.cc",
+      "source_file_path": "src/runtime/runtime-test.cc",
+      "source_file_line": 702
+    },
+    {
+      "line": "#2 0x7f2892e79ecb in v8::internal::Runtime_AbortJS(int, v8::internal::Object**, v8::internal::Isolate*) src/runtime/runtime-test.cc:692:1",
+      "address": 139812240072395,
+      "function_name": "v8::internal::Runtime_AbortJS(int, v8::internal::Object**, v8::internal::Isolate*)",
+      "function_offset": 1,
+      "source_file_name": "runtime-test.cc",
+      "source_file_path": "src/runtime/runtime-test.cc",
+      "source_file_line": 692
+    },
+    {
+      "line": "#3 0x7f289352235a in v8::internal::Simulator::DoRuntimeCall(v8::internal::Instruction*) src/arm64/simulator-arm64.cc:490:11",
+      "address": 139812247053146,
+      "function_name": "v8::internal::Simulator::DoRuntimeCall(v8::internal::Instruction*)",
+      "function_offset": 11,
+      "source_file_name": "simulator-arm64.cc",
+      "source_file_path": "src/arm64/simulator-arm64.cc",
+      "source_file_line": 490
+    },
+    {
+      "line": "#4 0x7f2893520fa1 in v8::internal::Simulator::ExecuteInstruction() src/arm64/simulator-arm64.h:779:5",
+      "address": 139812247048097,
+      "function_name": "v8::internal::Simulator::ExecuteInstruction()",
+      "function_offset": 5,
+      "source_file_name": "simulator-arm64.h",
+      "source_file_path": "src/arm64/simulator-arm64.h",
+      "source_file_line": 779
+    },
+    {
+      "line": "#5 0x7f289351d5c0 in Run src/arm64/simulator-arm64.cc:390:5",
+      "address": 139812247033280,
+      "function_name": "Run",
+      "function_offset": 5,
+      "source_file_name": "simulator-arm64.cc",
+      "source_file_path": "src/arm64/simulator-arm64.cc",
+      "source_file_line": 390
+    },
+    {
+      "line": "#6 0x7f289351d5c0 in v8::internal::Simulator::CheckPCSComplianceAndRun() src/arm64/simulator-arm64.cc:188",
+      "address": 139812247033280,
+      "function_name": "v8::internal::Simulator::CheckPCSComplianceAndRun()",
+      "source_file_name": "simulator-arm64.cc",
+      "source_file_path": "src/arm64/simulator-arm64.cc",
+      "source_file_line": 188
+    },
+    {
+      "line": "#7 0x7f289351c5a7 in v8::internal::Simulator::CallImpl(unsigned long, v8::internal::Simulator::CallArgument*) src/arm64/simulator-arm64.cc:157:3",
+      "address": 139812247029159,
+      "function_name": "v8::internal::Simulator::CallImpl(unsigned long, v8::internal::Simulator::CallArgument*)",
+      "function_offset": 3,
+      "source_file_name": "simulator-arm64.cc",
+      "source_file_path": "src/arm64/simulator-arm64.cc",
+      "source_file_line": 157
+    },
+    {
+      "line": "#8 0x7f2891cfa831 in Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***> src/arm64/simulator-arm64.h:725:5",
+      "address": 139812221724721,
+      "function_name": "Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***>",
+      "function_offset": 5,
+      "source_file_name": "simulator-arm64.h",
+      "source_file_path": "src/arm64/simulator-arm64.h",
+      "source_file_line": 725
+    },
+    {
+      "line": "#9 0x7f2891cfa831 in Call src/simulator.h:107",
+      "address": 139812221724721,
+      "function_name": "Call",
+      "source_file_name": "simulator.h",
+      "source_file_path": "src/simulator.h",
+      "source_file_line": 107
+    },
+    {
+      "line": "#10 0x7f2891cfa831 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:154",
+      "address": 139812221724721,
+      "function_name": "v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target)",
+      "source_file_name": "execution.cc",
+      "source_file_path": "src/execution.cc",
+      "source_file_line": 154
+    },
+    {
+      "line": "#11 0x7f2891cf8997 in v8::internal::(anonymous namespace)::CallInternal(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:190:10",
+      "address": 139812221716887,
+      "function_name": "v8::internal::(anonymous namespace)::CallInternal(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target)",
+      "function_offset": 10,
+      "source_file_name": "execution.cc",
+      "source_file_path": "src/execution.cc",
+      "source_file_line": 190
+    },
+    {
+      "line": "#12 0x7f2891cf84a6 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution.cc:201:10",
+      "address": 139812221715622,
+      "function_name": "v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*)",
+      "function_offset": 10,
+      "source_file_name": "execution.cc",
+      "source_file_path": "src/execution.cc",
+      "source_file_line": 201
+    },
+    {
+      "line": "#13 0x7f289094c1a4 in v8::Script::Run(v8::Local<v8::Context>) src/api.cc:2110:7",
+      "address": 139812201087396,
+      "function_name": "v8::Script::Run(v8::Local<v8::Context>)",
+      "function_offset": 7,
+      "source_file_name": "api.cc",
+      "source_file_path": "src/api.cc",
+      "source_file_line": 2110
+    },
+    {
+      "line": "#14 0x55baa2aaf0a6 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8.cc:534:28",
+      "address": 94260081389734,
+      "function_name": "v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue)",
+      "function_offset": 28,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8.cc",
+      "source_file_line": 534
+    },
+    {
+      "line": "#15 0x55baa2ace56e in v8::SourceGroup::Execute(v8::Isolate*) src/d8.cc:2480:10",
+      "address": 94260081517934,
+      "function_name": "v8::SourceGroup::Execute(v8::Isolate*)",
+      "function_offset": 10,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8.cc",
+      "source_file_line": 2480
+    },
+    {
+      "line": "#16 0x55baa2ad5e64 in v8::Shell::RunMain(v8::Isolate*, int, char**, bool) src/d8.cc:2948:34",
+      "address": 94260081548900,
+      "function_name": "v8::Shell::RunMain(v8::Isolate*, int, char**, bool)",
+      "function_offset": 34,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8.cc",
+      "source_file_line": 2948
+    },
+    {
+      "line": "#17 0x55baa2ada945 in v8::Shell::Main(int, char**) src/d8.cc:3498:16",
+      "address": 94260081568069,
+      "function_name": "v8::Shell::Main(int, char**)",
+      "function_offset": 16,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8.cc",
+      "source_file_line": 3498
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x7f2892e7b1c2 in v8::internal::__RT_impl_Runtime_AbortJS(v8::internal::Arguments, v8::internal::Isolate*) src/runtime/runtime-test.cc:702:3",
+    "#2 0x7f2892e79ecb in v8::internal::Runtime_AbortJS(int, v8::internal::Object**, v8::internal::Isolate*) src/runtime/runtime-test.cc:692:1",
+    "#3 0x7f289352235a in v8::internal::Simulator::DoRuntimeCall(v8::internal::Instruction*) src/arm64/simulator-arm64.cc:490:11",
+    "#4 0x7f2893520fa1 in v8::internal::Simulator::ExecuteInstruction() src/arm64/simulator-arm64.h:779:5",
+    "#5 0x7f289351d5c0 in Run src/arm64/simulator-arm64.cc:390:5",
+    "#6 0x7f289351d5c0 in v8::internal::Simulator::CheckPCSComplianceAndRun() src/arm64/simulator-arm64.cc:188",
+    "#7 0x7f289351c5a7 in v8::internal::Simulator::CallImpl(unsigned long, v8::internal::Simulator::CallArgument*) src/arm64/simulator-arm64.cc:157:3",
+    "#8 0x7f2891cfa831 in Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***> src/arm64/simulator-arm64.h:725:5",
+    "#9 0x7f2891cfa831 in Call src/simulator.h:107",
+    "#10 0x7f2891cfa831 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:154",
+    "#11 0x7f2891cf8997 in v8::internal::(anonymous namespace)::CallInternal(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) src/execution.cc:190:10",
+    "#12 0x7f2891cf84a6 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution.cc:201:10",
+    "#13 0x7f289094c1a4 in v8::Script::Run(v8::Local<v8::Context>) src/api.cc:2110:7",
+    "#14 0x55baa2aaf0a6 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8.cc:534:28",
+    "#15 0x55baa2ace56e in v8::SourceGroup::Execute(v8::Isolate*) src/d8.cc:2480:10",
+    "#16 0x55baa2ad5e64 in v8::Shell::RunMain(v8::Isolate*, int, char**, bool) src/d8.cc:2948:34",
+    "#17 0x55baa2ada945 in v8::Shell::Main(int, char**) src/d8.cc:3498:16"
+  ],
+  "minimized_stack_function_names": [
+    "v8::internal::__RT_impl_Runtime_AbortJS",
+    "v8::internal::Runtime_AbortJS",
+    "v8::internal::Simulator::DoRuntimeCall",
+    "v8::internal::Simulator::ExecuteInstruction",
+    "Run",
+    "v8::internal::Simulator::CheckPCSComplianceAndRun",
+    "v8::internal::Simulator::CallImpl",
+    "Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***>",
+    "Call",
+    "v8::internal::",
+    "v8::internal::",
+    "v8::internal::Execution::Call",
+    "v8::Script::Run",
+    "v8::Shell::ExecuteString",
+    "v8::SourceGroup::Execute",
+    "v8::Shell::RunMain",
+    "v8::Shell::Main"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

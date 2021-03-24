@@ -3,42 +3,51 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_ASAN_LOG,
-        CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
+        CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR, DISABLE_CHECK_DEBUGGER,
+        DISABLE_CHECK_QUEUE, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
+        TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
-    tasks::report::generic::{Config, ReportTask},
+    tasks::{
+        config::CommonConfig,
+        report::generic::{Config, ReportTask},
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use std::path::PathBuf;
+use storage_queue::QueueClient;
 
-pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
+pub fn build_report_config(
+    args: &clap::ArgMatches<'_>,
+    input_queue: Option<QueueClient>,
+    common: CommonConfig,
+) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
 
-    let crashes = Some(value_t!(args, CRASHES_DIR, PathBuf)?.into());
-    let reports = if args.is_present(REPORTS_DIR) {
-        Some(value_t!(args, REPORTS_DIR, PathBuf)?).map(|x| x.into())
-    } else {
-        None
-    };
-    let no_repro = if args.is_present(NO_REPRO_DIR) {
-        Some(value_t!(args, NO_REPRO_DIR, PathBuf)?).map(|x| x.into())
-    } else {
-        None
-    };
-    let unique_reports = Some(value_t!(args, UNIQUE_REPORTS_DIR, PathBuf)?.into());
+    let crashes = Some(get_synced_dir(
+        CRASHES_DIR,
+        common.job_id,
+        common.task_id,
+        args,
+    )?);
+    let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args).ok();
+    let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args).ok();
+
+    let unique_reports = Some(get_synced_dir(
+        UNIQUE_REPORTS_DIR,
+        common.job_id,
+        common.task_id,
+        args,
+    )?);
 
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
 
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
     let check_queue = !args.is_present(DISABLE_CHECK_QUEUE);
     let check_asan_log = args.is_present(CHECK_ASAN_LOG);
-    let check_debugger = !args.is_present("disable_check_debugger");
-
-    let common = build_common_config(args)?;
+    let check_debugger = !args.is_present(DISABLE_CHECK_DEBUGGER);
 
     let config = Config {
         target_exe,
@@ -50,7 +59,8 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
         check_retry_count,
         check_queue,
         crashes,
-        input_queue: None,
+        minimized_stack_depth: None,
+        input_queue,
         no_repro,
         reports,
         unique_reports,
@@ -61,8 +71,9 @@ pub fn build_report_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_report_config(args)?;
-    ReportTask::new(config).local_run().await
+    let common = build_common_config(args, true)?;
+    let config = build_report_config(args, None, common)?;
+    ReportTask::new(config).managed_run().await
 }
 
 pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
@@ -111,9 +122,9 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
         Arg::with_name(CHECK_ASAN_LOG)
             .takes_value(false)
             .long(CHECK_ASAN_LOG),
-        Arg::with_name("disable_check_debugger")
+        Arg::with_name(DISABLE_CHECK_DEBUGGER)
             .takes_value(false)
-            .long("disable_check_debugger"),
+            .long(DISABLE_CHECK_DEBUGGER),
     ]
 }
 

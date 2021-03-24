@@ -226,3 +226,65 @@ async fn test_worker_done() {
     assert!(matches!(worker, Worker::Done(..)));
     assert_eq!(events, vec![]);
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn test_redirected_child() {
+    use std::iter::repeat;
+    use std::process::Command;
+
+    // Assume OS pipe capacity of 16 pages, each 4096 bytes.
+    //
+    // For each stream,
+    //
+    //   1. Write enough of one char to fill up the OS pipe.
+    //   2. Write a smaller count (< tail size) of another char to overflow it.
+    //
+    // Our tailing buffer has size 4096, so we will expect to see all of the
+    // bytes from the second char, and the remainder from the first char.
+    let script = "import sys;\
+sys.stdout.write('A' * 65536 + 'B' * 4000);\
+sys.stderr.write('C' * 65536 + 'D' * 4000)";
+
+    let mut cmd = Command::new("python3");
+    cmd.args(&["-c", script]);
+
+    let mut redirected = RedirectedChild::spawn(cmd).unwrap();
+    redirected.child.wait().unwrap();
+    let captured = redirected.streams.unwrap().join().unwrap();
+
+    let stdout: String = repeat('A').take(96).chain(repeat('B').take(4000)).collect();
+    assert_eq!(captured.stdout, stdout);
+
+    let stderr: String = repeat('C').take(96).chain(repeat('D').take(4000)).collect();
+    assert_eq!(captured.stderr, stderr);
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn test_redirected_child() {
+    use std::iter::repeat;
+    use std::process::Command;
+
+    // Only write to stdout.
+    let script = "Write-Output ('A' * 65536  + 'B' * 4000)";
+
+    let mut cmd = Command::new("powershell.exe");
+    cmd.args(&[
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Unrestricted",
+        "-Command",
+        script,
+    ]);
+
+    let mut redirected = RedirectedChild::spawn(cmd).unwrap();
+    redirected.child.wait().unwrap();
+    let captured = redirected.streams.unwrap().join().unwrap();
+
+    let mut stdout: String = repeat('A').take(94).chain(repeat('B').take(4000)).collect();
+    stdout.push_str("\r\n");
+    assert_eq!(captured.stdout, stdout);
+
+    assert_eq!(captured.stderr, "");
+}

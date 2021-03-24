@@ -6,6 +6,7 @@
 import json
 import logging
 import os
+import pkgutil
 import re
 import subprocess  # nosec
 import uuid
@@ -14,7 +15,6 @@ from shutil import which
 from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
-import pkg_resources
 import semver
 from memoization import cached
 from onefuzztypes import (
@@ -183,11 +183,13 @@ class Files(Endpoint):
         sas = self.onefuzz.containers.get(container).sas_url
         return ContainerWrapper(sas)
 
-    def list(self, container: primitives.Container) -> models.Files:
+    def list(
+        self, container: primitives.Container, prefix: Optional[str] = None
+    ) -> models.Files:
         """ Get a list of files in a container """
         self.logger.debug("listing files in container: %s", container)
         client = self._get_client(container)
-        return models.Files(files=client.list_blobs())
+        return models.Files(files=client.list_blobs(name_starts_with=prefix))
 
     def delete(self, container: primitives.Container, filename: str) -> None:
         """ delete a file from a container """
@@ -224,13 +226,27 @@ class Files(Endpoint):
         client = self._get_client(container)
         client.upload_file(file_path, blob_name)
 
-    def upload_dir(self, container: primitives.Container, dir_path: str) -> None:
+    def upload_dir(
+        self, container: primitives.Container, dir_path: primitives.Directory
+    ) -> None:
         """ uploads a directory to a container """
 
         self.logger.debug("uploading directory to container %s:%s", container, dir_path)
 
         client = self._get_client(container)
         client.upload_dir(dir_path)
+
+    def download_dir(
+        self, container: primitives.Container, dir_path: primitives.Directory
+    ) -> None:
+        """ downloads a container to a directory """
+
+        self.logger.debug(
+            "downloading container to directory %s:%s", container, dir_path
+        )
+
+        client = self._get_client(container)
+        client.download_dir(dir_path)
 
 
 class Versions(Endpoint):
@@ -840,6 +856,8 @@ class Tasks(Endpoint):
         vm_count: int = 1,
         preserve_existing_outputs: bool = False,
         colocate: bool = False,
+        report_list: Optional[List[str]] = None,
+        minimized_stack_depth: Optional[int] = None,
     ) -> models.Task:
         """
         Create a task
@@ -902,6 +920,9 @@ class Tasks(Endpoint):
                 target_workers=target_workers,
                 type=task_type,
                 wait_for_files=task_wait_for_files,
+                report_list=report_list,
+                preserve_existing_outputs=preserve_existing_outputs,
+                minimized_stack_depth=minimized_stack_depth,
             ),
         )
 
@@ -1554,8 +1575,17 @@ class Onefuzz:
 
     def licenses(self) -> object:
         """ Return third-party licenses used by this package """
-        stream = pkg_resources.resource_stream(__name__, "data/licenses.json")
-        return json.load(stream)
+        data = pkgutil.get_data("onefuzz", "data/licenses.json")
+        if data is None:
+            raise Exception("missing licenses.json")
+        return json.loads(data)
+
+    def privacy_statement(self) -> bytes:
+        """ Return OneFuzz privacy statement """
+        data = pkgutil.get_data("onefuzz", "data/privacy.txt")
+        if data is None:
+            raise Exception("missing licenses.json")
+        return data
 
     def logout(self) -> None:
         """ Logout of Onefuzz """

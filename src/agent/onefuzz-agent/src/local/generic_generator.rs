@@ -3,19 +3,21 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, CmdType, CHECK_ASAN_LOG,
-        CHECK_RETRY_COUNT, CRASHES_DIR, GENERATOR_ENV, GENERATOR_EXE, GENERATOR_OPTIONS,
-        READONLY_INPUTS, RENAME_OUTPUT, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
-        TOOLS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
+        get_synced_dirs, CmdType, CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR,
+        DISABLE_CHECK_DEBUGGER, GENERATOR_ENV, GENERATOR_EXE, GENERATOR_OPTIONS, READONLY_INPUTS,
+        RENAME_OUTPUT, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, TOOLS_DIR,
     },
-    tasks::fuzz::generator::{Config, GeneratorTask},
+    tasks::{
+        config::CommonConfig,
+        fuzz::generator::{Config, GeneratorTask},
+    },
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use std::path::PathBuf;
 
-pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
-    let crashes = value_t!(args, CRASHES_DIR, PathBuf)?.into();
+pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> Result<Config> {
+    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?;
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_options = get_cmd_arg(CmdType::Target, args);
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -23,26 +25,18 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
     let generator_exe = get_cmd_exe(CmdType::Generator, args)?;
     let generator_options = get_cmd_arg(CmdType::Generator, args);
     let generator_env = get_cmd_env(CmdType::Generator, args)?;
-
-    let readonly_inputs = values_t!(args, READONLY_INPUTS, PathBuf)?
-        .iter()
-        .map(|x| x.to_owned().into())
-        .collect();
+    let readonly_inputs = get_synced_dirs(READONLY_INPUTS, common.job_id, common.task_id, args)?;
 
     let rename_output = args.is_present(RENAME_OUTPUT);
     let check_asan_log = args.is_present(CHECK_ASAN_LOG);
-    let check_debugger = !args.is_present("disable_check_debugger");
+    let check_debugger = !args.is_present(DISABLE_CHECK_DEBUGGER);
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
     let target_timeout = Some(value_t!(args, TARGET_TIMEOUT, u64)?);
 
-    let tools = if args.is_present(TOOLS_DIR) {
-        Some(value_t!(args, TOOLS_DIR, PathBuf)?.into())
-    } else {
-        None
-    };
+    let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args).ok();
 
     let ensemble_sync_delay = None;
-    let common = build_common_config(args)?;
+
     let config = Config {
         tools,
         generator_exe,
@@ -66,7 +60,8 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>) -> Result<Config> {
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let config = build_fuzz_config(args)?;
+    let common = build_common_config(args, true)?;
+    let config = build_fuzz_config(args, common)?;
     GeneratorTask::new(config).run().await
 }
 
@@ -125,9 +120,9 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
             .takes_value(true)
             .long(TARGET_TIMEOUT)
             .default_value("30"),
-        Arg::with_name("disable_check_debugger")
+        Arg::with_name(DISABLE_CHECK_DEBUGGER)
             .takes_value(false)
-            .long("disable_check_debugger"),
+            .long(DISABLE_CHECK_DEBUGGER),
     ]
 }
 

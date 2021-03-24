@@ -1,0 +1,82 @@
+{
+  "text": "F0813 00:29:27.775753  384244 file.cc:130] Check failed: std::is_sorted(foo.begin(), foo.end())\nAddressSanitizer:DEADLYSIGNAL\n=================================================================\n==384244==ERROR: AddressSanitizer: ABRT on unknown address 0x05390005dcf4 (pc 0x7f91eacc0602 bp 0x7ffeddeee0c0 sp 0x7ffeddeedf98 T0)\nSCARINESS: 10 (signal)\n    #0 0x7f91eacc0601 in raise (/usr/grte/v4/lib64/libc.so.6+0xfffff)\n    #1 0x7f91eacc231f in abort (/usr/grte/v4/lib64/libc.so.6+0xfffff)\n    #6 0x560e73b80fe2 in Frame(int) file/path.cc:130:3\n    #8 0x560e73b7d819 in LLVMFuzzerTestOneInput file/path.cc:10:1\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ABRT (/usr/grte/v4/lib64/libc.so.6+0xfffff) in raise\n==384244==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT (/usr/grte/v4/lib64/libc.so.6+0xfffff) in raise",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7f91eacc0601 in raise (/usr/grte/v4/lib64/libc.so.6+0xfffff)",
+    "#1 0x7f91eacc231f in abort (/usr/grte/v4/lib64/libc.so.6+0xfffff)",
+    "#6 0x560e73b80fe2 in Frame(int) file/path.cc:130:3",
+    "#8 0x560e73b7d819 in LLVMFuzzerTestOneInput file/path.cc:10:1"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f91eacc0601 in raise (/usr/grte/v4/lib64/libc.so.6+0xfffff)",
+      "address": 140264686224897,
+      "function_name": "raise",
+      "module_path": "/usr/grte/v4/lib64/libc.so.6",
+      "module_offset": 1048575
+    },
+    {
+      "line": "#1 0x7f91eacc231f in abort (/usr/grte/v4/lib64/libc.so.6+0xfffff)",
+      "address": 140264686232351,
+      "function_name": "abort",
+      "module_path": "/usr/grte/v4/lib64/libc.so.6",
+      "module_offset": 1048575
+    },
+    {
+      "line": "#6 0x560e73b80fe2 in Frame(int) file/path.cc:130:3",
+      "address": 94620070973410,
+      "function_name": "Frame(int)",
+      "function_offset": 3,
+      "source_file_name": "path.cc",
+      "source_file_path": "file/path.cc",
+      "source_file_line": 130
+    },
+    {
+      "line": "#8 0x560e73b7d819 in LLVMFuzzerTestOneInput file/path.cc:10:1",
+      "address": 94620070959129,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 1,
+      "source_file_name": "path.cc",
+      "source_file_path": "file/path.cc",
+      "source_file_line": 10
+    }
+  ],
+  "full_stack_names": [
+    "raise",
+    "abort",
+    "Frame",
+    "LLVMFuzzerTestOneInput"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#6 0x560e73b80fe2 in Frame(int) file/path.cc:130:3",
+      "address": 94620070973410,
+      "function_name": "Frame(int)",
+      "function_offset": 3,
+      "source_file_name": "path.cc",
+      "source_file_path": "file/path.cc",
+      "source_file_line": 130
+    },
+    {
+      "line": "#8 0x560e73b7d819 in LLVMFuzzerTestOneInput file/path.cc:10:1",
+      "address": 94620070959129,
+      "function_name": "path.cc",
+      "function_offset": 1,
+      "source_file_name": "path.cc",
+      "source_file_path": "file/path.cc",
+      "source_file_line": 10
+    }
+  ],
+  "minimized_stack": [
+    "#6 0x560e73b80fe2 in Frame(int) file/path.cc:130:3",
+    "#8 0x560e73b7d819 in LLVMFuzzerTestOneInput file/path.cc:10:1"
+  ],
+  "minimized_stack_function_names": [
+    "Frame",
+    "path.cc"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

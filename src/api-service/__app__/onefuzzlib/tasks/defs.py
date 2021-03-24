@@ -106,6 +106,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_timeout,
             TaskFeature.check_retry_count,
             TaskFeature.check_fuzzer_help,
+            TaskFeature.minimized_stack_depth,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -378,6 +379,7 @@ TASK_DEFINITIONS = {
             TaskFeature.check_asan_log,
             TaskFeature.check_debugger,
             TaskFeature.check_retry_count,
+            TaskFeature.minimized_stack_depth,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[
@@ -413,5 +415,134 @@ TASK_DEFINITIONS = {
             ),
         ],
         monitor_queue=ContainerType.crashes,
+    ),
+    TaskType.generic_regression: TaskDefinition(
+        features=[
+            TaskFeature.target_exe,
+            TaskFeature.target_env,
+            TaskFeature.target_options,
+            TaskFeature.target_timeout,
+            TaskFeature.check_asan_log,
+            TaskFeature.check_debugger,
+            TaskFeature.check_retry_count,
+            TaskFeature.report_list,
+            TaskFeature.minimized_stack_depth,
+        ],
+        vm=VmDefinition(compare=Compare.AtLeast, value=1),
+        containers=[
+            ContainerDefinition(
+                type=ContainerType.setup,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.regression_reports,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+            ContainerDefinition(
+                type=ContainerType.crashes,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.unique_reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.no_repro,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.readonly_inputs,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+        ],
+    ),
+    TaskType.libfuzzer_regression: TaskDefinition(
+        features=[
+            TaskFeature.target_exe,
+            TaskFeature.target_env,
+            TaskFeature.target_options,
+            TaskFeature.target_timeout,
+            TaskFeature.check_fuzzer_help,
+            TaskFeature.check_retry_count,
+            TaskFeature.report_list,
+            TaskFeature.minimized_stack_depth,
+        ],
+        vm=VmDefinition(compare=Compare.AtLeast, value=1),
+        containers=[
+            ContainerDefinition(
+                type=ContainerType.setup,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.regression_reports,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[
+                    ContainerPermission.Write,
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+            ContainerDefinition(
+                type=ContainerType.crashes,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.unique_reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.reports,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.no_repro,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.readonly_inputs,
+                compare=Compare.AtMost,
+                value=1,
+                permissions=[
+                    ContainerPermission.Read,
+                    ContainerPermission.List,
+                ],
+            ),
+        ],
     ),
 }

@@ -1,0 +1,175 @@
+{
+  "text": "=================================================================\n==15479==AddressSanitizer CHECK failed: /build/llvm-toolchain-9-uSl4bC/llvm-toolchain-9-9/projects/compiler-rt/lib/asan/asan_descriptions.cc:80 \"((0 && \"Address is not in memory and not in shadow?\")) != (0)\" (0x0, 0x0)\n==15479==WARNING: invalid path to external symbolizer!\n==15479==WARNING: Failed to use and restart external symbolizer!\n    #0 0x49a92e  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)\n    #1 0x4aef3f  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)\n    #2 0x423516  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)\n    #3 0x4245b6  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)\n    #4 0x4261b2  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)\n    #5 0x498180  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)\n    #6 0x47ef01  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)\n    #7 0x4c2223  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c2223)\n    #8 0x4c26b7  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c26b7)\n    #9 0x4c274d  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c274d)\n    #10 0x7ffff6e22bf6  (/lib/x86_64-linux-gnu/libc.so.6+0x21bf6)\n    #11 0x41ab39  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)\n\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer CHECK failed: /build/llvm-toolchain-9-uSl4bC/llvm-toolchain-9-9/projects/compiler-rt/lib/asan/asan_descriptions.cc:80",
+  "fault_type": "CHECK failed",
+  "call_stack": [
+    "#0 0x49a92e  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)",
+    "#1 0x4aef3f  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)",
+    "#2 0x423516  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)",
+    "#3 0x4245b6  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)",
+    "#4 0x4261b2  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)",
+    "#5 0x498180  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)",
+    "#6 0x47ef01  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)",
+    "#7 0x4c2223  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c2223)",
+    "#8 0x4c26b7  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c26b7)",
+    "#9 0x4c274d  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c274d)",
+    "#10 0x7ffff6e22bf6  (/lib/x86_64-linux-gnu/libc.so.6+0x21bf6)",
+    "#11 0x41ab39  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x49a92e  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)",
+      "address": 4827438,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4827438
+    },
+    {
+      "line": "#1 0x4aef3f  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)",
+      "address": 4910911,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4910911
+    },
+    {
+      "line": "#2 0x423516  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)",
+      "address": 4338966,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4338966
+    },
+    {
+      "line": "#3 0x4245b6  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)",
+      "address": 4343222,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4343222
+    },
+    {
+      "line": "#4 0x4261b2  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)",
+      "address": 4350386,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4350386
+    },
+    {
+      "line": "#5 0x498180  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)",
+      "address": 4817280,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4817280
+    },
+    {
+      "line": "#6 0x47ef01  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)",
+      "address": 4714241,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4714241
+    },
+    {
+      "line": "#7 0x4c2223  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c2223)",
+      "address": 4989475,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4989475
+    },
+    {
+      "line": "#8 0x4c26b7  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c26b7)",
+      "address": 4990647,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4990647
+    },
+    {
+      "line": "#9 0x4c274d  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c274d)",
+      "address": 4990797,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4990797
+    },
+    {
+      "line": "#10 0x7ffff6e22bf6  (/lib/x86_64-linux-gnu/libc.so.6+0x21bf6)",
+      "address": 140737335405558,
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 138230
+    },
+    {
+      "line": "#11 0x41ab39  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)",
+      "address": 4303673,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4303673
+    }
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x49a92e  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)",
+      "address": 4827438,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4827438
+    },
+    {
+      "line": "#1 0x4aef3f  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)",
+      "address": 4910911,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4910911
+    },
+    {
+      "line": "#2 0x423516  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)",
+      "address": 4338966,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4338966
+    },
+    {
+      "line": "#3 0x4245b6  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)",
+      "address": 4343222,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4343222
+    },
+    {
+      "line": "#4 0x4261b2  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)",
+      "address": 4350386,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4350386
+    },
+    {
+      "line": "#5 0x498180  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)",
+      "address": 4817280,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4817280
+    },
+    {
+      "line": "#6 0x47ef01  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)",
+      "address": 4714241,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4714241
+    },
+    {
+      "line": "#7 0x4c2223  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c2223)",
+      "address": 4989475,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4989475
+    },
+    {
+      "line": "#8 0x4c26b7  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c26b7)",
+      "address": 4990647,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4990647
+    },
+    {
+      "line": "#9 0x4c274d  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c274d)",
+      "address": 4990797,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4990797
+    },
+    {
+      "line": "#11 0x41ab39  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)",
+      "address": 4303673,
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4303673
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x49a92e  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)",
+    "#1 0x4aef3f  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)",
+    "#2 0x423516  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)",
+    "#3 0x4245b6  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)",
+    "#4 0x4261b2  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)",
+    "#5 0x498180  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)",
+    "#6 0x47ef01  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)",
+    "#7 0x4c2223  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c2223)",
+    "#8 0x4c26b7  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c26b7)",
+    "#9 0x4c274d  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4c274d)",
+    "#11 0x41ab39  (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)"
+  ]
+}

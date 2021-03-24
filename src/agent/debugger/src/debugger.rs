@@ -678,6 +678,10 @@ impl Debugger {
         self.target.read_register_u64(reg)
     }
 
+    pub fn read_program_counter(&mut self) -> Result<u64> {
+        self.target.read_program_counter()
+    }
+
     pub fn read_flags_register(&mut self) -> Result<u32> {
         self.target.read_flags_register()
     }
@@ -699,7 +703,7 @@ impl Debugger {
         dbghlp.stackwalk_ex(
             self.target.process_handle(),
             self.target.current_thread_handle(),
-            |_frame_context, frame| {
+            |frame| {
                 return_address = frame.AddrReturn;
                 stack_pointer = frame.AddrStack;
 

@@ -300,7 +300,33 @@ class Client:
                 service_principal_type="Application",
                 app_id=app.app_id,
             )
-            client.service_principals.create(service_principal_params)
+
+            def try_sp_create() -> None:
+                error: Optional[Exception] = None
+                for _ in range(10):
+                    try:
+                        client.service_principals.create(service_principal_params)
+                        return
+                    except GraphErrorException as err:
+                        # work around timing issue when creating service principal
+                        # https://github.com/Azure/azure-cli/issues/14767
+                        if (
+                            "service principal being created must in the local tenant"
+                            not in str(err)
+                        ):
+                            raise err
+                    logging.warning(
+                        "creating service principal failed with an error that occurs "
+                        "due to AAD race conditions"
+                    )
+                    time.sleep(60)
+                if error is None:
+                    raise Exception("service principal creation failed")
+                else:
+                    raise error
+
+            try_sp_create()
+
         else:
             app = existing[0]
             existing_role_values = [app_role.value for app_role in app.app_roles]
@@ -384,16 +410,40 @@ class Client:
                 mode=DeploymentMode.incremental, template=template, parameters=params
             )
         )
-        result = client.deployments.create_or_update(
-            self.resource_group, gen_guid(), deployment
-        ).result()
-        if result.properties.provisioning_state != "Succeeded":
-            logger.error(
-                "error deploying: %s",
-                json.dumps(result.as_dict(), indent=4, sort_keys=True),
-            )
-            sys.exit(1)
-        self.results["deploy"] = result.properties.outputs
+        count = 0
+        tries = 10
+        error: Optional[Exception] = None
+        while count < tries:
+            count += 1
+
+            try:
+                result = client.deployments.create_or_update(
+                    self.resource_group, gen_guid(), deployment
+                ).result()
+                if result.properties.provisioning_state != "Succeeded":
+                    logger.error(
+                        "error deploying: %s",
+                        json.dumps(result.as_dict(), indent=4, sort_keys=True),
+                    )
+                    sys.exit(1)
+                self.results["deploy"] = result.properties.outputs
+                return
+            except Exception as err:
+                error = err
+                as_repr = repr(err)
+                # Modeled after Azure-CLI.  See:
+                # https://github.com/Azure/azure-cli/blob/
+                #   3a2f6009cff788fde3b0170823c9129f187b2812/src/azure-cli-core/
+                #   azure/cli/core/commands/arm.py#L1086
+                if (
+                    "PrincipalNotFound" in as_repr
+                    and "does not exist in the directory" in as_repr
+                ):
+                    logging.info("application principal not available in AAD yet")
+        if error:
+            raise error
+        else:
+            raise Exception("unknown error deploying")
 
     def assign_scaleset_identity_role(self) -> None:
         if self.upgrade:

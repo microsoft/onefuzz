@@ -1,0 +1,64 @@
+{
+  "text": "INFO: Seed: 3192757444\nINFO: Loaded 1 modules   (12 inline 8-bit counters): 12 [0x7a1eb0, 0x7a1ebc),\nINFO: Loaded 1 PC tables (12 PCs): 12 [0x566fd8,0x567098),\n./fuzz.exe: Running 1 inputs 1 time(s) each.\nRunning: good.txt\n==25201== ERROR: libFuzzer: out-of-memory (used: 134Mb; limit: 1Mb)\n   To change the out-of-memory limit use -rss_limit_mb=<N>\n\nLive Heap Allocations: 21573335 bytes in 22 chunks; quarantined: 100009208 bytes in 8 chunks; 5943 other chunks; total chunks: 5973; showing top 95% (at most 8 unique contexts)\n21499304 byte(s) (99%) in 10 allocation(s)\n    #0 0x51d4dd in malloc (/home/user/src/onefuzz/src/agent/fuzz.exe+0x51d4dd)\n    #1 0x431b97 in operator new(unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x431b97)\n    #2 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)\n    #3 0x7f2e2eb89b96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310\n\nSUMMARY: libFuzzer: out-of-memory",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: out-of-memory",
+  "fault_type": "out-of-memory",
+  "call_stack": [
+    "#0 0x51d4dd in malloc (/home/user/src/onefuzz/src/agent/fuzz.exe+0x51d4dd)",
+    "#1 0x431b97 in operator new(unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x431b97)",
+    "#2 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)",
+    "#3 0x7f2e2eb89b96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x51d4dd in malloc (/home/user/src/onefuzz/src/agent/fuzz.exe+0x51d4dd)",
+      "address": 5362909,
+      "function_name": "malloc",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 5362909
+    },
+    {
+      "line": "#1 0x431b97 in operator new(unsigned long) (/home/user/src/onefuzz/src/agent/fuzz.exe+0x431b97)",
+      "address": 4397975,
+      "function_name": "operator new(unsigned long)",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4397975
+    },
+    {
+      "line": "#2 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)",
+      "address": 4659282,
+      "function_name": "main",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4659282
+    },
+    {
+      "line": "#3 0x7f2e2eb89b96 in __libc_start_main /build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c:310",
+      "address": 139836329073558,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-2ORdQG/glibc-2.27/csu/../csu/libc-start.c",
+      "source_file_line": 310
+    }
+  ],
+  "full_stack_names": [
+    "malloc",
+    "operator new",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#2 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)",
+      "address": 4659282,
+      "function_name": "main",
+      "module_path": "/home/user/src/onefuzz/src/agent/fuzz.exe",
+      "module_offset": 4659282
+    }
+  ],
+  "minimized_stack": [
+    "#2 0x471852 in main (/home/user/src/onefuzz/src/agent/fuzz.exe+0x471852)"
+  ],
+  "minimized_stack_function_names": [
+    "main"
+  ]
+}

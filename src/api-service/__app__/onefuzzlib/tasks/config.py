@@ -4,7 +4,9 @@
 # Licensed under the MIT License.
 
 import logging
+import ntpath
 import os
+import posixpath
 from typing import Dict, List, Optional
 from uuid import UUID
 
@@ -101,6 +103,16 @@ def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
             return
 
         return
+
+    # Azure Blob Store uses virtualized directory structures.  As such, we need
+    # the paths to already be canonicalized.  As an example, accessing the blob
+    # store path "./foo" generates an exception, but "foo" and "foo/bar" do
+    # not.
+    if (
+        posixpath.relpath(config.task.target_exe) != config.task.target_exe
+        or ntpath.relpath(config.task.target_exe) != config.task.target_exe
+    ):
+        raise TaskConfigError("target_exe must be a canonicalized relative path")
 
     container = [x for x in config.containers if x.type == ContainerType.setup][0]
     if not blob_exists(container.name, config.task.target_exe, StorageType.corpus):
@@ -335,6 +347,12 @@ def build_task_config(
             if task_config.task.check_fuzzer_help is not None
             else True
         )
+
+    if TaskFeature.report_list in definition.features:
+        config.report_list = task_config.task.report_list
+
+    if TaskFeature.minimized_stack_depth in definition.features:
+        config.minimized_stack_depth = task_config.task.minimized_stack_depth
 
     if TaskFeature.expect_crash_on_failure in definition.features:
         config.expect_crash_on_failure = (

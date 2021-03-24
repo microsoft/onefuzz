@@ -27,6 +27,23 @@ pub enum State<M> {
     Processed(M),
 }
 
+impl<M: PartialEq> PartialEq for State<M> {
+    fn eq(&self, other: &State<M>) -> bool {
+        use State::*;
+
+        match (self, other) {
+            (Ready, Ready) => true,
+            (Polled(l), Polled(r)) => l == r,
+            (Parsed(l0, l1), Parsed(r0, r1)) => l0 == r0 && l1 == r1,
+            (Downloaded(l0, l1, l2, l3), Downloaded(r0, r1, r2, r3)) => {
+                l0 == r0 && l1 == r1 && l2 == r2 && l3.path() == r3.path()
+            }
+            (Processed(l), Processed(r)) => l == r,
+            _ => false,
+        }
+    }
+}
+
 impl<M> fmt::Display for State<M> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -104,17 +121,13 @@ impl<M> InputPoller<M> {
         to_process: &SyncedDir,
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
-        if to_process.url.is_some() {
-            to_process.init_pull().await?;
-        }
+        to_process.init_pull().await?;
         info!("batch processing directory: {}", to_process.path.display());
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
-            info!("Processing batch-downloaded input {:?}", file);
-
-            let file = file?;
-            let path = file.path();
+            let path = file?.path();
+            info!("Processing batch-downloaded input: {}", path.display());
 
             // Compute the file name relative to the synced directory, and thus the
             // container.
@@ -165,7 +178,7 @@ impl<M> InputPoller<M> {
                     delay_with_jitter(POLL_INTERVAL).await;
                 }
                 State::Downloaded(_msg, _url, input, _tempdir) => {
-                    info!("Processing downloaded input: {:?}", input);
+                    info!("Processing downloaded input: {}", input.display());
                 }
                 _ => {}
             }

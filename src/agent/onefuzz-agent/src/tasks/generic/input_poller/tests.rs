@@ -100,9 +100,7 @@ fn url_input_name(url: &Url) -> String {
 }
 
 fn fixture() -> InputPoller<Msg> {
-    let task = InputPoller::new();
-
-    task
+    InputPoller::new()
 }
 
 fn url_fixture(msg: Msg) -> Url {
@@ -180,7 +178,7 @@ async fn test_parsed_download() {
         .unwrap();
 
     match task.state() {
-        State::Downloaded(got_msg, got_url, got_path) => {
+        State::Downloaded(got_msg, got_url, got_path, _tmp_dir) => {
             assert_eq!(*got_msg, msg);
             assert_eq!(*got_url, url);
             assert_eq!(got_path.file_name(), input.file_name());
@@ -194,6 +192,7 @@ async fn test_parsed_download() {
 #[tokio::test]
 async fn test_downloaded_process() {
     let mut task = fixture();
+    let tmp_dir = tempfile::tempdir().unwrap();
 
     let dir = Path::new("etc");
 
@@ -201,7 +200,7 @@ async fn test_downloaded_process() {
     let url = url_fixture(msg);
     let input = input_fixture(dir, msg);
 
-    task.set_state(State::Downloaded(msg, url.clone(), input.clone()));
+    task.set_state(State::Downloaded(msg, url.clone(), input.clone(), tmp_dir));
 
     let mut processor = TestProcessor::default();
 

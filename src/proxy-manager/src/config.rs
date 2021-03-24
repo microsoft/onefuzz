@@ -3,7 +3,9 @@
 
 use crate::proxy;
 use anyhow::Result;
-use onefuzz_telemetry::{set_appinsights_clients, EventData, Role};
+use onefuzz_telemetry::{
+    set_appinsights_clients, EventData, InstanceTelemetryKey, MicrosoftTelemetryKey, Role,
+};
 use reqwest_retry::SendRetry;
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::PathBuf};
@@ -43,8 +45,15 @@ pub struct Forward {
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct ConfigData {
     pub instance_id: Uuid,
-    pub instrumentation_key: Option<Uuid>,
-    pub telemetry_key: Option<Uuid>,
+
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "instrumentation_key")]
+    pub instance_telemetry_key: Option<InstanceTelemetryKey>,
+
+    // TODO: remove the alias once the service has been updated to match
+    #[serde(alias = "telemetry_key")]
+    pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
+
     pub region: String,
     pub url: Url,
     pub notification: Url,
@@ -73,7 +82,10 @@ impl Config {
         let data: ConfigData =
             serde_json::from_reader(r).map_err(|source| ProxyError::ParseError { source })?;
 
-        set_appinsights_clients(data.instrumentation_key, data.telemetry_key);
+        set_appinsights_clients(
+            data.instance_telemetry_key.clone(),
+            data.microsoft_telemetry_key.clone(),
+        );
 
         onefuzz_telemetry::set_property(EventData::Region(data.region.to_owned()));
         onefuzz_telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
@@ -131,7 +143,7 @@ impl Config {
 
     pub async fn notify(&self) -> Result<()> {
         info!("notifying service of proxy update");
-        let client = QueueClient::new(self.data.notification.clone());
+        let client = QueueClient::new(self.data.notification.clone())?;
 
         client
             .enqueue(NotifyResponse {
@@ -142,18 +154,14 @@ impl Config {
         Ok(())
     }
 
-    pub async fn update(&mut self) -> Result<bool> {
+    pub async fn update(&mut self) -> Result<()> {
         if self.fetch().await? {
             info!("config updated");
             self.save().await?;
+            proxy::update(&self.data).await?;
+            self.notify().await?;
         }
 
-        let notified = if proxy::update(&self.data).await? {
-            self.notify().await?;
-            true
-        } else {
-            false
-        };
-        Ok(notified)
+        Ok(())
     }
 }

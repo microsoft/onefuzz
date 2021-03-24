@@ -1,0 +1,318 @@
+{
+  "text": "=================================================================\n==1==ERROR: LeakSanitizer: detected memory leaks\n\nIndirect leak of 96 byte(s) in 2 object(s) allocated from:\n    #0 0x4d5058 in malloc _asan_rtl_\n    #1 0x80469a in xmlNewDocElementContent /src/libxml2/valid.c:952:34\n    #2 0x6c92c9 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6262:11\n    #3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16\n    #4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12\n    #5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4\n    #6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6\n    #7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6\n    #8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5\n    #9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13\n    #10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18\n    #11 0x589918 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13\n    #12 0x58a664 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3\n    #13 0x5912b5 in fuzzer::Fuzzer::MutateAndTestOne() /src/libfuzzer/FuzzerLoop.cpp:757:30\n    #14 0x592323 in fuzzer::Fuzzer::Loop() /src/libfuzzer/FuzzerLoop.cpp:791:5\n    #15 0x521899 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:567:6\n    #16 0x512dd8 in main /src/libfuzzer/FuzzerMain.cpp:20:10\n    #17 0x7f68b269182f in __libc_start_main\n\nIndirect leak of 96 byte(s) in 2 object(s) allocated from:\n    #0 0x4d5058 in malloc _asan_rtl_\n    #1 0x80469a in xmlNewDocElementContent /src/libxml2/valid.c:952:34\n    #2 0x6c924e in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6260:14\n    #3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16\n    #4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12\n    #5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4\n    #6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6\n    #7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6\n    #8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5\n    #9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13\n    #10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18\n    #11 0x589918 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13\n    #12 0x58a664 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3\n    #13 0x5912b5 in fuzzer::Fuzzer::MutateAndTestOne() /src/libfuzzer/FuzzerLoop.cpp:757:30\n    #14 0x592323 in fuzzer::Fuzzer::Loop() /src/libfuzzer/FuzzerLoop.cpp:791:5\n    #15 0x521899 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:567:6\n    #16 0x512dd8 in main /src/libfuzzer/FuzzerMain.cpp:20:10\n    #17 0x7f68b269182f in __libc_start_main\n\nIndirect leak of 48 byte(s) in 1 object(s) allocated from:\n    #0 0x4d5058 in malloc _asan_rtl_\n    #1 0x80469a in xmlNewDocElementContent /src/libxml2/valid.c:952:34\n    #2 0x6c8e89 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6247:18\n    #3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16\n    #4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12\n    #5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4\n    #6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6\n    #7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6\n    #8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5\n    #9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13\n    #10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18\n    #11 0x589918 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13\n    #12 0x58a664 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3\n    #13 0x5912b5 in fuzzer::Fuzzer::MutateAndTestOne() /src/libfuzzer/FuzzerLoop.cpp:757:30\n    #14 0x592323 in fuzzer::Fuzzer::Loop() /src/libfuzzer/FuzzerLoop.cpp:791:5\n    #15 0x521899 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:567:6\n    #16 0x512dd8 in main /src/libfuzzer/FuzzerMain.cpp:20:10\n    #17 0x7f68b269182f in __libc_start_main\n\nIndirect leak of 48 byte(s) in 1 object(s) allocated from:\n    #0 0x4d5058 in malloc _asan_rtl_\n    #1 0x80469a in xmlNewDocElementContent /src/libxml2/valid.c:952:34\n    #2 0x6c90f0 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6253:16\n    #3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16\n    #4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12\n    #5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4\n    #6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6\n    #7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6\n    #8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5\n    #9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13\n    #10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18\n    #11 0x589918 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13\n    #12 0x58a664 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3\n    #13 0x5912b5 in fuzzer::Fuzzer::MutateAndTestOne() /src/libfuzzer/FuzzerLoop.cpp:757:30\n    #14 0x592323 in fuzzer::Fuzzer::Loop() /src/libfuzzer/FuzzerLoop.cpp:791:5\n    #15 0x521899 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:567:6\n    #16 0x512dd8 in main /src/libfuzzer/FuzzerMain.cpp:20:10\n    #17 0x7f68b269182f in __libc_start_main\n\nSUMMARY: AddressSanitizer: 288 byte(s) leaked in 6 allocation(s).\nINFO: to ignore leaks on libFuzzer side use -detect_leaks=0.",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: 288 byte(s) leaked in 6 allocation(s).",
+  "fault_type": "288",
+  "call_stack": [
+    "#0 0x4d5058 in malloc _asan_rtl_",
+    "#1 0x80469a in xmlNewDocElementContent /src/libxml2/valid.c:952:34",
+    "#2 0x6c92c9 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6262:11",
+    "#3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16",
+    "#4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12",
+    "#5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4",
+    "#6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6",
+    "#7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6",
+    "#8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5",
+    "#9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13",
+    "#10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18",
+    "#11 0x589918 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13",
+    "#12 0x58a664 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3",
+    "#13 0x5912b5 in fuzzer::Fuzzer::MutateAndTestOne() /src/libfuzzer/FuzzerLoop.cpp:757:30",
+    "#14 0x592323 in fuzzer::Fuzzer::Loop() /src/libfuzzer/FuzzerLoop.cpp:791:5",
+    "#15 0x521899 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:567:6",
+    "#16 0x512dd8 in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+    "#17 0x7f68b269182f in __libc_start_main"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x4d5058 in malloc _asan_rtl_",
+      "address": 5066840,
+      "function_name": "malloc _asan_rtl_"
+    },
+    {
+      "line": "#1 0x80469a in xmlNewDocElementContent /src/libxml2/valid.c:952:34",
+      "address": 8406682,
+      "function_name": "xmlNewDocElementContent",
+      "function_offset": 34,
+      "source_file_name": "valid.c",
+      "source_file_path": "/src/libxml2/valid.c",
+      "source_file_line": 952
+    },
+    {
+      "line": "#2 0x6c92c9 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6262:11",
+      "address": 7115465,
+      "function_name": "xmlParseElementMixedContentDecl",
+      "function_offset": 11,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6262
+    },
+    {
+      "line": "#3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16",
+      "address": 7142883,
+      "function_name": "xmlParseElementContentDecl",
+      "function_offset": 16,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6677
+    },
+    {
+      "line": "#4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12",
+      "address": 7154326,
+      "function_name": "xmlParseElementDecl",
+      "function_offset": 12,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6745
+    },
+    {
+      "line": "#5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4",
+      "address": 7159187,
+      "function_name": "xmlParseMarkupDecl",
+      "function_offset": 4,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6997
+    },
+    {
+      "line": "#6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6",
+      "address": 7441592,
+      "function_name": "xmlParseInternalSubset",
+      "function_offset": 6,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 8473
+    },
+    {
+      "line": "#7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6",
+      "address": 7434562,
+      "function_name": "xmlParseDocument",
+      "function_offset": 6,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 10921
+    },
+    {
+      "line": "#8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5",
+      "address": 7624144,
+      "function_name": "xmlDoRead",
+      "function_offset": 5,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 15432
+    },
+    {
+      "line": "#9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13",
+      "address": 7625266,
+      "function_name": "xmlReadMemory",
+      "function_offset": 13,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 15518
+    },
+    {
+      "line": "#10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18",
+      "address": 5319574,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 18,
+      "source_file_name": "libxml2_xml_read_memory_fuzzer.cc",
+      "source_file_path": "/src/libxml2_xml_read_memory_fuzzer.cc",
+      "source_file_line": 17
+    },
+    {
+      "line": "#11 0x589918 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13",
+      "address": 5806360,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 550
+    },
+    {
+      "line": "#12 0x58a664 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3",
+      "address": 5809764,
+      "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 501
+    },
+    {
+      "line": "#13 0x5912b5 in fuzzer::Fuzzer::MutateAndTestOne() /src/libfuzzer/FuzzerLoop.cpp:757:30",
+      "address": 5837493,
+      "function_name": "fuzzer::Fuzzer::MutateAndTestOne()",
+      "function_offset": 30,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 757
+    },
+    {
+      "line": "#14 0x592323 in fuzzer::Fuzzer::Loop() /src/libfuzzer/FuzzerLoop.cpp:791:5",
+      "address": 5841699,
+      "function_name": "fuzzer::Fuzzer::Loop()",
+      "function_offset": 5,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 791
+    },
+    {
+      "line": "#15 0x521899 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:567:6",
+      "address": 5380249,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 567
+    },
+    {
+      "line": "#16 0x512dd8 in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+      "address": 5320152,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#17 0x7f68b269182f in __libc_start_main",
+      "address": 140087646558255,
+      "function_name": "__libc_start_main"
+    }
+  ],
+  "full_stack_names": [
+    "malloc _asan_rtl_",
+    "xmlNewDocElementContent",
+    "xmlParseElementMixedContentDecl",
+    "xmlParseElementContentDecl",
+    "xmlParseElementDecl",
+    "xmlParseMarkupDecl",
+    "xmlParseInternalSubset",
+    "xmlParseDocument",
+    "xmlDoRead",
+    "xmlReadMemory",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::Fuzzer::MutateAndTestOne",
+    "fuzzer::Fuzzer::Loop",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x80469a in xmlNewDocElementContent /src/libxml2/valid.c:952:34",
+      "address": 8406682,
+      "function_name": "xmlNewDocElementContent",
+      "function_offset": 34,
+      "source_file_name": "valid.c",
+      "source_file_path": "/src/libxml2/valid.c",
+      "source_file_line": 952
+    },
+    {
+      "line": "#2 0x6c92c9 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6262:11",
+      "address": 7115465,
+      "function_name": "xmlParseElementMixedContentDecl",
+      "function_offset": 11,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6262
+    },
+    {
+      "line": "#3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16",
+      "address": 7142883,
+      "function_name": "xmlParseElementContentDecl",
+      "function_offset": 16,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6677
+    },
+    {
+      "line": "#4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12",
+      "address": 7154326,
+      "function_name": "xmlParseElementDecl",
+      "function_offset": 12,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6745
+    },
+    {
+      "line": "#5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4",
+      "address": 7159187,
+      "function_name": "xmlParseMarkupDecl",
+      "function_offset": 4,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 6997
+    },
+    {
+      "line": "#6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6",
+      "address": 7441592,
+      "function_name": "xmlParseInternalSubset",
+      "function_offset": 6,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 8473
+    },
+    {
+      "line": "#7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6",
+      "address": 7434562,
+      "function_name": "xmlParseDocument",
+      "function_offset": 6,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 10921
+    },
+    {
+      "line": "#8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5",
+      "address": 7624144,
+      "function_name": "xmlDoRead",
+      "function_offset": 5,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 15432
+    },
+    {
+      "line": "#9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13",
+      "address": 7625266,
+      "function_name": "xmlReadMemory",
+      "function_offset": 13,
+      "source_file_name": "parser.c",
+      "source_file_path": "/src/libxml2/parser.c",
+      "source_file_line": 15518
+    },
+    {
+      "line": "#10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18",
+      "address": 5319574,
+      "function_name": "libxml2_xml_read_memory_fuzzer.cc",
+      "function_offset": 18,
+      "source_file_name": "libxml2_xml_read_memory_fuzzer.cc",
+      "source_file_path": "/src/libxml2_xml_read_memory_fuzzer.cc",
+      "source_file_line": 17
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x80469a in xmlNewDocElementContent /src/libxml2/valid.c:952:34",
+    "#2 0x6c92c9 in xmlParseElementMixedContentDecl /src/libxml2/parser.c:6262:11",
+    "#3 0x6cfde3 in xmlParseElementContentDecl /src/libxml2/parser.c:6677:16",
+    "#4 0x6d2a96 in xmlParseElementDecl /src/libxml2/parser.c:6745:12",
+    "#5 0x6d3d93 in xmlParseMarkupDecl /src/libxml2/parser.c:6997:4",
+    "#6 0x718cb8 in xmlParseInternalSubset /src/libxml2/parser.c:8473:6",
+    "#7 0x717142 in xmlParseDocument /src/libxml2/parser.c:10921:6",
+    "#8 0x7455d0 in xmlDoRead /src/libxml2/parser.c:15432:5",
+    "#9 0x745a32 in xmlReadMemory /src/libxml2/parser.c:15518:13",
+    "#10 0x512b96 in LLVMFuzzerTestOneInput /src/libxml2_xml_read_memory_fuzzer.cc:17:18"
+  ],
+  "minimized_stack_function_names": [
+    "xmlNewDocElementContent",
+    "xmlParseElementMixedContentDecl",
+    "xmlParseElementContentDecl",
+    "xmlParseElementDecl",
+    "xmlParseMarkupDecl",
+    "xmlParseInternalSubset",
+    "xmlParseDocument",
+    "xmlDoRead",
+    "xmlReadMemory",
+    "libxml2_xml_read_memory_fuzzer.cc"
+  ]
+}

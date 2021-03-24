@@ -231,11 +231,23 @@ def add_application_password(app_object_id: UUID) -> Tuple[str, str]:
     wait_duration = 10
     while count < tries:
         count += 1
+        if count > 1:
+            logging.info("retrying app password creation")
         try:
-            return add_application_password_impl(app_object_id)
+            password = add_application_password_impl(app_object_id)
+            logging.info("app password created")
+            return password
         except GraphQueryError as err:
             error = err
-            logging.warning("unable to create app password: %s", err.message)
+            # modeled after AZ-CLI's handling of missing application
+            # See: https://github.com/Azure/azure-cli/blob/
+            #   e015d5bcba0c2d21dc42189daa43dc1eb82d2485/src/azure-cli/
+            #   azure/cli/command_modules/util/tests/
+            #   latest/test_rest.py#L191-L192
+            if "Request_ResourceNotFound" in repr(err):
+                logging.info("app unavailable in AAD, unable to create password yet")
+            else:
+                logging.warning("unable to create app password: %s", err.message)
         time.sleep(wait_duration)
     if error:
         raise error

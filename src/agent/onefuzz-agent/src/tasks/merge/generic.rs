@@ -56,9 +56,10 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         debug!("tmp dir reset");
         utils::reset_tmp_dir(&tmp_dir).await?;
         config.unique_inputs.sync_pull().await?;
-        let mut queue = QueueClient::new(config.input_queue.clone());
+        let queue = QueueClient::new(config.input_queue.clone())?;
         if let Some(msg) = queue.pop().await? {
-            let input_url = match utils::parse_url_data(msg.data()) {
+            let input_url = msg.parse(utils::parse_url_data);
+            let input_url = match input_url {
                 Ok(url) => url,
                 Err(err) => {
                     error!("could not parse input URL from queue message: {}", err);
@@ -74,7 +75,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             } else {
                 debug!("will delete popped message with id = {}", msg.id());
 
-                queue.delete(msg).await?;
+                msg.delete().await?;
 
                 debug!(
                     "Attempting to delete {} from the candidate container",
@@ -88,7 +89,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         } else {
             warn!("no new candidate inputs found, sleeping");
             delay_with_jitter(EMPTY_QUEUE_DELAY).await;
-        }
+        };
     }
 }
 
@@ -140,7 +141,13 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         .setup_dir(&config.common.setup_dir)
         .tools_dir(&config.tools.path)
         .job_id(&config.common.job_id)
-        .task_id(&config.common.task_id);
+        .task_id(&config.common.task_id)
+        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
+            tester.microsoft_telemetry_key(&key)
+        })
+        .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
+            tester.instance_telemetry_key(&key)
+        });
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
 

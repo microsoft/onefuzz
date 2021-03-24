@@ -4,6 +4,120 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.10.0
+### Added
+* Agent/CLI/Service: Added regression testing tasks, including enabling [git bisect using OneFuzz](docs/how-to/git-bisect-a-crash.md).  [#664](https://github.com/microsoft/onefuzz/pull/664), [#691](https://github.com/microsoft/onefuzz/pull/691)
+* Agent/CLI/Service: Added call stack minimization using a [Rust port](src/agent/libclusterfuzz) of [ClusterFuzz stack trace parsing](https://github.com/google/clusterfuzz/tree/master/src/python/lib). [#591](https://github.com/microsoft/onefuzz/pull/591), [#705](https://github.com/microsoft/onefuzz/pull/705), [#706](https://github.com/microsoft/onefuzz/pull/706), [#707](https://github.com/microsoft/onefuzz/pull/707), [#714](https://github.com/microsoft/onefuzz/pull/714), [#715](https://github.com/microsoft/onefuzz/pull/715), [#719](https://github.com/microsoft/onefuzz/pull/719)
+* CLI: Added `onefuzz privacy_statement` command, which displays OneFuzz's privacy statement. [#695](https://github.com/microsoft/onefuzz/pull/695)
+* Agent: Added installation of the `x86` and `x86_64` Visual Studio C++ redistributable runtimes on Windows nodes.  [#686](https://github.com/microsoft/onefuzz/pull/686)
+
+### Changed
+* Agent/Proxy/Supervisor: Changed web request retry logic to include the underlying failure upon giving up retrying a request. [#696](https://github.com/microsoft/onefuzz/pull/696)
+* Supervisor: Added automatic web request retry logic when communicating to the service. [#704](https://github.com/microsoft/onefuzz/pull/704)
+* CLI/Service: Updated Python dependencies.  [#698](https://github.com/microsoft/onefuzz/pull/698), [#687](https://github.com/microsoft/onefuzz/pull/687)
+* Supervisor: Clarified log message when the supervisor unexpectedly exits. [#685](https://github.com/microsoft/onefuzz/pull/685)
+* Proxy: Simplified service communication logic. [#683](https://github.com/microsoft/onefuzz/pull/683)
+* Proxy: Increased log verbosity on proxy failure. [#702](https://github.com/microsoft/onefuzz/pull/702)
+* Agent: Increased setup script timestamp resolution. [#709](https://github.com/microsoft/onefuzz/pull/709)
+* Agent: Continued development related to an upcoming feature. [#508](https://github.com/microsoft/onefuzz/pull/508), [#688](https://github.com/microsoft/onefuzz/pull/688), [#703](https://github.com/microsoft/onefuzz/pull/703), [#710](https://github.com/microsoft/onefuzz/pull/710), [#711](https://github.com/microsoft/onefuzz/pull/711)
+
+### Fixed
+* Agent: Fixed support for libFuzzer targets that use shared objects or DLLs from the setup container. [#680](https://github.com/microsoft/onefuzz/pull/680), [#681](https://github.com/microsoft/onefuzz/pull/681), [#682](https://github.com/microsoft/onefuzz/pull/682), [#689](https://github.com/microsoft/onefuzz/pull/689), [#713](https://github.com/microsoft/onefuzz/pull/713)
+
+## 2.9.0
+### Added
+* Contrib: Added sample Webhook Service [#666](https://github.com/microsoft/onefuzz/pull/666)
+* Agent: Add OneFuzz version and Software role to telemetry [#586](https://github.com/microsoft/onefuzz/pull/586)
+* Agent: Add multiple telemetry data types for the upcoming functionality [#619](https://github.com/microsoft/onefuzz/pull/619)
+* Agent: Added `input_file_sha256` to [configuration value expansion](docs/command-replacements.md). [#641](https://github.com/microsoft/onefuzz/pull/641)
+* Agent: Added `job_id` to Task Heartbeat [#646](https://github.com/microsoft/onefuzz/pull/646)
+* Service: Added task information to [job_stopped](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#job_stopped) events [#648](https://github.com/microsoft/onefuzz/pull/648)
+ 
+### Changed
+* Service: [task_stopped](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#task_stopped) and [task_failed](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#task_failed) now trigger once the task has stopped instead of upon entering the `stopping` state. [#651](https://github.com/microsoft/onefuzz/pull/651)
+* CLI: Authentication tokens are saved upon successful login rather than on program exit. [#665](https://github.com/microsoft/onefuzz/pull/665)
+* Service: If a task with dependent tasks fails, all of the dependent tasks are marked as failed.  [#650](https://github.com/microsoft/onefuzz/pull/650)
+* Agent: Fixed PC address in crash report backtraces.  [#658](https://github.com/microsoft/onefuzz/pull/658)
+* Service: Upon task completion, if all of the tasks in the associated job are completed, the job is marked as stopped.  [#649](https://github.com/microsoft/onefuzz/pull/649)
+* Deployment/Agent: Updated AFL++ to 3.11c.  [#675](https://github.com/microsoft/onefuzz/pull/675)
+* Agent/Proxy/Supervisor: Changed web request retry logic to always retry any request that fails, regardless of why the request failed.  [#674](https://github.com/microsoft/onefuzz/pull/674)
+* Agent: Downloading files from task queues will now automatically retry on failure.  [#676](https://github.com/microsoft/onefuzz/pull/676)
+* Service: User information is now stripped from [Events](docs/webhook_events.md) before being logged to Application Insights.  [#661](https://github.com/microsoft/onefuzz/pull/661)
+ 
+### Fixed
+* Service: Handle exception related to manually deleted scalesets [#672](https://github.com/microsoft/onefuzz/pull/672)
+* Agent: Fixed Rust lifetime issues exposed by an update to Rust regex library [#671](https://github.com/microsoft/onefuzz/pull/671)
+
+## 2.8.0
+### Added
+* CLI: Added support for [Aarch64](docs/how-to/fuzzing-other-architectures-on-azure.md) libFuzzer targets using the [QEMU user space emulator](https://qemu.readthedocs.io/en/latest/user/main.html). [#600](https://github.com/microsoft/onefuzz/pull/600)
+* Build: Added CodeQL pipeline. [#617](https://github.com/microsoft/onefuzz/pull/617)
+* Service: Added node and task heartbeat [events](docs/webhook_events.md).  [#621](https://github.com/microsoft/onefuzz/pull/621)
+
+### Changed
+* Agent: Clarified batch-processing logs.  [#622](https://github.com/microsoft/onefuzz/pull/622)
+* Agent/Proxy: Updated multiple rust dependencies. [#624](https://github.com/microsoft/onefuzz/pull/624)
+* Service/CLI/Contrib: Updated multiple python dependencies.  [#607](https://github.com/microsoft/onefuzz/pull/607), [#608](https://github.com/microsoft/onefuzz/pull/608), [#610](https://github.com/microsoft/onefuzz/pull/610), [#611](https://github.com/microsoft/onefuzz/pull/611), [#612](https://github.com/microsoft/onefuzz/pull/612), [#625](https://github.com/microsoft/onefuzz/pull/625), [#626](https://github.com/microsoft/onefuzz/pull/626), [#630](https://github.com/microsoft/onefuzz/pull/630), [#640](https://github.com/microsoft/onefuzz/pull/640)
+* Service: Update task configuration to verify `target_exe` is a canonicalized relative path. [#613](https://github.com/microsoft/onefuzz/pull/613)
+* Deployment/Agent: Updated AFL++ to 3.10c.  [#609](https://github.com/microsoft/onefuzz/pull/609)
+* Deployment: Clarify application password creation succeeded after earlier failures.  [#629](https://github.com/microsoft/onefuzz/pull/629)
+* Service: VM passwords are no longer set on Linux VMs.  [#620](https://github.com/microsoft/onefuzz/pull/620)
+* Service: Clarify source of task failures when notification integration marks a task as failed.  [#635](https://github.com/microsoft/onefuzz/pull/635)
+
+### Fixed
+* Agent/Proxy/Supervisor: Fixed web request retry logic when handling operating system level errors.  [#623](https://github.com/microsoft/onefuzz/pull/623)
+* Service: Handle exceptions when creating scalesets fail due to Azure VM quota issues. [#614](https://github.com/microsoft/onefuzz/pull/614)
+
+## 2.7.0
+### Added
+* CLI: Added `onefuzz containers files download_dir` to enable downloading the contents of a container.  [#598](https://github.com/microsoft/onefuzz/pull/598)
+* Agent: Added `microsoft_telemetry_key` and `instance_telemetry_key` and expanded the availability `reports_dir` in [configuration value expansion](docs/command-replacements.md). [#561](https://github.com/microsoft/onefuzz/pull/561)
+* Agent/Service: Added `job_id` to agent-based heartbeats. [#594](https://github.com/microsoft/onefuzz/pull/594)
+* Agent/Proxy/Supervisor: Added additional context to errors during Storage Queue and service interactions to improve debugging.  [#601](https://github.com/microsoft/onefuzz/pull/601)
+
+### Changed
+* Agent/Proxy/Supervisor: Renamed the Application Insights token names used for telemetry to `microsoft_telemetry_key` and `instance_telemetry_key` and the function that gated telemetry sharing to `can_share_with_microsoft` to make the telemetry implementation easier to understand. [#587](https://github.com/microsoft/onefuzz/pull/587)
+* Deployment: Updated multiple Python dependencies. [#596](https://github.com/microsoft/onefuzz/pull/596)
+* Service: Updated multiple Python dependencies. Addresses potential security issue [CVE-2020-28493](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-28493) [#595](https://github.com/microsoft/onefuzz/pull/595)
+* Service: Don't let nodes run new tasks if they are part of a scaleset or pool that is scheduled to be shut down. [#583](https://github.com/microsoft/onefuzz/pull/583)
+
+### Fixed
+* Service: Fixed the queries used to identify nodes running outdated OneFuzz releases. [#597](https://github.com/microsoft/onefuzz/pull/597)
+* Agent: Fixed an issue that would stop an agent or supervisor from performing work if an HTTPS request has failed in certain conditions. [#603](https://github.com/microsoft/onefuzz/pull/603)
+* Agent: Fixed an issue that would stop a task if the task printed a significant amount of data to STDOUT or STDERR.  [#588](https://github.com/microsoft/onefuzz/pull/588)
+* Deployment: Address deployment failures relating to cross-region Azure Active Directory resource creation delays. [#585](https://github.com/microsoft/onefuzz/pull/585)
+
+## 2.6.0
+### Added
+* Service: Jobs that do not start within 30 days are automatically stopped. [#565](https://github.com/microsoft/onefuzz/pull/565)
+
+### Changed
+* Service: Debug proxies now use ports 28000 through 32000. [#552](https://github.com/microsoft/onefuzz/pull/552)
+* Service: [Events](docs/webhook_events.md) now include the instance name and unique identifier.  [#577](https://github.com/microsoft/onefuzz/pull/577)
+* Service: All task related [Events](docs/webhook_events.md) now include the task configuration.  [#580](https://github.com/microsoft/onefuzz/pull/580)
+* Service: Errors generated during report crash report notification due to invalid jobs or tasks now include the reason for the error.  [#576](https://github.com/microsoft/onefuzz/pull/576)
+* CLI: Namespaced containers for coverage used in job templates now include `build` and `platform` in addition to `project` and `name`. [#572](https://github.com/microsoft/onefuzz/pull/572)
+* Service: User triggered node reimaging no longer waits for confirmation from the node prior to starting the reimage process. [#566](https://github.com/microsoft/onefuzz/pull/566)
+
+### Fixed
+* Service: Fixed an error condition when users recreate a container immediately after deleting it. [#582](https://github.com/microsoft/onefuzz/pull/582)
+* Service: Fixed an issue when one task on a node ended, the node was reimaged regardless of the state of other tasks running on the node. [#567](https://github.com/microsoft/onefuzz/pull/567)
+
+## 2.5.0
+### Added
+* CLI: Added the ability to poll task status until the tasks have started to managed templates using `--wait_for_running`.  [#532](https://github.com/microsoft/onefuzz/pull/532)
+* CLI: Added a [libfuzzer-dotnet](docs/how-to/fuzzing-dotnet-with-libfuzzer.md) support.  [#535](https://github.com/microsoft/onefuzz/pull/535)
+* Agent: Added `crashes_account` and `crashes_container` to [configuration value expansion](docs/command-replacements.md). [#551](https://github.com/microsoft/onefuzz/pull/551)
+* CLI: Added `onefuzz status job` and `onefuzz status project` to provide a user-friendly job status.  [#550](https://github.com/microsoft/onefuzz/pull/550)
+
+### Changed
+* Agent: Logs and local telemetry from the agent now include the role (`agent` or `supervisor`) in recorded events.  [#527](https://github.com/microsoft/onefuzz/pull/527)
+* Agent: Clarified the errors generated when libFuzzer coverage extraction fails [#554](https://github.com/microsoft/onefuzz/pull/554)
+
+### Fixed
+* Service: Handled `SkuNotAvailable` errors from Azure when creating scalesets. [#557](https://github.com/microsoft/onefuzz/pull/557)
+* Agent/Proxy: Updated multiple third-party Rust libraries.  Addresses potential security issue [RUSTSEC-2021-0023](https://rustsec.org/advisories/RUSTSEC-2021-0023).  [#548](https://github.com/microsoft/onefuzz/pull/548)
+
 ## 2.4.1
 ### Changed
 * Agent: Verifying LibFuzzer targets at the start of a task using `-help=1` now happens prior to sending heartbeats.  [#528](https://github.com/microsoft/onefuzz/pull/528)
