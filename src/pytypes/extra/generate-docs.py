@@ -5,7 +5,7 @@
 
 from typing import List, Optional
 from uuid import UUID
-from onefuzztypes.primitives import Region, Container, PoolName
+
 from onefuzztypes.enums import (
     OS,
     Architecture,
@@ -34,10 +34,8 @@ from onefuzztypes.events import (
     EventRegressionReported,
     EventScalesetCreated,
     EventScalesetDeleted,
-    EventScalesetResizeScheduled,
-    EventJobCreated,
-    EventJobStopped,
     EventScalesetFailed,
+    EventScalesetResizeScheduled,
     EventTaskCreated,
     EventTaskFailed,
     EventTaskHeartbeat,
