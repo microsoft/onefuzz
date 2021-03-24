@@ -72,11 +72,10 @@ class Task(BASE_TASK, ORMMixin):
         )
 
         logging.info(
-            "created task. job_id:%s task_id:%s type:%s user:%s",
+            "created task. job_id:%s task_id:%s type:%s",
             task.job_id,
             task.task_id,
             task.config.task.type.name,
-            user_info,
         )
         return task
 

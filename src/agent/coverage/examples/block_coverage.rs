@@ -1,46 +1,45 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::path::PathBuf;
+use std::process::Command;
 
 use anyhow::Result;
 use structopt::StructOpt;
 
+#[derive(Debug, PartialEq, StructOpt)]
+struct Opt {
+    #[cfg(target_os = "linux")]
+    #[structopt(short, long)]
+    filter: Option<std::path::PathBuf>,
+
+    #[structopt(min_values = 1)]
+    cmd: Vec<String>,
+}
+
 #[cfg(target_os = "windows")]
 fn main() -> Result<()> {
-    use std::process::Command;
-
     env_logger::init();
 
-    let mut args = std::env::args().skip(1);
-    let exe = args.next().unwrap();
-    let args: Vec<_> = args.collect();
+    let opt = Opt::from_args();
+    log::info!("recording coverage for: {:?}", opt.cmd);
 
-    let mut cmd = Command::new(exe);
-    cmd.args(&args);
+    let mut cmd = Command::new(&opt.cmd[0]);
+    cmd.args(&opt.cmd[1..]);
 
     let coverage = coverage::block::windows::record(cmd)?;
-    let hit = coverage.count_blocks_hit();
-    let found = coverage.count_blocks();
-    let percent = 100.0 * (hit as f64) / (found as f64);
 
-    log::info!("block coverage = {}/{} ({:.2}%)", hit, found, percent);
+    for (module, cov) in coverage.iter() {
+        let total = cov.blocks.len();
+        let hit: u32 = cov.blocks.values().map(|b| b.count).sum();
+        let percent = 100.0 * (hit as f64) / (total as f64);
+        log::info!("module = {}, {} / {} ({:.2}%)", module, hit, total, percent);
+    }
 
     Ok(())
 }
 
-#[derive(Debug, PartialEq, StructOpt)]
-struct Opt {
-    #[structopt(short, long)]
-    filter: Option<PathBuf>,
-
-    cmd: Vec<String>,
-}
-
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
-    use std::process::Command;
-
     use coverage::block::linux::Recorder;
     use coverage::code::{CmdFilter, CmdFilterDef};
 

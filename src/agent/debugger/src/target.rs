@@ -595,6 +595,10 @@ impl Target {
         Ok(current_context.get_register_u64(reg))
     }
 
+    pub fn read_program_counter(&mut self) -> Result<u64> {
+        self.read_register_u64(iced_x86::Register::RIP)
+    }
+
     pub fn read_flags_register(&mut self) -> Result<u32> {
         let current_context = self.get_current_context()?;
         Ok(current_context.get_flags())
