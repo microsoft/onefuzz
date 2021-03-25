@@ -8,6 +8,7 @@ use onefuzz_telemetry::{track_event, Event::runtime_stats};
 use serde::Deserialize;
 pub const STATS_DELAY: std::time::Duration = std::time::Duration::from_secs(30);
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Deserialize, Clone)]
 pub enum StatsFormat {
     AFL,

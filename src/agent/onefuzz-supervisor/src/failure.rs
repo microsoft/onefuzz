@@ -19,6 +19,6 @@ pub fn save_failure(err: &Error) -> Result<()> {
 
 pub fn read_failure() -> Result<String> {
     let path = failure_path()?;
-    Ok(fs::read_to_string(&path)
-        .with_context(|| format!("unable to read failure log: {}", path.display()))?)
+    fs::read_to_string(&path)
+        .with_context(|| format!("unable to read failure log: {}", path.display()))
 }
