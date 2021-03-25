@@ -341,8 +341,12 @@ struct ModuleRuleDef {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 enum RuleDef {
-    Include { include: bool },
-    Exclude { exclude: bool },
+    Include {
+        include: bool,
+    },
+    Exclude {
+        exclude: bool,
+    },
 
     // Temporarily disable symbol filtering rules.
     // #[cfg_attr(feature = "symbol-filter", allow(unused))]
