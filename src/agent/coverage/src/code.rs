@@ -393,6 +393,7 @@ impl CmdFilter {
 
         Ok(Self { regexes, rules })
     }
+
     pub fn includes_module(&self, module: &ModulePath) -> bool {
         match self.regexes.matches(&module.path_lossy()).iter().next() {
             Some(index) => {
