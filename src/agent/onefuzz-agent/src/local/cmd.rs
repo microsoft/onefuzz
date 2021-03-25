@@ -63,7 +63,6 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
 
 pub fn args(name: &str) -> App<'static, 'static> {
     SubCommand::with_name(name)
-        //todo: add timeout here
         .about("pre-release local fuzzing")
         .arg(
             Arg::with_name(TIMEOUT)
