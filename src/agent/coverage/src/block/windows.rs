@@ -13,7 +13,7 @@ use debugger::{
 
 use crate::block::CommandBlockCov;
 use crate::cache::ModuleCache;
-use crate::code::ModulePath;
+use crate::code::{CmdFilter, ModulePath};
 
 pub fn record(cmd: Command) -> Result<CommandBlockCov> {
     let mut cache = ModuleCache::default();
@@ -82,17 +82,21 @@ pub struct Recorder<'a> {
     // support implicit calculation of total coverage for a corpus. For now,
     // assume callers will merge this into a separate struct when needed.
     coverage: CommandBlockCov,
+
+    filter: CmdFilter,
 }
 
 impl<'a> Recorder<'a> {
     pub fn new(cache: &'a mut ModuleCache) -> Self {
         let breakpoints = Breakpoints::default();
         let coverage = CommandBlockCov::default();
+        let filter = CmdFilter::default();
 
         Self {
             breakpoints,
             cache,
             coverage,
+            filter,
         }
     }
 
@@ -162,6 +166,11 @@ impl<'a> Recorder<'a> {
 
     fn insert_module(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
         let path = ModulePath::new(module.path().to_owned())?;
+
+        if !self.filter.includes_module(&path) {
+            log::debug!("skipping module: {}", path);
+            return Ok(());
+        }
 
         match self.cache.fetch(&path) {
             Ok(Some(info)) => {
