@@ -55,7 +55,7 @@ pub async fn run(config: Config) -> Result<()> {
         .ok_or_else(|| anyhow!("Invalid input path"))?;
     let temp_path = task_dir.join(".temp");
     tokio::fs::create_dir_all(&temp_path).await?;
-    let tmp_dir = tempdir_in(temp_path.clone())?;
+    let tmp_dir = tempdir_in(&temp_path)?;
     let tmp = OwnedDir::new(tmp_dir.path());
 
     tmp.reset().await?;
@@ -183,10 +183,10 @@ async fn _copy(input_url: BlobUrl, destination_folder: &OwnedDir) -> Result<Path
     destination_path.push(file_name);
     match input_url {
         BlobUrl::AzureBlob(input_url) => {
-            az_copy::copy(input_url.as_ref(), destination_path.clone(), false).await?
+            az_copy::copy(input_url.as_ref(), &destination_path, false).await?
         }
         BlobUrl::LocalFile(path) => {
-            tokio::fs::copy(path, destination_path.clone()).await?;
+            tokio::fs::copy(path, &destination_path).await?;
         }
     }
     Ok(destination_path)
