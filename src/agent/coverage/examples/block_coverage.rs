@@ -4,11 +4,11 @@
 use std::process::Command;
 
 use anyhow::Result;
+use coverage::code::{CmdFilter, CmdFilterDef};
 use structopt::StructOpt;
 
 #[derive(Debug, PartialEq, StructOpt)]
 struct Opt {
-    #[cfg(target_os = "linux")]
     #[structopt(short, long)]
     filter: Option<std::path::PathBuf>,
 
@@ -16,17 +16,31 @@ struct Opt {
     cmd: Vec<String>,
 }
 
+impl Opt {
+    pub fn load_filter_or_default(&self) -> Result<CmdFilter> {
+        if let Some(path) = &self.filter {
+            let data = std::fs::read(path)?;
+            let def: CmdFilterDef = serde_json::from_slice(&data)?;
+            CmdFilter::new(def)
+        } else {
+            Ok(CmdFilter::default())
+        }
+    }
+}
+
 #[cfg(target_os = "windows")]
 fn main() -> Result<()> {
     env_logger::init();
 
     let opt = Opt::from_args();
+    let filter = opt.load_filter_or_default()?;
+
     log::info!("recording coverage for: {:?}", opt.cmd);
 
     let mut cmd = Command::new(&opt.cmd[0]);
     cmd.args(&opt.cmd[1..]);
 
-    let coverage = coverage::block::windows::record(cmd)?;
+    let coverage = coverage::block::windows::record(cmd, filter)?;
 
     for (module, cov) in coverage.iter() {
         let total = cov.blocks.len();
@@ -41,18 +55,11 @@ fn main() -> Result<()> {
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
     use coverage::block::linux::Recorder;
-    use coverage::code::{CmdFilter, CmdFilterDef};
 
     env_logger::init();
 
     let opt = Opt::from_args();
-    let filter = if let Some(path) = &opt.filter {
-        let data = std::fs::read(path)?;
-        let def: CmdFilterDef = serde_json::from_slice(&data)?;
-        CmdFilter::new(def)?
-    } else {
-        CmdFilter::default()
-    };
+    let filter = opt.load_filter_or_default()?;
 
     let mut cmd = Command::new(&opt.cmd[0]);
     cmd.args(&opt.cmd[1..]);
