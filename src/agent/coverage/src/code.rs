@@ -349,7 +349,6 @@ enum RuleDef {
     },
 
     // Temporarily disable symbol filtering rules.
-    // #[cfg_attr(feature = "symbol-filter", allow(unused))]
     #[cfg_attr(not(feature = "symbol-filter"), serde(skip), allow(unused))]
     Filter(Box<Filter>),
 }
