@@ -6,10 +6,10 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use futures::stream::StreamExt;
-use onefuzz::{az_copy, blob::url::BlobUrl, fs::SyncPath};
+use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
     expand::Expand,
-    fs::{copy, set_executable, OwnedDir},
+    fs::{set_executable, OwnedDir},
     jitter::delay_with_jitter,
     process::monitor_process,
     syncdir::SyncedDir,
@@ -22,7 +22,7 @@ use std::{
     str,
 };
 use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
-use tempfile::tempdir;
+use tempfile::tempdir_in;
 use tokio::{fs, process::Command};
 
 #[derive(Debug, Deserialize)]
@@ -48,8 +48,16 @@ pub struct Config {
 }
 
 pub async fn run(config: Config) -> Result<()> {
-    let tmp_dir = PathBuf::from(format!("./{}/tmp", config.common.task_id));
-    let tmp = OwnedDir::new(tmp_dir);
+    let task_dir = config
+        .analysis
+        .path
+        .parent()
+        .ok_or_else(|| anyhow!("Invalid input path"))?;
+    let temp_path = task_dir.join(".temp");
+    tokio::fs::create_dir_all(&temp_path).await?;
+    let tmp_dir = tempdir_in(&temp_path)?;
+    let tmp = OwnedDir::new(tmp_dir.path());
+
     tmp.reset().await?;
 
     config.analysis.init().await?;
@@ -60,7 +68,7 @@ pub async fn run(config: Config) -> Result<()> {
     // report SyncedDir. The idea is that the option for where to write reports
     // is only available for target option / env expansion if one of the reports
     // SyncedDir is provided.
-    let reports_dir = tempdir()?;
+    let reports_dir = tempdir_in(temp_path)?;
     let (reports_path, reports_monitor_future) =
         if config.unique_reports.is_some() || config.reports.is_some() || config.no_repro.is_some()
         {
@@ -175,20 +183,14 @@ async fn _copy(input_url: BlobUrl, destination_folder: &OwnedDir) -> Result<Path
     destination_path.push(file_name);
     match input_url {
         BlobUrl::AzureBlob(input_url) => {
-            az_copy::copy(input_url.as_ref(), destination_path.clone(), false).await?
+            az_copy::copy(input_url.as_ref(), &destination_path, false).await?
         }
         BlobUrl::LocalFile(path) => {
-            copy(
-                SyncPath::file(path),
-                SyncPath::dir(destination_path.clone()),
-                false,
-            )
-            .await?
+            tokio::fs::copy(path, &destination_path).await?;
         }
     }
     Ok(destination_path)
 }
-
 pub async fn run_tool(
     input: impl AsRef<Path>,
     config: &Config,

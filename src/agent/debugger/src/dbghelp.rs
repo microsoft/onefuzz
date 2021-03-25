@@ -407,6 +407,7 @@ impl ModuleInfo {
     }
 }
 
+#[derive(Clone, Debug, Hash, PartialEq)]
 pub struct SymInfo {
     symbol: String,
     address: u64,
