@@ -8,6 +8,8 @@ use onefuzz_telemetry::{track_event, Event::runtime_stats};
 use serde::Deserialize;
 pub const STATS_DELAY: std::time::Duration = std::time::Duration::from_secs(30);
 
+// TODO - remove unkonwn_lints once GitHub build agents are at 1.51.0 or later
+#[allow(unknown_lints)]
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Deserialize, Clone)]
 pub enum StatsFormat {
