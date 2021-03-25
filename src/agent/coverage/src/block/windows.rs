@@ -15,9 +15,9 @@ use crate::block::CommandBlockCov;
 use crate::cache::ModuleCache;
 use crate::code::{CmdFilter, ModulePath};
 
-pub fn record(cmd: Command) -> Result<CommandBlockCov> {
+pub fn record(cmd: Command, filter: CmdFilter) -> Result<CommandBlockCov> {
     let mut cache = ModuleCache::default();
-    let recorder = Recorder::new(&mut cache);
+    let recorder = Recorder::new(&mut cache, filter);
     let timeout = Duration::from_secs(5);
     let mut handler = RecorderEventHandler::new(recorder, timeout);
     handler.run(cmd)?;
@@ -87,10 +87,9 @@ pub struct Recorder<'a> {
 }
 
 impl<'a> Recorder<'a> {
-    pub fn new(cache: &'a mut ModuleCache) -> Self {
+    pub fn new(cache: &'a mut ModuleCache, filter: CmdFilter) -> Self {
         let breakpoints = Breakpoints::default();
         let coverage = CommandBlockCov::default();
-        let filter = CmdFilter::default();
 
         Self {
             breakpoints,
