@@ -21,7 +21,7 @@ pub async fn monitor_stats(path: Option<String>, format: Option<StatsFormat>) ->
                     StatsFormat::AFL => afl::read_stats(&path).await,
                 };
                 if let Ok(stats) = stats {
-                    event_entries!(runtime_stats; stats);
+                    log_events!(runtime_stats; stats);
                 }
                 delay_with_jitter(STATS_DELAY).await;
             }

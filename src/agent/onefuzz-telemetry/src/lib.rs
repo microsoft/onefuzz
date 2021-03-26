@@ -545,7 +545,7 @@ pub fn log_message(level: appinsights::telemetry::SeverityLevel, msg: String) {
 }
 
 #[macro_export]
-macro_rules! event_entries {
+macro_rules! log_events {
     ($name: expr; $events: expr) => {{
         onefuzz_telemetry::track_event(&$name, &$events);
         log::info!(
@@ -566,7 +566,7 @@ macro_rules! event {
 
         })*;
 
-        event_entries!($name; events);
+        log_events!($name; events);
     }};
 }
 
