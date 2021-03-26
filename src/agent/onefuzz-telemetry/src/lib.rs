@@ -492,23 +492,22 @@ pub fn set_property(entry: EventData) {
     }
 }
 
-fn local_log_event(event: &Event, properties: &[EventData]) {
-    let as_values = properties
+pub fn format_events(events : &[EventData]) -> String {
+    events
         .iter()
         .map(|x| x.as_values())
         .map(|(x, y)| format!("{}:{}", x, y))
         .collect::<Vec<String>>()
-        .join(" ");
-    log::log!(log::Level::Info, "{} {}", event.as_str(), as_values);
+        .join(" ")
 }
 
-pub fn track_event(event: Event, properties: Vec<EventData>) {
+pub fn track_event(event: &Event, properties: &[EventData]) {
     use appinsights::telemetry::Telemetry;
 
     if let Some(client) = client(ClientType::Instance) {
         let mut evt = appinsights::telemetry::EventTelemetry::new(event.as_str());
         let props = evt.properties_mut();
-        for property in &properties {
+        for property in properties {
             let (name, val) = property.as_values();
             props.insert(name.to_string(), val);
         }
@@ -519,7 +518,7 @@ pub fn track_event(event: Event, properties: Vec<EventData>) {
         let mut evt = appinsights::telemetry::EventTelemetry::new(event.as_str());
         let props = evt.properties_mut();
 
-        for property in &properties {
+        for property in properties {
             if property.can_share_with_microsoft() {
                 let (name, val) = property.as_values();
                 props.insert(name.to_string(), val);
@@ -527,7 +526,6 @@ pub fn track_event(event: Event, properties: Vec<EventData>) {
         }
         client.track(evt);
     }
-    local_log_event(&event, &properties);
 }
 
 pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
@@ -540,17 +538,20 @@ pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level
     }
 }
 
-pub fn should_log(level: &appinsights::telemetry::SeverityLevel) -> bool {
-    to_log_level(level) <= log::max_level()
-}
-
 pub fn log_message(level: appinsights::telemetry::SeverityLevel, msg: String) {
-    let log_level = to_log_level(&level);
-    log::log!(log_level, "{}", msg);
     if let Some(client) = client(ClientType::Instance) {
         client.track_trace(msg, level);
     }
 }
+
+#[macro_export]
+macro_rules! event_entries {
+    ($name: expr; $events: expr) => {{
+        onefuzz_telemetry::track_event(&$name, &$events);
+        log::info!("{} {}", $name.as_str(), onefuzz_telemetry::format_events(&$events));
+    }};
+}
+
 
 #[macro_export]
 macro_rules! event {
@@ -562,15 +563,17 @@ macro_rules! event {
 
         })*;
 
-        onefuzz_telemetry::track_event($name, events);
+        event_entries!($name; events);
     }};
 }
 
 #[macro_export]
 macro_rules! log {
     ($level: expr, $($arg: tt)+) => {{
-        if onefuzz_telemetry::should_log(&$level) {
+        let log_level = onefuzz_telemetry::to_log_level(&$level);
+        if log_level <= log::max_level() {
             let msg = format!("{}", format_args!($($arg)+));
+            log::log!(log_level, "{}", msg);
             onefuzz_telemetry::log_message($level, msg.to_string());
         }
     }};
