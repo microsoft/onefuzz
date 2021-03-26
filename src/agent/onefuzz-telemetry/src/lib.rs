@@ -492,7 +492,7 @@ pub fn set_property(entry: EventData) {
     }
 }
 
-pub fn format_events(events : &[EventData]) -> String {
+pub fn format_events(events: &[EventData]) -> String {
     events
         .iter()
         .map(|x| x.as_values())
@@ -548,10 +548,13 @@ pub fn log_message(level: appinsights::telemetry::SeverityLevel, msg: String) {
 macro_rules! event_entries {
     ($name: expr; $events: expr) => {{
         onefuzz_telemetry::track_event(&$name, &$events);
-        log::info!("{} {}", $name.as_str(), onefuzz_telemetry::format_events(&$events));
+        log::info!(
+            "{} {}",
+            $name.as_str(),
+            onefuzz_telemetry::format_events(&$events)
+        );
     }};
 }
-
 
 #[macro_export]
 macro_rules! event {
