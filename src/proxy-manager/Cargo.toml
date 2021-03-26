@@ -21,3 +21,4 @@ url = { version = "2.2", features = ["serde"] }
 reqwest-retry = { path = "../agent/reqwest-retry"}
 onefuzz-telemetry = { path = "../agent/onefuzz-telemetry" }
 uuid = "0.8"
+log = "0.4"
