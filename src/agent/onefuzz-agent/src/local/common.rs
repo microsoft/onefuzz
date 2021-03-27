@@ -33,6 +33,7 @@ pub const TOOLS_DIR: &str = "tools_dir";
 pub const RENAME_OUTPUT: &str = "rename_output";
 pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
 pub const DISABLE_CHECK_DEBUGGER: &str = "disable_check_debugger";
+pub const REGRESSION_REPORTS_DIR: &str = "regression_reports_dir";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
