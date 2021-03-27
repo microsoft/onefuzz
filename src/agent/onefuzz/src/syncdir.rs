@@ -240,7 +240,8 @@ impl SyncedDir {
             }
 
             debug!("starting monitor for {}", self.path.display());
-            self.file_monitor_event(event.clone(), ignore_dotfiles).await?;
+            self.file_monitor_event(event.clone(), ignore_dotfiles)
+                .await?;
         }
     }
 }
