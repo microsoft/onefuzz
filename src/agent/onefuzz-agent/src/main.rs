@@ -40,9 +40,11 @@ fn main() -> Result<()> {
     let matches = app.get_matches();
 
     let mut rt = tokio::runtime::Runtime::new()?;
-    let result = rt.block_on(run(matches));
+    rt.block_on(run(matches))?;
+    
+    // only call atexit if everything exits cleanly
     atexit::execute();
-    result
+    Ok(())
 }
 
 async fn run(args: ArgMatches<'_>) -> Result<()> {
