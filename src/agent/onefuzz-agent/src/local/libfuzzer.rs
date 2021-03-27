@@ -4,8 +4,8 @@
 use crate::{
     local::{
         common::{
-            build_common_config, register_cleanup, wait_for_dir, DirectoryMonitorQueue,
-            ANALYZER_EXE, COVERAGE_DIR, UNIQUE_REPORTS_DIR,
+            build_common_config, wait_for_dir, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR,
+            UNIQUE_REPORTS_DIR,
         },
         generic_analysis::{build_analysis_config, build_shared_args as build_analysis_args},
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
@@ -33,8 +33,6 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         .url
         .as_file_path()
         .expect("invalid crash dir remote location");
-
-    register_cleanup(common.job_id)?;
 
     let fuzzer = LibFuzzerFuzzTask::new(fuzz_config)?;
     fuzzer.check_libfuzzer().await?;

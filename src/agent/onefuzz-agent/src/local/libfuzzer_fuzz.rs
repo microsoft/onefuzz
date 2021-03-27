@@ -3,9 +3,9 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        register_cleanup, CmdType, CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
+        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
+        CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
+        TARGET_WORKERS,
     },
     tasks::{
         config::CommonConfig,
@@ -51,7 +51,6 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let common = build_common_config(args, true)?;
-    register_cleanup(common.job_id)?;
     let config = build_fuzz_config(args, common)?;
     LibFuzzerFuzzTask::new(config)?.run().await
 }

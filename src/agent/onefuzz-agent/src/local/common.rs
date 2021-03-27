@@ -127,6 +127,11 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
             .takes_value(true)
             .required(false),
     )
+    .arg(
+        Arg::with_name("keep_job_dir")
+            .long("keep_job_dir")
+            .required(false),
+    )
 }
 
 fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
@@ -177,7 +182,7 @@ fn recursive_remove(path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn register_cleanup(job_id: Uuid) -> Result<()> {
+fn register_cleanup(job_id: Uuid) -> Result<()> {
     let path = std::env::current_dir()?.join(job_id.to_string());
     atexit::register(move || {
         recursive_remove(&path).expect("cleanup failed");
@@ -226,6 +231,10 @@ pub fn build_common_config(args: &ArgMatches<'_>, generate_task_id: bool) -> Res
     } else {
         PathBuf::default()
     };
+
+    if args.is_present("keep_job_dir") {
+        register_cleanup(job_id)?;
+    }
 
     let config = CommonConfig {
         job_id,

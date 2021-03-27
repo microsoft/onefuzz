@@ -4,9 +4,8 @@
 use crate::{
     local::common::{
         build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, register_cleanup, CmdType, ANALYSIS_INPUTS, ANALYSIS_UNIQUE_INPUTS,
-        CHECK_FUZZER_HELP, INPUTS_DIR, PRESERVE_EXISTING_OUTPUTS, TARGET_ENV, TARGET_EXE,
-        TARGET_OPTIONS,
+        get_synced_dirs, CmdType, ANALYSIS_INPUTS, ANALYSIS_UNIQUE_INPUTS, CHECK_FUZZER_HELP,
+        INPUTS_DIR, PRESERVE_EXISTING_OUTPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
     },
     tasks::{
         config::CommonConfig,
@@ -47,7 +46,6 @@ pub fn build_merge_config(
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let common = build_common_config(args, true)?;
-    register_cleanup(common.job_id)?;
     let config = build_merge_config(args, None, common)?;
     spawn(std::sync::Arc::new(config)).await
 }
