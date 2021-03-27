@@ -89,7 +89,7 @@ pub struct CoverageTask {
 impl CoverageTask {
     pub fn new(config: Config) -> Self {
         let config = Arc::new(config);
-        let poller = InputPoller::new();
+        let poller = InputPoller::new("libfuzzer-coverage");
         Self { config, poller }
     }
 

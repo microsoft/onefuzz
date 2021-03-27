@@ -103,14 +103,18 @@ pub struct InputPoller<M> {
     state: Option<State<M>>,
 
     batch_dir: Option<SyncedDir>,
+
+    name: String,
 }
 
 impl<M> InputPoller<M> {
-    pub fn new() -> Self {
+    pub fn new(name: impl AsRef<str>) -> Self {
+        let name= name.as_ref().to_owned();
         let state = Some(State::Ready);
         Self {
             state,
             batch_dir: None,
+            name,
         }
     }
 
@@ -122,12 +126,12 @@ impl<M> InputPoller<M> {
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
         to_process.init_pull().await?;
-        info!("batch processing directory: {}", to_process.path.display());
+        info!("batch processing directory: {} - {}", self.name, to_process.path.display());
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
             let path = file?.path();
-            info!("Processing batch-downloaded input: {}", path.display());
+            info!("processing batch-downloaded input: {} - {}", self.name, path.display());
 
             // Compute the file name relative to the synced directory, and thus the
             // container.
@@ -170,7 +174,7 @@ impl<M> InputPoller<M> {
     }
 
     pub async fn run(&mut self, mut cb: impl Callback<M>) -> Result<()> {
-        info!("starting input queue polling");
+        info!("starting input queue polling: {}", self.name);
         loop {
             match self.state() {
                 State::Polled(None) => {
@@ -178,7 +182,9 @@ impl<M> InputPoller<M> {
                     delay_with_jitter(POLL_INTERVAL).await;
                 }
                 State::Downloaded(_msg, _url, input, _tempdir) => {
-                    info!("Processing downloaded input: {}", input.display());
+                    // if we can't get the filename, just pass the whole thing to logging
+                    let filename = input.file_name().unwrap_or_else(|| input.as_ref());
+                    info!("processing {} input: {}", self.name, filename.to_string_lossy());
                 }
                 _ => {}
             }
