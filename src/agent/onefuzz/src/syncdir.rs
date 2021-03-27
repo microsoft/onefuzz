@@ -164,10 +164,10 @@ impl SyncedDir {
             fs::create_dir_all(&path).await?;
 
             while let Some(item) = monitor.next().await {
-                event!(event.clone(); EventData::Path = item.display().to_string());
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
+                event!(event.clone(); EventData::Path = file_name.to_string_lossy());
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
@@ -178,7 +178,7 @@ impl SyncedDir {
                     if !item.exists() {
                         // guarding against cases where a temporary file was detected
                         // but was deleted before the copy
-                        warn!("{}", error_message);
+                        debug!("{}", error_message);
                         continue;
                     }
                     bail!("{}", error_message);
@@ -201,7 +201,7 @@ impl SyncedDir {
                     if !item.exists() {
                         // guarding against cases where a temporary file was detected
                         // but was deleted before the upload
-                        warn!("{}", error_message);
+                        debug!("{}", error_message);
                         continue;
                     }
                     bail!("{}", error_message);
