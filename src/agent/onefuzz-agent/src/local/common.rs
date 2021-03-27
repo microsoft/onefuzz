@@ -1,20 +1,19 @@
 use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
-use anyhow::Result;
+use anyhow::{Context, Result};
+use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use onefuzz::jitter::delay_with_jitter;
 use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use path_absolutize::Absolutize;
 use reqwest::Url;
+use std::task::Poll;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     time::Duration,
 };
 use uuid::Uuid;
-
-use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
-use path_absolutize::Absolutize;
-use std::task::Poll;
 
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
@@ -160,6 +159,30 @@ pub fn get_synced_dirs(
         })
         .collect();
     Ok(dirs?)
+}
+
+fn recursive_remove(path: &Path) -> Result<()> {
+    if path.metadata()?.is_dir() {
+        for child in std::fs::read_dir(&path)? {
+            let path = child?.path();
+            // allow children remove to fail, as tempdirs are cleaning up at this
+            // point.  the follow on remove_dir_all will catch errors.
+            recursive_remove(&path).ok();
+        }
+        std::fs::remove_dir_all(&path)
+            .with_context(|| format!("removing directory {}", path.display()))?;
+    } else {
+        std::fs::remove_file(&path).with_context(|| format!("removing {}", path.display()))?;
+    }
+    Ok(())
+}
+
+pub fn register_cleanup(job_id: Uuid) -> Result<()> {
+    let path = std::env::current_dir()?.join(job_id.to_string());
+    atexit::register(move || {
+        recursive_remove(&path).expect("cleanup failed");
+    });
+    Ok(())
 }
 
 pub fn get_synced_dir(

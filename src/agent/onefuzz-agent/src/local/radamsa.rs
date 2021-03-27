@@ -3,7 +3,7 @@
 
 use crate::{
     local::{
-        common::{build_common_config, DirectoryMonitorQueue},
+        common::{build_common_config, register_cleanup, DirectoryMonitorQueue},
         generic_crash_report::{build_report_config, build_shared_args as build_crash_args},
         generic_generator::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
@@ -18,7 +18,9 @@ use uuid::Uuid;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let common = build_common_config(args, true)?;
+    register_cleanup(common.job_id)?;
     let fuzz_config = build_fuzz_config(args, common.clone())?;
+
     let crash_dir = fuzz_config
         .crashes
         .url

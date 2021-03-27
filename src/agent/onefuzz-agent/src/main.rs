@@ -44,14 +44,17 @@ fn main() -> Result<()> {
 }
 
 async fn run(args: ArgMatches<'_>) -> Result<()> {
-    match args.subcommand() {
+    let result = match args.subcommand() {
         (LICENSE_CMD, Some(_)) => licenses(),
         (LOCAL_CMD, Some(sub)) => local::cmd::run(sub).await,
         (MANAGED_CMD, Some(sub)) => managed::cmd::run(sub).await,
         _ => {
             anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
         }
-    }
+    };
+
+    atexit::execute();
+    result
 }
 
 fn licenses() -> Result<()> {

@@ -3,9 +3,10 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
-        ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, NO_REPRO_DIR,
-        REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR, UNIQUE_REPORTS_DIR,
+        build_common_config, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir,
+        register_cleanup, CmdType, ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS,
+        CRASHES_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR,
+        UNIQUE_REPORTS_DIR,
     },
     tasks::{
         analysis::generic::{run as run_analysis, Config},
@@ -61,6 +62,7 @@ pub fn build_analysis_config(
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let common = build_common_config(args, true)?;
+    register_cleanup(common.job_id)?;
     let config = build_analysis_config(args, None, common)?;
     run_analysis(config).await
 }

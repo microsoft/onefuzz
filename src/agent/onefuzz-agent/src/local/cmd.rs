@@ -49,8 +49,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         }
     };
 
-    if let Some(minutes) = running_duration {
-        if let Ok(run) = timeout(Duration::from_secs(minutes * 60), run).await {
+    if let Some(seconds) = running_duration {
+        if let Ok(run) = timeout(Duration::from_secs(seconds), run).await {
             run
         } else {
             info!("The running timeout period has elapsed");

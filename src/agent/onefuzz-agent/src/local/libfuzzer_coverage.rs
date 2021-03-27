@@ -4,8 +4,8 @@
 use crate::{
     local::common::{
         build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, CHECK_FUZZER_HELP, COVERAGE_DIR, INPUTS_DIR, READONLY_INPUTS,
-        TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
+        get_synced_dirs, register_cleanup, CmdType, CHECK_FUZZER_HELP, COVERAGE_DIR, INPUTS_DIR,
+        READONLY_INPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
     },
     tasks::{
         config::CommonConfig,
@@ -56,8 +56,8 @@ pub fn build_coverage_config(
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let common = build_common_config(args, true)?;
+    register_cleanup(common.job_id)?;
     let config = build_coverage_config(args, false, None, common)?;
-
     let mut task = CoverageTask::new(config);
     task.managed_run().await
 }
