@@ -41,7 +41,7 @@ fn main() -> Result<()> {
 
     let mut rt = tokio::runtime::Runtime::new()?;
     rt.block_on(run(matches))?;
-    
+
     // only call atexit if everything exits cleanly
     atexit::execute();
     Ok(())
