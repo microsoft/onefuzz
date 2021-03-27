@@ -56,7 +56,7 @@ pub struct ReportTask {
 
 impl ReportTask {
     pub fn new(config: Config) -> Self {
-        let poller = InputPoller::new();
+        let poller = InputPoller::new("libfuzzer-crash-report");
         let config = Arc::new(config);
 
         Self { config, poller }
