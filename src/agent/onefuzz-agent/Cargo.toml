@@ -36,6 +36,7 @@ onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 stacktrace-parser = { path = "../stacktrace-parser" }
 path-absolutize = "3.0.6"
 atexit = { path = "../atexit" }
+remove_dir_all = "0.7"
 
 [dev-dependencies]
 tempfile = "3.2"
