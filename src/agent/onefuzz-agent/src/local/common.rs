@@ -130,7 +130,8 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
     .arg(
         Arg::with_name("keep_job_dir")
             .long("keep_job_dir")
-            .required(false),
+            .required(false)
+            .help("keep the local directory created for running the task"),
     )
 }
 
@@ -232,7 +233,7 @@ pub fn build_common_config(args: &ArgMatches<'_>, generate_task_id: bool) -> Res
         PathBuf::default()
     };
 
-    if args.is_present("keep_job_dir") {
+    if !args.is_present("keep_job_dir") {
         register_cleanup(job_id)?;
     }
 
