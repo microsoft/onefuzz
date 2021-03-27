@@ -67,7 +67,7 @@ pub fn args(name: &str) -> App<'static, 'static> {
         .arg(
             Arg::with_name(TIMEOUT)
                 .long(TIMEOUT)
-                .help("The maximum running time in minutes")
+                .help("The maximum running time in seconds")
                 .takes_value(true)
                 .required(false),
         )
