@@ -20,7 +20,6 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let common = build_common_config(args, true)?;
     register_cleanup(common.job_id)?;
     let fuzz_config = build_fuzz_config(args, common.clone())?;
-
     let crash_dir = fuzz_config
         .crashes
         .url
