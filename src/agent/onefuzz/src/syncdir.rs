@@ -170,7 +170,8 @@ impl SyncedDir {
                 if ignore_dotfiles && file_name.to_string_lossy().starts_with(".") {
                     continue;
                 }
-                event!(event.clone(); EventData::Path = item.display().to_string());
+
+                event!(event.clone(); EventData::Path = file_name.to_string_lossy());
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
@@ -181,7 +182,7 @@ impl SyncedDir {
                     if !item.exists() {
                         // guarding against cases where a temporary file was detected
                         // but was deleted before the copy
-                        warn!("{}", error_message);
+                        debug!("{}", error_message);
                         continue;
                     }
                     bail!("{}", error_message);
@@ -210,7 +211,7 @@ impl SyncedDir {
                     if !item.exists() {
                         // guarding against cases where a temporary file was detected
                         // but was deleted before the upload
-                        warn!("{}", error_message);
+                        debug!("{}", error_message);
                         continue;
                     }
                     bail!("{}", error_message);
