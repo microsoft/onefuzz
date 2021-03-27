@@ -167,7 +167,7 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                if ignore_dotfiles && file_name.to_string_lossy().starts_with(".") {
+                if ignore_dotfiles && file_name.to_string_lossy().starts_with('.') {
                     continue;
                 }
 
@@ -195,7 +195,7 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                if ignore_dotfiles && file_name.to_string_lossy().starts_with(".") {
+                if ignore_dotfiles && file_name.to_string_lossy().starts_with('.') {
                     continue;
                 }
                 event!(event.clone(); EventData::Path = item.display().to_string());
