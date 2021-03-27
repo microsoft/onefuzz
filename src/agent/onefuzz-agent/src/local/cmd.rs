@@ -49,8 +49,8 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         }
     };
 
-    if let Some(minutes) = running_duration {
-        if let Ok(run) = timeout(Duration::from_secs(minutes * 60), run).await {
+    if let Some(seconds) = running_duration {
+        if let Ok(run) = timeout(Duration::from_secs(seconds), run).await {
             run
         } else {
             info!("The running timeout period has elapsed");
@@ -67,7 +67,7 @@ pub fn args(name: &str) -> App<'static, 'static> {
         .arg(
             Arg::with_name(TIMEOUT)
                 .long(TIMEOUT)
-                .help("The maximum running time in minutes")
+                .help("The maximum running time in seconds")
                 .takes_value(true)
                 .required(false),
         )
