@@ -40,21 +40,20 @@ fn main() -> Result<()> {
     let matches = app.get_matches();
 
     let mut rt = tokio::runtime::Runtime::new()?;
-    rt.block_on(run(matches))
+    let result = rt.block_on(run(matches));
+    atexit::execute();
+    result
 }
 
 async fn run(args: ArgMatches<'_>) -> Result<()> {
-    let result = match args.subcommand() {
+    match args.subcommand() {
         (LICENSE_CMD, Some(_)) => licenses(),
         (LOCAL_CMD, Some(sub)) => local::cmd::run(sub).await,
         (MANAGED_CMD, Some(sub)) => managed::cmd::run(sub).await,
         _ => {
             anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
         }
-    };
-
-    atexit::execute();
-    result
+    }
 }
 
 fn licenses() -> Result<()> {
