@@ -109,7 +109,7 @@ pub struct InputPoller<M> {
 
 impl<M> InputPoller<M> {
     pub fn new(name: impl AsRef<str>) -> Self {
-        let name= name.as_ref().to_owned();
+        let name = name.as_ref().to_owned();
         let state = Some(State::Ready);
         Self {
             state,
@@ -126,12 +126,20 @@ impl<M> InputPoller<M> {
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
         to_process.init_pull().await?;
-        info!("batch processing directory: {} - {}", self.name, to_process.path.display());
+        info!(
+            "batch processing directory: {} - {}",
+            self.name,
+            to_process.path.display()
+        );
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
             let path = file?.path();
-            info!("processing batch-downloaded input: {} - {}", self.name, path.display());
+            info!(
+                "processing batch-downloaded input: {} - {}",
+                self.name,
+                path.display()
+            );
 
             // Compute the file name relative to the synced directory, and thus the
             // container.
@@ -184,7 +192,11 @@ impl<M> InputPoller<M> {
                 State::Downloaded(_msg, _url, input, _tempdir) => {
                     // if we can't get the filename, just pass the whole thing to logging
                     let filename = input.file_name().unwrap_or_else(|| input.as_ref());
-                    info!("processing {} input: {}", self.name, filename.to_string_lossy());
+                    info!(
+                        "processing {} input: {}",
+                        self.name,
+                        filename.to_string_lossy()
+                    );
                 }
                 _ => {}
             }
