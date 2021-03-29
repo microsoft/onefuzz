@@ -67,7 +67,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
             DirectoryMonitorQueue::start_monitoring(crash_dir.clone()).await?;
         let coverage_config = build_coverage_config(
             args,
-            true,
+            false,
             Some(coverage_input_monitor.queue_client),
             CommonConfig {
                 task_id: Uuid::new_v4(),
