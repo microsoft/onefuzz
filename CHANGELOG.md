@@ -99,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Service: Fixed the queries used to identify nodes running outdated OneFuzz releases. [#597](https://github.com/microsoft/onefuzz/pull/597)
 * Agent: Fixed an issue that would stop an agent or supervisor from performing work if an HTTPS request has failed in certain conditions. [#603](https://github.com/microsoft/onefuzz/pull/603)
-* Agent: Fixed an issue that would stop a task if the task printed a significant amount of data to STDOUT or STDERR.  [#588](https://github.com/microsoft/onefuzz/pull/588)
+* Agent: Fixed an issue that would stop a task if the task printed a significant amount of data to stdout or stderr.  [#588](https://github.com/microsoft/onefuzz/pull/588)
 * Deployment: Address deployment failures relating to cross-region Azure Active Directory resource creation delays. [#585](https://github.com/microsoft/onefuzz/pull/585)
 
 ## 2.6.0
@@ -150,7 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Handle scaleset nodes that never register, such as nodes with instance-specific setup script failures.  [#518](https://github.com/microsoft/onefuzz/pull/518)
 
 ### Changed
-* Agent: Added STDOUT/STDERR logging and clarifying context during failures to the `generic_analysis` task.  [#522](https://github.com/microsoft/onefuzz/pull/522)
+* Agent: Added stdout/stderr logging and clarifying context during failures to the `generic_analysis` task.  [#522](https://github.com/microsoft/onefuzz/pull/522)
 * Agent/Service/Proxy: Clarify log messages from the scaleset proxy.  [#520](https://github.com/microsoft/onefuzz/pull/520)
 * Agent/Proxy: Update multiple third-party Rust libraries.  [#517](https://github.com/microsoft/onefuzz/pull/517)
 
@@ -222,7 +222,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deployment: Mitigate issues related to deployments within conditional access policy scenarios. [#447](https://github.com/microsoft/onefuzz/pull/447)
 * Agent: Fixed an issue where unused nodes would stop requesting new work. [#459](https://github.com/microsoft/onefuzz/pull/459)
 * Service: Fixed dead node cleanup. [#458](https://github.com/microsoft/onefuzz/pull/458)
-* Service: Fixed an issue logging excessively large STDOUT/STDERR from tasks.  [#460](https://github.com/microsoft/onefuzz/pull/460)
+* Service: Fixed an issue logging excessively large stdout/stderr from tasks.  [#460](https://github.com/microsoft/onefuzz/pull/460)
 
 ## 1.11.0
 ### Added 
@@ -231,7 +231,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI: Added `onefuzz debug log tail` which enables continuously following Application Insights query results.  [#401](https://github.com/microsoft/onefuzz/pull/401)
 * CLI/Agent: Support verifying LibFuzzer targets at the start of a task using `-help=1`, which will enable identifying non-functional LibFuzzer targets.  [#381](https://github.com/microsoft/onefuzz/pull/381)
 * CLI/Agent: Support specifying whether to log a warning or fail the task when a LibFuzzer target exits with a non-zero status code (without also generating a crashing input).  [#381](https://github.com/microsoft/onefuzz/pull/381)
-* Agent: The STDOUT and STDERR for the supervisors and generators are now logged to Application Insights.  [#400](https://github.com/microsoft/onefuzz/pull/400)
+* Agent: The stdout and stderr for the supervisors and generators are now logged to Application Insights.  [#400](https://github.com/microsoft/onefuzz/pull/400)
 * Service: Enabled per-Scaleset SSH keys on Windows VMs, similar to existing Linux support, enabling `onefuzz debug node ssh` to both Windows and Linux nodes.  [#390](https://github.com/microsoft/onefuzz/pull/390)
 * Agent: Support ASAN odr-violation results.  [#380](https://github.com/microsoft/onefuzz/pull/380)
 * CLI/Service/Agent: Added the ability add SSH keys to nodes within scalesets.  [#441](https://github.com/microsoft/onefuzz/pull/441)
@@ -249,7 +249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Re-enable API endpoint used by `onefuzz nodes update`.  [#412](https://github.com/microsoft/onefuzz/pull/412)
 * Agent: Addressed a race condition in LibFuzzer coverage analysis without initial seeds.  [#403](https://github.com/microsoft/onefuzz/pull/403)
 * Agent: Prevent supervisor that fatally exits from processing additional new tasks.  [#378](https://github.com/microsoft/onefuzz/pull/378)
-* Agent: Address issues handling LibFuzzer targets that produce non-UTF8 output to STDERR.  [#379](https://github.com/microsoft/onefuzz/pull/379)
+* Agent: Address issues handling LibFuzzer targets that produce non-UTF8 output to stderr.  [#379](https://github.com/microsoft/onefuzz/pull/379)
 
 ## 1.10.0
 ### Added
@@ -332,7 +332,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * CLI: The CLI now internally caches container authorization tokens [#224](https://github.com/microsoft/onefuzz/pull/224)
 * Service: Moved to using user-assigned managed identities for Scalesets [#219](https://github.com/microsoft/onefuzz/pull/219)
-* Agent: Added STDOUT to azcopy error logs [#247](https://github.com/microsoft/onefuzz/pull/247)
+* Agent: Added stdout to azcopy error logs [#247](https://github.com/microsoft/onefuzz/pull/247)
 * Service: Increased function timeouts to 5 minutes
 
 ## 1.5.0
@@ -387,7 +387,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Service: Nodes no longer have to wait for the scaleset to finish setup before being able to fuzz [#144](https://github.com/microsoft/onefuzz/pull/144)
 * Agent: Agent now only notifies the service about its current state upon state change [#175](https://github.com/microsoft/onefuzz/pull/175) 
-* Service: Task error messages now limit the STDOUT and STDERR to the last 4096 bytes [#170](https://github.com/microsoft/onefuzz/pull/170)
+* Service: Task error messages now limit the stdout and stderr to the last 4096 bytes [#170](https://github.com/microsoft/onefuzz/pull/170)
 * Service: Replaced custom queue based event loop with timers [#160](https://github.com/microsoft/onefuzz/pull/160), [#159](https://github.com/microsoft/onefuzz/pull/159)
 * Agent: Uploads that fail now report the failure earlier [#166](https://github.com/microsoft/onefuzz/pull/166)
 * Agent: All timers now include automatic jitter to reduce request storms [#180](https://github.com/microsoft/onefuzz/pull/180)
@@ -404,12 +404,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Testing: Added rust based libFuzzer in the end-to-end integration tests [#132](https://github.com/microsoft/onefuzz/pull/132)
 
 ### Fixed
-* Agent: Always parse STDERR when generating crash reports for LibFuzzer instead of using `ASAN_OPTIONS=log_path`, which fixes crash reports from non-sanitizer based crashes. [#131](https://github.com/microsoft/onefuzz/pull/131)
+* Agent: Always parse stderr when generating crash reports for LibFuzzer instead of using `ASAN_OPTIONS=log_path`, which fixes crash reports from non-sanitizer based crashes. [#131](https://github.com/microsoft/onefuzz/pull/131)
 * Deployment: Added data-migration script to fix notifications for pre-release installs [#135](https://github.com/microsoft/onefuzz/pull/135)
 
 ## 1.3.0
 ### Added
-* Agent: Crash reports for LibFuzzer now attempts to parse STDERR in addition to `ASAN_OPTIONS=log_path`.  This enables crash reporting of go-fuzz based binaries.  [#127](https://github.com/microsoft/onefuzz/pull/127)
+* Agent: Crash reports for LibFuzzer now attempts to parse stderr in addition to `ASAN_OPTIONS=log_path`.  This enables crash reporting of go-fuzz based binaries.  [#127](https://github.com/microsoft/onefuzz/pull/127)
 * Deployment: During deployment, App Insights logs can be configured to automatically export logs to the `app-insights` container in instance specific `func` storage account.  [#102](https://github.com/microsoft/onefuzz/pull/102)
 
 ### Changed
