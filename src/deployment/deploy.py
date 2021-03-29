@@ -68,6 +68,7 @@ from registration import (
     assign_scaleset_role,
     authorize_application,
     register_application,
+    set_app_audience,
     update_pool_registration,
 )
 
