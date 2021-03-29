@@ -6,18 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.11.0
 ### Changed
-* Agent: Continued log simplificaiton and clarification.  [#736](https://github.com/microsoft/onefuzz/pull/736), [#740](https://github.com/microsoft/onefuzz/pull/740), [#742](https://github.com/microsoft/onefuzz/pull/742)
+* Agent: Continued log simplification and clarification.  [#736](https://github.com/microsoft/onefuzz/pull/736), [#740](https://github.com/microsoft/onefuzz/pull/740), [#742](https://github.com/microsoft/onefuzz/pull/742)
 * Agent: Prevent invalid queue messages from being ignored. [#731](https://github.com/microsoft/onefuzz/pull/731)
 * Agent: Separated module and symbol names for Windows debugger-based crash reports. [#723](https://github.com/microsoft/onefuzz/pull/723)
 * Deployment/Agent: Updated AFL++ to 3.11c.  [#728](https://github.com/microsoft/onefuzz/pull/728)
 * CLI/Deployment: Updated Python dependencies.  [#721](https://github.com/microsoft/onefuzz/pull/721)
 * Agent: Updated stack minimization regular expressions from ClusterFuzz.  [#722](https://github.com/microsoft/onefuzz/pull/722)
-* Service: Removed user's identity information from instance logging instances.  [#724](https://github.com/microsoft/onefuzz/pull/724), [#725](https://github.com/microsoft/onefuzz/pull/725)
+* Service: Removed user's identity information from logging to user instance.  [#724](https://github.com/microsoft/onefuzz/pull/724), [#725](https://github.com/microsoft/onefuzz/pull/725)
 * Agent: Continued development related to upcoming features. [#699](https://github.com/microsoft/onefuzz/pull/699), [#729](https://github.com/microsoft/onefuzz/pull/729), [#733](https://github.com/microsoft/onefuzz/pull/733), [#735](https://github.com/microsoft/onefuzz/pull/735), [#738](https://github.com/microsoft/onefuzz/pull/738), [#739](https://github.com/microsoft/onefuzz/pull/739)
 
 ### Fixed
 * Deployment: Worked around a race condition in service principal creation. [#716](https://github.com/microsoft/onefuzz/pull/716)
-* Agent: Dotfiles are now ignored in libFuzzer related directories.  [#741](https://github.com/microsoft/onefuzz/pull/741)
+* Agent: Dotfiles are now ignored in libFuzzer-related directories.  [#741](https://github.com/microsoft/onefuzz/pull/741)
 
 ## 2.10.0
 ### Added
