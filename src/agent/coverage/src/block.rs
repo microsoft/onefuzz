@@ -141,14 +141,6 @@ mod tests {
     }
 
     #[test]
-    fn test_to_from_vec_roundtrip() {
-        let data = vec![(2, 0), (3, 1), (5, 0), (8, 2), (13, 1), (21, 10)];
-        let cov = from_vec(data.clone());
-        let roundtrip = to_vec(&cov);
-        assert_eq!(roundtrip, data);
-    }
-
-    #[test]
     fn test_module_merge_max() {
         let initial = vec![(2, 0), (3, 0), (5, 0), (8, 0)];
 
