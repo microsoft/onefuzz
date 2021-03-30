@@ -32,7 +32,9 @@ pub async fn run(
     readonly_inputs: &Option<SyncedDir>,
     handler: &impl RegressionHandler,
 ) -> Result<()> {
-    info!("Starting generic regression task");
+    info!("starting regression task");
+    regression_reports.init().await?;
+
     handle_crash_reports(
         handler,
         crashes,
@@ -41,7 +43,8 @@ pub async fn run(
         &regression_reports,
         &heartbeat_client,
     )
-    .await?;
+    .await
+    .context("handling crash reports")?;
 
     if let Some(readonly_inputs) = &readonly_inputs {
         handle_inputs(
@@ -50,9 +53,11 @@ pub async fn run(
             &regression_reports,
             &heartbeat_client,
         )
-        .await?;
+        .await
+        .context("handling inputs")?;
     }
 
+    info!("regression task stopped");
     Ok(())
 }
 

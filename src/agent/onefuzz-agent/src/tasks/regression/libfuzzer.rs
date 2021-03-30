@@ -7,7 +7,7 @@ use crate::tasks::{
     utils::default_bool_true,
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use reqwest::Url;
 
 use super::common::{self, RegressionHandler};
@@ -78,8 +78,6 @@ impl LibFuzzerRegressionTask {
     }
 
     pub async fn run(&self) -> Result<()> {
-        info!("Starting libfuzzer regression task");
-
         let mut report_dirs = vec![];
         for dir in &[
             &self.config.reports,
@@ -101,7 +99,8 @@ impl LibFuzzerRegressionTask {
             &self.config.readonly_inputs,
             self,
         )
-        .await?;
+        .await
+        .context("libfuzzer regression")?;
         Ok(())
     }
 }
