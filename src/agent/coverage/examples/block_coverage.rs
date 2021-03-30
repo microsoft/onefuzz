@@ -85,7 +85,7 @@ fn main() -> Result<()> {
             let marker = if block.count == 0 { " " } else { "x" };
 
             let module = recorder
-                .modules()
+                .module_cache()
                 .cached
                 .get(module_path)
                 .expect("unreachable: module with coverage not in recorder cache");

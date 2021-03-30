@@ -47,7 +47,7 @@ impl Recorder {
         self.coverage
     }
 
-    pub fn modules(&self) -> &ModuleCache {
+    pub fn module_cache(&self) -> &ModuleCache {
         &self.cache
     }
 
