@@ -18,16 +18,16 @@ use crate::region::Region;
 pub fn record(cmd: Command) -> Result<CommandBlockCov> {
     let mut recorder = Recorder::default();
     recorder.record(cmd)?;
-    Ok(recorder.coverage)
+    Ok(recorder.into_coverage())
 }
 
 #[derive(Default, Debug)]
 pub struct Recorder {
     breakpoints: Breakpoints,
-    pub coverage: CommandBlockCov,
+    coverage: CommandBlockCov,
     demangler: Demangler,
     images: Option<Images>,
-    pub modules: ModuleCache,
+    modules: ModuleCache,
     filter: CmdFilter,
 }
 
@@ -37,6 +37,18 @@ impl Recorder {
             filter,
             ..Self::default()
         }
+    }
+
+    pub fn coverage(&self) -> &CommandBlockCov {
+        &self.coverage
+    }
+
+    pub fn into_coverage(self) -> CommandBlockCov {
+        self.coverage
+    }
+
+    pub fn modules(&self) -> &ModuleCache {
+        &self.modules
     }
 
     pub fn record(&mut self, cmd: Command) -> Result<()> {

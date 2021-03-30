@@ -67,7 +67,7 @@ fn main() -> Result<()> {
     let mut recorder = Recorder::new(filter);
     recorder.record(cmd)?;
 
-    for (module_path, cov) in recorder.coverage.iter() {
+    for (module_path, cov) in recorder.coverage().iter() {
         let mut hit = 0;
         let mut found = 0;
 
@@ -85,7 +85,7 @@ fn main() -> Result<()> {
             let marker = if block.count == 0 { " " } else { "x" };
 
             let module = recorder
-                .modules
+                .modules()
                 .cached
                 .get(module_path)
                 .expect("unreachable: module with coverage not in recorder cache");
