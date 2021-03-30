@@ -444,11 +444,9 @@ impl Target {
         // We want to set every breakpoint for the module at once. We'll read the just the
         // memory we need to do that, so find the min and max rva to compute how much memory
         // to read and update in the remote process.
-        let (min, max) = breakpoints
-            .iter()
-            .fold((u64::max_value(), u64::min_value()), |acc, bp| {
-                (acc.0.min(bp.rva()), acc.1.max(bp.rva()))
-            });
+        let (min, max) = breakpoints.iter().fold((u64::MAX, u64::MIN), |acc, bp| {
+            (acc.0.min(bp.rva()), acc.1.max(bp.rva()))
+        });
 
         // Add 1 to include the final byte.
         let region_size = (max - min)
