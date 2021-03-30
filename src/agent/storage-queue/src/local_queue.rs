@@ -119,7 +119,7 @@ pub struct ChannelQueueClient {
 impl ChannelQueueClient {
     pub fn new() -> Result<Self> {
         let (sender, receiver) = unbounded_channel();
-        let cpus = num_cpus::get() as u64;
+        let cpus = num_cpus::get();
         let low_resource = cpus < 4;
         Ok(ChannelQueueClient {
             sender: Arc::new(Mutex::new(sender)),
