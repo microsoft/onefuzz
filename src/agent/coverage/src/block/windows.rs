@@ -149,7 +149,7 @@ impl<'a> Recorder<'a> {
             }
 
             self.coverage
-                .increment(breakpoint.module, breakpoint.offset)?;
+                .increment(breakpoint.module, breakpoint.offset);
         } else {
             let pc = if let Ok(pc) = dbg.read_program_counter() {
                 format!("{:x}", pc)

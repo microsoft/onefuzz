@@ -141,7 +141,7 @@ impl<'c> Recorder<'c> {
                 .ok_or_else(|| format_err!("unable to find image for va = {:x}", pc))?;
 
             let offset = image.va_to_offset(pc);
-            self.coverage.increment(image.path(), offset)?;
+            self.coverage.increment(image.path(), offset);
 
             // Execute clobbered instruction on restart.
             regs.rip = pc;
