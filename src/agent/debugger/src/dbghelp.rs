@@ -14,6 +14,7 @@ use std::{
     cmp,
     ffi::{OsStr, OsString},
     mem::{size_of, MaybeUninit},
+    num::NonZeroU64,
     path::{Path, PathBuf},
     sync::Once,
 };
@@ -514,6 +515,10 @@ impl DebugHelpGuard {
             }
             _ => Ok(load_address),
         }
+    }
+
+    pub fn get_module_base(&self, process_handle: HANDLE, addr: DWORD64) -> Option<NonZeroU64> {
+        NonZeroU64::new(unsafe { SymGetModuleBase64(process_handle, addr) })
     }
 
     pub fn stackwalk_ex<F: FnMut(&STACKFRAME_EX) -> bool>(
