@@ -7,7 +7,7 @@ pub mod linux;
 #[cfg(target_os = "windows")]
 pub mod windows;
 
-use std::collections::BTreeMap;
+use std::collections::{btree_map, BTreeMap};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -39,15 +39,18 @@ impl CommandBlockCov {
     }
 
     pub fn increment(&mut self, path: &ModulePath, offset: u64) -> Result<()> {
-        if let Some(module) = self.modules.get_mut(path) {
-            module.increment(offset);
-        } else {
-            log::error!(
-                "missing module when incrementing coverage at {}+{:x}",
+        let entry = self.modules.entry(path.clone());
+
+        if let btree_map::Entry::Vacant(_) = entry {
+            log::warn!(
+                "initializing missing module when incrementing coverage at {}+{:x}",
                 path,
                 offset
             );
         }
+
+        let module = entry.or_default();
+        module.increment(offset);
 
         Ok(())
     }
@@ -76,9 +79,11 @@ impl ModuleCov {
     }
 
     pub fn increment(&mut self, offset: u64) {
-        if let Some(block) = self.blocks.get_mut(&offset) {
-            block.count += 1;
-        }
+        let block = self
+            .blocks
+            .entry(offset)
+            .or_insert_with(|| BlockCov::new(offset));
+        block.count = block.count.saturating_add(1);
     }
 
     pub fn merge_max(&mut self, other: &Self) {
@@ -194,18 +199,54 @@ mod tests {
         );
     }
 
-    fn cmd_cov_from_vec(data: Vec<(&'static str, Vec<(u64, u32)>)>) -> CommandBlockCov {
-        use std::path::PathBuf;
+    fn module_path(path: &str) -> ModulePath {
+        ModulePath::new(std::path::PathBuf::from(path)).unwrap()
+    }
 
+    fn cmd_cov_from_vec(data: Vec<(&'static str, Vec<(u64, u32)>)>) -> CommandBlockCov {
         let mut cov = CommandBlockCov::default();
 
-        for (module, module_data) in data {
-            let module = ModulePath::new(PathBuf::from(module)).unwrap();
+        for (path, module_data) in data {
             let module_cov = from_vec(module_data);
-            cov.modules.insert(module, module_cov);
+            cov.modules.insert(module_path(path), module_cov);
         }
 
         cov
+    }
+
+    #[test]
+    fn test_cmd_cov_increment() {
+        const MAIN_EXE: &str = "/main.exe";
+        const SOME_DLL: &str = "/lib/some.dll";
+
+        let main_exe = module_path(MAIN_EXE);
+        let some_dll = module_path(SOME_DLL);
+
+        let mut coverage = CommandBlockCov::default();
+
+        // Normal initialization, assuming disassembly of module.
+        coverage.insert(&main_exe, vec![1, 20, 300].into_iter());
+        coverage.increment(&main_exe, 20);
+
+        // On-demand module initialization, using only observed offsets.
+        coverage.increment(&some_dll, 123);
+        coverage.increment(&some_dll, 456);
+        coverage.increment(&some_dll, 789);
+
+        let expected = cmd_cov_from_vec(vec![
+            (MAIN_EXE, vec![
+                (1, 0),
+                (20, 1),
+                (300, 0),
+            ]),
+            (SOME_DLL, vec![
+                (123, 1),
+                (456, 1),
+                (789, 1),
+            ]),
+        ]);
+
+        assert_eq!(coverage, expected);
     }
 
     #[test]
