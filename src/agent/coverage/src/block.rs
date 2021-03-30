@@ -231,16 +231,8 @@ mod tests {
         coverage.increment(&some_dll, 789);
 
         let expected = cmd_cov_from_vec(vec![
-            (MAIN_EXE, vec![
-                (1, 0),
-                (20, 1),
-                (300, 0),
-            ]),
-            (SOME_DLL, vec![
-                (123, 1),
-                (456, 1),
-                (789, 1),
-            ]),
+            (MAIN_EXE, vec![(1, 0), (20, 1), (300, 0)]),
+            (SOME_DLL, vec![(123, 1), (456, 1), (789, 1)]),
         ]);
 
         assert_eq!(coverage, expected);
