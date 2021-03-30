@@ -45,7 +45,7 @@ impl CommandBlockCov {
             }
         } else {
             log::error!(
-                "trying to increment coverage for breakpoint at {}+{:x}",
+                "missing module when incrementing coverage at {}+{:x}",
                 path,
                 offset
             );
