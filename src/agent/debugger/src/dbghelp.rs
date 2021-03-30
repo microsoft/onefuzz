@@ -410,9 +410,9 @@ impl ModuleInfo {
 
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub struct SymInfo {
-    symbol: String,
-    address: u64,
-    displacement: u64,
+    pub symbol: String,
+    pub address: u64,
+    pub displacement: u64,
 }
 
 impl SymInfo {
