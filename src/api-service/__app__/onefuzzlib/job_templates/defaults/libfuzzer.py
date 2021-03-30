@@ -261,7 +261,7 @@ libfuzzer_linux = JobTemplate(
             name="expect_crash_on_failure",
             help="Require crashes upon non-zero exits from libfuzzer",
             type=UserFieldType.Bool,
-            default=True,
+            default=False,
             locations=[
                 UserFieldLocation(
                     op=UserFieldOperation.add,

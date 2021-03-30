@@ -800,6 +800,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "AutoScaleConfig": {
             "properties": {
+                "ephemeral_os_disks": {
+                    "default": false,
+                    "title": "Ephemeral Os Disks",
+                    "type": "boolean"
+                },
                 "image": {
                     "title": "Image",
                     "type": "string"
@@ -3764,6 +3769,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "AutoScaleConfig": {
             "properties": {
+                "ephemeral_os_disks": {
+                    "default": false,
+                    "title": "Ephemeral Os Disks",
+                    "type": "boolean"
+                },
                 "image": {
                     "title": "Image",
                     "type": "string"
