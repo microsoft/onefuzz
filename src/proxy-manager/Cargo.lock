@@ -1165,6 +1165,7 @@ dependencies = [
  "clap",
  "env_logger",
  "futures",
+ "log",
  "onefuzz-telemetry",
  "reqwest",
  "reqwest-retry",

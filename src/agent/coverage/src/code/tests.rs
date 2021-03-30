@@ -33,6 +33,7 @@ fn test_module_filter_def_exclude_bool() {
     assert!(matches!(def.rule, RuleDef::Exclude { exclude: false }));
 }
 
+#[cfg(feature = "symbol-filter")]
 #[test]
 fn test_module_filter_def_include_filter() {
     let text = r#"{ "module": "abc.exe", "include": [] }"#;
@@ -58,6 +59,7 @@ fn test_module_filter_def_include_filter() {
     }
 }
 
+#[cfg(feature = "symbol-filter")]
 #[test]
 fn test_module_filter_def_exclude_filter() {
     let text = r#"{ "module": "abc.exe", "exclude": [] }"#;
@@ -79,6 +81,7 @@ fn test_module_filter_def_exclude_filter() {
     }
 }
 
+#[cfg(feature = "symbol-filter")]
 #[test]
 fn test_include_exclude() {
     let include_false = Rule::from(RuleDef::Include { include: false });
@@ -94,6 +97,7 @@ fn test_include_exclude() {
     assert!(matches!(exclude_false, Rule::IncludeModule(true)));
 }
 
+#[cfg(feature = "symbol-filter")]
 macro_rules! from_json {
     ($tt: tt) => {{
         let text = stringify!($tt);
@@ -103,22 +107,28 @@ macro_rules! from_json {
     }};
 }
 
+#[cfg(feature = "symbol-filter")]
 #[cfg(target_os = "windows")]
 const EXE: &str = r"c:\bin\fuzz.exe";
 
+#[cfg(feature = "symbol-filter")]
 #[cfg(target_os = "linux")]
 const EXE: &str = "/bin/fuzz.exe";
 
+#[cfg(feature = "symbol-filter")]
 #[cfg(target_os = "windows")]
 const LIB: &str = r"c:\lib\libpthread.dll";
 
+#[cfg(feature = "symbol-filter")]
 #[cfg(target_os = "linux")]
 const LIB: &str = "/lib/libpthread.so.0";
 
+#[cfg(feature = "symbol-filter")]
 fn module(s: &str) -> ModulePath {
     ModulePath::new(s.into()).unwrap()
 }
 
+#[cfg(feature = "symbol-filter")]
 #[test]
 fn test_cmd_filter_empty_def() {
     let filter = from_json!([]);
@@ -139,6 +149,7 @@ fn test_cmd_filter_empty_def() {
     assert!(filter.includes_symbol(&lib, "pthread_yield"));
 }
 
+#[cfg(feature = "symbol-filter")]
 #[test]
 fn test_cmd_filter_module_include_list() {
     let filter = from_json!([
@@ -166,6 +177,7 @@ fn test_cmd_filter_module_include_list() {
     assert!(filter.includes_symbol(&lib, "__asan_load8"));
 }
 
+#[cfg(feature = "symbol-filter")]
 #[test]
 fn test_cmd_filter_exclude_list() {
     let filter = from_json!([
@@ -194,6 +206,7 @@ fn test_cmd_filter_exclude_list() {
     assert!(filter.includes_symbol(&lib, "__asan_load8"));
 }
 
+#[cfg(feature = "symbol-filter")]
 #[test]
 fn test_cmd_filter_include_list_and_exclude_default() {
     // The 2nd rule in this list excludes all modules and symbols not explicitly

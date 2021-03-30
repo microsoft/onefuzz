@@ -62,7 +62,7 @@ pub struct ReportTask {
 
 impl ReportTask {
     pub fn new(config: Config) -> Self {
-        let poller = InputPoller::new();
+        let poller = InputPoller::new("crash-report");
         Self { config, poller }
     }
 

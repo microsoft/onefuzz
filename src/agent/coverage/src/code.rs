@@ -341,8 +341,15 @@ struct ModuleRuleDef {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 enum RuleDef {
-    Include { include: bool },
-    Exclude { exclude: bool },
+    Include {
+        include: bool,
+    },
+    Exclude {
+        exclude: bool,
+    },
+
+    // Temporarily disable symbol filtering rules.
+    #[cfg_attr(not(feature = "symbol-filter"), serde(skip), allow(unused))]
     Filter(Box<Filter>),
 }
 
@@ -393,6 +400,7 @@ impl CmdFilter {
 
         Ok(Self { regexes, rules })
     }
+
     pub fn includes_module(&self, module: &ModulePath) -> bool {
         match self.regexes.matches(&module.path_lossy()).iter().next() {
             Some(index) => {
