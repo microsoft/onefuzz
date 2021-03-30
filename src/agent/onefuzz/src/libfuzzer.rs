@@ -349,8 +349,8 @@ mod tests {
     #[tokio::test]
     #[cfg(target_family = "unix")]
     async fn verify_initial_inputs() -> Result<()> {
-        let false_bin = PathBuf::from("/usr/bin/false");
-        let true_bin = PathBuf::from("/usr/bin/true");
+        let false_bin = PathBuf::from("/bin/false");
+        let true_bin = PathBuf::from("/bin/echo");
         let temp_setup_dir = tempdir()?;
         let options = vec![];
         let env = HashMap::new();
