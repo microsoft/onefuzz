@@ -349,8 +349,8 @@ mod tests {
     #[tokio::test]
     #[cfg(target_family = "unix")]
     async fn verify_initial_inputs() -> Result<()> {
-        let false_bin = PathBuf::from("/bin/false");
-        let true_bin = PathBuf::from("/bin/echo");
+        let bad_bin = PathBuf::from("/bin/false");
+        let good_bin = PathBuf::from("/bin/echo");
         let temp_setup_dir = tempdir()?;
         let options = vec![];
         let env = HashMap::new();
@@ -358,7 +358,7 @@ mod tests {
         let input_file = temp_setup_dir.path().join("input.txt");
         write_file(&input_file, "input").await?;
 
-        let fuzzer = LibFuzzer::new(false_bin, &options, &env, &temp_setup_dir.path());
+        let fuzzer = LibFuzzer::new(bad_bin, &options, &env, &temp_setup_dir.path());
 
         // verify catching bad exits with -help=1
         assert!(
@@ -381,7 +381,7 @@ mod tests {
             "checking false without inputs"
         );
 
-        let fuzzer = LibFuzzer::new(true_bin, &options, &env, &temp_setup_dir.path());
+        let fuzzer = LibFuzzer::new(good_bin, &options, &env, &temp_setup_dir.path());
         // verify good exits with -help=1
         assert!(
             fuzzer.verify(true, None).await.is_ok(),
