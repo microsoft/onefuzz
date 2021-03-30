@@ -171,7 +171,9 @@ pub fn get_synced_dirs(
 fn register_cleanup(job_id: Uuid) -> Result<()> {
     let path = std::env::current_dir()?.join(job_id.to_string());
     atexit::register(move || {
-        remove_dir_all(&path).expect("cleanup failed");
+        if std::fs::metadata(&path).is_ok() {
+            remove_dir_all(&path).expect("cleanup failed");
+        }
     });
     Ok(())
 }

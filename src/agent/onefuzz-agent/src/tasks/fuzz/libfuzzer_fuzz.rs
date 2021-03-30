@@ -16,7 +16,10 @@ use onefuzz_telemetry::{
     EventData,
 };
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
@@ -79,13 +82,9 @@ impl LibFuzzerFuzzTask {
         }
     }
 
-    pub async fn managed_run(&self) -> Result<()> {
-        self.check_libfuzzer().await?;
-        self.run().await
-    }
-
     pub async fn run(&self) -> Result<()> {
         self.init_directories().await?;
+        self.verify().await?;
 
         let hb_client = self.config.common.init_heartbeat().await?;
 
@@ -102,17 +101,22 @@ impl LibFuzzerFuzzTask {
         Ok(())
     }
 
-    pub async fn check_libfuzzer(&self) -> Result<()> {
-        if self.config.check_fuzzer_help {
-            let fuzzer = LibFuzzer::new(
-                &self.config.target_exe,
-                &self.config.target_options,
-                &self.config.target_env,
-                &self.config.common.setup_dir,
-            );
-            fuzzer.check_help().await?;
+    pub async fn verify(&self) -> Result<()> {
+        let mut directories = vec![self.config.inputs.path.clone()];
+        if let Some(readonly_inputs) = &self.config.readonly_inputs {
+            let mut dirs = readonly_inputs.iter().map(|x| x.path.clone()).collect();
+            directories.append(&mut dirs);
         }
-        Ok(())
+
+        let fuzzer = LibFuzzer::new(
+            &self.config.target_exe,
+            &self.config.target_options,
+            &self.config.target_env,
+            &self.config.common.setup_dir,
+        );
+        fuzzer
+            .verify(self.config.check_fuzzer_help, Some(directories))
+            .await
     }
 
     pub async fn run_fuzzers(&self, stats_sender: Option<&StatsSender>) -> Result<()> {
@@ -174,7 +178,7 @@ impl LibFuzzerFuzzTask {
     // While it runs, parse stderr for progress metrics, and report them.
     async fn run_fuzzer(
         &self,
-        local_inputs: impl AsRef<std::path::Path>,
+        local_inputs: &Path,
         worker_id: u64,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
@@ -256,11 +260,11 @@ impl LibFuzzerFuzzTask {
     }
 
     async fn init_directories(&self) -> Result<()> {
-        self.config.inputs.init().await?;
+        self.config.inputs.init_pull().await?;
         self.config.crashes.init().await?;
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
             for dir in readonly_inputs {
-                dir.init().await?;
+                dir.init_pull().await?;
             }
         }
         Ok(())
