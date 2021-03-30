@@ -9,7 +9,6 @@ pub mod windows;
 
 use std::collections::{btree_map, BTreeMap};
 
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::code::ModulePath;
@@ -38,7 +37,7 @@ impl CommandBlockCov {
         }
     }
 
-    pub fn increment(&mut self, path: &ModulePath, offset: u64) -> Result<()> {
+    pub fn increment(&mut self, path: &ModulePath, offset: u64) {
         let entry = self.modules.entry(path.clone());
 
         if let btree_map::Entry::Vacant(_) = entry {
@@ -51,8 +50,6 @@ impl CommandBlockCov {
 
         let module = entry.or_default();
         module.increment(offset);
-
-        Ok(())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&ModulePath, &ModuleCov)> {
