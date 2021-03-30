@@ -10,7 +10,7 @@ use tokio::time::timeout;
 use crate::local::{
     common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
     libfuzzer, libfuzzer_coverage, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge,
-    libfuzzer_test_input, radamsa, test_input,
+    libfuzzer_regression, libfuzzer_test_input, radamsa, test_input,
 };
 
 const RADAMSA: &str = "radamsa";
@@ -20,6 +20,7 @@ const LIBFUZZER_CRASH_REPORT: &str = "libfuzzer-crash-report";
 const LIBFUZZER_COVERAGE: &str = "libfuzzer-coverage";
 const LIBFUZZER_MERGE: &str = "libfuzzer-merge";
 const LIBFUZZER_TEST_INPUT: &str = "libfuzzer-test-input";
+const LIBFUZZER_REGRESSION: &str = "libfuzzer-regression";
 const GENERIC_CRASH_REPORT: &str = "crash-report";
 const GENERIC_GENERATOR: &str = "generator";
 const GENERIC_ANALYSIS: &str = "analysis";
@@ -43,14 +44,15 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
             (GENERIC_GENERATOR, Some(sub)) => generic_generator::run(sub).await,
             (GENERIC_TEST_INPUT, Some(sub)) => test_input::run(sub).await,
             (LIBFUZZER_TEST_INPUT, Some(sub)) => libfuzzer_test_input::run(sub).await,
+            (LIBFUZZER_REGRESSION, Some(sub)) => libfuzzer_regression::run(sub).await,
             _ => {
                 anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
             }
         }
     };
 
-    if let Some(minutes) = running_duration {
-        if let Ok(run) = timeout(Duration::from_secs(minutes * 60), run).await {
+    if let Some(seconds) = running_duration {
+        if let Ok(run) = timeout(Duration::from_secs(seconds), run).await {
             run
         } else {
             info!("The running timeout period has elapsed");
@@ -67,7 +69,7 @@ pub fn args(name: &str) -> App<'static, 'static> {
         .arg(
             Arg::with_name(TIMEOUT)
                 .long(TIMEOUT)
-                .help("The maximum running time in minutes")
+                .help("The maximum running time in seconds")
                 .takes_value(true)
                 .required(false),
         )
@@ -78,6 +80,9 @@ pub fn args(name: &str) -> App<'static, 'static> {
             LIBFUZZER_COVERAGE,
         )))
         .subcommand(add_common_config(libfuzzer_merge::args(LIBFUZZER_MERGE)))
+        .subcommand(add_common_config(libfuzzer_regression::args(
+            LIBFUZZER_REGRESSION,
+        )))
         .subcommand(add_common_config(libfuzzer_crash_report::args(
             LIBFUZZER_CRASH_REPORT,
         )))

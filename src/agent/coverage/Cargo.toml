@@ -5,6 +5,10 @@ authors = ["fuzzing@microsoft.com"]
 license = "MIT"
 edition = "2018"
 
+[features]
+default = []
+symbol-filter = []  # Remove after impl'd
+
 [dependencies]
 anyhow = "1.0"
 bincode = "1.3"
