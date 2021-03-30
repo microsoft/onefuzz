@@ -40,6 +40,13 @@ pub struct AzureQueueMessage {
     pub messages_url: Option<Url>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(rename = "QueueMessage")]
+pub struct AzureQueueMessageSend {
+    pub message_text: String,
+}
+
 impl AzureQueueMessage {
     pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
         let decoded = base64::decode(&self.message_text)?;
@@ -122,7 +129,9 @@ impl AzureQueueClient {
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
         let serialized = serde_json::to_string(&data).unwrap();
-        let body = serde_xml_rs::to_string(&base64::encode(&serialized)).unwrap();
+        let body = serde_xml_rs::to_string(&AzureQueueMessageSend {
+            message_text: base64::encode(&serialized),
+        })?;
         let r = self
             .http
             .post(self.messages_url.clone())
