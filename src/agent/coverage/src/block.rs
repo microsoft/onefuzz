@@ -55,9 +55,16 @@ impl CommandBlockCov {
     pub fn iter(&self) -> impl Iterator<Item = (&ModulePath, &ModuleCov)> {
         self.modules.iter()
     }
+
+    pub fn merge_max(&mut self, other: &Self) {
+        for (module, cov) in other.iter() {
+            let entry = self.modules.entry(module.clone()).or_default();
+            entry.merge_max(cov);
+        }
+    }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct ModuleCov {
     pub blocks: BTreeMap<u64, BlockCov>,
 }
@@ -141,80 +148,35 @@ mod tests {
 
     #[test]
     fn test_module_merge_max() {
-        let initial = vec![
-            (2, 0),
-            (3, 0),
-            (5, 0),
-            (8, 0),
-        ];
+        let initial = vec![(2, 0), (3, 0), (5, 0), (8, 0)];
 
         // Start out with known offsets and no hits.
         let mut total = from_vec(initial.clone());
-        assert_eq!(to_vec(&total), vec![
-            (2, 0),
-            (3, 0),
-            (5, 0),
-            (8, 0),
-        ]);
+        assert_eq!(to_vec(&total), vec![(2, 0), (3, 0), (5, 0), (8, 0),]);
 
         // If we merge data that is missing offsets, nothing happens.
         let empty = from_vec(vec![]);
         total.merge_max(&empty);
-        assert_eq!(to_vec(&total), vec![
-            (2, 0),
-            (3, 0),
-            (5, 0),
-            (8, 0),
-        ]);
+        assert_eq!(to_vec(&total), vec![(2, 0), (3, 0), (5, 0), (8, 0),]);
 
         // Merging some known hits updates the total.
-        let hit_3_8 = from_vec(vec![
-            (2, 0),
-            (3, 1),
-            (5, 0),
-            (8, 1),
-        ]);
+        let hit_3_8 = from_vec(vec![(2, 0), (3, 1), (5, 0), (8, 1)]);
         total.merge_max(&hit_3_8);
-        assert_eq!(to_vec(&total), vec![
-            (2, 0),
-            (3, 1),
-            (5, 0),
-            (8, 1),
-        ]);
+        assert_eq!(to_vec(&total), vec![(2, 0), (3, 1), (5, 0), (8, 1),]);
 
         // Merging the same known hits again is idempotent.
         total.merge_max(&hit_3_8);
-        assert_eq!(to_vec(&total), vec![
-            (2, 0),
-            (3, 1),
-            (5, 0),
-            (8, 1),
-        ]);
+        assert_eq!(to_vec(&total), vec![(2, 0), (3, 1), (5, 0), (8, 1),]);
 
         // Monotonic: merging missed known offsets doesn't lose existing.
         let empty = from_vec(initial);
         total.merge_max(&empty);
-        assert_eq!(to_vec(&total), vec![
-            (2, 0),
-            (3, 1),
-            (5, 0),
-            (8, 1),
-        ]);
+        assert_eq!(to_vec(&total), vec![(2, 0), (3, 1), (5, 0), (8, 1),]);
 
         // Monotonic: merging some known hit, some misses doesn't lose existing.
-        let hit_3 = from_vec(vec!(
-            (2, 0),
-            (3, 1),
-            (5, 0),
-            (8, 0),
-        ));
+        let hit_3 = from_vec(vec![(2, 0), (3, 1), (5, 0), (8, 0)]);
         total.merge_max(&hit_3);
-        assert_eq!(to_vec(&total), vec![
-            (2, 0),
-            (3, 1),
-            (5, 0),
-            (8, 1),
-        ]);
+        assert_eq!(to_vec(&total), vec![(2, 0), (3, 1), (5, 0), (8, 1),]);
 
         // Newly-discovered offsets are merged.
         let extra = from_vec(vec![
@@ -226,15 +188,51 @@ mod tests {
             (13, 1), // New, was hit
         ]);
         total.merge_max(&extra);
-        assert_eq!(to_vec(&total), vec![
-            (1, 0),
-            (2, 0),
-            (3, 1),
-            (5, 0),
-            (8, 1),
-            (13, 1),
+        assert_eq!(
+            to_vec(&total),
+            vec![(1, 0), (2, 0), (3, 1), (5, 0), (8, 1), (13, 1),]
+        );
+    }
+
+    fn cmd_cov_from_vec(data: Vec<(&'static str, Vec<(u64, u32)>)>) -> CommandBlockCov {
+        use std::path::PathBuf;
+
+        let mut cov = CommandBlockCov::default();
+
+        for (module, module_data) in data {
+            let module = ModulePath::new(PathBuf::from(module)).unwrap();
+            let module_cov = from_vec(module_data);
+            cov.modules.insert(module, module_cov);
+        }
+
+        cov
+    }
+
+    #[test]
+    fn test_cmd_cov_merge_max() {
+        const MAIN_EXE: &str = "/main.exe";
+        const KNOWN_DLL: &str = "/lib/known.dll";
+        const UNKNOWN_DLL: &str = "/usr/lib/unknown.dll";
+
+        let mut total = cmd_cov_from_vec(vec![
+            (MAIN_EXE, vec![(2, 0), (40, 1), (600, 0), (8000, 1)]),
+            (KNOWN_DLL, vec![(1, 1), (30, 1), (500, 0), (7000, 0)]),
         ]);
 
+        let new = cmd_cov_from_vec(vec![
+            (MAIN_EXE, vec![(2, 1), (40, 0), (600, 0), (8000, 0)]),
+            (KNOWN_DLL, vec![(1, 0), (30, 0), (500, 1), (7000, 1)]),
+            (UNKNOWN_DLL, vec![(123, 0), (456, 1)]),
+        ]);
 
+        total.merge_max(&new);
+
+        let expected = cmd_cov_from_vec(vec![
+            (MAIN_EXE, vec![(2, 1), (40, 1), (600, 0), (8000, 1)]),
+            (KNOWN_DLL, vec![(1, 1), (30, 1), (500, 1), (7000, 1)]),
+            (UNKNOWN_DLL, vec![(123, 0), (456, 1)]),
+        ]);
+
+        assert_eq!(total, expected);
     }
 }
