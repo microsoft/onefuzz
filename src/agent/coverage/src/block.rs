@@ -73,6 +73,16 @@ impl ModuleCov {
             block.count += 1;
         }
     }
+
+    pub fn merge_max(&mut self, other: &Self) {
+        for block in other.blocks.values() {
+            let entry = self
+                .blocks
+                .entry(block.offset)
+                .or_insert_with(|| BlockCov::new(block.offset));
+            entry.count = u32::max(entry.count, block.count);
+        }
+    }
 }
 
 /// Coverage info for a specific block, identified by its offset.
@@ -97,5 +107,134 @@ pub struct BlockCov {
 impl BlockCov {
     pub fn new(offset: u64) -> Self {
         Self { offset, count: 0 }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Builds a `ModuleCov` from a vec of `(offset, counts)` tuples.
+    fn from_vec(data: Vec<(u64, u32)>) -> ModuleCov {
+        let offsets = data.iter().map(|(o, _)| *o);
+        let mut cov = ModuleCov::new(offsets);
+        for (offset, count) in data {
+            for _ in 0..count {
+                cov.increment(offset);
+            }
+        }
+        cov
+    }
+
+    // Builds a vec of `(count, offset)` tuples from a `ModuleCov`.
+    fn to_vec(cov: &ModuleCov) -> Vec<(u64, u32)> {
+        cov.blocks.iter().map(|(o, b)| (*o, b.count)).collect()
+    }
+
+    #[test]
+    fn test_to_from_vec_roundtrip() {
+        let data = vec![(2, 0), (3, 1), (5, 0), (8, 2), (13, 1), (21, 10)];
+        let cov = from_vec(data.clone());
+        let roundtrip = to_vec(&cov);
+        assert_eq!(roundtrip, data);
+    }
+
+    #[test]
+    fn test_module_merge_max() {
+        let initial = vec![
+            (2, 0),
+            (3, 0),
+            (5, 0),
+            (8, 0),
+        ];
+
+        // Start out with known offsets and no hits.
+        let mut total = from_vec(initial.clone());
+        assert_eq!(to_vec(&total), vec![
+            (2, 0),
+            (3, 0),
+            (5, 0),
+            (8, 0),
+        ]);
+
+        // If we merge data that is missing offsets, nothing happens.
+        let empty = from_vec(vec![]);
+        total.merge_max(&empty);
+        assert_eq!(to_vec(&total), vec![
+            (2, 0),
+            (3, 0),
+            (5, 0),
+            (8, 0),
+        ]);
+
+        // Merging some known hits updates the total.
+        let hit_3_8 = from_vec(vec![
+            (2, 0),
+            (3, 1),
+            (5, 0),
+            (8, 1),
+        ]);
+        total.merge_max(&hit_3_8);
+        assert_eq!(to_vec(&total), vec![
+            (2, 0),
+            (3, 1),
+            (5, 0),
+            (8, 1),
+        ]);
+
+        // Merging the same known hits again is idempotent.
+        total.merge_max(&hit_3_8);
+        assert_eq!(to_vec(&total), vec![
+            (2, 0),
+            (3, 1),
+            (5, 0),
+            (8, 1),
+        ]);
+
+        // Monotonic: merging missed known offsets doesn't lose existing.
+        let empty = from_vec(initial);
+        total.merge_max(&empty);
+        assert_eq!(to_vec(&total), vec![
+            (2, 0),
+            (3, 1),
+            (5, 0),
+            (8, 1),
+        ]);
+
+        // Monotonic: merging some known hit, some misses doesn't lose existing.
+        let hit_3 = from_vec(vec!(
+            (2, 0),
+            (3, 1),
+            (5, 0),
+            (8, 0),
+        ));
+        total.merge_max(&hit_3);
+        assert_eq!(to_vec(&total), vec![
+            (2, 0),
+            (3, 1),
+            (5, 0),
+            (8, 1),
+        ]);
+
+        // Newly-discovered offsets are merged.
+        let extra = from_vec(vec![
+            (1, 0), // New, not hit
+            (2, 0),
+            (3, 1),
+            (5, 0),
+            (8, 1),
+            (13, 1), // New, was hit
+        ]);
+        total.merge_max(&extra);
+        assert_eq!(to_vec(&total), vec![
+            (1, 0),
+            (2, 0),
+            (3, 1),
+            (5, 0),
+            (8, 1),
+            (13, 1),
+        ]);
+
+
     }
 }
