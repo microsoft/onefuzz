@@ -222,5 +222,7 @@ async fn test_emitted_state_failed_setup() {
     let events = &coordinator.events;
     assert_eq!(events, &expected_events);
 
-    tokio::fs::remove_file(crate::done::done_path().unwrap()).await.unwrap();
+    tokio::fs::remove_file(crate::done::done_path().unwrap())
+        .await
+        .unwrap();
 }
