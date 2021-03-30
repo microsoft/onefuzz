@@ -16,26 +16,32 @@ use crate::demangle::Demangler;
 use crate::region::Region;
 
 pub fn record(cmd: Command) -> Result<CommandBlockCov> {
-    let mut recorder = Recorder::default();
+    let mut cache = ModuleCache::default();
+    let filter = CmdFilter::default();
+    let mut recorder = Recorder::new(&mut cache, filter);
     recorder.record(cmd)?;
     Ok(recorder.into_coverage())
 }
 
-#[derive(Default, Debug)]
-pub struct Recorder {
+#[derive(Debug)]
+pub struct Recorder<'c> {
     breakpoints: Breakpoints,
-    cache: ModuleCache,
+    cache: &'c mut ModuleCache,
     coverage: CommandBlockCov,
     demangler: Demangler,
     filter: CmdFilter,
     images: Option<Images>,
 }
 
-impl Recorder {
-    pub fn new(filter: CmdFilter) -> Self {
+impl<'c> Recorder<'c> {
+    pub fn new(cache: &'c mut ModuleCache, filter: CmdFilter) -> Self {
         Self {
+            breakpoints: Breakpoints::default(),
+            cache,
+            coverage: CommandBlockCov::default(),
+            demangler: Demangler::default(),
             filter,
-            ..Self::default()
+            images: None,
         }
     }
 
@@ -48,7 +54,7 @@ impl Recorder {
     }
 
     pub fn module_cache(&self) -> &ModuleCache {
-        &self.cache
+        self.cache
     }
 
     pub fn record(&mut self, cmd: Command) -> Result<()> {

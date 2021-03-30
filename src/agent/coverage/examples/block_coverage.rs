@@ -55,6 +55,7 @@ fn main() -> Result<()> {
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
     use coverage::block::linux::Recorder;
+    use coverage::cache::ModuleCache;
 
     env_logger::init();
 
@@ -64,7 +65,8 @@ fn main() -> Result<()> {
     let mut cmd = Command::new(&opt.cmd[0]);
     cmd.args(&opt.cmd[1..]);
 
-    let mut recorder = Recorder::new(filter);
+    let mut cache = ModuleCache::default();
+    let mut recorder = Recorder::new(&mut cache, filter);
     recorder.record(cmd)?;
 
     for (module_path, cov) in recorder.coverage().iter() {
