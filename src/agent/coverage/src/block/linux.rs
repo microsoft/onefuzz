@@ -24,11 +24,11 @@ pub fn record(cmd: Command) -> Result<CommandBlockCov> {
 #[derive(Default, Debug)]
 pub struct Recorder {
     breakpoints: Breakpoints,
+    cache: ModuleCache,
     coverage: CommandBlockCov,
     demangler: Demangler,
-    images: Option<Images>,
-    modules: ModuleCache,
     filter: CmdFilter,
+    images: Option<Images>,
 }
 
 impl Recorder {
@@ -48,7 +48,7 @@ impl Recorder {
     }
 
     pub fn modules(&self) -> &ModuleCache {
-        &self.modules
+        &self.cache
     }
 
     pub fn record(&mut self, cmd: Command) -> Result<()> {
@@ -159,7 +159,7 @@ impl Recorder {
 
         // Fetch disassembled module info via cache.
         let info = self
-            .modules
+            .cache
             .fetch(image.path())?
             .ok_or_else(|| format_err!("unable to fetch info for module: {}", image.path()))?;
 
