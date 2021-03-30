@@ -213,8 +213,17 @@ mod tests {
 
     #[test]
     fn test_cmd_cov_increment() {
+        #[cfg(target_os = "linux")]
         const MAIN_EXE: &str = "/main.exe";
+
+        #[cfg(target_os = "linux")]
         const SOME_DLL: &str = "/lib/some.dll";
+
+        #[cfg(target_os = "windows")]
+        const MAIN_EXE: &str = r"c:\main.exe";
+
+        #[cfg(target_os = "windows")]
+        const SOME_DLL: &str = r"c:\lib\some.dll";
 
         let main_exe = module_path(MAIN_EXE);
         let some_dll = module_path(SOME_DLL);
@@ -240,9 +249,23 @@ mod tests {
 
     #[test]
     fn test_cmd_cov_merge_max() {
+        #[cfg(target_os = "linux")]
         const MAIN_EXE: &str = "/main.exe";
+
+        #[cfg(target_os = "linux")]
         const KNOWN_DLL: &str = "/lib/known.dll";
+
+        #[cfg(target_os = "linux")]
         const UNKNOWN_DLL: &str = "/usr/lib/unknown.dll";
+
+        #[cfg(target_os = "windows")]
+        const MAIN_EXE: &str = r"c:\main.exe";
+
+        #[cfg(target_os = "windows")]
+        const KNOWN_DLL: &str = r"c:\lib\known.dll";
+
+        #[cfg(target_os = "windows")]
+        const UNKNOWN_DLL: &str = r"c:\usr\lib\unknown.dll";
 
         let mut total = cmd_cov_from_vec(vec![
             (MAIN_EXE, vec![(2, 0), (40, 1), (600, 0), (8000, 1)]),
