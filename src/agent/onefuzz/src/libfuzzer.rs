@@ -119,7 +119,6 @@ impl<'a> LibFuzzer<'a> {
         check_fuzzer_help: bool,
         inputs: Option<Vec<PathBuf>>,
     ) -> Result<()> {
-        println!("verifying libfuzzer {:?}", inputs);
         if check_fuzzer_help {
             self.check_help().await?;
         }
@@ -362,29 +361,47 @@ mod tests {
         let fuzzer = LibFuzzer::new(false_bin, &options, &env, &temp_setup_dir.path());
 
         // verify catching bad exits with -help=1
-        assert!(fuzzer.verify(true, None).await.is_err());
+        assert!(
+            fuzzer.verify(true, None).await.is_err(),
+            "checking false with -help=1"
+        );
 
         // verify catching bad exits with inputs
-        assert!(fuzzer
-            .verify(false, Some(vec!(temp_setup_dir.path().to_path_buf())))
-            .await
-            .is_err());
+        assert!(
+            fuzzer
+                .verify(false, Some(vec!(temp_setup_dir.path().to_path_buf())))
+                .await
+                .is_err(),
+            "checking false with basic input"
+        );
 
         // verify catching bad exits with no inputs
-        assert!(fuzzer.verify(false, None).await.is_err());
+        assert!(
+            fuzzer.verify(false, None).await.is_err(),
+            "checking false without inputs"
+        );
 
         let fuzzer = LibFuzzer::new(true_bin, &options, &env, &temp_setup_dir.path());
         // verify good exits with -help=1
-        assert!(fuzzer.verify(true, None).await.is_ok());
+        assert!(
+            fuzzer.verify(true, None).await.is_ok(),
+            "checking true with -help=1"
+        );
 
         // verify good exits with inputs
-        assert!(fuzzer
-            .verify(false, Some(vec!(temp_setup_dir.path().to_path_buf())))
-            .await
-            .is_ok());
+        assert!(
+            fuzzer
+                .verify(false, Some(vec!(temp_setup_dir.path().to_path_buf())))
+                .await
+                .is_ok(),
+            "checking true with basic inputs"
+        );
 
         // verify good exits with no inputs
-        assert!(fuzzer.verify(false, None).await.is_ok());
+        assert!(
+            fuzzer.verify(false, None).await.is_ok(),
+            "checking true without inputs"
+        );
 
         Ok(())
     }
