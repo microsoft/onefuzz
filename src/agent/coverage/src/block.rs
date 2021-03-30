@@ -40,9 +40,7 @@ impl CommandBlockCov {
 
     pub fn increment(&mut self, path: &ModulePath, offset: u64) -> Result<()> {
         if let Some(module) = self.modules.get_mut(path) {
-            if let Some(block) = module.blocks.get_mut(&offset) {
-                block.count += 1;
-            }
+            module.increment(offset);
         } else {
             log::error!(
                 "missing module when incrementing coverage at {}+{:x}",
@@ -68,6 +66,12 @@ impl ModuleCov {
     pub fn new(offsets: impl Iterator<Item = u64>) -> Self {
         let blocks = offsets.map(|o| (o, BlockCov::new(o))).collect();
         Self { blocks }
+    }
+
+    pub fn increment(&mut self, offset: u64) {
+        if let Some(block) = self.blocks.get_mut(&offset) {
+            block.count += 1;
+        }
     }
 }
 
