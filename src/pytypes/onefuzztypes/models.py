@@ -586,6 +586,7 @@ class AutoScaleConfig(BaseModel):
     region: Optional[Region]
     scaleset_size: int  # Individual scaleset size
     spot_instances: bool = Field(default=False)
+    ephemeral_os_disks: bool = Field(default=False)
     vm_sku: str
 
     @validator("scaleset_size", allow_reuse=True)
@@ -654,6 +655,7 @@ class Scaleset(BaseModel):
     region: Region
     size: int
     spot_instances: bool
+    ephemeral_os_disks: bool = Field(default=False)
     needs_config_update: bool = Field(default=False)
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]

@@ -100,7 +100,7 @@ fn url_input_name(url: &Url) -> String {
 }
 
 fn fixture() -> InputPoller<Msg> {
-    InputPoller::new()
+    InputPoller::new("test")
 }
 
 fn url_fixture(msg: Msg) -> Url {

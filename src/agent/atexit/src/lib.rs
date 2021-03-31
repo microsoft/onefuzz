@@ -25,6 +25,13 @@ pub fn exit_process(code: i32) -> ! {
     ATEXIT.exit_process(code)
 }
 
+/// Runs the registered functions but does *not* terminate the process
+///
+/// This function is not called automatically (e.g. via `drop`).
+pub fn execute() {
+    ATEXIT.execute()
+}
+
 impl AtExit {
     fn new() -> Arc<Self> {
         let result = Arc::new(AtExit {
@@ -56,9 +63,13 @@ impl AtExit {
     }
 
     fn exit_process(&self, code: i32) -> ! {
+        self.execute();
+        std::process::exit(code);
+    }
+
+    fn execute(&self) {
         for function in self.functions.write().unwrap().iter_mut() {
             function();
         }
-        std::process::exit(code);
     }
 }
