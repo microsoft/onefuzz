@@ -128,14 +128,38 @@ impl<'a> TaskContext<'a> {
         // Invariant: `self.cache` must be present on method enter and exit.
         let cache = self.cache.take().expect("module cache not present");
 
-        let cmd = command_for_input(self.config, input)?;
-
+        let cmd = self.command_for_input(input)?;
         let recorded = spawn_blocking(move || record_os_impl(cache, cmd)).await??;
 
         // Maintain invariant.
         self.cache = Some(recorded.cache);
 
         Ok(recorded.coverage)
+    }
+
+    fn command_for_input(&self, input: &Path) -> Result<Command> {
+        let expand = Expand::new()
+            .input_path(input)
+            .job_id(&self.config.common.job_id)
+            .setup_dir(&self.config.common.setup_dir)
+            .target_options(&self.config.target_options)
+            .task_id(&self.config.common.task_id);
+
+        let mut cmd = Command::new(&self.config.target_exe);
+
+        let target_options = expand.evaluate(&self.config.target_options)?;
+        cmd.args(target_options);
+
+        for (k, v) in &self.config.target_env {
+            cmd.env(k, expand.evaluate_value(v)?);
+        }
+
+        cmd.env_remove("RUST_LOG");
+        cmd.stdin(Stdio::null());
+        cmd.stdout(Stdio::piped());
+        cmd.stderr(Stdio::piped());
+
+        Ok(cmd)
     }
 
     pub async fn record_corpus(&mut self, dir: &Path) -> Result<usize> {
@@ -203,29 +227,4 @@ impl<'a> Processor for TaskContext<'a> {
 
         Ok(())
     }
-}
-
-fn command_for_input(config: &Config, input: impl AsRef<Path>) -> Result<Command> {
-    let expand = Expand::new()
-        .input_path(input)
-        .job_id(&config.common.job_id)
-        .setup_dir(&config.common.setup_dir)
-        .target_options(&config.target_options)
-        .task_id(&config.common.task_id);
-
-    let mut cmd = Command::new(&config.target_exe);
-
-    let target_options = expand.evaluate(&config.target_options)?;
-    cmd.args(target_options);
-
-    for (k, v) in &config.target_env {
-        cmd.env(k, expand.evaluate_value(v)?);
-    }
-
-    cmd.env_remove("RUST_LOG");
-    cmd.stdin(Stdio::null());
-    cmd.stdout(Stdio::piped());
-    cmd.stderr(Stdio::piped());
-
-    Ok(cmd)
 }
