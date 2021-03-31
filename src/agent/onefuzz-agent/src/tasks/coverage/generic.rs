@@ -101,6 +101,13 @@ impl<'a> TaskContext<'a> {
     }
 
     pub async fn on_input(&mut self, input: &Path) -> Result<()> {
+        self.record(input).await?;
+        self.coverage.merge_max(recorder.coverage());
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    fn record(&self, input: &Path) -> Result<CommandBlockCov> {
         use coverage::block::linux::Recorder;
 
         let mut recorder = Recorder::new(&mut self.cache, CmdFilter::default());
@@ -109,8 +116,7 @@ impl<'a> TaskContext<'a> {
         // TODO: spawn_blocking
         recorder.record(cmd)?;
 
-        self.coverage.merge_max(recorder.coverage());
-        Ok(())
+        Ok(cmd.into_coverage())
     }
 
     pub async fn on_corpus(&mut self, dir: &Path) -> Result<()> {
