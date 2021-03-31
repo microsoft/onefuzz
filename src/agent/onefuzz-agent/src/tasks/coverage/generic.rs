@@ -63,11 +63,17 @@ impl CoverageTask {
 
         context.heartbeat.alive();
 
+        let mut seen_inputs = false;
+
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.path.display());
 
             dir.init_pull().await?;
             let dir_count = context.record_corpus(&dir.path).await?;
+
+            if dir_count > 0 {
+                seen_inputs = true;
+            }
 
             info!(
                 "recorded coverage for {} inputs from {}",
@@ -76,6 +82,10 @@ impl CoverageTask {
             );
 
             context.heartbeat.alive();
+        }
+
+        if seen_inputs {
+            context.report_coverage_stats().await?;
         }
 
         context.heartbeat.alive();
@@ -205,6 +215,16 @@ impl<'a> TaskContext<'a> {
 
         Ok(count)
     }
+
+    pub async fn report_coverage_stats(&self) -> Result<()> {
+        use onefuzz_telemetry::{Event::coverage_data, EventData};
+        use EventData::*;
+
+        let s = CoverageStats::new(&self.coverage);
+        event!(coverage_data; Covered = s.covered, Features = s.features, Rate = s.rate);
+
+        Ok(())
+    }
 }
 
 struct Recorded {
@@ -242,7 +262,37 @@ impl<'a> Processor for TaskContext<'a> {
         self.heartbeat.alive();
 
         self.record_input(input).await?;
+        self.report_coverage_stats().await?;
 
         Ok(())
+    }
+}
+
+#[derive(Default)]
+struct CoverageStats {
+    covered: u64,
+    features: u64,
+    rate: f64,
+}
+
+impl CoverageStats {
+    pub fn new(coverage: &CommandBlockCov) -> Self {
+        let mut stats = CoverageStats::default();
+
+        for (_, module) in coverage.iter() {
+            for (_, block) in &module.blocks {
+                stats.features += 1;
+
+                if block.count > 0 {
+                    stats.covered += 1;
+                }
+            }
+        }
+
+        if stats.features > 0 {
+            stats.rate = (stats.covered as f64) / (stats.features as f64)
+        }
+
+        stats
     }
 }
