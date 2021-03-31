@@ -71,7 +71,6 @@ pub struct LocalContext {
     pub common_config: CommonConfig,
 }
 
-
 pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
     let mut env = HashMap::new();
     for opt in args.values_of_lossy(name).unwrap_or_default() {
