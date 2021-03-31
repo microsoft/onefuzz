@@ -161,7 +161,6 @@ impl TerminalUi {
         let mut task_handles = vec![tick_event_handle, ui_loop, external_event_handle];
 
         if let Some(timeout) = timeout {
-            let timeout = timeout.clone();
             let ui_event_tx = self.ui_event_tx.clone();
             let timeout_task = tokio::spawn(async move {
                 time::delay_for(timeout).await;
