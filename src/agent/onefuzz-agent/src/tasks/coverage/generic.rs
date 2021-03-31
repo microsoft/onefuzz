@@ -34,9 +34,6 @@ pub struct Config {
     #[serde(default = "default_bool_true")]
     pub check_queue: bool,
 
-    #[serde(default = "default_bool_true")]
-    pub check_fuzzer_help: bool,
-
     #[serde(flatten)]
     pub common: CommonConfig,
 }
