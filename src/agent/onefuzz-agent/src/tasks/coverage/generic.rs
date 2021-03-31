@@ -62,7 +62,7 @@ impl CoverageTask {
             debug!("recording coverage for {}", dir.path.display());
 
             dir.init_pull().await?;
-            let dir_count = context.on_corpus(&dir.path).await?;
+            let dir_count = context.record_corpus(&dir.path).await?;
 
             info!("recorded coverage for {} inputs from {}", dir_count, dir.path.display());
         }
@@ -110,13 +110,13 @@ impl<'a> TaskContext<'a> {
         Self { cache, config, coverage }
     }
 
-    pub async fn on_input(&mut self, input: &Path) -> Result<()> {
-        let coverage = self.record(input).await?;
+    pub async fn record_input(&mut self, input: &Path) -> Result<()> {
+        let coverage = self.record_impl(input).await?;
         self.coverage.merge_max(&coverage);
         Ok(())
     }
 
-    async fn record(&mut self, input: &Path) -> Result<CommandBlockCov> {
+    async fn record_impl(&mut self, input: &Path) -> Result<CommandBlockCov> {
         // Invariant: `self.cache` must be present on method enter and exit.
         let cache = self.cache.take().expect("module cache not present");
 
@@ -130,7 +130,7 @@ impl<'a> TaskContext<'a> {
         Ok(recorded.coverage)
     }
 
-    pub async fn on_corpus(&mut self, dir: &Path) -> Result<usize> {
+    pub async fn record_corpus(&mut self, dir: &Path) -> Result<usize> {
         use futures::stream::StreamExt;
 
         let mut corpus = fs::read_dir(dir)
@@ -143,7 +143,7 @@ impl<'a> TaskContext<'a> {
             match entry {
                 Ok(entry) => {
                     if entry.file_type().await?.is_file() {
-                        self.on_input(&entry.path()).await?;
+                        self.record_input(&entry.path()).await?;
                         count += 1;
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
@@ -191,7 +191,7 @@ fn record_os_impl(mut cache: ModuleCache, cmd: Command) -> Result<Recorded> {
 #[async_trait]
 impl<'a> Processor for TaskContext<'a> {
     async fn process(&mut self, _url: Option<Url>, input: &Path) -> Result<()> {
-        self.on_input(input).await?;
+        self.record_input(input).await?;
 
         Ok(())
     }
