@@ -80,6 +80,9 @@ pub enum Config {
     #[serde(alias = "generic_analysis")]
     GenericAnalysis(analysis::generic::Config),
 
+    #[serde(alias = "generic_coverage")]
+    GenericCoverage(coverage::generic::Config),
+
     #[serde(alias = "generic_generator")]
     GenericGenerator(fuzz::generator::Config),
 
@@ -116,6 +119,7 @@ impl Config {
             Config::LibFuzzerCoverage(c) => &mut c.common,
             Config::LibFuzzerRegression(c) => &mut c.common,
             Config::GenericAnalysis(c) => &mut c.common,
+            Config::GenericCoverage(c) => &mut c.common,
             Config::GenericMerge(c) => &mut c.common,
             Config::GenericReport(c) => &mut c.common,
             Config::GenericSupervisor(c) => &mut c.common,
@@ -132,6 +136,7 @@ impl Config {
             Config::LibFuzzerCoverage(c) => &c.common,
             Config::LibFuzzerRegression(c) => &c.common,
             Config::GenericAnalysis(c) => &c.common,
+            Config::GenericCoverage(c) => &c.common,
             Config::GenericMerge(c) => &c.common,
             Config::GenericReport(c) => &c.common,
             Config::GenericSupervisor(c) => &c.common,
@@ -148,6 +153,7 @@ impl Config {
             Config::LibFuzzerCoverage(_) => "libfuzzer_coverage",
             Config::LibFuzzerRegression(_) => "libfuzzer_regression",
             Config::GenericAnalysis(_) => "generic_analysis",
+            Config::GenericCoverage(_) => "generic_coverage",
             Config::GenericMerge(_) => "generic_merge",
             Config::GenericReport(_) => "generic_crash_report",
             Config::GenericSupervisor(_) => "generic_supervisor",
@@ -201,6 +207,9 @@ impl Config {
             }
             Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
             Config::GenericAnalysis(config) => analysis::generic::run(config).await,
+            Config::GenericCoverage(config) => {
+                coverage::generic::CoverageTask::new(config).run().await
+            },
             Config::GenericGenerator(config) => {
                 fuzz::generator::GeneratorTask::new(config).run().await
             }

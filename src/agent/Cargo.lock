@@ -1705,6 +1705,7 @@ dependencies = [
  "atexit",
  "backoff",
  "clap",
+ "coverage",
  "env_logger",
  "futures",
  "hex",
