@@ -19,6 +19,7 @@ use url::Url;
 
 use crate::tasks::config::CommonConfig;
 use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
+use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
 use crate::tasks::utils::default_bool_true;
 
 const MODULE_CACHE_FILE: &'static str = "module-cache.json";
@@ -57,7 +58,8 @@ impl CoverageTask {
         self.config.coverage.init_pull().await?;
 
         let cache = self.load_module_cache().await?;
-        let mut context = TaskContext::new(cache, &self.config);
+        let heartbeat = self.config.common.init_heartbeat().await?;
+        let mut context = TaskContext::new(cache, &self.config, heartbeat);
 
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.path.display());
@@ -103,10 +105,15 @@ struct TaskContext<'a> {
 
     config: &'a Config,
     coverage: CommandBlockCov,
+    heartbeat: Option<TaskHeartbeatClient>,
 }
 
 impl<'a> TaskContext<'a> {
-    pub fn new(cache: ModuleCache, config: &'a Config) -> Self {
+    pub fn new(
+        cache: ModuleCache,
+        config: &'a Config,
+        heartbeat: Option<TaskHeartbeatClient>,
+    ) -> Self {
         let cache = Some(cache);
 
         // TODO: load existing
@@ -116,6 +123,7 @@ impl<'a> TaskContext<'a> {
             cache,
             config,
             coverage,
+            heartbeat,
         }
     }
 
