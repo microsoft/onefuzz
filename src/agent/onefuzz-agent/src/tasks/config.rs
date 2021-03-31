@@ -209,7 +209,7 @@ impl Config {
             Config::GenericAnalysis(config) => analysis::generic::run(config).await,
             Config::GenericCoverage(config) => {
                 coverage::generic::CoverageTask::new(config).run().await
-            },
+            }
             Config::GenericGenerator(config) => {
                 fuzz::generator::GeneratorTask::new(config).run().await
             }

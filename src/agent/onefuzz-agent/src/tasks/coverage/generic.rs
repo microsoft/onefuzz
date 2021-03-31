@@ -64,7 +64,11 @@ impl CoverageTask {
             dir.init_pull().await?;
             let dir_count = context.record_corpus(&dir.path).await?;
 
-            info!("recorded coverage for {} inputs from {}", dir_count, dir.path.display());
+            info!(
+                "recorded coverage for {} inputs from {}",
+                dir_count,
+                dir.path.display()
+            );
         }
 
         if let Some(queue) = &self.config.input_queue {
@@ -107,7 +111,11 @@ impl<'a> TaskContext<'a> {
         // TODO: load existing
         let coverage = CommandBlockCov::default();
 
-        Self { cache, config, coverage }
+        Self {
+            cache,
+            config,
+            coverage,
+        }
     }
 
     pub async fn record_input(&mut self, input: &Path) -> Result<()> {
@@ -148,10 +156,10 @@ impl<'a> TaskContext<'a> {
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
                     }
-                },
+                }
                 Err(err) => {
                     error!("{:?}", err);
-                },
+                }
             }
         }
 
