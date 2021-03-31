@@ -12,6 +12,7 @@ use coverage::cache::ModuleCache;
 use coverage::code::CmdFilter;
 use onefuzz::expand::Expand;
 use onefuzz::syncdir::SyncedDir;
+use serde::de::DeserializeOwned;
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
 use tokio::task::spawn_blocking;
@@ -22,6 +23,7 @@ use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
 use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
 use crate::tasks::utils::default_bool_true;
 
+const COVERAGE_FILE: &'static str = "coverage.json";
 const MODULE_CACHE_FILE: &'static str = "module-cache.json";
 
 #[derive(Debug, Deserialize)]
@@ -57,9 +59,13 @@ impl CoverageTask {
 
         self.config.coverage.init_pull().await?;
 
-        let cache = self.load_module_cache().await?;
+        let cache = deserialize_or_default(MODULE_CACHE_FILE).await?;
+
+        let coverage_file = self.config.coverage.path.join(COVERAGE_FILE);
+        let coverage = deserialize_or_default(coverage_file).await?;
+
         let heartbeat = self.config.common.init_heartbeat().await?;
-        let mut context = TaskContext::new(cache, &self.config, heartbeat);
+        let mut context = TaskContext::new(cache, &self.config, coverage, heartbeat);
 
         context.heartbeat.alive();
 
@@ -99,20 +105,25 @@ impl CoverageTask {
 
         Ok(())
     }
+}
 
-    /// Try to load an existing module cache from disk. If one is not found,
-    /// create a new, empty cache.
-    async fn load_module_cache(&mut self) -> Result<ModuleCache> {
-        let data = fs::read(MODULE_CACHE_FILE).await;
+async fn deserialize_or_default<T>(path: impl AsRef<Path>) -> Result<T>
+where
+    T: Default + DeserializeOwned,
+{
+    use tokio::io::ErrorKind::NotFound;
 
-        let cache = if let Ok(data) = &data {
-            serde_json::from_slice(data)?
-        } else {
-            ModuleCache::default()
-        };
+    let data = fs::read(path).await;
 
-        Ok(cache)
+    if let Err(err) = &data {
+        if err.kind() == NotFound {
+            return Ok(T::default());
+        }
     }
+
+    let data = data?;
+
+    Ok(serde_json::from_slice(&data)?)
 }
 
 struct TaskContext<'a> {
@@ -128,12 +139,10 @@ impl<'a> TaskContext<'a> {
     pub fn new(
         cache: ModuleCache,
         config: &'a Config,
+        coverage: CommandBlockCov,
         heartbeat: Option<TaskHeartbeatClient>,
     ) -> Self {
         let cache = Some(cache);
-
-        // TODO: load existing
-        let coverage = CommandBlockCov::default();
 
         Self {
             cache,
