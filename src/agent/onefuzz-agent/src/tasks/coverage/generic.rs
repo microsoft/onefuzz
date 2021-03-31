@@ -13,6 +13,7 @@ use onefuzz::expand::Expand;
 use onefuzz::syncdir::SyncedDir;
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
+use tokio::task::spawn_blocking;
 use url::Url;
 
 use crate::tasks::config::CommonConfig;
@@ -107,54 +108,18 @@ impl<'a> TaskContext<'a> {
         Ok(())
     }
 
-    #[cfg(target_os = "linux")]
     async fn record(&mut self, input: &Path) -> Result<CommandBlockCov> {
-        use coverage::block::linux::Recorder;
-
         // Invariant: `self.cache` must be present on method enter and exit.
-        let cache = self.cache.take();
+        let cache = self.cache.take().expect("module cache not present");
 
         let cmd = command_for_input(self.config, input)?;
 
-        let (cache, coverage) = tokio::task::spawn_blocking(move || -> Result<_> {
-            let mut cache = cache.expect("module cache not present");
-            let mut recorder = Recorder::new(&mut cache, CmdFilter::default());
-            recorder.record(cmd)?;
-            let coverage = recorder.into_coverage();
-            Ok((cache, coverage))
-        }).await??;
+        let recorded = spawn_blocking(move || record_os_impl(cache, cmd)).await??;
 
         // Maintain invariant.
-        self.cache = Some(cache);
+        self.cache = Some(recorded.cache);
 
-        Ok(coverage)
-    }
-
-    #[cfg(target_os = "windows")]
-    async fn record(&mut self, input: &Path) -> Result<CommandBlockCov> {
-        use coverage::block::windows::{Recorder, RecorderEventHandler};
-
-        // Invariant: `self.cache` must be present on method enter and exit.
-        let cache = self.cache.take();
-
-        let cmd = command_for_input(self.config, input)?;
-
-        let (cache, coverage) = tokio::task::spawn_blocking(move || -> Result<_> {
-            let mut cache = cache.expect("module cache not present");
-
-            let mut recorder = Recorder::new(&mut cache, CmdFilter::default());
-            let timeout = std::time::Duration::from_secs(5);
-            let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
-            handler.run(cmd)?;
-            let coverage = recorder.into_coverage();
-
-            Ok((cache, coverage))
-        }).await??;
-
-        // Maintain invariant.
-        self.cache = Some(cache);
-
-        Ok(coverage)
+        Ok(recorded.coverage)
     }
 
     pub async fn on_corpus(&mut self, dir: &Path) -> Result<()> {
@@ -181,6 +146,35 @@ impl<'a> TaskContext<'a> {
 
         Ok(())
     }
+}
+
+struct Recorded {
+    pub cache: ModuleCache,
+    pub coverage: CommandBlockCov,
+}
+
+#[cfg(target_os = "linux")]
+fn record_os_impl(mut cache: ModuleCache, cmd: Command) -> Result<Recorded> {
+    use coverage::block::linux::Recorder;
+
+    let mut recorder = Recorder::new(&mut cache, CmdFilter::default());
+    recorder.record(cmd)?;
+    let coverage = recorder.into_coverage();
+
+    Ok(Recorded { cache, coverage })
+}
+
+#[cfg(target_os = "windows")]
+fn record_os_impl(mut cache: ModuleCache, cmd: Command) -> Result<Recorded> {
+    use coverage::block::windows::{Recorder, RecorderEventHandler};
+
+    let mut recorder = Recorder::new(&mut cache, CmdFilter::default());
+    let timeout = std::time::Duration::from_secs(5);
+    let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
+    handler.run(cmd)?;
+    let coverage = recorder.into_coverage();
+
+    Ok(Recorded { cache, coverage })
 }
 
 #[async_trait]
