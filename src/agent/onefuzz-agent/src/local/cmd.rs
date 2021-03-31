@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use crossterm::tty::IsTty;
 use tokio::{select, time::timeout};
 
 use crate::local::{
@@ -27,11 +28,9 @@ const GENERIC_ANALYSIS: &str = "analysis";
 const GENERIC_TEST_INPUT: &str = "test-input";
 const TIMEOUT: &str = "timeout";
 
-const TERMINAL_UI: &str = "tui";
-
 pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     let running_duration = value_t!(args, TIMEOUT, u64).ok();
-    let terminal = if args.is_present(TERMINAL_UI) {
+    let terminal = if std::io::stdout().is_tty() {
         Some(TerminalUi::init()?)
     } else {
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
@@ -85,11 +84,6 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
 pub fn args(name: &str) -> App<'static, 'static> {
     SubCommand::with_name(name)
         .about("pre-release local fuzzing")
-        .arg(
-            Arg::with_name(TERMINAL_UI)
-                .long(TERMINAL_UI)
-                .required(false),
-        )
         .arg(
             Arg::with_name(TIMEOUT)
                 .long(TIMEOUT)

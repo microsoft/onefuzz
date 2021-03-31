@@ -55,7 +55,6 @@ async fn run(args: ArgMatches<'static>) -> Result<()> {
 }
 
 fn licenses() -> Result<()> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     stdout().write_all(include_bytes!("../../data/licenses.json"))?;
     Ok(())
 }
