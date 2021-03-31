@@ -325,7 +325,8 @@ pub fn test_process<'a>(
         command.env(k, v);
     }
 
-    let recorder = cache.map(BlockCoverageRecorder::new);
+    let filter = coverage::code::CmdFilter::default();
+    let recorder = cache.map(|c| BlockCoverageRecorder::new(c, filter));
     let start_time = Instant::now();
     let mut event_handler = CrashDetectorEventHandler::new(
         stdout_reader,

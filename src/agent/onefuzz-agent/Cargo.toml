@@ -14,6 +14,7 @@ anyhow = "1.0"
 arraydeque = "0.4.5"
 appinsights = "0.1"
 async-trait = "0.1"
+atexit = { path = "../atexit" }
 backoff = { version = "0.3", features = ["async-std"] }
 clap = "2.33"
 crossterm = "0.18"
@@ -30,6 +31,7 @@ onefuzz = { path = "../onefuzz" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 path-absolutize = "3.0.6"
 reqwest-retry = { path = "../reqwest-retry" }
+remove_dir_all = "0.7"
 stacktrace-parser = { path = "../stacktrace-parser" }
 storage-queue = { path = "../storage-queue" }
 tempfile = "3.2"

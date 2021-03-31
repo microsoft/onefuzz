@@ -5,7 +5,10 @@ use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use onefuzz::jitter::delay_with_jitter;
 use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use path_absolutize::Absolutize;
+use remove_dir_all::remove_dir_all;
 use reqwest::Url;
+use std::task::Poll;
 use std::{
     collections::HashMap,
     env::current_dir,
@@ -15,9 +18,6 @@ use std::{
 use tokio::stream::StreamExt;
 use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle, time::delay_for};
 use uuid::Uuid;
-
-use path_absolutize::Absolutize;
-use std::task::Poll;
 
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
@@ -36,6 +36,7 @@ pub const TOOLS_DIR: &str = "tools_dir";
 pub const RENAME_OUTPUT: &str = "rename_output";
 pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
 pub const DISABLE_CHECK_DEBUGGER: &str = "disable_check_debugger";
+pub const REGRESSION_REPORTS_DIR: &str = "regression_reports_dir";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
@@ -149,7 +150,8 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
     .arg(
         Arg::with_name("keep_job_dir")
             .long("keep_job_dir")
-            .required(false),
+            .required(false)
+            .help("keep the local directory created for running the task"),
     )
 }
 
@@ -183,6 +185,14 @@ pub fn get_synced_dirs(
         })
         .collect();
     Ok(dirs?)
+}
+
+fn register_cleanup(job_id: Uuid) -> Result<()> {
+    let path = std::env::current_dir()?.join(job_id.to_string());
+    atexit::register(move || {
+        remove_dir_all(&path).expect("cleanup failed");
+    });
+    Ok(())
 }
 
 pub fn get_synced_dir(
@@ -226,6 +236,10 @@ pub fn build_local_context(args: &ArgMatches<'_>, generate_task_id: bool) -> Res
     } else {
         PathBuf::default()
     };
+
+    if !args.is_present("keep_job_dir") {
+        register_cleanup(job_id)?;
+    }
 
     let common_config = CommonConfig {
         job_id,

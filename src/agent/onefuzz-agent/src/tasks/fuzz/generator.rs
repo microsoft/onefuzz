@@ -80,7 +80,7 @@ impl GeneratorTask {
             self.config.ensemble_sync_delay,
         );
 
-        let crash_dir_monitor = self.config.crashes.monitor_results(new_result);
+        let crash_dir_monitor = self.config.crashes.monitor_results(new_result, false);
 
         let fuzzer = self.fuzzing_loop(hb_client);
 

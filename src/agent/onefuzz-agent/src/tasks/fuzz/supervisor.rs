@@ -71,7 +71,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         url: config.crashes.url.clone(),
     };
     crashes.init().await?;
-    let monitor_crashes = crashes.monitor_results(new_result);
+    let monitor_crashes = crashes.monitor_results(new_result, false);
 
     // setup reports
     let reports_dir = tempdir()?;
@@ -111,7 +111,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
             delay_with_jitter(delay).await;
         }
     }
-    let monitor_inputs = inputs.monitor_results(new_coverage);
+    let monitor_inputs = inputs.monitor_results(new_coverage, false);
     let continuous_sync_task = inputs.continuous_sync(Pull, config.ensemble_sync_delay);
 
     let process = start_supervisor(

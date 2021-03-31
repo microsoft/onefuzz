@@ -25,7 +25,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
 
-    let target_workers = value_t!(args, "target_workers", u64).unwrap_or_default();
+    let target_workers = value_t!(args, "target_workers", usize).unwrap_or_default();
     let readonly_inputs = None;
     let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
     let expect_crash_on_failure = !args.is_present(DISABLE_EXPECT_CRASH_ON_FAILURE);

@@ -1,14 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::time::Duration;
+
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use tokio::select;
+use tokio::{select, time::timeout};
 
 use crate::local::{
     common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
     libfuzzer, libfuzzer_coverage, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge,
-    libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
+    libfuzzer_regression, libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
 };
 
 const RADAMSA: &str = "radamsa";
@@ -18,14 +20,17 @@ const LIBFUZZER_CRASH_REPORT: &str = "libfuzzer-crash-report";
 const LIBFUZZER_COVERAGE: &str = "libfuzzer-coverage";
 const LIBFUZZER_MERGE: &str = "libfuzzer-merge";
 const LIBFUZZER_TEST_INPUT: &str = "libfuzzer-test-input";
+const LIBFUZZER_REGRESSION: &str = "libfuzzer-regression";
 const GENERIC_CRASH_REPORT: &str = "crash-report";
 const GENERIC_GENERATOR: &str = "generator";
 const GENERIC_ANALYSIS: &str = "analysis";
 const GENERIC_TEST_INPUT: &str = "test-input";
+const TIMEOUT: &str = "timeout";
 
 const TERMINAL_UI: &str = "tui";
 
 pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
+    let running_duration = value_t!(args, TIMEOUT, u64).ok();
     let terminal = if args.is_present(TERMINAL_UI) {
         Some(TerminalUi::init()?)
     } else {
@@ -46,6 +51,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
             (GENERIC_GENERATOR, Some(sub)) => generic_generator::run(sub).await,
             (GENERIC_TEST_INPUT, Some(sub)) => test_input::run(sub).await,
             (LIBFUZZER_TEST_INPUT, Some(sub)) => libfuzzer_test_input::run(sub).await,
+            (LIBFUZZER_REGRESSION, Some(sub)) => libfuzzer_regression::run(sub).await,
             _ => {
                 anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
             }
@@ -53,7 +59,8 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     });
 
     if let Some(terminal) = terminal {
-        let ui_run = tokio::spawn(terminal.run());
+        let timeout = running_duration.map(Duration::from_secs);
+        let ui_run = tokio::spawn(terminal.run(timeout));
         select! {
             ui_result = ui_run => {
                 ui_result??
@@ -64,7 +71,16 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
         };
         Ok(())
     } else {
-        command_run.await?
+        if let Some(seconds) = running_duration {
+            if let Ok(run) = timeout(Duration::from_secs(seconds), command_run).await {
+                run?
+            } else {
+                info!("The running timeout period has elapsed");
+                Ok(())
+            }
+        } else {
+            command_run.await?
+        }
     }
 }
 
@@ -76,6 +92,12 @@ pub fn args(name: &str) -> App<'static, 'static> {
                 .long(TERMINAL_UI)
                 .required(false),
         )
+        .arg(
+            Arg::with_name(TIMEOUT)
+                .long(TIMEOUT)
+                .help("The maximum running time in seconds")
+                .takes_value(true),
+        )
         .subcommand(add_common_config(radamsa::args(RADAMSA)))
         .subcommand(add_common_config(libfuzzer::args(LIBFUZZER)))
         .subcommand(add_common_config(libfuzzer_fuzz::args(LIBFUZZER_FUZZ)))
@@ -83,6 +105,9 @@ pub fn args(name: &str) -> App<'static, 'static> {
             LIBFUZZER_COVERAGE,
         )))
         .subcommand(add_common_config(libfuzzer_merge::args(LIBFUZZER_MERGE)))
+        .subcommand(add_common_config(libfuzzer_regression::args(
+            LIBFUZZER_REGRESSION,
+        )))
         .subcommand(add_common_config(libfuzzer_crash_report::args(
             LIBFUZZER_CRASH_REPORT,
         )))

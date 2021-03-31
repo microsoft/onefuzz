@@ -18,7 +18,7 @@ use std::{
     thread::{self, JoinHandle},
     time::Duration,
 };
-use tokio::sync::mpsc;
+use tokio::{sync::mpsc, time};
 use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Corner, Direction, Layout},
@@ -79,6 +79,7 @@ enum TerminalEvent {
     Input(Event),
     Tick,
     FileCount { dir: PathBuf, count: usize },
+    Quit,
 }
 
 struct UILoopState {
@@ -125,7 +126,7 @@ impl TerminalUi {
         })
     }
 
-    pub async fn run(self) -> Result<()> {
+    pub async fn run(self, timeout: Option<Duration>) -> Result<()> {
         enable_raw_mode()?;
         let mut stdout = io::stdout();
         execute!(stdout, EnterAlternateScreen)?;
@@ -156,7 +157,21 @@ impl TerminalUi {
             tokio::spawn(Self::read_commands(ui_event_tx, task_event_receiver));
 
         let ui_loop = tokio::spawn(Self::ui_loop(initial_state, self.ui_event_rx));
-        try_wait_all_join_handles(vec![tick_event_handle, ui_loop, external_event_handle])
+
+        let mut task_handles = vec![tick_event_handle, ui_loop, external_event_handle];
+
+        if let Some(timeout) = timeout {
+            let timeout = timeout.clone();
+            let ui_event_tx = self.ui_event_tx.clone();
+            let timeout_task = tokio::spawn(async move {
+                time::delay_for(timeout).await;
+                let _ = ui_event_tx.send(TerminalEvent::Quit);
+                Ok(())
+            });
+            task_handles.push(timeout_task);
+        }
+
+        try_wait_all_join_handles(task_handles)
             .await
             .context("ui_loop")?;
         Ok(())
@@ -356,6 +371,7 @@ impl TerminalUi {
                     TerminalEvent::FileCount { dir, count } => {
                         Self::on_file_count(ui_state, dir, count).await
                     }
+                    TerminalEvent::Quit => Self::on_quit(ui_state).await,
                     _ => Ok(ui_state),
                 }
             })
