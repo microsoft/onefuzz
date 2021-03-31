@@ -87,13 +87,17 @@ impl CoverageTask {
 }
 
 struct TaskContext<'a> {
-    cache: ModuleCache,
+    // Optional only to enable temporary move into blocking thread.
+    cache: Option<ModuleCache>,
+
     config: &'a Config,
     coverage: CommandBlockCov,
 }
 
 impl<'a> TaskContext<'a> {
     pub fn new(cache: ModuleCache, config: &'a Config) -> Self {
+        let cache = Some(cache);
+
         // TODO: load existing
         let coverage = CommandBlockCov::default();
 
@@ -101,22 +105,32 @@ impl<'a> TaskContext<'a> {
     }
 
     pub async fn on_input(&mut self, input: &Path) -> Result<()> {
-        self.record(input).await?;
-        self.coverage.merge_max(recorder.coverage());
+        let coverage = self.record(input).await?;
+        self.coverage.merge_max(&coverage);
         Ok(())
     }
 
     #[cfg(target_os = "linux")]
-    fn record(&self, input: &Path) -> Result<CommandBlockCov> {
+    async fn record(&mut self, input: &Path) -> Result<CommandBlockCov> {
         use coverage::block::linux::Recorder;
 
-        let mut recorder = Recorder::new(&mut self.cache, CmdFilter::default());
+        // Invariant: `self.cache` must be present on method enter and exit.
+        let cache = self.cache.take();
+
         let cmd = command_for_input(self.config, input)?;
 
-        // TODO: spawn_blocking
-        recorder.record(cmd)?;
+        let (cache, coverage) = tokio::task::spawn_blocking(move || -> Result<_> {
+            let mut cache = cache.expect("module cache not present");
+            let mut recorder = Recorder::new(&mut cache, CmdFilter::default());
+            recorder.record(cmd)?;
+            let coverage = recorder.into_coverage();
+            Ok((cache, coverage))
+        }).await??;
 
-        Ok(cmd.into_coverage())
+        // Maintain invariant.
+        self.cache = Some(cache);
+
+        Ok(coverage)
     }
 
     pub async fn on_corpus(&mut self, dir: &Path) -> Result<()> {
