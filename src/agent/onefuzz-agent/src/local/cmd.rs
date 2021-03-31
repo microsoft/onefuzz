@@ -70,17 +70,15 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
             }
         };
         Ok(())
-    } else {
-        if let Some(seconds) = running_duration {
-            if let Ok(run) = timeout(Duration::from_secs(seconds), command_run).await {
-                run?
-            } else {
-                info!("The running timeout period has elapsed");
-                Ok(())
-            }
+    } else if let Some(seconds) = running_duration {
+        if let Ok(run) = timeout(Duration::from_secs(seconds), command_run).await {
+            run?
         } else {
-            command_run.await?
+            info!("The running timeout period has elapsed");
+            Ok(())
         }
+    } else {
+        command_run.await?
     }
 }
 
