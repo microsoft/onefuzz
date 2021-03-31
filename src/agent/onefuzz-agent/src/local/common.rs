@@ -1,6 +1,6 @@
 use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use onefuzz::jitter::delay_with_jitter;
@@ -67,18 +67,10 @@ pub enum CmdType {
 
 #[derive(Clone, Debug)]
 pub struct LocalContext {
-    pub cleanup_on_drop: bool,
     pub job_path: PathBuf,
     pub common_config: CommonConfig,
 }
 
-impl Drop for LocalContext {
-    fn drop(&mut self) {
-        if self.cleanup_on_drop && self.job_path.exists() {
-            std::fs::remove_dir_all(&self.job_path).unwrap();
-        }
-    }
-}
 
 pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
     let mut env = HashMap::new();
@@ -250,9 +242,7 @@ pub fn build_local_context(args: &ArgMatches<'_>, generate_task_id: bool) -> Res
     };
     let current_dir = current_dir()?;
     let job_path = current_dir.join(format!("{}", job_id));
-    let cleanup_on_drop = !args.is_present("keep_job_dir");
     Ok(LocalContext {
-        cleanup_on_drop,
         job_path,
         common_config,
     })
