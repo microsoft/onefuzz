@@ -61,6 +61,8 @@ impl CoverageTask {
         let heartbeat = self.config.common.init_heartbeat().await?;
         let mut context = TaskContext::new(cache, &self.config, heartbeat);
 
+        context.heartbeat.alive();
+
         for dir in &self.config.readonly_inputs {
             debug!("recording coverage for {}", dir.path.display());
 
@@ -72,7 +74,11 @@ impl CoverageTask {
                 dir_count,
                 dir.path.display()
             );
+
+            context.heartbeat.alive();
         }
+
+        context.heartbeat.alive();
 
         if let Some(queue) = &self.config.input_queue {
             info!("polling queue for new coverage inputs");
@@ -130,6 +136,7 @@ impl<'a> TaskContext<'a> {
     pub async fn record_input(&mut self, input: &Path) -> Result<()> {
         let coverage = self.record_impl(input).await?;
         self.coverage.merge_max(&coverage);
+
         Ok(())
     }
 
@@ -232,6 +239,8 @@ fn record_os_impl(mut cache: ModuleCache, cmd: Command) -> Result<Recorded> {
 #[async_trait]
 impl<'a> Processor for TaskContext<'a> {
     async fn process(&mut self, _url: Option<Url>, input: &Path) -> Result<()> {
+        self.heartbeat.alive();
+
         self.record_input(input).await?;
 
         Ok(())
