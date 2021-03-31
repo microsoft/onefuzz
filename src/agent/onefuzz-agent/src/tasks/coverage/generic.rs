@@ -51,17 +51,25 @@ impl CoverageTask {
     }
 
     pub async fn run(&mut self) -> Result<()> {
+        info!("starting generic-coverage task");
+
         self.config.coverage.init_pull().await?;
 
         let cache = self.load_module_cache().await?;
         let mut context = TaskContext::new(cache, &self.config);
 
         for dir in &self.config.readonly_inputs {
+            debug!("recording coverage for {}", dir.path.display());
+
             dir.init_pull().await?;
-            context.on_corpus(&dir.path).await?;
+            let dir_count = context.on_corpus(&dir.path).await?;
+
+            info!("recorded coverage for {} inputs from {}", dir_count, dir.path.display());
         }
 
         if let Some(queue) = &self.config.input_queue {
+            info!("polling queue for new coverage inputs");
+
             let callback = CallbackImpl::new(queue.clone(), context)?;
             self.poller.run(callback).await?;
         }
@@ -122,18 +130,21 @@ impl<'a> TaskContext<'a> {
         Ok(recorded.coverage)
     }
 
-    pub async fn on_corpus(&mut self, dir: &Path) -> Result<()> {
+    pub async fn on_corpus(&mut self, dir: &Path) -> Result<usize> {
         use futures::stream::StreamExt;
 
         let mut corpus = fs::read_dir(dir)
             .await
             .with_context(|| format!("unable to read corpus directory: {}", dir.display()))?;
 
+        let mut count = 0;
+
         while let Some(entry) = corpus.next().await {
             match entry {
                 Ok(entry) => {
                     if entry.file_type().await?.is_file() {
                         self.on_input(&entry.path()).await?;
+                        count += 1;
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
                     }
@@ -144,7 +155,7 @@ impl<'a> TaskContext<'a> {
             }
         }
 
-        Ok(())
+        Ok(count)
     }
 }
 
