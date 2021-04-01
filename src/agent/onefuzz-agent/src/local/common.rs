@@ -159,8 +159,7 @@ pub fn get_synced_dirs(
     args: &ArgMatches<'_>,
 ) -> Result<Vec<SyncedDir>> {
     let current_dir = std::env::current_dir()?;
-    let dirs: Result<Vec<SyncedDir>> = args
-        .values_of_os(name)
+    args.values_of_os(name)
         .ok_or_else(|| anyhow!("argument '{}' not specified", name))?
         .enumerate()
         .map(|(index, remote_path)| {
@@ -174,8 +173,7 @@ pub fn get_synced_dirs(
                 path,
             })
         })
-        .collect();
-    Ok(dirs?)
+        .collect()
 }
 
 fn register_cleanup(job_id: Uuid) -> Result<()> {
