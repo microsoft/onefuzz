@@ -139,7 +139,7 @@ mod array {
         S: Serializer,
     {
         let mut seq = ser.serialize_seq(Some(data.len()))?;
-        for (_, v) in data {
+        for v in data.values() {
             seq.serialize_element(v)?;
         }
         seq.end()
