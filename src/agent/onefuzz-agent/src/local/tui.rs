@@ -33,20 +33,20 @@ use arraydeque::{ArrayDeque, Wrapping};
 use async_trait::async_trait;
 
 #[derive(Debug, thiserror::Error)]
-enum UILoopError {
+enum UiLoopError {
     #[error("program exiting")]
     Exit,
     #[error("error")]
     Anyhow(anyhow::Error),
 }
 
-impl From<anyhow::Error> for UILoopError {
+impl From<anyhow::Error> for UiLoopError {
     fn from(e: anyhow::Error) -> Self {
         Self::Anyhow(e)
     }
 }
 
-impl From<std::io::Error> for UILoopError {
+impl From<std::io::Error> for UiLoopError {
     fn from(e: std::io::Error) -> Self {
         Self::Anyhow(e.into())
     }
@@ -82,7 +82,7 @@ enum TerminalEvent {
     Quit,
 }
 
-struct UILoopState {
+struct UiLoopState {
     pub logs: ArrayDeque<[(Level, String); BUFFER_SIZE], Wrapping>,
     pub file_count: HashMap<PathBuf, usize>,
     pub file_count_state: ListState,
@@ -91,7 +91,7 @@ struct UILoopState {
     pub terminal: Terminal<CrosstermBackend<Stdout>>,
 }
 
-impl UILoopState {
+impl UiLoopState {
     fn new(
         terminal: Terminal<CrosstermBackend<Stdout>>,
         log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
@@ -135,7 +135,7 @@ impl TerminalUi {
         let mut terminal = Terminal::new(backend)?;
         terminal.clear()?;
         let (log_event_sender, log_event_receiver) = mpsc::unbounded_channel();
-        let initial_state = UILoopState::new(terminal, log_event_receiver);
+        let initial_state = UiLoopState::new(terminal, log_event_receiver);
 
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
             .format(move |_buf, record| {
@@ -215,7 +215,7 @@ impl TerminalUi {
         Ok(())
     }
 
-    async fn refresh_ui(ui_state: UILoopState) -> Result<UILoopState, UILoopError> {
+    async fn refresh_ui(ui_state: UiLoopState) -> Result<UiLoopState, UiLoopError> {
         let mut logs = ui_state.logs;
         let mut file_count_state = ui_state.file_count_state;
         let file_count = ui_state.file_count;
@@ -280,7 +280,7 @@ impl TerminalUi {
 
             f.render_widget(log_list, chunks[1]);
         })?;
-        Ok(UILoopState {
+        Ok(UiLoopState {
             logs,
             file_count_state,
             file_count,
@@ -290,7 +290,7 @@ impl TerminalUi {
         })
     }
 
-    async fn on_key_down(ui_state: UILoopState) -> Result<UILoopState, UILoopError> {
+    async fn on_key_down(ui_state: UiLoopState) -> Result<UiLoopState, UiLoopError> {
         let mut file_count_state = ui_state.file_count_state;
         let count = ui_state.file_count.len();
         let i = file_count_state
@@ -305,13 +305,13 @@ impl TerminalUi {
             .unwrap_or_default();
 
         file_count_state.select(Some(i));
-        Ok(UILoopState {
+        Ok(UiLoopState {
             file_count_state,
             ..ui_state
         })
     }
 
-    async fn on_key_up(ui_state: UILoopState) -> Result<UILoopState, UILoopError> {
+    async fn on_key_up(ui_state: UiLoopState) -> Result<UiLoopState, UiLoopError> {
         let mut file_count_state = ui_state.file_count_state;
         let count = ui_state.file_count.len();
         let i = file_count_state
@@ -325,35 +325,35 @@ impl TerminalUi {
             })
             .unwrap_or_default();
         file_count_state.select(Some(i));
-        Ok(UILoopState {
+        Ok(UiLoopState {
             file_count_state,
             ..ui_state
         })
     }
 
-    async fn on_quit(ui_state: UILoopState) -> Result<UILoopState, UILoopError> {
+    async fn on_quit(ui_state: UiLoopState) -> Result<UiLoopState, UiLoopError> {
         let mut terminal = ui_state.terminal;
         disable_raw_mode().map_err(|e| anyhow!("{:?}", e))?;
         execute!(terminal.backend_mut(), LeaveAlternateScreen).map_err(|e| anyhow!("{:?}", e))?;
         terminal.show_cursor()?;
-        Err(UILoopError::Exit)
+        Err(UiLoopError::Exit)
     }
 
     async fn on_file_count(
-        ui_state: UILoopState,
+        ui_state: UiLoopState,
         dir: PathBuf,
         count: usize,
-    ) -> Result<UILoopState, UILoopError> {
+    ) -> Result<UiLoopState, UiLoopError> {
         let mut file_count = ui_state.file_count;
         file_count.insert(dir, count);
-        Ok(UILoopState {
+        Ok(UiLoopState {
             file_count,
             ..ui_state
         })
     }
 
     async fn ui_loop(
-        initial_state: UILoopState,
+        initial_state: UiLoopState,
         ui_event_rx: mpsc::UnboundedReceiver<TerminalEvent>,
     ) -> Result<()> {
         let loop_result = ui_event_rx
@@ -377,8 +377,8 @@ impl TerminalUi {
             .await;
 
         match loop_result {
-            Err(UILoopError::Exit) | Ok(_) => Ok(()),
-            Err(UILoopError::Anyhow(e)) => Err(e),
+            Err(UiLoopError::Exit) | Ok(_) => Ok(()),
+            Err(UiLoopError::Anyhow(e)) => Err(e),
         }
     }
 }

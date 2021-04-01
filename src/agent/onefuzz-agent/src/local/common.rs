@@ -1,6 +1,6 @@
 use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use onefuzz::jitter::delay_with_jitter;
