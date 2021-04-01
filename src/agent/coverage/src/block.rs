@@ -16,7 +16,7 @@ use crate::code::ModulePath;
 /// Block coverage for a command invocation.
 ///
 /// Organized by module.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct CommandBlockCov {
     modules: BTreeMap<ModulePath, ModuleCov>,
 }
