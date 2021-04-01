@@ -108,10 +108,7 @@ impl StaticConfig {
         let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
         let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?;
         let tenant = std::env::var("ONEFUZZ_TENANT")?;
-        let multi_tenant_domain = match std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN") {
-            Ok(domain) => Some(domain),
-            Err(_) => None,
-        };
+        let multi_tenant_domain = std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN").ok();
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
 
