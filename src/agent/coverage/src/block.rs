@@ -380,7 +380,10 @@ mod tests {
 
     #[test]
     fn test_block_cov_serde() {
-        let block = BlockCov { offset: 0x123, count: 456 };
+        let block = BlockCov {
+            offset: 0x123,
+            count: 456,
+        };
 
         let ser = serde_json::to_string(&block).unwrap();
 
