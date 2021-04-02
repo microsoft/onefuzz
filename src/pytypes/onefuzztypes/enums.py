@@ -153,6 +153,7 @@ class TaskType(Enum):
     libfuzzer_merge = "libfuzzer_merge"
     libfuzzer_regression = "libfuzzer_regression"
     generic_analysis = "generic_analysis"
+    generic_coverage = "generic_coverage"
     generic_supervisor = "generic_supervisor"
     generic_merge = "generic_merge"
     generic_generator = "generic_generator"
