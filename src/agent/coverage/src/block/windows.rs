@@ -17,23 +17,23 @@ use crate::code::{CmdFilter, ModulePath};
 
 pub fn record(cmd: Command, filter: CmdFilter) -> Result<CommandBlockCov> {
     let mut cache = ModuleCache::default();
-    let recorder = Recorder::new(&mut cache, filter);
+    let mut recorder = Recorder::new(&mut cache, filter);
     let timeout = Duration::from_secs(5);
-    let mut handler = RecorderEventHandler::new(recorder, timeout);
+    let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
     handler.run(cmd)?;
-    Ok(handler.recorder.into_coverage())
+    Ok(recorder.into_coverage())
 }
 
 #[derive(Debug)]
-pub struct RecorderEventHandler<'a> {
-    recorder: Recorder<'a>,
+pub struct RecorderEventHandler<'r, 'c> {
+    recorder: &'r mut Recorder<'c>,
     started: Instant,
     timed_out: bool,
     timeout: Duration,
 }
 
-impl<'a> RecorderEventHandler<'a> {
-    pub fn new(recorder: Recorder<'a>, timeout: Duration) -> Self {
+impl<'r, 'c> RecorderEventHandler<'r, 'c> {
+    pub fn new(recorder: &'r mut Recorder<'c>, timeout: Duration) -> Self {
         let started = Instant::now();
         let timed_out = false;
 
@@ -72,11 +72,11 @@ impl<'a> RecorderEventHandler<'a> {
 }
 
 #[derive(Debug)]
-pub struct Recorder<'a> {
+pub struct Recorder<'c> {
     breakpoints: Breakpoints,
 
     // Reference to allow in-memory reuse across runs.
-    cache: &'a mut ModuleCache,
+    cache: &'c mut ModuleCache,
 
     // Note: this could also be a reference to enable reuse across runs, to
     // support implicit calculation of total coverage for a corpus. For now,
@@ -86,8 +86,8 @@ pub struct Recorder<'a> {
     filter: CmdFilter,
 }
 
-impl<'a> Recorder<'a> {
-    pub fn new(cache: &'a mut ModuleCache, filter: CmdFilter) -> Self {
+impl<'c> Recorder<'c> {
+    pub fn new(cache: &'c mut ModuleCache, filter: CmdFilter) -> Self {
         let breakpoints = Breakpoints::default();
         let coverage = CommandBlockCov::default();
 
@@ -149,7 +149,7 @@ impl<'a> Recorder<'a> {
             }
 
             self.coverage
-                .increment(breakpoint.module, breakpoint.offset)?;
+                .increment(breakpoint.module, breakpoint.offset);
         } else {
             let pc = if let Ok(pc) = dbg.read_program_counter() {
                 format!("{:x}", pc)
@@ -196,7 +196,7 @@ impl<'a> Recorder<'a> {
     }
 }
 
-impl<'a> DebugEventHandler for RecorderEventHandler<'a> {
+impl<'r, 'c> DebugEventHandler for RecorderEventHandler<'r, 'c> {
     fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
         if self.recorder.on_create_process(dbg, module).is_err() {
             self.stop(dbg);

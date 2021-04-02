@@ -38,9 +38,9 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
 
-pub fn default_workers() -> u64 {
-    let cpus = num_cpus::get() as u64;
-    u64::max(1, cpus - 1)
+pub fn default_workers() -> usize {
+    let cpus = num_cpus::get();
+    usize::max(1, cpus - 1)
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -53,7 +53,7 @@ pub struct Config {
     pub target_options: Vec<String>,
 
     #[serde(default = "default_workers")]
-    pub target_workers: u64,
+    pub target_workers: usize,
     pub ensemble_sync_delay: Option<u64>,
 
     #[serde(default = "default_bool_true")]
@@ -75,7 +75,7 @@ impl LibFuzzerFuzzTask {
         Ok(Self { config })
     }
 
-    fn workers(&self) -> u64 {
+    fn workers(&self) -> usize {
         match self.config.target_workers {
             0 => default_workers(),
             x => x,
@@ -94,7 +94,7 @@ impl LibFuzzerFuzzTask {
         let new_crashes = self.config.crashes.monitor_results(new_result, true);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
-        let report_stats = report_runtime_stats(self.workers() as usize, stats_receiver, hb_client);
+        let report_stats = report_runtime_stats(self.workers(), stats_receiver, hb_client);
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
         futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
@@ -149,7 +149,7 @@ impl LibFuzzerFuzzTask {
     // or discovered fault. The monitor restarts the libFuzzer when it exits.
     pub async fn start_fuzzer_monitor(
         &self,
-        worker_id: u64,
+        worker_id: usize,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
         let local_input_dir = self.create_local_temp_dir().await?;
@@ -178,8 +178,8 @@ impl LibFuzzerFuzzTask {
     // While it runs, parse stderr for progress metrics, and report them.
     async fn run_fuzzer(
         &self,
-        local_inputs: &Path,
-        worker_id: u64,
+        local_inputs: impl AsRef<std::path::Path>,
+        worker_id: usize,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
         let crash_dir = self.create_local_temp_dir().await?;
@@ -282,7 +282,7 @@ impl LibFuzzerFuzzTask {
 
 fn try_report_iter_update(
     stats_sender: &StatsSender,
-    worker_id: u64,
+    worker_id: usize,
     run_id: Uuid,
     line: &str,
 ) -> Result<()> {
@@ -298,7 +298,7 @@ fn try_report_iter_update(
     Ok(())
 }
 
-async fn report_fuzzer_sys_info(worker_id: u64, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
+async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
     loop {
         system::refresh()?;
 
@@ -329,7 +329,7 @@ async fn report_fuzzer_sys_info(worker_id: u64, run_id: Uuid, fuzzer_pid: u32) -
 
 #[derive(Clone, Copy, Debug)]
 pub struct RuntimeStats {
-    worker_id: u64,
+    worker_id: usize,
     run_id: Uuid,
     count: u64,
     execs_sec: f64,

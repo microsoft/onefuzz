@@ -68,6 +68,7 @@ from registration import (
     assign_scaleset_role,
     authorize_application,
     register_application,
+    set_app_audience,
     update_pool_registration,
 )
 
@@ -76,6 +77,7 @@ ONEFUZZ_CLI_APP = "72f1562a-8c0c-41ea-beb9-fa2b71c80134"
 ONEFUZZ_CLI_AUTHORITY = (
     "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
 )
+COMMON_AUTHORITY = "https://login.microsoftonline.com/common"
 TELEMETRY_NOTICE = (
     "Telemetry collection on stats and OneFuzz failures are sent to Microsoft. "
     "To disable, delete the ONEFUZZ_TELEMETRY application setting in the "
@@ -118,6 +120,7 @@ class Client:
         migrations: List[str],
         export_appinsights: bool,
         log_service_principal: bool,
+        multi_tenant_domain: str,
         upgrade: bool,
     ):
         self.resource_group = resource_group
@@ -130,14 +133,19 @@ class Client:
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
+        self.multi_tenant_domain = multi_tenant_domain
         self.upgrade = upgrade
         self.results: Dict = {
             "client_id": client_id,
             "client_secret": client_secret,
         }
+        if self.multi_tenant_domain:
+            authority = COMMON_AUTHORITY
+        else:
+            authority = ONEFUZZ_CLI_AUTHORITY
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": ONEFUZZ_CLI_APP,
-            "authority": ONEFUZZ_CLI_AUTHORITY,
+            "authority": authority,
         }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
@@ -230,7 +238,6 @@ class Client:
     def setup_rbac(self) -> None:
         """
         Setup the client application for the OneFuzz instance.
-
         By default, Service Principals do not have access to create
         client applications in AAD.
         """
@@ -274,7 +281,14 @@ class Client:
 
         if not existing:
             logger.info("creating Application registration")
-            url = "https://%s.azurewebsites.net" % self.application_name
+
+            if self.multi_tenant_domain:
+                url = "https://%s/%s" % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                )
+            else:
+                url = "https://%s.azurewebsites.net" % self.application_name
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
@@ -291,6 +305,7 @@ class Client:
                 ],
                 app_roles=app_roles,
             )
+
             app = client.applications.create(params)
 
             logger.info("creating service principal")
@@ -349,6 +364,27 @@ class Client:
                     app.object_id, ApplicationUpdateParameters(app_roles=app_roles)
                 )
 
+        if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
+            url = "https://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+            client.applications.patch(
+                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+            )
+            set_app_audience(app.object_id, "AzureADMultipleOrgs")
+        elif (
+            not self.multi_tenant_domain
+            and app.sign_in_audience == "AzureADMultipleOrgs"
+        ):
+            set_app_audience(app.object_id, "AzureADMyOrg")
+            url = "https://%s.azurewebsites.net" % self.application_name
+            client.applications.patch(
+                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+            )
+        else:
+            logger.debug("No change to App Registration signInAudence setting")
+
             creds = list(client.applications.list_password_credentials(app.object_id))
             client.applications.update_password_credentials(app.object_id, creds)
 
@@ -366,9 +402,13 @@ class Client:
             app_info = register_application(
                 "onefuzz-cli", self.application_name, OnefuzzAppRole.CliClient
             )
+            if self.multi_tenant_domain:
+                authority = COMMON_AUTHORITY
+            else:
+                authority = app_info.authority
             self.cli_config = {
                 "client_id": app_info.client_id,
-                "authority": app_info.authority,
+                "authority": authority,
             }
 
         else:
@@ -397,12 +437,31 @@ class Client:
         expiry = (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
+
+        if self.multi_tenant_domain:
+            # clear the value in the Issuer Url field:
+            # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
+            app_func_audience = "https://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+            app_func_issuer = ""
+            multi_tenant_domain = {"value": self.multi_tenant_domain}
+        else:
+            app_func_audience = "https://%s.azurewebsites.net" % self.application_name
+            tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
+            app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
+            multi_tenant_domain = {"value": ""}
+
         params = {
+            "app_func_audience": {"value": app_func_audience},
             "name": {"value": self.application_name},
             "owner": {"value": self.owner},
             "clientId": {"value": self.results["client_id"]},
             "clientSecret": {"value": self.results["client_secret"]},
+            "app_func_issuer": {"value": app_func_issuer},
             "signedExpiry": {"value": expiry},
+            "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
         }
         deployment = Deployment(
@@ -779,13 +838,17 @@ class Client:
             if "client_secret" in self.cli_config
             else ""
         )
+        multi_tenant_domain = ""
+        if self.multi_tenant_domain:
+            multi_tenant_domain = "--tenant_domain %s" % self.multi_tenant_domain
         logger.info(
             "Update your CLI config via: onefuzz config --endpoint "
-            "https://%s.azurewebsites.net --authority %s --client_id %s %s",
+            "https://%s.azurewebsites.net --authority %s --client_id %s %s %s",
             self.application_name,
             self.cli_config["authority"],
             self.cli_config["client_id"],
             client_secret_arg,
+            multi_tenant_domain,
         )
 
 
@@ -898,6 +961,12 @@ def main() -> None:
         action="store_true",
         help="display service prinipal with info log level",
     )
+    parser.add_argument(
+        "--multi_tenant_domain",
+        type=str,
+        default=None,
+        help="enable multi-tenant authentication with this tenant domain",
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -921,6 +990,7 @@ def main() -> None:
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
         log_service_principal=args.log_service_principal,
+        multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
     )
     if args.verbose:

@@ -113,6 +113,10 @@ def build_pool_config(pool: Pool) -> str:
         instance_id=get_instance_id(),
     )
 
+    multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
+    if multi_tenant_domain:
+        config.multi_tenant_domain = multi_tenant_domain
+
     filename = f"{pool.name}/config.json"
 
     save_blob(

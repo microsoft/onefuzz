@@ -119,7 +119,7 @@ impl Event {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum EventData {
-    WorkerId(u64),
+    WorkerId(usize),
     InstanceId(Uuid),
     JobId(Uuid),
     TaskId(Uuid),

@@ -12,6 +12,7 @@ backoff = { version = "0.3", features = ["async-std"] }
 base64 = "0.13"
 bytes = "0.5"
 derivative = "2.2.0"
+num_cpus = "1.13"
 regex = "1.4"
 reqwest = { version = "0.10", features = ["json", "stream"] }
 reqwest-retry = { path = "../reqwest-retry" }
@@ -23,4 +24,3 @@ tokio = { version = "0.2", features = ["full"] }
 queue-file = "1.1"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 yaque = "0.5.1"
-

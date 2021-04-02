@@ -33,6 +33,7 @@ pub const TOOLS_DIR: &str = "tools_dir";
 pub const RENAME_OUTPUT: &str = "rename_output";
 pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
 pub const DISABLE_CHECK_DEBUGGER: &str = "disable_check_debugger";
+pub const REGRESSION_REPORTS_DIR: &str = "regression_reports_dir";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
@@ -149,8 +150,7 @@ pub fn get_synced_dirs(
     args: &ArgMatches<'_>,
 ) -> Result<Vec<SyncedDir>> {
     let current_dir = std::env::current_dir()?;
-    let dirs: Result<Vec<SyncedDir>> = args
-        .values_of_os(name)
+    args.values_of_os(name)
         .ok_or_else(|| anyhow!("argument '{}' not specified", name))?
         .enumerate()
         .map(|(index, remote_path)| {
@@ -164,8 +164,7 @@ pub fn get_synced_dirs(
                 path,
             })
         })
-        .collect();
-    Ok(dirs?)
+        .collect()
 }
 
 fn register_cleanup(job_id: Uuid) -> Result<()> {
