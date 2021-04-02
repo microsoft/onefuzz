@@ -101,6 +101,13 @@ impl ModuleCov {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct BlockCov {
     /// Offset of the block, relative to the module base load address.
+    //
+    // These offsets are represented as `u64` values, but since they are offsets
+    // within an assumed well-formed module, they should never exceed a `u32`.
+    // We thus assume that they can be losslessly serialized to an `f64`.
+    //
+    // If we need to handle malformed binaries or arbitrary addresses, then this
+    // will need revision.
     pub offset: u64,
 
     /// Number of times a block was seen to be executed, relative to some input
