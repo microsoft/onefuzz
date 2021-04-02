@@ -516,6 +516,35 @@ def assign_scaleset_role(onefuzz_instance_name: str, scaleset_name: str) -> None
         assign_scaleset_role_manually(onefuzz_instance_name, scaleset_name)
 
 
+def set_app_audience(objectId: str, audience: str) -> None:
+    # typical audience values: AzureADMyOrg, AzureADMultipleOrgs
+    http_body = {"signInAudience": audience}
+    try:
+        query_microsoft_graph(
+            method="PATCH",
+            resource="applications/%s" % objectId,
+            body=http_body,
+        )
+    except GraphQueryError:
+        query = (
+            "az rest --method patch --url "
+            "https://graph.microsoft.com/v1.0/applications/%s "
+            "--body '%s' --headers \"Content-Type\"=application/json"
+            % (objectId, http_body)
+        )
+        logger.warning(
+            "execute the following query in the azure portal bash shell and run deploy.py again : \n%s"
+            % query
+        )
+        err_str = (
+            "Unable to set signInAudience using Microsoft Graph Query API. \n"
+            + "The user must enable single/multi tenancy in the 'Authentication' blade of the "
+            + "Application Registration in the AAD web portal, or use the azure bash shell "
+            + "using the command given above."
+        )
+        raise Exception(err_str)
+
+
 def main() -> None:
     formatter = argparse.ArgumentDefaultsHelpFormatter
 
