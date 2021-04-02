@@ -289,7 +289,7 @@ impl CoverageStats {
         let mut stats = CoverageStats::default();
 
         for (_, module) in coverage.iter() {
-            for (_, block) in &module.blocks {
+            for block in module.blocks.values() {
                 stats.features += 1;
 
                 if block.count > 0 {
