@@ -23,8 +23,8 @@ use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
 use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
 use crate::tasks::utils::default_bool_true;
 
-const COVERAGE_FILE: &'static str = "coverage.json";
-const MODULE_CACHE_FILE: &'static str = "module-cache.json";
+const COVERAGE_FILE: &str = "coverage.json";
+const MODULE_CACHE_FILE: &str = "module-cache.json";
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
