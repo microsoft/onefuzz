@@ -214,9 +214,6 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
             node.debug_keep_node = True
             node.save()
     else:
-        logging.error(
-            "task failed. %s:%s status:%s", task.job_id, task.task_id, event.exit_status
-        )
         task.mark_failed(
             Error(
                 code=ErrorCode.TASK_FAILED,

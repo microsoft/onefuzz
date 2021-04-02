@@ -108,9 +108,12 @@ def get_queue_tasks() -> Sequence[Tuple[Task, Sequence[str]]]:
 
 
 def new_files(container: Container, filename: str) -> None:
-    report = get_report_or_regression(container, filename)
-
     notifications = get_notifications(container)
+
+    report = get_report_or_regression(
+        container, filename, expect_reports=bool(notifications)
+    )
+
     if notifications:
         done = []
         for notification in notifications:
