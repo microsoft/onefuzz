@@ -16,10 +16,7 @@ use onefuzz_telemetry::{
     EventData,
 };
 use serde::Deserialize;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::PathBuf};
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
