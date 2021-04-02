@@ -16,7 +16,8 @@ use crate::code::ModulePath;
 /// Block coverage for a command invocation.
 ///
 /// Organized by module.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[serde(transparent)]
 pub struct CommandBlockCov {
     modules: BTreeMap<ModulePath, ModuleCov>,
 }
@@ -65,7 +66,9 @@ impl CommandBlockCov {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(transparent)]
 pub struct ModuleCov {
+    #[serde(with = "array")]
     pub blocks: BTreeMap<u64, BlockCov>,
 }
 
@@ -98,6 +101,13 @@ impl ModuleCov {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct BlockCov {
     /// Offset of the block, relative to the module base load address.
+    //
+    // These offsets are represented as `u64` values, but since they are offsets
+    // within an assumed well-formed module, they should never exceed a `u32`.
+    // We thus assume that they can be losslessly serialized to an `f64`.
+    //
+    // If we need to handle malformed binaries or arbitrary addresses, then this
+    // will need revision.
     pub offset: u64,
 
     /// Number of times a block was seen to be executed, relative to some input
@@ -116,6 +126,59 @@ pub struct BlockCov {
 impl BlockCov {
     pub fn new(offset: u64) -> Self {
         Self { offset, count: 0 }
+    }
+}
+
+mod array {
+    use std::collections::BTreeMap;
+    use std::fmt;
+
+    use serde::de::{self, Deserializer, Visitor};
+    use serde::ser::{SerializeSeq, Serializer};
+
+    use super::BlockCov;
+
+    type BlockCovMap = BTreeMap<u64, BlockCov>;
+
+    pub fn serialize<S>(data: &BlockCovMap, ser: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = ser.serialize_seq(Some(data.len()))?;
+        for v in data.values() {
+            seq.serialize_element(v)?;
+        }
+        seq.end()
+    }
+
+    pub fn deserialize<'d, D>(de: D) -> Result<BlockCovMap, D::Error>
+    where
+        D: Deserializer<'d>,
+    {
+        de.deserialize_seq(FlattenVisitor)
+    }
+
+    struct FlattenVisitor;
+
+    impl<'d> Visitor<'d> for FlattenVisitor {
+        type Value = BlockCovMap;
+
+        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "array of blocks")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: de::SeqAccess<'d>,
+        {
+            let mut map = Self::Value::default();
+
+            while let Some(block) = seq.next_element::<BlockCov>()? {
+                map.insert(block.offset, block);
+            }
+
+            Ok(map)
+        }
     }
 }
 
@@ -279,5 +342,62 @@ mod tests {
         ]);
 
         assert_eq!(total, expected);
+    }
+
+    #[test]
+    fn test_block_cov_serde() {
+        let block = BlockCov {
+            offset: 123,
+            count: 456,
+        };
+
+        let ser = serde_json::to_string(&block).unwrap();
+
+        let text = r#"{"offset":123,"count":456}"#;
+        assert_eq!(ser, text);
+
+        let de: BlockCov = serde_json::from_str(&ser).unwrap();
+        assert_eq!(de, block);
+    }
+
+    #[test]
+    fn test_cmd_cov_serde() {
+        #[cfg(target_os = "linux")]
+        const MAIN_EXE: &str = "/main.exe";
+
+        #[cfg(target_os = "linux")]
+        const SOME_DLL: &str = "/lib/some.dll";
+
+        #[cfg(target_os = "windows")]
+        const MAIN_EXE: &str = r"c:\main.exe";
+
+        #[cfg(target_os = "windows")]
+        const SOME_DLL: &str = r"c:\lib\some.dll";
+
+        let main_exe = module_path(MAIN_EXE);
+        let some_dll = module_path(SOME_DLL);
+
+        let cov = {
+            let mut cov = CommandBlockCov::default();
+            cov.insert(&main_exe, vec![1, 20, 300].into_iter());
+            cov.increment(&main_exe, 1);
+            cov.increment(&main_exe, 300);
+            cov.insert(&some_dll, vec![2, 30, 400].into_iter());
+            cov.increment(&some_dll, 30);
+            cov
+        };
+
+        let ser = serde_json::to_string(&cov).unwrap();
+
+        #[cfg(target_os = "linux")]
+        let text = r#"{"/lib/some.dll":[{"offset":2,"count":0},{"offset":30,"count":1},{"offset":400,"count":0}],"/main.exe":[{"offset":1,"count":1},{"offset":20,"count":0},{"offset":300,"count":1}]}"#;
+
+        #[cfg(target_os = "windows")]
+        let text = r#"{"c:\\lib\\some.dll":[{"offset":2,"count":0},{"offset":30,"count":1},{"offset":400,"count":0}],"c:\\main.exe":[{"offset":1,"count":1},{"offset":20,"count":0},{"offset":300,"count":1}]}"#;
+
+        assert_eq!(ser, text);
+
+        let de: CommandBlockCov = serde_json::from_str(&ser).unwrap();
+        assert_eq!(de, cov);
     }
 }
