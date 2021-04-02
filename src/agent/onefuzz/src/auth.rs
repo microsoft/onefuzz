@@ -280,7 +280,7 @@ mod tests {
             Some(multi_tenant_domain.to_string()),
         );
 
-        assert!(managed_creds.is_err(), true);
+        assert!(managed_creds.is_err());
 
         Ok(())
     }
