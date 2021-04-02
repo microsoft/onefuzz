@@ -21,7 +21,6 @@ use url::Url;
 use crate::tasks::config::CommonConfig;
 use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
 use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
-use crate::tasks::utils::default_bool_true;
 
 const COVERAGE_FILE: &str = "coverage.json";
 const MODULE_CACHE_FILE: &str = "module-cache.json";
@@ -35,9 +34,6 @@ pub struct Config {
     pub input_queue: Option<QueueClient>,
     pub readonly_inputs: Vec<SyncedDir>,
     pub coverage: SyncedDir,
-
-    #[serde(default = "default_bool_true")]
-    pub check_queue: bool,
 
     #[serde(flatten)]
     pub common: CommonConfig,
