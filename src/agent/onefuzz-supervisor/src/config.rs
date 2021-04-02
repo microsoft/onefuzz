@@ -25,6 +25,8 @@ pub struct StaticConfig {
 
     pub onefuzz_url: Url,
 
+    pub multi_tenant_domain: Option<String>,
+
     // TODO: remove the alias once the service has been updated to match
     #[serde(alias = "instrumentation_key")]
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
@@ -46,6 +48,8 @@ struct RawStaticConfig {
     pub pool_name: String,
 
     pub onefuzz_url: Url,
+
+    pub multi_tenant_domain: Option<String>,
 
     // TODO: remove the alias once the service has been updated to match
     #[serde(alias = "instrumentation_key")]
@@ -73,7 +77,8 @@ impl StaticConfig {
                     .to_string()
                     .trim_end_matches('/')
                     .to_owned();
-                let managed = ManagedIdentityCredentials::new(resource);
+                let managed =
+                    ManagedIdentityCredentials::new(resource, config.multi_tenant_domain.clone())?;
                 managed.into()
             }
         };
@@ -81,6 +86,7 @@ impl StaticConfig {
             credentials,
             pool_name: config.pool_name,
             onefuzz_url: config.onefuzz_url,
+            multi_tenant_domain: config.multi_tenant_domain,
             microsoft_telemetry_key: config.microsoft_telemetry_key,
             instance_telemetry_key: config.instance_telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
@@ -102,6 +108,7 @@ impl StaticConfig {
         let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
         let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?;
         let tenant = std::env::var("ONEFUZZ_TENANT")?;
+        let multi_tenant_domain = std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN").ok();
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
 
@@ -125,15 +132,21 @@ impl StaticConfig {
                 None
             };
 
-        let credentials =
-            ClientCredentials::new(client_id, client_secret, onefuzz_url.to_string(), tenant)
-                .into();
+        let credentials = ClientCredentials::new(
+            client_id,
+            client_secret,
+            onefuzz_url.to_string(),
+            tenant,
+            multi_tenant_domain.clone(),
+        )
+        .into();
 
         Ok(Self {
             instance_id,
             credentials,
             pool_name,
             onefuzz_url,
+            multi_tenant_domain,
             instance_telemetry_key,
             microsoft_telemetry_key,
             heartbeat_queue,
