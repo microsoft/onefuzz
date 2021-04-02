@@ -101,7 +101,6 @@ impl ModuleCov {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct BlockCov {
     /// Offset of the block, relative to the module base load address.
-    #[serde(with = "hex")]
     pub offset: u64,
 
     /// Number of times a block was seen to be executed, relative to some input
@@ -172,46 +171,6 @@ mod array {
             }
 
             Ok(map)
-        }
-    }
-}
-
-mod hex {
-    use std::fmt;
-
-    use serde::de::{self, Deserializer, Visitor};
-    use serde::ser::Serializer;
-
-    pub fn serialize<S>(data: &u64, ser: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let s = format!("0x{:x}", data);
-        ser.serialize_str(&s)
-    }
-
-    pub fn deserialize<'d, D>(de: D) -> Result<u64, D::Error>
-    where
-        D: Deserializer<'d>,
-    {
-        de.deserialize_str(HexVisitor)
-    }
-
-    struct HexVisitor;
-
-    impl<'d> Visitor<'d> for HexVisitor {
-        type Value = u64;
-
-        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "lowercase hex string with `0x` prefix")
-        }
-
-        fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
-        where
-            E: de::Error,
-        {
-            let h = s.strip_prefix("0x").unwrap_or(s);
-            u64::from_str_radix(h, 16).map_err(de::Error::custom)
         }
     }
 }
@@ -381,13 +340,13 @@ mod tests {
     #[test]
     fn test_block_cov_serde() {
         let block = BlockCov {
-            offset: 0x123,
+            offset: 123,
             count: 456,
         };
 
         let ser = serde_json::to_string(&block).unwrap();
 
-        let text = r#"{"offset":"0x123","count":456}"#;
+        let text = r#"{"offset":123,"count":456}"#;
         assert_eq!(ser, text);
 
         let de: BlockCov = serde_json::from_str(&ser).unwrap();
@@ -413,21 +372,21 @@ mod tests {
 
         let cov = {
             let mut cov = CommandBlockCov::default();
-            cov.insert(&main_exe, vec![0x1, 0x20, 0x300].into_iter());
-            cov.increment(&main_exe, 0x1);
-            cov.increment(&main_exe, 0x300);
-            cov.insert(&some_dll, vec![0x2, 0x30, 0x400].into_iter());
-            cov.increment(&some_dll, 0x30);
+            cov.insert(&main_exe, vec![1, 20, 300].into_iter());
+            cov.increment(&main_exe, 1);
+            cov.increment(&main_exe, 300);
+            cov.insert(&some_dll, vec![2, 30, 400].into_iter());
+            cov.increment(&some_dll, 30);
             cov
         };
 
         let ser = serde_json::to_string(&cov).unwrap();
 
         #[cfg(target_os = "linux")]
-        let text = r#"{"/lib/some.dll":[{"offset":"0x2","count":0},{"offset":"0x30","count":1},{"offset":"0x400","count":0}],"/main.exe":[{"offset":"0x1","count":1},{"offset":"0x20","count":0},{"offset":"0x300","count":1}]}"#;
+        let text = r#"{"/lib/some.dll":[{"offset":2,"count":0},{"offset":30,"count":1},{"offset":400,"count":0}],"/main.exe":[{"offset":1,"count":1},{"offset":20,"count":0},{"offset":300,"count":1}]}"#;
 
         #[cfg(target_os = "windows")]
-        let text = r#"{"c:\\lib\\some.dll":[{"offset":"0x2","count":0},{"offset":"0x30","count":1},{"offset":"0x400","count":0}],"c:\\main.exe":[{"offset":"0x1","count":1},{"offset":"0x20","count":0},{"offset":"0x300","count":1}]}"#;
+        let text = r#"{"c:\\lib\\some.dll":[{"offset":2,"count":0},{"offset":30,"count":1},{"offset":400,"count":0}],"c:\\main.exe":[{"offset":1,"count":1},{"offset":20,"count":0},{"offset":300,"count":1}]}"#;
 
         assert_eq!(ser, text);
 
