@@ -427,7 +427,7 @@ mod tests {
         let text = r#"{"/lib/some.dll":[{"offset":"0x2","count":0},{"offset":"0x30","count":1},{"offset":"0x400","count":0}],"/main.exe":[{"offset":"0x1","count":1},{"offset":"0x20","count":0},{"offset":"0x300","count":1}]}"#;
 
         #[cfg(target_os = "windows")]
-        let text = r#"{"c:\lib\some.dll":[{"offset":"0x2","count":0},{"offset":"0x30","count":1},{"offset":"0x400","count":0}],"c:\main.exe":[{"offset":"0x1","count":1},{"offset":"0x20","count":0},{"offset":"0x300","count":1}]}"#;
+        let text = r#"{"c:\\lib\\some.dll":[{"offset":"0x2","count":0},{"offset":"0x30","count":1},{"offset":"0x400","count":0}],"c:\\main.exe":[{"offset":"0x1","count":1},{"offset":"0x20","count":0},{"offset":"0x300","count":1}]}"#;
 
         assert_eq!(ser, text);
 
