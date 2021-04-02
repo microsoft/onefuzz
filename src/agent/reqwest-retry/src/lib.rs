@@ -46,14 +46,20 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
                 }
             }
             Ok(x) => {
-                if x.status().is_success() {
-                    Ok(x)
-                } else {
-                    let fail_fast = fail_fast_status.as_ref().contains(&x.status());
-                    if attempt_count >= max_retry || fail_fast {
-                        Err(backoff::Error::Permanent(Ok(x)))
-                    } else {
-                        Err(backoff::Error::Transient(Ok(x)))
+                let status = x.status();
+                let response = x
+                    .error_for_status()
+                    .with_context(|| format!("request attempt {} failed", attempt_count + 1,));
+
+                match response {
+                    Ok(x) => Ok(x),
+                    Err(as_err) => {
+                        let fail_fast = fail_fast_status.as_ref().contains(&status);
+                        if attempt_count >= max_retry || fail_fast {
+                            Err(backoff::Error::Permanent(Err(as_err)))
+                        } else {
+                            Err(backoff::Error::Transient(Err(as_err)))
+                        }
                     }
                 }
             }
@@ -130,11 +136,10 @@ mod test {
     #[tokio::test]
     async fn retry_should_pass() -> Result<()> {
         reqwest::Client::new()
-            .get("https://www.microsoft.com")
+            .get("https://httpstat.us/200")
             .send_retry_default()
             .await?
             .error_for_status()?;
-
         Ok(())
     }
 
@@ -149,6 +154,24 @@ mod test {
         if let Err(err) = &resp {
             let as_text = format!("{:?}", err);
             assert!(as_text.contains("request attempt 4 failed"));
+        } else {
+            anyhow::bail!("response to {} was expected to fail", invalid_url);
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn retry_should_fail_404() -> Result<()> {
+        let invalid_url = "https://httpstat.us/400";
+        let resp = reqwest::Client::new()
+            .get(invalid_url)
+            .send_retry(vec![], Duration::from_millis(1), 1)
+            .await;
+
+        if let Err(err) = &resp {
+            let as_text = format!("{:?}", err);
+            assert!(as_text.contains("request attempt 2 failed"));
         } else {
             anyhow::bail!("response to {} was expected to fail", invalid_url);
         }
