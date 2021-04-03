@@ -5,7 +5,7 @@ use anyhow::Result;
 use downcast_rs::Downcast;
 use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
-use reqwest_retry::{SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
+use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -236,7 +236,10 @@ impl Coordinator {
         let request = self.get_request_builder(request_type.clone());
         let mut response = request
             .send_retry(
-                vec![StatusCode::UNAUTHORIZED],
+                |code| match code {
+                    StatusCode::UNAUTHORIZED => RetryCheck::Fail,
+                    _ => RetryCheck::Retry,
+                },
                 DEFAULT_RETRY_PERIOD,
                 MAX_RETRY_ATTEMPTS,
             )
