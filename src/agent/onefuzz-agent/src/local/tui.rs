@@ -18,7 +18,10 @@ use std::{
     thread::{self, JoinHandle},
     time::Duration,
 };
-use tokio::{sync::mpsc, time};
+use tokio::{
+    sync::mpsc::{self, UnboundedReceiver},
+    time,
+};
 use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Corner, Direction, Layout},
@@ -30,7 +33,6 @@ use tui::{
 };
 
 use arraydeque::{ArrayDeque, Wrapping};
-use async_trait::async_trait;
 
 #[derive(Debug, thiserror::Error)]
 enum UiLoopError {
@@ -52,26 +54,9 @@ impl From<std::io::Error> for UiLoopError {
     }
 }
 
-const BUFFER_SIZE: usize = 100;
+/// Maximum number of log message to display, arbitrarily chosen
+const LOGS_BUFFER_SIZE: usize = 100;
 const TICK_RATE: Duration = Duration::from_millis(250);
-
-trait TakeAvailable<T> {
-    fn take_available(&mut self, size: usize) -> Result<Vec<T>>;
-}
-
-#[async_trait]
-impl<T: Send + Sync> TakeAvailable<T> for mpsc::UnboundedReceiver<T> {
-    fn take_available(&mut self, size: usize) -> Result<Vec<T>> {
-        let mut result = vec![];
-        while let Ok(v) = self.try_recv() {
-            result.push(v);
-            if result.len() >= size {
-                break;
-            }
-        }
-        Ok(result)
-    }
-}
 
 /// Event driving the refresh of the UI
 #[derive(Debug)]
@@ -83,7 +68,7 @@ enum TerminalEvent {
 }
 
 struct UiLoopState {
-    pub logs: ArrayDeque<[(Level, String); BUFFER_SIZE], Wrapping>,
+    pub logs: ArrayDeque<[(Level, String); LOGS_BUFFER_SIZE], Wrapping>,
     pub file_count: HashMap<PathBuf, usize>,
     pub file_count_state: ListState,
     pub file_monitors: Vec<JoinHandle<Result<()>>>,
@@ -215,6 +200,21 @@ impl TerminalUi {
         Ok(())
     }
 
+    fn take_available_logs<T>(
+        receiver: &mut UnboundedReceiver<T>,
+        size: usize,
+        buffer: &mut ArrayDeque<[T; LOGS_BUFFER_SIZE], Wrapping>,
+    ) {
+        let mut count = 0;
+        while let Ok(v) = receiver.try_recv() {
+            count += 1;
+            buffer.push_front(v);
+            if count >= size {
+                break;
+            }
+        }
+    }
+
     async fn refresh_ui(ui_state: UiLoopState) -> Result<UiLoopState, UiLoopError> {
         let mut logs = ui_state.logs;
         let mut file_count_state = ui_state.file_count_state;
@@ -222,7 +222,8 @@ impl TerminalUi {
         let mut log_event_receiver = ui_state.log_event_receiver;
         let mut terminal = ui_state.terminal;
 
-        logs.extend_front(log_event_receiver.take_available(10)?.into_iter().rev());
+        Self::take_available_logs(&mut log_event_receiver, 10, &mut logs);
+        //.extend_front(log_event_receiver.take_available(10)?.into_iter().rev());
         terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
