@@ -62,8 +62,19 @@ impl ReportTask {
         Self { config, poller }
     }
 
+    pub async fn verify(&self) -> Result<()> {
+        let fuzzer = LibFuzzer::new(
+            &self.config.target_exe,
+            &self.config.target_options,
+            &self.config.target_env,
+            &self.config.common.setup_dir,
+        );
+        fuzzer.verify(self.config.check_fuzzer_help, None).await
+    }
+
     pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting libFuzzer crash report task");
+        self.verify().await?;
 
         if let Some(unique_reports) = &self.config.unique_reports {
             unique_reports.init().await?;

@@ -47,15 +47,13 @@ pub struct Config {
 }
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
-    if config.check_fuzzer_help {
-        let target = LibFuzzer::new(
-            &config.target_exe,
-            &config.target_options,
-            &config.target_env,
-            &config.common.setup_dir,
-        );
-        target.check_help().await?;
-    }
+    let fuzzer = LibFuzzer::new(
+        &config.target_exe,
+        &config.target_options,
+        &config.target_env,
+        &config.common.setup_dir,
+    );
+    fuzzer.verify(config.check_fuzzer_help, None).await?;
 
     config.unique_inputs.init().await?;
     if let Some(queue) = config.input_queue.clone() {
