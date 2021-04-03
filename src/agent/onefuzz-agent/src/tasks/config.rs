@@ -186,7 +186,7 @@ impl Config {
         match self {
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
-                    .managed_run()
+                    .run()
                     .await
             }
             Config::LibFuzzerReport(config) => {

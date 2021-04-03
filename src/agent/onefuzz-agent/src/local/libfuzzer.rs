@@ -38,10 +38,9 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         .expect("invalid crash dir remote location");
 
     let fuzzer = LibFuzzerFuzzTask::new(fuzz_config)?;
-    fuzzer.check_libfuzzer().await?;
     let mut task_handles = vec![];
 
-    let fuzz_task = spawn(async move { fuzzer.managed_run().await });
+    let fuzz_task = spawn(async move { fuzzer.run().await });
 
     wait_for_dir(&crash_dir).await?;
 
