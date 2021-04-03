@@ -5,9 +5,9 @@ use std::path::Path;
 
 use anyhow::Result;
 use futures::stream::TryStreamExt;
-use reqwest as r;
+use reqwest::{Body, Client, Response, StatusCode, Url};
 use reqwest_retry::{
-    send_retry_reqwest_default, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS,
+    send_retry_reqwest_default, RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS,
 };
 use serde::Serialize;
 use tokio::{fs, io};
@@ -15,18 +15,18 @@ use tokio_util::codec;
 
 #[derive(Clone)]
 pub struct BlobUploader {
-    client: r::Client,
-    url: r::Url,
+    client: Client,
+    url: Url,
 }
 
 impl BlobUploader {
-    pub fn new(url: r::Url) -> Self {
-        let client = r::Client::new();
+    pub fn new(url: Url) -> Self {
+        let client = Client::new();
 
         Self { client, url }
     }
 
-    pub async fn upload(&mut self, file_path: impl AsRef<Path>) -> Result<r::Response> {
+    pub async fn upload(&mut self, file_path: impl AsRef<Path>) -> Result<Response> {
         let file_path = file_path.as_ref();
 
         let file_name = file_path.file_name().unwrap().to_str().unwrap();
@@ -47,14 +47,16 @@ impl BlobUploader {
             .client
             .head(url.clone())
             .send_retry(
-                vec![reqwest::StatusCode::NOT_FOUND],
-                vec![],
+                |code| match code {
+                    StatusCode::NOT_FOUND => RetryCheck::Fail,
+                    _ => RetryCheck::Retry,
+                },
                 DEFAULT_RETRY_PERIOD,
                 MAX_RETRY_ATTEMPTS,
             )
             .await
         {
-            if head.status() == reqwest::StatusCode::OK {
+            if head.status() == StatusCode::OK {
                 return Ok(head);
             }
         }
@@ -72,7 +74,7 @@ impl BlobUploader {
                 .put(url.clone())
                 .header("Content-Length", &content_length)
                 .header("x-ms-blob-type", "BlockBlob")
-                .body(r::Body::wrap_stream(file_stream));
+                .body(Body::wrap_stream(file_stream));
 
             Ok(request_builder)
         })
@@ -85,7 +87,7 @@ impl BlobUploader {
         &mut self,
         data: D,
         name: impl AsRef<str>,
-    ) -> Result<r::Response> {
+    ) -> Result<Response> {
         let url = {
             let url_path = self.url.path();
             let blob_path = format!("{}/{}", url_path, name.as_ref());
