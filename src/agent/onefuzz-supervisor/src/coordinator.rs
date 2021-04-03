@@ -237,6 +237,7 @@ impl Coordinator {
         let mut response = request
             .send_retry(
                 vec![StatusCode::UNAUTHORIZED],
+                vec![],
                 DEFAULT_RETRY_PERIOD,
                 MAX_RETRY_ATTEMPTS,
             )

@@ -143,6 +143,7 @@ impl SyncedDir {
                     // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
                     .header("If-None-Match", "*")
                     .send_retry(
+                        vec![],
                         vec![StatusCode::CONFLICT],
                         DEFAULT_RETRY_PERIOD,
                         MAX_RETRY_ATTEMPTS,

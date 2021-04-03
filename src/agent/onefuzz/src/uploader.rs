@@ -48,6 +48,7 @@ impl BlobUploader {
             .head(url.clone())
             .send_retry(
                 vec![reqwest::StatusCode::NOT_FOUND],
+                vec![],
                 DEFAULT_RETRY_PERIOD,
                 MAX_RETRY_ATTEMPTS,
             )

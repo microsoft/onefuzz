@@ -19,12 +19,20 @@ pub async fn send_retry_reqwest_default<
 >(
     build_request: F,
 ) -> Result<Response> {
-    send_retry_reqwest(build_request, [], DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS).await
+    send_retry_reqwest(
+        build_request,
+        [],
+        [],
+        DEFAULT_RETRY_PERIOD,
+        MAX_RETRY_ATTEMPTS,
+    )
+    .await
 }
 
 pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Send + Sync>(
     build_request: F,
     fail_fast_status: impl AsRef<[StatusCode]>,
+    extra_success_status: impl AsRef<[StatusCode]>,
     retry_period: Duration,
     max_retry: usize,
 ) -> Result<Response> {
@@ -47,6 +55,10 @@ pub async fn send_retry_reqwest<F: Fn() -> Result<reqwest::RequestBuilder> + Sen
             }
             Ok(x) => {
                 let status = x.status();
+                if extra_success_status.as_ref().contains(&status) {
+                    return Ok(x);
+                }
+
                 let response = x
                     .error_for_status()
                     .with_context(|| format!("request attempt {} failed", attempt_count + 1,));
@@ -94,6 +106,7 @@ pub trait SendRetry {
     async fn send_retry(
         self,
         fail_fast_status: Vec<StatusCode>,
+        extra_success_status: Vec<StatusCode>,
         retry_period: Duration,
         max_retry: usize,
     ) -> Result<Response>;
@@ -103,13 +116,14 @@ pub trait SendRetry {
 #[async_trait]
 impl SendRetry for reqwest::RequestBuilder {
     async fn send_retry_default(self) -> Result<Response> {
-        self.send_retry(vec![], DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS)
+        self.send_retry(vec![], vec![], DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS)
             .await
     }
 
     async fn send_retry(
         self,
         fail_fast_status: Vec<StatusCode>,
+        extra_success_status: Vec<StatusCode>,
         retry_period: Duration,
         max_retry: usize,
     ) -> Result<Response> {
@@ -120,6 +134,7 @@ impl SendRetry for reqwest::RequestBuilder {
                 })
             },
             fail_fast_status,
+            extra_success_status,
             retry_period,
             max_retry,
         )
@@ -148,7 +163,7 @@ mod test {
         let invalid_url = "http://127.0.0.1:81/test.txt";
         let resp = reqwest::Client::new()
             .get(invalid_url)
-            .send_retry(vec![], Duration::from_millis(1), 3)
+            .send_retry(vec![], vec![], Duration::from_millis(1), 3)
             .await;
 
         if let Err(err) = &resp {
@@ -166,7 +181,7 @@ mod test {
         let invalid_url = "https://httpstat.us/400";
         let resp = reqwest::Client::new()
             .get(invalid_url)
-            .send_retry(vec![], Duration::from_millis(1), 1)
+            .send_retry(vec![], vec![], Duration::from_millis(1), 1)
             .await;
 
         if let Err(err) = &resp {
@@ -175,6 +190,24 @@ mod test {
         } else {
             anyhow::bail!("response to {} was expected to fail", invalid_url);
         }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn extra_error_success() -> Result<()> {
+        let invalid_url = "https://httpstat.us/400";
+        let resp = reqwest::Client::new()
+            .get(invalid_url)
+            .send_retry(
+                vec![],
+                vec![StatusCode::BAD_REQUEST],
+                Duration::from_millis(1),
+                1,
+            )
+            .await?;
+
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 
         Ok(())
     }
