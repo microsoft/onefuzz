@@ -35,12 +35,8 @@ pub struct CommonConfig {
 
     pub heartbeat_queue: Option<Url>,
 
-    // TODO: remove the alias once the service has been updated to match
-    #[serde(alias = "instrumentation_key")]
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
 
-    // TODO: remove the alias once the service has been updated to match
-    #[serde(alias = "telemetry_key")]
     pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
 
     #[serde(default)]
