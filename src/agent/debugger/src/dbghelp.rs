@@ -7,6 +7,7 @@
 #![allow(clippy::unreadable_literal)]
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::needless_return)]
+#![allow(clippy::upper_case_acronyms)]
 /// This module defines a wrapper around dbghelp apis so they can be used in a thread safe manner
 /// as well as providing a more Rust like api.
 use std::{

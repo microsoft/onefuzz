@@ -205,8 +205,8 @@ def build_task_config(
         job_id=job_id,
         task_id=task_id,
         task_type=task_config.task.type,
-        instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
-        telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+        instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+        microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "task-heartbeat",
             StorageType.config,
