@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::useless_format)]
+#![allow(clippy::upper_case_acronyms)]
 
 use std::{
     env,

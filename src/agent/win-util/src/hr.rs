@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#![allow(clippy::upper_case_acronyms)]
+
 //! A module used to wrap an HRESULT for use as an Error.
 use std::fmt::{self, Display, Formatter};
 

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.12.0
+### Added
+* Agent: LibFuzzer tasks now include a verification step that verifies the fuzzer can test a small number of seeds at the start of the task.  [#752](https://github.com/microsoft/onefuzz/pull/752)
+* Integration Tests: Added verification that no errors are logged to Application Insights during testing.  [#700](https://github.com/microsoft/onefuzz/pull/700)
+* Agent/Supervisor/Service/Deployment: Added support for multi-tenant authentication.  [#746](https://github.com/microsoft/onefuzz/pull/746)
+* CLI/Service: Added support for [Ephemeral OS Disks](https://docs.microsoft.com/en-us/azure/virtual-machines/ephemeral-os-disks).  [#461](https://github.com/microsoft/onefuzz/pull/461), [#761](https://github.com/microsoft/onefuzz/pull/761) 
+
+### Changed
+* Agent: Continued development related to upcoming features. [#765](https://github.com/microsoft/onefuzz/pull/765), [#762](https://github.com/microsoft/onefuzz/pull/762), [#754](https://github.com/microsoft/onefuzz/pull/754), [#756](https://github.com/microsoft/onefuzz/pull/756), [#750](https://github.com/microsoft/onefuzz/pull/750), [#744](https://github.com/microsoft/onefuzz/pull/744), [#753](https://github.com/microsoft/onefuzz/pull/753)
+* Contrib: Updated multiple python dependencies.  [#764](https://github.com/microsoft/onefuzz/pull/764)
+* CLI/Agent: LibFuzzer fuzzing tasks no longer default to failing the task if the fuzzer exits with a non-zero status but no crash artifact.  [#748](https://github.com/microsoft/onefuzz/pull/748)
+
+### Fixed
+* Agent/Proxy/Supervisor: Fixed issues prevent HTTPS retries.  [#766](https://github.com/microsoft/onefuzz/pull/766)
+* Agent/Service/Proxy/Supervisor: Fixed logging and telemetry from the agent. [#769](https://github.com/microsoft/onefuzz/pull/769)
+
 ## 2.11.1
 ### Fixed
 * Agent/Proxy/Supervisor: Fixed issues preventing heartbeats.  [#749](https://github.com/microsoft/onefuzz/pull/749)

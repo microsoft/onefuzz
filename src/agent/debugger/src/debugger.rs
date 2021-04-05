@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_else_if)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::unreadable_literal)]
 #![allow(clippy::single_match)]
