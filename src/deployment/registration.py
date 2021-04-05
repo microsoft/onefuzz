@@ -533,14 +533,17 @@ def set_app_audience(objectId: str, audience: str) -> None:
             % (objectId, http_body)
         )
         logger.warning(
-            "execute the following query in the azure portal bash shell and run deploy.py again : \n%s"
-            % query
+            "execute the following query in the azure portal bash shell and "
+            "run deploy.py again : \n%s",
+            query,
         )
         err_str = (
             "Unable to set signInAudience using Microsoft Graph Query API. \n"
-            + "The user must enable single/multi tenancy in the 'Authentication' blade of the "
-            + "Application Registration in the AAD web portal, or use the azure bash shell "
-            + "using the command given above."
+            "The user must enable single/multi tenancy in the "
+            "'Authentication' blade of the "
+            "Application Registration in the "
+            "AAD web portal, or use the azure bash shell "
+            "using the command given above."
         )
         raise Exception(err_str)
 
