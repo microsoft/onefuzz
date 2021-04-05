@@ -222,8 +222,8 @@ class Proxy(ORMMixin):
             ),
             forwards=forwards,
             region=self.region,
-            instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
-            telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+            instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+            microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
             instance_id=get_instance_id(),
         )
 

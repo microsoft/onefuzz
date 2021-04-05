@@ -31,8 +31,8 @@ def set_config(pool: Pool) -> Pool:
     pool.config = AgentConfig(
         pool_name=pool.name,
         onefuzz_url=get_instance_url(),
-        instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
-        telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+        instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+        microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "node-heartbeat",
             StorageType.config,
