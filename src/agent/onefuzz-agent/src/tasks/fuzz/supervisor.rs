@@ -211,6 +211,7 @@ async fn start_supervisor(
     let cmd = cmd
         .kill_on_drop(true)
         .env_remove("RUST_LOG")
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 

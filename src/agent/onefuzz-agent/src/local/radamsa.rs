@@ -3,7 +3,7 @@
 
 use crate::{
     local::{
-        common::{build_common_config, DirectoryMonitorQueue},
+        common::{build_local_context, DirectoryMonitorQueue},
         generic_crash_report::{build_report_config, build_shared_args as build_crash_args},
         generic_generator::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
@@ -14,11 +14,12 @@ use clap::{App, SubCommand};
 use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
 use tokio::task::spawn;
+
 use uuid::Uuid;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args, true)?;
-    let fuzz_config = build_fuzz_config(args, common.clone())?;
+    let context = build_local_context(args, true)?;
+    let fuzz_config = build_fuzz_config(args, context.common_config.clone())?;
     let crash_dir = fuzz_config
         .crashes
         .url
@@ -34,7 +35,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         Some(crash_report_input_monitor.queue_client),
         CommonConfig {
             task_id: Uuid::new_v4(),
-            ..common
+            ..context.common_config.clone()
         },
     )?;
     let report_task = spawn(async move { ReportTask::new(report_config).managed_run().await });

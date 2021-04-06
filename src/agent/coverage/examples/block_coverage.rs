@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::process::Command;
+use std::{path::PathBuf, process::Command, process::Stdio};
 
 use anyhow::Result;
 use coverage::code::{CmdFilter, CmdFilterDef};
@@ -63,7 +63,7 @@ fn main() -> Result<()> {
     let filter = opt.load_filter_or_default()?;
 
     let mut cmd = Command::new(&opt.cmd[0]);
-    cmd.args(&opt.cmd[1..]);
+    cmd.stdin(Stdio::null()).args(&opt.cmd[1..]);
 
     let mut cache = ModuleCache::default();
     let mut recorder = Recorder::new(&mut cache, filter);

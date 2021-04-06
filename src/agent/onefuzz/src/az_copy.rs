@@ -11,6 +11,7 @@ pub async fn sync(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, delete_dst: bo
     let mut cmd = Command::new("azcopy");
 
     cmd.kill_on_drop(true)
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .arg("sync")
@@ -48,6 +49,7 @@ pub async fn copy(src: impl AsRef<OsStr>, dst: impl AsRef<OsStr>, recursive: boo
     let mut cmd = Command::new("azcopy");
 
     cmd.kill_on_drop(true)
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .arg("copy")

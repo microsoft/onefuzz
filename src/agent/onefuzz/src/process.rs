@@ -114,6 +114,7 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
 
     let mut cmd = Command::new(program);
     cmd.env_remove("RUST_LOG")
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .args(argv)
