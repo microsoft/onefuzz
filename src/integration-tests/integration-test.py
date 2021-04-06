@@ -777,6 +777,22 @@ class TestOnefuzz:
             ):
                 continue
 
+            # ignore analyzer output, as we can't control what applications
+            # being fuzzed send to stdout or stderr. (most importantly, cdb
+            # prints "Symbol Loading Error Summary")
+            if message.startswith("process (stdout) analyzer:") or message.startswith(
+                "process (stderr) analyzer:"
+            ):
+                continue
+
+            # TODO: ignore queue errors until tasks are shut down before
+            # deleting queues https://github.com/microsoft/onefuzz/issues/141
+            if (
+                message in ["storage queue pop failed", "storage queue delete failed"]
+                and entry.get("sdkVersion") == "rust:0.1.5"
+            ):
+                continue
+
             if message is None:
                 self.logger.error("error log: %s", entry)
             else:
