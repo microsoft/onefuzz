@@ -88,6 +88,7 @@ impl CoverageTask {
 
         if seen_inputs {
             context.report_coverage_stats().await?;
+            context.save_and_sync_coverage().await?;
         }
 
         context.heartbeat.alive();
@@ -230,6 +231,18 @@ impl<'a> TaskContext<'a> {
 
         Ok(())
     }
+
+    pub async fn save_and_sync_coverage(&self) -> Result<()> {
+        let path = self.config.coverage.path.join(COVERAGE_FILE);
+        let text = serde_json::to_string(&self.coverage).context("serializing coverage to JSON")?;
+
+        fs::write(&path, &text)
+            .await
+            .with_context(|| format!("writing coverage to {}", path.display()))?;
+        self.config.coverage.sync_push().await?;
+
+        Ok(())
+    }
 }
 
 struct Recorded {
@@ -268,6 +281,7 @@ impl<'a> Processor for TaskContext<'a> {
 
         self.record_input(input).await?;
         self.report_coverage_stats().await?;
+        self.save_and_sync_coverage().await?;
 
         Ok(())
     }
