@@ -223,7 +223,6 @@ impl TerminalUi {
         let mut terminal = ui_state.terminal;
 
         Self::take_available_logs(&mut log_event_receiver, 10, &mut logs);
-        //.extend_front(log_event_receiver.take_available(10)?.into_iter().rev());
         terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
