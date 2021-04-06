@@ -132,14 +132,12 @@ impl AzureQueueClient {
         let body = serde_xml_rs::to_string(&AzureQueueMessageSend {
             message_text: base64::encode(&serialized),
         })?;
-        let r = self
-            .http
+        self.http
             .post(self.messages_url.clone())
             .body(body)
             .send_retry_default()
             .await
-            .context("storage queue enqueue failed")?;
-        let _ = r
+            .context("storage queue enqueue failed")?
             .error_for_status()
             .context("storage queue enqueue failed with error")?;
         Ok(())

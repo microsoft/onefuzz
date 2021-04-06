@@ -362,8 +362,8 @@ class AgentConfig(BaseModel):
     onefuzz_url: str
     pool_name: PoolName
     heartbeat_queue: Optional[str]
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
     multi_tenant_domain: Optional[str]
     instance_id: UUID
 
@@ -373,8 +373,8 @@ class TaskUnitConfig(BaseModel):
     job_id: UUID
     task_id: UUID
     task_type: TaskType
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
     heartbeat_queue: str
     # command_queue: str
     input_queue: Optional[str]
@@ -433,8 +433,8 @@ class ProxyConfig(BaseModel):
     notification: str
     region: Region
     forwards: List[Forward]
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
     instance_id: UUID
 
 
