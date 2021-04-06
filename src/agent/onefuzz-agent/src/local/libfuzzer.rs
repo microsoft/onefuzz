@@ -102,7 +102,7 @@ pub async fn run(
                 task_id: Uuid::new_v4(),
                 ..context.common_config.clone()
             },
-            event_sender,
+            event_sender.clone(),
         )?;
         let analysis_task = spawn(async move { run_analysis(analysis_config).await });
 
@@ -117,6 +117,7 @@ pub async fn run(
                 task_id: Uuid::new_v4(),
                 ..context.common_config.clone()
             },
+            event_sender,
         )?;
         let regression = LibFuzzerRegressionTask::new(regression_config);
         let regression_task = spawn(async move { regression.run().await });

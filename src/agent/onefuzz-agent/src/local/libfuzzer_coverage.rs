@@ -31,12 +31,10 @@ pub fn build_coverage_config(
     let target_options = get_cmd_arg(CmdType::Target, args);
 
     let readonly_inputs = if local_job {
-        vec![get_synced_dir(
-            INPUTS_DIR,
-            common.job_id,
-            common.task_id,
-            args,
-        )?.monitor_count(&event_sender)?]
+        vec![
+            get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?
+                .monitor_count(&event_sender)?,
+        ]
     } else {
         get_synced_dirs(READONLY_INPUTS, common.job_id, common.task_id, args)?
             .into_iter()
