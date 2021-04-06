@@ -208,7 +208,6 @@ pub fn get_synced_dir(
     })
 }
 
-
 // NOTE: generate_task_id is intended to change the default behavior for local
 // fuzzing tasks from generating random task id to using UUID::nil(). This
 // enables making the one-shot crash report generation, which isn't really a task,
