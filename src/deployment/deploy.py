@@ -122,7 +122,9 @@ class Client:
         log_service_principal: bool,
         multi_tenant_domain: str,
         upgrade: bool,
+        subscription_id: Optional[str],
     ):
+        self.subscription_id = subscription_id
         self.resource_group = resource_group
         self.arm_template = arm_template
         self.location = location
@@ -171,11 +173,16 @@ class Client:
             self.workbook_data = json.load(f)
 
     def get_subscription_id(self) -> str:
+        if self.subscription_id:
+            return self.subscription_id
         profile = get_cli_profile()
-        return cast(str, profile.get_subscription_id())
+        self.subscription_id = cast(str, profile.get_subscription_id())
+        return self.subscription_id
 
     def get_location_display_name(self) -> str:
-        location_client = get_client_from_cli_profile(SubscriptionClient)
+        location_client = get_client_from_cli_profile(
+            SubscriptionClient, subscription_id=self.get_subscription_id()
+        )
         locations = location_client.subscriptions.list_locations(
             self.get_subscription_id()
         )
@@ -194,7 +201,9 @@ class Client:
         with open(self.arm_template, "r") as handle:
             arm = json.load(handle)
 
-        client = get_client_from_cli_profile(ResourceManagementClient)
+        client = get_client_from_cli_profile(
+            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        )
         providers = {x.namespace: x for x in client.providers.list()}
 
         unsupported = []
@@ -233,7 +242,7 @@ class Client:
             sys.exit(1)
 
     def create_password(self, object_id: UUID) -> Tuple[str, str]:
-        return add_application_password(object_id)
+        return add_application_password(object_id, self.get_subscription_id())
 
     def setup_rbac(self) -> None:
         """
@@ -245,7 +254,9 @@ class Client:
             logger.info("using existing client application")
             return
 
-        client = get_client_from_cli_profile(GraphRbacManagementClient)
+        client = get_client_from_cli_profile(
+            GraphRbacManagementClient, subscription_id=self.get_subscription_id()
+        )
         logger.info("checking if RBAC already exists")
 
         try:
@@ -400,7 +411,10 @@ class Client:
                 "subscription, creating a new one"
             )
             app_info = register_application(
-                "onefuzz-cli", self.application_name, OnefuzzAppRole.CliClient
+                "onefuzz-cli",
+                self.application_name,
+                OnefuzzAppRole.CliClient,
+                self.get_subscription_id(),
             )
             if self.multi_tenant_domain:
                 authority = COMMON_AUTHORITY
@@ -429,7 +443,9 @@ class Client:
         with open(self.arm_template, "r") as template_handle:
             template = json.load(template_handle)
 
-        client = get_client_from_cli_profile(ResourceManagementClient)
+        client = get_client_from_cli_profile(
+            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        )
         client.resource_groups.create_or_update(
             self.resource_group, {"location": self.location}
         )
@@ -512,6 +528,7 @@ class Client:
         assign_scaleset_role(
             self.application_name,
             self.results["deploy"]["scaleset-identity"]["value"],
+            self.get_subscription_id(),
         )
 
     def apply_migrations(self) -> None:
@@ -548,7 +565,9 @@ class Client:
         logger.info("creating eventgrid subscription")
         src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
         dst_resource_id = self.results["deploy"]["func-storage"]["value"]
-        client = get_client_from_cli_profile(StorageManagementClient)
+        client = get_client_from_cli_profile(
+            StorageManagementClient, subscription_id=self.get_subscription_id()
+        )
         event_subscription_info = EventSubscription(
             destination=StorageQueueEventSubscriptionDestination(
                 resource_id=dst_resource_id, queue_name="file-changes"
@@ -565,7 +584,9 @@ class Client:
             ),
         )
 
-        client = get_client_from_cli_profile(EventGridManagementClient)
+        client = get_client_from_cli_profile(
+            EventGridManagementClient, subscription_id=self.get_subscription_id()
+        )
         result = client.event_subscriptions.create_or_update(
             src_resource_id, "onefuzz1", event_subscription_info
         ).result()
@@ -639,7 +660,8 @@ class Client:
         )
 
         app_insight_client = get_client_from_cli_profile(
-            ApplicationInsightsManagementClient
+            ApplicationInsightsManagementClient,
+            subscription_id=self.get_subscription_id(),
         )
 
         to_delete = []
@@ -829,7 +851,7 @@ class Client:
     def update_registration(self) -> None:
         if not self.create_registration:
             return
-        update_pool_registration(self.application_name)
+        update_pool_registration(self.application_name, self.get_subscription_id())
 
     def done(self) -> None:
         logger.info(TELEMETRY_NOTICE)
@@ -967,6 +989,10 @@ def main() -> None:
         default=None,
         help="enable multi-tenant authentication with this tenant domain",
     )
+    parser.add_argument(
+        "--subscription_id",
+        type=str,
+    )
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -992,6 +1018,7 @@ def main() -> None:
         log_service_principal=args.log_service_principal,
         multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
+        subscription_id=args.subscription_id,
     )
     if args.verbose:
         level = logging.DEBUG
