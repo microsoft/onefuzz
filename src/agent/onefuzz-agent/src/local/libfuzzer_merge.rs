@@ -30,7 +30,9 @@ pub fn build_merge_config(
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
     let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
-    let inputs = get_synced_dirs(ANALYSIS_INPUTS, common.job_id, common.task_id, args)?;
+    let inputs = get_synced_dirs(ANALYSIS_INPUTS, common.job_id, common.task_id, args)?.into_iter()
+            .map(|sd| sd.monitor_count(&event_sender))
+            .collect::<Result<Vec<_>>>()?;
     let unique_inputs =
         get_synced_dir(ANALYSIS_UNIQUE_INPUTS, common.job_id, common.task_id, args)?
             .monitor_count(&event_sender)?;

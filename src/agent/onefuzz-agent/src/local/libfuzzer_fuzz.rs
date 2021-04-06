@@ -27,7 +27,7 @@ pub fn build_fuzz_config(
 ) -> Result<Config> {
     let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?
         .monitor_count(&event_sender)?;
-    let inputs = get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?;
+    let inputs = get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?.monitor_count(&event_sender)?;
 
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;

@@ -34,7 +34,9 @@ pub fn build_fuzz_config(
     let generator_exe = get_cmd_exe(CmdType::Generator, args)?;
     let generator_options = get_cmd_arg(CmdType::Generator, args);
     let generator_env = get_cmd_env(CmdType::Generator, args)?;
-    let readonly_inputs = get_synced_dirs(READONLY_INPUTS, common.job_id, common.task_id, args)?;
+    let readonly_inputs = get_synced_dirs(READONLY_INPUTS, common.job_id, common.task_id, args)?.into_iter()
+            .map(|sd| sd.monitor_count(&event_sender))
+            .collect::<Result<Vec<_>>>()?;
 
     let rename_output = args.is_present(RENAME_OUTPUT);
     let check_asan_log = args.is_present(CHECK_ASAN_LOG);
@@ -42,7 +44,7 @@ pub fn build_fuzz_config(
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
     let target_timeout = Some(value_t!(args, TARGET_TIMEOUT, u64)?);
 
-    let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args).ok();
+    let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args).ok().monitor_count(&event_sender)?;
 
     let ensemble_sync_delay = None;
 
