@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::match_like_matches_macro)]
-#![allow(clippy::unknown_clippy_lints)]
 #![allow(clippy::single_component_path_imports)]
 #![allow(clippy::option_map_or_none)]
 #![allow(clippy::ptr_arg)]
