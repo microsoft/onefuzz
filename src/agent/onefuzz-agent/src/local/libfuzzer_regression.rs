@@ -3,7 +3,7 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
+        build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
         CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR, NO_REPRO_DIR,
         REGRESSION_REPORTS_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
         TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
@@ -65,8 +65,8 @@ pub fn build_regression_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args, true)?;
-    let config = build_regression_config(args, common)?;
+    let context = build_local_context(args, true)?;
+    let config = build_regression_config(args, context.common_config.clone())?;
     LibFuzzerRegressionTask::new(config).run().await
 }
 

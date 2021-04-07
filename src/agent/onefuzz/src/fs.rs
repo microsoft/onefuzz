@@ -181,6 +181,7 @@ pub async fn sync_impl(
 ) -> Result<()> {
     let mut cmd = Command::new("rsync");
     cmd.kill_on_drop(true)
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .arg(if recursive { "-zhr" } else { "-zh" });
@@ -221,6 +222,7 @@ pub async fn sync_impl(
 ) -> Result<()> {
     let mut cmd = Command::new("robocopy");
     cmd.kill_on_drop(true)
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .arg(&src)

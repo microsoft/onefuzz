@@ -11,6 +11,8 @@ use crate::{
 };
 use anyhow::{Error, Result};
 use stacktrace_parser::{CrashLog, StackEntry};
+#[cfg(target_os = "linux")]
+use std::process::Stdio;
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
@@ -197,7 +199,7 @@ impl<'a> Tester<'a> {
         env: HashMap<String, String>,
     ) -> Result<Option<CrashLog>> {
         let mut cmd = std::process::Command::new(self.exe_path);
-        cmd.args(args);
+        cmd.args(args).stdin(Stdio::null());
         cmd.envs(&env);
 
         let (sender, receiver) = std::sync::mpsc::channel();

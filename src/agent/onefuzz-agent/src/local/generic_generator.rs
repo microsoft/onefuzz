@@ -3,7 +3,7 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
+        build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
         get_synced_dirs, CmdType, CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR,
         DISABLE_CHECK_DEBUGGER, GENERATOR_ENV, GENERATOR_EXE, GENERATOR_OPTIONS, READONLY_INPUTS,
         RENAME_OUTPUT, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, TOOLS_DIR,
@@ -60,8 +60,8 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args, true)?;
-    let config = build_fuzz_config(args, common)?;
+    let context = build_local_context(args, true)?;
+    let config = build_fuzz_config(args, context.common_config.clone())?;
     GeneratorTask::new(config).run().await
 }
 

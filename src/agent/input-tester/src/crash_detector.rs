@@ -9,7 +9,7 @@ use std::{
     fs,
     io::Write,
     path::Path,
-    process::{Command, Output},
+    process::{Command, Output, Stdio},
     time::{Duration, Instant},
 };
 
@@ -317,6 +317,7 @@ pub fn test_process<'a>(
     let mut command = Command::new(app_path);
     command
         .args(args)
+        .stdin(Stdio::null())
         .stdout(stdout_writer)
         .stderr(stderr_writer);
 

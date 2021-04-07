@@ -3,7 +3,7 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
+        build_local_context, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
         ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, NO_REPRO_DIR,
         REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR, UNIQUE_REPORTS_DIR,
     },
@@ -60,8 +60,8 @@ pub fn build_analysis_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args, true)?;
-    let config = build_analysis_config(args, None, common)?;
+    let context = build_local_context(args, true)?;
+    let config = build_analysis_config(args, None, context.common_config.clone())?;
     run_analysis(config).await
 }
 
