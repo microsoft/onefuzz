@@ -17,19 +17,12 @@ use memmap2::Mmap;
 use pdb::{
     AddressMap, FallibleIterator, PdbInternalSectionOffset, ProcedureSymbol, TypeIndex, PDB,
 };
-use uuid::Uuid;
-use winapi::um::winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386};
+use winapi::um::{
+    dbghelp::SYMOPT_EXACT_SYMBOLS,
+    winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386},
+};
 
 use crate::intel;
-
-fn uuid_from_bytes_le(mut bytes: [u8; 16]) -> Uuid {
-    for (i, j) in [(0, 3), (1, 2), (4, 5), (6, 7)].iter() {
-        let tmp = bytes[*i];
-        bytes[*i] = bytes[*j];
-        bytes[*j] = tmp;
-    }
-    Uuid::from_bytes(bytes)
-}
 
 struct JumpTableData {
     pub offset: PdbInternalSectionOffset,
@@ -246,18 +239,8 @@ pub fn process_module(
         let pdb_path = find_pdb_path(pe_path.as_ref(), &cv)?;
         let pdb_file = File::open(&pdb_path)?;
         let mut pdb = PDB::open(pdb_file)?;
-        let pdbi = pdb.pdb_information()?;
-
-        if pdbi.guid != uuid_from_bytes_le(cv.signature) || pdbi.age < cv.age {
-            anyhow::bail!(
-                "pdb `{}` doesn't match image `{}`",
-                pdb_path.display(),
-                pe_path.as_ref().display()
-            );
-        }
 
         let address_map = pdb.address_map()?;
-
         let mut blocks = FixedBitSet::with_capacity(data.len());
 
         let proc_sym_info = collect_proc_symbols(&mut pdb.global_symbols()?.iter())?;
@@ -313,6 +296,10 @@ fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf>
     let dbghelp = debugger::dbghelp::lock()?;
     dbghelp.sym_initialize(handle)?;
     let _cleanup = DbgHelpCleanupGuard::new(&dbghelp, handle);
+
+    // Enable signature and age checking.
+    let options = dbghelp.sym_get_options();
+    dbghelp.sym_set_options(options | SYMOPT_EXACT_SYMBOLS);
 
     let mut search_path = dbghelp.sym_get_search_path(handle)?;
 
