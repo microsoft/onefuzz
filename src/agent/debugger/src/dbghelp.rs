@@ -55,6 +55,11 @@ use winapi::{
 // We use 4096 based on C4503 - the documented VC++ warning that a name is truncated.
 const MAX_SYM_NAME: usize = 4096;
 
+/// For `flags` parameter of `SymFindFileInPath`.
+///
+/// Missing from `winapi-rs`.
+const SSRVOPT_DWORD: DWORD = 0x0002;
+
 // Ideally this would be a function, but it would require returning a large stack
 // allocated object **and** an interior pointer to the object, so we use a macro instead.
 macro_rules! init_sym_info {
@@ -697,8 +702,8 @@ impl DebugHelpGuard {
         let two = pdb_age;
         let three = 0;
 
-        // SSRVOPT_DWORD
-        let flags = 0x0002;
+        // Assert that we are passing a DWORD signature in `id`.
+        let flags = SSRVOPT_DWORD;
 
         check_winapi(|| unsafe {
             SymFindFileInPathW(
