@@ -277,9 +277,7 @@
                         "clientSecret": "[parameters('clientSecret')]",
                         "issuer": "[parameters('app_func_issuer')]",
                         "defaultProvider": "AzureActiveDirectory",
-                        "allowedAudiences": [
-                            "[concat('https://', parameters('name'), '.azurewebsites.net')]"
-                        ],
+                        "allowedAudiences": ["[parameters('app_func_audience')]"],
                         "isAadAutoProvisioned": false
                     }
                 },
