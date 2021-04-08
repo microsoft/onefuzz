@@ -6,10 +6,7 @@ use std::process::Command;
 use std::time::{Duration, Instant};
 
 use anyhow::Result;
-use debugger::{
-    debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger},
-    target::Module,
-};
+use debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger, ModuleLoadInfo};
 
 use crate::block::CommandBlockCov;
 use crate::cache::ModuleCache;
@@ -107,10 +104,11 @@ impl<'c> Recorder<'c> {
         self.coverage
     }
 
-    pub fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
+    pub fn on_create_process(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) -> Result<()> {
         log::debug!("process created: {}", module.path().display());
 
-        if let Err(err) = dbg.target().sym_initialize() {
+        // TODO: we should avoid loading symbols if the module is in the cache.
+        if let Err(err) = dbg.target().maybe_sym_initialize() {
             log::error!(
                 "unable to initialize symbol handler for new process {}: {:?}",
                 module.path().display(),
@@ -121,8 +119,10 @@ impl<'c> Recorder<'c> {
         self.insert_module(dbg, module)
     }
 
-    pub fn on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
+    pub fn on_load_dll(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) -> Result<()> {
         log::debug!("DLL loaded: {}", module.path().display());
+
+        // TODO: we should load symbols if the module is not in the cache (see on_create_process).
 
         self.insert_module(dbg, module)
     }
@@ -163,7 +163,7 @@ impl<'c> Recorder<'c> {
         Ok(())
     }
 
-    fn insert_module(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
+    fn insert_module(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) -> Result<()> {
         let path = ModulePath::new(module.path().to_owned())?;
 
         if !self.filter.includes_module(&path) {
@@ -197,13 +197,13 @@ impl<'c> Recorder<'c> {
 }
 
 impl<'r, 'c> DebugEventHandler for RecorderEventHandler<'r, 'c> {
-    fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
+    fn on_create_process(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
         if self.recorder.on_create_process(dbg, module).is_err() {
             self.stop(dbg);
         }
     }
 
-    fn on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) {
+    fn on_load_dll(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
         if self.recorder.on_load_dll(dbg, module).is_err() {
             self.stop(dbg);
         }
@@ -244,17 +244,17 @@ impl Breakpoints {
     pub fn set(
         &mut self,
         dbg: &mut Debugger,
-        module: &Module,
+        module: &ModuleLoadInfo,
         offsets: impl Iterator<Item = u64>,
     ) -> Result<()> {
-        // From the `target::Module`, create and save a `ModulePath`.
+        // From the `debugger::ModuleLoadInfo`, create and save a `ModulePath`.
         let module_path = ModulePath::new(module.path().to_owned())?;
         let module_index = self.modules.len();
         self.modules.push(module_path);
 
         for offset in offsets {
             // Register the breakpoint in the running target address space.
-            let id = dbg.register_breakpoint(module.name(), offset, BreakpointType::OneTime);
+            let id = dbg.new_rva_breakpoint(module.name(), offset, BreakpointType::OneTime);
 
             // Associate the opaque `BreakpointId` with the module and offset.
             self.registered.insert(id, (module_index, offset));

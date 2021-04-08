@@ -3,33 +3,32 @@
 
 #![allow(clippy::single_match)]
 
-use std::{
-    collections::hash_map,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{collections::hash_map, num::NonZeroU64, path::Path};
 
 use anyhow::Result;
-use log::{error, trace};
+use log::{debug, error, trace};
 use rand::{thread_rng, Rng};
-use win_util::{file, handle::Handle, last_os_error, process};
+use win_util::{last_os_error, process};
 use winapi::{
-    shared::minwindef::{DWORD, LPVOID},
+    shared::minwindef::DWORD,
     um::{
         processthreadsapi::{ResumeThread, SuspendThread},
         winbase::Wow64SuspendThread,
-        winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386},
+        winnt::HANDLE,
     },
 };
 
 use crate::{
+    breakpoint::{self, Breakpoint},
     dbghelp::{self, FrameContext},
-    debugger::{Breakpoint, BreakpointId, BreakpointType, ModuleBreakpoint, StepState},
+    debugger::{BreakpointId, BreakpointType, ModuleLoadInfo},
+    module::{self, Machine, Module},
 };
 
-struct CodeByteToUpdate {
-    address: u64,
-    byte: u8,
+#[derive(Copy, Clone)]
+pub(crate) enum StepState {
+    RestoreBreakpointAfterStep { pc: u64 },
+    SingleStep,
 }
 
 struct ThreadInfo {
@@ -85,71 +84,11 @@ impl ThreadInfo {
     }
 }
 
-#[derive(Clone)]
-pub struct Module {
-    path: PathBuf,
-    file_handle: Handle,
-    base_address: u64,
-    image_size: u32,
-    machine: Machine,
-
-    // Track if we need to call SymLoadModule for the dll.
-    sym_module_loaded: bool,
-}
-
-impl Module {
-    fn new(module_handle: HANDLE, base_address: u64) -> Result<Self> {
-        let path = file::get_path_from_handle(module_handle).unwrap_or_else(|e| {
-            error!("Error getting path from file handle: {}", e);
-            "???".into()
-        });
-
-        let image_details = get_image_details(&path)?;
-
-        Ok(Self {
-            path,
-            file_handle: Handle(module_handle),
-            base_address,
-            image_size: image_details.image_size,
-            machine: image_details.machine,
-            sym_module_loaded: false,
-        })
-    }
-
-    fn sym_load_module(&mut self, process_handle: HANDLE) -> Result<()> {
-        if !self.sym_module_loaded {
-            let dbghelp = dbghelp::lock()?;
-
-            dbghelp.sym_load_module(
-                process_handle,
-                self.file_handle.0,
-                &self.path,
-                self.base_address,
-                self.image_size,
-            )?;
-
-            self.sym_module_loaded = true;
-        }
-
-        Ok(())
-    }
-
-    pub fn path(&self) -> &Path {
-        &self.path
-    }
-
-    pub fn base_address(&self) -> u64 {
-        self.base_address
-    }
-
-    pub fn image_size(&self) -> u32 {
-        self.image_size
-    }
-
-    pub fn name(&self) -> &Path {
-        // Unwrap guaranteed by construction, we always have a filename.
-        self.path.file_stem().unwrap().as_ref()
-    }
+#[derive(Copy, Clone, PartialEq)]
+enum SymInitalizeState {
+    NotInitialized,
+    InitializeNeeded,
+    Initialized,
 }
 
 pub struct Target {
@@ -163,7 +102,7 @@ pub struct Target {
 
     // Track if we need to call SymInitialize for the process and if we need to notify
     // dbghelp about loaded/unloaded dlls.
-    sym_initialized: bool,
+    sym_initialize_state: SymInitalizeState,
     exited: bool,
 
     thread_info: fnv::FnvHashMap<DWORD, ThreadInfo>,
@@ -177,12 +116,11 @@ pub struct Target {
     // Key is base address (which also happens to be the HANDLE).
     modules: fnv::FnvHashMap<u64, Module>,
 
-    breakpoints: fnv::FnvHashMap<u64, Breakpoint>,
+    // Breakpoints that are either unresolved - so just an rva or symbol.
+    unresolved_breakpoints: Vec<Breakpoint>,
 
     // Map of thread to stepping state (e.g. breakpoint address to restore breakpoints)
     single_step: fnv::FnvHashMap<DWORD, StepState>,
-
-    code_byte_to_update: Option<CodeByteToUpdate>,
 }
 
 impl Target {
@@ -204,14 +142,13 @@ impl Target {
             saw_initial_bp: false,
             saw_initial_wow64_bp: false,
             wow64,
-            sym_initialized: false,
+            sym_initialize_state: SymInitalizeState::NotInitialized,
             exited: false,
             thread_info: thread_handles,
             current_context: None,
             modules: fnv::FnvHashMap::default(),
-            breakpoints: fnv::FnvHashMap::default(),
+            unresolved_breakpoints: vec![],
             single_step: fnv::FnvHashMap::default(),
-            code_byte_to_update: None,
         }
     }
 
@@ -252,16 +189,8 @@ impl Target {
         self.saw_initial_wow64_bp
     }
 
-    pub fn set_saw_initial_wow64_bp(&mut self) {
-        self.saw_initial_wow64_bp = true;
-    }
-
     pub fn saw_initial_bp(&self) -> bool {
         self.saw_initial_bp
-    }
-
-    pub fn set_saw_initial_bp(&mut self) {
-        self.saw_initial_bp = true;
     }
 
     pub fn exited(&self) -> bool {
@@ -272,24 +201,162 @@ impl Target {
         self.modules.iter()
     }
 
-    pub fn initial_bp(&mut self, load_symbols: bool) -> Result<()> {
+    pub fn initial_bp(&mut self) -> Result<()> {
         self.saw_initial_bp = true;
 
-        if load_symbols || !self.breakpoints.is_empty() {
-            self.sym_initialize()?;
+        if self
+            .unresolved_breakpoints
+            .iter()
+            .any(|bp| bp.sym_extra_info().is_some())
+        {
+            self.maybe_sym_initialize()?;
+        }
 
-            for (_, module) in self.modules.iter_mut() {
-                if let Err(e) = module.sym_load_module(self.process_handle) {
-                    error!("Error loading symbols: {}", e);
-                }
-            }
+        if !self.unresolved_breakpoints.is_empty() {
+            self.try_resolve_all_unresolved_breakpoints()?;
         }
 
         Ok(())
     }
 
-    pub fn breakpoint_set_at_addr(&self, address: u64) -> bool {
-        self.breakpoints.contains_key(&address)
+    pub fn initial_wow64_bp(&mut self) {
+        self.saw_initial_wow64_bp = true;
+    }
+
+    fn try_resolve_all_unresolved_breakpoints(&mut self) -> Result<()> {
+        // borrowck - take ownership from self so we call `try_resolve_unresolved_breakpoint`.
+        let mut unresolved_breakpoints = std::mem::take(&mut self.unresolved_breakpoints);
+        unresolved_breakpoints.retain(|bp| self.try_resolve_unresolved_breakpoint(bp));
+        assert!(self.unresolved_breakpoints.is_empty());
+        self.unresolved_breakpoints = unresolved_breakpoints;
+
+        Ok(())
+    }
+
+    fn try_resolve_unresolved_breakpoint(&mut self, breakpoint: &Breakpoint) -> bool {
+        if !self.saw_initial_bp {
+            return false;
+        }
+
+        match breakpoint.extra_info() {
+            breakpoint::ExtraInfo::Rva(rva_info) => {
+                if let Some(module) = self.module_from_name_mut(rva_info.module()) {
+                    let address = module.base_address() + rva_info.rva();
+                    module.new_breakpoint(breakpoint.id(), breakpoint.kind(), address);
+                    true
+                } else {
+                    false
+                }
+            }
+            breakpoint::ExtraInfo::UnresolvedSymbol(sym_info) => {
+                let process_handle = self.process_handle; // borrowck
+                if let Some(module) = self.module_from_name_mut(sym_info.module()) {
+                    match dbghelp::lock() {
+                        Ok(dbghelp) => {
+                            match dbghelp.sym_from_name(
+                                process_handle,
+                                module.name(),
+                                sym_info.function(),
+                            ) {
+                                Ok(sym) => {
+                                    module.new_breakpoint(
+                                        breakpoint.id(),
+                                        breakpoint.kind(),
+                                        sym.address(),
+                                    );
+                                }
+                                Err(_) => {
+                                    debug!(
+                                        "unknown symbol {}!{}",
+                                        module.name().display(),
+                                        sym_info.function()
+                                    );
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            error!("Can't set symbolic breakpoints: {}", e);
+                        }
+                    }
+                }
+                false
+            }
+            breakpoint::ExtraInfo::Resolved(_) => unreachable!(
+                "address breakpoints should never be added to the unresolved breakpoint list"
+            ),
+        }
+    }
+
+    pub fn new_symbolic_breakpoint(
+        &mut self,
+        id: BreakpointId,
+        module: impl AsRef<str>,
+        func: impl AsRef<str>,
+        kind: BreakpointType,
+    ) -> Result<BreakpointId> {
+        self.maybe_sym_initialize()?;
+        let bp = Breakpoint::from_symbol(id, kind, module.as_ref(), func.as_ref());
+        if !self.try_resolve_unresolved_breakpoint(&bp) {
+            self.unresolved_breakpoints.push(bp);
+        }
+        Ok(id)
+    }
+
+    pub fn new_rva_breakpoint(
+        &mut self,
+        id: BreakpointId,
+        module: impl AsRef<str>,
+        rva: u64,
+        kind: BreakpointType,
+    ) -> BreakpointId {
+        let bp = Breakpoint::from_rva(id, kind, module.as_ref(), rva);
+        if !self.try_resolve_unresolved_breakpoint(&bp) {
+            self.unresolved_breakpoints.push(bp);
+        }
+        id
+    }
+
+    pub fn new_absolute_breakpoint(
+        &mut self,
+        id: BreakpointId,
+        address: u64,
+        kind: BreakpointType,
+    ) -> Result<BreakpointId> {
+        self.module_from_address(address)
+            .new_breakpoint(id, kind, address);
+        Ok(id)
+    }
+
+    fn module_base_from_address(&self, address: u64) -> Option<NonZeroU64> {
+        let dbghelp = dbghelp::lock().expect("can't lock dbghelp to find module");
+        dbghelp.get_module_base(self.process_handle, address)
+    }
+
+    fn module_from_address(&mut self, address: u64) -> &mut Module {
+        let module_base = self
+            .module_base_from_address(address)
+            .unwrap_or(unsafe { NonZeroU64::new_unchecked(module::UNKNOWN_MODULE_BASE_ADDRESS) });
+
+        self.modules
+            .entry(module_base.get())
+            .or_insert_with(|| Module::new_fake_module())
+    }
+
+    fn module_from_name_mut(&mut self, name: &str) -> Option<&mut Module> {
+        let name = Path::new(name);
+        self.modules
+            .values_mut()
+            .find(|module| module.name() == name)
+    }
+
+    fn get_breakpoint_for_address(&mut self, address: u64) -> Option<&mut Breakpoint> {
+        self.module_from_address(address)
+            .get_breakpoint_mut(address)
+    }
+
+    pub fn breakpoint_set_at_addr(&mut self, address: u64) -> bool {
+        self.module_from_address(address)
+            .contains_breakpoint(address)
     }
 
     pub(crate) fn expecting_single_step(&self, thread_id: DWORD) -> bool {
@@ -300,30 +367,43 @@ impl Target {
         self.single_step.remove(&thread_id);
     }
 
-    pub fn sym_initialize(&mut self) -> Result<()> {
-        if !self.sym_initialized {
-            let dbghelp = dbghelp::lock()?;
-            if let Err(e) = dbghelp.sym_initialize(self.process_handle) {
-                error!("Error in SymInitializeW: {}", e);
+    pub fn maybe_sym_initialize(&mut self) -> Result<()> {
+        if self.sym_initialize_state == SymInitalizeState::Initialized {
+            return Ok(());
+        }
 
-                if let Err(e) = dbghelp.sym_cleanup(self.process_handle) {
-                    error!("Error in SymCleanup: {}", e);
-                }
+        if self.sym_initialize_state == SymInitalizeState::NotInitialized {
+            self.sym_initialize_state = SymInitalizeState::InitializeNeeded;
+        }
 
-                return Err(e);
+        if self.saw_initial_bp && self.sym_initialize_state == SymInitalizeState::InitializeNeeded {
+            self.sym_initialize()?;
+            self.sym_initialize_state = SymInitalizeState::Initialized;
+        }
+
+        Ok(())
+    }
+
+    fn sym_initialize(&mut self) -> Result<()> {
+        let dbghelp = dbghelp::lock()?;
+        if let Err(e) = dbghelp.sym_initialize(self.process_handle) {
+            error!("Error in SymInitializeW: {}", e);
+
+            if let Err(e) = dbghelp.sym_cleanup(self.process_handle) {
+                error!("Error in SymCleanup: {}", e);
             }
 
-            for (_, module) in self.modules.iter_mut() {
-                if let Err(e) = module.sym_load_module(self.process_handle) {
-                    error!(
-                        "Error loading symbols for module {}: {}",
-                        module.path.display(),
-                        e
-                    );
-                }
-            }
+            return Err(e);
+        }
 
-            self.sym_initialized = true;
+        for (_, module) in self.modules.iter_mut() {
+            if let Err(e) = module.sym_load_module(self.process_handle) {
+                error!(
+                    "Error loading symbols for module {}: {}",
+                    module.path().display(),
+                    e
+                );
+            }
         }
 
         Ok(())
@@ -335,7 +415,7 @@ impl Target {
         &mut self,
         module_handle: HANDLE,
         base_address: u64,
-    ) -> Result<Option<Module>> {
+    ) -> Result<Option<ModuleLoadInfo>> {
         let mut module = Module::new(module_handle, base_address)?;
 
         trace!(
@@ -344,172 +424,52 @@ impl Target {
             base_address
         );
 
-        if module.machine == Machine::X64 && process::is_wow64_process(self.process_handle) {
+        if module.machine() == Machine::X64 && process::is_wow64_process(self.process_handle) {
             // We ignore native dlls in wow64 processes.
             return Ok(None);
         }
 
-        if self.sym_initialized {
+        if self.sym_initialize_state == SymInitalizeState::Initialized {
             if let Err(e) = module.sym_load_module(self.process_handle) {
                 error!("Error loading symbols: {}", e);
             }
         }
 
-        let base_address = module.base_address;
-        if let Some(old_value) = self.modules.insert(base_address, module.clone()) {
+        let module_load_info = ModuleLoadInfo::new(module.path(), base_address);
+        let base_address = module.base_address();
+        if let Some(old_value) = self.modules.insert(base_address, module) {
             error!(
                 "Existing module {} replace at base_address {}",
-                old_value.path.display(),
+                old_value.path().display(),
                 base_address
             );
         }
 
-        Ok(Some(module))
+        Ok(Some(module_load_info))
     }
 
     pub fn unload_module(&mut self, base_address: u64) {
-        // Drop the module and remove any breakpoints.
-        if let Some(module) = self.modules.remove(&base_address) {
-            let image_size = module.image_size as u64;
-            self.breakpoints
-                .retain(|&ip, _| ip < base_address || ip >= base_address + image_size);
-        }
+        self.modules.remove(&base_address);
     }
 
-    pub(crate) fn set_symbolic_breakpoint(
-        &mut self,
-        module_name: &str,
-        func: &str,
-        kind: BreakpointType,
-        id: BreakpointId,
-    ) -> Result<()> {
-        match dbghelp::lock() {
-            Ok(dbghelp) => match dbghelp.sym_from_name(self.process_handle, module_name, func) {
-                Ok(sym) => {
-                    self.apply_absolute_breakpoint(sym.address(), kind, id)?;
-                }
-                Err(_) => {
-                    anyhow::bail!("unknown symbol {}!{}", module_name, func);
-                }
-            },
-            Err(e) => {
-                error!("Can't set symbolic breakpoints: {}", e);
-            }
+    pub fn remove_all_breakpoints(&mut self) -> Result<()> {
+        for module in self.modules.values_mut() {
+            module.remove_breakpoints(self.process_handle)?;
         }
 
         Ok(())
     }
 
-    pub fn apply_absolute_breakpoint(
-        &mut self,
-        address: u64,
-        kind: BreakpointType,
-        id: BreakpointId,
-    ) -> Result<()> {
-        let original_byte: u8 = process::read_memory(self.process_handle, address as LPVOID)?;
-
-        self.breakpoints
-            .entry(address)
-            .and_modify(|bp| {
-                bp.set_kind(kind);
-                bp.set_enabled(true);
-                bp.set_original_byte(Some(original_byte));
-                bp.set_id(id);
-            })
-            .or_insert_with(|| {
-                Breakpoint::new(
-                    address,
-                    kind,
-                    /*enabled*/ true,
-                    /*original_byte*/ Some(original_byte),
-                    /*hit_count*/ 0,
-                    id,
-                )
-            });
-
-        write_instruction_byte(self.process_handle, address, 0xcc)?;
-
-        Ok(())
-    }
-
-    pub(crate) fn apply_module_breakpoints(
-        &mut self,
-        base_address: u64,
-        breakpoints: &[ModuleBreakpoint],
-    ) -> Result<()> {
-        if breakpoints.is_empty() {
-            return Ok(());
+    fn restore_all_breakpoints(&mut self) -> Result<()> {
+        for module in self.modules.values_mut() {
+            module.apply_breakpoints(self.process_handle)?;
         }
-
-        // We want to set every breakpoint for the module at once. We'll read the just the
-        // memory we need to do that, so find the min and max rva to compute how much memory
-        // to read and update in the remote process.
-        let (min, max) = breakpoints.iter().fold((u64::MAX, u64::MIN), |acc, bp| {
-            (acc.0.min(bp.rva()), acc.1.max(bp.rva()))
-        });
-
-        // Add 1 to include the final byte.
-        let region_size = (max - min)
-            .checked_add(1)
-            .ok_or_else(|| anyhow::anyhow!("overflow in region size trying to set breakpoints"))?
-            as usize;
-        let remote_address = base_address.checked_add(min).ok_or_else(|| {
-            anyhow::anyhow!("overflow in remote address calculation trying to set breakpoints")
-        })? as LPVOID;
-
-        let mut buffer: Vec<u8> = Vec::with_capacity(region_size);
-        unsafe {
-            buffer.set_len(region_size);
-        }
-        process::read_memory_array(self.process_handle, remote_address, &mut buffer[..])?;
-
-        for mbp in breakpoints {
-            let ip = base_address + mbp.rva();
-            let offset = (mbp.rva() - min) as usize;
-
-            trace!("Setting breakpoint at {:x}", ip);
-
-            let bp = Breakpoint::new(
-                ip,
-                mbp.kind(),
-                /*enabled*/ true,
-                Some(buffer[offset]),
-                /*hit_count*/ 0,
-                mbp.id(),
-            );
-
-            buffer[offset] = 0xcc;
-
-            self.breakpoints.insert(ip, bp);
-        }
-
-        process::write_memory_slice(self.process_handle, remote_address, &buffer[..])?;
-        process::flush_instruction_cache(self.process_handle, remote_address, region_size)?;
 
         Ok(())
     }
 
     pub fn prepare_to_resume(&mut self) -> Result<()> {
-        // When resuming, we take extra care to avoid missing breakpoints. There are 2 race
-        // conditions considered here:
-        //
-        // * Threads A and B hit a breakpoint at literally the same time, so we have
-        //   multiple events already queued to handle those breakpoints.
-        //   Restoring the breakpoint for thread A should not interfere with restoring
-        //   the original code for thread B.
-        // * Thread A hit a breakpoint, thread B is 1 instruction away from hitting
-        //   that breakpoint. Thread B cannot miss the breakpoint when thread A is resumed.
-        //
-        // To avoid these possible races, when resuming, we only let a single thread go **if**
-        // we're single stepping any threads.
-        //
-        // First, if we last stepped because of hitting a breakpoint, we restore the breakpoint
-        // so that whichever thread is resumed, it can't miss the breakpoint.
-        if let Some(CodeByteToUpdate { address, byte }) = self.code_byte_to_update.take() {
-            trace!("Updating breakpoint at 0x{:x}", address);
-            write_instruction_byte(self.process_handle, address, byte)?;
-        }
-
+        let mut restore_breakpoint_pc = None;
         if self.single_step.is_empty() {
             // Resume all threads if we aren't waiting for any threads to single step.
             trace!("Resuming all threads");
@@ -532,22 +492,44 @@ impl Target {
             thread_info.resume_thread()?;
 
             // We may also need to remove a breakpoint.
-            if let StepState::RemoveBreakpoint { pc, original_byte } = step_state {
-                trace!("Restoring original byte at 0x{:x}", *pc);
-                write_instruction_byte(self.process_handle, *pc, *original_byte)?;
-
+            if let StepState::RestoreBreakpointAfterStep { pc } = step_state {
                 // We are stepping to remove the breakpoint. After we've stepped,
                 // we must restore the breakpoint (which is done on the subsequent
                 // call to this function).
-                self.code_byte_to_update = Some(CodeByteToUpdate {
-                    address: *pc,
-                    byte: 0xcc,
-                });
+                restore_breakpoint_pc = Some(*pc);
             }
         }
 
         // The current context will not be valid after resuming.
         self.current_context = None;
+
+        // When resuming, we take extra care to avoid missing breakpoints. There are 2 race
+        // conditions considered here:
+        //
+        // * Threads A and B hit a breakpoint at literally the same time, so we have
+        //   multiple events already queued to handle those breakpoints.
+        //   Restoring the breakpoint for thread A should not interfere with restoring
+        //   the original code for thread B.
+        // * Thread A hit a breakpoint, thread B is 1 instruction away from hitting
+        //   that breakpoint. Thread B cannot miss the breakpoint when thread A is resumed.
+        //
+        // To avoid these possible races, when resuming, we only let a single thread go **if**
+        // we're single stepping any threads.
+
+        // When we processed the breakpoint, we disabled it, so this call to restore breakpoints
+        // will not restore the breakpoint we want to step over.
+        self.restore_all_breakpoints()?;
+
+        // We now re-enable the breakpoint so that the next time we step, the breakpoint
+        // will be restored. Note that we use a counter in enable/disable to cover the
+        // case of 2 threads hitting the breakpoint at the same time - 2 threads will then
+        // increment the disable count twice, requiring 2 enable calls before we actually
+        // restore the breakpoint.
+        if let Some(restore_breakpoint_pc) = restore_breakpoint_pc {
+            if let Some(breakpoint) = self.get_breakpoint_for_address(restore_breakpoint_pc) {
+                breakpoint.enable();
+            }
+        }
 
         Ok(())
     }
@@ -608,31 +590,18 @@ impl Target {
     /// Return the breakpoint id if it should be reported to the client.
     pub fn handle_breakpoint(&mut self, pc: u64) -> Result<Option<BreakpointId>> {
         let id;
-        let original_byte;
-        let mut restore_breakpoint = true;
+        let mut renable_after_step = true;
         {
-            let bp = self.breakpoints.get_mut(&pc).unwrap();
+            let bp = self
+                .get_breakpoint_for_address(pc)
+                .expect("debugger should have checked already");
             id = bp.id();
 
             bp.increment_hit_count();
-
-            original_byte = bp.original_byte().unwrap();
+            bp.disable();
 
             if let BreakpointType::OneTime = bp.kind() {
-                // This assertion simplifies `prepare_to_resume` slightly.
-                // If it fires, we could restore the original code byte here, otherwise we
-                // would need an additional Option to test in `prepare_to_resume`.
-                assert!(self.code_byte_to_update.is_none());
-
-                self.code_byte_to_update = Some(CodeByteToUpdate {
-                    address: bp.ip(),
-                    byte: original_byte,
-                });
-
-                bp.set_enabled(false);
-                bp.set_original_byte(None);
-
-                restore_breakpoint = false;
+                renable_after_step = false;
             }
         }
 
@@ -644,18 +613,18 @@ impl Target {
         let context = self.get_current_context_mut()?;
         context.set_program_counter(pc);
 
-        if restore_breakpoint {
+        if renable_after_step {
             context.set_single_step(true);
         }
 
         context.set_thread_context(current_thread_handle)?;
 
-        if restore_breakpoint {
+        if renable_after_step {
             // Remember that on the current thread, we need to restore the original byte.
             // When resuming, if we pick the current thread, we'll remove the breakpoint.
             self.single_step.insert(
                 self.current_thread_id,
-                StepState::RemoveBreakpoint { pc, original_byte },
+                StepState::RestoreBreakpointAfterStep { pc },
             );
         }
 
@@ -665,52 +634,10 @@ impl Target {
     pub fn set_exited(&mut self) -> Result<()> {
         self.exited = true;
 
-        if self.sym_initialized {
+        if self.sym_initialize_state == SymInitalizeState::Initialized {
             let dbghelp = dbghelp::lock()?;
             dbghelp.sym_cleanup(self.process_handle)?;
         }
         Ok(())
     }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum Machine {
-    Unknown,
-    X64,
-    X86,
-}
-
-struct ImageDetails {
-    image_size: u32,
-    machine: Machine,
-}
-
-fn get_image_details(path: &Path) -> Result<ImageDetails> {
-    let file = fs::File::open(path)?;
-    let map = unsafe { memmap2::Mmap::map(&file)? };
-
-    let header = goblin::pe::header::Header::parse(&map)?;
-    let image_size = header
-        .optional_header
-        .map(|h| h.windows_fields.size_of_image)
-        .ok_or_else(|| anyhow::anyhow!("Missing optional header in PE image"))?;
-
-    let machine = match header.coff_header.machine {
-        IMAGE_FILE_MACHINE_AMD64 => Machine::X64,
-        IMAGE_FILE_MACHINE_I386 => Machine::X86,
-        _ => Machine::Unknown,
-    };
-
-    Ok(ImageDetails {
-        image_size,
-        machine,
-    })
-}
-
-fn write_instruction_byte(process_handle: HANDLE, ip: u64, b: u8) -> Result<()> {
-    let orig_byte = [b; 1];
-    let remote_address = ip as LPVOID;
-    process::write_memory_slice(process_handle, remote_address, &orig_byte)?;
-    process::flush_instruction_cache(process_handle, remote_address, orig_byte.len())?;
-    Ok(())
 }
