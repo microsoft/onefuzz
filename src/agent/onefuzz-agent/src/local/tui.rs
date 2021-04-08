@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::local::common::UiEvent;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use crossterm::{
     event::{self, Event, KeyCode},
     execute,
@@ -23,7 +23,7 @@ use std::{
 };
 use tokio::{
     sync::{
-        broadcast::{self, RecvError},
+        broadcast::{self, TryRecvError},
         mpsc::{self, UnboundedSender},
     },
     time::delay_for,
@@ -65,6 +65,8 @@ impl From<std::io::Error> for UiLoopError {
 /// Maximum number of log message to display, arbitrarily chosen
 const LOGS_BUFFER_SIZE: usize = 100;
 const TICK_RATE: Duration = Duration::from_millis(250);
+const FILE_MONITOR_POLLING_PERIOD: Duration = Duration::from_secs(5);
+const EVENT_POLLING_PERIOD: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Default)]
 struct CoverageData {
@@ -234,7 +236,7 @@ impl TerminalUi {
         let mut rx = onefuzz_telemetry::subscribe_to_events();
 
         while cancellation_rx.try_recv() == Err(broadcast::TryRecvError::Empty) {
-            match rx.recv().await {
+            match rx.try_recv() {
                 Ok((_event, data)) => {
                     let data = data
                         .into_iter()
@@ -242,9 +244,9 @@ impl TerminalUi {
                         .collect::<Vec<_>>();
                     let _ = ui_event_tx.send(TerminalEvent::Telemetry(data));
                 }
-
-                Err(RecvError::Lagged(_)) => continue,
-                Err(RecvError::Closed) => break,
+                Err(TryRecvError::Empty) => delay_for(EVENT_POLLING_PERIOD).await,
+                Err(TryRecvError::Lagged(_)) => continue,
+                Err(TryRecvError::Closed) => break,
             }
         }
         Ok(())
@@ -270,7 +272,7 @@ impl TerminalUi {
     ) -> JoinHandle<Result<()>> {
         thread::spawn(move || {
             while Err(broadcast::TryRecvError::Empty) == cancellation_rx.try_recv() {
-                if event::poll(Duration::from_secs(1))? {
+                if event::poll(EVENT_POLLING_PERIOD)? {
                     let event = event::read()?;
                     if let Err(_err) = ui_event_tx.send(TerminalEvent::Input(event)) {
                         return Ok(());
@@ -293,7 +295,7 @@ impl TerminalUi {
                         break;
                     }
                 }
-                Err(mpsc::error::TryRecvError::Empty) => delay_for(Duration::from_secs(1)).await,
+                Err(mpsc::error::TryRecvError::Empty) => delay_for(EVENT_POLLING_PERIOD).await,
                 Err(mpsc::error::TryRecvError::Closed) => break,
             }
         }
@@ -429,7 +431,7 @@ impl TerminalUi {
             .collect::<Vec<_>>();
 
         List::new(log_items)
-            .block(Block::default().borders(Borders::ALL).title("Logs"))
+            .block(Block::default().borders(Borders::TOP).title("Logs"))
             .start_corner(Corner::BottomLeft)
     }
 
@@ -543,14 +545,6 @@ impl TerminalUi {
         cancellation_tx: broadcast::Sender<()>,
     ) -> Result<UiLoopState, UiLoopError> {
         let _ = cancellation_tx.send(());
-        let file_monitors = ui_state.file_monitors.into_iter().map(|(_, v)| v).collect();
-        tokio::time::timeout(
-            Duration::from_secs(10),
-            try_wait_all_join_handles(file_monitors),
-        )
-        .await
-        .context("failed to close file monitoring tasks")?
-        .context("file monitoring task terminated with error")?;
         let mut terminal = ui_state.terminal;
         disable_raw_mode().map_err(|e| anyhow!("{:?}", e))?;
         execute!(terminal.backend_mut(), LeaveAlternateScreen).map_err(|e| anyhow!("{:?}", e))?;
@@ -666,7 +660,8 @@ impl TerminalUi {
                 {
                     break;
                 }
-                delay_for(Duration::from_secs(5)).await;
+
+                delay_for(FILE_MONITOR_POLLING_PERIOD).await;
             }
             Ok(())
         })
