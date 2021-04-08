@@ -82,15 +82,16 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
         }
     };
 
-    let backoff = ExponentialBackoff {
-        current_interval: RETRY_INTERVAL,
-        initial_interval: RETRY_INTERVAL,
-        ..ExponentialBackoff::default()
-    };
-
-    let notify = |err, dur| warn!("request attempt failed after {:?}: {:?}", dur, err);
-
-    retry_notify(backoff, operation, notify);
+    retry_notify(
+        ExponentialBackoff {
+            current_interval: RETRY_INTERVAL,
+            initial_interval: RETRY_INTERVAL,
+            ..ExponentialBackoff::default()
+        },
+        operation,
+        |err, dur| warn!("request attempt failed after {:?}: {:?}", dur, err),
+    )
+    .await?;
 
     Ok(())
 }
