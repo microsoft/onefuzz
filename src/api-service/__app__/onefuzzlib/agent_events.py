@@ -125,24 +125,30 @@ def on_state_update(
                 node_task.save()
 
     elif state == NodeState.done:
-        # if tasks are running on the node when it reports as Done
-        # those are stopped early
-        node.mark_tasks_stopped_early()
-        node.to_reimage(done=True)
-
         # Model-validated.
         #
         # This field will be required in the future.
         # For now, it is optional for back compat.
         done_data = cast(Optional[NodeDoneEventData], state_update.data)
+        error = None
         if done_data:
-            # TODO: do something with this done data
+            error = Error(
+                code=ErrorCode.SETUP_FAILED,
+                errors=["%s" % done_data],
+            )
+
             if done_data.error:
                 logging.error(
                     "node 'done' with error: machine_id:%s, data:%s",
                     machine_id,
                     done_data,
                 )
+
+        # if tasks are running on the node when it reports as Done
+        # those are stopped early
+        node.mark_tasks_stopped_early(error=error)
+        node.to_reimage(done=True)
+
     return None
 
 
