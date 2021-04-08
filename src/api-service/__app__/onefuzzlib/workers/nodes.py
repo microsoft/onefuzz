@@ -220,7 +220,7 @@ class Node(BASE_NODE, ORMMixin):
         self.stop()
         return True
 
-    def mark_tasks_stopped_early(self, error: Optional[Error]) -> None:
+    def mark_tasks_stopped_early(self, error: Optional[Error] = None) -> None:
         from ..tasks.main import Task
 
         if error is None:
