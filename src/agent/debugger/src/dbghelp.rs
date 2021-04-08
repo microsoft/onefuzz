@@ -34,7 +34,8 @@ use winapi::{
             AddrModeFlat, StackWalkEx, SymCleanup, SymFindFileInPathW, SymFromNameW,
             SymFunctionTableAccess64, SymGetModuleBase64, SymInitializeW, SymLoadModuleExW,
             IMAGEHLP_LINEW64, PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW,
-            SYM_STKWALK_DEFAULT,
+            SYM_STKWALK_DEFAULT, SYMOPT_DEBUG, SYMOPT_DEFERRED_LOADS, SYMOPT_FAIL_CRITICAL_ERRORS,
+            SYMOPT_NO_PROMPTS,
         },
         errhandlingapi::GetLastError,
         handleapi::CloseHandle,
@@ -78,12 +79,6 @@ macro_rules! init_sym_info {
         symbol_info_ptr
     }};
 }
-
-// Missing from winapi-rs - see https://github.com/retep998/winapi-rs/pull/864
-const SYMOPT_DEBUG: DWORD = 0x80000000;
-const SYMOPT_DEFERRED_LOADS: DWORD = 0x00000004;
-const SYMOPT_FAIL_CRITICAL_ERRORS: DWORD = 0x00000200;
-const SYMOPT_NO_PROMPTS: DWORD = 0x00080000;
 
 /// We use dbghlp Sym apis to walk a stack. dbghlp apis are documented as not being thread safe,
 /// so we provide a lock around our use of these apis.
