@@ -691,7 +691,7 @@ impl DebugHelpGuard {
         let file_name = win_util::string::to_wstring(file_name);
 
         // Must be at least `MAX_PATH` characters in length.
-        let mut found_file_data = Box::new([0u16; MAX_PATH]);
+        let mut found_file_data = Vec::<u16>::with_capacity(MAX_PATH);
 
         // Inherit search path used in `SymInitializeW()`. When that is also set
         // to `NULL`, the default search path is used.
