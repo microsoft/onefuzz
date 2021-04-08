@@ -299,6 +299,10 @@ fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf>
     // The callee `sym_find_pdb_file_in_path()` handles either.
     let cv_filename = Path::new(cv_filename);
 
+    // If the PE-specified PDB file exists on disk, use that.
+    if std::fs::metadata(&cv_filename)?.is_file() {
+        return Ok(cv_filename.to_owned());
+    }
 
     let handle = PSEUDO_HANDLE;
 
