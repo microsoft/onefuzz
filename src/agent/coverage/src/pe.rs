@@ -233,13 +233,14 @@ pub fn process_module(
     data: &[u8],
     pe: &PE,
     functions_only: bool,
+    target_handle: Option<HANDLE>,
 ) -> Result<FixedBitSet> {
     if let Some(DebugData {
         image_debug_directory: _,
         codeview_pdb70_debug_info: Some(cv),
     }) = pe.debug_data
     {
-        let pdb_path = find_pdb_path(pe_path.as_ref(), &cv)
+        let pdb_path = find_pdb_path(pe_path.as_ref(), &cv, target_handle.into())
             .with_context(|| format!("searching for PDB for PE: {}", pe_path.as_ref().display()))?;
         log::info!("found PDB: {}", pdb_path.display());
 
@@ -302,7 +303,11 @@ fn process_pdb(data: &[u8], pe: &PE, functions_only: bool, pdb_path: &Path) -> R
 // See: https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-syminitializew
 const PSEUDO_HANDLE: HANDLE = -2i64 as _;
 
-fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf> {
+fn find_pdb_path(
+    pe_path: &Path,
+    cv: &CodeviewPDB70DebugInfo,
+    target_handle: Option<HANDLE>,
+) -> Result<PathBuf> {
     let cv_filename = CStr::from_bytes_with_nul(cv.filename)?.to_str()?;
 
     // This field is named `filename`, but it may be an absolute path.
@@ -314,11 +319,22 @@ fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf>
         return Ok(cv_filename.to_owned());
     }
 
-    let handle = PSEUDO_HANDLE;
+    // If we have one, use the the process handle for an existing debug
+    let handle = target_handle.unwrap_or(PSEUDO_HANDLE);
 
     let dbghelp = debugger::dbghelp::lock()?;
-    dbghelp.sym_initialize(handle)?;
-    let _cleanup = DbgHelpCleanupGuard::new(&dbghelp, handle);
+
+    // If a target handle was provided, we assume the caller initialized the
+    // dbghelp symbol handler, and will clean up after itself.
+    //
+    // Otherwise, initialize a symbol handler with our own pseudo-path, and use
+    // a drop guard to ensure we don't leak resources.
+    let _cleanup = if target_handle.is_some() {
+        None
+    } else {
+        dbghelp.sym_initialize(handle)?;
+        Some(DbgHelpCleanupGuard::new(&dbghelp, handle))
+    };
 
     // Enable signature and age checking.
     let options = dbghelp.sym_get_options();
@@ -371,10 +387,14 @@ impl<'d> Drop for DbgHelpCleanupGuard<'d> {
     }
 }
 
-pub fn process_image(path: impl AsRef<Path>, functions_only: bool) -> Result<FixedBitSet> {
+pub fn process_image(
+    path: impl AsRef<Path>,
+    functions_only: bool,
+    handle: Option<HANDLE>,
+) -> Result<FixedBitSet> {
     let file = File::open(path.as_ref())?;
     let mmap = unsafe { Mmap::map(&file)? };
     let pe = PE::parse(&mmap)?;
 
-    process_module(path, &mmap, &pe, functions_only)
+    process_module(path, &mmap, &pe, functions_only, handle)
 }

@@ -6,6 +6,9 @@ use std::collections::{BTreeSet, HashMap};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+#[cfg(target_os = "windows")]
+use winapi::um::winnt::HANDLE;
+
 use crate::code::{ModuleIndex, ModulePath};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -20,9 +23,23 @@ impl ModuleCache {
         Self { cached }
     }
 
+    #[cfg(target_os = "linux")]
     pub fn fetch(&mut self, path: &ModulePath) -> Result<Option<&ModuleInfo>> {
         if !self.cached.contains_key(path) {
             self.insert(path)?;
+        }
+
+        Ok(self.cached.get(path))
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn fetch(
+        &mut self,
+        path: &ModulePath,
+        handle: impl Into<Option<HANDLE>>,
+    ) -> Result<Option<&ModuleInfo>> {
+        if !self.cached.contains_key(path) {
+            self.insert(path, handle)?;
         }
 
         Ok(self.cached.get(path))
@@ -36,8 +53,8 @@ impl ModuleCache {
     }
 
     #[cfg(target_os = "windows")]
-    pub fn insert(&mut self, path: &ModulePath) -> Result<()> {
-        let entry = ModuleInfo::new_pe(path)?;
+    pub fn insert(&mut self, path: &ModulePath, handle: impl Into<Option<HANDLE>>) -> Result<()> {
+        let entry = ModuleInfo::new_pe(path, handle)?;
         self.cached.insert(path.clone(), entry);
         Ok(())
     }
@@ -65,13 +82,13 @@ impl ModuleInfo {
     }
 
     #[cfg(target_os = "windows")]
-    pub fn new_pe(path: &ModulePath) -> Result<Self> {
+    pub fn new_pe(path: &ModulePath, handle: impl Into<Option<HANDLE>>) -> Result<Self> {
         let file = std::fs::File::open(path)?;
         let data = unsafe { memmap2::Mmap::map(&file)? };
 
         let pe = goblin::pe::PE::parse(&data)?;
         let module = ModuleIndex::index_pe(path.clone(), &pe);
-        let offsets = crate::pe::process_module(path, &data, &pe, false)?;
+        let offsets = crate::pe::process_module(path, &data, &pe, false, handle.into())?;
         let blocks = offsets.ones().map(|off| off as u64).collect();
 
         Ok(Self { module, blocks })
