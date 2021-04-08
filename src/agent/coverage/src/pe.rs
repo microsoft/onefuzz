@@ -3,18 +3,22 @@
 
 #![allow(clippy::manual_swap)]
 
-use std::{ffi::CStr, fs::File, path::Path};
+use std::{ffi::CStr, fs::File, path::{Path, PathBuf}};
 
 use anyhow::Result;
+use debugger::dbghelp::DebugHelpGuard;
 use fixedbitset::FixedBitSet;
-use goblin::pe::{debug::DebugData, PE};
+use goblin::pe::{
+    debug::{CodeviewPDB70DebugInfo, DebugData},
+    PE,
+};
 use log::trace;
 use memmap2::Mmap;
 use pdb::{
     AddressMap, FallibleIterator, PdbInternalSectionOffset, ProcedureSymbol, TypeIndex, PDB,
 };
 use uuid::Uuid;
-use winapi::um::winnt::{IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386};
+use winapi::um::winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386};
 
 use crate::intel;
 
@@ -239,15 +243,15 @@ pub fn process_module(
         codeview_pdb70_debug_info: Some(cv),
     }) = pe.debug_data
     {
-        let pdb_path = CStr::from_bytes_with_nul(cv.filename)?.to_str()?;
-        let pdb_file = File::open(pdb_path)?;
+        let pdb_path = find_pdb_path(pe_path.as_ref(), &cv)?;
+        let pdb_file = File::open(&pdb_path)?;
         let mut pdb = PDB::open(pdb_file)?;
         let pdbi = pdb.pdb_information()?;
 
         if pdbi.guid != uuid_from_bytes_le(cv.signature) || pdbi.age < cv.age {
             anyhow::bail!(
                 "pdb `{}` doesn't match image `{}`",
-                pdb_path,
+                pdb_path.display(),
                 pe_path.as_ref().display()
             );
         }
@@ -266,7 +270,7 @@ pub fn process_module(
             functions_only,
         )?;
 
-        // Modules in the pdb correspond to object files.
+        // Modules in the PDB correspond to object files.
         let dbi = pdb.debug_information()?;
         let mut modules = dbi.modules()?;
         while let Some(module) = modules.next()? {
@@ -287,6 +291,75 @@ pub fn process_module(
     }
 
     anyhow::bail!("PE missing codeview pdb debug info")
+}
+
+fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf> {
+    let cv_filename = CStr::from_bytes_with_nul(cv.filename)?.to_str()?;
+
+    // This field is named `filename`, but it may be an absolute path.
+    // The callee `sym_find_pdb_file_in_path()` handles either.
+    let cv_filename = Path::new(cv_filename);
+
+    // Any nonzero value (cast to a `HANDLE`) should work here.
+    //
+    // The docs warn that we must not intialize the dbghelp symbol handler
+    // with the current process handle when debugging another process. When
+    // we invoke this function, we will often be doing exactly this.
+    //
+    // Assume this is only relevant when making queries about some debuggee's
+    // address space, which we will not do here.
+    let handle = win_util::process::current_process_handle();
+
+    let dbghelp = debugger::dbghelp::lock()?;
+    dbghelp.sym_initialize(handle)?;
+    let _cleanup = DbgHelpCleanupGuard::new(&dbghelp, handle);
+
+    let mut search_path = dbghelp.sym_get_search_path(handle)?;
+
+    log::debug!("initial search path = {:?}", search_path);
+
+    // Try to add the directory of the PE to the PDB search path.
+    //
+    // This may be redundant, and should always succeed.
+    if let Some(pe_dir) = pe_path.parent() {
+        log::debug!("pushing PE dir to search path = {:?}", pe_dir.display());
+
+        search_path.push(";");
+        search_path.push(pe_dir);
+    } else {
+        log::warn!("PE path has no parent dir: {}", pe_path.display());
+    }
+
+    dbghelp.sym_set_search_path(handle, search_path)?;
+
+    let pdb_path = dbghelp.sym_find_pdb_file_in_path(
+        handle,
+        cv_filename,
+        cv.codeview_signature,
+        cv.age,
+    )?;
+
+    Ok(pdb_path)
+}
+
+/// On drop, deallocates all resources associated with its process handle.
+struct DbgHelpCleanupGuard<'d> {
+    dbghelp: &'d DebugHelpGuard,
+    process_handle: HANDLE,
+}
+
+impl<'d> DbgHelpCleanupGuard<'d> {
+    pub fn new(dbghelp: &'d DebugHelpGuard, process_handle: HANDLE) -> Self {
+        Self { dbghelp, process_handle }
+    }
+}
+
+impl<'d> Drop for DbgHelpCleanupGuard<'d> {
+    fn drop(&mut self) {
+        if let Err(err) = self.dbghelp.sym_cleanup(self.process_handle) {
+            log::error!("error cleaning up symbol handler: {:?}", err);
+        }
+    }
 }
 
 pub fn process_image(path: impl AsRef<Path>, functions_only: bool) -> Result<FixedBitSet> {
