@@ -3,7 +3,11 @@
 
 #![allow(clippy::manual_swap)]
 
-use std::{ffi::CStr, fs::File, path::{Path, PathBuf}};
+use std::{
+    ffi::CStr,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 use debugger::dbghelp::DebugHelpGuard;
@@ -319,12 +323,8 @@ fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf>
 
     dbghelp.sym_set_search_path(handle, search_path)?;
 
-    let pdb_path = dbghelp.sym_find_pdb_file_in_path(
-        handle,
-        cv_filename,
-        cv.codeview_signature,
-        cv.age,
-    )?;
+    let pdb_path =
+        dbghelp.sym_find_pdb_file_in_path(handle, cv_filename, cv.codeview_signature, cv.age)?;
 
     Ok(pdb_path)
 }
@@ -337,7 +337,10 @@ struct DbgHelpCleanupGuard<'d> {
 
 impl<'d> DbgHelpCleanupGuard<'d> {
     pub fn new(dbghelp: &'d DebugHelpGuard, process_handle: HANDLE) -> Self {
-        Self { dbghelp, process_handle }
+        Self {
+            dbghelp,
+            process_handle,
+        }
     }
 }
 

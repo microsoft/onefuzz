@@ -218,7 +218,5 @@ pub fn flush_instruction_cache(
 }
 
 pub fn current_process_handle() -> HANDLE {
-    unsafe {
-        GetCurrentProcess()
-    }
+    unsafe { GetCurrentProcess() }
 }

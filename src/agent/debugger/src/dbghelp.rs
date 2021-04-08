@@ -33,8 +33,8 @@ use winapi::{
         dbghelp::{
             AddrModeFlat, StackWalkEx, SymCleanup, SymFindFileInPathW, SymFromNameW,
             SymFunctionTableAccess64, SymGetModuleBase64, SymInitializeW, SymLoadModuleExW,
-            IMAGEHLP_LINEW64, PIMAGEHLP_LINEW64, PSYMBOL_INFOW,
-            STACKFRAME_EX, SYMBOL_INFOW, SYM_STKWALK_DEFAULT,
+            IMAGEHLP_LINEW64, PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW,
+            SYM_STKWALK_DEFAULT,
         },
         errhandlingapi::GetLastError,
         handleapi::CloseHandle,
@@ -215,15 +215,8 @@ extern "system" {
         qwAddr: DWORD64,
         ModuleInfo: PIMAGEHLP_MODULEW64,
     ) -> BOOL;
-    pub fn SymGetSearchPathW(
-        hProcess: HANDLE,
-        SearchPath: PWSTR,
-        SearchPathLength: DWORD,
-    ) -> BOOL;
-    pub fn SymSetSearchPathW(
-        hProcess: HANDLE,
-        SearchPath: PCWSTR,
-    ) -> BOOL;
+    pub fn SymGetSearchPathW(hProcess: HANDLE, SearchPath: PWSTR, SearchPathLength: DWORD) -> BOOL;
+    pub fn SymSetSearchPathW(hProcess: HANDLE, SearchPath: PCWSTR) -> BOOL;
 }
 
 #[repr(C, align(8))]
@@ -731,9 +724,8 @@ impl DebugHelpGuard {
         //
         // We zero-initialize `found_file_data`, and assume that `SymFindFileInPathW`
         // only succeeds if it wrote a NUL-terminated wide string.
-        let found_file = unsafe {
-            win_util::string::os_string_from_wide_ptr(found_file_data.as_ptr())
-        };
+        let found_file =
+            unsafe { win_util::string::os_string_from_wide_ptr(found_file_data.as_ptr()) };
 
         Ok(found_file.into())
     }
@@ -753,19 +745,20 @@ impl DebugHelpGuard {
         //
         // We zero-initialize `search_path_data`, and assume that `SymGetSearchPathW`
         // only succeeds if it wrote a NUL-terminated wide string.
-        let search_path = unsafe {
-            win_util::string::os_string_from_wide_ptr(search_path_data.as_ptr())
-        };
+        let search_path =
+            unsafe { win_util::string::os_string_from_wide_ptr(search_path_data.as_ptr()) };
 
         Ok(search_path)
     }
 
-    pub fn sym_set_search_path(&self, process_handle: HANDLE, search_path: impl AsRef<OsStr>) -> Result<()> {
+    pub fn sym_set_search_path(
+        &self,
+        process_handle: HANDLE,
+        search_path: impl AsRef<OsStr>,
+    ) -> Result<()> {
         let mut search_path = win_util::string::to_wstring(search_path.as_ref());
 
-        check_winapi(|| unsafe {
-            SymSetSearchPathW(process_handle, search_path.as_mut_ptr())
-        })?;
+        check_winapi(|| unsafe { SymSetSearchPathW(process_handle, search_path.as_mut_ptr()) })?;
 
         Ok(())
     }
