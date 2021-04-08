@@ -133,7 +133,7 @@ def on_state_update(
         error = None
         if done_data:
             error = Error(
-                code=ErrorCode.SETUP_FAILED,
+                code=ErrorCode.TASK_FAILED,
                 errors=["%s" % done_data],
             )
 
