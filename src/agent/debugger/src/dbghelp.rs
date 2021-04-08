@@ -55,6 +55,9 @@ use winapi::{
 // We use 4096 based on C4503 - the documented VC++ warning that a name is truncated.
 const MAX_SYM_NAME: usize = 4096;
 
+// Arbitrary practical choice, but must not exceed `u32::MAX`.
+const MAX_SYM_SEARCH_PATH_LEN: usize = 8192;
+
 /// For `flags` parameter of `SymFindFileInPath`.
 ///
 /// Missing from `winapi-rs`.
@@ -731,8 +734,8 @@ impl DebugHelpGuard {
     }
 
     pub fn sym_get_search_path(&self, process_handle: HANDLE) -> Result<OsString> {
-        let mut search_path_data = Vec::<u16>::with_capacity(MAX_PATH * 8);
-        let search_path_len = (MAX_PATH * 8) as u32;
+        let mut search_path_data = Vec::<u16>::with_capacity(MAX_SYM_SEARCH_PATH_LEN);
+        let search_path_len = MAX_SYM_SEARCH_PATH_LEN as u32;
         check_winapi(|| unsafe {
             SymGetSearchPathW(
                 process_handle,
