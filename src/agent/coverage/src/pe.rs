@@ -280,6 +280,18 @@ pub fn process_module(
     anyhow::bail!("PE missing codeview pdb debug info")
 }
 
+// This is a fallback pseudo-handle used for interacting with dbghelp.
+//
+// We want to avoid `(HANDLE) -1`, because that pseudo-handle is reserved for
+// the current process. Reusing it is documented as causing unexpected dbghelp
+// behavior when debugging other processes (which we typically will be).
+//
+// By picking some other very large value, we avoid collisions with handles that
+// are concretely either table indices or virtual addresses.
+//
+// See: https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-syminitializew
+const PSEUDO_HANDLE: HANDLE = -2i64 as _;
+
 fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf> {
     let cv_filename = CStr::from_bytes_with_nul(cv.filename)?.to_str()?;
 
@@ -287,15 +299,8 @@ fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf>
     // The callee `sym_find_pdb_file_in_path()` handles either.
     let cv_filename = Path::new(cv_filename);
 
-    // Any nonzero value (cast to a `HANDLE`) should work here.
-    //
-    // The docs warn that we must not intialize the dbghelp symbol handler
-    // with the current process handle when debugging another process. When
-    // we invoke this function, we will often be doing exactly this.
-    //
-    // Assume this is only relevant when making queries about some debuggee's
-    // address space, which we will not do here.
-    let handle = win_util::process::current_process_handle();
+
+    let handle = PSEUDO_HANDLE;
 
     let dbghelp = debugger::dbghelp::lock()?;
     dbghelp.sym_initialize(handle)?;
