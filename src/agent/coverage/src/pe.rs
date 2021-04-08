@@ -240,7 +240,7 @@ pub fn process_module(
         codeview_pdb70_debug_info: Some(cv),
     }) = pe.debug_data
     {
-        let pdb_path = find_pdb_path(pe_path.as_ref(), &cv, target_handle.into())
+        let pdb_path = find_pdb_path(pe_path.as_ref(), &cv, target_handle)
             .with_context(|| format!("searching for PDB for PE: {}", pe_path.as_ref().display()))?;
         log::info!("found PDB: {}", pdb_path.display());
 
