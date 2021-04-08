@@ -684,7 +684,7 @@ impl DebugHelpGuard {
     /// This method is effectively a specialization of `SymFindFileInPathW`.
     ///
     /// Note: `file_name` may be a full path, but only the file name is used.
-    pub fn sym_find_pdb_file_in_path(
+    pub fn find_pdb_file_in_path(
         &self,
         process_handle: HANDLE,
         file_name: impl AsRef<Path>,

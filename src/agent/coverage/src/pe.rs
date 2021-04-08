@@ -296,7 +296,7 @@ fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf>
     let cv_filename = CStr::from_bytes_with_nul(cv.filename)?.to_str()?;
 
     // This field is named `filename`, but it may be an absolute path.
-    // The callee `sym_find_pdb_file_in_path()` handles either.
+    // The callee `find_pdb_file_in_path()` handles either.
     let cv_filename = Path::new(cv_filename);
 
     // If the PE-specified PDB file exists on disk, use that.
@@ -333,7 +333,7 @@ fn find_pdb_path(pe_path: &Path, cv: &CodeviewPDB70DebugInfo) -> Result<PathBuf>
     dbghelp.sym_set_search_path(handle, search_path)?;
 
     let pdb_path =
-        dbghelp.sym_find_pdb_file_in_path(handle, cv_filename, cv.codeview_signature, cv.age)?;
+        dbghelp.find_pdb_file_in_path(handle, cv_filename, cv.codeview_signature, cv.age)?;
 
     Ok(pdb_path)
 }
