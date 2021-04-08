@@ -26,13 +26,15 @@ use winapi::{
         basetsd::{DWORD64, PDWORD64},
         guiddef::GUID,
         minwindef::{BOOL, DWORD, FALSE, LPVOID, MAX_PATH, PDWORD, TRUE, ULONG, WORD},
+        ntdef::{PCWSTR, PWSTR},
         winerror::{ERROR_ALREADY_EXISTS, ERROR_SUCCESS},
     },
     um::{
         dbghelp::{
-            AddrModeFlat, StackWalkEx, SymCleanup, SymFromNameW, SymFunctionTableAccess64,
-            SymGetModuleBase64, SymInitializeW, SymLoadModuleExW, IMAGEHLP_LINEW64,
-            PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW, SYM_STKWALK_DEFAULT,
+            AddrModeFlat, StackWalkEx, SymCleanup, SymFindFileInPathW, SymFromNameW,
+            SymFunctionTableAccess64, SymGetModuleBase64, SymInitializeW, SymLoadModuleExW,
+            IMAGEHLP_LINEW64, PIMAGEHLP_LINEW64, PSYMBOL_INFOW,
+            STACKFRAME_EX, SYMBOL_INFOW, SYM_STKWALK_DEFAULT,
         },
         errhandlingapi::GetLastError,
         handleapi::CloseHandle,
@@ -212,6 +214,15 @@ extern "system" {
         hProcess: HANDLE,
         qwAddr: DWORD64,
         ModuleInfo: PIMAGEHLP_MODULEW64,
+    ) -> BOOL;
+    pub fn SymGetSearchPathW(
+        hProcess: HANDLE,
+        SearchPath: PWSTR,
+        SearchPathLength: DWORD,
+    ) -> BOOL;
+    pub fn SymSetSearchPathW(
+        hProcess: HANDLE,
+        SearchPath: PCWSTR,
     ) -> BOOL;
 }
 
@@ -669,6 +680,94 @@ impl DebugHelpGuard {
             address: sym_info_ptr.Address,
             displacement: 0,
         })
+    }
+
+    /// Look for a filesystem path to a PDB file using the symbol handler's
+    /// current search path.
+    ///
+    /// This method is effectively a specialization of `SymFindFileInPathW`.
+    ///
+    /// Note: `file_name` may be a full path, but only the file name is used.
+    pub fn sym_find_pdb_file_in_path(
+        &self,
+        process_handle: HANDLE,
+        file_name: impl AsRef<Path>,
+        pdb_signature: u32,
+        pdb_age: u32,
+    ) -> Result<PathBuf> {
+        let file_name = win_util::string::to_wstring(file_name);
+
+        // Must be at least `MAX_PATH` characters in length.
+        let mut found_file_data = Box::new([0u16; MAX_PATH]);
+
+        // Inherit search path used in `SymInitializeW()`. When that is also set
+        // to `NULL`, the default search path is used.
+        let search_path = std::ptr::null_mut();
+
+        // See: https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-symfindfileinpathw#remarks
+        let id = pdb_signature as *mut _;
+        let two = pdb_age;
+        let three = 0;
+
+        // SSRVOPT_DWORD
+        let flags = 0x0002;
+
+        check_winapi(|| unsafe {
+            SymFindFileInPathW(
+                process_handle,
+                search_path,
+                file_name.as_ptr(),
+                id,
+                two,
+                three,
+                flags,
+                found_file_data.as_mut_ptr(),
+                None,
+                std::ptr::null_mut(),
+            )
+        })?;
+
+        // Safety: `found_file_data` must contain at least one NUL byte.
+        //
+        // We zero-initialize `found_file_data`, and assume that `SymFindFileInPathW`
+        // only succeeds if it wrote a NUL-terminated wide string.
+        let found_file = unsafe {
+            win_util::string::os_string_from_wide_ptr(found_file_data.as_ptr())
+        };
+
+        Ok(found_file.into())
+    }
+
+    pub fn sym_get_search_path(&self, process_handle: HANDLE) -> Result<OsString> {
+        let mut search_path_data = Vec::<u16>::with_capacity(MAX_PATH * 8);
+        let search_path_len = (MAX_PATH * 8) as u32;
+        check_winapi(|| unsafe {
+            SymGetSearchPathW(
+                process_handle,
+                search_path_data.as_mut_ptr(),
+                search_path_len,
+            )
+        })?;
+
+        // Safety: `search_path_data` must contain at least one NUL byte.
+        //
+        // We zero-initialize `search_path_data`, and assume that `SymGetSearchPathW`
+        // only succeeds if it wrote a NUL-terminated wide string.
+        let search_path = unsafe {
+            win_util::string::os_string_from_wide_ptr(search_path_data.as_ptr())
+        };
+
+        Ok(search_path)
+    }
+
+    pub fn sym_set_search_path(&self, process_handle: HANDLE, search_path: impl AsRef<OsStr>) -> Result<()> {
+        let mut search_path = win_util::string::to_wstring(search_path.as_ref());
+
+        check_winapi(|| unsafe {
+            SymSetSearchPathW(process_handle, search_path.as_mut_ptr())
+        })?;
+
+        Ok(())
     }
 }
 
