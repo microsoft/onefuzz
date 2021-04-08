@@ -3,7 +3,7 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
+        build_local_context, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
         ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, NO_REPRO_DIR,
         REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR, UNIQUE_REPORTS_DIR,
     },
@@ -29,7 +29,12 @@ pub fn build_analysis_config(
     let analyzer_env = get_hash_map(args, ANALYZER_ENV)?;
     let analysis = get_synced_dir(ANALYSIS_DIR, common.job_id, common.task_id, args)?;
     let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args)?;
-    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args).ok();
+    let crashes = if input_queue.is_none() {
+        get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args).ok()
+    } else {
+        None
+    };
+
     let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args).ok();
     let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args).ok();
     let unique_reports =
@@ -55,8 +60,8 @@ pub fn build_analysis_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
-    let config = build_analysis_config(args, None, common)?;
+    let context = build_local_context(args, true)?;
+    let config = build_analysis_config(args, None, context.common_config.clone())?;
     run_analysis(config).await
 }
 

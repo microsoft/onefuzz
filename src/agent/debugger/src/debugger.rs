@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_else_if)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::unreadable_literal)]
 #![allow(clippy::single_match)]
@@ -676,6 +677,10 @@ impl Debugger {
 
     pub fn read_register_u64(&mut self, reg: iced_x86::Register) -> Result<u64> {
         self.target.read_register_u64(reg)
+    }
+
+    pub fn read_program_counter(&mut self) -> Result<u64> {
+        self.target.read_program_counter()
     }
 
     pub fn read_flags_register(&mut self) -> Result<u32> {

@@ -31,8 +31,8 @@ def set_config(pool: Pool) -> Pool:
     pool.config = AgentConfig(
         pool_name=pool.name,
         onefuzz_url=get_instance_url(),
-        instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
-        telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+        instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+        microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "node-heartbeat",
             StorageType.config,
@@ -40,6 +40,11 @@ def set_config(pool: Pool) -> Pool:
         ),
         instance_id=get_instance_id(),
     )
+
+    multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
+    if multi_tenant_domain:
+        pool.config.multi_tenant_domain = multi_tenant_domain
+
     return pool
 
 

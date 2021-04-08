@@ -3,7 +3,7 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
+        build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
         get_synced_dirs, CmdType, ANALYSIS_INPUTS, ANALYSIS_UNIQUE_INPUTS, CHECK_FUZZER_HELP,
         INPUTS_DIR, PRESERVE_EXISTING_OUTPUTS, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
     },
@@ -45,8 +45,8 @@ pub fn build_merge_config(
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
-    let config = build_merge_config(args, None, common)?;
+    let context = build_local_context(args, true)?;
+    let config = build_merge_config(args, None, context.common_config.clone())?;
     spawn(std::sync::Arc::new(config)).await
 }
 

@@ -3,7 +3,7 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
+        build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
         CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
         TARGET_WORKERS,
     },
@@ -25,7 +25,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
 
-    let target_workers = value_t!(args, "target_workers", u64).unwrap_or_default();
+    let target_workers = value_t!(args, "target_workers", usize).unwrap_or_default();
     let readonly_inputs = None;
     let check_fuzzer_help = args.is_present(CHECK_FUZZER_HELP);
     let expect_crash_on_failure = !args.is_present(DISABLE_EXPECT_CRASH_ON_FAILURE);
@@ -50,8 +50,8 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
-    let config = build_fuzz_config(args, common)?;
+    let context = build_local_context(args, true)?;
+    let config = build_fuzz_config(args, context.common_config.clone())?;
     LibFuzzerFuzzTask::new(config)?.run().await
 }
 

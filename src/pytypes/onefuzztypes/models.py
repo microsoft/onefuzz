@@ -171,6 +171,7 @@ class TaskDetails(BaseModel):
     ensemble_sync_delay: Optional[int]
     preserve_existing_outputs: Optional[bool]
     report_list: Optional[List[str]]
+    minimized_stack_depth: Optional[int]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:
@@ -250,6 +251,10 @@ class Report(BaseModel):
     job_id: UUID
     scariness_score: Optional[int]
     scariness_description: Optional[str]
+    minimized_stack: Optional[List[str]]
+    minimized_stack_sha256: Optional[str]
+    minimized_stack_function_names: Optional[List[str]]
+    minimized_stack_function_names_sha256: Optional[str]
 
 
 class NoReproReport(BaseModel):
@@ -357,8 +362,9 @@ class AgentConfig(BaseModel):
     onefuzz_url: str
     pool_name: PoolName
     heartbeat_queue: Optional[str]
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
+    multi_tenant_domain: Optional[str]
     instance_id: UUID
 
 
@@ -367,8 +373,8 @@ class TaskUnitConfig(BaseModel):
     job_id: UUID
     task_id: UUID
     task_type: TaskType
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
     heartbeat_queue: str
     # command_queue: str
     input_queue: Optional[str]
@@ -399,6 +405,7 @@ class TaskUnitConfig(BaseModel):
     stats_format: Optional[StatsFormat]
     ensemble_sync_delay: Optional[int]
     report_list: Optional[List[str]]
+    minimized_stack_depth: Optional[int]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes
@@ -426,8 +433,8 @@ class ProxyConfig(BaseModel):
     notification: str
     region: Region
     forwards: List[Forward]
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
     instance_id: UUID
 
 
@@ -580,6 +587,7 @@ class AutoScaleConfig(BaseModel):
     region: Optional[Region]
     scaleset_size: int  # Individual scaleset size
     spot_instances: bool = Field(default=False)
+    ephemeral_os_disks: bool = Field(default=False)
     vm_sku: str
 
     @validator("scaleset_size", allow_reuse=True)
@@ -648,6 +656,7 @@ class Scaleset(BaseModel):
     region: Region
     size: int
     spot_instances: bool
+    ephemeral_os_disks: bool = Field(default=False)
     needs_config_update: bool = Field(default=False)
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]

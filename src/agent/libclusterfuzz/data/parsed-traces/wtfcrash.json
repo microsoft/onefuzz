@@ -1,0 +1,637 @@
+{
+  "text": "AddressSanitizer:DEADLYSIGNAL\n=================================================================\n==22566==ERROR: AddressSanitizer: ILL on unknown address 0x000002ade51c (pc 0x000002ade51c bp 0x7ffd8a3210f0 sp 0x7ffd8a3210f0 T0)\nSCARINESS: 10 (signal)\n#0 0x2ade51b in WTFCrash /src/WebKit/Source/WTF/wtf/Assertions.cpp:271:5\n#1 0x28e6c15 in JSC::BuiltinExecutables::createExecutable(JSC::VM&, JSC::SourceCode const&, JSC::Identifier const&, JSC::ConstructorKind, JSC::ConstructAbility) /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:87:9\n#2 0x2917404 in JSC::BuiltinExecutables::typedArrayPrototypeEveryCodeExecutable() /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:128:1\n#3 0x25dd7db in JSC::typedArrayPrototypeEveryCodeGenerator(JSC::VM&) /src/WebKit/WebKitBuild/Debug/DerivedSources/JavaScriptCore/JSCBuiltins.cpp:4410:1\n#4 0x21aade1 in JSC::JSTypedArrayViewPrototype::finishCreation(JSC::VM&, JSC::JSGlobalObject*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:304:5\n#5 0x21af2a0 in JSC::JSTypedArrayViewPrototype::create(JSC::VM&, JSC::JSGlobalObject*, JSC::Structure*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:346:16\n#6 0x2105009 in JSC::JSGlobalObject::init(JSC::VM&)::$_10::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:468:22\n#7 0x2104e3a in JSC::JSTypedArrayViewPrototype* JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::callFunc<JSC::JSGlobalObject::init(JSC::VM&)::$_10>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5\n#8 0x212857c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20\n#9 0x21097bf in JSC::JSGlobalObject::init(JSC::VM&)::$_18::operator()(JSC::LazyClassStructure::Initializer&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:489:5\n#10 0x210960b in void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/LazyClassStructureInlines.h:42:13\n#11 0x210942a in JSC::Structure* JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::callFunc<void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5\n#12 0x132853c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20\n#13 0x216cbba in JSC::reifyStaticProperty(JSC::VM&, JSC::ClassInfo const*, JSC::PropertyName const&, JSC::HashTableValue const&, JSC::JSObject&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.h:366:20\n#14 0x22163a5 in JSC::setUpStaticFunctionSlot(JSC::VM&, JSC::ClassInfo const*, JSC::HashTableValue const*, JSC::JSObject*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.cpp:62:9\n#15 0x215b61c in JSC::JSObject::getOwnStaticPropertySlot(JSC::VM&, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.cpp:2028:17\n#16 0x1342949 in JSC::JSObject::getOwnNonIndexPropertySlot(JSC::VM&, JSC::Structure*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1329:16\n#17 0x13426a9 in JSC::JSObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1380:17\n#18 0x20ddf67 in JSC::JSGlobalObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:1409:9\n#19 0x2183b83 in JSC::abstractAccess(JSC::ExecState*, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, unsigned long, bool&, JSC::ResolveOp&, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:156:31\n#20 0x2182dea in JSC::JSScope::abstractResolve(JSC::ExecState*, unsigned long, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, JSC::ResolveType, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:312:24\n#21 0x13de75e in JSC::CodeBlock::finishCreation(JSC::VM&, JSC::ScriptExecutable*, JSC::UnlinkedCodeBlock*, JSC::JSScope*) /src/WebKit/Source/JavaScriptCore/bytecode/CodeBlock.cpp:636:28\n#22 0x22b76a4 in JSC::FunctionCodeBlock::create(JSC::VM*, JSC::FunctionExecutable*, JSC::UnlinkedFunctionCodeBlock*, JSC::JSScope*, WTF::RefPtr<JSC::SourceProvider>&&, unsigned int, unsigned int) /src/WebKit/Source/JavaScriptCore/bytecode/FunctionCodeBlock.h:55:24\n#23 0x22aee53 in JSC::ScriptExecutable::newCodeBlockFor(JSC::CodeSpecializationKind, JSC::JSFunction*, JSC::JSScope*, JSC::JSObject*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:259:12\n#24 0x22af8d7 in JSC::ScriptExecutable::prepareForExecutionImpl(JSC::VM&, JSC::JSFunction*, JSC::JSScope*, JSC::CodeSpecializationKind, JSC::CodeBlock*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:339:28\n#25 0x1def053 in JSC::LLInt::setUpCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind, JSC::JSValue, JSC::LLIntCallLinkInfo*) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1398:47\n#26 0x1dee5df in JSC::LLInt::genericCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1449:12\n#27 0x1de7655 in llint_slow_path_call /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1456:12\n#28 0x1dd59b3 in jsc\n#29 0x7fab96bcce6e  (<unknown module>)\n#30 0x7fab96bccb8f  (<unknown module>)\n#31 0x7fab96bccb8f  (<unknown module>)\n#32 0x7fab96bccb8f  (<unknown module>)\n#33 0x7fab96bccb8f  (<unknown module>)\n#34 0x7fab96bccb8f  (<unknown module>)\n#35 0x7fab96bccb8f  (<unknown module>)\n#36 0x7fab96bccb8f  (<unknown module>)\n#37 0x7fab96bccb8f  (<unknown module>)\n#38 0x7fab96bccb8f  (<unknown module>)\n#39 0x7fab96bccb8f  (<unknown module>)\n#40 0x7fab96bccb8f  (<unknown module>)\n#41 0x7fab96bccb8f  (<unknown module>)\n#42 0x7fab96bccb8f  (<unknown module>)\n#43 0x7fab96bccb8f  (<unknown module>)\n#44 0x7fab96bccb8f  (<unknown module>)\n#45 0x7fab96bccb8f  (<unknown module>)\n#46 0x7fab96bccb8f  (<unknown module>)\n#47 0x7fab96bccb8f  (<unknown module>)\n#48 0x7fab96bccb8f  (<unknown module>)\n#49 0x7fab96bccb8f  (<unknown module>)\n#50 0x7fab96bccb8f  (<unknown module>)\n#51 0x7fab96bccb8f  (<unknown module>)\n#52 0x7fab96bccb8f  (<unknown module>)\n#53 0x7fab96bccb8f  (<unknown module>)\n#54 0x7fab96bccb8f  (<unknown module>)\n#55 0x7fab96bccb8f  (<unknown module>)\n#56 0x7fab96bccb8f  (<unknown module>)\n#57 0x7fab96bccb8f  (<unknown module>)\n#58 0x7fab96bccb8f  (<unknown module>)\n#59 0x7fab96bccb8f  (<unknown module>)\n#60 0x7fab96bccb8f  (<unknown module>)\n#61 0x7fab96bccb8f  (<unknown module>)\n#62 0x7fab96bccb8f  (<unknown module>)\n#63 0x7fab96bccb8f  (<unknown module>)\n#64 0x7fab96bccb8f  (<unknown module>)\n#65 0x7fab96bccb8f  (<unknown module>)\n#66 0x7fab96bccb8f  (<unknown module>)\n#67 0x7fab96bccb8f  (<unknown module>)\n#68 0x7fab96bccb8f  (<unknown module>)\n#69 0x7fab96bccb8f  (<unknown module>)\n#70 0x7fab96bccb8f  (<unknown module>)\n#71 0x7fab96bccb8f  (<unknown module>)\n#72 0x7fab96bccb8f  (<unknown module>)\n#73 0x7fab96bccb8f  (<unknown module>)\n#74 0x7fab96bccb8f  (<unknown module>)\n#75 0x7fab96bccb8f  (<unknown module>)\n#76 0x7fab96bccb8f  (<unknown module>)\n#77 0x7fab96bccb8f  (<unknown module>)\n#78 0x7fab96bccb8f  (<unknown module>)\n#79 0x7fab96bccb8f  (<unknown module>)\n#80 0x7fab96bccb8f  (<unknown module>)\n#81 0x7fab96bccb8f  (<unknown module>)\n#82 0x7fab96bccb8f  (<unknown module>)\n#83 0x7fab96bccb8f  (<unknown module>)\n#84 0x7fab96bccb8f  (<unknown module>)\n#85 0x7fab96bccb8f  (<unknown module>)\n#86 0x7fab96bccb8f  (<unknown module>)\n#87 0x7fab96bccb8f  (<unknown module>)\n#88 0x7fab96bccb8f  (<unknown module>)\n#89 0x7fab96bccb8f  (<unknown module>)\n#90 0x7fab96bccb8f  (<unknown module>)\n#91 0x7fab96bccb8f  (<unknown module>)\n#92 0x7fab96bccb8f  (<unknown module>)\n#93 0x7fab96bccb8f  (<unknown module>)\n#94 0x7fab96bccb8f  (<unknown module>)\n#95 0x7fab96bccb8f  (<unknown module>)\n#96 0x7fab96bccb8f  (<unknown module>)\n#97 0x7fab96bccb8f  (<unknown module>)\n#98 0x7fab96bccb8f  (<unknown module>)\n#99 0x7fab96bccb8f  (<unknown module>)\n#100 0x7fab96bccb8f  (<unknown module>)\n#101 0x7fab96bccb8f  (<unknown module>)\n#102 0x7fab96bccb8f  (<unknown module>)\n#103 0x7fab96bccb8f  (<unknown module>)\n#104 0x7fab96bccb8f  (<unknown module>)\n#105 0x7fab96bccb8f  (<unknown module>)\n#106 0x7fab96bccb8f  (<unknown module>)\n#107 0x7fab96bccb8f  (<unknown module>)\n#108 0x7fab96bccb8f  (<unknown module>)\n#109 0x7fab96bccb8f  (<unknown module>)\n#110 0x7fab96bccb8f  (<unknown module>)\n#111 0x7fab96bccb8f  (<unknown module>)\n#112 0x7fab96bccb8f  (<unknown module>)\n#113 0x7fab96bccb8f  (<unknown module>)\n#114 0x7fab96bccb8f  (<unknown module>)\n#115 0x7fab96bccb8f  (<unknown module>)\n#116 0x7fab96bccb8f  (<unknown module>)\n#117 0x7fab96bccb8f  (<unknown module>)\n#118 0x7fab96bccb8f  (<unknown module>)\n#119 0x7fab96bccb8f  (<unknown module>)\n#120 0x7fab96bccb8f  (<unknown module>)\n#121 0x7fab96bccb8f  (<unknown module>)\n#122 0x7fab96bccb8f  (<unknown module>)\n#123 0x7fab96bccb8f  (<unknown module>)\n#124 0x7fab96bccb8f  (<unknown module>)\n#125 0x7fab96bccb8f  (<unknown module>)\n#126 0x7fab96bccb8f  (<unknown module>)\n#127 0x7fab96bccb8f  (<unknown module>)\n#128 0x7fab96bccb8f  (<unknown module>)\n#129 0x7fab96bccb8f  (<unknown module>)\n#130 0x7fab96bccb8f  (<unknown module>)\n#131 0x7fab96bccb8f  (<unknown module>)\n#132 0x7fab96bccb8f  (<unknown module>)\n#133 0x7fab96bccb8f  (<unknown module>)\n#134 0x7fab96bccb8f  (<unknown module>)\n#135 0x7fab96bccb8f  (<unknown module>)\n#136 0x7fab96bccb8f  (<unknown module>)\n#137 0x7fab96bccb8f  (<unknown module>)\n#138 0x7fab96bccb8f  (<unknown module>)\n#139 0x7fab96bccb8f  (<unknown module>)\n#140 0x7fab96bccb8f  (<unknown module>)\n#141 0x7fab96bccb8f  (<unknown module>)\n#142 0x7fab96bccb8f  (<unknown module>)\n#143 0x7fab96bccb8f  (<unknown module>)\n#144 0x7fab96bccb8f  (<unknown module>)\n#145 0x7fab96bccb8f  (<unknown module>)\n#146 0x7fab96bccb8f  (<unknown module>)\n#147 0x7fab96bccb8f  (<unknown module>)\n#148 0x7fab96bccb8f  (<unknown module>)\n#149 0x7fab96bccb8f  (<unknown module>)\n#150 0x7fab96bccb8f  (<unknown module>)\n#151 0x7fab96bccb8f  (<unknown module>)\n#152 0x7fab96bccb8f  (<unknown module>)\n#153 0x7fab96bccb8f  (<unknown module>)\n#154 0x7fab96bccb8f  (<unknown module>)\n#155 0x7fab96bccb8f  (<unknown module>)\n#156 0x7fab96bccb8f  (<unknown module>)\n#157 0x7fab96bccb8f  (<unknown module>)\n#158 0x7fab96bccb8f  (<unknown module>)\n#159 0x7fab96bccb8f  (<unknown module>)\n#160 0x7fab96bccb8f  (<unknown module>)\n#161 0x7fab96bccb8f  (<unknown module>)\n#162 0x7fab96bccb8f  (<unknown module>)\n#163 0x7fab96bccb8f  (<unknown module>)\n#164 0x7fab96bccb8f  (<unknown module>)\n#165 0x7fab96bccb8f  (<unknown module>)\n#166 0x7fab96bccb8f  (<unknown module>)\n#167 0x7fab96bccb8f  (<unknown module>)\n#168 0x7fab96bccb8f  (<unknown module>)\n#169 0x7fab96bccb8f  (<unknown module>)\n#170 0x7fab96bccb8f  (<unknown module>)\n#171 0x7fab96bccb8f  (<unknown module>)\n#172 0x7fab96bccb8f  (<unknown module>)\n#173 0x7fab96bccb8f  (<unknown module>)\n#174 0x7fab96bccb8f  (<unknown module>)\n#175 0x7fab96bccb8f  (<unknown module>)\n#176 0x7fab96bccb8f  (<unknown module>)\n#177 0x7fab96bccb8f  (<unknown module>)\n#178 0x7fab96bccb8f  (<unknown module>)\n#179 0x7fab96bccb8f  (<unknown module>)\n#180 0x7fab96bccb8f  (<unknown module>)\n#181 0x7fab96bccb8f  (<unknown module>)\n#182 0x7fab96bccb8f  (<unknown module>)\n#183 0x7fab96bccb8f  (<unknown module>)\n#184 0x7fab96bccb8f  (<unknown module>)\n#185 0x7fab96bccb8f  (<unknown module>)\n#186 0x7fab96bccb8f  (<unknown module>)\n#187 0x7fab96bccb8f  (<unknown module>)\n#188 0x7fab96bccb8f  (<unknown module>)\n#189 0x7fab96bccb8f  (<unknown module>)\n#190 0x7fab96bccb8f  (<unknown module>)\n#191 0x7fab96bccb8f  (<unknown module>)\n#192 0x7fab96bccb8f  (<unknown module>)\n#193 0x7fab96bccb8f  (<unknown module>)\n#194 0x7fab96bccb8f  (<unknown module>)\n#195 0x7fab96bccb8f  (<unknown module>)\n#196 0x7fab96bccb8f  (<unknown module>)\n#197 0x7fab96bccb8f  (<unknown module>)\n#198 0x7fab96bccb8f  (<unknown module>)\n#199 0x7fab96bccb8f  (<unknown module>)\n#200 0x7fab96bccb8f  (<unknown module>)\n#201 0x7fab96bccb8f  (<unknown module>)\n#202 0x7fab96bccb8f  (<unknown module>)\n#203 0x7fab96bccb8f  (<unknown module>)\n#204 0x7fab96bccb8f  (<unknown module>)\n#205 0x7fab96bccb8f  (<unknown module>)\n#206 0x7fab96bccb8f  (<unknown module>)\n#207 0x7fab96bccb8f  (<unknown module>)\n#208 0x7fab96bccb8f  (<unknown module>)\n#209 0x7fab96bccb8f  (<unknown module>)\n#210 0x7fab96bccb8f  (<unknown module>)\n#211 0x7fab96bccb8f  (<unknown module>)\n#212 0x7fab96bccb8f  (<unknown module>)\n#213 0x7fab96bccb8f  (<unknown module>)\n#214 0x7fab96bccb8f  (<unknown module>)\n#215 0x7fab96bccb8f  (<unknown module>)\n#216 0x7fab96bccb8f  (<unknown module>)\n#217 0x7fab96bccb8f  (<unknown module>)\n#218 0x7fab96bccb8f  (<unknown module>)\n#219 0x7fab96bccb8f  (<unknown module>)\n#220 0x7fab96bccb8f  (<unknown module>)\n#221 0x7fab96bccb8f  (<unknown module>)\n#222 0x7fab96bccb8f  (<unknown module>)\n#223 0x7fab96bccb8f  (<unknown module>)\n#224 0x7fab96bccb8f  (<unknown module>)\n#225 0x7fab96bccb8f  (<unknown module>)\n#226 0x7fab96bccb8f  (<unknown module>)\n#227 0x7fab96bccb8f  (<unknown module>)\n#228 0x7fab96bccb8f  (<unknown module>)\n#229 0x7fab96bccb8f  (<unknown module>)\n#230 0x7fab96bccb8f  (<unknown module>)\n#231 0x7fab96bccb8f  (<unknown module>)\n#232 0x7fab96bccb8f  (<unknown module>)\n#233 0x7fab96bccb8f  (<unknown module>)\n#234 0x7fab96bccb8f  (<unknown module>)\n#235 0x7fab96bccb8f  (<unknown module>)\n#236 0x7fab96bccb8f  (<unknown module>)\n#237 0x7fab96bccb8f  (<unknown module>)\n#238 0x7fab96bccb8f  (<unknown module>)\n#239 0x7fab96bccb8f  (<unknown module>)\n#240 0x7fab96bccb8f  (<unknown module>)\n#241 0x7fab96bccb8f  (<unknown module>)\n#242 0x7fab96bccb8f  (<unknown module>)\n#243 0x7fab96bccb8f  (<unknown module>)\n#244 0x7fab96bccb8f  (<unknown module>)\n#245 0x7fab96bccb8f  (<unknown module>)\n#246 0x7fab96bccb8f  (<unknown module>)\n#247 0x7fab96bccb8f  (<unknown module>)\n#248 0x7fab96bccb8f  (<unknown module>)\n#249 0x7fab96bccb8f  (<unknown module>)\n#250 0x7fab96bccb8f  (<unknown module>)\n#251 0x7fab96bccb8f  (<unknown module>)\n#252 0x7fab96bccb8f  (<unknown module>)\n#253 0x7fab96bccb8f  (<unknown module>)\n#254 0x7fab96bccb8f  (<unknown module>)\n    #255 0x7fab96bccb8f  (<unknown module>)\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ILL (/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds-no-engine_jsc_b0799c36b671da909defc43d3a0fa14299c575c8/revisions/jsc+0x2ade51b)\n==22566==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ILL (/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds-no-engine_jsc_b0799c36b671da909defc43d3a0fa14299c575c8/revisions/jsc+0x2ade51b)",
+  "fault_type": "ILL",
+  "call_stack": [
+    "#0 0x2ade51b in WTFCrash /src/WebKit/Source/WTF/wtf/Assertions.cpp:271:5",
+    "#1 0x28e6c15 in JSC::BuiltinExecutables::createExecutable(JSC::VM&, JSC::SourceCode const&, JSC::Identifier const&, JSC::ConstructorKind, JSC::ConstructAbility) /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:87:9",
+    "#2 0x2917404 in JSC::BuiltinExecutables::typedArrayPrototypeEveryCodeExecutable() /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:128:1",
+    "#3 0x25dd7db in JSC::typedArrayPrototypeEveryCodeGenerator(JSC::VM&) /src/WebKit/WebKitBuild/Debug/DerivedSources/JavaScriptCore/JSCBuiltins.cpp:4410:1",
+    "#4 0x21aade1 in JSC::JSTypedArrayViewPrototype::finishCreation(JSC::VM&, JSC::JSGlobalObject*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:304:5",
+    "#5 0x21af2a0 in JSC::JSTypedArrayViewPrototype::create(JSC::VM&, JSC::JSGlobalObject*, JSC::Structure*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:346:16",
+    "#6 0x2105009 in JSC::JSGlobalObject::init(JSC::VM&)::$_10::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:468:22",
+    "#7 0x2104e3a in JSC::JSTypedArrayViewPrototype* JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::callFunc<JSC::JSGlobalObject::init(JSC::VM&)::$_10>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5",
+    "#8 0x212857c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20",
+    "#9 0x21097bf in JSC::JSGlobalObject::init(JSC::VM&)::$_18::operator()(JSC::LazyClassStructure::Initializer&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:489:5",
+    "#10 0x210960b in void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/LazyClassStructureInlines.h:42:13",
+    "#11 0x210942a in JSC::Structure* JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::callFunc<void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5",
+    "#12 0x132853c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20",
+    "#13 0x216cbba in JSC::reifyStaticProperty(JSC::VM&, JSC::ClassInfo const*, JSC::PropertyName const&, JSC::HashTableValue const&, JSC::JSObject&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.h:366:20",
+    "#14 0x22163a5 in JSC::setUpStaticFunctionSlot(JSC::VM&, JSC::ClassInfo const*, JSC::HashTableValue const*, JSC::JSObject*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.cpp:62:9",
+    "#15 0x215b61c in JSC::JSObject::getOwnStaticPropertySlot(JSC::VM&, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.cpp:2028:17",
+    "#16 0x1342949 in JSC::JSObject::getOwnNonIndexPropertySlot(JSC::VM&, JSC::Structure*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1329:16",
+    "#17 0x13426a9 in JSC::JSObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1380:17",
+    "#18 0x20ddf67 in JSC::JSGlobalObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:1409:9",
+    "#19 0x2183b83 in JSC::abstractAccess(JSC::ExecState*, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, unsigned long, bool&, JSC::ResolveOp&, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:156:31",
+    "#20 0x2182dea in JSC::JSScope::abstractResolve(JSC::ExecState*, unsigned long, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, JSC::ResolveType, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:312:24",
+    "#21 0x13de75e in JSC::CodeBlock::finishCreation(JSC::VM&, JSC::ScriptExecutable*, JSC::UnlinkedCodeBlock*, JSC::JSScope*) /src/WebKit/Source/JavaScriptCore/bytecode/CodeBlock.cpp:636:28",
+    "#22 0x22b76a4 in JSC::FunctionCodeBlock::create(JSC::VM*, JSC::FunctionExecutable*, JSC::UnlinkedFunctionCodeBlock*, JSC::JSScope*, WTF::RefPtr<JSC::SourceProvider>&&, unsigned int, unsigned int) /src/WebKit/Source/JavaScriptCore/bytecode/FunctionCodeBlock.h:55:24",
+    "#23 0x22aee53 in JSC::ScriptExecutable::newCodeBlockFor(JSC::CodeSpecializationKind, JSC::JSFunction*, JSC::JSScope*, JSC::JSObject*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:259:12",
+    "#24 0x22af8d7 in JSC::ScriptExecutable::prepareForExecutionImpl(JSC::VM&, JSC::JSFunction*, JSC::JSScope*, JSC::CodeSpecializationKind, JSC::CodeBlock*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:339:28",
+    "#25 0x1def053 in JSC::LLInt::setUpCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind, JSC::JSValue, JSC::LLIntCallLinkInfo*) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1398:47",
+    "#26 0x1dee5df in JSC::LLInt::genericCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1449:12",
+    "#27 0x1de7655 in llint_slow_path_call /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1456:12",
+    "#28 0x1dd59b3 in jsc"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x2ade51b in WTFCrash /src/WebKit/Source/WTF/wtf/Assertions.cpp:271:5",
+      "address": 44950811,
+      "function_name": "WTFCrash",
+      "function_offset": 5,
+      "source_file_name": "Assertions.cpp",
+      "source_file_path": "/src/WebKit/Source/WTF/wtf/Assertions.cpp",
+      "source_file_line": 271
+    },
+    {
+      "line": "#1 0x28e6c15 in JSC::BuiltinExecutables::createExecutable(JSC::VM&, JSC::SourceCode const&, JSC::Identifier const&, JSC::ConstructorKind, JSC::ConstructAbility) /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:87:9",
+      "address": 42888213,
+      "function_name": "JSC::BuiltinExecutables::createExecutable(JSC::VM&, JSC::SourceCode const&, JSC::Identifier const&, JSC::ConstructorKind, JSC::ConstructAbility)",
+      "function_offset": 9,
+      "source_file_name": "BuiltinExecutables.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp",
+      "source_file_line": 87
+    },
+    {
+      "line": "#2 0x2917404 in JSC::BuiltinExecutables::typedArrayPrototypeEveryCodeExecutable() /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:128:1",
+      "address": 43086852,
+      "function_name": "JSC::BuiltinExecutables::typedArrayPrototypeEveryCodeExecutable()",
+      "function_offset": 1,
+      "source_file_name": "BuiltinExecutables.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp",
+      "source_file_line": 128
+    },
+    {
+      "line": "#3 0x25dd7db in JSC::typedArrayPrototypeEveryCodeGenerator(JSC::VM&) /src/WebKit/WebKitBuild/Debug/DerivedSources/JavaScriptCore/JSCBuiltins.cpp:4410:1",
+      "address": 39704539,
+      "function_name": "JSC::typedArrayPrototypeEveryCodeGenerator(JSC::VM&)",
+      "function_offset": 1,
+      "source_file_name": "JSCBuiltins.cpp",
+      "source_file_path": "/src/WebKit/WebKitBuild/Debug/DerivedSources/JavaScriptCore/JSCBuiltins.cpp",
+      "source_file_line": 4410
+    },
+    {
+      "line": "#4 0x21aade1 in JSC::JSTypedArrayViewPrototype::finishCreation(JSC::VM&, JSC::JSGlobalObject*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:304:5",
+      "address": 35302881,
+      "function_name": "JSC::JSTypedArrayViewPrototype::finishCreation(JSC::VM&, JSC::JSGlobalObject*)",
+      "function_offset": 5,
+      "source_file_name": "JSTypedArrayViewPrototype.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp",
+      "source_file_line": 304
+    },
+    {
+      "line": "#5 0x21af2a0 in JSC::JSTypedArrayViewPrototype::create(JSC::VM&, JSC::JSGlobalObject*, JSC::Structure*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:346:16",
+      "address": 35320480,
+      "function_name": "JSC::JSTypedArrayViewPrototype::create(JSC::VM&, JSC::JSGlobalObject*, JSC::Structure*)",
+      "function_offset": 16,
+      "source_file_name": "JSTypedArrayViewPrototype.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp",
+      "source_file_line": 346
+    },
+    {
+      "line": "#6 0x2105009 in JSC::JSGlobalObject::init(JSC::VM&)::$_10::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:468:22",
+      "address": 34623497,
+      "function_name": "JSC::JSGlobalObject::init(JSC::VM&)::$_10::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) const",
+      "function_offset": 22,
+      "source_file_name": "JSGlobalObject.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp",
+      "source_file_line": 468
+    },
+    {
+      "line": "#7 0x2104e3a in JSC::JSTypedArrayViewPrototype* JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::callFunc<JSC::JSGlobalObject::init(JSC::VM&)::$_10>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5",
+      "address": 34623034,
+      "function_name": "JSC::JSTypedArrayViewPrototype* JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::callFunc<JSC::JSGlobalObject::init(JSC::VM&)::$_10>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&)",
+      "function_offset": 5,
+      "source_file_name": "LazyPropertyInlines.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h",
+      "source_file_line": 98
+    },
+    {
+      "line": "#8 0x212857c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20",
+      "address": 34768252,
+      "function_name": "JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::get(JSC::JSGlobalObject const*) const",
+      "function_offset": 20,
+      "source_file_name": "LazyProperty.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h",
+      "source_file_line": 84
+    },
+    {
+      "line": "#9 0x21097bf in JSC::JSGlobalObject::init(JSC::VM&)::$_18::operator()(JSC::LazyClassStructure::Initializer&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:489:5",
+      "address": 34641855,
+      "function_name": "JSC::JSGlobalObject::init(JSC::VM&)::$_18::operator()(JSC::LazyClassStructure::Initializer&) const",
+      "function_offset": 5,
+      "source_file_name": "JSGlobalObject.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp",
+      "source_file_line": 489
+    },
+    {
+      "line": "#10 0x210960b in void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/LazyClassStructureInlines.h:42:13",
+      "address": 34641419,
+      "function_name": "void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) const",
+      "function_offset": 13,
+      "source_file_name": "LazyClassStructureInlines.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyClassStructureInlines.h",
+      "source_file_line": 42
+    },
+    {
+      "line": "#11 0x210942a in JSC::Structure* JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::callFunc<void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5",
+      "address": 34640938,
+      "function_name": "JSC::Structure* JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::callFunc<void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)",
+      "function_offset": 5,
+      "source_file_name": "LazyPropertyInlines.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h",
+      "source_file_line": 98
+    },
+    {
+      "line": "#12 0x132853c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20",
+      "address": 20088124,
+      "function_name": "JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::get(JSC::JSGlobalObject const*) const",
+      "function_offset": 20,
+      "source_file_name": "LazyProperty.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h",
+      "source_file_line": 84
+    },
+    {
+      "line": "#13 0x216cbba in JSC::reifyStaticProperty(JSC::VM&, JSC::ClassInfo const*, JSC::PropertyName const&, JSC::HashTableValue const&, JSC::JSObject&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.h:366:20",
+      "address": 35048378,
+      "function_name": "JSC::reifyStaticProperty(JSC::VM&, JSC::ClassInfo const*, JSC::PropertyName const&, JSC::HashTableValue const&, JSC::JSObject&)",
+      "function_offset": 20,
+      "source_file_name": "Lookup.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/Lookup.h",
+      "source_file_line": 366
+    },
+    {
+      "line": "#14 0x22163a5 in JSC::setUpStaticFunctionSlot(JSC::VM&, JSC::ClassInfo const*, JSC::HashTableValue const*, JSC::JSObject*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.cpp:62:9",
+      "address": 35742629,
+      "function_name": "JSC::setUpStaticFunctionSlot(JSC::VM&, JSC::ClassInfo const*, JSC::HashTableValue const*, JSC::JSObject*, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 9,
+      "source_file_name": "Lookup.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/Lookup.cpp",
+      "source_file_line": 62
+    },
+    {
+      "line": "#15 0x215b61c in JSC::JSObject::getOwnStaticPropertySlot(JSC::VM&, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.cpp:2028:17",
+      "address": 34977308,
+      "function_name": "JSC::JSObject::getOwnStaticPropertySlot(JSC::VM&, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 17,
+      "source_file_name": "JSObject.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSObject.cpp",
+      "source_file_line": 2028
+    },
+    {
+      "line": "#16 0x1342949 in JSC::JSObject::getOwnNonIndexPropertySlot(JSC::VM&, JSC::Structure*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1329:16",
+      "address": 20195657,
+      "function_name": "JSC::JSObject::getOwnNonIndexPropertySlot(JSC::VM&, JSC::Structure*, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 16,
+      "source_file_name": "JSObject.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSObject.h",
+      "source_file_line": 1329
+    },
+    {
+      "line": "#17 0x13426a9 in JSC::JSObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1380:17",
+      "address": 20194985,
+      "function_name": "JSC::JSObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 17,
+      "source_file_name": "JSObject.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSObject.h",
+      "source_file_line": 1380
+    },
+    {
+      "line": "#18 0x20ddf67 in JSC::JSGlobalObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:1409:9",
+      "address": 34463591,
+      "function_name": "JSC::JSGlobalObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 9,
+      "source_file_name": "JSGlobalObject.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp",
+      "source_file_line": 1409
+    },
+    {
+      "line": "#19 0x2183b83 in JSC::abstractAccess(JSC::ExecState*, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, unsigned long, bool&, JSC::ResolveOp&, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:156:31",
+      "address": 35142531,
+      "function_name": "JSC::abstractAccess(JSC::ExecState*, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, unsigned long, bool&, JSC::ResolveOp&, JSC::InitializationMode)",
+      "function_offset": 31,
+      "source_file_name": "JSScope.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp",
+      "source_file_line": 156
+    },
+    {
+      "line": "#20 0x2182dea in JSC::JSScope::abstractResolve(JSC::ExecState*, unsigned long, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, JSC::ResolveType, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:312:24",
+      "address": 35139050,
+      "function_name": "JSC::JSScope::abstractResolve(JSC::ExecState*, unsigned long, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, JSC::ResolveType, JSC::InitializationMode)",
+      "function_offset": 24,
+      "source_file_name": "JSScope.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp",
+      "source_file_line": 312
+    },
+    {
+      "line": "#21 0x13de75e in JSC::CodeBlock::finishCreation(JSC::VM&, JSC::ScriptExecutable*, JSC::UnlinkedCodeBlock*, JSC::JSScope*) /src/WebKit/Source/JavaScriptCore/bytecode/CodeBlock.cpp:636:28",
+      "address": 20834142,
+      "function_name": "JSC::CodeBlock::finishCreation(JSC::VM&, JSC::ScriptExecutable*, JSC::UnlinkedCodeBlock*, JSC::JSScope*)",
+      "function_offset": 28,
+      "source_file_name": "CodeBlock.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/bytecode/CodeBlock.cpp",
+      "source_file_line": 636
+    },
+    {
+      "line": "#22 0x22b76a4 in JSC::FunctionCodeBlock::create(JSC::VM*, JSC::FunctionExecutable*, JSC::UnlinkedFunctionCodeBlock*, JSC::JSScope*, WTF::RefPtr<JSC::SourceProvider>&&, unsigned int, unsigned int) /src/WebKit/Source/JavaScriptCore/bytecode/FunctionCodeBlock.h:55:24",
+      "address": 36402852,
+      "function_name": "JSC::FunctionCodeBlock::create(JSC::VM*, JSC::FunctionExecutable*, JSC::UnlinkedFunctionCodeBlock*, JSC::JSScope*, WTF::RefPtr<JSC::SourceProvider>&&, unsigned int, unsigned int)",
+      "function_offset": 24,
+      "source_file_name": "FunctionCodeBlock.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/bytecode/FunctionCodeBlock.h",
+      "source_file_line": 55
+    },
+    {
+      "line": "#23 0x22aee53 in JSC::ScriptExecutable::newCodeBlockFor(JSC::CodeSpecializationKind, JSC::JSFunction*, JSC::JSScope*, JSC::JSObject*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:259:12",
+      "address": 36367955,
+      "function_name": "JSC::ScriptExecutable::newCodeBlockFor(JSC::CodeSpecializationKind, JSC::JSFunction*, JSC::JSScope*, JSC::JSObject*&)",
+      "function_offset": 12,
+      "source_file_name": "ScriptExecutable.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp",
+      "source_file_line": 259
+    },
+    {
+      "line": "#24 0x22af8d7 in JSC::ScriptExecutable::prepareForExecutionImpl(JSC::VM&, JSC::JSFunction*, JSC::JSScope*, JSC::CodeSpecializationKind, JSC::CodeBlock*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:339:28",
+      "address": 36370647,
+      "function_name": "JSC::ScriptExecutable::prepareForExecutionImpl(JSC::VM&, JSC::JSFunction*, JSC::JSScope*, JSC::CodeSpecializationKind, JSC::CodeBlock*&)",
+      "function_offset": 28,
+      "source_file_name": "ScriptExecutable.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp",
+      "source_file_line": 339
+    },
+    {
+      "line": "#25 0x1def053 in JSC::LLInt::setUpCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind, JSC::JSValue, JSC::LLIntCallLinkInfo*) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1398:47",
+      "address": 31387731,
+      "function_name": "JSC::LLInt::setUpCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind, JSC::JSValue, JSC::LLIntCallLinkInfo*)",
+      "function_offset": 47,
+      "source_file_name": "LLIntSlowPaths.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp",
+      "source_file_line": 1398
+    },
+    {
+      "line": "#26 0x1dee5df in JSC::LLInt::genericCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1449:12",
+      "address": 31385055,
+      "function_name": "JSC::LLInt::genericCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind)",
+      "function_offset": 12,
+      "source_file_name": "LLIntSlowPaths.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp",
+      "source_file_line": 1449
+    },
+    {
+      "line": "#27 0x1de7655 in llint_slow_path_call /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1456:12",
+      "address": 31356501,
+      "function_name": "llint_slow_path_call",
+      "function_offset": 12,
+      "source_file_name": "LLIntSlowPaths.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp",
+      "source_file_line": 1456
+    },
+    {
+      "line": "#28 0x1dd59b3 in jsc",
+      "address": 31283635,
+      "module_path": "jsc"
+    }
+  ],
+  "full_stack_names": [
+    "WTFCrash",
+    "JSC::BuiltinExecutables::createExecutable",
+    "JSC::BuiltinExecutables::typedArrayPrototypeEveryCodeExecutable",
+    "JSC::typedArrayPrototypeEveryCodeGenerator",
+    "JSC::JSTypedArrayViewPrototype::finishCreation",
+    "JSC::JSTypedArrayViewPrototype::create",
+    "JSC::JSGlobalObject::init",
+    "JSC::JSTypedArrayViewPrototype* JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::callFunc<JSC::JSGlobalObject::init",
+    "JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::get",
+    "JSC::JSGlobalObject::init",
+    "void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init",
+    "JSC::Structure* JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::callFunc<void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init",
+    "JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::get",
+    "JSC::reifyStaticProperty",
+    "JSC::setUpStaticFunctionSlot",
+    "JSC::JSObject::getOwnStaticPropertySlot",
+    "JSC::JSObject::getOwnNonIndexPropertySlot",
+    "JSC::JSObject::getOwnPropertySlot",
+    "JSC::JSGlobalObject::getOwnPropertySlot",
+    "JSC::abstractAccess",
+    "JSC::JSScope::abstractResolve",
+    "JSC::CodeBlock::finishCreation",
+    "JSC::FunctionCodeBlock::create",
+    "JSC::ScriptExecutable::newCodeBlockFor",
+    "JSC::ScriptExecutable::prepareForExecutionImpl",
+    "JSC::LLInt::setUpCall",
+    "JSC::LLInt::genericCall",
+    "llint_slow_path_call"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x28e6c15 in JSC::BuiltinExecutables::createExecutable(JSC::VM&, JSC::SourceCode const&, JSC::Identifier const&, JSC::ConstructorKind, JSC::ConstructAbility) /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:87:9",
+      "address": 42888213,
+      "function_name": "JSC::BuiltinExecutables::createExecutable(JSC::VM&, JSC::SourceCode const&, JSC::Identifier const&, JSC::ConstructorKind, JSC::ConstructAbility)",
+      "function_offset": 9,
+      "source_file_name": "BuiltinExecutables.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp",
+      "source_file_line": 87
+    },
+    {
+      "line": "#2 0x2917404 in JSC::BuiltinExecutables::typedArrayPrototypeEveryCodeExecutable() /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:128:1",
+      "address": 43086852,
+      "function_name": "JSC::BuiltinExecutables::typedArrayPrototypeEveryCodeExecutable()",
+      "function_offset": 1,
+      "source_file_name": "BuiltinExecutables.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp",
+      "source_file_line": 128
+    },
+    {
+      "line": "#3 0x25dd7db in JSC::typedArrayPrototypeEveryCodeGenerator(JSC::VM&) /src/WebKit/WebKitBuild/Debug/DerivedSources/JavaScriptCore/JSCBuiltins.cpp:4410:1",
+      "address": 39704539,
+      "function_name": "JSC::typedArrayPrototypeEveryCodeGenerator(JSC::VM&)",
+      "function_offset": 1,
+      "source_file_name": "JSCBuiltins.cpp",
+      "source_file_path": "/src/WebKit/WebKitBuild/Debug/DerivedSources/JavaScriptCore/JSCBuiltins.cpp",
+      "source_file_line": 4410
+    },
+    {
+      "line": "#4 0x21aade1 in JSC::JSTypedArrayViewPrototype::finishCreation(JSC::VM&, JSC::JSGlobalObject*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:304:5",
+      "address": 35302881,
+      "function_name": "JSC::JSTypedArrayViewPrototype::finishCreation(JSC::VM&, JSC::JSGlobalObject*)",
+      "function_offset": 5,
+      "source_file_name": "JSTypedArrayViewPrototype.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp",
+      "source_file_line": 304
+    },
+    {
+      "line": "#5 0x21af2a0 in JSC::JSTypedArrayViewPrototype::create(JSC::VM&, JSC::JSGlobalObject*, JSC::Structure*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:346:16",
+      "address": 35320480,
+      "function_name": "JSC::JSTypedArrayViewPrototype::create(JSC::VM&, JSC::JSGlobalObject*, JSC::Structure*)",
+      "function_offset": 16,
+      "source_file_name": "JSTypedArrayViewPrototype.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp",
+      "source_file_line": 346
+    },
+    {
+      "line": "#6 0x2105009 in JSC::JSGlobalObject::init(JSC::VM&)::$_10::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:468:22",
+      "address": 34623497,
+      "function_name": "JSC::JSGlobalObject::init(JSC::VM&)::$_10::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) const",
+      "function_offset": 22,
+      "source_file_name": "JSGlobalObject.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp",
+      "source_file_line": 468
+    },
+    {
+      "line": "#7 0x2104e3a in JSC::JSTypedArrayViewPrototype* JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::callFunc<JSC::JSGlobalObject::init(JSC::VM&)::$_10>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5",
+      "address": 34623034,
+      "function_name": "JSC::JSTypedArrayViewPrototype* JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::callFunc<JSC::JSGlobalObject::init(JSC::VM&)::$_10>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&)",
+      "function_offset": 5,
+      "source_file_name": "LazyPropertyInlines.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h",
+      "source_file_line": 98
+    },
+    {
+      "line": "#8 0x212857c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20",
+      "address": 34768252,
+      "function_name": "JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::get(JSC::JSGlobalObject const*) const",
+      "function_offset": 20,
+      "source_file_name": "LazyProperty.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h",
+      "source_file_line": 84
+    },
+    {
+      "line": "#9 0x21097bf in JSC::JSGlobalObject::init(JSC::VM&)::$_18::operator()(JSC::LazyClassStructure::Initializer&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:489:5",
+      "address": 34641855,
+      "function_name": "JSC::JSGlobalObject::init(JSC::VM&)::$_18::operator()(JSC::LazyClassStructure::Initializer&) const",
+      "function_offset": 5,
+      "source_file_name": "JSGlobalObject.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp",
+      "source_file_line": 489
+    },
+    {
+      "line": "#10 0x210960b in void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/LazyClassStructureInlines.h:42:13",
+      "address": 34641419,
+      "function_name": "void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) const",
+      "function_offset": 13,
+      "source_file_name": "LazyClassStructureInlines.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyClassStructureInlines.h",
+      "source_file_line": 42
+    },
+    {
+      "line": "#11 0x210942a in JSC::Structure* JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::callFunc<void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5",
+      "address": 34640938,
+      "function_name": "JSC::Structure* JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::callFunc<void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)",
+      "function_offset": 5,
+      "source_file_name": "LazyPropertyInlines.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h",
+      "source_file_line": 98
+    },
+    {
+      "line": "#12 0x132853c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20",
+      "address": 20088124,
+      "function_name": "JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::get(JSC::JSGlobalObject const*) const",
+      "function_offset": 20,
+      "source_file_name": "LazyProperty.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h",
+      "source_file_line": 84
+    },
+    {
+      "line": "#13 0x216cbba in JSC::reifyStaticProperty(JSC::VM&, JSC::ClassInfo const*, JSC::PropertyName const&, JSC::HashTableValue const&, JSC::JSObject&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.h:366:20",
+      "address": 35048378,
+      "function_name": "JSC::reifyStaticProperty(JSC::VM&, JSC::ClassInfo const*, JSC::PropertyName const&, JSC::HashTableValue const&, JSC::JSObject&)",
+      "function_offset": 20,
+      "source_file_name": "Lookup.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/Lookup.h",
+      "source_file_line": 366
+    },
+    {
+      "line": "#14 0x22163a5 in JSC::setUpStaticFunctionSlot(JSC::VM&, JSC::ClassInfo const*, JSC::HashTableValue const*, JSC::JSObject*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.cpp:62:9",
+      "address": 35742629,
+      "function_name": "JSC::setUpStaticFunctionSlot(JSC::VM&, JSC::ClassInfo const*, JSC::HashTableValue const*, JSC::JSObject*, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 9,
+      "source_file_name": "Lookup.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/Lookup.cpp",
+      "source_file_line": 62
+    },
+    {
+      "line": "#15 0x215b61c in JSC::JSObject::getOwnStaticPropertySlot(JSC::VM&, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.cpp:2028:17",
+      "address": 34977308,
+      "function_name": "JSC::JSObject::getOwnStaticPropertySlot(JSC::VM&, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 17,
+      "source_file_name": "JSObject.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSObject.cpp",
+      "source_file_line": 2028
+    },
+    {
+      "line": "#16 0x1342949 in JSC::JSObject::getOwnNonIndexPropertySlot(JSC::VM&, JSC::Structure*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1329:16",
+      "address": 20195657,
+      "function_name": "JSC::JSObject::getOwnNonIndexPropertySlot(JSC::VM&, JSC::Structure*, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 16,
+      "source_file_name": "JSObject.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSObject.h",
+      "source_file_line": 1329
+    },
+    {
+      "line": "#17 0x13426a9 in JSC::JSObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1380:17",
+      "address": 20194985,
+      "function_name": "JSC::JSObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 17,
+      "source_file_name": "JSObject.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSObject.h",
+      "source_file_line": 1380
+    },
+    {
+      "line": "#18 0x20ddf67 in JSC::JSGlobalObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:1409:9",
+      "address": 34463591,
+      "function_name": "JSC::JSGlobalObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&)",
+      "function_offset": 9,
+      "source_file_name": "JSGlobalObject.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp",
+      "source_file_line": 1409
+    },
+    {
+      "line": "#19 0x2183b83 in JSC::abstractAccess(JSC::ExecState*, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, unsigned long, bool&, JSC::ResolveOp&, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:156:31",
+      "address": 35142531,
+      "function_name": "JSC::abstractAccess(JSC::ExecState*, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, unsigned long, bool&, JSC::ResolveOp&, JSC::InitializationMode)",
+      "function_offset": 31,
+      "source_file_name": "JSScope.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp",
+      "source_file_line": 156
+    },
+    {
+      "line": "#20 0x2182dea in JSC::JSScope::abstractResolve(JSC::ExecState*, unsigned long, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, JSC::ResolveType, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:312:24",
+      "address": 35139050,
+      "function_name": "JSC::JSScope::abstractResolve(JSC::ExecState*, unsigned long, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, JSC::ResolveType, JSC::InitializationMode)",
+      "function_offset": 24,
+      "source_file_name": "JSScope.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp",
+      "source_file_line": 312
+    },
+    {
+      "line": "#21 0x13de75e in JSC::CodeBlock::finishCreation(JSC::VM&, JSC::ScriptExecutable*, JSC::UnlinkedCodeBlock*, JSC::JSScope*) /src/WebKit/Source/JavaScriptCore/bytecode/CodeBlock.cpp:636:28",
+      "address": 20834142,
+      "function_name": "JSC::CodeBlock::finishCreation(JSC::VM&, JSC::ScriptExecutable*, JSC::UnlinkedCodeBlock*, JSC::JSScope*)",
+      "function_offset": 28,
+      "source_file_name": "CodeBlock.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/bytecode/CodeBlock.cpp",
+      "source_file_line": 636
+    },
+    {
+      "line": "#22 0x22b76a4 in JSC::FunctionCodeBlock::create(JSC::VM*, JSC::FunctionExecutable*, JSC::UnlinkedFunctionCodeBlock*, JSC::JSScope*, WTF::RefPtr<JSC::SourceProvider>&&, unsigned int, unsigned int) /src/WebKit/Source/JavaScriptCore/bytecode/FunctionCodeBlock.h:55:24",
+      "address": 36402852,
+      "function_name": "JSC::FunctionCodeBlock::create(JSC::VM*, JSC::FunctionExecutable*, JSC::UnlinkedFunctionCodeBlock*, JSC::JSScope*, WTF::RefPtr<JSC::SourceProvider>&&, unsigned int, unsigned int)",
+      "function_offset": 24,
+      "source_file_name": "FunctionCodeBlock.h",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/bytecode/FunctionCodeBlock.h",
+      "source_file_line": 55
+    },
+    {
+      "line": "#23 0x22aee53 in JSC::ScriptExecutable::newCodeBlockFor(JSC::CodeSpecializationKind, JSC::JSFunction*, JSC::JSScope*, JSC::JSObject*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:259:12",
+      "address": 36367955,
+      "function_name": "JSC::ScriptExecutable::newCodeBlockFor(JSC::CodeSpecializationKind, JSC::JSFunction*, JSC::JSScope*, JSC::JSObject*&)",
+      "function_offset": 12,
+      "source_file_name": "ScriptExecutable.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp",
+      "source_file_line": 259
+    },
+    {
+      "line": "#24 0x22af8d7 in JSC::ScriptExecutable::prepareForExecutionImpl(JSC::VM&, JSC::JSFunction*, JSC::JSScope*, JSC::CodeSpecializationKind, JSC::CodeBlock*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:339:28",
+      "address": 36370647,
+      "function_name": "JSC::ScriptExecutable::prepareForExecutionImpl(JSC::VM&, JSC::JSFunction*, JSC::JSScope*, JSC::CodeSpecializationKind, JSC::CodeBlock*&)",
+      "function_offset": 28,
+      "source_file_name": "ScriptExecutable.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp",
+      "source_file_line": 339
+    },
+    {
+      "line": "#25 0x1def053 in JSC::LLInt::setUpCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind, JSC::JSValue, JSC::LLIntCallLinkInfo*) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1398:47",
+      "address": 31387731,
+      "function_name": "JSC::LLInt::setUpCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind, JSC::JSValue, JSC::LLIntCallLinkInfo*)",
+      "function_offset": 47,
+      "source_file_name": "LLIntSlowPaths.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp",
+      "source_file_line": 1398
+    },
+    {
+      "line": "#26 0x1dee5df in JSC::LLInt::genericCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1449:12",
+      "address": 31385055,
+      "function_name": "JSC::LLInt::genericCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind)",
+      "function_offset": 12,
+      "source_file_name": "LLIntSlowPaths.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp",
+      "source_file_line": 1449
+    },
+    {
+      "line": "#27 0x1de7655 in llint_slow_path_call /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1456:12",
+      "address": 31356501,
+      "function_name": "llint_slow_path_call",
+      "function_offset": 12,
+      "source_file_name": "LLIntSlowPaths.cpp",
+      "source_file_path": "/src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp",
+      "source_file_line": 1456
+    },
+    {
+      "line": "#28 0x1dd59b3 in jsc",
+      "address": 31283635,
+      "module_path": "jsc"
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x28e6c15 in JSC::BuiltinExecutables::createExecutable(JSC::VM&, JSC::SourceCode const&, JSC::Identifier const&, JSC::ConstructorKind, JSC::ConstructAbility) /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:87:9",
+    "#2 0x2917404 in JSC::BuiltinExecutables::typedArrayPrototypeEveryCodeExecutable() /src/WebKit/Source/JavaScriptCore/builtins/BuiltinExecutables.cpp:128:1",
+    "#3 0x25dd7db in JSC::typedArrayPrototypeEveryCodeGenerator(JSC::VM&) /src/WebKit/WebKitBuild/Debug/DerivedSources/JavaScriptCore/JSCBuiltins.cpp:4410:1",
+    "#4 0x21aade1 in JSC::JSTypedArrayViewPrototype::finishCreation(JSC::VM&, JSC::JSGlobalObject*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:304:5",
+    "#5 0x21af2a0 in JSC::JSTypedArrayViewPrototype::create(JSC::VM&, JSC::JSGlobalObject*, JSC::Structure*) /src/WebKit/Source/JavaScriptCore/runtime/JSTypedArrayViewPrototype.cpp:346:16",
+    "#6 0x2105009 in JSC::JSGlobalObject::init(JSC::VM&)::$_10::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:468:22",
+    "#7 0x2104e3a in JSC::JSTypedArrayViewPrototype* JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::callFunc<JSC::JSGlobalObject::init(JSC::VM&)::$_10>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5",
+    "#8 0x212857c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20",
+    "#9 0x21097bf in JSC::JSGlobalObject::init(JSC::VM&)::$_18::operator()(JSC::LazyClassStructure::Initializer&) const /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:489:5",
+    "#10 0x210960b in void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}::operator()(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) const /src/WebKit/Source/JavaScriptCore/runtime/LazyClassStructureInlines.h:42:13",
+    "#11 0x210942a in JSC::Structure* JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::callFunc<void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init(JSC::VM&)::$_18>(JSC::JSGlobalObject::init(JSC::VM&)::$_18 const&)::{lambda(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&)#1}>(JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::Initializer const&) /src/WebKit/Source/JavaScriptCore/runtime/LazyPropertyInlines.h:98:5",
+    "#12 0x132853c in JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::get(JSC::JSGlobalObject const*) const /src/WebKit/Source/JavaScriptCore/runtime/LazyProperty.h:84:20",
+    "#13 0x216cbba in JSC::reifyStaticProperty(JSC::VM&, JSC::ClassInfo const*, JSC::PropertyName const&, JSC::HashTableValue const&, JSC::JSObject&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.h:366:20",
+    "#14 0x22163a5 in JSC::setUpStaticFunctionSlot(JSC::VM&, JSC::ClassInfo const*, JSC::HashTableValue const*, JSC::JSObject*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/Lookup.cpp:62:9",
+    "#15 0x215b61c in JSC::JSObject::getOwnStaticPropertySlot(JSC::VM&, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.cpp:2028:17",
+    "#16 0x1342949 in JSC::JSObject::getOwnNonIndexPropertySlot(JSC::VM&, JSC::Structure*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1329:16",
+    "#17 0x13426a9 in JSC::JSObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSObject.h:1380:17",
+    "#18 0x20ddf67 in JSC::JSGlobalObject::getOwnPropertySlot(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PropertySlot&) /src/WebKit/Source/JavaScriptCore/runtime/JSGlobalObject.cpp:1409:9",
+    "#19 0x2183b83 in JSC::abstractAccess(JSC::ExecState*, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, unsigned long, bool&, JSC::ResolveOp&, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:156:31",
+    "#20 0x2182dea in JSC::JSScope::abstractResolve(JSC::ExecState*, unsigned long, JSC::JSScope*, JSC::Identifier const&, JSC::GetOrPut, JSC::ResolveType, JSC::InitializationMode) /src/WebKit/Source/JavaScriptCore/runtime/JSScope.cpp:312:24",
+    "#21 0x13de75e in JSC::CodeBlock::finishCreation(JSC::VM&, JSC::ScriptExecutable*, JSC::UnlinkedCodeBlock*, JSC::JSScope*) /src/WebKit/Source/JavaScriptCore/bytecode/CodeBlock.cpp:636:28",
+    "#22 0x22b76a4 in JSC::FunctionCodeBlock::create(JSC::VM*, JSC::FunctionExecutable*, JSC::UnlinkedFunctionCodeBlock*, JSC::JSScope*, WTF::RefPtr<JSC::SourceProvider>&&, unsigned int, unsigned int) /src/WebKit/Source/JavaScriptCore/bytecode/FunctionCodeBlock.h:55:24",
+    "#23 0x22aee53 in JSC::ScriptExecutable::newCodeBlockFor(JSC::CodeSpecializationKind, JSC::JSFunction*, JSC::JSScope*, JSC::JSObject*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:259:12",
+    "#24 0x22af8d7 in JSC::ScriptExecutable::prepareForExecutionImpl(JSC::VM&, JSC::JSFunction*, JSC::JSScope*, JSC::CodeSpecializationKind, JSC::CodeBlock*&) /src/WebKit/Source/JavaScriptCore/runtime/ScriptExecutable.cpp:339:28",
+    "#25 0x1def053 in JSC::LLInt::setUpCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind, JSC::JSValue, JSC::LLIntCallLinkInfo*) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1398:47",
+    "#26 0x1dee5df in JSC::LLInt::genericCall(JSC::ExecState*, JSC::Instruction*, JSC::CodeSpecializationKind) /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1449:12",
+    "#27 0x1de7655 in llint_slow_path_call /src/WebKit/Source/JavaScriptCore/llint/LLIntSlowPaths.cpp:1456:12",
+    "#28 0x1dd59b3 in jsc"
+  ],
+  "minimized_stack_function_names": [
+    "JSC::BuiltinExecutables::createExecutable",
+    "JSC::BuiltinExecutables::typedArrayPrototypeEveryCodeExecutable",
+    "JSC::typedArrayPrototypeEveryCodeGenerator",
+    "JSC::JSTypedArrayViewPrototype::finishCreation",
+    "JSC::JSTypedArrayViewPrototype::create",
+    "JSC::JSGlobalObject::init",
+    "JSC::JSTypedArrayViewPrototype* JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::callFunc<JSC::JSGlobalObject::init",
+    "JSC::LazyProperty<JSC::JSGlobalObject, JSC::JSTypedArrayViewPrototype>::get",
+    "JSC::JSGlobalObject::init",
+    "void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init",
+    "JSC::Structure* JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::callFunc<void JSC::LazyClassStructure::initLater<JSC::JSGlobalObject::init",
+    "JSC::LazyProperty<JSC::JSGlobalObject, JSC::Structure>::get",
+    "JSC::reifyStaticProperty",
+    "JSC::setUpStaticFunctionSlot",
+    "JSC::JSObject::getOwnStaticPropertySlot",
+    "JSC::JSObject::getOwnNonIndexPropertySlot",
+    "JSC::JSObject::getOwnPropertySlot",
+    "JSC::JSGlobalObject::getOwnPropertySlot",
+    "JSC::abstractAccess",
+    "JSC::JSScope::abstractResolve",
+    "JSC::CodeBlock::finishCreation",
+    "JSC::FunctionCodeBlock::create",
+    "JSC::ScriptExecutable::newCodeBlockFor",
+    "JSC::ScriptExecutable::prepareForExecutionImpl",
+    "JSC::LLInt::setUpCall",
+    "JSC::LLInt::genericCall",
+    "llint_slow_path_call"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

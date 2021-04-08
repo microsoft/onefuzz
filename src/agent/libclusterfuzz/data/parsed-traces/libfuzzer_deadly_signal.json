@@ -1,0 +1,160 @@
+{
+  "text": "==247664== ERROR: libFuzzer: deadly signal\n    #0 0x4f2ae7 in __sanitizer_print_stack_trace /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/asan/asan_stack.cc:38:3\n    #1 0x42f0f6 in fuzzer::Fuzzer::CrashCallback() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:233:5\n    #2 0x42f0bf in fuzzer::Fuzzer::StaticCrashSignalCallback() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:206:6\n    #3 0x7fa27237a39f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1239f)\n    #4 0x51a44a in LLVMFuzzerTestOneInput (/src/a.out+0x51a44a)\n    #5 0x43061c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:515:13\n    #6 0x42fe7b in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:440:3\n    #7 0x43183d in fuzzer::Fuzzer::MutateAndTestOne() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:648:19\n    #8 0x432235 in fuzzer::Fuzzer::Loop(std::vector<std::string, fuzzer::fuzzer_allocator<std::string> > const&) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:775:5\n    #9 0x4270b3 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:754:6\n    #10 0x44a012 in main /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10\n    #11 0x7fa2719a852a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2352a)\n    #12 0x41fda9 in _start (/src/a.out+0x41fda9)\n",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: deadly signal",
+  "fault_type": "deadly signal",
+  "call_stack": [
+    "#0 0x4f2ae7 in __sanitizer_print_stack_trace /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/asan/asan_stack.cc:38:3",
+    "#1 0x42f0f6 in fuzzer::Fuzzer::CrashCallback() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:233:5",
+    "#2 0x42f0bf in fuzzer::Fuzzer::StaticCrashSignalCallback() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:206:6",
+    "#3 0x7fa27237a39f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1239f)",
+    "#4 0x51a44a in LLVMFuzzerTestOneInput (/src/a.out+0x51a44a)",
+    "#5 0x43061c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:515:13",
+    "#6 0x42fe7b in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:440:3",
+    "#7 0x43183d in fuzzer::Fuzzer::MutateAndTestOne() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:648:19",
+    "#8 0x432235 in fuzzer::Fuzzer::Loop(std::vector<std::string, fuzzer::fuzzer_allocator<std::string> > const&) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:775:5",
+    "#9 0x4270b3 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:754:6",
+    "#10 0x44a012 in main /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10",
+    "#11 0x7fa2719a852a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2352a)",
+    "#12 0x41fda9 in _start (/src/a.out+0x41fda9)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x4f2ae7 in __sanitizer_print_stack_trace /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/asan/asan_stack.cc:38:3",
+      "address": 5188327,
+      "function_name": "__sanitizer_print_stack_trace",
+      "function_offset": 3,
+      "source_file_name": "asan_stack.cc",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/asan/asan_stack.cc",
+      "source_file_line": 38
+    },
+    {
+      "line": "#1 0x42f0f6 in fuzzer::Fuzzer::CrashCallback() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:233:5",
+      "address": 4387062,
+      "function_name": "fuzzer::Fuzzer::CrashCallback()",
+      "function_offset": 5,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 233
+    },
+    {
+      "line": "#2 0x42f0bf in fuzzer::Fuzzer::StaticCrashSignalCallback() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:206:6",
+      "address": 4387007,
+      "function_name": "fuzzer::Fuzzer::StaticCrashSignalCallback()",
+      "function_offset": 6,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 206
+    },
+    {
+      "line": "#3 0x7fa27237a39f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1239f)",
+      "address": 140335677678495,
+      "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
+      "module_offset": 74655
+    },
+    {
+      "line": "#4 0x51a44a in LLVMFuzzerTestOneInput (/src/a.out+0x51a44a)",
+      "address": 5350474,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "module_path": "/src/a.out",
+      "module_offset": 5350474
+    },
+    {
+      "line": "#5 0x43061c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:515:13",
+      "address": 4392476,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 515
+    },
+    {
+      "line": "#6 0x42fe7b in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:440:3",
+      "address": 4390523,
+      "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 440
+    },
+    {
+      "line": "#7 0x43183d in fuzzer::Fuzzer::MutateAndTestOne() /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:648:19",
+      "address": 4397117,
+      "function_name": "fuzzer::Fuzzer::MutateAndTestOne()",
+      "function_offset": 19,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 648
+    },
+    {
+      "line": "#8 0x432235 in fuzzer::Fuzzer::Loop(std::vector<std::string, fuzzer::fuzzer_allocator<std::string> > const&) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:775:5",
+      "address": 4399669,
+      "function_name": "fuzzer::Fuzzer::Loop(std::vector<std::string, fuzzer::fuzzer_allocator<std::string> > const&)",
+      "function_offset": 5,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 775
+    },
+    {
+      "line": "#9 0x4270b3 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:754:6",
+      "address": 4354227,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 754
+    },
+    {
+      "line": "#10 0x44a012 in main /home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10",
+      "address": 4497426,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/home/snd-local/releases/6.0/release/final/llvm.src/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#11 0x7fa2719a852a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2352a)",
+      "address": 140335667381546,
+      "function_name": "__libc_start_main",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 144682
+    },
+    {
+      "line": "#12 0x41fda9 in _start (/src/a.out+0x41fda9)",
+      "address": 4324777,
+      "function_name": "_start",
+      "module_path": "/src/a.out",
+      "module_offset": 4324777
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "fuzzer::Fuzzer::CrashCallback",
+    "fuzzer::Fuzzer::StaticCrashSignalCallback",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::Fuzzer::MutateAndTestOne",
+    "fuzzer::Fuzzer::Loop",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x51a44a in LLVMFuzzerTestOneInput (/src/a.out+0x51a44a)",
+      "address": 5350474,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "module_path": "/src/a.out",
+      "module_offset": 5350474
+    }
+  ],
+  "minimized_stack": [
+    "#4 0x51a44a in LLVMFuzzerTestOneInput (/src/a.out+0x51a44a)"
+  ],
+  "minimized_stack_function_names": [
+    "LLVMFuzzerTestOneInput"
+  ]
+}

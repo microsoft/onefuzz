@@ -70,17 +70,24 @@ impl BlobUrl {
     }
 
     pub fn name(&self) -> String {
-        let name_segments: Vec<_> = self
-            .url()
-            .path_segments()
-            .unwrap()
-            .skip(match self {
-                Self::AzureBlob(_) => 1,
-                _ => 0,
-            })
-            .map(|s| s.to_owned())
-            .collect();
-        name_segments.join("/")
+        match self {
+            Self::AzureBlob(url) => {
+                let name_segments: Vec<_> = url
+                    .path_segments()
+                    .unwrap()
+                    .skip(1)
+                    .map(|s| s.to_owned())
+                    .collect();
+                name_segments.join("/")
+            }
+            Self::LocalFile(path) => path
+                .file_name()
+                .expect("Invalid file path")
+                .to_os_string()
+                .to_str()
+                .expect("Invalid file path")
+                .into(),
+        }
     }
 }
 
@@ -169,6 +176,12 @@ impl BlobContainerUrl {
         );
 
         BlobUrl::new(url).expect("invalid blob URL from valid container")
+    }
+}
+
+impl AsRef<Url> for BlobContainerUrl {
+    fn as_ref(&self) -> &Url {
+        self.url()
     }
 }
 

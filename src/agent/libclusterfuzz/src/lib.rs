@@ -43,5 +43,6 @@ mod tests {
     fn test_stack_filter() {
         assert!(get_stack_filter().is_match("abort"));
         assert!(!get_stack_filter().is_match("ContosoSaysHi"));
+        assert!(get_stack_filter().is_match("libc.so"));
     }
 }

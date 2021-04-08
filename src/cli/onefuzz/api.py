@@ -848,6 +848,7 @@ class Tasks(Endpoint):
         preserve_existing_outputs: bool = False,
         colocate: bool = False,
         report_list: Optional[List[str]] = None,
+        minimized_stack_depth: Optional[int] = None,
     ) -> models.Task:
         """
         Create a task
@@ -912,6 +913,7 @@ class Tasks(Endpoint):
                 wait_for_files=task_wait_for_files,
                 report_list=report_list,
                 preserve_existing_outputs=preserve_existing_outputs,
+                minimized_stack_depth=minimized_stack_depth,
             ),
         )
 
@@ -1277,6 +1279,7 @@ class Scaleset(Endpoint):
         vm_sku: Optional[str] = "Standard_D2s_v3",
         region: Optional[primitives.Region] = None,
         spot_instances: bool = False,
+        ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
     ) -> models.Scaleset:
         self.logger.debug("create scaleset")
@@ -1303,6 +1306,7 @@ class Scaleset(Endpoint):
                 region=region,
                 size=size,
                 spot_instances=spot_instances,
+                ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
             ),
         )

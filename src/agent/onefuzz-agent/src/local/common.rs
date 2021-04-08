@@ -1,20 +1,23 @@
 use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
+use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use onefuzz::jitter::delay_with_jitter;
 use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use path_absolutize::Absolutize;
+use remove_dir_all::remove_dir_all;
 use reqwest::Url;
+use std::task::Poll;
 use std::{
     collections::HashMap,
+    env::current_dir,
     path::{Path, PathBuf},
     time::Duration,
 };
+use tokio::stream::StreamExt;
+use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle, time::delay_for};
 use uuid::Uuid;
-
-use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
-use path_absolutize::Absolutize;
-use std::task::Poll;
 
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
@@ -32,6 +35,8 @@ pub const CHECK_ASAN_LOG: &str = "check_asan_log";
 pub const TOOLS_DIR: &str = "tools_dir";
 pub const RENAME_OUTPUT: &str = "rename_output";
 pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
+pub const DISABLE_CHECK_DEBUGGER: &str = "disable_check_debugger";
+pub const REGRESSION_REPORTS_DIR: &str = "regression_reports_dir";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
@@ -58,6 +63,12 @@ pub enum CmdType {
     Target,
     Generator,
     // Supervisor,
+}
+
+#[derive(Clone, Debug)]
+pub struct LocalContext {
+    pub job_path: PathBuf,
+    pub common_config: CommonConfig,
 }
 
 pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
@@ -127,6 +138,12 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
             .takes_value(true)
             .required(false),
     )
+    .arg(
+        Arg::with_name("keep_job_dir")
+            .long("keep_job_dir")
+            .required(false)
+            .help("keep the local directory created for running the task"),
+    )
 }
 
 fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
@@ -142,8 +159,8 @@ pub fn get_synced_dirs(
     args: &ArgMatches<'_>,
 ) -> Result<Vec<SyncedDir>> {
     let current_dir = std::env::current_dir()?;
-    let dirs: Result<Vec<SyncedDir>> = value_t!(args, name, PathBuf)?
-        .iter()
+    args.values_of_os(name)
+        .ok_or_else(|| anyhow!("argument '{}' not specified", name))?
         .enumerate()
         .map(|(index, remote_path)| {
             let path = PathBuf::from(remote_path);
@@ -156,8 +173,23 @@ pub fn get_synced_dirs(
                 path,
             })
         })
-        .collect();
-    Ok(dirs?)
+        .collect()
+}
+
+fn register_cleanup(job_id: Uuid) -> Result<()> {
+    let path = std::env::current_dir()?.join(job_id.to_string());
+    atexit::register(move || {
+        // only cleaing up if the path exists upon exit
+        if std::fs::metadata(&path).is_ok() {
+            let result = remove_dir_all(&path);
+
+            // don't panic if the remove failed but the path is gone
+            if result.is_err() && std::fs::metadata(&path).is_ok() {
+                result.expect("cleanup failed");
+            }
+        }
+    });
+    Ok(())
 }
 
 pub fn get_synced_dir(
@@ -176,9 +208,19 @@ pub fn get_synced_dir(
     })
 }
 
-pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
+// NOTE: generate_task_id is intended to change the default behavior for local
+// fuzzing tasks from generating random task id to using UUID::nil(). This
+// enables making the one-shot crash report generation, which isn't really a task,
+// consistent across multiple runs.
+pub fn build_local_context(args: &ArgMatches<'_>, generate_task_id: bool) -> Result<LocalContext> {
     let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
-    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| Uuid::new_v4());
+    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
+        if generate_task_id {
+            Uuid::new_v4()
+        } else {
+            Uuid::nil()
+        }
+    });
     let instance_id = get_uuid("instance_id", args).unwrap_or_else(|_| Uuid::nil());
 
     let setup_dir = if args.is_present(SETUP_DIR) {
@@ -192,14 +234,23 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
         PathBuf::default()
     };
 
-    let config = CommonConfig {
+    if !args.is_present("keep_job_dir") {
+        register_cleanup(job_id)?;
+    }
+
+    let common_config = CommonConfig {
         job_id,
         task_id,
         instance_id,
         setup_dir,
         ..Default::default()
     };
-    Ok(config)
+    let current_dir = current_dir()?;
+    let job_path = current_dir.join(format!("{}", job_id));
+    Ok(LocalContext {
+        job_path,
+        common_config,
+    })
 }
 
 /// Information about a local path being monitored
@@ -250,7 +301,7 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
             Ok(())
         } else {
             Err(BackoffError::Transient(anyhow::anyhow!(
-                "path '{:?}' does not exisit",
+                "path '{:?}' does not exist",
                 path.as_ref()
             )))
         }
@@ -264,4 +315,50 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
         op,
     )
     .await
+}
+
+pub fn spawn_file_count_monitor(
+    dir: PathBuf,
+    sender: UnboundedSender<UiEvent>,
+) -> JoinHandle<Result<()>> {
+    tokio::spawn(async move {
+        wait_for_dir(&dir).await?;
+
+        loop {
+            let mut rd = tokio::fs::read_dir(&dir).await?;
+            let mut count: usize = 0;
+
+            while let Some(Ok(entry)) = rd.next().await {
+                if entry.path().is_file() {
+                    count += 1;
+                }
+            }
+
+            if sender
+                .send(UiEvent::FileCount {
+                    dir: dir.clone(),
+                    count,
+                })
+                .is_err()
+            {
+                return Ok(());
+            }
+            delay_for(Duration::from_secs(5)).await;
+        }
+    })
+}
+
+pub fn monitor_file_urls(
+    urls: &[Option<impl AsRef<Path>>],
+    event_sender: UnboundedSender<UiEvent>,
+) -> Vec<JoinHandle<Result<()>>> {
+    urls.iter()
+        .filter_map(|x| x.as_ref())
+        .map(|path| spawn_file_count_monitor(path.as_ref().into(), event_sender.clone()))
+        .collect::<Vec<_>>()
+}
+
+#[derive(Debug)]
+pub enum UiEvent {
+    FileCount { dir: PathBuf, count: usize },
 }

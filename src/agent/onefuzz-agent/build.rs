@@ -1,14 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::process::Command;
+use std::{env, process::Stdio};
 
 fn run_cmd(args: &[&str]) -> Result<String, Box<dyn Error>> {
-    let cmd = Command::new(args[0]).args(&args[1..]).output()?;
+    let cmd = Command::new(args[0])
+        .args(&args[1..])
+        .stdin(Stdio::null())
+        .output()?;
     if cmd.status.success() {
         Ok(String::from_utf8_lossy(&cmd.stdout).trim().to_string())
     } else {

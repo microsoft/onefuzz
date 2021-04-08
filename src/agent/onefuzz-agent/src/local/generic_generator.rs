@@ -3,10 +3,10 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR, GENERATOR_ENV,
-        GENERATOR_EXE, GENERATOR_OPTIONS, READONLY_INPUTS, RENAME_OUTPUT, TARGET_ENV, TARGET_EXE,
-        TARGET_OPTIONS, TARGET_TIMEOUT, TOOLS_DIR,
+        build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
+        get_synced_dirs, CmdType, CHECK_ASAN_LOG, CHECK_RETRY_COUNT, CRASHES_DIR,
+        DISABLE_CHECK_DEBUGGER, GENERATOR_ENV, GENERATOR_EXE, GENERATOR_OPTIONS, READONLY_INPUTS,
+        RENAME_OUTPUT, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT, TOOLS_DIR,
     },
     tasks::{
         config::CommonConfig,
@@ -29,7 +29,7 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
 
     let rename_output = args.is_present(RENAME_OUTPUT);
     let check_asan_log = args.is_present(CHECK_ASAN_LOG);
-    let check_debugger = !args.is_present("disable_check_debugger");
+    let check_debugger = !args.is_present(DISABLE_CHECK_DEBUGGER);
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
     let target_timeout = Some(value_t!(args, TARGET_TIMEOUT, u64)?);
 
@@ -60,8 +60,8 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
 }
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args)?;
-    let config = build_fuzz_config(args, common)?;
+    let context = build_local_context(args, true)?;
+    let config = build_fuzz_config(args, context.common_config.clone())?;
     GeneratorTask::new(config).run().await
 }
 
@@ -120,9 +120,9 @@ pub fn build_shared_args() -> Vec<Arg<'static, 'static>> {
             .takes_value(true)
             .long(TARGET_TIMEOUT)
             .default_value("30"),
-        Arg::with_name("disable_check_debugger")
+        Arg::with_name(DISABLE_CHECK_DEBUGGER)
             .takes_value(false)
-            .long("disable_check_debugger"),
+            .long(DISABLE_CHECK_DEBUGGER),
     ]
 }
 

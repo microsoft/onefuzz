@@ -24,10 +24,14 @@ class TestReportParse(unittest.TestCase):
         self.assertIsInstance(report, Report)
 
         with self.assertLogs(level="ERROR"):
-            self.assertIsNone(parse_report_or_regression('"invalid"'))
+            self.assertIsNone(
+                parse_report_or_regression('"invalid"', expect_reports=True)
+            )
 
         with self.assertLogs(level="WARNING") as logs:
-            self.assertIsNone(parse_report_or_regression(json.dumps(invalid)))
+            self.assertIsNone(
+                parse_report_or_regression(json.dumps(invalid), expect_reports=True)
+            )
             self.assertTrue(any(["unable to parse report" in x for x in logs.output]))
 
 

@@ -205,8 +205,8 @@ def build_task_config(
         job_id=job_id,
         task_id=task_id,
         task_type=task_config.task.type,
-        instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
-        telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+        instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+        microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "task-heartbeat",
             StorageType.config,
@@ -350,6 +350,9 @@ def build_task_config(
 
     if TaskFeature.report_list in definition.features:
         config.report_list = task_config.task.report_list
+
+    if TaskFeature.minimized_stack_depth in definition.features:
+        config.minimized_stack_depth = task_config.task.minimized_stack_depth
 
     if TaskFeature.expect_crash_on_failure in definition.features:
         config.expect_crash_on_failure = (

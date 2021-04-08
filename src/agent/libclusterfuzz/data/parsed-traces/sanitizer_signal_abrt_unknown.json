@@ -1,0 +1,59 @@
+{
+  "text": "ERROR: AddressSanitizer: ABRT on unknown address 0x000000000001 (pc 0x7f24b70be418 bp 0x0000005b6a80 sp 0x7ffe58419768 T0)\nSCARINESS: 10 (signal)\n  #0 0x7f24b70be417 in gsignal\n  #1 0x7f24b70c0019 in abort\n  #2 0x7f24b70b6bd6 in libc.so.6\n  #3 0x7f24b70b6c81 in __assert_fail\n  #4 0x512b27 in LLVMFuzzerTestOneInput\n  /src/json/test/src/fuzzer-parse_msgpack.cpp:45:13\n  #5 0x5122e3 in main /src/libfuzzer/afl/afl_driver.cpp:287:7\n  #6 0x7f24b70a982f in __libc_start_main\n  #7 0x41b588 in _start\n\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35417)\n==1==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35417)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7f24b70be417 in gsignal",
+    "#1 0x7f24b70c0019 in abort",
+    "#2 0x7f24b70b6bd6 in libc.so.6",
+    "#3 0x7f24b70b6c81 in __assert_fail",
+    "#4 0x512b27 in LLVMFuzzerTestOneInput"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f24b70be417 in gsignal",
+      "address": 139795666560023,
+      "module_path": "gsignal"
+    },
+    {
+      "line": "#1 0x7f24b70c0019 in abort",
+      "address": 139795666567193,
+      "module_path": "abort"
+    },
+    {
+      "line": "#2 0x7f24b70b6bd6 in libc.so.6",
+      "address": 139795666529238,
+      "module_path": "libc.so.6"
+    },
+    {
+      "line": "#3 0x7f24b70b6c81 in __assert_fail",
+      "address": 139795666529409,
+      "function_name": "__assert_fail"
+    },
+    {
+      "line": "#4 0x512b27 in LLVMFuzzerTestOneInput",
+      "address": 5319463,
+      "function_name": "LLVMFuzzerTestOneInput"
+    }
+  ],
+  "full_stack_names": [
+    "__assert_fail",
+    "LLVMFuzzerTestOneInput"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x512b27 in LLVMFuzzerTestOneInput",
+      "address": 5319463,
+      "function_name": "LLVMFuzzerTestOneInput"
+    }
+  ],
+  "minimized_stack": [
+    "#4 0x512b27 in LLVMFuzzerTestOneInput"
+  ],
+  "minimized_stack_function_names": [
+    "LLVMFuzzerTestOneInput"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

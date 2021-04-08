@@ -56,14 +56,25 @@ pub struct ReportTask {
 
 impl ReportTask {
     pub fn new(config: Config) -> Self {
-        let poller = InputPoller::new();
+        let poller = InputPoller::new("libfuzzer-crash-report");
         let config = Arc::new(config);
 
         Self { config, poller }
     }
 
+    pub async fn verify(&self) -> Result<()> {
+        let fuzzer = LibFuzzer::new(
+            &self.config.target_exe,
+            &self.config.target_options,
+            &self.config.target_env,
+            &self.config.common.setup_dir,
+        );
+        fuzzer.verify(self.config.check_fuzzer_help, None).await
+    }
+
     pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting libFuzzer crash report task");
+        self.verify().await?;
 
         if let Some(unique_reports) = &self.config.unique_reports {
             unique_reports.init().await?;
@@ -128,7 +139,7 @@ pub async fn test_input(args: TestInputArgs<'_>) -> Result<CrashTestResult> {
         .repro(args.input, args.target_timeout, args.check_retry_count)
         .await?;
 
-    match test_report.asan_log {
+    match test_report.crash_log {
         Some(crash_log) => {
             let crash_report = CrashReport::new(
                 crash_log,

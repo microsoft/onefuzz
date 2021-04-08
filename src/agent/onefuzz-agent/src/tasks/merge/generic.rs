@@ -93,7 +93,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     }
 }
 
-async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &PathBuf) -> Result<()> {
+async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &Path) -> Result<()> {
     let input_path = utils::download_input(input_url.clone(), &config.unique_inputs.path).await?;
     info!("downloaded input to {}", input_path.display());
 
@@ -101,11 +101,11 @@ async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &PathBuf
     match merge(&config, tmp_dir).await {
         Ok(_) => {
             // remove the 'queue' folder
-            let mut queue_dir = tmp_dir.clone();
+            let mut queue_dir = tmp_dir.to_path_buf();
             queue_dir.push("queue");
             let _delete_output = tokio::fs::remove_dir_all(queue_dir).await;
             let synced_dir = SyncedDir {
-                path: tmp_dir.clone(),
+                path: tmp_dir.to_path_buf(),
                 url: config.unique_inputs.url.clone(),
             };
             synced_dir.sync_push().await?
@@ -155,6 +155,7 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
 
     cmd.kill_on_drop(true)
         .env_remove("RUST_LOG")
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 

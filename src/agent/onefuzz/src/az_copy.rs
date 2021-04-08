@@ -32,6 +32,7 @@ impl fmt::Display for Mode {
 async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
     let mut cmd = Command::new("azcopy");
     cmd.kill_on_drop(true)
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .arg(mode.to_string())

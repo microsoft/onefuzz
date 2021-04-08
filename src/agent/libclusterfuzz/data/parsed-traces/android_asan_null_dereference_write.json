@@ -1,0 +1,178 @@
+{
+  "text": "==13931==ERROR: AddressSanitizer: SEGV on unknown address 0x00000011 (pc 0xb2011bf5 bp 0xaee0e750 sp 0xaebff7b0 T8)\n==13931==The signal is caused by a WRITE memory access.\n==13931==Hint: address points to the zero page.\n#0 0xb2011bf4 in _JavaVM::AttachCurrentThread(_JNIEnv**, void*) libnativehelper/include/nativehelper/jni.h:1060\n#1 0xb2011bf4 in javaAttachThread frameworks/base/core/jni/AndroidRuntime.cpp:1131\n#2 0xb2011bf4 in android::AndroidRuntime::javaThreadShell(void*) frameworks/base/core/jni/AndroidRuntime.cpp:1169\n#3 0xb1e188a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16\n#4 0xb2370d0c in __asan::AsanThread::ThreadStart(unsigned long, __sanitizer::atomic_uintptr_t*)\n#5 0xb23550f9 in asan_thread_start(void*)\n#6 0xb1ec8404 in __pthread_start(void*) bionic/libc/bionic/pthread_create.cpp:198:18\n#7 0xb1e73610 in __start_thread bionic/libc/bionic/clone.cpp:41:16\n#8 0xb1e713c6 in __bionic_clone bionic/libc/arch-x86/bionic/__bionic_clone.S:54\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: SEGV (/system/lib/libandroid_runtime.so+0x71bf4)\nThread T8 (Binder:13931_2) created by T7 (Binder:13931_1) here:\n#0 0xb2354f89 in pthread_create\n#1 0xb1e18714 in androidCreateRawThreadEtc system/core/libutils/Threads.cpp:160:18\n#2 0xb2011cfd in android::AndroidRuntime::javaCreateThreadEtc(int (*)(void*), void*, char const*, int, unsigned int, void**) frameworks/base/core/jni/AndroidRuntime.cpp:1207\n#3 0xb183b361 in android::ProcessState::spawnPooledThread(bool) frameworks/native/libs/binder/ProcessState.cpp:293:9\n#4 0xb1814fc9 in android::IPCThreadState::executeCommand(int) frameworks/native/libs/binder/IPCThreadState.cpp:1169:9\n#5 0xb1814a7e in android::IPCThreadState::getAndExecuteCommand() frameworks/native/libs/binder/IPCThreadState.cpp:445:18\n#6 0xb18152bf in android::IPCThreadState::joinThreadPool(bool) frameworks/native/libs/binder/IPCThreadState.cpp:513:18\n#7 0xb183c12e in android::PoolThread::threadLoop() frameworks/native/libs/binder/ProcessState.cpp:63:9\n#8 0xb1e190d9 in android::Thread::_threadLoop(void*) system/core/libutils/Threads.cpp:751:26\n#9 0xb2011c00 in android::AndroidRuntime::javaThreadShell(void*) frameworks/base/core/jni/AndroidRuntime.cpp:1173\nThread T7 (Binder:13931_1) created by T0 (Shutdown thread) here:\n#0 0xb2354f89 in pthread_create\n#1 0xb1e18714 in androidCreateRawThreadEtc system/core/libutils/Threads.cpp:160:18\n#2 0xb2011cfd in android::AndroidRuntime::javaCreateThreadEtc(int (*)(void*), void*, char const*, int, unsigned int, void**) frameworks/base/core/jni/AndroidRuntime.cpp:1207\n#3 0xb183b361 in android::ProcessState::spawnPooledThread(bool) frameworks/native/libs/binder/ProcessState.cpp:293:9\n#4 0xb183b253 in android::ProcessState::startThreadPool() frameworks/native/libs/binder/ProcessState.cpp:137:9\n#5 0xb5611f7f in android::AppRuntime::onStarted() frameworks/base/cmds/app_process/app_main.cpp:83:9\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: SEGV (/system/lib/libandroid_runtime.so+0x71bf4)",
+  "fault_type": "SEGV",
+  "call_stack": [
+    "#0 0xb2011bf4 in _JavaVM::AttachCurrentThread(_JNIEnv**, void*) libnativehelper/include/nativehelper/jni.h:1060",
+    "#1 0xb2011bf4 in javaAttachThread frameworks/base/core/jni/AndroidRuntime.cpp:1131",
+    "#2 0xb2011bf4 in android::AndroidRuntime::javaThreadShell(void*) frameworks/base/core/jni/AndroidRuntime.cpp:1169",
+    "#3 0xb1e188a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16",
+    "#4 0xb2370d0c in __asan::AsanThread::ThreadStart(unsigned long, __sanitizer::atomic_uintptr_t*)",
+    "#5 0xb23550f9 in asan_thread_start(void*)",
+    "#6 0xb1ec8404 in __pthread_start(void*) bionic/libc/bionic/pthread_create.cpp:198:18",
+    "#7 0xb1e73610 in __start_thread bionic/libc/bionic/clone.cpp:41:16",
+    "#8 0xb1e713c6 in __bionic_clone bionic/libc/arch-x86/bionic/__bionic_clone.S:54"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0xb2011bf4 in _JavaVM::AttachCurrentThread(_JNIEnv**, void*) libnativehelper/include/nativehelper/jni.h:1060",
+      "address": 2986417140,
+      "function_name": "_JavaVM::AttachCurrentThread(_JNIEnv**, void*)",
+      "source_file_name": "jni.h",
+      "source_file_path": "libnativehelper/include/nativehelper/jni.h",
+      "source_file_line": 1060
+    },
+    {
+      "line": "#1 0xb2011bf4 in javaAttachThread frameworks/base/core/jni/AndroidRuntime.cpp:1131",
+      "address": 2986417140,
+      "function_name": "javaAttachThread",
+      "source_file_name": "AndroidRuntime.cpp",
+      "source_file_path": "frameworks/base/core/jni/AndroidRuntime.cpp",
+      "source_file_line": 1131
+    },
+    {
+      "line": "#2 0xb2011bf4 in android::AndroidRuntime::javaThreadShell(void*) frameworks/base/core/jni/AndroidRuntime.cpp:1169",
+      "address": 2986417140,
+      "function_name": "android::AndroidRuntime::javaThreadShell(void*)",
+      "source_file_name": "AndroidRuntime.cpp",
+      "source_file_path": "frameworks/base/core/jni/AndroidRuntime.cpp",
+      "source_file_line": 1169
+    },
+    {
+      "line": "#3 0xb1e188a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16",
+      "address": 2984347817,
+      "function_name": "thread_data_t::trampoline(thread_data_t const*)",
+      "function_offset": 16,
+      "source_file_name": "Threads.cpp",
+      "source_file_path": "system/core/libutils/Threads.cpp",
+      "source_file_line": 99
+    },
+    {
+      "line": "#4 0xb2370d0c in __asan::AsanThread::ThreadStart(unsigned long, __sanitizer::atomic_uintptr_t*)",
+      "address": 2989952268,
+      "function_name": "__asan::AsanThread::ThreadStart(unsigned long, __sanitizer::atomic_uintptr_t*)"
+    },
+    {
+      "line": "#5 0xb23550f9 in asan_thread_start(void*)",
+      "address": 2989838585,
+      "function_name": "asan_thread_start(void*)"
+    },
+    {
+      "line": "#6 0xb1ec8404 in __pthread_start(void*) bionic/libc/bionic/pthread_create.cpp:198:18",
+      "address": 2985067524,
+      "function_name": "__pthread_start(void*)",
+      "function_offset": 18,
+      "source_file_name": "pthread_create.cpp",
+      "source_file_path": "bionic/libc/bionic/pthread_create.cpp",
+      "source_file_line": 198
+    },
+    {
+      "line": "#7 0xb1e73610 in __start_thread bionic/libc/bionic/clone.cpp:41:16",
+      "address": 2984719888,
+      "function_name": "__start_thread",
+      "function_offset": 16,
+      "source_file_name": "clone.cpp",
+      "source_file_path": "bionic/libc/bionic/clone.cpp",
+      "source_file_line": 41
+    },
+    {
+      "line": "#8 0xb1e713c6 in __bionic_clone bionic/libc/arch-x86/bionic/__bionic_clone.S:54",
+      "address": 2984711110,
+      "function_name": "__bionic_clone",
+      "source_file_name": "__bionic_clone.S",
+      "source_file_path": "bionic/libc/arch-x86/bionic/__bionic_clone.S",
+      "source_file_line": 54
+    }
+  ],
+  "full_stack_names": [
+    "_JavaVM::AttachCurrentThread",
+    "javaAttachThread",
+    "android::AndroidRuntime::javaThreadShell",
+    "thread_data_t::trampoline",
+    "__asan::AsanThread::ThreadStart",
+    "asan_thread_start",
+    "__pthread_start",
+    "__start_thread",
+    "__bionic_clone"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0xb2011bf4 in _JavaVM::AttachCurrentThread(_JNIEnv**, void*) libnativehelper/include/nativehelper/jni.h:1060",
+      "address": 2986417140,
+      "function_name": "_JavaVM::AttachCurrentThread(_JNIEnv**, void*)",
+      "source_file_name": "jni.h",
+      "source_file_path": "libnativehelper/include/nativehelper/jni.h",
+      "source_file_line": 1060
+    },
+    {
+      "line": "#1 0xb2011bf4 in javaAttachThread frameworks/base/core/jni/AndroidRuntime.cpp:1131",
+      "address": 2986417140,
+      "function_name": "javaAttachThread",
+      "source_file_name": "AndroidRuntime.cpp",
+      "source_file_path": "frameworks/base/core/jni/AndroidRuntime.cpp",
+      "source_file_line": 1131
+    },
+    {
+      "line": "#2 0xb2011bf4 in android::AndroidRuntime::javaThreadShell(void*) frameworks/base/core/jni/AndroidRuntime.cpp:1169",
+      "address": 2986417140,
+      "function_name": "android::AndroidRuntime::javaThreadShell(void*)",
+      "source_file_name": "AndroidRuntime.cpp",
+      "source_file_path": "frameworks/base/core/jni/AndroidRuntime.cpp",
+      "source_file_line": 1169
+    },
+    {
+      "line": "#3 0xb1e188a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16",
+      "address": 2984347817,
+      "function_name": "thread_data_t::trampoline(thread_data_t const*)",
+      "function_offset": 16,
+      "source_file_name": "Threads.cpp",
+      "source_file_path": "system/core/libutils/Threads.cpp",
+      "source_file_line": 99
+    },
+    {
+      "line": "#6 0xb1ec8404 in __pthread_start(void*) bionic/libc/bionic/pthread_create.cpp:198:18",
+      "address": 2985067524,
+      "function_name": "__pthread_start(void*)",
+      "function_offset": 18,
+      "source_file_name": "pthread_create.cpp",
+      "source_file_path": "bionic/libc/bionic/pthread_create.cpp",
+      "source_file_line": 198
+    },
+    {
+      "line": "#7 0xb1e73610 in __start_thread bionic/libc/bionic/clone.cpp:41:16",
+      "address": 2984719888,
+      "function_name": "__start_thread",
+      "function_offset": 16,
+      "source_file_name": "clone.cpp",
+      "source_file_path": "bionic/libc/bionic/clone.cpp",
+      "source_file_line": 41
+    },
+    {
+      "line": "#8 0xb1e713c6 in __bionic_clone bionic/libc/arch-x86/bionic/__bionic_clone.S:54",
+      "address": 2984711110,
+      "function_name": "__bionic_clone",
+      "source_file_name": "__bionic_clone.S",
+      "source_file_path": "bionic/libc/arch-x86/bionic/__bionic_clone.S",
+      "source_file_line": 54
+    }
+  ],
+  "minimized_stack": [
+    "#0 0xb2011bf4 in _JavaVM::AttachCurrentThread(_JNIEnv**, void*) libnativehelper/include/nativehelper/jni.h:1060",
+    "#1 0xb2011bf4 in javaAttachThread frameworks/base/core/jni/AndroidRuntime.cpp:1131",
+    "#2 0xb2011bf4 in android::AndroidRuntime::javaThreadShell(void*) frameworks/base/core/jni/AndroidRuntime.cpp:1169",
+    "#3 0xb1e188a9 in thread_data_t::trampoline(thread_data_t const*) system/core/libutils/Threads.cpp:99:16",
+    "#6 0xb1ec8404 in __pthread_start(void*) bionic/libc/bionic/pthread_create.cpp:198:18",
+    "#7 0xb1e73610 in __start_thread bionic/libc/bionic/clone.cpp:41:16",
+    "#8 0xb1e713c6 in __bionic_clone bionic/libc/arch-x86/bionic/__bionic_clone.S:54"
+  ],
+  "minimized_stack_function_names": [
+    "_JavaVM::AttachCurrentThread",
+    "javaAttachThread",
+    "android::AndroidRuntime::javaThreadShell",
+    "thread_data_t::trampoline",
+    "__pthread_start",
+    "__start_thread",
+    "__bionic_clone"
+  ]
+}

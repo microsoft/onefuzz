@@ -13,7 +13,7 @@ use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use onefuzz_telemetry::{Event, EventData};
 use reqwest::StatusCode;
-use reqwest_retry::SendRetry;
+use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, str, time::Duration};
 use tokio::fs;
@@ -142,7 +142,14 @@ impl SyncedDir {
                     // Conditional PUT, only if-not-exists.
                     // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
                     .header("If-None-Match", "*")
-                    .send_retry_default()
+                    .send_retry(
+                        |code| match code {
+                            StatusCode::CONFLICT => RetryCheck::Succeed,
+                            _ => RetryCheck::Retry,
+                        },
+                        DEFAULT_RETRY_PERIOD,
+                        MAX_RETRY_ATTEMPTS,
+                    )
                     .await
                     .context("Uploading blob")?;
 
@@ -151,7 +158,7 @@ impl SyncedDir {
         }
     }
 
-    async fn file_monitor_event(&self, event: Event) -> Result<()> {
+    async fn file_monitor_event(&self, event: Event, ignore_dotfiles: bool) -> Result<()> {
         debug!("monitoring {}", self.path.display());
         let mut monitor = DirectoryMonitor::new(self.path.clone());
         monitor.start()?;
@@ -160,10 +167,14 @@ impl SyncedDir {
             fs::create_dir_all(&path).await?;
 
             while let Some(item) = monitor.next().await {
-                event!(event.clone(); EventData::Path = item.display().to_string());
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
+                if ignore_dotfiles && file_name.to_string_lossy().starts_with('.') {
+                    continue;
+                }
+
+                event!(event.clone(); EventData::Path = file_name.to_string_lossy());
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
@@ -174,7 +185,7 @@ impl SyncedDir {
                     if !item.exists() {
                         // guarding against cases where a temporary file was detected
                         // but was deleted before the copy
-                        warn!("{}", error_message);
+                        debug!("{}", error_message);
                         continue;
                     }
                     bail!("{}", error_message);
@@ -184,6 +195,12 @@ impl SyncedDir {
             let mut uploader = BlobUploader::new(self.url.url().clone());
 
             while let Some(item) = monitor.next().await {
+                let file_name = item
+                    .file_name()
+                    .ok_or_else(|| anyhow!("invalid file path"))?;
+                if ignore_dotfiles && file_name.to_string_lossy().starts_with('.') {
+                    continue;
+                }
                 event!(event.clone(); EventData::Path = item.display().to_string());
 
                 if let Err(err) = uploader.upload(item.clone()).await {
@@ -197,7 +214,7 @@ impl SyncedDir {
                     if !item.exists() {
                         // guarding against cases where a temporary file was detected
                         // but was deleted before the upload
-                        warn!("{}", error_message);
+                        debug!("{}", error_message);
                         continue;
                     }
                     bail!("{}", error_message);
@@ -217,7 +234,7 @@ impl SyncedDir {
     /// The intent of this is to support use cases where we usually want a directory
     /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
     /// a directory, and may reset it.
-    pub async fn monitor_results(&self, event: Event) -> Result<()> {
+    pub async fn monitor_results(&self, event: Event, ignore_dotfiles: bool) -> Result<()> {
         loop {
             debug!("waiting to monitor {}", self.path.display());
 
@@ -227,7 +244,8 @@ impl SyncedDir {
             }
 
             debug!("starting monitor for {}", self.path.display());
-            self.file_monitor_event(event.clone()).await?;
+            self.file_monitor_event(event.clone(), ignore_dotfiles)
+                .await?;
         }
     }
 }

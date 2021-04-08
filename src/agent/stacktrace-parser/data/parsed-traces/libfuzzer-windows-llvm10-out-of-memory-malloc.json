@@ -150,17 +150,17 @@
   ],
   "full_stack_names": [
     "__sanitizer_print_stack_trace",
-    "fuzzer::PrintStackTrace(void)",
-    "fuzzer::Fuzzer::HandleMalloc(unsigned __int64)",
-    "fuzzer::MallocHook(void const volatile *, unsigned __int64)",
-    "__sanitizer::RunMallocHooks(void const *, unsigned __int64)",
-    "__asan::Allocator::Allocate(unsigned __int64, unsigned __int64, struct __sanitizer::BufferedStackTrace *, enum __asan::AllocType, bool)",
-    "__asan::asan_malloc(unsigned __int64, struct __sanitizer::BufferedStackTrace *)",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::HandleMalloc",
+    "fuzzer::MallocHook",
+    "__sanitizer::RunMallocHooks",
+    "__asan::Allocator::Allocate",
+    "__asan::asan_malloc",
     "malloc",
     "LLVMFuzzerTestOneInput",
-    "fuzzer::Fuzzer::ExecuteCallback(unsigned char const *, unsigned __int64)",
-    "fuzzer::RunOneTest(class fuzzer::Fuzzer *, char const *, unsigned __int64)",
-    "fuzzer::FuzzerDriver(int *, char ***, int (__cdecl *)(unsigned char const *, unsigned __int64))",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
     "main",
     "__scrt_common_main_seh",
     "BaseThreadInitThunk",
@@ -176,7 +176,7 @@
     }
   ],
   "minimized_stack": [
-    "LLVMFuzzerTestOneInput"
+    "#8 0x7ff739df1061 in LLVMFuzzerTestOneInput (X:\\fuzz\\fuzz.exe+0x140001061)"
   ],
   "minimized_stack_function_names": [
     "LLVMFuzzerTestOneInput"

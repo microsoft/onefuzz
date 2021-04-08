@@ -1,0 +1,837 @@
+{
+  "text": "[18457:18457:0129/154606:ERROR:browser_main_loop.cc(171)] Running without the SUID sandbox! See https://code.google.com/p/chromium/wiki/LinuxSUIDSandboxDevelopment for more information on developing with the sandbox on.\n/mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.20 not found (required by /mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux)\n==18457==WARNING: Cant read from symbolizer at fd 67\n/mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.20 not found (required by /mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux)\n==18457==WARNING: Cant read from symbolizer at fd 67\n/mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.20 not found (required by /mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux)\n==18457==WARNING: Cant read from symbolizer at fd 67\n/mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.20 not found (required by /mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux)\n==18457==WARNING: Cant read from symbolizer at fd 67\n==18457==WARNING: Failed to use and restart external symbolizer!\n/mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.20 not found (required by /mnt/scratch0/clusterfuzz/scripts/llvm-symbolizer-linux)\n==================\nWARNING: ThreadSanitizer: data race (pid=18457)c\n  Write of size 4 at 0x7f15d580f30c by thread T11 (mutexes: write M1608):\n    #0 0x7f15ceac9f57 in sqlite3StatusSet third_party/sqlite/amalgamation/sqlite3.c:12693:3\n    #1 0x7f15ceac9f57 in pcache1Alloc third_party/sqlite/amalgamation/sqlite3.c:35125\n    #2 0x7f15ceb0db56 in pcache1AllocPage third_party/sqlite/amalgamation/sqlite3.c:35205:15\n    #3 0x7f15ceb0db56 in pcache1Fetch third_party/sqlite/amalgamation/sqlite3.c:35674\n    #4 0x7f15ceaa359e in sqlite3PcacheFetch third_party/sqlite/amalgamation/sqlite3.c:34559:13\n    #5 0x7f15ceaa359e in sqlite3PagerAcquire third_party/sqlite/amalgamation/sqlite3.c:41408\n    #6 0x7f15cebc83f7 in btreeGetPage third_party/sqlite/amalgamation/sqlite3.c:48666:8\n    #7 0x7f15cebc83f7 in allocateBtreePage third_party/sqlite/amalgamation/sqlite3.c:52106\n    #8 0x7f15cebc422d in btreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54143:10\n    #9 0x7f15cebc422d in sqlite3BtreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54162\n    #10 0x7f15ceba7d2d in sqlite3VdbeExec third_party/sqlite/amalgamation/sqlite3.c:67024:8\n    #11 0x7f15ceaa9191 in sqlite3Step third_party/sqlite/amalgamation/sqlite3.c:60748:10\n    #12 0x7f15ceaa9191 in sqlite3_step third_party/sqlite/amalgamation/sqlite3.c:60813\n    #13 0x7f15ceab2d38 in sqlite3_exec third_party/sqlite/amalgamation/sqlite3.c:86385:12\n    #14 0x7f15d0b098c8 in ExecuteAndReturnErrorCode sql/connection.cc:659:10\n    #15 0x7f15d0b098c8 in sql::Connection::Execute(char const*) sql/connection.cc:668\n    #16 0x7f15d19deb98 in InitMainTable components/autofill/core/browser/webdata/autofill_table.cc:1643:10\n    #17 0x7f15d19deb98 in autofill::AutofillTable::CreateTablesIfNecessary() components/autofill/core/browser/webdata/autofill_table.cc:490\n    #18 0x7f15d14d6f0e in WebDatabase::Init(base::FilePath const&) components/webdata/common/web_database.cc:120:10\n    #19 0x7f15d14daac2 in WebDataServiceBackend::LoadDatabaseIfNecessary() components/webdata/common/web_data_service_backend.cc:52:18\n    #20 0x7f15d14da92e in WebDataServiceBackend::InitDatabase() components/webdata/common/web_data_service_backend.cc:34:3\n    #21 0x7f15d14d91d3 in Run base/bind_internal.h:185:12\n    #22 0x7f15d14d91d3 in MakeItSo base/bind_internal.h:381\n    #23 0x7f15d14d91d3 in base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void (WebDataServiceBackend::*)()>, void (WebDataServiceBackend*), void (scoped_refptr<WebDataServiceBackend>)>, void (WebDataServiceBackend*)>::Run(base::internal::BindStateBase*) base/bind_internal.h:475\n    #24 0x7f15cd234501 in Run base/callback.h:396:12\n    #25 0x7f15cd234501 in base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&) base/debug/task_annotator.cc:63\n    #26 0x7f15cd1bab54 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:458:3\n    #27 0x7f15cd1bb224 in DeferOrRunPendingTask base/message_loop/message_loop.cc:468:5\n    #28 0x7f15cd1bb224 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:580\n    #29 0x7f15cd1be322 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_default.cc:32:21\n    #30 0x7f15cd1ba4cc in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:424:3\n    #31 0x7f15cd1d4107 in base::RunLoop::Run() base/run_loop.cc:55:3\n    #32 0x7f15cd1b9ea6 in base::MessageLoop::Run() base/message_loop/message_loop.cc:317:3\n    #33 0x7f15cd1fd23a in base::Thread::Run(base::MessageLoop*) base/threading/thread.cc:174:3\n    #34 0x7f15d0605880 in content::BrowserThreadImpl::DBThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:184:3\n    #35 0x7f15d0605ecc in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:243:14\n    #36 0x7f15cd1fd46e in base::Thread::ThreadMain() base/threading/thread.cc:228:5\n    #37 0x7f15cd1f75c1 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:80:3\n    #38 0x7f15cc9f33ee in __tsan_thread_start_func\n\n  Previous write of size 4 at 0x7f15d580f30c by thread T22 (mutexes: write M1643):\n    #0 0x7f15ceac9f57 in sqlite3StatusSet third_party/sqlite/amalgamation/sqlite3.c:12693:3\n    #1 0x7f15ceac9f57 in pcache1Alloc third_party/sqlite/amalgamation/sqlite3.c:35125\n    #2 0x7f15ceb0db56 in pcache1AllocPage third_party/sqlite/amalgamation/sqlite3.c:35205:15\n    #3 0x7f15ceb0db56 in pcache1Fetch third_party/sqlite/amalgamation/sqlite3.c:35674\n    #4 0x7f15ceaa359e in sqlite3PcacheFetch third_party/sqlite/amalgamation/sqlite3.c:34559:13\n    #5 0x7f15ceaa359e in sqlite3PagerAcquire third_party/sqlite/amalgamation/sqlite3.c:41408\n    #6 0x7f15cebc83f7 in btreeGetPage third_party/sqlite/amalgamation/sqlite3.c:48666:8\n    #7 0x7f15cebc83f7 in allocateBtreePage third_party/sqlite/amalgamation/sqlite3.c:52106\n    #8 0x7f15cebc422d in btreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54143:10\n    #9 0x7f15cebc422d in sqlite3BtreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54162\n    #10 0x7f15ceba7d2d in sqlite3VdbeExec third_party/sqlite/amalgamation/sqlite3.c:67024:8\n    #11 0x7f15ceaa9191 in sqlite3Step third_party/sqlite/amalgamation/sqlite3.c:60748:10\n    #12 0x7f15ceaa9191 in sqlite3_step third_party/sqlite/amalgamation/sqlite3.c:60813\n    #13 0x7f15ceab2d38 in sqlite3_exec third_party/sqlite/amalgamation/sqlite3.c:86385:12\n    #14 0x7f15d0b098c8 in ExecuteAndReturnErrorCode sql/connection.cc:659:10\n    #15 0x7f15d0b098c8 in sql::Connection::Execute(char const*) sql/connection.cc:668\n    #16 0x7f15d1ab2a11 in history::URLDatabase::CreateURLTable(bool) components/history/core/browser/url_database.cc:611:10\n    #17 0x7f15d1aa26aa in history::HistoryDatabase::Init(base::FilePath const&) components/history/core/browser/history_database.cc:90:8\n    #18 0x7f15ccc86f45 in history::HistoryBackend::InitImpl(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, history::HistoryDatabaseParams const&) chrome/browser/history/history_backend.cc:612:28\n    #19 0x7f15ccc86baf in history::HistoryBackend::Init(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool, history::HistoryDatabaseParams const&) chrome/browser/history/history_backend.cc:235:5\n    #20 0x7f15ccacb288 in Run base/bind_internal.h:185:12\n    #21 0x7f15ccacb288 in MakeItSo base/bind_internal.h:381\n    #22 0x7f15ccacb288 in base::internal::Invoker<4, base::internal::BindState<base::internal::RunnableAdapter<void (history::HistoryBackend::*)(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool, history::HistoryDatabaseParams const&)>, void (history::HistoryBackend*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool, history::HistoryDatabaseParams const&), void (history::HistoryBackend*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, history::HistoryDatabaseParams)>, void (history::HistoryBackend*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool, history::HistoryDatabaseParams const&)>::Run(base::internal::BindStateBase*) base/bind_internal.h:869\n    #23 0x7f15cd234501 in Run base/callback.h:396:12\n    #24 0x7f15cd234501 in base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&) base/debug/task_annotator.cc:63\n    #25 0x7f15cd1bab54 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:458:3\n    #26 0x7f15cd1bb224 in DeferOrRunPendingTask base/message_loop/message_loop.cc:468:5\n    #27 0x7f15cd1bb224 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:580\n    #28 0x7f15cd1be322 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_default.cc:32:21\n    #29 0x7f15cd1ba4cc in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:424:3\n    #30 0x7f15cd1d4107 in base::RunLoop::Run() base/run_loop.cc:55:3\n    #31 0x7f15cd1b9ea6 in base::MessageLoop::Run() base/message_loop/message_loop.cc:317:3\n    #32 0x7f15cd1fd23a in base::Thread::Run(base::MessageLoop*) base/threading/thread.cc:174:3\n    #33 0x7f15cd1fd46e in base::Thread::ThreadMain() base/threading/thread.cc:228:5\n    #34 0x7f15cd1f75c1 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:80:3\n    #35 0x7f15cc9f33ee in __tsan_thread_start_func\n\n  Location is global <null> of size 0 at 0x000000000000 (chrome+0x0000098ae30c)\n\n  Mutex M1608 (0x7d0c0002e6b8) created at:\n    #0 0x7f15cc9f48f1 in __interceptor_pthread_mutex_init\n    #1 0x7f15ceb1c188 in pthreadMutexAlloc third_party/sqlite/amalgamation/sqlite3.c:17171:9\n    #2 0x7f15ceabd3c2 in sqlite3MutexAlloc third_party/sqlite/amalgamation/sqlite3.c:16474:10\n    #3 0x7f15ceabd3c2 in openDatabase third_party/sqlite/amalgamation/sqlite3.c:109114\n    #4 0x7f15ceabd1a8 in sqlite3_open third_party/sqlite/amalgamation/sqlite3.c:109297:10\n    #5 0x7f15d0b08ab3 in sql::Connection::OpenInternal(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, sql::Connection::Retry) sql/connection.cc:883:13\n    #6 0x7f15d0b0899f in sql::Connection::Open(base::FilePath const&) sql/connection.cc:247:10\n    #7 0x7f15d14d6d3e in WebDatabase::Init(base::FilePath const&) components/webdata/common/web_database.cc:87:8\n    #8 0x7f15d14daac2 in WebDataServiceBackend::LoadDatabaseIfNecessary() components/webdata/common/web_data_service_backend.cc:52:18\n    #9 0x7f15d14da92e in WebDataServiceBackend::InitDatabase() components/webdata/common/web_data_service_backend.cc:34:3\n    #10 0x7f15d14d91d3 in Run base/bind_internal.h:185:12\n    #11 0x7f15d14d91d3 in MakeItSo base/bind_internal.h:381\n    #12 0x7f15d14d91d3 in base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void (WebDataServiceBackend::*)()>, void (WebDataServiceBackend*), void (scoped_refptr<WebDataServiceBackend>)>, void (WebDataServiceBackend*)>::Run(base::internal::BindStateBase*) base/bind_internal.h:475\n    #13 0x7f15cd234501 in Run base/callback.h:396:12\n    #14 0x7f15cd234501 in base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&) base/debug/task_annotator.cc:63\n    #15 0x7f15cd1bab54 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:458:3\n    #16 0x7f15cd1bb224 in DeferOrRunPendingTask base/message_loop/message_loop.cc:468:5\n    #17 0x7f15cd1bb224 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:580\n    #18 0x7f15cd1be322 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_default.cc:32:21\n    #19 0x7f15cd1ba4cc in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:424:3\n    #20 0x7f15cd1d4107 in base::RunLoop::Run() base/run_loop.cc:55:3\n    #21 0x7f15cd1b9ea6 in base::MessageLoop::Run() base/message_loop/message_loop.cc:317:3\n    #22 0x7f15cd1fd23a in base::Thread::Run(base::MessageLoop*) base/threading/thread.cc:174:3\n    #23 0x7f15d0605880 in content::BrowserThreadImpl::DBThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:184:3\n    #24 0x7f15d0605ecc in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:243:14\n    #25 0x7f15cd1fd46e in base::Thread::ThreadMain() base/threading/thread.cc:228:5\n    #26 0x7f15cd1f75c1 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:80:3\n    #27 0x7f15cc9f33ee in __tsan_thread_start_func\n\n  Mutex M1643 (0x7d0c00080f48) created at:\n    #0 0x7f15cc9f48f1 in __interceptor_pthread_mutex_init\n    #1 0x7f15ceb1c188 in pthreadMutexAlloc third_party/sqlite/amalgamation/sqlite3.c:17171:9\n    #2 0x7f15ceabd3c2 in sqlite3MutexAlloc third_party/sqlite/amalgamation/sqlite3.c:16474:10\n    #3 0x7f15ceabd3c2 in openDatabase third_party/sqlite/amalgamation/sqlite3.c:109114\n    #4 0x7f15ceabd1a8 in sqlite3_open third_party/sqlite/amalgamation/sqlite3.c:109297:10\n    #5 0x7f15d0b08ab3 in sql::Connection::OpenInternal(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, sql::Connection::Retry) sql/connection.cc:883:13\n    #6 0x7f15d0b0899f in sql::Connection::Open(base::FilePath const&) sql/connection.cc:247:10\n    #7 0x7f15d1aa263d in history::HistoryDatabase::Init(base::FilePath const&) components/history/core/browser/history_database.cc:68:8\n    #8 0x7f15ccc86f45 in history::HistoryBackend::InitImpl(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, history::HistoryDatabaseParams const&) chrome/browser/history/history_backend.cc:612:28\n    #9 0x7f15ccc86baf in history::HistoryBackend::Init(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool, history::HistoryDatabaseParams const&) chrome/browser/history/history_backend.cc:235:5\n    #10 0x7f15ccacb288 in Run base/bind_internal.h:185:12\n    #11 0x7f15ccacb288 in MakeItSo base/bind_internal.h:381\n    #12 0x7f15ccacb288 in base::internal::Invoker<4, base::internal::BindState<base::internal::RunnableAdapter<void (history::HistoryBackend::*)(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool, history::HistoryDatabaseParams const&)>, void (history::HistoryBackend*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool, history::HistoryDatabaseParams const&), void (history::HistoryBackend*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, history::HistoryDatabaseParams)>, void (history::HistoryBackend*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool, history::HistoryDatabaseParams const&)>::Run(base::internal::BindStateBase*) base/bind_internal.h:869\n    #13 0x7f15cd234501 in Run base/callback.h:396:12\n    #14 0x7f15cd234501 in base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&) base/debug/task_annotator.cc:63\n    #15 0x7f15cd1bab54 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:458:3\n    #16 0x7f15cd1bb224 in DeferOrRunPendingTask base/message_loop/message_loop.cc:468:5\n    #17 0x7f15cd1bb224 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:580\n    #18 0x7f15cd1be322 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_default.cc:32:21\n    #19 0x7f15cd1ba4cc in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:424:3\n    #20 0x7f15cd1d4107 in base::RunLoop::Run() base/run_loop.cc:55:3\n    #21 0x7f15cd1b9ea6 in base::MessageLoop::Run() base/message_loop/message_loop.cc:317:3\n    #22 0x7f15cd1fd23a in base::Thread::Run(base::MessageLoop*) base/threading/thread.cc:174:3\n    #23 0x7f15cd1fd46e in base::Thread::ThreadMain() base/threading/thread.cc:228:5\n    #24 0x7f15cd1f75c1 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:80:3\n    #25 0x7f15cc9f33ee in __tsan_thread_start_func\n\n  Thread T11 Chrome_DBThread (tid=18472, running) created by main thread at:\n    #0 0x7f15cc9f34f2 in __interceptor_pthread_create\n    #1 0x7f15cd1f71c0 in base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority) base/threading/platform_thread_posix.cc:120:13\n    #2 0x7f15cd1f7032 in base::PlatformThread::Create(unsigned long, base::PlatformThread::Delegate*, base::PlatformThreadHandle*) base/threading/platform_thread_posix.cc:206:10\n    #3 0x7f15cd1fd022 in base::Thread::StartWithOptions(base::Thread::Options const&) base/threading/thread.cc:108:8\n    #4 0x7f15d08aa009 in content::BrowserMainLoop::CreateThreads() content/browser/browser_main_loop.cc:774:12\n    #5 0x7f15d08ae8a3 in Run base/bind_internal.h:185:12\n    #6 0x7f15d08ae8a3 in MakeItSo base/bind_internal.h:374\n    #7 0x7f15d08ae8a3 in base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<int (content::BrowserMainLoop::*)()>, int (content::BrowserMainLoop*), void (base::internal::UnretainedWrapper<content::BrowserMainLoop>)>, int (content::BrowserMainLoop*)>::Run(base::internal::BindStateBase*) base/bind_internal.h:475\n    #8 0x7f15d0a24f90 in Run base/callback.h:396:12\n    #9 0x7f15d0a24f90 in content::StartupTaskRunner::RunAllTasksNow() content/browser/startup_task_runner.cc:45\n    #10 0x7f15d08a936d in content::BrowserMainLoop::CreateStartupTasks() content/browser/browser_main_loop.cc:689:3\n    #11 0x7f15d06040ae in content::BrowserMainRunnerImpl::Initialize(content::MainFunctionParams const&) content/browser/browser_main_runner.cc:188:5\n    #12 0x7f15d0603c98 in content::BrowserMain(content::MainFunctionParams const&) content/browser/browser_main.cc:22:19\n    #13 0x7f15cd185b4e in content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) content/app/content_main_runner.cc:423:14\n    #14 0x7f15cd1864e2 in content::ContentMainRunnerImpl::Run() content/app/content_main_runner.cc:800:12\n    #15 0x7f15cd184dff in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:15\n    #16 0x7f15cca54ba4 in ChromeMain chrome/app/chrome_main.cc:66:12\n    #17 0x7f15cca54b1f in main chrome/app/chrome_exe_main_aura.cc:17:10\n    #18 0x7f15c41a7ec5 in __libc_start_main /build/buildd/eglibc-2.19/csu/libc-start.c:287\n  Thread T22 Chrome_HistoryThread (tid=18484, running) created by main thread at:\n    #0 0x7f15cc9f34f2 in __interceptor_pthread_create\n    #1 0x7f15cd1f71c0 in base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority) base/threading/platform_thread_posix.cc:120:13\n    #2 0x7f15cd1f7032 in base::PlatformThread::Create(unsigned long, base::PlatformThread::Delegate*, base::PlatformThreadHandle*) base/threading/platform_thread_posix.cc:206:10\n    #3 0x7f15cd1fd022 in base::Thread::StartWithOptions(base::Thread::Options const&) base/threading/thread.cc:108:8\n    #4 0x7f15ccac7e67 in HistoryService::Init(bool, history::HistoryDatabaseParams const&) chrome/browser/history/history_service.cc:954:8\n    #5 0x7f15ccad4f74 in Init chrome/browser/history/history_service.h:103:12\n    #6 0x7f15ccad4f74 in HistoryServiceFactory::BuildServiceInstanceFor(content::BrowserContext*) const chrome/browser/history/history_service_factory.cc:81\n    #7 0x7f15d16442cd in BrowserContextKeyedServiceFactory::BuildServiceInstanceFor(base::SupportsUserData*) const components/keyed_service/content/browser_context_keyed_service_factory.cc:91:10\n    #8 0x7f15d10cc013 in KeyedServiceFactory::GetServiceForContext(base::SupportsUserData*, bool) components/keyed_service/core/keyed_service_factory.cc:87:15\n    #9 0x7f15d164417b in BrowserContextKeyedServiceFactory::GetServiceForBrowserContext(content::BrowserContext*, bool) components/keyed_service/content/browser_context_keyed_service_factory.cc:45:10\n    #10 0x7f15ccad4c63 in HistoryServiceFactory::GetForProfile(Profile*, ServiceAccessType) chrome/browser/history/history_service_factory.cc:32:7\n    #11 0x7f15ccb3f0be in TemplateURLServiceFactory::BuildInstanceFor(content::BrowserContext*) chrome/browser/search_engines/template_url_service_factory.cc:55:11\n    #12 0x7f15ccb3f26a in TemplateURLServiceFactory::BuildServiceInstanceFor(content::BrowserContext*) const chrome/browser/search_engines/template_url_service_factory.cc:75:10\n    #13 0x7f15d16442cd in BrowserContextKeyedServiceFactory::BuildServiceInstanceFor(base::SupportsUserData*) const components/keyed_service/content/browser_context_keyed_service_factory.cc:91:10\n    #14 0x7f15d10cc013 in KeyedServiceFactory::GetServiceForContext(base::SupportsUserData*, bool) components/keyed_service/core/keyed_service_factory.cc:87:15\n    #15 0x7f15d164417b in BrowserContextKeyedServiceFactory::GetServiceForBrowserContext(content::BrowserContext*, bool) components/keyed_service/content/browser_context_keyed_service_factory.cc:45:10\n    #16 0x7f15ccb3ee77 in TemplateURLServiceFactory::GetForProfile(Profile*) chrome/browser/search_engines/template_url_service_factory.cc:29:7\n    #17 0x7f15d171e788 in extensions::OmniboxAPI::OmniboxAPI(content::BrowserContext*) chrome/browser/extensions/api/omnibox/omnibox_api.cc:180:20\n    #18 0x7f15d1720cfb in extensions::BrowserContextKeyedAPIFactory<extensions::OmniboxAPI>::BuildServiceInstanceFor(content::BrowserContext*) const extensions/browser/browser_context_keyed_api_factory.h:107:5\n    #19 0x7f15d16442cd in BrowserContextKeyedServiceFactory::BuildServiceInstanceFor(base::SupportsUserData*) const components/keyed_service/content/browser_context_keyed_service_factory.cc:91:10\n    #20 0x7f15d10cc013 in KeyedServiceFactory::GetServiceForContext(base::SupportsUserData*, bool) components/keyed_service/core/keyed_service_factory.cc:87:15\n    #21 0x7f15d10cc6a6 in KeyedServiceFactory::CreateServiceNow(base::SupportsUserData*) components/keyed_service/core/keyed_service_factory.cc:136:3\n    #22 0x7f15d10cdf19 in DependencyManager::CreateContextServices(base::SupportsUserData*, bool) components/keyed_service/core/dependency_manager.cc:73:7\n    #23 0x7f15d16437fb in BrowserContextDependencyManager::DoCreateBrowserContextServices(content::BrowserContext*, bool) components/keyed_service/content/browser_context_dependency_manager.cc:44:3\n    #24 0x7f15d1643533 in BrowserContextDependencyManager::CreateBrowserContextServices(content::BrowserContext*) components/keyed_service/content/browser_context_dependency_manager.cc:29:3\n    #25 0x7f15cccd877b in ProfileImpl::OnPrefsLoaded(bool) chrome/browser/profiles/profile_impl.cc:891:3\n    #26 0x7f15cccd8285 in ProfileImpl::ProfileImpl(base::FilePath const&, Profile::Delegate*, Profile::CreateMode, base::SequencedTaskRunner*) chrome/browser/profiles/profile_impl.cc:521:5\n    #27 0x7f15cccd706c in Profile::CreateProfile(base::FilePath const&, Profile::Delegate*, Profile::CreateMode) chrome/browser/profiles/profile_impl.cc:295:3\n    #28 0x7f15ccb391fe in ProfileManager::CreateProfileHelper(base::FilePath const&) chrome/browser/profiles/profile_manager.cc:1070:10\n    #29 0x7f15ccb340fd in ProfileManager::GetProfile(base::FilePath const&) chrome/browser/profiles/profile_manager.cc:383:13\n    #30 0x7f15cce56c7e in CreatePrimaryProfile chrome/browser/chrome_browser_main.cc:360:13\n    #31 0x7f15cce56c7e in ChromeBrowserMainParts::PreMainMessageLoopRunImpl() chrome/browser/chrome_browser_main.cc:1277\n    #32 0x7f15cce56212 in ChromeBrowserMainParts::PreMainMessageLoopRun() chrome/browser/chrome_browser_main.cc:1007:18\n    #33 0x7f15d08ab493 in content::BrowserMainLoop::PreMainMessageLoopRun() content/browser/browser_main_loop.cc:791:5\n    #34 0x7f15d08ae8a3 in Run base/bind_internal.h:185:12\n    #35 0x7f15d08ae8a3 in MakeItSo base/bind_internal.h:374\n    #36 0x7f15d08ae8a3 in base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<int (content::BrowserMainLoop::*)()>, int (content::BrowserMainLoop*), void (base::internal::UnretainedWrapper<content::BrowserMainLoop>)>, int (content::BrowserMainLoop*)>::Run(base::internal::BindStateBase*) base/bind_internal.h:475\n    #37 0x7f15d0a24f90 in Run base/callback.h:396:12\n    #38 0x7f15d0a24f90 in content::StartupTaskRunner::RunAllTasksNow() content/browser/startup_task_runner.cc:45\n    #39 0x7f15d08a936d in content::BrowserMainLoop::CreateStartupTasks() content/browser/browser_main_loop.cc:689:3\n    #40 0x7f15d06040ae in content::BrowserMainRunnerImpl::Initialize(content::MainFunctionParams const&) content/browser/browser_main_runner.cc:188:5\n    #41 0x7f15d0603c98 in content::BrowserMain(content::MainFunctionParams const&) content/browser/browser_main.cc:22:19\n    #42 0x7f15cd185b4e in content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) content/app/content_main_runner.cc:423:14\n    #43 0x7f15cd1864e2 in content::ContentMainRunnerImpl::Run() content/app/content_main_runner.cc:800:12\n    #44 0x7f15cd184dff in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:15\n    #45 0x7f15cca54ba4 in ChromeMain chrome/app/chrome_main.cc:66:12\n    #46 0x7f15cca54b1f in main chrome/app/chrome_exe_main_aura.cc:17:10\n    #47 0x7f15c41a7ec5 in __libc_start_main /build/buildd/eglibc-2.19/csu/libc-start.c:287\n\nSUMMARY: ThreadSanitizer: data race ??:0 ??\n==================\n",
+  "sanitizer": "ThreadSanitizer",
+  "summary": "ThreadSanitizer: data race ??:0 ??",
+  "fault_type": "data race",
+  "call_stack": [
+    "#0 0x7f15ceac9f57 in sqlite3StatusSet third_party/sqlite/amalgamation/sqlite3.c:12693:3",
+    "#1 0x7f15ceac9f57 in pcache1Alloc third_party/sqlite/amalgamation/sqlite3.c:35125",
+    "#2 0x7f15ceb0db56 in pcache1AllocPage third_party/sqlite/amalgamation/sqlite3.c:35205:15",
+    "#3 0x7f15ceb0db56 in pcache1Fetch third_party/sqlite/amalgamation/sqlite3.c:35674",
+    "#4 0x7f15ceaa359e in sqlite3PcacheFetch third_party/sqlite/amalgamation/sqlite3.c:34559:13",
+    "#5 0x7f15ceaa359e in sqlite3PagerAcquire third_party/sqlite/amalgamation/sqlite3.c:41408",
+    "#6 0x7f15cebc83f7 in btreeGetPage third_party/sqlite/amalgamation/sqlite3.c:48666:8",
+    "#7 0x7f15cebc83f7 in allocateBtreePage third_party/sqlite/amalgamation/sqlite3.c:52106",
+    "#8 0x7f15cebc422d in btreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54143:10",
+    "#9 0x7f15cebc422d in sqlite3BtreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54162",
+    "#10 0x7f15ceba7d2d in sqlite3VdbeExec third_party/sqlite/amalgamation/sqlite3.c:67024:8",
+    "#11 0x7f15ceaa9191 in sqlite3Step third_party/sqlite/amalgamation/sqlite3.c:60748:10",
+    "#12 0x7f15ceaa9191 in sqlite3_step third_party/sqlite/amalgamation/sqlite3.c:60813",
+    "#13 0x7f15ceab2d38 in sqlite3_exec third_party/sqlite/amalgamation/sqlite3.c:86385:12",
+    "#14 0x7f15d0b098c8 in ExecuteAndReturnErrorCode sql/connection.cc:659:10",
+    "#15 0x7f15d0b098c8 in sql::Connection::Execute(char const*) sql/connection.cc:668",
+    "#16 0x7f15d19deb98 in InitMainTable components/autofill/core/browser/webdata/autofill_table.cc:1643:10",
+    "#17 0x7f15d19deb98 in autofill::AutofillTable::CreateTablesIfNecessary() components/autofill/core/browser/webdata/autofill_table.cc:490",
+    "#18 0x7f15d14d6f0e in WebDatabase::Init(base::FilePath const&) components/webdata/common/web_database.cc:120:10",
+    "#19 0x7f15d14daac2 in WebDataServiceBackend::LoadDatabaseIfNecessary() components/webdata/common/web_data_service_backend.cc:52:18",
+    "#20 0x7f15d14da92e in WebDataServiceBackend::InitDatabase() components/webdata/common/web_data_service_backend.cc:34:3",
+    "#21 0x7f15d14d91d3 in Run base/bind_internal.h:185:12",
+    "#22 0x7f15d14d91d3 in MakeItSo base/bind_internal.h:381",
+    "#23 0x7f15d14d91d3 in base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void (WebDataServiceBackend::*)()>, void (WebDataServiceBackend*), void (scoped_refptr<WebDataServiceBackend>)>, void (WebDataServiceBackend*)>::Run(base::internal::BindStateBase*) base/bind_internal.h:475",
+    "#24 0x7f15cd234501 in Run base/callback.h:396:12",
+    "#25 0x7f15cd234501 in base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&) base/debug/task_annotator.cc:63",
+    "#26 0x7f15cd1bab54 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:458:3",
+    "#27 0x7f15cd1bb224 in DeferOrRunPendingTask base/message_loop/message_loop.cc:468:5",
+    "#28 0x7f15cd1bb224 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:580",
+    "#29 0x7f15cd1be322 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_default.cc:32:21",
+    "#30 0x7f15cd1ba4cc in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:424:3",
+    "#31 0x7f15cd1d4107 in base::RunLoop::Run() base/run_loop.cc:55:3",
+    "#32 0x7f15cd1b9ea6 in base::MessageLoop::Run() base/message_loop/message_loop.cc:317:3",
+    "#33 0x7f15cd1fd23a in base::Thread::Run(base::MessageLoop*) base/threading/thread.cc:174:3",
+    "#34 0x7f15d0605880 in content::BrowserThreadImpl::DBThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:184:3",
+    "#35 0x7f15d0605ecc in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:243:14",
+    "#36 0x7f15cd1fd46e in base::Thread::ThreadMain() base/threading/thread.cc:228:5",
+    "#37 0x7f15cd1f75c1 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:80:3",
+    "#38 0x7f15cc9f33ee in __tsan_thread_start_func"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f15ceac9f57 in sqlite3StatusSet third_party/sqlite/amalgamation/sqlite3.c:12693:3",
+      "address": 139731638460247,
+      "function_name": "sqlite3StatusSet",
+      "function_offset": 3,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 12693
+    },
+    {
+      "line": "#1 0x7f15ceac9f57 in pcache1Alloc third_party/sqlite/amalgamation/sqlite3.c:35125",
+      "address": 139731638460247,
+      "function_name": "pcache1Alloc",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 35125
+    },
+    {
+      "line": "#2 0x7f15ceb0db56 in pcache1AllocPage third_party/sqlite/amalgamation/sqlite3.c:35205:15",
+      "address": 139731638737750,
+      "function_name": "pcache1AllocPage",
+      "function_offset": 15,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 35205
+    },
+    {
+      "line": "#3 0x7f15ceb0db56 in pcache1Fetch third_party/sqlite/amalgamation/sqlite3.c:35674",
+      "address": 139731638737750,
+      "function_name": "pcache1Fetch",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 35674
+    },
+    {
+      "line": "#4 0x7f15ceaa359e in sqlite3PcacheFetch third_party/sqlite/amalgamation/sqlite3.c:34559:13",
+      "address": 139731638302110,
+      "function_name": "sqlite3PcacheFetch",
+      "function_offset": 13,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 34559
+    },
+    {
+      "line": "#5 0x7f15ceaa359e in sqlite3PagerAcquire third_party/sqlite/amalgamation/sqlite3.c:41408",
+      "address": 139731638302110,
+      "function_name": "sqlite3PagerAcquire",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 41408
+    },
+    {
+      "line": "#6 0x7f15cebc83f7 in btreeGetPage third_party/sqlite/amalgamation/sqlite3.c:48666:8",
+      "address": 139731639501815,
+      "function_name": "btreeGetPage",
+      "function_offset": 8,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 48666
+    },
+    {
+      "line": "#7 0x7f15cebc83f7 in allocateBtreePage third_party/sqlite/amalgamation/sqlite3.c:52106",
+      "address": 139731639501815,
+      "function_name": "allocateBtreePage",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 52106
+    },
+    {
+      "line": "#8 0x7f15cebc422d in btreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54143:10",
+      "address": 139731639484973,
+      "function_name": "btreeCreateTable",
+      "function_offset": 10,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 54143
+    },
+    {
+      "line": "#9 0x7f15cebc422d in sqlite3BtreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54162",
+      "address": 139731639484973,
+      "function_name": "sqlite3BtreeCreateTable",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 54162
+    },
+    {
+      "line": "#10 0x7f15ceba7d2d in sqlite3VdbeExec third_party/sqlite/amalgamation/sqlite3.c:67024:8",
+      "address": 139731639369005,
+      "function_name": "sqlite3VdbeExec",
+      "function_offset": 8,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 67024
+    },
+    {
+      "line": "#11 0x7f15ceaa9191 in sqlite3Step third_party/sqlite/amalgamation/sqlite3.c:60748:10",
+      "address": 139731638325649,
+      "function_name": "sqlite3Step",
+      "function_offset": 10,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 60748
+    },
+    {
+      "line": "#12 0x7f15ceaa9191 in sqlite3_step third_party/sqlite/amalgamation/sqlite3.c:60813",
+      "address": 139731638325649,
+      "function_name": "sqlite3_step",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 60813
+    },
+    {
+      "line": "#13 0x7f15ceab2d38 in sqlite3_exec third_party/sqlite/amalgamation/sqlite3.c:86385:12",
+      "address": 139731638365496,
+      "function_name": "sqlite3_exec",
+      "function_offset": 12,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 86385
+    },
+    {
+      "line": "#14 0x7f15d0b098c8 in ExecuteAndReturnErrorCode sql/connection.cc:659:10",
+      "address": 139731672275144,
+      "function_name": "ExecuteAndReturnErrorCode",
+      "function_offset": 10,
+      "source_file_name": "connection.cc",
+      "source_file_path": "sql/connection.cc",
+      "source_file_line": 659
+    },
+    {
+      "line": "#15 0x7f15d0b098c8 in sql::Connection::Execute(char const*) sql/connection.cc:668",
+      "address": 139731672275144,
+      "function_name": "sql::Connection::Execute(char const*)",
+      "source_file_name": "connection.cc",
+      "source_file_path": "sql/connection.cc",
+      "source_file_line": 668
+    },
+    {
+      "line": "#16 0x7f15d19deb98 in InitMainTable components/autofill/core/browser/webdata/autofill_table.cc:1643:10",
+      "address": 139731687828376,
+      "function_name": "InitMainTable",
+      "function_offset": 10,
+      "source_file_name": "autofill_table.cc",
+      "source_file_path": "components/autofill/core/browser/webdata/autofill_table.cc",
+      "source_file_line": 1643
+    },
+    {
+      "line": "#17 0x7f15d19deb98 in autofill::AutofillTable::CreateTablesIfNecessary() components/autofill/core/browser/webdata/autofill_table.cc:490",
+      "address": 139731687828376,
+      "function_name": "autofill::AutofillTable::CreateTablesIfNecessary()",
+      "source_file_name": "autofill_table.cc",
+      "source_file_path": "components/autofill/core/browser/webdata/autofill_table.cc",
+      "source_file_line": 490
+    },
+    {
+      "line": "#18 0x7f15d14d6f0e in WebDatabase::Init(base::FilePath const&) components/webdata/common/web_database.cc:120:10",
+      "address": 139731682553614,
+      "function_name": "WebDatabase::Init(base::FilePath const&)",
+      "function_offset": 10,
+      "source_file_name": "web_database.cc",
+      "source_file_path": "components/webdata/common/web_database.cc",
+      "source_file_line": 120
+    },
+    {
+      "line": "#19 0x7f15d14daac2 in WebDataServiceBackend::LoadDatabaseIfNecessary() components/webdata/common/web_data_service_backend.cc:52:18",
+      "address": 139731682568898,
+      "function_name": "WebDataServiceBackend::LoadDatabaseIfNecessary()",
+      "function_offset": 18,
+      "source_file_name": "web_data_service_backend.cc",
+      "source_file_path": "components/webdata/common/web_data_service_backend.cc",
+      "source_file_line": 52
+    },
+    {
+      "line": "#20 0x7f15d14da92e in WebDataServiceBackend::InitDatabase() components/webdata/common/web_data_service_backend.cc:34:3",
+      "address": 139731682568494,
+      "function_name": "WebDataServiceBackend::InitDatabase()",
+      "function_offset": 3,
+      "source_file_name": "web_data_service_backend.cc",
+      "source_file_path": "components/webdata/common/web_data_service_backend.cc",
+      "source_file_line": 34
+    },
+    {
+      "line": "#21 0x7f15d14d91d3 in Run base/bind_internal.h:185:12",
+      "address": 139731682562515,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 185
+    },
+    {
+      "line": "#22 0x7f15d14d91d3 in MakeItSo base/bind_internal.h:381",
+      "address": 139731682562515,
+      "function_name": "MakeItSo",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 381
+    },
+    {
+      "line": "#23 0x7f15d14d91d3 in base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void (WebDataServiceBackend::*)()>, void (WebDataServiceBackend*), void (scoped_refptr<WebDataServiceBackend>)>, void (WebDataServiceBackend*)>::Run(base::internal::BindStateBase*) base/bind_internal.h:475",
+      "address": 139731682562515,
+      "function_name": "base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void (WebDataServiceBackend::*)()>, void (WebDataServiceBackend*), void (scoped_refptr<WebDataServiceBackend>)>, void (WebDataServiceBackend*)>::Run(base::internal::BindStateBase*)",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 475
+    },
+    {
+      "line": "#24 0x7f15cd234501 in Run base/callback.h:396:12",
+      "address": 139731612681473,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 396
+    },
+    {
+      "line": "#25 0x7f15cd234501 in base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&) base/debug/task_annotator.cc:63",
+      "address": 139731612681473,
+      "function_name": "base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&)",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 63
+    },
+    {
+      "line": "#26 0x7f15cd1bab54 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:458:3",
+      "address": 139731612183380,
+      "function_name": "base::MessageLoop::RunTask(base::PendingTask const&)",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 458
+    },
+    {
+      "line": "#27 0x7f15cd1bb224 in DeferOrRunPendingTask base/message_loop/message_loop.cc:468:5",
+      "address": 139731612185124,
+      "function_name": "DeferOrRunPendingTask",
+      "function_offset": 5,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 468
+    },
+    {
+      "line": "#28 0x7f15cd1bb224 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:580",
+      "address": 139731612185124,
+      "function_name": "base::MessageLoop::DoWork()",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 580
+    },
+    {
+      "line": "#29 0x7f15cd1be322 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_default.cc:32:21",
+      "address": 139731612197666,
+      "function_name": "base::MessagePumpDefault::Run(base::MessagePump::Delegate*)",
+      "function_offset": 21,
+      "source_file_name": "message_pump_default.cc",
+      "source_file_path": "base/message_loop/message_pump_default.cc",
+      "source_file_line": 32
+    },
+    {
+      "line": "#30 0x7f15cd1ba4cc in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:424:3",
+      "address": 139731612181708,
+      "function_name": "base::MessageLoop::RunHandler()",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 424
+    },
+    {
+      "line": "#31 0x7f15cd1d4107 in base::RunLoop::Run() base/run_loop.cc:55:3",
+      "address": 139731612287239,
+      "function_name": "base::RunLoop::Run()",
+      "function_offset": 3,
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 55
+    },
+    {
+      "line": "#32 0x7f15cd1b9ea6 in base::MessageLoop::Run() base/message_loop/message_loop.cc:317:3",
+      "address": 139731612180134,
+      "function_name": "base::MessageLoop::Run()",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 317
+    },
+    {
+      "line": "#33 0x7f15cd1fd23a in base::Thread::Run(base::MessageLoop*) base/threading/thread.cc:174:3",
+      "address": 139731612455482,
+      "function_name": "base::Thread::Run(base::MessageLoop*)",
+      "function_offset": 3,
+      "source_file_name": "thread.cc",
+      "source_file_path": "base/threading/thread.cc",
+      "source_file_line": 174
+    },
+    {
+      "line": "#34 0x7f15d0605880 in content::BrowserThreadImpl::DBThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:184:3",
+      "address": 139731667015808,
+      "function_name": "content::BrowserThreadImpl::DBThreadRun(base::MessageLoop*)",
+      "function_offset": 3,
+      "source_file_name": "browser_thread_impl.cc",
+      "source_file_path": "content/browser/browser_thread_impl.cc",
+      "source_file_line": 184
+    },
+    {
+      "line": "#35 0x7f15d0605ecc in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:243:14",
+      "address": 139731667017420,
+      "function_name": "content::BrowserThreadImpl::Run(base::MessageLoop*)",
+      "function_offset": 14,
+      "source_file_name": "browser_thread_impl.cc",
+      "source_file_path": "content/browser/browser_thread_impl.cc",
+      "source_file_line": 243
+    },
+    {
+      "line": "#36 0x7f15cd1fd46e in base::Thread::ThreadMain() base/threading/thread.cc:228:5",
+      "address": 139731612456046,
+      "function_name": "base::Thread::ThreadMain()",
+      "function_offset": 5,
+      "source_file_name": "thread.cc",
+      "source_file_path": "base/threading/thread.cc",
+      "source_file_line": 228
+    },
+    {
+      "line": "#37 0x7f15cd1f75c1 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:80:3",
+      "address": 139731612431809,
+      "function_name": "base::(anonymous namespace)::ThreadFunc(void*)",
+      "function_offset": 3,
+      "source_file_name": "platform_thread_posix.cc",
+      "source_file_path": "base/threading/platform_thread_posix.cc",
+      "source_file_line": 80
+    },
+    {
+      "line": "#38 0x7f15cc9f33ee in __tsan_thread_start_func",
+      "address": 139731604026350,
+      "function_name": "__tsan_thread_start_func"
+    }
+  ],
+  "full_stack_names": [
+    "sqlite3StatusSet",
+    "pcache1Alloc",
+    "pcache1AllocPage",
+    "pcache1Fetch",
+    "sqlite3PcacheFetch",
+    "sqlite3PagerAcquire",
+    "btreeGetPage",
+    "allocateBtreePage",
+    "btreeCreateTable",
+    "sqlite3BtreeCreateTable",
+    "sqlite3VdbeExec",
+    "sqlite3Step",
+    "sqlite3_step",
+    "sqlite3_exec",
+    "ExecuteAndReturnErrorCode",
+    "sql::Connection::Execute",
+    "InitMainTable",
+    "autofill::AutofillTable::CreateTablesIfNecessary",
+    "WebDatabase::Init",
+    "WebDataServiceBackend::LoadDatabaseIfNecessary",
+    "WebDataServiceBackend::InitDatabase",
+    "Run",
+    "MakeItSo",
+    "base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "Run",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpDefault::Run",
+    "base::MessageLoop::RunHandler",
+    "base::RunLoop::Run",
+    "base::MessageLoop::Run",
+    "base::Thread::Run",
+    "content::BrowserThreadImpl::DBThreadRun",
+    "content::BrowserThreadImpl::Run",
+    "base::Thread::ThreadMain",
+    "base::",
+    "__tsan_thread_start_func"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x7f15ceac9f57 in sqlite3StatusSet third_party/sqlite/amalgamation/sqlite3.c:12693:3",
+      "address": 139731638460247,
+      "function_name": "sqlite3StatusSet",
+      "function_offset": 3,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 12693
+    },
+    {
+      "line": "#1 0x7f15ceac9f57 in pcache1Alloc third_party/sqlite/amalgamation/sqlite3.c:35125",
+      "address": 139731638460247,
+      "function_name": "pcache1Alloc",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 35125
+    },
+    {
+      "line": "#2 0x7f15ceb0db56 in pcache1AllocPage third_party/sqlite/amalgamation/sqlite3.c:35205:15",
+      "address": 139731638737750,
+      "function_name": "pcache1AllocPage",
+      "function_offset": 15,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 35205
+    },
+    {
+      "line": "#3 0x7f15ceb0db56 in pcache1Fetch third_party/sqlite/amalgamation/sqlite3.c:35674",
+      "address": 139731638737750,
+      "function_name": "pcache1Fetch",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 35674
+    },
+    {
+      "line": "#4 0x7f15ceaa359e in sqlite3PcacheFetch third_party/sqlite/amalgamation/sqlite3.c:34559:13",
+      "address": 139731638302110,
+      "function_name": "sqlite3PcacheFetch",
+      "function_offset": 13,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 34559
+    },
+    {
+      "line": "#5 0x7f15ceaa359e in sqlite3PagerAcquire third_party/sqlite/amalgamation/sqlite3.c:41408",
+      "address": 139731638302110,
+      "function_name": "sqlite3PagerAcquire",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 41408
+    },
+    {
+      "line": "#6 0x7f15cebc83f7 in btreeGetPage third_party/sqlite/amalgamation/sqlite3.c:48666:8",
+      "address": 139731639501815,
+      "function_name": "btreeGetPage",
+      "function_offset": 8,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 48666
+    },
+    {
+      "line": "#7 0x7f15cebc83f7 in allocateBtreePage third_party/sqlite/amalgamation/sqlite3.c:52106",
+      "address": 139731639501815,
+      "function_name": "allocateBtreePage",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 52106
+    },
+    {
+      "line": "#8 0x7f15cebc422d in btreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54143:10",
+      "address": 139731639484973,
+      "function_name": "btreeCreateTable",
+      "function_offset": 10,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 54143
+    },
+    {
+      "line": "#9 0x7f15cebc422d in sqlite3BtreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54162",
+      "address": 139731639484973,
+      "function_name": "sqlite3BtreeCreateTable",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 54162
+    },
+    {
+      "line": "#10 0x7f15ceba7d2d in sqlite3VdbeExec third_party/sqlite/amalgamation/sqlite3.c:67024:8",
+      "address": 139731639369005,
+      "function_name": "sqlite3VdbeExec",
+      "function_offset": 8,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 67024
+    },
+    {
+      "line": "#11 0x7f15ceaa9191 in sqlite3Step third_party/sqlite/amalgamation/sqlite3.c:60748:10",
+      "address": 139731638325649,
+      "function_name": "sqlite3Step",
+      "function_offset": 10,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 60748
+    },
+    {
+      "line": "#12 0x7f15ceaa9191 in sqlite3_step third_party/sqlite/amalgamation/sqlite3.c:60813",
+      "address": 139731638325649,
+      "function_name": "sqlite3_step",
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 60813
+    },
+    {
+      "line": "#13 0x7f15ceab2d38 in sqlite3_exec third_party/sqlite/amalgamation/sqlite3.c:86385:12",
+      "address": 139731638365496,
+      "function_name": "sqlite3_exec",
+      "function_offset": 12,
+      "source_file_name": "sqlite3.c",
+      "source_file_path": "third_party/sqlite/amalgamation/sqlite3.c",
+      "source_file_line": 86385
+    },
+    {
+      "line": "#14 0x7f15d0b098c8 in ExecuteAndReturnErrorCode sql/connection.cc:659:10",
+      "address": 139731672275144,
+      "function_name": "ExecuteAndReturnErrorCode",
+      "function_offset": 10,
+      "source_file_name": "connection.cc",
+      "source_file_path": "sql/connection.cc",
+      "source_file_line": 659
+    },
+    {
+      "line": "#15 0x7f15d0b098c8 in sql::Connection::Execute(char const*) sql/connection.cc:668",
+      "address": 139731672275144,
+      "function_name": "sql::Connection::Execute(char const*)",
+      "source_file_name": "connection.cc",
+      "source_file_path": "sql/connection.cc",
+      "source_file_line": 668
+    },
+    {
+      "line": "#16 0x7f15d19deb98 in InitMainTable components/autofill/core/browser/webdata/autofill_table.cc:1643:10",
+      "address": 139731687828376,
+      "function_name": "InitMainTable",
+      "function_offset": 10,
+      "source_file_name": "autofill_table.cc",
+      "source_file_path": "components/autofill/core/browser/webdata/autofill_table.cc",
+      "source_file_line": 1643
+    },
+    {
+      "line": "#17 0x7f15d19deb98 in autofill::AutofillTable::CreateTablesIfNecessary() components/autofill/core/browser/webdata/autofill_table.cc:490",
+      "address": 139731687828376,
+      "function_name": "autofill::AutofillTable::CreateTablesIfNecessary()",
+      "source_file_name": "autofill_table.cc",
+      "source_file_path": "components/autofill/core/browser/webdata/autofill_table.cc",
+      "source_file_line": 490
+    },
+    {
+      "line": "#18 0x7f15d14d6f0e in WebDatabase::Init(base::FilePath const&) components/webdata/common/web_database.cc:120:10",
+      "address": 139731682553614,
+      "function_name": "WebDatabase::Init(base::FilePath const&)",
+      "function_offset": 10,
+      "source_file_name": "web_database.cc",
+      "source_file_path": "components/webdata/common/web_database.cc",
+      "source_file_line": 120
+    },
+    {
+      "line": "#19 0x7f15d14daac2 in WebDataServiceBackend::LoadDatabaseIfNecessary() components/webdata/common/web_data_service_backend.cc:52:18",
+      "address": 139731682568898,
+      "function_name": "WebDataServiceBackend::LoadDatabaseIfNecessary()",
+      "function_offset": 18,
+      "source_file_name": "web_data_service_backend.cc",
+      "source_file_path": "components/webdata/common/web_data_service_backend.cc",
+      "source_file_line": 52
+    },
+    {
+      "line": "#20 0x7f15d14da92e in WebDataServiceBackend::InitDatabase() components/webdata/common/web_data_service_backend.cc:34:3",
+      "address": 139731682568494,
+      "function_name": "WebDataServiceBackend::InitDatabase()",
+      "function_offset": 3,
+      "source_file_name": "web_data_service_backend.cc",
+      "source_file_path": "components/webdata/common/web_data_service_backend.cc",
+      "source_file_line": 34
+    },
+    {
+      "line": "#21 0x7f15d14d91d3 in Run base/bind_internal.h:185:12",
+      "address": 139731682562515,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 185
+    },
+    {
+      "line": "#22 0x7f15d14d91d3 in MakeItSo base/bind_internal.h:381",
+      "address": 139731682562515,
+      "function_name": "MakeItSo",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 381
+    },
+    {
+      "line": "#23 0x7f15d14d91d3 in base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void (WebDataServiceBackend::*)()>, void (WebDataServiceBackend*), void (scoped_refptr<WebDataServiceBackend>)>, void (WebDataServiceBackend*)>::Run(base::internal::BindStateBase*) base/bind_internal.h:475",
+      "address": 139731682562515,
+      "function_name": "base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void (WebDataServiceBackend::*)()>, void (WebDataServiceBackend*), void (scoped_refptr<WebDataServiceBackend>)>, void (WebDataServiceBackend*)>::Run(base::internal::BindStateBase*)",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 475
+    },
+    {
+      "line": "#24 0x7f15cd234501 in Run base/callback.h:396:12",
+      "address": 139731612681473,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 396
+    },
+    {
+      "line": "#25 0x7f15cd234501 in base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&) base/debug/task_annotator.cc:63",
+      "address": 139731612681473,
+      "function_name": "base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&)",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 63
+    },
+    {
+      "line": "#26 0x7f15cd1bab54 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:458:3",
+      "address": 139731612183380,
+      "function_name": "base::MessageLoop::RunTask(base::PendingTask const&)",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 458
+    },
+    {
+      "line": "#27 0x7f15cd1bb224 in DeferOrRunPendingTask base/message_loop/message_loop.cc:468:5",
+      "address": 139731612185124,
+      "function_name": "DeferOrRunPendingTask",
+      "function_offset": 5,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 468
+    },
+    {
+      "line": "#28 0x7f15cd1bb224 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:580",
+      "address": 139731612185124,
+      "function_name": "base::MessageLoop::DoWork()",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 580
+    },
+    {
+      "line": "#29 0x7f15cd1be322 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_default.cc:32:21",
+      "address": 139731612197666,
+      "function_name": "base::MessagePumpDefault::Run(base::MessagePump::Delegate*)",
+      "function_offset": 21,
+      "source_file_name": "message_pump_default.cc",
+      "source_file_path": "base/message_loop/message_pump_default.cc",
+      "source_file_line": 32
+    },
+    {
+      "line": "#30 0x7f15cd1ba4cc in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:424:3",
+      "address": 139731612181708,
+      "function_name": "base::MessageLoop::RunHandler()",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 424
+    },
+    {
+      "line": "#31 0x7f15cd1d4107 in base::RunLoop::Run() base/run_loop.cc:55:3",
+      "address": 139731612287239,
+      "function_name": "base::RunLoop::Run()",
+      "function_offset": 3,
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 55
+    },
+    {
+      "line": "#32 0x7f15cd1b9ea6 in base::MessageLoop::Run() base/message_loop/message_loop.cc:317:3",
+      "address": 139731612180134,
+      "function_name": "base::MessageLoop::Run()",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 317
+    },
+    {
+      "line": "#33 0x7f15cd1fd23a in base::Thread::Run(base::MessageLoop*) base/threading/thread.cc:174:3",
+      "address": 139731612455482,
+      "function_name": "base::Thread::Run(base::MessageLoop*)",
+      "function_offset": 3,
+      "source_file_name": "thread.cc",
+      "source_file_path": "base/threading/thread.cc",
+      "source_file_line": 174
+    },
+    {
+      "line": "#34 0x7f15d0605880 in content::BrowserThreadImpl::DBThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:184:3",
+      "address": 139731667015808,
+      "function_name": "content::BrowserThreadImpl::DBThreadRun(base::MessageLoop*)",
+      "function_offset": 3,
+      "source_file_name": "browser_thread_impl.cc",
+      "source_file_path": "content/browser/browser_thread_impl.cc",
+      "source_file_line": 184
+    },
+    {
+      "line": "#35 0x7f15d0605ecc in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:243:14",
+      "address": 139731667017420,
+      "function_name": "content::BrowserThreadImpl::Run(base::MessageLoop*)",
+      "function_offset": 14,
+      "source_file_name": "browser_thread_impl.cc",
+      "source_file_path": "content/browser/browser_thread_impl.cc",
+      "source_file_line": 243
+    },
+    {
+      "line": "#36 0x7f15cd1fd46e in base::Thread::ThreadMain() base/threading/thread.cc:228:5",
+      "address": 139731612456046,
+      "function_name": "base::Thread::ThreadMain()",
+      "function_offset": 5,
+      "source_file_name": "thread.cc",
+      "source_file_path": "base/threading/thread.cc",
+      "source_file_line": 228
+    },
+    {
+      "line": "#37 0x7f15cd1f75c1 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:80:3",
+      "address": 139731612431809,
+      "function_name": "base::(anonymous namespace)::ThreadFunc(void*)",
+      "function_offset": 3,
+      "source_file_name": "platform_thread_posix.cc",
+      "source_file_path": "base/threading/platform_thread_posix.cc",
+      "source_file_line": 80
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x7f15ceac9f57 in sqlite3StatusSet third_party/sqlite/amalgamation/sqlite3.c:12693:3",
+    "#1 0x7f15ceac9f57 in pcache1Alloc third_party/sqlite/amalgamation/sqlite3.c:35125",
+    "#2 0x7f15ceb0db56 in pcache1AllocPage third_party/sqlite/amalgamation/sqlite3.c:35205:15",
+    "#3 0x7f15ceb0db56 in pcache1Fetch third_party/sqlite/amalgamation/sqlite3.c:35674",
+    "#4 0x7f15ceaa359e in sqlite3PcacheFetch third_party/sqlite/amalgamation/sqlite3.c:34559:13",
+    "#5 0x7f15ceaa359e in sqlite3PagerAcquire third_party/sqlite/amalgamation/sqlite3.c:41408",
+    "#6 0x7f15cebc83f7 in btreeGetPage third_party/sqlite/amalgamation/sqlite3.c:48666:8",
+    "#7 0x7f15cebc83f7 in allocateBtreePage third_party/sqlite/amalgamation/sqlite3.c:52106",
+    "#8 0x7f15cebc422d in btreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54143:10",
+    "#9 0x7f15cebc422d in sqlite3BtreeCreateTable third_party/sqlite/amalgamation/sqlite3.c:54162",
+    "#10 0x7f15ceba7d2d in sqlite3VdbeExec third_party/sqlite/amalgamation/sqlite3.c:67024:8",
+    "#11 0x7f15ceaa9191 in sqlite3Step third_party/sqlite/amalgamation/sqlite3.c:60748:10",
+    "#12 0x7f15ceaa9191 in sqlite3_step third_party/sqlite/amalgamation/sqlite3.c:60813",
+    "#13 0x7f15ceab2d38 in sqlite3_exec third_party/sqlite/amalgamation/sqlite3.c:86385:12",
+    "#14 0x7f15d0b098c8 in ExecuteAndReturnErrorCode sql/connection.cc:659:10",
+    "#15 0x7f15d0b098c8 in sql::Connection::Execute(char const*) sql/connection.cc:668",
+    "#16 0x7f15d19deb98 in InitMainTable components/autofill/core/browser/webdata/autofill_table.cc:1643:10",
+    "#17 0x7f15d19deb98 in autofill::AutofillTable::CreateTablesIfNecessary() components/autofill/core/browser/webdata/autofill_table.cc:490",
+    "#18 0x7f15d14d6f0e in WebDatabase::Init(base::FilePath const&) components/webdata/common/web_database.cc:120:10",
+    "#19 0x7f15d14daac2 in WebDataServiceBackend::LoadDatabaseIfNecessary() components/webdata/common/web_data_service_backend.cc:52:18",
+    "#20 0x7f15d14da92e in WebDataServiceBackend::InitDatabase() components/webdata/common/web_data_service_backend.cc:34:3",
+    "#21 0x7f15d14d91d3 in Run base/bind_internal.h:185:12",
+    "#22 0x7f15d14d91d3 in MakeItSo base/bind_internal.h:381",
+    "#23 0x7f15d14d91d3 in base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void (WebDataServiceBackend::*)()>, void (WebDataServiceBackend*), void (scoped_refptr<WebDataServiceBackend>)>, void (WebDataServiceBackend*)>::Run(base::internal::BindStateBase*) base/bind_internal.h:475",
+    "#24 0x7f15cd234501 in Run base/callback.h:396:12",
+    "#25 0x7f15cd234501 in base::debug::TaskAnnotator::RunTask(char const*, char const*, base::PendingTask const&) base/debug/task_annotator.cc:63",
+    "#26 0x7f15cd1bab54 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:458:3",
+    "#27 0x7f15cd1bb224 in DeferOrRunPendingTask base/message_loop/message_loop.cc:468:5",
+    "#28 0x7f15cd1bb224 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:580",
+    "#29 0x7f15cd1be322 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_default.cc:32:21",
+    "#30 0x7f15cd1ba4cc in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:424:3",
+    "#31 0x7f15cd1d4107 in base::RunLoop::Run() base/run_loop.cc:55:3",
+    "#32 0x7f15cd1b9ea6 in base::MessageLoop::Run() base/message_loop/message_loop.cc:317:3",
+    "#33 0x7f15cd1fd23a in base::Thread::Run(base::MessageLoop*) base/threading/thread.cc:174:3",
+    "#34 0x7f15d0605880 in content::BrowserThreadImpl::DBThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:184:3",
+    "#35 0x7f15d0605ecc in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:243:14",
+    "#36 0x7f15cd1fd46e in base::Thread::ThreadMain() base/threading/thread.cc:228:5",
+    "#37 0x7f15cd1f75c1 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:80:3"
+  ],
+  "minimized_stack_function_names": [
+    "sqlite3StatusSet",
+    "pcache1Alloc",
+    "pcache1AllocPage",
+    "pcache1Fetch",
+    "sqlite3PcacheFetch",
+    "sqlite3PagerAcquire",
+    "btreeGetPage",
+    "allocateBtreePage",
+    "btreeCreateTable",
+    "sqlite3BtreeCreateTable",
+    "sqlite3VdbeExec",
+    "sqlite3Step",
+    "sqlite3_step",
+    "sqlite3_exec",
+    "ExecuteAndReturnErrorCode",
+    "sql::Connection::Execute",
+    "InitMainTable",
+    "autofill::AutofillTable::CreateTablesIfNecessary",
+    "WebDatabase::Init",
+    "WebDataServiceBackend::LoadDatabaseIfNecessary",
+    "WebDataServiceBackend::InitDatabase",
+    "Run",
+    "MakeItSo",
+    "base::internal::Invoker<1, base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "Run",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpDefault::Run",
+    "base::MessageLoop::RunHandler",
+    "base::RunLoop::Run",
+    "base::MessageLoop::Run",
+    "base::Thread::Run",
+    "content::BrowserThreadImpl::DBThreadRun",
+    "content::BrowserThreadImpl::Run",
+    "base::Thread::ThreadMain",
+    "base::"
+  ]
+}
