@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::collections::{BTreeSet, HashMap};
+
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeSet, HashMap};
 
 use crate::code::{ModuleIndex, ModulePath};
 
