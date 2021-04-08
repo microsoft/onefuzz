@@ -15,6 +15,8 @@ use onefuzz_telemetry::{self, EventData};
 use std::{
     collections::HashMap,
     io::{self, Stdout, Write},
+    iter::once,
+    mem::{discriminant, Discriminant},
     path::PathBuf,
     thread::{self, JoinHandle},
     time::Duration,
@@ -28,11 +30,11 @@ use tokio::{
 };
 use tui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Corner, Direction, Layout},
+    layout::{Alignment, Constraint, Corner, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders},
-    widgets::{Gauge, List, ListItem, ListState},
+    widgets::{Gauge, List, ListItem, ListState, Paragraph, Wrap},
     Terminal,
 };
 
@@ -79,7 +81,7 @@ enum TerminalEvent {
     FileCount { dir: PathBuf, count: usize },
     Quit,
     MonitorDir(PathBuf),
-    Coverage(CoverageData),
+    Telemetry(Vec<EventData>),
 }
 
 struct UiLoopState {
@@ -89,8 +91,8 @@ struct UiLoopState {
     pub file_monitors: HashMap<PathBuf, tokio::task::JoinHandle<Result<()>>>,
     pub log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
     pub terminal: Terminal<CrosstermBackend<Stdout>>,
-    pub coverage: CoverageData,
     pub cancellation_tx: broadcast::Sender<()>,
+    pub events: HashMap<Discriminant<EventData>, EventData>,
 }
 
 impl UiLoopState {
@@ -99,6 +101,7 @@ impl UiLoopState {
         log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
     ) -> Self {
         let (cancellation_tx, _) = broadcast::channel(1);
+        let events = HashMap::new();
         Self {
             log_event_receiver,
             logs: Default::default(),
@@ -106,8 +109,8 @@ impl UiLoopState {
             file_count_state: Default::default(),
             file_monitors: Default::default(),
             terminal,
-            coverage: Default::default(),
             cancellation_tx,
+            events,
         }
     }
 }
@@ -200,6 +203,30 @@ impl TerminalUi {
         Ok(())
     }
 
+    fn filter_event(event: &EventData) -> bool {
+        !matches!(
+            event,
+            EventData::WorkerId(_)
+                | EventData::InstanceId(_)
+                | EventData::JobId(_)
+                | EventData::TaskId(_)
+                | EventData::ScalesetId(_)
+                | EventData::MachineId(_)
+                | EventData::Version(_)
+                | EventData::CommandLine(_)
+                | EventData::Type(_)
+                | EventData::Mode(_)
+                | EventData::Path(_)
+                | EventData::Count(_)
+                | EventData::ExecsSecond(_)
+                | EventData::Pid(_)
+                | EventData::RunId(_)
+                | EventData::Name(_)
+                | EventData::ToolName(_)
+                | EventData::ProcessStatus(_)
+        )
+    }
+
     async fn listen_telemetry_event(
         ui_event_tx: UnboundedSender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
@@ -208,24 +235,12 @@ impl TerminalUi {
 
         while cancellation_rx.try_recv() == Err(broadcast::TryRecvError::Empty) {
             match rx.recv().await {
-                Ok((event, data)) => {
-                    if let onefuzz_telemetry::Event::coverage_data = event {
-                        let (covered, features, rate) =
-                            data.iter()
-                                .cloned()
-                                .fold((None, None, None), |(c, f, r), d| match d {
-                                    EventData::Covered(value) => (Some(value), f, r),
-                                    EventData::Features(value) => (c, Some(value), r),
-                                    EventData::Rate(value) => (c, f, Some(value)),
-                                    _ => (c, f, r),
-                                });
-
-                        let _ = ui_event_tx.send(TerminalEvent::Coverage(CoverageData {
-                            covered,
-                            features,
-                            rate,
-                        }));
-                    }
+                Ok((_event, data)) => {
+                    let data = data
+                        .into_iter()
+                        .filter(Self::filter_event)
+                        .collect::<Vec<_>>();
+                    let _ = ui_event_tx.send(TerminalEvent::Telemetry(data));
                 }
 
                 Err(RecvError::Lagged(_)) => continue,
@@ -300,15 +315,141 @@ impl TerminalUi {
         }
     }
 
+    fn create_coverage_gauge<'a>(rate: f64) -> Gauge<'a> {
+        let label = format!("coverage {:.2}%", rate * 100.0);
+        Gauge::default()
+            .gauge_style(
+                Style::default()
+                    .fg(Color::White)
+                    .bg(Color::Black)
+                    .add_modifier(Modifier::ITALIC | Modifier::BOLD),
+            )
+            .label(label)
+            .ratio(rate)
+    }
+
+    fn create_stats_paragraph(
+        events: &HashMap<Discriminant<EventData>, EventData>,
+    ) -> Paragraph<'_> {
+        let mut event_values = events.values().map(|v| v.as_values()).collect::<Vec<_>>();
+
+        event_values.sort_by(|(a, _), (b, _)| a.cmp(b));
+
+        let mut stats_spans = once(Span::styled(
+            "Stats: ",
+            Style::default().add_modifier(Modifier::BOLD),
+        ))
+        .chain(
+            event_values
+                .into_iter()
+                .map(|(name, value)| {
+                    vec![
+                        Span::raw(name),
+                        Span::raw(" "),
+                        Span::styled(value, Style::default().add_modifier(Modifier::BOLD)),
+                        Span::raw(", "),
+                    ]
+                })
+                .flatten(),
+        )
+        .collect::<Vec<_>>();
+
+        if stats_spans.len() > 1 {
+            // removing the last ","
+            stats_spans.pop();
+        }
+
+        Paragraph::new(Spans::from(stats_spans))
+            .style(Style::default())
+            .alignment(Alignment::Left)
+            .wrap(Wrap { trim: true })
+    }
+
+    fn create_file_count_paragraph(file_count: &HashMap<PathBuf, usize>) -> Paragraph<'_> {
+        let mut sorted_file_count = file_count.iter().collect::<Vec<_>>();
+
+        sorted_file_count.sort_by(|(p1, _), (p2, _)| p1.cmp(p2));
+
+        let mut files_spans = once(Span::styled(
+            "Files: ",
+            Style::default().add_modifier(Modifier::BOLD),
+        ))
+        .chain(
+            sorted_file_count
+                .iter()
+                .map(|(path, count)| {
+                    vec![
+                        Span::raw(
+                            path.file_name()
+                                .map(|f| f.to_string_lossy())
+                                .unwrap_or_default(),
+                        ),
+                        Span::raw(" "),
+                        Span::styled(
+                            format!("{}", count),
+                            Style::default().add_modifier(Modifier::BOLD),
+                        ),
+                        Span::raw(", "),
+                    ]
+                })
+                .flatten(),
+        )
+        .collect::<Vec<_>>();
+
+        if files_spans.len() > 1 {
+            files_spans.pop();
+        } // removing the last ","
+
+        Paragraph::new(Spans::from(files_spans))
+            .style(Style::default())
+            .alignment(Alignment::Left)
+            .wrap(Wrap { trim: true })
+    }
+
+    fn create_log_list(
+        logs: &ArrayDeque<[(Level, String); LOGS_BUFFER_SIZE], Wrapping>,
+    ) -> List<'_> {
+        let log_items = logs
+            .iter()
+            .map(|(level, log)| {
+                let style = match level {
+                    Level::Debug => Style::default().fg(Color::Magenta),
+                    Level::Error => Style::default().fg(Color::Red),
+                    Level::Warn => Style::default().fg(Color::Yellow),
+                    Level::Info => Style::default().fg(Color::Blue),
+                    Level::Trace => Style::default(),
+                };
+
+                ListItem::new(Spans::from(vec![
+                    Span::styled(format!("{:<9}", level), style),
+                    Span::raw(" "),
+                    Span::raw(log),
+                ]))
+            })
+            .collect::<Vec<_>>();
+
+        List::new(log_items)
+            .block(Block::default().borders(Borders::ALL).title("Logs"))
+            .start_corner(Corner::BottomLeft)
+    }
+
     async fn refresh_ui(ui_state: UiLoopState) -> Result<UiLoopState, UiLoopError> {
         let mut logs = ui_state.logs;
-        let mut file_count_state = ui_state.file_count_state;
         let file_count = ui_state.file_count;
         let mut log_event_receiver = ui_state.log_event_receiver;
         let mut terminal = ui_state.terminal;
-        let rate = ui_state.coverage.rate.unwrap_or(0.0);
-        let features = ui_state.coverage.features.unwrap_or(0);
-        let covered = ui_state.coverage.covered.unwrap_or(0);
+        let rate = ui_state
+            .events
+            .get(&discriminant(&EventData::Rate(0.0)))
+            .and_then(|x| {
+                if let EventData::Rate(r) = x {
+                    Some(*r)
+                } else {
+                    None
+                }
+            });
+
+        let events = ui_state.events;
 
         Self::take_available_logs(&mut log_event_receiver, 10, &mut logs);
         terminal.draw(|f| {
@@ -319,104 +460,39 @@ impl TerminalUi {
 
             let log_area = chunks[1];
             let top_area = Layout::default()
-                .direction(Direction::Horizontal)
+                .direction(Direction::Vertical)
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .split(chunks[0]);
 
             let file_count_area = top_area[0];
-            let coverage_area = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(25), Constraint::Percentage(75)].as_ref())
-                .margin(1)
-                .split(top_area[1]);
 
-            let label = format!("{:.2}%", rate * 100.0);
+            if let Some(rate) = rate {
+                let coverage_area = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([Constraint::Percentage(25), Constraint::Percentage(75)].as_ref())
+                    .split(top_area[1]);
 
-            let coverage_block = Block::default().borders(Borders::ALL).title("Coverage:");
+                let gauge = Self::create_coverage_gauge(rate);
+                f.render_widget(gauge, coverage_area[0]);
+                let stats_paragraph = Self::create_stats_paragraph(&events);
+                f.render_widget(stats_paragraph, coverage_area[1]);
+            } else {
+                let stats_paragraph = Self::create_stats_paragraph(&events);
+                f.render_widget(stats_paragraph, top_area[1]);
+            }
 
-            f.render_widget(coverage_block, top_area[1]);
+            let file_count_paragraph = Self::create_file_count_paragraph(&file_count);
+            f.render_widget(file_count_paragraph, file_count_area);
 
-            let gauge = Gauge::default()
-                .gauge_style(
-                    Style::default()
-                        .fg(Color::Magenta)
-                        .bg(Color::Black)
-                        .add_modifier(Modifier::ITALIC | Modifier::BOLD),
-                )
-                .label(label)
-                .ratio(rate);
-            f.render_widget(gauge, coverage_area[0]);
-
-            let coverage_info = List::new([
-                ListItem::new(Spans::from(vec![
-                    Span::raw("features: "),
-                    Span::raw(format!("{}", features)),
-                ])),
-                ListItem::new(Spans::from(vec![
-                    Span::raw("covered: "),
-                    Span::raw(format!("{}", covered)),
-                ])),
-            ]);
-
-            f.render_widget(coverage_info, coverage_area[1]);
-
-            let mut sorted_file_count = file_count.iter().collect::<Vec<_>>();
-
-            sorted_file_count.sort_by(|(p1, _), (p2, _)| p1.cmp(p2));
-
-            let files = sorted_file_count
-                .iter()
-                .map(|(path, count)| {
-                    ListItem::new(Spans::from(vec![
-                        Span::raw(
-                            path.file_name()
-                                .map(|f| f.to_string_lossy())
-                                .unwrap_or_default(),
-                        ),
-                        Span::raw(": "),
-                        Span::raw(format!("{}", count)),
-                    ]))
-                })
-                .collect::<Vec<_>>();
-
-            let log_list = List::new(files)
-                .block(Block::default().borders(Borders::ALL).title("files"))
-                .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-                .start_corner(Corner::TopLeft);
-
-            f.render_stateful_widget(log_list, file_count_area, &mut file_count_state);
-
-            let log_items = logs
-                .iter()
-                .map(|(level, log)| {
-                    let style = match level {
-                        Level::Debug => Style::default().fg(Color::Magenta),
-                        Level::Error => Style::default().fg(Color::Red),
-                        Level::Warn => Style::default().fg(Color::Yellow),
-                        Level::Info => Style::default().fg(Color::Blue),
-                        Level::Trace => Style::default(),
-                    };
-
-                    ListItem::new(Spans::from(vec![
-                        Span::styled(format!("{:<9}", level), style),
-                        Span::raw(" "),
-                        Span::raw(log),
-                    ]))
-                })
-                .collect::<Vec<_>>();
-
-            let log_list = List::new(log_items)
-                .block(Block::default().borders(Borders::ALL).title("Logs"))
-                .start_corner(Corner::BottomLeft);
-
+            let log_list = Self::create_log_list(&logs);
             f.render_widget(log_list, log_area);
         })?;
         Ok(UiLoopState {
             logs,
-            file_count_state,
             file_count,
             terminal,
             log_event_receiver,
+            events,
             ..ui_state
         })
     }
@@ -545,10 +621,14 @@ impl TerminalUi {
                         )
                         .await
                     }
-                    TerminalEvent::Coverage(coverage) => Ok(UiLoopState {
-                        coverage,
-                        ..ui_state
-                    }),
+                    TerminalEvent::Telemetry(event_data) => {
+                        let mut events = ui_state.events;
+                        for e in event_data {
+                            events.insert(discriminant(&e), e);
+                        }
+
+                        Ok(UiLoopState { events, ..ui_state })
+                    }
                     _ => Ok(ui_state),
                 }
             })
