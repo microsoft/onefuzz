@@ -9,14 +9,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use debugger::dbghelp::DebugHelpGuard;
 use fixedbitset::FixedBitSet;
 use goblin::pe::{
     debug::{CodeviewPDB70DebugInfo, DebugData},
     PE,
 };
-use log::trace;
 use memmap2::Mmap;
 use pdb::{
     AddressMap, FallibleIterator, PdbInternalSectionOffset, ProcedureSymbol, TypeIndex, PDB,
@@ -209,7 +208,7 @@ fn find_blocks(
                     }
                 }
 
-                trace!(
+                log::trace!(
                     "analyzing func: {} rva: 0x{:x} file_offset: 0x{:x}",
                     &proc.name,
                     rva.0,
@@ -240,44 +239,55 @@ pub fn process_module(
         codeview_pdb70_debug_info: Some(cv),
     }) = pe.debug_data
     {
-        let pdb_path = find_pdb_path(pe_path.as_ref(), &cv)?;
-        let pdb_file = File::open(&pdb_path)?;
-        let mut pdb = PDB::open(pdb_file)?;
+        let pdb_path = find_pdb_path(pe_path.as_ref(), &cv)
+            .with_context(|| format!("searching for PDB for PE: {}", pe_path.as_ref().display()))?;
+        log::info!("found PDB: {}", pdb_path.display());
 
-        let address_map = pdb.address_map()?;
-        let mut blocks = FixedBitSet::with_capacity(data.len());
-
-        let proc_sym_info = collect_proc_symbols(&mut pdb.global_symbols()?.iter())?;
-        find_blocks(
-            &proc_sym_info[..],
-            &mut blocks,
-            &address_map,
-            &pe,
-            data,
-            functions_only,
-        )?;
-
-        // Modules in the PDB correspond to object files.
-        let dbi = pdb.debug_information()?;
-        let mut modules = dbi.modules()?;
-        while let Some(module) = modules.next()? {
-            if let Some(info) = pdb.module_info(&module)? {
-                let proc_sym_info = collect_proc_symbols(&mut info.symbols()?)?;
-                find_blocks(
-                    &proc_sym_info[..],
-                    &mut blocks,
-                    &address_map,
-                    &pe,
-                    data,
-                    functions_only,
-                )?;
-            }
-        }
-
-        return Ok(blocks);
+        return process_pdb(data, pe, functions_only, &pdb_path)
+            .with_context(|| format!("processing PDB: {}", pdb_path.display()));
     }
 
-    anyhow::bail!("PE missing codeview pdb debug info")
+    anyhow::bail!(
+        "PE missing Codeview PDB debug info: {}",
+        pe_path.as_ref().display()
+    )
+}
+
+fn process_pdb(data: &[u8], pe: &PE, functions_only: bool, pdb_path: &Path) -> Result<FixedBitSet> {
+    let pdb_file = File::open(&pdb_path).context("opening PDB")?;
+    let mut pdb = PDB::open(pdb_file).context("parsing PDB")?;
+
+    let address_map = pdb.address_map()?;
+    let mut blocks = FixedBitSet::with_capacity(data.len());
+    let proc_sym_info = collect_proc_symbols(&mut pdb.global_symbols()?.iter())?;
+
+    find_blocks(
+        &proc_sym_info[..],
+        &mut blocks,
+        &address_map,
+        &pe,
+        data,
+        functions_only,
+    )?;
+
+    // Modules in the PDB correspond to object files.
+    let dbi = pdb.debug_information()?;
+    let mut modules = dbi.modules()?;
+    while let Some(module) = modules.next()? {
+        if let Some(info) = pdb.module_info(&module)? {
+            let proc_sym_info = collect_proc_symbols(&mut info.symbols()?)?;
+            find_blocks(
+                &proc_sym_info[..],
+                &mut blocks,
+                &address_map,
+                &pe,
+                data,
+                functions_only,
+            )?;
+        }
+    }
+
+    Ok(blocks)
 }
 
 // This is a fallback pseudo-handle used for interacting with dbghelp.
