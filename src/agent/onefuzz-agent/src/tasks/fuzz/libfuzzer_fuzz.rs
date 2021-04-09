@@ -298,8 +298,6 @@ fn try_report_iter_update(
 
 async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
     loop {
-        system::refresh()?;
-
         // Allow for sampling CPU usage.
         time::delay_for(PROC_INFO_COLLECTION_DELAY).await;
 
