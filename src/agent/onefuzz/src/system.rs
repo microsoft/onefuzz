@@ -22,6 +22,11 @@ pub fn proc_info(pid: u32) -> Result<Option<ProcInfo>> {
     Ok(s.proc_info(pid))
 }
 
+pub fn refresh_process(pid: u32) -> Result<bool> {
+    let mut s = SYSTEM.write().map_err(|e| format_err!("{}", e))?;
+    Ok(s.refresh_process(pid))
+}
+
 lazy_static! {
     static ref SYSTEM: RwLock<System> = {
         let mut s = System::new();
@@ -54,6 +59,10 @@ impl System {
 
     pub fn refresh(&mut self) {
         self.system.refresh_all();
+    }
+
+    pub fn refresh_process(&mut self, pid: u32) -> bool {
+        self.system.refresh_process(pid as Pid)
     }
 
     pub fn system_info(&self) -> SystemInfo {
