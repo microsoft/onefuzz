@@ -431,7 +431,7 @@ dependencies = [
  "memmap2",
  "msvc-demangler",
  "pdb",
- "pete 0.3.1",
+ "pete",
  "procfs",
  "regex",
  "rustc-demangle",
@@ -1677,19 +1677,6 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50e4785f2c3b7589a0d0c1dd60285e1188adac4006e8abd6dd578e1567027363"
-dependencies = [
- "bitflags",
- "cc",
- "cfg-if 0.1.10",
- "libc",
- "void",
-]
-
-[[package]]
-name = "nix"
 version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2ccba0cfe4fdf15982d1674c69b1fd80bad427d293849982668dfe454bd61f2"
@@ -1820,7 +1807,7 @@ dependencies = [
  "nix 0.20.0",
  "notify 4.0.15",
  "onefuzz-telemetry",
- "pete 0.4.0",
+ "pete",
  "proc-maps",
  "process_control",
  "rand 0.8.3",
@@ -2066,17 +2053,6 @@ name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
-
-[[package]]
-name = "pete"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28d1e549819476ac90362292319a9d8c9ea1a98a9347931860cb32f4afbb3007"
-dependencies = [
- "libc",
- "nix 0.17.0",
- "thiserror",
-]
 
 [[package]]
 name = "pete"
@@ -3367,12 +3343,6 @@ name = "version_check"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
-
-[[package]]
-name = "void"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 
 [[package]]
 name = "waker-fn"
