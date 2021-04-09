@@ -206,26 +206,22 @@ impl TerminalUi {
     }
 
     fn filter_event(event: &EventData) -> bool {
-        !matches!(
+        matches!(
             event,
-            EventData::WorkerId(_)
-                | EventData::InstanceId(_)
-                | EventData::JobId(_)
-                | EventData::TaskId(_)
-                | EventData::ScalesetId(_)
-                | EventData::MachineId(_)
-                | EventData::Version(_)
-                | EventData::CommandLine(_)
-                | EventData::Type(_)
-                | EventData::Mode(_)
-                | EventData::Path(_)
+            EventData::Features(_)
+                | EventData::Covered(_)
+                | EventData::Rate(_)
                 | EventData::Count(_)
                 | EventData::ExecsSecond(_)
-                | EventData::Pid(_)
-                | EventData::RunId(_)
-                | EventData::Name(_)
-                | EventData::ToolName(_)
-                | EventData::ProcessStatus(_)
+                | EventData::VirtualMemory(_)
+                | EventData::PhysicalMemory(_)
+                | EventData::CpuUsage(_)
+                | EventData::Coverage(_)
+                | EventData::CoveragePaths(_)
+                | EventData::CoveragePathsFavored(_)
+                | EventData::CoveragePathsFound(_)
+                | EventData::CoveragePathsImported(_)
+                | EventData::CoverageMaxDepth(_)
         )
     }
 
