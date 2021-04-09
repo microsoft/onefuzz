@@ -22,7 +22,7 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
     task,
-    time::{self, Duration},
+    time::{delay_for, Duration},
 };
 use uuid::Uuid;
 
@@ -301,7 +301,7 @@ async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32)
         system::refresh()?;
 
         // Allow for sampling CPU usage.
-        time::delay_for(PROC_INFO_COLLECTION_DELAY).await;
+        delay_for(PROC_INFO_COLLECTION_DELAY).await;
 
         if let Some(proc_info) = system::proc_info(fuzzer_pid)? {
             event!(process_stats;
@@ -319,7 +319,7 @@ async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32)
             break;
         }
 
-        time::delay_for(PROC_INFO_PERIOD).await;
+        delay_for(PROC_INFO_PERIOD).await;
     }
 
     Ok(())
@@ -369,21 +369,6 @@ impl TotalStats {
 
 type StatsSender = mpsc::UnboundedSender<RuntimeStats>;
 
-#[derive(Clone, Copy, Debug)]
-struct Timer {
-    interval: Duration,
-}
-
-impl Timer {
-    pub fn new(interval: Duration) -> Self {
-        Self { interval }
-    }
-
-    async fn wait(&self) {
-        time::delay_for(self.interval).await;
-    }
-}
-
 // Report runtime stats, as delivered via the `stats` channel, with a periodic trigger to
 // guarantee a minimum reporting frequency.
 //
@@ -404,20 +389,22 @@ async fn report_runtime_stats(
     // report all zeros to start
     total.report();
 
-    let timer = Timer::new(RUNTIME_STATS_PERIOD);
-
     loop {
-        tokio::select! {
-            Some(stats) = stats_channel.next() => {
+        match stats_channel.try_recv() {
+            Ok(stats) => {
                 heartbeat_client.alive();
                 total.update(stats);
-                total.report();
+                total.report()
             }
-            _ = timer.wait() => {
+            Err(mpsc::error::TryRecvError::Empty) => {
                 total.report();
+                delay_for(RUNTIME_STATS_PERIOD).await
             }
-        };
+            Err(mpsc::error::TryRecvError::Closed) => break,
+        }
     }
+
+    Ok(())
 }
 
 #[cfg(test)]
