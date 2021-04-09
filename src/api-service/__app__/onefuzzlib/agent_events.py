@@ -132,16 +132,17 @@ def on_state_update(
         done_data = cast(Optional[NodeDoneEventData], state_update.data)
         error = None
         if done_data:
+            error_text = done_data.json(exclude_none=True)
             error = Error(
                 code=ErrorCode.TASK_FAILED,
-                errors=[done_data.json(exclude_none=True)],
+                errors=[error_text],
             )
 
             if done_data.error:
                 logging.error(
                     "node 'done' with error: machine_id:%s, data:%s",
                     machine_id,
-                    done_data,
+                    error_text,
                 )
 
         # if tasks are running on the node when it reports as Done
