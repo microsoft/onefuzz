@@ -4,9 +4,9 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, SyncCountDirMonitor, ANALYSIS_INPUTS, ANALYSIS_UNIQUE_INPUTS,
-        CHECK_FUZZER_HELP, INPUTS_DIR, PRESERVE_EXISTING_OUTPUTS, TARGET_ENV, TARGET_EXE,
-        TARGET_OPTIONS,
+        get_synced_dirs, CmdType, SyncCountDirMonitor, UiEvent, ANALYSIS_INPUTS,
+        ANALYSIS_UNIQUE_INPUTS, CHECK_FUZZER_HELP, INPUTS_DIR, PRESERVE_EXISTING_OUTPUTS,
+        TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
     },
     tasks::{
         config::CommonConfig,
@@ -17,8 +17,6 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use storage_queue::QueueClient;
 use tokio::sync::mpsc::UnboundedSender;
-
-use super::common::UiEvent;
 
 pub fn build_merge_config(
     args: &clap::ArgMatches<'_>,

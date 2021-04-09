@@ -3,8 +3,9 @@
 
 use crate::{
     local::common::{
-        build_local_context, get_cmd_arg, get_cmd_env, CmdType, CHECK_ASAN_LOG, CHECK_RETRY_COUNT,
-        DISABLE_CHECK_DEBUGGER, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
+        build_local_context, get_cmd_arg, get_cmd_env, CmdType, UiEvent, CHECK_ASAN_LOG,
+        CHECK_RETRY_COUNT, DISABLE_CHECK_DEBUGGER, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
+        TARGET_TIMEOUT,
     },
     tasks::report::generic::{test_input, TestInputArgs},
 };
@@ -12,8 +13,6 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
 use tokio::sync::mpsc::UnboundedSender;
-
-use super::common::UiEvent;
 
 pub async fn run(
     args: &clap::ArgMatches<'_>,

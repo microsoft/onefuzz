@@ -3,7 +3,7 @@
 
 use crate::{
     local::{
-        common::{build_local_context, DirectoryMonitorQueue},
+        common::{build_local_context, DirectoryMonitorQueue, UiEvent},
         generic_crash_report::{build_report_config, build_shared_args as build_crash_args},
         generic_generator::{build_fuzz_config, build_shared_args as build_fuzz_args},
     },
@@ -16,8 +16,6 @@ use std::collections::HashSet;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::task::spawn;
 use uuid::Uuid;
-
-use super::common::UiEvent;
 
 pub async fn run(
     args: &clap::ArgMatches<'_>,

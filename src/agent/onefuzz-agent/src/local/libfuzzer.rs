@@ -4,8 +4,8 @@
 use crate::{
     local::{
         common::{
-            build_local_context, wait_for_dir, DirectoryMonitorQueue, ANALYZER_EXE, COVERAGE_DIR,
-            REGRESSION_REPORTS_DIR, UNIQUE_REPORTS_DIR,
+            build_local_context, wait_for_dir, DirectoryMonitorQueue, UiEvent, ANALYZER_EXE,
+            COVERAGE_DIR, REGRESSION_REPORTS_DIR, UNIQUE_REPORTS_DIR,
         },
         generic_analysis::{build_analysis_config, build_shared_args as build_analysis_args},
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
@@ -27,8 +27,6 @@ use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
 use tokio::{sync::mpsc::UnboundedSender, task::spawn};
 use uuid::Uuid;
-
-use super::common::UiEvent;
 
 pub async fn run(
     args: &clap::ArgMatches<'_>,

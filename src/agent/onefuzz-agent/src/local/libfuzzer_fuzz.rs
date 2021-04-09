@@ -4,8 +4,8 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
-        SyncCountDirMonitor, CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE,
-        TARGET_OPTIONS, TARGET_WORKERS,
+        SyncCountDirMonitor, UiEvent, CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV,
+        TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
     },
     tasks::{
         config::CommonConfig,
@@ -15,8 +15,6 @@ use crate::{
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use tokio::sync::mpsc::UnboundedSender;
-
-use super::common::UiEvent;
 
 const DISABLE_EXPECT_CRASH_ON_FAILURE: &str = "disable_expect_crash_on_failure";
 

@@ -4,7 +4,7 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
-        SyncCountDirMonitor, ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS,
+        SyncCountDirMonitor, UiEvent, ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS,
         CRASHES_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR,
         UNIQUE_REPORTS_DIR,
     },
@@ -17,8 +17,6 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use storage_queue::QueueClient;
 use tokio::sync::mpsc::UnboundedSender;
-
-use super::common::UiEvent;
 
 pub fn build_analysis_config(
     args: &clap::ArgMatches<'_>,

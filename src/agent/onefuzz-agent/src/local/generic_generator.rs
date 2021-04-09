@@ -4,7 +4,7 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir,
-        get_synced_dirs, CmdType, SyncCountDirMonitor, CHECK_ASAN_LOG, CHECK_RETRY_COUNT,
+        get_synced_dirs, CmdType, SyncCountDirMonitor, UiEvent, CHECK_ASAN_LOG, CHECK_RETRY_COUNT,
         CRASHES_DIR, DISABLE_CHECK_DEBUGGER, GENERATOR_ENV, GENERATOR_EXE, GENERATOR_OPTIONS,
         READONLY_INPUTS, RENAME_OUTPUT, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
         TOOLS_DIR,
@@ -17,8 +17,6 @@ use crate::{
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use tokio::sync::mpsc::UnboundedSender;
-
-use super::common::UiEvent;
 
 pub fn build_fuzz_config(
     args: &clap::ArgMatches<'_>,
