@@ -1701,6 +1701,7 @@ dependencies = [
  "anyhow",
  "appinsights",
  "async-trait",
+ "backoff",
  "base64",
  "bytes 0.5.6",
  "cpp_demangle",
