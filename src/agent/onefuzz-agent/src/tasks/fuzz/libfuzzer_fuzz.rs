@@ -349,7 +349,7 @@ impl TotalStats {
         if let Some(current) = self.worker_stats.get(&worker_data.worker_id) {
             // if it's the same run, only add the differences
             if current.run_id == worker_data.run_id {
-                self.count += worker_data.count - current.count;
+                self.count += worker_data.count.saturating_sub(current.count);
             } else {
                 self.count += worker_data.count;
             }
