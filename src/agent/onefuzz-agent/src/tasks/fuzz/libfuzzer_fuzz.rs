@@ -38,7 +38,7 @@ const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
 
 /// Maximum number of log message to safe in case of libFuzzer failing,
 /// arbitrarily chosen
-const LOGS_BUFFER_SIZE: usize = 1000;
+const LOGS_BUFFER_SIZE: usize = 1024;
 
 pub fn default_workers() -> usize {
     let cpus = num_cpus::get();
@@ -212,8 +212,7 @@ impl LibFuzzerFuzzTask {
             .ok_or_else(|| format_err!("stderr not captured"))?;
         let mut stderr = BufReader::new(stderr);
 
-        let mut libfuzzer_output: ArrayDeque<[String; LOGS_BUFFER_SIZE], Wrapping> =
-            ArrayDeque::new();
+        let mut libfuzzer_output: ArrayDeque<[_; LOGS_BUFFER_SIZE], Wrapping> = ArrayDeque::new();
 
         loop {
             let mut buf = vec![];
