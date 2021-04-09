@@ -4,8 +4,8 @@
 use crate::{
     local::{
         common::{
-            build_local_context, monitor_file_urls, wait_for_dir, DirectoryMonitorQueue,
-            ANALYZER_EXE, COVERAGE_DIR, REGRESSION_REPORTS_DIR, UNIQUE_REPORTS_DIR,
+            build_local_context, wait_for_dir, DirectoryMonitorQueue, UiEvent, ANALYZER_EXE,
+            COVERAGE_DIR, REGRESSION_REPORTS_DIR, UNIQUE_REPORTS_DIR,
         },
         generic_analysis::{build_analysis_config, build_shared_args as build_analysis_args},
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
@@ -28,24 +28,12 @@ use std::collections::HashSet;
 use tokio::{sync::mpsc::UnboundedSender, task::spawn};
 use uuid::Uuid;
 
-use super::common::UiEvent;
-
 pub async fn run(
     args: &clap::ArgMatches<'_>,
     event_sender: Option<UnboundedSender<UiEvent>>,
 ) -> Result<()> {
-    let mut task_handles = vec![];
-    let context = build_local_context(args, true)?;
-    let fuzz_config = build_fuzz_config(args, context.common_config.clone())?;
-    if let Some(event_sender) = event_sender.clone() {
-        task_handles.append(&mut monitor_file_urls(
-            &[
-                fuzz_config.crashes.url.as_file_path(),
-                fuzz_config.inputs.url.as_file_path(),
-            ],
-            event_sender,
-        ));
-    }
+    let context = build_local_context(args, true, event_sender.clone())?;
+    let fuzz_config = build_fuzz_config(args, context.common_config.clone(), event_sender.clone())?;
     let crash_dir = fuzz_config
         .crashes
         .url
@@ -72,26 +60,8 @@ pub async fn run(
                 task_id: Uuid::new_v4(),
                 ..context.common_config.clone()
             },
+            event_sender.clone(),
         )?;
-        if let Some(event_sender) = event_sender.clone() {
-            task_handles.append(&mut monitor_file_urls(
-                &[
-                    report_config
-                        .no_repro
-                        .clone()
-                        .and_then(|u| u.url.as_file_path()),
-                    report_config
-                        .reports
-                        .clone()
-                        .and_then(|u| u.url.as_file_path()),
-                    report_config
-                        .unique_reports
-                        .clone()
-                        .and_then(|u| u.url.as_file_path()),
-                ],
-                event_sender,
-            ));
-        }
 
         let mut report = ReportTask::new(report_config);
         let report_task = spawn(async move { report.managed_run().await });
@@ -111,23 +81,8 @@ pub async fn run(
                 task_id: Uuid::new_v4(),
                 ..context.common_config.clone()
             },
+            event_sender.clone(),
         )?;
-
-        if let Some(event_sender) = event_sender {
-            task_handles.append(&mut monitor_file_urls(
-                &coverage_config
-                    .readonly_inputs
-                    .iter()
-                    .cloned()
-                    .map(|input| input.url.as_file_path())
-                    .collect::<Vec<_>>(),
-                event_sender.clone(),
-            ));
-            task_handles.append(&mut monitor_file_urls(
-                &[coverage_config.coverage.url.as_file_path()],
-                event_sender,
-            ));
-        }
 
         let mut coverage = CoverageTask::new(coverage_config);
         let coverage_task = spawn(async move { coverage.managed_run().await });
@@ -145,6 +100,7 @@ pub async fn run(
                 task_id: Uuid::new_v4(),
                 ..context.common_config.clone()
             },
+            event_sender.clone(),
         )?;
         let analysis_task = spawn(async move { run_analysis(analysis_config).await });
 
@@ -159,6 +115,7 @@ pub async fn run(
                 task_id: Uuid::new_v4(),
                 ..context.common_config.clone()
             },
+            event_sender,
         )?;
         let regression = LibFuzzerRegressionTask::new(regression_config);
         let regression_task = spawn(async move { regression.run().await });

@@ -3,17 +3,21 @@
 
 use crate::{
     local::common::{
-        build_local_context, get_cmd_arg, get_cmd_env, CmdType, CHECK_RETRY_COUNT, TARGET_ENV,
-        TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
+        build_local_context, get_cmd_arg, get_cmd_env, CmdType, UiEvent, CHECK_RETRY_COUNT,
+        TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
     },
     tasks::report::libfuzzer_report::{test_input, TestInputArgs},
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
+use tokio::sync::mpsc::UnboundedSender;
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let context = build_local_context(args, true)?;
+pub async fn run(
+    args: &clap::ArgMatches<'_>,
+    event_sender: Option<UnboundedSender<UiEvent>>,
+) -> Result<()> {
+    let context = build_local_context(args, true, event_sender)?;
 
     let target_exe = value_t!(args, TARGET_EXE, PathBuf)?;
     let target_env = get_cmd_env(CmdType::Target, args)?;

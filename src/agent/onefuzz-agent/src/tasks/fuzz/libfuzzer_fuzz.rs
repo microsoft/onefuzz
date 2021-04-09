@@ -259,7 +259,11 @@ impl LibFuzzerFuzzTask {
         for file in &files {
             if let Some(filename) = file.file_name() {
                 let dest = self.config.crashes.path.join(filename);
-                tokio::fs::rename(file, dest).await?;
+                if let Err(e) = tokio::fs::rename(file.clone(), dest.clone()).await {
+                    if !dest.exists() {
+                        bail!(e)
+                    }
+                }
             }
         }
 
