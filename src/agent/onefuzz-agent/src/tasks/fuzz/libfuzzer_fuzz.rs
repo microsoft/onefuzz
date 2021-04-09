@@ -250,7 +250,11 @@ impl LibFuzzerFuzzTask {
         for file in &files {
             if let Some(filename) = file.file_name() {
                 let dest = self.config.crashes.path.join(filename);
-                tokio::fs::rename(file, dest).await?;
+                if let Err(e) = tokio::fs::rename(file.clone(), dest.clone()).await {
+                    if !dest.exists() {
+                        bail!(e)
+                    }
+                }
             }
         }
 
@@ -297,11 +301,14 @@ fn try_report_iter_update(
 }
 
 async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
-    loop {
-        system::refresh()?;
+    // Allow for sampling CPU usage.
+    time::delay_for(PROC_INFO_COLLECTION_DELAY).await;
 
-        // Allow for sampling CPU usage.
-        time::delay_for(PROC_INFO_COLLECTION_DELAY).await;
+    loop {
+        // process doesn't exist
+        if !system::refresh_process(fuzzer_pid)? {
+            break;
+        }
 
         if let Some(proc_info) = system::proc_info(fuzzer_pid)? {
             event!(process_stats;

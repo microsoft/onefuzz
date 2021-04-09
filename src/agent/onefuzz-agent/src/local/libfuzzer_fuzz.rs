@@ -4,8 +4,8 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
-        CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
-        TARGET_WORKERS,
+        SyncCountDirMonitor, UiEvent, CHECK_FUZZER_HELP, CRASHES_DIR, INPUTS_DIR, TARGET_ENV,
+        TARGET_EXE, TARGET_OPTIONS, TARGET_WORKERS,
     },
     tasks::{
         config::CommonConfig,
@@ -14,12 +14,19 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use tokio::sync::mpsc::UnboundedSender;
 
 const DISABLE_EXPECT_CRASH_ON_FAILURE: &str = "disable_expect_crash_on_failure";
 
-pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> Result<Config> {
-    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?;
-    let inputs = get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?;
+pub fn build_fuzz_config(
+    args: &clap::ArgMatches<'_>,
+    common: CommonConfig,
+    event_sender: Option<UnboundedSender<UiEvent>>,
+) -> Result<Config> {
+    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?
+        .monitor_count(&event_sender)?;
+    let inputs = get_synced_dir(INPUTS_DIR, common.job_id, common.task_id, args)?
+        .monitor_count(&event_sender)?;
 
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -49,9 +56,12 @@ pub fn build_fuzz_config(args: &clap::ArgMatches<'_>, common: CommonConfig) -> R
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let context = build_local_context(args, true)?;
-    let config = build_fuzz_config(args, context.common_config.clone())?;
+pub async fn run(
+    args: &clap::ArgMatches<'_>,
+    event_sender: Option<UnboundedSender<UiEvent>>,
+) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone())?;
+    let config = build_fuzz_config(args, context.common_config.clone(), event_sender)?;
     LibFuzzerFuzzTask::new(config)?.run().await
 }
 
