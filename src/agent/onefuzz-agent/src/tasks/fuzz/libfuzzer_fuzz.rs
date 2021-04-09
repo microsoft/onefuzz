@@ -373,6 +373,21 @@ impl TotalStats {
 
 type StatsSender = mpsc::UnboundedSender<RuntimeStats>;
 
+#[derive(Clone, Copy, Debug)]
+struct Timer {
+    interval: Duration,
+}
+
+impl Timer {
+    pub fn new(interval: Duration) -> Self {
+        Self { interval }
+    }
+
+    async fn wait(&self) {
+        delay_for(self.interval).await;
+    }
+}
+
 // Report runtime stats, as delivered via the `stats` channel, with a periodic trigger to
 // guarantee a minimum reporting frequency.
 //
@@ -393,22 +408,20 @@ async fn report_runtime_stats(
     // report all zeros to start
     total.report();
 
+    let timer = Timer::new(RUNTIME_STATS_PERIOD);
+
     loop {
-        match stats_channel.try_recv() {
-            Ok(stats) => {
+        tokio::select! {
+            Some(stats) = stats_channel.next() => {
                 heartbeat_client.alive();
                 total.update(stats);
                 total.report()
             }
-            Err(mpsc::error::TryRecvError::Empty) => {
-                total.report();
-                delay_for(RUNTIME_STATS_PERIOD).await
+            _ = timer.wait() => {
+                total.report()
             }
-            Err(mpsc::error::TryRecvError::Closed) => break,
         }
     }
-
-    Ok(())
 }
 
 #[cfg(test)]
