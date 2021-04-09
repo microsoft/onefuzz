@@ -15,8 +15,7 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
-use tokio::stream::StreamExt;
-use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle, time::delay_for};
+use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
 pub const SETUP_DIR: &str = "setup_dir";
@@ -69,6 +68,7 @@ pub enum CmdType {
 pub struct LocalContext {
     pub job_path: PathBuf,
     pub common_config: CommonConfig,
+    pub event_sender: Option<UnboundedSender<UiEvent>>,
 }
 
 pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
@@ -212,7 +212,11 @@ pub fn get_synced_dir(
 // fuzzing tasks from generating random task id to using UUID::nil(). This
 // enables making the one-shot crash report generation, which isn't really a task,
 // consistent across multiple runs.
-pub fn build_local_context(args: &ArgMatches<'_>, generate_task_id: bool) -> Result<LocalContext> {
+pub fn build_local_context(
+    args: &ArgMatches<'_>,
+    generate_task_id: bool,
+    event_sender: Option<UnboundedSender<UiEvent>>,
+) -> Result<LocalContext> {
     let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
     let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
         if generate_task_id {
@@ -250,6 +254,7 @@ pub fn build_local_context(args: &ArgMatches<'_>, generate_task_id: bool) -> Res
     Ok(LocalContext {
         job_path,
         common_config,
+        event_sender,
     })
 }
 
@@ -317,48 +322,31 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
     .await
 }
 
-pub fn spawn_file_count_monitor(
-    dir: PathBuf,
-    sender: UnboundedSender<UiEvent>,
-) -> JoinHandle<Result<()>> {
-    tokio::spawn(async move {
-        wait_for_dir(&dir).await?;
-
-        loop {
-            let mut rd = tokio::fs::read_dir(&dir).await?;
-            let mut count: usize = 0;
-
-            while let Some(Ok(entry)) = rd.next().await {
-                if entry.path().is_file() {
-                    count += 1;
-                }
-            }
-
-            if sender
-                .send(UiEvent::FileCount {
-                    dir: dir.clone(),
-                    count,
-                })
-                .is_err()
-            {
-                return Ok(());
-            }
-            delay_for(Duration::from_secs(5)).await;
-        }
-    })
-}
-
-pub fn monitor_file_urls(
-    urls: &[Option<impl AsRef<Path>>],
-    event_sender: UnboundedSender<UiEvent>,
-) -> Vec<JoinHandle<Result<()>>> {
-    urls.iter()
-        .filter_map(|x| x.as_ref())
-        .map(|path| spawn_file_count_monitor(path.as_ref().into(), event_sender.clone()))
-        .collect::<Vec<_>>()
-}
-
 #[derive(Debug)]
 pub enum UiEvent {
-    FileCount { dir: PathBuf, count: usize },
+    MonitorDir(PathBuf),
+}
+
+pub trait SyncCountDirMonitor<T: Sized> {
+    fn monitor_count(self, event_sender: &Option<UnboundedSender<UiEvent>>) -> Result<T>;
+}
+
+impl SyncCountDirMonitor<SyncedDir> for SyncedDir {
+    fn monitor_count(self, event_sender: &Option<UnboundedSender<UiEvent>>) -> Result<Self> {
+        if let (Some(event_sender), Some(p)) = (event_sender, self.url.as_file_path()) {
+            event_sender.send(UiEvent::MonitorDir(p))?;
+        }
+        Ok(self)
+    }
+}
+
+impl SyncCountDirMonitor<Option<SyncedDir>> for Option<SyncedDir> {
+    fn monitor_count(self, event_sender: &Option<UnboundedSender<UiEvent>>) -> Result<Self> {
+        if let Some(sd) = self {
+            let sd = sd.monitor_count(event_sender)?;
+            Ok(Some(sd))
+        } else {
+            Ok(self)
+        }
+    }
 }

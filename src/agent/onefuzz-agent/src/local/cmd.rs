@@ -39,18 +39,20 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     let event_sender = terminal.as_ref().map(|t| t.task_events.clone());
     let command_run = tokio::spawn(async move {
         match args.subcommand() {
-            (RADAMSA, Some(sub)) => radamsa::run(sub).await,
+            (RADAMSA, Some(sub)) => radamsa::run(sub, event_sender).await,
             (LIBFUZZER, Some(sub)) => libfuzzer::run(sub, event_sender).await,
-            (LIBFUZZER_FUZZ, Some(sub)) => libfuzzer_fuzz::run(sub).await,
-            (LIBFUZZER_COVERAGE, Some(sub)) => libfuzzer_coverage::run(sub).await,
-            (LIBFUZZER_CRASH_REPORT, Some(sub)) => libfuzzer_crash_report::run(sub).await,
-            (LIBFUZZER_MERGE, Some(sub)) => libfuzzer_merge::run(sub).await,
-            (GENERIC_ANALYSIS, Some(sub)) => generic_analysis::run(sub).await,
-            (GENERIC_CRASH_REPORT, Some(sub)) => generic_crash_report::run(sub).await,
-            (GENERIC_GENERATOR, Some(sub)) => generic_generator::run(sub).await,
-            (GENERIC_TEST_INPUT, Some(sub)) => test_input::run(sub).await,
-            (LIBFUZZER_TEST_INPUT, Some(sub)) => libfuzzer_test_input::run(sub).await,
-            (LIBFUZZER_REGRESSION, Some(sub)) => libfuzzer_regression::run(sub).await,
+            (LIBFUZZER_FUZZ, Some(sub)) => libfuzzer_fuzz::run(sub, event_sender).await,
+            (LIBFUZZER_COVERAGE, Some(sub)) => libfuzzer_coverage::run(sub, event_sender).await,
+            (LIBFUZZER_CRASH_REPORT, Some(sub)) => {
+                libfuzzer_crash_report::run(sub, event_sender).await
+            }
+            (LIBFUZZER_MERGE, Some(sub)) => libfuzzer_merge::run(sub, event_sender).await,
+            (GENERIC_ANALYSIS, Some(sub)) => generic_analysis::run(sub, event_sender).await,
+            (GENERIC_CRASH_REPORT, Some(sub)) => generic_crash_report::run(sub, event_sender).await,
+            (GENERIC_GENERATOR, Some(sub)) => generic_generator::run(sub, event_sender).await,
+            (GENERIC_TEST_INPUT, Some(sub)) => test_input::run(sub, event_sender).await,
+            (LIBFUZZER_TEST_INPUT, Some(sub)) => libfuzzer_test_input::run(sub, event_sender).await,
+            (LIBFUZZER_REGRESSION, Some(sub)) => libfuzzer_regression::run(sub, event_sender).await,
             _ => {
                 anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());
             }
