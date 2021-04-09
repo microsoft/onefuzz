@@ -122,10 +122,6 @@ impl CoverageTask {
             if self.record_corpus_coverage(&mut processor, dir).await? {
                 seen_inputs = true;
             }
-
-            fs::remove_dir_all(&dir.path).await.with_context(|| {
-                format!("unable to remove readonly_inputs: {}", dir.path.display())
-            })?;
         }
 
         if seen_inputs {
