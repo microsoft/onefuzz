@@ -3,6 +3,7 @@
 
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::{Context, Result};
+use arraydeque::{ArrayDeque, Wrapping};
 use futures::{future::try_join_all, stream::StreamExt};
 use onefuzz::{
     fs::list_files,
@@ -34,6 +35,10 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
+
+/// Maximum number of log message to safe in case of libFuzzer failing,
+/// arbitrarily chosen
+const LOGS_BUFFER_SIZE: usize = 1000;
 
 pub fn default_workers() -> usize {
     let cpus = num_cpus::get();
@@ -207,7 +212,9 @@ impl LibFuzzerFuzzTask {
             .ok_or_else(|| format_err!("stderr not captured"))?;
         let mut stderr = BufReader::new(stderr);
 
-        let mut libfuzzer_output = Vec::new();
+        let mut libfuzzer_output: ArrayDeque<[String; LOGS_BUFFER_SIZE], Wrapping> =
+            ArrayDeque::new();
+
         loop {
             let mut buf = vec![];
             let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
@@ -220,7 +227,7 @@ impl LibFuzzerFuzzTask {
                     error!("could not parse fuzzing interation update: {}", err);
                 }
             }
-            libfuzzer_output.push(line);
+            libfuzzer_output.push_back(line);
         }
 
         let (exit_status, _) = tokio::join!(running, sys_info);
@@ -236,13 +243,16 @@ impl LibFuzzerFuzzTask {
                 bail!(
                     "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
                     serde_json::to_string(&exit_status)?,
-                    libfuzzer_output.join("\n")
+                    libfuzzer_output
+                        .into_iter()
+                        .collect::<Vec<String>>()
+                        .join("\n")
                 );
             } else {
                 warn!(
                     "libfuzzer exited without generating crashes, continuing.  status:{} stderr:{:?}",
                     serde_json::to_string(&exit_status)?,
-                    libfuzzer_output.join("\n")
+                    libfuzzer_output.into_iter().collect::<Vec<String>>().join("\n")
                 );
             }
         }
