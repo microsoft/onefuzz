@@ -29,3 +29,10 @@ pub async fn digest_file(file: impl AsRef<Path>) -> Result<String> {
 
     Ok(hex::encode(Sha256::digest(&data)))
 }
+
+pub fn digest_file_blocking(file: impl AsRef<Path>) -> Result<String> {
+    let file = file.as_ref();
+    let data = std::fs::read(file)
+        .with_context(|| format!("unable to read file to generate digest: {}", file.display()))?;
+    Ok(hex::encode(Sha256::digest(&data)))
+}

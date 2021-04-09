@@ -3,53 +3,60 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
-from onefuzztypes.primitives import Region, Container
+
 from onefuzztypes.enums import (
-    TaskType,
-    ContainerType,
-    ErrorCode,
     OS,
     Architecture,
+    ContainerType,
+    ErrorCode,
     NodeState,
-)
-from onefuzztypes.models import (
-    TaskConfig,
-    TaskDetails,
-    TaskContainers,
     TaskState,
-    Error,
-    UserInfo,
-    JobConfig,
-    Report,
-    BlobRef,
+    TaskType,
 )
 from onefuzztypes.events import (
     Event,
-    EventPing,
     EventCrashReported,
     EventFileAdded,
-    EventTaskCreated,
-    EventTaskStopped,
-    EventTaskFailed,
+    EventJobCreated,
+    EventJobStopped,
+    EventNodeCreated,
+    EventNodeDeleted,
+    EventNodeHeartbeat,
+    EventNodeStateUpdated,
+    EventPing,
+    EventPoolCreated,
+    EventPoolDeleted,
     EventProxyCreated,
     EventProxyDeleted,
     EventProxyFailed,
-    EventPoolCreated,
-    EventPoolDeleted,
+    EventRegressionReported,
     EventScalesetCreated,
-    EventScalesetFailed,
     EventScalesetDeleted,
-    EventJobCreated,
-    EventJobStopped,
+    EventScalesetFailed,
+    EventTaskCreated,
+    EventTaskFailed,
+    EventTaskHeartbeat,
     EventTaskStateUpdated,
-    EventNodeStateUpdated,
-    EventNodeCreated,
-    EventNodeDeleted,
-    get_event_type,
+    EventTaskStopped,
     EventType,
+    JobTaskStopped,
+    get_event_type,
 )
+from onefuzztypes.models import (
+    BlobRef,
+    CrashTestResult,
+    Error,
+    JobConfig,
+    RegressionReport,
+    Report,
+    TaskConfig,
+    TaskContainers,
+    TaskDetails,
+    UserInfo,
+)
+from onefuzztypes.primitives import Container, PoolName, Region
 from onefuzztypes.webhooks import WebhookMessage
 
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -66,28 +73,47 @@ def typed(depth: int, title: str, content: str, data_type: str) -> None:
     print(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
 
 
-def main():
-    examples = [
+def main() -> None:
+    task_config = TaskConfig(
+        job_id=UUID(int=0),
+        task=TaskDetails(
+            type=TaskType.libfuzzer_fuzz,
+            duration=1,
+            target_exe="fuzz.exe",
+            target_env={},
+            target_options=[],
+        ),
+        containers=[
+            TaskContainers(name=Container("my-setup"), type=ContainerType.setup),
+            TaskContainers(name=Container("my-inputs"), type=ContainerType.inputs),
+            TaskContainers(name=Container("my-crashes"), type=ContainerType.crashes),
+        ],
+        tags={},
+    )
+    report = Report(
+        input_blob=BlobRef(
+            account="contoso-storage-account",
+            container=Container("crashes"),
+            name="input.txt",
+        ),
+        executable="fuzz.exe",
+        crash_type="example crash report type",
+        crash_site="example crash site",
+        call_stack=["#0 line", "#1 line", "#2 line"],
+        call_stack_sha256=ZERO_SHA256,
+        input_sha256=EMPTY_SHA256,
+        asan_log="example asan log",
+        task_id=UUID(int=0),
+        job_id=UUID(int=0),
+        scariness_score=10,
+        scariness_description="example-scariness",
+    )
+    examples: List[Event] = [
         EventPing(ping_id=UUID(int=0)),
         EventTaskCreated(
             job_id=UUID(int=0),
             task_id=UUID(int=0),
-            config=TaskConfig(
-                job_id=UUID(int=0),
-                task=TaskDetails(
-                    type=TaskType.libfuzzer_fuzz,
-                    duration=1,
-                    target_exe="fuzz.exe",
-                    target_env={},
-                    target_options=[],
-                ),
-                containers=[
-                    TaskContainers(name="my-setup", type=ContainerType.setup),
-                    TaskContainers(name="my-inputs", type=ContainerType.inputs),
-                    TaskContainers(name="my-crashes", type=ContainerType.crashes),
-                ],
-                tags={},
-            ),
+            config=task_config,
             user_info=UserInfo(
                 application_id=UUID(int=0),
                 object_id=UUID(int=0),
@@ -102,6 +128,7 @@ def main():
                 object_id=UUID(int=0),
                 upn="example@contoso.com",
             ),
+            config=task_config,
         ),
         EventTaskFailed(
             job_id=UUID(int=0),
@@ -112,9 +139,13 @@ def main():
                 object_id=UUID(int=0),
                 upn="example@contoso.com",
             ),
+            config=task_config,
         ),
         EventTaskStateUpdated(
-            job_id=UUID(int=0), task_id=UUID(int=0), state=TaskState.init
+            job_id=UUID(int=0),
+            task_id=UUID(int=0),
+            state=TaskState.init,
+            config=task_config,
         ),
         EventProxyCreated(region=Region("eastus")),
         EventProxyDeleted(region=Region("eastus")),
@@ -123,12 +154,15 @@ def main():
             error=Error(code=ErrorCode.PROXY_FAILED, errors=["example error message"]),
         ),
         EventPoolCreated(
-            pool_name="example", os=OS.linux, arch=Architecture.x86_64, managed=True
+            pool_name=PoolName("example"),
+            os=OS.linux,
+            arch=Architecture.x86_64,
+            managed=True,
         ),
-        EventPoolDeleted(pool_name="example"),
+        EventPoolDeleted(pool_name=PoolName("example")),
         EventScalesetCreated(
             scaleset_id=UUID(int=0),
-            pool_name="example",
+            pool_name=PoolName("example"),
             vm_sku="Standard_D2s_v3",
             image="Canonical:UbuntuServer:18.04-LTS:latest",
             region=Region("eastus"),
@@ -136,12 +170,12 @@ def main():
         ),
         EventScalesetFailed(
             scaleset_id=UUID(int=0),
-            pool_name="example",
+            pool_name=PoolName("example"),
             error=Error(
                 code=ErrorCode.UNABLE_TO_RESIZE, errors=["example error message"]
             ),
         ),
-        EventScalesetDeleted(scaleset_id=UUID(int=0), pool_name="example"),
+        EventScalesetDeleted(scaleset_id=UUID(int=0), pool_name=PoolName("example")),
         EventJobCreated(
             job_id=UUID(int=0),
             config=JobConfig(
@@ -159,38 +193,47 @@ def main():
                 build="build 1",
                 duration=24,
             ),
+            task_info=[
+                JobTaskStopped(
+                    task_id=UUID(int=0),
+                    task_type=TaskType.libfuzzer_fuzz,
+                    error=Error(
+                        code=ErrorCode.TASK_FAILED, errors=["example error message"]
+                    ),
+                ),
+                JobTaskStopped(
+                    task_id=UUID(int=1),
+                    task_type=TaskType.libfuzzer_coverage,
+                ),
+            ],
         ),
-        EventNodeCreated(machine_id=UUID(int=0), pool_name="example"),
-        EventNodeDeleted(machine_id=UUID(int=0), pool_name="example"),
+        EventNodeCreated(machine_id=UUID(int=0), pool_name=PoolName("example")),
+        EventNodeDeleted(machine_id=UUID(int=0), pool_name=PoolName("example")),
         EventNodeStateUpdated(
-            machine_id=UUID(int=0), pool_name="example", state=NodeState.setting_up
+            machine_id=UUID(int=0),
+            pool_name=PoolName("example"),
+            state=NodeState.setting_up,
+        ),
+        EventRegressionReported(
+            regression_report=RegressionReport(
+                crash_test_result=CrashTestResult(crash_report=report),
+                original_crash_test_result=CrashTestResult(crash_report=report),
+            ),
+            container=Container("container-name"),
+            filename="example.json",
         ),
         EventCrashReported(
             container=Container("container-name"),
             filename="example.json",
-            report=Report(
-                input_blob=BlobRef(
-                    account="contoso-storage-account",
-                    container=Container("crashes"),
-                    name="input.txt",
-                ),
-                executable="fuzz.exe",
-                crash_type="example crash report type",
-                crash_site="example crash site",
-                call_stack=["#0 line", "#1 line", "#2 line"],
-                call_stack_sha256=ZERO_SHA256,
-                input_sha256=EMPTY_SHA256,
-                asan_log="example asan log",
-                task_id=UUID(int=0),
-                job_id=UUID(int=0),
-                scariness_score=10,
-                scariness_description="example-scariness",
-            ),
+            report=report,
         ),
         EventFileAdded(container=Container("container-name"), filename="example.txt"),
+        EventNodeHeartbeat(machine_id=UUID(int=0), pool_name=PoolName("example")),
+        EventTaskHeartbeat(task_id=UUID(int=0), job_id=UUID(int=0), config=task_config),
     ]
 
-    for event in Event.__args__:
+    # works around `mypy` not handling that Union has `__args__`
+    for event in getattr(Event, "__args__", []):
         seen = False
         for value in examples:
             if isinstance(value, event):
@@ -210,12 +253,15 @@ def main():
         event_id=UUID(int=0),
         event_type=EventType.ping,
         event=EventPing(ping_id=UUID(int=0)),
+        instance_id=UUID(int=0),
+        instance_name="example",
     )
 
     layer(
         1,
         "Webhook Events",
-        "This document describes the basic webhook event subscriptions available in OneFuzz",
+        "This document describes the basic webhook event subscriptions "
+        "available in OneFuzz",
     )
     layer(
         2,
@@ -223,7 +269,9 @@ def main():
         "Each event will be submitted via HTTP POST to the user provided URL.",
     )
 
-    typed(3, "Example", message.json(indent=4, exclude_none=True), "json")
+    typed(
+        3, "Example", message.json(indent=4, exclude_none=True, sort_keys=True), "json"
+    )
     layer(2, "Event Types (EventType)")
 
     event_map = {get_event_type(x).name: x for x in examples}
@@ -236,10 +284,15 @@ def main():
     for name in sorted(event_map.keys()):
         example = event_map[name]
         layer(3, name)
-        typed(4, "Example", example.json(indent=4, exclude_none=True), "json")
-        typed(4, "Schema", example.schema_json(indent=4), "json")
+        typed(
+            4,
+            "Example",
+            example.json(indent=4, exclude_none=True, sort_keys=True),
+            "json",
+        )
+        typed(4, "Schema", example.schema_json(indent=4, sort_keys=True), "json")
 
-    typed(2, "Full Event Schema", message.schema_json(indent=4), "json")
+    typed(2, "Full Event Schema", message.schema_json(indent=4, sort_keys=True), "json")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 
 use crate::tasks::{
     config::CommonConfig,
-    heartbeat::*,
+    heartbeat::HeartbeatSender,
     utils::{self, default_bool_true},
 };
 use anyhow::Result;
@@ -34,7 +34,7 @@ pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
-    pub input_queue: Option<Url>,
+    pub input_queue: Option<QueueClient>,
     pub inputs: Vec<SyncedDir>,
     pub unique_inputs: SyncedDir,
     pub preserve_existing_outputs: bool,
@@ -47,21 +47,18 @@ pub struct Config {
 }
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
-    if config.check_fuzzer_help {
-        let target = LibFuzzer::new(
-            &config.target_exe,
-            &config.target_options,
-            &config.target_env,
-            &config.common.setup_dir,
-        );
-        target.check_help().await?;
-    }
+    let fuzzer = LibFuzzer::new(
+        &config.target_exe,
+        &config.target_options,
+        &config.target_env,
+        &config.common.setup_dir,
+    );
+    fuzzer.verify(config.check_fuzzer_help, None).await?;
 
     config.unique_inputs.init().await?;
-    if let Some(url) = config.input_queue.clone() {
+    if let Some(queue) = config.input_queue.clone() {
         loop {
-            let queue = QueueClient::new(url.clone());
-            if let Err(error) = process_message(config.clone(), queue).await {
+            if let Err(error) = process_message(config.clone(), queue.clone()).await {
                 error!(
                     "failed to process latest message from notification queue: {}",
                     error
@@ -85,15 +82,19 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     }
 }
 
-async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> Result<()> {
+async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Result<()> {
     let hb_client = config.common.init_heartbeat().await?;
     hb_client.alive();
     let tmp_dir = "./tmp";
-    verbose!("tmp dir reset");
+    debug!("tmp dir reset");
     utils::reset_tmp_dir(tmp_dir).await?;
 
     if let Some(msg) = input_queue.pop().await? {
-        let input_url = match utils::parse_url_data(msg.data()) {
+        let input_url = msg.parse(|data| {
+            let data = std::str::from_utf8(data)?;
+            Ok(Url::parse(data)?)
+        });
+        let input_url: Url = match input_url {
             Ok(url) => url,
             Err(err) => {
                 error!("could not parse input URL from queue message: {}", err);
@@ -105,11 +106,11 @@ async fn process_message(config: Arc<Config>, mut input_queue: QueueClient) -> R
         info!("downloaded input to {}", input_path.display());
         sync_and_merge(config.clone(), vec![tmp_dir], true, true).await?;
 
-        verbose!("will delete popped message with id = {}", msg.id());
+        debug!("will delete popped message with id = {}", msg.id());
 
-        input_queue.delete(msg).await?;
+        msg.delete().await?;
 
-        verbose!(
+        debug!(
             "Attempting to delete {} from the candidate container",
             input_url.clone()
         );

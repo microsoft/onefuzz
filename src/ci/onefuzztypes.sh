@@ -12,10 +12,11 @@ pip install -r requirements-dev.txt
 python setup.py sdist bdist_wheel
 
 pip install -r requirements-lint.txt
-black ./onefuzztypes --check
-flake8 ./onefuzztypes
-isort --profile black ./onefuzztypes --check
-mypy ./onefuzztypes --ignore-missing-imports
+black ./onefuzztypes ./extra --check
+flake8 ./onefuzztypes ./extra
+bandit -r ./onefuzztypes
+isort --profile black ./onefuzztypes ./extra --check
+mypy ./onefuzztypes ./extra --ignore-missing-imports
 pytest -v tests
 
 cp dist/*.* ../../artifacts/sdk

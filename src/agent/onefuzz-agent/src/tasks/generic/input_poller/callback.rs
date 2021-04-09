@@ -6,27 +6,28 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use async_trait::async_trait;
 use reqwest::Url;
-use storage_queue::{Message, QueueClient};
+use storage_queue::Message;
+use storage_queue::QueueClient;
 
 #[async_trait]
-pub trait Queue<M> {
+pub trait Queue<M>: Send {
     async fn pop(&mut self) -> Result<Option<M>>;
 
     async fn delete(&mut self, msg: M) -> Result<()>;
 }
 
-pub trait Parser<M> {
+pub trait Parser<M>: Send {
     fn parse(&mut self, msg: &M) -> Result<Url>;
 }
 
 #[async_trait]
-pub trait Downloader {
+pub trait Downloader: Send {
     async fn download(&mut self, url: Url, dir: &Path) -> Result<PathBuf>;
 }
 
 #[async_trait]
-pub trait Processor {
-    async fn process(&mut self, url: Url, input: &Path) -> Result<()>;
+pub trait Processor: Send {
+    async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()>;
 }
 
 pub trait Callback<M> {
@@ -72,9 +73,8 @@ impl<P> CallbackImpl<P>
 where
     P: Processor + Send,
 {
-    pub fn new(queue_url: Url, processor: P) -> Self {
-        let queue = QueueClient::new(queue_url);
-        Self { queue, processor }
+    pub fn new(queue: QueueClient, processor: P) -> Result<Self> {
+        Ok(Self { queue, processor })
     }
 }
 
@@ -88,7 +88,7 @@ where
     }
 
     async fn delete(&mut self, msg: Message) -> Result<()> {
-        self.queue.delete(msg).await
+        msg.delete().await
     }
 }
 
@@ -97,9 +97,10 @@ where
     P: Processor + Send,
 {
     fn parse(&mut self, msg: &Message) -> Result<Url> {
-        let text = std::str::from_utf8(msg.data())?;
-        let url = Url::parse(text)?;
-
+        let url = msg.parse(|data| {
+            let data = std::str::from_utf8(data)?;
+            Ok(Url::parse(data)?)
+        })?;
         Ok(url)
     }
 }

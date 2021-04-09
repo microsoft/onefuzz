@@ -135,7 +135,7 @@ class NodeSearch(BaseRequest):
     machine_id: Optional[UUID]
     state: Optional[List[NodeState]]
     scaleset_id: Optional[UUID]
-    pool_name: Optional[str]
+    pool_name: Optional[PoolName]
 
 
 class NodeGet(BaseRequest):
@@ -176,6 +176,7 @@ class ScalesetCreate(BaseRequest):
     region: Optional[Region]
     size: int
     spot_instances: bool
+    ephemeral_os_disks: bool = Field(default=False)
     tags: Dict[str, str]
 
     @validator("size", allow_reuse=True)

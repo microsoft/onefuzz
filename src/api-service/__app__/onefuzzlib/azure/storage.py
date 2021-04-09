@@ -7,18 +7,25 @@ import logging
 import os
 import random
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 from azure.mgmt.storage import StorageManagementClient
 from memoization import cached
 from msrestazure.tools import parse_resource_id
 
-from .creds import get_base_resource_group, mgmt_client_factory
+from .creds import get_base_resource_group, get_identity, get_subscription
 
 
 class StorageType(Enum):
     corpus = "corpus"
     config = "config"
+
+
+@cached
+def get_mgmt_client() -> StorageManagementClient:
+    return StorageManagementClient(
+        credential=get_identity(), subscription_id=get_subscription()
+    )
 
 
 @cached
@@ -54,14 +61,17 @@ def get_accounts(storage_type: StorageType) -> List[str]:
 
 @cached
 def get_storage_account_name_key(account_id: str) -> Tuple[str, str]:
-    client = mgmt_client_factory(StorageManagementClient)
     resource = parse_resource_id(account_id)
-    key = (
-        client.storage_accounts.list_keys(resource["resource_group"], resource["name"])
-        .keys[0]
-        .value
-    )
+    key = get_storage_account_name_key_by_name(resource["name"])
     return resource["name"], key
+
+
+@cached
+def get_storage_account_name_key_by_name(account_name: str) -> str:
+    client = get_mgmt_client()
+    group = get_base_resource_group()
+    key = client.storage_accounts.list_keys(group, account_name).keys[0].value
+    return cast(str, key)
 
 
 def choose_account(storage_type: StorageType) -> str:
@@ -75,7 +85,9 @@ def choose_account(storage_type: StorageType) -> str:
     # Use a random secondary storage account if any are available.  This
     # reduces IOP contention for the Storage Queues, which are only available
     # on primary accounts
-    return random.choice(accounts[1:])
+    #
+    # security note: this is not used as a security feature
+    return random.choice(accounts[1:])  # nosec
 
 
 @cached
@@ -83,7 +95,7 @@ def corpus_accounts() -> List[str]:
     skip = get_func_storage()
     results = [get_fuzz_storage()]
 
-    client = mgmt_client_factory(StorageManagementClient)
+    client = get_mgmt_client()
     group = get_base_resource_group()
     for account in client.storage_accounts.list_by_resource_group(group):
         # protection from someone adding the corpus tag to the config account
@@ -104,5 +116,5 @@ def corpus_accounts() -> List[str]:
 
         results.append(account.id)
 
-    logging.info("corpus accounts: %s", corpus_accounts)
+    logging.info("corpus accounts: %s", results)
     return results

@@ -4,10 +4,11 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
+from pydantic.dataclasses import dataclass
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -36,9 +37,42 @@ from .primitives import Container, PoolName, Region
 
 
 class UserInfo(BaseModel):
-    application_id: UUID
+    application_id: Optional[UUID]
     object_id: Optional[UUID]
     upn: Optional[str]
+
+
+# Stores the address of a secret
+class SecretAddress(BaseModel):
+    # keyvault address of a secret
+    url: str
+
+
+T = TypeVar("T")
+
+
+# This class allows us to store some data that are intended to be secret
+# The secret field stores either the raw data or the address of that data
+# This class allows us to maintain backward compatibility with existing
+# NotificationTemplate classes
+@dataclass
+class SecretData(Generic[T]):
+    secret: Union[T, SecretAddress]
+
+    def __init__(self, secret: Union[T, SecretAddress]):
+        if isinstance(secret, dict):
+            self.secret = SecretAddress.parse_obj(secret)
+        else:
+            self.secret = secret
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        if isinstance(self.secret, SecretAddress):
+            return str(self.secret)
+        else:
+            return "[REDACTED]"
 
 
 class EnumModel(BaseModel):
@@ -108,9 +142,9 @@ class ReproConfig(BaseModel):
 class TaskDetails(BaseModel):
     type: TaskType
     duration: int
-    target_exe: str
-    target_env: Dict[str, str]
-    target_options: List[str]
+    target_exe: Optional[str]
+    target_env: Optional[Dict[str, str]]
+    target_options: Optional[List[str]]
     target_workers: Optional[int]
     target_options_merge: Optional[bool]
     check_asan_log: Optional[bool]
@@ -136,6 +170,8 @@ class TaskDetails(BaseModel):
     target_timeout: Optional[int]
     ensemble_sync_delay: Optional[int]
     preserve_existing_outputs: Optional[bool]
+    report_list: Optional[List[str]]
+    minimized_stack_depth: Optional[int]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:
@@ -203,7 +239,7 @@ class BlobRef(BaseModel):
 
 class Report(BaseModel):
     input_url: Optional[str]
-    input_blob: BlobRef
+    input_blob: Optional[BlobRef]
     executable: str
     crash_type: str
     crash_site: str
@@ -215,6 +251,30 @@ class Report(BaseModel):
     job_id: UUID
     scariness_score: Optional[int]
     scariness_description: Optional[str]
+    minimized_stack: Optional[List[str]]
+    minimized_stack_sha256: Optional[str]
+    minimized_stack_function_names: Optional[List[str]]
+    minimized_stack_function_names_sha256: Optional[str]
+
+
+class NoReproReport(BaseModel):
+    input_sha256: str
+    input_blob: Optional[BlobRef]
+    executable: str
+    task_id: UUID
+    job_id: UUID
+    tries: int
+    error: Optional[str]
+
+
+class CrashTestResult(BaseModel):
+    crash_report: Optional[Report]
+    no_repro: Optional[NoReproReport]
+
+
+class RegressionReport(BaseModel):
+    crash_test_result: CrashTestResult
+    original_crash_test_result: Optional[CrashTestResult]
 
 
 class ADODuplicateTemplate(BaseModel):
@@ -226,7 +286,7 @@ class ADODuplicateTemplate(BaseModel):
 
 class ADOTemplate(BaseModel):
     base_url: str
-    auth_token: str
+    auth_token: SecretData[str]
     project: str
     type: str
     unique_fields: List[str]
@@ -234,15 +294,33 @@ class ADOTemplate(BaseModel):
     ado_fields: Dict[str, str]
     on_duplicate: ADODuplicateTemplate
 
-    def redact(self) -> None:
-        self.auth_token = "***"
+    # validator needed for backward compatibility
+    @validator("auth_token", pre=True, always=True)
+    def validate_auth_token(cls, v: Any) -> SecretData:
+        if isinstance(v, str):
+            return SecretData(secret=v)
+        elif isinstance(v, SecretData):
+            return v
+        elif isinstance(v, dict):
+            return SecretData(secret=v["secret"])
+        else:
+            raise TypeError(f"invalid datatype {type(v)}")
 
 
 class TeamsTemplate(BaseModel):
-    url: str
+    url: SecretData[str]
 
-    def redact(self) -> None:
-        self.url = "***"
+    # validator needed for backward compatibility
+    @validator("url", pre=True, always=True)
+    def validate_url(cls, v: Any) -> SecretData:
+        if isinstance(v, str):
+            return SecretData(secret=v)
+        elif isinstance(v, SecretData):
+            return v
+        elif isinstance(v, dict):
+            return SecretData(secret=v["secret"])
+        else:
+            raise TypeError(f"invalid datatype {type(v)}")
 
 
 class ContainerDefinition(BaseModel):
@@ -282,10 +360,11 @@ class ClientCredentials(BaseModel):
 class AgentConfig(BaseModel):
     client_credentials: Optional[ClientCredentials]
     onefuzz_url: str
-    pool_name: str
+    pool_name: PoolName
     heartbeat_queue: Optional[str]
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
+    multi_tenant_domain: Optional[str]
     instance_id: UUID
 
 
@@ -294,8 +373,8 @@ class TaskUnitConfig(BaseModel):
     job_id: UUID
     task_id: UUID
     task_type: TaskType
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
     heartbeat_queue: str
     # command_queue: str
     input_queue: Optional[str]
@@ -325,6 +404,8 @@ class TaskUnitConfig(BaseModel):
     stats_file: Optional[str]
     stats_format: Optional[StatsFormat]
     ensemble_sync_delay: Optional[int]
+    report_list: Optional[List[str]]
+    minimized_stack_depth: Optional[int]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes
@@ -338,6 +419,7 @@ class TaskUnitConfig(BaseModel):
     tools: CONTAINER_DEF
     unique_inputs: CONTAINER_DEF
     unique_reports: CONTAINER_DEF
+    regression_reports: CONTAINER_DEF
 
 
 class Forward(BaseModel):
@@ -351,6 +433,9 @@ class ProxyConfig(BaseModel):
     notification: str
     region: Region
     forwards: List[Forward]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
+    instance_id: UUID
 
 
 class ProxyHeartbeat(BaseModel):
@@ -408,7 +493,7 @@ class GithubAuth(BaseModel):
 
 
 class GithubIssueTemplate(BaseModel):
-    auth: GithubAuth
+    auth: SecretData[GithubAuth]
     organization: str
     repository: str
     title: str
@@ -418,9 +503,20 @@ class GithubIssueTemplate(BaseModel):
     labels: List[str]
     on_duplicate: GithubIssueDuplicate
 
-    def redact(self) -> None:
-        self.auth.user = "***"
-        self.auth.personal_access_token = "***"
+    # validator needed for backward compatibility
+    @validator("auth", pre=True, always=True)
+    def validate_auth(cls, v: Any) -> SecretData:
+        if isinstance(v, str):
+            return SecretData(secret=v)
+        elif isinstance(v, SecretData):
+            return v
+        elif isinstance(v, dict):
+            try:
+                return SecretData(GithubAuth.parse_obj(v))
+            except Exception:
+                return SecretData(secret=v["secret"])
+        else:
+            raise TypeError(f"invalid datatype {type(v)}")
 
 
 NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
@@ -450,6 +546,7 @@ class Job(BaseModel):
 
 class TaskHeartbeatEntry(BaseModel):
     task_id: UUID
+    job_id: Optional[UUID]
     machine_id: UUID
     data: List[Dict[str, HeartbeatType]]
 
@@ -490,6 +587,7 @@ class AutoScaleConfig(BaseModel):
     region: Optional[Region]
     scaleset_size: int  # Individual scaleset size
     spot_instances: bool = Field(default=False)
+    ephemeral_os_disks: bool = Field(default=False)
     vm_sku: str
 
     @validator("scaleset_size", allow_reuse=True)
@@ -558,6 +656,8 @@ class Scaleset(BaseModel):
     region: Region
     size: int
     spot_instances: bool
+    ephemeral_os_disks: bool = Field(default=False)
+    needs_config_update: bool = Field(default=False)
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]
     client_id: Optional[UUID]

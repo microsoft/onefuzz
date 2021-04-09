@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#![allow(clippy::unknown_clippy_lints)]
+#![allow(clippy::match_like_matches_macro)]
 #![allow(clippy::single_component_path_imports)]
 #![allow(clippy::option_map_or_none)]
 #![allow(clippy::ptr_arg)]
@@ -19,7 +19,6 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use coverage::AppCoverageBlocks;
 use log::{error, info, trace, warn};
 use num_cpus;
 use rayon::{prelude::*, ThreadPoolBuilder};
@@ -52,19 +51,13 @@ const MAX_CRASH_SAMPLES: usize = 10;
 pub struct InputTestResult {
     pub debugger_result: DebuggerResult,
     pub input_path: PathBuf,
-    pub blocks_covered: Option<usize>,
 }
 
 impl InputTestResult {
-    pub fn new(
-        debugger_result: DebuggerResult,
-        input_path: PathBuf,
-        blocks_covered: Option<usize>,
-    ) -> Self {
+    pub fn new(debugger_result: DebuggerResult, input_path: PathBuf) -> Self {
         InputTestResult {
             debugger_result,
             input_path,
-            blocks_covered,
         }
     }
 }
@@ -77,7 +70,6 @@ pub struct Tester {
     ignore_first_chance_exceptions: bool,
     appverif_controller: Option<AppVerifierController>,
     bugs_found_dir: PathBuf,
-    coverage_map: Option<AppCoverageBlocks>,
 }
 
 impl Tester {
@@ -115,7 +107,6 @@ impl Tester {
             None
         };
 
-        let coverage_map = coverage::load_coverage_map(&output_dir)?;
         Ok(Arc::new(Tester {
             appverif_controller,
             driver,
@@ -124,7 +115,6 @@ impl Tester {
             max_run_s,
             ignore_first_chance_exceptions,
             bugs_found_dir,
-            coverage_map,
         }))
     }
 
@@ -132,20 +122,16 @@ impl Tester {
     pub fn test_application(&self, input_path: impl AsRef<Path>) -> Result<InputTestResult> {
         let app_args = args_with_input_file_applied(&self.driver_args, &input_path)?;
 
-        let mut coverage_map = self.coverage_map.clone();
-
         crash_detector::test_process(
             &self.driver,
             &app_args,
             &self.driver_env,
             Duration::from_secs(self.max_run_s),
             self.ignore_first_chance_exceptions,
-            coverage_map.as_mut(),
+            None,
         )
         .and_then(|result| {
-            let blocks_hit = coverage_map.map_or(None, |map| Some(map.count_blocks_hit()));
-            let result =
-                InputTestResult::new(result, PathBuf::from(input_path.as_ref()), blocks_hit);
+            let result = InputTestResult::new(result, PathBuf::from(input_path.as_ref()));
             log_input_test_result(&result);
             Ok(result)
         })

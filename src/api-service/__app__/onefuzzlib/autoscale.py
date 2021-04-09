@@ -10,8 +10,10 @@ from typing import List
 from onefuzztypes.enums import NodeState, ScalesetState
 from onefuzztypes.models import AutoScaleConfig, TaskPool
 
-from .pools import Node, Pool, Scaleset
 from .tasks.main import Task
+from .workers.nodes import Node
+from .workers.pools import Pool
+from .workers.scalesets import Scaleset
 
 
 def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
@@ -73,6 +75,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
             region=autoscale_config.region,
             size=max_nodes_scaleset,
             spot_instances=autoscale_config.spot_instances,
+            ephemeral_os_disks=autoscale_config.ephemeral_os_disks,
             tags={"pool": pool.name},
         )
         nodes_needed -= max_nodes_scaleset

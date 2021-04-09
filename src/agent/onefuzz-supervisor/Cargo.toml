@@ -10,7 +10,7 @@ publish = false
 anyhow = "1.0"
 appinsights = "0.1"
 async-trait = "0.1"
-downcast-rs = "1.2.0"
+downcast-rs = "1.2"
 env_logger = "0.8"
 futures = "0.3"
 log = "0.4"
@@ -23,8 +23,9 @@ structopt = "0.3"
 tokio = { version = "1.0", features = ["fs", "process"]}
 url = { version = "2.2", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
-clap = { version = "2.33", default-features = false }
+clap = "2.33"
 reqwest-retry = { path = "../reqwest-retry" }
+onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 users = "0.11"

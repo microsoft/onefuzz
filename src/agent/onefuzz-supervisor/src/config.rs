@@ -3,9 +3,11 @@
 
 use anyhow::{Context, Result};
 use onefuzz::{
+    auth::{ClientCredentials, Credentials, ManagedIdentityCredentials},
     http::{is_auth_error_code, ResponseExt},
     jitter::delay_with_jitter,
 };
+use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use reqwest_retry::SendRetry;
 use std::{
     path::{Path, PathBuf},
@@ -15,8 +17,6 @@ use tokio::fs;
 use url::Url;
 use uuid::Uuid;
 
-use crate::auth::{ClientCredentials, Credentials, ManagedIdentityCredentials};
-
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct StaticConfig {
     pub credentials: Credentials,
@@ -25,9 +25,11 @@ pub struct StaticConfig {
 
     pub onefuzz_url: Url,
 
-    pub instrumentation_key: Option<Uuid>,
+    pub multi_tenant_domain: Option<String>,
 
-    pub telemetry_key: Option<Uuid>,
+    pub instance_telemetry_key: Option<InstanceTelemetryKey>,
+
+    pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
 
     pub heartbeat_queue: Option<Url>,
 
@@ -43,9 +45,11 @@ struct RawStaticConfig {
 
     pub onefuzz_url: Url,
 
-    pub instrumentation_key: Option<Uuid>,
+    pub multi_tenant_domain: Option<String>,
 
-    pub telemetry_key: Option<Uuid>,
+    pub instance_telemetry_key: Option<InstanceTelemetryKey>,
+
+    pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
 
     pub heartbeat_queue: Option<Url>,
 
@@ -65,7 +69,8 @@ impl StaticConfig {
                     .to_string()
                     .trim_end_matches('/')
                     .to_owned();
-                let managed = ManagedIdentityCredentials::new(resource);
+                let managed =
+                    ManagedIdentityCredentials::new(resource, config.multi_tenant_domain.clone())?;
                 managed.into()
             }
         };
@@ -73,8 +78,9 @@ impl StaticConfig {
             credentials,
             pool_name: config.pool_name,
             onefuzz_url: config.onefuzz_url,
-            instrumentation_key: config.instrumentation_key,
-            telemetry_key: config.telemetry_key,
+            multi_tenant_domain: config.multi_tenant_domain,
+            microsoft_telemetry_key: config.microsoft_telemetry_key,
+            instance_telemetry_key: config.instance_telemetry_key,
             heartbeat_queue: config.heartbeat_queue,
             instance_id: config.instance_id,
         };
@@ -94,6 +100,7 @@ impl StaticConfig {
         let client_id = Uuid::parse_str(&std::env::var("ONEFUZZ_CLIENT_ID")?)?;
         let client_secret = std::env::var("ONEFUZZ_CLIENT_SECRET")?;
         let tenant = std::env::var("ONEFUZZ_TENANT")?;
+        let multi_tenant_domain = std::env::var("ONEFUZZ_MULTI_TENANT_DOMAIN").ok();
         let onefuzz_url = Url::parse(&std::env::var("ONEFUZZ_URL")?)?;
         let pool_name = std::env::var("ONEFUZZ_POOL")?;
 
@@ -103,29 +110,37 @@ impl StaticConfig {
             None
         };
 
-        let instrumentation_key = if let Ok(key) = std::env::var("ONEFUZZ_INSTRUMENTATION_KEY") {
-            Some(Uuid::parse_str(&key)?)
-        } else {
-            None
-        };
+        let instance_telemetry_key =
+            if let Ok(key) = std::env::var("ONEFUZZ_INSTANCE_TELEMETRY_KEY") {
+                Some(InstanceTelemetryKey::new(Uuid::parse_str(&key)?))
+            } else {
+                None
+            };
 
-        let telemetry_key = if let Ok(key) = std::env::var("ONEFUZZ_TELEMETRY_KEY") {
-            Some(Uuid::parse_str(&key)?)
-        } else {
-            None
-        };
+        let microsoft_telemetry_key =
+            if let Ok(key) = std::env::var("ONEFUZZ_MICROSOFT_TELEMETRY_KEY") {
+                Some(MicrosoftTelemetryKey::new(Uuid::parse_str(&key)?))
+            } else {
+                None
+            };
 
-        let credentials =
-            ClientCredentials::new(client_id, client_secret, onefuzz_url.to_string(), tenant)
-                .into();
+        let credentials = ClientCredentials::new(
+            client_id,
+            client_secret,
+            onefuzz_url.to_string(),
+            tenant,
+            multi_tenant_domain.clone(),
+        )
+        .into();
 
         Ok(Self {
             instance_id,
             credentials,
             pool_name,
             onefuzz_url,
-            instrumentation_key,
-            telemetry_key,
+            multi_tenant_domain,
+            instance_telemetry_key,
+            microsoft_telemetry_key,
             heartbeat_queue,
         })
     }

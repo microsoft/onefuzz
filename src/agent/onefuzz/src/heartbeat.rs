@@ -61,7 +61,7 @@ where
     where
         Fut: Future<Output = ()> + Send,
     {
-        let queue_client = Arc::new(QueueClient::new(queue_url));
+        let queue_client = Arc::new(QueueClient::new(queue_url)?);
         flush(queue_client.clone(), messages.clone()).await;
         while !cancelled.is_notified(heartbeat_period).await {
             flush(queue_client.clone(), messages.clone()).await;
@@ -75,7 +75,7 @@ where
         queue_url: Url,
         heartbeat_period: Option<Duration>,
         flush: F,
-    ) -> HeartbeatClient<TContext, T>
+    ) -> Result<HeartbeatClient<TContext, T>>
     where
         F: Fn(Arc<HeartbeatContext<TContext, T>>) -> Fut + Sync + Send + 'static,
         Fut: Future<Output = ()> + Send,
@@ -86,7 +86,7 @@ where
 
         let context = Arc::new(HeartbeatContext {
             state: context,
-            queue_client: QueueClient::new(queue_url),
+            queue_client: QueueClient::new(queue_url)?,
             pending_messages: Mutex::new(HashSet::<T>::new()),
             cancelled: Notify::new(),
         });
@@ -102,9 +102,9 @@ where
             Ok(())
         });
 
-        HeartbeatClient {
+        Ok(HeartbeatClient {
             context,
             heartbeat_process,
-        }
+        })
     }
 }

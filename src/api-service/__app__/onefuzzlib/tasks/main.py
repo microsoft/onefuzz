@@ -18,14 +18,17 @@ from onefuzztypes.events import (
 from onefuzztypes.models import Error
 from onefuzztypes.models import Task as BASE_TASK
 from onefuzztypes.models import TaskConfig, TaskVm, UserInfo
+from onefuzztypes.primitives import PoolName
 
 from ..azure.image import get_os
 from ..azure.queue import create_queue, delete_queue
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
-from ..pools import Node, Pool, Scaleset
 from ..proxy_forward import ProxyForward
+from ..workers.nodes import Node
+from ..workers.pools import Pool
+from ..workers.scalesets import Scaleset
 
 
 class Task(BASE_TASK, ORMMixin):
@@ -69,11 +72,10 @@ class Task(BASE_TASK, ORMMixin):
         )
 
         logging.info(
-            "created task. job_id:%s task_id:%s type:%s user:%s",
+            "created task. job_id:%s task_id:%s type:%s",
             task.job_id,
             task.task_id,
             task.config.task.type.name,
-            user_info,
         )
         return task
 
@@ -123,12 +125,17 @@ class Task(BASE_TASK, ORMMixin):
 
     def stopping(self) -> None:
         # TODO: we need to 'unschedule' this task from the existing pools
+        from ..jobs import Job
 
         logging.info("stopping task: %s:%s", self.job_id, self.task_id)
         ProxyForward.remove_forward(self.task_id)
         delete_queue(str(self.task_id), StorageType.corpus)
         Node.stop_task(self.task_id)
-        self.set_state(TaskState.stopped, send=False)
+        self.set_state(TaskState.stopped)
+
+        job = Job.get(self.job_id)
+        if job:
+            job.stop_if_all_done()
 
     @classmethod
     def search_states(
@@ -163,7 +170,7 @@ class Task(BASE_TASK, ORMMixin):
         return task
 
     @classmethod
-    def get_tasks_by_pool_name(cls, pool_name: str) -> List["Task"]:
+    def get_tasks_by_pool_name(cls, pool_name: PoolName) -> List["Task"]:
         tasks = cls.search_states(states=TaskState.available())
         if not tasks:
             return []
@@ -180,37 +187,46 @@ class Task(BASE_TASK, ORMMixin):
         return pool_tasks
 
     def mark_stopping(self) -> None:
-        if self.state in [TaskState.stopped, TaskState.stopping]:
+        if self.state in TaskState.shutting_down():
             logging.debug(
                 "ignoring post-task stop calls to stop %s:%s", self.job_id, self.task_id
             )
             return
 
-        self.set_state(TaskState.stopping, send=False)
-        send_event(
-            EventTaskStopped(
-                job_id=self.job_id, task_id=self.task_id, user_info=self.user_info
-            )
-        )
+        self.set_state(TaskState.stopping)
 
-    def mark_failed(self, error: Error) -> None:
-        if self.state in [TaskState.stopped, TaskState.stopping]:
+    def mark_failed(
+        self, error: Error, tasks_in_job: Optional[List["Task"]] = None
+    ) -> None:
+        if self.state in TaskState.shutting_down():
             logging.debug(
                 "ignoring post-task stop failures for %s:%s", self.job_id, self.task_id
             )
             return
 
-        self.error = error
-        self.set_state(TaskState.stopping, send=False)
+        logging.error("task failed %s:%s - %s", self.job_id, self.task_id, error)
 
-        send_event(
-            EventTaskFailed(
-                job_id=self.job_id,
-                task_id=self.task_id,
-                error=error,
-                user_info=self.user_info,
-            )
-        )
+        self.error = error
+        self.set_state(TaskState.stopping)
+
+        self.mark_dependants_failed(tasks_in_job=tasks_in_job)
+
+    def mark_dependants_failed(
+        self, tasks_in_job: Optional[List["Task"]] = None
+    ) -> None:
+        if tasks_in_job is None:
+            tasks_in_job = Task.search(query={"job_id": [self.job_id]})
+
+        for task in tasks_in_job:
+            if task.config.prereq_tasks:
+                if self.task_id in task.config.prereq_tasks:
+                    task.mark_failed(
+                        Error(
+                            code=ErrorCode.TASK_FAILED,
+                            errors=["prerequisite task failed"],
+                        ),
+                        tasks_in_job,
+                    )
 
     def get_pool(self) -> Optional[Pool]:
         if self.config.pool:
@@ -287,7 +303,7 @@ class Task(BASE_TASK, ORMMixin):
     def key_fields(cls) -> Tuple[str, str]:
         return ("job_id", "task_id")
 
-    def set_state(self, state: TaskState, send: bool = True) -> None:
+    def set_state(self, state: TaskState) -> None:
         if self.state == state:
             return
 
@@ -297,11 +313,33 @@ class Task(BASE_TASK, ORMMixin):
 
         self.save()
 
-        send_event(
-            EventTaskStateUpdated(
-                job_id=self.job_id,
-                task_id=self.task_id,
-                state=self.state,
-                end_time=self.end_time,
+        if self.state == TaskState.stopped:
+            if self.error:
+                send_event(
+                    EventTaskFailed(
+                        job_id=self.job_id,
+                        task_id=self.task_id,
+                        error=self.error,
+                        user_info=self.user_info,
+                        config=self.config,
+                    )
+                )
+            else:
+                send_event(
+                    EventTaskStopped(
+                        job_id=self.job_id,
+                        task_id=self.task_id,
+                        user_info=self.user_info,
+                        config=self.config,
+                    )
+                )
+        else:
+            send_event(
+                EventTaskStateUpdated(
+                    job_id=self.job_id,
+                    task_id=self.task_id,
+                    state=self.state,
+                    end_time=self.end_time,
+                    config=self.config,
+                )
             )
-        )

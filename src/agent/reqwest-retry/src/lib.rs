@@ -1,62 +1,27 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
-use backoff::{self, future::FutureOperation, ExponentialBackoff};
+use backoff::{self, future::retry_notify, ExponentialBackoff};
+use onefuzz_telemetry::warn;
 use reqwest::{Response, StatusCode};
 use std::{
-    sync::atomic::{AtomicI32, Ordering},
+    sync::atomic::{AtomicUsize, Ordering},
     time::Duration,
 };
 
-use std::error::Error as StdError;
-use std::io::ErrorKind;
+pub const DEFAULT_RETRY_PERIOD: Duration = Duration::from_secs(5);
+pub const MAX_RETRY_ATTEMPTS: usize = 5;
 
-const DEFAULT_RETRY_PERIOD: Duration = Duration::from_secs(2);
-const MAX_ELAPSED_TIME: Duration = Duration::from_secs(30);
-const MAX_RETRY_ATTEMPTS: i32 = 5;
+pub enum RetryCheck {
+    Retry,
+    Fail,
+    Succeed,
+}
 
-fn to_backoff_response(
-    result: Result<Response, reqwest::Error>,
-) -> Result<Response, backoff::Error<anyhow::Error>> {
-    fn is_transient_socket_error(error: &reqwest::Error) -> bool {
-        let source = error.source();
-        while let Some(err) = source {
-            if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
-                match io_error.kind() {
-                    ErrorKind::ConnectionAborted
-                    | ErrorKind::ConnectionReset
-                    | ErrorKind::TimedOut
-                    | ErrorKind::NotConnected => return true,
-                    _ => (),
-                }
-            }
-        }
-        false
-    }
-
-    match result {
-        Err(error) => {
-            if is_transient_socket_error(&error) {
-                Err(backoff::Error::Transient(anyhow::Error::from(error)))
-            } else {
-                Err(backoff::Error::Permanent(anyhow::Error::from(error)))
-            }
-        }
-        Ok(response) => match response.status() {
-            status if status.is_success() => Ok(response),
-            StatusCode::REQUEST_TIMEOUT
-            | StatusCode::TOO_MANY_REQUESTS
-            | StatusCode::INTERNAL_SERVER_ERROR
-            | StatusCode::BAD_GATEWAY
-            | StatusCode::SERVICE_UNAVAILABLE
-            | StatusCode::GATEWAY_TIMEOUT => Ok(response
-                .error_for_status()
-                .map_err(|error| backoff::Error::Transient(anyhow::Error::from(error)))?),
-            _ => Ok(response),
-        },
-    }
+fn always_retry(_: StatusCode) -> RetryCheck {
+    RetryCheck::Retry
 }
 
 pub async fn send_retry_reqwest_default<
@@ -66,101 +31,140 @@ pub async fn send_retry_reqwest_default<
 ) -> Result<Response> {
     send_retry_reqwest(
         build_request,
+        |_| RetryCheck::Retry,
         DEFAULT_RETRY_PERIOD,
-        MAX_ELAPSED_TIME,
         MAX_RETRY_ATTEMPTS,
-        to_backoff_response,
     )
     .await
 }
 
-pub async fn send_retry_reqwest<
-    F: Fn() -> Result<reqwest::RequestBuilder> + Send + Sync,
-    F2: Fn(Result<Response, reqwest::Error>) -> Result<Response, backoff::Error<anyhow::Error>>
-        + Send
-        + Sync,
->(
+pub async fn send_retry_reqwest<F, R>(
     build_request: F,
+    check_status: R,
     retry_period: Duration,
-    max_elapsed_time: Duration,
-    max_retry: i32,
-    error_mapper: F2,
-) -> Result<Response> {
-    let counter = AtomicI32::new(0);
+    max_retry: usize,
+) -> Result<Response>
+where
+    F: Fn() -> Result<reqwest::RequestBuilder> + Send + Sync,
+    R: Fn(StatusCode) -> RetryCheck + Send + Sync,
+{
+    let counter = AtomicUsize::new(0);
     let op = || async {
-        if counter.fetch_add(1, Ordering::SeqCst) >= max_retry {
-            Result::<Response, backoff::Error<anyhow::Error>>::Err(backoff::Error::Permanent(
-                anyhow::Error::msg("Maximum number of attempts reached for this request"),
-            ))
-        } else {
-            let request = build_request().map_err(backoff::Error::Permanent)?;
-            let response = request.send().await;
-            Result::<Response, backoff::Error<anyhow::Error>>::Ok(error_mapper(response)?)
+        let attempt_count = counter.fetch_add(1, Ordering::SeqCst);
+        let request = build_request().map_err(|err| backoff::Error::Permanent(Err(err)))?;
+        let result = request
+            .send()
+            .await
+            .with_context(|| format!("request attempt {} failed", attempt_count + 1));
+
+        match result {
+            Err(x) => {
+                if attempt_count >= max_retry {
+                    Err(backoff::Error::Permanent(Err(x)))
+                } else {
+                    Err(backoff::Error::Transient(Err(x)))
+                }
+            }
+            Ok(x) => {
+                if x.status().is_success() {
+                    Ok(x)
+                } else {
+                    let status = x.status();
+                    let result = check_status(status);
+
+                    match result {
+                        RetryCheck::Succeed => Ok(x),
+                        RetryCheck::Fail => {
+                            match x.error_for_status().with_context(|| {
+                                format!("request attempt {} failed", attempt_count + 1)
+                            }) {
+                                // the is_success check earlier should have taken care of this already.
+                                Ok(x) => Ok(x),
+                                Err(as_err) => Err(backoff::Error::Permanent(Err(as_err))),
+                            }
+                        }
+                        RetryCheck::Retry => {
+                            match x.error_for_status().with_context(|| {
+                                format!("request attempt {} failed", attempt_count + 1)
+                            }) {
+                                // the is_success check earlier should have taken care of this already.
+                                Ok(x) => Ok(x),
+                                Err(as_err) => {
+                                    if attempt_count >= max_retry {
+                                        Err(backoff::Error::Permanent(Err(as_err)))
+                                    } else {
+                                        Err(backoff::Error::Transient(Err(as_err)))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     };
-    let result = op
-        .retry_notify(
-            ExponentialBackoff {
-                current_interval: retry_period,
-                initial_interval: retry_period,
-                max_elapsed_time: Some(max_elapsed_time),
-                ..ExponentialBackoff::default()
-            },
-            |err, _| println!("Transient error: {}", err),
-        )
-        .await?;
-    Ok(result)
+    let result = retry_notify(
+        ExponentialBackoff {
+            current_interval: retry_period,
+            initial_interval: retry_period,
+            ..ExponentialBackoff::default()
+        },
+        op,
+        |err: Result<Response, anyhow::Error>, dur| match err {
+            Ok(response) => {
+                if let Err(err) = response.error_for_status() {
+                    warn!("request attempt failed after {:?}: {:?}", dur, err)
+                }
+            }
+            err => warn!("request attempt failed after {:?}: {:?}", dur, err),
+        },
+    )
+    .await;
+
+    match result {
+        Ok(response) | Err(Ok(response)) => Ok(response),
+        Err(Err(err)) => Err(err),
+    }
 }
 
 #[async_trait]
 pub trait SendRetry {
-    async fn send_retry<
-        F: Fn(Result<Response, reqwest::Error>) -> Result<Response, backoff::Error<anyhow::Error>>
-            + Send
-            + Sync,
-    >(
+    async fn send_retry<R>(
         self,
+        check_status: R,
         retry_period: Duration,
-        max_elapsed_time: Duration,
-        max_retry: i32,
-        error_mapper: F,
-    ) -> Result<Response>;
+        max_retry: usize,
+    ) -> Result<Response>
+    where
+        R: Fn(StatusCode) -> RetryCheck + Send + Sync;
     async fn send_retry_default(self) -> Result<Response>;
 }
 
 #[async_trait]
 impl SendRetry for reqwest::RequestBuilder {
     async fn send_retry_default(self) -> Result<Response> {
-        self.send_retry(
-            DEFAULT_RETRY_PERIOD,
-            MAX_ELAPSED_TIME,
-            MAX_RETRY_ATTEMPTS,
-            to_backoff_response,
-        )
-        .await
+        self.send_retry(always_retry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS)
+            .await
     }
 
-    async fn send_retry<
-        F: Fn(Result<Response, reqwest::Error>) -> Result<Response, backoff::Error<anyhow::Error>>
-            + Send
-            + Sync,
-    >(
+    async fn send_retry<R>(
         self,
+        check_status: R,
         retry_period: Duration,
-        max_elapsed_time: Duration,
-        max_retry: i32,
-        response_mapper: F,
-    ) -> Result<Response> {
+        max_retry: usize,
+    ) -> Result<Response>
+    where
+        R: Fn(StatusCode) -> RetryCheck + Send + Sync,
+    {
         let result = send_retry_reqwest(
             || {
                 self.try_clone().ok_or_else(|| {
                     anyhow::Error::msg("This request cannot be retried because it cannot be cloned")
                 })
             },
+            check_status,
             retry_period,
-            max_elapsed_time,
             max_retry,
-            response_mapper,
         )
         .await?;
 
@@ -172,15 +176,106 @@ impl SendRetry for reqwest::RequestBuilder {
 mod test {
     use super::*;
 
-    #[tokio::test]
-    async fn empty_stack() -> Result<()> {
-        let resp = reqwest::Client::new()
-            .get("http://localhost:5000/api/testGet")
-            .send_retry_default()
-            .await?;
-        println!("{:?}", resp);
+    fn always_fail(_: StatusCode) -> RetryCheck {
+        RetryCheck::Fail
+    }
 
-        assert!(resp.error_for_status().is_err());
+    fn succeed_400(code: StatusCode) -> RetryCheck {
+        match code {
+            StatusCode::BAD_REQUEST => RetryCheck::Succeed,
+            _ => RetryCheck::Retry,
+        }
+    }
+
+    #[tokio::test]
+    async fn retry_success() -> Result<()> {
+        reqwest::Client::new()
+            .get("https://httpstat.us/200")
+            .send_retry_default()
+            .await?
+            .error_for_status()?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn retry_socket_failure() -> Result<()> {
+        let invalid_url = "http://127.0.0.1:81/test.txt";
+        let resp = reqwest::Client::new()
+            .get(invalid_url)
+            .send_retry(always_retry, Duration::from_millis(1), 3)
+            .await;
+
+        match resp {
+            Ok(_) => {
+                anyhow::bail!("response should have failed: {}", invalid_url);
+            }
+            Err(err) => {
+                let as_text = format!("{:?}", err);
+                assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn retry_fail_normal() -> Result<()> {
+        let invalid_url = "https://httpstat.us/400";
+        let resp = reqwest::Client::new()
+            .get(invalid_url)
+            .send_retry(always_retry, Duration::from_millis(1), 3)
+            .await;
+
+        match resp {
+            Ok(result) => {
+                anyhow::bail!("response should have failed: {:?}", result);
+            }
+            Err(err) => {
+                let as_text = format!("{:?}", err);
+                assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn retry_fail_fast() -> Result<()> {
+        let invalid_url = "https://httpstat.us/400";
+        let resp = reqwest::Client::new()
+            .get(invalid_url)
+            .send_retry(always_fail, Duration::from_millis(1), 3)
+            .await;
+
+        assert!(resp.is_err(), "{:?}", resp);
+        let as_text = format!("{:?}", resp);
+        assert!(as_text.contains("request attempt 1 failed"), "{}", as_text);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn retry_400_success() -> Result<()> {
+        let invalid_url = "https://httpstat.us/400";
+        let resp = reqwest::Client::new()
+            .get(invalid_url)
+            .send_retry(succeed_400, Duration::from_millis(1), 3)
+            .await?;
+
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn retry_400_with_retry() -> Result<()> {
+        let invalid_url = "https://httpstat.us/401";
+        let resp = reqwest::Client::new()
+            .get(invalid_url)
+            .send_retry(succeed_400, Duration::from_millis(1), 3)
+            .await;
+
+        assert!(resp.is_err(), "{:?}", resp);
+        let as_text = format!("{:?}", resp);
+        assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
         Ok(())
     }
 }

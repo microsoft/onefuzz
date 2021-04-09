@@ -4,7 +4,9 @@
 # Licensed under the MIT License.
 
 import logging
+import ntpath
 import os
+import posixpath
 from typing import Dict, List, Optional
 from uuid import UUID
 
@@ -49,7 +51,7 @@ def check_container(
     compare: Compare,
     expected: int,
     container_type: ContainerType,
-    containers: Dict[ContainerType, List[str]],
+    containers: Dict[ContainerType, List[Container]],
 ) -> None:
     actual = len(containers.get(container_type, []))
     if not check_val(compare, expected, actual):
@@ -62,7 +64,7 @@ def check_container(
 def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
     checked = set()
 
-    containers: Dict[ContainerType, List[str]] = {}
+    containers: Dict[ContainerType, List[Container]] = {}
     for container in config.containers:
         if container.name not in checked:
             if not container_exists(container.name, StorageType.corpus):
@@ -90,6 +92,35 @@ def check_containers(definition: TaskDefinition, config: TaskConfig) -> None:
                 "unable to monitor container type as it is not used by this task: %s"
                 % definition.monitor_queue.name
             )
+
+
+def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
+    if config.task.target_exe is None:
+        if TaskFeature.target_exe in definition.features:
+            raise TaskConfigError("missing target_exe")
+
+        if TaskFeature.target_exe_optional in definition.features:
+            return
+
+        return
+
+    # Azure Blob Store uses virtualized directory structures.  As such, we need
+    # the paths to already be canonicalized.  As an example, accessing the blob
+    # store path "./foo" generates an exception, but "foo" and "foo/bar" do
+    # not.
+    if (
+        posixpath.relpath(config.task.target_exe) != config.task.target_exe
+        or ntpath.relpath(config.task.target_exe) != config.task.target_exe
+    ):
+        raise TaskConfigError("target_exe must be a canonicalized relative path")
+
+    container = [x for x in config.containers if x.type == ContainerType.setup][0]
+    if not blob_exists(container.name, config.task.target_exe, StorageType.corpus):
+        err = "target_exe `%s` does not exist in the setup container `%s`" % (
+            config.task.target_exe,
+            container.name,
+        )
+        LOGGER.warning(err)
 
 
 def check_config(config: TaskConfig) -> None:
@@ -132,14 +163,7 @@ def check_config(config: TaskConfig) -> None:
     else:
         raise TaskConfigError("either the vm or pool must be specified")
 
-    if TaskFeature.target_exe in definition.features:
-        container = [x for x in config.containers if x.type == ContainerType.setup][0]
-        if not blob_exists(container.name, config.task.target_exe, StorageType.corpus):
-            err = "target_exe `%s` does not exist in the setup container `%s`" % (
-                config.task.target_exe,
-                container.name,
-            )
-            LOGGER.warning(err)
+    check_target_exe(config, definition)
 
     if TaskFeature.generator_exe in definition.features:
         container = [x for x in config.containers if x.type == ContainerType.tools][0]
@@ -181,8 +205,8 @@ def build_task_config(
         job_id=job_id,
         task_id=task_id,
         task_type=task_config.task.type,
-        instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
-        telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+        instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+        microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "task-heartbeat",
             StorageType.config,
@@ -218,9 +242,7 @@ def build_task_config(
                         StorageType.corpus,
                         read=ContainerPermission.Read in container_def.permissions,
                         write=ContainerPermission.Write in container_def.permissions,
-                        add=ContainerPermission.Add in container_def.permissions,
                         delete=ContainerPermission.Delete in container_def.permissions,
-                        create=ContainerPermission.Create in container_def.permissions,
                         list=ContainerPermission.List in container_def.permissions,
                     ),
                 }
@@ -253,6 +275,12 @@ def build_task_config(
         config.supervisor_input_marker = task_config.task.supervisor_input_marker
 
     if TaskFeature.target_exe in definition.features:
+        config.target_exe = "setup/%s" % task_config.task.target_exe
+
+    if (
+        TaskFeature.target_exe_optional in definition.features
+        and task_config.task.target_exe
+    ):
         config.target_exe = "setup/%s" % task_config.task.target_exe
 
     if TaskFeature.target_env in definition.features:
@@ -319,6 +347,12 @@ def build_task_config(
             if task_config.task.check_fuzzer_help is not None
             else True
         )
+
+    if TaskFeature.report_list in definition.features:
+        config.report_list = task_config.task.report_list
+
+    if TaskFeature.minimized_stack_depth in definition.features:
+        config.minimized_stack_depth = task_config.task.minimized_stack_depth
 
     if TaskFeature.expect_crash_on_failure in definition.features:
         config.expect_crash_on_failure = (

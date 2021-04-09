@@ -4,13 +4,14 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
-from onefuzztypes.models import Report, TeamsTemplate
+from onefuzztypes.models import RegressionReport, Report, TeamsTemplate
 from onefuzztypes.primitives import Container
 
 from ..azure.containers import auth_download_url
+from ..secrets import get_secret_string_value
 from ..tasks.config import get_setup_container
 from ..tasks.main import Task
 
@@ -46,18 +47,22 @@ def send_teams_webhook(
     if text:
         message["sections"].append({"text": text})
 
-    response = requests.post(config.url, json=message)
+    config_url = get_secret_string_value(config.url)
+    response = requests.post(config_url, json=message)
     if not response.ok:
         logging.error("webhook failed %s %s", response.status_code, response.content)
 
 
 def notify_teams(
-    config: TeamsTemplate, container: Container, filename: str, report: Optional[Report]
+    config: TeamsTemplate,
+    container: Container,
+    filename: str,
+    report: Optional[Union[Report, RegressionReport]],
 ) -> None:
     text = None
     facts: List[Dict[str, str]] = []
 
-    if report:
+    if isinstance(report, Report):
         task = Task.get(report.job_id, report.task_id)
         if not task:
             logging.error(

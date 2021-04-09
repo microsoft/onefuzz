@@ -261,7 +261,7 @@ libfuzzer_linux = JobTemplate(
             name="expect_crash_on_failure",
             help="Require crashes upon non-zero exits from libfuzzer",
             type=UserFieldType.Bool,
-            default=True,
+            default=False,
             locations=[
                 UserFieldLocation(
                     op=UserFieldOperation.add,
@@ -308,6 +308,17 @@ libfuzzer_linux = JobTemplate(
                 UserFieldLocation(
                     op=UserFieldOperation.replace,
                     path="/tasks/1/task/target_timeout",
+                ),
+            ],
+        ),
+        UserField(
+            name="minimized_stack_depth",
+            help="Number of frames to include in the minimized stack",
+            type=UserFieldType.Int,
+            locations=[
+                UserFieldLocation(
+                    op=UserFieldOperation.replace,
+                    path="/tasks/1/task/minimized_stack_depth",
                 ),
             ],
         ),

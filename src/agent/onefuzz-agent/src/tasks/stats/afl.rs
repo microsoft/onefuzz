@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::{Context, Error, Result};
-use onefuzz::telemetry::EventData;
+use onefuzz_telemetry::EventData;
 use std::path::Path;
 use tokio::io::AsyncBufReadExt;
 

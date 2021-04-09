@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_else_if)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::unreadable_literal)]
 #![allow(clippy::single_match)]
@@ -50,7 +51,7 @@ pub struct BreakpointId(pub u64);
 
 #[derive(Copy, Clone)]
 pub(crate) enum StepState {
-    Breakpoint { pc: u64 },
+    RemoveBreakpoint { pc: u64, original_byte: u8 },
     SingleStep,
 }
 
@@ -58,7 +59,6 @@ pub(crate) enum StepState {
 pub enum BreakpointType {
     Counter,
     OneTime,
-    StepOut { rsp: u64 },
 }
 
 pub(crate) struct ModuleBreakpoint {
@@ -238,7 +238,10 @@ impl Debugger {
         mut command: Command,
         callbacks: &mut impl DebugEventHandler,
     ) -> Result<(Self, Child)> {
-        let child = command.creation_flags(DEBUG_ONLY_THIS_PROCESS).spawn()?;
+        let child = command
+            .creation_flags(DEBUG_ONLY_THIS_PROCESS)
+            .spawn()
+            .context("debugee failed to start")?;
 
         check_winapi(|| unsafe { DebugSetProcessKillOnExit(TRUE) })
             .context("Setting DebugSetProcessKillOnExit to TRUE")?;
@@ -368,7 +371,7 @@ impl Debugger {
         &mut self,
         callbacks: &mut impl DebugEventHandler,
         timeout_ms: DWORD,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let mut de = MaybeUninit::uninit();
         if unsafe { WaitForDebugEvent(de.as_mut_ptr(), timeout_ms) } == TRUE {
             let de = unsafe { de.assume_init() };
@@ -381,6 +384,7 @@ impl Debugger {
                 process_id: de.process_id(),
                 thread_id: de.thread_id(),
             });
+            Ok(true)
         } else {
             self.continue_args = None;
 
@@ -390,9 +394,8 @@ impl Debugger {
             }
 
             trace!("timeout waiting for debug event");
+            Ok(false)
         }
-
-        Ok(())
     }
 
     pub fn continue_debugging(&mut self) -> Result<()> {
@@ -567,14 +570,14 @@ impl Debugger {
                 Ok(DBG_CONTINUE)
             }
             Some(DebuggerNotification::Clr) => Ok(DBG_CONTINUE),
-            Some(DebuggerNotification::Breakpoint(pc)) => {
+            Some(DebuggerNotification::Breakpoint { pc }) => {
                 if let Some(bp_id) = self.target.handle_breakpoint(pc)? {
                     callbacks.on_breakpoint(self, bp_id);
                 }
                 Ok(DBG_CONTINUE)
             }
-            Some(DebuggerNotification::SingleStep(step_state)) => {
-                self.target.handle_single_step(step_state)?;
+            Some(DebuggerNotification::SingleStep { thread_id }) => {
+                self.target.complete_single_step(thread_id);
                 Ok(DBG_CONTINUE)
             }
             None => {
@@ -676,6 +679,10 @@ impl Debugger {
         self.target.read_register_u64(reg)
     }
 
+    pub fn read_program_counter(&mut self) -> Result<u64> {
+        self.target.read_program_counter()
+    }
+
     pub fn read_flags_register(&mut self) -> Result<u32> {
         self.target.read_flags_register()
     }
@@ -697,7 +704,7 @@ impl Debugger {
         dbghlp.stackwalk_ex(
             self.target.process_handle(),
             self.target.current_thread_handle(),
-            |_frame_context, frame| {
+            |frame| {
                 return_address = frame.AddrReturn;
                 stack_pointer = frame.AddrStack;
 
@@ -714,33 +721,14 @@ impl Debugger {
         self.continue_debugging()?;
         Ok(true)
     }
-
-    /// Find the return address (and stack pointer to cover recursion), set a breakpoint
-    /// (internal, not reported to the client) that gets cleared after stepping out.
-    ///
-    /// The return address and stack pointer are returned so the caller can check
-    /// that the step out is complete regardless of other debug events that may happen before
-    /// hitting the breakpoint at the return address.
-    pub fn prepare_to_step_out(&mut self) -> Result<StackFrame> {
-        let stack_frame = self.get_current_frame()?;
-        let address = stack_frame.return_address();
-        self.register_absolute_breakpoint(
-            address,
-            BreakpointType::StepOut {
-                rsp: stack_frame.stack_pointer(),
-            },
-        )?;
-
-        Ok(stack_frame)
-    }
 }
 
 enum DebuggerNotification {
     Clr,
     InitialBreak,
     InitialWow64Break,
-    Breakpoint(u64),
-    SingleStep(StepState),
+    Breakpoint { pc: u64 },
+    SingleStep { thread_id: DWORD },
 }
 
 fn is_debugger_notification(
@@ -761,7 +749,9 @@ fn is_debugger_notification(
         EXCEPTION_BREAKPOINT => {
             if target.saw_initial_bp() {
                 if target.breakpoint_set_at_addr(exception_address) {
-                    Some(DebuggerNotification::Breakpoint(exception_address))
+                    Some(DebuggerNotification::Breakpoint {
+                        pc: exception_address,
+                    })
                 } else {
                     None
                 }
@@ -781,8 +771,9 @@ fn is_debugger_notification(
         }
 
         EXCEPTION_SINGLE_STEP => {
-            if let Some(step_state) = target.single_step(target.current_thread_handle()) {
-                Some(DebuggerNotification::SingleStep(step_state))
+            let thread_id = target.current_thread_id();
+            if target.expecting_single_step(thread_id) {
+                Some(DebuggerNotification::SingleStep { thread_id })
             } else {
                 // Unexpected single step - could be a logic bug in the debugger or less
                 // likely but possibly an intentional exception in the debug target.

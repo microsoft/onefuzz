@@ -7,6 +7,7 @@
 #![allow(clippy::unreadable_literal)]
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::needless_return)]
+#![allow(clippy::upper_case_acronyms)]
 /// This module defines a wrapper around dbghelp apis so they can be used in a thread safe manner
 /// as well as providing a more Rust like api.
 use std::{
@@ -324,7 +325,7 @@ impl FrameContext {
                 R15 => cr.0.R15,
                 RDI => cr.0.Rdi,
                 RSI => cr.0.Rsi,
-                RBP => cr.0.Rbx,
+                RBP => cr.0.Rbp,
                 RSP => cr.0.Rsp,
                 CS | DS | ES | FS | SS => 0u64,
                 // GS points to the TEB in 64b but there is no official documented way
@@ -343,7 +344,7 @@ impl FrameContext {
                 EDX => cr.Edx as u64,
                 EDI => cr.Edi as u64,
                 ESI => cr.Esi as u64,
-                EBP => cr.Ebx as u64,
+                EBP => cr.Ebp as u64,
                 ESP => cr.Esp as u64,
                 _ => unimplemented!("Register read {:?}", reg),
             },
@@ -407,6 +408,7 @@ impl ModuleInfo {
     }
 }
 
+#[derive(Clone, Debug, Hash, PartialEq)]
 pub struct SymInfo {
     symbol: String,
     address: u64,
@@ -514,7 +516,7 @@ impl DebugHelpGuard {
         }
     }
 
-    pub fn stackwalk_ex<F: FnMut(&FrameContext, &STACKFRAME_EX) -> bool>(
+    pub fn stackwalk_ex<F: FnMut(&STACKFRAME_EX) -> bool>(
         &self,
         process_handle: HANDLE,
         thread_handle: HANDLE,
@@ -550,7 +552,7 @@ impl DebugHelpGuard {
                 break;
             }
 
-            if !f(&frame_context, &frame) {
+            if !f(&frame) {
                 break;
             }
         }
@@ -602,7 +604,7 @@ impl DebugHelpGuard {
     ) -> Result<SymLineInfo> {
         let mut line_info: IMAGEHLP_LINEW64 = unsafe { MaybeUninit::zeroed().assume_init() };
         line_info.SizeOfStruct = size_of::<IMAGEHLP_LINEW64>() as DWORD;
-        let mut displacement = 0 as DWORD;
+        let mut displacement: DWORD = 0;
         check_winapi(|| unsafe {
             SymGetLineFromInlineContextW(
                 process_handle,

@@ -7,9 +7,12 @@ members = [
     "onefuzz",
     "onefuzz-agent",
     "onefuzz-supervisor",
+    "onefuzz-telemetry",
     "reqwest-retry",
     "storage-queue",
     "win-util",
+    "libclusterfuzz",
+    "stacktrace-parser",
 ]
 
 [profile.release]

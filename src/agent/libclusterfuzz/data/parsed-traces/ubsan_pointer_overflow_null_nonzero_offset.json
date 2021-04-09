@@ -1,0 +1,191 @@
+{
+  "text": "Running: /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/crash-711bfa4abfce32eefd009ed5e6aff6ad1df26753\n../../courgette/disassembler_win32.cc:241:44: runtime error: applying non-zero offset 255 to null pointer\n    #0 0x56431fe9163e in courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*) courgette/disassembler_win32.cc:241:44\n    #1 0x56431fe91ed9 in courgette::DisassemblerWin32::ExtractAbs32Locations() courgette/disassembler_win32.cc:369:8\n    #2 0x56431fe67c67 in courgette::Disassembler::CreateProgram(bool) courgette/disassembler.cc:59:17\n    #3 0x56431fe62d5f in courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool) courgette/courgette_flow.cc:116:33\n    #4 0x56431fcd0e20 in LLVMFuzzerTestOneInput testing/libfuzzer/fuzzers/courgette_fuzzer.cc:17:8\n    #5 0x56431fd0c7e6 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:556:15\n    #6 0x56431fcf1385 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:292:6\n    #7 0x56431fcf4489 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:774:9\n    #8 0x56431fd1674a in main third_party/libFuzzer/src/FuzzerMain.cpp:19:10\n    #9 0x7f79915ec82f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/../csu/libc-start.c:291\n    #10 0x56431fcbb829 in _start (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-718607/courgette_fuzzer+0x23d829)\nSUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ../../courgette/disassembler_win32.cc:241:44 in\nExecuted /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/crash-711bfa4abfce32eefd009ed5e6aff6ad1df26753 in 4395 ms",
+  "sanitizer": "UndefinedBehaviorSanitizer",
+  "summary": "UndefinedBehaviorSanitizer: undefined-behavior ../../courgette/disassembler_win32.cc:241:44 in",
+  "fault_type": "undefined-behavior",
+  "call_stack": [
+    "#0 0x56431fe9163e in courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*) courgette/disassembler_win32.cc:241:44",
+    "#1 0x56431fe91ed9 in courgette::DisassemblerWin32::ExtractAbs32Locations() courgette/disassembler_win32.cc:369:8",
+    "#2 0x56431fe67c67 in courgette::Disassembler::CreateProgram(bool) courgette/disassembler.cc:59:17",
+    "#3 0x56431fe62d5f in courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool) courgette/courgette_flow.cc:116:33",
+    "#4 0x56431fcd0e20 in LLVMFuzzerTestOneInput testing/libfuzzer/fuzzers/courgette_fuzzer.cc:17:8",
+    "#5 0x56431fd0c7e6 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:556:15",
+    "#6 0x56431fcf1385 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:292:6",
+    "#7 0x56431fcf4489 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:774:9",
+    "#8 0x56431fd1674a in main third_party/libFuzzer/src/FuzzerMain.cpp:19:10",
+    "#9 0x7f79915ec82f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/../csu/libc-start.c:291",
+    "#10 0x56431fcbb829 in _start (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-718607/courgette_fuzzer+0x23d829)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x56431fe9163e in courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*) courgette/disassembler_win32.cc:241:44",
+      "address": 94846298166846,
+      "function_name": "courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*)",
+      "function_offset": 44,
+      "source_file_name": "disassembler_win32.cc",
+      "source_file_path": "courgette/disassembler_win32.cc",
+      "source_file_line": 241
+    },
+    {
+      "line": "#1 0x56431fe91ed9 in courgette::DisassemblerWin32::ExtractAbs32Locations() courgette/disassembler_win32.cc:369:8",
+      "address": 94846298169049,
+      "function_name": "courgette::DisassemblerWin32::ExtractAbs32Locations()",
+      "function_offset": 8,
+      "source_file_name": "disassembler_win32.cc",
+      "source_file_path": "courgette/disassembler_win32.cc",
+      "source_file_line": 369
+    },
+    {
+      "line": "#2 0x56431fe67c67 in courgette::Disassembler::CreateProgram(bool) courgette/disassembler.cc:59:17",
+      "address": 94846297996391,
+      "function_name": "courgette::Disassembler::CreateProgram(bool)",
+      "function_offset": 17,
+      "source_file_name": "disassembler.cc",
+      "source_file_path": "courgette/disassembler.cc",
+      "source_file_line": 59
+    },
+    {
+      "line": "#3 0x56431fe62d5f in courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool) courgette/courgette_flow.cc:116:33",
+      "address": 94846297976159,
+      "function_name": "courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool)",
+      "function_offset": 33,
+      "source_file_name": "courgette_flow.cc",
+      "source_file_path": "courgette/courgette_flow.cc",
+      "source_file_line": 116
+    },
+    {
+      "line": "#4 0x56431fcd0e20 in LLVMFuzzerTestOneInput testing/libfuzzer/fuzzers/courgette_fuzzer.cc:17:8",
+      "address": 94846296329760,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 8,
+      "source_file_name": "courgette_fuzzer.cc",
+      "source_file_path": "testing/libfuzzer/fuzzers/courgette_fuzzer.cc",
+      "source_file_line": 17
+    },
+    {
+      "line": "#5 0x56431fd0c7e6 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:556:15",
+      "address": 94846296573926,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 15,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 556
+    },
+    {
+      "line": "#6 0x56431fcf1385 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:292:6",
+      "address": 94846296462213,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 292
+    },
+    {
+      "line": "#7 0x56431fcf4489 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:774:9",
+      "address": 94846296474761,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 774
+    },
+    {
+      "line": "#8 0x56431fd1674a in main third_party/libFuzzer/src/FuzzerMain.cpp:19:10",
+      "address": 94846296614730,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerMain.cpp",
+      "source_file_line": 19
+    },
+    {
+      "line": "#9 0x7f79915ec82f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/../csu/libc-start.c:291",
+      "address": 140160106678319,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-LK5gWL/glibc-2.23/csu/../csu/libc-start.c",
+      "source_file_line": 291
+    },
+    {
+      "line": "#10 0x56431fcbb829 in _start (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-718607/courgette_fuzzer+0x23d829)",
+      "address": 94846296242217,
+      "function_name": "_start",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-718607/courgette_fuzzer",
+      "module_offset": 2349097
+    }
+  ],
+  "full_stack_names": [
+    "courgette::DisassemblerWin32::ParseRelocs",
+    "courgette::DisassemblerWin32::ExtractAbs32Locations",
+    "courgette::Disassembler::CreateProgram",
+    "courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x56431fe9163e in courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*) courgette/disassembler_win32.cc:241:44",
+      "address": 94846298166846,
+      "function_name": "courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*)",
+      "function_offset": 44,
+      "source_file_name": "disassembler_win32.cc",
+      "source_file_path": "courgette/disassembler_win32.cc",
+      "source_file_line": 241
+    },
+    {
+      "line": "#1 0x56431fe91ed9 in courgette::DisassemblerWin32::ExtractAbs32Locations() courgette/disassembler_win32.cc:369:8",
+      "address": 94846298169049,
+      "function_name": "courgette::DisassemblerWin32::ExtractAbs32Locations()",
+      "function_offset": 8,
+      "source_file_name": "disassembler_win32.cc",
+      "source_file_path": "courgette/disassembler_win32.cc",
+      "source_file_line": 369
+    },
+    {
+      "line": "#2 0x56431fe67c67 in courgette::Disassembler::CreateProgram(bool) courgette/disassembler.cc:59:17",
+      "address": 94846297996391,
+      "function_name": "courgette::Disassembler::CreateProgram(bool)",
+      "function_offset": 17,
+      "source_file_name": "disassembler.cc",
+      "source_file_path": "courgette/disassembler.cc",
+      "source_file_line": 59
+    },
+    {
+      "line": "#3 0x56431fe62d5f in courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool) courgette/courgette_flow.cc:116:33",
+      "address": 94846297976159,
+      "function_name": "courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool)",
+      "function_offset": 33,
+      "source_file_name": "courgette_flow.cc",
+      "source_file_path": "courgette/courgette_flow.cc",
+      "source_file_line": 116
+    },
+    {
+      "line": "#4 0x56431fcd0e20 in LLVMFuzzerTestOneInput testing/libfuzzer/fuzzers/courgette_fuzzer.cc:17:8",
+      "address": 94846296329760,
+      "function_name": "courgette_fuzzer.cc",
+      "function_offset": 8,
+      "source_file_name": "courgette_fuzzer.cc",
+      "source_file_path": "testing/libfuzzer/fuzzers/courgette_fuzzer.cc",
+      "source_file_line": 17
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x56431fe9163e in courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*) courgette/disassembler_win32.cc:241:44",
+    "#1 0x56431fe91ed9 in courgette::DisassemblerWin32::ExtractAbs32Locations() courgette/disassembler_win32.cc:369:8",
+    "#2 0x56431fe67c67 in courgette::Disassembler::CreateProgram(bool) courgette/disassembler.cc:59:17",
+    "#3 0x56431fe62d5f in courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool) courgette/courgette_flow.cc:116:33",
+    "#4 0x56431fcd0e20 in LLVMFuzzerTestOneInput testing/libfuzzer/fuzzers/courgette_fuzzer.cc:17:8"
+  ],
+  "minimized_stack_function_names": [
+    "courgette::DisassemblerWin32::ParseRelocs",
+    "courgette::DisassemblerWin32::ExtractAbs32Locations",
+    "courgette::Disassembler::CreateProgram",
+    "courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler",
+    "courgette_fuzzer.cc"
+  ]
+}

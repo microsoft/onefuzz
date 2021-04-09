@@ -6,17 +6,16 @@ extern crate async_trait;
 #[macro_use]
 extern crate downcast_rs;
 #[macro_use]
-extern crate onefuzz;
-#[macro_use]
-extern crate serde;
-#[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate anyhow;
+#[macro_use]
+extern crate onefuzz_telemetry;
+extern crate onefuzz;
 
 use crate::{
-    config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::*, work::WorkSet,
-    worker::WorkerEvent,
+    config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,
+    work::WorkSet, worker::WorkerEvent,
 };
 use std::path::PathBuf;
 
@@ -24,17 +23,18 @@ use anyhow::Result;
 use onefuzz::{
     machine_id::{get_machine_id, get_scaleset_name},
     process::ExitStatus,
-    telemetry::{self, EventData},
 };
+use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use structopt::StructOpt;
 
 pub mod agent;
-pub mod auth;
+pub mod buffer;
 pub mod commands;
 pub mod config;
 pub mod coordinator;
 pub mod debug;
 pub mod done;
+pub mod failure;
 pub mod heartbeat;
 pub mod reboot;
 pub mod scheduler;
@@ -88,7 +88,7 @@ fn licenses() -> Result<()> {
 
 fn run(opt: RunOpt) -> Result<()> {
     if done::is_agent_done()? {
-        verbose!(
+        debug!(
             "agent is done, remove lock ({}) to continue",
             done::done_path()?.display()
         );
@@ -109,6 +109,9 @@ fn run(opt: RunOpt) -> Result<()> {
 
     if let Err(err) = &result {
         error!("error running supervisor agent: {}", err);
+        if let Err(err) = failure::save_failure(err) {
+            error!("unable to save failure log: {}", err);
+        }
     }
 
     telemetry::try_flush_and_close();
@@ -135,13 +138,16 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
     // failed, then exit as a failure.
 
     if let Some(work) = WorkSet::load_from_fs_context().await? {
-        let failure = "onefuzz-supervisor failed to launch task due to pre-existing config";
+        let failure = match failure::read_failure() {
+            Ok(value) => format!("onefuzz-supervisor failed: {}", value),
+            Err(_) => "onefuzz-supervisor failed".into(),
+        };
 
         for unit in &work.work_units {
             let event = WorkerEvent::Done {
                 task_id: unit.task_id,
                 stdout: "".to_string(),
-                stderr: failure.to_string(),
+                stderr: failure.clone(),
                 exit_status: ExitStatus {
                     code: Some(1),
                     signal: None,
@@ -152,7 +158,7 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
         }
 
         let event = StateUpdateEvent::Done {
-            error: Some(failure.to_string()),
+            error: Some(failure),
             script_output: None,
         };
         coordinator.emit_event(event.into()).await?;
@@ -160,7 +166,10 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
         // force set done semaphore, as to not prevent the supervisor continuing
         // to report the workset as failed.
         done::set_done_lock().await?;
-        anyhow::bail!("error starting due to pre-existing workset");
+        anyhow::bail!(
+            "failed to start due to pre-existing workset config: {}",
+            WorkSet::context_path()?.display()
+        );
     }
 
     Ok(())
@@ -170,6 +179,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
     telemetry::set_property(EventData::InstanceId(config.instance_id));
     telemetry::set_property(EventData::MachineId(get_machine_id().await?));
     telemetry::set_property(EventData::Version(env!("ONEFUZZ_VERSION").to_string()));
+    telemetry::set_property(EventData::Role(Role::Supervisor));
     let scaleset = get_scaleset_name().await?;
     if let Some(scaleset_name) = &scaleset {
         telemetry::set_property(EventData::ScalesetId(scaleset_name.to_string()));
@@ -185,10 +195,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
             }
         }
     };
-    verbose!("current registration: {:?}", registration);
+    debug!("current registration: {:?}", registration);
 
     let mut coordinator = coordinator::Coordinator::new(registration.clone()).await?;
-    verbose!("initialized coordinator");
+    debug!("initialized coordinator");
 
     let mut reboot = reboot::Reboot;
     let reboot_context = reboot.load_context().await?;
@@ -196,9 +206,9 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
         check_existing_worksets(&mut coordinator).await?;
     }
     let scheduler = reboot_context.into();
-    verbose!("loaded scheduler: {}", scheduler);
+    debug!("loaded scheduler: {}", scheduler);
 
-    let work_queue = work::WorkQueue::new(registration.clone());
+    let work_queue = work::WorkQueue::new(registration.clone())?;
 
     let agent_heartbeat = match config.heartbeat_queue {
         Some(url) => Some(init_agent_heartbeat(url).await?),
@@ -224,7 +234,8 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 }
 
 fn init_telemetry(config: &StaticConfig) {
-    let inst_key = config.instrumentation_key;
-    let tele_key = config.telemetry_key;
-    telemetry::set_appinsights_clients(inst_key, tele_key);
+    telemetry::set_appinsights_clients(
+        config.instance_telemetry_key.clone(),
+        config.microsoft_telemetry_key.clone(),
+    );
 }

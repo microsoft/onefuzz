@@ -10,8 +10,9 @@ from onefuzztypes.requests import NodeGet, NodeSearch, NodeUpdate
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
-from ..onefuzzlib.pools import Node, NodeTasks
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.nodes import Node, NodeTasks
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -84,7 +85,7 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
 def patch(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(NodeGet, req)
     if isinstance(request, Error):
-        return not_ok(request, context="NodeRestart")
+        return not_ok(request, context="NodeReimage")
 
     node = Node.get_by_machine_id(request.machine_id)
     if not node:
@@ -93,14 +94,20 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
             context=request.machine_id,
         )
 
-    node.stop()
+    node.stop(done=True)
     if node.debug_keep_node:
         node.debug_keep_node = False
         node.save()
     return ok(BoolResult(result=True))
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
     methods = {"GET": get, "PATCH": patch, "DELETE": delete, "POST": post}
     method = methods[req.method]
-    return call_if_user(req, method)
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

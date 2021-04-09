@@ -5,7 +5,6 @@ use anyhow::Result;
 use async_trait::async_trait;
 use reqwest::Url;
 use std::path::Path;
-use tempfile::{tempdir, TempDir};
 
 use super::*;
 
@@ -84,12 +83,12 @@ impl Downloader for TestDownloader {
 
 #[derive(Default)]
 struct TestProcessor {
-    processed: Vec<(Url, PathBuf)>,
+    processed: Vec<(Option<Url>, PathBuf)>,
 }
 
 #[async_trait]
 impl Processor for TestProcessor {
-    async fn process(&mut self, url: Url, input: &Path) -> Result<()> {
+    async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
         self.processed.push((url, input.to_owned()));
 
         Ok(())
@@ -100,11 +99,8 @@ fn url_input_name(url: &Url) -> String {
     url.path_segments().unwrap().last().unwrap().to_owned()
 }
 
-fn fixture() -> (TempDir, InputPoller<Msg>) {
-    let dir = tempdir().unwrap();
-    let task = InputPoller::new(dir.path());
-
-    (dir, task)
+fn fixture() -> InputPoller<Msg> {
+    InputPoller::new("test")
 }
 
 fn url_fixture(msg: Msg) -> Url {
@@ -118,7 +114,7 @@ fn input_fixture(dir: &Path, msg: Msg) -> PathBuf {
 
 #[tokio::test]
 async fn test_ready_poll() {
-    let (_, mut task) = fixture();
+    let mut task = fixture();
 
     let msg: Msg = 0;
 
@@ -135,7 +131,7 @@ async fn test_ready_poll() {
 
 #[tokio::test]
 async fn test_polled_some_parse() {
-    let (_, mut task) = fixture();
+    let mut task = fixture();
 
     let msg: Msg = 0;
     let url = url_fixture(msg);
@@ -153,7 +149,7 @@ async fn test_polled_some_parse() {
 
 #[tokio::test]
 async fn test_polled_none_parse() {
-    let (_, mut task) = fixture();
+    let mut task = fixture();
 
     task.set_state(State::Polled(None));
 
@@ -166,11 +162,12 @@ async fn test_polled_none_parse() {
 
 #[tokio::test]
 async fn test_parsed_download() {
-    let (dir, mut task) = fixture();
+    let mut task = fixture();
 
+    let dir = Path::new("etc");
     let msg: Msg = 0;
     let url = url_fixture(msg);
-    let input = input_fixture(dir.path(), msg);
+    let input = input_fixture(&dir, msg);
 
     task.set_state(State::Parsed(msg, url.clone()));
 
@@ -180,31 +177,42 @@ async fn test_parsed_download() {
         .await
         .unwrap();
 
-    assert_eq!(task.state(), &State::Downloaded(msg, url.clone(), input));
-    assert_eq!(downloader.downloaded, vec![url]);
+    match task.state() {
+        State::Downloaded(got_msg, got_url, got_path, _tmp_dir) => {
+            assert_eq!(*got_msg, msg);
+            assert_eq!(*got_url, url);
+            assert_eq!(got_path.file_name(), input.file_name());
+        }
+        _ => {
+            panic!("unexpected state");
+        }
+    }
 }
 
 #[tokio::test]
 async fn test_downloaded_process() {
-    let (dir, mut task) = fixture();
+    let mut task = fixture();
+    let tmp_dir = tempfile::tempdir().unwrap();
+
+    let dir = Path::new("etc");
 
     let msg: Msg = 0;
     let url = url_fixture(msg);
-    let input = input_fixture(dir.path(), msg);
+    let input = input_fixture(dir, msg);
 
-    task.set_state(State::Downloaded(msg, url.clone(), input.clone()));
+    task.set_state(State::Downloaded(msg, url.clone(), input.clone(), tmp_dir));
 
     let mut processor = TestProcessor::default();
 
     task.trigger(Event::Process(&mut processor)).await.unwrap();
 
     assert_eq!(task.state(), &State::Processed(msg));
-    assert_eq!(processor.processed, vec![(url, input)]);
+    assert_eq!(processor.processed, vec![(Some(url), input)]);
 }
 
 #[tokio::test]
 async fn test_processed_finish() {
-    let (_, mut task) = fixture();
+    let mut task = fixture();
 
     let msg: Msg = 0;
 
@@ -220,7 +228,7 @@ async fn test_processed_finish() {
 
 #[tokio::test]
 async fn test_invalid_trigger() {
-    let (_, mut task) = fixture();
+    let mut task = fixture();
 
     let mut queue = TestQueue::default();
 
@@ -233,7 +241,7 @@ async fn test_invalid_trigger() {
 
 #[tokio::test]
 async fn test_valid_trigger_failed_action() {
-    let (_, mut task) = fixture();
+    let mut task = fixture();
 
     let mut queue = TestQueueAlwaysFails;
 

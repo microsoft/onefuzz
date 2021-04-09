@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::useless_format)]
+#![allow(clippy::upper_case_acronyms)]
 
 use std::{
     env,
@@ -1034,6 +1035,7 @@ impl AppVerifierController {
         );
         let child = Command::new(&self.appverif_path)
             .args(args)
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()

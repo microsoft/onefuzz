@@ -39,19 +39,17 @@ use crate::tasks::{
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use onefuzz::{
-    fs::list_files, libfuzzer::LibFuzzer, syncdir::SyncedDir, telemetry::Event::coverage_data,
-    telemetry::EventData,
-};
+use onefuzz::{fs::list_files, libfuzzer::LibFuzzer, syncdir::SyncedDir};
+use onefuzz_telemetry::{Event::coverage_data, EventData};
 use reqwest::Url;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::{
     ffi::OsString,
     path::{Path, PathBuf},
     sync::Arc,
 };
-use storage_queue::Message;
+use storage_queue::{Message, QueueClient};
 use tokio::fs;
 
 const TOTAL_COVERAGE: &str = "total.cov";
@@ -61,9 +59,12 @@ pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
-    pub input_queue: Option<Url>,
+    pub input_queue: Option<QueueClient>,
     pub readonly_inputs: Vec<SyncedDir>,
     pub coverage: SyncedDir,
+
+    #[serde(default = "default_bool_true")]
+    pub check_queue: bool,
 
     #[serde(default = "default_bool_true")]
     pub check_fuzzer_help: bool,
@@ -86,29 +87,25 @@ pub struct CoverageTask {
 }
 
 impl CoverageTask {
-    pub fn new(config: impl Into<Arc<Config>>) -> Self {
-        let config = config.into();
-
-        let task_dir = PathBuf::from(config.common.task_id.to_string());
-        let poller_dir = task_dir.join("poller");
-        let poller = InputPoller::<Message>::new(poller_dir);
-
+    pub fn new(config: Config) -> Self {
+        let config = Arc::new(config);
+        let poller = InputPoller::new("libfuzzer-coverage");
         Self { config, poller }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
+    pub async fn verify(&self) -> Result<()> {
+        let fuzzer = LibFuzzer::new(
+            &self.config.target_exe,
+            &self.config.target_options,
+            &self.config.target_env,
+            &self.config.common.setup_dir,
+        );
+        fuzzer.verify(self.config.check_fuzzer_help, None).await
+    }
+
+    pub async fn managed_run(&mut self) -> Result<()> {
         info!("starting libFuzzer coverage task");
-
-        if self.config.check_fuzzer_help {
-            let target = LibFuzzer::new(
-                &self.config.target_exe,
-                &self.config.target_options,
-                &self.config.target_env,
-                &self.config.common.setup_dir,
-            );
-            target.check_help().await?;
-        }
-
+        self.verify().await?;
         self.config.coverage.init_pull().await?;
         self.process().await
     }
@@ -116,10 +113,11 @@ impl CoverageTask {
     async fn process(&mut self) -> Result<()> {
         let mut processor = CoverageProcessor::new(self.config.clone()).await?;
 
+        info!("processing initial dataset");
         let mut seen_inputs = false;
         // Update the total with the coverage from each seed corpus.
         for dir in &self.config.readonly_inputs {
-            verbose!("recording coverage for {}", dir.path.display());
+            debug!("recording coverage for {}", dir.path.display());
             dir.init_pull().await?;
             if self.record_corpus_coverage(&mut processor, dir).await? {
                 seen_inputs = true;
@@ -144,8 +142,8 @@ impl CoverageTask {
 
         // If a queue has been provided, poll it for new coverage.
         if let Some(queue) = &self.config.input_queue {
-            verbose!("polling queue for new coverage");
-            let callback = CallbackImpl::new(queue.clone(), processor);
+            info!("polling queue for new coverage");
+            let callback = CallbackImpl::new(queue.clone(), processor)?;
             self.poller.run(callback).await?;
         }
 
@@ -186,7 +184,7 @@ pub struct CoverageProcessor {
     config: Arc<Config>,
     pub recorder: CoverageRecorder,
     pub total: TotalCoverage,
-    pub module_totals: HashMap<OsString, TotalCoverage>,
+    pub module_totals: BTreeMap<OsString, TotalCoverage>,
     heartbeat_client: Option<TaskHeartbeatClient>,
 }
 
@@ -195,7 +193,7 @@ impl CoverageProcessor {
         let heartbeat_client = config.common.init_heartbeat().await?;
         let total = TotalCoverage::new(config.coverage.path.join(TOTAL_COVERAGE));
         let recorder = CoverageRecorder::new(config.clone());
-        let module_totals = HashMap::default();
+        let module_totals = BTreeMap::default();
 
         Ok(Self {
             config,
@@ -212,7 +210,7 @@ impl CoverageProcessor {
             .ok_or_else(|| format_err!("module must have filename"))?
             .to_os_string();
 
-        verbose!("updating module info {:?}", module);
+        debug!("updating module info {:?}", module);
 
         if !self.module_totals.contains_key(&module) {
             let parent = &self.config.coverage.path.join("by-module");
@@ -229,16 +227,17 @@ impl CoverageProcessor {
 
         self.module_totals[&module].update_bytes(data).await?;
 
-        verbose!("updated {:?}", module);
+        debug!("updated {:?}", module);
         Ok(())
     }
 
-    async fn collect_by_module(&mut self, path: &Path) -> Result<PathBuf> {
-        let files = list_files(&path).await?;
+    async fn collect_by_module(&mut self, path: &Path) -> Result<()> {
+        let mut files = list_files(&path).await?;
+        files.sort();
         let mut sum = Vec::new();
 
         for file in &files {
-            verbose!("checking {:?}", file);
+            debug!("checking {:?}", file);
             let mut content = fs::read(file)
                 .await
                 .with_context(|| format!("unable to read module coverage: {}", file.display()))?;
@@ -253,14 +252,25 @@ impl CoverageProcessor {
             .await
             .with_context(|| format!("unable to write combined coverage file: {:?}", combined))?;
 
-        Ok(combined.into())
+        Ok(())
     }
 
     pub async fn test_input(&mut self, input: &Path) -> Result<()> {
         info!("processing input {:?}", input);
         let new_coverage = self.recorder.record(input).await?;
-        let combined = self.collect_by_module(&new_coverage).await?;
-        self.total.update(&combined).await?;
+        self.collect_by_module(&new_coverage).await?;
+        self.update_total().await?;
+        Ok(())
+    }
+
+    async fn update_total(&mut self) -> Result<()> {
+        let mut total = Vec::new();
+        for module_total in self.module_totals.values() {
+            if let Some(mut module_data) = module_total.data().await? {
+                total.append(&mut module_data);
+            }
+        }
+        self.total.write(&total).await?;
         Ok(())
     }
 
@@ -273,7 +283,7 @@ impl CoverageProcessor {
 
 #[async_trait]
 impl Processor for CoverageProcessor {
-    async fn process(&mut self, _url: Url, input: &Path) -> Result<()> {
+    async fn process(&mut self, _url: Option<Url>, input: &Path) -> Result<()> {
         self.heartbeat_client.alive();
         self.test_input(input).await?;
         self.report_total().await?;

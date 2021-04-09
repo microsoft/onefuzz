@@ -47,19 +47,12 @@ impl Fixture {
     }
 
     pub fn message(&self) -> Message {
-        let receipt = self.receipt();
         let work_set = self.work_set();
 
-        Message { receipt, work_set }
-    }
-
-    pub fn receipt(&self) -> Receipt {
-        let message_id = "6a0bc779-a1a8-4112-93cd-eb0d77529aa3".parse().unwrap();
-
-        Receipt(storage_queue::Receipt {
-            message_id,
-            pop_receipt: "abc".into(),
-        })
+        Message {
+            work_set,
+            queue_message: None,
+        }
     }
 
     pub fn work_set(&self) -> WorkSet {
@@ -97,7 +90,12 @@ async fn test_update_free_no_work() {
     assert!(matches!(agent.scheduler().unwrap(), Scheduler::Free(..)));
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
-    assert_eq!(double.claimed, &[]);
+    let claimed_worksets = double
+        .claimed
+        .iter()
+        .map(|cl| cl.work_set.clone())
+        .collect::<Vec<WorkSet>>();
+    assert_eq!(claimed_worksets, &[]);
 }
 
 #[tokio::test]
@@ -119,7 +117,12 @@ async fn test_update_free_has_work() {
     ));
 
     let double: &WorkQueueDouble = agent.work_queue.downcast_ref().unwrap();
-    assert_eq!(double.claimed, &[Fixture.receipt()]);
+    let claimed_worksets = double
+        .claimed
+        .iter()
+        .map(|cl| cl.work_set.clone())
+        .collect::<Vec<WorkSet>>();
+    assert_eq!(claimed_worksets, &[Fixture.work_set()]);
 }
 
 #[tokio::test]
@@ -218,4 +221,10 @@ async fn test_emitted_state_failed_setup() {
     let coordinator: &CoordinatorDouble = agent.coordinator.downcast_ref().unwrap();
     let events = &coordinator.events;
     assert_eq!(events, &expected_events);
+
+    // TODO: at some point, the underlying tests should be updated to not write
+    // this file in the first place.
+    tokio::fs::remove_file(crate::done::done_path().unwrap())
+        .await
+        .unwrap();
 }

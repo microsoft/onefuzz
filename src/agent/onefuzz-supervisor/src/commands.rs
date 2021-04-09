@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::auth::Secret;
-use anyhow::Result;
-use onefuzz::machine_id::get_scaleset_name;
+use anyhow::{Context, Result};
+use onefuzz::{auth::Secret, machine_id::get_scaleset_name};
 use std::process::Stdio;
 use tokio::{fs, io::AsyncWriteExt, process::Command};
 
@@ -44,7 +43,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
             .await?;
     }
 
-    verbose!("removing Authenticated Users permissions from administrators_authorized_keys");
+    debug!("removing Authenticated Users permissions from administrators_authorized_keys");
     let result = Command::new("icacls.exe")
         .arg(&admin_auth_keys_path)
         .arg("/remove")
@@ -52,9 +51,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("icacls failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("icalcs failed to run")?;
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",
@@ -63,16 +64,18 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         );
     }
 
-    verbose!("removing inheritance");
+    debug!("removing inheritance");
     let result = Command::new("icacls.exe")
         .arg(&admin_auth_keys_path)
         .arg("/inheritance:r")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("icacls failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("icacls failed to run")?;
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",
@@ -81,7 +84,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         );
     }
 
-    verbose!("copying ACL from ssh_host_dsa_key");
+    debug!("copying ACL from ssh_host_dsa_key");
     let result = Command::new("powershell.exe")
         .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
         .arg(format!(
@@ -92,9 +95,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("Powershell Get-ACL | Set-ACL failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("Powershell Get-ACL | Set-ACL failed to run")?;
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",
@@ -126,20 +131,22 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
     let mut ssh_path = home_path.join(".ssh");
     if !ssh_path.exists() {
-        verbose!("creating ssh directory: {}", ssh_path.display());
+        debug!("creating ssh directory: {}", ssh_path.display());
         fs::create_dir_all(&ssh_path).await?;
     }
 
-    verbose!("setting ssh permissions");
+    debug!("setting ssh permissions");
     let result = Command::new("chmod")
         .arg("700")
         .arg(&ssh_path)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("chmod failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("chmod failed to run")?;
     if !result.status.success() {
         bail!("set $HOME/.ssh permissions failed: {:?}", result);
     }
@@ -152,16 +159,18 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
             .await?;
     }
 
-    verbose!("setting authorized_keys permissions");
+    debug!("setting authorized_keys permissions");
     let result = Command::new("chmod")
         .arg("600")
         .arg(&ssh_path)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()?
+        .spawn()
+        .context("chmod failed to start")?
         .wait_with_output()
-        .await?;
+        .await
+        .context("chmod failed to run")?;
     if !result.status.success() {
         bail!(
             "set authorized_keys ({}) permissions failed: {:?}",

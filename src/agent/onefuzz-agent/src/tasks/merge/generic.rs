@@ -53,12 +53,13 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
     loop {
         hb_client.alive();
         let tmp_dir = PathBuf::from("./tmp");
-        verbose!("tmp dir reset");
+        debug!("tmp dir reset");
         utils::reset_tmp_dir(&tmp_dir).await?;
         config.unique_inputs.sync_pull().await?;
-        let mut queue = QueueClient::new(config.input_queue.clone());
+        let queue = QueueClient::new(config.input_queue.clone())?;
         if let Some(msg) = queue.pop().await? {
-            let input_url = match utils::parse_url_data(msg.data()) {
+            let input_url = msg.parse(utils::parse_url_data);
+            let input_url = match input_url {
                 Ok(url) => url,
                 Err(err) => {
                     error!("could not parse input URL from queue message: {}", err);
@@ -72,11 +73,11 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
                     error
                 );
             } else {
-                verbose!("will delete popped message with id = {}", msg.id());
+                debug!("will delete popped message with id = {}", msg.id());
 
-                queue.delete(msg).await?;
+                msg.delete().await?;
 
-                verbose!(
+                debug!(
                     "Attempting to delete {} from the candidate container",
                     input_url.clone()
                 );
@@ -88,11 +89,11 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
         } else {
             warn!("no new candidate inputs found, sleeping");
             delay_with_jitter(EMPTY_QUEUE_DELAY).await;
-        }
+        };
     }
 }
 
-async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &PathBuf) -> Result<()> {
+async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &Path) -> Result<()> {
     let input_path = utils::download_input(input_url.clone(), &config.unique_inputs.path).await?;
     info!("downloaded input to {}", input_path.display());
 
@@ -100,11 +101,11 @@ async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &PathBuf
     match merge(&config, tmp_dir).await {
         Ok(_) => {
             // remove the 'queue' folder
-            let mut queue_dir = tmp_dir.clone();
+            let mut queue_dir = tmp_dir.to_path_buf();
             queue_dir.push("queue");
             let _delete_output = tokio::fs::remove_dir_all(queue_dir).await;
             let synced_dir = SyncedDir {
-                path: tmp_dir.clone(),
+                path: tmp_dir.to_path_buf(),
                 url: config.unique_inputs.url.clone(),
             };
             synced_dir.sync_push().await?
@@ -129,9 +130,7 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
 }
 
 async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
-    let mut supervisor_args = Expand::new();
-
-    supervisor_args
+    let expand = Expand::new()
         .input_marker(&config.supervisor_input_marker)
         .input_corpus(&config.unique_inputs.path)
         .target_options(&config.target_options)
@@ -139,33 +138,37 @@ async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
         .supervisor_options(&config.supervisor_options)
         .generated_inputs(output_dir)
         .target_exe(&config.target_exe)
-        .setup_dir(&config.common.setup_dir);
-
-    if config.target_options_merge {
-        supervisor_args.target_options(&config.target_options);
-    }
-
-    let supervisor_path = Expand::new()
+        .setup_dir(&config.common.setup_dir)
         .tools_dir(&config.tools.path)
-        .evaluate_value(&config.supervisor_exe)?;
+        .job_id(&config.common.job_id)
+        .task_id(&config.common.task_id)
+        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
+            tester.microsoft_telemetry_key(&key)
+        })
+        .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
+            tester.instance_telemetry_key(&key)
+        });
+
+    let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
 
     let mut cmd = Command::new(supervisor_path);
 
     cmd.kill_on_drop(true)
         .env_remove("RUST_LOG")
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
     for (k, v) in &config.supervisor_env {
-        cmd.env(k, v);
+        cmd.env(k, expand.evaluate_value(v)?);
     }
 
-    for arg in supervisor_args.evaluate(&config.supervisor_options)? {
+    for arg in expand.evaluate(&config.supervisor_options)? {
         cmd.arg(arg);
     }
 
     if !config.target_options_merge {
-        for arg in supervisor_args.evaluate(&config.target_options)? {
+        for arg in expand.evaluate(&config.target_options)? {
             cmd.arg(arg);
         }
     }

@@ -13,9 +13,10 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, UserInfo
 
 from .azure.creds import get_scaleset_principal_id
-from .pools import Pool, Scaleset
 from .request import not_ok
 from .user_credentials import parse_jwt_token
+from .workers.pools import Pool
+from .workers.scalesets import Scaleset
 
 
 @cached(ttl=60)
@@ -31,6 +32,9 @@ def is_agent(token_data: UserInfo) -> bool:
         # verify object_id against the user assigned managed identity
         principal_id: UUID = get_scaleset_principal_id()
         return principal_id == token_data.object_id
+
+    if not token_data.application_id:
+        return False
 
     pools = Pool.search(query={"client_id": [token_data.application_id]})
     if len(pools) > 0:

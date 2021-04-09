@@ -1,68 +1,76 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::env;
+use std::{path::PathBuf, process::Command, process::Stdio};
 
 use anyhow::Result;
+use coverage::code::{CmdFilter, CmdFilterDef};
+use structopt::StructOpt;
+
+#[derive(Debug, PartialEq, StructOpt)]
+struct Opt {
+    #[structopt(short, long)]
+    filter: Option<std::path::PathBuf>,
+
+    #[structopt(min_values = 1)]
+    cmd: Vec<String>,
+}
+
+impl Opt {
+    pub fn load_filter_or_default(&self) -> Result<CmdFilter> {
+        if let Some(path) = &self.filter {
+            let data = std::fs::read(path)?;
+            let def: CmdFilterDef = serde_json::from_slice(&data)?;
+            CmdFilter::new(def)
+        } else {
+            Ok(CmdFilter::default())
+        }
+    }
+}
 
 #[cfg(target_os = "windows")]
 fn main() -> Result<()> {
-    use std::process::Command;
-
     env_logger::init();
 
-    let mut args = env::args().skip(1);
-    let exe = args.next().unwrap();
-    let args: Vec<_> = args.collect();
+    let opt = Opt::from_args();
+    let filter = opt.load_filter_or_default()?;
 
-    let mut cmd = Command::new(exe);
-    cmd.args(&args);
+    log::info!("recording coverage for: {:?}", opt.cmd);
 
-    let coverage = coverage::block::windows::record(cmd)?;
-    let hit = coverage.count_blocks_hit();
-    let found = coverage.count_blocks();
-    let percent = 100.0 * (hit as f64) / (found as f64);
+    let mut cmd = Command::new(&opt.cmd[0]);
+    cmd.args(&opt.cmd[1..]);
 
-    log::info!("block coverage = {}/{} ({:.2}%)", hit, found, percent);
+    let coverage = coverage::block::windows::record(cmd, filter)?;
+
+    for (module, cov) in coverage.iter() {
+        let total = cov.blocks.len();
+        let hit: u32 = cov.blocks.values().map(|b| b.count).sum();
+        let percent = 100.0 * (hit as f64) / (total as f64);
+        log::info!("module = {}, {} / {} ({:.2}%)", module, hit, total, percent);
+    }
 
     Ok(())
 }
 
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
-    use coverage::block::linux::record;
-    use pete::Command;
+    use coverage::block::linux::Recorder;
+    use coverage::cache::ModuleCache;
 
     env_logger::init();
 
-    let argv = env::args().skip(1).collect();
-    let cmd = Command::new(argv)?;
+    let opt = Opt::from_args();
+    let filter = opt.load_filter_or_default()?;
 
-    let coverage = record(cmd)?;
+    let mut cmd = Command::new(&opt.cmd[0]);
+    cmd.stdin(Stdio::null()).args(&opt.cmd[1..]);
 
-    for m in coverage.modules.values() {
-        let mut hit = 0;
-        let mut found = 0;
+    let mut cache = ModuleCache::default();
+    let mut recorder = Recorder::new(&mut cache, filter);
+    recorder.record(cmd)?;
 
-        let name = m.module.file_name().unwrap().to_string_lossy();
-
-        log::info!("{}", m.module.display());
-
-        for b in m.blocks.values() {
-            found += 1;
-
-            if b.count > 0 {
-                hit += 1;
-            };
-
-            let marker = if b.count == 0 { " " } else { "x" };
-
-            log::debug!("  [{}] {}+{:x}", marker, name, b.offset);
-        }
-
-        let percent = 100.0 * (hit as f64) / (found as f64);
-        log::info!("block coverage = {}/{} ({:.2}%)", hit, found, percent);
-    }
+    let coverage = serde_json::to_string_pretty(recorder.coverage())?;
+    println!("{}", coverage);
 
     Ok(())
 }

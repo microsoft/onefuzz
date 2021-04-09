@@ -5,8 +5,9 @@ use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use futures::stream::StreamExt;
-use onefuzz::{blob::BlobUrl, fs::OwnedDir, jitter::delay_with_jitter, syncdir::SyncedDir};
+use onefuzz::{blob::BlobUrl, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
+use tempfile::{tempdir, TempDir};
 use tokio::{fs, time::Duration};
 
 mod callback;
@@ -17,13 +18,30 @@ const POLL_INTERVAL: Duration = Duration::from_secs(10);
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub enum State<M> {
     Ready,
     Polled(Option<M>),
     Parsed(M, Url),
-    Downloaded(M, Url, PathBuf),
+    Downloaded(M, Url, PathBuf, TempDir),
     Processed(M),
+}
+
+impl<M: PartialEq> PartialEq for State<M> {
+    fn eq(&self, other: &State<M>) -> bool {
+        use State::*;
+
+        match (self, other) {
+            (Ready, Ready) => true,
+            (Polled(l), Polled(r)) => l == r,
+            (Parsed(l0, l1), Parsed(r0, r1)) => l0 == r0 && l1 == r1,
+            (Downloaded(l0, l1, l2, l3), Downloaded(r0, r1, r2, r3)) => {
+                l0 == r0 && l1 == r1 && l2 == r2 && l3.path() == r3.path()
+            }
+            (Processed(l), Processed(r)) => l == r,
+            _ => false,
+        }
+    }
 }
 
 impl<M> fmt::Display for State<M> {
@@ -78,10 +96,6 @@ impl<'a, M> fmt::Debug for Event<'a, M> {
 /// application data (here, the input URL, in some encoding) and metadata for
 /// operations like finalizing a dequeue with a pop receipt.
 pub struct InputPoller<M> {
-    /// Agent-local directory where the poller will download inputs.
-    /// Will be reset for each new input.
-    working_dir: OwnedDir,
-
     /// Internal automaton state.
     ///
     /// This is only nullable so we can internally `take()` the current state
@@ -89,16 +103,18 @@ pub struct InputPoller<M> {
     state: Option<State<M>>,
 
     batch_dir: Option<SyncedDir>,
+
+    name: String,
 }
 
 impl<M> InputPoller<M> {
-    pub fn new(working_dir: impl Into<PathBuf>) -> Self {
-        let working_dir = OwnedDir::new(working_dir);
+    pub fn new(name: impl AsRef<str>) -> Self {
+        let name = name.as_ref().to_owned();
         let state = Some(State::Ready);
         Self {
             state,
-            working_dir,
             batch_dir: None,
+            name,
         }
     }
 
@@ -110,13 +126,20 @@ impl<M> InputPoller<M> {
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
         to_process.init_pull().await?;
+        info!(
+            "batch processing directory: {} - {}",
+            self.name,
+            to_process.path.display()
+        );
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
         while let Some(file) = read_dir.next().await {
-            verbose!("Processing batch-downloaded input {:?}", file);
-
-            let file = file?;
-            let path = file.path();
+            let path = file?.path();
+            info!(
+                "processing batch-downloaded input: {} - {}",
+                self.name,
+                path.display()
+            );
 
             // Compute the file name relative to the synced directory, and thus the
             // container.
@@ -126,7 +149,7 @@ impl<M> InputPoller<M> {
                 let dir_relative = input_path.strip_prefix(&dir_path)?;
                 dir_relative.display().to_string()
             };
-            let url = to_process.url.blob(blob_name).url();
+            let url = to_process.try_url().map(|x| x.blob(blob_name).url()).ok();
 
             processor.process(url, &path).await?;
         }
@@ -137,8 +160,8 @@ impl<M> InputPoller<M> {
     pub async fn seen_in_batch(&self, url: &Url) -> Result<bool> {
         let result = if let Some(batch_dir) = &self.batch_dir {
             if let Ok(blob) = BlobUrl::new(url.clone()) {
-                batch_dir.url.account() == blob.account()
-                    && batch_dir.url.container() == blob.container()
+                batch_dir.try_url()?.account() == blob.account()
+                    && batch_dir.try_url()?.container() == blob.container()
                     && batch_dir.path.join(blob.name()).exists()
             } else {
                 false
@@ -147,15 +170,6 @@ impl<M> InputPoller<M> {
             false
         };
         Ok(result)
-    }
-
-    /// Path to the working directory.
-    ///
-    /// We will create or reset the working directory before entering the
-    /// `Downloaded` state, but a caller cannot otherwise assume it exists.
-    #[allow(unused)]
-    pub fn working_dir(&self) -> &OwnedDir {
-        &self.working_dir
     }
 
     /// Get the current automaton state, including the state data.
@@ -168,14 +182,21 @@ impl<M> InputPoller<M> {
     }
 
     pub async fn run(&mut self, mut cb: impl Callback<M>) -> Result<()> {
+        info!("starting input queue polling: {}", self.name);
         loop {
             match self.state() {
                 State::Polled(None) => {
-                    verbose!("Input queue empty, sleeping");
+                    debug!("Input queue empty, sleeping");
                     delay_with_jitter(POLL_INTERVAL).await;
                 }
-                State::Downloaded(_msg, _url, input) => {
-                    info!("Processing downloaded input: {:?}", input);
+                State::Downloaded(_msg, _url, input, _tempdir) => {
+                    // if we can't get the filename, just pass the whole thing to logging
+                    let filename = input.file_name().unwrap_or_else(|| input.as_ref());
+                    info!(
+                        "processing {} input: {}",
+                        self.name,
+                        filename.to_string_lossy()
+                    );
                 }
                 _ => {}
             }
@@ -249,21 +270,23 @@ impl<M> InputPoller<M> {
                 }
             }
             (Parsed(msg, url), Download(downloader)) => {
-                self.working_dir.reset().await?;
-
+                let download_dir = tempdir()?;
                 if self.seen_in_batch(&url).await? {
-                    verbose!("url was seen during batch processing: {:?}", url);
+                    debug!("url was seen during batch processing: {:?}", url);
                     self.set_state(Processed(msg));
                 } else {
                     let input = downloader
-                        .download(url.clone(), self.working_dir.path())
+                        .download(url.clone(), download_dir.path())
                         .await?;
 
-                    self.set_state(Downloaded(msg, url, input));
+                    self.set_state(Downloaded(msg, url, input, download_dir));
                 }
             }
-            (Downloaded(msg, url, input), Process(processor)) => {
-                processor.process(url, &input).await?;
+            // NOTE: _download_dir is a TempDir, which the physical path gets
+            // deleted automatically upon going out of scope.  Keep it in-scope until
+            // here.
+            (Downloaded(msg, url, input, _download_dir), Process(processor)) => {
+                processor.process(Some(url), &input).await?;
 
                 self.set_state(Processed(msg));
             }

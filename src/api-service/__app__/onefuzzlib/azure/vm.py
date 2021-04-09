@@ -8,7 +8,7 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
-from azure.mgmt.compute import ComputeManagementClient
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.compute.models import VirtualMachine
 from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
@@ -16,7 +16,8 @@ from onefuzztypes.models import Authentication, Error
 from onefuzztypes.primitives import Extension, Region
 from pydantic import BaseModel
 
-from .creds import get_base_resource_group, mgmt_client_factory
+from .compute import get_compute_client
+from .creds import get_base_resource_group
 from .disk import delete_disk, list_disks
 from .image import get_os
 from .ip import create_public_nic, delete_ip, delete_nic, get_ip, get_public_nic
@@ -26,7 +27,7 @@ def get_vm(name: str) -> Optional[VirtualMachine]:
     resource_group = get_base_resource_group()
 
     logging.debug("getting vm: %s", name)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
     try:
         return cast(
             VirtualMachine,
@@ -34,7 +35,7 @@ def get_vm(name: str) -> Optional[VirtualMachine]:
                 resource_group, name, expand="instanceView"
             ),
         )
-    except CloudError as err:
+    except (ResourceNotFoundError, CloudError) as err:
         logging.debug("vm does not exist %s", err)
         return None
 
@@ -50,7 +51,7 @@ def create_vm(
     resource_group = get_base_resource_group()
     logging.info("creating vm %s:%s:%s", resource_group, location, name)
 
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
 
     nic = get_public_nic(resource_group, name)
     if nic is None:
@@ -76,7 +77,6 @@ def create_vm(
         "os_profile": {
             "computer_name": "node",
             "admin_username": "onefuzz",
-            "admin_password": password,
         },
         "hardware_profile": {"vm_size": vm_sku},
         "storage_profile": {"image_reference": image_ref},
@@ -87,7 +87,11 @@ def create_vm(
     if isinstance(image_os, Error):
         return image_os
 
+    if image_os == OS.windows:
+        params["os_profile"]["admin_password"] = password
+
     if image_os == OS.linux:
+
         params["os_profile"]["linux_configuration"] = {
             "disable_password_authentication": True,
             "ssh": {
@@ -104,8 +108,10 @@ def create_vm(
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
 
     try:
-        compute_client.virtual_machines.create_or_update(resource_group, name, params)
-    except CloudError as err:
+        compute_client.virtual_machines.begin_create_or_update(
+            resource_group, name, params
+        )
+    except (ResourceNotFoundError, CloudError) as err:
         if "The request failed due to conflict with a concurrent request" in str(err):
             logging.debug(
                 "create VM had conflicts with concurrent request, ignoring %s", err
@@ -124,13 +130,13 @@ def get_extension(vm_name: str, extension_name: str) -> Optional[Any]:
         vm_name,
         extension_name,
     )
-    compute_client = mgmt_client_factory(ComputeManagementClient)
+    compute_client = get_compute_client()
     try:
         return compute_client.virtual_machine_extensions.get(
             resource_group, vm_name, extension_name
         )
-    except CloudError as err:
-        logging.error("extension does not exist %s", err)
+    except (ResourceNotFoundError, CloudError) as err:
+        logging.info("extension does not exist %s", err)
         return None
 
 
@@ -140,8 +146,8 @@ def create_extension(vm_name: str, extension: Dict) -> Any:
     logging.info(
         "creating extension: %s:%s:%s", resource_group, vm_name, extension["name"]
     )
-    compute_client = mgmt_client_factory(ComputeManagementClient)
-    return compute_client.virtual_machine_extensions.create_or_update(
+    compute_client = get_compute_client()
+    return compute_client.virtual_machine_extensions.begin_create_or_update(
         resource_group, vm_name, extension["name"], extension
     )
 
@@ -150,8 +156,8 @@ def delete_vm(name: str) -> Any:
     resource_group = get_base_resource_group()
 
     logging.info("deleting vm: %s %s", resource_group, name)
-    compute_client = mgmt_client_factory(ComputeManagementClient)
-    return compute_client.virtual_machines.delete(resource_group, name)
+    compute_client = get_compute_client()
+    return compute_client.virtual_machines.begin_delete(resource_group, name)
 
 
 def has_components(name: str) -> bool:

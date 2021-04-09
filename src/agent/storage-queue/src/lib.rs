@@ -1,179 +1,139 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
-use reqwest::{Client, Url};
-use reqwest_retry::SendRetry;
-use serde::{Deserialize, Serialize};
+use anyhow::{anyhow, Result};
+use reqwest::Url;
+use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
 
 pub const EMPTY_QUEUE_DELAY: Duration = Duration::from_secs(10);
+pub mod azure_queue;
+pub mod local_queue;
 
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "PascalCase")]
-struct QueueMessage {
-    message_text: Option<String>,
+use azure_queue::{AzureQueueClient, AzureQueueMessage};
+use local_queue::{ChannelQueueClient, FileQueueClient, LocalQueueMessage};
+
+#[derive(Debug, Clone)]
+pub enum QueueClient {
+    AzureQueue(AzureQueueClient),
+    FileQueueClient(Box<FileQueueClient>),
+    Channel(ChannelQueueClient),
 }
 
-pub struct QueueClient {
-    http: Client,
-    messages_url: Url,
+impl<'de> Deserialize<'de> for QueueClient {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Url::deserialize(deserializer)
+            .map(QueueClient::new)?
+            .map_err(serde::de::Error::custom)
+    }
 }
 
 impl QueueClient {
-    pub fn new(queue_url: Url) -> Self {
-        let http = Client::new();
+    pub fn new(queue_url: Url) -> Result<Self> {
+        if queue_url.scheme().to_lowercase() == "file" {
+            let path = queue_url
+                .to_file_path()
+                .map_err(|_| anyhow!("invalid local path"))?;
+            let local_queue = FileQueueClient::new(path)?;
+            Ok(QueueClient::FileQueueClient(Box::new(local_queue)))
+        } else {
+            Ok(QueueClient::AzureQueue(AzureQueueClient::new(queue_url)))
+        }
+    }
 
-        let messages_url = {
-            let queue_path = queue_url.path();
-            let messages_path = format!("{}/messages", queue_path);
-            let mut url = queue_url;
-            url.set_path(&messages_path);
-            url
-        };
-
-        Self { http, messages_url }
+    pub fn get_url(self) -> Result<Url> {
+        match self {
+            QueueClient::AzureQueue(queue_client) => Ok(queue_client.messages_url),
+            QueueClient::FileQueueClient(queue_client) => {
+                Url::from_file_path(queue_client.as_ref().path.clone())
+                    .map_err(|_| anyhow!("invalid queue url"))
+            }
+            QueueClient::Channel(queue_client) => Ok(queue_client.url),
+        }
     }
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
-        let serialized = serde_json::to_string(&data).unwrap();
-        let queue_message = QueueMessage {
-            message_text: Some(base64::encode(&serialized)),
-        };
-        let body = serde_xml_rs::to_string(&queue_message).unwrap();
-        let r = self
-            .http
-            .post(self.messages_url())
-            .body(body)
-            .send_retry_default()
-            .await?;
-        let _ = r.error_for_status()?;
-        Ok(())
+        match self {
+            QueueClient::AzureQueue(queue_client) => queue_client.enqueue(data).await,
+            QueueClient::FileQueueClient(queue_client) => queue_client.enqueue(data).await,
+            QueueClient::Channel(queue_client) => queue_client.enqueue(data).await,
+        }
     }
 
-    pub async fn pop(&mut self) -> Result<Option<Message>> {
-        let response = self
-            .http
-            .get(self.messages_url())
-            .send_retry_default()
-            .await?
-            .error_for_status()?;
-        let text = response.text().await?;
-        let msg = Message::parse(&text);
-
-        let msg = if let Some(msg) = msg {
-            msg
-        } else {
-            return Ok(None);
-        };
-
-        let msg = if msg.data.is_empty() { None } else { Some(msg) };
-
-        Ok(msg)
-    }
-
-    pub async fn delete(&mut self, receipt: impl Into<Receipt>) -> Result<()> {
-        let receipt = receipt.into();
-        let url = self.delete_url(receipt);
-        self.http
-            .delete(url)
-            .send_retry_default()
-            .await?
-            .error_for_status()?;
-        Ok(())
-    }
-
-    fn delete_url(&self, receipt: Receipt) -> Url {
-        let messages_url = self.messages_url();
-        let messages_path = messages_url.path();
-        let item_path = format!("{}/{}", messages_path, receipt.message_id);
-        let mut url = messages_url;
-        url.set_path(&item_path);
-        url.query_pairs_mut()
-            .append_pair("popreceipt", &receipt.pop_receipt);
-        url
-    }
-
-    fn messages_url(&self) -> Url {
-        self.messages_url.clone()
+    pub async fn pop(&self) -> Result<Option<Message>> {
+        match self {
+            QueueClient::AzureQueue(queue_client) => {
+                let message = queue_client.pop().await?;
+                Ok(message.map(Message::QueueMessage))
+            }
+            QueueClient::FileQueueClient(queue_client) => {
+                let message = queue_client.pop().await?;
+                Ok(message.map(Message::LocalQueueMessage))
+            }
+            QueueClient::Channel(queue_client) => {
+                let message = queue_client.pop().await?;
+                Ok(message.map(Message::LocalQueueMessage))
+            }
+        }
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Receipt {
-    // Unique ID of the associated queue message.
-    pub message_id: Uuid,
-
-    // Opaque data that licenses message deletion.
-    pub pop_receipt: String,
-}
-
-impl From<Message> for Receipt {
-    fn from(msg: Message) -> Self {
-        msg.receipt
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Message {
-    pub receipt: Receipt,
-    pub data: Vec<u8>,
+#[derive(Debug)]
+pub enum Message {
+    QueueMessage(AzureQueueMessage),
+    LocalQueueMessage(LocalQueueMessage),
 }
 
 impl Message {
+    pub fn get<T: DeserializeOwned>(&self) -> Result<T> {
+        match self {
+            Message::QueueMessage(message) => {
+                let data = message.get()?;
+                Ok(data)
+            }
+            Message::LocalQueueMessage(message) => Ok(serde_json::from_slice(&*message.data)?),
+        }
+    }
+
+    pub async fn claim<T: DeserializeOwned>(self) -> Result<T> {
+        match self {
+            Message::QueueMessage(message) => Ok(message.claim().await?),
+            Message::LocalQueueMessage(message) => Ok(serde_json::from_slice(&message.data)?),
+        }
+    }
+
+    pub async fn delete(&self) -> Result<()> {
+        match self {
+            Message::QueueMessage(message) => Ok(message.delete().await?),
+            Message::LocalQueueMessage(_) => Ok(()),
+        }
+    }
+
+    pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
+        match self {
+            Message::QueueMessage(message) => message.parse(parser),
+            Message::LocalQueueMessage(message) => parser(&*message.data),
+        }
+    }
+
+    pub fn update_url(self, new_url: Url) -> Self {
+        match self {
+            Message::QueueMessage(message) => Message::QueueMessage(AzureQueueMessage {
+                messages_url: Some(new_url),
+                ..message
+            }),
+            m => m,
+        }
+    }
+
     pub fn id(&self) -> Uuid {
-        self.receipt.message_id
+        match self {
+            Message::QueueMessage(message) => message.message_id,
+            Message::LocalQueueMessage(_message) => Uuid::default(),
+        }
     }
-
-    pub fn data(&self) -> &[u8] {
-        &self.data
-    }
-
-    fn parse(text: &str) -> Option<Message> {
-        let message_id = parse_message_id(text)?;
-        let pop_receipt = parse_pop_receipt(text)?;
-        let receipt = Receipt {
-            message_id,
-            pop_receipt,
-        };
-        let data = parse_data(text)?;
-
-        let msg = Self { receipt, data };
-
-        Some(msg)
-    }
-
-    pub fn get<'a, T: serde::de::Deserialize<'a>>(&'a self) -> Result<T> {
-        let data = serde_json::from_slice(&self.data)?;
-        Ok(data)
-    }
-}
-
-fn parse_message_id(text: &str) -> Option<Uuid> {
-    let pat = r"<MessageId>(.*)</MessageId>";
-    let re = regex::Regex::new(pat).unwrap();
-
-    let msg_id_text = re.captures_iter(text).next()?.get(1)?.as_str();
-
-    Uuid::parse_str(msg_id_text).ok()
-}
-
-fn parse_pop_receipt(text: &str) -> Option<String> {
-    let pat = r"<PopReceipt>(.*)</PopReceipt>";
-    let re = regex::Regex::new(pat).unwrap();
-
-    let text = re.captures_iter(text).next()?.get(1)?.as_str().into();
-
-    Some(text)
-}
-
-fn parse_data(text: &str) -> Option<Vec<u8>> {
-    let pat = r"<MessageText>(.*)</MessageText>";
-    let re = regex::Regex::new(pat).unwrap();
-
-    let encoded = re.captures_iter(text).next()?.get(1)?.as_str();
-    let decoded = base64::decode(encoded).ok()?;
-
-    Some(decoded)
 }

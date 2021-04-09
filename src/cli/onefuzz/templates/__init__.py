@@ -8,16 +8,17 @@ import os
 import tempfile
 import zipfile
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import uuid4
 
 from onefuzztypes.enums import OS, ContainerType, TaskState
 from onefuzztypes.models import Job, NotificationConfig
 from onefuzztypes.primitives import Container, Directory, File
 
-from onefuzz.backend import wait
+from ..job_templates.job_monitor import JobMonitor
 
 ELF_MAGIC = b"\x7fELF"
 DEFAULT_LINUX_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
-DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:rs5-pro:latest"
+DEFAULT_WINDOWS_IMAGE = "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest"
 
 
 class StoppedEarly(Exception):
@@ -32,12 +33,18 @@ def _build_container_name(
     build: str,
     platform: OS,
 ) -> Container:
-    if container_type == ContainerType.setup:
+    if container_type in [ContainerType.setup, ContainerType.coverage]:
         guid = onefuzz.utils.namespaced_guid(
             project,
             name,
             build=build,
             platform=platform.name,
+        )
+    elif container_type == ContainerType.regression_reports:
+        guid = onefuzz.utils.namespaced_guid(
+            project,
+            name,
+            build=build,
         )
     else:
         guid = onefuzz.utils.namespaced_guid(project, name)
@@ -71,7 +78,7 @@ class JobHelper:
         self.project = project
         self.name = name
         self.build = build
-        self.to_monitor: Dict[str, int] = {}
+        self.to_monitor: Dict[Container, int] = {}
 
         if platform is None:
             self.platform = JobHelper.get_platform(target_exe)
@@ -87,6 +94,7 @@ class JobHelper:
                 )
 
         self.wait_for_running: bool = False
+        self.wait_for_stopped: bool = False
         self.containers: Dict[ContainerType, Container] = {}
         self.tags: Dict[str, str] = {"project": project, "name": name, "build": build}
         if job is None:
@@ -116,12 +124,24 @@ class JobHelper:
                 self.platform,
             )
 
+    def get_unique_container_name(self, container_type: ContainerType) -> Container:
+        return Container(
+            "oft-%s-%s"
+            % (
+                container_type.name.replace("_", "-"),
+                uuid4().hex,
+            )
+        )
+
     def create_containers(self) -> None:
         for (container_type, container_name) in self.containers.items():
             self.logger.info("using container: %s", container_name)
             self.onefuzz.containers.create(
                 container_name, metadata={"container_type": container_type.name}
             )
+
+    def delete_container(self, container_name: Container) -> None:
+        self.onefuzz.containers.delete(container_name)
 
     def setup_notifications(self, config: Optional[NotificationConfig]) -> None:
         if not config:
@@ -200,7 +220,7 @@ class JobHelper:
 
             self.logger.info("uploading inputs from zip: `%s`" % path)
             self.onefuzz.containers.files.upload_dir(
-                self.containers[ContainerType.inputs], tmp_dir
+                self.containers[ContainerType.inputs], Directory(tmp_dir)
             )
 
     @classmethod
@@ -281,13 +301,11 @@ class JobHelper:
         )
 
     def wait(self) -> None:
-        if self.wait_for_running:
-            wait(self.is_running)
-            self.logger.info("tasks started")
-
-        if self.to_monitor:
-            wait(self.has_files)
-            self.logger.info("new files found")
+        JobMonitor(self.onefuzz, self.job).wait(
+            wait_for_running=self.wait_for_running,
+            wait_for_files=self.to_monitor,
+            wait_for_stopped=self.wait_for_stopped,
+        )
 
     def target_exe_blob_name(
         self, target_exe: File, setup_dir: Optional[Directory]

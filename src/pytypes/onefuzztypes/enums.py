@@ -57,6 +57,7 @@ class TaskFeature(Enum):
     stats_file = "stats_file"
     stats_format = "stats_format"
     target_exe = "target_exe"
+    target_exe_optional = "target_exe_optional"
     target_env = "target_env"
     target_options = "target_options"
     analyzer_exe = "analyzer_exe"
@@ -77,6 +78,8 @@ class TaskFeature(Enum):
     preserve_existing_outputs = "preserve_existing_outputs"
     check_fuzzer_help = "check_fuzzer_help"
     expect_crash_on_failure = "expect_crash_on_failure"
+    report_list = "report_list"
+    minimized_stack_depth = "minimized_stack_depth"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -85,10 +88,8 @@ class TaskFeature(Enum):
 class ContainerPermission(Enum):
     Read = "Read"
     Write = "Write"
-    Create = "Create"
     List = "List"
     Delete = "Delete"
-    Add = "Add"
 
 
 class JobState(Enum):
@@ -108,6 +109,10 @@ class JobState(Enum):
         set of states that indicate work is needed during eventing
         """
         return [cls.init, cls.stopping]
+
+    @classmethod
+    def shutting_down(cls) -> List["JobState"]:
+        return [cls.stopping, cls.stopped]
 
 
 class TaskState(Enum):
@@ -146,11 +151,13 @@ class TaskType(Enum):
     libfuzzer_coverage = "libfuzzer_coverage"
     libfuzzer_crash_report = "libfuzzer_crash_report"
     libfuzzer_merge = "libfuzzer_merge"
+    libfuzzer_regression = "libfuzzer_regression"
     generic_analysis = "generic_analysis"
     generic_supervisor = "generic_supervisor"
     generic_merge = "generic_merge"
     generic_generator = "generic_generator"
     generic_crash_report = "generic_crash_report"
+    generic_regression = "generic_regression"
 
 
 class VmState(Enum):
@@ -204,6 +211,7 @@ class ContainerType(Enum):
     tools = "tools"
     unique_inputs = "unique_inputs"
     unique_reports = "unique_reports"
+    regression_reports = "regression_reports"
 
     @classmethod
     def reset_defaults(cls) -> List["ContainerType"]:
@@ -216,8 +224,9 @@ class ContainerType(Enum):
             cls.readonly_inputs,
             cls.reports,
             cls.setup,
-            cls.unique_reports,
             cls.unique_inputs,
+            cls.unique_reports,
+            cls.regression_reports,
         ]
 
     @classmethod

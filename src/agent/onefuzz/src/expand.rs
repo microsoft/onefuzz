@@ -1,17 +1,20 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::sha256::digest_file_blocking;
 use anyhow::Result;
-use std::collections::HashMap;
+use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use std::path::{Path, PathBuf};
+use std::{collections::HashMap, hash::Hash};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use uuid::Uuid;
 
 pub enum ExpandedValue<'a> {
     Path(String),
     Scalar(String),
     List(&'a [String]),
-    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Option<ExpandedValue<'a>>>),
+    Mapping(Box<dyn Fn(&Expand<'a>, &str) -> Option<ExpandedValue<'a>> + Send>),
 }
 
 #[derive(PartialEq, Eq, Hash, EnumIter)]
@@ -34,6 +37,14 @@ pub enum PlaceHolder {
     SupervisorExe,
     SupervisorOptions,
     SetupDir,
+    ReportsDir,
+    JobId,
+    TaskId,
+    CrashesContainer,
+    CrashesAccount,
+    MicrosoftTelemetryKey,
+    InstanceTelemetryKey,
+    InputFileSha256,
 }
 
 impl PlaceHolder {
@@ -57,6 +68,14 @@ impl PlaceHolder {
             Self::SupervisorExe => "{supervisor_exe}",
             Self::SupervisorOptions => "{supervisor_options}",
             Self::SetupDir => "{setup_dir}",
+            Self::ReportsDir => "{reports_dir}",
+            Self::JobId => "{job_id}",
+            Self::TaskId => "{task_id}",
+            Self::CrashesContainer => "{crashes_container}",
+            Self::CrashesAccount => "{crashes_account}",
+            Self::MicrosoftTelemetryKey => "{microsoft_telemetry_key}",
+            Self::InstanceTelemetryKey => "{instance_telemetry_key}",
+            Self::InputFileSha256 => "{input_file_sha256}",
         }
         .to_string()
     }
@@ -83,7 +102,21 @@ impl<'a> Expand<'a> {
             PlaceHolder::InputFileName.get_string(),
             ExpandedValue::Mapping(Box::new(Expand::extract_file_name)),
         );
+        values.insert(
+            PlaceHolder::InputFileSha256.get_string(),
+            ExpandedValue::Mapping(Box::new(Expand::input_file_sha256)),
+        );
         Self { values }
+    }
+
+    fn input_file_sha256(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
+        match self.values.get(&PlaceHolder::Input.get_string()) {
+            Some(ExpandedValue::Path(fp)) => {
+                let file = PathBuf::from(fp);
+                digest_file_blocking(file).ok().map(ExpandedValue::Scalar)
+            }
+            _ => None,
+        }
     }
 
     fn extract_file_name_no_ext(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
@@ -110,118 +143,167 @@ impl<'a> Expand<'a> {
         }
     }
 
-    pub fn set_value(&mut self, name: PlaceHolder, value: ExpandedValue<'a>) -> &mut Self {
-        self.values.insert(name.get_string(), value);
-        self
+    pub fn set_value(self, name: PlaceHolder, value: ExpandedValue<'a>) -> Self {
+        let mut values = self.values;
+        values.insert(name.get_string(), value);
+        Self { values }
     }
 
-    pub fn generated_inputs(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn set_optional_ref<'l, T: 'l>(
+        self,
+        value: &'l Option<T>,
+        setter: impl FnOnce(Self, &'l T) -> Self,
+    ) -> Self {
+        if let Some(value) = value {
+            setter(self, value)
+        } else {
+            self
+        }
+    }
+
+    pub fn set_optional<T>(self, value: Option<T>, setter: impl FnOnce(Self, T) -> Self) -> Self {
+        if let Some(value) = value {
+            setter(self, value)
+        } else {
+            self
+        }
+    }
+
+    pub fn generated_inputs(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::GeneratedInputs, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::GeneratedInputs, ExpandedValue::Path(path))
     }
 
-    pub fn crashes(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn crashes(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::Crashes, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::Crashes, ExpandedValue::Path(path))
     }
 
-    pub fn input_path(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn input_path(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::Input, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::Input, ExpandedValue::Path(path))
     }
 
-    pub fn input_marker(&mut self, arg: &str) -> &mut Self {
-        self.set_value(PlaceHolder::Input, ExpandedValue::Scalar(String::from(arg)));
-        self
+    pub fn input_marker(self, arg: &str) -> Self {
+        self.set_value(PlaceHolder::Input, ExpandedValue::Scalar(String::from(arg)))
     }
 
-    pub fn input_corpus(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn input_corpus(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::InputCorpus, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::InputCorpus, ExpandedValue::Path(path))
     }
 
-    pub fn generator_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn generator_exe(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::GeneratorExe, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::GeneratorExe, ExpandedValue::Path(path))
     }
 
-    pub fn generator_options(&mut self, arg: &'a [String]) -> &mut Self {
-        self.set_value(PlaceHolder::GeneratorOptions, ExpandedValue::List(arg));
-        self
+    pub fn generator_options(self, arg: &'a [String]) -> Self {
+        self.set_value(PlaceHolder::GeneratorOptions, ExpandedValue::List(arg))
     }
 
-    pub fn target_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn target_exe(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::TargetExe, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::TargetExe, ExpandedValue::Path(path))
     }
 
-    pub fn target_options(&mut self, arg: &'a [String]) -> &mut Self {
-        self.set_value(PlaceHolder::TargetOptions, ExpandedValue::List(arg));
-        self
+    pub fn target_options(self, arg: &'a [String]) -> Self {
+        self.set_value(PlaceHolder::TargetOptions, ExpandedValue::List(arg))
     }
 
-    pub fn analyzer_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn analyzer_exe(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::AnalyzerExe, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::AnalyzerExe, ExpandedValue::Path(path))
     }
 
-    pub fn analyzer_options(&mut self, arg: &'a [String]) -> &mut Self {
-        self.set_value(PlaceHolder::AnalyzerOptions, ExpandedValue::List(arg));
-        self
+    pub fn analyzer_options(self, arg: &'a [String]) -> Self {
+        self.set_value(PlaceHolder::AnalyzerOptions, ExpandedValue::List(arg))
     }
 
-    pub fn supervisor_exe(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn supervisor_exe(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::SupervisorExe, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::SupervisorExe, ExpandedValue::Path(path))
     }
 
-    pub fn supervisor_options(&mut self, arg: &'a [String]) -> &mut Self {
-        self.set_value(PlaceHolder::SupervisorOptions, ExpandedValue::List(arg));
-        self
+    pub fn supervisor_options(self, arg: &'a [String]) -> Self {
+        self.set_value(PlaceHolder::SupervisorOptions, ExpandedValue::List(arg))
     }
 
-    pub fn output_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn output_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::OutputDir, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::OutputDir, ExpandedValue::Path(path))
     }
 
-    pub fn tools_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn reports_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::ToolsDir, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::ReportsDir, ExpandedValue::Path(path))
     }
 
-    pub fn runtime_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn tools_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::RuntimeDir, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::ToolsDir, ExpandedValue::Path(path))
     }
 
-    pub fn setup_dir(&mut self, arg: impl AsRef<Path>) -> &mut Self {
+    pub fn runtime_dir(self, arg: impl AsRef<Path>) -> Self {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
-        self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path));
-        self
+        self.set_value(PlaceHolder::RuntimeDir, ExpandedValue::Path(path))
+    }
+
+    pub fn setup_dir(self, arg: impl AsRef<Path>) -> Self {
+        let arg = arg.as_ref();
+        let path = String::from(arg.to_string_lossy());
+        self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path))
+    }
+
+    pub fn task_id(self, arg: &Uuid) -> Self {
+        let value = arg.to_hyphenated().to_string();
+        self.set_value(PlaceHolder::TaskId, ExpandedValue::Scalar(value))
+    }
+
+    pub fn job_id(self, arg: &Uuid) -> Self {
+        let value = arg.to_hyphenated().to_string();
+        self.set_value(PlaceHolder::JobId, ExpandedValue::Scalar(value))
+    }
+
+    pub fn microsoft_telemetry_key(self, arg: &MicrosoftTelemetryKey) -> Self {
+        let value = arg.to_string();
+        self.set_value(
+            PlaceHolder::MicrosoftTelemetryKey,
+            ExpandedValue::Scalar(value),
+        )
+    }
+    pub fn instance_telemetry_key(self, arg: &InstanceTelemetryKey) -> Self {
+        let value = arg.to_string();
+        self.set_value(
+            PlaceHolder::InstanceTelemetryKey,
+            ExpandedValue::Scalar(value),
+        )
+    }
+
+    pub fn crashes_account(self, arg: &str) -> Self {
+        self.set_value(
+            PlaceHolder::CrashesAccount,
+            ExpandedValue::Scalar(String::from(arg)),
+        )
+    }
+
+    pub fn crashes_container(self, arg: &str) -> Self {
+        self.set_value(
+            PlaceHolder::CrashesContainer,
+            ExpandedValue::Scalar(String::from(arg)),
+        )
     }
 
     fn replace_value(
@@ -287,8 +369,24 @@ impl<'a> Expand<'a> {
 #[cfg(test)]
 mod tests {
     use super::Expand;
-    use anyhow::Result;
+    use anyhow::{Context, Result};
     use std::path::Path;
+
+    #[test]
+    fn test_expand_nested() -> Result<()> {
+        let supervisor_options = vec!["{target_options}".to_string()];
+        let target_options: Vec<_> = vec!["a", "b", "c"].iter().map(|p| p.to_string()).collect();
+        let result = Expand::new()
+            .target_options(&target_options)
+            .evaluate(&supervisor_options)?;
+        let expected = vec!["a b c"];
+        assert_eq!(
+            result, expected,
+            "result: {:?} expected: {:?}",
+            result, expected
+        );
+        Ok(())
+    }
 
     #[test]
     fn test_expand() -> Result<()> {
@@ -317,8 +415,8 @@ mod tests {
         ];
 
         // The paths need to exist for canonicalization.
-        let input_path = "data/libfuzzer-asan-log.txt";
-        let input_corpus_dir = "data";
+        let input_path = "src/lib.rs";
+        let input_corpus_dir = "src";
         let generated_inputs_dir = "src";
 
         let result = Expand::new()
@@ -332,7 +430,7 @@ mod tests {
         let expected_input_corpus = input_corpus_path.to_string_lossy();
         let generated_inputs_path = dunce::canonicalize(generated_inputs_dir)?;
         let expected_generated_inputs = generated_inputs_path.to_string_lossy();
-        let input_full_path = dunce::canonicalize(input_path)?;
+        let input_full_path = dunce::canonicalize(input_path).context("canonicalize failed")?;
         let expected_input = input_full_path.to_string_lossy();
         let expected_options = format!(
             "inner {} then {} {}",
@@ -349,7 +447,7 @@ mod tests {
                 "c",
                 &expected_options,
                 "d",
-                "libfuzzer-asan-log",
+                "lib",
                 &expected_input,
                 &expected_input
             ]

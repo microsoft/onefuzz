@@ -1,0 +1,95 @@
+{
+  "text": "INFO: Seed: 2746158486\nINFO: Loaded 1 modules   (21 inline 8-bit counters): 21 [0x766ef0, 0x766f05), \nINFO: Loaded 1 PC tables (21 PCs): 21 [0x542fd0,0x543120), \n./fuzz.exe: Running 1 inputs 1 time(s) each.\nRunning: crash-cbe07cd3ebaba15610ecd968c4e4a04c6643e534\n=================================================================\n==17066==ERROR: AddressSanitizer: heap-use-after-free on address 0x602000000050 at pc 0x000000527476 bp 0x7ffeb9b631d0 sp 0x7ffeb9b631c8\nWRITE of size 4 at 0x602000000050 thread T0\n    #0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51\n    #1 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)\n    #2 0x41ef87 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41ef87)\n    #3 0x424ba1 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x424ba1)\n    #4 0x44bd72 in main (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x44bd72)\n    #5 0x7fbf0729bb96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310\n    #6 0x41d879 in _start (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41d879)\n\n0x602000000050 is located 0 bytes inside of 4-byte region [0x602000000050,0x602000000054)\nfreed by thread T0 here:\n    #0 0x4f72e2 in free (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x4f72e2)\n    #1 0x52742f in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:39\n    #2 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)\n    #3 0x41ef87 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41ef87)\n    #4 0x424ba1 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x424ba1)\n    #5 0x44bd72 in main (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x44bd72)\n    #6 0x7fbf0729bb96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310\n\npreviously allocated by thread T0 here:\n    #0 0x4f7663 in __interceptor_malloc (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x4f7663)\n    #1 0x527419 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:18\n    #2 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)\n    #3 0x41ef87 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41ef87)\n    #4 0x424ba1 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x424ba1)\n    #5 0x44bd72 in main (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x44bd72)\n    #6 0x7fbf0729bb96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310\n\nSUMMARY: AddressSanitizer: heap-use-after-free /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51 in LLVMFuzzerTestOneInput\nShadow bytes around the buggy address:\n  0x0c047fff7fb0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x0c047fff7fc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x0c047fff7fd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x0c047fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x0c047fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x0c047fff8000: fa fa 04 fa fa fa 04 fa fa fa[fd]fa fa fa fa fa\n  0x0c047fff8010: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x0c047fff8020: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x0c047fff8030: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x0c047fff8040: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x0c047fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n  Shadow gap:              cc\n==17066==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: heap-use-after-free /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51 in LLVMFuzzerTestOneInput",
+  "fault_type": "heap-use-after-free",
+  "call_stack": [
+    "#0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51",
+    "#1 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)",
+    "#2 0x41ef87 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41ef87)",
+    "#3 0x424ba1 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x424ba1)",
+    "#4 0x44bd72 in main (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x44bd72)",
+    "#5 0x7fbf0729bb96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310",
+    "#6 0x41d879 in _start (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41d879)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51",
+      "address": 5403765,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 51,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
+      "source_file_line": 45
+    },
+    {
+      "line": "#1 0x42fb3a in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x42fb3a)",
+      "address": 4389690,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
+      "module_offset": 4389690
+    },
+    {
+      "line": "#2 0x41ef87 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41ef87)",
+      "address": 4321159,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
+      "module_offset": 4321159
+    },
+    {
+      "line": "#3 0x424ba1 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x424ba1)",
+      "address": 4344737,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
+      "module_offset": 4344737
+    },
+    {
+      "line": "#4 0x44bd72 in main (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x44bd72)",
+      "address": 4504946,
+      "function_name": "main",
+      "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
+      "module_offset": 4504946
+    },
+    {
+      "line": "#5 0x7fbf0729bb96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310",
+      "address": 140458435656598,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c",
+      "source_file_line": 310
+    },
+    {
+      "line": "#6 0x41d879 in _start (/home/testuser/projects/onefuzz/samples/asan/fuzz.exe+0x41d879)",
+      "address": 4315257,
+      "function_name": "_start",
+      "module_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.exe",
+      "module_offset": 4315257
+    }
+  ],
+  "full_stack_names": [
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51",
+      "address": 5403765,
+      "function_name": "fuzz.c",
+      "function_offset": 51,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/testuser/projects/onefuzz/samples/asan/fuzz.c",
+      "source_file_line": 45
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x527475 in LLVMFuzzerTestOneInput /home/testuser/projects/onefuzz/samples/asan/fuzz.c:45:51"
+  ],
+  "minimized_stack_function_names": [
+    "fuzz.c"
+  ]
+}

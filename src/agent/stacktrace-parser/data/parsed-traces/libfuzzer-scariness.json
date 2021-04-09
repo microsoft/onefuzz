@@ -1,0 +1,116 @@
+{
+  "text": "=================================================================\n==28073==ERROR: AddressSanitizer: FPE on unknown address 0x0000004fd774 (pc 0x0000004fd774 bp 0x7ffd45d2c110 sp 0x7ffd45d2bf00 T0)\nSCARINESS: 10 (signal)\n    #0 0x4fd773 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32\n    #1 0x43b271 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43b271)\n    #2 0x43a9a5 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43a9a5)\n    #3 0x43cf9b in fuzzer::Fuzzer::MutateAndTestOne() (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43cf9b)\n    #4 0x43dd15 in fuzzer::Fuzzer::Loop(std::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43dd15)\n    #5 0x42999b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x42999b)\n    #6 0x4557a2 in main (/tmp/xx/linux-libfuzzer/fuzz.exe+0x4557a2)\n    #7 0x7fc6b74190b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16\n    #8 0x41db59 in _start (/tmp/xx/linux-libfuzzer/fuzz.exe+0x41db59)\n\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: FPE /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32 in LLVMFuzzerTestOneInput\n==28073==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: FPE /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32 in LLVMFuzzerTestOneInput",
+  "fault_type": "FPE",
+  "call_stack": [
+    "#0 0x4fd773 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32",
+    "#1 0x43b271 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43b271)",
+    "#2 0x43a9a5 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43a9a5)",
+    "#3 0x43cf9b in fuzzer::Fuzzer::MutateAndTestOne() (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43cf9b)",
+    "#4 0x43dd15 in fuzzer::Fuzzer::Loop(std::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43dd15)",
+    "#5 0x42999b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x42999b)",
+    "#6 0x4557a2 in main (/tmp/xx/linux-libfuzzer/fuzz.exe+0x4557a2)",
+    "#7 0x7fc6b74190b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16",
+    "#8 0x41db59 in _start (/tmp/xx/linux-libfuzzer/fuzz.exe+0x41db59)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x4fd773 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32",
+      "address": 5232499,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 32,
+      "source_file_name": "simple.c",
+      "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c",
+      "source_file_line": 58
+    },
+    {
+      "line": "#1 0x43b271 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43b271)",
+      "address": 4436593,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
+      "module_offset": 4436593
+    },
+    {
+      "line": "#2 0x43a9a5 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43a9a5)",
+      "address": 4434341,
+      "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool*)",
+      "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
+      "module_offset": 4434341
+    },
+    {
+      "line": "#3 0x43cf9b in fuzzer::Fuzzer::MutateAndTestOne() (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43cf9b)",
+      "address": 4444059,
+      "function_name": "fuzzer::Fuzzer::MutateAndTestOne()",
+      "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
+      "module_offset": 4444059
+    },
+    {
+      "line": "#4 0x43dd15 in fuzzer::Fuzzer::Loop(std::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x43dd15)",
+      "address": 4447509,
+      "function_name": "fuzzer::Fuzzer::Loop(std::vector<fuzzer::SizedFile, fuzzer::fuzzer_allocator<fuzzer::SizedFile> >&)",
+      "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
+      "module_offset": 4447509
+    },
+    {
+      "line": "#5 0x42999b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/tmp/xx/linux-libfuzzer/fuzz.exe+0x42999b)",
+      "address": 4364699,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
+      "module_offset": 4364699
+    },
+    {
+      "line": "#6 0x4557a2 in main (/tmp/xx/linux-libfuzzer/fuzz.exe+0x4557a2)",
+      "address": 4544418,
+      "function_name": "main",
+      "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
+      "module_offset": 4544418
+    },
+    {
+      "line": "#7 0x7fc6b74190b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16",
+      "address": 140491454779570,
+      "function_name": "__libc_start_main",
+      "function_offset": 16,
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c",
+      "source_file_line": 308
+    },
+    {
+      "line": "#8 0x41db59 in _start (/tmp/xx/linux-libfuzzer/fuzz.exe+0x41db59)",
+      "address": 4315993,
+      "function_name": "_start",
+      "module_path": "/tmp/xx/linux-libfuzzer/fuzz.exe",
+      "module_offset": 4315993
+    }
+  ],
+  "full_stack_names": [
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::Fuzzer::MutateAndTestOne",
+    "fuzzer::Fuzzer::Loop",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x4fd773 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32",
+      "address": 5232499,
+      "function_name": "simple.c",
+      "function_offset": 32,
+      "source_file_name": "simple.c",
+      "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c",
+      "source_file_line": 58
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x4fd773 in LLVMFuzzerTestOneInput /home/runner/work/onefuzz/onefuzz/src/integration-tests/libfuzzer/simple.c:58:32"
+  ],
+  "minimized_stack_function_names": [
+    "simple.c"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

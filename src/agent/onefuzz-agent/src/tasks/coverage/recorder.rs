@@ -25,6 +25,8 @@ pub struct CoverageRecorder {
     script_dir: OwnedDir,
 }
 
+const SYMBOL_EXTRACT_ERROR: &str = "Target appears to be missing sancov instrumentation. This error can also happen if symbols for the target are not available.";
+
 impl CoverageRecorder {
     pub fn new(config: Arc<Config>) -> Self {
         let script_dir =
@@ -57,28 +59,19 @@ impl CoverageRecorder {
         let script = self.invoke_debugger_script(test_input, &coverage_path)?;
         let output = script.wait_with_output().await?;
 
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+
         if !output.status.success() {
             let err = format_err!("coverage recording failed: {}", output.status);
             error!("{}", err);
-            error!(
-                "recording stderr: {}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-            error!(
-                "recording stdout: {}",
-                String::from_utf8_lossy(&output.stdout)
-            );
+            error!("recording stderr: {}", stderr);
+            error!("recording stdout: {}", stdout);
 
             return Err(err);
         } else {
-            verbose!(
-                "recording stderr: {}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-            verbose!(
-                "recording stdout: {}",
-                String::from_utf8_lossy(&output.stdout)
-            );
+            debug!("recording stderr: {}", stderr);
+            debug!("recording stdout: {}", stdout);
         }
 
         if !has_files(&coverage_path).await? {
@@ -90,7 +83,19 @@ impl CoverageRecorder {
                         coverage_path.display()
                     )
                 })?;
-            bail!("no coverage files for input: {}", test_input.display());
+
+            let filename = test_input
+                .file_name()
+                .ok_or_else(|| format_err!("unable to identify coverage input filename"))?;
+
+            bail!(
+                "{}\ntarget_exe: {}\ninput: {:?}\ndebugger stdout: {}\ndebugger stderr: {}",
+                SYMBOL_EXTRACT_ERROR,
+                self.config.target_exe.display(),
+                filename,
+                stdout,
+                stderr
+            );
         }
 
         Ok(coverage_path)
@@ -118,6 +123,7 @@ impl CoverageRecorder {
                 test_input.to_string_lossy(),
                 output.to_string_lossy(),
             ))
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);
@@ -126,7 +132,7 @@ impl CoverageRecorder {
             cmd.env(k, v);
         }
 
-        let child = cmd.spawn()?;
+        let child = cmd.spawn().context("gdb failed to start")?;
 
         Ok(child)
     }
@@ -155,6 +161,7 @@ impl CoverageRecorder {
             .arg(cdb_cmd)
             .arg(&self.config.target_exe)
             .arg(test_input)
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);
@@ -163,7 +170,7 @@ impl CoverageRecorder {
             cmd.env(k, v);
         }
 
-        let child = cmd.spawn()?;
+        let child = cmd.spawn().context("cdb.exe failed to start")?;
 
         Ok(child)
     }

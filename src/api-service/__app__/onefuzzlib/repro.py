@@ -27,7 +27,7 @@ from .tasks.main import Task
 
 DEFAULT_OS = {
     OS.linux: "Canonical:UbuntuServer:18.04-LTS:latest",
-    OS.windows: "MicrosoftWindowsDesktop:Windows-10:rs5-pro:latest",
+    OS.windows: "MicrosoftWindowsDesktop:Windows-10:20h2-pro:latest",
 }
 
 DEFAULT_SKU = "Standard_DS1_v2"
@@ -163,6 +163,12 @@ class Repro(BASE_REPRO, ORMMixin):
         report = get_report(self.config.container, self.config.path)
         if report is None:
             return Error(code=ErrorCode.VM_CREATE_FAILED, errors=["missing report"])
+
+        if report.input_blob is None:
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED,
+                errors=["unable to perform repro for crash reports without inputs"],
+            )
 
         files = {}
 

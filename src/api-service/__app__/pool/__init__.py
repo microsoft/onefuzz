@@ -22,16 +22,17 @@ from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.azure.vmss import list_available_skus
 from ..onefuzzlib.endpoint_authorization import call_if_user
-from ..onefuzzlib.pools import Pool
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.workers.pools import Pool
 
 
 def set_config(pool: Pool) -> Pool:
     pool.config = AgentConfig(
         pool_name=pool.name,
         onefuzz_url=get_instance_url(),
-        instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
-        telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+        instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+        microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         heartbeat_queue=get_queue_sas(
             "node-heartbeat",
             StorageType.config,
@@ -39,6 +40,11 @@ def set_config(pool: Pool) -> Pool:
         ),
         instance_id=get_instance_id(),
     )
+
+    multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
+    if multi_tenant_domain:
+        pool.config.multi_tenant_domain = multi_tenant_domain
+
     return pool
 
 
@@ -131,7 +137,13 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     return ok(BoolResult(result=True))
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
     methods = {"GET": get, "POST": post, "DELETE": delete}
     method = methods[req.method]
-    return call_if_user(req, method)
+    result = call_if_user(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

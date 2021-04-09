@@ -32,7 +32,7 @@ from uuid import UUID
 import jmespath
 from docstring_parser import parse as parse_docstring
 from msrest.serialization import Model
-from onefuzztypes.primitives import Container, Directory, File
+from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, ValidationError
 
 LOGGER = logging.getLogger("cli")
@@ -158,6 +158,8 @@ class Builder:
             int: {"type": int},
             UUID: {"type": UUID},
             Container: {"type": str},
+            Region: {"type": str},
+            PoolName: {"type": str},
             File: {"type": arg_file},
             Directory: {"type": arg_dir},
         }
@@ -503,6 +505,14 @@ def output(result: Any, output_format: str, expression: Optional[Any]) -> None:
             print(result, flush=True)
 
 
+def log_exception(args: argparse.Namespace, err: Exception) -> None:
+    if args.verbose > 0:
+        entry = traceback.format_exc()
+        for x in entry.split("\n"):
+            LOGGER.error("traceback: %s", x)
+    LOGGER.error("command failed: %s", " ".join([str(x) for x in err.args]))
+
+
 def execute_api(api: Any, api_types: List[Any], version: str) -> int:
     builder = Builder(api_types)
     builder.add_version(version)
@@ -543,11 +553,7 @@ def execute_api(api: Any, api_types: List[Any], version: str) -> int:
     try:
         result = call_func(args.func, args)
     except Exception as err:
-        if args.verbose > 0:
-            entry = traceback.format_exc()
-            for x in entry.split("\n"):
-                LOGGER.error("traceback: %s", x)
-        LOGGER.error("command failed: %s", " ".join([str(x) for x in err.args]))
+        log_exception(args, err)
         return 1
 
     output(result, args.format, expression)

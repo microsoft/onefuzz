@@ -33,10 +33,10 @@ on-premise hardware, third-party clouds, etc).
 All telemetry is gathered from two places, the agents that run within fuzzing
 nodes and the service API running in the Azure Functions instance.
 
-1. The rust library [onefuzz::telemetry](../src/agent/onefuzz/src/telemetry.rs)
+1. The rust library [onefuzz::telemetry](../src/agent/onefuzz-telemetry/src/lib.rs)
    provides a detailed set of telemetry types, as well as the function
-   `can_share`, which gates if a given telemetry field should be sent to the
-   Microsoft central telemetry instance.
+   `can_share_with_microsoft`, which gates if a given telemetry field should be
+   sent to the Microsoft central telemetry instance.
 1. The Python library
    [onefuzzlib.telemetry](../src/api-service/__app__/onefuzzlib/telemetry.py)
    provides a filtering mechanism to identify a per-object set of filtering
@@ -77,9 +77,11 @@ The following are common data types used in multiple locations:
 * Scaleset ID - A randomly generated GUID used to uniquely identify a VM
   scaleset.
 * Task Type - The type of task being executed. Examples include
-  "generic_crash_report" or "libfuzzer_coverage". For a full list, see the enum
+  `generic_crash_report` or `libfuzzer_coverage`. For a full list, see the enum
   [TaskType](../src/pytypes/onefuzztypes/enums.py).
 * OS - An enum value describing the OS used (Currently, only Windows or Linux).
+* Version - A compile-time generated string that specifies the OneFuzz version number based on [CURRENT\_RELEASE](../CURRENT_RELEASE) and the sha-1 git revision (See [example](../src/agent/onefuzz-agent/build.rs)).
+* Role - An enum value describing the role of the OneFuzz software in use.  Examples include `Agent` or `Proxy`.  For a full list, see the enum [Role](../src/agent/onefuzz-telemetry/src/lib.rs).
 
 ### Data recorded by Agents
 
@@ -180,3 +182,69 @@ recorded:
 * Machine ID
 * State - the current state of the task on the node. For a full list, see the
   enum [NodeTaskState](../src/pytypes/onefuzztypes/enums.py).
+
+
+### Data recorded by an upcoming feature
+
+The following information is recorded for Salvo related tasks:
+
+* InputsFuzzed - A u64 representing the count of inputs that were symbolically
+  executed.
+* SatConstraints - A u64 representing the count of satisfiable constraints and
+  hence number new inputs generated.
+* UnsatConstraints - A u64 representing the count of unsatisfiable constraints.
+* AverageVarsPerConstraint - A float64 representing the average count of input
+  bytes used per constraint over all of the inputs fuzzed.
+* MaxConstraintVars - A u64 representing the maximum count of input bytes used
+  for any single constraint.
+* AverageSymexTime - A float64 representing the average time in seconds spent
+  symbolically executing the program under test over all inputs fuzzed.
+* MaxSymexTime - A u64 representing the maximum time in seconds spent
+  symbolically executing the program under test for a single input.
+* AverageSolvingTime - A float64 representing the average time in seconds spent
+  solving constraints over all inputs fuzzed.
+* MaxSolvingTime - A u64 representing the maximum time in seconds spent solving
+  constraints for any single input.
+* UniqueCodeLocationCount - A u64 representing the count of the unique code
+  locations that are of interest to Salvo, e.g. a tainted instruction or branch
+  target.
+* AverageInstructionsExecuted - A float64 representing the average count of
+  instructions that were symbolically executed over all fuzzed inputs.
+* MaxInstructionsExecuted - A u64 representing the maximum count of
+  instructions that were symbolically executed for any single fuzzed input.
+* AverageTaintedInstructions - A float64 representing the count of instructions
+  that make use of tainted input over all inputs fuzzed.
+* MaxTaintedInstructions - A u64 representing the count of instructions that
+  make use of tainted input for any single input.
+* AverageMemoryTaintedInstructions - A float64 representing the count of
+  instructions that make use of tainted input to read or write memory over all
+  inputs fuzzed.
+* MaxMemoryTaintedInstructions - A u64 representing the count of instructions
+  that make use of tainted input to read or write memory for any single input.
+* AveragePathLength - A u64 representing the count of the average constraints
+  tracked for constraint solving while symbolically executing the program.
+* MaxPathLength - A u64 representing the count of the maximum constraints
+  tracked for constraint solving while symbolically executing the program.
+* DivergenceRate - A float64 representing the ratio of inputs that did not
+  branch as expected divided by the number of inputs fuzzed.
+* DivergencePathLength - A u32 that indicates the length of execution path
+  divergence.
+* DivergencePathExpectedIndex - A u32 that indicates the expected index for
+  divergence.
+* DivergencePathActualIndex - A u32 that indicates the actual index for
+  divergence.
+* MissedInstructionCode - The Intel Instruction code for an instruction that
+  was not modelled during symbolic execution but may have been input tainted.
+  Examples include `Cmovs_r16_rm16` and `Movq_mm_rm64`.  For the full list, see
+  [iced_x86::Code](https://docs.rs/iced-x86/1.10.3/iced_x86/enum.Code.html).
+* MissedInstructionMnemonic - The Intel Instruction that was not modelled
+  during symbolic execution but may have been input tainted. Examples include
+  `Cmovs` and `Movq`.  For the full list, see
+  [iced_x86::mnemonic](https://docs.rs/iced-x86/1.10.3/iced_x86/enum.Mnemonic.html).
+* Z3ErrorCode - An error code that corresponds to an error code from Z3 when
+  solving a constraint fails.  Examples include `NoParser` and
+  `InvalidPattern`.  For the full list, see
+  [z3_sys::ErrorCode](https://docs.rs/z3-sys/0.6.3/z3_sys/enum.ErrorCode.html)
+* SymexTimeout - A u64 representing the maximum time in seconds to spend during
+  symbolic execution, reported each time symbolic execution was stopped due to
+  the limit.

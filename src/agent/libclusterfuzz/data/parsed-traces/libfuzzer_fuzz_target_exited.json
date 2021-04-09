@@ -1,0 +1,116 @@
+{
+  "text": "==588579== ERROR: libFuzzer: fuzz target exited\n    #0 0x4e8327 in __sanitizer_print_stack_trace third_party/llvm/llvm/projects/compiler-rt/lib/asan/asan_stack.cc:38:3\n    #1 0x55209b in ExitCallback third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:211:5\n    #2 0x55209b in fuzzer::Fuzzer::StaticExitCallback() third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:180\n    #3 0x4f6a63 in LLVMFuzzerTestOneInput third_party/clearsilver/clearsilver_fuzzer_file.cc:4:16\n    #4 0x553b8e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:494:13\n    #5 0x55363e in fuzzer::Fuzzer::ShuffleAndMinimize(std::vector<std::vector<unsigned char, std::allocator<unsigned char> >, std::allocator<std::vector<unsigned char, std::allocator<unsigned char> > > >*) third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:389:3\n    #6 0x54bbbe in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/llvm/llvm/lib/Fuzzer/FuzzerDriver.cpp:749:6\n    #7 0x55d3a2 in main third_party/llvm/llvm/lib/Fuzzer/FuzzerMain.cpp:20:10\n\nSUMMARY: libFuzzer: fuzz target exited\nMS: 0 ; base unit: 0000000000000000000000000000000000000000",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: fuzz target exited",
+  "fault_type": "fuzz",
+  "call_stack": [
+    "#0 0x4e8327 in __sanitizer_print_stack_trace third_party/llvm/llvm/projects/compiler-rt/lib/asan/asan_stack.cc:38:3",
+    "#1 0x55209b in ExitCallback third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:211:5",
+    "#2 0x55209b in fuzzer::Fuzzer::StaticExitCallback() third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:180",
+    "#3 0x4f6a63 in LLVMFuzzerTestOneInput third_party/clearsilver/clearsilver_fuzzer_file.cc:4:16",
+    "#4 0x553b8e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:494:13",
+    "#5 0x55363e in fuzzer::Fuzzer::ShuffleAndMinimize(std::vector<std::vector<unsigned char, std::allocator<unsigned char> >, std::allocator<std::vector<unsigned char, std::allocator<unsigned char> > > >*) third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:389:3",
+    "#6 0x54bbbe in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/llvm/llvm/lib/Fuzzer/FuzzerDriver.cpp:749:6",
+    "#7 0x55d3a2 in main third_party/llvm/llvm/lib/Fuzzer/FuzzerMain.cpp:20:10"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x4e8327 in __sanitizer_print_stack_trace third_party/llvm/llvm/projects/compiler-rt/lib/asan/asan_stack.cc:38:3",
+      "address": 5145383,
+      "function_name": "__sanitizer_print_stack_trace",
+      "function_offset": 3,
+      "source_file_name": "asan_stack.cc",
+      "source_file_path": "third_party/llvm/llvm/projects/compiler-rt/lib/asan/asan_stack.cc",
+      "source_file_line": 38
+    },
+    {
+      "line": "#1 0x55209b in ExitCallback third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:211:5",
+      "address": 5578907,
+      "function_name": "ExitCallback",
+      "function_offset": 5,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 211
+    },
+    {
+      "line": "#2 0x55209b in fuzzer::Fuzzer::StaticExitCallback() third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:180",
+      "address": 5578907,
+      "function_name": "fuzzer::Fuzzer::StaticExitCallback()",
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 180
+    },
+    {
+      "line": "#3 0x4f6a63 in LLVMFuzzerTestOneInput third_party/clearsilver/clearsilver_fuzzer_file.cc:4:16",
+      "address": 5204579,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 16,
+      "source_file_name": "clearsilver_fuzzer_file.cc",
+      "source_file_path": "third_party/clearsilver/clearsilver_fuzzer_file.cc",
+      "source_file_line": 4
+    },
+    {
+      "line": "#4 0x553b8e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:494:13",
+      "address": 5585806,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 494
+    },
+    {
+      "line": "#5 0x55363e in fuzzer::Fuzzer::ShuffleAndMinimize(std::vector<std::vector<unsigned char, std::allocator<unsigned char> >, std::allocator<std::vector<unsigned char, std::allocator<unsigned char> > > >*) third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp:389:3",
+      "address": 5584446,
+      "function_name": "fuzzer::Fuzzer::ShuffleAndMinimize(std::vector<std::vector<unsigned char, std::allocator<unsigned char> >, std::allocator<std::vector<unsigned char, std::allocator<unsigned char> > > >*)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/llvm/llvm/lib/Fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 389
+    },
+    {
+      "line": "#6 0x54bbbe in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/llvm/llvm/lib/Fuzzer/FuzzerDriver.cpp:749:6",
+      "address": 5553086,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/llvm/llvm/lib/Fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 749
+    },
+    {
+      "line": "#7 0x55d3a2 in main third_party/llvm/llvm/lib/Fuzzer/FuzzerMain.cpp:20:10",
+      "address": 5624738,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "third_party/llvm/llvm/lib/Fuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "ExitCallback",
+    "fuzzer::Fuzzer::StaticExitCallback",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::ShuffleAndMinimize",
+    "fuzzer::FuzzerDriver",
+    "main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#3 0x4f6a63 in LLVMFuzzerTestOneInput third_party/clearsilver/clearsilver_fuzzer_file.cc:4:16",
+      "address": 5204579,
+      "function_name": "clearsilver_fuzzer_file.cc",
+      "function_offset": 16,
+      "source_file_name": "clearsilver_fuzzer_file.cc",
+      "source_file_path": "third_party/clearsilver/clearsilver_fuzzer_file.cc",
+      "source_file_line": 4
+    }
+  ],
+  "minimized_stack": [
+    "#3 0x4f6a63 in LLVMFuzzerTestOneInput third_party/clearsilver/clearsilver_fuzzer_file.cc:4:16"
+  ],
+  "minimized_stack_function_names": [
+    "clearsilver_fuzzer_file.cc"
+  ]
+}

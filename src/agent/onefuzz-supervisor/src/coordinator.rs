@@ -3,12 +3,12 @@
 
 use anyhow::Result;
 use downcast_rs::Downcast;
-use onefuzz::{http::ResponseExt, process::Output};
-use reqwest::{Client, Request, Response, StatusCode};
+use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
+use reqwest::{Client, RequestBuilder, Response, StatusCode};
+use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::auth::AccessToken;
 use crate::commands::SshKeyInfo;
 use crate::config::Registration;
 use crate::work::{TaskId, WorkSet};
@@ -233,20 +233,29 @@ impl Coordinator {
         &mut self,
         request_type: RequestType<'a>,
     ) -> Result<Response> {
-        let request = self.build_request(request_type.clone())?;
-        let mut response = self.client.execute(request).await?;
+        let request = self.get_request_builder(request_type.clone());
+        let mut response = request
+            .send_retry(
+                |code| match code {
+                    StatusCode::UNAUTHORIZED => RetryCheck::Fail,
+                    _ => RetryCheck::Retry,
+                },
+                DEFAULT_RETRY_PERIOD,
+                MAX_RETRY_ATTEMPTS,
+            )
+            .await?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
-            verbose!("access token expired, renewing");
+            debug!("access token expired, renewing");
 
             // If we didn't succeed due to authorization, refresh our token,
             self.token = self.registration.config.credentials.access_token().await?;
 
-            verbose!("retrying request after refreshing access token");
+            debug!("retrying request after refreshing access token");
 
             // And try one more time.
-            let request = self.build_request(request_type)?;
-            response = self.client.execute(request).await?;
+            let request = self.get_request_builder(request_type);
+            response = request.send_retry_default().await?;
         };
 
         // We've retried if we got a `401 Unauthorized`. If it happens again, we
@@ -256,7 +265,7 @@ impl Coordinator {
         Ok(response)
     }
 
-    fn build_request(&self, request_type: RequestType<'_>) -> Result<Request> {
+    fn get_request_builder(&self, request_type: RequestType<'_>) -> RequestBuilder {
         match request_type {
             RequestType::PollCommands => self.poll_commands_request(),
             RequestType::ClaimCommand(message_id) => self.claim_command_request(message_id),
@@ -265,52 +274,49 @@ impl Coordinator {
         }
     }
 
-    fn poll_commands_request(&self) -> Result<Request> {
+    fn poll_commands_request(&self) -> RequestBuilder {
         let request = PollCommandsRequest {
             machine_id: self.registration.machine_id,
         };
 
         let url = self.registration.dynamic_config.commands_url.clone();
-        let request = self
+        let request_builder = self
             .client
             .get(url)
             .bearer_auth(self.token.secret().expose_ref())
-            .json(&request)
-            .build()?;
+            .json(&request);
 
-        Ok(request)
+        request_builder
     }
 
-    fn claim_command_request(&self, message_id: String) -> Result<Request> {
+    fn claim_command_request(&self, message_id: String) -> RequestBuilder {
         let request = ClaimNodeCommandRequest {
             machine_id: self.registration.machine_id,
             message_id,
         };
 
         let url = self.registration.dynamic_config.commands_url.clone();
-        let request = self
+        let request_builder = self
             .client
             .delete(url)
             .bearer_auth(self.token.secret().expose_ref())
-            .json(&request)
-            .build()?;
+            .json(&request);
 
-        Ok(request)
+        request_builder
     }
 
-    fn emit_event_request(&self, event: &NodeEventEnvelope) -> Result<Request> {
+    fn emit_event_request(&self, event: &NodeEventEnvelope) -> RequestBuilder {
         let url = self.registration.dynamic_config.events_url.clone();
-        let request = self
+        let request_builder = self
             .client
             .post(url)
             .bearer_auth(self.token.secret().expose_ref())
-            .json(event)
-            .build()?;
+            .json(event);
 
-        Ok(request)
+        request_builder
     }
 
-    fn can_schedule_request(&self, work_set: &WorkSet) -> Result<Request> {
+    fn can_schedule_request(&self, work_set: &WorkSet) -> RequestBuilder {
         // Temporary: assume one work unit per work set.
         //
         // In the future, we will probably want the same behavior, but we will
@@ -322,18 +328,17 @@ impl Coordinator {
             task_id,
         };
 
-        verbose!("checking if able to schedule task ID = {}", task_id);
+        debug!("checking if able to schedule task ID = {}", task_id);
 
         let mut url = self.registration.config.onefuzz_url.clone();
         url.set_path("/api/agents/can_schedule");
-        let request = self
+        let request_builder = self
             .client
             .post(url)
             .bearer_auth(self.token.secret().expose_ref())
-            .json(&can_schedule)
-            .build()?;
+            .json(&can_schedule);
 
-        Ok(request)
+        request_builder
     }
 }
 

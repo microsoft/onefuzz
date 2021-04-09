@@ -10,9 +10,10 @@ from onefuzztypes.requests import CanScheduleRequest
 from onefuzztypes.responses import CanSchedule
 
 from ..onefuzzlib.endpoint_authorization import call_if_agent
-from ..onefuzzlib.pools import Node
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.tasks.main import Task
+from ..onefuzzlib.workers.nodes import Node
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
@@ -42,7 +43,13 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     return ok(CanSchedule(allowed=allowed, work_stopped=work_stopped))
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
     methods = {"POST": post}
     method = methods[req.method]
-    return call_if_agent(req, method)
+    result = call_if_agent(req, method)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
+
+    return result

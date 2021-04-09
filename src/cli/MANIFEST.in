@@ -1,4 +1,7 @@
 include LICENSE
 include *.txt
 include *.md
+include extra/pyinstaller/*.py
+include onefuzz/data/privacy.txt
+include onefuzz/data/licenses.json
 graft examples

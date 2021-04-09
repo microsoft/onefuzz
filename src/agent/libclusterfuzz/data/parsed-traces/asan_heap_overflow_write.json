@@ -1,0 +1,594 @@
+{
+  "text": "=================================================================\n==3216==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x0d37d6e0 at pc 0x013de06e bp 0xdeadbeef sp 0x00b6d550\nWRITE of size 16 at 0x0d37d6e0 thread T0\n==3216==*** WARNING: Failed to initialize DbgHelp!              ***\n==3216==*** Most likely this means that the app is already      ***\n==3216==*** using DbgHelp, possibly with incompatible flags.    ***\n==3216==*** Due to technical reasons, symbolization might crash ***\n==3216==*** or produce wrong results.                           ***\n    #0 0x13de084 in __asan_memset+0xe4 (C:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_a15986b6468dcac5c0ae9a2e0729fd95d8ce33c8\\symbolized\\release\\asan-win32-release-367086\\chrome.exe+0x6ae084)\n    #1 0x1ad13757 in blink::TimerBase::stop third_party/WebKit/Source/platform/Timer.cpp:73\n    #2 0x13792007 in blink::HTMLInputElement::onSearch third_party/WebKit/Source/core/html/HTMLInputElement.cpp:1487\n    #3 0x1ce8bdfd in blink::internal::CallClosureTask::performTask components/scheduler/child/webthread_base.cc:26\n    #4 0x13614ffc in blink::MainThreadTaskRunner::perform third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:105\n    #5 0x13614e02 in blink::MainThreadTask::run third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:61\n    #6 0x1ce88f9b in scheduler::WebTaskRunnerImpl::runTask components/scheduler/child/web_task_runner_impl.cc:49\n    #7 0x1ce89bac in base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run base/bind_internal.h:157\n    #8 0x1ce89a83 in base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >::MakeItSo base/bind_internal.h:297\n    #9 0x1ce898c9 in base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,void __cdecl(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >),base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,base::internal::TypeList<base::internal::UnwrapTraits<base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > > >,base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,void __cdecl(void)>::Run base/bind_internal.h:347\n    #10 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394\n    #11 0x1ced7fc4 in scheduler::TaskQueueManager::ProcessTaskFromWorkQueue components/scheduler/base/task_queue_manager.cc:264\n    #12 0x1ced265e in scheduler::TaskQueueManager::DoWork components/scheduler/base/task_queue_manager.cc:180\n    #13 0x1cededaa in base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,void __cdecl(scheduler::TaskQueueManager *,base::TimeTicks,bool),base::WeakPtr<scheduler::TaskQueueManager>,base::TimeTicks,bool>,base::internal::TypeList<base::internal::UnwrapTraits<base::WeakPtr<scheduler::TaskQueueManager> >,base::internal::UnwrapTraits<base::TimeTicks>,base::internal::UnwrapTraits<bool> >,base::internal::InvokeHelper<1,void,base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,base::internal::TypeList<base::WeakPtr<scheduler::TaskQueueManager> const &,base::TimeTicks const &,bool const &> >,void __cdecl(void)>::Run base/bind_internal.h:178\n    #14 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394\n    #15 0x10375759 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:488\n    #16 0x10376cf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:497\n    #17 0x10486577 in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33\n    #18 0x10374693 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:452\n    #19 0x10486c66 in base::RunLoop::Run base/run_loop.cc:56\n    #20 0x10373635 in base::MessageLoop::Run base/message_loop/message_loop.cc:290\n    #21 0x169d1812 in content::RendererMain content/renderer/renderer_main.cc:232\n    #22 0x10262f5d in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:383\n    #23 0x102650b2 in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:795\n    #24 0x10262b2b in content::ContentMain content/app/content_main.cc:19\n    #25 0xfe7113b in ChromeMain chrome/app/chrome_main.cc:67\n    #26 0x113fe80 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:285\n    #27 0x1133873 in main chrome/app/chrome_exe_main_win.cc:219\n    #28 0x13f9dfa in __tmainCRTStartup f:\\dd\\vctools\\crt\\crtw32\\startup\\crt0.c:255\n    #29 0x77157c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x6b817c03)\n    #30 0x778aad5e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x6b2dad5e)\n    #31 0x778aad29 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x6b2dad29)\n\n0x0d37d6e0 is located 12 bytes to the right of 20-byte region [0x0d37d6c0,0x0d37d6d4)\nallocated by thread T0 here:\n    #0 0x13e3298 in malloc+0xb8 (C:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_a15986b6468dcac5c0ae9a2e0729fd95d8ce33c8\\symbolized\\release\\asan-win32-release-367086\\chrome.exe+0x6b3298)\n    #1 0x13b4bad3 in blink::PasswordInputType::create third_party/WebKit/Source/wtf/PartitionAlloc.h:736\n    #2 0x13993883 in blink::InputType::create third_party/WebKit/Source/core/html/forms/InputType.cpp:120\n    #3 0x1377dd48 in blink::HTMLInputElement::updateType third_party/WebKit/Source/core/html/HTMLInputElement.cpp:461\n    #4 0x1378614d in blink::HTMLInputElement::parseAttribute third_party/WebKit/Source/core/html/HTMLInputElement.cpp:689\n    #5 0x1342d2bc in blink::Element::attributeChanged third_party/WebKit/Source/core/dom/Element.cpp:1197\n    #6 0x13456147 in blink::Element::didModifyAttribute third_party/WebKit/Source/core/dom/Element.cpp:3136\n    #7 0x1342bb31 in blink::Element::setAttribute third_party/WebKit/Source/core/dom/Element.cpp:1180\n    #8 0x1622da4c in blink::V8IdleRequestCallback::`vector deleting destructor out/Release/gen/blink/bindings/core/v8/V8Element.cpp:1150\n    #9 0x1c2497aa in v8::internal::FunctionCallbackArguments::Call v8/src/arguments.cc:33\n    #10 0x1b2504de in v8::internal::Builtins::InvokeApiFunction v8/src/builtins.cc:2208\n    #11 0x1b277710 in v8::internal::Runtime_SetAllocationTimeout v8/src/builtins.cc:2232\n\nSUMMARY: AddressSanitizer: heap-buffer-overflow (C:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_a15986b6468dcac5c0ae9a2e0729fd95d8ce33c8\\symbolized\\release\\asan-win32-release-367086\\chrome.exe+0x6ae084) in __asan_memset+0xe4\nShadow bytes around the buggy address:\n  0x31a6fa80: fa fa fa fa fa fa fa fa fd fd fd fd fa fa fa fa\n  0x31a6fa90: fa fa fa fa fa fa fa fa fa fa fa fa 00 00 00 00\n  0x31a6faa0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x31a6fab0: 00 00 04 fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x31a6fac0: fa fa fa fa fd fd fd fd fa fa fa fa fa fa fa fa\n=>0x31a6fad0: fa fa fa fa fa fa fa fa 00 00 04 fa[fa]fa fa fa\n  0x31a6fae0: fa fa fa fa fa fa fa fa fa fa fa fa fd fd fd fa\n  0x31a6faf0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x31a6fb00: fd fd fd fd fa fa fa fa fa fa fa fa fa fa fa fa\n  0x31a6fb10: fa fa fa fa fd fd fd fd fa fa fa fa fa fa fa fa\n  0x31a6fb20: fa fa fa fa fa fa fa fa 00 00 00 04 fa fa fa fa\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07\n  Heap left redzone:       fa\n  Heap right redzone:      fb\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack partial redzone:   f4\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==3216==ABORTING\n[1229/173339:ERROR:main_dll_loader_win.cc(299)] Could not find exported function RelaunchChromeBrowserWithNewCommandLineIfNeeded\n       \n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: heap-buffer-overflow (C:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_a15986b6468dcac5c0ae9a2e0729fd95d8ce33c8\\symbolized\\release\\asan-win32-release-367086\\chrome.exe+0x6ae084) in __asan_memset+0xe4",
+  "fault_type": "heap-buffer-overflow",
+  "call_stack": [
+    "#0 0x13de084 in __asan_memset+0xe4 (C:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_a15986b6468dcac5c0ae9a2e0729fd95d8ce33c8\\symbolized\\release\\asan-win32-release-367086\\chrome.exe+0x6ae084)",
+    "#1 0x1ad13757 in blink::TimerBase::stop third_party/WebKit/Source/platform/Timer.cpp:73",
+    "#2 0x13792007 in blink::HTMLInputElement::onSearch third_party/WebKit/Source/core/html/HTMLInputElement.cpp:1487",
+    "#3 0x1ce8bdfd in blink::internal::CallClosureTask::performTask components/scheduler/child/webthread_base.cc:26",
+    "#4 0x13614ffc in blink::MainThreadTaskRunner::perform third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:105",
+    "#5 0x13614e02 in blink::MainThreadTask::run third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:61",
+    "#6 0x1ce88f9b in scheduler::WebTaskRunnerImpl::runTask components/scheduler/child/web_task_runner_impl.cc:49",
+    "#7 0x1ce89bac in base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run base/bind_internal.h:157",
+    "#8 0x1ce89a83 in base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >::MakeItSo base/bind_internal.h:297",
+    "#9 0x1ce898c9 in base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,void __cdecl(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >),base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,base::internal::TypeList<base::internal::UnwrapTraits<base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > > >,base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,void __cdecl(void)>::Run base/bind_internal.h:347",
+    "#10 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394",
+    "#11 0x1ced7fc4 in scheduler::TaskQueueManager::ProcessTaskFromWorkQueue components/scheduler/base/task_queue_manager.cc:264",
+    "#12 0x1ced265e in scheduler::TaskQueueManager::DoWork components/scheduler/base/task_queue_manager.cc:180",
+    "#13 0x1cededaa in base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,void __cdecl(scheduler::TaskQueueManager *,base::TimeTicks,bool),base::WeakPtr<scheduler::TaskQueueManager>,base::TimeTicks,bool>,base::internal::TypeList<base::internal::UnwrapTraits<base::WeakPtr<scheduler::TaskQueueManager> >,base::internal::UnwrapTraits<base::TimeTicks>,base::internal::UnwrapTraits<bool> >,base::internal::InvokeHelper<1,void,base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,base::internal::TypeList<base::WeakPtr<scheduler::TaskQueueManager> const &,base::TimeTicks const &,bool const &> >,void __cdecl(void)>::Run base/bind_internal.h:178",
+    "#14 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394",
+    "#15 0x10375759 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:488",
+    "#16 0x10376cf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:497",
+    "#17 0x10486577 in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+    "#18 0x10374693 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:452",
+    "#19 0x10486c66 in base::RunLoop::Run base/run_loop.cc:56",
+    "#20 0x10373635 in base::MessageLoop::Run base/message_loop/message_loop.cc:290",
+    "#21 0x169d1812 in content::RendererMain content/renderer/renderer_main.cc:232",
+    "#22 0x10262f5d in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:383",
+    "#23 0x102650b2 in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:795",
+    "#24 0x10262b2b in content::ContentMain content/app/content_main.cc:19",
+    "#25 0xfe7113b in ChromeMain chrome/app/chrome_main.cc:67",
+    "#26 0x113fe80 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:285",
+    "#27 0x1133873 in main chrome/app/chrome_exe_main_win.cc:219",
+    "#28 0x13f9dfa in __tmainCRTStartup f:\\dd\\vctools\\crt\\crtw32\\startup\\crt0.c:255",
+    "#29 0x77157c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x6b817c03)",
+    "#30 0x778aad5e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x6b2dad5e)",
+    "#31 0x778aad29 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x6b2dad29)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x13de084 in __asan_memset+0xe4 (C:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_a15986b6468dcac5c0ae9a2e0729fd95d8ce33c8\\symbolized\\release\\asan-win32-release-367086\\chrome.exe+0x6ae084)",
+      "address": 20832388,
+      "function_name": "__asan_memset+0xe4",
+      "module_path": "C:\\clusterfuzz\\bot\\builds\\chromium-browser-asan_win32-release_a15986b6468dcac5c0ae9a2e0729fd95d8ce33c8\\symbolized\\release\\asan-win32-release-367086\\chrome.exe",
+      "module_offset": 7004292
+    },
+    {
+      "line": "#1 0x1ad13757 in blink::TimerBase::stop third_party/WebKit/Source/platform/Timer.cpp:73",
+      "address": 449918807,
+      "function_name": "blink::TimerBase::stop",
+      "source_file_name": "Timer.cpp",
+      "source_file_path": "third_party/WebKit/Source/platform/Timer.cpp",
+      "source_file_line": 73
+    },
+    {
+      "line": "#2 0x13792007 in blink::HTMLInputElement::onSearch third_party/WebKit/Source/core/html/HTMLInputElement.cpp:1487",
+      "address": 326705159,
+      "function_name": "blink::HTMLInputElement::onSearch",
+      "source_file_name": "HTMLInputElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
+      "source_file_line": 1487
+    },
+    {
+      "line": "#3 0x1ce8bdfd in blink::internal::CallClosureTask::performTask components/scheduler/child/webthread_base.cc:26",
+      "address": 485015037,
+      "function_name": "blink::internal::CallClosureTask::performTask",
+      "source_file_name": "webthread_base.cc",
+      "source_file_path": "components/scheduler/child/webthread_base.cc",
+      "source_file_line": 26
+    },
+    {
+      "line": "#4 0x13614ffc in blink::MainThreadTaskRunner::perform third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:105",
+      "address": 325144572,
+      "function_name": "blink::MainThreadTaskRunner::perform",
+      "source_file_name": "MainThreadTaskRunner.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp",
+      "source_file_line": 105
+    },
+    {
+      "line": "#5 0x13614e02 in blink::MainThreadTask::run third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:61",
+      "address": 325144066,
+      "function_name": "blink::MainThreadTask::run",
+      "source_file_name": "MainThreadTaskRunner.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp",
+      "source_file_line": 61
+    },
+    {
+      "line": "#6 0x1ce88f9b in scheduler::WebTaskRunnerImpl::runTask components/scheduler/child/web_task_runner_impl.cc:49",
+      "address": 485003163,
+      "function_name": "scheduler::WebTaskRunnerImpl::runTask",
+      "source_file_name": "web_task_runner_impl.cc",
+      "source_file_path": "components/scheduler/child/web_task_runner_impl.cc",
+      "source_file_line": 49
+    },
+    {
+      "line": "#7 0x1ce89bac in base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run base/bind_internal.h:157",
+      "address": 485006252,
+      "function_name": "base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 157
+    },
+    {
+      "line": "#8 0x1ce89a83 in base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >::MakeItSo base/bind_internal.h:297",
+      "address": 485005955,
+      "function_name": "base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >::MakeItSo",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 297
+    },
+    {
+      "line": "#9 0x1ce898c9 in base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,void __cdecl(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >),base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,base::internal::TypeList<base::internal::UnwrapTraits<base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > > >,base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,void __cdecl(void)>::Run base/bind_internal.h:347",
+      "address": 485005513,
+      "function_name": "base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,void __cdecl(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >),base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,base::internal::TypeList<base::internal::UnwrapTraits<base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > > >,base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,void __cdecl(void)>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 347
+    },
+    {
+      "line": "#10 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394",
+      "address": 273149137,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 394
+    },
+    {
+      "line": "#11 0x1ced7fc4 in scheduler::TaskQueueManager::ProcessTaskFromWorkQueue components/scheduler/base/task_queue_manager.cc:264",
+      "address": 485326788,
+      "function_name": "scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "components/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 264
+    },
+    {
+      "line": "#12 0x1ced265e in scheduler::TaskQueueManager::DoWork components/scheduler/base/task_queue_manager.cc:180",
+      "address": 485303902,
+      "function_name": "scheduler::TaskQueueManager::DoWork",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "components/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 180
+    },
+    {
+      "line": "#13 0x1cededaa in base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,void __cdecl(scheduler::TaskQueueManager *,base::TimeTicks,bool),base::WeakPtr<scheduler::TaskQueueManager>,base::TimeTicks,bool>,base::internal::TypeList<base::internal::UnwrapTraits<base::WeakPtr<scheduler::TaskQueueManager> >,base::internal::UnwrapTraits<base::TimeTicks>,base::internal::UnwrapTraits<bool> >,base::internal::InvokeHelper<1,void,base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,base::internal::TypeList<base::WeakPtr<scheduler::TaskQueueManager> const &,base::TimeTicks const &,bool const &> >,void __cdecl(void)>::Run base/bind_internal.h:178",
+      "address": 485354922,
+      "function_name": "base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,void __cdecl(scheduler::TaskQueueManager *,base::TimeTicks,bool),base::WeakPtr<scheduler::TaskQueueManager>,base::TimeTicks,bool>,base::internal::TypeList<base::internal::UnwrapTraits<base::WeakPtr<scheduler::TaskQueueManager> >,base::internal::UnwrapTraits<base::TimeTicks>,base::internal::UnwrapTraits<bool> >,base::internal::InvokeHelper<1,void,base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,base::internal::TypeList<base::WeakPtr<scheduler::TaskQueueManager> const &,base::TimeTicks const &,bool const &> >,void __cdecl(void)>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 178
+    },
+    {
+      "line": "#14 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394",
+      "address": 273149137,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 394
+    },
+    {
+      "line": "#15 0x10375759 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:488",
+      "address": 272062297,
+      "function_name": "base::MessageLoop::RunTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 488
+    },
+    {
+      "line": "#16 0x10376cf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:497",
+      "address": 272067830,
+      "function_name": "base::MessageLoop::DoWork",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 497
+    },
+    {
+      "line": "#17 0x10486577 in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+      "address": 273180023,
+      "function_name": "base::MessagePumpDefault::Run",
+      "source_file_name": "message_pump_default.cc",
+      "source_file_path": "base/message_loop/message_pump_default.cc",
+      "source_file_line": 33
+    },
+    {
+      "line": "#18 0x10374693 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:452",
+      "address": 272058003,
+      "function_name": "base::MessageLoop::RunHandler",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 452
+    },
+    {
+      "line": "#19 0x10486c66 in base::RunLoop::Run base/run_loop.cc:56",
+      "address": 273181798,
+      "function_name": "base::RunLoop::Run",
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 56
+    },
+    {
+      "line": "#20 0x10373635 in base::MessageLoop::Run base/message_loop/message_loop.cc:290",
+      "address": 272053813,
+      "function_name": "base::MessageLoop::Run",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 290
+    },
+    {
+      "line": "#21 0x169d1812 in content::RendererMain content/renderer/renderer_main.cc:232",
+      "address": 379394066,
+      "function_name": "content::RendererMain",
+      "source_file_name": "renderer_main.cc",
+      "source_file_path": "content/renderer/renderer_main.cc",
+      "source_file_line": 232
+    },
+    {
+      "line": "#22 0x10262f5d in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:383",
+      "address": 270937949,
+      "function_name": "content::RunNamedProcessTypeMain",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 383
+    },
+    {
+      "line": "#23 0x102650b2 in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:795",
+      "address": 270946482,
+      "function_name": "content::ContentMainRunnerImpl::Run",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 795
+    },
+    {
+      "line": "#24 0x10262b2b in content::ContentMain content/app/content_main.cc:19",
+      "address": 270936875,
+      "function_name": "content::ContentMain",
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#25 0xfe7113b in ChromeMain chrome/app/chrome_main.cc:67",
+      "address": 266801467,
+      "function_name": "ChromeMain",
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 67
+    },
+    {
+      "line": "#26 0x113fe80 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:285",
+      "address": 18087552,
+      "function_name": "MainDllLoader::Launch",
+      "source_file_name": "main_dll_loader_win.cc",
+      "source_file_path": "chrome/app/main_dll_loader_win.cc",
+      "source_file_line": 285
+    },
+    {
+      "line": "#27 0x1133873 in main chrome/app/chrome_exe_main_win.cc:219",
+      "address": 18036851,
+      "function_name": "main",
+      "source_file_name": "chrome_exe_main_win.cc",
+      "source_file_path": "chrome/app/chrome_exe_main_win.cc",
+      "source_file_line": 219
+    },
+    {
+      "line": "#28 0x13f9dfa in __tmainCRTStartup f:\\dd\\vctools\\crt\\crtw32\\startup\\crt0.c:255",
+      "address": 20946426,
+      "function_name": "__tmainCRTStartup",
+      "source_file_name": "crt0.c",
+      "source_file_path": "f:\\dd\\vctools\\crt\\crtw32\\startup\\crt0.c",
+      "source_file_line": 255
+    },
+    {
+      "line": "#29 0x77157c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x6b817c03)",
+      "address": 1997896707,
+      "function_name": "BaseThreadInitThunk+0x23",
+      "module_path": "C:\\windows\\SYSTEM32\\KERNEL32.DLL",
+      "module_offset": 1803648003
+    },
+    {
+      "line": "#30 0x778aad5e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x6b2dad5e)",
+      "address": 2005577054,
+      "function_name": "RtlInitializeExceptionChain+0x8e",
+      "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
+      "module_offset": 1798155614
+    },
+    {
+      "line": "#31 0x778aad29 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x6b2dad29)",
+      "address": 2005577001,
+      "function_name": "RtlInitializeExceptionChain+0x59",
+      "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
+      "module_offset": 1798155561
+    }
+  ],
+  "full_stack_names": [
+    "__asan_memset+0xe4",
+    "blink::TimerBase::stop",
+    "blink::HTMLInputElement::onSearch",
+    "blink::internal::CallClosureTask::performTask",
+    "blink::MainThreadTaskRunner::perform",
+    "blink::MainThreadTask::run",
+    "scheduler::WebTaskRunnerImpl::runTask",
+    "base::internal::RunnableAdapter<void ",
+    "base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void ",
+    "base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+    "scheduler::TaskQueueManager::DoWork",
+    "base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpDefault::Run",
+    "base::MessageLoop::RunHandler",
+    "base::RunLoop::Run",
+    "base::MessageLoop::Run",
+    "content::RendererMain",
+    "content::RunNamedProcessTypeMain",
+    "content::ContentMainRunnerImpl::Run",
+    "content::ContentMain",
+    "ChromeMain",
+    "MainDllLoader::Launch",
+    "main",
+    "__tmainCRTStartup",
+    "BaseThreadInitThunk+0x23",
+    "RtlInitializeExceptionChain+0x8e",
+    "RtlInitializeExceptionChain+0x59"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x1ad13757 in blink::TimerBase::stop third_party/WebKit/Source/platform/Timer.cpp:73",
+      "address": 449918807,
+      "function_name": "blink::TimerBase::stop",
+      "source_file_name": "Timer.cpp",
+      "source_file_path": "third_party/WebKit/Source/platform/Timer.cpp",
+      "source_file_line": 73
+    },
+    {
+      "line": "#2 0x13792007 in blink::HTMLInputElement::onSearch third_party/WebKit/Source/core/html/HTMLInputElement.cpp:1487",
+      "address": 326705159,
+      "function_name": "blink::HTMLInputElement::onSearch",
+      "source_file_name": "HTMLInputElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/html/HTMLInputElement.cpp",
+      "source_file_line": 1487
+    },
+    {
+      "line": "#3 0x1ce8bdfd in blink::internal::CallClosureTask::performTask components/scheduler/child/webthread_base.cc:26",
+      "address": 485015037,
+      "function_name": "blink::internal::CallClosureTask::performTask",
+      "source_file_name": "webthread_base.cc",
+      "source_file_path": "components/scheduler/child/webthread_base.cc",
+      "source_file_line": 26
+    },
+    {
+      "line": "#4 0x13614ffc in blink::MainThreadTaskRunner::perform third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:105",
+      "address": 325144572,
+      "function_name": "blink::MainThreadTaskRunner::perform",
+      "source_file_name": "MainThreadTaskRunner.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp",
+      "source_file_line": 105
+    },
+    {
+      "line": "#5 0x13614e02 in blink::MainThreadTask::run third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:61",
+      "address": 325144066,
+      "function_name": "blink::MainThreadTask::run",
+      "source_file_name": "MainThreadTaskRunner.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp",
+      "source_file_line": 61
+    },
+    {
+      "line": "#6 0x1ce88f9b in scheduler::WebTaskRunnerImpl::runTask components/scheduler/child/web_task_runner_impl.cc:49",
+      "address": 485003163,
+      "function_name": "scheduler::WebTaskRunnerImpl::runTask",
+      "source_file_name": "web_task_runner_impl.cc",
+      "source_file_path": "components/scheduler/child/web_task_runner_impl.cc",
+      "source_file_line": 49
+    },
+    {
+      "line": "#7 0x1ce89bac in base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run base/bind_internal.h:157",
+      "address": 485006252,
+      "function_name": "base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 157
+    },
+    {
+      "line": "#8 0x1ce89a83 in base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >::MakeItSo base/bind_internal.h:297",
+      "address": 485005955,
+      "function_name": "base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >::MakeItSo",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 297
+    },
+    {
+      "line": "#9 0x1ce898c9 in base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,void __cdecl(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >),base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,base::internal::TypeList<base::internal::UnwrapTraits<base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > > >,base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,void __cdecl(void)>::Run base/bind_internal.h:347",
+      "address": 485005513,
+      "function_name": "base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,void __cdecl(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >),base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,base::internal::TypeList<base::internal::UnwrapTraits<base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > > >,base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,void __cdecl(void)>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 347
+    },
+    {
+      "line": "#10 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394",
+      "address": 273149137,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 394
+    },
+    {
+      "line": "#11 0x1ced7fc4 in scheduler::TaskQueueManager::ProcessTaskFromWorkQueue components/scheduler/base/task_queue_manager.cc:264",
+      "address": 485326788,
+      "function_name": "scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "components/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 264
+    },
+    {
+      "line": "#12 0x1ced265e in scheduler::TaskQueueManager::DoWork components/scheduler/base/task_queue_manager.cc:180",
+      "address": 485303902,
+      "function_name": "scheduler::TaskQueueManager::DoWork",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "components/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 180
+    },
+    {
+      "line": "#13 0x1cededaa in base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,void __cdecl(scheduler::TaskQueueManager *,base::TimeTicks,bool),base::WeakPtr<scheduler::TaskQueueManager>,base::TimeTicks,bool>,base::internal::TypeList<base::internal::UnwrapTraits<base::WeakPtr<scheduler::TaskQueueManager> >,base::internal::UnwrapTraits<base::TimeTicks>,base::internal::UnwrapTraits<bool> >,base::internal::InvokeHelper<1,void,base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,base::internal::TypeList<base::WeakPtr<scheduler::TaskQueueManager> const &,base::TimeTicks const &,bool const &> >,void __cdecl(void)>::Run base/bind_internal.h:178",
+      "address": 485354922,
+      "function_name": "base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,void __cdecl(scheduler::TaskQueueManager *,base::TimeTicks,bool),base::WeakPtr<scheduler::TaskQueueManager>,base::TimeTicks,bool>,base::internal::TypeList<base::internal::UnwrapTraits<base::WeakPtr<scheduler::TaskQueueManager> >,base::internal::UnwrapTraits<base::TimeTicks>,base::internal::UnwrapTraits<bool> >,base::internal::InvokeHelper<1,void,base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,base::internal::TypeList<base::WeakPtr<scheduler::TaskQueueManager> const &,base::TimeTicks const &,bool const &> >,void __cdecl(void)>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 178
+    },
+    {
+      "line": "#14 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394",
+      "address": 273149137,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 394
+    },
+    {
+      "line": "#15 0x10375759 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:488",
+      "address": 272062297,
+      "function_name": "base::MessageLoop::RunTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 488
+    },
+    {
+      "line": "#16 0x10376cf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:497",
+      "address": 272067830,
+      "function_name": "base::MessageLoop::DoWork",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 497
+    },
+    {
+      "line": "#17 0x10486577 in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+      "address": 273180023,
+      "function_name": "base::MessagePumpDefault::Run",
+      "source_file_name": "message_pump_default.cc",
+      "source_file_path": "base/message_loop/message_pump_default.cc",
+      "source_file_line": 33
+    },
+    {
+      "line": "#18 0x10374693 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:452",
+      "address": 272058003,
+      "function_name": "base::MessageLoop::RunHandler",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 452
+    },
+    {
+      "line": "#19 0x10486c66 in base::RunLoop::Run base/run_loop.cc:56",
+      "address": 273181798,
+      "function_name": "base::RunLoop::Run",
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 56
+    },
+    {
+      "line": "#20 0x10373635 in base::MessageLoop::Run base/message_loop/message_loop.cc:290",
+      "address": 272053813,
+      "function_name": "base::MessageLoop::Run",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 290
+    },
+    {
+      "line": "#21 0x169d1812 in content::RendererMain content/renderer/renderer_main.cc:232",
+      "address": 379394066,
+      "function_name": "content::RendererMain",
+      "source_file_name": "renderer_main.cc",
+      "source_file_path": "content/renderer/renderer_main.cc",
+      "source_file_line": 232
+    },
+    {
+      "line": "#22 0x10262f5d in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:383",
+      "address": 270937949,
+      "function_name": "content::RunNamedProcessTypeMain",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 383
+    },
+    {
+      "line": "#23 0x102650b2 in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:795",
+      "address": 270946482,
+      "function_name": "content::ContentMainRunnerImpl::Run",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 795
+    },
+    {
+      "line": "#24 0x10262b2b in content::ContentMain content/app/content_main.cc:19",
+      "address": 270936875,
+      "function_name": "content::ContentMain",
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#25 0xfe7113b in ChromeMain chrome/app/chrome_main.cc:67",
+      "address": 266801467,
+      "function_name": "ChromeMain",
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 67
+    },
+    {
+      "line": "#26 0x113fe80 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:285",
+      "address": 18087552,
+      "function_name": "MainDllLoader::Launch",
+      "source_file_name": "main_dll_loader_win.cc",
+      "source_file_path": "chrome/app/main_dll_loader_win.cc",
+      "source_file_line": 285
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x1ad13757 in blink::TimerBase::stop third_party/WebKit/Source/platform/Timer.cpp:73",
+    "#2 0x13792007 in blink::HTMLInputElement::onSearch third_party/WebKit/Source/core/html/HTMLInputElement.cpp:1487",
+    "#3 0x1ce8bdfd in blink::internal::CallClosureTask::performTask components/scheduler/child/webthread_base.cc:26",
+    "#4 0x13614ffc in blink::MainThreadTaskRunner::perform third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:105",
+    "#5 0x13614e02 in blink::MainThreadTask::run third_party/WebKit/Source/core/dom/MainThreadTaskRunner.cpp:61",
+    "#6 0x1ce88f9b in scheduler::WebTaskRunnerImpl::runTask components/scheduler/child/web_task_runner_impl.cc:49",
+    "#7 0x1ce89bac in base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run base/bind_internal.h:157",
+    "#8 0x1ce89a83 in base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >::MakeItSo base/bind_internal.h:297",
+    "#9 0x1ce898c9 in base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,void __cdecl(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >),base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,base::internal::TypeList<base::internal::UnwrapTraits<base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > > >,base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,void __cdecl(void)>::Run base/bind_internal.h:347",
+    "#10 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394",
+    "#11 0x1ced7fc4 in scheduler::TaskQueueManager::ProcessTaskFromWorkQueue components/scheduler/base/task_queue_manager.cc:264",
+    "#12 0x1ced265e in scheduler::TaskQueueManager::DoWork components/scheduler/base/task_queue_manager.cc:180",
+    "#13 0x1cededaa in base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,void __cdecl(scheduler::TaskQueueManager *,base::TimeTicks,bool),base::WeakPtr<scheduler::TaskQueueManager>,base::TimeTicks,bool>,base::internal::TypeList<base::internal::UnwrapTraits<base::WeakPtr<scheduler::TaskQueueManager> >,base::internal::UnwrapTraits<base::TimeTicks>,base::internal::UnwrapTraits<bool> >,base::internal::InvokeHelper<1,void,base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,base::internal::TypeList<base::WeakPtr<scheduler::TaskQueueManager> const &,base::TimeTicks const &,bool const &> >,void __cdecl(void)>::Run base/bind_internal.h:178",
+    "#14 0x1047ecd1 in base::debug::TaskAnnotator::RunTask base/callback.h:394",
+    "#15 0x10375759 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:488",
+    "#16 0x10376cf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:497",
+    "#17 0x10486577 in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+    "#18 0x10374693 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:452",
+    "#19 0x10486c66 in base::RunLoop::Run base/run_loop.cc:56",
+    "#20 0x10373635 in base::MessageLoop::Run base/message_loop/message_loop.cc:290",
+    "#21 0x169d1812 in content::RendererMain content/renderer/renderer_main.cc:232",
+    "#22 0x10262f5d in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:383",
+    "#23 0x102650b2 in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:795",
+    "#24 0x10262b2b in content::ContentMain content/app/content_main.cc:19",
+    "#25 0xfe7113b in ChromeMain chrome/app/chrome_main.cc:67",
+    "#26 0x113fe80 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:285"
+  ],
+  "minimized_stack_function_names": [
+    "blink::TimerBase::stop",
+    "blink::HTMLInputElement::onSearch",
+    "blink::internal::CallClosureTask::performTask",
+    "blink::MainThreadTaskRunner::perform",
+    "blink::MainThreadTask::run",
+    "scheduler::WebTaskRunnerImpl::runTask",
+    "base::internal::RunnableAdapter<void ",
+    "base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void ",
+    "base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+    "scheduler::TaskQueueManager::DoWork",
+    "base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpDefault::Run",
+    "base::MessageLoop::RunHandler",
+    "base::RunLoop::Run",
+    "base::MessageLoop::Run",
+    "content::RendererMain",
+    "content::RunNamedProcessTypeMain",
+    "content::ContentMainRunnerImpl::Run",
+    "content::ContentMain",
+    "ChromeMain",
+    "MainDllLoader::Launch"
+  ]
+}
