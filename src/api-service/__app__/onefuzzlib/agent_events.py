@@ -134,7 +134,7 @@ def on_state_update(
         if done_data:
             error = Error(
                 code=ErrorCode.TASK_FAILED,
-                errors=["%s" % done_data],
+                errors=[done_data.json(exclude_none=True)],
             )
 
             if done_data.error:
