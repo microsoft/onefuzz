@@ -23,7 +23,7 @@ pub fn proc_info(pid: u32) -> Result<Option<ProcInfo>> {
 }
 
 pub fn refresh_process(pid: u32) -> Result<bool> {
-    let s = SYSTEM.read().map_err(|e| format_err!("{}", e))?;
+    let mut s = SYSTEM.write().map_err(|e| format_err!("{}", e))?;
     Ok(s.refresh_process(pid))
 }
 
