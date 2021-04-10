@@ -337,7 +337,7 @@ impl Target {
 
         self.modules
             .entry(module_base.get())
-            .or_insert_with(|| Module::new_fake_module())
+            .or_insert_with(Module::new_fake_module)
     }
 
     fn module_from_name_mut(&mut self, name: &str) -> Option<&mut Module> {
