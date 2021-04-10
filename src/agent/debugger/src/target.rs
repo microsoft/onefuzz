@@ -213,7 +213,7 @@ impl Target {
         }
 
         if !self.unresolved_breakpoints.is_empty() {
-            self.try_resolve_all_unresolved_breakpoints()?;
+            self.try_resolve_all_unresolved_breakpoints();
         }
 
         Ok(())
@@ -223,14 +223,12 @@ impl Target {
         self.saw_initial_wow64_bp = true;
     }
 
-    fn try_resolve_all_unresolved_breakpoints(&mut self) -> Result<()> {
+    fn try_resolve_all_unresolved_breakpoints(&mut self) {
         // borrowck - take ownership from self so we call `try_resolve_unresolved_breakpoint`.
         let mut unresolved_breakpoints = std::mem::take(&mut self.unresolved_breakpoints);
         unresolved_breakpoints.retain(|bp| self.try_resolve_unresolved_breakpoint(bp));
         assert!(self.unresolved_breakpoints.is_empty());
         self.unresolved_breakpoints = unresolved_breakpoints;
-
-        Ok(())
     }
 
     fn try_resolve_unresolved_breakpoint(&mut self, breakpoint: &Breakpoint) -> bool {

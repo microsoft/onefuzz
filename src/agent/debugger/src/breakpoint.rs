@@ -216,7 +216,7 @@ impl BreakpointCollection {
     }
 
     pub fn bulk_remove_all(&mut self, process_handle: HANDLE) -> Result<()> {
-        if self.breakpoints.len() == 0 {
+        if self.breakpoints.is_empty() {
             return Ok(());
         }
 
@@ -247,7 +247,7 @@ impl BreakpointCollection {
     }
 
     pub fn bulk_apply_all(&mut self, process_handle: HANDLE) -> Result<()> {
-        if self.breakpoints.len() == 0 {
+        if self.breakpoints.is_empty() {
             return Ok(());
         }
 
