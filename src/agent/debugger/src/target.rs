@@ -10,7 +10,7 @@ use log::{debug, error, trace};
 use rand::{thread_rng, Rng};
 use win_util::{last_os_error, process};
 use winapi::{
-    shared::minwindef::DWORD,
+    shared::minwindef::{DWORD, LPCVOID},
     um::{
         processthreadsapi::{ResumeThread, SuspendThread},
         winbase::Wow64SuspendThread,
@@ -582,6 +582,10 @@ impl Target {
     pub fn read_flags_register(&mut self) -> Result<u32> {
         let current_context = self.get_current_context()?;
         Ok(current_context.get_flags())
+    }
+
+    pub fn read_memory(&self, remote_address: LPCVOID, buf: &mut [impl Copy]) -> Result<()> {
+        process::read_memory_array(self.process_handle, remote_address, buf)
     }
 
     /// Handle a breakpoint that we set (as opposed to a breakpoint in user code, e.g.

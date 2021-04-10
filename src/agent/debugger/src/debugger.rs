@@ -488,13 +488,8 @@ impl Debugger {
         self.target.read_flags_register()
     }
 
-    pub fn get_current_target_memory<T: Copy>(
-        &self,
-        remote_address: LPCVOID,
-        buf: &mut [T],
-    ) -> Result<()> {
-        process::read_memory_array(self.target.process_handle(), remote_address, buf)?;
-        Ok(())
+    pub fn read_memory(&self, remote_address: LPCVOID, buf: &mut [impl Copy]) -> Result<()> {
+        self.target.read_memory(remote_address, buf)
     }
 
     pub fn get_current_frame(&self) -> Result<StackFrame> {
