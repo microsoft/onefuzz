@@ -122,10 +122,6 @@ impl CoverageTask {
             if self.record_corpus_coverage(&mut processor, dir).await? {
                 seen_inputs = true;
             }
-
-            fs::remove_dir_all(&dir.path).await.with_context(|| {
-                format!("unable to remove readonly_inputs: {}", dir.path.display())
-            })?;
         }
 
         if seen_inputs {
@@ -192,7 +188,7 @@ impl CoverageProcessor {
     pub async fn new(config: Arc<Config>) -> Result<Self> {
         let heartbeat_client = config.common.init_heartbeat().await?;
         let total = TotalCoverage::new(config.coverage.path.join(TOTAL_COVERAGE));
-        let recorder = CoverageRecorder::new(config.clone());
+        let recorder = CoverageRecorder::new(config.clone()).await?;
         let module_totals = BTreeMap::default();
 
         Ok(Self {

@@ -4,8 +4,9 @@
 use crate::{
     local::common::{
         build_local_context, get_cmd_arg, get_cmd_exe, get_hash_map, get_synced_dir, CmdType,
-        ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS, CRASHES_DIR, NO_REPRO_DIR,
-        REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR, UNIQUE_REPORTS_DIR,
+        SyncCountDirMonitor, UiEvent, ANALYSIS_DIR, ANALYZER_ENV, ANALYZER_EXE, ANALYZER_OPTIONS,
+        CRASHES_DIR, NO_REPRO_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TOOLS_DIR,
+        UNIQUE_REPORTS_DIR,
     },
     tasks::{
         analysis::generic::{run as run_analysis, Config},
@@ -15,11 +16,13 @@ use crate::{
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use storage_queue::QueueClient;
+use tokio::sync::mpsc::UnboundedSender;
 
 pub fn build_analysis_config(
     args: &clap::ArgMatches<'_>,
     input_queue: Option<QueueClient>,
     common: CommonConfig,
+    event_sender: Option<UnboundedSender<UiEvent>>,
 ) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_options = get_cmd_arg(CmdType::Target, args);
@@ -27,18 +30,25 @@ pub fn build_analysis_config(
     let analyzer_exe = value_t!(args, ANALYZER_EXE, String)?;
     let analyzer_options = args.values_of_lossy(ANALYZER_OPTIONS).unwrap_or_default();
     let analyzer_env = get_hash_map(args, ANALYZER_ENV)?;
-    let analysis = get_synced_dir(ANALYSIS_DIR, common.job_id, common.task_id, args)?;
+    let analysis = get_synced_dir(ANALYSIS_DIR, common.job_id, common.task_id, args)?
+        .monitor_count(&event_sender)?;
     let tools = get_synced_dir(TOOLS_DIR, common.job_id, common.task_id, args)?;
     let crashes = if input_queue.is_none() {
-        get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args).ok()
+        get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)
+            .ok()
+            .monitor_count(&event_sender)?
     } else {
         None
     };
-
-    let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args).ok();
-    let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args).ok();
-    let unique_reports =
-        get_synced_dir(UNIQUE_REPORTS_DIR, common.job_id, common.task_id, args).ok();
+    let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args)
+        .ok()
+        .monitor_count(&event_sender)?;
+    let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args)
+        .ok()
+        .monitor_count(&event_sender)?;
+    let unique_reports = get_synced_dir(UNIQUE_REPORTS_DIR, common.job_id, common.task_id, args)
+        .ok()
+        .monitor_count(&event_sender)?;
 
     let config = Config {
         target_exe,
@@ -59,9 +69,12 @@ pub fn build_analysis_config(
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let context = build_local_context(args, true)?;
-    let config = build_analysis_config(args, None, context.common_config.clone())?;
+pub async fn run(
+    args: &clap::ArgMatches<'_>,
+    event_sender: Option<UnboundedSender<UiEvent>>,
+) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone())?;
+    let config = build_analysis_config(args, None, context.common_config.clone(), event_sender)?;
     run_analysis(config).await
 }
 
