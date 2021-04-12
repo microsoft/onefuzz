@@ -7,6 +7,7 @@ use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
 };
+use tokio_stream::wrappers::ReadDirStream;
 
 use std::process::Stdio;
 use tokio::fs;
@@ -41,7 +42,7 @@ pub async fn list_files(path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
         .await
         .with_context(|| format!("unable to list files: {}", path.display()))?;
 
-    let mut files = paths
+    let mut files = ReadDirStream::new(paths)
         .filter_map(|x| async {
             match x {
                 Ok(x) => {

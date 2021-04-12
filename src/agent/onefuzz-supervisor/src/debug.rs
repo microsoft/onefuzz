@@ -163,7 +163,7 @@ fn debug_run_worker(opt: RunWorkerOpt) -> Result<()> {
         work_units: vec![work_unit],
     };
 
-    let mut rt = tokio::runtime::Runtime::new()?;
+    let rt = tokio::runtime::Runtime::new()?;
     let events = rt.block_on(run_worker(work_set))?;
 
     for event in events {

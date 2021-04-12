@@ -11,15 +11,15 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, SubCommand};
+use flume;
 use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
-use tokio::sync::mpsc::UnboundedSender;
 use tokio::task::spawn;
 use uuid::Uuid;
 
 pub async fn run(
     args: &clap::ArgMatches<'_>,
-    event_sender: Option<UnboundedSender<UiEvent>>,
+    event_sender: Option<flume::Sender<UiEvent>>,
 ) -> Result<()> {
     let context = build_local_context(args, true, event_sender.clone())?;
     let fuzz_config = build_fuzz_config(args, context.common_config.clone(), event_sender.clone())?;

@@ -4,7 +4,6 @@
 use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
-use futures::stream::StreamExt;
 use onefuzz::{blob::BlobUrl, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
 use tempfile::{tempdir, TempDir};
@@ -133,8 +132,8 @@ impl<M> InputPoller<M> {
         );
 
         let mut read_dir = fs::read_dir(&to_process.path).await?;
-        while let Some(file) = read_dir.next().await {
-            let path = file?.path();
+        while let Some(file) = read_dir.next_entry().await? {
+            let path = file.path();
             info!(
                 "processing batch-downloaded input: {} - {}",
                 self.name,

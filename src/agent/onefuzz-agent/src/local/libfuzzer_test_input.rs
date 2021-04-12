@@ -10,12 +10,12 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use flume;
 use std::path::PathBuf;
-use tokio::sync::mpsc::UnboundedSender;
 
 pub async fn run(
     args: &clap::ArgMatches<'_>,
-    event_sender: Option<UnboundedSender<UiEvent>>,
+    event_sender: Option<flume::Sender<UiEvent>>,
 ) -> Result<()> {
     let context = build_local_context(args, true, event_sender)?;
 

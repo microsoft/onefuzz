@@ -357,7 +357,7 @@ mod tests {
                     MAX_FUZZ_TIME_SECONDS
                 );
             }
-            tokio::time::delay_for(std::time::Duration::from_secs(1)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         }
     }
 }

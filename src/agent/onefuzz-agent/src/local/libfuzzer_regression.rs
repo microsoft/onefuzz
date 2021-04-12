@@ -15,14 +15,14 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use tokio::sync::mpsc::UnboundedSender;
+use flume;
 
 const REPORT_NAMES: &str = "report_names";
 
 pub fn build_regression_config(
     args: &clap::ArgMatches<'_>,
     common: CommonConfig,
-    event_sender: Option<UnboundedSender<UiEvent>>,
+    event_sender: Option<flume::Sender<UiEvent>>,
 ) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -75,7 +75,7 @@ pub fn build_regression_config(
 
 pub async fn run(
     args: &clap::ArgMatches<'_>,
-    event_sender: Option<UnboundedSender<UiEvent>>,
+    event_sender: Option<flume::Sender<UiEvent>>,
 ) -> Result<()> {
     let context = build_local_context(args, true, event_sender.clone())?;
     let config = build_regression_config(args, context.common_config.clone(), event_sender)?;
