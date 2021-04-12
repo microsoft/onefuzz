@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.13.0
+### Added
+* Deployment: Allow specifying the Azure subscription to use for deployment, instead of always using the default [#774](https://github.com/microsoft/onefuzz/pull/774)
+
+### Changed
+* Agent/Supervisor: Added automatic retry when executing `azcopy`.  [#701](https://github.com/microsoft/onefuzz/pull/701)
+* Service: When task setup fails, the error that caused the setup failure is now included in the Task error message.  [#781](https://github.com/microsoft/onefuzz/pull/781)
+* Agent: The `libfuzzer-fuzz` task no longer queries the full local system status when only reporting process status.  [#784](https://github.com/microsoft/onefuzz/pull/784)
+* Agent: The `libfuzzer-fuzz` task now limits the stderr collected to the last 1024 lines for potential failure reporting.  [#785](https://github.com/microsoft/onefuzz/pull/785)
+* Agent: The `libfuzzer-fuzz` task now summarizes the executions per second and iteration counts from all of the workers on each VM.  [#786](https://github.com/microsoft/onefuzz/pull/786)
+* Agent: The `libfuzzer-coverage` task no longer removes the initial copy of inputs.  [#788](https://github.com/microsoft/onefuzz/pull/788)
+* Agent: Debugger scripts for extracting libFuzzer coverage are now embedded in the agent.  [#783](https://github.com/microsoft/onefuzz/pull/783)
+* Agent: Continued development related to upcoming features. [#787](https://github.com/microsoft/onefuzz/pull/787), [#776](https://github.com/microsoft/onefuzz/pull/776), [#663](https://github.com/microsoft/onefuzz/pull/663)
+
+### Fixed
+* CLI: Fixed issue relating to line endings in the `libfuzzer-qemu` job template setup script. [#782](https://github.com/microsoft/onefuzz/pull/782)
+* Service: Fixed backward compatibility issue in ephemeral disk support when creating scalesets.  [#780](https://github.com/microsoft/onefuzz/pull/780)
+* Deployment: Fixed issue in multi-tenant deployment support. [#773](https://github.com/microsoft/onefuzz/pull/773)
+
 ## 2.12.0
 ### Added
 * Agent: LibFuzzer tasks now include a verification step that verifies the fuzzer can test a small number of seeds at the start of the task.  [#752](https://github.com/microsoft/onefuzz/pull/752)
