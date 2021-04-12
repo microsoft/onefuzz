@@ -224,19 +224,20 @@ impl Target {
         self.unresolved_breakpoints = unresolved_breakpoints;
     }
 
+    /// Try to resolve a single unresolved breakpoint, returning true if the breakpoint
+    /// was successfully resolved.
     fn try_resolve_unresolved_breakpoint(&mut self, breakpoint: &Breakpoint) -> bool {
         if !self.saw_initial_bp {
             return false;
         }
 
+        let mut resolved = false;
         match breakpoint.extra_info() {
             breakpoint::ExtraInfo::Rva(rva_info) => {
                 if let Some(module) = self.module_from_name_mut(rva_info.module()) {
                     let address = module.base_address() + rva_info.rva();
                     module.new_breakpoint(breakpoint.id(), breakpoint.kind(), address);
-                    true
-                } else {
-                    false
+                    resolved = true;
                 }
             }
             breakpoint::ExtraInfo::UnresolvedSymbol(sym_info) => {
@@ -255,6 +256,7 @@ impl Target {
                                         breakpoint.kind(),
                                         sym.address(),
                                     );
+                                    resolved = true;
                                 }
                                 Err(_) => {
                                     debug!(
@@ -270,12 +272,13 @@ impl Target {
                         }
                     }
                 }
-                false
             }
             breakpoint::ExtraInfo::Resolved(_) => unreachable!(
                 "address breakpoints should never be added to the unresolved breakpoint list"
             ),
         }
+
+        resolved
     }
 
     pub fn new_symbolic_breakpoint(
