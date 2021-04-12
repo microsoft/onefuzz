@@ -109,6 +109,24 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "BlobRef",
             "type": "object"
         },
+        "ContainerType": {
+            "description": "An enumeration.",
+            "enum": [
+                "analysis",
+                "coverage",
+                "crashes",
+                "inputs",
+                "no_repro",
+                "readonly_inputs",
+                "reports",
+                "setup",
+                "tools",
+                "unique_inputs",
+                "unique_reports",
+                "regression_reports"
+            ],
+            "title": "ContainerType"
+        },
         "Report": {
             "properties": {
                 "asan_log": {
@@ -202,6 +220,331 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "Report",
             "type": "object"
+        },
+        "StatsFormat": {
+            "description": "An enumeration.",
+            "enum": [
+                "AFL"
+            ],
+            "title": "StatsFormat"
+        },
+        "TaskConfig": {
+            "properties": {
+                "colocate": {
+                    "title": "Colocate",
+                    "type": "boolean"
+                },
+                "containers": {
+                    "items": {
+                        "$ref": "#/definitions/TaskContainers"
+                    },
+                    "title": "Containers",
+                    "type": "array"
+                },
+                "debug": {
+                    "items": {
+                        "$ref": "#/definitions/TaskDebugFlag"
+                    },
+                    "type": "array"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "pool": {
+                    "$ref": "#/definitions/TaskPool"
+                },
+                "prereq_tasks": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Prereq Tasks",
+                    "type": "array"
+                },
+                "tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Tags",
+                    "type": "object"
+                },
+                "task": {
+                    "$ref": "#/definitions/TaskDetails"
+                },
+                "vm": {
+                    "$ref": "#/definitions/TaskVm"
+                }
+            },
+            "required": [
+                "job_id",
+                "task",
+                "containers",
+                "tags"
+            ],
+            "title": "TaskConfig",
+            "type": "object"
+        },
+        "TaskContainers": {
+            "properties": {
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "name"
+            ],
+            "title": "TaskContainers",
+            "type": "object"
+        },
+        "TaskDebugFlag": {
+            "description": "An enumeration.",
+            "enum": [
+                "keep_node_on_failure",
+                "keep_node_on_completion"
+            ],
+            "title": "TaskDebugFlag"
+        },
+        "TaskDetails": {
+            "properties": {
+                "analyzer_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Env",
+                    "type": "object"
+                },
+                "analyzer_exe": {
+                    "title": "Analyzer Exe",
+                    "type": "string"
+                },
+                "analyzer_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Options",
+                    "type": "array"
+                },
+                "check_asan_log": {
+                    "title": "Check Asan Log",
+                    "type": "boolean"
+                },
+                "check_debugger": {
+                    "default": true,
+                    "title": "Check Debugger",
+                    "type": "boolean"
+                },
+                "check_fuzzer_help": {
+                    "title": "Check Fuzzer Help",
+                    "type": "boolean"
+                },
+                "check_retry_count": {
+                    "title": "Check Retry Count",
+                    "type": "integer"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                },
+                "ensemble_sync_delay": {
+                    "title": "Ensemble Sync Delay",
+                    "type": "integer"
+                },
+                "expect_crash_on_failure": {
+                    "title": "Expect Crash On Failure",
+                    "type": "boolean"
+                },
+                "generator_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Generator Env",
+                    "type": "object"
+                },
+                "generator_exe": {
+                    "title": "Generator Exe",
+                    "type": "string"
+                },
+                "generator_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Generator Options",
+                    "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
+                },
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "rename_output": {
+                    "title": "Rename Output",
+                    "type": "boolean"
+                },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
+                "stats_file": {
+                    "title": "Stats File",
+                    "type": "string"
+                },
+                "stats_format": {
+                    "$ref": "#/definitions/StatsFormat"
+                },
+                "supervisor_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Env",
+                    "type": "object"
+                },
+                "supervisor_exe": {
+                    "title": "Supervisor Exe",
+                    "type": "string"
+                },
+                "supervisor_input_marker": {
+                    "title": "Supervisor Input Marker",
+                    "type": "string"
+                },
+                "supervisor_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Options",
+                    "type": "array"
+                },
+                "target_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Target Env",
+                    "type": "object"
+                },
+                "target_exe": {
+                    "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Target Options",
+                    "type": "array"
+                },
+                "target_options_merge": {
+                    "title": "Target Options Merge",
+                    "type": "boolean"
+                },
+                "target_timeout": {
+                    "title": "Target Timeout",
+                    "type": "integer"
+                },
+                "target_workers": {
+                    "title": "Target Workers",
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/TaskType"
+                },
+                "wait_for_files": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "duration"
+            ],
+            "title": "TaskDetails",
+            "type": "object"
+        },
+        "TaskPool": {
+            "properties": {
+                "count": {
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "count",
+                "pool_name"
+            ],
+            "title": "TaskPool",
+            "type": "object"
+        },
+        "TaskType": {
+            "description": "An enumeration.",
+            "enum": [
+                "libfuzzer_fuzz",
+                "libfuzzer_coverage",
+                "libfuzzer_crash_report",
+                "libfuzzer_merge",
+                "libfuzzer_regression",
+                "generic_analysis",
+                "generic_supervisor",
+                "generic_merge",
+                "generic_generator",
+                "generic_crash_report",
+                "generic_regression"
+            ],
+            "title": "TaskType"
+        },
+        "TaskVm": {
+            "properties": {
+                "count": {
+                    "default": 1,
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "sku": {
+                    "title": "Sku",
+                    "type": "string"
+                },
+                "spot_instances": {
+                    "default": false,
+                    "title": "Spot Instances",
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "region",
+                "sku",
+                "image"
+            ],
+            "title": "TaskVm",
+            "type": "object"
         }
     },
     "properties": {
@@ -215,6 +558,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "report": {
             "$ref": "#/definitions/Report"
+        },
+        "task_config": {
+            "$ref": "#/definitions/TaskConfig"
         }
     },
     "required": [
@@ -1149,6 +1495,24 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "BlobRef",
             "type": "object"
         },
+        "ContainerType": {
+            "description": "An enumeration.",
+            "enum": [
+                "analysis",
+                "coverage",
+                "crashes",
+                "inputs",
+                "no_repro",
+                "readonly_inputs",
+                "reports",
+                "setup",
+                "tools",
+                "unique_inputs",
+                "unique_reports",
+                "regression_reports"
+            ],
+            "title": "ContainerType"
+        },
         "CrashTestResult": {
             "properties": {
                 "crash_report": {
@@ -1311,6 +1675,331 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "Report",
             "type": "object"
+        },
+        "StatsFormat": {
+            "description": "An enumeration.",
+            "enum": [
+                "AFL"
+            ],
+            "title": "StatsFormat"
+        },
+        "TaskConfig": {
+            "properties": {
+                "colocate": {
+                    "title": "Colocate",
+                    "type": "boolean"
+                },
+                "containers": {
+                    "items": {
+                        "$ref": "#/definitions/TaskContainers"
+                    },
+                    "title": "Containers",
+                    "type": "array"
+                },
+                "debug": {
+                    "items": {
+                        "$ref": "#/definitions/TaskDebugFlag"
+                    },
+                    "type": "array"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "pool": {
+                    "$ref": "#/definitions/TaskPool"
+                },
+                "prereq_tasks": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Prereq Tasks",
+                    "type": "array"
+                },
+                "tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Tags",
+                    "type": "object"
+                },
+                "task": {
+                    "$ref": "#/definitions/TaskDetails"
+                },
+                "vm": {
+                    "$ref": "#/definitions/TaskVm"
+                }
+            },
+            "required": [
+                "job_id",
+                "task",
+                "containers",
+                "tags"
+            ],
+            "title": "TaskConfig",
+            "type": "object"
+        },
+        "TaskContainers": {
+            "properties": {
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "name"
+            ],
+            "title": "TaskContainers",
+            "type": "object"
+        },
+        "TaskDebugFlag": {
+            "description": "An enumeration.",
+            "enum": [
+                "keep_node_on_failure",
+                "keep_node_on_completion"
+            ],
+            "title": "TaskDebugFlag"
+        },
+        "TaskDetails": {
+            "properties": {
+                "analyzer_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Env",
+                    "type": "object"
+                },
+                "analyzer_exe": {
+                    "title": "Analyzer Exe",
+                    "type": "string"
+                },
+                "analyzer_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Options",
+                    "type": "array"
+                },
+                "check_asan_log": {
+                    "title": "Check Asan Log",
+                    "type": "boolean"
+                },
+                "check_debugger": {
+                    "default": true,
+                    "title": "Check Debugger",
+                    "type": "boolean"
+                },
+                "check_fuzzer_help": {
+                    "title": "Check Fuzzer Help",
+                    "type": "boolean"
+                },
+                "check_retry_count": {
+                    "title": "Check Retry Count",
+                    "type": "integer"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                },
+                "ensemble_sync_delay": {
+                    "title": "Ensemble Sync Delay",
+                    "type": "integer"
+                },
+                "expect_crash_on_failure": {
+                    "title": "Expect Crash On Failure",
+                    "type": "boolean"
+                },
+                "generator_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Generator Env",
+                    "type": "object"
+                },
+                "generator_exe": {
+                    "title": "Generator Exe",
+                    "type": "string"
+                },
+                "generator_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Generator Options",
+                    "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
+                },
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "rename_output": {
+                    "title": "Rename Output",
+                    "type": "boolean"
+                },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
+                "stats_file": {
+                    "title": "Stats File",
+                    "type": "string"
+                },
+                "stats_format": {
+                    "$ref": "#/definitions/StatsFormat"
+                },
+                "supervisor_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Env",
+                    "type": "object"
+                },
+                "supervisor_exe": {
+                    "title": "Supervisor Exe",
+                    "type": "string"
+                },
+                "supervisor_input_marker": {
+                    "title": "Supervisor Input Marker",
+                    "type": "string"
+                },
+                "supervisor_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Options",
+                    "type": "array"
+                },
+                "target_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Target Env",
+                    "type": "object"
+                },
+                "target_exe": {
+                    "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Target Options",
+                    "type": "array"
+                },
+                "target_options_merge": {
+                    "title": "Target Options Merge",
+                    "type": "boolean"
+                },
+                "target_timeout": {
+                    "title": "Target Timeout",
+                    "type": "integer"
+                },
+                "target_workers": {
+                    "title": "Target Workers",
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/TaskType"
+                },
+                "wait_for_files": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "duration"
+            ],
+            "title": "TaskDetails",
+            "type": "object"
+        },
+        "TaskPool": {
+            "properties": {
+                "count": {
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "count",
+                "pool_name"
+            ],
+            "title": "TaskPool",
+            "type": "object"
+        },
+        "TaskType": {
+            "description": "An enumeration.",
+            "enum": [
+                "libfuzzer_fuzz",
+                "libfuzzer_coverage",
+                "libfuzzer_crash_report",
+                "libfuzzer_merge",
+                "libfuzzer_regression",
+                "generic_analysis",
+                "generic_supervisor",
+                "generic_merge",
+                "generic_generator",
+                "generic_crash_report",
+                "generic_regression"
+            ],
+            "title": "TaskType"
+        },
+        "TaskVm": {
+            "properties": {
+                "count": {
+                    "default": 1,
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "sku": {
+                    "title": "Sku",
+                    "type": "string"
+                },
+                "spot_instances": {
+                    "default": false,
+                    "title": "Spot Instances",
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "region",
+                "sku",
+                "image"
+            ],
+            "title": "TaskVm",
+            "type": "object"
         }
     },
     "properties": {
@@ -1324,6 +2013,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "regression_report": {
             "$ref": "#/definitions/RegressionReport"
+        },
+        "task_config": {
+            "$ref": "#/definitions/TaskConfig"
         }
     },
     "required": [
@@ -3927,6 +4619,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "report": {
                     "$ref": "#/definitions/Report"
+                },
+                "task_config": {
+                    "$ref": "#/definitions/TaskConfig"
                 }
             },
             "required": [
@@ -4228,6 +4923,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "regression_report": {
                     "$ref": "#/definitions/RegressionReport"
+                },
+                "task_config": {
+                    "$ref": "#/definitions/TaskConfig"
                 }
             },
             "required": [
