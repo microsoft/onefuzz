@@ -4,7 +4,7 @@ use anyhow::Result;
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use onefuzz::jitter::delay_with_jitter;
-use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use onefuzz::{monitor::DirectoryMonitor, syncdir::SyncedDir};
 use path_absolutize::Absolutize;
 use remove_dir_all::remove_dir_all;
 use reqwest::Url;
@@ -154,22 +154,22 @@ fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
 
 pub fn get_synced_dirs(
     name: &str,
-    job_id: Uuid,
-    task_id: Uuid,
+    _job_id: Uuid,
+    _task_id: Uuid,
     args: &ArgMatches<'_>,
 ) -> Result<Vec<SyncedDir>> {
-    let current_dir = std::env::current_dir()?;
+    //let current_dir = std::env::current_dir()?;
     args.values_of_os(name)
         .ok_or_else(|| anyhow!("argument '{}' not specified", name))?
         .enumerate()
-        .map(|(index, remote_path)| {
+        .map(|(_index, remote_path)| {
             let path = PathBuf::from(remote_path);
-            let remote_path = path.absolutize()?;
-            let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
-            let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
-            let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
+            // let remote_path = path.absolutize()?;
+            // let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
+            // let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
+            // let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
             Ok(SyncedDir {
-                url: remote_blob_url,
+                url: None,
                 path,
             })
         })
@@ -194,17 +194,17 @@ fn register_cleanup(job_id: Uuid) -> Result<()> {
 
 pub fn get_synced_dir(
     name: &str,
-    job_id: Uuid,
-    task_id: Uuid,
+    _job_id: Uuid,
+    _task_id: Uuid,
     args: &ArgMatches<'_>,
 ) -> Result<SyncedDir> {
     let remote_path = value_t!(args, name, PathBuf)?.absolutize()?.into_owned();
-    let remote_url = Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
-    let remote_blob_url = BlobContainerUrl::new(remote_url)?;
-    let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
+    // let remote_url = Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
+    // let remote_blob_url = BlobContainerUrl::new(remote_url)?;
+    // let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
     Ok(SyncedDir {
-        url: remote_blob_url,
-        path,
+        url: None,
+        path: remote_path,
     })
 }
 
@@ -333,7 +333,7 @@ pub trait SyncCountDirMonitor<T: Sized> {
 
 impl SyncCountDirMonitor<SyncedDir> for SyncedDir {
     fn monitor_count(self, event_sender: &Option<UnboundedSender<UiEvent>>) -> Result<Self> {
-        if let (Some(event_sender), Some(p)) = (event_sender, self.url.as_file_path()) {
+        if let (Some(event_sender), Some(p)) = (event_sender, self.remote_url()?.as_file_path()) {
             event_sender.send(UiEvent::MonitorDir(p))?;
         }
         Ok(self)

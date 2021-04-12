@@ -199,12 +199,14 @@ async fn start_supervisor(
         .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
             tester.instance_telemetry_key(&key)
         })
-        .set_optional_ref(&config.crashes.url.account(), |tester, account| {
-            tester.crashes_account(account)
-        })
-        .set_optional_ref(&config.crashes.url.container(), |tester, container| {
-            tester.crashes_container(container)
-        });
+        .set_optional_ref(
+            &config.crashes.url.clone().and_then(|u| u.account()),
+            |tester, account| tester.crashes_account(account),
+        )
+        .set_optional_ref(
+            &config.crashes.url.clone().and_then(|u| u.container()),
+            |tester, container| tester.crashes_container(container),
+        );
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
     let mut cmd = Command::new(supervisor_path);

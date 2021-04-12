@@ -88,7 +88,9 @@ pub async fn handle_inputs(
             .to_string_lossy()
             .to_string();
 
-        let input_url = readonly_inputs.url.url().join(&file_name)?;
+        //let input_url = readonly_inputs.url.url().join(&file_name)?;
+        let input_url = readonly_inputs.remote_url()?.url()
+            .join(&file_name)?;
 
         let crash_test_result = handler.get_crash_result(file_path, input_url).await?;
         RegressionReport {
@@ -150,7 +152,8 @@ pub async fn handle_crash_reports(
             }
             .ok_or_else(|| format_err!("crash report is missing input blob: {}", file_name))?;
 
-            let input_url = crashes.url.blob(&input_blob.name).url();
+            //let crash_url = Url::from_file_path(crashes.path).into()?;
+            let input_url = crashes.remote_url()?.url().clone();
             let input = crashes.path.join(&input_blob.name);
             let crash_test_result = handler.get_crash_result(input, input_url).await?;
 

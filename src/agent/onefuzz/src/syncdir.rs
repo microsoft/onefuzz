@@ -12,7 +12,7 @@ use crate::{
 use anyhow::{Context, Result};
 use futures::stream::StreamExt;
 use onefuzz_telemetry::{Event, EventData};
-use reqwest::StatusCode;
+use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, str, time::Duration};
@@ -30,13 +30,20 @@ const DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS: u64 = 60;
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct SyncedDir {
     pub path: PathBuf,
-    pub url: BlobContainerUrl,
+    pub url: Option<BlobContainerUrl>,
 }
 
 impl SyncedDir {
+
+    pub fn remote_url(&self) -> Result<BlobContainerUrl> {
+        let url = self.url.clone().unwrap_or(BlobContainerUrl::new(Url::from_file_path(self.path.clone()).map_err(|_| anyhow!("invalid path"))? )?);
+        Ok(url)
+    }
+
     pub async fn sync(&self, operation: SyncOperation, delete_dst: bool) -> Result<()> {
         let dir = &self.path.join("");
-        if let Some(dest) = self.url.as_file_path() {
+
+        if let Some(dest) = self.url.clone().and_then(|u| u.as_file_path()) {
             debug!("syncing {:?} {}", operation, dest.display());
             match operation {
                 SyncOperation::Push => {
@@ -56,19 +63,20 @@ impl SyncedDir {
                     .await
                 }
             }
-        } else {
-            let url = self.url.url();
+        } else if let Some(url) = self.url.clone().map(|u| u.url().clone()) {
             let url = url.as_ref();
             debug!("syncing {:?} {}", operation, dir.display());
             match operation {
                 SyncOperation::Push => az_copy::sync(dir, url, delete_dst).await,
                 SyncOperation::Pull => az_copy::sync(url, dir, delete_dst).await,
             }
+        } else {
+            Ok(())
         }
     }
 
-    pub fn try_url(&self) -> Result<&BlobContainerUrl> {
-        Ok(&self.url)
+    pub fn try_url(&self) -> Option<BlobContainerUrl> {
+        self.url.clone()
     }
 
     pub async fn init_pull(&self) -> Result<()> {
@@ -77,7 +85,7 @@ impl SyncedDir {
     }
 
     pub async fn init(&self) -> Result<()> {
-        if let Some(remote_path) = self.url.as_file_path() {
+        if let Some(remote_path) = self.url.clone().and_then(|u| u.as_file_path()) {
             fs::create_dir_all(remote_path).await?;
         }
 
@@ -122,48 +130,64 @@ impl SyncedDir {
 
     // Conditionally upload a report, if it would not be a duplicate.
     pub async fn upload<T: Serialize>(&self, name: &str, data: &T) -> Result<bool> {
-        match self.url.as_file_path() {
-            Some(path) => {
-                let path = path.join(name);
-                if !exists(&path).await? {
-                    let data = serde_json::to_vec(&data)?;
-                    fs::write(path, data).await?;
-                    Ok(true)
-                } else {
-                    Ok(false)
+        if let Some(url) = self.url.clone() {
+            match url.as_file_path() {
+                Some(path) => {
+                    let path = path.join(name);
+                    if !exists(&path).await? {
+                        let data = serde_json::to_vec(&data)?;
+                        fs::write(path, data).await?;
+                        Ok(true)
+                    } else {
+                        Ok(false)
+                    }
+                }
+                None => {
+                    let url = url.blob(name).url();
+                    let blob = BlobClient::new();
+                    let result = blob
+                        .put(url.clone())
+                        .json(data)
+                        // Conditional PUT, only if-not-exists.
+                        // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
+                        .header("If-None-Match", "*")
+                        .send_retry(
+                            |code| match code {
+                                StatusCode::CONFLICT => RetryCheck::Succeed,
+                                _ => RetryCheck::Retry,
+                            },
+                            DEFAULT_RETRY_PERIOD,
+                            MAX_RETRY_ATTEMPTS,
+                        )
+                        .await
+                        .context("Uploading blob")?;
+
+                    Ok(result.status() == StatusCode::CREATED)
                 }
             }
-            None => {
-                let url = self.url.blob(name).url();
-                let blob = BlobClient::new();
-                let result = blob
-                    .put(url.clone())
-                    .json(data)
-                    // Conditional PUT, only if-not-exists.
-                    // https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations
-                    .header("If-None-Match", "*")
-                    .send_retry(
-                        |code| match code {
-                            StatusCode::CONFLICT => RetryCheck::Succeed,
-                            _ => RetryCheck::Retry,
-                        },
-                        DEFAULT_RETRY_PERIOD,
-                        MAX_RETRY_ATTEMPTS,
-                    )
-                    .await
-                    .context("Uploading blob")?;
-
-                Ok(result.status() == StatusCode::CREATED)
+        } else {
+            let path = self.path.join(name);
+            if !exists(&path).await? {
+                let data = serde_json::to_vec(&data)?;
+                fs::write(path, data).await?;
+                Ok(true)
+            } else {
+                Ok(false)
             }
         }
     }
 
-    async fn file_monitor_event(&self, event: Event, ignore_dotfiles: bool) -> Result<()> {
-        debug!("monitoring {}", self.path.display());
-        let mut monitor = DirectoryMonitor::new(self.path.clone());
+    async fn file_monitor_event(
+        path: PathBuf,
+        url: BlobContainerUrl,
+        event: Event,
+        ignore_dotfiles: bool,
+    ) -> Result<()> {
+        debug!("monitoring {}", path.display());
+        let mut monitor = DirectoryMonitor::new(path.clone());
         monitor.start()?;
 
-        if let Some(path) = self.url.as_file_path() {
+        if let Some(path) = url.as_file_path() {
             fs::create_dir_all(&path).await?;
 
             while let Some(item) = monitor.next().await {
@@ -192,7 +216,7 @@ impl SyncedDir {
                 }
             }
         } else {
-            let mut uploader = BlobUploader::new(self.url.url().clone());
+            let mut uploader = BlobUploader::new(url.url().clone());
 
             while let Some(item) = monitor.next().await {
                 let file_name = item
@@ -207,7 +231,7 @@ impl SyncedDir {
                     let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{}",
                         item.display(),
-                        self.path.display(),
+                        path.display(),
                         err
                     );
 
@@ -235,17 +259,26 @@ impl SyncedDir {
     /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
     /// a directory, and may reset it.
     pub async fn monitor_results(&self, event: Event, ignore_dotfiles: bool) -> Result<()> {
-        loop {
-            debug!("waiting to monitor {}", self.path.display());
+        if let Some(url) = self.url.clone() {
+            loop {
+                debug!("waiting to monitor {}", self.path.display());
 
-            while fs::metadata(&self.path).await.is_err() {
-                debug!("dir {} not ready to monitor, delaying", self.path.display());
-                delay_with_jitter(DELAY).await;
-            }
+                while fs::metadata(&self.path).await.is_err() {
+                    debug!("dir {} not ready to monitor, delaying", self.path.display());
+                    delay_with_jitter(DELAY).await;
+                }
 
-            debug!("starting monitor for {}", self.path.display());
-            self.file_monitor_event(event.clone(), ignore_dotfiles)
+                debug!("starting monitor for {}", self.path.display());
+                Self::file_monitor_event(
+                    self.path.clone(),
+                    url.clone(),
+                    event.clone(),
+                    ignore_dotfiles,
+                )
                 .await?;
+            }
+        } else {
+            Ok(())
         }
     }
 }
