@@ -6,12 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.13.0
 ### Added
-* Deployment: Added support for non-default Azure subscriptions. [#774](https://github.com/microsoft/onefuzz/pull/774)
+* Deployment: Allow specifying the Azure subscription to use for deployment, instead of always using the default [#774](https://github.com/microsoft/onefuzz/pull/774)
 
 ### Changed
 * Agent/Supervisor: Added automatic retry when executing `azcopy`.  [#701](https://github.com/microsoft/onefuzz/pull/701)
 * Service: When task setup fails, the error that caused the setup failure is now included in the Task error message.  [#781](https://github.com/microsoft/onefuzz/pull/781)
-* Agent: The `libfuzzer-fuzz` task no longer updates system status when reporting process status.  [#784](https://github.com/microsoft/onefuzz/pull/784)
+* Agent: The `libfuzzer-fuzz` task no longer queries the full local system status when only reporting process status.  [#784](https://github.com/microsoft/onefuzz/pull/784)
 * Agent: The `libfuzzer-fuzz` task now limits the stderr collected to the last 1024 lines for potential failure reporting.  [#785](https://github.com/microsoft/onefuzz/pull/785)
 * Agent: The `libfuzzer-fuzz` task now summarizes the executions per second and iteration counts from all of the workers on each VM.  [#786](https://github.com/microsoft/onefuzz/pull/786)
 * Agent: The `libfuzzer-coverage` task no longer removes the initial copy of inputs.  [#788](https://github.com/microsoft/onefuzz/pull/788)
