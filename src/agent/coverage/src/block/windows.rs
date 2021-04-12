@@ -170,7 +170,7 @@ impl<'c> Recorder<'c> {
             return Ok(());
         }
 
-        match self.cache.fetch(&path) {
+        match self.cache.fetch(&path, dbg.target().process_handle()) {
             Ok(Some(info)) => {
                 let new = self.coverage.insert(&path, info.blocks.iter().copied());
 

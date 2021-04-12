@@ -216,3 +216,7 @@ pub fn flush_instruction_cache(
 ) -> Result<()> {
     check_winapi(|| unsafe { FlushInstructionCache(process_handle, remote_address, len) })
 }
+
+pub fn current_process_handle() -> HANDLE {
+    unsafe { GetCurrentProcess() }
+}
