@@ -34,9 +34,10 @@ pub struct SyncedDir {
 }
 
 impl SyncedDir {
-
     pub fn remote_url(&self) -> Result<BlobContainerUrl> {
-        let url = self.url.clone().unwrap_or(BlobContainerUrl::new(Url::from_file_path(self.path.clone()).map_err(|_| anyhow!("invalid path"))? )?);
+        let url = self.url.clone().unwrap_or(BlobContainerUrl::new(
+            Url::from_file_path(self.path.clone()).map_err(|_| anyhow!("invalid path"))?,
+        )?);
         Ok(url)
     }
 

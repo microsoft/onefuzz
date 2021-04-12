@@ -88,9 +88,7 @@ pub async fn handle_inputs(
             .to_string_lossy()
             .to_string();
 
-        //let input_url = readonly_inputs.url.url().join(&file_name)?;
-        let input_url = readonly_inputs.remote_url()?.url()
-            .join(&file_name)?;
+        let input_url = readonly_inputs.remote_url()?.url().join(&file_name)?;
 
         let crash_test_result = handler.get_crash_result(file_path, input_url).await?;
         RegressionReport {

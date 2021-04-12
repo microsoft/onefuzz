@@ -4,7 +4,7 @@ use anyhow::Result;
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use onefuzz::jitter::delay_with_jitter;
-use onefuzz::{monitor::DirectoryMonitor, syncdir::SyncedDir};
+use onefuzz::{blob::url::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use path_absolutize::Absolutize;
 use remove_dir_all::remove_dir_all;
 use reqwest::Url;
@@ -54,6 +54,8 @@ pub const ANALYSIS_DIR: &str = "analysis_dir";
 pub const ANALYSIS_INPUTS: &str = "analysis_inputs";
 pub const ANALYSIS_UNIQUE_INPUTS: &str = "analysis_unique_inputs";
 pub const PRESERVE_EXISTING_OUTPUTS: &str = "preserve_existing_outputs";
+
+pub const NO_JOB_DIR: &str = "no_job_dir";
 
 const WAIT_FOR_MAX_WAIT: Duration = Duration::from_secs(10);
 const WAIT_FOR_DIR_DELAY: Duration = Duration::from_secs(1);
@@ -144,6 +146,12 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
             .required(false)
             .help("keep the local directory created for running the task"),
     )
+    .arg(
+        Arg::with_name(NO_JOB_DIR)
+            .long(NO_JOB_DIR)
+            .required(false)
+            .help("if specified no job dir will be created"),
+    )
 }
 
 fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
@@ -154,24 +162,29 @@ fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
 
 pub fn get_synced_dirs(
     name: &str,
-    _job_id: Uuid,
-    _task_id: Uuid,
+    job_id: Uuid,
+    task_id: Uuid,
     args: &ArgMatches<'_>,
 ) -> Result<Vec<SyncedDir>> {
-    //let current_dir = std::env::current_dir()?;
+    let create_job_dir = !args.is_present(NO_JOB_DIR);
+    let current_dir = std::env::current_dir()?;
     args.values_of_os(name)
         .ok_or_else(|| anyhow!("argument '{}' not specified", name))?
         .enumerate()
-        .map(|(_index, remote_path)| {
+        .map(|(index, remote_path)| {
             let path = PathBuf::from(remote_path);
-            // let remote_path = path.absolutize()?;
-            // let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
-            // let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
-            // let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
-            Ok(SyncedDir {
-                url: None,
-                path,
-            })
+            if create_job_dir {
+                let remote_path = path.absolutize()?;
+                let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
+                let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
+                let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
+                Ok(SyncedDir {
+                    url: Some(remote_blob_url),
+                    path,
+                })
+            } else {
+                Ok(SyncedDir { url: None, path })
+            }
         })
         .collect()
 }
@@ -194,18 +207,26 @@ fn register_cleanup(job_id: Uuid) -> Result<()> {
 
 pub fn get_synced_dir(
     name: &str,
-    _job_id: Uuid,
-    _task_id: Uuid,
+    job_id: Uuid,
+    task_id: Uuid,
     args: &ArgMatches<'_>,
 ) -> Result<SyncedDir> {
     let remote_path = value_t!(args, name, PathBuf)?.absolutize()?.into_owned();
-    // let remote_url = Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
-    // let remote_blob_url = BlobContainerUrl::new(remote_url)?;
-    // let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
-    Ok(SyncedDir {
-        url: None,
-        path: remote_path,
-    })
+    if !args.is_present(NO_JOB_DIR) {
+        let remote_url =
+            Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
+        let remote_blob_url = BlobContainerUrl::new(remote_url)?;
+        let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
+        Ok(SyncedDir {
+            url: Some(remote_blob_url),
+            path,
+        })
+    } else {
+        Ok(SyncedDir {
+            url: None,
+            path: remote_path,
+        })
+    }
 }
 
 // NOTE: generate_task_id is intended to change the default behavior for local
