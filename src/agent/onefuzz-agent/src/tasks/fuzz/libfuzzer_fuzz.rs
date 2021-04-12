@@ -61,7 +61,7 @@ pub struct Config {
     #[serde(default = "default_bool_true")]
     pub check_fuzzer_help: bool,
 
-    #[serde(default = "default_bool_true")]
+    #[serde(default)]
     pub expect_crash_on_failure: bool,
 
     #[serde(flatten)]
