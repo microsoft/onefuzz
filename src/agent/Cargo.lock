@@ -1702,6 +1702,7 @@ dependencies = [
  "anyhow",
  "appinsights",
  "async-trait",
+ "backoff",
  "base64",
  "bytes 0.5.6",
  "cpp_demangle",
@@ -1812,6 +1813,7 @@ version = "0.1.0"
 dependencies = [
  "appinsights",
  "iced-x86",
+ "lazy_static",
  "log",
  "serde",
  "tokio 0.2.25",

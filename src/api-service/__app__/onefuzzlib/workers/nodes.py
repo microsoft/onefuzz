@@ -220,18 +220,19 @@ class Node(BASE_NODE, ORMMixin):
         self.stop()
         return True
 
-    def mark_tasks_stopped_early(self) -> None:
+    def mark_tasks_stopped_early(self, error: Optional[Error] = None) -> None:
         from ..tasks.main import Task
+
+        if error is None:
+            error = Error(
+                code=ErrorCode.TASK_FAILED,
+                errors=["node reimaged during task execution"],
+            )
 
         for entry in NodeTasks.get_by_machine_id(self.machine_id):
             task = Task.get_by_task_id(entry.task_id)
             if isinstance(task, Task):
-                task.mark_failed(
-                    Error(
-                        code=ErrorCode.TASK_FAILED,
-                        errors=["node reimaged during task execution"],
-                    )
-                )
+                task.mark_failed(error)
 
     def could_shrink_scaleset(self) -> bool:
         from .scalesets import ScalesetShrinkQueue
