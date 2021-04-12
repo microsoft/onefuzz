@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * CLI: Fixed issue relating to line endings in the `libfuzzer-qemu` job template setup script. [#782](https://github.com/microsoft/onefuzz/pull/782)
-* Service: Fixed backwards compatibility issue in ephemeral disk support when creating scalesets.  [#780](https://github.com/microsoft/onefuzz/pull/780)
+* Service: Fixed backward compatibility issue in ephemeral disk support when creating scalesets.  [#780](https://github.com/microsoft/onefuzz/pull/780)
 * Deployment: Fixed issue in multi-tenant deployment support. [#773](https://github.com/microsoft/onefuzz/pull/773)
 
 ## 2.12.0
