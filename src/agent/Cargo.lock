@@ -439,6 +439,7 @@ dependencies = [
  "serde_json",
  "structopt",
  "uuid",
+ "win-util",
  "winapi 0.3.9",
 ]
 
