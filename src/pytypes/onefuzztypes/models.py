@@ -535,6 +535,7 @@ class JobTaskInfo(BaseModel):
 
 
 class Job(BaseModel):
+    Timestamp: Optional[datetime]
     job_id: UUID = Field(default_factory=uuid4)
     state: JobState = Field(default=JobState.init)
     config: JobConfig
@@ -557,6 +558,7 @@ class NodeHeartbeatEntry(BaseModel):
 
 
 class Node(BaseModel):
+    Timestamp: Optional[datetime]
     pool_name: PoolName
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
@@ -620,6 +622,7 @@ class AutoScaleConfig(BaseModel):
 
 
 class Pool(BaseModel):
+    Timestamp: Optional[datetime]
     name: PoolName
     pool_id: UUID = Field(default_factory=uuid4)
     os: OS
@@ -647,6 +650,7 @@ class ScalesetNodeState(BaseModel):
 
 
 class Scaleset(BaseModel):
+    Timestamp: Optional[datetime]
     pool_name: PoolName
     scaleset_id: UUID = Field(default_factory=uuid4)
     state: ScalesetState = Field(default=ScalesetState.init)
@@ -676,6 +680,7 @@ class NotificationConfig(BaseModel):
 
 
 class Repro(BaseModel):
+    Timestamp: Optional[datetime]
     vm_id: UUID = Field(default_factory=uuid4)
     task_id: UUID
     config: ReproConfig
@@ -795,6 +800,7 @@ class NodeCommandEnvelope(BaseModel):
 
 
 class TaskEvent(BaseModel):
+    Timestamp: Optional[datetime]
     task_id: UUID
     machine_id: UUID
     event_data: WorkerEvent
@@ -813,6 +819,7 @@ class NodeAssignment(BaseModel):
 
 
 class Task(BaseModel):
+    Timestamp: Optional[datetime]
     job_id: UUID
     task_id: UUID = Field(default_factory=uuid4)
     state: TaskState = Field(default=TaskState.init)

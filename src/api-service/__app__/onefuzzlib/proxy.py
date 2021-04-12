@@ -42,6 +42,7 @@ PROXY_LOG_PREFIX = "scaleset-proxy: "
 # This isn't intended to ever be shared to the client, hence not being in
 # onefuzztypes
 class Proxy(ORMMixin):
+    Timestamp: Optional[datetime.datetime]
     region: Region
     state: VmState = Field(default=VmState.init)
     auth: Authentication = Field(default_factory=build_auth)
