@@ -110,18 +110,10 @@ def get_regression_report_task(report: RegressionReport) -> Optional[Task]:
             report.crash_test_result.no_repro.task_id,
         )
 
-    # original_crash_test_result is not required, nor are report & no_repro.
-    if report.original_crash_test_result:
-        if report.original_crash_test_result.crash_report:
-            return Task.get(
-                report.original_crash_test_result.crash_report.job_id,
-                report.original_crash_test_result.crash_report.task_id,
-            )
-        if report.original_crash_test_result.no_repro:
-            return Task.get(
-                report.original_crash_test_result.no_repro.job_id,
-                report.original_crash_test_result.no_repro.task_id,
-            )
+    logging.error(
+        "unable to find crash_report or no_repro entry for report: %s",
+        report.json(include_none=False),
+    )
     return None
 
 
