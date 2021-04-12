@@ -96,3 +96,7 @@ pub fn parse_key_value(value: String) -> Result<(String, String)> {
 pub fn default_bool_true() -> bool {
     true
 }
+
+pub fn default_bool_false() -> bool {
+    false
+}
