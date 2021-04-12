@@ -98,18 +98,20 @@ def get_notifications(container: Container) -> List[Notification]:
 
 
 def get_regression_report_task(report: RegressionReport) -> Optional[Task]:
-    if report.crash_test_result:
-        if report.crash_test_result.crash_report:
-            return Task.get(
-                report.crash_test_result.crash_report.job_id,
-                report.crash_test_result.crash_report.task_id,
-            )
-        if report.crash_test_result.no_repro:
-            return Task.get(
-                report.crash_test_result.no_repro.job_id,
-                report.crash_test_result.no_repro.task_id,
-            )
-    elif report.original_crash_test_result:
+    # crash_test_result is required, but report & no_repro are not
+    if report.crash_test_result.crash_report:
+        return Task.get(
+            report.crash_test_result.crash_report.job_id,
+            report.crash_test_result.crash_report.task_id,
+        )
+    if report.crash_test_result.no_repro:
+        return Task.get(
+            report.crash_test_result.no_repro.job_id,
+            report.crash_test_result.no_repro.task_id,
+        )
+
+    # original_crash_test_result is not required, nor are report & no_repro.
+    if report.original_crash_test_result:
         if report.original_crash_test_result.crash_report:
             return Task.get(
                 report.original_crash_test_result.crash_report.job_id,
