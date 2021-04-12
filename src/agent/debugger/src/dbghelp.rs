@@ -517,8 +517,13 @@ impl DebugHelpGuard {
         }
     }
 
-    pub fn get_module_base(&self, process_handle: HANDLE, addr: DWORD64) -> Option<NonZeroU64> {
-        NonZeroU64::new(unsafe { SymGetModuleBase64(process_handle, addr) })
+    pub fn get_module_base(&self, process_handle: HANDLE, addr: DWORD64) -> Result<NonZeroU64> {
+        if let Some(base) = NonZeroU64::new(unsafe { SymGetModuleBase64(process_handle, addr) }) {
+            Ok(base)
+        } else {
+            let last_error = std::io::Error::last_os_error();
+            Err(last_error.into())
+        }
     }
 
     pub fn stackwalk_ex<F: FnMut(&STACKFRAME_EX) -> bool>(

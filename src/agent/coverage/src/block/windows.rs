@@ -12,10 +12,9 @@ use crate::block::CommandBlockCov;
 use crate::cache::ModuleCache;
 use crate::code::{CmdFilter, ModulePath};
 
-pub fn record(cmd: Command, filter: CmdFilter) -> Result<CommandBlockCov> {
+pub fn record(cmd: Command, filter: CmdFilter, timeout: Duration) -> Result<CommandBlockCov> {
     let mut cache = ModuleCache::default();
     let mut recorder = Recorder::new(&mut cache, filter);
-    let timeout = Duration::from_secs(5);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
     handler.run(cmd)?;
     Ok(recorder.into_coverage())

@@ -204,15 +204,8 @@ impl Target {
     pub fn initial_bp(&mut self) -> Result<()> {
         self.saw_initial_bp = true;
 
-        if self
-            .unresolved_breakpoints
-            .iter()
-            .any(|bp| bp.sym_extra_info().is_some())
-        {
-            self.maybe_sym_initialize()?;
-        }
-
         if !self.unresolved_breakpoints.is_empty() {
+            self.maybe_sym_initialize()?;
             self.try_resolve_all_unresolved_breakpoints();
         }
 
@@ -226,7 +219,7 @@ impl Target {
     fn try_resolve_all_unresolved_breakpoints(&mut self) {
         // borrowck - take ownership from self so we call `try_resolve_unresolved_breakpoint`.
         let mut unresolved_breakpoints = std::mem::take(&mut self.unresolved_breakpoints);
-        unresolved_breakpoints.retain(|bp| self.try_resolve_unresolved_breakpoint(bp));
+        unresolved_breakpoints.retain(|bp| !self.try_resolve_unresolved_breakpoint(bp));
         assert!(self.unresolved_breakpoints.is_empty());
         self.unresolved_breakpoints = unresolved_breakpoints;
     }
@@ -325,7 +318,7 @@ impl Target {
         Ok(id)
     }
 
-    fn module_base_from_address(&self, address: u64) -> Option<NonZeroU64> {
+    fn module_base_from_address(&self, address: u64) -> Result<NonZeroU64> {
         let dbghelp = dbghelp::lock().expect("can't lock dbghelp to find module");
         dbghelp.get_module_base(self.process_handle, address)
     }
