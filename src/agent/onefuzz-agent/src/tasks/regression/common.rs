@@ -150,7 +150,6 @@ pub async fn handle_crash_reports(
             }
             .ok_or_else(|| format_err!("crash report is missing input blob: {}", file_name))?;
 
-            //let crash_url = Url::from_file_path(crashes.path).into()?;
             let input_url = crashes.remote_url()?.url().clone();
             let input = crashes.path.join(&input_blob.name);
             let crash_test_result = handler.get_crash_result(input, input_url).await?;
