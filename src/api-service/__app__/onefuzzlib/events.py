@@ -6,7 +6,7 @@
 import json
 import logging
 from queue import Empty, Queue
-from typing import List, Optional, Set
+from typing import Optional
 
 from onefuzztypes.events import Event, EventMessage, EventType, get_event_type
 from onefuzztypes.models import UserInfo
@@ -48,12 +48,7 @@ def filter_event(event: Event, event_type: EventType) -> BaseModel:
     return filtered_event
 
 
-def filter_event_recurse(entry: BaseModel, visited: Set[int] = set()) -> BaseModel:
-
-    if id(entry) in visited:
-        return entry
-
-    visited.add(id(entry))
+def filter_event_recurse(entry: BaseModel) -> BaseModel:
 
     for field in entry.__fields__:
         field_data = getattr(entry, field)
@@ -62,12 +57,14 @@ def filter_event_recurse(entry: BaseModel, visited: Set[int] = set()) -> BaseMod
             field_data = None
         elif isinstance(field_data, list):
             for (i, value) in enumerate(field_data):
-                field_data[i] = filter_event_recurse(value, visited)
+                if isinstance(value, BaseModel):
+                    field_data[i] = filter_event_recurse(value)
         elif isinstance(field_data, dict):
             for (key, value) in field_data.items():
-                field_data[key] = filter_event_recurse(value, visited)
+                if isinstance(value, BaseModel):
+                    field_data[key] = filter_event_recurse(value)
         elif isinstance(field_data, BaseModel):
-            field_data = filter_event_recurse(field_data, visited)
+            field_data = filter_event_recurse(field_data)
 
         setattr(entry, field, field_data)
 
