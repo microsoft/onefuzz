@@ -287,15 +287,15 @@ mod tests {
         let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
         let crashes = SyncedDir {
             path: crashes_local,
-            url: BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap())
-                .unwrap(),
+            url: Some(BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap())
+                .unwrap()),
         };
 
         let corpus_dir_temp = tempfile::tempdir().unwrap();
         let corpus_dir = SyncedDir {
             path: corpus_dir_local,
-            url: BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
-                .unwrap(),
+            url: Some(BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
+                .unwrap()),
         };
         let seed_file_name = corpus_dir.path.join("seed.txt");
         tokio::fs::write(seed_file_name, "xyz").await.unwrap();
