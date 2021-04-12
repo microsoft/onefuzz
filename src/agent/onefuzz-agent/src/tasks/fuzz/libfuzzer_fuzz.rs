@@ -1,11 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::tasks::{
-    config::CommonConfig,
-    heartbeat::HeartbeatSender,
-    utils::{default_bool_false, default_bool_true},
-};
+use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::{Context, Result};
 use arraydeque::{ArrayDeque, Wrapping};
 use futures::{future::try_join_all, stream::StreamExt};
@@ -65,7 +61,7 @@ pub struct Config {
     #[serde(default = "default_bool_true")]
     pub check_fuzzer_help: bool,
 
-    #[serde(default = "default_bool_false")]
+    #[serde(default)]
     pub expect_crash_on_failure: bool,
 
     #[serde(flatten)]
