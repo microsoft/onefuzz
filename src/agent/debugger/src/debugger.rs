@@ -246,8 +246,6 @@ impl Debugger {
     ) -> Result<bool> {
         let mut de = MaybeUninit::uninit();
         if unsafe { WaitForDebugEvent(de.as_mut_ptr(), timeout_ms) } == TRUE {
-            self.target.remove_all_breakpoints()?;
-
             let de = unsafe { de.assume_init() };
             let de = DebugEvent::new(&de);
             trace!("{}", de);

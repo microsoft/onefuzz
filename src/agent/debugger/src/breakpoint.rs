@@ -79,15 +79,43 @@ impl Breakpoint {
     }
 
     pub fn is_enabled(&self) -> bool {
-        self.disabled == 0
+        !self.is_disabled()
     }
 
-    pub fn disable(&mut self) {
+    pub fn is_disabled(&self) -> bool {
+        self.disabled > 0
+    }
+
+    pub(crate) fn disable(&mut self, process_handle: HANDLE) -> Result<()> {
         self.disabled = self.disabled.saturating_add(1);
+
+        if self.is_disabled() {
+            if let ExtraInfo::Resolved(AddressExtraInfo {
+                address,
+                original_byte: Some(original_byte),
+            }) = &self.extra_info
+            {
+                write_instruction_byte(process_handle, *address, *original_byte)?;
+            }
+        }
+
+        Ok(())
     }
 
-    pub fn enable(&mut self) {
+    pub fn enable(&mut self, process_handle: HANDLE) -> Result<()> {
         self.disabled = self.disabled.saturating_sub(1);
+
+        if let ExtraInfo::Resolved(AddressExtraInfo {
+            address,
+            original_byte,
+        }) = &mut self.extra_info
+        {
+            let new_original_byte = process::read_memory(process_handle, *address as _)?;
+            *original_byte = Some(new_original_byte);
+            write_instruction_byte(process_handle, *address, 0xcc)?;
+        }
+
+        Ok(())
     }
 
     #[allow(unused)]

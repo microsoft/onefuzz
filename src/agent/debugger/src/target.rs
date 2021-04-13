@@ -121,6 +121,11 @@ pub struct Target {
 
     // Map of thread to stepping state (e.g. breakpoint address to restore breakpoints)
     single_step: fnv::FnvHashMap<DWORD, StepState>,
+
+    // When stepping after hitting a breakpoint, we need to restore the breakpoint.
+    // We track the address of the breakpoint to restore. 1 is sufficient because we
+    // can only hit a single breakpoint between calls to where we restore the breakpoint.
+    restore_breakpoint_pc: Option<u64>,
 }
 
 impl Target {
@@ -149,6 +154,7 @@ impl Target {
             modules: fnv::FnvHashMap::default(),
             unresolved_breakpoints: vec![],
             single_step: fnv::FnvHashMap::default(),
+            restore_breakpoint_pc: None,
         }
     }
 
@@ -207,6 +213,9 @@ impl Target {
         if !self.unresolved_breakpoints.is_empty() {
             self.maybe_sym_initialize()?;
             self.try_resolve_all_unresolved_breakpoints();
+            for module in self.modules.values_mut() {
+                module.apply_breakpoints(self.process_handle)?;
+            }
         }
 
         Ok(())
@@ -446,24 +455,32 @@ impl Target {
         self.modules.remove(&base_address);
     }
 
-    pub fn remove_all_breakpoints(&mut self) -> Result<()> {
-        for module in self.modules.values_mut() {
-            module.remove_breakpoints(self.process_handle)?;
-        }
-
-        Ok(())
-    }
-
-    fn restore_all_breakpoints(&mut self) -> Result<()> {
-        for module in self.modules.values_mut() {
-            module.apply_breakpoints(self.process_handle)?;
-        }
-
-        Ok(())
-    }
-
     pub fn prepare_to_resume(&mut self) -> Result<()> {
-        let mut restore_breakpoint_pc = None;
+        // When resuming, we take extra care to avoid missing breakpoints. There are 2 race
+        // conditions considered here:
+        //
+        // * Threads A and B hit a breakpoint at literally the same time, so we have
+        //   multiple events already queued to handle those breakpoints.
+        //   Restoring the breakpoint for thread A should not interfere with restoring
+        //   the original code for thread B.
+        // * Thread A hit a breakpoint, thread B is 1 instruction away from hitting
+        //   that breakpoint. Thread B cannot miss the breakpoint when thread A is resumed.
+        //
+        // To avoid these possible races, when resuming, we only let a single thread go **if**
+        // we're single stepping any threads.
+
+        // We now re-enable the breakpoint so that the next time we step, the breakpoint
+        // will be restored. Note that we use a counter in enable/disable to cover the
+        // case of 2 threads hitting the breakpoint at the same time - 2 threads will then
+        // increment the disable count twice, requiring 2 enable calls before we actually
+        // restore the breakpoint.
+        if let Some(restore_breakpoint_pc) = self.restore_breakpoint_pc {
+            let process_handle = self.process_handle; // borrowck
+            if let Some(breakpoint) = self.get_breakpoint_for_address(restore_breakpoint_pc) {
+                breakpoint.enable(process_handle)?;
+            }
+        }
+
         if self.single_step.is_empty() {
             // Resume all threads if we aren't waiting for any threads to single step.
             trace!("Resuming all threads");
@@ -490,40 +507,12 @@ impl Target {
                 // We are stepping to remove the breakpoint. After we've stepped,
                 // we must restore the breakpoint (which is done on the subsequent
                 // call to this function).
-                restore_breakpoint_pc = Some(*pc);
+                self.restore_breakpoint_pc = Some(*pc);
             }
         }
 
         // The current context will not be valid after resuming.
         self.current_context = None;
-
-        // When resuming, we take extra care to avoid missing breakpoints. There are 2 race
-        // conditions considered here:
-        //
-        // * Threads A and B hit a breakpoint at literally the same time, so we have
-        //   multiple events already queued to handle those breakpoints.
-        //   Restoring the breakpoint for thread A should not interfere with restoring
-        //   the original code for thread B.
-        // * Thread A hit a breakpoint, thread B is 1 instruction away from hitting
-        //   that breakpoint. Thread B cannot miss the breakpoint when thread A is resumed.
-        //
-        // To avoid these possible races, when resuming, we only let a single thread go **if**
-        // we're single stepping any threads.
-
-        // When we processed the breakpoint, we disabled it, so this call to restore breakpoints
-        // will not restore the breakpoint we want to step over.
-        self.restore_all_breakpoints()?;
-
-        // We now re-enable the breakpoint so that the next time we step, the breakpoint
-        // will be restored. Note that we use a counter in enable/disable to cover the
-        // case of 2 threads hitting the breakpoint at the same time - 2 threads will then
-        // increment the disable count twice, requiring 2 enable calls before we actually
-        // restore the breakpoint.
-        if let Some(restore_breakpoint_pc) = restore_breakpoint_pc {
-            if let Some(breakpoint) = self.get_breakpoint_for_address(restore_breakpoint_pc) {
-                breakpoint.enable();
-            }
-        }
 
         Ok(())
     }
@@ -587,6 +576,7 @@ impl Target {
     ///
     /// Return the breakpoint id if it should be reported to the client.
     pub fn handle_breakpoint(&mut self, pc: u64) -> Result<Option<BreakpointId>> {
+        let process_handle = self.process_handle; // borrowck
         let id;
         let mut renable_after_step = true;
         {
@@ -596,7 +586,7 @@ impl Target {
             id = bp.id();
 
             bp.increment_hit_count();
-            bp.disable();
+            bp.disable(process_handle)?;
 
             if let BreakpointType::OneTime = bp.kind() {
                 renable_after_step = false;
