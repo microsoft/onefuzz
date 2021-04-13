@@ -256,7 +256,7 @@ impl Coordinator {
             response = request
                 .send_retry_default()
                 .await
-                .context("Coordinator.send_with_auth_retry after refreshing access token")?;
+                .context("Coordinator.send after refreshing access token")?;
         };
 
         // We've retried if we got a `401 Unauthorized`. If it happens again, we
@@ -264,7 +264,7 @@ impl Coordinator {
         let response = response
             .error_for_status_with_body()
             .await
-            .context("Coordinator.send_with_auth_retry status body")?;
+            .context("Coordinator.send status body")?;
 
         Ok(response)
     }
