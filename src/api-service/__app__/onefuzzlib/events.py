@@ -38,7 +38,7 @@ def get_events() -> Optional[str]:
 def log_event(event: Event, event_type: EventType) -> None:
     scrubbed_event = filter_event(event, event_type)
     logging.info(
-        "sending event: %s - %s", event_type, scrubbed_event.json(include_none=False)
+        "sending event: %s - %s", event_type, scrubbed_event.json(exclude_none=True)
     )
 
 
