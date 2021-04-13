@@ -18,7 +18,7 @@ class WebhookMessage(EventMessage):
 
 
 class WebhookMessageLog(WebhookMessage):
-    Timestamp: Optional[datetime]
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     state: WebhookMessageState = Field(default=WebhookMessageState.queued)
     try_count: int = Field(default=0)
 
