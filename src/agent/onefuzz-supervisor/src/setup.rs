@@ -132,7 +132,7 @@ async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<
 
 #[cfg(target_os = "linux")]
 async fn create_setup_symlink(setup_dir: &Path, work_unit: &WorkUnit) -> Result<()> {
-    use tokio::fs::os::unix::symlink;
+    use tokio::fs::symlink;
 
     let working_dir = work_unit.working_dir()?;
 
