@@ -128,9 +128,10 @@ class Task(BASE_TASK, ORMMixin):
         ProxyForward.remove_forward(self.task_id)
         Node.stop_task(self.task_id)
         if not NodeTasks.get_nodes_by_task_id(self.task_id):
-            self.set_state(TaskState.stopped)
+            self.stopped()
 
     def stopped(self) -> None:
+        self.set_state(TaskState.stopped)
         delete_queue(str(self.task_id), StorageType.corpus)
 
         # TODO: we need to 'unschedule' this task from the existing pools
