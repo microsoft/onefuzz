@@ -25,7 +25,7 @@ pub async fn run(
     let fuzz_config = build_fuzz_config(args, context.common_config.clone(), event_sender.clone())?;
     let crash_dir = fuzz_config
         .crashes
-        .url
+        .remote_url()?
         .as_file_path()
         .expect("invalid crash dir remote location");
 
