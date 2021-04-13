@@ -238,6 +238,11 @@ def on_worker_event_done(machine_id: UUID, event: WorkerDoneEvent) -> Result[Non
             node.debug_keep_node = True
             node.save()
 
+    if not node.debug_keep_node:
+        node_task = NodeTasks.get(machine_id, event.task_id)
+        if node_task:
+            node_task.delete()
+
     event.stdout = event.stdout[-MAX_OUTPUT_SIZE:]
     event.stderr = event.stderr[-MAX_OUTPUT_SIZE:]
     task_event = TaskEvent(
