@@ -237,7 +237,8 @@ impl Registration {
                 .bearer_auth(token.secret().expose_ref())
                 .body("")
                 .send_retry_default()
-                .await.context("Registration.create")?;
+                .await
+                .context("Registration.create")?;
 
             let status_code = response.status();
 
@@ -299,9 +300,11 @@ impl Registration {
             .get(url)
             .bearer_auth(token.secret().expose_ref())
             .send_retry_default()
-            .await.context("Registration.renew")?
+            .await
+            .context("Registration.renew")?
             .error_for_status_with_body()
-            .await.context("Registration.renew request body")?;
+            .await
+            .context("Registration.renew request body")?;
 
         self.dynamic_config = response.json().await?;
         self.dynamic_config.save().await?;

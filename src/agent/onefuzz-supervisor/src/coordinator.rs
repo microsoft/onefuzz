@@ -229,10 +229,7 @@ impl Coordinator {
     // The lifetime is needed by an argument type. We can't make it anonymous,
     // as clippy suggests, because `'_` is not allowed in this binding site.
     #[allow(clippy::needless_lifetimes)]
-    async fn send<'a>(
-        &mut self,
-        request_type: RequestType<'a>,
-    ) -> Result<Response> {
+    async fn send<'a>(&mut self, request_type: RequestType<'a>) -> Result<Response> {
         let request = self.get_request_builder(request_type.clone());
         let mut response = request
             .send_retry(
@@ -243,7 +240,8 @@ impl Coordinator {
                 DEFAULT_RETRY_PERIOD,
                 MAX_RETRY_ATTEMPTS,
             )
-            .await.context("Coordinator.send")?;
+            .await
+            .context("Coordinator.send")?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
             debug!("access token expired, renewing");
@@ -255,12 +253,18 @@ impl Coordinator {
 
             // And try one more time.
             let request = self.get_request_builder(request_type);
-            response = request.send_retry_default().await.context("Coordinator.send_with_auth_retry after refreshing access token")?;
+            response = request
+                .send_retry_default()
+                .await
+                .context("Coordinator.send_with_auth_retry after refreshing access token")?;
         };
 
         // We've retried if we got a `401 Unauthorized`. If it happens again, we
         // really want to bail this time.
-        let response = response.error_for_status_with_body().await.context("Coordinator.send_with_auth_retry status body")?;
+        let response = response
+            .error_for_status_with_body()
+            .await
+            .context("Coordinator.send_with_auth_retry status body")?;
 
         Ok(response)
     }

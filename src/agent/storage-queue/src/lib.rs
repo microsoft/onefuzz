@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{anyhow, Result, Context};
+use anyhow::{anyhow, Context, Result};
 use reqwest::Url;
 use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize};
 use std::time::Duration;
@@ -61,7 +61,8 @@ impl QueueClient {
             QueueClient::AzureQueue(queue_client) => queue_client.enqueue(data).await,
             QueueClient::FileQueueClient(queue_client) => queue_client.enqueue(data).await,
             QueueClient::Channel(queue_client) => queue_client.enqueue(data).await,
-        }.context("QueueClient.enqueue")
+        }
+        .context("QueueClient.enqueue")
     }
 
     pub async fn pop(&self) -> Result<Option<Message>> {

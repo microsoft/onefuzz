@@ -174,9 +174,11 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
     http_client
         .delete(input_url)
         .send_retry_default()
-        .await.context("try_delete_blob")?
+        .await
+        .context("try_delete_blob")?
         .error_for_status_with_body()
-        .await.context("try_delete_blob status body")?;
+        .await
+        .context("try_delete_blob status body")?;
 
-        Ok(())
+    Ok(())
 }
