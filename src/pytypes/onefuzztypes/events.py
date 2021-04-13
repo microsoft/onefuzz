@@ -162,12 +162,14 @@ class EventCrashReported(BaseEvent):
     report: Report
     container: Container
     filename: str
+    task_config: Optional[TaskConfig]
 
 
 class EventRegressionReported(BaseEvent):
     regression_report: RegressionReport
     container: Container
     filename: str
+    task_config: Optional[TaskConfig]
 
 
 class EventFileAdded(BaseEvent):
