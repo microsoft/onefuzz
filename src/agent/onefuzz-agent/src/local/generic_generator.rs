@@ -16,7 +16,6 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use flume;
 
 pub fn build_fuzz_config(
     args: &clap::ArgMatches<'_>,

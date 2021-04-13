@@ -11,7 +11,6 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use flume;
 use std::path::PathBuf;
 
 pub async fn run(

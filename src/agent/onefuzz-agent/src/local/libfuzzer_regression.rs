@@ -15,7 +15,6 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use flume;
 
 const REPORT_NAMES: &str = "report_names";
 

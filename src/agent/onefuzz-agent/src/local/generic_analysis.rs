@@ -15,7 +15,6 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use flume;
 use storage_queue::QueueClient;
 
 pub fn build_analysis_config(

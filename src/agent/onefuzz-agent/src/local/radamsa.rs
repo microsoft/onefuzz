@@ -11,7 +11,6 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, SubCommand};
-use flume;
 use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
 use tokio::task::spawn;

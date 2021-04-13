@@ -14,7 +14,6 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use flume;
 
 const EXPECT_CRASH_ON_FAILURE: &str = "expect_crash_on_failure";
 

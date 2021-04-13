@@ -22,7 +22,6 @@ use std::{
     time::Duration,
 };
 
-use flume;
 use tokio::{
     sync::broadcast::{self, error::TryRecvError},
     time::sleep,
