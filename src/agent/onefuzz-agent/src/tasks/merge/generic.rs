@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz::{
     expand::Expand, fs::set_executable, http::ResponseExt, jitter::delay_with_jitter,
     syncdir::SyncedDir,
@@ -117,16 +117,15 @@ async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &Path) -
 
 async fn try_delete_blob(input_url: Url) -> Result<()> {
     let http_client = reqwest::Client::new();
-    match http_client
+    http_client
         .delete(input_url)
         .send_retry_default()
-        .await?
+        .await
+        .context("try_delete_blob")?
         .error_for_status_with_body()
         .await
-    {
-        Ok(_) => Ok(()),
-        Err(err) => Err(err),
-    }
+        .context("try_delete_blob status body")?;
+    Ok(())
 }
 
 async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
