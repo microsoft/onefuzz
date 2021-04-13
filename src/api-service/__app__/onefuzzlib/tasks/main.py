@@ -208,6 +208,12 @@ class Task(BASE_TASK, ORMMixin):
             )
             return
 
+        if self.error is not None:
+            logging.debug(
+                "ignoring additional task error %s:%s", self.job_id, self.task_id
+            )
+            return
+
         logging.error("task failed %s:%s - %s", self.job_id, self.task_id, error)
 
         self.error = error

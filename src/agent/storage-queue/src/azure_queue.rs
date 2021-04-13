@@ -65,8 +65,10 @@ impl AzureQueueMessage {
             let http = Client::new();
             http.delete(url)
                 .send_retry_default()
-                .await?
-                .error_for_status()?;
+                .await
+                .context("AzureQueueMessage.claim")?
+                .error_for_status()
+                .context("AzureQueueMessage.claim status body")?;
         }
         let decoded = base64::decode(self.message_text)?;
         let value: T = serde_json::from_slice(&decoded)?;
