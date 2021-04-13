@@ -33,7 +33,8 @@ pub async fn get_ims_id() -> Result<Uuid> {
                 .timeout(Duration::from_millis(500))
                 .header("Metadata", "true")
                 .send_retry_default()
-                .await?;
+                .await
+                .context("get_ims_id")?;
             let body = resp.text().await?;
             write_file(path, &body).await?;
             body
@@ -54,7 +55,8 @@ pub async fn get_machine_name() -> Result<String> {
                 .timeout(Duration::from_millis(500))
                 .header("Metadata", "true")
                 .send_retry_default()
-                .await?;
+                .await
+                .context("get_machine_name")?;
             let body = resp.text().await?;
             write_file(path, &body).await?;
             body
