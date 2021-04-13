@@ -42,6 +42,7 @@ PROXY_LOG_PREFIX = "scaleset-proxy: "
 # This isn't intended to ever be shared to the client, hence not being in
 # onefuzztypes
 class Proxy(ORMMixin):
+    timestamp: Optional[datetime.datetime] = Field(alias="Timestamp")
     region: Region
     state: VmState = Field(default=VmState.init)
     auth: Authentication = Field(default_factory=build_auth)
@@ -179,12 +180,12 @@ class Proxy(ORMMixin):
             )
             return False
 
-        elif not self.heartbeat and self.Timestamp and self.Timestamp < ten_minutes_ago:
+        elif not self.heartbeat and self.timestamp and self.timestamp < ten_minutes_ago:
             logging.error(
                 PROXY_LOG_PREFIX + "no heartbeat in the last 10 minutes: "
                 "%s timestamp: %s compared_to:%s",
                 self.region,
-                self.Timestamp,
+                self.timestamp,
                 ten_minutes_ago,
             )
             return False
