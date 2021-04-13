@@ -92,8 +92,8 @@ mod test {
 
         let try_wait_handle = try_wait_all_join_handles(vec![handle1, handle2, handle3]);
 
-        notify1.notify();
-        notify2.notify();
+        notify1.notify_one();
+        notify2.notify_one();
         sleep(Duration::from_secs(1)).await;
         assert!(
             try_wait_handle.now_or_never().is_none(),
@@ -109,9 +109,9 @@ mod test {
 
         let try_wait_handle = try_wait_all_join_handles(vec![handle1, handle2, handle3]);
 
-        notify1.notify();
-        notify2.notify();
-        notify3.notify();
+        notify1.notify_one();
+        notify2.notify_one();
+        notify3.notify_one();
         sleep(Duration::from_secs(1)).await;
         if let Some(result) = try_wait_handle.now_or_never() {
             assert!(result.is_ok(), "expected Ok")
@@ -128,7 +128,7 @@ mod test {
 
         let try_wait_handle = try_wait_all_join_handles(vec![handle1, handle2, handle3]);
 
-        notify1.notify();
+        notify1.notify_one();
         sleep(Duration::from_secs(1)).await;
         assert!(
             try_wait_handle.now_or_never().is_none(),
@@ -144,7 +144,7 @@ mod test {
 
         let try_wait_handle = try_wait_all_join_handles(vec![handle1, handle2, handle3]);
 
-        notify2.notify();
+        notify2.notify_one();
 
         sleep(Duration::from_secs(1)).await;
         if let Some(result) = try_wait_handle.now_or_never() {

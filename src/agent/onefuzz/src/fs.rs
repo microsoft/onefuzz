@@ -299,7 +299,7 @@ pub async fn copy(src: SyncPath, dst: SyncPath, recur: bool) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use tempfile::tempdir;
-    use tokio::{fs, stream::StreamExt};
+    use tokio::fs;
 
     use super::*;
 
@@ -307,7 +307,7 @@ mod tests {
         let mut len = 0;
         let mut entries = fs::read_dir(dir).await.unwrap();
 
-        while entries.next().await.is_some() {
+        while entries.next_entry().await.unwrap().is_some() {
             len += 1;
         }
 
