@@ -161,7 +161,7 @@ impl SyncedDir {
                             MAX_RETRY_ATTEMPTS,
                         )
                         .await
-                        .context("Uploading blob")?;
+                        .context("SyncedDir.upload")?;
 
                     Ok(result.status() == StatusCode::CREATED)
                 }
