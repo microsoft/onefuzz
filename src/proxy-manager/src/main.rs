@@ -85,6 +85,6 @@ fn main() -> Result<()> {
     let proxy = Config::from_file(config_path)?;
 
     info!("parsed initial config");
-    let mut rt = Runtime::new()?;
+    let rt = Runtime::new()?;
     rt.block_on(run(proxy))
 }
