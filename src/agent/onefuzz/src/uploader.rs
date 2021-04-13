@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::TryStreamExt;
 use reqwest::{Body, Client, Response, StatusCode, Url};
 use reqwest_retry::{
@@ -80,7 +80,8 @@ impl BlobUploader {
 
             Ok(request_builder)
         })
-        .await?;
+        .await
+        .context("BlobUploader.upload")?;
 
         Ok(resp)
     }
@@ -104,7 +105,8 @@ impl BlobUploader {
             .header("x-ms-blob-type", "BlockBlob")
             .json(&data)
             .send_retry_default()
-            .await?;
+            .await
+            .context("BlobUploader.upload_json")?;
 
         Ok(resp)
     }
