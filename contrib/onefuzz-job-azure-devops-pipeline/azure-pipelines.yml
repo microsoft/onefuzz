@@ -1,0 +1,42 @@
+trigger:
+- main
+parameters:
+- name: onefuzz_project
+  displayName: OneFuzz Project
+  type: string
+  default: sample
+- name: onefuzz_target
+  displayName: OneFuzz Target Name
+  type: string
+  default: sample
+- name: onefuzz_pool
+  displayName: Fuzzing Pool to use
+  type: string
+  default: linux
+jobs:
+- job: Example
+  pool:
+    vmImage: ubuntu-latest
+  variables:
+  - group: onefuzz-config
+  steps:
+  - bash: |
+      set -ex
+      make
+    displayName: Build
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+      addToPath: true
+      architecture: x64
+    displayName: setup python env
+  - bash: |
+      set -ex
+      pip install onefuzz
+      sed -i s/INSERT_PAT_HERE/$(ado_pat)/ ado-work-items.json
+      onefuzz config --endpoint $(endpoint) --client_id $(client_id) --client_secret $(client_secret)
+      onefuzz template libfuzzer basic ${{ parameters.onefuzz_project }} ${{ parameters.onefuzz_target }} $(Build.SourceVersion) ${{ parameters.onefuzz_pool }} --target_exe fuzz.exe --colocate_all_tasks --duration 1 --vm_count 1 --notification_config @./ado-work-items.json
+    displayName: run onefuzz
+    env:
+      client_secret: client_secret
+      ado_pat: ado_pat
