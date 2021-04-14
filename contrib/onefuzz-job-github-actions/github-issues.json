@@ -1,0 +1,23 @@
+{
+   "config": {
+      "auth": {
+         "user": "INSERT_YOUR_USERNAME_HERE",
+         "personal_access_token": "INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE"
+      },
+      "organization": "contoso",
+      "repository": "sample-project",
+      "title": "{{ report.executable }} - {{report.crash_site}}",
+      "body": "## Files\n\n* input: [{{ report.input_blob.name }}]({{ input_url }})\n* exe: [{{ report.executable }}]( {{ target_url }})\n* report: [{{ report_filename }}]({{ report_url }})\n\n## Repro\n\n `{{ repro_cmd }}`\n\n## Call Stack\n\n```{% for item in report.call_stack %}{{ item }}\n{% endfor %}```\n\n## ASAN Log\n\n```{{ report.asan_log }}```",
+      "unique_search": {
+         "field_match": ["title"],
+         "string": "{{ report.executable }}"
+      },
+      "assignees": [],
+      "labels": ["bug", "{{ report.crash_type }}"],
+      "on_duplicate": {
+         "comment": "Duplicate found.\n\n* input: [{{ report.input_blob.name }}]({{ input_url }})\n* exe: [{{ report.executable }}]( {{ target_url }})\n* report: [{{ report_filename }}]({{ report_url }})",
+         "labels": ["{{ report.crash_type }}"],
+         "reopen": true
+      }
+   }
+}
