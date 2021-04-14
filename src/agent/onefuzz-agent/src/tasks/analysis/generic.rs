@@ -5,7 +5,6 @@ use crate::tasks::{
     config::CommonConfig, heartbeat::HeartbeatSender, report::crash_report::monitor_reports,
 };
 use anyhow::{Context, Result};
-use futures::stream::StreamExt;
 use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
     expand::Expand,
@@ -116,9 +115,8 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
         crashes.init_pull().await?;
         let mut count: u64 = 0;
         let mut read_dir = fs::read_dir(&crashes.path).await?;
-        while let Some(file) = read_dir.next().await {
+        while let Some(file) = read_dir.next_entry().await? {
             debug!("Processing file {:?}", file);
-            let file = file?;
             run_tool(file.path(), &config, &reports_dir).await?;
             count += 1;
         }
@@ -130,8 +128,8 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
 
 async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
     let result = if let Some(crashes) = &config.crashes {
-        crashes.url.account() == input.account()
-            && crashes.url.container() == input.container()
+        crashes.url.clone().and_then(|u| u.account()) == input.account()
+            && crashes.url.clone().and_then(|u| u.container()) == input.container()
             && crashes.path.join(input.name()).exists()
     } else {
         false
@@ -211,12 +209,14 @@ pub async fn run_tool(
         })
         .set_optional_ref(&config.crashes, |tester, crashes| {
             tester
-                .set_optional_ref(&crashes.url.account(), |tester, account| {
-                    tester.crashes_account(account)
-                })
-                .set_optional_ref(&crashes.url.container(), |tester, container| {
-                    tester.crashes_container(container)
-                })
+                .set_optional_ref(
+                    &crashes.url.clone().and_then(|u| u.account()),
+                    |tester, account| tester.crashes_account(account),
+                )
+                .set_optional_ref(
+                    &crashes.url.clone().and_then(|u| u.container()),
+                    |tester, container| tester.crashes_container(container),
+                )
         });
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;

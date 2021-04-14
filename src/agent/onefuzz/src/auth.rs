@@ -4,7 +4,7 @@
 use std::fmt;
 
 use crate::http::ResponseExt;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use reqwest_retry::SendRetry;
 use url::Url;
 use uuid::Uuid;
@@ -142,9 +142,11 @@ impl ClientCredentials {
                 ("scope", format!("{}.default", resource)),
             ])
             .send_retry_default()
-            .await?
+            .await
+            .context("access_token request")?
             .error_for_status_with_body()
-            .await?;
+            .await
+            .context("access_token request body")?;
 
         let body: ClientAccessTokenBody = response.json().await?;
 
@@ -208,9 +210,11 @@ impl ManagedIdentityCredentials {
             .get(self.url())
             .header("Metadata", "true")
             .send_retry_default()
-            .await?
+            .await
+            .context("ManagedIdentityCredentials.access_token")?
             .error_for_status_with_body()
-            .await?;
+            .await
+            .context("ManagedIdentityCredentials.access_token status body")?;
 
         let body: ManagedIdentityAccessTokenBody = response.json().await?;
 

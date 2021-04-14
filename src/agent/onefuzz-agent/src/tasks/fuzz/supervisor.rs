@@ -199,12 +199,14 @@ async fn start_supervisor(
         .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
             tester.instance_telemetry_key(&key)
         })
-        .set_optional_ref(&config.crashes.url.account(), |tester, account| {
-            tester.crashes_account(account)
-        })
-        .set_optional_ref(&config.crashes.url.container(), |tester, container| {
-            tester.crashes_container(container)
-        });
+        .set_optional_ref(
+            &config.crashes.url.clone().and_then(|u| u.account()),
+            |tester, account| tester.crashes_account(account),
+        )
+        .set_optional_ref(
+            &config.crashes.url.clone().and_then(|u| u.container()),
+            |tester, container| tester.crashes_container(container),
+        );
 
     let supervisor_path = expand.evaluate_value(&config.supervisor_exe)?;
     let mut cmd = Command::new(supervisor_path);
@@ -285,15 +287,18 @@ mod tests {
         let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
         let crashes = SyncedDir {
             path: crashes_local,
-            url: BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap())
-                .unwrap(),
+            url: Some(
+                BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap()).unwrap(),
+            ),
         };
 
         let corpus_dir_temp = tempfile::tempdir().unwrap();
         let corpus_dir = SyncedDir {
             path: corpus_dir_local,
-            url: BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
-                .unwrap(),
+            url: Some(
+                BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
+                    .unwrap(),
+            ),
         };
         let seed_file_name = corpus_dir.path.join("seed.txt");
         tokio::fs::write(seed_file_name, "xyz").await.unwrap();
@@ -357,7 +362,7 @@ mod tests {
                     MAX_FUZZ_TIME_SECONDS
                 );
             }
-            tokio::time::delay_for(std::time::Duration::from_secs(1)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         }
     }
 }

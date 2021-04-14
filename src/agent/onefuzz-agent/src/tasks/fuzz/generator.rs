@@ -7,7 +7,6 @@ use crate::tasks::{
     utils::{self, default_bool_true},
 };
 use anyhow::{Context, Result};
-use futures::stream::StreamExt;
 use onefuzz::{
     expand::Expand,
     fs::set_executable,
@@ -122,9 +121,7 @@ impl GeneratorTask {
         tester: &Tester<'_>,
     ) -> Result<()> {
         let mut read_dir = fs::read_dir(generated_inputs).await?;
-        while let Some(file) = read_dir.next().await {
-            let file = file?;
-
+        while let Some(file) = read_dir.next_entry().await? {
             debug!("testing input: {:?}", file);
 
             let destination_file = if self.config.rename_output {
@@ -244,15 +241,21 @@ mod tests {
             generator_options,
             readonly_inputs: vec![SyncedDir {
                 path: readonly_inputs_local,
-                url: BlobContainerUrl::parse(Url::from_directory_path(inputs).unwrap())?,
+                url: Some(BlobContainerUrl::parse(
+                    Url::from_directory_path(inputs).unwrap(),
+                )?),
             }],
             crashes: SyncedDir {
                 path: crashes_local,
-                url: BlobContainerUrl::parse(Url::from_directory_path(crashes).unwrap())?,
+                url: Some(BlobContainerUrl::parse(
+                    Url::from_directory_path(crashes).unwrap(),
+                )?),
             },
             tools: Some(SyncedDir {
                 path: tools_local,
-                url: BlobContainerUrl::parse(Url::from_directory_path(radamsa_dir).unwrap())?,
+                url: Some(BlobContainerUrl::parse(
+                    Url::from_directory_path(radamsa_dir).unwrap(),
+                )?),
             }),
             target_exe: Default::default(),
             target_env: Default::default(),

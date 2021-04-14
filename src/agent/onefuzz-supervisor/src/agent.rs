@@ -277,7 +277,7 @@ impl Agent {
 
     async fn sleep(&mut self) {
         let delay = time::Duration::from_secs(30);
-        time::delay_for(delay).await;
+        time::sleep(delay).await;
     }
 
     fn scheduler(&mut self) -> Result<&mut Scheduler> {
@@ -285,9 +285,9 @@ impl Agent {
     }
 }
 
-fn command_delay() -> time::Delay {
+fn command_delay() -> time::Sleep {
     let delay = time::Duration::from_secs(10);
-    time::delay_for(delay)
+    time::sleep(delay)
 }
 
 // The agent owns a `Scheduler`, which it must consume when driving its state

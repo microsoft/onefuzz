@@ -8,10 +8,10 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
-reqwest = { version = "0.10", features = ["json", "stream"] }
+reqwest = { version = "0.11.3", features = ["json", "stream"] }
 backoff = { version = "0.3", features = ["async-std"] }
 log = "0.4"
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 
 [dev-dependencies]
-tokio = { version = "0.2" , features=["macros"] }
+tokio = { version = "1.5.0", features = ["macros"] }

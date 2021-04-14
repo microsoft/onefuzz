@@ -165,7 +165,7 @@ async fn wait_process(context: &str, process: Child, stopped: Option<&Notify>) -
 
     debug!("child exited. {}:{:?}", context, output.status);
     if let Some(stopped) = stopped {
-        stopped.notify();
+        stopped.notify_one();
     }
 
     if output.status.success() {

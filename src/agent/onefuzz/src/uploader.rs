@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::TryStreamExt;
 use reqwest::{Body, Client, Response, StatusCode, Url};
 use reqwest_retry::{
@@ -67,7 +67,9 @@ impl BlobUploader {
             let file = fs::File::from_std(std::fs::File::open(file_path)?);
             let reader = io::BufReader::new(file);
             let codec = codec::BytesCodec::new();
-            let file_stream = codec::FramedRead::new(reader, codec).map_ok(bytes::BytesMut::freeze);
+            let file_stream = codec::FramedRead::new(reader, codec)
+                .map_ok(bytes::BytesMut::freeze)
+                .into_stream();
 
             let request_builder = self
                 .client
@@ -78,7 +80,8 @@ impl BlobUploader {
 
             Ok(request_builder)
         })
-        .await?;
+        .await
+        .context("BlobUploader.upload")?;
 
         Ok(resp)
     }
@@ -102,7 +105,8 @@ impl BlobUploader {
             .header("x-ms-blob-type", "BlockBlob")
             .json(&data)
             .send_retry_default()
-            .await?;
+            .await
+            .context("BlobUploader.upload_json")?;
 
         Ok(resp)
     }

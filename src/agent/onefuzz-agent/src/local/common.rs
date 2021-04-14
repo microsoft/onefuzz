@@ -3,10 +3,10 @@ use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
+use flume::Sender;
 use onefuzz::jitter::delay_with_jitter;
-use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use onefuzz::{blob::url::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use path_absolutize::Absolutize;
-use remove_dir_all::remove_dir_all;
 use reqwest::Url;
 use std::task::Poll;
 use std::{
@@ -15,8 +15,6 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
-use tokio::stream::StreamExt;
-use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle, time::delay_for};
 use uuid::Uuid;
 
 pub const SETUP_DIR: &str = "setup_dir";
@@ -56,6 +54,8 @@ pub const ANALYSIS_INPUTS: &str = "analysis_inputs";
 pub const ANALYSIS_UNIQUE_INPUTS: &str = "analysis_unique_inputs";
 pub const PRESERVE_EXISTING_OUTPUTS: &str = "preserve_existing_outputs";
 
+pub const CREATE_JOB_DIR: &str = "create_job_dir";
+
 const WAIT_FOR_MAX_WAIT: Duration = Duration::from_secs(10);
 const WAIT_FOR_DIR_DELAY: Duration = Duration::from_secs(1);
 
@@ -69,6 +69,7 @@ pub enum CmdType {
 pub struct LocalContext {
     pub job_path: PathBuf,
     pub common_config: CommonConfig,
+    pub event_sender: Option<Sender<UiEvent>>,
 }
 
 pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
@@ -139,10 +140,10 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
             .required(false),
     )
     .arg(
-        Arg::with_name("keep_job_dir")
-            .long("keep_job_dir")
+        Arg::with_name(CREATE_JOB_DIR)
+            .long(CREATE_JOB_DIR)
             .required(false)
-            .help("keep the local directory created for running the task"),
+            .help("create a local job directory to sync the files"),
     )
 }
 
@@ -158,38 +159,27 @@ pub fn get_synced_dirs(
     task_id: Uuid,
     args: &ArgMatches<'_>,
 ) -> Result<Vec<SyncedDir>> {
+    let create_job_dir = args.is_present(CREATE_JOB_DIR);
     let current_dir = std::env::current_dir()?;
     args.values_of_os(name)
         .ok_or_else(|| anyhow!("argument '{}' not specified", name))?
         .enumerate()
         .map(|(index, remote_path)| {
             let path = PathBuf::from(remote_path);
-            let remote_path = path.absolutize()?;
-            let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
-            let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
-            let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
-            Ok(SyncedDir {
-                url: remote_blob_url,
-                path,
-            })
+            if create_job_dir {
+                let remote_path = path.absolutize()?;
+                let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
+                let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
+                let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
+                Ok(SyncedDir {
+                    url: Some(remote_blob_url),
+                    path,
+                })
+            } else {
+                Ok(SyncedDir { url: None, path })
+            }
         })
         .collect()
-}
-
-fn register_cleanup(job_id: Uuid) -> Result<()> {
-    let path = std::env::current_dir()?.join(job_id.to_string());
-    atexit::register(move || {
-        // only cleaing up if the path exists upon exit
-        if std::fs::metadata(&path).is_ok() {
-            let result = remove_dir_all(&path);
-
-            // don't panic if the remove failed but the path is gone
-            if result.is_err() && std::fs::metadata(&path).is_ok() {
-                result.expect("cleanup failed");
-            }
-        }
-    });
-    Ok(())
 }
 
 pub fn get_synced_dir(
@@ -199,20 +189,32 @@ pub fn get_synced_dir(
     args: &ArgMatches<'_>,
 ) -> Result<SyncedDir> {
     let remote_path = value_t!(args, name, PathBuf)?.absolutize()?.into_owned();
-    let remote_url = Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
-    let remote_blob_url = BlobContainerUrl::new(remote_url)?;
-    let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
-    Ok(SyncedDir {
-        url: remote_blob_url,
-        path,
-    })
+    if args.is_present(CREATE_JOB_DIR) {
+        let remote_url =
+            Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
+        let remote_blob_url = BlobContainerUrl::new(remote_url)?;
+        let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
+        Ok(SyncedDir {
+            url: Some(remote_blob_url),
+            path,
+        })
+    } else {
+        Ok(SyncedDir {
+            url: None,
+            path: remote_path,
+        })
+    }
 }
 
 // NOTE: generate_task_id is intended to change the default behavior for local
 // fuzzing tasks from generating random task id to using UUID::nil(). This
 // enables making the one-shot crash report generation, which isn't really a task,
 // consistent across multiple runs.
-pub fn build_local_context(args: &ArgMatches<'_>, generate_task_id: bool) -> Result<LocalContext> {
+pub fn build_local_context(
+    args: &ArgMatches<'_>,
+    generate_task_id: bool,
+    event_sender: Option<Sender<UiEvent>>,
+) -> Result<LocalContext> {
     let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
     let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
         if generate_task_id {
@@ -234,10 +236,6 @@ pub fn build_local_context(args: &ArgMatches<'_>, generate_task_id: bool) -> Res
         PathBuf::default()
     };
 
-    if !args.is_present("keep_job_dir") {
-        register_cleanup(job_id)?;
-    }
-
     let common_config = CommonConfig {
         job_id,
         task_id,
@@ -250,6 +248,7 @@ pub fn build_local_context(args: &ArgMatches<'_>, generate_task_id: bool) -> Res
     Ok(LocalContext {
         job_path,
         common_config,
+        event_sender,
     })
 }
 
@@ -317,48 +316,31 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
     .await
 }
 
-pub fn spawn_file_count_monitor(
-    dir: PathBuf,
-    sender: UnboundedSender<UiEvent>,
-) -> JoinHandle<Result<()>> {
-    tokio::spawn(async move {
-        wait_for_dir(&dir).await?;
-
-        loop {
-            let mut rd = tokio::fs::read_dir(&dir).await?;
-            let mut count: usize = 0;
-
-            while let Some(Ok(entry)) = rd.next().await {
-                if entry.path().is_file() {
-                    count += 1;
-                }
-            }
-
-            if sender
-                .send(UiEvent::FileCount {
-                    dir: dir.clone(),
-                    count,
-                })
-                .is_err()
-            {
-                return Ok(());
-            }
-            delay_for(Duration::from_secs(5)).await;
-        }
-    })
-}
-
-pub fn monitor_file_urls(
-    urls: &[Option<impl AsRef<Path>>],
-    event_sender: UnboundedSender<UiEvent>,
-) -> Vec<JoinHandle<Result<()>>> {
-    urls.iter()
-        .filter_map(|x| x.as_ref())
-        .map(|path| spawn_file_count_monitor(path.as_ref().into(), event_sender.clone()))
-        .collect::<Vec<_>>()
-}
-
 #[derive(Debug)]
 pub enum UiEvent {
-    FileCount { dir: PathBuf, count: usize },
+    MonitorDir(PathBuf),
+}
+
+pub trait SyncCountDirMonitor<T: Sized> {
+    fn monitor_count(self, event_sender: &Option<Sender<UiEvent>>) -> Result<T>;
+}
+
+impl SyncCountDirMonitor<SyncedDir> for SyncedDir {
+    fn monitor_count(self, event_sender: &Option<Sender<UiEvent>>) -> Result<Self> {
+        if let (Some(event_sender), Some(p)) = (event_sender, self.remote_url()?.as_file_path()) {
+            event_sender.send(UiEvent::MonitorDir(p))?;
+        }
+        Ok(self)
+    }
+}
+
+impl SyncCountDirMonitor<Option<SyncedDir>> for Option<SyncedDir> {
+    fn monitor_count(self, event_sender: &Option<Sender<UiEvent>>) -> Result<Self> {
+        if let Some(sd) = self {
+            let sd = sd.monitor_count(event_sender)?;
+            Ok(Some(sd))
+        } else {
+            Ok(self)
+        }
+    }
 }
