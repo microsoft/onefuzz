@@ -1,0 +1,36 @@
+
+
+name: Onefuzz Sample Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: build
+        run: |
+          set -ex
+          make
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7 
+      - name: submit onefuzz job
+        env:
+          ONEFUZZ_ENDPOINT: ${{ secrets.onefuzz_endpoint }}
+          ONEFUZZ_CLIENT_ID: ${{ secrets.onefuzz_client_id }}
+          ONEFUZZ_CLIENT_SECRET: ${{ secrets.onefuzz_client_secret }}
+          ONEFUZZ_PAT: ${{ secrets.onefuzz_pat }}
+          ONEFUZZ_PROJECT: sample
+          ONEFUZZ_NAME: sample
+          ONEFUZZ_POOL: linux
+        run: |
+          set -ex
+          pip install onefuzz
+          sed -i s/INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE/${ONEFUZZ_PAT}/ github-issues.json
+          onefuzz config --endpoint $ONEFUZZ_ENDPOINT --client_id $ONEFUZZ_CLIENT_ID --client_secret $ONEFUZZ_CLIENT_SECRET
+          onefuzz template libfuzzer basic $ONEFUZZ_PROJECT $ONEFUZZ_NAME $GITHUB_SHA $ONEFUZZ_POOL --target_exe fuzz.exe --colocate_all_tasks --duration 1 --vm_count 1 --notification_config @./github-issues.json
