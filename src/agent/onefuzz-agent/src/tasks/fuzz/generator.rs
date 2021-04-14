@@ -241,15 +241,21 @@ mod tests {
             generator_options,
             readonly_inputs: vec![SyncedDir {
                 path: readonly_inputs_local,
-                url: BlobContainerUrl::parse(Url::from_directory_path(inputs).unwrap())?,
+                url: Some(BlobContainerUrl::parse(
+                    Url::from_directory_path(inputs).unwrap(),
+                )?),
             }],
             crashes: SyncedDir {
                 path: crashes_local,
-                url: BlobContainerUrl::parse(Url::from_directory_path(crashes).unwrap())?,
+                url: Some(BlobContainerUrl::parse(
+                    Url::from_directory_path(crashes).unwrap(),
+                )?),
             },
             tools: Some(SyncedDir {
                 path: tools_local,
-                url: BlobContainerUrl::parse(Url::from_directory_path(radamsa_dir).unwrap())?,
+                url: Some(BlobContainerUrl::parse(
+                    Url::from_directory_path(radamsa_dir).unwrap(),
+                )?),
             }),
             target_exe: Default::default(),
             target_env: Default::default(),

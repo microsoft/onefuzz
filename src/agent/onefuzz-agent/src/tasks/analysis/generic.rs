@@ -128,8 +128,8 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
 
 async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
     let result = if let Some(crashes) = &config.crashes {
-        crashes.url.account() == input.account()
-            && crashes.url.container() == input.container()
+        crashes.url.clone().and_then(|u| u.account()) == input.account()
+            && crashes.url.clone().and_then(|u| u.container()) == input.container()
             && crashes.path.join(input.name()).exists()
     } else {
         false
@@ -209,12 +209,14 @@ pub async fn run_tool(
         })
         .set_optional_ref(&config.crashes, |tester, crashes| {
             tester
-                .set_optional_ref(&crashes.url.account(), |tester, account| {
-                    tester.crashes_account(account)
-                })
-                .set_optional_ref(&crashes.url.container(), |tester, container| {
-                    tester.crashes_container(container)
-                })
+                .set_optional_ref(
+                    &crashes.url.clone().and_then(|u| u.account()),
+                    |tester, account| tester.crashes_account(account),
+                )
+                .set_optional_ref(
+                    &crashes.url.clone().and_then(|u| u.container()),
+                    |tester, container| tester.crashes_container(container),
+                )
         });
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
