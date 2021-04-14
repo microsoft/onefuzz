@@ -3,7 +3,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from datetime import datetime
 from typing import List, Optional
 from uuid import UUID, uuid4
 
@@ -18,7 +17,6 @@ class WebhookMessage(EventMessage):
 
 
 class WebhookMessageLog(WebhookMessage):
-    timestamp: Optional[datetime] = Field(alias="Timestamp")
     state: WebhookMessageState = Field(default=WebhookMessageState.queued)
     try_count: int = Field(default=0)
 
