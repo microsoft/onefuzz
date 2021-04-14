@@ -7,7 +7,6 @@ use crate::tasks::{
     utils::{self, default_bool_true},
 };
 use anyhow::{Context, Result};
-use futures::stream::StreamExt;
 use onefuzz::{
     expand::Expand,
     fs::set_executable,
@@ -122,9 +121,7 @@ impl GeneratorTask {
         tester: &Tester<'_>,
     ) -> Result<()> {
         let mut read_dir = fs::read_dir(generated_inputs).await?;
-        while let Some(file) = read_dir.next().await {
-            let file = file?;
-
+        while let Some(file) = read_dir.next_entry().await? {
             debug!("testing input: {:?}", file);
 
             let destination_file = if self.config.rename_output {

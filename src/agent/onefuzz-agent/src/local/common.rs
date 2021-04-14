@@ -3,6 +3,7 @@ use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
+use flume::Sender;
 use onefuzz::jitter::delay_with_jitter;
 use onefuzz::{blob::url::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use path_absolutize::Absolutize;
@@ -14,7 +15,6 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
-use tokio::sync::mpsc::UnboundedSender;
 use uuid::Uuid;
 
 pub const SETUP_DIR: &str = "setup_dir";
@@ -69,7 +69,7 @@ pub enum CmdType {
 pub struct LocalContext {
     pub job_path: PathBuf,
     pub common_config: CommonConfig,
-    pub event_sender: Option<UnboundedSender<UiEvent>>,
+    pub event_sender: Option<Sender<UiEvent>>,
 }
 
 pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
@@ -213,7 +213,7 @@ pub fn get_synced_dir(
 pub fn build_local_context(
     args: &ArgMatches<'_>,
     generate_task_id: bool,
-    event_sender: Option<UnboundedSender<UiEvent>>,
+    event_sender: Option<Sender<UiEvent>>,
 ) -> Result<LocalContext> {
     let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
     let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
@@ -322,11 +322,11 @@ pub enum UiEvent {
 }
 
 pub trait SyncCountDirMonitor<T: Sized> {
-    fn monitor_count(self, event_sender: &Option<UnboundedSender<UiEvent>>) -> Result<T>;
+    fn monitor_count(self, event_sender: &Option<Sender<UiEvent>>) -> Result<T>;
 }
 
 impl SyncCountDirMonitor<SyncedDir> for SyncedDir {
-    fn monitor_count(self, event_sender: &Option<UnboundedSender<UiEvent>>) -> Result<Self> {
+    fn monitor_count(self, event_sender: &Option<Sender<UiEvent>>) -> Result<Self> {
         if let (Some(event_sender), Some(p)) = (event_sender, self.remote_url()?.as_file_path()) {
             event_sender.send(UiEvent::MonitorDir(p))?;
         }
@@ -335,7 +335,7 @@ impl SyncCountDirMonitor<SyncedDir> for SyncedDir {
 }
 
 impl SyncCountDirMonitor<Option<SyncedDir>> for Option<SyncedDir> {
-    fn monitor_count(self, event_sender: &Option<UnboundedSender<UiEvent>>) -> Result<Self> {
+    fn monitor_count(self, event_sender: &Option<Sender<UiEvent>>) -> Result<Self> {
         if let Some(sd) = self {
             let sd = sd.monitor_count(event_sender)?;
             Ok(Some(sd))

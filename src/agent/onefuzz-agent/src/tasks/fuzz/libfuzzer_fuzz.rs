@@ -4,7 +4,7 @@
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::{Context, Result};
 use arraydeque::{ArrayDeque, Wrapping};
-use futures::{future::try_join_all, stream::StreamExt};
+use futures::future::try_join_all;
 use onefuzz::{
     fs::list_files,
     libfuzzer::{LibFuzzer, LibFuzzerLine},
@@ -23,7 +23,7 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
     task,
-    time::{delay_for, Duration},
+    time::{sleep, Duration},
 };
 use uuid::Uuid;
 
@@ -160,7 +160,7 @@ impl LibFuzzerFuzzTask {
                 .await?;
 
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
-            while let Some(Ok(entry)) = entries.next().await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
                 let destination_path = self.config.inputs.path.clone().join(entry.file_name());
                 tokio::fs::rename(&entry.path(), &destination_path)
                     .await
@@ -203,7 +203,11 @@ impl LibFuzzerFuzzTask {
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
         let running_id = running.id();
 
-        let sys_info = task::spawn(report_fuzzer_sys_info(worker_id, run_id, running_id));
+        let sys_info = task::spawn(report_fuzzer_sys_info(
+            worker_id,
+            run_id,
+            running_id.unwrap_or_default(),
+        ));
 
         // Splitting borrow.
         let stderr = running
@@ -229,7 +233,7 @@ impl LibFuzzerFuzzTask {
             libfuzzer_output.push_back(line);
         }
 
-        let (exit_status, _) = tokio::join!(running, sys_info);
+        let (exit_status, _) = tokio::join!(running.wait(), sys_info);
         let exit_status: ExitStatus = exit_status?.into();
 
         let files = list_files(crash_dir.path()).await?;
@@ -311,7 +315,7 @@ fn try_report_iter_update(
 
 async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
     // Allow for sampling CPU usage.
-    delay_for(PROC_INFO_COLLECTION_DELAY).await;
+    sleep(PROC_INFO_COLLECTION_DELAY).await;
 
     loop {
         // process doesn't exist
@@ -335,7 +339,7 @@ async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32)
             break;
         }
 
-        delay_for(PROC_INFO_PERIOD).await;
+        sleep(PROC_INFO_PERIOD).await;
     }
 
     Ok(())
@@ -396,7 +400,7 @@ impl Timer {
     }
 
     async fn wait(&self) {
-        delay_for(self.interval).await;
+        sleep(self.interval).await;
     }
 }
 
@@ -424,7 +428,7 @@ async fn report_runtime_stats(
 
     loop {
         tokio::select! {
-            Some(stats) = stats_channel.next() => {
+            Some(stats) = stats_channel.recv() => {
                 heartbeat_client.alive();
                 total.update(stats);
                 total.report()

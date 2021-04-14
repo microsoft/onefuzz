@@ -5,7 +5,6 @@ use crate::tasks::{
     config::CommonConfig, heartbeat::HeartbeatSender, report::crash_report::monitor_reports,
 };
 use anyhow::{Context, Result};
-use futures::stream::StreamExt;
 use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
     expand::Expand,
@@ -116,9 +115,8 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
         crashes.init_pull().await?;
         let mut count: u64 = 0;
         let mut read_dir = fs::read_dir(&crashes.path).await?;
-        while let Some(file) = read_dir.next().await {
+        while let Some(file) = read_dir.next_entry().await? {
             debug!("Processing file {:?}", file);
-            let file = file?;
             run_tool(file.path(), &config, &reports_dir).await?;
             count += 1;
         }
