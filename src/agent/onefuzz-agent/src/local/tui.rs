@@ -22,6 +22,7 @@ use std::{
     time::Duration,
 };
 
+use flume::{Receiver, Sender};
 use tokio::{
     sync::broadcast::{self, error::TryRecvError},
     time::sleep,
@@ -89,7 +90,7 @@ struct UiLoopState {
     pub file_count: HashMap<PathBuf, usize>,
     pub file_count_state: ListState,
     pub file_monitors: HashMap<PathBuf, tokio::task::JoinHandle<Result<()>>>,
-    pub log_event_receiver: flume::Receiver<(Level, String)>,
+    pub log_event_receiver: Receiver<(Level, String)>,
     pub terminal: Terminal<CrosstermBackend<Stdout>>,
     pub cancellation_tx: broadcast::Sender<()>,
     pub events: HashMap<Discriminant<EventData>, EventData>,
@@ -98,7 +99,7 @@ struct UiLoopState {
 impl UiLoopState {
     fn new(
         terminal: Terminal<CrosstermBackend<Stdout>>,
-        log_event_receiver: flume::Receiver<(Level, String)>,
+        log_event_receiver: Receiver<(Level, String)>,
     ) -> Self {
         let (cancellation_tx, _) = broadcast::channel(1);
         let events = HashMap::new();
@@ -116,10 +117,10 @@ impl UiLoopState {
 }
 
 pub struct TerminalUi {
-    pub task_events: flume::Sender<UiEvent>,
-    task_event_receiver: flume::Receiver<UiEvent>,
-    ui_event_tx: flume::Sender<TerminalEvent>,
-    ui_event_rx: flume::Receiver<TerminalEvent>,
+    pub task_events: Sender<UiEvent>,
+    task_event_receiver: Receiver<UiEvent>,
+    ui_event_tx: Sender<TerminalEvent>,
+    ui_event_rx: Receiver<TerminalEvent>,
 }
 
 impl TerminalUi {
@@ -224,7 +225,7 @@ impl TerminalUi {
     }
 
     async fn listen_telemetry_event(
-        ui_event_tx: flume::Sender<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<()> {
         let mut rx = onefuzz_telemetry::subscribe_to_events();
@@ -247,7 +248,7 @@ impl TerminalUi {
     }
 
     async fn ticking(
-        ui_event_tx: flume::Sender<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<()> {
         let mut interval = tokio::time::interval(TICK_RATE);
@@ -261,7 +262,7 @@ impl TerminalUi {
     }
 
     fn read_keyboard_events(
-        ui_event_tx: flume::Sender<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> JoinHandle<Result<()>> {
         thread::spawn(move || {
@@ -278,8 +279,8 @@ impl TerminalUi {
     }
 
     async fn read_commands(
-        ui_event_tx: flume::Sender<TerminalEvent>,
-        external_event_rx: flume::Receiver<UiEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
+        external_event_rx: Receiver<UiEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<()> {
         while Err(broadcast::error::TryRecvError::Empty) == cancellation_rx.try_recv() {
@@ -297,7 +298,7 @@ impl TerminalUi {
     }
 
     fn take_available_logs<T>(
-        receiver: &mut flume::Receiver<T>,
+        receiver: &mut Receiver<T>,
         size: usize,
         buffer: &mut ArrayDeque<[T; LOGS_BUFFER_SIZE], Wrapping>,
     ) {
@@ -563,7 +564,7 @@ impl TerminalUi {
     async fn on_monitor_dir(
         ui_state: UiLoopState,
         path: PathBuf,
-        ui_event_tx: flume::Sender<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
         cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<UiLoopState, UiLoopError> {
         let mut file_monitors = ui_state.file_monitors;
@@ -580,8 +581,8 @@ impl TerminalUi {
 
     async fn ui_loop(
         initial_state: UiLoopState,
-        ui_event_rx: flume::Receiver<TerminalEvent>,
-        ui_event_tx: flume::Sender<TerminalEvent>,
+        ui_event_rx: Receiver<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
     ) -> Result<()> {
         let loop_result = ui_event_rx
             .stream()
@@ -631,7 +632,7 @@ impl TerminalUi {
 
     fn spawn_file_count_monitor(
         dir: PathBuf,
-        sender: flume::Sender<TerminalEvent>,
+        sender: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> tokio::task::JoinHandle<Result<()>> {
         tokio::spawn(async move {
