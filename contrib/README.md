@@ -1,4 +1,4 @@
-# Supplimental Contributions related to OneFuzz
+# Supplemental Contributions related to OneFuzz
 
 * [Deploying fuzzing jobs in your Azure Devops Pipelines](onefuzz-job-azure-devops-pipeline)
 * [Deploying fuzzing jobs in your Github Actions workflow](onefuzz-job-github-actions)
