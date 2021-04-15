@@ -112,10 +112,6 @@ impl fmt::Display for BlobUrl {
     }
 }
 
-// pub enum Container {
-//     BlobContainer(Url),
-//     Path(PathBuf)
-// }
 
 /// URL for accessing an Azure Blob Storage container.
 ///
@@ -194,12 +190,6 @@ impl BlobContainerUrl {
     }
 }
 
-// impl AsRef<Url> for BlobContainerUrl {
-//     fn as_ref(&self) -> &Url {
-//         self.url()
-//     }
-// }
-
 impl fmt::Debug for BlobContainerUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -220,12 +210,6 @@ impl fmt::Display for BlobContainerUrl {
         }
     }
 }
-
-// impl From<BlobContainerUrl> for Url {
-//     fn from(container: BlobContainerUrl) -> Self {
-//         container.url()
-//     }
-// }
 
 fn redact_query_sas_sig(url: &Url) -> Url {
     let mut redacted = url.clone();
