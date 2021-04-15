@@ -256,26 +256,24 @@ mod tests {
 
     // Given a POSIX-style path as a string, construct a valid absolute path for
     // the target OS and return it as a checked `ModulePath`.
-    macro_rules! module {
-        ($posix_path: expr) => {{
-            let mut p = std::path::PathBuf::default();
+    fn module_path(posix_path: &str) -> Result<ModulePath> {
+        let mut p = std::path::PathBuf::default();
 
-            // Ensure that the new path is absolute.
-            if cfg!(target_os = "windows") {
-                p.push("c:\\");
-            } else {
-                p.push("/");
-            }
+        // Ensure that the new path is absolute.
+        if cfg!(target_os = "windows") {
+            p.push("c:\\");
+        } else {
+            p.push("/");
+        }
 
-            // Remove any affixed POSIX path separators, then split on any
-            // internal separators and add each component to our accumulator
-            // path in an OS-specific way.
-            for c in $posix_path.trim_matches('/').split('/') {
-                p.push(c);
-            }
+        // Remove any affixed POSIX path separators, then split on any internal
+        // separators and add each component to our accumulator path in an
+        // OS-specific way.
+        for c in posix_path.trim_matches('/').split('/') {
+            p.push(c);
+        }
 
-            ModulePath::new(p)
-        }};
+        ModulePath::new(p)
     }
 
     fn cmd_cov_from_vec(data: Vec<(&ModulePath, Vec<(u64, u32)>)>) -> CommandBlockCov {
@@ -291,8 +289,8 @@ mod tests {
 
     #[test]
     fn test_cmd_cov_increment() -> Result<()> {
-        let main_exe = module!("/onefuzz/main.exe")?;
-        let some_dll = module!("/common/some.dll")?;
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let some_dll = module_path("/common/some.dll")?;
 
         let mut coverage = CommandBlockCov::default();
 
@@ -317,9 +315,9 @@ mod tests {
 
     #[test]
     fn test_cmd_cov_merge_max() -> Result<()> {
-        let main_exe = module!("/onefuzz/main.exe")?;
-        let known_dll = module!("/common/known.dll")?;
-        let unknown_dll = module!("/other/unknown.dll")?;
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let known_dll = module_path("/common/known.dll")?;
+        let unknown_dll = module_path("/other/unknown.dll")?;
 
         let mut total = cmd_cov_from_vec(vec![
             (&main_exe, vec![(2, 0), (40, 1), (600, 0), (8000, 1)]),
@@ -367,8 +365,8 @@ mod tests {
 
     #[test]
     fn test_cmd_cov_serde() -> Result<()> {
-        let main_exe = module!("/onefuzz/main.exe")?;
-        let some_dll = module!("/common/some.dll")?;
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let some_dll = module_path("/common/some.dll")?;
 
         let cov = {
             let mut cov = CommandBlockCov::default();
