@@ -26,7 +26,7 @@ impl CommandBlockCov {
     /// Returns `true` if the module was newly-inserted (which initializes its
     /// block coverage map). Otherwise, returns `false`, and no re-computation
     /// is performed.
-    pub fn insert(&mut self, path: &ModulePath, offsets: impl Iterator<Item = u64>) -> bool {
+    pub fn insert(&mut self, path: &ModulePath, offsets: impl Iterator<Item = u32>) -> bool {
         use std::collections::btree_map::Entry;
 
         match self.modules.entry(path.clone()) {
@@ -38,7 +38,7 @@ impl CommandBlockCov {
         }
     }
 
-    pub fn increment(&mut self, path: &ModulePath, offset: u64) {
+    pub fn increment(&mut self, path: &ModulePath, offset: u32) {
         let entry = self.modules.entry(path.clone());
 
         if let btree_map::Entry::Vacant(_) = entry {
@@ -69,16 +69,16 @@ impl CommandBlockCov {
 #[serde(transparent)]
 pub struct ModuleCov {
     #[serde(with = "array")]
-    pub blocks: BTreeMap<u64, BlockCov>,
+    pub blocks: BTreeMap<u32, BlockCov>,
 }
 
 impl ModuleCov {
-    pub fn new(offsets: impl Iterator<Item = u64>) -> Self {
+    pub fn new(offsets: impl Iterator<Item = u32>) -> Self {
         let blocks = offsets.map(|o| (o, BlockCov::new(o))).collect();
         Self { blocks }
     }
 
-    pub fn increment(&mut self, offset: u64) {
+    pub fn increment(&mut self, offset: u32) {
         let block = self
             .blocks
             .entry(offset)
@@ -102,13 +102,12 @@ impl ModuleCov {
 pub struct BlockCov {
     /// Offset of the block, relative to the module base load address.
     //
-    // These offsets are represented as `u64` values, but since they are offsets
-    // within an assumed well-formed module, they should never exceed a `u32`.
-    // We thus assume that they can be losslessly serialized to an `f64`.
+    // These offsets come from well-formed executable modules, so we assume they
+    // can be represented as `u32` values and losslessly serialized to an `f64`.
     //
     // If we need to handle malformed binaries or arbitrary addresses, then this
     // will need revision.
-    pub offset: u64,
+    pub offset: u32,
 
     /// Number of times a block was seen to be executed, relative to some input
     /// or corpus.
@@ -124,7 +123,7 @@ pub struct BlockCov {
 }
 
 impl BlockCov {
-    pub fn new(offset: u64) -> Self {
+    pub fn new(offset: u32) -> Self {
         Self { offset, count: 0 }
     }
 }
@@ -138,7 +137,7 @@ mod array {
 
     use super::BlockCov;
 
-    type BlockCovMap = BTreeMap<u64, BlockCov>;
+    type BlockCovMap = BTreeMap<u32, BlockCov>;
 
     pub fn serialize<S>(data: &BlockCovMap, ser: S) -> Result<S::Ok, S::Error>
     where
@@ -189,8 +188,8 @@ mod tests {
 
     use super::*;
 
-    // Builds a `ModuleCov` from a vec of `(offset, counts)` tuples.
-    fn from_vec(data: Vec<(u64, u32)>) -> ModuleCov {
+    // Builds a `ModuleCov` from a vec of `(offset, count)` tuples.
+    fn from_vec(data: Vec<(u32, u32)>) -> ModuleCov {
         let offsets = data.iter().map(|(o, _)| *o);
         let mut cov = ModuleCov::new(offsets);
         for (offset, count) in data {
@@ -201,8 +200,8 @@ mod tests {
         cov
     }
 
-    // Builds a vec of `(count, offset)` tuples from a `ModuleCov`.
-    fn to_vec(cov: &ModuleCov) -> Vec<(u64, u32)> {
+    // Builds a vec of `(offset, count)` tuples from a `ModuleCov`.
+    fn to_vec(cov: &ModuleCov) -> Vec<(u32, u32)> {
         cov.blocks.iter().map(|(o, b)| (*o, b.count)).collect()
     }
 
@@ -276,7 +275,7 @@ mod tests {
         ModulePath::new(p)
     }
 
-    fn cmd_cov_from_vec(data: Vec<(&ModulePath, Vec<(u64, u32)>)>) -> CommandBlockCov {
+    fn cmd_cov_from_vec(data: Vec<(&ModulePath, Vec<(u32, u32)>)>) -> CommandBlockCov {
         let mut cov = CommandBlockCov::default();
 
         for (path, module_data) in data {

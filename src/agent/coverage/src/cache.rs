@@ -66,7 +66,7 @@ pub struct ModuleInfo {
     pub module: ModuleIndex,
 
     /// Set of image offsets of basic blocks.
-    pub blocks: BTreeSet<u64>,
+    pub blocks: BTreeSet<u32>,
 }
 
 impl ModuleInfo {
@@ -89,7 +89,7 @@ impl ModuleInfo {
         let pe = goblin::pe::PE::parse(&data)?;
         let module = ModuleIndex::index_pe(path.clone(), &pe);
         let offsets = crate::pe::process_module(path, &data, &pe, false, handle.into())?;
-        let blocks = offsets.ones().map(|off| off as u64).collect();
+        let blocks = offsets.ones().map(|off| off as u32).collect();
 
         Ok(Self { module, blocks })
     }
