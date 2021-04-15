@@ -112,7 +112,6 @@ impl fmt::Display for BlobUrl {
     }
 }
 
-
 /// URL for accessing an Azure Blob Storage container.
 ///
 /// Use to validate a URL and address contained blobs.
