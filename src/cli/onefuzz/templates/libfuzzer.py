@@ -58,7 +58,7 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = True,
-        expect_crash_on_failure: bool = True,
+        expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
     ) -> None:
 
@@ -443,7 +443,7 @@ class Libfuzzer(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
-        expect_crash_on_failure: bool = True,
+        expect_crash_on_failure: bool = False,
     ) -> Optional[Job]:
 
         """
