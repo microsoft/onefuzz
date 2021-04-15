@@ -98,7 +98,7 @@ impl CoverageRecorder {
 
         let coverage_path = {
             let digest = digest_file(test_input).await?;
-            self.config.coverage.path.join("inputs").join(digest)
+            self.config.coverage.local_path.join("inputs").join(digest)
         };
 
         fs::create_dir_all(&coverage_path).await.with_context(|| {

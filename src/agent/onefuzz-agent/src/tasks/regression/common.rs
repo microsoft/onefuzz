@@ -73,7 +73,7 @@ pub async fn handle_inputs(
     heartbeat_client: &Option<TaskHeartbeatClient>,
 ) -> Result<()> {
     readonly_inputs.init_pull().await?;
-    let mut input_files = tokio::fs::read_dir(&readonly_inputs.path).await?;
+    let mut input_files = tokio::fs::read_dir(&readonly_inputs.local_path).await?;
     while let Some(file) = input_files.next_entry().await? {
         heartbeat_client.alive();
 
@@ -88,7 +88,7 @@ pub async fn handle_inputs(
             .to_string_lossy()
             .to_string();
 
-        let input_url = readonly_inputs.remote_url()?.url().join(&file_name)?;
+        let input_url = readonly_inputs.remote_url()?.url()?.join(&file_name)?;
 
         let crash_test_result = handler.get_crash_result(file_path, input_url).await?;
         RegressionReport {
@@ -120,7 +120,7 @@ pub async fn handle_crash_reports(
     for possible_dir in report_dirs {
         possible_dir.init_pull().await?;
 
-        let mut report_files = tokio::fs::read_dir(&possible_dir.path).await?;
+        let mut report_files = tokio::fs::read_dir(&possible_dir.local_path).await?;
         while let Some(file) = report_files.next_entry().await? {
             heartbeat_client.alive();
             let file_path = file.path();
@@ -150,8 +150,8 @@ pub async fn handle_crash_reports(
             }
             .ok_or_else(|| format_err!("crash report is missing input blob: {}", file_name))?;
 
-            let input_url = crashes.remote_url()?.url().clone();
-            let input = crashes.path.join(&input_blob.name);
+            let input_url = crashes.remote_url()?.url()?;
+            let input = crashes.local_path.join(&input_blob.name);
             let crash_test_result = handler.get_crash_result(input, input_url).await?;
 
             RegressionReport {

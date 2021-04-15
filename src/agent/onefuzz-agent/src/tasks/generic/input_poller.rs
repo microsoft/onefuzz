@@ -128,10 +128,10 @@ impl<M> InputPoller<M> {
         info!(
             "batch processing directory: {} - {}",
             self.name,
-            to_process.path.display()
+            to_process.local_path.display()
         );
 
-        let mut read_dir = fs::read_dir(&to_process.path).await?;
+        let mut read_dir = fs::read_dir(&to_process.local_path).await?;
         while let Some(file) = read_dir.next_entry().await? {
             let path = file.path();
             info!(
@@ -143,7 +143,7 @@ impl<M> InputPoller<M> {
             // Compute the file name relative to the synced directory, and thus the
             // container.
             let blob_name = {
-                let dir_path = to_process.path.canonicalize()?;
+                let dir_path = to_process.local_path.canonicalize()?;
                 let input_path = path.canonicalize()?;
                 let dir_relative = input_path.strip_prefix(&dir_path)?;
                 dir_relative.display().to_string()
@@ -161,7 +161,7 @@ impl<M> InputPoller<M> {
             if let Ok(blob) = BlobUrl::new(url.clone()) {
                 batch_dir.try_url().and_then(|u| u.account()) == blob.account()
                     && batch_dir.try_url().and_then(|u| u.container()) == blob.container()
-                    && batch_dir.path.join(blob.name()).exists()
+                    && batch_dir.local_path.join(blob.name()).exists()
             } else {
                 false
             }

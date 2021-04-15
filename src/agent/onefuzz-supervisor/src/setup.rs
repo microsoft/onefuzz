@@ -41,7 +41,7 @@ impl SetupRunner {
         work_set.save_context().await?;
 
         // Download the setup container.
-        let setup_url = work_set.setup_url.url();
+        let setup_url = work_set.setup_url.url()?;
         let setup_dir = work_set.setup_dir()?;
 
         // `azcopy sync` requires the local dir to exist.

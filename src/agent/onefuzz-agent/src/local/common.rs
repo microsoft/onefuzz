@@ -172,11 +172,14 @@ pub fn get_synced_dirs(
                 let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
                 let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
                 Ok(SyncedDir {
-                    url: Some(remote_blob_url),
-                    path,
+                    remote_path: Some(remote_blob_url),
+                    local_path: path,
                 })
             } else {
-                Ok(SyncedDir { url: None, path })
+                Ok(SyncedDir {
+                    remote_path: None,
+                    local_path: path,
+                })
             }
         })
         .collect()
@@ -195,13 +198,13 @@ pub fn get_synced_dir(
         let remote_blob_url = BlobContainerUrl::new(remote_url)?;
         let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
         Ok(SyncedDir {
-            url: Some(remote_blob_url),
-            path,
+            remote_path: Some(remote_blob_url),
+            local_path: path,
         })
     } else {
         Ok(SyncedDir {
-            url: None,
-            path: remote_path,
+            remote_path: None,
+            local_path: remote_path,
         })
     }
 }
