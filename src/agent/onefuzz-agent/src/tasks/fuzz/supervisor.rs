@@ -292,21 +292,21 @@ mod tests {
         let crashes_local = tempfile::tempdir().unwrap().path().into();
         let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
         let crashes = SyncedDir {
-            path: crashes_local,
-            url: Some(
+            local_path: crashes_local,
+            remote_path: Some(
                 BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap()).unwrap(),
             ),
         };
 
         let corpus_dir_temp = tempfile::tempdir().unwrap();
         let corpus_dir = SyncedDir {
-            path: corpus_dir_local,
-            url: Some(
+            local_path: corpus_dir_local,
+            remote_path: Some(
                 BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
                     .unwrap(),
             ),
         };
-        let seed_file_name = corpus_dir.path.join("seed.txt");
+        let seed_file_name = corpus_dir.local_path.join("seed.txt");
         tokio::fs::write(seed_file_name, "xyz").await.unwrap();
 
         let target_options = Some(vec!["{input}".to_owned()]);
@@ -355,7 +355,7 @@ mod tests {
         let notify = Notify::new();
         let _fuzzing_monitor =
             monitor_process(process, "supervisor".to_string(), false, Some(&notify));
-        let stat_output = crashes.path.join("fuzzer_stats");
+        let stat_output = crashes.local_path.join("fuzzer_stats");
         let start = Instant::now();
         loop {
             if has_stats(&stat_output).await {

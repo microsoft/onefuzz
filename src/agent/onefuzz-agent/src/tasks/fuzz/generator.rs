@@ -240,20 +240,20 @@ mod tests {
             generator_exe: String::from("{tools_dir}/radamsa"),
             generator_options,
             readonly_inputs: vec![SyncedDir {
-                path: readonly_inputs_local,
-                url: Some(BlobContainerUrl::parse(
+                local_path: readonly_inputs_local,
+                remote_path: Some(BlobContainerUrl::parse(
                     Url::from_directory_path(inputs).unwrap(),
                 )?),
             }],
             crashes: SyncedDir {
-                path: crashes_local,
-                url: Some(BlobContainerUrl::parse(
+                local_path: crashes_local,
+                remote_path: Some(BlobContainerUrl::parse(
                     Url::from_directory_path(crashes).unwrap(),
                 )?),
             },
             tools: Some(SyncedDir {
-                path: tools_local,
-                url: Some(BlobContainerUrl::parse(
+                local_path: tools_local,
+                remote_path: Some(BlobContainerUrl::parse(
                     Url::from_directory_path(radamsa_dir).unwrap(),
                 )?),
             }),
