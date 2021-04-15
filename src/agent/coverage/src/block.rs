@@ -57,10 +57,12 @@ impl CommandBlockCov {
         self.modules.iter()
     }
 
+    /// Total count of covered blocks across all modules.
     pub fn covered(&self) -> u64 {
         self.modules.values().map(|m| m.covered()).sum()
     }
 
+    /// Total count of known blocks across all modules.
     pub fn features(&self) -> u64 {
         self.modules.values().map(|m| m.features()).sum()
     }
@@ -72,7 +74,7 @@ impl CommandBlockCov {
         }
     }
 
-    // Count of blocks covered by `self` but not `other`.
+    /// Total count of blocks covered by `self` but not `other`.
     pub fn difference(&self, other: &Self) -> u64 {
         let mut total = 0;
 
@@ -101,6 +103,7 @@ impl ModuleCov {
         Self { blocks }
     }
 
+    /// Total count of blocks that have been reached (have a nonzero count).
     pub fn covered(&self) -> u64 {
         self.blocks
             .values()
@@ -108,6 +111,7 @@ impl ModuleCov {
             .sum()
     }
 
+    /// Total count of known blocks.
     pub fn features(&self) -> u64 {
         self.blocks.len() as u64
     }
