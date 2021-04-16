@@ -231,7 +231,7 @@ struct Breakpoints {
     // Map of breakpoint IDs to data which pick out an code location. For a
     // value `(module, offset)`, `module` is an index into `self.modules`, and
     // `offset` is a VA offset relative to the module base.
-    registered: BTreeMap<BreakpointId, (usize, u64)>,
+    registered: BTreeMap<BreakpointId, (usize, u32)>,
 }
 
 impl Breakpoints {
@@ -245,7 +245,7 @@ impl Breakpoints {
         &mut self,
         dbg: &mut Debugger,
         module: &Module,
-        offsets: impl Iterator<Item = u64>,
+        offsets: impl Iterator<Item = u32>,
     ) -> Result<()> {
         // From the `target::Module`, create and save a `ModulePath`.
         let module_path = ModulePath::new(module.path().to_owned())?;
@@ -254,7 +254,7 @@ impl Breakpoints {
 
         for offset in offsets {
             // Register the breakpoint in the running target address space.
-            let id = dbg.register_breakpoint(module.name(), offset, BreakpointType::OneTime);
+            let id = dbg.register_breakpoint(module.name(), offset as u64, BreakpointType::OneTime);
 
             // Associate the opaque `BreakpointId` with the module and offset.
             self.registered.insert(id, (module_index, offset));
@@ -271,5 +271,5 @@ impl Breakpoints {
 #[derive(Clone, Copy, Debug)]
 pub struct BreakpointData<'a> {
     pub module: &'a ModulePath,
-    pub offset: u64,
+    pub offset: u32,
 }

@@ -26,7 +26,7 @@ impl CommandBlockCov {
     /// Returns `true` if the module was newly-inserted (which initializes its
     /// block coverage map). Otherwise, returns `false`, and no re-computation
     /// is performed.
-    pub fn insert(&mut self, path: &ModulePath, offsets: impl Iterator<Item = u64>) -> bool {
+    pub fn insert(&mut self, path: &ModulePath, offsets: impl Iterator<Item = u32>) -> bool {
         use std::collections::btree_map::Entry;
 
         match self.modules.entry(path.clone()) {
@@ -38,7 +38,7 @@ impl CommandBlockCov {
         }
     }
 
-    pub fn increment(&mut self, path: &ModulePath, offset: u64) {
+    pub fn increment(&mut self, path: &ModulePath, offset: u32) {
         let entry = self.modules.entry(path.clone());
 
         if let btree_map::Entry::Vacant(_) = entry {
@@ -69,16 +69,16 @@ impl CommandBlockCov {
 #[serde(transparent)]
 pub struct ModuleCov {
     #[serde(with = "array")]
-    pub blocks: BTreeMap<u64, BlockCov>,
+    pub blocks: BTreeMap<u32, BlockCov>,
 }
 
 impl ModuleCov {
-    pub fn new(offsets: impl Iterator<Item = u64>) -> Self {
+    pub fn new(offsets: impl Iterator<Item = u32>) -> Self {
         let blocks = offsets.map(|o| (o, BlockCov::new(o))).collect();
         Self { blocks }
     }
 
-    pub fn increment(&mut self, offset: u64) {
+    pub fn increment(&mut self, offset: u32) {
         let block = self
             .blocks
             .entry(offset)
@@ -102,13 +102,12 @@ impl ModuleCov {
 pub struct BlockCov {
     /// Offset of the block, relative to the module base load address.
     //
-    // These offsets are represented as `u64` values, but since they are offsets
-    // within an assumed well-formed module, they should never exceed a `u32`.
-    // We thus assume that they can be losslessly serialized to an `f64`.
+    // These offsets come from well-formed executable modules, so we assume they
+    // can be represented as `u32` values and losslessly serialized to an `f64`.
     //
     // If we need to handle malformed binaries or arbitrary addresses, then this
     // will need revision.
-    pub offset: u64,
+    pub offset: u32,
 
     /// Number of times a block was seen to be executed, relative to some input
     /// or corpus.
@@ -124,7 +123,7 @@ pub struct BlockCov {
 }
 
 impl BlockCov {
-    pub fn new(offset: u64) -> Self {
+    pub fn new(offset: u32) -> Self {
         Self { offset, count: 0 }
     }
 }
@@ -138,7 +137,7 @@ mod array {
 
     use super::BlockCov;
 
-    type BlockCovMap = BTreeMap<u64, BlockCov>;
+    type BlockCovMap = BTreeMap<u32, BlockCov>;
 
     pub fn serialize<S>(data: &BlockCovMap, ser: S) -> Result<S::Ok, S::Error>
     where
@@ -184,10 +183,13 @@ mod array {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
+    use serde_json::json;
+
     use super::*;
 
-    // Builds a `ModuleCov` from a vec of `(offset, counts)` tuples.
-    fn from_vec(data: Vec<(u64, u32)>) -> ModuleCov {
+    // Builds a `ModuleCov` from a vec of `(offset, count)` tuples.
+    fn from_vec(data: Vec<(u32, u32)>) -> ModuleCov {
         let offsets = data.iter().map(|(o, _)| *o);
         let mut cov = ModuleCov::new(offsets);
         for (offset, count) in data {
@@ -198,8 +200,8 @@ mod tests {
         cov
     }
 
-    // Builds a vec of `(count, offset)` tuples from a `ModuleCov`.
-    fn to_vec(cov: &ModuleCov) -> Vec<(u64, u32)> {
+    // Builds a vec of `(offset, count)` tuples from a `ModuleCov`.
+    fn to_vec(cov: &ModuleCov) -> Vec<(u32, u32)> {
         cov.blocks.iter().map(|(o, b)| (*o, b.count)).collect()
     }
 
@@ -251,37 +253,43 @@ mod tests {
         );
     }
 
-    fn module_path(path: &str) -> ModulePath {
-        ModulePath::new(std::path::PathBuf::from(path)).unwrap()
+    // Given a POSIX-style path as a string, construct a valid absolute path for
+    // the target OS and return it as a checked `ModulePath`.
+    fn module_path(posix_path: &str) -> Result<ModulePath> {
+        let mut p = std::path::PathBuf::default();
+
+        // Ensure that the new path is absolute.
+        if cfg!(target_os = "windows") {
+            p.push("c:\\");
+        } else {
+            p.push("/");
+        }
+
+        // Remove any affixed POSIX path separators, then split on any internal
+        // separators and add each component to our accumulator path in an
+        // OS-specific way.
+        for c in posix_path.trim_matches('/').split('/') {
+            p.push(c);
+        }
+
+        ModulePath::new(p)
     }
 
-    fn cmd_cov_from_vec(data: Vec<(&'static str, Vec<(u64, u32)>)>) -> CommandBlockCov {
+    fn cmd_cov_from_vec(data: Vec<(&ModulePath, Vec<(u32, u32)>)>) -> CommandBlockCov {
         let mut cov = CommandBlockCov::default();
 
         for (path, module_data) in data {
             let module_cov = from_vec(module_data);
-            cov.modules.insert(module_path(path), module_cov);
+            cov.modules.insert(path.clone(), module_cov);
         }
 
         cov
     }
 
     #[test]
-    fn test_cmd_cov_increment() {
-        #[cfg(target_os = "linux")]
-        const MAIN_EXE: &str = "/main.exe";
-
-        #[cfg(target_os = "linux")]
-        const SOME_DLL: &str = "/lib/some.dll";
-
-        #[cfg(target_os = "windows")]
-        const MAIN_EXE: &str = r"c:\main.exe";
-
-        #[cfg(target_os = "windows")]
-        const SOME_DLL: &str = r"c:\lib\some.dll";
-
-        let main_exe = module_path(MAIN_EXE);
-        let some_dll = module_path(SOME_DLL);
+    fn test_cmd_cov_increment() -> Result<()> {
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let some_dll = module_path("/common/some.dll")?;
 
         let mut coverage = CommandBlockCov::default();
 
@@ -295,87 +303,69 @@ mod tests {
         coverage.increment(&some_dll, 789);
 
         let expected = cmd_cov_from_vec(vec![
-            (MAIN_EXE, vec![(1, 0), (20, 1), (300, 0)]),
-            (SOME_DLL, vec![(123, 1), (456, 1), (789, 1)]),
+            (&main_exe, vec![(1, 0), (20, 1), (300, 0)]),
+            (&some_dll, vec![(123, 1), (456, 1), (789, 1)]),
         ]);
 
         assert_eq!(coverage, expected);
+
+        Ok(())
     }
 
     #[test]
-    fn test_cmd_cov_merge_max() {
-        #[cfg(target_os = "linux")]
-        const MAIN_EXE: &str = "/main.exe";
-
-        #[cfg(target_os = "linux")]
-        const KNOWN_DLL: &str = "/lib/known.dll";
-
-        #[cfg(target_os = "linux")]
-        const UNKNOWN_DLL: &str = "/usr/lib/unknown.dll";
-
-        #[cfg(target_os = "windows")]
-        const MAIN_EXE: &str = r"c:\main.exe";
-
-        #[cfg(target_os = "windows")]
-        const KNOWN_DLL: &str = r"c:\lib\known.dll";
-
-        #[cfg(target_os = "windows")]
-        const UNKNOWN_DLL: &str = r"c:\usr\lib\unknown.dll";
+    fn test_cmd_cov_merge_max() -> Result<()> {
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let known_dll = module_path("/common/known.dll")?;
+        let unknown_dll = module_path("/other/unknown.dll")?;
 
         let mut total = cmd_cov_from_vec(vec![
-            (MAIN_EXE, vec![(2, 0), (40, 1), (600, 0), (8000, 1)]),
-            (KNOWN_DLL, vec![(1, 1), (30, 1), (500, 0), (7000, 0)]),
+            (&main_exe, vec![(2, 0), (40, 1), (600, 0), (8000, 1)]),
+            (&known_dll, vec![(1, 1), (30, 1), (500, 0), (7000, 0)]),
         ]);
 
         let new = cmd_cov_from_vec(vec![
-            (MAIN_EXE, vec![(2, 1), (40, 0), (600, 0), (8000, 0)]),
-            (KNOWN_DLL, vec![(1, 0), (30, 0), (500, 1), (7000, 1)]),
-            (UNKNOWN_DLL, vec![(123, 0), (456, 1)]),
+            (&main_exe, vec![(2, 1), (40, 0), (600, 0), (8000, 0)]),
+            (&known_dll, vec![(1, 0), (30, 0), (500, 1), (7000, 1)]),
+            (&unknown_dll, vec![(123, 0), (456, 1)]),
         ]);
 
         total.merge_max(&new);
 
         let expected = cmd_cov_from_vec(vec![
-            (MAIN_EXE, vec![(2, 1), (40, 1), (600, 0), (8000, 1)]),
-            (KNOWN_DLL, vec![(1, 1), (30, 1), (500, 1), (7000, 1)]),
-            (UNKNOWN_DLL, vec![(123, 0), (456, 1)]),
+            (&main_exe, vec![(2, 1), (40, 1), (600, 0), (8000, 1)]),
+            (&known_dll, vec![(1, 1), (30, 1), (500, 1), (7000, 1)]),
+            (&unknown_dll, vec![(123, 0), (456, 1)]),
         ]);
 
         assert_eq!(total, expected);
+
+        Ok(())
     }
 
     #[test]
-    fn test_block_cov_serde() {
+    fn test_block_cov_serde() -> Result<()> {
         let block = BlockCov {
             offset: 123,
             count: 456,
         };
 
-        let ser = serde_json::to_string(&block).unwrap();
+        let ser = serde_json::to_string(&block)?;
 
         let text = r#"{"offset":123,"count":456}"#;
+
         assert_eq!(ser, text);
 
-        let de: BlockCov = serde_json::from_str(&ser).unwrap();
+        let de: BlockCov = serde_json::from_str(&ser)?;
+
         assert_eq!(de, block);
+
+        Ok(())
     }
 
     #[test]
-    fn test_cmd_cov_serde() {
-        #[cfg(target_os = "linux")]
-        const MAIN_EXE: &str = "/main.exe";
-
-        #[cfg(target_os = "linux")]
-        const SOME_DLL: &str = "/lib/some.dll";
-
-        #[cfg(target_os = "windows")]
-        const MAIN_EXE: &str = r"c:\main.exe";
-
-        #[cfg(target_os = "windows")]
-        const SOME_DLL: &str = r"c:\lib\some.dll";
-
-        let main_exe = module_path(MAIN_EXE);
-        let some_dll = module_path(SOME_DLL);
+    fn test_cmd_cov_serde() -> Result<()> {
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let some_dll = module_path("/common/some.dll")?;
 
         let cov = {
             let mut cov = CommandBlockCov::default();
@@ -387,17 +377,26 @@ mod tests {
             cov
         };
 
-        let ser = serde_json::to_string(&cov).unwrap();
+        let ser = serde_json::to_string(&cov)?;
 
-        #[cfg(target_os = "linux")]
-        let text = r#"{"/lib/some.dll":[{"offset":2,"count":0},{"offset":30,"count":1},{"offset":400,"count":0}],"/main.exe":[{"offset":1,"count":1},{"offset":20,"count":0},{"offset":300,"count":1}]}"#;
-
-        #[cfg(target_os = "windows")]
-        let text = r#"{"c:\\lib\\some.dll":[{"offset":2,"count":0},{"offset":30,"count":1},{"offset":400,"count":0}],"c:\\main.exe":[{"offset":1,"count":1},{"offset":20,"count":0},{"offset":300,"count":1}]}"#;
+        let text = serde_json::to_string(&json!({
+            some_dll.to_string(): [
+                {"offset":2,"count":0},
+                {"offset":30,"count":1},
+                {"offset":400,"count":0},
+            ],
+            main_exe.to_string(): [
+                {"offset":1,"count":1},
+                {"offset":20,"count":0},
+                {"offset":300,"count":1},
+            ],
+        }))?;
 
         assert_eq!(ser, text);
 
-        let de: CommandBlockCov = serde_json::from_str(&ser).unwrap();
+        let de: CommandBlockCov = serde_json::from_str(&ser)?;
         assert_eq!(de, cov);
+
+        Ok(())
     }
 }
