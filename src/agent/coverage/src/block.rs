@@ -105,7 +105,7 @@ impl ModuleCov {
         Self { blocks }
     }
 
-    /// Total count of blocks that have been reached (have a nonzero count).
+    /// Total count of blocks that have been reached (have a positive count).
     pub fn covered_blocks(&self) -> u64 {
         self.blocks.values().filter(|b| b.count > 0).count() as u64
     }
@@ -117,7 +117,7 @@ impl ModuleCov {
 
     /// Total count of blocks covered by `self` but not `other`.
     ///
-    /// A difference of 0 does not imply identical coverage, and a nonzero
+    /// A difference of 0 does not imply identical coverage, and a positive
     /// difference does not imply that `self` covers every block in `other`.
     pub fn difference(&self, other: &Self) -> u64 {
         let mut total = 0;
