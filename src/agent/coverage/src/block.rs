@@ -57,11 +57,38 @@ impl CommandBlockCov {
         self.modules.iter()
     }
 
+    /// Total count of covered blocks across all modules.
+    pub fn covered_blocks(&self) -> u64 {
+        self.modules.values().map(|m| m.covered_blocks()).sum()
+    }
+
+    /// Total count of known blocks across all modules.
+    pub fn known_blocks(&self) -> u64 {
+        self.modules.values().map(|m| m.known_blocks()).sum()
+    }
+
     pub fn merge_max(&mut self, other: &Self) {
         for (module, cov) in other.iter() {
             let entry = self.modules.entry(module.clone()).or_default();
             entry.merge_max(cov);
         }
+    }
+
+    /// Total count of blocks covered by modules in `self` but not `other`.
+    ///
+    /// Counts modules absent in `self`.
+    pub fn difference(&self, other: &Self) -> u64 {
+        let mut total = 0;
+
+        for (module, cov) in &self.modules {
+            if let Some(other_cov) = other.modules.get(module) {
+                total += cov.difference(other_cov);
+            } else {
+                total += cov.covered_blocks();
+            }
+        }
+
+        total
     }
 }
 
@@ -76,6 +103,36 @@ impl ModuleCov {
     pub fn new(offsets: impl Iterator<Item = u32>) -> Self {
         let blocks = offsets.map(|o| (o, BlockCov::new(o))).collect();
         Self { blocks }
+    }
+
+    /// Total count of blocks that have been reached (have a positive count).
+    pub fn covered_blocks(&self) -> u64 {
+        self.blocks.values().filter(|b| b.count > 0).count() as u64
+    }
+
+    /// Total count of known blocks.
+    pub fn known_blocks(&self) -> u64 {
+        self.blocks.len() as u64
+    }
+
+    /// Total count of blocks covered by `self` but not `other`.
+    ///
+    /// A difference of 0 does not imply identical coverage, and a positive
+    /// difference does not imply that `self` covers every block in `other`.
+    pub fn difference(&self, other: &Self) -> u64 {
+        let mut total = 0;
+
+        for (offset, block) in &self.blocks {
+            if let Some(other_block) = other.blocks.get(offset) {
+                if other_block.count == 0 {
+                    total += u64::min(1, block.count as u64);
+                }
+            } else {
+                total += u64::min(1, block.count as u64);
+            }
+        }
+
+        total
     }
 
     pub fn increment(&mut self, offset: u32) {
@@ -396,6 +453,66 @@ mod tests {
 
         let de: CommandBlockCov = serde_json::from_str(&ser)?;
         assert_eq!(de, cov);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_cmd_cov_stats() -> Result<()> {
+        let main_exe = module_path("/onefuzz/main.exe")?;
+        let some_dll = module_path("/common/some.dll")?;
+        let other_dll = module_path("/common/other.dll")?;
+
+        let empty = CommandBlockCov::default();
+
+        let mut total: CommandBlockCov = serde_json::from_value(json!({
+            some_dll.to_string(): [
+                { "offset": 2, "count": 0 },
+                { "offset": 30, "count": 1 },
+                { "offset": 400, "count": 0 },
+            ],
+            main_exe.to_string(): [
+                { "offset": 1, "count": 2 },
+                { "offset": 20, "count": 0 },
+                { "offset": 300, "count": 3 },
+            ],
+        }))?;
+
+        assert_eq!(total.known_blocks(), 6);
+        assert_eq!(total.covered_blocks(), 3);
+        assert_eq!(total.covered_blocks(), total.difference(&empty));
+        assert_eq!(total.difference(&total), 0);
+
+        let new: CommandBlockCov = serde_json::from_value(json!({
+            some_dll.to_string(): [
+                { "offset": 2, "count": 0 },
+                { "offset": 22, "count": 4 },
+                { "offset": 30, "count": 5 },
+                { "offset": 400, "count": 6 },
+            ],
+            main_exe.to_string(): [
+                { "offset": 1, "count": 0 },
+                { "offset": 300, "count": 1 },
+                { "offset": 5000, "count": 0 },
+            ],
+            other_dll.to_string(): [
+                { "offset": 123, "count": 0 },
+                { "offset": 456, "count": 10 },
+            ],
+        }))?;
+
+        assert_eq!(new.known_blocks(), 9);
+        assert_eq!(new.covered_blocks(), 5);
+        assert_eq!(new.covered_blocks(), new.difference(&empty));
+        assert_eq!(new.difference(&new), 0);
+
+        assert_eq!(new.difference(&total), 3);
+        assert_eq!(total.difference(&new), 1);
+
+        total.merge_max(&new);
+
+        assert_eq!(total.known_blocks(), 10);
+        assert_eq!(total.covered_blocks(), 6);
 
         Ok(())
     }
