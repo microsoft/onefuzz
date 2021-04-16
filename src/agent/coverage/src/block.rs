@@ -107,10 +107,7 @@ impl ModuleCov {
 
     /// Total count of blocks that have been reached (have a nonzero count).
     pub fn covered_blocks(&self) -> u64 {
-        self.blocks
-            .values()
-            .map(|b| u64::min(1, b.count as u64))
-            .sum()
+        self.blocks.values().filter(|b| b.count > 0).count() as u64
     }
 
     /// Total count of known blocks.
