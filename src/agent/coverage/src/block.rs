@@ -463,6 +463,8 @@ mod tests {
         let some_dll = module_path("/common/some.dll")?;
         let other_dll = module_path("/common/other.dll")?;
 
+        let empty = CommandBlockCov::default();
+
         let mut total: CommandBlockCov = serde_json::from_value(json!({
             some_dll.to_string(): [
                 { "offset": 2, "count": 0 },
@@ -478,10 +480,7 @@ mod tests {
 
         assert_eq!(total.known_blocks(), 6);
         assert_eq!(total.covered_blocks(), 3);
-        assert_eq!(
-            total.covered_blocks(),
-            total.difference(&CommandBlockCov::default())
-        );
+        assert_eq!(total.covered_blocks(), total.difference(&empty));
         assert_eq!(total.difference(&total), 0);
 
         let new: CommandBlockCov = serde_json::from_value(json!({
@@ -504,10 +503,7 @@ mod tests {
 
         assert_eq!(new.known_blocks(), 9);
         assert_eq!(new.covered_blocks(), 5);
-        assert_eq!(
-            new.covered_blocks(),
-            new.difference(&CommandBlockCov::default())
-        );
+        assert_eq!(new.covered_blocks(), new.difference(&empty));
         assert_eq!(new.difference(&new), 0);
 
         assert_eq!(new.difference(&total), 3);
