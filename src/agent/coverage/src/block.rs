@@ -461,6 +461,7 @@ mod tests {
     fn test_cmd_cov_stats() -> Result<()> {
         let main_exe = module_path("/onefuzz/main.exe")?;
         let some_dll = module_path("/common/some.dll")?;
+        let other_dll = module_path("/common/other.dll")?;
 
         let mut total: CommandBlockCov = serde_json::from_value(json!({
             some_dll.to_string(): [
@@ -495,20 +496,24 @@ mod tests {
                 { "offset": 300, "count": 1 },
                 { "offset": 5000, "count": 0 },
             ],
+            other_dll.to_string(): [
+                { "offset": 123, "count": 0 },
+                { "offset": 456, "count": 10 },
+            ],
         }))?;
 
-        assert_eq!(new.features(), 7);
-        assert_eq!(new.covered(), 4);
+        assert_eq!(new.features(), 9);
+        assert_eq!(new.covered(), 5);
         assert_eq!(new.covered(), new.difference(&CommandBlockCov::default()));
         assert_eq!(new.difference(&new), 0);
 
-        assert_eq!(new.difference(&total), 2);
+        assert_eq!(new.difference(&total), 3);
         assert_eq!(total.difference(&new), 1);
 
         total.merge_max(&new);
 
-        assert_eq!(total.features(), 8);
-        assert_eq!(total.covered(), 5);
+        assert_eq!(total.features(), 10);
+        assert_eq!(total.covered(), 6);
 
         Ok(())
     }
