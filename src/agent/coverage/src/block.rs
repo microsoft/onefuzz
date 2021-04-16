@@ -504,7 +504,10 @@ mod tests {
 
         assert_eq!(new.known_blocks(), 9);
         assert_eq!(new.covered_blocks(), 5);
-        assert_eq!(new.covered_blocks(), new.difference(&CommandBlockCov::default()));
+        assert_eq!(
+            new.covered_blocks(),
+            new.difference(&CommandBlockCov::default())
+        );
         assert_eq!(new.difference(&new), 0);
 
         assert_eq!(new.difference(&total), 3);
