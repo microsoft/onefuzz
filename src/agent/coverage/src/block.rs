@@ -116,6 +116,9 @@ impl ModuleCov {
     }
 
     /// Total count of blocks covered by `self` but not `other`.
+    ///
+    /// A difference of 0 does not imply identical coverage, and a nonzero
+    /// difference does not imply that `self` covers every block in `other`.
     pub fn difference(&self, other: &Self) -> u64 {
         let mut total = 0;
 
