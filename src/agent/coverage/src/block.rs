@@ -58,13 +58,13 @@ impl CommandBlockCov {
     }
 
     /// Total count of covered blocks across all modules.
-    pub fn covered(&self) -> u64 {
-        self.modules.values().map(|m| m.covered()).sum()
+    pub fn covered_blocks(&self) -> u64 {
+        self.modules.values().map(|m| m.covered_blocks()).sum()
     }
 
     /// Total count of known blocks across all modules.
-    pub fn features(&self) -> u64 {
-        self.modules.values().map(|m| m.features()).sum()
+    pub fn known_blocks(&self) -> u64 {
+        self.modules.values().map(|m| m.known_blocks()).sum()
     }
 
     pub fn merge_max(&mut self, other: &Self) {
@@ -84,7 +84,7 @@ impl CommandBlockCov {
             if let Some(other_cov) = other.modules.get(module) {
                 total += cov.difference(other_cov);
             } else {
-                total += cov.covered();
+                total += cov.covered_blocks();
             }
         }
 
@@ -106,7 +106,7 @@ impl ModuleCov {
     }
 
     /// Total count of blocks that have been reached (have a nonzero count).
-    pub fn covered(&self) -> u64 {
+    pub fn covered_blocks(&self) -> u64 {
         self.blocks
             .values()
             .map(|b| u64::min(1, b.count as u64))
@@ -114,7 +114,7 @@ impl ModuleCov {
     }
 
     /// Total count of known blocks.
-    pub fn features(&self) -> u64 {
+    pub fn known_blocks(&self) -> u64 {
         self.blocks.len() as u64
     }
 
@@ -476,10 +476,10 @@ mod tests {
             ],
         }))?;
 
-        assert_eq!(total.features(), 6);
-        assert_eq!(total.covered(), 3);
+        assert_eq!(total.known_blocks(), 6);
+        assert_eq!(total.covered_blocks(), 3);
         assert_eq!(
-            total.covered(),
+            total.covered_blocks(),
             total.difference(&CommandBlockCov::default())
         );
         assert_eq!(total.difference(&total), 0);
@@ -502,9 +502,9 @@ mod tests {
             ],
         }))?;
 
-        assert_eq!(new.features(), 9);
-        assert_eq!(new.covered(), 5);
-        assert_eq!(new.covered(), new.difference(&CommandBlockCov::default()));
+        assert_eq!(new.known_blocks(), 9);
+        assert_eq!(new.covered_blocks(), 5);
+        assert_eq!(new.covered_blocks(), new.difference(&CommandBlockCov::default()));
         assert_eq!(new.difference(&new), 0);
 
         assert_eq!(new.difference(&total), 3);
@@ -512,8 +512,8 @@ mod tests {
 
         total.merge_max(&new);
 
-        assert_eq!(total.features(), 10);
-        assert_eq!(total.covered(), 6);
+        assert_eq!(total.known_blocks(), 10);
+        assert_eq!(total.covered_blocks(), 6);
 
         Ok(())
     }
