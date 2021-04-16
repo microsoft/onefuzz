@@ -53,7 +53,7 @@ impl<'a> ModuleDisassembler<'a> {
             .module
             .base_va
             .checked_add(symbol.image_offset)
-            .ok_or_else(|| format_err!("symbol image offset overflows base VA"))?;
+            .ok_or_else(|| format_err!("symbol image offset overflowed base VA"))?;
         decoder.set_ip(va);
 
         // Function entry is a leader.
@@ -68,7 +68,7 @@ impl<'a> ModuleDisassembler<'a> {
 
                 // The branch target is a leader, if it is intra-procedural.
                 if symbol.contains_image_offset(offset) {
-                    blocks.insert(offset.try_into().context("ELF offset overflows `u32`")?);
+                    blocks.insert(offset.try_into().context("ELF offset overflowed `u32`")?);
                 }
 
                 // Only mark the fallthrough instruction as a leader if the branch is conditional.
@@ -87,7 +87,7 @@ impl<'a> ModuleDisassembler<'a> {
                         let next = decoder.ip() as u64;
                         let next_offset =
                             if let Some(offset) = next.checked_sub(self.module.base_va) {
-                                offset.try_into().context("ELF offset overflows `u32`")?
+                                offset.try_into().context("ELF offset overflowed `u32`")?
                             } else {
                                 anyhow::bail!("underflow converting ELF VA to offset")
                             };

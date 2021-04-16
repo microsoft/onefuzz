@@ -6,7 +6,7 @@ use std::convert::TryInto;
 use std::ffi::OsStr;
 use std::process::Command;
 
-use anyhow::{format_err, Result};
+use anyhow::{format_err, Context, Result};
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
 
@@ -318,7 +318,7 @@ impl ModuleImage {
 
     pub fn va_to_offset(&self, va: u64) -> Result<u32> {
         if let Some(offset) = va.checked_sub(self.base()) {
-            Ok(offset.try_into()?)
+            Ok(offset.try_into().context("ELF offset overflowed `u32`")?)
         } else {
             anyhow::bail!("underflow converting VA to image offset")
         }
