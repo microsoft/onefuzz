@@ -1,0 +1,25 @@
+{
+  "config": {
+    "base_url": "https://dev.azure.com/INSERT_YOUR_ORG_HERE",
+    "auth_token": "INSERT_PAT_HERE",
+    "project": "INSERT_YOUR_PROJECT_HERE",
+    "type": "Bug",
+    "unique_fields": [
+      "System.Title",
+      "System.AreaPath"
+    ],
+    "comment": "<br> This is my call stack: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul>  Repro Command: <br> <pre> {{ repro_cmd }} </pre>",
+    "ado_fields": {
+      "System.AreaPath": "OneFuzz-Ado-Integration",
+      "System.Title": "{{report.task_id}}"
+    },
+    "on_duplicate": {
+      "increment": [],
+      "comment": "DUP {{report.input_sha256}} <br> Repro Command: <br> <pre> {{ repro_cmd }} </pre> ",
+      "set_state": {
+        "Resolved": "Active"
+      },
+      "ado_fields": {}
+    }
+  }
+}
