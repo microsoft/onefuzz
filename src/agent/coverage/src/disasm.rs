@@ -2,8 +2,9 @@
 // Licensed under the MIT License.
 
 use std::collections::BTreeSet;
+use std::convert::TryInto;
 
-use anyhow::{bail, format_err, Result};
+use anyhow::{bail, format_err, Context, Result};
 use iced_x86::{Decoder, DecoderOptions, Instruction};
 
 use crate::code::{ModuleIndex, Symbol};
@@ -19,7 +20,7 @@ impl<'a> ModuleDisassembler<'a> {
     }
 
     /// Find block entry points for every symbol in the module.
-    pub fn find_blocks(&self) -> BTreeSet<u64> {
+    pub fn find_blocks(&self) -> BTreeSet<u32> {
         let mut blocks = BTreeSet::new();
 
         for symbol in self.module.symbols.iter() {
@@ -36,7 +37,7 @@ impl<'a> ModuleDisassembler<'a> {
     }
 
     /// Find all entry points for blocks contained within the region of `symbol`.
-    fn insert_symbol_blocks(&self, blocks: &mut BTreeSet<u64>, symbol: &Symbol) -> Result<()> {
+    fn insert_symbol_blocks(&self, blocks: &mut BTreeSet<u32>, symbol: &Symbol) -> Result<()> {
         // Slice the symbol's instruction data from the module file data.
         let data = if let Some(data) = self.data.get(symbol.file_range_usize()) {
             data
@@ -52,11 +53,11 @@ impl<'a> ModuleDisassembler<'a> {
             .module
             .base_va
             .checked_add(symbol.image_offset)
-            .ok_or_else(|| format_err!("symbol image offset overflows base VA"))?;
+            .ok_or_else(|| format_err!("symbol image offset overflowed base VA"))?;
         decoder.set_ip(va);
 
         // Function entry is a leader.
-        blocks.insert(symbol.image_offset);
+        blocks.insert(symbol.image_offset.try_into()?);
 
         let mut inst = Instruction::default();
         while decoder.can_decode() {
@@ -67,7 +68,7 @@ impl<'a> ModuleDisassembler<'a> {
 
                 // The branch target is a leader, if it is intra-procedural.
                 if symbol.contains_image_offset(offset) {
-                    blocks.insert(offset);
+                    blocks.insert(offset.try_into().context("ELF offset overflowed `u32`")?);
                 }
 
                 // Only mark the fallthrough instruction as a leader if the branch is conditional.
@@ -84,7 +85,13 @@ impl<'a> ModuleDisassembler<'a> {
                         // We decoded the current instruction, so the decoder offset is
                         // set to the next instruction.
                         let next = decoder.ip() as u64;
-                        let next_offset = next - self.module.base_va;
+                        let next_offset =
+                            if let Some(offset) = next.checked_sub(self.module.base_va) {
+                                offset.try_into().context("ELF offset overflowed `u32`")?
+                            } else {
+                                anyhow::bail!("underflow converting ELF VA to offset")
+                            };
+
                         blocks.insert(next_offset);
                     }
                 }
