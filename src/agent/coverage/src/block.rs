@@ -74,7 +74,9 @@ impl CommandBlockCov {
         }
     }
 
-    /// Total count of blocks covered by `self` but not `other`.
+    /// Total count of blocks covered by modules in `self` but not `other`.
+    ///
+    /// Counts modules absent in `self`.
     pub fn difference(&self, other: &Self) -> u64 {
         let mut total = 0;
 
@@ -116,6 +118,7 @@ impl ModuleCov {
         self.blocks.len() as u64
     }
 
+    /// Total count of blocks covered by `self` but not `other`.
     pub fn difference(&self, other: &Self) -> u64 {
         let mut total = 0;
 
