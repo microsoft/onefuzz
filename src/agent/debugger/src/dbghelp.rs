@@ -14,6 +14,7 @@ use std::{
     cmp,
     ffi::{OsStr, OsString},
     mem::{size_of, MaybeUninit},
+    num::NonZeroU64,
     path::{Path, PathBuf},
     sync::Once,
 };
@@ -417,9 +418,9 @@ impl ModuleInfo {
 
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub struct SymInfo {
-    symbol: String,
-    address: u64,
-    displacement: u64,
+    pub symbol: String,
+    pub address: u64,
+    pub displacement: u64,
 }
 
 impl SymInfo {
@@ -520,6 +521,15 @@ impl DebugHelpGuard {
                 }
             }
             _ => Ok(load_address),
+        }
+    }
+
+    pub fn get_module_base(&self, process_handle: HANDLE, addr: DWORD64) -> Result<NonZeroU64> {
+        if let Some(base) = NonZeroU64::new(unsafe { SymGetModuleBase64(process_handle, addr) }) {
+            Ok(base)
+        } else {
+            let last_error = std::io::Error::last_os_error();
+            Err(last_error.into())
         }
     }
 

@@ -14,6 +14,9 @@ struct Opt {
 
     #[structopt(min_values = 1)]
     cmd: Vec<String>,
+
+    #[structopt(short, long, default_value = "5")]
+    timeout: u64,
 }
 
 impl Opt {
@@ -40,7 +43,8 @@ fn main() -> Result<()> {
     let mut cmd = Command::new(&opt.cmd[0]);
     cmd.args(&opt.cmd[1..]);
 
-    let coverage = coverage::block::windows::record(cmd, filter)?;
+    let timeout = std::time::Duration::from_secs(opt.timeout);
+    let coverage = coverage::block::windows::record(cmd, filter, timeout)?;
 
     for (module, cov) in coverage.iter() {
         let total = cov.blocks.len();
@@ -63,7 +67,7 @@ fn main() -> Result<()> {
     let filter = opt.load_filter_or_default()?;
 
     let mut cmd = Command::new(&opt.cmd[0]);
-    cmd.stdin(Stdio::null()).args(&opt.cmd[1..]);
+    cmd.stdin(std::process::Stdio::null()).args(&opt.cmd[1..]);
 
     let mut cache = ModuleCache::default();
     let mut recorder = Recorder::new(&mut cache, filter);
