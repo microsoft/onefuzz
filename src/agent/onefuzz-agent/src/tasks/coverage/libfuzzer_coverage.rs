@@ -38,7 +38,6 @@ use crate::tasks::{
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use futures::stream::StreamExt;
 use onefuzz::{fs::list_files, libfuzzer::LibFuzzer, syncdir::SyncedDir};
 use onefuzz_telemetry::{Event::coverage_data, EventData};
 use reqwest::Url;
@@ -117,7 +116,7 @@ impl CoverageTask {
         let mut seen_inputs = false;
         // Update the total with the coverage from each seed corpus.
         for dir in &self.config.readonly_inputs {
-            debug!("recording coverage for {}", dir.path.display());
+            debug!("recording coverage for {}", dir.local_path.display());
             dir.init_pull().await?;
             if self.record_corpus_coverage(&mut processor, dir).await? {
                 seen_inputs = true;
@@ -151,17 +150,20 @@ impl CoverageTask {
         processor: &mut CoverageProcessor,
         corpus_dir: &SyncedDir,
     ) -> Result<bool> {
-        let mut corpus = fs::read_dir(&corpus_dir.path).await.with_context(|| {
-            format!(
-                "unable to read corpus coverage directory: {}",
-                corpus_dir.path.display()
-            )
-        })?;
+        let mut corpus = fs::read_dir(&corpus_dir.local_path)
+            .await
+            .with_context(|| {
+                format!(
+                    "unable to read corpus coverage directory: {}",
+                    corpus_dir.local_path.display()
+                )
+            })?;
         let mut seen_inputs = false;
 
-        while let Some(input) = corpus.next().await {
-            let input = match input {
-                Ok(input) => input,
+        loop {
+            let input = match corpus.next_entry().await {
+                Ok(Some(input)) => input,
+                Ok(None) => break,
                 Err(err) => {
                     error!("{}", err);
                     continue;
@@ -187,7 +189,7 @@ pub struct CoverageProcessor {
 impl CoverageProcessor {
     pub async fn new(config: Arc<Config>) -> Result<Self> {
         let heartbeat_client = config.common.init_heartbeat().await?;
-        let total = TotalCoverage::new(config.coverage.path.join(TOTAL_COVERAGE));
+        let total = TotalCoverage::new(config.coverage.local_path.join(TOTAL_COVERAGE));
         let recorder = CoverageRecorder::new(config.clone()).await?;
         let module_totals = BTreeMap::default();
 
@@ -209,7 +211,7 @@ impl CoverageProcessor {
         debug!("updating module info {:?}", module);
 
         if !self.module_totals.contains_key(&module) {
-            let parent = &self.config.coverage.path.join("by-module");
+            let parent = &self.config.coverage.local_path.join("by-module");
             fs::create_dir_all(parent).await.with_context(|| {
                 format!(
                     "unable to create by-module coverage directory: {}",

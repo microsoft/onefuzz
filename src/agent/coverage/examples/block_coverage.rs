@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::process::Command;
+use std::{process::Command, process::Stdio};
 
 use anyhow::Result;
 use coverage::code::{CmdFilter, CmdFilterDef};

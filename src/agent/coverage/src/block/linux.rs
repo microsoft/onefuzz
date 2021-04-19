@@ -2,10 +2,11 @@
 // Licensed under the MIT License.
 
 use std::collections::BTreeMap;
+use std::convert::TryInto;
 use std::ffi::OsStr;
 use std::process::Command;
 
-use anyhow::{format_err, Result};
+use anyhow::{format_err, Context, Result};
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
 
@@ -140,7 +141,7 @@ impl<'c> Recorder<'c> {
                 .find_va_image(pc)
                 .ok_or_else(|| format_err!("unable to find image for va = {:x}", pc))?;
 
-            let offset = image.va_to_offset(pc);
+            let offset = image.va_to_offset(pc)?;
             self.coverage.increment(image.path(), offset);
 
             // Execute clobbered instruction on restart.
@@ -182,7 +183,15 @@ impl<'c> Recorder<'c> {
 
             // Check the maybe-demangled against the coverage filter.
             if self.filter.includes_symbol(&info.module.path, symbol_name) {
-                for offset in info.blocks.range(symbol.range()) {
+                // Convert range bounds to an `offset`-sized type.
+                let range = {
+                    let range = symbol.range();
+                    let lo: u32 = range.start.try_into()?;
+                    let hi: u32 = range.end.try_into()?;
+                    lo..hi
+                };
+
+                for offset in info.blocks.range(range) {
                     allowed_blocks.push(*offset);
                 }
             }
@@ -307,12 +316,16 @@ impl ModuleImage {
         (self.map.address.0)..(self.map.address.1)
     }
 
-    pub fn va_to_offset(&self, va: u64) -> u64 {
-        va - self.base()
+    pub fn va_to_offset(&self, va: u64) -> Result<u32> {
+        if let Some(offset) = va.checked_sub(self.base()) {
+            Ok(offset.try_into().context("ELF offset overflowed `u32`")?)
+        } else {
+            anyhow::bail!("underflow converting VA to image offset")
+        }
     }
 
-    pub fn offset_to_va(&self, offset: u64) -> u64 {
-        self.base() + offset
+    pub fn offset_to_va(&self, offset: u32) -> u64 {
+        self.base() + (offset as u64)
     }
 }
 

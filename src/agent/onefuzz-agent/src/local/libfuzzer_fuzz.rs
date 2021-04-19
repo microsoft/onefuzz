@@ -14,14 +14,14 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use tokio::sync::mpsc::UnboundedSender;
+use flume::Sender;
 
 const EXPECT_CRASH_ON_FAILURE: &str = "expect_crash_on_failure";
 
 pub fn build_fuzz_config(
     args: &clap::ArgMatches<'_>,
     common: CommonConfig,
-    event_sender: Option<UnboundedSender<UiEvent>>,
+    event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
     let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?
         .monitor_count(&event_sender)?;
@@ -56,10 +56,7 @@ pub fn build_fuzz_config(
     Ok(config)
 }
 
-pub async fn run(
-    args: &clap::ArgMatches<'_>,
-    event_sender: Option<UnboundedSender<UiEvent>>,
-) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
     let context = build_local_context(args, true, event_sender.clone())?;
     let config = build_fuzz_config(args, context.common_config.clone(), event_sender)?;
     LibFuzzerFuzzTask::new(config)?.run().await

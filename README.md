@@ -5,7 +5,7 @@
 Project OneFuzz enables continuous developer-driven fuzzing to proactively
 harden software prior to release.  With a [single 
 command](docs/getting-started.md#launching-a-job), which can be [baked into
-CICD](https://github.com/microsoft/onefuzz-samples), developers can launch
+CICD](contrib/onefuzz-job-github-actions/README.md), developers can launch
 fuzz jobs from a few virtual machines to thousands of cores.
 
 ## Build Status

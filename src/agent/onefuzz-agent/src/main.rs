@@ -37,7 +37,7 @@ fn main() -> Result<()> {
 
     let matches = app.get_matches();
 
-    let mut rt = tokio::runtime::Runtime::new()?;
+    let rt = tokio::runtime::Runtime::new()?;
     let result = rt.block_on(run(matches));
     atexit::execute();
     result

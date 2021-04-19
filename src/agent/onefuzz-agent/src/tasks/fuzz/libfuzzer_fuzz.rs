@@ -4,7 +4,7 @@
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::{Context, Result};
 use arraydeque::{ArrayDeque, Wrapping};
-use futures::{future::try_join_all, stream::StreamExt};
+use futures::future::try_join_all;
 use onefuzz::{
     fs::list_files,
     libfuzzer::{LibFuzzer, LibFuzzerLine},
@@ -23,7 +23,7 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
     task,
-    time::{delay_for, Duration},
+    time::{sleep, Duration},
 };
 use uuid::Uuid;
 
@@ -104,9 +104,12 @@ impl LibFuzzerFuzzTask {
     }
 
     pub async fn verify(&self) -> Result<()> {
-        let mut directories = vec![self.config.inputs.path.clone()];
+        let mut directories = vec![self.config.inputs.local_path.clone()];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
-            let mut dirs = readonly_inputs.iter().map(|x| x.path.clone()).collect();
+            let mut dirs = readonly_inputs
+                .iter()
+                .map(|x| x.local_path.clone())
+                .collect();
             directories.append(&mut dirs);
         }
 
@@ -136,7 +139,7 @@ impl LibFuzzerFuzzTask {
         let task_dir = self
             .config
             .inputs
-            .path
+            .local_path
             .parent()
             .ok_or_else(|| anyhow!("Invalid input path"))?;
         let temp_path = task_dir.join(".temp");
@@ -160,8 +163,13 @@ impl LibFuzzerFuzzTask {
                 .await?;
 
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
-            while let Some(Ok(entry)) = entries.next().await {
-                let destination_path = self.config.inputs.path.clone().join(entry.file_name());
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let destination_path = self
+                    .config
+                    .inputs
+                    .local_path
+                    .clone()
+                    .join(entry.file_name());
                 tokio::fs::rename(&entry.path(), &destination_path)
                     .await
                     .with_context(|| {
@@ -189,9 +197,11 @@ impl LibFuzzerFuzzTask {
 
         debug!("starting fuzzer run, run_id = {}", run_id);
 
-        let mut inputs = vec![&self.config.inputs.path];
+        let mut inputs = vec![&self.config.inputs.local_path];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
-            readonly_inputs.iter().for_each(|d| inputs.push(&d.path));
+            readonly_inputs
+                .iter()
+                .for_each(|d| inputs.push(&d.local_path));
         }
 
         let fuzzer = LibFuzzer::new(
@@ -203,7 +213,11 @@ impl LibFuzzerFuzzTask {
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
         let running_id = running.id();
 
-        let sys_info = task::spawn(report_fuzzer_sys_info(worker_id, run_id, running_id));
+        let sys_info = task::spawn(report_fuzzer_sys_info(
+            worker_id,
+            run_id,
+            running_id.unwrap_or_default(),
+        ));
 
         // Splitting borrow.
         let stderr = running
@@ -229,7 +243,7 @@ impl LibFuzzerFuzzTask {
             libfuzzer_output.push_back(line);
         }
 
-        let (exit_status, _) = tokio::join!(running, sys_info);
+        let (exit_status, _) = tokio::join!(running.wait(), sys_info);
         let exit_status: ExitStatus = exit_status?.into();
 
         let files = list_files(crash_dir.path()).await?;
@@ -258,7 +272,7 @@ impl LibFuzzerFuzzTask {
 
         for file in &files {
             if let Some(filename) = file.file_name() {
-                let dest = self.config.crashes.path.join(filename);
+                let dest = self.config.crashes.local_path.join(filename);
                 if let Err(e) = tokio::fs::rename(file.clone(), dest.clone()).await {
                     if !dest.exists() {
                         bail!(e)
@@ -311,7 +325,7 @@ fn try_report_iter_update(
 
 async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
     // Allow for sampling CPU usage.
-    delay_for(PROC_INFO_COLLECTION_DELAY).await;
+    sleep(PROC_INFO_COLLECTION_DELAY).await;
 
     loop {
         // process doesn't exist
@@ -335,7 +349,7 @@ async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32)
             break;
         }
 
-        delay_for(PROC_INFO_PERIOD).await;
+        sleep(PROC_INFO_PERIOD).await;
     }
 
     Ok(())
@@ -396,7 +410,7 @@ impl Timer {
     }
 
     async fn wait(&self) {
-        delay_for(self.interval).await;
+        sleep(self.interval).await;
     }
 }
 
@@ -424,7 +438,7 @@ async fn report_runtime_stats(
 
     loop {
         tokio::select! {
-            Some(stats) = stats_channel.next() => {
+            Some(stats) = stats_channel.recv() => {
                 heartbeat_client.alive();
                 total.update(stats);
                 total.report()

@@ -3,7 +3,7 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::TryStreamExt;
 use reqwest::{Body, RequestBuilder, Response, Url};
 use reqwest_retry::SendRetry;
@@ -36,8 +36,10 @@ impl BlobClient {
             .client
             .get(url)
             .send_retry_default()
-            .await?
-            .error_for_status()?;
+            .await
+            .context("BlobClient.get")?
+            .error_for_status()
+            .context("BlobClient.get status")?;
 
         Ok(r)
     }
@@ -63,30 +65,22 @@ impl BlobClient {
     }
 
     pub async fn put_data(&self, url: Url, data: impl Into<Body>) -> Result<Response> {
-        let r = self
-            .client
-            .put(url)
-            .header("x-ms-blob-type", "BlockBlob")
+        self.put(url)
             .body(data)
             .send_retry_default()
-            .await?;
-
-        Ok(r)
+            .await
+            .context("BlobClient.put_data")
     }
 
     pub async fn put_json<I>(&self, url: Url, item: I) -> Result<Response>
     where
         I: Serialize,
     {
-        let r = self
-            .client
-            .put(url)
-            .header("x-ms-blob-type", "BlockBlob")
+        self.put(url)
             .json(&item)
             .send_retry_default()
-            .await?;
-
-        Ok(r)
+            .await
+            .context("BlobClient.put_json")
     }
 
     pub async fn put_file(&self, file_url: Url, file_path: impl AsRef<Path>) -> Result<Response> {
@@ -103,15 +97,11 @@ impl BlobClient {
         let body = reqwest::Body::wrap_stream(file_stream);
         let content_length = format!("{}", file_len);
 
-        let resp = self
-            .client
-            .put(file_url)
+        self.put(file_url)
             .header("Content-Length", &content_length)
-            .header("x-ms-blob-type", "BlockBlob")
             .body(body)
             .send_retry_default()
-            .await?;
-
-        Ok(resp)
+            .await
+            .context("BlobClient.put_file")
     }
 }

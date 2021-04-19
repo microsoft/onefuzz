@@ -16,7 +16,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let result = config.run().await;
 
     if let Err(err) = &result {
-        error!("error running task: {}", err);
+        error!("error running task: {:?}", err);
     }
 
     onefuzz_telemetry::try_flush_and_close();
