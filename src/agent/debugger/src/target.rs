@@ -572,7 +572,7 @@ impl Target {
         // memory we read contains **our** breakpoints instead of the original code.
         let remote_address = remote_address as u64;
         let module = self.module_from_address(remote_address);
-        let range = remote_address..=(remote_address + buf.len() as u64);
+        let range = remote_address..(remote_address + buf.len() as u64);
 
         let u8_buf = unsafe {
             std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u8, std::mem::size_of_val(buf))
