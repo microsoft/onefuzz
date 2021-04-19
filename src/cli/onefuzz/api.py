@@ -1327,6 +1327,7 @@ class Scaleset(Endpoint):
         vm_sku: Optional[str] = "Standard_D2s_v3",
         region: Optional[primitives.Region] = None,
         spot_instances: bool = False,
+        ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
     ) -> models.Scaleset:
         self.logger.debug("create scaleset")
@@ -1348,6 +1349,7 @@ class Scaleset(Endpoint):
                 region=region,
                 size=size,
                 spot_instances=spot_instances,
+                ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
             ),
         )

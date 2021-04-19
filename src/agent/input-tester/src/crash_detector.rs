@@ -9,7 +9,7 @@ use std::{
     fs,
     io::Write,
     path::Path,
-    process::{Command, Output},
+    process::{Command, Output, Stdio},
     time::{Duration, Instant},
 };
 
@@ -317,6 +317,7 @@ pub fn test_process<'a>(
     let mut command = Command::new(app_path);
     command
         .args(args)
+        .stdin(Stdio::null())
         .stdout(stdout_writer)
         .stderr(stderr_writer);
 
@@ -324,7 +325,8 @@ pub fn test_process<'a>(
         command.env(k, v);
     }
 
-    let recorder = cache.map(BlockCoverageRecorder::new);
+    let filter = coverage::code::CmdFilter::default();
+    let recorder = cache.map(|c| BlockCoverageRecorder::new(c, filter));
     let start_time = Instant::now();
     let mut event_handler = CrashDetectorEventHandler::new(
         stdout_reader,

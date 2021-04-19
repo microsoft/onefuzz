@@ -87,6 +87,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
             region=region,
             size=scaleset_size,
             spot_instances=config.spot_instances,
+            ephemeral_os_disks=config.ephemeral_os_disks,
             tags={"pool": pool.name},
         )
         logging.info(

@@ -92,6 +92,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         region=region,
         size=request.size,
         spot_instances=request.spot_instances,
+        ephemeral_os_disks=request.ephemeral_os_disks,
         tags=request.tags,
     )
     # don't return auths during create, only 'get' with include_auth

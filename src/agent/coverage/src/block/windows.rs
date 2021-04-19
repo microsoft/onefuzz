@@ -13,27 +13,27 @@ use debugger::{
 
 use crate::block::CommandBlockCov;
 use crate::cache::ModuleCache;
-use crate::code::ModulePath;
+use crate::code::{CmdFilter, ModulePath};
 
-pub fn record(cmd: Command) -> Result<CommandBlockCov> {
+pub fn record(cmd: Command, filter: CmdFilter) -> Result<CommandBlockCov> {
     let mut cache = ModuleCache::default();
-    let recorder = Recorder::new(&mut cache);
+    let mut recorder = Recorder::new(&mut cache, filter);
     let timeout = Duration::from_secs(5);
-    let mut handler = RecorderEventHandler::new(recorder, timeout);
+    let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
     handler.run(cmd)?;
-    Ok(handler.recorder.into_coverage())
+    Ok(recorder.into_coverage())
 }
 
 #[derive(Debug)]
-pub struct RecorderEventHandler<'a> {
-    recorder: Recorder<'a>,
+pub struct RecorderEventHandler<'r, 'c> {
+    recorder: &'r mut Recorder<'c>,
     started: Instant,
     timed_out: bool,
     timeout: Duration,
 }
 
-impl<'a> RecorderEventHandler<'a> {
-    pub fn new(recorder: Recorder<'a>, timeout: Duration) -> Self {
+impl<'r, 'c> RecorderEventHandler<'r, 'c> {
+    pub fn new(recorder: &'r mut Recorder<'c>, timeout: Duration) -> Self {
         let started = Instant::now();
         let timed_out = false;
 
@@ -72,20 +72,22 @@ impl<'a> RecorderEventHandler<'a> {
 }
 
 #[derive(Debug)]
-pub struct Recorder<'a> {
+pub struct Recorder<'c> {
     breakpoints: Breakpoints,
 
     // Reference to allow in-memory reuse across runs.
-    cache: &'a mut ModuleCache,
+    cache: &'c mut ModuleCache,
 
     // Note: this could also be a reference to enable reuse across runs, to
     // support implicit calculation of total coverage for a corpus. For now,
     // assume callers will merge this into a separate struct when needed.
     coverage: CommandBlockCov,
+
+    filter: CmdFilter,
 }
 
-impl<'a> Recorder<'a> {
-    pub fn new(cache: &'a mut ModuleCache) -> Self {
+impl<'c> Recorder<'c> {
+    pub fn new(cache: &'c mut ModuleCache, filter: CmdFilter) -> Self {
         let breakpoints = Breakpoints::default();
         let coverage = CommandBlockCov::default();
 
@@ -93,6 +95,7 @@ impl<'a> Recorder<'a> {
             breakpoints,
             cache,
             coverage,
+            filter,
         }
     }
 
@@ -146,7 +149,7 @@ impl<'a> Recorder<'a> {
             }
 
             self.coverage
-                .increment(breakpoint.module, breakpoint.offset)?;
+                .increment(breakpoint.module, breakpoint.offset);
         } else {
             let pc = if let Ok(pc) = dbg.read_program_counter() {
                 format!("{:x}", pc)
@@ -163,7 +166,12 @@ impl<'a> Recorder<'a> {
     fn insert_module(&mut self, dbg: &mut Debugger, module: &Module) -> Result<()> {
         let path = ModulePath::new(module.path().to_owned())?;
 
-        match self.cache.fetch(&path) {
+        if !self.filter.includes_module(&path) {
+            log::debug!("skipping module: {}", path);
+            return Ok(());
+        }
+
+        match self.cache.fetch(&path, dbg.target().process_handle()) {
             Ok(Some(info)) => {
                 let new = self.coverage.insert(&path, info.blocks.iter().copied());
 
@@ -188,7 +196,7 @@ impl<'a> Recorder<'a> {
     }
 }
 
-impl<'a> DebugEventHandler for RecorderEventHandler<'a> {
+impl<'r, 'c> DebugEventHandler for RecorderEventHandler<'r, 'c> {
     fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
         if self.recorder.on_create_process(dbg, module).is_err() {
             self.stop(dbg);
@@ -223,7 +231,7 @@ struct Breakpoints {
     // Map of breakpoint IDs to data which pick out an code location. For a
     // value `(module, offset)`, `module` is an index into `self.modules`, and
     // `offset` is a VA offset relative to the module base.
-    registered: BTreeMap<BreakpointId, (usize, u64)>,
+    registered: BTreeMap<BreakpointId, (usize, u32)>,
 }
 
 impl Breakpoints {
@@ -237,7 +245,7 @@ impl Breakpoints {
         &mut self,
         dbg: &mut Debugger,
         module: &Module,
-        offsets: impl Iterator<Item = u64>,
+        offsets: impl Iterator<Item = u32>,
     ) -> Result<()> {
         // From the `target::Module`, create and save a `ModulePath`.
         let module_path = ModulePath::new(module.path().to_owned())?;
@@ -246,7 +254,7 @@ impl Breakpoints {
 
         for offset in offsets {
             // Register the breakpoint in the running target address space.
-            let id = dbg.register_breakpoint(module.name(), offset, BreakpointType::OneTime);
+            let id = dbg.register_breakpoint(module.name(), offset as u64, BreakpointType::OneTime);
 
             // Associate the opaque `BreakpointId` with the module and offset.
             self.registered.insert(id, (module_index, offset));
@@ -263,5 +271,5 @@ impl Breakpoints {
 #[derive(Clone, Copy, Debug)]
 pub struct BreakpointData<'a> {
     pub module: &'a ModulePath,
-    pub offset: u64,
+    pub offset: u32,
 }

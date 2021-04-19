@@ -3,7 +3,8 @@
 
 use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender, utils::default_bool_true};
 use anyhow::{Context, Result};
-use futures::{future::try_join_all, stream::StreamExt};
+use arraydeque::{ArrayDeque, Wrapping};
+use futures::future::try_join_all;
 use onefuzz::{
     fs::list_files,
     libfuzzer::{LibFuzzer, LibFuzzerLine},
@@ -22,7 +23,7 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
     task,
-    time::{self, Duration},
+    time::{sleep, Duration},
 };
 use uuid::Uuid;
 
@@ -35,9 +36,13 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
 
-pub fn default_workers() -> u64 {
-    let cpus = num_cpus::get() as u64;
-    u64::max(1, cpus - 1)
+/// Maximum number of log message to safe in case of libFuzzer failing,
+/// arbitrarily chosen
+const LOGS_BUFFER_SIZE: usize = 1024;
+
+pub fn default_workers() -> usize {
+    let cpus = num_cpus::get();
+    usize::max(1, cpus - 1)
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -50,13 +55,13 @@ pub struct Config {
     pub target_options: Vec<String>,
 
     #[serde(default = "default_workers")]
-    pub target_workers: u64,
+    pub target_workers: usize,
     pub ensemble_sync_delay: Option<u64>,
 
     #[serde(default = "default_bool_true")]
     pub check_fuzzer_help: bool,
 
-    #[serde(default = "default_bool_true")]
+    #[serde(default)]
     pub expect_crash_on_failure: bool,
 
     #[serde(flatten)]
@@ -72,47 +77,51 @@ impl LibFuzzerFuzzTask {
         Ok(Self { config })
     }
 
-    fn workers(&self) -> u64 {
+    fn workers(&self) -> usize {
         match self.config.target_workers {
             0 => default_workers(),
             x => x,
         }
     }
 
-    pub async fn managed_run(&self) -> Result<()> {
-        self.check_libfuzzer().await?;
-        self.run().await
-    }
-
     pub async fn run(&self) -> Result<()> {
         self.init_directories().await?;
+        self.verify().await?;
 
         let hb_client = self.config.common.init_heartbeat().await?;
 
         // To be scheduled.
         let resync = self.continuous_sync_inputs();
-        let new_inputs = self.config.inputs.monitor_results(new_coverage);
-        let new_crashes = self.config.crashes.monitor_results(new_result);
+        let new_inputs = self.config.inputs.monitor_results(new_coverage, true);
+        let new_crashes = self.config.crashes.monitor_results(new_result, true);
 
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
-        let report_stats = report_runtime_stats(self.workers() as usize, stats_receiver, hb_client);
+        let report_stats = report_runtime_stats(stats_receiver, hb_client);
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
         futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
 
         Ok(())
     }
 
-    pub async fn check_libfuzzer(&self) -> Result<()> {
-        if self.config.check_fuzzer_help {
-            let fuzzer = LibFuzzer::new(
-                &self.config.target_exe,
-                &self.config.target_options,
-                &self.config.target_env,
-                &self.config.common.setup_dir,
-            );
-            fuzzer.check_help().await?;
+    pub async fn verify(&self) -> Result<()> {
+        let mut directories = vec![self.config.inputs.local_path.clone()];
+        if let Some(readonly_inputs) = &self.config.readonly_inputs {
+            let mut dirs = readonly_inputs
+                .iter()
+                .map(|x| x.local_path.clone())
+                .collect();
+            directories.append(&mut dirs);
         }
-        Ok(())
+
+        let fuzzer = LibFuzzer::new(
+            &self.config.target_exe,
+            &self.config.target_options,
+            &self.config.target_env,
+            &self.config.common.setup_dir,
+        );
+        fuzzer
+            .verify(self.config.check_fuzzer_help, Some(directories))
+            .await
     }
 
     pub async fn run_fuzzers(&self, stats_sender: Option<&StatsSender>) -> Result<()> {
@@ -130,7 +139,7 @@ impl LibFuzzerFuzzTask {
         let task_dir = self
             .config
             .inputs
-            .path
+            .local_path
             .parent()
             .ok_or_else(|| anyhow!("Invalid input path"))?;
         let temp_path = task_dir.join(".temp");
@@ -145,7 +154,7 @@ impl LibFuzzerFuzzTask {
     // or discovered fault. The monitor restarts the libFuzzer when it exits.
     pub async fn start_fuzzer_monitor(
         &self,
-        worker_id: u64,
+        worker_id: usize,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
         let local_input_dir = self.create_local_temp_dir().await?;
@@ -154,8 +163,13 @@ impl LibFuzzerFuzzTask {
                 .await?;
 
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
-            while let Some(Ok(entry)) = entries.next().await {
-                let destination_path = self.config.inputs.path.clone().join(entry.file_name());
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let destination_path = self
+                    .config
+                    .inputs
+                    .local_path
+                    .clone()
+                    .join(entry.file_name());
                 tokio::fs::rename(&entry.path(), &destination_path)
                     .await
                     .with_context(|| {
@@ -175,7 +189,7 @@ impl LibFuzzerFuzzTask {
     async fn run_fuzzer(
         &self,
         local_inputs: impl AsRef<std::path::Path>,
-        worker_id: u64,
+        worker_id: usize,
         stats_sender: Option<&StatsSender>,
     ) -> Result<()> {
         let crash_dir = self.create_local_temp_dir().await?;
@@ -183,9 +197,11 @@ impl LibFuzzerFuzzTask {
 
         debug!("starting fuzzer run, run_id = {}", run_id);
 
-        let mut inputs = vec![&self.config.inputs.path];
+        let mut inputs = vec![&self.config.inputs.local_path];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
-            readonly_inputs.iter().for_each(|d| inputs.push(&d.path));
+            readonly_inputs
+                .iter()
+                .for_each(|d| inputs.push(&d.local_path));
         }
 
         let fuzzer = LibFuzzer::new(
@@ -195,8 +211,13 @@ impl LibFuzzerFuzzTask {
             &self.config.common.setup_dir,
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
+        let running_id = running.id();
 
-        let sys_info = task::spawn(report_fuzzer_sys_info(worker_id, run_id, running.id()));
+        let sys_info = task::spawn(report_fuzzer_sys_info(
+            worker_id,
+            run_id,
+            running_id.unwrap_or_default(),
+        ));
 
         // Splitting borrow.
         let stderr = running
@@ -205,7 +226,8 @@ impl LibFuzzerFuzzTask {
             .ok_or_else(|| format_err!("stderr not captured"))?;
         let mut stderr = BufReader::new(stderr);
 
-        let mut libfuzzer_output = Vec::new();
+        let mut libfuzzer_output: ArrayDeque<[_; LOGS_BUFFER_SIZE], Wrapping> = ArrayDeque::new();
+
         loop {
             let mut buf = vec![];
             let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
@@ -218,10 +240,10 @@ impl LibFuzzerFuzzTask {
                     error!("could not parse fuzzing interation update: {}", err);
                 }
             }
-            libfuzzer_output.push(line);
+            libfuzzer_output.push_back(line);
         }
 
-        let (exit_status, _) = tokio::join!(running, sys_info);
+        let (exit_status, _) = tokio::join!(running.wait(), sys_info);
         let exit_status: ExitStatus = exit_status?.into();
 
         let files = list_files(crash_dir.path()).await?;
@@ -234,21 +256,28 @@ impl LibFuzzerFuzzTask {
                 bail!(
                     "libfuzzer exited without generating crashes.  status:{} stderr:{:?}",
                     serde_json::to_string(&exit_status)?,
-                    libfuzzer_output.join("\n")
+                    libfuzzer_output
+                        .into_iter()
+                        .collect::<Vec<String>>()
+                        .join("\n")
                 );
             } else {
                 warn!(
                     "libfuzzer exited without generating crashes, continuing.  status:{} stderr:{:?}",
                     serde_json::to_string(&exit_status)?,
-                    libfuzzer_output.join("\n")
+                    libfuzzer_output.into_iter().collect::<Vec<String>>().join("\n")
                 );
             }
         }
 
         for file in &files {
             if let Some(filename) = file.file_name() {
-                let dest = self.config.crashes.path.join(filename);
-                tokio::fs::rename(file, dest).await?;
+                let dest = self.config.crashes.local_path.join(filename);
+                if let Err(e) = tokio::fs::rename(file.clone(), dest.clone()).await {
+                    if !dest.exists() {
+                        bail!(e)
+                    }
+                }
             }
         }
 
@@ -256,11 +285,11 @@ impl LibFuzzerFuzzTask {
     }
 
     async fn init_directories(&self) -> Result<()> {
-        self.config.inputs.init().await?;
+        self.config.inputs.init_pull().await?;
         self.config.crashes.init().await?;
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
             for dir in readonly_inputs {
-                dir.init().await?;
+                dir.init_pull().await?;
             }
         }
         Ok(())
@@ -278,7 +307,7 @@ impl LibFuzzerFuzzTask {
 
 fn try_report_iter_update(
     stats_sender: &StatsSender,
-    worker_id: u64,
+    worker_id: usize,
     run_id: Uuid,
     line: &str,
 ) -> Result<()> {
@@ -294,12 +323,15 @@ fn try_report_iter_update(
     Ok(())
 }
 
-async fn report_fuzzer_sys_info(worker_id: u64, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
-    loop {
-        system::refresh()?;
+async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
+    // Allow for sampling CPU usage.
+    sleep(PROC_INFO_COLLECTION_DELAY).await;
 
-        // Allow for sampling CPU usage.
-        time::delay_for(PROC_INFO_COLLECTION_DELAY).await;
+    loop {
+        // process doesn't exist
+        if !system::refresh_process(fuzzer_pid)? {
+            break;
+        }
 
         if let Some(proc_info) = system::proc_info(fuzzer_pid)? {
             event!(process_stats;
@@ -317,26 +349,48 @@ async fn report_fuzzer_sys_info(worker_id: u64, run_id: Uuid, fuzzer_pid: u32) -
             break;
         }
 
-        time::delay_for(PROC_INFO_PERIOD).await;
+        sleep(PROC_INFO_PERIOD).await;
     }
 
     Ok(())
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct RuntimeStats {
-    worker_id: u64,
+    worker_id: usize,
     run_id: Uuid,
     count: u64,
     execs_sec: f64,
 }
 
-impl RuntimeStats {
-    pub fn report(&self) {
+#[derive(Debug, Default)]
+pub struct TotalStats {
+    worker_stats: HashMap<usize, RuntimeStats>,
+    count: u64,
+    execs_sec: f64,
+}
+
+impl TotalStats {
+    fn update(&mut self, worker_data: RuntimeStats) {
+        if let Some(current) = self.worker_stats.get(&worker_data.worker_id) {
+            // if it's the same run, only add the differences
+            if current.run_id == worker_data.run_id {
+                self.count += worker_data.count.saturating_sub(current.count);
+            } else {
+                self.count += worker_data.count;
+            }
+        } else {
+            self.count += worker_data.count;
+        }
+
+        self.worker_stats.insert(worker_data.worker_id, worker_data);
+
+        self.execs_sec = self.worker_stats.values().map(|x| x.execs_sec).sum();
+    }
+
+    fn report(&self) {
         event!(
             runtime_stats;
-            EventData::WorkerId = self.worker_id,
-            EventData::RunId = self.run_id,
             EventData::Count = self.count,
             EventData::ExecsSecond = self.execs_sec
         );
@@ -356,7 +410,7 @@ impl Timer {
     }
 
     async fn wait(&self) {
-        time::delay_for(self.interval).await;
+        sleep(self.interval).await;
     }
 }
 
@@ -368,7 +422,6 @@ impl Timer {
 // running worker runs, this can result in misleading gaps and binning artifacts. In effect, we
 // are approximating nearest-neighbor interpolation on the runtime stats time series.
 async fn report_runtime_stats(
-    workers: usize,
     mut stats_channel: mpsc::UnboundedReceiver<RuntimeStats>,
     heartbeat_client: impl HeartbeatSender,
 ) -> Result<()> {
@@ -376,27 +429,91 @@ async fn report_runtime_stats(
     //
     // When logging stats, the most recently reported runtime stats will be used for any
     // missing data. For time-triggered logging, it will be used for all workers.
-    let mut last_reported: Vec<Option<RuntimeStats>> =
-        std::iter::repeat(None).take(workers).collect();
+    let mut total = TotalStats::default();
+
+    // report all zeros to start
+    total.report();
 
     let timer = Timer::new(RUNTIME_STATS_PERIOD);
 
     loop {
         tokio::select! {
-            Some(stats) = stats_channel.next() => {
+            Some(stats) = stats_channel.recv() => {
                 heartbeat_client.alive();
-                stats.report();
-
-                let idx = stats.worker_id as usize;
-                last_reported[idx] = Some(stats);
+                total.update(stats);
+                total.report()
             }
             _ = timer.wait() => {
-                for stats in &last_reported {
-                    if let Some(stats) = stats {
-                        stats.report();
-                    }
-                }
+                total.report()
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{RuntimeStats, TotalStats};
+    use anyhow::Result;
+    use uuid::Uuid;
+
+    #[test]
+    fn test_total_stats() -> Result<()> {
+        let mut total = TotalStats::default();
+        let mut a = RuntimeStats {
+            worker_id: 0,
+            run_id: Uuid::new_v4(),
+            count: 0,
+            execs_sec: 0.0,
         };
+
+        total.update(a.clone());
+        assert!(total.execs_sec == 0.0);
+        assert!(total.count == 0);
+
+        // same run of existing worker, but counts & execs_sec increased.
+        a.count += 10;
+        a.execs_sec = 1.0;
+        total.update(a.clone());
+        assert!(total.execs_sec == 1.0);
+        assert!(total.count == 10);
+
+        // same run of existing worker.  counts and execs should stay the same.
+        total.update(a.clone());
+        assert!(total.count == 10);
+        assert!(total.execs_sec == 1.0);
+
+        // new run of existing worker. counts should go up, execs_sec should
+        // equal new worker value.
+        a.run_id = Uuid::new_v4();
+        a.execs_sec = 2.0;
+        total.update(a.clone());
+        assert!(total.count == 20);
+        assert!(total.execs_sec == 2.0);
+
+        // existing worker, now new data.  totals should stay the same.
+        total.update(a.clone());
+        assert!(total.count == 20);
+        assert!(total.execs_sec == 2.0);
+
+        // new worker, counts & execs_sec should go up by data from worker.
+        let mut b = RuntimeStats {
+            worker_id: 1,
+            run_id: Uuid::new_v4(),
+            count: 10,
+            execs_sec: 2.0,
+        };
+        total.update(b.clone());
+        assert!(total.count == 30);
+        assert!(total.execs_sec == 4.0);
+
+        // existing run for existing worker.
+        // count should go up by 1, execs_sec down by 1.
+        b.count += 1;
+        b.execs_sec -= 1.0;
+        total.update(b.clone());
+        assert!(total.count == 31);
+        assert!(total.execs_sec == 3.0);
+
+        Ok(())
     }
 }

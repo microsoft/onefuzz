@@ -18,13 +18,13 @@ from onefuzztypes.models import Error, Result
 from onefuzztypes.webhooks import Webhook as BASE_WEBHOOK
 from onefuzztypes.webhooks import WebhookMessage
 from onefuzztypes.webhooks import WebhookMessageLog as BASE_WEBHOOK_MESSAGE_LOG
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .__version__ import __version__
 from .azure.creds import get_instance_id, get_instance_name
 from .azure.queue import queue_object
 from .azure.storage import StorageType
-from .orm import ORMMixin
+from .orm import MappingIntStrAny, ORMMixin
 
 MAX_TRIES = 5
 EXPIRE_DAYS = 7
@@ -37,9 +37,14 @@ class WebhookMessageQueueObj(BaseModel):
 
 
 class WebhookMessageLog(BASE_WEBHOOK_MESSAGE_LOG, ORMMixin):
+    timestamp: Optional[datetime.datetime] = Field(alias="Timestamp")
+
     @classmethod
     def key_fields(cls) -> Tuple[str, Optional[str]]:
         return ("webhook_id", "event_id")
+
+    def export_exclude(self) -> Optional[MappingIntStrAny]:
+        return {"etag": ..., "timestamp": ...}
 
     @classmethod
     def search_expired(cls) -> List["WebhookMessageLog"]:

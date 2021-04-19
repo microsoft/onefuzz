@@ -45,15 +45,8 @@ pub struct Forward {
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct ConfigData {
     pub instance_id: Uuid,
-
-    // TODO: remove the alias once the service has been updated to match
-    #[serde(alias = "instrumentation_key")]
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
-
-    // TODO: remove the alias once the service has been updated to match
-    #[serde(alias = "telemetry_key")]
     pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
-
     pub region: String,
     pub url: Url,
     pub notification: Url,

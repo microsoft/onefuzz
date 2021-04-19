@@ -20,7 +20,7 @@ use std::{
 };
 use tokio::{
     runtime::Runtime,
-    time::{delay_for, Duration},
+    time::{sleep, Duration},
 };
 
 const MINIMUM_NOTIFY_INTERVAL: Duration = Duration::from_secs(120);
@@ -37,7 +37,7 @@ async fn run_loop(mut proxy_config: Config) -> Result<()> {
             last_notified = Instant::now();
         }
 
-        delay_for(POLL_INTERVAL).await;
+        sleep(POLL_INTERVAL).await;
     }
 }
 
@@ -85,6 +85,6 @@ fn main() -> Result<()> {
     let proxy = Config::from_file(config_path)?;
 
     info!("parsed initial config");
-    let mut rt = Runtime::new()?;
+    let rt = Runtime::new()?;
     rt.block_on(run(proxy))
 }
