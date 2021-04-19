@@ -46,7 +46,7 @@ pub struct Config {
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
     config.tools.init_pull().await?;
-    set_executable(&config.tools.path).await?;
+    set_executable(&config.tools.local_path).await?;
 
     config.unique_inputs.init().await?;
     let hb_client = config.common.init_heartbeat().await?;
@@ -94,7 +94,8 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
 }
 
 async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &Path) -> Result<()> {
-    let input_path = utils::download_input(input_url.clone(), &config.unique_inputs.path).await?;
+    let input_path =
+        utils::download_input(input_url.clone(), &config.unique_inputs.local_path).await?;
     info!("downloaded input to {}", input_path.display());
 
     info!("Merging corpus");
@@ -105,8 +106,8 @@ async fn process_message(config: Arc<Config>, input_url: &Url, tmp_dir: &Path) -
             queue_dir.push("queue");
             let _delete_output = tokio::fs::remove_dir_all(queue_dir).await;
             let synced_dir = SyncedDir {
-                path: tmp_dir.to_path_buf(),
-                url: config.unique_inputs.url.clone(),
+                local_path: tmp_dir.to_path_buf(),
+                remote_path: config.unique_inputs.remote_path.clone(),
             };
             synced_dir.sync_push().await?
         }
@@ -131,14 +132,14 @@ async fn try_delete_blob(input_url: Url) -> Result<()> {
 async fn merge(config: &Config, output_dir: impl AsRef<Path>) -> Result<()> {
     let expand = Expand::new()
         .input_marker(&config.supervisor_input_marker)
-        .input_corpus(&config.unique_inputs.path)
+        .input_corpus(&config.unique_inputs.local_path)
         .target_options(&config.target_options)
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .generated_inputs(output_dir)
         .target_exe(&config.target_exe)
         .setup_dir(&config.common.setup_dir)
-        .tools_dir(&config.tools.path)
+        .tools_dir(&config.tools.local_path)
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
         .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
