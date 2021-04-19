@@ -1,72 +1,97 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+use std::{
+    collections::{btree_map::Range, BTreeMap},
+    ops::RangeBounds,
+};
+
 use anyhow::Result;
 use win_util::process;
 use winapi::um::winnt::HANDLE;
 
 use crate::debugger::{BreakpointId, BreakpointType};
 
-pub struct RvaExtraInfo {
-    module: String,
-    rva: u64,
+pub(crate) enum ExtraInfo {
+    Rva(u64),
+    Function(String),
 }
 
-impl RvaExtraInfo {
-    pub fn module(&self) -> &str {
+pub(crate) struct UnresolvedBreakpoint {
+    id: BreakpointId,
+    kind: BreakpointType,
+    module: String,
+    extra_info: ExtraInfo,
+}
+
+impl UnresolvedBreakpoint {
+    pub(crate) fn from_symbol(
+        id: BreakpointId,
+        kind: BreakpointType,
+        module: impl ToString,
+        function: impl ToString,
+    ) -> Self {
+        UnresolvedBreakpoint {
+            id,
+            kind,
+            module: module.to_string(),
+            extra_info: ExtraInfo::Function(function.to_string()),
+        }
+    }
+
+    pub(crate) fn from_rva(
+        id: BreakpointId,
+        kind: BreakpointType,
+        module: impl ToString,
+        rva: u64,
+    ) -> Self {
+        UnresolvedBreakpoint {
+            id,
+            kind,
+            module: module.to_string(),
+            extra_info: ExtraInfo::Rva(rva),
+        }
+    }
+
+    pub(crate) fn id(&self) -> BreakpointId {
+        self.id
+    }
+
+    pub(crate) fn kind(&self) -> BreakpointType {
+        self.kind
+    }
+
+    pub(crate) fn module(&self) -> &str {
         &self.module
     }
 
-    pub fn rva(&self) -> u64 {
-        self.rva
+    pub(crate) fn extra_info(&self) -> &ExtraInfo {
+        &self.extra_info
     }
 }
 
-pub struct SymbolExtraInfo {
-    module: String,
-    function: String,
-}
+pub struct ResolvedBreakpoint {
+    id: BreakpointId,
+    kind: BreakpointType,
 
-impl SymbolExtraInfo {
-    pub fn module(&self) -> &str {
-        &self.module
-    }
-
-    pub fn function(&self) -> &str {
-        &self.function
-    }
-}
-
-pub struct AddressExtraInfo {
+    // We use a counter to handle multiple threads hitting the breakpoint at the same time.
+    // Each thread will increment the disable count and the breakpoint won't be restored
+    // until an equivalent number of threads enable the breakpoint.
+    disabled: u32,
+    hit_count: u64,
     address: u64,
     original_byte: Option<u8>,
 }
 
-impl AddressExtraInfo {
-    pub fn address(&self) -> u64 {
-        self.address
-    }
-}
-
-pub(crate) enum ExtraInfo {
-    Rva(RvaExtraInfo),
-    UnresolvedSymbol(SymbolExtraInfo),
-    Resolved(AddressExtraInfo),
-}
-
-pub struct Breakpoint {
-    id: BreakpointId,
-    kind: BreakpointType,
-    disabled: u32,
-    hit_count: u64,
-    extra_info: ExtraInfo,
-}
-
-impl Breakpoint {
-    fn new(id: BreakpointId, kind: BreakpointType, detail: ExtraInfo) -> Self {
-        Breakpoint {
+impl ResolvedBreakpoint {
+    pub fn new(id: BreakpointId, kind: BreakpointType, address: u64) -> Self {
+        ResolvedBreakpoint {
             id,
             kind,
             disabled: 0,
             hit_count: 0,
-            extra_info: detail,
+            address,
+            original_byte: None,
         }
     }
 
@@ -78,6 +103,7 @@ impl Breakpoint {
         self.kind
     }
 
+    #[allow(unused)]
     pub fn is_enabled(&self) -> bool {
         !self.is_disabled()
     }
@@ -86,16 +112,16 @@ impl Breakpoint {
         self.disabled > 0
     }
 
+    fn is_applied(&self) -> bool {
+        self.original_byte.is_some()
+    }
+
     pub(crate) fn disable(&mut self, process_handle: HANDLE) -> Result<()> {
         self.disabled = self.disabled.saturating_add(1);
 
         if self.is_disabled() {
-            if let ExtraInfo::Resolved(AddressExtraInfo {
-                address,
-                original_byte: Some(original_byte),
-            }) = &self.extra_info
-            {
-                write_instruction_byte(process_handle, *address, *original_byte)?;
+            if let Some(original_byte) = self.original_byte.take() {
+                write_instruction_byte(process_handle, self.address, original_byte)?;
             }
         }
 
@@ -105,15 +131,9 @@ impl Breakpoint {
     pub fn enable(&mut self, process_handle: HANDLE) -> Result<()> {
         self.disabled = self.disabled.saturating_sub(1);
 
-        if let ExtraInfo::Resolved(AddressExtraInfo {
-            address,
-            original_byte,
-        }) = &mut self.extra_info
-        {
-            let new_original_byte = process::read_memory(process_handle, *address as _)?;
-            *original_byte = Some(new_original_byte);
-            write_instruction_byte(process_handle, *address, 0xcc)?;
-        }
+        let new_original_byte = process::read_memory(process_handle, self.address as _)?;
+        self.original_byte = Some(new_original_byte);
+        write_instruction_byte(process_handle, self.address, 0xcc)?;
 
         Ok(())
     }
@@ -124,88 +144,20 @@ impl Breakpoint {
     }
 
     pub fn increment_hit_count(&mut self) {
-        self.hit_count += 1;
+        self.hit_count = self.hit_count.saturating_add(1);
     }
 
-    pub(crate) fn extra_info(&self) -> &ExtraInfo {
-        &self.extra_info
-    }
-
-    pub fn sym_extra_info(&self) -> Option<&SymbolExtraInfo> {
-        if let ExtraInfo::UnresolvedSymbol(sym) = &self.extra_info {
-            Some(sym)
-        } else {
-            None
-        }
-    }
-
-    pub fn rva_extra_info(&self) -> Option<&RvaExtraInfo> {
-        if let ExtraInfo::Rva(rva) = &self.extra_info {
-            Some(rva)
-        } else {
-            None
-        }
-    }
-
-    pub fn address_extra_info(&self) -> Option<&AddressExtraInfo> {
-        if let ExtraInfo::Resolved(address) = &self.extra_info {
-            Some(address)
-        } else {
-            None
-        }
-    }
-
-    fn get_original_byte(&self) -> Option<u8> {
-        if let ExtraInfo::Resolved(address) = &self.extra_info {
-            address.original_byte
-        } else {
-            None
-        }
+    pub(crate) fn get_original_byte(&self) -> Option<u8> {
+        self.original_byte
     }
 
     fn set_original_byte(&mut self, byte: u8) {
-        if let ExtraInfo::Resolved(address) = &mut self.extra_info {
-            address.original_byte = Some(byte);
-        }
-    }
-
-    pub fn from_symbol(
-        id: BreakpointId,
-        kind: BreakpointType,
-        module: impl ToString,
-        function: impl ToString,
-    ) -> Self {
-        let detail = ExtraInfo::UnresolvedSymbol(SymbolExtraInfo {
-            module: module.to_string(),
-            function: function.to_string(),
-        });
-        Breakpoint::new(id, kind, detail)
-    }
-
-    pub fn from_rva(
-        id: BreakpointId,
-        kind: BreakpointType,
-        module: impl ToString,
-        rva: u64,
-    ) -> Self {
-        let detail = ExtraInfo::Rva(RvaExtraInfo {
-            module: module.to_string(),
-            rva,
-        });
-        Breakpoint::new(id, kind, detail)
-    }
-
-    pub fn from_address(id: BreakpointId, kind: BreakpointType, address: u64) -> Self {
-        let detail = ExtraInfo::Resolved(AddressExtraInfo {
-            address,
-            original_byte: None,
-        });
-        Breakpoint::new(id, kind, detail)
+        self.original_byte = Some(byte);
     }
 }
 
 pub(crate) struct BreakpointCollection {
-    breakpoints: fnv::FnvHashMap<u64, Breakpoint>,
+    breakpoints: BTreeMap<u64, ResolvedBreakpoint>,
     min_breakpoint_addr: u64,
     max_breakpoint_addr: u64,
 }
@@ -213,13 +165,17 @@ pub(crate) struct BreakpointCollection {
 impl BreakpointCollection {
     pub fn new() -> Self {
         BreakpointCollection {
-            breakpoints: fnv::FnvHashMap::default(),
+            breakpoints: BTreeMap::default(),
             min_breakpoint_addr: u64::MAX,
             max_breakpoint_addr: u64::MIN,
         }
     }
 
-    pub fn insert(&mut self, address: u64, breakpoint: Breakpoint) -> Option<Breakpoint> {
+    pub fn insert(
+        &mut self,
+        address: u64,
+        breakpoint: ResolvedBreakpoint,
+    ) -> Option<ResolvedBreakpoint> {
         self.min_breakpoint_addr = std::cmp::min(self.min_breakpoint_addr, address);
         self.max_breakpoint_addr = std::cmp::max(self.max_breakpoint_addr, address);
         self.breakpoints.insert(address, breakpoint)
@@ -229,10 +185,18 @@ impl BreakpointCollection {
         self.breakpoints.contains_key(&address)
     }
 
-    pub fn get_mut(&mut self, address: u64) -> Option<&mut Breakpoint> {
+    pub fn get_mut(&mut self, address: u64) -> Option<&mut ResolvedBreakpoint> {
         self.breakpoints.get_mut(&address)
     }
 
+    pub fn breakpoints_for_range(
+        &self,
+        range: impl RangeBounds<u64>,
+    ) -> Range<u64, ResolvedBreakpoint> {
+        self.breakpoints.range(range)
+    }
+
+    #[allow(unused)]
     pub fn remove_all(&mut self, process_handle: HANDLE) -> Result<()> {
         for (address, breakpoint) in self.breakpoints.iter() {
             if let Some(original_byte) = breakpoint.get_original_byte() {
@@ -243,6 +207,7 @@ impl BreakpointCollection {
         Ok(())
     }
 
+    #[allow(unused)]
     pub fn bulk_remove_all(&mut self, process_handle: HANDLE) -> Result<()> {
         if self.breakpoints.is_empty() {
             return Ok(());
@@ -264,7 +229,7 @@ impl BreakpointCollection {
         // No module, so we can't use the trick of reading and writing
         // a single large range of memory.
         for (address, breakpoint) in self.breakpoints.iter_mut() {
-            if breakpoint.is_enabled() {
+            if !breakpoint.is_applied() {
                 let original_byte = process::read_memory(process_handle, *address as _)?;
                 breakpoint.set_original_byte(original_byte);
                 write_instruction_byte(process_handle, *address, 0xcc)?;
@@ -282,7 +247,7 @@ impl BreakpointCollection {
         let mut buffer = self.bulk_read_process_memory(process_handle)?;
 
         for (address, breakpoint) in self.breakpoints.iter_mut() {
-            if breakpoint.is_enabled() {
+            if !breakpoint.is_applied() {
                 let idx = (*address - self.min_breakpoint_addr) as usize;
                 breakpoint.set_original_byte(buffer[idx]);
                 buffer[idx] = 0xcc;
@@ -302,7 +267,6 @@ impl BreakpointCollection {
             buffer.set_len(self.bulk_region_size());
         }
         process::read_memory_array(process_handle, self.min_breakpoint_addr as _, &mut buffer)?;
-
         Ok(buffer)
     }
 

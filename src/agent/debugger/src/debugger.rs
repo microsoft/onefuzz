@@ -223,7 +223,7 @@ impl Debugger {
         module: &Path,
         rva: u64,
         kind: BreakpointType,
-    ) -> BreakpointId {
+    ) -> Result<BreakpointId> {
         let id = self.next_breakpoint_id();
         let module = format!("{}", module.display());
         self.target.new_rva_breakpoint(id, module, rva, kind)
@@ -430,7 +430,7 @@ impl Debugger {
                 Ok(DBG_CONTINUE)
             }
             Some(DebuggerNotification::SingleStep { thread_id }) => {
-                self.target.complete_single_step(thread_id);
+                self.target.complete_single_step(thread_id)?;
                 Ok(DBG_CONTINUE)
             }
             None => {
@@ -486,7 +486,7 @@ impl Debugger {
         self.target.read_flags_register()
     }
 
-    pub fn read_memory(&self, remote_address: LPCVOID, buf: &mut [impl Copy]) -> Result<()> {
+    pub fn read_memory(&mut self, remote_address: LPCVOID, buf: &mut [impl Copy]) -> Result<()> {
         self.target.read_memory(remote_address, buf)
     }
 

@@ -1,5 +1,10 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 use std::{
+    collections::btree_map::Range,
     fs,
+    ops::RangeBounds,
     path::{Path, PathBuf},
 };
 
@@ -12,7 +17,7 @@ use winapi::um::{
 };
 
 use crate::{
-    breakpoint::{Breakpoint, BreakpointCollection},
+    breakpoint::{BreakpointCollection, ResolvedBreakpoint},
     dbghelp,
     debugger::{BreakpointId, BreakpointType},
 };
@@ -95,6 +100,7 @@ impl Module {
         self.machine
     }
 
+    #[allow(unused)]
     pub fn image_size(&self) -> u32 {
         self.image_size
     }
@@ -104,11 +110,20 @@ impl Module {
         self.path.file_stem().unwrap().as_ref()
     }
 
-    pub fn new_breakpoint(&mut self, id: BreakpointId, kind: BreakpointType, address: u64) {
-        let breakpoint = Breakpoint::from_address(id, kind, address);
+    pub fn new_breakpoint(
+        &mut self,
+        id: BreakpointId,
+        kind: BreakpointType,
+        address: u64,
+        process_handle: HANDLE,
+    ) -> Result<()> {
+        let mut breakpoint = ResolvedBreakpoint::new(id, kind, address);
+        breakpoint.enable(process_handle)?;
         self.breakpoints.insert(address, breakpoint);
+        Ok(())
     }
 
+    #[allow(unused)]
     pub fn remove_breakpoints(&mut self, process_handle: HANDLE) -> Result<()> {
         if self.base_address == UNKNOWN_MODULE_BASE_ADDRESS {
             self.breakpoints.remove_all(process_handle)
@@ -129,8 +144,15 @@ impl Module {
         self.breakpoints.contains_key(address)
     }
 
-    pub fn get_breakpoint_mut(&mut self, address: u64) -> Option<&mut Breakpoint> {
+    pub fn get_breakpoint_mut(&mut self, address: u64) -> Option<&mut ResolvedBreakpoint> {
         self.breakpoints.get_mut(address)
+    }
+
+    pub fn breakpoints_for_range(
+        &self,
+        range: impl RangeBounds<u64>,
+    ) -> Range<u64, ResolvedBreakpoint> {
+        self.breakpoints.breakpoints_for_range(range)
     }
 }
 

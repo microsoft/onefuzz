@@ -253,7 +253,7 @@ impl Breakpoints {
 
         for offset in offsets {
             // Register the breakpoint in the running target address space.
-            let id = dbg.new_rva_breakpoint(module.name(), offset, BreakpointType::OneTime);
+            let id = dbg.new_rva_breakpoint(module.name(), offset, BreakpointType::OneTime)?;
 
             // Associate the opaque `BreakpointId` with the module and offset.
             self.registered.insert(id, (module_index, offset));

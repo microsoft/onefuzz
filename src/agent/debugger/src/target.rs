@@ -3,7 +3,7 @@
 
 #![allow(clippy::single_match)]
 
-use std::{collections::hash_map, num::NonZeroU64, path::Path};
+use std::{num::NonZeroU64, path::Path};
 
 use anyhow::Result;
 use log::{debug, error, trace};
@@ -19,7 +19,7 @@ use winapi::{
 };
 
 use crate::{
-    breakpoint::{self, Breakpoint},
+    breakpoint::{self, ResolvedBreakpoint, UnresolvedBreakpoint},
     dbghelp::{self, FrameContext},
     debugger::{BreakpointId, BreakpointType, ModuleLoadInfo},
     module::{self, Machine, Module},
@@ -32,6 +32,7 @@ pub(crate) enum StepState {
 }
 
 struct ThreadInfo {
+    #[allow(unused)]
     id: u32,
     handle: HANDLE,
     suspended: bool,
@@ -58,7 +59,6 @@ impl ThreadInfo {
             Err(last_os_error())
         } else {
             self.suspended = false;
-            trace!("Resume {:x} - suspend_count: {}", self.id, suspend_count);
             Ok(())
         }
     }
@@ -78,7 +78,6 @@ impl ThreadInfo {
             Err(last_os_error())
         } else {
             self.suspended = true;
-            trace!("Suspend {:x} - suspend_count: {}", self.id, suspend_count);
             Ok(())
         }
     }
@@ -116,8 +115,8 @@ pub struct Target {
     // Key is base address (which also happens to be the HANDLE).
     modules: fnv::FnvHashMap<u64, Module>,
 
-    // Breakpoints that are either unresolved - so just an rva or symbol.
-    unresolved_breakpoints: Vec<Breakpoint>,
+    // Breakpoints that are not yet resolved to a virtual address, so either an RVA or symbol.
+    unresolved_breakpoints: Vec<UnresolvedBreakpoint>,
 
     // Map of thread to stepping state (e.g. breakpoint address to restore breakpoints)
     single_step: fnv::FnvHashMap<DWORD, StepState>,
@@ -203,10 +202,6 @@ impl Target {
         self.exited
     }
 
-    pub fn modules(&self) -> hash_map::Iter<u64, Module> {
-        self.modules.iter()
-    }
-
     pub fn initial_bp(&mut self) -> Result<()> {
         self.saw_initial_bp = true;
 
@@ -228,66 +223,70 @@ impl Target {
     fn try_resolve_all_unresolved_breakpoints(&mut self) {
         // borrowck - take ownership from self so we call `try_resolve_unresolved_breakpoint`.
         let mut unresolved_breakpoints = std::mem::take(&mut self.unresolved_breakpoints);
-        unresolved_breakpoints.retain(|bp| !self.try_resolve_unresolved_breakpoint(bp));
+        unresolved_breakpoints.retain(|bp| match self.try_resolve_unresolved_breakpoint(bp) {
+            Ok(resolved) => !resolved,
+            Err(err) => {
+                debug!("Error resolving breakpoint: {:?}", err);
+                true
+            }
+        });
         assert!(self.unresolved_breakpoints.is_empty());
         self.unresolved_breakpoints = unresolved_breakpoints;
     }
 
     /// Try to resolve a single unresolved breakpoint, returning true if the breakpoint
     /// was successfully resolved.
-    fn try_resolve_unresolved_breakpoint(&mut self, breakpoint: &Breakpoint) -> bool {
+    fn try_resolve_unresolved_breakpoint(
+        &mut self,
+        breakpoint: &UnresolvedBreakpoint,
+    ) -> Result<bool> {
         if !self.saw_initial_bp {
-            return false;
+            return Ok(false);
         }
 
+        let process_handle = self.process_handle; // borrowck
         let mut resolved = false;
         match breakpoint.extra_info() {
-            breakpoint::ExtraInfo::Rva(rva_info) => {
-                if let Some(module) = self.module_from_name_mut(rva_info.module()) {
-                    let address = module.base_address() + rva_info.rva();
-                    module.new_breakpoint(breakpoint.id(), breakpoint.kind(), address);
+            breakpoint::ExtraInfo::Rva(rva) => {
+                if let Some(module) = self.module_from_name_mut(breakpoint.module()) {
+                    let address = module.base_address() + *rva;
+                    module.new_breakpoint(
+                        breakpoint.id(),
+                        breakpoint.kind(),
+                        address,
+                        process_handle,
+                    )?;
                     resolved = true;
                 }
             }
-            breakpoint::ExtraInfo::UnresolvedSymbol(sym_info) => {
-                let process_handle = self.process_handle; // borrowck
-                if let Some(module) = self.module_from_name_mut(sym_info.module()) {
+            breakpoint::ExtraInfo::Function(func) => {
+                if let Some(module) = self.module_from_name_mut(breakpoint.module()) {
                     match dbghelp::lock() {
                         Ok(dbghelp) => {
-                            match dbghelp.sym_from_name(
-                                process_handle,
-                                module.name(),
-                                sym_info.function(),
-                            ) {
+                            match dbghelp.sym_from_name(process_handle, module.name(), func) {
                                 Ok(sym) => {
                                     module.new_breakpoint(
                                         breakpoint.id(),
                                         breakpoint.kind(),
                                         sym.address(),
-                                    );
+                                        process_handle,
+                                    )?;
                                     resolved = true;
                                 }
                                 Err(_) => {
-                                    debug!(
-                                        "unknown symbol {}!{}",
-                                        module.name().display(),
-                                        sym_info.function()
-                                    );
+                                    debug!("unknown symbol {}!{}", module.name().display(), func);
                                 }
                             }
                         }
                         Err(e) => {
-                            error!("Can't set symbolic breakpoints: {}", e);
+                            error!("Can't set symbolic breakpoints: {:?}", e);
                         }
                     }
                 }
             }
-            breakpoint::ExtraInfo::Resolved(_) => unreachable!(
-                "address breakpoints should never be added to the unresolved breakpoint list"
-            ),
         }
 
-        resolved
+        Ok(resolved)
     }
 
     pub fn new_symbolic_breakpoint(
@@ -298,8 +297,8 @@ impl Target {
         kind: BreakpointType,
     ) -> Result<BreakpointId> {
         self.maybe_sym_initialize()?;
-        let bp = Breakpoint::from_symbol(id, kind, module.as_ref(), func.as_ref());
-        if !self.try_resolve_unresolved_breakpoint(&bp) {
+        let bp = UnresolvedBreakpoint::from_symbol(id, kind, module.as_ref(), func.as_ref());
+        if !self.try_resolve_unresolved_breakpoint(&bp)? {
             self.unresolved_breakpoints.push(bp);
         }
         Ok(id)
@@ -311,12 +310,12 @@ impl Target {
         module: impl AsRef<str>,
         rva: u64,
         kind: BreakpointType,
-    ) -> BreakpointId {
-        let bp = Breakpoint::from_rva(id, kind, module.as_ref(), rva);
-        if !self.try_resolve_unresolved_breakpoint(&bp) {
+    ) -> Result<BreakpointId> {
+        let bp = UnresolvedBreakpoint::from_rva(id, kind, module.as_ref(), rva);
+        if !self.try_resolve_unresolved_breakpoint(&bp)? {
             self.unresolved_breakpoints.push(bp);
         }
-        id
+        Ok(id)
     }
 
     pub fn new_absolute_breakpoint(
@@ -325,8 +324,9 @@ impl Target {
         address: u64,
         kind: BreakpointType,
     ) -> Result<BreakpointId> {
+        let process_handle = self.process_handle; // borrowck
         self.module_from_address(address)
-            .new_breakpoint(id, kind, address);
+            .new_breakpoint(id, kind, address, process_handle)?;
         Ok(id)
     }
 
@@ -352,7 +352,7 @@ impl Target {
             .find(|module| module.name() == name)
     }
 
-    fn get_breakpoint_for_address(&mut self, address: u64) -> Option<&mut Breakpoint> {
+    fn get_breakpoint_for_address(&mut self, address: u64) -> Option<&mut ResolvedBreakpoint> {
         self.module_from_address(address)
             .get_breakpoint_mut(address)
     }
@@ -366,8 +366,20 @@ impl Target {
         self.single_step.contains_key(&thread_id)
     }
 
-    pub(crate) fn complete_single_step(&mut self, thread_id: DWORD) {
+    pub(crate) fn complete_single_step(&mut self, thread_id: DWORD) -> Result<()> {
+        // We now re-enable the breakpoint so that the next time we step, the breakpoint
+        // will be restored.
+        if let Some(restore_breakpoint_pc) = self.restore_breakpoint_pc.take() {
+            let process_handle = self.process_handle; // borrowck
+            if let Some(breakpoint) = self.get_breakpoint_for_address(restore_breakpoint_pc) {
+                trace!("Restoring breakpoint at 0x{:x}", restore_breakpoint_pc);
+                breakpoint.enable(process_handle)?;
+            }
+        }
+
         self.single_step.remove(&thread_id);
+
+        Ok(())
     }
 
     pub fn maybe_sym_initialize(&mut self) -> Result<()> {
@@ -390,10 +402,10 @@ impl Target {
     fn sym_initialize(&mut self) -> Result<()> {
         let dbghelp = dbghelp::lock()?;
         if let Err(e) = dbghelp.sym_initialize(self.process_handle) {
-            error!("Error in SymInitializeW: {}", e);
+            error!("Error in SymInitializeW: {:?}", e);
 
             if let Err(e) = dbghelp.sym_cleanup(self.process_handle) {
-                error!("Error in SymCleanup: {}", e);
+                error!("Error in SymCleanup: {:?}", e);
             }
 
             return Err(e);
@@ -402,7 +414,7 @@ impl Target {
         for (_, module) in self.modules.iter_mut() {
             if let Err(e) = module.sym_load_module(self.process_handle) {
                 error!(
-                    "Error loading symbols for module {}: {}",
+                    "Error loading symbols for module {}: {:?}",
                     module.path().display(),
                     e
                 );
@@ -434,7 +446,7 @@ impl Target {
 
         if self.sym_initialize_state == SymInitalizeState::Initialized {
             if let Err(e) = module.sym_load_module(self.process_handle) {
-                error!("Error loading symbols: {}", e);
+                error!("Error loading symbols: {:?}", e);
             }
         }
 
@@ -469,22 +481,8 @@ impl Target {
         // To avoid these possible races, when resuming, we only let a single thread go **if**
         // we're single stepping any threads.
 
-        // We now re-enable the breakpoint so that the next time we step, the breakpoint
-        // will be restored. Note that we use a counter in enable/disable to cover the
-        // case of 2 threads hitting the breakpoint at the same time - 2 threads will then
-        // increment the disable count twice, requiring 2 enable calls before we actually
-        // restore the breakpoint.
-        if let Some(restore_breakpoint_pc) = self.restore_breakpoint_pc {
-            let process_handle = self.process_handle; // borrowck
-            if let Some(breakpoint) = self.get_breakpoint_for_address(restore_breakpoint_pc) {
-                breakpoint.enable(process_handle)?;
-            }
-        }
-
         if self.single_step.is_empty() {
             // Resume all threads if we aren't waiting for any threads to single step.
-            trace!("Resuming all threads");
-
             for thread_info in self.thread_info.values_mut() {
                 thread_info.resume_thread()?;
             }
@@ -567,8 +565,26 @@ impl Target {
         Ok(current_context.get_flags())
     }
 
-    pub fn read_memory(&self, remote_address: LPCVOID, buf: &mut [impl Copy]) -> Result<()> {
-        process::read_memory_array(self.process_handle, remote_address, buf)
+    pub fn read_memory(&mut self, remote_address: LPCVOID, buf: &mut [impl Copy]) -> Result<()> {
+        process::read_memory_array(self.process_handle, remote_address, buf)?;
+
+        // We don't remove breakpoints when processing an event, so it's possible that the
+        // memory we read contains **our** breakpoints instead of the original code.
+        let remote_address = remote_address as u64;
+        let module = self.module_from_address(remote_address);
+        let range = remote_address..=(remote_address + buf.len() as u64);
+
+        let u8_buf = unsafe {
+            std::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u8, std::mem::size_of_val(buf))
+        };
+        for (address, breakpoint) in module.breakpoints_for_range(range) {
+            if let Some(original_byte) = breakpoint.get_original_byte() {
+                let idx = *address - remote_address;
+                u8_buf[idx as usize] = original_byte;
+            }
+        }
+
+        Ok(())
     }
 
     /// Handle a breakpoint that we set (as opposed to a breakpoint in user code, e.g.
