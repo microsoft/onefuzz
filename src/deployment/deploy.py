@@ -887,9 +887,12 @@ def arg_file(arg: str) -> str:
 
 
 def main() -> None:
-    states = [
+    rbac_only_states = [
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
+    ]
+
+    full_deployment_states = rbac_only_states + [
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
         ("apply_migrations", Client.apply_migrations),
@@ -947,8 +950,8 @@ def main() -> None:
     parser.add_argument("--client_secret")
     parser.add_argument(
         "--start_at",
-        default=states[0][0],
-        choices=[x[0] for x in states],
+        default=full_deployment_states[0][0],
+        choices=[x[0] for x in full_deployment_states],
         help=(
             "Debug deployments by starting at a specific state.  "
             "NOT FOR PRODUCTION USE.  (default: %(default)s)"
@@ -993,6 +996,12 @@ def main() -> None:
         "--subscription_id",
         type=str,
     )
+    parser.add_argument(
+        "--rbac_only",
+        action="store_true",
+        help="deploy only the azure Active directory only",
+    )
+
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1028,6 +1037,11 @@ def main() -> None:
     logging.basicConfig(level=level)
 
     logging.getLogger("deploy").setLevel(logging.INFO)
+
+    if args.rbac_only:
+        states = rbac_only_states
+    else:
+        states = full_deployment_states
 
     if args.start_at != states[0][0]:
         logger.warning(
