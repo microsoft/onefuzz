@@ -14,7 +14,10 @@ use std::{
 };
 
 use anyhow::Result;
-use coverage::{block::windows::Recorder as BlockCoverageRecorder, cache::ModuleCache};
+use coverage::{
+    block::{windows::Recorder as BlockCoverageRecorder, CommandBlockCov},
+    cache::ModuleCache,
+};
 use debugger::{BreakpointId, DebugEventHandler, Debugger, ModuleLoadInfo};
 use log::{debug, error, trace};
 use win_util::{
@@ -45,6 +48,7 @@ pub struct DebuggerResult {
     pub stdout: String,
     pub stderr: String,
     pub debugger_output: String,
+    pub coverage: Option<CommandBlockCov>,
 }
 
 impl DebuggerResult {
@@ -54,6 +58,7 @@ impl DebuggerResult {
         stdout: String,
         stderr: String,
         debugger_output: String,
+        coverage: Option<CommandBlockCov>,
     ) -> Self {
         DebuggerResult {
             exceptions,
@@ -61,6 +66,7 @@ impl DebuggerResult {
             stdout,
             stderr,
             debugger_output,
+            coverage,
         }
     }
 
@@ -359,6 +365,7 @@ pub fn test_process<'a>(
         String::from_utf8_lossy(&output.stdout).to_string(),
         String::from_utf8_lossy(&output.stderr).to_string(),
         event_handler.debugger_output,
+        event_handler.coverage.map(|r| r.into_coverage()),
     ))
 }
 
