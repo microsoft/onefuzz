@@ -42,7 +42,7 @@ impl CommandBlockCov {
         let entry = self.modules.entry(path.clone());
 
         if let btree_map::Entry::Vacant(_) = entry {
-            log::warn!(
+            log::debug!(
                 "initializing missing module when incrementing coverage at {}+{:x}",
                 path,
                 offset
