@@ -184,10 +184,10 @@ impl<'c> Recorder<'c> {
                 log::debug!("set {} breakpoints for module {}", info.blocks.len(), path);
             }
             Ok(None) => {
-                log::warn!("could not find module: {}", path);
+                log::debug!("could not find module: {}", path);
             }
             Err(err) => {
-                log::warn!("could not disassemble module {}: {:?}", path, err);
+                log::debug!("could not disassemble module {}: {:?}", path, err);
             }
         }
 
