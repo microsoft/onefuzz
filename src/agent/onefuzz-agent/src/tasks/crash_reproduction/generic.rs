@@ -56,9 +56,6 @@ pub async fn run_tool(config: &Config) -> Result<()> {
         .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
             tester.microsoft_telemetry_key(&key)
         })
-        .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
-            tester.microsoft_telemetry_key(&key)
-        })
         .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
             tester.instance_telemetry_key(&key)
         })
@@ -77,31 +74,32 @@ pub async fn run_tool(config: &Config) -> Result<()> {
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
 
-    let mut cmd = Command::new(&analyzer_path);
-    cmd.kill_on_drop(true)
-        .env_remove("RUST_LOG")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+    loop {
+        let mut cmd = Command::new(&analyzer_path);
+        cmd.kill_on_drop(true)
+            .env_remove("RUST_LOG")
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
 
-    for arg in expand.evaluate(&config.analyzer_options)? {
-        cmd.arg(arg);
+        for arg in expand.evaluate(&config.analyzer_options)? {
+            cmd.arg(arg);
+        }
+
+        for (k, v) in &config.analyzer_env {
+            cmd.env(k, expand.evaluate_value(v)?);
+        }
+
+        info!("analyzing input with {:?}", cmd);
+        let output = cmd
+            .spawn()
+            .with_context(|| format!("analyzer failed to start: {}", analyzer_path))?;
+
+        // while we monitor the runtime of the debugger, we don't fail the task if
+        // the debugger exits non-zero. This frequently happens during normal use of
+        // debuggers.
+        monitor_process(output, "crash-repro".to_string(), true, None)
+            .await
+            .ok();
     }
-
-    for (k, v) in &config.analyzer_env {
-        cmd.env(k, expand.evaluate_value(v)?);
-    }
-
-    info!("analyzing input with {:?}", cmd);
-    let output = cmd
-        .spawn()
-        .with_context(|| format!("analyzer failed to start: {}", analyzer_path))?;
-
-    // while we monitor the runtime of the debugger, we don't fail the task if
-    // the debugger exits non-zero. This frequently happens during normal use of
-    // debuggers.
-    monitor_process(output, "analyzer".to_string(), true, None)
-        .await
-        .ok();
-    Ok(())
 }
