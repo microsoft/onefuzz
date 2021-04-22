@@ -31,7 +31,7 @@ pub async fn run(config: Config) -> Result<()> {
     config.crashes.init_pull().await?;
     if let Some(tools) = &config.tools {
         tools.init_pull().await?;
-        set_executable(&tools.path).await?;
+        set_executable(&tools.local_path).await?;
     }
 
     loop {
@@ -47,7 +47,9 @@ pub async fn run_tool(config: &Config) -> Result<()> {
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)
-        .set_optional_ref(&config.tools, |tester, key| tester.tools_dir(&key.path))
+        .set_optional_ref(&config.tools, |tester, key| {
+            tester.tools_dir(&key.local_path)
+        })
         .setup_dir(&config.common.setup_dir)
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
@@ -60,12 +62,18 @@ pub async fn run_tool(config: &Config) -> Result<()> {
         .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
             tester.instance_telemetry_key(&key)
         })
-        .set_optional_ref(&config.crashes.url.account(), |tester, account| {
-            tester.crashes_account(account)
-        })
-        .set_optional_ref(&config.crashes.url.container(), |tester, container| {
-            tester.crashes_container(container)
-        });
+        .set_optional_ref(
+            &config.crashes.remote_path.clone().and_then(|u| u.account()),
+            |tester, account| tester.crashes_account(account),
+        )
+        .set_optional_ref(
+            &config
+                .crashes
+                .remote_path
+                .clone()
+                .and_then(|u| u.container()),
+            |tester, container| tester.crashes_container(container),
+        );
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
 
