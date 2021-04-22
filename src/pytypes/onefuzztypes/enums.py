@@ -79,6 +79,7 @@ class TaskFeature(Enum):
     check_fuzzer_help = "check_fuzzer_help"
     expect_crash_on_failure = "expect_crash_on_failure"
     report_list = "report_list"
+    minimized_stack_depth = "minimized_stack_depth"
 
 
 # Permissions for an Azure Blob Storage Container.

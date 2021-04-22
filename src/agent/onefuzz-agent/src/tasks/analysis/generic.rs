@@ -5,11 +5,10 @@ use crate::tasks::{
     config::CommonConfig, heartbeat::HeartbeatSender, report::crash_report::monitor_reports,
 };
 use anyhow::{Context, Result};
-use futures::stream::StreamExt;
-use onefuzz::{az_copy, blob::url::BlobUrl, fs::SyncPath};
+use onefuzz::{az_copy, blob::url::BlobUrl};
 use onefuzz::{
     expand::Expand,
-    fs::{copy, set_executable, OwnedDir},
+    fs::{set_executable, OwnedDir},
     jitter::delay_with_jitter,
     process::monitor_process,
     syncdir::SyncedDir,
@@ -22,7 +21,7 @@ use std::{
     str,
 };
 use storage_queue::{QueueClient, EMPTY_QUEUE_DELAY};
-use tempfile::tempdir;
+use tempfile::tempdir_in;
 use tokio::{fs, process::Command};
 
 #[derive(Debug, Deserialize)]
@@ -48,8 +47,16 @@ pub struct Config {
 }
 
 pub async fn run(config: Config) -> Result<()> {
-    let tmp_dir = PathBuf::from(format!("./{}/tmp", config.common.task_id));
-    let tmp = OwnedDir::new(tmp_dir);
+    let task_dir = config
+        .analysis
+        .local_path
+        .parent()
+        .ok_or_else(|| anyhow!("Invalid input path"))?;
+    let temp_path = task_dir.join(".temp");
+    tokio::fs::create_dir_all(&temp_path).await?;
+    let tmp_dir = tempdir_in(&temp_path)?;
+    let tmp = OwnedDir::new(tmp_dir.path());
+
     tmp.reset().await?;
 
     config.analysis.init().await?;
@@ -60,7 +67,7 @@ pub async fn run(config: Config) -> Result<()> {
     // report SyncedDir. The idea is that the option for where to write reports
     // is only available for target option / env expansion if one of the reports
     // SyncedDir is provided.
-    let reports_dir = tempdir()?;
+    let reports_dir = tempdir_in(temp_path)?;
     let (reports_path, reports_monitor_future) =
         if config.unique_reports.is_some() || config.reports.is_some() || config.no_repro.is_some()
         {
@@ -87,7 +94,7 @@ pub async fn run(config: Config) -> Result<()> {
             (None, None)
         };
 
-    set_executable(&config.tools.path).await?;
+    set_executable(&config.tools.local_path).await?;
     run_existing(&config, &reports_path).await?;
     let poller = poll_inputs(&config, tmp, &reports_path);
 
@@ -107,10 +114,9 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
     if let Some(crashes) = &config.crashes {
         crashes.init_pull().await?;
         let mut count: u64 = 0;
-        let mut read_dir = fs::read_dir(&crashes.path).await?;
-        while let Some(file) = read_dir.next().await {
+        let mut read_dir = fs::read_dir(&crashes.local_path).await?;
+        while let Some(file) = read_dir.next_entry().await? {
             debug!("Processing file {:?}", file);
-            let file = file?;
             run_tool(file.path(), &config, &reports_dir).await?;
             count += 1;
         }
@@ -122,9 +128,9 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
 
 async fn already_checked(config: &Config, input: &BlobUrl) -> Result<bool> {
     let result = if let Some(crashes) = &config.crashes {
-        crashes.url.account() == input.account()
-            && crashes.url.container() == input.container()
-            && crashes.path.join(input.name()).exists()
+        crashes.remote_path.clone().and_then(|u| u.account()) == input.account()
+            && crashes.remote_path.clone().and_then(|u| u.container()) == input.container()
+            && crashes.local_path.join(input.name()).exists()
     } else {
         false
     };
@@ -142,16 +148,9 @@ async fn poll_inputs(
         loop {
             heartbeat.alive();
             if let Some(message) = input_queue.pop().await? {
-                let input_url = message.parse(|data| BlobUrl::parse(str::from_utf8(data)?));
-
-                let input_url = match input_url {
-                    Ok(url) => url,
-                    Err(err) => {
-                        error!("could not parse input URL from queue message: {}", err);
-                        return Ok(());
-                    }
-                };
-
+                let input_url = message
+                    .parse(|data| BlobUrl::parse(str::from_utf8(data)?))
+                    .with_context(|| format!("unable to parse URL from queue: {:?}", message))?;
                 if !already_checked(&config, &input_url).await? {
                     let destination_path = _copy(input_url, &tmp_dir).await?;
 
@@ -175,20 +174,14 @@ async fn _copy(input_url: BlobUrl, destination_folder: &OwnedDir) -> Result<Path
     destination_path.push(file_name);
     match input_url {
         BlobUrl::AzureBlob(input_url) => {
-            az_copy::copy(input_url.as_ref(), destination_path.clone(), false).await?
+            az_copy::copy(input_url.as_ref(), &destination_path, false).await?
         }
         BlobUrl::LocalFile(path) => {
-            copy(
-                SyncPath::file(path),
-                SyncPath::dir(destination_path.clone()),
-                false,
-            )
-            .await?
+            tokio::fs::copy(path, &destination_path).await?;
         }
     }
     Ok(destination_path)
 }
-
 pub async fn run_tool(
     input: impl AsRef<Path>,
     config: &Config,
@@ -200,8 +193,8 @@ pub async fn run_tool(
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
         .analyzer_options(&config.analyzer_options)
-        .output_dir(&config.analysis.path)
-        .tools_dir(&config.tools.path)
+        .output_dir(&config.analysis.local_path)
+        .tools_dir(&config.tools.local_path)
         .setup_dir(&config.common.setup_dir)
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
@@ -216,12 +209,14 @@ pub async fn run_tool(
         })
         .set_optional_ref(&config.crashes, |tester, crashes| {
             tester
-                .set_optional_ref(&crashes.url.account(), |tester, account| {
-                    tester.crashes_account(account)
-                })
-                .set_optional_ref(&crashes.url.container(), |tester, container| {
-                    tester.crashes_container(container)
-                })
+                .set_optional_ref(
+                    &crashes.remote_path.clone().and_then(|u| u.account()),
+                    |tester, account| tester.crashes_account(account),
+                )
+                .set_optional_ref(
+                    &crashes.remote_path.clone().and_then(|u| u.container()),
+                    |tester, container| tester.crashes_container(container),
+                )
         });
 
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;

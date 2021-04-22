@@ -1,0 +1,92 @@
+{
+  "text": "/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_freetype2_b57c98057dc4c0067a21efc54058effece3bc33b/revisions/freetype2_fuzzer: Running 1 inputs 65536 time(s) each.\nRunning: /fuzz-2-freetype2_fuzzer\n#1\tpulse  cov: 256 bits: 249 indir: 55 units: 0 exec/s: 0\n==31802== ERROR: libFuzzer: out-of-memory (malloc(4278190080))\n   To change the out-of-memory limit use -rss_limit_mb=<N>\n\nLive Heap Allocations: 2379484 bytes from 64 allocations; showing top 50%\n2359368 byte(s) (99%) in 1 allocation(s)\n    #0 0x4f8430 in operator new(unsigned long) /src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cc:78\n    #1 0x932ddf in fuzzer::Fuzzer::InitializeTraceState() /src/llvm/lib/Fuzzer/FuzzerTraceState.cpp:498:8\n    #2 0x8be96f in fuzzer::Fuzzer::Fuzzer(int (*)(unsigned char const*, unsigned long), fuzzer::MutationDispatcher&, fuzzer::Fuzzer::FuzzingOptions) /src/llvm/lib/Fuzzer/FuzzerLoop.cpp:152:3\n    #3 0x88eb73 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/lib/Fuzzer/FuzzerDriver.cpp:351:10\n    #4 0x915a48 in main /src/llvm/lib/Fuzzer/FuzzerMain.cpp:21:10\n    #5 0x7f2c7742582f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)\n\nSUMMARY: libFuzzer: out-of-memory\n\n",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: out-of-memory",
+  "fault_type": "out-of-memory",
+  "call_stack": [
+    "#0 0x4f8430 in operator new(unsigned long) /src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cc:78",
+    "#1 0x932ddf in fuzzer::Fuzzer::InitializeTraceState() /src/llvm/lib/Fuzzer/FuzzerTraceState.cpp:498:8",
+    "#2 0x8be96f in fuzzer::Fuzzer::Fuzzer(int (*)(unsigned char const*, unsigned long), fuzzer::MutationDispatcher&, fuzzer::Fuzzer::FuzzingOptions) /src/llvm/lib/Fuzzer/FuzzerLoop.cpp:152:3",
+    "#3 0x88eb73 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/lib/Fuzzer/FuzzerDriver.cpp:351:10",
+    "#4 0x915a48 in main /src/llvm/lib/Fuzzer/FuzzerMain.cpp:21:10",
+    "#5 0x7f2c7742582f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x4f8430 in operator new(unsigned long) /src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cc:78",
+      "address": 5211184,
+      "function_name": "operator new(unsigned long)",
+      "source_file_name": "asan_new_delete.cc",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cc",
+      "source_file_line": 78
+    },
+    {
+      "line": "#1 0x932ddf in fuzzer::Fuzzer::InitializeTraceState() /src/llvm/lib/Fuzzer/FuzzerTraceState.cpp:498:8",
+      "address": 9645535,
+      "function_name": "fuzzer::Fuzzer::InitializeTraceState()",
+      "function_offset": 8,
+      "source_file_name": "FuzzerTraceState.cpp",
+      "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerTraceState.cpp",
+      "source_file_line": 498
+    },
+    {
+      "line": "#2 0x8be96f in fuzzer::Fuzzer::Fuzzer(int (*)(unsigned char const*, unsigned long), fuzzer::MutationDispatcher&, fuzzer::Fuzzer::FuzzingOptions) /src/llvm/lib/Fuzzer/FuzzerLoop.cpp:152:3",
+      "address": 9169263,
+      "function_name": "fuzzer::Fuzzer::Fuzzer(int (*)(unsigned char const*, unsigned long), fuzzer::MutationDispatcher&, fuzzer::Fuzzer::FuzzingOptions)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 152
+    },
+    {
+      "line": "#3 0x88eb73 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/lib/Fuzzer/FuzzerDriver.cpp:351:10",
+      "address": 8973171,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 10,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 351
+    },
+    {
+      "line": "#4 0x915a48 in main /src/llvm/lib/Fuzzer/FuzzerMain.cpp:21:10",
+      "address": 9525832,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerMain.cpp",
+      "source_file_line": 21
+    },
+    {
+      "line": "#5 0x7f2c7742582f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)",
+      "address": 139828956125231,
+      "function_name": "__libc_start_main",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 133167
+    }
+  ],
+  "full_stack_names": [
+    "operator new",
+    "fuzzer::Fuzzer::InitializeTraceState",
+    "fuzzer::Fuzzer::Fuzzer",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x915a48 in main /src/llvm/lib/Fuzzer/FuzzerMain.cpp:21:10",
+      "address": 9525832,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/llvm/lib/Fuzzer/FuzzerMain.cpp",
+      "source_file_line": 21
+    }
+  ],
+  "minimized_stack": [
+    "#4 0x915a48 in main /src/llvm/lib/Fuzzer/FuzzerMain.cpp:21:10"
+  ],
+  "minimized_stack_function_names": [
+    "main"
+  ]
+}

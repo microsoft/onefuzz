@@ -1,0 +1,353 @@
+{
+  "text": "[1222/164952:FATAL:ftp_util.cc(198)] Check failed: 1 == map_[ASCIIToUTF16(\"jan\")] (1 vs. 0)\n#0 0x000000466ef1 __interceptor_backtrace\n#1 0x0000015ac58a base::debug::StackTrace::StackTrace()\n#2 0x000001177e4c logging::LogMessage::~LogMessage()\n#3 0x0000010b9df0 net::FtpUtil::AbbreviatedMonthToNumber()\n#4 0x0000010be233 net::FtpUtil::LsDateListingToTime()\n#5 0x000001084fa9 net::ParseFtpDirectoryListingLs()\n#6 0x000001082006 net::ParseFtpDirectoryListing()\n#7 0x0000004e640a LLVMFuzzerTestOneInput\n#8 0x000001ff6eb8 fuzzer::RunOneTest()\n#9 0x000001ff8f42 fuzzer::FuzzerDriver()\n#10 0x000001ff7486 fuzzer::FuzzerDriver()\n#11 0x000001ff718b fuzzer::FuzzerDriver()\n#12 0x7ffb57addec5 __libc_start_main\n#13 0x0000004264e3 <unknown>\n\nASAN:DEADLYSIGNAL\n=================================================================\n==96165==ERROR: AddressSanitizer: SEGV on unknown address 0x5668a000177a5 (pc 0x7ffb57af2cb7 bp 0x7ffe2246d7d0 sp 0x7ffe2246d698 T0)\n    #0 0x7ffb57af2cb6 in gsignal /tmp/tmp.Htw1L27e9P/nptl/sysdeps/unix/sysv/linux/raise.c:56\n    #1 0x1178a18 in logging::LogMessage::~LogMessage() base/logging.cc:721:7\n    #2 0x10b9def in AbbreviatedMonthsMap net/ftp/ftp_util.cc:198:5\n    #3 0x10b9def in New base/memory/singleton.h:53\n    #4 0x10b9def in get base/memory/singleton.h:248\n    #5 0x10b9def in GetInstance net/ftp/ftp_util.cc:135\n    #6 0x10b9def in net::FtpUtil::AbbreviatedMonthToNumber(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, int*) net/ftp/ftp_util.cc:223\n    #7 0x10be232 in net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*) net/ftp/ftp_util.cc:234:8\n    #8 0x1084fa8 in DetectColumnOffsetSizeAndModificationTime net/ftp/ftp_directory_listing_parser_ls.cc:85:9\n    #9 0x1084fa8 in net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser_ls.cc:158\n    #10 0x1082005 in Run base/callback.h:396:12\n    #11 0x1082005 in ParseListing net/ftp/ftp_directory_listing_parser.cc:71\n    #12 0x1082005 in DecodeAndParse net/ftp/ftp_directory_listing_parser.cc:101\n    #13 0x1082005 in net::ParseFtpDirectoryListing(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser.cc:129\n    #14 0x4e6409 in LLVMFuzzerTestOneInput testing/libfuzzer/ftp_directory_listing_fuzzer.cc:16:3\n    #15 0x1ff6eb7 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:189:3\n    #16 0x1ff8f41 in fuzzer::FuzzerDriver(std::__1::vector<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, std::__1::allocator<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > > > const&, fuzzer::UserSuppliedFuzzer&) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:277:12\n    #17 0x1ff7485 in fuzzer::FuzzerDriver(int, char**, fuzzer::UserSuppliedFuzzer&) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:201:10\n    #18 0x1ff718a in fuzzer::FuzzerDriver(int, char**, int (*)(unsigned char const*, unsigned long)) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:196:10\n    #19 0x7ffb57addec4 in __libc_start_main /tmp/tmp.Htw1L27e9P/csu/libc-start.c:287\n\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0x36cb6)\n==96165==ABORTING\nDEATH:\n\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0x36cb6)",
+  "fault_type": "SEGV",
+  "call_stack": [
+    "#0 0x7ffb57af2cb6 in gsignal /tmp/tmp.Htw1L27e9P/nptl/sysdeps/unix/sysv/linux/raise.c:56",
+    "#1 0x1178a18 in logging::LogMessage::~LogMessage() base/logging.cc:721:7",
+    "#2 0x10b9def in AbbreviatedMonthsMap net/ftp/ftp_util.cc:198:5",
+    "#3 0x10b9def in New base/memory/singleton.h:53",
+    "#4 0x10b9def in get base/memory/singleton.h:248",
+    "#5 0x10b9def in GetInstance net/ftp/ftp_util.cc:135",
+    "#6 0x10b9def in net::FtpUtil::AbbreviatedMonthToNumber(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, int*) net/ftp/ftp_util.cc:223",
+    "#7 0x10be232 in net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*) net/ftp/ftp_util.cc:234:8",
+    "#8 0x1084fa8 in DetectColumnOffsetSizeAndModificationTime net/ftp/ftp_directory_listing_parser_ls.cc:85:9",
+    "#9 0x1084fa8 in net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser_ls.cc:158",
+    "#10 0x1082005 in Run base/callback.h:396:12",
+    "#11 0x1082005 in ParseListing net/ftp/ftp_directory_listing_parser.cc:71",
+    "#12 0x1082005 in DecodeAndParse net/ftp/ftp_directory_listing_parser.cc:101",
+    "#13 0x1082005 in net::ParseFtpDirectoryListing(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser.cc:129",
+    "#14 0x4e6409 in LLVMFuzzerTestOneInput testing/libfuzzer/ftp_directory_listing_fuzzer.cc:16:3",
+    "#15 0x1ff6eb7 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:189:3",
+    "#16 0x1ff8f41 in fuzzer::FuzzerDriver(std::__1::vector<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, std::__1::allocator<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > > > const&, fuzzer::UserSuppliedFuzzer&) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:277:12",
+    "#17 0x1ff7485 in fuzzer::FuzzerDriver(int, char**, fuzzer::UserSuppliedFuzzer&) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:201:10",
+    "#18 0x1ff718a in fuzzer::FuzzerDriver(int, char**, int (*)(unsigned char const*, unsigned long)) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:196:10",
+    "#19 0x7ffb57addec4 in __libc_start_main /tmp/tmp.Htw1L27e9P/csu/libc-start.c:287"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7ffb57af2cb6 in gsignal /tmp/tmp.Htw1L27e9P/nptl/sysdeps/unix/sysv/linux/raise.c:56",
+      "address": 140717484616886,
+      "function_name": "gsignal",
+      "source_file_name": "raise.c",
+      "source_file_path": "/tmp/tmp.Htw1L27e9P/nptl/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 56
+    },
+    {
+      "line": "#1 0x1178a18 in logging::LogMessage::~LogMessage() base/logging.cc:721:7",
+      "address": 18319896,
+      "function_name": "logging::LogMessage::~LogMessage()",
+      "function_offset": 7,
+      "source_file_name": "logging.cc",
+      "source_file_path": "base/logging.cc",
+      "source_file_line": 721
+    },
+    {
+      "line": "#2 0x10b9def in AbbreviatedMonthsMap net/ftp/ftp_util.cc:198:5",
+      "address": 17538543,
+      "function_name": "AbbreviatedMonthsMap",
+      "function_offset": 5,
+      "source_file_name": "ftp_util.cc",
+      "source_file_path": "net/ftp/ftp_util.cc",
+      "source_file_line": 198
+    },
+    {
+      "line": "#3 0x10b9def in New base/memory/singleton.h:53",
+      "address": 17538543,
+      "function_name": "New",
+      "source_file_name": "singleton.h",
+      "source_file_path": "base/memory/singleton.h",
+      "source_file_line": 53
+    },
+    {
+      "line": "#4 0x10b9def in get base/memory/singleton.h:248",
+      "address": 17538543,
+      "function_name": "get",
+      "source_file_name": "singleton.h",
+      "source_file_path": "base/memory/singleton.h",
+      "source_file_line": 248
+    },
+    {
+      "line": "#5 0x10b9def in GetInstance net/ftp/ftp_util.cc:135",
+      "address": 17538543,
+      "function_name": "GetInstance",
+      "source_file_name": "ftp_util.cc",
+      "source_file_path": "net/ftp/ftp_util.cc",
+      "source_file_line": 135
+    },
+    {
+      "line": "#6 0x10b9def in net::FtpUtil::AbbreviatedMonthToNumber(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, int*) net/ftp/ftp_util.cc:223",
+      "address": 17538543,
+      "function_name": "net::FtpUtil::AbbreviatedMonthToNumber(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, int*)",
+      "source_file_name": "ftp_util.cc",
+      "source_file_path": "net/ftp/ftp_util.cc",
+      "source_file_line": 223
+    },
+    {
+      "line": "#7 0x10be232 in net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*) net/ftp/ftp_util.cc:234:8",
+      "address": 17556018,
+      "function_name": "net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*)",
+      "function_offset": 8,
+      "source_file_name": "ftp_util.cc",
+      "source_file_path": "net/ftp/ftp_util.cc",
+      "source_file_line": 234
+    },
+    {
+      "line": "#8 0x1084fa8 in DetectColumnOffsetSizeAndModificationTime net/ftp/ftp_directory_listing_parser_ls.cc:85:9",
+      "address": 17321896,
+      "function_name": "DetectColumnOffsetSizeAndModificationTime",
+      "function_offset": 9,
+      "source_file_name": "ftp_directory_listing_parser_ls.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser_ls.cc",
+      "source_file_line": 85
+    },
+    {
+      "line": "#9 0x1084fa8 in net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser_ls.cc:158",
+      "address": 17321896,
+      "function_name": "net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*)",
+      "source_file_name": "ftp_directory_listing_parser_ls.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser_ls.cc",
+      "source_file_line": 158
+    },
+    {
+      "line": "#10 0x1082005 in Run base/callback.h:396:12",
+      "address": 17309701,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 396
+    },
+    {
+      "line": "#11 0x1082005 in ParseListing net/ftp/ftp_directory_listing_parser.cc:71",
+      "address": 17309701,
+      "function_name": "ParseListing",
+      "source_file_name": "ftp_directory_listing_parser.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser.cc",
+      "source_file_line": 71
+    },
+    {
+      "line": "#12 0x1082005 in DecodeAndParse net/ftp/ftp_directory_listing_parser.cc:101",
+      "address": 17309701,
+      "function_name": "DecodeAndParse",
+      "source_file_name": "ftp_directory_listing_parser.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser.cc",
+      "source_file_line": 101
+    },
+    {
+      "line": "#13 0x1082005 in net::ParseFtpDirectoryListing(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser.cc:129",
+      "address": 17309701,
+      "function_name": "net::ParseFtpDirectoryListing(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*)",
+      "source_file_name": "ftp_directory_listing_parser.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser.cc",
+      "source_file_line": 129
+    },
+    {
+      "line": "#14 0x4e6409 in LLVMFuzzerTestOneInput testing/libfuzzer/ftp_directory_listing_fuzzer.cc:16:3",
+      "address": 5137417,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 3,
+      "source_file_name": "ftp_directory_listing_fuzzer.cc",
+      "source_file_path": "testing/libfuzzer/ftp_directory_listing_fuzzer.cc",
+      "source_file_line": 16
+    },
+    {
+      "line": "#15 0x1ff6eb7 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:189:3",
+      "address": 33517239,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 189
+    },
+    {
+      "line": "#16 0x1ff8f41 in fuzzer::FuzzerDriver(std::__1::vector<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, std::__1::allocator<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > > > const&, fuzzer::UserSuppliedFuzzer&) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:277:12",
+      "address": 33525569,
+      "function_name": "fuzzer::FuzzerDriver(std::__1::vector<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, std::__1::allocator<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > > > const&, fuzzer::UserSuppliedFuzzer&)",
+      "function_offset": 12,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 277
+    },
+    {
+      "line": "#17 0x1ff7485 in fuzzer::FuzzerDriver(int, char**, fuzzer::UserSuppliedFuzzer&) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:201:10",
+      "address": 33518725,
+      "function_name": "fuzzer::FuzzerDriver(int, char**, fuzzer::UserSuppliedFuzzer&)",
+      "function_offset": 10,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 201
+    },
+    {
+      "line": "#18 0x1ff718a in fuzzer::FuzzerDriver(int, char**, int (*)(unsigned char const*, unsigned long)) third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp:196:10",
+      "address": 33517962,
+      "function_name": "fuzzer::FuzzerDriver(int, char**, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 10,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/llvm/lib/Fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 196
+    },
+    {
+      "line": "#19 0x7ffb57addec4 in __libc_start_main /tmp/tmp.Htw1L27e9P/csu/libc-start.c:287",
+      "address": 140717484531396,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/tmp/tmp.Htw1L27e9P/csu/libc-start.c",
+      "source_file_line": 287
+    }
+  ],
+  "full_stack_names": [
+    "gsignal",
+    "logging::LogMessage::~LogMessage",
+    "AbbreviatedMonthsMap",
+    "New",
+    "get",
+    "GetInstance",
+    "net::FtpUtil::AbbreviatedMonthToNumber",
+    "net::FtpUtil::LsDateListingToTime",
+    "DetectColumnOffsetSizeAndModificationTime",
+    "net::ParseFtpDirectoryListingLs",
+    "Run",
+    "ParseListing",
+    "DecodeAndParse",
+    "net::ParseFtpDirectoryListing",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "fuzzer::FuzzerDriver",
+    "fuzzer::FuzzerDriver",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#2 0x10b9def in AbbreviatedMonthsMap net/ftp/ftp_util.cc:198:5",
+      "address": 17538543,
+      "function_name": "AbbreviatedMonthsMap",
+      "function_offset": 5,
+      "source_file_name": "ftp_util.cc",
+      "source_file_path": "net/ftp/ftp_util.cc",
+      "source_file_line": 198
+    },
+    {
+      "line": "#4 0x10b9def in get base/memory/singleton.h:248",
+      "address": 17538543,
+      "function_name": "get",
+      "source_file_name": "singleton.h",
+      "source_file_path": "base/memory/singleton.h",
+      "source_file_line": 248
+    },
+    {
+      "line": "#5 0x10b9def in GetInstance net/ftp/ftp_util.cc:135",
+      "address": 17538543,
+      "function_name": "GetInstance",
+      "source_file_name": "ftp_util.cc",
+      "source_file_path": "net/ftp/ftp_util.cc",
+      "source_file_line": 135
+    },
+    {
+      "line": "#6 0x10b9def in net::FtpUtil::AbbreviatedMonthToNumber(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, int*) net/ftp/ftp_util.cc:223",
+      "address": 17538543,
+      "function_name": "net::FtpUtil::AbbreviatedMonthToNumber(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, int*)",
+      "source_file_name": "ftp_util.cc",
+      "source_file_path": "net/ftp/ftp_util.cc",
+      "source_file_line": 223
+    },
+    {
+      "line": "#7 0x10be232 in net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*) net/ftp/ftp_util.cc:234:8",
+      "address": 17556018,
+      "function_name": "net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*)",
+      "function_offset": 8,
+      "source_file_name": "ftp_util.cc",
+      "source_file_path": "net/ftp/ftp_util.cc",
+      "source_file_line": 234
+    },
+    {
+      "line": "#8 0x1084fa8 in DetectColumnOffsetSizeAndModificationTime net/ftp/ftp_directory_listing_parser_ls.cc:85:9",
+      "address": 17321896,
+      "function_name": "DetectColumnOffsetSizeAndModificationTime",
+      "function_offset": 9,
+      "source_file_name": "ftp_directory_listing_parser_ls.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser_ls.cc",
+      "source_file_line": 85
+    },
+    {
+      "line": "#9 0x1084fa8 in net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser_ls.cc:158",
+      "address": 17321896,
+      "function_name": "net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*)",
+      "source_file_name": "ftp_directory_listing_parser_ls.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser_ls.cc",
+      "source_file_line": 158
+    },
+    {
+      "line": "#10 0x1082005 in Run base/callback.h:396:12",
+      "address": 17309701,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 396
+    },
+    {
+      "line": "#11 0x1082005 in ParseListing net/ftp/ftp_directory_listing_parser.cc:71",
+      "address": 17309701,
+      "function_name": "ParseListing",
+      "source_file_name": "ftp_directory_listing_parser.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser.cc",
+      "source_file_line": 71
+    },
+    {
+      "line": "#12 0x1082005 in DecodeAndParse net/ftp/ftp_directory_listing_parser.cc:101",
+      "address": 17309701,
+      "function_name": "DecodeAndParse",
+      "source_file_name": "ftp_directory_listing_parser.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser.cc",
+      "source_file_line": 101
+    },
+    {
+      "line": "#13 0x1082005 in net::ParseFtpDirectoryListing(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser.cc:129",
+      "address": 17309701,
+      "function_name": "net::ParseFtpDirectoryListing(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*)",
+      "source_file_name": "ftp_directory_listing_parser.cc",
+      "source_file_path": "net/ftp/ftp_directory_listing_parser.cc",
+      "source_file_line": 129
+    },
+    {
+      "line": "#14 0x4e6409 in LLVMFuzzerTestOneInput testing/libfuzzer/ftp_directory_listing_fuzzer.cc:16:3",
+      "address": 5137417,
+      "function_name": "ftp_directory_listing_fuzzer.cc",
+      "function_offset": 3,
+      "source_file_name": "ftp_directory_listing_fuzzer.cc",
+      "source_file_path": "testing/libfuzzer/ftp_directory_listing_fuzzer.cc",
+      "source_file_line": 16
+    }
+  ],
+  "minimized_stack": [
+    "#2 0x10b9def in AbbreviatedMonthsMap net/ftp/ftp_util.cc:198:5",
+    "#4 0x10b9def in get base/memory/singleton.h:248",
+    "#5 0x10b9def in GetInstance net/ftp/ftp_util.cc:135",
+    "#6 0x10b9def in net::FtpUtil::AbbreviatedMonthToNumber(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, int*) net/ftp/ftp_util.cc:223",
+    "#7 0x10be232 in net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*) net/ftp/ftp_util.cc:234:8",
+    "#8 0x1084fa8 in DetectColumnOffsetSizeAndModificationTime net/ftp/ftp_directory_listing_parser_ls.cc:85:9",
+    "#9 0x1084fa8 in net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser_ls.cc:158",
+    "#10 0x1082005 in Run base/callback.h:396:12",
+    "#11 0x1082005 in ParseListing net/ftp/ftp_directory_listing_parser.cc:71",
+    "#12 0x1082005 in DecodeAndParse net/ftp/ftp_directory_listing_parser.cc:101",
+    "#13 0x1082005 in net::ParseFtpDirectoryListing(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) net/ftp/ftp_directory_listing_parser.cc:129",
+    "#14 0x4e6409 in LLVMFuzzerTestOneInput testing/libfuzzer/ftp_directory_listing_fuzzer.cc:16:3"
+  ],
+  "minimized_stack_function_names": [
+    "AbbreviatedMonthsMap",
+    "get",
+    "GetInstance",
+    "net::FtpUtil::AbbreviatedMonthToNumber",
+    "net::FtpUtil::LsDateListingToTime",
+    "DetectColumnOffsetSizeAndModificationTime",
+    "net::ParseFtpDirectoryListingLs",
+    "Run",
+    "ParseListing",
+    "DecodeAndParse",
+    "net::ParseFtpDirectoryListing",
+    "ftp_directory_listing_fuzzer.cc"
+  ]
+}

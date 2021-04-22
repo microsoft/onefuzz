@@ -1,0 +1,217 @@
+{
+  "text": "==1==ERROR: AddressSanitizer: ABRT on unknown address 0x000000000001 (pc 0x7fb31a28e418 bp 0x7ffc4aa89af0 sp 0x7ffc4aa898b8 T0)\nSCARINESS: 10 (signal)\n    #0 0x7fb31a28e417 in gsignal\n    #1 0x7fb31a290019 in abort\n    #2 0x583436 in abort_message\n    #3 0x584c65 in demangling_terminate_handler()\n    #4 0x5832d5 in std::__terminate(void (*)())\n    #5 0x5847d6 in __cxa_throw\n    #6 0x524dfd in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::get_number(nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::token_type) const /src/json/src/json.hpp:11871:21\n    #7 0x51b119 in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12146:29\n    #8 0x51be3a in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12092:38\n    #9 0x51a67f in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse() /src/json/src/json.hpp:11953:33\n    #10 0x5132ec in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer> nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse<unsigned char const*, 0>(unsigned char const*, unsigned char const*, std::__1::function<bool (int, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse_event_t, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&)>) /src/json/src/json.hpp:7244:40\n    #11 0x512a40 in LLVMFuzzerTestOneInput /src/json/test/src/fuzzer-parse_json.cpp:34:19\n    #12 0x512333 in main /src/libfuzzer/afl/afl_driver.cpp:287:7\n    #13 0x7fb31a27982f in __libc_start_main\n    #14 0x41b5d8 in _start\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35417)\n==1==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35417)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7fb31a28e417 in gsignal",
+    "#1 0x7fb31a290019 in abort",
+    "#2 0x583436 in abort_message",
+    "#3 0x584c65 in demangling_terminate_handler()",
+    "#4 0x5832d5 in std::__terminate(void (*)())",
+    "#5 0x5847d6 in __cxa_throw",
+    "#6 0x524dfd in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::get_number(nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::token_type) const /src/json/src/json.hpp:11871:21",
+    "#7 0x51b119 in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12146:29",
+    "#8 0x51be3a in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12092:38",
+    "#9 0x51a67f in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse() /src/json/src/json.hpp:11953:33",
+    "#10 0x5132ec in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer> nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse<unsigned char const*, 0>(unsigned char const*, unsigned char const*, std::__1::function<bool (int, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse_event_t, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&)>) /src/json/src/json.hpp:7244:40",
+    "#11 0x512a40 in LLVMFuzzerTestOneInput /src/json/test/src/fuzzer-parse_json.cpp:34:19",
+    "#12 0x512333 in main /src/libfuzzer/afl/afl_driver.cpp:287:7",
+    "#13 0x7fb31a27982f in __libc_start_main",
+    "#14 0x41b5d8 in _start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7fb31a28e417 in gsignal",
+      "address": 140407214760983,
+      "module_path": "gsignal"
+    },
+    {
+      "line": "#1 0x7fb31a290019 in abort",
+      "address": 140407214768153,
+      "module_path": "abort"
+    },
+    {
+      "line": "#2 0x583436 in abort_message",
+      "address": 5780534,
+      "function_name": "abort_message"
+    },
+    {
+      "line": "#3 0x584c65 in demangling_terminate_handler()",
+      "address": 5786725,
+      "function_name": "demangling_terminate_handler()"
+    },
+    {
+      "line": "#4 0x5832d5 in std::__terminate(void (*)())",
+      "address": 5780181,
+      "function_name": "std::__terminate(void (*)())"
+    },
+    {
+      "line": "#5 0x5847d6 in __cxa_throw",
+      "address": 5785558,
+      "function_name": "__cxa_throw"
+    },
+    {
+      "line": "#6 0x524dfd in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::get_number(nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::token_type) const /src/json/src/json.hpp:11871:21",
+      "address": 5393917,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::get_number(nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::token_type) const",
+      "function_offset": 21,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 11871
+    },
+    {
+      "line": "#7 0x51b119 in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12146:29",
+      "address": 5353753,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool)",
+      "function_offset": 29,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 12146
+    },
+    {
+      "line": "#8 0x51be3a in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12092:38",
+      "address": 5357114,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool)",
+      "function_offset": 38,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 12092
+    },
+    {
+      "line": "#9 0x51a67f in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse() /src/json/src/json.hpp:11953:33",
+      "address": 5351039,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse()",
+      "function_offset": 33,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 11953
+    },
+    {
+      "line": "#10 0x5132ec in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer> nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse<unsigned char const*, 0>(unsigned char const*, unsigned char const*, std::__1::function<bool (int, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse_event_t, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&)>) /src/json/src/json.hpp:7244:40",
+      "address": 5321452,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer> nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse<unsigned char const*, 0>(unsigned char const*, unsigned char const*, std::__1::function<bool (int, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse_event_t, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&)>)",
+      "function_offset": 40,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 7244
+    },
+    {
+      "line": "#11 0x512a40 in LLVMFuzzerTestOneInput /src/json/test/src/fuzzer-parse_json.cpp:34:19",
+      "address": 5319232,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 19,
+      "source_file_name": "fuzzer-parse_json.cpp",
+      "source_file_path": "/src/json/test/src/fuzzer-parse_json.cpp",
+      "source_file_line": 34
+    },
+    {
+      "line": "#12 0x512333 in main /src/libfuzzer/afl/afl_driver.cpp:287:7",
+      "address": 5317427,
+      "function_name": "main",
+      "function_offset": 7,
+      "source_file_name": "afl_driver.cpp",
+      "source_file_path": "/src/libfuzzer/afl/afl_driver.cpp",
+      "source_file_line": 287
+    },
+    {
+      "line": "#13 0x7fb31a27982f in __libc_start_main",
+      "address": 140407214676015,
+      "function_name": "__libc_start_main"
+    },
+    {
+      "line": "#14 0x41b5d8 in _start",
+      "address": 4306392,
+      "function_name": "_start"
+    }
+  ],
+  "full_stack_names": [
+    "abort_message",
+    "demangling_terminate_handler",
+    "std::__terminate",
+    "__cxa_throw",
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::get_number",
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal",
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal",
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse",
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer> nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse<unsigned char const*, 0>",
+    "LLVMFuzzerTestOneInput",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#6 0x524dfd in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::get_number(nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::token_type) const /src/json/src/json.hpp:11871:21",
+      "address": 5393917,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::get_number(nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::token_type) const",
+      "function_offset": 21,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 11871
+    },
+    {
+      "line": "#7 0x51b119 in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12146:29",
+      "address": 5353753,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool)",
+      "function_offset": 29,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 12146
+    },
+    {
+      "line": "#8 0x51be3a in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12092:38",
+      "address": 5357114,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool)",
+      "function_offset": 38,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 12092
+    },
+    {
+      "line": "#9 0x51a67f in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse() /src/json/src/json.hpp:11953:33",
+      "address": 5351039,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse()",
+      "function_offset": 33,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 11953
+    },
+    {
+      "line": "#10 0x5132ec in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer> nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse<unsigned char const*, 0>(unsigned char const*, unsigned char const*, std::__1::function<bool (int, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse_event_t, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&)>) /src/json/src/json.hpp:7244:40",
+      "address": 5321452,
+      "function_name": "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer> nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse<unsigned char const*, 0>(unsigned char const*, unsigned char const*, std::__1::function<bool (int, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse_event_t, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&)>)",
+      "function_offset": 40,
+      "source_file_name": "json.hpp",
+      "source_file_path": "/src/json/src/json.hpp",
+      "source_file_line": 7244
+    },
+    {
+      "line": "#11 0x512a40 in LLVMFuzzerTestOneInput /src/json/test/src/fuzzer-parse_json.cpp:34:19",
+      "address": 5319232,
+      "function_name": "fuzzer-parse_json.cpp",
+      "function_offset": 19,
+      "source_file_name": "fuzzer-parse_json.cpp",
+      "source_file_path": "/src/json/test/src/fuzzer-parse_json.cpp",
+      "source_file_line": 34
+    }
+  ],
+  "minimized_stack": [
+    "#6 0x524dfd in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::get_number(nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::token_type) const /src/json/src/json.hpp:11871:21",
+    "#7 0x51b119 in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12146:29",
+    "#8 0x51be3a in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal(bool) /src/json/src/json.hpp:12092:38",
+    "#9 0x51a67f in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse() /src/json/src/json.hpp:11953:33",
+    "#10 0x5132ec in nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer> nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse<unsigned char const*, 0>(unsigned char const*, unsigned char const*, std::__1::function<bool (int, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse_event_t, nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>&)>) /src/json/src/json.hpp:7244:40",
+    "#11 0x512a40 in LLVMFuzzerTestOneInput /src/json/test/src/fuzzer-parse_json.cpp:34:19"
+  ],
+  "minimized_stack_function_names": [
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::lexer::get_number",
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal",
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse_internal",
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parser::parse",
+    "nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer> nlohmann::basic_json<std::__1::map, std::__1::vector, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, bool, long, unsigned long, double, std::__1::allocator, nlohmann::adl_serializer>::parse<unsigned char const*, 0>",
+    "fuzzer-parse_json.cpp"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

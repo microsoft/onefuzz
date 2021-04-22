@@ -1,20 +1,21 @@
 use crate::tasks::config::CommonConfig;
 use crate::tasks::utils::parse_key_value;
 use anyhow::Result;
+use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
+use flume::Sender;
 use onefuzz::jitter::delay_with_jitter;
-use onefuzz::{blob::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use onefuzz::{blob::url::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
+use path_absolutize::Absolutize;
 use reqwest::Url;
+use std::task::Poll;
 use std::{
     collections::HashMap,
+    env::current_dir,
     path::{Path, PathBuf},
     time::Duration,
 };
 use uuid::Uuid;
-
-use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
-use path_absolutize::Absolutize;
-use std::task::Poll;
 
 pub const SETUP_DIR: &str = "setup_dir";
 pub const INPUTS_DIR: &str = "inputs_dir";
@@ -32,6 +33,8 @@ pub const CHECK_ASAN_LOG: &str = "check_asan_log";
 pub const TOOLS_DIR: &str = "tools_dir";
 pub const RENAME_OUTPUT: &str = "rename_output";
 pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
+pub const DISABLE_CHECK_DEBUGGER: &str = "disable_check_debugger";
+pub const REGRESSION_REPORTS_DIR: &str = "regression_reports_dir";
 
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
@@ -51,6 +54,8 @@ pub const ANALYSIS_INPUTS: &str = "analysis_inputs";
 pub const ANALYSIS_UNIQUE_INPUTS: &str = "analysis_unique_inputs";
 pub const PRESERVE_EXISTING_OUTPUTS: &str = "preserve_existing_outputs";
 
+pub const CREATE_JOB_DIR: &str = "create_job_dir";
+
 const WAIT_FOR_MAX_WAIT: Duration = Duration::from_secs(10);
 const WAIT_FOR_DIR_DELAY: Duration = Duration::from_secs(1);
 
@@ -58,6 +63,13 @@ pub enum CmdType {
     Target,
     Generator,
     // Supervisor,
+}
+
+#[derive(Clone, Debug)]
+pub struct LocalContext {
+    pub job_path: PathBuf,
+    pub common_config: CommonConfig,
+    pub event_sender: Option<Sender<UiEvent>>,
 }
 
 pub fn get_hash_map(args: &clap::ArgMatches<'_>, name: &str) -> Result<HashMap<String, String>> {
@@ -127,6 +139,12 @@ pub fn add_common_config(app: App<'static, 'static>) -> App<'static, 'static> {
             .takes_value(true)
             .required(false),
     )
+    .arg(
+        Arg::with_name(CREATE_JOB_DIR)
+            .long(CREATE_JOB_DIR)
+            .required(false)
+            .help("create a local job directory to sync the files"),
+    )
 }
 
 fn get_uuid(name: &str, args: &ArgMatches<'_>) -> Result<Uuid> {
@@ -141,23 +159,30 @@ pub fn get_synced_dirs(
     task_id: Uuid,
     args: &ArgMatches<'_>,
 ) -> Result<Vec<SyncedDir>> {
+    let create_job_dir = args.is_present(CREATE_JOB_DIR);
     let current_dir = std::env::current_dir()?;
-    let dirs: Result<Vec<SyncedDir>> = value_t!(args, name, PathBuf)?
-        .iter()
+    args.values_of_os(name)
+        .ok_or_else(|| anyhow!("argument '{}' not specified", name))?
         .enumerate()
         .map(|(index, remote_path)| {
             let path = PathBuf::from(remote_path);
-            let remote_path = path.absolutize()?;
-            let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
-            let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
-            let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
-            Ok(SyncedDir {
-                url: remote_blob_url,
-                path,
-            })
+            if create_job_dir {
+                let remote_path = path.absolutize()?;
+                let remote_url = Url::from_file_path(remote_path).expect("invalid file path");
+                let remote_blob_url = BlobContainerUrl::new(remote_url).expect("invalid url");
+                let path = current_dir.join(format!("{}/{}/{}_{}", job_id, task_id, name, index));
+                Ok(SyncedDir {
+                    remote_path: Some(remote_blob_url),
+                    local_path: path,
+                })
+            } else {
+                Ok(SyncedDir {
+                    remote_path: None,
+                    local_path: path,
+                })
+            }
         })
-        .collect();
-    Ok(dirs?)
+        .collect()
 }
 
 pub fn get_synced_dir(
@@ -167,18 +192,40 @@ pub fn get_synced_dir(
     args: &ArgMatches<'_>,
 ) -> Result<SyncedDir> {
     let remote_path = value_t!(args, name, PathBuf)?.absolutize()?.into_owned();
-    let remote_url = Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
-    let remote_blob_url = BlobContainerUrl::new(remote_url)?;
-    let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
-    Ok(SyncedDir {
-        url: remote_blob_url,
-        path,
-    })
+    if args.is_present(CREATE_JOB_DIR) {
+        let remote_url =
+            Url::from_file_path(remote_path).map_err(|_| anyhow!("invalid file path"))?;
+        let remote_blob_url = BlobContainerUrl::new(remote_url)?;
+        let path = std::env::current_dir()?.join(format!("{}/{}/{}", job_id, task_id, name));
+        Ok(SyncedDir {
+            remote_path: Some(remote_blob_url),
+            local_path: path,
+        })
+    } else {
+        Ok(SyncedDir {
+            remote_path: None,
+            local_path: remote_path,
+        })
+    }
 }
 
-pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
+// NOTE: generate_task_id is intended to change the default behavior for local
+// fuzzing tasks from generating random task id to using UUID::nil(). This
+// enables making the one-shot crash report generation, which isn't really a task,
+// consistent across multiple runs.
+pub fn build_local_context(
+    args: &ArgMatches<'_>,
+    generate_task_id: bool,
+    event_sender: Option<Sender<UiEvent>>,
+) -> Result<LocalContext> {
     let job_id = get_uuid("job_id", args).unwrap_or_else(|_| Uuid::nil());
-    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| Uuid::new_v4());
+    let task_id = get_uuid("task_id", args).unwrap_or_else(|_| {
+        if generate_task_id {
+            Uuid::new_v4()
+        } else {
+            Uuid::nil()
+        }
+    });
     let instance_id = get_uuid("instance_id", args).unwrap_or_else(|_| Uuid::nil());
 
     let setup_dir = if args.is_present(SETUP_DIR) {
@@ -192,14 +239,20 @@ pub fn build_common_config(args: &ArgMatches<'_>) -> Result<CommonConfig> {
         PathBuf::default()
     };
 
-    let config = CommonConfig {
+    let common_config = CommonConfig {
         job_id,
         task_id,
         instance_id,
         setup_dir,
         ..Default::default()
     };
-    Ok(config)
+    let current_dir = current_dir()?;
+    let job_path = current_dir.join(format!("{}", job_id));
+    Ok(LocalContext {
+        job_path,
+        common_config,
+        event_sender,
+    })
 }
 
 /// Information about a local path being monitored
@@ -250,7 +303,7 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
             Ok(())
         } else {
             Err(BackoffError::Transient(anyhow::anyhow!(
-                "path '{:?}' does not exisit",
+                "path '{:?}' does not exist",
                 path.as_ref()
             )))
         }
@@ -264,4 +317,33 @@ pub async fn wait_for_dir(path: impl AsRef<Path>) -> Result<()> {
         op,
     )
     .await
+}
+
+#[derive(Debug)]
+pub enum UiEvent {
+    MonitorDir(PathBuf),
+}
+
+pub trait SyncCountDirMonitor<T: Sized> {
+    fn monitor_count(self, event_sender: &Option<Sender<UiEvent>>) -> Result<T>;
+}
+
+impl SyncCountDirMonitor<SyncedDir> for SyncedDir {
+    fn monitor_count(self, event_sender: &Option<Sender<UiEvent>>) -> Result<Self> {
+        if let (Some(event_sender), Some(p)) = (event_sender, self.remote_url()?.as_file_path()) {
+            event_sender.send(UiEvent::MonitorDir(p))?;
+        }
+        Ok(self)
+    }
+}
+
+impl SyncCountDirMonitor<Option<SyncedDir>> for Option<SyncedDir> {
+    fn monitor_count(self, event_sender: &Option<Sender<UiEvent>>) -> Result<Self> {
+        if let Some(sd) = self {
+            let sd = sd.monitor_count(event_sender)?;
+            Ok(Some(sd))
+        } else {
+            Ok(self)
+        }
+    }
 }

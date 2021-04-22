@@ -1,0 +1,634 @@
+{
+  "text": "ASAN:DEADLYSIGNAL\n=================================================================\n==1550==ERROR: AddressSanitizer: SEGV on unknown address 0x000000010530 (pc 0x7efef5995c27 bp 0x7fff15768f00 sp 0x7fff15768ef0 T0)\n==1550==The signal is caused by a UNKNOWN memory access.\n==1550==Hint: address points to the zero page.\n    #0 0x7fda4ecc3242 in blink::Member<blink::StyleEngine>::get() const third_party/WebKit/Source/platform/heap/Handle.h:824:29\n    #1 0x7fda4ecc00d1 in blink::Document::styleEngine() third_party/WebKit/Source/core/dom/Document.h:385:71\n    #2 0x7fda4fef7e5c in blink::Document::updateLayoutTreeIgnorePendingStylesheets() third_party/WebKit/Source/core/dom/Document.cpp:1990:53\n    #3 0x7fda4fef825e in blink::Document::updateLayoutIgnorePendingStylesheets(blink::Document::RunPostLayoutTasks) third_party/WebKit/Source/core/dom/Document.cpp:2018:5\n    #4 0x7fda50b99186 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:150:5\n    #5 0x7fda50ba0f82 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::rangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:1096:42\n    #6 0x7fda50bfea62 in blink::TextCheckingParagraph::checkingStart() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:206:27\n    #7 0x7fda50bfe68b in blink::TextCheckingParagraph::isRangeEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.h:73:40\n    #8 0x7fda50bfe5fa in blink::TextCheckingParagraph::isEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:182:12\n    #9 0x7fda50bf5aa6 in blink::SpellChecker::chunkAndMarkAllMisspellingsAndBadGrammar(unsigned int, blink::TextCheckingParagraph const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:512:9\n    #10 0x7fda50bf47d0 in blink::SpellChecker::markAllMisspellingsAndBadGrammarInRanges(unsigned int, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:479:5\n    #11 0x7fda50bf3e6d in blink::SpellChecker::markMisspellingsAndBadGrammar(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool, blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:640:9\n    #12 0x7fda50bf1826 in blink::SpellChecker::didBeginEditing(blink::Element*) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:147:13\n    #13 0x7fda4ff10813 in blink::Document::setFocusedElement(WTF::RawPtr<blink::Element>, blink::FocusParams const&) third_party/WebKit/Source/core/dom/Document.cpp:3673:13\n    #14 0x7fda5115d229 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>, blink::FocusParams const&) third_party/WebKit/Source/core/page/FocusController.cpp:912:36\n    #15 0x7fda5115ca98 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>) third_party/WebKit/Source/core/page/FocusController.cpp:869:12\n    #16 0x7fda50a72023 in blink::FrameSelection::setFocusedNodeIfNeeded() third_party/WebKit/Source/core/editing/FrameSelection.cpp:1112:17\n    #17 0x7fda50a677cc in void blink::FrameSelection::setSelectionAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int, blink::CursorAlignOnScroll, blink::TextGranularity) third_party/WebKit/Source/core/editing/FrameSelection.cpp:331:9\n    #18 0x7fda50a6fa9a in blink::FrameSelection::selectAll() third_party/WebKit/Source/core/editing/FrameSelection.cpp:864:5\n    #19 0x7fda50b48cb2 in blink::executeSelectAll(blink::LocalFrame&, blink::Event*, blink::EditorCommandSource, WTF::String const&) third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1070:5\n    #20 0x7fda50b41c8e in blink::Editor::Command::execute(WTF::String const&, blink::Event*) const third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1792:12\n    #21 0x7fda4ff1d5a3 in blink::Document::execCommand(WTF::String const&, bool, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/dom/Document.cpp:4470:12\n    #22 0x7fda523162d7 in blink::DocumentV8Internal::execCommandMethod(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4682:19\n    #23 0x7fda5230c9b6 in blink::DocumentV8Internal::execCommandMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4693:5\n    #24 0x7fda4e73f6f1 in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/arguments.cc:33:3\n    #25 0x7fda4dac0e26 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>) v8/src/builtins.cc:3671:34\n    #26 0x7fda4db18613 in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*) v8/src/builtins.cc:3695:3\n    #27 0x7fda4dac898a in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins.cc:3692:1\n    #28 0x7fd88a3089da  (<unknown module>)\n    #29 0x7fd88a406df3  (<unknown module>)\n    #30 0x7fd88a3384a3  (<unknown module>)\n    #31 0x7fd88a319da1  (<unknown module>)\n    #28 0x7fda4df1633f in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>) v8/src/execution.cc:97:13\n    #29 0x7fda4df1566c in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) v8/src/execution.cc:163:10\n    #30 0x7fda4d9c88c3 in v8::Script::Run(v8::Local<v8::Context>) v8/src/api.cc:1717:23\n    #31 0x7fda51ef234f in blink::V8ScriptRunner::runCompiledScript(v8::Isolate*, v8::Local<v8::Script>, blink::ExecutionContext*) third_party/WebKit/Source/bindings/core/v8/V8ScriptRunner.cpp:417:18\n    #32 0x7fda51e31d16 in blink::ScriptController::executeScriptAndReturnValue(v8::Local<v8::Context>, blink::ScriptSourceCode const&, blink::AccessControlStatus, double*) third_party/WebKit/Source/bindings/core/v8/ScriptController.cpp:192:21\n    #33 0x7fda51e3661d in blink::ScriptController::evaluateScriptInMainWorld(blink::ScriptSourceCode const&, blink::AccessControlStatus, blink::ScriptController::ExecuteScriptPolicy, double*) third_party/WebKit/Source/bindings/core/v8/ScriptController.cpp:571:35\n    #34 0x7fda51e36b97 in blink::ScriptController::executeScriptInMainWorld(blink::ScriptSourceCode const&, blink::AccessControlStatus, double*) third_party/WebKit/Source/bindings/core/v8/ScriptController.cpp:544:5\n    #35 0x7fda502be0f6 in blink::ScriptLoader::executeScript(blink::ScriptSourceCode const&, double*) third_party/WebKit/Source/core/dom/ScriptLoader.cpp:431:5\n    #36 0x7fda502ba357 in blink::ScriptLoader::prepareScript(WTF::TextPosition const&, blink::ScriptLoader::LegacyTypeSupport) third_party/WebKit/Source/core/dom/ScriptLoader.cpp:280:14\n    #37 0x7fda50567e90 in blink::HTMLScriptRunner::runScript(blink::Element*, WTF::TextPosition const&) third_party/WebKit/Source/core/html/parser/HTMLScriptRunner.cpp:427:9\n    #38 0x7fda505678e2 in blink::HTMLScriptRunner::execute(WTF::RawPtr<blink::Element>, WTF::TextPosition const&) third_party/WebKit/Source/core/html/parser/HTMLScriptRunner.cpp:283:5\n    #39 0x7fda50525c1b in blink::HTMLDocumentParser::runScriptsForPausedTreeBuilder() third_party/WebKit/Source/core/html/parser/HTMLDocumentParser.cpp:330:9\n    #40 0x7fda50529774 in blink::HTMLDocumentParser::processParsedChunkFromBackgroundParser(WTF::PassOwnPtr<blink::HTMLDocumentParser::ParsedChunk>) third_party/WebKit/Source/core/html/parser/HTMLDocumentParser.cpp:525:13\n    #41 0x7fda505252fe in blink::HTMLDocumentParser::pumpPendingSpeculations() third_party/WebKit/Source/core/html/parser/HTMLDocumentParser.cpp:586:36\n    #42 0x7fda50524ea5 in blink::HTMLDocumentParser::resumeParsingAfterYield() third_party/WebKit/Source/core/html/parser/HTMLDocumentParser.cpp:319:5\n    #43 0x7fda5054f1f2 in WTF::FunctionWrapper<void (blink::HTMLParserScheduler::*)()>::operator()(WTF::WeakPtr<blink::HTMLParserScheduler> const&) third_party/WebKit/Source/wtf/Functional.h:99:16\n    #44 0x7fda5054eb3b in WTF::PartBoundFunctionImpl<1, WTF::FunctionWrapper<void (blink::HTMLParserScheduler::*)()>, void (blink::CrossThreadWeakPersistentThisPointer<blink::HTMLParserScheduler>)>::operator()() third_party/WebKit/Source/wtf/Functional.h:182:16\n    #45 0x7fda5aefa5e4 in blink::CancellableTaskFactory::CancellableTask::run() third_party/WebKit/Source/platform/scheduler/CancellableTaskFactory.cpp:28:9\n    #46 0x7fda55fa9f3e in base::internal::RunnableAdapter<void (*)(scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> >)>::Run(scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> >) base/bind_internal.h:158:12\n    #47 0x7fda55fa9d67 in base::internal::InvokeHelper<false, void, base::internal::RunnableAdapter<void (*)(scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> >)>, base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> > > >::MakeItSo(base::internal::RunnableAdapter<void (*)(scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> >)>, scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> >) base/bind_internal.h:298:5\n    #48 0x7fda55fa9c03 in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (*)(scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> >)>, void (scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> >), base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> > > >, base::internal::TypeList<base::internal::UnwrapTraits<base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> > > > >, base::internal::InvokeHelper<false, void, base::internal::RunnableAdapter<void (*)(scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> >)>, base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task, std::__1::default_delete<blink::WebTaskRunner::Task> > > >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:348:12\n    #49 0x7fda49e2dac7 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51:3\n    #50 0x7fda55fc870d in scheduler::TaskQueueManager::ProcessTaskFromWorkQueue(scheduler::internal::WorkQueue*, scheduler::internal::TaskQueueImpl::Task*) components/scheduler/base/task_queue_manager.cc:286:3\n    #51 0x7fda55fc517e in scheduler::TaskQueueManager::DoWork(base::TimeTicks, bool) components/scheduler/base/task_queue_manager.cc:198:13\n    #52 0x7fda55fcbf9a in base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (scheduler::TaskQueueManager::*)(base::TimeTicks, bool)>, base::internal::TypeList<base::WeakPtr<scheduler::TaskQueueManager> const&, base::TimeTicks const&, bool const&> >::MakeItSo(base::internal::RunnableAdapter<void (scheduler::TaskQueueManager::*)(base::TimeTicks, bool)>, base::WeakPtr<scheduler::TaskQueueManager> const&, base::TimeTicks const&, bool const&) base/bind_internal.h:308:5\n    #53 0x7fda49e2dac7 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51:3\n    #54 0x7fda49c94119 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:486:3\n    #55 0x7fda49c94ead in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:495:5\n    #56 0x7fda49c95542 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:607:13\n    #57 0x7fda49ca3b79 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_default.cc:33:21\n    #58 0x7fda49c935f5 in base::MessageLoop::RunHandler() base/message_loop/message_loop.cc:450:3\n    #59 0x7fda49d02c94 in base::RunLoop::Run() base/run_loop.cc:56:3\n    #60 0x7fda49c90e28 in base::MessageLoop::Run() base/message_loop/message_loop.cc:293:3\n    #61 0x7fda56132666 in content::RendererMain(content::MainFunctionParams const&) content/renderer/renderer_main.cc:226:7\n    #62 0x7fda49b2e308 in content::RunZygote(content::MainFunctionParams const&, content::ContentMainDelegate*) content/app/content_main_runner.cc:294:14\n    #63 0x7fda49b2ff32 in content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) content/app/content_main_runner.cc:381:12\n    #64 0x7fda49b332a1 in content::ContentMainRunnerImpl::Run() content/app/content_main_runner.cc:742:12\n    #65 0x7fda49b2d051 in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:15\n    #66 0x7fda48721d59 in ChromeMain chrome/app/chrome_main.cc:67:12\n    #67 0x7fda3dc1fec4 in __libc_start_main /build/buildd/eglibc-2.19/csu/libc-start.c:287\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: SEGV (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux-release_3e8ee0f0e660f39ebe723667101aab55a53e781c/symbolized/release/asan-symbolized-linux-release-v8-component-33791/chrome+0x90a7242)\n==1==ABORTING",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: SEGV (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux-release_3e8ee0f0e660f39ebe723667101aab55a53e781c/symbolized/release/asan-symbolized-linux-release-v8-component-33791/chrome+0x90a7242)",
+  "fault_type": "SEGV",
+  "call_stack": [
+    "#0 0x7fda4ecc3242 in blink::Member<blink::StyleEngine>::get() const third_party/WebKit/Source/platform/heap/Handle.h:824:29",
+    "#1 0x7fda4ecc00d1 in blink::Document::styleEngine() third_party/WebKit/Source/core/dom/Document.h:385:71",
+    "#2 0x7fda4fef7e5c in blink::Document::updateLayoutTreeIgnorePendingStylesheets() third_party/WebKit/Source/core/dom/Document.cpp:1990:53",
+    "#3 0x7fda4fef825e in blink::Document::updateLayoutIgnorePendingStylesheets(blink::Document::RunPostLayoutTasks) third_party/WebKit/Source/core/dom/Document.cpp:2018:5",
+    "#4 0x7fda50b99186 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:150:5",
+    "#5 0x7fda50ba0f82 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::rangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:1096:42",
+    "#6 0x7fda50bfea62 in blink::TextCheckingParagraph::checkingStart() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:206:27",
+    "#7 0x7fda50bfe68b in blink::TextCheckingParagraph::isRangeEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.h:73:40",
+    "#8 0x7fda50bfe5fa in blink::TextCheckingParagraph::isEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:182:12",
+    "#9 0x7fda50bf5aa6 in blink::SpellChecker::chunkAndMarkAllMisspellingsAndBadGrammar(unsigned int, blink::TextCheckingParagraph const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:512:9",
+    "#10 0x7fda50bf47d0 in blink::SpellChecker::markAllMisspellingsAndBadGrammarInRanges(unsigned int, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:479:5",
+    "#11 0x7fda50bf3e6d in blink::SpellChecker::markMisspellingsAndBadGrammar(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool, blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:640:9",
+    "#12 0x7fda50bf1826 in blink::SpellChecker::didBeginEditing(blink::Element*) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:147:13",
+    "#13 0x7fda4ff10813 in blink::Document::setFocusedElement(WTF::RawPtr<blink::Element>, blink::FocusParams const&) third_party/WebKit/Source/core/dom/Document.cpp:3673:13",
+    "#14 0x7fda5115d229 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>, blink::FocusParams const&) third_party/WebKit/Source/core/page/FocusController.cpp:912:36",
+    "#15 0x7fda5115ca98 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>) third_party/WebKit/Source/core/page/FocusController.cpp:869:12",
+    "#16 0x7fda50a72023 in blink::FrameSelection::setFocusedNodeIfNeeded() third_party/WebKit/Source/core/editing/FrameSelection.cpp:1112:17",
+    "#17 0x7fda50a677cc in void blink::FrameSelection::setSelectionAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int, blink::CursorAlignOnScroll, blink::TextGranularity) third_party/WebKit/Source/core/editing/FrameSelection.cpp:331:9",
+    "#18 0x7fda50a6fa9a in blink::FrameSelection::selectAll() third_party/WebKit/Source/core/editing/FrameSelection.cpp:864:5",
+    "#19 0x7fda50b48cb2 in blink::executeSelectAll(blink::LocalFrame&, blink::Event*, blink::EditorCommandSource, WTF::String const&) third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1070:5",
+    "#20 0x7fda50b41c8e in blink::Editor::Command::execute(WTF::String const&, blink::Event*) const third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1792:12",
+    "#21 0x7fda4ff1d5a3 in blink::Document::execCommand(WTF::String const&, bool, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/dom/Document.cpp:4470:12",
+    "#22 0x7fda523162d7 in blink::DocumentV8Internal::execCommandMethod(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4682:19",
+    "#23 0x7fda5230c9b6 in blink::DocumentV8Internal::execCommandMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4693:5",
+    "#24 0x7fda4e73f6f1 in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/arguments.cc:33:3",
+    "#25 0x7fda4dac0e26 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>) v8/src/builtins.cc:3671:34",
+    "#26 0x7fda4db18613 in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*) v8/src/builtins.cc:3695:3",
+    "#27 0x7fda4dac898a in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins.cc:3692:1"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7fda4ecc3242 in blink::Member<blink::StyleEngine>::get() const third_party/WebKit/Source/platform/heap/Handle.h:824:29",
+      "address": 140575601603138,
+      "function_name": "blink::Member<blink::StyleEngine>::get() const",
+      "function_offset": 29,
+      "source_file_name": "Handle.h",
+      "source_file_path": "third_party/WebKit/Source/platform/heap/Handle.h",
+      "source_file_line": 824
+    },
+    {
+      "line": "#1 0x7fda4ecc00d1 in blink::Document::styleEngine() third_party/WebKit/Source/core/dom/Document.h:385:71",
+      "address": 140575601590481,
+      "function_name": "blink::Document::styleEngine()",
+      "function_offset": 71,
+      "source_file_name": "Document.h",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.h",
+      "source_file_line": 385
+    },
+    {
+      "line": "#2 0x7fda4fef7e5c in blink::Document::updateLayoutTreeIgnorePendingStylesheets() third_party/WebKit/Source/core/dom/Document.cpp:1990:53",
+      "address": 140575620693596,
+      "function_name": "blink::Document::updateLayoutTreeIgnorePendingStylesheets()",
+      "function_offset": 53,
+      "source_file_name": "Document.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.cpp",
+      "source_file_line": 1990
+    },
+    {
+      "line": "#3 0x7fda4fef825e in blink::Document::updateLayoutIgnorePendingStylesheets(blink::Document::RunPostLayoutTasks) third_party/WebKit/Source/core/dom/Document.cpp:2018:5",
+      "address": 140575620694622,
+      "function_name": "blink::Document::updateLayoutIgnorePendingStylesheets(blink::Document::RunPostLayoutTasks)",
+      "function_offset": 5,
+      "source_file_name": "Document.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.cpp",
+      "source_file_line": 2018
+    },
+    {
+      "line": "#4 0x7fda50b99186 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:150:5",
+      "address": 140575633936774,
+      "function_name": "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int)",
+      "function_offset": 5,
+      "source_file_name": "TextIterator.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp",
+      "source_file_line": 150
+    },
+    {
+      "line": "#5 0x7fda50ba0f82 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::rangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:1096:42",
+      "address": 140575633969026,
+      "function_name": "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::rangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool)",
+      "function_offset": 42,
+      "source_file_name": "TextIterator.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp",
+      "source_file_line": 1096
+    },
+    {
+      "line": "#6 0x7fda50bfea62 in blink::TextCheckingParagraph::checkingStart() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:206:27",
+      "address": 140575634352738,
+      "function_name": "blink::TextCheckingParagraph::checkingStart() const",
+      "function_offset": 27,
+      "source_file_name": "TextCheckingHelper.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp",
+      "source_file_line": 206
+    },
+    {
+      "line": "#7 0x7fda50bfe68b in blink::TextCheckingParagraph::isRangeEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.h:73:40",
+      "address": 140575634351755,
+      "function_name": "blink::TextCheckingParagraph::isRangeEmpty() const",
+      "function_offset": 40,
+      "source_file_name": "TextCheckingHelper.h",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.h",
+      "source_file_line": 73
+    },
+    {
+      "line": "#8 0x7fda50bfe5fa in blink::TextCheckingParagraph::isEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:182:12",
+      "address": 140575634351610,
+      "function_name": "blink::TextCheckingParagraph::isEmpty() const",
+      "function_offset": 12,
+      "source_file_name": "TextCheckingHelper.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp",
+      "source_file_line": 182
+    },
+    {
+      "line": "#9 0x7fda50bf5aa6 in blink::SpellChecker::chunkAndMarkAllMisspellingsAndBadGrammar(unsigned int, blink::TextCheckingParagraph const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:512:9",
+      "address": 140575634315942,
+      "function_name": "blink::SpellChecker::chunkAndMarkAllMisspellingsAndBadGrammar(unsigned int, blink::TextCheckingParagraph const&)",
+      "function_offset": 9,
+      "source_file_name": "SpellChecker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp",
+      "source_file_line": 512
+    },
+    {
+      "line": "#10 0x7fda50bf47d0 in blink::SpellChecker::markAllMisspellingsAndBadGrammarInRanges(unsigned int, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:479:5",
+      "address": 140575634311120,
+      "function_name": "blink::SpellChecker::markAllMisspellingsAndBadGrammarInRanges(unsigned int, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&)",
+      "function_offset": 5,
+      "source_file_name": "SpellChecker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp",
+      "source_file_line": 479
+    },
+    {
+      "line": "#11 0x7fda50bf3e6d in blink::SpellChecker::markMisspellingsAndBadGrammar(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool, blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:640:9",
+      "address": 140575634308717,
+      "function_name": "blink::SpellChecker::markMisspellingsAndBadGrammar(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool, blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&)",
+      "function_offset": 9,
+      "source_file_name": "SpellChecker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp",
+      "source_file_line": 640
+    },
+    {
+      "line": "#12 0x7fda50bf1826 in blink::SpellChecker::didBeginEditing(blink::Element*) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:147:13",
+      "address": 140575634298918,
+      "function_name": "blink::SpellChecker::didBeginEditing(blink::Element*)",
+      "function_offset": 13,
+      "source_file_name": "SpellChecker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp",
+      "source_file_line": 147
+    },
+    {
+      "line": "#13 0x7fda4ff10813 in blink::Document::setFocusedElement(WTF::RawPtr<blink::Element>, blink::FocusParams const&) third_party/WebKit/Source/core/dom/Document.cpp:3673:13",
+      "address": 140575620794387,
+      "function_name": "blink::Document::setFocusedElement(WTF::RawPtr<blink::Element>, blink::FocusParams const&)",
+      "function_offset": 13,
+      "source_file_name": "Document.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.cpp",
+      "source_file_line": 3673
+    },
+    {
+      "line": "#14 0x7fda5115d229 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>, blink::FocusParams const&) third_party/WebKit/Source/core/page/FocusController.cpp:912:36",
+      "address": 140575639982633,
+      "function_name": "blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>, blink::FocusParams const&)",
+      "function_offset": 36,
+      "source_file_name": "FocusController.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/page/FocusController.cpp",
+      "source_file_line": 912
+    },
+    {
+      "line": "#15 0x7fda5115ca98 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>) third_party/WebKit/Source/core/page/FocusController.cpp:869:12",
+      "address": 140575639980696,
+      "function_name": "blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>)",
+      "function_offset": 12,
+      "source_file_name": "FocusController.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/page/FocusController.cpp",
+      "source_file_line": 869
+    },
+    {
+      "line": "#16 0x7fda50a72023 in blink::FrameSelection::setFocusedNodeIfNeeded() third_party/WebKit/Source/core/editing/FrameSelection.cpp:1112:17",
+      "address": 140575632728099,
+      "function_name": "blink::FrameSelection::setFocusedNodeIfNeeded()",
+      "function_offset": 17,
+      "source_file_name": "FrameSelection.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/FrameSelection.cpp",
+      "source_file_line": 1112
+    },
+    {
+      "line": "#17 0x7fda50a677cc in void blink::FrameSelection::setSelectionAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int, blink::CursorAlignOnScroll, blink::TextGranularity) third_party/WebKit/Source/core/editing/FrameSelection.cpp:331:9",
+      "address": 140575632685004,
+      "function_name": "void blink::FrameSelection::setSelectionAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int, blink::CursorAlignOnScroll, blink::TextGranularity)",
+      "function_offset": 9,
+      "source_file_name": "FrameSelection.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/FrameSelection.cpp",
+      "source_file_line": 331
+    },
+    {
+      "line": "#18 0x7fda50a6fa9a in blink::FrameSelection::selectAll() third_party/WebKit/Source/core/editing/FrameSelection.cpp:864:5",
+      "address": 140575632718490,
+      "function_name": "blink::FrameSelection::selectAll()",
+      "function_offset": 5,
+      "source_file_name": "FrameSelection.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/FrameSelection.cpp",
+      "source_file_line": 864
+    },
+    {
+      "line": "#19 0x7fda50b48cb2 in blink::executeSelectAll(blink::LocalFrame&, blink::Event*, blink::EditorCommandSource, WTF::String const&) third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1070:5",
+      "address": 140575633607858,
+      "function_name": "blink::executeSelectAll(blink::LocalFrame&, blink::Event*, blink::EditorCommandSource, WTF::String const&)",
+      "function_offset": 5,
+      "source_file_name": "EditorCommand.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp",
+      "source_file_line": 1070
+    },
+    {
+      "line": "#20 0x7fda50b41c8e in blink::Editor::Command::execute(WTF::String const&, blink::Event*) const third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1792:12",
+      "address": 140575633579150,
+      "function_name": "blink::Editor::Command::execute(WTF::String const&, blink::Event*) const",
+      "function_offset": 12,
+      "source_file_name": "EditorCommand.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp",
+      "source_file_line": 1792
+    },
+    {
+      "line": "#21 0x7fda4ff1d5a3 in blink::Document::execCommand(WTF::String const&, bool, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/dom/Document.cpp:4470:12",
+      "address": 140575620847011,
+      "function_name": "blink::Document::execCommand(WTF::String const&, bool, WTF::String const&, blink::ExceptionState&)",
+      "function_offset": 12,
+      "source_file_name": "Document.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.cpp",
+      "source_file_line": 4470
+    },
+    {
+      "line": "#22 0x7fda523162d7 in blink::DocumentV8Internal::execCommandMethod(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4682:19",
+      "address": 140575658566359,
+      "function_name": "blink::DocumentV8Internal::execCommandMethod(v8::FunctionCallbackInfo<v8::Value> const&)",
+      "function_offset": 19,
+      "source_file_name": "V8Document.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8Document.cpp",
+      "source_file_line": 4682
+    },
+    {
+      "line": "#23 0x7fda5230c9b6 in blink::DocumentV8Internal::execCommandMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4693:5",
+      "address": 140575658527158,
+      "function_name": "blink::DocumentV8Internal::execCommandMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&)",
+      "function_offset": 5,
+      "source_file_name": "V8Document.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8Document.cpp",
+      "source_file_line": 4693
+    },
+    {
+      "line": "#24 0x7fda4e73f6f1 in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/arguments.cc:33:3",
+      "address": 140575595820785,
+      "function_name": "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
+      "function_offset": 3,
+      "source_file_name": "arguments.cc",
+      "source_file_path": "v8/src/arguments.cc",
+      "source_file_line": 33
+    },
+    {
+      "line": "#25 0x7fda4dac0e26 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>) v8/src/builtins.cc:3671:34",
+      "address": 140575582719526,
+      "function_name": "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>)",
+      "function_offset": 34,
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 3671
+    },
+    {
+      "line": "#26 0x7fda4db18613 in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*) v8/src/builtins.cc:3695:3",
+      "address": 140575583077907,
+      "function_name": "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*)",
+      "function_offset": 3,
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 3695
+    },
+    {
+      "line": "#27 0x7fda4dac898a in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins.cc:3692:1",
+      "address": 140575582751114,
+      "function_name": "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)",
+      "function_offset": 1,
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 3692
+    }
+  ],
+  "full_stack_names": [
+    "blink::Member<blink::StyleEngine>::get",
+    "blink::Document::styleEngine",
+    "blink::Document::updateLayoutTreeIgnorePendingStylesheets",
+    "blink::Document::updateLayoutIgnorePendingStylesheets",
+    "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::TextIteratorAlgorithm",
+    "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::rangeLength",
+    "blink::TextCheckingParagraph::checkingStart",
+    "blink::TextCheckingParagraph::isRangeEmpty",
+    "blink::TextCheckingParagraph::isEmpty",
+    "blink::SpellChecker::chunkAndMarkAllMisspellingsAndBadGrammar",
+    "blink::SpellChecker::markAllMisspellingsAndBadGrammarInRanges",
+    "blink::SpellChecker::markMisspellingsAndBadGrammar",
+    "blink::SpellChecker::didBeginEditing",
+    "blink::Document::setFocusedElement",
+    "blink::FocusController::setFocusedElement",
+    "blink::FocusController::setFocusedElement",
+    "blink::FrameSelection::setFocusedNodeIfNeeded",
+    "void blink::FrameSelection::setSelectionAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >",
+    "blink::FrameSelection::selectAll",
+    "blink::executeSelectAll",
+    "blink::Editor::Command::execute",
+    "blink::Document::execCommand",
+    "blink::DocumentV8Internal::execCommandMethod",
+    "blink::DocumentV8Internal::execCommandMethodCallback",
+    "v8::internal::FunctionCallbackArguments::Call",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::Builtin_Impl_HandleApiCall",
+    "v8::internal::Builtin_HandleApiCall"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x7fda4ecc3242 in blink::Member<blink::StyleEngine>::get() const third_party/WebKit/Source/platform/heap/Handle.h:824:29",
+      "address": 140575601603138,
+      "function_name": "blink::Member<blink::StyleEngine>::get() const",
+      "function_offset": 29,
+      "source_file_name": "Handle.h",
+      "source_file_path": "third_party/WebKit/Source/platform/heap/Handle.h",
+      "source_file_line": 824
+    },
+    {
+      "line": "#1 0x7fda4ecc00d1 in blink::Document::styleEngine() third_party/WebKit/Source/core/dom/Document.h:385:71",
+      "address": 140575601590481,
+      "function_name": "blink::Document::styleEngine()",
+      "function_offset": 71,
+      "source_file_name": "Document.h",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.h",
+      "source_file_line": 385
+    },
+    {
+      "line": "#2 0x7fda4fef7e5c in blink::Document::updateLayoutTreeIgnorePendingStylesheets() third_party/WebKit/Source/core/dom/Document.cpp:1990:53",
+      "address": 140575620693596,
+      "function_name": "blink::Document::updateLayoutTreeIgnorePendingStylesheets()",
+      "function_offset": 53,
+      "source_file_name": "Document.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.cpp",
+      "source_file_line": 1990
+    },
+    {
+      "line": "#3 0x7fda4fef825e in blink::Document::updateLayoutIgnorePendingStylesheets(blink::Document::RunPostLayoutTasks) third_party/WebKit/Source/core/dom/Document.cpp:2018:5",
+      "address": 140575620694622,
+      "function_name": "blink::Document::updateLayoutIgnorePendingStylesheets(blink::Document::RunPostLayoutTasks)",
+      "function_offset": 5,
+      "source_file_name": "Document.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.cpp",
+      "source_file_line": 2018
+    },
+    {
+      "line": "#4 0x7fda50b99186 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:150:5",
+      "address": 140575633936774,
+      "function_name": "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int)",
+      "function_offset": 5,
+      "source_file_name": "TextIterator.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp",
+      "source_file_line": 150
+    },
+    {
+      "line": "#5 0x7fda50ba0f82 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::rangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:1096:42",
+      "address": 140575633969026,
+      "function_name": "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::rangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool)",
+      "function_offset": 42,
+      "source_file_name": "TextIterator.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp",
+      "source_file_line": 1096
+    },
+    {
+      "line": "#6 0x7fda50bfea62 in blink::TextCheckingParagraph::checkingStart() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:206:27",
+      "address": 140575634352738,
+      "function_name": "blink::TextCheckingParagraph::checkingStart() const",
+      "function_offset": 27,
+      "source_file_name": "TextCheckingHelper.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp",
+      "source_file_line": 206
+    },
+    {
+      "line": "#7 0x7fda50bfe68b in blink::TextCheckingParagraph::isRangeEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.h:73:40",
+      "address": 140575634351755,
+      "function_name": "blink::TextCheckingParagraph::isRangeEmpty() const",
+      "function_offset": 40,
+      "source_file_name": "TextCheckingHelper.h",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.h",
+      "source_file_line": 73
+    },
+    {
+      "line": "#8 0x7fda50bfe5fa in blink::TextCheckingParagraph::isEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:182:12",
+      "address": 140575634351610,
+      "function_name": "blink::TextCheckingParagraph::isEmpty() const",
+      "function_offset": 12,
+      "source_file_name": "TextCheckingHelper.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp",
+      "source_file_line": 182
+    },
+    {
+      "line": "#9 0x7fda50bf5aa6 in blink::SpellChecker::chunkAndMarkAllMisspellingsAndBadGrammar(unsigned int, blink::TextCheckingParagraph const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:512:9",
+      "address": 140575634315942,
+      "function_name": "blink::SpellChecker::chunkAndMarkAllMisspellingsAndBadGrammar(unsigned int, blink::TextCheckingParagraph const&)",
+      "function_offset": 9,
+      "source_file_name": "SpellChecker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp",
+      "source_file_line": 512
+    },
+    {
+      "line": "#10 0x7fda50bf47d0 in blink::SpellChecker::markAllMisspellingsAndBadGrammarInRanges(unsigned int, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:479:5",
+      "address": 140575634311120,
+      "function_name": "blink::SpellChecker::markAllMisspellingsAndBadGrammarInRanges(unsigned int, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&)",
+      "function_offset": 5,
+      "source_file_name": "SpellChecker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp",
+      "source_file_line": 479
+    },
+    {
+      "line": "#11 0x7fda50bf3e6d in blink::SpellChecker::markMisspellingsAndBadGrammar(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool, blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:640:9",
+      "address": 140575634308717,
+      "function_name": "blink::SpellChecker::markMisspellingsAndBadGrammar(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool, blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&)",
+      "function_offset": 9,
+      "source_file_name": "SpellChecker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp",
+      "source_file_line": 640
+    },
+    {
+      "line": "#12 0x7fda50bf1826 in blink::SpellChecker::didBeginEditing(blink::Element*) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:147:13",
+      "address": 140575634298918,
+      "function_name": "blink::SpellChecker::didBeginEditing(blink::Element*)",
+      "function_offset": 13,
+      "source_file_name": "SpellChecker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp",
+      "source_file_line": 147
+    },
+    {
+      "line": "#13 0x7fda4ff10813 in blink::Document::setFocusedElement(WTF::RawPtr<blink::Element>, blink::FocusParams const&) third_party/WebKit/Source/core/dom/Document.cpp:3673:13",
+      "address": 140575620794387,
+      "function_name": "blink::Document::setFocusedElement(WTF::RawPtr<blink::Element>, blink::FocusParams const&)",
+      "function_offset": 13,
+      "source_file_name": "Document.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.cpp",
+      "source_file_line": 3673
+    },
+    {
+      "line": "#14 0x7fda5115d229 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>, blink::FocusParams const&) third_party/WebKit/Source/core/page/FocusController.cpp:912:36",
+      "address": 140575639982633,
+      "function_name": "blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>, blink::FocusParams const&)",
+      "function_offset": 36,
+      "source_file_name": "FocusController.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/page/FocusController.cpp",
+      "source_file_line": 912
+    },
+    {
+      "line": "#15 0x7fda5115ca98 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>) third_party/WebKit/Source/core/page/FocusController.cpp:869:12",
+      "address": 140575639980696,
+      "function_name": "blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>)",
+      "function_offset": 12,
+      "source_file_name": "FocusController.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/page/FocusController.cpp",
+      "source_file_line": 869
+    },
+    {
+      "line": "#16 0x7fda50a72023 in blink::FrameSelection::setFocusedNodeIfNeeded() third_party/WebKit/Source/core/editing/FrameSelection.cpp:1112:17",
+      "address": 140575632728099,
+      "function_name": "blink::FrameSelection::setFocusedNodeIfNeeded()",
+      "function_offset": 17,
+      "source_file_name": "FrameSelection.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/FrameSelection.cpp",
+      "source_file_line": 1112
+    },
+    {
+      "line": "#17 0x7fda50a677cc in void blink::FrameSelection::setSelectionAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int, blink::CursorAlignOnScroll, blink::TextGranularity) third_party/WebKit/Source/core/editing/FrameSelection.cpp:331:9",
+      "address": 140575632685004,
+      "function_name": "void blink::FrameSelection::setSelectionAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int, blink::CursorAlignOnScroll, blink::TextGranularity)",
+      "function_offset": 9,
+      "source_file_name": "FrameSelection.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/FrameSelection.cpp",
+      "source_file_line": 331
+    },
+    {
+      "line": "#18 0x7fda50a6fa9a in blink::FrameSelection::selectAll() third_party/WebKit/Source/core/editing/FrameSelection.cpp:864:5",
+      "address": 140575632718490,
+      "function_name": "blink::FrameSelection::selectAll()",
+      "function_offset": 5,
+      "source_file_name": "FrameSelection.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/FrameSelection.cpp",
+      "source_file_line": 864
+    },
+    {
+      "line": "#19 0x7fda50b48cb2 in blink::executeSelectAll(blink::LocalFrame&, blink::Event*, blink::EditorCommandSource, WTF::String const&) third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1070:5",
+      "address": 140575633607858,
+      "function_name": "blink::executeSelectAll(blink::LocalFrame&, blink::Event*, blink::EditorCommandSource, WTF::String const&)",
+      "function_offset": 5,
+      "source_file_name": "EditorCommand.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp",
+      "source_file_line": 1070
+    },
+    {
+      "line": "#20 0x7fda50b41c8e in blink::Editor::Command::execute(WTF::String const&, blink::Event*) const third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1792:12",
+      "address": 140575633579150,
+      "function_name": "blink::Editor::Command::execute(WTF::String const&, blink::Event*) const",
+      "function_offset": 12,
+      "source_file_name": "EditorCommand.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp",
+      "source_file_line": 1792
+    },
+    {
+      "line": "#21 0x7fda4ff1d5a3 in blink::Document::execCommand(WTF::String const&, bool, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/dom/Document.cpp:4470:12",
+      "address": 140575620847011,
+      "function_name": "blink::Document::execCommand(WTF::String const&, bool, WTF::String const&, blink::ExceptionState&)",
+      "function_offset": 12,
+      "source_file_name": "Document.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/dom/Document.cpp",
+      "source_file_line": 4470
+    },
+    {
+      "line": "#22 0x7fda523162d7 in blink::DocumentV8Internal::execCommandMethod(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4682:19",
+      "address": 140575658566359,
+      "function_name": "blink::DocumentV8Internal::execCommandMethod(v8::FunctionCallbackInfo<v8::Value> const&)",
+      "function_offset": 19,
+      "source_file_name": "V8Document.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8Document.cpp",
+      "source_file_line": 4682
+    },
+    {
+      "line": "#23 0x7fda5230c9b6 in blink::DocumentV8Internal::execCommandMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4693:5",
+      "address": 140575658527158,
+      "function_name": "blink::DocumentV8Internal::execCommandMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&)",
+      "function_offset": 5,
+      "source_file_name": "V8Document.cpp",
+      "source_file_path": "out/Release/gen/blink/bindings/core/v8/V8Document.cpp",
+      "source_file_line": 4693
+    },
+    {
+      "line": "#24 0x7fda4e73f6f1 in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/arguments.cc:33:3",
+      "address": 140575595820785,
+      "function_name": "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
+      "function_offset": 3,
+      "source_file_name": "arguments.cc",
+      "source_file_path": "v8/src/arguments.cc",
+      "source_file_line": 33
+    },
+    {
+      "line": "#25 0x7fda4dac0e26 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>) v8/src/builtins.cc:3671:34",
+      "address": 140575582719526,
+      "function_name": "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>)",
+      "function_offset": 34,
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 3671
+    },
+    {
+      "line": "#26 0x7fda4db18613 in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*) v8/src/builtins.cc:3695:3",
+      "address": 140575583077907,
+      "function_name": "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*)",
+      "function_offset": 3,
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 3695
+    },
+    {
+      "line": "#27 0x7fda4dac898a in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins.cc:3692:1",
+      "address": 140575582751114,
+      "function_name": "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)",
+      "function_offset": 1,
+      "source_file_name": "builtins.cc",
+      "source_file_path": "v8/src/builtins.cc",
+      "source_file_line": 3692
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x7fda4ecc3242 in blink::Member<blink::StyleEngine>::get() const third_party/WebKit/Source/platform/heap/Handle.h:824:29",
+    "#1 0x7fda4ecc00d1 in blink::Document::styleEngine() third_party/WebKit/Source/core/dom/Document.h:385:71",
+    "#2 0x7fda4fef7e5c in blink::Document::updateLayoutTreeIgnorePendingStylesheets() third_party/WebKit/Source/core/dom/Document.cpp:1990:53",
+    "#3 0x7fda4fef825e in blink::Document::updateLayoutIgnorePendingStylesheets(blink::Document::RunPostLayoutTasks) third_party/WebKit/Source/core/dom/Document.cpp:2018:5",
+    "#4 0x7fda50b99186 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:150:5",
+    "#5 0x7fda50ba0f82 in blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::rangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool) third_party/WebKit/Source/core/editing/iterators/TextIterator.cpp:1096:42",
+    "#6 0x7fda50bfea62 in blink::TextCheckingParagraph::checkingStart() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:206:27",
+    "#7 0x7fda50bfe68b in blink::TextCheckingParagraph::isRangeEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.h:73:40",
+    "#8 0x7fda50bfe5fa in blink::TextCheckingParagraph::isEmpty() const third_party/WebKit/Source/core/editing/spellcheck/TextCheckingHelper.cpp:182:12",
+    "#9 0x7fda50bf5aa6 in blink::SpellChecker::chunkAndMarkAllMisspellingsAndBadGrammar(unsigned int, blink::TextCheckingParagraph const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:512:9",
+    "#10 0x7fda50bf47d0 in blink::SpellChecker::markAllMisspellingsAndBadGrammarInRanges(unsigned int, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, blink::EphemeralRangeTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:479:5",
+    "#11 0x7fda50bf3e6d in blink::SpellChecker::markMisspellingsAndBadGrammar(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, bool, blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:640:9",
+    "#12 0x7fda50bf1826 in blink::SpellChecker::didBeginEditing(blink::Element*) third_party/WebKit/Source/core/editing/spellcheck/SpellChecker.cpp:147:13",
+    "#13 0x7fda4ff10813 in blink::Document::setFocusedElement(WTF::RawPtr<blink::Element>, blink::FocusParams const&) third_party/WebKit/Source/core/dom/Document.cpp:3673:13",
+    "#14 0x7fda5115d229 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>, blink::FocusParams const&) third_party/WebKit/Source/core/page/FocusController.cpp:912:36",
+    "#15 0x7fda5115ca98 in blink::FocusController::setFocusedElement(blink::Element*, WTF::RawPtr<blink::Frame>) third_party/WebKit/Source/core/page/FocusController.cpp:869:12",
+    "#16 0x7fda50a72023 in blink::FrameSelection::setFocusedNodeIfNeeded() third_party/WebKit/Source/core/editing/FrameSelection.cpp:1112:17",
+    "#17 0x7fda50a677cc in void blink::FrameSelection::setSelectionAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >(blink::VisibleSelectionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&, unsigned int, blink::CursorAlignOnScroll, blink::TextGranularity) third_party/WebKit/Source/core/editing/FrameSelection.cpp:331:9",
+    "#18 0x7fda50a6fa9a in blink::FrameSelection::selectAll() third_party/WebKit/Source/core/editing/FrameSelection.cpp:864:5",
+    "#19 0x7fda50b48cb2 in blink::executeSelectAll(blink::LocalFrame&, blink::Event*, blink::EditorCommandSource, WTF::String const&) third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1070:5",
+    "#20 0x7fda50b41c8e in blink::Editor::Command::execute(WTF::String const&, blink::Event*) const third_party/WebKit/Source/core/editing/commands/EditorCommand.cpp:1792:12",
+    "#21 0x7fda4ff1d5a3 in blink::Document::execCommand(WTF::String const&, bool, WTF::String const&, blink::ExceptionState&) third_party/WebKit/Source/core/dom/Document.cpp:4470:12",
+    "#22 0x7fda523162d7 in blink::DocumentV8Internal::execCommandMethod(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4682:19",
+    "#23 0x7fda5230c9b6 in blink::DocumentV8Internal::execCommandMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) out/Release/gen/blink/bindings/core/v8/V8Document.cpp:4693:5",
+    "#24 0x7fda4e73f6f1 in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/arguments.cc:33:3",
+    "#25 0x7fda4dac0e26 in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>) v8/src/builtins.cc:3671:34",
+    "#26 0x7fda4db18613 in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*) v8/src/builtins.cc:3695:3",
+    "#27 0x7fda4dac898a in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins.cc:3692:1"
+  ],
+  "minimized_stack_function_names": [
+    "blink::Member<blink::StyleEngine>::get",
+    "blink::Document::styleEngine",
+    "blink::Document::updateLayoutTreeIgnorePendingStylesheets",
+    "blink::Document::updateLayoutIgnorePendingStylesheets",
+    "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::TextIteratorAlgorithm",
+    "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >::rangeLength",
+    "blink::TextCheckingParagraph::checkingStart",
+    "blink::TextCheckingParagraph::isRangeEmpty",
+    "blink::TextCheckingParagraph::isEmpty",
+    "blink::SpellChecker::chunkAndMarkAllMisspellingsAndBadGrammar",
+    "blink::SpellChecker::markAllMisspellingsAndBadGrammarInRanges",
+    "blink::SpellChecker::markMisspellingsAndBadGrammar",
+    "blink::SpellChecker::didBeginEditing",
+    "blink::Document::setFocusedElement",
+    "blink::FocusController::setFocusedElement",
+    "blink::FocusController::setFocusedElement",
+    "blink::FrameSelection::setFocusedNodeIfNeeded",
+    "void blink::FrameSelection::setSelectionAlgorithm<blink::EditingAlgorithm<blink::NodeTraversal> >",
+    "blink::FrameSelection::selectAll",
+    "blink::executeSelectAll",
+    "blink::Editor::Command::execute",
+    "blink::Document::execCommand",
+    "blink::DocumentV8Internal::execCommandMethod",
+    "blink::DocumentV8Internal::execCommandMethodCallback",
+    "v8::internal::FunctionCallbackArguments::Call",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::Builtin_Impl_HandleApiCall",
+    "v8::internal::Builtin_HandleApiCall"
+  ]
+}

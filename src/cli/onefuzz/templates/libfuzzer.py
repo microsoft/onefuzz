@@ -58,7 +58,8 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = True,
-        expect_crash_on_failure: bool = True,
+        expect_crash_on_failure: bool = False,
+        minimized_stack_depth: Optional[int] = None,
     ) -> None:
 
         regression_containers = [
@@ -89,6 +90,7 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
+            minimized_stack_depth=minimized_stack_depth,
         )
 
         fuzzer_containers = [
@@ -175,6 +177,7 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
+            minimized_stack_depth=minimized_stack_depth,
         )
 
     def basic(
@@ -207,7 +210,8 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = True,
-        expect_crash_on_failure: bool = True,
+        expect_crash_on_failure: bool = False,
+        minimized_stack_depth: Optional[int] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -288,6 +292,7 @@ class Libfuzzer(Command):
             colocate_secondary_tasks=colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
+            minimized_stack_depth=minimized_stack_depth,
         )
 
         self.logger.info("done creating tasks")
@@ -438,7 +443,7 @@ class Libfuzzer(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
-        expect_crash_on_failure: bool = True,
+        expect_crash_on_failure: bool = False,
     ) -> Optional[Job]:
 
         """
@@ -621,7 +626,7 @@ class Libfuzzer(Command):
         with tempfile.TemporaryDirectory() as tempdir:
             if sysroot:
                 setup_path = File(os.path.join(tempdir, "setup.sh"))
-                with open(setup_path, "w") as handle:
+                with open(setup_path, "w", newline="\n") as handle:
                     sysroot_filename = helper.target_exe_blob_name(sysroot, None)
                     handle.write(
                         "#!/bin/bash\n"
@@ -633,7 +638,7 @@ class Libfuzzer(Command):
                     )
 
                 wrapper_path = File(os.path.join(tempdir, wrapper_name))
-                with open(wrapper_path, "w") as handle:
+                with open(wrapper_path, "w", newline="\n") as handle:
                     handle.write(
                         "#!/bin/bash\n"
                         'SETUP_DIR=$(dirname "$(readlink -f "$0")")\n'
@@ -643,7 +648,7 @@ class Libfuzzer(Command):
                 upload_files = [setup_path, wrapper_path, sysroot]
             else:
                 setup_path = File(os.path.join(tempdir, "setup.sh"))
-                with open(setup_path, "w") as handle:
+                with open(setup_path, "w", newline="\n") as handle:
                     handle.write(
                         "#!/bin/bash\n"
                         "set -ex\n"
@@ -651,7 +656,7 @@ class Libfuzzer(Command):
                     )
 
                 wrapper_path = File(os.path.join(tempdir, wrapper_name))
-                with open(wrapper_path, "w") as handle:
+                with open(wrapper_path, "w", newline="\n") as handle:
                     handle.write(
                         "#!/bin/bash\n"
                         'SETUP_DIR=$(dirname "$(readlink -f "$0")")\n'

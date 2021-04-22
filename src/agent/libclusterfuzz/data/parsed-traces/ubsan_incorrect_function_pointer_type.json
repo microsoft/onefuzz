@@ -1,0 +1,222 @@
+{
+  "text": "../../ui/gl/gl_implementation.cc:138:18: runtime error: call to function eglGetProcAddress through pointer to incorrect function type void *(*)(const char *)\nthird_party/angle/src/libEGL/libEGL.cpp:287: note: eglGetProcAddress defined here\n#0 0x6adc5c in gl::GetGLProcAddress(char const*) ui/gl/gl_implementation.cc:138:18\n#1 0x6d34f2 in gl::DriverGL::InitializeStaticBindings() ui/gl/gl_bindings_autogen_gl.cc:78:42\n#2 0x6a9891 in gl::InitializeStaticGLBindingsGL() ui/gl/gl_gl_api_implementation.cc:381:15\n#3 0xc1f68b in gl::init::(anonymous namespace)::InitializeStaticEGLInternal() ui/gl/init/gl_initializer_x11.cc:118:3\n#4 0xc1f0a0 in gl::init::InitializeStaticGLBindings(gl::GLImplementation) ui/gl/init/gl_initializer_x11.cc:169:14\n#5 0xc1e94c in gl::init::InitializeGLOneOffImplementation(gl::GLImplementation, bool, bool, bool) ui/gl/init/gl_factory.cc:65:7\n#6 0x53e356 in gpu::(anonymous namespace)::CommandBufferSetup::CommandBufferSetup() gpu/command_buffer/tests/fuzzer_main.cc:105:5\n#7 0x521e5a in __cxx_global_var_init gpu/command_buffer/tests/fuzzer_main.cc:317:35\n#8 0xed9a7c in __libc_csu_init (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-438050/gpu_angle_fuzzer+0xed9a7c)\n#9 0x7f8babe1ae54 in __libc_start_main /build/buildd/eglibc-2.19/csu/libc-start.c:246\n#10 0x52256c in _start (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-438050/gpu_angle_fuzzer+0x52256c)\n \nSUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ../../ui/gl/gl_implementation.cc:138:18 in\n",
+  "sanitizer": "UndefinedBehaviorSanitizer",
+  "summary": "UndefinedBehaviorSanitizer: undefined-behavior ../../ui/gl/gl_implementation.cc:138:18 in",
+  "fault_type": "undefined-behavior",
+  "call_stack": [
+    "#0 0x6adc5c in gl::GetGLProcAddress(char const*) ui/gl/gl_implementation.cc:138:18",
+    "#1 0x6d34f2 in gl::DriverGL::InitializeStaticBindings() ui/gl/gl_bindings_autogen_gl.cc:78:42",
+    "#2 0x6a9891 in gl::InitializeStaticGLBindingsGL() ui/gl/gl_gl_api_implementation.cc:381:15",
+    "#3 0xc1f68b in gl::init::(anonymous namespace)::InitializeStaticEGLInternal() ui/gl/init/gl_initializer_x11.cc:118:3",
+    "#4 0xc1f0a0 in gl::init::InitializeStaticGLBindings(gl::GLImplementation) ui/gl/init/gl_initializer_x11.cc:169:14",
+    "#5 0xc1e94c in gl::init::InitializeGLOneOffImplementation(gl::GLImplementation, bool, bool, bool) ui/gl/init/gl_factory.cc:65:7",
+    "#6 0x53e356 in gpu::(anonymous namespace)::CommandBufferSetup::CommandBufferSetup() gpu/command_buffer/tests/fuzzer_main.cc:105:5",
+    "#7 0x521e5a in __cxx_global_var_init gpu/command_buffer/tests/fuzzer_main.cc:317:35",
+    "#8 0xed9a7c in __libc_csu_init (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-438050/gpu_angle_fuzzer+0xed9a7c)",
+    "#9 0x7f8babe1ae54 in __libc_start_main /build/buildd/eglibc-2.19/csu/libc-start.c:246",
+    "#10 0x52256c in _start (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-438050/gpu_angle_fuzzer+0x52256c)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x6adc5c in gl::GetGLProcAddress(char const*) ui/gl/gl_implementation.cc:138:18",
+      "address": 7003228,
+      "function_name": "gl::GetGLProcAddress(char const*)",
+      "function_offset": 18,
+      "source_file_name": "gl_implementation.cc",
+      "source_file_path": "ui/gl/gl_implementation.cc",
+      "source_file_line": 138
+    },
+    {
+      "line": "#1 0x6d34f2 in gl::DriverGL::InitializeStaticBindings() ui/gl/gl_bindings_autogen_gl.cc:78:42",
+      "address": 7156978,
+      "function_name": "gl::DriverGL::InitializeStaticBindings()",
+      "function_offset": 42,
+      "source_file_name": "gl_bindings_autogen_gl.cc",
+      "source_file_path": "ui/gl/gl_bindings_autogen_gl.cc",
+      "source_file_line": 78
+    },
+    {
+      "line": "#2 0x6a9891 in gl::InitializeStaticGLBindingsGL() ui/gl/gl_gl_api_implementation.cc:381:15",
+      "address": 6985873,
+      "function_name": "gl::InitializeStaticGLBindingsGL()",
+      "function_offset": 15,
+      "source_file_name": "gl_gl_api_implementation.cc",
+      "source_file_path": "ui/gl/gl_gl_api_implementation.cc",
+      "source_file_line": 381
+    },
+    {
+      "line": "#3 0xc1f68b in gl::init::(anonymous namespace)::InitializeStaticEGLInternal() ui/gl/init/gl_initializer_x11.cc:118:3",
+      "address": 12711563,
+      "function_name": "gl::init::(anonymous namespace)::InitializeStaticEGLInternal()",
+      "function_offset": 3,
+      "source_file_name": "gl_initializer_x11.cc",
+      "source_file_path": "ui/gl/init/gl_initializer_x11.cc",
+      "source_file_line": 118
+    },
+    {
+      "line": "#4 0xc1f0a0 in gl::init::InitializeStaticGLBindings(gl::GLImplementation) ui/gl/init/gl_initializer_x11.cc:169:14",
+      "address": 12710048,
+      "function_name": "gl::init::InitializeStaticGLBindings(gl::GLImplementation)",
+      "function_offset": 14,
+      "source_file_name": "gl_initializer_x11.cc",
+      "source_file_path": "ui/gl/init/gl_initializer_x11.cc",
+      "source_file_line": 169
+    },
+    {
+      "line": "#5 0xc1e94c in gl::init::InitializeGLOneOffImplementation(gl::GLImplementation, bool, bool, bool) ui/gl/init/gl_factory.cc:65:7",
+      "address": 12708172,
+      "function_name": "gl::init::InitializeGLOneOffImplementation(gl::GLImplementation, bool, bool, bool)",
+      "function_offset": 7,
+      "source_file_name": "gl_factory.cc",
+      "source_file_path": "ui/gl/init/gl_factory.cc",
+      "source_file_line": 65
+    },
+    {
+      "line": "#6 0x53e356 in gpu::(anonymous namespace)::CommandBufferSetup::CommandBufferSetup() gpu/command_buffer/tests/fuzzer_main.cc:105:5",
+      "address": 5497686,
+      "function_name": "gpu::(anonymous namespace)::CommandBufferSetup::CommandBufferSetup()",
+      "function_offset": 5,
+      "source_file_name": "fuzzer_main.cc",
+      "source_file_path": "gpu/command_buffer/tests/fuzzer_main.cc",
+      "source_file_line": 105
+    },
+    {
+      "line": "#7 0x521e5a in __cxx_global_var_init gpu/command_buffer/tests/fuzzer_main.cc:317:35",
+      "address": 5381722,
+      "function_name": "__cxx_global_var_init",
+      "function_offset": 35,
+      "source_file_name": "fuzzer_main.cc",
+      "source_file_path": "gpu/command_buffer/tests/fuzzer_main.cc",
+      "source_file_line": 317
+    },
+    {
+      "line": "#8 0xed9a7c in __libc_csu_init (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-438050/gpu_angle_fuzzer+0xed9a7c)",
+      "address": 15571580,
+      "function_name": "__libc_csu_init",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-438050/gpu_angle_fuzzer",
+      "module_offset": 15571580
+    },
+    {
+      "line": "#9 0x7f8babe1ae54 in __libc_start_main /build/buildd/eglibc-2.19/csu/libc-start.c:246",
+      "address": 140237860875860,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/buildd/eglibc-2.19/csu/libc-start.c",
+      "source_file_line": 246
+    },
+    {
+      "line": "#10 0x52256c in _start (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-438050/gpu_angle_fuzzer+0x52256c)",
+      "address": 5383532,
+      "function_name": "_start",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-release-ubsan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-release-438050/gpu_angle_fuzzer",
+      "module_offset": 5383532
+    }
+  ],
+  "full_stack_names": [
+    "gl::GetGLProcAddress",
+    "gl::DriverGL::InitializeStaticBindings",
+    "gl::InitializeStaticGLBindingsGL",
+    "gl::init::",
+    "gl::init::InitializeStaticGLBindings",
+    "gl::init::InitializeGLOneOffImplementation",
+    "gpu::",
+    "__cxx_global_var_init",
+    "__libc_csu_init",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x6adc5c in gl::GetGLProcAddress(char const*) ui/gl/gl_implementation.cc:138:18",
+      "address": 7003228,
+      "function_name": "gl::GetGLProcAddress(char const*)",
+      "function_offset": 18,
+      "source_file_name": "gl_implementation.cc",
+      "source_file_path": "ui/gl/gl_implementation.cc",
+      "source_file_line": 138
+    },
+    {
+      "line": "#1 0x6d34f2 in gl::DriverGL::InitializeStaticBindings() ui/gl/gl_bindings_autogen_gl.cc:78:42",
+      "address": 7156978,
+      "function_name": "gl::DriverGL::InitializeStaticBindings()",
+      "function_offset": 42,
+      "source_file_name": "gl_bindings_autogen_gl.cc",
+      "source_file_path": "ui/gl/gl_bindings_autogen_gl.cc",
+      "source_file_line": 78
+    },
+    {
+      "line": "#2 0x6a9891 in gl::InitializeStaticGLBindingsGL() ui/gl/gl_gl_api_implementation.cc:381:15",
+      "address": 6985873,
+      "function_name": "gl::InitializeStaticGLBindingsGL()",
+      "function_offset": 15,
+      "source_file_name": "gl_gl_api_implementation.cc",
+      "source_file_path": "ui/gl/gl_gl_api_implementation.cc",
+      "source_file_line": 381
+    },
+    {
+      "line": "#3 0xc1f68b in gl::init::(anonymous namespace)::InitializeStaticEGLInternal() ui/gl/init/gl_initializer_x11.cc:118:3",
+      "address": 12711563,
+      "function_name": "gl::init::(anonymous namespace)::InitializeStaticEGLInternal()",
+      "function_offset": 3,
+      "source_file_name": "gl_initializer_x11.cc",
+      "source_file_path": "ui/gl/init/gl_initializer_x11.cc",
+      "source_file_line": 118
+    },
+    {
+      "line": "#4 0xc1f0a0 in gl::init::InitializeStaticGLBindings(gl::GLImplementation) ui/gl/init/gl_initializer_x11.cc:169:14",
+      "address": 12710048,
+      "function_name": "gl::init::InitializeStaticGLBindings(gl::GLImplementation)",
+      "function_offset": 14,
+      "source_file_name": "gl_initializer_x11.cc",
+      "source_file_path": "ui/gl/init/gl_initializer_x11.cc",
+      "source_file_line": 169
+    },
+    {
+      "line": "#5 0xc1e94c in gl::init::InitializeGLOneOffImplementation(gl::GLImplementation, bool, bool, bool) ui/gl/init/gl_factory.cc:65:7",
+      "address": 12708172,
+      "function_name": "gl::init::InitializeGLOneOffImplementation(gl::GLImplementation, bool, bool, bool)",
+      "function_offset": 7,
+      "source_file_name": "gl_factory.cc",
+      "source_file_path": "ui/gl/init/gl_factory.cc",
+      "source_file_line": 65
+    },
+    {
+      "line": "#6 0x53e356 in gpu::(anonymous namespace)::CommandBufferSetup::CommandBufferSetup() gpu/command_buffer/tests/fuzzer_main.cc:105:5",
+      "address": 5497686,
+      "function_name": "gpu::(anonymous namespace)::CommandBufferSetup::CommandBufferSetup()",
+      "function_offset": 5,
+      "source_file_name": "fuzzer_main.cc",
+      "source_file_path": "gpu/command_buffer/tests/fuzzer_main.cc",
+      "source_file_line": 105
+    },
+    {
+      "line": "#7 0x521e5a in __cxx_global_var_init gpu/command_buffer/tests/fuzzer_main.cc:317:35",
+      "address": 5381722,
+      "function_name": "__cxx_global_var_init",
+      "function_offset": 35,
+      "source_file_name": "fuzzer_main.cc",
+      "source_file_path": "gpu/command_buffer/tests/fuzzer_main.cc",
+      "source_file_line": 317
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x6adc5c in gl::GetGLProcAddress(char const*) ui/gl/gl_implementation.cc:138:18",
+    "#1 0x6d34f2 in gl::DriverGL::InitializeStaticBindings() ui/gl/gl_bindings_autogen_gl.cc:78:42",
+    "#2 0x6a9891 in gl::InitializeStaticGLBindingsGL() ui/gl/gl_gl_api_implementation.cc:381:15",
+    "#3 0xc1f68b in gl::init::(anonymous namespace)::InitializeStaticEGLInternal() ui/gl/init/gl_initializer_x11.cc:118:3",
+    "#4 0xc1f0a0 in gl::init::InitializeStaticGLBindings(gl::GLImplementation) ui/gl/init/gl_initializer_x11.cc:169:14",
+    "#5 0xc1e94c in gl::init::InitializeGLOneOffImplementation(gl::GLImplementation, bool, bool, bool) ui/gl/init/gl_factory.cc:65:7",
+    "#6 0x53e356 in gpu::(anonymous namespace)::CommandBufferSetup::CommandBufferSetup() gpu/command_buffer/tests/fuzzer_main.cc:105:5",
+    "#7 0x521e5a in __cxx_global_var_init gpu/command_buffer/tests/fuzzer_main.cc:317:35"
+  ],
+  "minimized_stack_function_names": [
+    "gl::GetGLProcAddress",
+    "gl::DriverGL::InitializeStaticBindings",
+    "gl::InitializeStaticGLBindingsGL",
+    "gl::init::",
+    "gl::init::InitializeStaticGLBindings",
+    "gl::init::InitializeGLOneOffImplementation",
+    "gpu::",
+    "__cxx_global_var_init"
+  ]
+}

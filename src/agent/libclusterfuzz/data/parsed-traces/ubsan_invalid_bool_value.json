@@ -1,0 +1,175 @@
+{
+  "text": "Running command: /mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_libtsm_6d95cdfb4510c2f52e59cdc48fa60dca63fa8045/revisions/libtsm_fuzzer -runs=100 -rss_limit_mb=2048 -timeout=25 /fuzz-3-libtsm_fuzzer\nWARNING: Failed to find function \"__sanitizer_print_stack_trace\".\nINFO: Seed: 2187685998\nINFO: Loaded 1 modules (2806 guards): [0x73e710, 0x7412e8),\n/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_libtsm_6d95cdfb4510c2f52e59cdc48fa60dca63fa8045/revisions/libtsm_fuzzer: Running 1 inputs 100 time(s) each.\nRunning: /fuzz-3-libtsm_fuzzer\nsrc/tsm/tsm-screen.c:1321:8: runtime error: load of value 161, which is not a valid value for type 'bool'\n#0 0x434f6d in tsm_screen_tab_left /src/libtsm/src/tsm/tsm-screen.c:1321:8\n#1 0x438eb7 in parse_data /src/libtsm/src/tsm/tsm-vte.c:0:3\n#2 0x438b19 in tsm_vte_input /src/libtsm/src/tsm/tsm-vte.c:0:4\n#3 0x42e3ad in LLVMFuzzerTestOneInput /src/libtsm_fuzzer.c:44:3\n#4 0x4509d4 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13\n#5 0x450cfa in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3\n#6 0x4451ad in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6\n#7 0x447139 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:517:9\n#8 0x444ebc in main /src/libfuzzer/FuzzerMain.cpp:20:10\n#9 0x7fe78e4ca82f in __libc_start_main\n#10 0x4058f8 in _start\nSUMMARY: UndefinedBehaviorSanitizer: undefined-behavior src/tsm/tsm-screen.c:1321:8 in\n",
+  "sanitizer": "UndefinedBehaviorSanitizer",
+  "summary": "UndefinedBehaviorSanitizer: undefined-behavior src/tsm/tsm-screen.c:1321:8 in",
+  "fault_type": "undefined-behavior",
+  "call_stack": [
+    "#0 0x434f6d in tsm_screen_tab_left /src/libtsm/src/tsm/tsm-screen.c:1321:8",
+    "#1 0x438eb7 in parse_data /src/libtsm/src/tsm/tsm-vte.c:0:3",
+    "#2 0x438b19 in tsm_vte_input /src/libtsm/src/tsm/tsm-vte.c:0:4",
+    "#3 0x42e3ad in LLVMFuzzerTestOneInput /src/libtsm_fuzzer.c:44:3",
+    "#4 0x4509d4 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13",
+    "#5 0x450cfa in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3",
+    "#6 0x4451ad in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6",
+    "#7 0x447139 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:517:9",
+    "#8 0x444ebc in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+    "#9 0x7fe78e4ca82f in __libc_start_main",
+    "#10 0x4058f8 in _start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x434f6d in tsm_screen_tab_left /src/libtsm/src/tsm/tsm-screen.c:1321:8",
+      "address": 4411245,
+      "function_name": "tsm_screen_tab_left",
+      "function_offset": 8,
+      "source_file_name": "tsm-screen.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-screen.c",
+      "source_file_line": 1321
+    },
+    {
+      "line": "#1 0x438eb7 in parse_data /src/libtsm/src/tsm/tsm-vte.c:0:3",
+      "address": 4427447,
+      "function_name": "parse_data",
+      "function_offset": 3,
+      "source_file_name": "tsm-vte.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-vte.c",
+      "source_file_line": 0
+    },
+    {
+      "line": "#2 0x438b19 in tsm_vte_input /src/libtsm/src/tsm/tsm-vte.c:0:4",
+      "address": 4426521,
+      "function_name": "tsm_vte_input",
+      "function_offset": 4,
+      "source_file_name": "tsm-vte.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-vte.c",
+      "source_file_line": 0
+    },
+    {
+      "line": "#3 0x42e3ad in LLVMFuzzerTestOneInput /src/libtsm_fuzzer.c:44:3",
+      "address": 4383661,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 3,
+      "source_file_name": "libtsm_fuzzer.c",
+      "source_file_path": "/src/libtsm_fuzzer.c",
+      "source_file_line": 44
+    },
+    {
+      "line": "#4 0x4509d4 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:550:13",
+      "address": 4524500,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 550
+    },
+    {
+      "line": "#5 0x450cfa in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:501:3",
+      "address": 4525306,
+      "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 501
+    },
+    {
+      "line": "#6 0x4451ad in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6",
+      "address": 4477357,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 268
+    },
+    {
+      "line": "#7 0x447139 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:517:9",
+      "address": 4485433,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 517
+    },
+    {
+      "line": "#8 0x444ebc in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+      "address": 4476604,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#9 0x7fe78e4ca82f in __libc_start_main",
+      "address": 140632501561391,
+      "function_name": "__libc_start_main"
+    },
+    {
+      "line": "#10 0x4058f8 in _start",
+      "address": 4217080,
+      "function_name": "_start"
+    }
+  ],
+  "full_stack_names": [
+    "tsm_screen_tab_left",
+    "parse_data",
+    "tsm_vte_input",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x434f6d in tsm_screen_tab_left /src/libtsm/src/tsm/tsm-screen.c:1321:8",
+      "address": 4411245,
+      "function_name": "tsm_screen_tab_left",
+      "function_offset": 8,
+      "source_file_name": "tsm-screen.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-screen.c",
+      "source_file_line": 1321
+    },
+    {
+      "line": "#1 0x438eb7 in parse_data /src/libtsm/src/tsm/tsm-vte.c:0:3",
+      "address": 4427447,
+      "function_name": "parse_data",
+      "function_offset": 3,
+      "source_file_name": "tsm-vte.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-vte.c",
+      "source_file_line": 0
+    },
+    {
+      "line": "#2 0x438b19 in tsm_vte_input /src/libtsm/src/tsm/tsm-vte.c:0:4",
+      "address": 4426521,
+      "function_name": "tsm_vte_input",
+      "function_offset": 4,
+      "source_file_name": "tsm-vte.c",
+      "source_file_path": "/src/libtsm/src/tsm/tsm-vte.c",
+      "source_file_line": 0
+    },
+    {
+      "line": "#3 0x42e3ad in LLVMFuzzerTestOneInput /src/libtsm_fuzzer.c:44:3",
+      "address": 4383661,
+      "function_name": "libtsm_fuzzer.c",
+      "function_offset": 3,
+      "source_file_name": "libtsm_fuzzer.c",
+      "source_file_path": "/src/libtsm_fuzzer.c",
+      "source_file_line": 44
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x434f6d in tsm_screen_tab_left /src/libtsm/src/tsm/tsm-screen.c:1321:8",
+    "#1 0x438eb7 in parse_data /src/libtsm/src/tsm/tsm-vte.c:0:3",
+    "#2 0x438b19 in tsm_vte_input /src/libtsm/src/tsm/tsm-vte.c:0:4",
+    "#3 0x42e3ad in LLVMFuzzerTestOneInput /src/libtsm_fuzzer.c:44:3"
+  ],
+  "minimized_stack_function_names": [
+    "tsm_screen_tab_left",
+    "parse_data",
+    "tsm_vte_input",
+    "libtsm_fuzzer.c"
+  ]
+}

@@ -72,11 +72,10 @@ class Task(BASE_TASK, ORMMixin):
         )
 
         logging.info(
-            "created task. job_id:%s task_id:%s type:%s user:%s",
+            "created task. job_id:%s task_id:%s type:%s",
             task.job_id,
             task.task_id,
             task.config.task.type.name,
-            user_info,
         )
         return task
 
@@ -204,6 +203,14 @@ class Task(BASE_TASK, ORMMixin):
                 "ignoring post-task stop failures for %s:%s", self.job_id, self.task_id
             )
             return
+
+        if self.error is not None:
+            logging.debug(
+                "ignoring additional task error %s:%s", self.job_id, self.task_id
+            )
+            return
+
+        logging.error("task failed %s:%s - %s", self.job_id, self.task_id, error)
 
         self.error = error
         self.set_state(TaskState.stopping)

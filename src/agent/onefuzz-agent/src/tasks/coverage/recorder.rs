@@ -9,10 +9,8 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use onefuzz::{
-    fs::{has_files, OwnedDir},
-    sha256::digest_file,
-};
+use onefuzz::{fs::has_files, sha256::digest_file};
+use tempfile::{tempdir, TempDir};
 use tokio::{
     fs,
     process::{Child, Command},
@@ -22,17 +20,71 @@ use crate::tasks::coverage::libfuzzer_coverage::Config;
 
 pub struct CoverageRecorder {
     config: Arc<Config>,
-    script_dir: OwnedDir,
+    script_path: PathBuf,
+    // keep _temp_dir such that Drop cleans up temporary files
+    _temp_dir: Option<TempDir>,
 }
 
 const SYMBOL_EXTRACT_ERROR: &str = "Target appears to be missing sancov instrumentation. This error can also happen if symbols for the target are not available.";
 
 impl CoverageRecorder {
-    pub fn new(config: Arc<Config>) -> Self {
-        let script_dir =
-            OwnedDir::new(env::var("ONEFUZZ_TOOLS").unwrap_or_else(|_| "script".to_string()));
+    pub async fn new(config: Arc<Config>) -> Result<Self> {
+        let (script_path, _temp_dir) = match env::var("ONEFUZZ_TOOLS") {
+            Ok(tools_dir) => {
+                let script_path = PathBuf::from(tools_dir);
+                if cfg!(target_os = "linux") {
+                    (
+                        script_path
+                            .join("linux")
+                            .join("libfuzzer-coverage")
+                            .join("coverage_cmd.py"),
+                        None,
+                    )
+                } else if cfg!(target_os = "windows") {
+                    (
+                        script_path
+                            .join("win64")
+                            .join("libfuzzer-coverage")
+                            .join("DumpCounters.js"),
+                        None,
+                    )
+                } else {
+                    bail!("coverage recorder not implemented for target os");
+                }
+            }
+            Err(_) => {
+                let temp_dir = tempdir()?;
+                let script_path = if cfg!(target_os = "linux") {
+                    let script_path = temp_dir.path().join("coverage_cmd.py");
+                    let content = include_bytes!(
+                        "../../../../script/linux/libfuzzer-coverage/coverage_cmd.py"
+                    );
+                    fs::write(&script_path, content).await.with_context(|| {
+                        format!("unable to write file: {}", script_path.display())
+                    })?;
+                    script_path
+                } else if cfg!(target_os = "windows") {
+                    let script_path = temp_dir.path().join("DumpCounters.js");
+                    let content = include_bytes!(
+                        "../../../../script/win64/libfuzzer-coverage/DumpCounters.js"
+                    );
+                    fs::write(&script_path, content).await.with_context(|| {
+                        format!("unable to write file: {}", script_path.display())
+                    })?;
+                    script_path
+                } else {
+                    bail!("coverage recorder not implemented for target os");
+                };
 
-        Self { config, script_dir }
+                (script_path, Some(temp_dir))
+            }
+        };
+
+        Ok(Self {
+            config,
+            script_path,
+            _temp_dir,
+        })
     }
 
     /// Invoke a script to write coverage to a file.
@@ -46,7 +98,7 @@ impl CoverageRecorder {
 
         let coverage_path = {
             let digest = digest_file(test_input).await?;
-            self.config.coverage.path.join("inputs").join(digest)
+            self.config.coverage.local_path.join("inputs").join(digest)
         };
 
         fs::create_dir_all(&coverage_path).await.with_context(|| {
@@ -103,19 +155,12 @@ impl CoverageRecorder {
 
     #[cfg(target_os = "linux")]
     fn invoke_debugger_script(&self, test_input: &Path, output: &Path) -> Result<Child> {
-        let script_path = self
-            .script_dir
-            .path()
-            .join("linux")
-            .join("libfuzzer-coverage")
-            .join("coverage_cmd.py");
-
         let mut cmd = Command::new("gdb");
         cmd.arg(&self.config.target_exe)
             .arg("-nh")
             .arg("-batch")
             .arg("-x")
-            .arg(script_path)
+            .arg(&self.script_path)
             .arg("-ex")
             .arg(format!(
                 "coverage {} {} {}",
@@ -123,6 +168,7 @@ impl CoverageRecorder {
                 test_input.to_string_lossy(),
                 output.to_string_lossy(),
             ))
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);
@@ -138,18 +184,11 @@ impl CoverageRecorder {
 
     #[cfg(target_os = "windows")]
     fn invoke_debugger_script(&self, test_input: &Path, output: &Path) -> Result<Child> {
-        let script_path = self
-            .script_dir
-            .path()
-            .join("win64")
-            .join("libfuzzer-coverage")
-            .join("DumpCounters.js");
-
         let should_disable_sympath = !self.config.target_env.contains_key("_NT_SYMBOL_PATH");
 
         let cdb_cmd = format!(
             ".scriptload {}; !dumpcounters {:?}, {}; q",
-            script_path.to_string_lossy(),
+            self.script_path.to_string_lossy(),
             output.to_string_lossy(),
             should_disable_sympath,
         );
@@ -160,6 +199,7 @@ impl CoverageRecorder {
             .arg(cdb_cmd)
             .arg(&self.config.target_exe)
             .arg(test_input)
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);

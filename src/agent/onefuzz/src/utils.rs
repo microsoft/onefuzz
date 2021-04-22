@@ -46,7 +46,7 @@ mod test {
     use anyhow::Result;
     use futures::*;
     use std::sync::Arc;
-    use tokio::{spawn, sync::Notify, task::JoinHandle, time::delay_for};
+    use tokio::{spawn, sync::Notify, task::JoinHandle, time::sleep};
 
     fn spawn_ok() -> (Arc<Notify>, JoinHandle<Result<()>>) {
         let notify = Arc::new(Notify::new());
@@ -77,7 +77,7 @@ mod test {
         let (_notify3, handle3) = spawn_ok();
 
         let try_wait_handle = try_wait_all_join_handles(vec![handle1, handle2, handle3]);
-        delay_for(Duration::from_secs(1)).await;
+        sleep(Duration::from_secs(1)).await;
         assert!(
             try_wait_handle.now_or_never().is_none(),
             "expected no result"
@@ -92,9 +92,9 @@ mod test {
 
         let try_wait_handle = try_wait_all_join_handles(vec![handle1, handle2, handle3]);
 
-        notify1.notify();
-        notify2.notify();
-        delay_for(Duration::from_secs(1)).await;
+        notify1.notify_one();
+        notify2.notify_one();
+        sleep(Duration::from_secs(1)).await;
         assert!(
             try_wait_handle.now_or_never().is_none(),
             "expected no result"
@@ -109,10 +109,10 @@ mod test {
 
         let try_wait_handle = try_wait_all_join_handles(vec![handle1, handle2, handle3]);
 
-        notify1.notify();
-        notify2.notify();
-        notify3.notify();
-        delay_for(Duration::from_secs(1)).await;
+        notify1.notify_one();
+        notify2.notify_one();
+        notify3.notify_one();
+        sleep(Duration::from_secs(1)).await;
         if let Some(result) = try_wait_handle.now_or_never() {
             assert!(result.is_ok(), "expected Ok")
         } else {
@@ -128,8 +128,8 @@ mod test {
 
         let try_wait_handle = try_wait_all_join_handles(vec![handle1, handle2, handle3]);
 
-        notify1.notify();
-        delay_for(Duration::from_secs(1)).await;
+        notify1.notify_one();
+        sleep(Duration::from_secs(1)).await;
         assert!(
             try_wait_handle.now_or_never().is_none(),
             "expected no result"
@@ -144,9 +144,9 @@ mod test {
 
         let try_wait_handle = try_wait_all_join_handles(vec![handle1, handle2, handle3]);
 
-        notify2.notify();
+        notify2.notify_one();
 
-        delay_for(Duration::from_secs(1)).await;
+        sleep(Duration::from_secs(1)).await;
         if let Some(result) = try_wait_handle.now_or_never() {
             assert!(result.is_err(), "expected error")
         } else {

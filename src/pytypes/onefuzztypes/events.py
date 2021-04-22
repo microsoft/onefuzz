@@ -8,7 +8,7 @@ from enum import Enum
 from typing import List, Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Field
 
 from .enums import OS, Architecture, NodeState, TaskState, TaskType
 from .models import (
@@ -25,8 +25,7 @@ from .responses import BaseResponse
 
 
 class BaseEvent(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    pass
 
 
 class EventTaskStopped(BaseEvent):
@@ -162,12 +161,14 @@ class EventCrashReported(BaseEvent):
     report: Report
     container: Container
     filename: str
+    task_config: Optional[TaskConfig]
 
 
 class EventRegressionReported(BaseEvent):
     regression_report: RegressionReport
     container: Container
     filename: str
+    task_config: Optional[TaskConfig]
 
 
 class EventFileAdded(BaseEvent):
