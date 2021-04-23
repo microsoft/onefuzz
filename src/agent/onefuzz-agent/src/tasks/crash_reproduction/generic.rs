@@ -26,21 +26,17 @@ pub struct Config {
 }
 
 pub async fn run(config: Config) -> Result<()> {
-    let heartbeat = config.common.init_heartbeat().await?;
-
     config.crashes.init_pull().await?;
     if let Some(tools) = &config.tools {
         tools.init_pull().await?;
         set_executable(&tools.local_path).await?;
     }
 
-    loop {
-        heartbeat.alive();
-        run_tool(&config).await?;
-    }
+    run_tool(&config).await
 }
 
 pub async fn run_tool(config: &Config) -> Result<()> {
+    let heartbeat = config.common.init_heartbeat().await?;
     let expand = Expand::new()
         .input_path(&config.input)
         .target_exe(&config.target_exe)
@@ -75,6 +71,7 @@ pub async fn run_tool(config: &Config) -> Result<()> {
     let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
 
     loop {
+        heartbeat.alive();
         let mut cmd = Command::new(&analyzer_path);
         cmd.kill_on_drop(true)
             .env_remove("RUST_LOG")
