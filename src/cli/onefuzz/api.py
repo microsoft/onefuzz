@@ -565,7 +565,7 @@ class LiveRepro(Endpoint):
         private_key_path: Optional[primitives.File] = None,
         debug_command: Optional[str] = None,
     ) -> Optional[str]:
-        task_id_expanded = self._disambiguate_uuid(
+        task_id_expanded: UUID = self._disambiguate_uuid(
             "task_id",
             task_id,
             lambda: [str(x.task_id) for x in self.onefuzz.tasks.list()],
