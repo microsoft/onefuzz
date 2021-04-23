@@ -26,10 +26,16 @@ pub struct Config {
 }
 
 pub async fn run(config: Config) -> Result<()> {
-    config.crashes.init_pull().await?;
+    config
+        .crashes
+        .init_pull()
+        .await
+        .context("unable to sync crashes")?;
     if let Some(tools) = &config.tools {
-        tools.init_pull().await?;
-        set_executable(&tools.local_path).await?;
+        tools.init_pull().await.context("unable to sync tools")?;
+        set_executable(&tools.local_path)
+            .await
+            .context("to set tools as executable")?;
     }
 
     run_tool(&config).await
@@ -69,7 +75,9 @@ pub async fn run_tool(config: &Config) -> Result<()> {
             |tester, container| tester.crashes_container(container),
         );
 
-    let analyzer_path = expand.evaluate_value(&config.analyzer_exe)?;
+    let analyzer_path = expand
+        .evaluate_value(&config.analyzer_exe)
+        .context("expanding analyzer_exe failed")?;
 
     loop {
         heartbeat.alive();
@@ -85,7 +93,12 @@ pub async fn run_tool(config: &Config) -> Result<()> {
         }
 
         for (k, v) in &config.analyzer_env {
-            cmd.env(k, expand.evaluate_value(v)?);
+            cmd.env(
+                k,
+                expand
+                    .evaluate_value(v)
+                    .context("expanding analyzer_env failed")?,
+            );
         }
 
         info!("analyzing input with {:?}", cmd);
