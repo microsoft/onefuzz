@@ -566,6 +566,7 @@ class Node(BaseModel):
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    messages: Optional[List["NodeCommand"]] = None
     heartbeat: Optional[datetime]
     version: str = Field(default="1.0.0")
     reimage_requested: bool = Field(default=False)

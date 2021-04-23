@@ -606,7 +606,7 @@ class LiveRepro(Endpoint):
 
         def wait_for_key() -> Tuple[bool, str, models.Node]:
             node = self.onefuzz.nodes.get(node_id)
-            return (not bool(node.tasks), "waiting for node to add ssh key", node)
+            return (not bool(node.messages), "waiting for node to add ssh key", node)
 
         node = wait(wait_for_key)
 
