@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.14.0
+### Added
+* Contrib: Added a sample GitHub Actions workflow and an Azure DevOps Pipeline to demonstrate deploying OneFuzz jobs using CICD.  [#778](https://github.com/microsoft/onefuzz/pull/778)
+* CLI/Service: Added creation timestamps to `Job`, `Node`, `Pool`, `Scaleset`, `Repro`, `Task`, and `TaskEvent` records returned by the service.  [#796](https://github.com/microsoft/onefuzz/pull/796), [#805](https://github.com/microsoft/onefuzz/pull/805), [#804](https://github.com/microsoft/onefuzz/pull/804)
+* Agent/Proxy/Supervisor: Added additional context to web request failures to assist in debugging issues.  [#798](https://github.com/microsoft/onefuzz/pull/798)
+* Service: Added task configuration to the [crash\_reported](docs/webhook_events.md#crash_reported) and [regression\_reported](https://github.com/microsoft/onefuzz/blob/main/docs/webhook_events.md#regression_reported) events.  [#793](https://github.com/microsoft/onefuzz/pull/793)
+
+### Changes
+* Agent: The full error context is now logged upon task failure. [#802](https://github.com/microsoft/onefuzz/pull/802)
+* CLI: The `libfuzzer-dotnet` template no longer defaults to failing the task if the fuzzer exits with a non-zero status but no crash artifact.  [#807](https://github.com/microsoft/onefuzz/pull/807)
+* Agent/Proxy/Supervisor: Updated multiple Rust dependencies.  [#800](https://github.com/microsoft/onefuzz/pull/800)
+* Service: When multiple failures are reported for a given task, only the first failure is recorded.  [#797](https://github.com/microsoft/onefuzz/pull/797)
+* Agent: Continued development related to upcoming features. [#820](https://github.com/microsoft/onefuzz/pull/820), [#816](https://github.com/microsoft/onefuzz/pull/816), [#790](https://github.com/microsoft/onefuzz/pull/790), [#809](https://github.com/microsoft/onefuzz/pull/809), [#812](https://github.com/microsoft/onefuzz/pull/812), [#811](https://github.com/microsoft/onefuzz/pull/811), [#810](https://github.com/microsoft/onefuzz/pull/810), [#794](https://github.com/microsoft/onefuzz/pull/794), [#799](https://github.com/microsoft/onefuzz/pull/799), [#779](https://github.com/microsoft/onefuzz/pull/779)
+
+### Fixed
+* Deployment: Added missing actions to the example Custom Azure Role for deployment. [#808](https://github.com/microsoft/onefuzz/pull/808)
+* Service: Fixed an issue in scaleset creation with incompatible VM SKUs and VM Images. [#803](https://github.com/microsoft/onefuzz/pull/803)
+* Service: Fixed an issue removing user identity information from logging to user instances.  [#795](https://github.com/microsoft/onefuzz/pull/795)
+
 ## 2.13.0
 ### Added
 * Deployment: Allow specifying the Azure subscription to use for deployment, instead of always using the default [#774](https://github.com/microsoft/onefuzz/pull/774)
