@@ -557,7 +557,7 @@ class LiveRepro(Endpoint):
 
     def connect(
         self,
-        task_id: UUID,
+        task_id: UUID_EXPANSION,
         *,
         public_key_path: primitives.File = primitives.File(
             os.path.expanduser("~/.ssh/id_rsa.pub")
