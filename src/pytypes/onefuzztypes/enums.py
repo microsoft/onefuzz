@@ -80,6 +80,7 @@ class TaskFeature(Enum):
     expect_crash_on_failure = "expect_crash_on_failure"
     report_list = "report_list"
     minimized_stack_depth = "minimized_stack_depth"
+    input_file = "input_file"
 
 
 # Permissions for an Azure Blob Storage Container.

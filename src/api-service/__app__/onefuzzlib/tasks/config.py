@@ -361,6 +361,9 @@ def build_task_config(
             else True
         )
 
+    if TaskFeature.input_file in definition.features:
+        config.input_file = task_config.task.input_file
+
     return config
 
 

@@ -552,6 +552,7 @@ TASK_DEFINITIONS = {
             TaskFeature.analyzer_options,
             TaskFeature.target_exe,
             TaskFeature.target_options,
+            TaskFeature.input_file,
         ],
         vm=VmDefinition(compare=Compare.AtLeast, value=1),
         containers=[

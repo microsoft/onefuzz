@@ -499,6 +499,8 @@ class LiveRepro(Endpoint):
         raw_report = self.onefuzz.containers.files.get(container, path)
         report = models.Report.parse_raw(raw_report)
         # print(report.json(indent=4))
+        if report.input_blob is None:
+            raise Exception("report does not include input_blob")
         job = self.onefuzz.jobs.get(report.job_id)
         task = self.onefuzz.tasks.get(report.task_id)
         # print(task.json(indent=4, exclude_none=True))
@@ -523,10 +525,13 @@ class LiveRepro(Endpoint):
             tags = {}
 
         containers = [
-            x
-            for x in task.config.containers
-            if x.type in [enums.ContainerType.setup, enums.ContainerType.crashes]
+            x for x in task.config.containers if x.type == enums.ContainerType.setup
         ]
+        containers.append(
+            models.TaskContainers(
+                name=report.input_blob.container, type=enums.ContainerType.crashes
+            )
+        )
 
         job = self.onefuzz.jobs.create(
             job.config.project, job.config.name, job.config.build, duration=duration
@@ -540,6 +545,7 @@ class LiveRepro(Endpoint):
             task=models.TaskDetails(
                 duration=duration,
                 type=enums.TaskType.crash_reproduction,
+                input_file=report.input_blob.name,
                 target_exe=task.config.task.target_exe,
                 target_options=task.config.task.target_options,
                 analyzer_exe=analyzer_exe,
@@ -567,6 +573,10 @@ class LiveRepro(Endpoint):
 
         def missing_node() -> Tuple[bool, str, models.Task]:
             task = self.onefuzz.tasks.get(task_id_expanded)
+
+            if task.error:
+                raise Exception("task failed: %s" % task.error.json())
+
             return (
                 bool(task.nodes),
                 "waiting task to be assigned to node",
@@ -574,6 +584,8 @@ class LiveRepro(Endpoint):
             )
 
         task = wait(missing_node)
+        if task.error:
+            raise Exception("task failed: %s" % task.error.json())
 
         if task.config.task.type != enums.TaskType.crash_reproduction:
             raise Exception("invalid task type")
@@ -597,6 +609,10 @@ class LiveRepro(Endpoint):
             return (not bool(node.tasks), "waiting for node to add ssh key", node)
 
         node = wait(wait_for_key)
+
+        task = self.onefuzz.tasks.get(task.task_id)
+        if task.error:
+            raise Exception("task failed: %s" % task.error)
 
         def missing_ip() -> Tuple[bool, str, responses.ProxyGetResult]:
             if node.scaleset_id is None:
