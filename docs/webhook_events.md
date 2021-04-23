@@ -377,6 +377,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "input_file": {
+                    "title": "Input File",
+                    "type": "string"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -1821,6 +1825,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "input_file": {
+                    "title": "Input File",
+                    "type": "string"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -2428,6 +2436,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "input_file": {
+                    "title": "Input File",
+                    "type": "string"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -2922,6 +2934,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "input_file": {
+                    "title": "Input File",
+                    "type": "string"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -3361,6 +3377,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Generator Options",
                     "type": "array"
                 },
+                "input_file": {
+                    "title": "Input File",
+                    "type": "string"
+                },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
                     "type": "integer"
@@ -3773,6 +3793,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "input_file": {
+                    "title": "Input File",
+                    "type": "string"
                 },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
@@ -4213,6 +4237,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "input_file": {
+                    "title": "Input File",
+                    "type": "string"
                 },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
@@ -5538,6 +5566,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Generator Options",
                     "type": "array"
+                },
+                "input_file": {
+                    "title": "Input File",
+                    "type": "string"
                 },
                 "minimized_stack_depth": {
                     "title": "Minimized Stack Depth",
