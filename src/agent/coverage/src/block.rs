@@ -26,7 +26,7 @@ impl CommandBlockCov {
     /// Returns `true` if the module was newly-inserted (which initializes its
     /// block coverage map). Otherwise, returns `false`, and no re-computation
     /// is performed.
-    pub fn insert(&mut self, path: &ModulePath, offsets: impl Iterator<Item = u32>) -> bool {
+    pub fn insert(&mut self, path: &ModulePath, offsets: impl IntoIterator<Item = u32>) -> bool {
         use std::collections::btree_map::Entry;
 
         match self.modules.entry(path.clone()) {
@@ -42,7 +42,7 @@ impl CommandBlockCov {
         let entry = self.modules.entry(path.clone());
 
         if let btree_map::Entry::Vacant(_) = entry {
-            log::warn!(
+            log::debug!(
                 "initializing missing module when incrementing coverage at {}+{:x}",
                 path,
                 offset
@@ -100,8 +100,8 @@ pub struct ModuleCov {
 }
 
 impl ModuleCov {
-    pub fn new(offsets: impl Iterator<Item = u32>) -> Self {
-        let blocks = offsets.map(|o| (o, BlockCov::new(o))).collect();
+    pub fn new(offsets: impl IntoIterator<Item = u32>) -> Self {
+        let blocks = offsets.into_iter().map(|o| (o, BlockCov::new(o))).collect();
         Self { blocks }
     }
 
