@@ -504,7 +504,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "crash_reproduction"
             ],
             "title": "TaskType"
         },
@@ -845,7 +846,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "crash_reproduction"
             ],
             "title": "TaskType"
         },
@@ -1946,7 +1948,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "crash_reproduction"
             ],
             "title": "TaskType"
         },
@@ -2552,7 +2555,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "crash_reproduction"
             ],
             "title": "TaskType"
         },
@@ -3045,7 +3049,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "crash_reproduction"
             ],
             "title": "TaskType"
         },
@@ -3483,7 +3488,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "crash_reproduction"
             ],
             "title": "TaskType"
         },
@@ -3909,7 +3915,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "crash_reproduction"
             ],
             "title": "TaskType"
         },
@@ -4334,7 +4341,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "crash_reproduction"
             ],
             "title": "TaskType"
         },
@@ -5672,7 +5680,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "generic_merge",
                 "generic_generator",
                 "generic_crash_report",
-                "generic_regression"
+                "generic_regression",
+                "crash_reproduction"
             ],
             "title": "TaskType"
         },
