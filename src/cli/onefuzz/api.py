@@ -482,27 +482,32 @@ class Containers(Endpoint):
 
 class LiveRepro(Endpoint):
     """ Live debug a crash using pools - PREVIEW FEATURE """
-    def run(
+
+    def create(
         self,
-        project: str,
-        target: str,
-        build: str,
-        pool_name: primitives.PoolName,
+        container: primitives.Container,
+        path: str,
         *,
-        target_exe: primitives.File = primitives.File("fuzz.exe"),
-        target_options: List[str] = None,
-        public_key_path: primitives.File = primitives.File(
-            os.path.expanduser("~/.ssh/id_rsa.pub")
-        ),
-        private_key_path: Optional[primitives.File] = None,
-        duration: int = 24,
+        pool_name: Optional[primitives.PoolName],
+        duration: int = 1,
         tags: Optional[Dict[str, str]] = None,
-        debug_command: Optional[str] = None,
         analyzer_env: Optional[Dict[str, str]] = {"ASAN_OPTIONS": "abort_on_error=1"},
         analyzer_exe: Optional[str] = None,
         analyzer_options: Optional[List[str]] = ["{target_exe}", "{input}"],
-    ) -> Optional[str]:
+    ) -> models.Task:
         self.onefuzz._warn_preview(PreviewFeature.crash_repro_task)
+        raw_report = self.onefuzz.containers.files.get(container, path)
+        report = models.Report.parse_raw(raw_report)
+        # print(report.json(indent=4))
+        job = self.onefuzz.jobs.get(report.job_id)
+        task = self.onefuzz.tasks.get(report.task_id)
+        # print(task.json(indent=4, exclude_none=True))
+
+        if pool_name is None and task.config.pool:
+            pool_name = task.config.pool.pool_name
+
+        if pool_name is None:
+            raise Exception("missing pool_name")
 
         pool = self.onefuzz.pools.get(pool_name)
         if not pool.managed:
@@ -514,28 +519,54 @@ class LiveRepro(Endpoint):
             else:
                 analyzer_exe = "gdbserver"
 
-        job = self.onefuzz.jobs.create(project, target, build, duration=duration)
+        if tags is None:
+            tags = {}
+
+        containers = [
+            x
+            for x in task.config.containers
+            if x.type in [enums.ContainerType.setup, enums.ContainerType.crashes]
+        ]
+
+        job = self.onefuzz.jobs.create(
+            job.config.project, job.config.name, job.config.build, duration=duration
+        )
         task_config = models.TaskConfig(
             job_id=job.job_id,
-            pool=pool,
-            containers=[],
+            pool=models.TaskPool(pool_name=pool_name, count=1),
+            containers=containers,
             colocate=False,
             tags=tags,
             task=models.TaskDetails(
                 duration=duration,
                 type=enums.TaskType.crash_reproduction,
-                target_exe=target_exe,
-                target_options=target_options,
+                target_exe=task.config.task.target_exe,
+                target_options=task.config.task.target_options,
                 analyzer_exe=analyzer_exe,
                 analyzer_env=analyzer_env,
                 analyzer_options=analyzer_options,
             ),
         )
-        task = self.onefuzz.tasks.create_with_config(task_config)
-        task_id = task.task_id
+        return self.onefuzz.tasks.create_with_config(task_config)
+
+    def connect(
+        self,
+        task_id: UUID,
+        *,
+        public_key_path: primitives.File = primitives.File(
+            os.path.expanduser("~/.ssh/id_rsa.pub")
+        ),
+        private_key_path: Optional[primitives.File] = None,
+        debug_command: Optional[str] = None,
+    ) -> Optional[str]:
+        task_id_expanded = self._disambiguate_uuid(
+            "task_id",
+            task_id,
+            lambda: [str(x.task_id) for x in self.onefuzz.tasks.list()],
+        )
 
         def missing_node() -> Tuple[bool, str, models.Task]:
-            task = self.onefuzz.tasks.get(task_id)
+            task = self.onefuzz.tasks.get(task_id_expanded)
             return (
                 bool(task.nodes),
                 "waiting task to be assigned to node",
@@ -543,6 +574,10 @@ class LiveRepro(Endpoint):
             )
 
         task = wait(missing_node)
+
+        if task.config.task.type != enums.TaskType.crash_reproduction:
+            raise Exception("invalid task type")
+
         if not task.nodes:
             raise Exception("missing nodes")
         node_assignment = task.nodes[0]
@@ -551,7 +586,7 @@ class LiveRepro(Endpoint):
         node_id = node_assignment.node_id
 
         proxy = self.onefuzz.scaleset_proxy.create(
-            node_assignment.scaleset_id, node_id, 22, duration=duration
+            node_assignment.scaleset_id, node_id, 22, duration=task.config.task.duration
         )
 
         with open(public_key_path, "r") as handle:
@@ -576,10 +611,47 @@ class LiveRepro(Endpoint):
         if not proxy.ip:
             raise Exception("missing ip")
 
+        pool = self.onefuzz.pools.get(node.pool_name)
+
         cmd = {enums.OS.linux: self._dbg_linux, enums.OS.windows: self._dbg_windows}
         return cmd[pool.os](
             proxy.ip,
             proxy.forward.src_port,
+            private_key_path=private_key_path,
+            debug_command=debug_command,
+        )
+
+    def create_and_connect(
+        self,
+        container: primitives.Container,
+        path: str,
+        *,
+        pool_name: Optional[primitives.PoolName],
+        public_key_path: primitives.File = primitives.File(
+            os.path.expanduser("~/.ssh/id_rsa.pub")
+        ),
+        private_key_path: Optional[primitives.File] = None,
+        duration: int = 1,
+        tags: Optional[Dict[str, str]] = None,
+        debug_command: Optional[str] = None,
+        analyzer_env: Optional[Dict[str, str]] = {"ASAN_OPTIONS": "abort_on_error=1"},
+        analyzer_exe: Optional[str] = None,
+        analyzer_options: Optional[List[str]] = ["{target_exe}", "{input}"],
+    ) -> Optional[str]:
+
+        task = self.create(
+            container,
+            path,
+            pool_name=pool_name,
+            duration=duration,
+            tags=tags,
+            analyzer_env=analyzer_env,
+            analyzer_exe=analyzer_exe,
+            analyzer_options=analyzer_options,
+        )
+        return self.connect(
+            task.task_id,
+            public_key_path=public_key_path,
             private_key_path=private_key_path,
             debug_command=debug_command,
         )
