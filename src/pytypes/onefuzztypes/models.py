@@ -835,3 +835,6 @@ class Task(BaseModel):
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
     user_info: Optional[UserInfo]
+
+
+Node.update_forward_refs()
