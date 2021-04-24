@@ -665,6 +665,7 @@ class LiveRepro(Endpoint):
             analyzer_exe=analyzer_exe,
             analyzer_options=analyzer_options,
         )
+        self.logger.info("task created: %s", task.task_id)
         return self.connect(
             task.task_id,
             public_key_path=public_key_path,
