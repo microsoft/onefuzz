@@ -44,7 +44,6 @@ pub async fn run(config: Config) -> Result<()> {
 pub async fn run_tool(config: &Config) -> Result<()> {
     let heartbeat = config.common.init_heartbeat().await?;
     let expand = Expand::new()
-        .input_path(format!("{{crashes}}/{}", config.input_file))
         .target_exe(&config.target_exe)
         .target_options(&config.target_options)
         .analyzer_exe(&config.analyzer_exe)
@@ -74,6 +73,11 @@ pub async fn run_tool(config: &Config) -> Result<()> {
                 .and_then(|u| u.container()),
             |tester, container| tester.crashes_container(container),
         );
+
+    let input_path = expand
+        .evaluate_value(format!("{{crashes}}/{}", config.input_file))
+        .context("unable to expand input_path")?;
+    let expand = expand.input_path(input_path);
 
     let analyzer_path = expand
         .evaluate_value(&config.analyzer_exe)
