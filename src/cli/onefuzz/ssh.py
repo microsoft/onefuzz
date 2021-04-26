@@ -107,13 +107,14 @@ def build_ssh_command(
                 command=command,
                 private_key_path=private_key_path,
             )
-    yield build_ssh_command_args(
-        ip=ip,
-        proxy=proxy,
-        port=port,
-        command=command,
-        private_key_path=private_key_path,
-    )
+    else:
+        yield build_ssh_command_args(
+            ip=ip,
+            proxy=proxy,
+            port=port,
+            command=command,
+            private_key_path=private_key_path,
+        )
 
 
 @contextmanager
