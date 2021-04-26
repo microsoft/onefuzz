@@ -30,7 +30,7 @@ class TelemetryEvent(Enum):
 
     @classmethod
     def can_share(cls) -> List["TelemetryEvent"]:
-        """ only these events will be shared to the central telemetry """
+        """only these events will be shared to the central telemetry"""
         return [cls.task, cls.state_changed]
 
 
@@ -44,7 +44,7 @@ class TelemetryData(Enum):
 
     @classmethod
     def can_share(cls) -> List["TelemetryData"]:
-        """ only these types of data will be shared to the central telemetry """
+        """only these types of data will be shared to the central telemetry"""
         return [cls.current_state, cls.vm_id, cls.job_id, cls.task_id, cls.task_type]
 
 
@@ -100,7 +100,7 @@ class JobState(Enum):
 
     @classmethod
     def available(cls) -> List["JobState"]:
-        """ set of states that indicate if tasks can be added to it """
+        """set of states that indicate if tasks can be added to it"""
         return [x for x in cls if x not in [cls.stopping, cls.stopped]]
 
     @classmethod
@@ -138,7 +138,7 @@ class TaskState(Enum):
 
     @classmethod
     def available(cls) -> List["TaskState"]:
-        """ set of states that indicate if the task isn't stopping """
+        """set of states that indicate if the task isn't stopping"""
         return [x for x in cls if x not in [TaskState.stopping, TaskState.stopped]]
 
     @classmethod
@@ -178,7 +178,7 @@ class VmState(Enum):
 
     @classmethod
     def available(cls) -> List["VmState"]:
-        """ set of states that indicate if the repro vm isn't stopping """
+        """set of states that indicate if the repro vm isn't stopping"""
         return [x for x in cls if x not in [cls.stopping, cls.stopped]]
 
 
@@ -289,7 +289,7 @@ class PoolState(Enum):
 
     @classmethod
     def available(cls) -> List["PoolState"]:
-        """ set of states that indicate if it's available for work """
+        """set of states that indicate if it's available for work"""
         return [cls.running]
 
 
@@ -311,13 +311,13 @@ class ScalesetState(Enum):
 
     @classmethod
     def available(cls) -> List["ScalesetState"]:
-        """ set of states that indicate if it's available for work """
+        """set of states that indicate if it's available for work"""
         unavailable = [cls.shutdown, cls.halt, cls.creation_failed]
         return [x for x in cls if x not in unavailable]
 
     @classmethod
     def modifying(cls) -> List["ScalesetState"]:
-        """ set of states that indicate scaleset is resizing """
+        """set of states that indicate scaleset is resizing"""
         return [
             cls.halt,
             cls.init,
