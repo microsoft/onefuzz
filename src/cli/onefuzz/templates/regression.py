@@ -16,7 +16,7 @@ from . import JobHelper
 
 
 class Regression(Command):
-    """ Regression job """
+    """Regression job"""
 
     def _check_regression(self, container: Container, file: File) -> bool:
         content = self.onefuzz.containers.files.get(Container(container), file)

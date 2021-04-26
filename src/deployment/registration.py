@@ -151,7 +151,7 @@ def register_application(
 
 
 def create_application_credential(application_name: str, subscription_id: str) -> str:
-    """ Add a new password to the application registration """
+    """Add a new password to the application registration"""
 
     logger.info("creating application credential for '%s'" % application_name)
     client = get_graph_client(subscription_id)
@@ -168,7 +168,7 @@ def create_application_credential(application_name: str, subscription_id: str) -
 def create_application_registration(
     onefuzz_instance_name: str, name: str, approle: OnefuzzAppRole, subscription_id: str
 ) -> Application:
-    """ Create an application registration """
+    """Create an application registration"""
 
     client = get_graph_client(subscription_id)
     apps: List[Application] = list(
