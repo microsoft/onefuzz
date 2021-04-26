@@ -890,11 +890,11 @@ def main() -> None:
     rbac_only_states = [
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
+        ("arm", Client.deploy_template),
+        ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
     ]
 
     full_deployment_states = rbac_only_states + [
-        ("arm", Client.deploy_template),
-        ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
         ("apply_migrations", Client.apply_migrations),
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
