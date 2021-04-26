@@ -24,10 +24,10 @@ class QemuArch(Enum):
 
 
 class Libfuzzer(Command):
-    """ Pre-defined Libfuzzer job """
+    """Pre-defined Libfuzzer job"""
 
     def _check_is_libfuzzer(self, target_exe: File) -> None:
-        """ Look for a magic string """
+        """Look for a magic string"""
         self.logger.debug(
             "checking %s for %s", repr(target_exe), repr(LIBFUZZER_MAGIC_STRING)
         )
