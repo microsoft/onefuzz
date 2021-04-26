@@ -559,6 +559,29 @@ class NodeHeartbeatEntry(BaseModel):
     data: List[Dict[str, HeartbeatType]]
 
 
+class StopNodeCommand(BaseModel):
+    pass
+
+
+class StopTaskNodeCommand(BaseModel):
+    task_id: UUID
+
+
+class NodeCommandAddSshKey(BaseModel):
+    public_key: str
+
+
+class NodeCommand(EnumModel):
+    stop: Optional[StopNodeCommand]
+    stop_task: Optional[StopTaskNodeCommand]
+    add_ssh_key: Optional[NodeCommandAddSshKey]
+
+
+class NodeCommandEnvelope(BaseModel):
+    command: NodeCommand
+    message_id: str
+
+
 class Node(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
     pool_name: PoolName
@@ -566,7 +589,7 @@ class Node(BaseModel):
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
-    messages: Optional[List["NodeCommand"]] = None
+    messages: Optional[List[NodeCommand]] = None
     heartbeat: Optional[datetime]
     version: str = Field(default="1.0.0")
     reimage_requested: bool = Field(default=False)
@@ -779,29 +802,6 @@ class NodeEventEnvelope(BaseModel):
     event: NodeEventShim
 
 
-class StopNodeCommand(BaseModel):
-    pass
-
-
-class StopTaskNodeCommand(BaseModel):
-    task_id: UUID
-
-
-class NodeCommandAddSshKey(BaseModel):
-    public_key: str
-
-
-class NodeCommand(EnumModel):
-    stop: Optional[StopNodeCommand]
-    stop_task: Optional[StopTaskNodeCommand]
-    add_ssh_key: Optional[NodeCommandAddSshKey]
-
-
-class NodeCommandEnvelope(BaseModel):
-    command: NodeCommand
-    message_id: str
-
-
 class TaskEvent(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
     task_id: UUID
@@ -835,6 +835,3 @@ class Task(BaseModel):
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
     user_info: Optional[UserInfo]
-
-
-Node.update_forward_refs()
