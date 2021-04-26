@@ -498,12 +498,10 @@ class LiveRepro(Endpoint):
         self.onefuzz._warn_preview(PreviewFeature.crash_repro_task)
         raw_report = self.onefuzz.containers.files.get(container, path)
         report = models.Report.parse_raw(raw_report)
-        # print(report.json(indent=4))
         if report.input_blob is None:
             raise Exception("report does not include input_blob")
         job = self.onefuzz.jobs.get(report.job_id)
         task = self.onefuzz.tasks.get(report.task_id)
-        # print(task.json(indent=4, exclude_none=True))
 
         if pool_name is None and task.config.pool:
             pool_name = task.config.pool.pool_name
