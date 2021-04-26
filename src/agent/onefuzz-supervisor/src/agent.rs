@@ -265,10 +265,11 @@ impl Agent {
     }
 
     async fn execute_pending_commands(&mut self) -> Result<()> {
+        info!("executing pending commands");
         let cmd = self.coordinator.poll_commands().await?;
 
         if let Some(cmd) = cmd {
-            debug!("agent received node command: {:?}", cmd);
+            info!("agent received node command: {:?}", cmd);
             self.scheduler()?.execute_command(cmd).await?;
         }
 

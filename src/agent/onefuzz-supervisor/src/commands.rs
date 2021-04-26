@@ -122,7 +122,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 
     let user =
         get_user_by_name(ONEFUZZ_SERVICE_USER).ok_or_else(|| format_err!("unable to find user"))?;
-    info!("adding sshkey:{:?} to user:{:?}", key_info, user);
+    info!("adding ssh key:{:?} to user:{:?}", key_info, user);
 
     let home_path = user.home_dir().to_owned();
     if !home_path.exists() {
