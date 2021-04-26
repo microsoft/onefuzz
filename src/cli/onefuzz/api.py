@@ -632,7 +632,7 @@ class LiveRepro(Endpoint):
             proxy = self.onefuzz.scaleset_proxy.get(
                 node.scaleset_id, node.machine_id, 22
             )
-            return (proxy.ip is None, "waiting for proxy", proxy)
+            return (proxy.ip is not None, "waiting for proxy", proxy)
 
         proxy = wait(missing_ip)
         if not proxy.ip:
