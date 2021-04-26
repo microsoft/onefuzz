@@ -1735,7 +1735,7 @@ class ScalesetProxy(Endpoint):
             machine_id_expanded,
         ) = self.onefuzz.scalesets._expand_scaleset_machine(scaleset_id, machine_id)
 
-        self.logger.debug(
+        self.logger.info(
             "create proxy: %s:%s %d",
             scaleset.scaleset_id,
             machine_id_expanded,
