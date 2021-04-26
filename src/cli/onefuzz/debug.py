@@ -20,7 +20,7 @@ from onefuzztypes.enums import ContainerType, TaskType
 from onefuzztypes.models import BlobRef, NodeAssignment, Report, Task
 from onefuzztypes.primitives import Container, Directory
 
-from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
+from onefuzz.api import UUID_EXPANSION, Command, LiveRepro, Onefuzz
 
 from .azcopy import azcopy_sync
 from .backend import wait
@@ -38,11 +38,16 @@ class DebugRepro(Command):
     """Debug repro instances"""
 
     def _disambiguate(self, vm_id: UUID_EXPANSION) -> str:
+        if isinstance(self.onefuzz.repro, LiveRepro):
+            raise Exception("not supported on LiveRepro")
+
+        repro_list = self.onefuzz.repro.list
+
         return str(
             self.onefuzz.repro._disambiguate_uuid(
                 "vm_id",
                 vm_id,
-                lambda: [str(x.vm_id) for x in self.onefuzz.repro.list()],
+                lambda: [str(x.vm_id) for x in repro_list()],
             )
         )
 
@@ -51,6 +56,9 @@ class DebugRepro(Command):
         return info.resource_group, info.subscription
 
     def ssh(self, vm_id: str) -> None:
+        if isinstance(self.onefuzz.repro, LiveRepro):
+            raise Exception("not supported on LiveRepro.  Use onefuzz.debug.tasks.ssh")
+
         vm_id = self._disambiguate(vm_id)
         repro = self.onefuzz.repro.get(vm_id)
         if repro.ip is None:
@@ -62,6 +70,9 @@ class DebugRepro(Command):
             pass
 
     def rdp(self, vm_id: str) -> None:
+        if isinstance(self.onefuzz.repro, LiveRepro):
+            raise Exception("not supported on LiveRepro.  Use onefuzz.debug.task.rdp")
+
         vm_id = self._disambiguate(vm_id)
         repro = self.onefuzz.repro.get(vm_id)
         if repro.ip is None:

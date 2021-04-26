@@ -12,7 +12,7 @@ import subprocess  # nosec
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 from uuid import UUID
 
 import semver
@@ -488,7 +488,7 @@ class LiveRepro(Endpoint):
         container: primitives.Container,
         path: str,
         *,
-        pool_name: Optional[primitives.PoolName],
+        pool_name: Optional[primitives.PoolName] = None,
         duration: int = 1,
         tags: Optional[Dict[str, str]] = None,
         analyzer_env: Optional[Dict[str, str]] = {"ASAN_OPTIONS": "abort_on_error=1"},
@@ -1784,7 +1784,6 @@ class Onefuzz:
             config=DEFAULT, config_path=config_path, token_path=token_path
         )
         self.containers = Containers(self)
-        self.repro = Repro(self)
         self.notifications = Notifications(self)
         self.tasks = Tasks(self)
         self.jobs = Jobs(self)
@@ -1799,8 +1798,9 @@ class Onefuzz:
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates = JobTemplates(self)
 
+        self.repro: Union[LiveRepro, Repro] = Repro(self)
         if self._backend.is_feature_enabled(PreviewFeature.crash_repro_task.name):
-            self.live_repro = LiveRepro(self)
+            self.repro = LiveRepro(self)
 
         # these are externally developed cli modules
         self.template = Template(self, self.logger)
@@ -1927,7 +1927,7 @@ class Onefuzz:
                 )
                 self.notifications.delete(notification.notification_id)
 
-        if repros:
+        if repros and isinstance(self.repro, Repro):
             for vm in self.repro.list():
                 self.repro.delete(str(vm.vm_id))
 

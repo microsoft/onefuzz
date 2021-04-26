@@ -24,14 +24,14 @@ import re
 import sys
 from enum import Enum
 from shutil import which
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 from uuid import UUID, uuid4
 
 import requests
-from onefuzz.api import Command, Onefuzz
+from onefuzz.api import Command, LiveRepro, Onefuzz
 from onefuzz.backend import ContainerWrapper, wait
 from onefuzz.cli import execute_api
-from onefuzztypes.enums import OS, ContainerType, TaskState, VmState
+from onefuzztypes.enums import OS, ContainerType, TaskState
 from onefuzztypes.models import Job, Pool, Repro, Scaleset, Task
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
@@ -512,7 +512,7 @@ class TestOnefuzz:
                     return (container.name, files.files[0])
         return None
 
-    def launch_repro(self) -> Tuple[bool, Dict[UUID, Tuple[Job, Repro]]]:
+    def launch_repro(self) -> Tuple[bool, Dict[UUID, Tuple[Job, Union[Repro, Task]]]]:
         # launch repro for one report from all succeessful jobs
         has_cdb = bool(which("cdb.exe"))
         has_gdb = bool(which("gdb"))
@@ -552,81 +552,45 @@ class TestOnefuzz:
 
         return (result, repros)
 
-    def check_repro(self, repros: Dict[UUID, Tuple[Job, Repro]]) -> bool:
+    def delete_repro(self, repro: Union[Repro, Task]) -> None:
+        if isinstance(repro, Task):
+            self.of.tasks.delete(repro.task_id)
+        elif isinstance(self.of.repro, LiveRepro):
+            raise Exception("invalid repro & self.of.repro instances")
+        else:
+            self.of.repro.delete(repro.vm_id)
+
+    def check_repro(self, repros: Dict[UUID, Tuple[Job, Union[Repro, Task]]]) -> bool:
         self.logger.info("checking repros")
         self.success = True
 
-        def check_repro_impl() -> Tuple[bool, str, bool]:
-            # check all of the launched repros
+        commands: Dict[OS, Tuple[str, str]] = {
+            OS.windows: ("r rip", r"^rip=[a-f0-9]{16}"),
+            OS.linux: ("info reg rip", r"^rip\s+0x[a-f0-9]+\s+0x[a-f0-9]+"),
+        }
 
-            self.cleared = False
-
-            def clear() -> None:
-                if not self.cleared:
-                    self.cleared = True
-                    print("")
-
-            commands: Dict[OS, Tuple[str, str]] = {
-                OS.windows: ("r rip", r"^rip=[a-f0-9]{16}"),
-                OS.linux: ("info reg rip", r"^rip\s+0x[a-f0-9]+\s+0x[a-f0-9]+"),
-            }
-
-            for (job, repro) in list(repros.values()):
-                repros[job.job_id] = (job, self.of.repro.get(repro.vm_id))
-
-            for (job, repro) in list(repros.values()):
-                if repro.error:
-                    clear()
-                    self.logger.error(
-                        "repro failed: %s: %s",
-                        job.config.name,
-                        repro.error,
-                    )
-                    self.of.repro.delete(repro.vm_id)
-                    del repros[job.job_id]
-                elif repro.state == VmState.running:
-                    try:
-                        result = self.of.repro.connect(
-                            repro.vm_id,
-                            delete_after_use=True,
-                            debug_command=commands[repro.os][0],
-                        )
-                        if result is not None and re.search(
-                            commands[repro.os][1], result, re.MULTILINE
-                        ):
-                            clear()
-                            self.logger.info("repro succeeded: %s", job.config.name)
-                        else:
-                            clear()
-                            self.logger.error(
-                                "repro failed: %s - %s", job.config.name, result
-                            )
-                    except Exception as err:
-                        clear()
-                        self.logger.error("repro failed: %s - %s", job.config.name, err)
-                    del repros[job.job_id]
-                elif repro.state not in [VmState.init, VmState.extensions_launch]:
-                    self.logger.error(
-                        "repro failed: %s - bad state: %s", job.config.name, repro.state
-                    )
-                    del repros[job.job_id]
-
-            repro_states: Dict[str, List[str]] = {}
-            for (job, repro) in repros.values():
-                if repro.state.name not in repro_states:
-                    repro_states[repro.state.name] = []
-                repro_states[repro.state.name].append(job.config.name)
-
-            logline = []
-            for state in repro_states:
-                logline.append("%s:%s" % (state, ",".join(repro_states[state])))
-
-            msg = "waiting repro: %s" % " ".join(logline)
-            if len(msg) > 80:
-                msg = "waiting on %d repros" % len(repros)
-            return (not bool(repros), msg, self.success)
-
-        return wait(check_repro_impl)
+        for (job, repro) in list(repros.values()):
+            try:
+                repro_id: UUID = (
+                    repro.vm_id if isinstance(repro, Repro) else repro.task_id
+                )
+                result = self.of.repro.connect(
+                    repro_id,
+                    debug_command=commands[repro.os][0],
+                )
+                if result is not None and re.search(
+                    commands[repro.os][1], result, re.MULTILINE
+                ):
+                    self.logger.info("repro succeeded: %s", job.config.name)
+                else:
+                    self.logger.error("repro failed: %s - %s", job.config.name, result)
+                    success = False
+            except Exception as err:
+                self.logger.error("repro failed: %s - %s", job.config.name, err)
+                success = False
+            self.delete_repro(repro)
+            del repros[job.job_id]
+        return success
 
     def get_jobs(self) -> List[Job]:
         jobs = self.of.jobs.list(job_state=None)
@@ -680,13 +644,16 @@ class TestOnefuzz:
                     ]:
                         container_names.add(container.name)
 
-        for repro in self.of.repro.list():
-            if repro.config.container in container_names:
-                try:
-                    self.of.repro.delete(repro.vm_id)
-                except Exception as e:
-                    self.logger.error("cleanup of repro failed: %s %s", repro.vm_id, e)
-                    errors.append(e)
+        if not isinstance(self.of.repro, LiveRepro):
+            for repro in self.of.repro.list():
+                if repro.config.container in container_names:
+                    try:
+                        self.of.repro.delete(repro.vm_id)
+                    except Exception as e:
+                        self.logger.error(
+                            "cleanup of repro failed: %s %s", repro.vm_id, e
+                        )
+                        errors.append(e)
 
         if errors:
             raise Exception("cleanup failed")
