@@ -35,7 +35,7 @@ DEFAULT_TAIL_DELAY = 10.0
 
 
 class DebugRepro(Command):
-    """ Debug repro instances """
+    """Debug repro instances"""
 
     def _disambiguate(self, vm_id: UUID_EXPANSION) -> str:
         return str(
@@ -75,7 +75,7 @@ class DebugRepro(Command):
 
 
 class DebugNode(Command):
-    """ Debug a specific node on a scaleset """
+    """Debug a specific node on a scaleset"""
 
     def rdp(self, machine_id: UUID_EXPANSION, duration: Optional[int] = 1) -> None:
         node = self.onefuzz.nodes.get(machine_id)
@@ -95,7 +95,7 @@ class DebugNode(Command):
 
 
 class DebugScaleset(Command):
-    """ Debug tasks """
+    """Debug tasks"""
 
     def _get_proxy_setup(
         self, scaleset_id: UUID, machine_id: UUID, port: int, duration: Optional[int]
@@ -176,7 +176,7 @@ class DebugScaleset(Command):
 
 
 class DebugTask(Command):
-    """ Debug a specific job """
+    """Debug a specific job"""
 
     def list_nodes(self, task_id: UUID_EXPANSION) -> Optional[List[NodeAssignment]]:
         task = self.onefuzz.tasks.get(task_id)
@@ -259,7 +259,7 @@ class DebugTask(Command):
 
 
 class DebugJobTask(Command):
-    """ Debug a task for a specific job """
+    """Debug a task for a specific job"""
 
     def _get_task(self, job_id: UUID_EXPANSION, task_type: TaskType) -> UUID:
         for task in self.onefuzz.tasks.list(job_id=job_id):
@@ -277,7 +277,7 @@ class DebugJobTask(Command):
         *,
         duration: Optional[int] = 1,
     ) -> None:
-        """ SSH into the first node running the specified task type in the job """
+        """SSH into the first node running the specified task type in the job"""
         return self.onefuzz.debug.task.ssh(
             self._get_task(job_id, task_type), duration=duration
         )
@@ -289,14 +289,14 @@ class DebugJobTask(Command):
         *,
         duration: Optional[int] = 1,
     ) -> None:
-        """ RDP into the first node running the specified task type in the job """
+        """RDP into the first node running the specified task type in the job"""
         return self.onefuzz.debug.task.rdp(
             self._get_task(job_id, task_type), duration=duration
         )
 
 
 class DebugJob(Command):
-    """ Debug a specific Job """
+    """Debug a specific Job"""
 
     def __init__(self, onefuzz: Any, logger: logging.Logger):
         super().__init__(onefuzz, logger)
@@ -339,7 +339,7 @@ class DebugJob(Command):
         )
 
     def download_files(self, job_id: UUID_EXPANSION, output: Directory) -> None:
-        """ Download the containers by container type for each task in the specified job """
+        """Download the containers by container type for each task in the specified job"""
 
         to_download = {}
         tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
@@ -574,7 +574,7 @@ class DebugLog(Command):
 
 
 class DebugNotification(Command):
-    """ Debug notification integrations """
+    """Debug notification integrations"""
 
     def _get_container(
         self, task: Task, container_type: ContainerType
@@ -596,7 +596,7 @@ class DebugNotification(Command):
         report_container_type: ContainerType = ContainerType.unique_reports,
         crash_name: str = "fake-crash-sample",
     ) -> None:
-        """ Inject a report into the first crash reporting task in the specified job """
+        """Inject a report into the first crash reporting task in the specified job"""
 
         tasks = self.onefuzz.tasks.list(job_id=job_id, state=[])
         for task in tasks:
@@ -620,7 +620,7 @@ class DebugNotification(Command):
         report_container_type: ContainerType = ContainerType.unique_reports,
         crash_name: str = "fake-crash-sample",
     ) -> None:
-        """ Inject a report into the specified crash reporting task """
+        """Inject a report into the specified crash reporting task"""
 
         task = self.onefuzz.tasks.get(task_id)
         crashes = self._get_container(task, ContainerType.crashes)
@@ -668,7 +668,7 @@ class DebugNotification(Command):
 
 
 class Debug(Command):
-    """ Debug running jobs """
+    """Debug running jobs"""
 
     def __init__(self, onefuzz: Any, logger: logging.Logger):
         super().__init__(onefuzz, logger)

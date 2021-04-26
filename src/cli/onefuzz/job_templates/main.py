@@ -34,7 +34,7 @@ def load_templates(templates: List[JobTemplateConfig]) -> None:
 
 
 class JobTemplates(Endpoint):
-    """ Job Templates """
+    """Job Templates"""
 
     endpoint = "job_templates"
 
@@ -44,7 +44,7 @@ class JobTemplates(Endpoint):
         self.submit = TemplateSubmitHandler(onefuzz)
 
     def info(self, name: str) -> Optional[JobTemplateConfig]:
-        """ Display information for a Job Template """
+        """Display information for a Job Template"""
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
 
         endpoint = self.onefuzz._backend.config.endpoint
@@ -62,7 +62,7 @@ class JobTemplates(Endpoint):
         return None
 
     def list(self) -> Optional[List[str]]:
-        """ List available Job Templates """
+        """List available Job Templates"""
 
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
 
@@ -90,7 +90,7 @@ class JobTemplates(Endpoint):
         load_templates(entry.configs)
 
     def refresh(self) -> None:
-        """ Update available templates """
+        """Update available templates"""
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
         self.onefuzz.logger.info("refreshing job template cache")
 
