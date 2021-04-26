@@ -157,7 +157,7 @@ class Node(BASE_NODE, ORMMixin):
         return ("pool_name", "machine_id")
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:
-        return {"tasks": ...}
+        return {"tasks": ..., "messages": ...}
 
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {
