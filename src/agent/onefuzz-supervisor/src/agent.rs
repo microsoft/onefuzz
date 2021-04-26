@@ -13,6 +13,8 @@ use crate::setup::*;
 use crate::work::IWorkQueue;
 use crate::worker::IWorkerRunner;
 
+const PENDING_COMMANDS_DELAY: time::Duration = time::Duration::from_secs(10);
+
 pub struct Agent {
     coordinator: Box<dyn ICoordinator>,
     reboot: Box<dyn IReboot>,
@@ -68,7 +70,7 @@ impl Agent {
 
         loop {
             self.heartbeat.alive();
-            if instant.elapsed() >= time::Duration::from_secs(10) {
+            if instant.elapsed() >= PENDING_COMMANDS_DELAY {
                 self.execute_pending_commands().await?;
                 instant = time::Instant::now();
             }
