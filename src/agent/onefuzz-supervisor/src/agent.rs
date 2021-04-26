@@ -50,7 +50,7 @@ impl Agent {
     }
 
     pub async fn run(&mut self) -> Result<()> {
-        let mut delay = command_delay();
+        let mut instant = time::Instant::now();
 
         // Tell the service that the agent has started.
         //
@@ -68,9 +68,9 @@ impl Agent {
 
         loop {
             self.heartbeat.alive();
-            if delay.is_elapsed() {
+            if instant.elapsed() >= time::Duration::from_secs(10) {
                 self.execute_pending_commands().await?;
-                delay = command_delay();
+                instant = time::Instant::now();
             }
 
             let done = self.update().await?;
@@ -284,11 +284,6 @@ impl Agent {
     fn scheduler(&mut self) -> Result<&mut Scheduler> {
         self.scheduler.as_mut().ok_or_else(scheduler_error)
     }
-}
-
-fn command_delay() -> time::Sleep {
-    let delay = time::Duration::from_secs(10);
-    time::sleep(delay)
 }
 
 // The agent owns a `Scheduler`, which it must consume when driving its state
