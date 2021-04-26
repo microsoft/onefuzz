@@ -17,7 +17,7 @@ from .templates.regression import Regression
 
 
 class Template(Command):
-    """ Pre-defined job templates """
+    """Pre-defined job templates"""
 
     def __init__(self, onefuzz: Onefuzz, logger: logging.Logger) -> None:
         super().__init__(onefuzz, logger)
