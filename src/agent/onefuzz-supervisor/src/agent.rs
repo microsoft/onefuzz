@@ -267,7 +267,6 @@ impl Agent {
     }
 
     async fn execute_pending_commands(&mut self) -> Result<()> {
-        info!("executing pending commands");
         let cmd = self.coordinator.poll_commands().await?;
 
         if let Some(cmd) = cmd {
