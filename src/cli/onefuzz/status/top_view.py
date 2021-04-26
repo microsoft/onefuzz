@@ -145,7 +145,7 @@ class TopView(Frame):
         return [(x, y) for (y, x) in enumerate(data)]
 
     def auto_resize(self, name: str) -> None:
-        """ recompute widget width based on max length of all of the values """
+        """recompute widget width based on max length of all of the values"""
         widget = self.find_widget(name)
         for column in range(len(widget._columns) - 1):
 
