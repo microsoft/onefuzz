@@ -205,10 +205,9 @@ def autoscale_pool(pool: Pool) -> None:
     scalesets = Scaleset.search_by_pool(pool.name)
     current_size = 0
     for scaleset in scalesets:
+        valid_auto_scale_states = ScalesetState.include_autoscale_count()
         unable_to_autoscale = [
-            x.scaleset_id
-            for x in scalesets
-            if x.state not in ScalesetState.include_autoscale_count()
+            x.scaleset_id for x in scalesets if x.state not in valid_auto_scale_states
         ]
         if unable_to_autoscale:
             logging.info(
