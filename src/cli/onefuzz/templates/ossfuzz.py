@@ -23,7 +23,7 @@ VM_COUNT = 1
 
 
 class OssFuzz(Command):
-    """ OssFuzz style jobs """
+    """OssFuzz style jobs"""
 
     def _containers(self, project: str, build: str, platform: OS) -> Dict[str, str]:
         guid = self.onefuzz.utils.namespaced_guid(

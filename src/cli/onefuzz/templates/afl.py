@@ -15,7 +15,7 @@ from . import JobHelper
 
 
 class AFL(Command):
-    """ Pre-defined AFL job """
+    """Pre-defined AFL job"""
 
     def basic(
         self,

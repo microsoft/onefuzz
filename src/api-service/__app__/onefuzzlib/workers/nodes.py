@@ -376,7 +376,7 @@ class Node(BASE_NODE, ORMMixin):
         self.save()
 
     def set_halt(self) -> None:
-        """ Tell the node to stop everything. """
+        """Tell the node to stop everything."""
         self.set_shutdown()
         self.stop()
         self.set_state(NodeState.halt)
