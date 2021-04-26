@@ -22,7 +22,7 @@ SANITIZERS = ["address", "dataflow", "memory", "undefined"]
 
 class Ossfuzz(Command):
     def build(self, project: str, sanitizer: str) -> None:
-        """ Build the latest oss-fuzz target """
+        """Build the latest oss-fuzz target"""
         self.logger.info("building %s:%s", project, sanitizer)
         cmd = [
             "docker",
@@ -47,7 +47,7 @@ class Ossfuzz(Command):
         sanitizers: Optional[List[str]] = None,
         notification_config: Optional[NotificationConfig] = None,
     ) -> None:
-        """ Build & Launch all of the libFuzzer targets for a given project """
+        """Build & Launch all of the libFuzzer targets for a given project"""
 
         if sanitizers is None:
             sanitizers = SANITIZERS

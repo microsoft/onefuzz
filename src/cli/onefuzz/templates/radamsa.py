@@ -15,7 +15,7 @@ from . import JobHelper
 
 
 class Radamsa(Command):
-    """ Pre-defined Radamsa job """
+    """Pre-defined Radamsa job"""
 
     def basic(
         self,
