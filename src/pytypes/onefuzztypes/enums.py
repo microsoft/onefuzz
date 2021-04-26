@@ -317,7 +317,7 @@ class ScalesetState(Enum):
 
     @classmethod
     def include_autoscale_count(cls) -> List["ScalesetState"]:
-        """ set of states that indicate inclusion in autoscale counts """
+        """set of states that indicate inclusion in autoscale counts"""
         unavailable = [cls.halt, cls.init, cls.setup]
         return [x for x in cls if x not in unavailable]
 
