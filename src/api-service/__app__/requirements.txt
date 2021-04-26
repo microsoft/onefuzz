@@ -13,13 +13,13 @@ azure-mgmt-compute==19.0.0
 azure-mgmt-core==1.2.2
 azure-mgmt-loganalytics~=8.0.0
 azure-mgmt-network==18.0.0
-azure-mgmt-storage~=17.0.0
-azure-mgmt-resource~=16.0.0
+azure-mgmt-storage~=17.1.0
+azure-mgmt-resource~=16.1.0
 azure-mgmt-subscription~=1.0.0
 azure-nspkg==3.0.2
-azure-storage-blob==12.8.0
+azure-storage-blob==12.8.1
 azure-storage-common==2.1.0
-azure-storage-queue==12.1.5
+azure-storage-queue==12.1.6
 jinja2~=2.11.3
 msrestazure~=0.6.3
 opencensus-ext-azure~=1.0.2
