@@ -187,9 +187,9 @@ def peek_queue(
             result.append(object_type.parse_obj(raw))
     except ResourceNotFoundError:
         return result
-      
+
     return result
-  
+
 
 def decode_message(message: QueueMessage, object_type: Type[A]) -> Optional[A]:
     decoded = base64.b64decode(message.content)
