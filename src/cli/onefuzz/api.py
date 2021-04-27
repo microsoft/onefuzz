@@ -521,7 +521,7 @@ class LiveRepro(Endpoint):
                         "-server",
                         "tcp:port=1337",
                         "-c",
-                        '"g"',
+                        "g",
                         "{target_exe}",
                         "{input}",
                     ]
@@ -614,6 +614,9 @@ class LiveRepro(Endpoint):
             self.onefuzz.nodes.add_ssh_key(node_id, public_key=handle.read())
 
         def wait_for_key() -> Tuple[bool, str, models.Node]:
+            task = self.onefuzz.tasks.get(task_id_expanded)
+            if task.error:
+                raise Exception("task failed: %s" % task.error.json())
             node = self.onefuzz.nodes.get(node_id)
             return (not bool(node.messages), "waiting for node to add ssh key", node)
 
@@ -626,6 +629,10 @@ class LiveRepro(Endpoint):
         def missing_ip() -> Tuple[bool, str, responses.ProxyGetResult]:
             if node.scaleset_id is None:
                 raise Exception("node got assigned to unmanaged node")
+
+            task = self.onefuzz.tasks.get(task_id_expanded)
+            if task.error:
+                raise Exception("task failed: %s" % task.error.json())
 
             proxy = self.onefuzz.scaleset_proxy.get(
                 node.scaleset_id, node.machine_id, 22
