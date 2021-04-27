@@ -89,7 +89,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
         .arg(format!(
             "Get-Acl \"{}\" | Set-Acl \"{}\"",
-            host_key_path.display()
+            host_key_path.display(),
             admin_auth_keys_path.display(),
         ))
         .stdin(Stdio::null())
