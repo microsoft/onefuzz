@@ -1615,9 +1615,13 @@ class Onefuzz:
         client_secret: Optional[str] = None,
         enable_feature: Optional[PreviewFeature] = None,
         tenant_domain: Optional[str] = None,
+        reset: Optional[bool] = None,
     ) -> BackendConfig:
         """Configure onefuzz CLI"""
         self.logger.debug("set config")
+
+        if reset:
+            self._backend.config = BackendConfig(authority="", client_id="")
 
         if endpoint is not None:
             # The normal path for calling the API always uses the oauth2 workflow,
