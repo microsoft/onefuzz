@@ -65,7 +65,7 @@ from data_migration import migrate
 from registration import (
     OnefuzzAppRole,
     add_application_password,
-    assign_scaleset_role,
+    assign_app_role,
     authorize_application,
     register_application,
     set_app_audience,
@@ -525,10 +525,11 @@ class Client:
             logger.info("Upgrading: skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
-        assign_scaleset_role(
+        assign_app_role(
             self.application_name,
             self.results["deploy"]["scaleset-identity"]["value"],
             self.get_subscription_id(),
+            OnefuzzAppRole.ManagedNode,
         )
 
     def apply_migrations(self) -> None:

@@ -12,7 +12,7 @@ from onefuzztypes.responses import BoolResult
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
-from ..onefuzzlib.workers.nodes import Node, NodeTasks
+from ..onefuzzlib.workers.nodes import Node, NodeMessage, NodeTasks
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -33,6 +33,9 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
 
         node_tasks = NodeTasks.get_by_machine_id(request.machine_id)
         node.tasks = [(t.task_id, t.state) for t in node_tasks]
+        node.messages = [
+            x.message for x in NodeMessage.get_messages(request.machine_id)
+        ]
 
         return ok(node)
 
