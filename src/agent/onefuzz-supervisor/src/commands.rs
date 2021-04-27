@@ -58,7 +58,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .context("icalcs failed to run")?;
     if !result.status.success() {
         bail!(
-            "set authorized_keys ({}) permissions failed: {:?}",
+            "removing 'NT AUTHORITY/Authenticated Users' permissions to '{}' failed: {:?}",
             admin_auth_keys_path.display(),
             result
         );
@@ -78,7 +78,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .context("icacls failed to run")?;
     if !result.status.success() {
         bail!(
-            "set authorized_keys ({}) permissions failed: {:?}",
+            "removing permission inheretence to '{}' failed: {:?}",
             admin_auth_keys_path.display(),
             result
         );
@@ -89,8 +89,8 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
         .arg(format!(
             "Get-Acl \"{}\" | Set-Acl \"{}\"",
-            admin_auth_keys_path.display(),
             host_key_path.display()
+            admin_auth_keys_path.display(),
         ))
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -102,7 +102,8 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         .context("Powershell Get-ACL | Set-ACL failed to run")?;
     if !result.status.success() {
         bail!(
-            "set authorized_keys ({}) permissions failed: {:?}",
+            "copying ACL from '{}' to '{}' permissions failed: {:?}",
+            host_key_path.display(),
             admin_auth_keys_path.display(),
             result
         );
