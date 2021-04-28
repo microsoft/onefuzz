@@ -1000,7 +1000,7 @@ def main() -> None:
     parser.add_argument(
         "--rbac_only",
         action="store_true",
-        help="deploy only the azure Active directory only",
+        help="execute only the steps required to create the rbac resources",
     )
 
     args = parser.parse_args()
@@ -1040,6 +1040,10 @@ def main() -> None:
     logging.getLogger("deploy").setLevel(logging.INFO)
 
     if args.rbac_only:
+        logger.warning(
+            "'rbac_only' specified. The deployment will execute "
+            "only the steps required to create the rbac resources"
+        )
         states = rbac_only_states
     else:
         states = full_deployment_states
