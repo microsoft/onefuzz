@@ -550,24 +550,33 @@ mod tests {
         assert_eq!(total.covered_blocks(), total.difference(&empty));
         assert_eq!(total.difference(&total), 0);
 
-        let new: BlockCoverageReport = serde_json::from_value(json!({
-            some_dll.to_string(): [
-                { "offset": 2, "count": 0 },
-                { "offset": 22, "count": 4 },
-                { "offset": 30, "count": 5 },
-                { "offset": 400, "count": 6 },
-            ],
-            main_exe.to_string(): [
-                { "offset": 1, "count": 0 },
-                { "offset": 300, "count": 1 },
-                { "offset": 5000, "count": 0 },
-            ],
-            other_dll.to_string(): [
-                { "offset": 123, "count": 0 },
-                { "offset": 456, "count": 10 },
-            ],
-        }))?;
-        let new = CommandBlockCov::try_from(new)?;
+        let new: BlockCoverageReport = serde_json::from_value(json!([
+            {
+                "module": some_dll,
+                "blocks": [
+                    { "offset": 2, "count": 0 },
+                    { "offset": 22, "count": 4 },
+                    { "offset": 30, "count": 5 },
+                    { "offset": 400, "count": 6 },
+                ],
+            },
+            {
+                "module": main_exe,
+                "blocks": [
+                    { "offset": 1, "count": 0 },
+                    { "offset": 300, "count": 1 },
+                    { "offset": 5000, "count": 0 },
+                ],
+            },
+            {
+                "module": other_dll,
+                "blocks": [
+                    { "offset": 123, "count": 0 },
+                    { "offset": 456, "count": 10 },
+                ],
+            },
+        ]))?;
+        let new = CommandBlockCov::try_from_report(new)?;
 
         assert_eq!(new.known_blocks(), 9);
         assert_eq!(new.covered_blocks(), 5);
