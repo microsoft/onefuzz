@@ -20,3 +20,6 @@ pub mod disasm;
 
 pub mod filter;
 mod region;
+
+#[cfg(test)]
+mod test;
