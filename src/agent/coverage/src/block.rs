@@ -493,17 +493,17 @@ mod tests {
             {
                 "module": some_dll,
                 "blocks": [
-                    {"offset": 2,"count": 0},
-                    {"offset": 30,"count": 1},
-                    {"offset": 400,"count": 0},
+                    { "offset": 2, "count": 0 },
+                    { "offset": 30, "count": 1 },
+                    { "offset": 400, "count": 0 },
                 ],
             },
             {
                 "module": main_exe,
                 "blocks": [
-                    {"offset": 1, "count": 1},
-                    {"offset": 20,"count": 0},
-                    {"offset": 300, "count": 1},
+                    { "offset": 1, "count": 1 },
+                    { "offset": 20, "count": 0 },
+                    { "offset": 300, "count": 1 },
                 ],
             },
         ]))?;
