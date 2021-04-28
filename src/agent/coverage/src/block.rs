@@ -20,7 +20,7 @@ use crate::report::{CoverageReport, CoverageReportEntry};
 ///
 /// Organized by module.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
-#[serde(transparent)]
+#[serde(into = "BlockCoverageReport", try_from = "BlockCoverageReport")]
 pub struct CommandBlockCov {
     modules: BTreeMap<ModulePath, ModuleCov>,
 }
@@ -487,7 +487,7 @@ mod tests {
             cov
         };
 
-        let ser = serde_json::to_string(&cov.clone().into_report())?;
+        let ser = serde_json::to_string(&cov)?;
 
         let text = serde_json::to_string(&json!([
             {
@@ -510,8 +510,7 @@ mod tests {
 
         assert_eq!(ser, text);
 
-        let report: BlockCoverageReport = serde_json::from_str(&ser)?;
-        let de = CommandBlockCov::try_from_report(report)?;
+        let de: CommandBlockCov = serde_json::from_str(&ser)?;
         assert_eq!(de, cov);
 
         Ok(())
@@ -525,7 +524,7 @@ mod tests {
 
         let empty = CommandBlockCov::default();
 
-        let total: BlockCoverageReport = serde_json::from_value(json!([
+        let mut total: CommandBlockCov = serde_json::from_value(json!([
             {
                 "module": some_dll,
                 "blocks": [
@@ -543,14 +542,13 @@ mod tests {
                 ],
             },
         ]))?;
-        let mut total = CommandBlockCov::try_from_report(total)?;
 
         assert_eq!(total.known_blocks(), 6);
         assert_eq!(total.covered_blocks(), 3);
         assert_eq!(total.covered_blocks(), total.difference(&empty));
         assert_eq!(total.difference(&total), 0);
 
-        let new: BlockCoverageReport = serde_json::from_value(json!([
+        let new: CommandBlockCov = serde_json::from_value(json!([
             {
                 "module": some_dll,
                 "blocks": [
@@ -576,7 +574,6 @@ mod tests {
                 ],
             },
         ]))?;
-        let new = CommandBlockCov::try_from_report(new)?;
 
         assert_eq!(new.known_blocks(), 9);
         assert_eq!(new.covered_blocks(), 5);
