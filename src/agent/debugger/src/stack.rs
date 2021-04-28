@@ -228,39 +228,45 @@ pub fn get_stack(
 
     let mut stack = vec![];
 
-    dbghlp.stackwalk_ex(process_handle, thread_handle, |frame| {
-        let program_counter = frame.AddrPC.Offset;
+    dbghlp.stackwalk_ex(
+        process_handle,
+        thread_handle,
+        true, /* visit inline frames */
+        |frame| {
+            let program_counter = frame.AddrPC.Offset;
 
-        let debug_stack_frame = if resolve_symbols {
-            if let Ok(module_info) = dbghlp.sym_get_module_info(process_handle, program_counter) {
-                get_function_location_in_module(
-                    &dbghlp,
-                    &module_info,
-                    process_handle,
-                    program_counter,
-                    frame.InlineFrameContext,
-                )
+            let debug_stack_frame = if resolve_symbols {
+                if let Ok(module_info) = dbghlp.sym_get_module_info(process_handle, program_counter)
+                {
+                    get_function_location_in_module(
+                        &dbghlp,
+                        &module_info,
+                        process_handle,
+                        program_counter,
+                        frame.InlineFrameContext,
+                    )
+                } else {
+                    // We ignore the error from sym_get_module_info because corrupt stacks in the
+                    // target are a common cause of not finding the module - a condition we expect.
+                    get_frame_with_unknown_module(process_handle, program_counter)
+                }
             } else {
-                // We ignore the error from sym_get_module_info because corrupt stacks in the
-                // target are a common cause of not finding the module - a condition we expect.
                 get_frame_with_unknown_module(process_handle, program_counter)
-            }
-        } else {
-            get_frame_with_unknown_module(process_handle, program_counter)
-        };
+            };
 
-        // Avoid pushing consecutive corrupt frames.
-        if !debug_stack_frame.is_corrupt_frame()
-            || stack
-                .last()
-                .map_or(true, |f: &DebugStackFrame| !f.is_corrupt_frame())
-        {
-            stack.push(debug_stack_frame);
-        };
+            // Avoid pushing consecutive corrupt frames.
+            if !debug_stack_frame.is_corrupt_frame()
+                || stack
+                    .last()
+                    .map_or(true, |f: &DebugStackFrame| !f.is_corrupt_frame())
+            {
+                stack.push(debug_stack_frame);
+            };
 
-        // We want all frames, so continue walking.
-        true
-    })?;
+            // We want all frames, so continue walking.
+            true
+        },
+    )?;
 
     Ok(DebugStack::new(stack))
 }
