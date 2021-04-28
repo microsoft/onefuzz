@@ -8,10 +8,13 @@ pub mod linux;
 pub mod windows;
 
 use std::collections::{btree_map, BTreeMap};
+use std::convert::TryFrom;
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::code::ModulePath;
+use crate::report::{CoverageReport, CoverageReportEntry};
 
 /// Block coverage for a command invocation.
 ///
@@ -90,6 +93,56 @@ impl CommandBlockCov {
 
         total
     }
+
+    pub fn into_report(self) -> BlockCoverageReport {
+        self.into()
+    }
+
+    pub fn try_from_report(report: BlockCoverageReport) -> Result<Self> {
+        Self::try_from(report)
+    }
+}
+
+impl From<CommandBlockCov> for BlockCoverageReport {
+    fn from(cmd: CommandBlockCov) -> Self {
+        let mut report = CoverageReport::default();
+
+        for (module, blocks) in cmd.modules {
+            let entry = CoverageReportEntry {
+                module: module.path_lossy(),
+                metadata: (),
+                coverage: Block { blocks },
+            };
+            report.entries.push(entry);
+        }
+
+        report
+    }
+}
+
+impl TryFrom<CoverageReport<Block, ()>> for CommandBlockCov {
+    type Error = anyhow::Error;
+
+    fn try_from(report: BlockCoverageReport) -> Result<Self> {
+        let mut coverage = Self::default();
+
+        for entry in report.entries {
+            let path = ModulePath::new(entry.module.into())?;
+            let blocks = entry.coverage.blocks.blocks;
+            let cov = ModuleCov { blocks };
+
+            coverage.modules.insert(path, cov);
+        }
+
+        Ok(coverage)
+    }
+}
+
+pub type BlockCoverageReport = CoverageReport<Block, ()>;
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Block {
+    blocks: ModuleCov,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -434,24 +487,31 @@ mod tests {
             cov
         };
 
-        let ser = serde_json::to_string(&cov)?;
+        let ser = serde_json::to_string(&cov.clone().into_report())?;
 
-        let text = serde_json::to_string(&json!({
-            some_dll.to_string(): [
-                {"offset":2,"count":0},
-                {"offset":30,"count":1},
-                {"offset":400,"count":0},
-            ],
-            main_exe.to_string(): [
-                {"offset":1,"count":1},
-                {"offset":20,"count":0},
-                {"offset":300,"count":1},
-            ],
-        }))?;
+        let text = serde_json::to_string(&json!([
+            {
+                "module": some_dll,
+                "blocks": [
+                    {"offset": 2,"count": 0},
+                    {"offset": 30,"count": 1},
+                    {"offset": 400,"count": 0},
+                ],
+            },
+            {
+                "module": main_exe,
+                "blocks": [
+                    {"offset": 1, "count": 1},
+                    {"offset": 20,"count": 0},
+                    {"offset": 300, "count": 1},
+                ],
+            },
+        ]))?;
 
         assert_eq!(ser, text);
 
-        let de: CommandBlockCov = serde_json::from_str(&ser)?;
+        let report: BlockCoverageReport = serde_json::from_str(&ser)?;
+        let de = CommandBlockCov::try_from_report(report)?;
         assert_eq!(de, cov);
 
         Ok(())
@@ -465,25 +525,32 @@ mod tests {
 
         let empty = CommandBlockCov::default();
 
-        let mut total: CommandBlockCov = serde_json::from_value(json!({
-            some_dll.to_string(): [
-                { "offset": 2, "count": 0 },
-                { "offset": 30, "count": 1 },
-                { "offset": 400, "count": 0 },
-            ],
-            main_exe.to_string(): [
-                { "offset": 1, "count": 2 },
-                { "offset": 20, "count": 0 },
-                { "offset": 300, "count": 3 },
-            ],
-        }))?;
+        let total: BlockCoverageReport = serde_json::from_value(json!([
+            {
+                "module": some_dll,
+                "blocks": [
+                    { "offset": 2, "count": 0 },
+                    { "offset": 30, "count": 1 },
+                    { "offset": 400, "count": 0 },
+                ],
+            },
+            {
+                "module": main_exe,
+                "blocks": [
+                    { "offset": 1, "count": 2 },
+                    { "offset": 20, "count": 0 },
+                    { "offset": 300, "count": 3 },
+                ],
+            },
+        ]))?;
+        let mut total = CommandBlockCov::try_from_report(total)?;
 
         assert_eq!(total.known_blocks(), 6);
         assert_eq!(total.covered_blocks(), 3);
         assert_eq!(total.covered_blocks(), total.difference(&empty));
         assert_eq!(total.difference(&total), 0);
 
-        let new: CommandBlockCov = serde_json::from_value(json!({
+        let new: BlockCoverageReport = serde_json::from_value(json!({
             some_dll.to_string(): [
                 { "offset": 2, "count": 0 },
                 { "offset": 22, "count": 4 },
@@ -500,6 +567,7 @@ mod tests {
                 { "offset": 456, "count": 10 },
             ],
         }))?;
+        let new = CommandBlockCov::try_from(new)?;
 
         assert_eq!(new.known_blocks(), 9);
         assert_eq!(new.covered_blocks(), 5);
