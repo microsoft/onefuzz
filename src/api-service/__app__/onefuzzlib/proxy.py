@@ -163,8 +163,8 @@ class Proxy(ORMMixin):
                 self.state,
             )
             return False
-        if self.timestamp is not None: 
-            proxy_timestamp = self.timestamp    
+        if self.timestamp is not None:
+            proxy_timestamp = self.timestamp
             if proxy_timestamp < (datetime.datetime.now() - datetime.timedelta(7)):
                 logging.info(
                     PROXY_LOG_PREFIX
@@ -285,8 +285,8 @@ class Proxy(ORMMixin):
                     proxy.state = VmState.stopping
                     proxy.save()
                 return None
-            if proxy.timestamp is not None: 
-                proxy_timestamp = proxy.timestamp    
+            if proxy.timestamp is not None:
+                proxy_timestamp = proxy.timestamp
                 if proxy_timestamp < (datetime.datetime.now() - datetime.timedelta(7)):
                     logging.info(
                         PROXY_LOG_PREFIX
