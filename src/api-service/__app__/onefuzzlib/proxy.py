@@ -163,20 +163,20 @@ class Proxy(ORMMixin):
                 self.state,
             )
             return False
-        if self.timestamp < (datetime.datetime.now() - datatime.timedelta(7)): 
+        if self.timestamp < (datetime.datetime.now() - datetime.timedelta(7)):
             logging.info(
                 PROXY_LOG_PREFIX + "proxy older than 7 days: proxy-created:%s state:%s",
                 self.timestamp,
-                self.state
+                self.state,
             )
             return False
         return True
 
     def is_used(self) -> bool:
-            if len(self.get_forwards()) == 0:
-                logging.info(PROXY_LOG_PREFIX + "no forwards: %s", self.region)
-                return False
-            return True
+        if len(self.get_forwards()) == 0:
+            logging.info(PROXY_LOG_PREFIX + "no forwards: %s", self.region)
+            return False
+        return True
 
     def is_alive(self) -> bool:
         # Unfortunately, with and without TZ information is required for compare
@@ -261,7 +261,7 @@ class Proxy(ORMMixin):
         return cls.search(query=query)
 
     @classmethod
-    # Question for Brian - Why does this not include is_used to check forwards? 
+    # Question for Brian - Why does this not include is_used to check forwards?
     def get_or_create(cls, region: Region) -> Optional["Proxy"]:
         proxy = Proxy.get(region)
         if proxy is not None:
@@ -277,11 +277,12 @@ class Proxy(ORMMixin):
                     proxy.state = VmState.stopping
                     proxy.save()
                 return None
-            if proxy.timestamp < (datetime.datetime.now() - datatime.timedelta(7)): 
+            if proxy.timestamp < (datetime.datetime.now() - datetime.timedelta(7)):
                 logging.info(
-                    PROXY_LOG_PREFIX + "proxy older than 7 days: proxy-created:%s state:%s",
+                    PROXY_LOG_PREFIX
+                    + "proxy older than 7 days: proxy-created:%s state:%s",
                     proxy.timestamp,
-                    proxy.state
+                    proxy.state,
                 )
                 if proxy.state != VmState.stopping:
                     # If the proxy is out-of-date, delete and re-create it
