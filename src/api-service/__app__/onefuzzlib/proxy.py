@@ -154,11 +154,29 @@ class Proxy(ORMMixin):
         logging.info(PROXY_LOG_PREFIX + "removing proxy: %s", self.region)
         self.delete()
 
-    def is_used(self) -> bool:
-        if len(self.get_forwards()) == 0:
-            logging.info(PROXY_LOG_PREFIX + "no forwards: %s", self.region)
+    def is_outdated(self) -> bool:
+        if self.version != __version__:
+            logging.info(
+                PROXY_LOG_PREFIX + "mismatch version: proxy:%s service:%s state:%s",
+                self.version,
+                __version__,
+                self.state,
+            )
+            return False
+        if self.timestamp < (datetime.datetime.now() - datatime.timedelta(7)): 
+            logging.info(
+                PROXY_LOG_PREFIX + "proxy older than 7 days: proxy-created:%s state:%s",
+                self.timestamp,
+                self.state
+            )
             return False
         return True
+
+    def is_used(self) -> bool:
+            if len(self.get_forwards()) == 0:
+                logging.info(PROXY_LOG_PREFIX + "no forwards: %s", self.region)
+                return False
+            return True
 
     def is_alive(self) -> bool:
         # Unfortunately, with and without TZ information is required for compare
@@ -243,6 +261,7 @@ class Proxy(ORMMixin):
         return cls.search(query=query)
 
     @classmethod
+    # Question for Brian - Why does this not include is_used to check forwards? 
     def get_or_create(cls, region: Region) -> Optional["Proxy"]:
         proxy = Proxy.get(region)
         if proxy is not None:
@@ -252,6 +271,17 @@ class Proxy(ORMMixin):
                     proxy.version,
                     __version__,
                     proxy.state,
+                )
+                if proxy.state != VmState.stopping:
+                    # If the proxy is out-of-date, delete and re-create it
+                    proxy.state = VmState.stopping
+                    proxy.save()
+                return None
+            if proxy.timestamp < (datetime.datetime.now() - datatime.timedelta(7)): 
+                logging.info(
+                    PROXY_LOG_PREFIX + "proxy older than 7 days: proxy-created:%s state:%s",
+                    proxy.timestamp,
+                    proxy.state
                 )
                 if proxy.state != VmState.stopping:
                     # If the proxy is out-of-date, delete and re-create it
