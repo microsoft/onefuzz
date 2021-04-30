@@ -7,6 +7,8 @@ pub mod linux;
 #[cfg(target_os = "windows")]
 pub mod windows;
 
+pub mod pe_provider;
+
 use std::collections::{btree_map, BTreeMap};
 use std::convert::TryFrom;
 
