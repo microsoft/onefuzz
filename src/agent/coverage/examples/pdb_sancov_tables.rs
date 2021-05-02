@@ -24,7 +24,10 @@ fn main() -> Result<()> {
     let data = fs::read(&opt.pe)?;
     let pe = PE::parse(&data)?;
 
-    let pdb = opt.pdb.clone().unwrap_or_else(|| opt.pe.with_extension("pdb"));
+    let pdb = opt
+        .pdb
+        .clone()
+        .unwrap_or_else(|| opt.pe.with_extension("pdb"));
     let pdb = fs::File::open(pdb)?;
     let mut pdb = PDB::open(pdb)?;
 

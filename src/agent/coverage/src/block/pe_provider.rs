@@ -6,7 +6,9 @@ use std::convert::TryInto;
 
 use anyhow::{format_err, Result};
 use goblin::pe::PE;
-use pdb::{AddressMap, DataSymbol, FallibleIterator, Rva, ProcedureSymbol, Source, SymbolData, PDB};
+use pdb::{
+    AddressMap, DataSymbol, FallibleIterator, ProcedureSymbol, Rva, Source, SymbolData, PDB,
+};
 
 /// Basic block offset provider for uninstrumented PE modules.
 pub struct PeBasicBlockProvider {}
@@ -23,11 +25,7 @@ where
     D: Source<'d> + 'd,
 {
     pub fn new(data: &'p [u8], pe: &'p PE<'p>, pdb: &'p mut PDB<'d, D>) -> Self {
-        Self {
-            data,
-            pe,
-            pdb,
-        }
+        Self { data, pe, pdb }
     }
 
     pub fn provide(&mut self) -> Result<BTreeSet<u32>> {
@@ -59,12 +57,8 @@ where
     }
 
     fn provide_from_inline_table(&mut self, counter_table: SancovTable) -> Result<BTreeSet<u32>> {
-        let mut visitor = SancovInlineAccessVisitor::new(
-            counter_table,
-            &self.data,
-            &self.pe,
-            &mut self.pdb,
-        )?;
+        let mut visitor =
+            SancovInlineAccessVisitor::new(counter_table, &self.data, &self.pe, &mut self.pdb)?;
 
         let debug_info = self.pdb.debug_information()?;
         let mut modules = debug_info.modules()?;
@@ -73,7 +67,6 @@ where
             if let Some(module_info) = self.pdb.module_info(&module)? {
                 let mut symbols = module_info.symbols()?;
                 while let Some(symbol) = symbols.next()? {
-
                     if let Ok(SymbolData::Procedure(proc)) = symbol.parse() {
                         visitor.visit_procedure_symbol(&proc)?;
                     }
@@ -95,7 +88,8 @@ where
 
     fn provide_from_pcs_table(&mut self, pcs_table: SancovTable) -> Result<BTreeSet<u32>> {
         // Read the PE directly to extract the PCs from the PC table.
-        let pe_alignment = self.pe
+        let pe_alignment = self
+            .pe
             .header
             .optional_header
             .ok_or_else(|| format_err!("PE file missing optional header"))?
@@ -106,10 +100,11 @@ where
             &self.pe.sections,
             pe_alignment,
         );
-        let pe_offset = pe_offset
-            .ok_or_else(|| format_err!("could not find file offset for sancov table"))?;
+        let pe_offset =
+            pe_offset.ok_or_else(|| format_err!("could not find file offset for sancov table"))?;
         let table_range = pe_offset..(pe_offset + pcs_table.size);
-        let pcs_table_data = self.data
+        let pcs_table_data = self
+            .data
             .get(table_range)
             .ok_or_else(|| format_err!("sancov table slice out of file range"))?;
 
@@ -129,13 +124,13 @@ where
             let pc = u64::from_le_bytes(le);
             let pc_offset: u32 = pc
                 .checked_sub(module_base)
-                .ok_or_else(||
-                            format_err!(
-                                "underflow when computing offset from VA: {:x} - {:x}",
-                                pc,
-                                module_base,
-                            )
-                )?
+                .ok_or_else(|| {
+                    format_err!(
+                        "underflow when computing offset from VA: {:x} - {:x}",
+                        pc,
+                        module_base,
+                    )
+                })?
                 .try_into()?;
             pcs.insert(pc_offset);
         }
@@ -488,13 +483,24 @@ pub struct SancovInlineAccessVisitor<'d, 'p> {
 }
 
 impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
-    pub fn new<'pdb, D>(table: SancovTable, data: &'p [u8], pe: &'p PE<'p>, pdb: &'pdb mut PDB<'d, D>) -> Result<Self>
+    pub fn new<'pdb, D>(
+        table: SancovTable,
+        data: &'p [u8],
+        pe: &'p PE<'p>,
+        pdb: &'pdb mut PDB<'d, D>,
+    ) -> Result<Self>
     where
         D: Source<'d> + 'd,
     {
         let access_offsets = BTreeSet::default();
         let address_map = pdb.address_map()?;
-        Ok(Self { access_offsets, address_map, data, pe, table })
+        Ok(Self {
+            access_offsets,
+            address_map,
+            data,
+            pe,
+            table,
+        })
     }
 
     pub fn visit_procedure_symbol(&mut self, proc: &ProcedureSymbol) -> Result<()> {
@@ -505,12 +511,7 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
         let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
 
         // Set decoder IP to be an RVA.
-        let proc_rip: u64 = proc
-            .offset
-            .to_rva(&self.address_map)
-            .unwrap()
-            .0
-            .into();
+        let proc_rip: u64 = proc.offset.to_rva(&self.address_map).unwrap().0.into();
         decoder.set_ip(proc_rip);
 
         let mut inst = Instruction::default();
@@ -518,8 +519,7 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
             decoder.decode_out(&mut inst);
 
             match inst.op_code().mnemonic() {
-                Mnemonic::Add |
-                Mnemonic::Inc => {
+                Mnemonic::Add | Mnemonic::Inc => {
                     // These may be 8-bit counter updates, check further.
                 }
                 Mnemonic::Mov => {
@@ -573,7 +573,7 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
                             continue;
                         }
                     }
-                },
+                }
                 _ => {
                     // Does not correspond to any known counter update, so skip.
                     continue;
@@ -596,7 +596,8 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
     }
 
     fn procedure_data(&self, proc: &ProcedureSymbol) -> Result<&'p [u8]> {
-        let alignment = self.pe
+        let alignment = self
+            .pe
             .header
             .optional_header
             .ok_or_else(|| format_err!("PE file missing optional header"))?
@@ -615,6 +616,8 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
             .into();
         // let range = file_offset..(file_offset + self.table.size);
         let range = file_offset..(file_offset + proc.len as usize);
-        self.data.get(range).ok_or_else(|| format_err!("invalid PE file range for procedure data"))
+        self.data
+            .get(range)
+            .ok_or_else(|| format_err!("invalid PE file range for procedure data"))
     }
 }

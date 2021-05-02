@@ -93,19 +93,11 @@ impl ModuleInfo {
         let pe = goblin::pe::PE::parse(&data)?;
         let module = ModuleIndex::index_pe(path.clone(), &pe);
 
-        let pdb_path = crate::pdb::find_pdb_path(
-            path.as_ref(),
-            &pe,
-            handle,
-        )?;
+        let pdb_path = crate::pdb::find_pdb_path(path.as_ref(), &pe, handle)?;
         let pdb = std::fs::File::open(&pdb_path)?;
         let mut pdb = pdb::PDB::open(pdb)?;
 
-        let mut sancov_provider = PeSancovBasicBlockProvider::new(
-            &data,
-            &pe,
-            &mut pdb,
-        );
+        let mut sancov_provider = PeSancovBasicBlockProvider::new(&data, &pe, &mut pdb);
 
         let blocks = if let Ok(blocks) = sancov_provider.provide() {
             blocks
