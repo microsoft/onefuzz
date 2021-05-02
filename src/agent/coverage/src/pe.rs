@@ -3,23 +3,16 @@
 
 #![allow(clippy::manual_swap)]
 
-use std::{
-    fs::File,
-    path::Path,
-};
+use std::{fs::File, path::Path};
 
 use anyhow::{Context, Result};
 use fixedbitset::FixedBitSet;
-use goblin::pe::{
-    PE,
-};
+use goblin::pe::PE;
 use memmap2::Mmap;
 use pdb::{
     AddressMap, FallibleIterator, PdbInternalSectionOffset, ProcedureSymbol, TypeIndex, PDB,
 };
-use winapi::um::{
-    winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386},
-};
+use winapi::um::winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386};
 
 use crate::intel;
 

@@ -8,14 +8,8 @@ use std::{
 
 use anyhow::Result;
 use debugger::dbghelp::DebugHelpGuard;
-use goblin::pe::{
-    debug::DebugData,
-    PE,
-};
-use winapi::um::{
-    dbghelp::SYMOPT_EXACT_SYMBOLS,
-    winnt::HANDLE,
-};
+use goblin::pe::{debug::DebugData, PE};
+use winapi::um::{dbghelp::SYMOPT_EXACT_SYMBOLS, winnt::HANDLE};
 
 // This is a fallback pseudo-handle used for interacting with dbghelp.
 //
@@ -29,21 +23,15 @@ use winapi::um::{
 // See: https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-syminitializew
 const PSEUDO_HANDLE: HANDLE = -2i64 as _;
 
-pub fn find_pdb_path(
-    pe_path: &Path,
-    pe: &PE,
-    target_handle: Option<HANDLE>,
-) -> Result<PathBuf> {
+pub fn find_pdb_path(pe_path: &Path, pe: &PE, target_handle: Option<HANDLE>) -> Result<PathBuf> {
     let cv = if let Some(DebugData {
         image_debug_directory: _,
         codeview_pdb70_debug_info: Some(cv),
-    }) = pe.debug_data {
+    }) = pe.debug_data
+    {
         cv
     } else {
-        anyhow::bail!(
-            "PE missing Codeview PDB debug info: {}",
-            pe_path.display(),
-        )
+        anyhow::bail!("PE missing Codeview PDB debug info: {}", pe_path.display(),)
     };
 
     let cv_filename = CStr::from_bytes_with_nul(cv.filename)?.to_str()?;
