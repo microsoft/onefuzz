@@ -8,9 +8,10 @@ use anyhow::{format_err, Result};
 use goblin::pe::PE;
 use pdb::{AddressMap, DataSymbol, FallibleIterator, Rva, ProcedureSymbol, Source, SymbolData, PDB};
 
-/// Basic block provider for uninstrumented executable modules.
+/// Basic block offset provider for uninstrumented PE modules.
 pub struct PeBasicBlockProvider {}
 
+/// Basic block offset provider for Sancov-instrumented PE modules.
 pub struct PeSancovBasicBlockProvider<'d, 'p, D> {
     data: &'p [u8],
     pe: &'p PE<'p>,
