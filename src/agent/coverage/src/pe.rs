@@ -229,8 +229,8 @@ pub fn process_module(
 
     log::info!("found PDB: {}", pdb_path.display());
 
-    return process_pdb(data, pe, functions_only, &pdb_path)
-        .with_context(|| format!("processing PDB: {}", pdb_path.display()));
+    process_pdb(data, pe, functions_only, &pdb_path)
+        .with_context(|| format!("processing PDB: {}", pdb_path.display()))
 }
 
 fn process_pdb(data: &[u8], pe: &PE, functions_only: bool, pdb_path: &Path) -> Result<FixedBitSet> {
