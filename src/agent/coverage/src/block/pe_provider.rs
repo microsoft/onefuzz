@@ -612,10 +612,10 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
             .try_into()?;
 
         let file_offset = goblin::pe::utils::find_offset(rva, &self.pe.sections, alignment)
-            .ok_or_else(|| format_err!("unable to find PE offset for RVA"))?
-            .into();
-        // let range = file_offset..(file_offset + self.table.size);
+            .ok_or_else(|| format_err!("unable to find PE offset for RVA"))?;
+
         let range = file_offset..(file_offset + proc.len as usize);
+
         self.data
             .get(range)
             .ok_or_else(|| format_err!("invalid PE file range for procedure data"))
