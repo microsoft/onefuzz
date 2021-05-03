@@ -6,6 +6,7 @@ use std::convert::TryInto;
 
 use anyhow::{format_err, Result};
 use goblin::pe::PE;
+use iced_x86::{Decoder, DecoderOptions, Instruction, Mnemonic, OpKind};
 use pdb::{
     AddressMap, DataSymbol, FallibleIterator, ProcedureSymbol, Rva, Source, SymbolData, PDB,
 };
@@ -504,8 +505,6 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
     }
 
     pub fn visit_procedure_symbol(&mut self, proc: &ProcedureSymbol) -> Result<()> {
-        use iced_x86::{Decoder, DecoderOptions, Instruction, Mnemonic, OpKind};
-
         let data = self.procedure_data(proc)?;
 
         let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
