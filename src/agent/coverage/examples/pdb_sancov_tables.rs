@@ -18,6 +18,7 @@ struct Opt {
     pdb: Option<std::path::PathBuf>,
 }
 
+#[cfg(target_os = "windows")]
 fn main() -> Result<()> {
     let opt = Opt::from_args();
 
@@ -38,3 +39,6 @@ fn main() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(target_os = "linux")]
+fn main() {}
