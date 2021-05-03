@@ -165,7 +165,7 @@ class Proxy(ORMMixin):
             return False
         if self.timestamp is not None:
             proxy_timestamp = self.timestamp
-            if proxy_timestamp < (datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(7)):
+            if proxy_timestamp < (datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(minutes=30)):
                 logging.info(
                     PROXY_LOG_PREFIX
                     + "proxy older than 7 days: proxy-created:%s state:%s",
@@ -288,7 +288,7 @@ class Proxy(ORMMixin):
             if proxy.timestamp is not None:
                 proxy_timestamp = proxy.timestamp
                 if proxy_timestamp < (
-                    datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(7)
+                    datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(minutes=30)
                 ):
                     logging.info(
                         PROXY_LOG_PREFIX
