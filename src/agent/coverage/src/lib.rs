@@ -7,6 +7,9 @@
 mod intel;
 
 #[cfg(target_os = "windows")]
+pub mod pdb;
+
+#[cfg(target_os = "windows")]
 pub mod pe;
 
 pub mod block;
