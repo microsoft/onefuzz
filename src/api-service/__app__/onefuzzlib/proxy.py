@@ -165,7 +165,10 @@ class Proxy(ORMMixin):
             return False
         if self.timestamp is not None:
             proxy_timestamp = self.timestamp
-            if proxy_timestamp < (datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(minutes=30)):
+            if proxy_timestamp < (
+                datetime.datetime.now(tz=datetime.timezone.utc)
+                - datetime.timedelta(minutes=30)
+            ):
                 logging.info(
                     PROXY_LOG_PREFIX
                     + "proxy older than 7 days: proxy-created:%s state:%s",
@@ -188,9 +191,9 @@ class Proxy(ORMMixin):
     def is_alive(self) -> bool:
         # Unfortunately, with and without TZ information is required for compare
         # or exceptions are generated
-        ten_minutes_ago_no_tz = datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(
-            minutes=10
-        )
+        ten_minutes_ago_no_tz = datetime.datetime.now(
+            tz=datetime.timezone.utc
+        ) - datetime.timedelta(minutes=10)
         ten_minutes_ago = ten_minutes_ago_no_tz.astimezone(datetime.timezone.utc)
         if (
             self.heartbeat is not None
@@ -288,7 +291,8 @@ class Proxy(ORMMixin):
             if proxy.timestamp is not None:
                 proxy_timestamp = proxy.timestamp
                 if proxy_timestamp < (
-                    datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(minutes=30)
+                    datetime.datetime.now(tz=datetime.timezone.utc)
+                    - datetime.timedelta(minutes=30)
                 ):
                     logging.info(
                         PROXY_LOG_PREFIX
