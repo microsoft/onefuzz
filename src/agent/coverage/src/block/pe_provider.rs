@@ -391,9 +391,9 @@ pub struct SancovTable {
     ///
     /// For `u8`-sized elements, this is also the length, but for PC tables,
     /// this will be the product of the length and entry count, where each
-    /// entry is defined as:
+    /// entry is defined in LLVM as:
     ///
-    /// ```
+    /// ```c
     /// struct PCTableEntry {
     ///   uintptr_t PC, PCFlags;
     /// };
