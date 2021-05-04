@@ -8,16 +8,19 @@ pub mod linux;
 pub mod windows;
 
 use std::collections::{btree_map, BTreeMap};
+use std::convert::TryFrom;
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::code::ModulePath;
+use crate::report::{CoverageReport, CoverageReportEntry};
 
 /// Block coverage for a command invocation.
 ///
 /// Organized by module.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
-#[serde(transparent)]
+#[serde(into = "BlockCoverageReport", try_from = "BlockCoverageReport")]
 pub struct CommandBlockCov {
     modules: BTreeMap<ModulePath, ModuleCov>,
 }
@@ -90,6 +93,56 @@ impl CommandBlockCov {
 
         total
     }
+
+    pub fn into_report(self) -> BlockCoverageReport {
+        self.into()
+    }
+
+    pub fn try_from_report(report: BlockCoverageReport) -> Result<Self> {
+        Self::try_from(report)
+    }
+}
+
+impl From<CommandBlockCov> for BlockCoverageReport {
+    fn from(cmd: CommandBlockCov) -> Self {
+        let mut report = CoverageReport::default();
+
+        for (module, blocks) in cmd.modules {
+            let entry = CoverageReportEntry {
+                module: module.path_lossy(),
+                metadata: (),
+                coverage: Block { blocks },
+            };
+            report.entries.push(entry);
+        }
+
+        report
+    }
+}
+
+impl TryFrom<CoverageReport<Block, ()>> for CommandBlockCov {
+    type Error = anyhow::Error;
+
+    fn try_from(report: BlockCoverageReport) -> Result<Self> {
+        let mut coverage = Self::default();
+
+        for entry in report.entries {
+            let path = ModulePath::new(entry.module.into())?;
+            let blocks = entry.coverage.blocks.blocks;
+            let cov = ModuleCov { blocks };
+
+            coverage.modules.insert(path, cov);
+        }
+
+        Ok(coverage)
+    }
+}
+
+pub type BlockCoverageReport = CoverageReport<Block, ()>;
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Block {
+    pub blocks: ModuleCov,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -243,6 +296,8 @@ mod tests {
     use anyhow::Result;
     use serde_json::json;
 
+    use crate::test::module_path;
+
     use super::*;
 
     // Builds a `ModuleCov` from a vec of `(offset, count)` tuples.
@@ -308,28 +363,6 @@ mod tests {
             to_vec(&total),
             vec![(1, 0), (2, 0), (3, 1), (5, 0), (8, 1), (13, 1),]
         );
-    }
-
-    // Given a POSIX-style path as a string, construct a valid absolute path for
-    // the target OS and return it as a checked `ModulePath`.
-    fn module_path(posix_path: &str) -> Result<ModulePath> {
-        let mut p = std::path::PathBuf::default();
-
-        // Ensure that the new path is absolute.
-        if cfg!(target_os = "windows") {
-            p.push("c:\\");
-        } else {
-            p.push("/");
-        }
-
-        // Remove any affixed POSIX path separators, then split on any internal
-        // separators and add each component to our accumulator path in an
-        // OS-specific way.
-        for c in posix_path.trim_matches('/').split('/') {
-            p.push(c);
-        }
-
-        ModulePath::new(p)
     }
 
     fn cmd_cov_from_vec(data: Vec<(&ModulePath, Vec<(u32, u32)>)>) -> CommandBlockCov {
@@ -436,18 +469,24 @@ mod tests {
 
         let ser = serde_json::to_string(&cov)?;
 
-        let text = serde_json::to_string(&json!({
-            some_dll.to_string(): [
-                {"offset":2,"count":0},
-                {"offset":30,"count":1},
-                {"offset":400,"count":0},
-            ],
-            main_exe.to_string(): [
-                {"offset":1,"count":1},
-                {"offset":20,"count":0},
-                {"offset":300,"count":1},
-            ],
-        }))?;
+        let text = serde_json::to_string(&json!([
+            {
+                "module": some_dll,
+                "blocks": [
+                    { "offset": 2, "count": 0 },
+                    { "offset": 30, "count": 1 },
+                    { "offset": 400, "count": 0 },
+                ],
+            },
+            {
+                "module": main_exe,
+                "blocks": [
+                    { "offset": 1, "count": 1 },
+                    { "offset": 20, "count": 0 },
+                    { "offset": 300, "count": 1 },
+                ],
+            },
+        ]))?;
 
         assert_eq!(ser, text);
 
@@ -465,41 +504,56 @@ mod tests {
 
         let empty = CommandBlockCov::default();
 
-        let mut total: CommandBlockCov = serde_json::from_value(json!({
-            some_dll.to_string(): [
-                { "offset": 2, "count": 0 },
-                { "offset": 30, "count": 1 },
-                { "offset": 400, "count": 0 },
-            ],
-            main_exe.to_string(): [
-                { "offset": 1, "count": 2 },
-                { "offset": 20, "count": 0 },
-                { "offset": 300, "count": 3 },
-            ],
-        }))?;
+        let mut total: CommandBlockCov = serde_json::from_value(json!([
+            {
+                "module": some_dll,
+                "blocks": [
+                    { "offset": 2, "count": 0 },
+                    { "offset": 30, "count": 1 },
+                    { "offset": 400, "count": 0 },
+                ],
+            },
+            {
+                "module": main_exe,
+                "blocks": [
+                    { "offset": 1, "count": 2 },
+                    { "offset": 20, "count": 0 },
+                    { "offset": 300, "count": 3 },
+                ],
+            },
+        ]))?;
 
         assert_eq!(total.known_blocks(), 6);
         assert_eq!(total.covered_blocks(), 3);
         assert_eq!(total.covered_blocks(), total.difference(&empty));
         assert_eq!(total.difference(&total), 0);
 
-        let new: CommandBlockCov = serde_json::from_value(json!({
-            some_dll.to_string(): [
-                { "offset": 2, "count": 0 },
-                { "offset": 22, "count": 4 },
-                { "offset": 30, "count": 5 },
-                { "offset": 400, "count": 6 },
-            ],
-            main_exe.to_string(): [
-                { "offset": 1, "count": 0 },
-                { "offset": 300, "count": 1 },
-                { "offset": 5000, "count": 0 },
-            ],
-            other_dll.to_string(): [
-                { "offset": 123, "count": 0 },
-                { "offset": 456, "count": 10 },
-            ],
-        }))?;
+        let new: CommandBlockCov = serde_json::from_value(json!([
+            {
+                "module": some_dll,
+                "blocks": [
+                    { "offset": 2, "count": 0 },
+                    { "offset": 22, "count": 4 },
+                    { "offset": 30, "count": 5 },
+                    { "offset": 400, "count": 6 },
+                ],
+            },
+            {
+                "module": main_exe,
+                "blocks": [
+                    { "offset": 1, "count": 0 },
+                    { "offset": 300, "count": 1 },
+                    { "offset": 5000, "count": 0 },
+                ],
+            },
+            {
+                "module": other_dll,
+                "blocks": [
+                    { "offset": 123, "count": 0 },
+                    { "offset": 456, "count": 10 },
+                ],
+            },
+        ]))?;
 
         assert_eq!(new.known_blocks(), 9);
         assert_eq!(new.covered_blocks(), 5);

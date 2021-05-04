@@ -28,7 +28,7 @@ uuid = { version = "0.8", features = ["guid"] }
 win-util = { path = "../win-util" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-pdb = "0.6"
+pdb = "0.7"
 winapi = "0.3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
