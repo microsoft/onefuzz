@@ -165,7 +165,7 @@ class Proxy(ORMMixin):
                 __version__,
                 self.state,
             )
-            return False
+            return True
         if self.created_timestamp is not None:
             proxy_timestamp = self.created_timestamp
             if proxy_timestamp < (
@@ -178,12 +178,8 @@ class Proxy(ORMMixin):
                     self.created_timestamp,
                     self.state,
                 )
-                if self.state != VmState.stopping:
-                    # If the proxy is out-of-date, delete and re-create it
-                    self.state = VmState.stopping
-                    self.save()
-                return False
-        return True
+                return True
+        return False
 
     def is_used(self) -> bool:
         if len(self.get_forwards()) == 0:
