@@ -43,7 +43,9 @@ PROXY_LOG_PREFIX = "scaleset-proxy: "
 # onefuzztypes
 class Proxy(ORMMixin):
     timestamp: Optional[datetime.datetime] = Field(alias="Timestamp")
-    created_timestamp = Optional[datatime.datetime] = Field(alias="Created Timestamp")
+    created_timestamp: Optional[datatime.datetime] = Field(
+        default_factory=datetime.datetime.utcnow()
+    )
     region: Region
     state: VmState = Field(default=VmState.init)
     auth: Authentication = Field(default_factory=build_auth)
@@ -309,10 +311,7 @@ class Proxy(ORMMixin):
             return proxy
 
         logging.info(PROXY_LOG_PREFIX + "creating proxy: region:%s", region)
-        proxy = Proxy(
-            created_timestamp=datetime.datetime.now(tz=datetime.timezone.utc),
-            region=region,
-        )
+        proxy = Proxy(region=region)
         proxy.save()
         send_event(EventProxyCreated(region=region))
         return proxy
