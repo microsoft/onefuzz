@@ -43,6 +43,7 @@ PROXY_LOG_PREFIX = "scaleset-proxy: "
 # onefuzztypes
 class Proxy(ORMMixin):
     timestamp: Optional[datetime.datetime] = Field(alias="Timestamp")
+    created_timestamp = Optional[datatime.datetime] = Field(alias="Created Timestamp")
     region: Region
     state: VmState = Field(default=VmState.init)
     auth: Authentication = Field(default_factory=build_auth)
@@ -163,8 +164,8 @@ class Proxy(ORMMixin):
                 self.state,
             )
             return False
-        if self.timestamp is not None:
-            proxy_timestamp = self.timestamp
+        if self.created_timestamp is not None:
+            proxy_timestamp = self.created_timestamp
             if proxy_timestamp < (
                 datetime.datetime.now(tz=datetime.timezone.utc)
                 - datetime.timedelta(minutes=30)
@@ -172,7 +173,7 @@ class Proxy(ORMMixin):
                 logging.info(
                     PROXY_LOG_PREFIX
                     + "proxy older than 7 days: proxy-created:%s state:%s",
-                    self.timestamp,
+                    self.created_timestamp,
                     self.state,
                 )
                 if self.state != VmState.stopping:
@@ -288,8 +289,8 @@ class Proxy(ORMMixin):
                     proxy.state = VmState.stopping
                     proxy.save()
                 return None
-            if proxy.timestamp is not None:
-                proxy_timestamp = proxy.timestamp
+            if proxy.created_timestamp is not None:
+                proxy_timestamp = proxy.created_timestamp
                 if proxy_timestamp < (
                     datetime.datetime.now(tz=datetime.timezone.utc)
                     - datetime.timedelta(minutes=30)
@@ -297,7 +298,7 @@ class Proxy(ORMMixin):
                     logging.info(
                         PROXY_LOG_PREFIX
                         + "proxy older than 7 days: proxy-created:%s state:%s",
-                        proxy.timestamp,
+                        proxy.created_timestamp,
                         proxy.state,
                     )
                     if proxy.state != VmState.stopping:
@@ -308,7 +309,10 @@ class Proxy(ORMMixin):
             return proxy
 
         logging.info(PROXY_LOG_PREFIX + "creating proxy: region:%s", region)
-        proxy = Proxy(region=region)
+        proxy = Proxy(
+            created_timestamp=datetime.datetime.now(tz=datetime.timezone.utc),
+            region=region,
+        )
         proxy.save()
         send_event(EventProxyCreated(region=region))
         return proxy
