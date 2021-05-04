@@ -43,7 +43,7 @@ PROXY_LOG_PREFIX = "scaleset-proxy: "
 # onefuzztypes
 class Proxy(ORMMixin):
     timestamp: Optional[datetime.datetime] = Field(alias="Timestamp")
-    created_timestamp: Optional[datetime.datetime] = Field(
+    created_timestamp: datetime.datetime = Field(
         default_factory=datetime.datetime.utcnow()
     )
     region: Region
