@@ -17,7 +17,7 @@ from ..onefuzzlib.workers.scalesets import Scaleset
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
     for proxy in Proxy.search():
-        if proxy.is_outdated(): 
+        if proxy.is_outdated():
             logging.info("outdated proxy, creating new one.")
             new_proxy = Proxy(region=proxy.region)
             new_proxy.save()
