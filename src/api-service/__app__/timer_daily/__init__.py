@@ -7,6 +7,7 @@ import logging
 
 import azure.functions as func
 from onefuzztypes.enums import VmState
+from onefuzztypes.events import EventProxyCreated
 
 from ..onefuzzlib.events import get_events, send_event
 from ..onefuzzlib.proxy import Proxy
@@ -18,9 +19,9 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     for proxy in Proxy.search():
         if proxy.is_outdated(): 
             logging.info("outdated proxy, creating new one.")
-            new_proxy = Proxy(region=region)
+            new_proxy = Proxy(region=proxy.region)
             new_proxy.save()
-            send_event(EventProxyCreated(region=region))
+            send_event(EventProxyCreated(region=proxy.region))
         if not proxy.is_used:
             logging.info("stopping proxy")
             proxy.state = VmState.stopping
