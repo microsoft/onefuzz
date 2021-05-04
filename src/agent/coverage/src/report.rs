@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 #[serde(transparent)]
 pub struct CoverageReport<C, M> {
     /// Coverage data for each module.
-    pub(crate) entries: Vec<CoverageReportEntry<C, M>>,
+    pub entries: Vec<CoverageReportEntry<C, M>>,
 }
 
 /// A generic entry in a code coverage report.
@@ -32,15 +32,15 @@ pub struct CoverageReport<C, M> {
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct CoverageReportEntry<C, M> {
     /// Path or name of the module.
-    pub(crate) module: String,
+    pub module: String,
 
     /// Metadata to identify or contextualize the module.
     #[serde(flatten)]
-    pub(crate) metadata: M,
+    pub metadata: M,
 
     /// Coverage data for the module.
     #[serde(flatten)]
-    pub(crate) coverage: C,
+    pub coverage: C,
 }
 
 #[cfg(test)]

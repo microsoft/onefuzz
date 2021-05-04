@@ -145,7 +145,7 @@ pub type BlockCoverageReport = CoverageReport<Block, ()>;
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Block {
-    blocks: ModuleCov,
+    pub blocks: ModuleCov,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
