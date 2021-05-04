@@ -29,27 +29,38 @@ where
         Self { data, pe, pdb }
     }
 
+    /// Try to provide basic block offsets using available Sancov table symbols.
+    ///
+    /// If PC tables are available and definitely well-formed, use those
+    /// directly. Otherwise, look for an inline counter or bool flag array, then
+    /// disassemble all functions to reverse the instrumentation sites.
     pub fn provide(&mut self) -> Result<BTreeSet<u32>> {
         let mut visitor = SancovDelimiterVisitor::new(self.pdb.address_map()?);
 
         let global_symbols = self.pdb.global_symbols()?;
         let mut iter = global_symbols.iter();
 
+        // Search symbols which delimit Sancov tables.
         while let Some(symbol) = iter.next()? {
             if let Ok(SymbolData::Data(data)) = symbol.parse() {
                 visitor.visit_data_symbol(&data)?;
             }
         }
 
+        // If we found a non-empty PC table, try to parse it.
         if let Some(pcs_table) = visitor.sancov_pcs_table() {
-            // Discovering and parsing the PC table can be error-prone, if we even have it. Recover
-            // it if we can, with some strict assumptions. If we can't, fall back on reversing the
-            // inline counter accesses.
+            // Discovering and parsing the PC table can be error-prone, if we even have it. Mine it
+            // for PCs if we can, with some strict assumptions. If we can't, fall back on reversing
+            // the inline table accesses.
             if let Ok(blocks) = self.provide_from_pcs_table(pcs_table) {
                 return Ok(blocks);
             }
         }
 
+        // Either the PC table was empty, or something went wrong when parsing it.
+        //
+        // If we found any inline table, then we should still be able to reverse the instrumentation
+        // sites by disassembling instructions that access the inline table region in expected ways.
         if let Some(inline_table) = visitor.sancov_inline_table() {
             return self.provide_from_inline_table(inline_table);
         }
@@ -57,9 +68,11 @@ where
         anyhow::bail!("unable to find Sancov table")
     }
 
-    fn provide_from_inline_table(&mut self, counter_table: SancovTable) -> Result<BTreeSet<u32>> {
+    // Search for instructions that access a known inline table region, and use their offsets to
+    // reverse the instrumented basic blocks.
+    fn provide_from_inline_table(&mut self, inline_table: SancovTable) -> Result<BTreeSet<u32>> {
         let mut visitor =
-            SancovInlineAccessVisitor::new(counter_table, &self.data, &self.pe, &mut self.pdb)?;
+            SancovInlineAccessVisitor::new(inline_table, &self.data, &self.pe, &mut self.pdb)?;
 
         let debug_info = self.pdb.debug_information()?;
         let mut modules = debug_info.modules()?;
@@ -87,6 +100,9 @@ where
         Ok(visitor.access_offsets)
     }
 
+    // Try to parse instrumented VAs directly from the PC table.
+    //
+    // Currently this assumes `sizeof(uintptr_t) ==  8` for the target PE.
     fn provide_from_pcs_table(&mut self, pcs_table: SancovTable) -> Result<BTreeSet<u32>> {
         // Read the PE directly to extract the PCs from the PC table.
         let pe_alignment = self
@@ -162,6 +178,14 @@ pub struct SancovDelimiterVisitor<'am> {
     msvc_preview_counters_stop: Option<u32>,
 }
 
+// Define a partial accessor method that returns the named Sancov table region when
+//
+// 1. Both the `$start` and `$stop` delimiter symbols are present
+// 2. The delimited region is non-empty
+//
+// Sancov `$start` delimiters are usually declared as 8 byte values to ensure that they predictably
+// anchor the delimited table during linking. If `$pad` is true, adjust for this so that the `start`
+// offset in the returned `SancovTable` denotes the actual offset of the first table entry.
 macro_rules! define_table_getter {
     (
         name = $name: ident,
@@ -179,6 +203,8 @@ macro_rules! define_table_getter {
 
             let size = self.$stop?.checked_sub(offset)?.try_into().ok()?;
 
+            // The delimiters may be present even when the table is unused. We can detect this case
+            // by an empty delimited region.
             if size == 0 {
                 return None;
             }
@@ -213,10 +239,8 @@ impl<'am> SancovDelimiterVisitor<'am> {
         }
     }
 
+    /// Return the most compiler-specific Sancov inline counter or bool flag table, if any.
     pub fn sancov_inline_table(&self) -> Option<SancovTable> {
-        // In all cases, check for PC tables first. If we have those, then we
-        // have all instrumented PCs, and don't care about any other tables.
-
         // With MSVC, the LLVM delimiters are typically linked in alongside the
         // MSVC-specific symbols. Check for MSVC-delimited tables first, though
         // our validation of table size _should_ make this unnecessary.
@@ -246,6 +270,7 @@ impl<'am> SancovDelimiterVisitor<'am> {
         None
     }
 
+    /// Return the most compiler-specific PC table, if any.
     pub fn sancov_pcs_table(&self) -> Option<SancovTable> {
         // Check for MSVC tables first.
         if let Some(table) = self.msvc_pcs_table() {
@@ -366,6 +391,10 @@ impl<'am> SancovDelimiterVisitor<'am> {
         }
     }
 
+    /// Visit a data symbol and check if it is a known Sancov delimiter. If it is, save its value.
+    ///
+    /// We want to visit all delimiter symbols, since we can only determine the redundant delimiters
+    /// if we know that there are more compiler-specific variants present.
     pub fn visit_data_symbol(&mut self, data: &DataSymbol) -> Result<()> {
         let name = &*data.name.to_string();
 
@@ -381,6 +410,9 @@ impl<'am> SancovDelimiterVisitor<'am> {
     }
 }
 
+/// A table of Sancov instrumentation data.
+///
+/// It is an array of either bytes or (packed pairs of) pointer-sized integers.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SancovTable {
     pub ty: SancovTableTy,
