@@ -5,6 +5,9 @@
 pub mod linux;
 
 #[cfg(target_os = "windows")]
+pub mod pe_provider;
+
+#[cfg(target_os = "windows")]
 pub mod windows;
 
 use std::collections::{btree_map, BTreeMap};
