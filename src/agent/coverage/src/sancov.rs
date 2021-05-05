@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use std::collections::BTreeSet;
 use std::convert::TryInto;
 
 use anyhow::Result;
+use iced_x86::{Decoder, DecoderOptions, Instruction, Mnemonic, OpKind};
 
 #[derive(Default)]
 pub struct SancovDelimiters {
@@ -325,5 +327,106 @@ impl std::str::FromStr for Delimiter {
         };
 
         Ok(delimiter)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct SancovInlineAccessScanner {
+    base: u64,
+    pub(crate) offsets: BTreeSet<u32>,
+    table: SancovTable,
+}
+
+impl SancovInlineAccessScanner {
+    pub fn new(base: u64, table: SancovTable) -> Self {
+        let offsets = BTreeSet::default();
+
+        Self { base, offsets, table }
+    }
+
+    pub fn scan(&mut self, data: &[u8], va: u64) -> Result<()> {
+        let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
+
+        decoder.set_ip(va);
+
+        let mut inst = Instruction::default();
+        while decoder.can_decode() {
+            decoder.decode_out(&mut inst);
+
+            match inst.op_code().mnemonic() {
+                Mnemonic::Add | Mnemonic::Inc => {
+                    // These may be 8-bit counter updates, check further.
+                }
+                Mnemonic::Mov => {
+                    // This may be a bool flag set or the start of an unoptimized
+                    // 8-bit counter update sequence.
+                    //
+                    //     mov al, [rel <table>]
+                    //
+                    // or:
+                    //
+                    //     mov [rel <table>], 1
+                    match (inst.op0_kind(), inst.op1_kind()) {
+                        (OpKind::Register, OpKind::Memory) => {
+                            // Possible start of an unoptimized 8-bit counter update sequence, like:
+                            //
+                            //     mov al, [rel <table>]
+                            //     add al, 1
+                            //     mov [rel <table>], al
+                            //
+                            // Check the operand sizes.
+
+                            if inst.memory_size().size() != 1 {
+                                // Load would span multiple table entries, skip.
+                                continue;
+                            }
+
+                            if inst.op0_register().size() != 1 {
+                                // Should be unreachable after a 1-byte load.
+                                continue;
+                            }
+                        }
+                        (OpKind::Memory, OpKind::Immediate8) => {
+                            // Possible bool flag set, like:
+                            //
+                            //     mov [rel <table>], 1
+                            //
+                            // Check store size and immediate value.
+
+                            if inst.memory_size().size() != 1 {
+                                // Store would span multiple table entries, skip.
+                                continue;
+                            }
+
+                            if inst.immediate8() != 1 {
+                                // Not a bool flag set, skip.
+                                continue;
+                            }
+                        }
+                        _ => {
+                            // Not a known update pattern, skip.
+                            continue;
+                        }
+                    }
+                }
+                _ => {
+                    // Does not correspond to any known counter update, so skip.
+                    continue;
+                }
+            }
+
+            if inst.is_ip_rel_memory_operand() {
+                // When relative, `memory_displacement64()` returns a VA. The
+                // decoder RIP is already set to be module image-relative, so
+                // our "VA" is already an RVA.
+                let accessed = inst.memory_displacement64() as u32;
+
+                if self.table.range().contains(&accessed) {
+                    self.offsets.insert(inst.ip() as u32);
+                }
+            }
+        }
+
+        Ok(())
     }
 }

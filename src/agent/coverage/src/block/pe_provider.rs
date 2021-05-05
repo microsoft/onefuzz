@@ -6,12 +6,11 @@ use std::convert::TryInto;
 
 use anyhow::{format_err, Result};
 use goblin::pe::PE;
-use iced_x86::{Decoder, DecoderOptions, Instruction, Mnemonic, OpKind};
 use pdb::{
     AddressMap, DataSymbol, FallibleIterator, ProcedureSymbol, Rva, Source, SymbolData, PDB,
 };
 
-use crate::sancov::{SancovDelimiters, SancovTable};
+use crate::sancov::{SancovDelimiters, SancovInlineAccessScanner, SancovTable};
 
 /// Basic block offset provider for uninstrumented PE modules.
 pub struct PeBasicBlockProvider {}
@@ -99,7 +98,7 @@ where
             }
         }
 
-        Ok(visitor.access_offsets)
+        Ok(visitor.scanner.offsets)
     }
 
     // Try to parse instrumented VAs directly from the PC table.
@@ -192,11 +191,10 @@ impl<'am> SancovDelimiterVisitor<'am> {
 }
 
 pub struct SancovInlineAccessVisitor<'d, 'p> {
-    access_offsets: BTreeSet<u32>,
     address_map: AddressMap<'d>,
     data: &'p [u8],
     pe: &'p PE<'p>,
-    table: SancovTable,
+    scanner: SancovInlineAccessScanner,
 }
 
 impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
@@ -209,108 +207,19 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
     where
         D: Source<'d> + 'd,
     {
-        let access_offsets = BTreeSet::default();
         let address_map = pdb.address_map()?;
+        let base: u64 = pe.image_base.try_into()?;
+        let scanner = SancovInlineAccessScanner::new(base, table);
+
         Ok(Self {
-            access_offsets,
             address_map,
             data,
             pe,
-            table,
+            scanner,
         })
     }
 
     pub fn visit_procedure_symbol(&mut self, proc: &ProcedureSymbol) -> Result<()> {
-        let data = self.procedure_data(proc)?;
-
-        let mut decoder = Decoder::new(64, data, DecoderOptions::NONE);
-
-        // Set decoder IP to be an RVA.
-        let proc_rip: u64 = proc.offset.to_rva(&self.address_map).unwrap().0.into();
-        decoder.set_ip(proc_rip);
-
-        let mut inst = Instruction::default();
-        while decoder.can_decode() {
-            decoder.decode_out(&mut inst);
-
-            match inst.op_code().mnemonic() {
-                Mnemonic::Add | Mnemonic::Inc => {
-                    // These may be 8-bit counter updates, check further.
-                }
-                Mnemonic::Mov => {
-                    // This may be a bool flag set or the start of an unoptimized
-                    // 8-bit counter update sequence.
-                    //
-                    //     mov al, [rel <table>]
-                    //
-                    // or:
-                    //
-                    //     mov [rel <table>], 1
-                    match (inst.op0_kind(), inst.op1_kind()) {
-                        (OpKind::Register, OpKind::Memory) => {
-                            // Possible start of an unoptimized 8-bit counter update sequence, like:
-                            //
-                            //     mov al, [rel <table>]
-                            //     add al, 1
-                            //     mov [rel <table>], al
-                            //
-                            // Check the operand sizes.
-
-                            if inst.memory_size().size() != 1 {
-                                // Load would span multiple table entries, skip.
-                                continue;
-                            }
-
-                            if inst.op0_register().size() != 1 {
-                                // Should be unreachable after a 1-byte load.
-                                continue;
-                            }
-                        }
-                        (OpKind::Memory, OpKind::Immediate8) => {
-                            // Possible bool flag set, like:
-                            //
-                            //     mov [rel <table>], 1
-                            //
-                            // Check store size and immediate value.
-
-                            if inst.memory_size().size() != 1 {
-                                // Store would span multiple table entries, skip.
-                                continue;
-                            }
-
-                            if inst.immediate8() != 1 {
-                                // Not a bool flag set, skip.
-                                continue;
-                            }
-                        }
-                        _ => {
-                            // Not a known update pattern, skip.
-                            continue;
-                        }
-                    }
-                }
-                _ => {
-                    // Does not correspond to any known counter update, so skip.
-                    continue;
-                }
-            }
-
-            if inst.is_ip_rel_memory_operand() {
-                // When relative, `memory_displacement64()` returns a VA. The
-                // decoder RIP is already set to be module image-relative, so
-                // our "VA" is already an RVA.
-                let accessed = inst.memory_displacement64() as u32;
-
-                if self.table.range().contains(&accessed) {
-                    self.access_offsets.insert(inst.ip() as u32);
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    fn procedure_data(&self, proc: &ProcedureSymbol) -> Result<&'p [u8]> {
         let alignment = self
             .pe
             .header
@@ -331,8 +240,15 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
 
         let range = file_offset..(file_offset + proc.len as usize);
 
-        self.data
+        let data = self.data
             .get(range)
-            .ok_or_else(|| format_err!("invalid PE file range for procedure data"))
+            .ok_or_else(|| format_err!("invalid PE file range for procedure data"))?;
+
+        // Set decoder IP to be an RVA.
+        let addr: u64 = proc.offset.to_rva(&self.address_map).unwrap().0.into();
+
+        self.scanner.scan(data, addr)?;
+
+        Ok(())
     }
 }
