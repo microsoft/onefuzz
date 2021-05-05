@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.15.0
+### Added
+* Agent: Added context to errors generated during [configuration value expansion](docs/command-replacements.md). [#835](https://github.com/microsoft/onefuzz/pull/835).
+* CLI/Service: Added messages awaiting processing for a ndoe to the node status API.  [#836](https://github.com/microsoft/onefuzz/pull/836)
+* Agent: Continued development related to upcoming features. [#844](https://github.com/microsoft/onefuzz/pull/844), [#852](https://github.com/microsoft/onefuzz/pull/852), [#850](https://github.com/microsoft/onefuzz/pull/850), [#843](https://github.com/microsoft/onefuzz/pull/843), [#837](https://github.com/microsoft/onefuzz/pull/837), [#838](https://github.com/microsoft/onefuzz/pull/838), [#844](https://github.com/microsoft/onefuzz/pull/844)
+
+### Changes
+* Agent/Proxy/Supervisor : Updated multiple third-party Rust dependencies.  [#842](https://github.com/microsoft/onefuzz/pull/842), [#826](https://github.com/microsoft/onefuzz/pull/826), [#829](https://github.com/microsoft/onefuzz/pull/829), 
+* Service/Contrib: Updated multiple Python dependencies.  [#828](https://github.com/microsoft/onefuzz/pull/828), [#827](https://github.com/microsoft/onefuzz/pull/827), [#823](https://github.com/microsoft/onefuzz/pull/823), [#822](https://github.com/microsoft/onefuzz/pull/822), [#821](https://github.com/microsoft/onefuzz/pull/821), [#847](https://github.com/microsoft/onefuzz/pull/847)
+* Service: Resetting nodes no longer requires waiting for the node to acknowledge the shutdown in some cases. [#834](https://github.com/microsoft/onefuzz/pull/834)
+
+### Fixed
+* Supervisor: Fixed an issue introduced in 2.14.0 that prevents nodes to stop processing tasks in some cases.  [#833](https://github.com/microsoft/onefuzz/pull/833)
+* Service: Fixed an issue related to Azure Storage Queues being deleted while in use. [#832](https://github.com/microsoft/onefuzz/pull/832)
+* Deployment: Fixed an issue where the CLI client application role was not assigned during deployment.  [#825](https://github.com/microsoft/onefuzz/pull/825)
+
 ## 2.14.0
 ### Added
 * Contrib: Added a sample GitHub Actions workflow and an Azure DevOps Pipeline to demonstrate deploying OneFuzz jobs using CICD.  [#778](https://github.com/microsoft/onefuzz/pull/778)
