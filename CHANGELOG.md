@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 2.15.0
 ### Added
 * Agent: Added context to errors generated during [configuration value expansion](docs/command-replacements.md). [#835](https://github.com/microsoft/onefuzz/pull/835).
-* CLI/Service: Added messages awaiting processing for a ndoe to the node status API.  [#836](https://github.com/microsoft/onefuzz/pull/836)
+* CLI/Service: Added messages awaiting processing for a node to the node status API.  [#836](https://github.com/microsoft/onefuzz/pull/836)
 * Agent: Continued development related to upcoming features. [#844](https://github.com/microsoft/onefuzz/pull/844), [#852](https://github.com/microsoft/onefuzz/pull/852), [#850](https://github.com/microsoft/onefuzz/pull/850), [#843](https://github.com/microsoft/onefuzz/pull/843), [#837](https://github.com/microsoft/onefuzz/pull/837), [#838](https://github.com/microsoft/onefuzz/pull/838), [#844](https://github.com/microsoft/onefuzz/pull/844)
 
 ### Changes
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Service: Resetting nodes no longer requires waiting for the node to acknowledge the shutdown in some cases. [#834](https://github.com/microsoft/onefuzz/pull/834)
 
 ### Fixed
-* Supervisor: Fixed an issue introduced in 2.14.0 that prevents nodes to stop processing tasks in some cases.  [#833](https://github.com/microsoft/onefuzz/pull/833)
+* Supervisor: Fixed an issue introduced in 2.14.0 that sometimes prevents nodes from stopping processing tasks.  [#833](https://github.com/microsoft/onefuzz/pull/833)
 * Service: Fixed an issue related to Azure Storage Queues being deleted while in use. [#832](https://github.com/microsoft/onefuzz/pull/832)
 * Deployment: Fixed an issue where the CLI client application role was not assigned during deployment.  [#825](https://github.com/microsoft/onefuzz/pull/825)
 
