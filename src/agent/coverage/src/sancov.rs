@@ -272,10 +272,10 @@ pub enum SancovTableTy {
 /// first entry of a Sancov table array, but an anchor offset that precedes it
 /// by 8 bytes.
 ///
-/// See: -
-/// `compiler-rt/lib/sanitizer_common/sanitizer_coverage_win_sections.cpp` -
-/// `ModuleSanitizerCoverage::CreateSecStartEnd()` in
-/// `llvm/lib/Transforms/Instrumentation/SanitizerCoverage.cpp:350-351`
+/// See:
+/// - `compiler-rt/lib/sanitizer_common/sanitizer_coverage_win_sections.cpp`
+/// - `ModuleSanitizerCoverage::CreateSecStartEnd()` in
+///   `llvm/lib/Transforms/Instrumentation/SanitizerCoverage.cpp:350-351`
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Delimiter {
     LlvmBoolsStart,
