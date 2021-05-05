@@ -341,7 +341,11 @@ impl SancovInlineAccessScanner {
     pub fn new(base: u64, table: SancovTable) -> Self {
         let offsets = BTreeSet::default();
 
-        Self { base, offsets, table }
+        Self {
+            base,
+            offsets,
+            table,
+        }
     }
 
     pub fn scan(&mut self, data: &[u8], va: u64) -> Result<()> {
@@ -417,13 +421,15 @@ impl SancovInlineAccessScanner {
 
             if inst.is_ip_rel_memory_operand() {
                 // When relative, `memory_displacement64()` returns a VA.
-                let accessed = inst.memory_displacement64()
+                let accessed = inst
+                    .memory_displacement64()
                     .checked_sub(self.base)
                     .ok_or_else(|| format_err!("underflow converting access VA to offset"))?
                     .try_into()?;
 
                 if self.table.range().contains(&accessed) {
-                    let offset = inst.ip()
+                    let offset = inst
+                        .ip()
                         .checked_sub(self.base)
                         .ok_or_else(|| format_err!("underflow computing module offset"))?
                         .try_into()?;

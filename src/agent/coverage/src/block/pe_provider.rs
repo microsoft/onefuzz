@@ -168,7 +168,10 @@ impl<'am> SancovDelimiterVisitor<'am> {
     pub fn new(address_map: AddressMap<'am>) -> Self {
         let delimiters = SancovDelimiters::default();
 
-        Self { address_map, delimiters }
+        Self {
+            address_map,
+            delimiters,
+        }
     }
 
     /// Visit a data symbol and check if it is a known Sancov delimiter. If it is, save its value.
@@ -240,7 +243,8 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
 
         let range = file_offset..(file_offset + proc.len as usize);
 
-        let data = self.data
+        let data = self
+            .data
             .get(range)
             .ok_or_else(|| format_err!("invalid PE file range for procedure data"))?;
 
