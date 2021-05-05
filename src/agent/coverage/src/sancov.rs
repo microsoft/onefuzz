@@ -4,7 +4,7 @@
 use std::collections::BTreeSet;
 use std::convert::TryInto;
 
-use anyhow::Result;
+use anyhow::{format_err, Result};
 use iced_x86::{Decoder, DecoderOptions, Instruction, Mnemonic, OpKind};
 
 #[derive(Default)]
@@ -332,8 +332,8 @@ impl std::str::FromStr for Delimiter {
 
 #[derive(Clone, Debug)]
 pub struct SancovInlineAccessScanner {
-    base: u64,
-    pub(crate) offsets: BTreeSet<u32>,
+    pub base: u64,
+    pub offsets: BTreeSet<u32>,
     table: SancovTable,
 }
 
@@ -416,13 +416,19 @@ impl SancovInlineAccessScanner {
             }
 
             if inst.is_ip_rel_memory_operand() {
-                // When relative, `memory_displacement64()` returns a VA. The
-                // decoder RIP is already set to be module image-relative, so
-                // our "VA" is already an RVA.
-                let accessed = inst.memory_displacement64() as u32;
+                // When relative, `memory_displacement64()` returns a VA.
+                let accessed = inst.memory_displacement64()
+                    .checked_sub(self.base)
+                    .ok_or_else(|| format_err!("underflow converting access VA to offset"))?
+                    .try_into()?;
 
                 if self.table.range().contains(&accessed) {
-                    self.offsets.insert(inst.ip() as u32);
+                    let offset = inst.ip()
+                        .checked_sub(self.base)
+                        .ok_or_else(|| format_err!("underflow computing module offset"))?
+                        .try_into()?;
+
+                    self.offsets.insert(offset);
                 }
             }
         }

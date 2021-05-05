@@ -244,10 +244,9 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
             .get(range)
             .ok_or_else(|| format_err!("invalid PE file range for procedure data"))?;
 
-        // Set decoder IP to be an RVA.
-        let addr: u64 = proc.offset.to_rva(&self.address_map).unwrap().0.into();
-
-        self.scanner.scan(data, addr)?;
+        let offset: u64 = rva.try_into()?;
+        let va: u64 = self.scanner.base + offset;
+        self.scanner.scan(data, va)?;
 
         Ok(())
     }
