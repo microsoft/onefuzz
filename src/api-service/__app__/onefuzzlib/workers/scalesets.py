@@ -468,6 +468,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "scaleset is unavailable. scaleset_id:%s",
                 self.scaleset_id,
             )
+            self.set_shutdown()
             return
 
         if size == self.size:
