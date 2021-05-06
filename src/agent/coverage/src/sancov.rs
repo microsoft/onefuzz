@@ -173,51 +173,49 @@ impl SancovDelimiters {
     );
 
     pub fn insert(&mut self, delimiter: Delimiter, offset: u32) {
-        use Delimiter::*;
-
         let offset = Some(offset);
 
         match delimiter {
-            LlvmBoolsStart => {
+            Delimiter::LlvmBoolsStart => {
                 self.llvm_bools_start = offset;
             }
-            LlvmBoolsStop => {
+            Delimiter::LlvmBoolsStop => {
                 self.llvm_bools_stop = offset;
             }
-            LlvmCountersStart => {
+            Delimiter::LlvmCountersStart => {
                 self.llvm_counters_start = offset;
             }
-            LlvmCountersStop => {
+            Delimiter::LlvmCountersStop => {
                 self.llvm_counters_stop = offset;
             }
-            LlvmPcsStart => {
+            Delimiter::LlvmPcsStart => {
                 self.llvm_pcs_start = offset;
             }
-            LlvmPcsStop => {
+            Delimiter::LlvmPcsStop => {
                 self.llvm_pcs_stop = offset;
             }
-            MsvcBoolsStart => {
+            Delimiter::MsvcBoolsStart => {
                 self.msvc_bools_start = offset;
             }
-            MsvcBoolsStop => {
+            Delimiter::MsvcBoolsStop => {
                 self.msvc_bools_stop = offset;
             }
-            MsvcCountersStart => {
+            Delimiter::MsvcCountersStart => {
                 self.msvc_counters_start = offset;
             }
-            MsvcCountersStop => {
+            Delimiter::MsvcCountersStop => {
                 self.msvc_counters_stop = offset;
             }
-            MsvcPcsStart => {
+            Delimiter::MsvcPcsStart => {
                 self.msvc_pcs_start = offset;
             }
-            MsvcPcsStop => {
+            Delimiter::MsvcPcsStop => {
                 self.msvc_pcs_stop = offset;
             }
-            MsvcPreviewCountersStart => {
+            Delimiter::MsvcPreviewCountersStart => {
                 self.msvc_preview_counters_start = offset;
             }
-            MsvcPreviewCountersStop => {
+            Delimiter::MsvcPreviewCountersStop => {
                 self.msvc_preview_counters_stop = offset;
             }
         }
