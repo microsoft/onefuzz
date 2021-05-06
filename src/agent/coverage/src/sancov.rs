@@ -87,7 +87,6 @@ impl SancovDelimiters {
         }
 
         if let Some(table) = self.msvc_preview_counters_table(pad) {
-
             return Some(table);
         }
 
@@ -98,7 +97,6 @@ impl SancovDelimiters {
         }
 
         if let Some(table) = self.llvm_counters_table(pad) {
-
             return Some(table);
         }
 
@@ -113,7 +111,6 @@ impl SancovDelimiters {
         }
 
         if let Some(table) = self.llvm_pcs_table(pad) {
-
             return Some(table);
         }
 
