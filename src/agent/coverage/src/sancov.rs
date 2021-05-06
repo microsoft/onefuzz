@@ -7,6 +7,12 @@ use std::convert::TryInto;
 use anyhow::{format_err, Result};
 use iced_x86::{Decoder, DecoderOptions, Instruction, Mnemonic, OpKind};
 
+/// Size of padding inserted (on Window) between `__start_` delimiter symbols
+/// and the first entry of the delimited table's array.
+///
+/// To find the true start offset of the table, add this to the symbol value.
+const DELIMITER_START_PADDING: u32 = 8;
+
 #[derive(Default)]
 pub struct SancovDelimiters {
     llvm_bools_start: Option<u32>,
@@ -40,10 +46,9 @@ macro_rules! define_table_getter {
         start = $start: ident,
         stop = $stop: ident,
         ty = $ty: expr,
-        pad = $pad: expr
     ) => {
-        pub fn $name(&self) -> Option<SancovTable> {
-            let offset = if $pad {
+        pub fn $name(&self, pad: bool) -> Option<SancovTable> {
+            let offset = if pad {
                 self.$start?.checked_add(DELIMITER_START_PADDING)?
             } else {
                 self.$start?
@@ -67,44 +72,37 @@ macro_rules! define_table_getter {
         start = $start: ident,
         stop = $stop: ident,
         ty = $ty: expr,
-        pad = $pad: expr,
     ) => {
-        define_table_getter!(
-            name = $name,
-            start = $start,
-            stop = $stop,
-            ty = $ty,
-            pad = $pad
-        );
+        define_table_getter!(name = $name, start = $start, stop = $stop, ty = $ty,);
     };
 }
 
 impl SancovDelimiters {
     /// Return the most compiler-specific Sancov inline counter or bool flag table, if any.
-    pub fn inline_table(&self) -> Option<SancovTable> {
+    pub fn inline_table(&self, pad: bool) -> Option<SancovTable> {
         // With MSVC, the LLVM delimiters are typically linked in alongside the
         // MSVC-specific symbols. Check for MSVC-delimited tables first, though
         // our validation of table size _should_ make this unnecessary.
 
-        if let Some(table) = self.msvc_bools_table() {
+        if let Some(table) = self.msvc_bools_table(pad) {
             return Some(table);
         }
 
-        if let Some(table) = self.msvc_counters_table() {
+        if let Some(table) = self.msvc_counters_table(pad) {
             return Some(table);
         }
 
-        if let Some(table) = self.msvc_preview_counters_table() {
+        if let Some(table) = self.msvc_preview_counters_table(pad) {
             return Some(table);
         }
 
         // No MSVC tables found. Check for LLVM-emitted tables.
 
-        if let Some(table) = self.llvm_bools_table() {
+        if let Some(table) = self.llvm_bools_table(pad) {
             return Some(table);
         }
 
-        if let Some(table) = self.llvm_counters_table() {
+        if let Some(table) = self.llvm_counters_table(pad) {
             return Some(table);
         }
 
@@ -112,13 +110,13 @@ impl SancovDelimiters {
     }
 
     /// Return the most compiler-specific PC table, if any.
-    pub fn pcs_table(&self) -> Option<SancovTable> {
+    pub fn pcs_table(&self, pad: bool) -> Option<SancovTable> {
         // Check for MSVC tables first.
-        if let Some(table) = self.msvc_pcs_table() {
+        if let Some(table) = self.msvc_pcs_table(pad) {
             return Some(table);
         }
 
-        if let Some(table) = self.llvm_pcs_table() {
+        if let Some(table) = self.llvm_pcs_table(pad) {
             return Some(table);
         }
 
@@ -130,7 +128,6 @@ impl SancovDelimiters {
         start = llvm_bools_start,
         stop = llvm_bools_stop,
         ty = SancovTableTy::Bools,
-        pad = true,
     );
 
     define_table_getter!(
@@ -138,7 +135,6 @@ impl SancovDelimiters {
         start = llvm_counters_start,
         stop = llvm_counters_stop,
         ty = SancovTableTy::Counters,
-        pad = true,
     );
 
     define_table_getter!(
@@ -146,7 +142,6 @@ impl SancovDelimiters {
         start = llvm_pcs_start,
         stop = llvm_pcs_stop,
         ty = SancovTableTy::Pcs,
-        pad = true,
     );
 
     define_table_getter!(
@@ -154,7 +149,6 @@ impl SancovDelimiters {
         start = msvc_bools_start,
         stop = msvc_bools_stop,
         ty = SancovTableTy::Bools,
-        pad = true,
     );
 
     define_table_getter!(
@@ -162,7 +156,6 @@ impl SancovDelimiters {
         start = msvc_counters_start,
         stop = msvc_counters_stop,
         ty = SancovTableTy::Counters,
-        pad = true,
     );
 
     define_table_getter!(
@@ -170,7 +163,6 @@ impl SancovDelimiters {
         start = msvc_pcs_start,
         stop = msvc_pcs_stop,
         ty = SancovTableTy::Pcs,
-        pad = true,
     );
 
     define_table_getter!(
@@ -178,55 +170,52 @@ impl SancovDelimiters {
         start = msvc_preview_counters_start,
         stop = msvc_preview_counters_stop,
         ty = SancovTableTy::Counters,
-        pad = true,
     );
 
     pub fn insert(&mut self, delimiter: Delimiter, offset: u32) {
-        use Delimiter::*;
-
         let offset = Some(offset);
 
         match delimiter {
-            LlvmBoolsStart => {
+            Delimiter::LlvmBoolsStart => {
                 self.llvm_bools_start = offset;
             }
-            LlvmBoolsStop => {
+            Delimiter::LlvmBoolsStop => {
                 self.llvm_bools_stop = offset;
             }
-            LlvmCountersStart => {
+            Delimiter::LlvmCountersStart => {
                 self.llvm_counters_start = offset;
             }
-            LlvmCountersStop => {
+            Delimiter::LlvmCountersStop => {
                 self.llvm_counters_stop = offset;
             }
-            LlvmPcsStart => {
+            Delimiter::LlvmPcsStart => {
                 self.llvm_pcs_start = offset;
             }
-            LlvmPcsStop => {
+            Delimiter::LlvmPcsStop => {
                 self.llvm_pcs_stop = offset;
             }
-            MsvcBoolsStart => {
+            Delimiter::MsvcBoolsStart => {
                 self.msvc_bools_start = offset;
             }
-            MsvcBoolsStop => {
+            Delimiter::MsvcBoolsStop => {
                 self.msvc_bools_stop = offset;
             }
-            MsvcCountersStart => {
+            Delimiter::MsvcCountersStart => {
                 self.msvc_counters_start = offset;
             }
-            MsvcCountersStop => {
+            Delimiter::MsvcCountersStop => {
                 self.msvc_counters_stop = offset;
             }
-            MsvcPcsStart => {
+            Delimiter::MsvcPcsStart => {
                 self.msvc_pcs_start = offset;
             }
-            MsvcPcsStop => {
+            Delimiter::MsvcPcsStop => {
                 self.msvc_pcs_stop = offset;
             }
-            MsvcPreviewCountersStart => {
+            Delimiter::MsvcPreviewCountersStart => {
                 self.msvc_preview_counters_start = offset;
             }
-            MsvcPreviewCountersStop => {
+            Delimiter::MsvcPreviewCountersStop => {
                 self.msvc_preview_counters_stop = offset;
             }
         }
@@ -295,12 +284,6 @@ pub enum Delimiter {
     MsvcPreviewCountersStart,
     MsvcPreviewCountersStop,
 }
-
-/// Size of padding inserted (on Window) between `__start_` delimiter symbols
-/// and the first entry of the delimited table's array.
-///
-/// To find the true start offset of the table, add this to the symbol value.
-const DELIMITER_START_PADDING: u32 = 8;
 
 impl std::str::FromStr for Delimiter {
     type Err = anyhow::Error;

@@ -49,7 +49,7 @@ where
         }
 
         // If we found a non-empty PC table, try to parse it.
-        if let Some(pcs_table) = visitor.delimiters.pcs_table() {
+        if let Some(pcs_table) = visitor.delimiters.pcs_table(true) {
             // Discovering and parsing the PC table can be error-prone, if we even have it. Mine it
             // for PCs if we can, with some strict assumptions. If we can't, fall back on reversing
             // the inline table accesses.
@@ -62,7 +62,7 @@ where
         //
         // If we found any inline table, then we should still be able to reverse the instrumentation
         // sites by disassembling instructions that access the inline table region in expected ways.
-        if let Some(inline_table) = visitor.delimiters.inline_table() {
+        if let Some(inline_table) = visitor.delimiters.inline_table(true) {
             return self.provide_from_inline_table(inline_table);
         }
 
