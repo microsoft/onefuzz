@@ -7,6 +7,12 @@ use std::convert::TryInto;
 use anyhow::{format_err, Result};
 use iced_x86::{Decoder, DecoderOptions, Instruction, Mnemonic, OpKind};
 
+/// Size of padding inserted (on Window) between `__start_` delimiter symbols
+/// and the first entry of the delimited table's array.
+///
+/// To find the true start offset of the table, add this to the symbol value.
+const DELIMITER_START_PADDING: u32 = 8;
+
 #[derive(Default)]
 pub struct SancovDelimiters {
     llvm_bools_start: Option<u32>,
@@ -280,12 +286,6 @@ pub enum Delimiter {
     MsvcPreviewCountersStart,
     MsvcPreviewCountersStop,
 }
-
-/// Size of padding inserted (on Window) between `__start_` delimiter symbols
-/// and the first entry of the delimited table's array.
-///
-/// To find the true start offset of the table, add this to the symbol value.
-const DELIMITER_START_PADDING: u32 = 8;
 
 impl std::str::FromStr for Delimiter {
     type Err = anyhow::Error;
