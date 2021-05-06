@@ -67,7 +67,9 @@ impl BlobUploader {
             let file = fs::File::from_std(std::fs::File::open(file_path)?);
             let reader = io::BufReader::new(file);
             let codec = codec::BytesCodec::new();
-            let file_stream = codec::FramedRead::new(reader, codec).map_ok(bytes::BytesMut::freeze);
+            let file_stream = codec::FramedRead::new(reader, codec)
+                .map_ok(bytes::BytesMut::freeze)
+                .into_stream();
 
             let request_builder = self
                 .client

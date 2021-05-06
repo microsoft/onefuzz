@@ -11,15 +11,16 @@ anyhow = "1.0"
 appinsights = "0.1"
 async-trait = "0.1"
 base64 = "0.13"
-bytes = "0.5"
+bytes = "1.0.1"
 dunce = "1.0"
-futures = "0.3"
+futures = "0.3.14"
+futures-util = "0.3.14"
 hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 notify = "4.0"
 regex = "1.4"
-reqwest = { version = "0.10", features = ["json", "stream"] }
+reqwest = { version = "0.11.3", features = ["json", "stream"] }
 sha2 = "0.9"
 url = { version = "2.2", features = ["serde"] }
 serde = "1.0"
@@ -27,8 +28,9 @@ serde_json = "1.0"
 rand = "0.7"
 serde_derive = "1.0"
 sysinfo = "0.16"
-tokio = { version = "0.2", features = ["full"] }
-tokio-util = { version = "0.3", features = ["full"] }
+tokio = { version = "1.5.0", features = ["full"] }
+tokio-stream = { version = "0.1.5", features = ["fs", "time", "tokio-util"] }
+tokio-util = { version = "0.6.6", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 urlparse = "0.7"
 ring = "0.16"

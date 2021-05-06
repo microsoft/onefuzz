@@ -18,12 +18,12 @@ from ..api import Endpoint, PreviewFeature
 
 
 class Manage(Endpoint):
-    """ Manage Job Templates """
+    """Manage Job Templates"""
 
     endpoint = "job_templates/manage"
 
     def list(self) -> List[JobTemplateIndex]:
-        """ List templates """
+        """List templates"""
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
 
         self.onefuzz.logger.debug("listing job templates")
@@ -32,14 +32,14 @@ class Manage(Endpoint):
         )
 
     def get(self, name: str) -> JobTemplate:
-        """ Get an existing Job Template """
+        """Get an existing Job Template"""
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
 
         self.onefuzz.logger.debug("get job template")
         return self._req_model("GET", JobTemplate, data=JobTemplateGet(name=name))
 
     def upload(self, name: str, template: JobTemplate) -> BoolResult:
-        """ Upload a Job Template """
+        """Upload a Job Template"""
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
 
         self.onefuzz.logger.debug("upload job template")
@@ -50,7 +50,7 @@ class Manage(Endpoint):
         )
 
     def delete(self, name: str) -> BoolResult:
-        """ Delete a Job Template """
+        """Delete a Job Template"""
         self.onefuzz._warn_preview(PreviewFeature.job_templates)
 
         self.onefuzz.logger.debug("delete job templates")

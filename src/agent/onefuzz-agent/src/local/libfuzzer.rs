@@ -23,20 +23,18 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, SubCommand};
+use flume::Sender;
 use onefuzz::utils::try_wait_all_join_handles;
 use std::collections::HashSet;
-use tokio::{sync::mpsc::UnboundedSender, task::spawn};
+use tokio::task::spawn;
 use uuid::Uuid;
 
-pub async fn run(
-    args: &clap::ArgMatches<'_>,
-    event_sender: Option<UnboundedSender<UiEvent>>,
-) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
     let context = build_local_context(args, true, event_sender.clone())?;
     let fuzz_config = build_fuzz_config(args, context.common_config.clone(), event_sender.clone())?;
     let crash_dir = fuzz_config
         .crashes
-        .url
+        .remote_url()?
         .as_file_path()
         .expect("invalid crash dir remote location");
 

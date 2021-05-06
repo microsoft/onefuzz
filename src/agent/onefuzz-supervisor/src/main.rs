@@ -104,7 +104,7 @@ fn run(opt: RunOpt) -> Result<()> {
 
     let config = config?;
 
-    let mut rt = tokio::runtime::Runtime::new()?;
+    let rt = tokio::runtime::Runtime::new()?;
     let result = rt.block_on(run_agent(config));
 
     if let Err(err) = &result {

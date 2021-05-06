@@ -95,7 +95,7 @@ def process_state_update(obj: HasState) -> None:
 
 
 def process_state_updates(obj: HasState, max_updates: int = 5) -> None:
-    """ process through the state machine for an object """
+    """process through the state machine for an object"""
 
     for _ in range(max_updates):
         state = obj.state

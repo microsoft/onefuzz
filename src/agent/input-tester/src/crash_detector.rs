@@ -14,11 +14,11 @@ use std::{
 };
 
 use anyhow::Result;
-use coverage::{block::windows::Recorder as BlockCoverageRecorder, cache::ModuleCache};
-use debugger::{
-    debugger::{BreakpointId, DebugEventHandler, Debugger},
-    target::Module,
+use coverage::{
+    block::{windows::Recorder as BlockCoverageRecorder, CommandBlockCov},
+    cache::ModuleCache,
 };
+use debugger::{BreakpointId, DebugEventHandler, Debugger, ModuleLoadInfo};
 use log::{debug, error, trace};
 use win_util::{
     pipe_handle::{pipe, PipeReaderNonBlocking},
@@ -48,6 +48,7 @@ pub struct DebuggerResult {
     pub stdout: String,
     pub stderr: String,
     pub debugger_output: String,
+    pub coverage: Option<CommandBlockCov>,
 }
 
 impl DebuggerResult {
@@ -57,6 +58,7 @@ impl DebuggerResult {
         stdout: String,
         stderr: String,
         debugger_output: String,
+        coverage: Option<CommandBlockCov>,
     ) -> Self {
         DebuggerResult {
             exceptions,
@@ -64,6 +66,7 @@ impl DebuggerResult {
             stdout,
             stderr,
             debugger_output,
+            coverage,
         }
     }
 
@@ -270,7 +273,7 @@ impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
         }
     }
 
-    fn on_create_process(&mut self, dbg: &mut Debugger, module: &Module) {
+    fn on_create_process(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
         if let Some(coverage) = &mut self.coverage {
             if let Err(err) = coverage.on_create_process(dbg, module) {
                 error!("error recording coverage on create process: {:?}", err);
@@ -279,7 +282,7 @@ impl<'a> DebugEventHandler for CrashDetectorEventHandler<'a> {
         }
     }
 
-    fn on_load_dll(&mut self, dbg: &mut Debugger, module: &Module) {
+    fn on_load_dll(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) {
         if let Some(coverage) = &mut self.coverage {
             if let Err(err) = coverage.on_load_dll(dbg, module) {
                 error!("error recording coverage on load DLL: {:?}", err);
@@ -362,6 +365,7 @@ pub fn test_process<'a>(
         String::from_utf8_lossy(&output.stdout).to_string(),
         String::from_utf8_lossy(&output.stderr).to_string(),
         event_handler.debugger_output,
+        event_handler.coverage.map(|r| r.into_coverage()),
     ))
 }
 

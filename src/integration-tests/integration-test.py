@@ -230,7 +230,7 @@ class TestOnefuzz:
     def launch(
         self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
     ) -> None:
-        """ Launch all of the fuzzing templates """
+        """Launch all of the fuzzing templates"""
         for target, config in TARGETS.items():
             if target not in targets:
                 continue
@@ -364,7 +364,7 @@ class TestOnefuzz:
     def check_jobs(
         self, poll: bool = False, stop_on_complete_check: bool = False
     ) -> bool:
-        """ Check all of the integration jobs """
+        """Check all of the integration jobs"""
         jobs: Dict[UUID, Job] = {x.job_id: x for x in self.get_jobs()}
         job_tasks: Dict[UUID, List[Task]] = {}
         check_containers: Dict[UUID, Dict[Container, Tuple[ContainerWrapper, int]]] = {}
@@ -647,7 +647,7 @@ class TestOnefuzz:
         return pools
 
     def cleanup(self) -> None:
-        """ cleanup all of the integration pools & jobs """
+        """cleanup all of the integration pools & jobs"""
 
         self.logger.info("cleaning up")
         errors: List[Exception] = []

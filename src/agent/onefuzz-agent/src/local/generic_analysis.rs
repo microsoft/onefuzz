@@ -15,14 +15,14 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use flume::Sender;
 use storage_queue::QueueClient;
-use tokio::sync::mpsc::UnboundedSender;
 
 pub fn build_analysis_config(
     args: &clap::ArgMatches<'_>,
     input_queue: Option<QueueClient>,
     common: CommonConfig,
-    event_sender: Option<UnboundedSender<UiEvent>>,
+    event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_options = get_cmd_arg(CmdType::Target, args);
@@ -69,10 +69,7 @@ pub fn build_analysis_config(
     Ok(config)
 }
 
-pub async fn run(
-    args: &clap::ArgMatches<'_>,
-    event_sender: Option<UnboundedSender<UiEvent>>,
-) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
     let context = build_local_context(args, true, event_sender.clone())?;
     let config = build_analysis_config(args, None, context.common_config.clone(), event_sender)?;
     run_analysis(config).await

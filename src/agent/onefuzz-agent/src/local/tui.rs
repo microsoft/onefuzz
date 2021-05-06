@@ -21,12 +21,11 @@ use std::{
     thread::{self, JoinHandle},
     time::Duration,
 };
+
+use flume::{Receiver, Sender};
 use tokio::{
-    sync::{
-        broadcast::{self, TryRecvError},
-        mpsc::{self, UnboundedSender},
-    },
-    time::delay_for,
+    sync::broadcast::{self, error::TryRecvError},
+    time::sleep,
 };
 use tui::{
     backend::CrosstermBackend,
@@ -91,7 +90,7 @@ struct UiLoopState {
     pub file_count: HashMap<PathBuf, usize>,
     pub file_count_state: ListState,
     pub file_monitors: HashMap<PathBuf, tokio::task::JoinHandle<Result<()>>>,
-    pub log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
+    pub log_event_receiver: Receiver<(Level, String)>,
     pub terminal: Terminal<CrosstermBackend<Stdout>>,
     pub cancellation_tx: broadcast::Sender<()>,
     pub events: HashMap<Discriminant<EventData>, EventData>,
@@ -100,7 +99,7 @@ struct UiLoopState {
 impl UiLoopState {
     fn new(
         terminal: Terminal<CrosstermBackend<Stdout>>,
-        log_event_receiver: mpsc::UnboundedReceiver<(Level, String)>,
+        log_event_receiver: Receiver<(Level, String)>,
     ) -> Self {
         let (cancellation_tx, _) = broadcast::channel(1);
         let events = HashMap::new();
@@ -118,16 +117,16 @@ impl UiLoopState {
 }
 
 pub struct TerminalUi {
-    pub task_events: mpsc::UnboundedSender<UiEvent>,
-    task_event_receiver: mpsc::UnboundedReceiver<UiEvent>,
-    ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
-    ui_event_rx: mpsc::UnboundedReceiver<TerminalEvent>,
+    pub task_events: Sender<UiEvent>,
+    task_event_receiver: Receiver<UiEvent>,
+    ui_event_tx: Sender<TerminalEvent>,
+    ui_event_rx: Receiver<TerminalEvent>,
 }
 
 impl TerminalUi {
     pub fn init() -> Result<Self> {
-        let (task_event_sender, task_event_receiver) = mpsc::unbounded_channel();
-        let (ui_event_tx, ui_event_rx) = mpsc::unbounded_channel();
+        let (task_event_sender, task_event_receiver) = flume::unbounded();
+        let (ui_event_tx, ui_event_rx) = flume::unbounded();
         Ok(Self {
             task_events: task_event_sender,
             task_event_receiver,
@@ -144,7 +143,7 @@ impl TerminalUi {
         let backend = CrosstermBackend::new(stdout);
         let mut terminal = Terminal::new(backend)?;
         terminal.clear()?;
-        let (log_event_sender, log_event_receiver) = mpsc::unbounded_channel();
+        let (log_event_sender, log_event_receiver) = flume::unbounded();
         let initial_state = UiLoopState::new(terminal, log_event_receiver);
 
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
@@ -196,7 +195,7 @@ impl TerminalUi {
         if let Some(timeout) = timeout {
             let ui_event_tx = self.ui_event_tx.clone();
             tokio::spawn(async move {
-                tokio::time::delay_for(timeout).await;
+                tokio::time::sleep(timeout).await;
                 let _ = ui_event_tx.send(TerminalEvent::Quit);
             });
         }
@@ -226,12 +225,12 @@ impl TerminalUi {
     }
 
     async fn listen_telemetry_event(
-        ui_event_tx: UnboundedSender<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<()> {
         let mut rx = onefuzz_telemetry::subscribe_to_events();
 
-        while cancellation_rx.try_recv() == Err(broadcast::TryRecvError::Empty) {
+        while cancellation_rx.try_recv() == Err(broadcast::error::TryRecvError::Empty) {
             match rx.try_recv() {
                 Ok((_event, data)) => {
                     let data = data
@@ -240,7 +239,7 @@ impl TerminalUi {
                         .collect::<Vec<_>>();
                     let _ = ui_event_tx.send(TerminalEvent::Telemetry(data));
                 }
-                Err(TryRecvError::Empty) => delay_for(EVENT_POLLING_PERIOD).await,
+                Err(TryRecvError::Empty) => sleep(EVENT_POLLING_PERIOD).await,
                 Err(TryRecvError::Lagged(_)) => continue,
                 Err(TryRecvError::Closed) => break,
             }
@@ -249,11 +248,11 @@ impl TerminalUi {
     }
 
     async fn ticking(
-        ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<()> {
         let mut interval = tokio::time::interval(TICK_RATE);
-        while Err(broadcast::TryRecvError::Empty) == cancellation_rx.try_recv() {
+        while Err(broadcast::error::TryRecvError::Empty) == cancellation_rx.try_recv() {
             interval.tick().await;
             if let Err(_err) = ui_event_tx.send(TerminalEvent::Tick) {
                 break;
@@ -263,11 +262,11 @@ impl TerminalUi {
     }
 
     fn read_keyboard_events(
-        ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> JoinHandle<Result<()>> {
         thread::spawn(move || {
-            while Err(broadcast::TryRecvError::Empty) == cancellation_rx.try_recv() {
+            while Err(broadcast::error::TryRecvError::Empty) == cancellation_rx.try_recv() {
                 if event::poll(EVENT_POLLING_PERIOD)? {
                     let event = event::read()?;
                     if let Err(_err) = ui_event_tx.send(TerminalEvent::Input(event)) {
@@ -280,26 +279,26 @@ impl TerminalUi {
     }
 
     async fn read_commands(
-        ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
-        mut external_event_rx: mpsc::UnboundedReceiver<UiEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
+        external_event_rx: Receiver<UiEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<()> {
-        while Err(broadcast::TryRecvError::Empty) == cancellation_rx.try_recv() {
+        while Err(broadcast::error::TryRecvError::Empty) == cancellation_rx.try_recv() {
             match external_event_rx.try_recv() {
                 Ok(UiEvent::MonitorDir(dir)) => {
                     if ui_event_tx.send(TerminalEvent::MonitorDir(dir)).is_err() {
                         break;
                     }
                 }
-                Err(mpsc::error::TryRecvError::Empty) => delay_for(EVENT_POLLING_PERIOD).await,
-                Err(mpsc::error::TryRecvError::Closed) => break,
+                Err(flume::TryRecvError::Empty) => sleep(EVENT_POLLING_PERIOD).await,
+                Err(flume::TryRecvError::Disconnected) => break,
             }
         }
         Ok(())
     }
 
     fn take_available_logs<T>(
-        receiver: &mut mpsc::UnboundedReceiver<T>,
+        receiver: &mut Receiver<T>,
         size: usize,
         buffer: &mut ArrayDeque<[T; LOGS_BUFFER_SIZE], Wrapping>,
     ) {
@@ -565,7 +564,7 @@ impl TerminalUi {
     async fn on_monitor_dir(
         ui_state: UiLoopState,
         path: PathBuf,
-        ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
         cancellation_rx: broadcast::Receiver<()>,
     ) -> Result<UiLoopState, UiLoopError> {
         let mut file_monitors = ui_state.file_monitors;
@@ -582,10 +581,11 @@ impl TerminalUi {
 
     async fn ui_loop(
         initial_state: UiLoopState,
-        ui_event_rx: mpsc::UnboundedReceiver<TerminalEvent>,
-        ui_event_tx: mpsc::UnboundedSender<TerminalEvent>,
+        ui_event_rx: Receiver<TerminalEvent>,
+        ui_event_tx: Sender<TerminalEvent>,
     ) -> Result<()> {
         let loop_result = ui_event_rx
+            .stream()
             .map(Ok)
             .try_fold(initial_state, |ui_state, event| async {
                 let ui_event_tx = ui_event_tx.clone();
@@ -632,16 +632,16 @@ impl TerminalUi {
 
     fn spawn_file_count_monitor(
         dir: PathBuf,
-        sender: mpsc::UnboundedSender<TerminalEvent>,
+        sender: Sender<TerminalEvent>,
         mut cancellation_rx: broadcast::Receiver<()>,
     ) -> tokio::task::JoinHandle<Result<()>> {
         tokio::spawn(async move {
             wait_for_dir(&dir).await?;
-            while cancellation_rx.try_recv() == Err(broadcast::TryRecvError::Empty) {
+            while cancellation_rx.try_recv() == Err(broadcast::error::TryRecvError::Empty) {
                 let mut rd = tokio::fs::read_dir(&dir).await?;
                 let mut count: usize = 0;
 
-                while let Some(Ok(entry)) = rd.next().await {
+                while let Ok(Some(entry)) = rd.next_entry().await {
                     if entry.path().is_file() {
                         count += 1;
                     }
@@ -657,7 +657,7 @@ impl TerminalUi {
                     break;
                 }
 
-                delay_for(FILE_MONITOR_POLLING_PERIOD).await;
+                sleep(FILE_MONITOR_POLLING_PERIOD).await;
             }
             Ok(())
         })

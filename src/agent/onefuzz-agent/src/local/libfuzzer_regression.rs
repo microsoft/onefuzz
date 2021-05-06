@@ -15,14 +15,14 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use tokio::sync::mpsc::UnboundedSender;
+use flume::Sender;
 
 const REPORT_NAMES: &str = "report_names";
 
 pub fn build_regression_config(
     args: &clap::ArgMatches<'_>,
     common: CommonConfig,
-    event_sender: Option<UnboundedSender<UiEvent>>,
+    event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -73,10 +73,7 @@ pub fn build_regression_config(
     Ok(config)
 }
 
-pub async fn run(
-    args: &clap::ArgMatches<'_>,
-    event_sender: Option<UnboundedSender<UiEvent>>,
-) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
     let context = build_local_context(args, true, event_sender.clone())?;
     let config = build_regression_config(args, context.common_config.clone(), event_sender)?;
     LibFuzzerRegressionTask::new(config).run().await

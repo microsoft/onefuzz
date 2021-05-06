@@ -3,7 +3,7 @@
 
 use anyhow::{Context, Result};
 use std::{collections::HashMap, hash::BuildHasher, path::Path};
-use tokio::{fs, stream::StreamExt};
+use tokio::fs;
 
 pub use stacktrace_parser::CrashLog;
 const ASAN_LOG_TRUNCATE_SIZE: usize = 4096;
@@ -68,8 +68,7 @@ pub async fn check_asan_string(mut data: String) -> Result<Option<CrashLog>> {
 pub async fn check_asan_path(asan_dir: &Path) -> Result<Option<CrashLog>> {
     let mut entries = fs::read_dir(asan_dir).await?;
     // there should be only up to one file in asan_dir
-    if let Some(file) = entries.next().await {
-        let file = file?;
+    if let Some(file) = entries.next_entry().await? {
         let mut asan_text = fs::read_to_string(file.path()).await?;
 
         let asan = CrashLog::parse(asan_text.clone()).with_context(|| {

@@ -8,7 +8,11 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import (
+    HttpResponseError,
+    ResourceExistsError,
+    ResourceNotFoundError,
+)
 from azure.mgmt.compute.models import (
     ResourceSku,
     ResourceSkuRestrictionsType,
@@ -350,6 +354,18 @@ def create_vmss(
             code=ErrorCode.VM_CREATE_FAILED,
             errors=["creating vmss: %s" % err],
         )
+    except HttpResponseError as err:
+        err_str = str(err)
+        # Catch Gen2 Hypervisor / Image mismatch errors
+        # See https://github.com/microsoft/lisa/pull/716 for an example
+        if (
+            "check that the Hypervisor Generation of the Image matches the "
+            "Hypervisor Generation of the selected VM Size"
+        ) in err_str:
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED, errors=[f"creating vmss: {err_str}"]
+            )
+        raise err
 
     return None
 

@@ -157,7 +157,7 @@ class Node(BASE_NODE, ORMMixin):
         return ("pool_name", "machine_id")
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:
-        return {"tasks": ...}
+        return {"tasks": ..., "messages": ...}
 
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {
@@ -217,7 +217,7 @@ class Node(BASE_NODE, ORMMixin):
             "node: stopping busy node with all tasks complete: %s",
             self.machine_id,
         )
-        self.stop()
+        self.stop(done=True)
         return True
 
     def mark_tasks_stopped_early(self, error: Optional[Error] = None) -> None:
@@ -255,7 +255,7 @@ class Node(BASE_NODE, ORMMixin):
                 self.version,
                 __version__,
             )
-            self.stop()
+            self.stop(done=True)
             return False
 
         if self.state in NodeState.ready_for_reset():
@@ -269,7 +269,7 @@ class Node(BASE_NODE, ORMMixin):
                 "can_schedule is set to be deleted.  machine_id:%s",
                 self.machine_id,
             )
-            self.stop()
+            self.stop(done=True)
             return False
 
         if self.reimage_requested:
@@ -277,7 +277,7 @@ class Node(BASE_NODE, ORMMixin):
                 "can_schedule is set to be reimaged.  machine_id:%s",
                 self.machine_id,
             )
-            self.stop()
+            self.stop(done=True)
             return False
 
         if self.could_shrink_scaleset():
@@ -368,7 +368,7 @@ class Node(BASE_NODE, ORMMixin):
         self.save()
 
     def set_halt(self) -> None:
-        """ Tell the node to stop everything. """
+        """Tell the node to stop everything."""
         self.set_shutdown()
         self.stop()
         self.set_state(NodeState.halt)

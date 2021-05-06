@@ -10,13 +10,10 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use flume::Sender;
 use std::path::PathBuf;
-use tokio::sync::mpsc::UnboundedSender;
 
-pub async fn run(
-    args: &clap::ArgMatches<'_>,
-    event_sender: Option<UnboundedSender<UiEvent>>,
-) -> Result<()> {
+pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
     let context = build_local_context(args, true, event_sender)?;
 
     let target_exe = value_t!(args, TARGET_EXE, PathBuf)?;

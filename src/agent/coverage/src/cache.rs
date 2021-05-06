@@ -66,7 +66,7 @@ pub struct ModuleInfo {
     pub module: ModuleIndex,
 
     /// Set of image offsets of basic blocks.
-    pub blocks: BTreeSet<u64>,
+    pub blocks: BTreeSet<u32>,
 }
 
 impl ModuleInfo {
@@ -83,13 +83,28 @@ impl ModuleInfo {
 
     #[cfg(target_os = "windows")]
     pub fn new_pe(path: &ModulePath, handle: impl Into<Option<HANDLE>>) -> Result<Self> {
+        use crate::block::pe_provider::PeSancovBasicBlockProvider;
+
+        let handle = handle.into();
+
         let file = std::fs::File::open(path)?;
         let data = unsafe { memmap2::Mmap::map(&file)? };
 
         let pe = goblin::pe::PE::parse(&data)?;
         let module = ModuleIndex::index_pe(path.clone(), &pe);
-        let offsets = crate::pe::process_module(path, &data, &pe, false, handle.into())?;
-        let blocks = offsets.ones().map(|off| off as u64).collect();
+
+        let pdb_path = crate::pdb::find_pdb_path(path.as_ref(), &pe, handle)?;
+        let pdb = std::fs::File::open(&pdb_path)?;
+        let mut pdb = pdb::PDB::open(pdb)?;
+
+        let mut sancov_provider = PeSancovBasicBlockProvider::new(&data, &pe, &mut pdb);
+
+        let blocks = if let Ok(blocks) = sancov_provider.provide() {
+            blocks
+        } else {
+            let bitset = crate::pe::process_module(path, &data, &pe, false, handle)?;
+            bitset.ones().map(|off| off as u32).collect()
+        };
 
         Ok(Self { module, blocks })
     }

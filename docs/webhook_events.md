@@ -84,7 +84,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "BlobRef": {
             "properties": {
@@ -588,7 +587,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "container": {
             "title": "Container",
@@ -628,7 +626,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "JobConfig": {
             "properties": {
@@ -737,7 +734,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -918,7 +914,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -959,7 +954,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -1000,7 +994,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -1042,7 +1035,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "NodeState": {
             "description": "An enumeration.",
@@ -1135,7 +1127,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Architecture": {
             "description": "An enumeration.",
@@ -1243,7 +1234,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "pool_name": {
             "title": "Pool Name",
@@ -1272,7 +1262,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "region": {
             "title": "Region",
@@ -1301,7 +1290,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "region": {
             "title": "Region",
@@ -1336,7 +1324,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -1470,7 +1457,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "BlobRef": {
             "properties": {
@@ -2047,7 +2033,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "image": {
             "title": "Image",
@@ -2103,7 +2088,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "pool_name": {
             "title": "Pool Name",
@@ -2145,7 +2129,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -2266,7 +2249,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -2712,7 +2694,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -3199,7 +3180,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -3612,7 +3592,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -4052,7 +4031,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -4450,7 +4428,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Architecture": {
             "description": "An enumeration.",
@@ -4607,7 +4584,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "ErrorCode"
         },
         "EventCrashReported": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4633,7 +4609,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventFileAdded": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4652,7 +4627,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventJobCreated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/JobConfig"
@@ -4674,7 +4648,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventJobStopped": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/JobConfig"
@@ -4703,7 +4676,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeCreated": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4728,7 +4700,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4753,7 +4724,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeHeartbeat": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4778,7 +4748,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeStateUpdated": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4821,7 +4790,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventPoolCreated": {
-            "additionalProperties": false,
             "properties": {
                 "arch": {
                     "$ref": "#/definitions/Architecture"
@@ -4851,7 +4819,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventPoolDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "pool_name": {
                     "title": "Pool Name",
@@ -4865,7 +4832,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyCreated": {
-            "additionalProperties": false,
             "properties": {
                 "region": {
                     "title": "Region",
@@ -4879,7 +4845,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "region": {
                     "title": "Region",
@@ -4893,7 +4858,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyFailed": {
-            "additionalProperties": false,
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Error"
@@ -4911,7 +4875,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventRegressionReported": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4937,7 +4900,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetCreated": {
-            "additionalProperties": false,
             "properties": {
                 "image": {
                     "title": "Image",
@@ -4977,7 +4939,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "pool_name": {
                     "title": "Pool Name",
@@ -4997,7 +4958,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetFailed": {
-            "additionalProperties": false,
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Error"
@@ -5021,7 +4981,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskCreated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5049,7 +5008,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskFailed": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5081,7 +5039,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskHeartbeat": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5106,7 +5063,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskStateUpdated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5140,7 +5096,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskStopped": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"

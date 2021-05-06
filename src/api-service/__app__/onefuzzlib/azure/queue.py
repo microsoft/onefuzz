@@ -158,14 +158,17 @@ def peek_queue(
     if max_messages < MIN_PEEK_SIZE or max_messages > MAX_PEEK_SIZE:
         raise ValueError("invalid max messages: %s" % max_messages)
 
-    queue = get_queue(name, storage_type)
-    if not queue:
-        return result
+    try:
+        queue = get_queue(name, storage_type)
+        if not queue:
+            return result
 
-    for message in queue.peek_messages(max_messages=max_messages):
-        decoded = base64.b64decode(message.content)
-        raw = json.loads(decoded)
-        result.append(object_type.parse_obj(raw))
+        for message in queue.peek_messages(max_messages=max_messages):
+            decoded = base64.b64decode(message.content)
+            raw = json.loads(decoded)
+            result.append(object_type.parse_obj(raw))
+    except ResourceNotFoundError:
+        return result
     return result
 
 
