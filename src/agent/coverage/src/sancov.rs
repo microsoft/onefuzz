@@ -67,12 +67,7 @@ macro_rules! define_table_getter {
         stop = $stop: ident,
         ty = $ty: expr,
     ) => {
-        define_table_getter!(
-            name = $name,
-            start = $start,
-            stop = $stop,
-            ty = $ty,
-        );
+        define_table_getter!(name = $name, start = $start, stop = $stop, ty = $ty,);
     };
 }
 
