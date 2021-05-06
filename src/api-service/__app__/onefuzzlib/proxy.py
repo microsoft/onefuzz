@@ -277,7 +277,7 @@ class Proxy(ORMMixin):
     @classmethod
     # Question - Why does this not include is_used to check forwards?
     def get_or_create(cls, region: Region) -> Optional["Proxy"]:
-        proxy = Proxy.search(query={"region": region, "outdated": [False]})
+        proxy = Proxy.search(query={"region": region, "outdated": [False]}, num_results=1)
         proxy_timestamp = None
         if proxy is not None:
             if proxy.version != __version__:
