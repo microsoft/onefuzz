@@ -203,7 +203,15 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                if ignore_dotfiles && file_name.to_string_lossy().starts_with('.') {
+                let file_name_str = file_name.to_string_lossy();
+
+                // explicitly ignore azcopy temporary files
+                // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
+                if file_name_str.starts_with(".azDownload-") {
+                    continue;
+                }
+
+                if ignore_dotfiles && file_name_str.starts_with('.') {
                     continue;
                 }
 
@@ -231,11 +239,19 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                if ignore_dotfiles && file_name.to_string_lossy().starts_with('.') {
+                let file_name_str = file_name.to_string_lossy();
+
+                // explicitly ignore azcopy temporary files
+                // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
+                if file_name_str.starts_with(".azDownload-") {
                     continue;
                 }
-                event!(event.clone(); EventData::Path = item.display().to_string());
 
+                if ignore_dotfiles && file_name_str.starts_with('.') {
+                    continue;
+                }
+
+                event!(event.clone(); EventData::Path = item.display().to_string());
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{}",
