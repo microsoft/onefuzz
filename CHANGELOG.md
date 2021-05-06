@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.16.0
+### Aded
+* Deployment: Added ability to only deploy RBAC rsources. [#818](https://github.com/microsoft/onefuzz/pull/818)
+* Agent: Continued development related to upcoming features. [#855](https://github.com/microsoft/onefuzz/pull/855), [#858](https://github.com/microsoft/onefuzz/pull/858)
+
+### Fixed
+* Agent: Fixed issue where directory monitoring would fail due to azcopy temporary files. [#859](https://github.com/microsoft/onefuzz/pull/859)
+* Service: Fixed issue where scalesets were deleted manually. [#860](https://github.com/microsoft/onefuzz/pull/860)
+
 ## 2.15.0
 ### Added
 * Agent: Added context to errors generated during [configuration value expansion](docs/command-replacements.md). [#835](https://github.com/microsoft/onefuzz/pull/835).
