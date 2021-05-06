@@ -7,6 +7,7 @@ import datetime
 import logging
 import os
 from typing import List, Optional, Tuple
+from uuid import UUID, uuid4
 
 from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import ErrorCode, VmState
@@ -62,7 +63,7 @@ class Proxy(ORMMixin):
 
     def get_vm(self) -> VM:
         vm = VM(
-            name="proxy-%s" % self.region,
+            name="proxy-%s-%s" % (self.region, self.proxy_id),
             region=self.region,
             sku=PROXY_SKU,
             image=PROXY_IMAGE,
@@ -167,6 +168,7 @@ class Proxy(ORMMixin):
                 __version__,
                 self.state,
             )
+            self.outdated = True
             return True
         if self.created_timestamp is not None:
             proxy_timestamp = self.created_timestamp
@@ -180,6 +182,7 @@ class Proxy(ORMMixin):
                     self.created_timestamp,
                     self.state,
                 )
+                self.outdated = True
                 return True
         return False
 
@@ -274,7 +277,7 @@ class Proxy(ORMMixin):
     @classmethod
     # Question - Why does this not include is_used to check forwards?
     def get_or_create(cls, region: Region) -> Optional["Proxy"]:
-        proxy = Proxy.get(region)
+        proxy = Proxy.search(query={"region": region, "outdated": False})
         proxy_timestamp = None
         if proxy is not None:
             if proxy.version != __version__:
@@ -288,6 +291,7 @@ class Proxy(ORMMixin):
                     # If the proxy is out-of-date, delete and re-create it
                     proxy.state = VmState.stopping
                     proxy.save()
+                proxy.outdated = True
                 return None
             if proxy.created_timestamp is not None:
                 proxy_timestamp = proxy.created_timestamp
@@ -305,6 +309,7 @@ class Proxy(ORMMixin):
                         # If the proxy is out-of-date, delete and re-create it
                         proxy.state = VmState.stopping
                         proxy.save()
+                    proxy.outdated = True
                     return None
             return proxy
 
