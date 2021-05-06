@@ -46,6 +46,7 @@ class Proxy(ORMMixin):
     created_timestamp: datetime.datetime = Field(
         default_factory=datetime.datetime.utcnow
     )
+    proxy_id: UUID = Field(default_factory=uuid4)
     region: Region
     state: VmState = Field(default=VmState.init)
     auth: Authentication = Field(default_factory=build_auth)
@@ -53,10 +54,11 @@ class Proxy(ORMMixin):
     error: Optional[Error]
     version: str = Field(default=__version__)
     heartbeat: Optional[ProxyHeartbeat]
+    outdated: bool = Field(default=False)
 
     @classmethod
     def key_fields(cls) -> Tuple[str, Optional[str]]:
-        return ("region", None)
+        return ("region", "proxy_id")
 
     def get_vm(self) -> VM:
         vm = VM(
@@ -239,7 +241,7 @@ class Proxy(ORMMixin):
         proxy_config = ProxyConfig(
             url=get_file_sas_url(
                 Container("proxy-configs"),
-                "%s/config.json" % self.region,
+                "%s/%s/config.json" % (self.region, self.proxy_id),
                 StorageType.config,
                 read=True,
             ),
@@ -257,7 +259,7 @@ class Proxy(ORMMixin):
 
         save_blob(
             Container("proxy-configs"),
-            "%s/config.json" % self.region,
+            "%s/%s/config.json" % (self.region, self.proxy_id),
             proxy_config.json(),
             StorageType.config,
         )
