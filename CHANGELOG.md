@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Continued development related to upcoming features. [#855](https://github.com/microsoft/onefuzz/pull/855), [#858](https://github.com/microsoft/onefuzz/pull/858)
 
 ### Fixed
-* Agent: Fixed issue where directory monitoring would fail due to azcopy temporary files. [#859](https://github.com/microsoft/onefuzz/pull/859)
-* Service: Fixed issue where scalesets were deleted manually. [#860](https://github.com/microsoft/onefuzz/pull/860)
+* Agent: Fixed issue where directory monitoring would fail due to `azcopy` temporary files. [#859](https://github.com/microsoft/onefuzz/pull/859)
+* Service: Fixed issue where scalesets could get stuck trying to resize if also manually deleted. [#860](https://github.com/microsoft/onefuzz/pull/860)
 
 ## 2.15.0
 ### Added
