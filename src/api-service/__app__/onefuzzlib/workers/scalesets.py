@@ -482,6 +482,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "scaleset is unavailable. scaleset_id:%s",
                 self.scaleset_id,
             )
+            # if the scaleset is missing, this is an indication the scaleset
+            # was manually deleted, rather than having OneFuzz delete it.  As
+            # such, we should go thruogh the process of deleting it.
+            self.set_shutdown(now=True)
             return
 
         if ground_truth_size < self.size:
