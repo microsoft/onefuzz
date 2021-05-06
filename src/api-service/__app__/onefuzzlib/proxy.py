@@ -279,7 +279,7 @@ class Proxy(ORMMixin):
     def get_or_create(cls, region: Region) -> Optional["Proxy"]:
         proxy = Proxy.search(
             query={"region": [region], "outdated": [False]}, num_results=1
-        )
+        )[0]
         proxy_timestamp = None
         if proxy is not None:
             if proxy.version != __version__:
