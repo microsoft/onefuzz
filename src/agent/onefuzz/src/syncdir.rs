@@ -215,7 +215,7 @@ impl SyncedDir {
                     continue;
                 }
 
-                event!(event.clone(); EventData::Path = file_name.to_string_lossy());
+                event!(event.clone(); EventData::Path = file_name_str);
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
@@ -251,7 +251,7 @@ impl SyncedDir {
                     continue;
                 }
 
-                event!(event.clone(); EventData::Path = item.display().to_string());
+                event!(event.clone(); EventData::Path = file_name_str);
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{}",
