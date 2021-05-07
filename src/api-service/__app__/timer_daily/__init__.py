@@ -21,7 +21,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             logging.info("outdated proxy, creating new one.")
             new_proxy = Proxy(region=proxy.region)
             new_proxy.save()
-            send_event(EventProxyCreated(region=proxy.region))
+            send_event(EventProxyCreated(region=proxy.region, proxy_id=proxy.proxy_id))
         if not proxy.is_used:
             logging.info("stopping proxy")
             proxy.state = VmState.stopping

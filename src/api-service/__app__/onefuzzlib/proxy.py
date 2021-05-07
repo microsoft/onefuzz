@@ -110,7 +110,9 @@ class Proxy(ORMMixin):
             return
 
         logging.error(PROXY_LOG_PREFIX + "vm failed: %s - %s", self.region, error)
-        send_event(EventProxyFailed(region=self.region, error=error))
+        send_event(
+            EventProxyFailed(region=self.region, proxy_id=self.proxy_id, error=error)
+        )
         self.error = error
         self.state = VmState.stopping
         self.save()
@@ -137,7 +139,7 @@ class Proxy(ORMMixin):
             return
         self.ip = ip
 
-        extensions = proxy_manager_extensions(self.region)
+        extensions = proxy_manager_extensions(self.region, self.proxy_id)
         result = vm.add_extensions(extensions)
         if isinstance(result, Error):
             self.set_failed(result)
@@ -320,9 +322,9 @@ class Proxy(ORMMixin):
         logging.info(PROXY_LOG_PREFIX + "creating proxy: region:%s", region)
         proxy = Proxy(region=region)
         proxy.save()
-        send_event(EventProxyCreated(region=region))
+        send_event(EventProxyCreated(region=region, proxy_id=proxy.proxy_id))
         return proxy
 
     def delete(self) -> None:
         super().delete()
-        send_event(EventProxyDeleted(region=self.region))
+        send_event(EventProxyDeleted(region=self.region, proxy_id=self.proxy_id))
