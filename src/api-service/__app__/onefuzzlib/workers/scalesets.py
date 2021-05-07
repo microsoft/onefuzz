@@ -440,9 +440,18 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         return
 
     def _resize_shrink(self, to_remove: int) -> None:
+        logging.info(
+            SCALESET_LOG_PREFIX + "shrinking scaleset. scaleset_id:%s to_remove:%d",
+            self.scaleset_id,
+            to_remove,
+        )
         queue = ScalesetShrinkQueue(self.scaleset_id)
         for _ in range(to_remove):
             queue.add_entry()
+
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
+        for node in nodes:
+            node.send_stop_if_free()
 
     def resize(self) -> None:
         # no longer needing to resize
