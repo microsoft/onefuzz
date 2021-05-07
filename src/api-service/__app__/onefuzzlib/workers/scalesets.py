@@ -451,7 +451,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
         for node in nodes:
-            node.send_no_new_work()
+            node.send_stop_if_free()
 
     def resize(self) -> None:
         # no longer needing to resize

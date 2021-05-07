@@ -25,7 +25,7 @@ pub enum NodeCommand {
     AddSshKey(SshKeyInfo),
     StopTask(StopTask),
     Stop {},
-    NoNewWork {},
+    StopIfFree {},
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]

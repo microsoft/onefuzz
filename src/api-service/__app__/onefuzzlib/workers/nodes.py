@@ -20,7 +20,7 @@ from onefuzztypes.models import (
     NodeAssignment,
     NodeCommand,
     NodeCommandAddSshKey,
-    NodeCommandNoNewWork,
+    NodeCommandStopIfFree,
 )
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Result, StopNodeCommand, StopTaskNodeCommand
@@ -347,7 +347,7 @@ class Node(BASE_NODE, ORMMixin):
 
         # if we're going to reimage, make sure the node doesn't pick up new work
         # too.
-        self.send_no_new_work()
+        self.send_stop_if_free()
 
         self.save()
 
@@ -366,9 +366,9 @@ class Node(BASE_NODE, ORMMixin):
         )
         return None
 
-    def send_no_new_work(self) -> None:
+    def send_stop_if_free(self) -> None:
         if is_minimum_version(version=self.version, minimum="2.16.1"):
-            self.send_message(NodeCommand(no_new_work=NodeCommandNoNewWork()))
+            self.send_message(NodeCommand(stop_if_free=NodeCommandStopIfFree()))
 
     def stop(self, done: bool = False) -> None:
         self.to_reimage(done=done)
