@@ -5,7 +5,7 @@ use std::collections::BTreeSet;
 use std::convert::TryInto;
 
 use anyhow::{format_err, Result};
-use iced_x86::{Decoder, DecoderOptions, Instruction, Mnemonic, OpKind};
+use iced_x86::{Decoder, DecoderOptions, Instruction, Mnemonic, OpKind, Register};
 
 /// Size of padding inserted (on Window) between `__start_` delimiter symbols
 /// and the first entry of the delimited table's array.
@@ -337,8 +337,29 @@ impl SancovInlineAccessScanner {
         decoder.set_ip(va);
 
         let mut inst = Instruction::default();
+
         while decoder.can_decode() {
             decoder.decode_out(&mut inst);
+
+            // If no memory operand, there is no table access.
+            if !inst.op_kinds().any(|o| o == OpKind::Memory) {
+                continue;
+            }
+
+            // Skip any memory access that is not PC-relative or absolute.
+            if !inst.is_ip_rel_memory_operand() {
+                if inst.memory_base() != Register::None {
+                    continue;
+                }
+
+                if inst.memory_index() != Register::None {
+                    continue;
+                }
+
+                if inst.segment_prefix() != Register::None {
+                    continue;
+                }
+            }
 
             match inst.op_code().mnemonic() {
                 Mnemonic::Add | Mnemonic::Inc => {
@@ -402,23 +423,21 @@ impl SancovInlineAccessScanner {
                 }
             }
 
-            if inst.is_ip_rel_memory_operand() {
-                // When relative, `memory_displacement64()` returns a VA.
-                let accessed = inst
-                    .memory_displacement64()
+            // Even when PC-relative, `memory_displacement64()` returns a VA.
+            let accessed = inst
+                .memory_displacement64()
+                .checked_sub(self.base)
+                .ok_or_else(|| format_err!("underflow converting access VA to offset"))?
+                .try_into()?;
+
+            if self.table.range().contains(&accessed) {
+                let offset = inst
+                    .ip()
                     .checked_sub(self.base)
-                    .ok_or_else(|| format_err!("underflow converting access VA to offset"))?
+                    .ok_or_else(|| format_err!("underflow computing module offset"))?
                     .try_into()?;
 
-                if self.table.range().contains(&accessed) {
-                    let offset = inst
-                        .ip()
-                        .checked_sub(self.base)
-                        .ok_or_else(|| format_err!("underflow computing module offset"))?
-                        .try_into()?;
-
-                    self.offsets.insert(offset);
-                }
+                self.offsets.insert(offset);
             }
         }
 
