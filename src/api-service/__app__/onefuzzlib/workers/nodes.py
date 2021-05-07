@@ -345,7 +345,10 @@ class Node(BASE_NODE, ORMMixin):
             logging.info("setting reimage_requested: %s", self.machine_id)
             self.reimage_requested = True
 
+        # if we're going to reimage, make sure the node doesn't pick up new work
+        # too.
         self.send_no_new_work()
+
         self.save()
 
     def add_ssh_public_key(self, public_key: str) -> Result[None]:
