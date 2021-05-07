@@ -33,11 +33,5 @@ def versions() -> Dict[str, Version]:
 
 
 def is_minimum_version(*, version: str, minimum: str) -> bool:
-    # >>> is_minimum_version(version="1.0.0", minimum="1.0.0")
-    # True
-    # >>> is_minimum_version(version="1.0.1", minimum="1.0.0")
-    # True
-    # >>> is_minimum_version(version="1.0.0", minimum="1.0.1")
-    # False
-    # >>>
-    return bool(semver.compare(version, minimum) >= 0)
+    # check if version is at least (or higher) than minimum
+    return bool(semver.VersionInfo.parse(version).compare(minimum) >= 0)
