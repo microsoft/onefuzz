@@ -288,7 +288,7 @@ class Proxy(ORMMixin):
             if proxy.version != __version__:
                 logging.info(
                     PROXY_LOG_PREFIX
-                    + "mismatch  version: proxy:%s service:%s state:%s",
+                    + "mismatch  version: proxy :%s service:%s state:%s",
                     proxy.version,
                     __version__,
                     proxy.state,
