@@ -345,7 +345,7 @@ def proxy_manager_extensions(region: Region) -> List[Extension]:
     urls = [
         get_file_sas_url(
             Container("proxy-configs"),
-            "%s/config.json" % region,
+            "%s/%s/config.json" % (self.region, self.proxy_id),
             StorageType.config,
             read=True,
         ),
