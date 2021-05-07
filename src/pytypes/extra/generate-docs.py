@@ -147,10 +147,11 @@ def main() -> None:
             state=TaskState.init,
             config=task_config,
         ),
-        EventProxyCreated(region=Region("eastus")),
-        EventProxyDeleted(region=Region("eastus")),
+        EventProxyCreated(region=Region("eastus"), proxy_id=UUID(int=0)),
+        EventProxyDeleted(region=Region("eastus"), proxy_id=UUID(int=0)),
         EventProxyFailed(
             region=Region("eastus"),
+            proxy_id=UUID(int=0),
             error=Error(code=ErrorCode.PROXY_FAILED, errors=["example error message"]),
         ),
         EventPoolCreated(
