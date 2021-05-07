@@ -16,7 +16,12 @@ from onefuzztypes.events import (
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Node as BASE_NODE
-from onefuzztypes.models import NodeAssignment, NodeCommand, NodeCommandAddSshKey
+from onefuzztypes.models import (
+    NodeAssignment,
+    NodeCommand,
+    NodeCommandAddSshKey,
+    NodeCommandNoNewWork,
+)
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Result, StopNodeCommand, StopTaskNodeCommand
 from onefuzztypes.primitives import PoolName
@@ -26,6 +31,7 @@ from ..__version__ import __version__
 from ..azure.vmss import get_instance_id
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
+from ..versions import is_minimum_version
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -338,6 +344,8 @@ class Node(BASE_NODE, ORMMixin):
         if not self.reimage_requested and not self.delete_requested:
             logging.info("setting reimage_requested: %s", self.machine_id)
             self.reimage_requested = True
+
+        self.send_no_new_work()
         self.save()
 
     def add_ssh_public_key(self, public_key: str) -> Result[None]:
@@ -354,6 +362,10 @@ class Node(BASE_NODE, ORMMixin):
             NodeCommand(add_ssh_key=NodeCommandAddSshKey(public_key=public_key))
         )
         return None
+
+    def send_no_new_work(self) -> None:
+        if is_minimum_version(version=self.version, minimum="2.17.0"):
+            self.send_message(NodeCommand(no_new_work=NodeCommandNoNewWork()))
 
     def stop(self, done: bool = False) -> None:
         self.to_reimage(done=done)

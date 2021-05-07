@@ -557,6 +557,10 @@ class NodeHeartbeatEntry(BaseModel):
     data: List[Dict[str, HeartbeatType]]
 
 
+class NodeCommandNoNewWork(BaseModel):
+    pass
+
+
 class StopNodeCommand(BaseModel):
     pass
 
@@ -573,6 +577,7 @@ class NodeCommand(EnumModel):
     stop: Optional[StopNodeCommand]
     stop_task: Optional[StopTaskNodeCommand]
     add_ssh_key: Optional[NodeCommandAddSshKey]
+    no_new_work: Optional[NodeCommandNoNewWork]
 
 
 class NodeCommandEnvelope(BaseModel):
