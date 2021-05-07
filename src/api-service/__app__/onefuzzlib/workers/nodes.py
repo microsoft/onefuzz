@@ -364,7 +364,7 @@ class Node(BASE_NODE, ORMMixin):
         return None
 
     def send_no_new_work(self) -> None:
-        if is_minimum_version(version=self.version, minimum="2.15.0"):
+        if is_minimum_version(version=self.version, minimum="2.16.1"):
             self.send_message(NodeCommand(no_new_work=NodeCommandNoNewWork()))
 
     def stop(self, done: bool = False) -> None:
