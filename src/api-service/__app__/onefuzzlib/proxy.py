@@ -319,7 +319,7 @@ class Proxy(ORMMixin):
                     return None
             return proxy
 
-        logging.info(PROXY_LOG_PREFIX + "creating proxy: region:%s", region)
+        logging.info(PROXY_LOG_PREFIX + "creating proxy : region:%s", region)
         proxy = Proxy(region=region)
         proxy.save()
         send_event(EventProxyCreated(region=region, proxy_id=proxy.proxy_id))
