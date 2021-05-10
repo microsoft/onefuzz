@@ -4,10 +4,10 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
-from onefuzztypes.models import Report, TeamsTemplate
+from onefuzztypes.models import RegressionReport, Report, TeamsTemplate
 from onefuzztypes.primitives import Container
 
 from ..azure.containers import auth_download_url
@@ -54,12 +54,15 @@ def send_teams_webhook(
 
 
 def notify_teams(
-    config: TeamsTemplate, container: Container, filename: str, report: Optional[Report]
+    config: TeamsTemplate,
+    container: Container,
+    filename: str,
+    report: Optional[Union[Report, RegressionReport]],
 ) -> None:
     text = None
     facts: List[Dict[str, str]] = []
 
-    if report:
+    if isinstance(report, Report):
         task = Task.get(report.job_id, report.task_id)
         if not task:
             logging.error(

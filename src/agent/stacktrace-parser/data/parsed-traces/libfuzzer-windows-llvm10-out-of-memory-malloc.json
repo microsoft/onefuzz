@@ -1,0 +1,184 @@
+{
+  "text": "INFO: Seed: 695951618\nINFO: Loaded 1 modules   (12 inline 8-bit counters): 12 [00007FF739F96088, 00007FF739F96094),\nINFO: Loaded 1 PC tables (12 PCs): 12 [00007FF739F48720,00007FF739F487E0),\nX:\\fuzz\\fuzz.exe: Running 1 inputs 1 time(s) each.\nRunning: .\\good.txt\n==1060== ERROR: libFuzzer: out-of-memory (malloc(2000000))\n   To change the out-of-memory limit use -rss_limit_mb=<N>\n\n    #0 0x7ff739e118a8 in __sanitizer_print_stack_trace C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_stack.cpp:86\n    #1 0x7ff739e38a84 in fuzzer::PrintStackTrace(void) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerUtil.cpp:205\n    #2 0x7ff739e570d1 in fuzzer::Fuzzer::HandleMalloc(unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp:130\n    #3 0x7ff739e56ff7 in fuzzer::MallocHook(void const volatile *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp:99\n    #4 0x7ff739e0a739 in __sanitizer::RunMallocHooks(void const *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\sanitizer_common\\sanitizer_common.cpp:299\n    #5 0x7ff739e2c862 in __asan::Allocator::Allocate(unsigned __int64, unsigned __int64, struct __sanitizer::BufferedStackTrace *, enum __asan::AllocType, bool) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_allocator.cpp:560\n    #6 0x7ff739e2c169 in __asan::asan_malloc(unsigned __int64, struct __sanitizer::BufferedStackTrace *) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_allocator.cpp:892\n    #7 0x7ff739e19730 in malloc C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_malloc_win.cpp:99\n    #8 0x7ff739df1061 in LLVMFuzzerTestOneInput (X:\\fuzz\\fuzz.exe+0x140001061)\n    #9 0x7ff739e5a0ea in fuzzer::Fuzzer::ExecuteCallback(unsigned char const *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp:556\n    #10 0x7ff739e6d025 in fuzzer::RunOneTest(class fuzzer::Fuzzer *, char const *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerDriver.cpp:293\n    #11 0x7ff739e72076 in fuzzer::FuzzerDriver(int *, char ***, int (__cdecl *)(unsigned char const *, unsigned __int64)) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerDriver.cpp:779\n    #12 0x7ff739e33ec2 in main C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerMain.cpp:19\n    #13 0x7ff739e79b5f in __scrt_common_main_seh d:\\A01\\_work\\6\\s\\src\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl:288\n    #14 0x7ffa95e46fd3 in BaseThreadInitThunk (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)\n    #15 0x7ffa975bcec0 in RtlUserThreadStart (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)\n\nSUMMARY: libFuzzer: out-of-memory",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: out-of-memory",
+  "fault_type": "out-of-memory",
+  "call_stack": [
+    "#0 0x7ff739e118a8 in __sanitizer_print_stack_trace C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_stack.cpp:86",
+    "#1 0x7ff739e38a84 in fuzzer::PrintStackTrace(void) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerUtil.cpp:205",
+    "#2 0x7ff739e570d1 in fuzzer::Fuzzer::HandleMalloc(unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp:130",
+    "#3 0x7ff739e56ff7 in fuzzer::MallocHook(void const volatile *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp:99",
+    "#4 0x7ff739e0a739 in __sanitizer::RunMallocHooks(void const *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\sanitizer_common\\sanitizer_common.cpp:299",
+    "#5 0x7ff739e2c862 in __asan::Allocator::Allocate(unsigned __int64, unsigned __int64, struct __sanitizer::BufferedStackTrace *, enum __asan::AllocType, bool) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_allocator.cpp:560",
+    "#6 0x7ff739e2c169 in __asan::asan_malloc(unsigned __int64, struct __sanitizer::BufferedStackTrace *) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_allocator.cpp:892",
+    "#7 0x7ff739e19730 in malloc C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_malloc_win.cpp:99",
+    "#8 0x7ff739df1061 in LLVMFuzzerTestOneInput (X:\\fuzz\\fuzz.exe+0x140001061)",
+    "#9 0x7ff739e5a0ea in fuzzer::Fuzzer::ExecuteCallback(unsigned char const *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp:556",
+    "#10 0x7ff739e6d025 in fuzzer::RunOneTest(class fuzzer::Fuzzer *, char const *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerDriver.cpp:293",
+    "#11 0x7ff739e72076 in fuzzer::FuzzerDriver(int *, char ***, int (__cdecl *)(unsigned char const *, unsigned __int64)) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerDriver.cpp:779",
+    "#12 0x7ff739e33ec2 in main C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerMain.cpp:19",
+    "#13 0x7ff739e79b5f in __scrt_common_main_seh d:\\A01\\_work\\6\\s\\src\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl:288",
+    "#14 0x7ffa95e46fd3 in BaseThreadInitThunk (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)",
+    "#15 0x7ffa975bcec0 in RtlUserThreadStart (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7ff739e118a8 in __sanitizer_print_stack_trace C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_stack.cpp:86",
+      "address": 140699804702888,
+      "function_name": "__sanitizer_print_stack_trace",
+      "source_file_name": "asan_stack.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_stack.cpp",
+      "source_file_line": 86
+    },
+    {
+      "line": "#1 0x7ff739e38a84 in fuzzer::PrintStackTrace(void) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerUtil.cpp:205",
+      "address": 140699804863108,
+      "function_name": "fuzzer::PrintStackTrace(void)",
+      "source_file_name": "FuzzerUtil.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerUtil.cpp",
+      "source_file_line": 205
+    },
+    {
+      "line": "#2 0x7ff739e570d1 in fuzzer::Fuzzer::HandleMalloc(unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp:130",
+      "address": 140699804987601,
+      "function_name": "fuzzer::Fuzzer::HandleMalloc(unsigned __int64)",
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp",
+      "source_file_line": 130
+    },
+    {
+      "line": "#3 0x7ff739e56ff7 in fuzzer::MallocHook(void const volatile *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp:99",
+      "address": 140699804987383,
+      "function_name": "fuzzer::MallocHook(void const volatile *, unsigned __int64)",
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp",
+      "source_file_line": 99
+    },
+    {
+      "line": "#4 0x7ff739e0a739 in __sanitizer::RunMallocHooks(void const *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\sanitizer_common\\sanitizer_common.cpp:299",
+      "address": 140699804673849,
+      "function_name": "__sanitizer::RunMallocHooks(void const *, unsigned __int64)",
+      "source_file_name": "sanitizer_common.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\sanitizer_common\\sanitizer_common.cpp",
+      "source_file_line": 299
+    },
+    {
+      "line": "#5 0x7ff739e2c862 in __asan::Allocator::Allocate(unsigned __int64, unsigned __int64, struct __sanitizer::BufferedStackTrace *, enum __asan::AllocType, bool) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_allocator.cpp:560",
+      "address": 140699804813410,
+      "function_name": "__asan::Allocator::Allocate(unsigned __int64, unsigned __int64, struct __sanitizer::BufferedStackTrace *, enum __asan::AllocType, bool)",
+      "source_file_name": "asan_allocator.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_allocator.cpp",
+      "source_file_line": 560
+    },
+    {
+      "line": "#6 0x7ff739e2c169 in __asan::asan_malloc(unsigned __int64, struct __sanitizer::BufferedStackTrace *) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_allocator.cpp:892",
+      "address": 140699804811625,
+      "function_name": "__asan::asan_malloc(unsigned __int64, struct __sanitizer::BufferedStackTrace *)",
+      "source_file_name": "asan_allocator.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_allocator.cpp",
+      "source_file_line": 892
+    },
+    {
+      "line": "#7 0x7ff739e19730 in malloc C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_malloc_win.cpp:99",
+      "address": 140699804735280,
+      "function_name": "malloc",
+      "source_file_name": "asan_malloc_win.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\asan\\asan_malloc_win.cpp",
+      "source_file_line": 99
+    },
+    {
+      "line": "#8 0x7ff739df1061 in LLVMFuzzerTestOneInput (X:\\fuzz\\fuzz.exe+0x140001061)",
+      "address": 140699804569697,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "module_path": "X:\\fuzz\\fuzz.exe",
+      "module_offset": 5368713313
+    },
+    {
+      "line": "#9 0x7ff739e5a0ea in fuzzer::Fuzzer::ExecuteCallback(unsigned char const *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp:556",
+      "address": 140699804999914,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const *, unsigned __int64)",
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerLoop.cpp",
+      "source_file_line": 556
+    },
+    {
+      "line": "#10 0x7ff739e6d025 in fuzzer::RunOneTest(class fuzzer::Fuzzer *, char const *, unsigned __int64) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerDriver.cpp:293",
+      "address": 140699805077541,
+      "function_name": "fuzzer::RunOneTest(class fuzzer::Fuzzer *, char const *, unsigned __int64)",
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerDriver.cpp",
+      "source_file_line": 293
+    },
+    {
+      "line": "#11 0x7ff739e72076 in fuzzer::FuzzerDriver(int *, char ***, int (__cdecl *)(unsigned char const *, unsigned __int64)) C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerDriver.cpp:779",
+      "address": 140699805098102,
+      "function_name": "fuzzer::FuzzerDriver(int *, char ***, int (__cdecl *)(unsigned char const *, unsigned __int64))",
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerDriver.cpp",
+      "source_file_line": 779
+    },
+    {
+      "line": "#12 0x7ff739e33ec2 in main C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerMain.cpp:19",
+      "address": 140699804843714,
+      "function_name": "main",
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "C:\\src\\llvm_package_1000-final\\llvm-project\\compiler-rt\\lib\\fuzzer\\FuzzerMain.cpp",
+      "source_file_line": 19
+    },
+    {
+      "line": "#13 0x7ff739e79b5f in __scrt_common_main_seh d:\\A01\\_work\\6\\s\\src\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl:288",
+      "address": 140699805129567,
+      "function_name": "__scrt_common_main_seh",
+      "source_file_name": "exe_common.inl",
+      "source_file_path": "d:\\A01\\_work\\6\\s\\src\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl",
+      "source_file_line": 288
+    },
+    {
+      "line": "#14 0x7ffa95e46fd3 in BaseThreadInitThunk (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)",
+      "address": 140714233327571,
+      "function_name": "BaseThreadInitThunk",
+      "module_path": "C:\\WINDOWS\\System32\\KERNEL32.DLL",
+      "module_offset": 6442545107
+    },
+    {
+      "line": "#15 0x7ffa975bcec0 in RtlUserThreadStart (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)",
+      "address": 140714257927872,
+      "function_name": "RtlUserThreadStart",
+      "module_path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "module_offset": 6442766016
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::HandleMalloc",
+    "fuzzer::MallocHook",
+    "__sanitizer::RunMallocHooks",
+    "__asan::Allocator::Allocate",
+    "__asan::asan_malloc",
+    "malloc",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__scrt_common_main_seh",
+    "BaseThreadInitThunk",
+    "RtlUserThreadStart"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#8 0x7ff739df1061 in LLVMFuzzerTestOneInput (X:\\fuzz\\fuzz.exe+0x140001061)",
+      "address": 140699804569697,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "module_path": "X:\\fuzz\\fuzz.exe",
+      "module_offset": 5368713313
+    }
+  ],
+  "minimized_stack": [
+    "#8 0x7ff739df1061 in LLVMFuzzerTestOneInput (X:\\fuzz\\fuzz.exe+0x140001061)"
+  ],
+  "minimized_stack_function_names": [
+    "LLVMFuzzerTestOneInput"
+  ]
+}

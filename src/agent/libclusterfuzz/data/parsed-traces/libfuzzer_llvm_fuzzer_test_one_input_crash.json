@@ -1,0 +1,145 @@
+{
+  "text": "AddressSanitizer:DEADLYSIGNAL\n=================================================================\n==15227==ERROR: AddressSanitizer: ABRT on unknown address 0x03e900003b7b (pc 0x7f0ba613bc37 bp 0x7f0ba6288bf8 sp 0x7fff3c6cbfd8 T0)\nSCARINESS: 10 (signal)\n#0 0x7f0ba613bc36 in gsignal /build/eglibc-MjiXCM/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56\n#1 0x7f0ba613f027 in abort /build/eglibc-MjiXCM/eglibc-2.19/stdlib/abort.c:89\n#2 0x7f0ba6134bf5 in __assert_fail_base /build/eglibc-MjiXCM/eglibc-2.19/assert/assert.c:92\n#3 0x7f0ba6134ca1 in __assert_fail /build/eglibc-MjiXCM/eglibc-2.19/assert/assert.c:101\n#4 0x3404db in LLVMFuzzerTestOneInput third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc:35:5\n#5 0x3a8128 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:464:13\n#6 0x344c67 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:273:6\n#7 0x35a494 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:688:9\n#8 0x3fdc2e in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10\n#9 0x7f0ba6126f44 in __libc_start_main /build/eglibc-MjiXCM/eglibc-2.19/csu/libc-start.c:287\n#10 0x270028 in _start (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-debug-asan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-debug-515875/zlib_deflate_set_dictionary_fuzzer+0x270028)\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ABRT /build/eglibc-MjiXCM/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56 in gsignal\n==15227==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT /build/eglibc-MjiXCM/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56 in gsignal",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7f0ba613bc36 in gsignal /build/eglibc-MjiXCM/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56",
+    "#1 0x7f0ba613f027 in abort /build/eglibc-MjiXCM/eglibc-2.19/stdlib/abort.c:89",
+    "#2 0x7f0ba6134bf5 in __assert_fail_base /build/eglibc-MjiXCM/eglibc-2.19/assert/assert.c:92",
+    "#3 0x7f0ba6134ca1 in __assert_fail /build/eglibc-MjiXCM/eglibc-2.19/assert/assert.c:101",
+    "#4 0x3404db in LLVMFuzzerTestOneInput third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc:35:5",
+    "#5 0x3a8128 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:464:13",
+    "#6 0x344c67 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:273:6",
+    "#7 0x35a494 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:688:9",
+    "#8 0x3fdc2e in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+    "#9 0x7f0ba6126f44 in __libc_start_main /build/eglibc-MjiXCM/eglibc-2.19/csu/libc-start.c:287",
+    "#10 0x270028 in _start (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-debug-asan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-debug-515875/zlib_deflate_set_dictionary_fuzzer+0x270028)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f0ba613bc36 in gsignal /build/eglibc-MjiXCM/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c:56",
+      "address": 139688007679030,
+      "function_name": "gsignal",
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/eglibc-MjiXCM/eglibc-2.19/signal/../nptl/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 56
+    },
+    {
+      "line": "#1 0x7f0ba613f027 in abort /build/eglibc-MjiXCM/eglibc-2.19/stdlib/abort.c:89",
+      "address": 139688007692327,
+      "function_name": "abort",
+      "source_file_name": "abort.c",
+      "source_file_path": "/build/eglibc-MjiXCM/eglibc-2.19/stdlib/abort.c",
+      "source_file_line": 89
+    },
+    {
+      "line": "#2 0x7f0ba6134bf5 in __assert_fail_base /build/eglibc-MjiXCM/eglibc-2.19/assert/assert.c:92",
+      "address": 139688007650293,
+      "function_name": "__assert_fail_base",
+      "source_file_name": "assert.c",
+      "source_file_path": "/build/eglibc-MjiXCM/eglibc-2.19/assert/assert.c",
+      "source_file_line": 92
+    },
+    {
+      "line": "#3 0x7f0ba6134ca1 in __assert_fail /build/eglibc-MjiXCM/eglibc-2.19/assert/assert.c:101",
+      "address": 139688007650465,
+      "function_name": "__assert_fail",
+      "source_file_name": "assert.c",
+      "source_file_path": "/build/eglibc-MjiXCM/eglibc-2.19/assert/assert.c",
+      "source_file_line": 101
+    },
+    {
+      "line": "#4 0x3404db in LLVMFuzzerTestOneInput third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc:35:5",
+      "address": 3409115,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 5,
+      "source_file_name": "deflate_set_dictionary_fuzzer.cc",
+      "source_file_path": "third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#5 0x3a8128 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:464:13",
+      "address": 3834152,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 464
+    },
+    {
+      "line": "#6 0x344c67 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:273:6",
+      "address": 3427431,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 273
+    },
+    {
+      "line": "#7 0x35a494 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:688:9",
+      "address": 3515540,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 688
+    },
+    {
+      "line": "#8 0x3fdc2e in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+      "address": 4185134,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#9 0x7f0ba6126f44 in __libc_start_main /build/eglibc-MjiXCM/eglibc-2.19/csu/libc-start.c:287",
+      "address": 139688007593796,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/eglibc-MjiXCM/eglibc-2.19/csu/libc-start.c",
+      "source_file_line": 287
+    },
+    {
+      "line": "#10 0x270028 in _start (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-debug-asan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-debug-515875/zlib_deflate_set_dictionary_fuzzer+0x270028)",
+      "address": 2555944,
+      "function_name": "_start",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-libfuzzer_linux-debug-asan_ae530a86793cd6b8b56ce9af9159ac101396e802/revisions/libfuzzer-linux-debug-515875/zlib_deflate_set_dictionary_fuzzer",
+      "module_offset": 2555944
+    }
+  ],
+  "full_stack_names": [
+    "gsignal",
+    "abort",
+    "__assert_fail_base",
+    "__assert_fail",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x3404db in LLVMFuzzerTestOneInput third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc:35:5",
+      "address": 3409115,
+      "function_name": "deflate_set_dictionary_fuzzer.cc",
+      "function_offset": 5,
+      "source_file_name": "deflate_set_dictionary_fuzzer.cc",
+      "source_file_path": "third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc",
+      "source_file_line": 35
+    }
+  ],
+  "minimized_stack": [
+    "#4 0x3404db in LLVMFuzzerTestOneInput third_party/zlib/contrib/tests/fuzzers/deflate_set_dictionary_fuzzer.cc:35:5"
+  ],
+  "minimized_stack_function_names": [
+    "deflate_set_dictionary_fuzzer.cc"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

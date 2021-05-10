@@ -1,0 +1,251 @@
+{
+  "text": "chewing_default_fuzzer: tree.c:860: RecordNode *DuplicateRecordAndInsertInterval(const RecordNode *, TreeDataType *, const int): Assertion `record failed.\nASAN:DEADLYSIGNAL\n=================================================================\n==1==ERROR: AddressSanitizer: ABRT on unknown address 0x000000000001 (pc 0x7faed4efa418 bp 0x000000734960 sp 0x7ffc43b364e8 T0)\nSCARINESS: 10 (signal)\n#0 0x7faed4efa417 in gsignal (/lib/x86_64-linux-gnu/libc.so.6+0x35417)\n#1 0x7faed4efc019 in abort (/lib/x86_64-linux-gnu/libc.so.6+0x37019)\n#0 0x7faed4ef2bd6 in libc.so.6\n#3 0x7faed4ef2c81 in __assert_fail (/lib/x86_64-linux-gnu/libc.so.6+0x2dc81)\n#4 0x550d27 in DuplicateRecordAndInsertInterval /src/libchewing/src/tree.c:860:5\n#5 0x5490c1 in DoDpPhrasing /src/libchewing/src/tree.c:977:19\n#6 0x5447a9 in Phrasing /src/libchewing/src/tree.c:1019:9\n#7 0x532cfc in CallPhrasing /src/libchewing/src/chewingutil.c:746:5\n#8 0x51ca3c in chewing_handle_Default /src/libchewing/src/chewingio.c:1601:9\n#9 0x51aaaf in chewing_handle_Space /src/libchewing/src/chewingio.c:811:16\n#10 0x50fd2d in type_single_keystroke /src/libchewing/test/testhelper.c:174:13\n#11 0x50ed82 in stress_main /src/libchewing/test/stress.c:222:7\n#12 0x50ce27 in LLVMFuzzerTestOneInput /src/chewing_default_fuzzer.c:12:3\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT on unknown address 0x000000000001 (pc 0x7faed4efa418 bp 0x000000734960 sp 0x7ffc43b364e8 T0)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7faed4efa417 in gsignal (/lib/x86_64-linux-gnu/libc.so.6+0x35417)",
+    "#1 0x7faed4efc019 in abort (/lib/x86_64-linux-gnu/libc.so.6+0x37019)",
+    "#0 0x7faed4ef2bd6 in libc.so.6",
+    "#3 0x7faed4ef2c81 in __assert_fail (/lib/x86_64-linux-gnu/libc.so.6+0x2dc81)",
+    "#4 0x550d27 in DuplicateRecordAndInsertInterval /src/libchewing/src/tree.c:860:5",
+    "#5 0x5490c1 in DoDpPhrasing /src/libchewing/src/tree.c:977:19",
+    "#6 0x5447a9 in Phrasing /src/libchewing/src/tree.c:1019:9",
+    "#7 0x532cfc in CallPhrasing /src/libchewing/src/chewingutil.c:746:5",
+    "#8 0x51ca3c in chewing_handle_Default /src/libchewing/src/chewingio.c:1601:9",
+    "#9 0x51aaaf in chewing_handle_Space /src/libchewing/src/chewingio.c:811:16",
+    "#10 0x50fd2d in type_single_keystroke /src/libchewing/test/testhelper.c:174:13",
+    "#11 0x50ed82 in stress_main /src/libchewing/test/stress.c:222:7",
+    "#12 0x50ce27 in LLVMFuzzerTestOneInput /src/chewing_default_fuzzer.c:12:3"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7faed4efa417 in gsignal (/lib/x86_64-linux-gnu/libc.so.6+0x35417)",
+      "address": 140388873511959,
+      "function_name": "gsignal",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 218135
+    },
+    {
+      "line": "#1 0x7faed4efc019 in abort (/lib/x86_64-linux-gnu/libc.so.6+0x37019)",
+      "address": 140388873519129,
+      "function_name": "abort",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 225305
+    },
+    {
+      "line": "#0 0x7faed4ef2bd6 in libc.so.6",
+      "address": 140388873481174,
+      "module_path": "libc.so.6"
+    },
+    {
+      "line": "#3 0x7faed4ef2c81 in __assert_fail (/lib/x86_64-linux-gnu/libc.so.6+0x2dc81)",
+      "address": 140388873481345,
+      "function_name": "__assert_fail",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 187521
+    },
+    {
+      "line": "#4 0x550d27 in DuplicateRecordAndInsertInterval /src/libchewing/src/tree.c:860:5",
+      "address": 5573927,
+      "function_name": "DuplicateRecordAndInsertInterval",
+      "function_offset": 5,
+      "source_file_name": "tree.c",
+      "source_file_path": "/src/libchewing/src/tree.c",
+      "source_file_line": 860
+    },
+    {
+      "line": "#5 0x5490c1 in DoDpPhrasing /src/libchewing/src/tree.c:977:19",
+      "address": 5542081,
+      "function_name": "DoDpPhrasing",
+      "function_offset": 19,
+      "source_file_name": "tree.c",
+      "source_file_path": "/src/libchewing/src/tree.c",
+      "source_file_line": 977
+    },
+    {
+      "line": "#6 0x5447a9 in Phrasing /src/libchewing/src/tree.c:1019:9",
+      "address": 5523369,
+      "function_name": "Phrasing",
+      "function_offset": 9,
+      "source_file_name": "tree.c",
+      "source_file_path": "/src/libchewing/src/tree.c",
+      "source_file_line": 1019
+    },
+    {
+      "line": "#7 0x532cfc in CallPhrasing /src/libchewing/src/chewingutil.c:746:5",
+      "address": 5451004,
+      "function_name": "CallPhrasing",
+      "function_offset": 5,
+      "source_file_name": "chewingutil.c",
+      "source_file_path": "/src/libchewing/src/chewingutil.c",
+      "source_file_line": 746
+    },
+    {
+      "line": "#8 0x51ca3c in chewing_handle_Default /src/libchewing/src/chewingio.c:1601:9",
+      "address": 5360188,
+      "function_name": "chewing_handle_Default",
+      "function_offset": 9,
+      "source_file_name": "chewingio.c",
+      "source_file_path": "/src/libchewing/src/chewingio.c",
+      "source_file_line": 1601
+    },
+    {
+      "line": "#9 0x51aaaf in chewing_handle_Space /src/libchewing/src/chewingio.c:811:16",
+      "address": 5352111,
+      "function_name": "chewing_handle_Space",
+      "function_offset": 16,
+      "source_file_name": "chewingio.c",
+      "source_file_path": "/src/libchewing/src/chewingio.c",
+      "source_file_line": 811
+    },
+    {
+      "line": "#10 0x50fd2d in type_single_keystroke /src/libchewing/test/testhelper.c:174:13",
+      "address": 5307693,
+      "function_name": "type_single_keystroke",
+      "function_offset": 13,
+      "source_file_name": "testhelper.c",
+      "source_file_path": "/src/libchewing/test/testhelper.c",
+      "source_file_line": 174
+    },
+    {
+      "line": "#11 0x50ed82 in stress_main /src/libchewing/test/stress.c:222:7",
+      "address": 5303682,
+      "function_name": "stress_main",
+      "function_offset": 7,
+      "source_file_name": "stress.c",
+      "source_file_path": "/src/libchewing/test/stress.c",
+      "source_file_line": 222
+    },
+    {
+      "line": "#12 0x50ce27 in LLVMFuzzerTestOneInput /src/chewing_default_fuzzer.c:12:3",
+      "address": 5295655,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 3,
+      "source_file_name": "chewing_default_fuzzer.c",
+      "source_file_path": "/src/chewing_default_fuzzer.c",
+      "source_file_line": 12
+    }
+  ],
+  "full_stack_names": [
+    "gsignal",
+    "abort",
+    "__assert_fail",
+    "DuplicateRecordAndInsertInterval",
+    "DoDpPhrasing",
+    "Phrasing",
+    "CallPhrasing",
+    "chewing_handle_Default",
+    "chewing_handle_Space",
+    "type_single_keystroke",
+    "stress_main",
+    "LLVMFuzzerTestOneInput"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x550d27 in DuplicateRecordAndInsertInterval /src/libchewing/src/tree.c:860:5",
+      "address": 5573927,
+      "function_name": "DuplicateRecordAndInsertInterval",
+      "function_offset": 5,
+      "source_file_name": "tree.c",
+      "source_file_path": "/src/libchewing/src/tree.c",
+      "source_file_line": 860
+    },
+    {
+      "line": "#5 0x5490c1 in DoDpPhrasing /src/libchewing/src/tree.c:977:19",
+      "address": 5542081,
+      "function_name": "DoDpPhrasing",
+      "function_offset": 19,
+      "source_file_name": "tree.c",
+      "source_file_path": "/src/libchewing/src/tree.c",
+      "source_file_line": 977
+    },
+    {
+      "line": "#6 0x5447a9 in Phrasing /src/libchewing/src/tree.c:1019:9",
+      "address": 5523369,
+      "function_name": "Phrasing",
+      "function_offset": 9,
+      "source_file_name": "tree.c",
+      "source_file_path": "/src/libchewing/src/tree.c",
+      "source_file_line": 1019
+    },
+    {
+      "line": "#7 0x532cfc in CallPhrasing /src/libchewing/src/chewingutil.c:746:5",
+      "address": 5451004,
+      "function_name": "CallPhrasing",
+      "function_offset": 5,
+      "source_file_name": "chewingutil.c",
+      "source_file_path": "/src/libchewing/src/chewingutil.c",
+      "source_file_line": 746
+    },
+    {
+      "line": "#8 0x51ca3c in chewing_handle_Default /src/libchewing/src/chewingio.c:1601:9",
+      "address": 5360188,
+      "function_name": "chewing_handle_Default",
+      "function_offset": 9,
+      "source_file_name": "chewingio.c",
+      "source_file_path": "/src/libchewing/src/chewingio.c",
+      "source_file_line": 1601
+    },
+    {
+      "line": "#9 0x51aaaf in chewing_handle_Space /src/libchewing/src/chewingio.c:811:16",
+      "address": 5352111,
+      "function_name": "chewing_handle_Space",
+      "function_offset": 16,
+      "source_file_name": "chewingio.c",
+      "source_file_path": "/src/libchewing/src/chewingio.c",
+      "source_file_line": 811
+    },
+    {
+      "line": "#10 0x50fd2d in type_single_keystroke /src/libchewing/test/testhelper.c:174:13",
+      "address": 5307693,
+      "function_name": "type_single_keystroke",
+      "function_offset": 13,
+      "source_file_name": "testhelper.c",
+      "source_file_path": "/src/libchewing/test/testhelper.c",
+      "source_file_line": 174
+    },
+    {
+      "line": "#11 0x50ed82 in stress_main /src/libchewing/test/stress.c:222:7",
+      "address": 5303682,
+      "function_name": "stress_main",
+      "function_offset": 7,
+      "source_file_name": "stress.c",
+      "source_file_path": "/src/libchewing/test/stress.c",
+      "source_file_line": 222
+    },
+    {
+      "line": "#12 0x50ce27 in LLVMFuzzerTestOneInput /src/chewing_default_fuzzer.c:12:3",
+      "address": 5295655,
+      "function_name": "chewing_default_fuzzer.c",
+      "function_offset": 3,
+      "source_file_name": "chewing_default_fuzzer.c",
+      "source_file_path": "/src/chewing_default_fuzzer.c",
+      "source_file_line": 12
+    }
+  ],
+  "minimized_stack": [
+    "#4 0x550d27 in DuplicateRecordAndInsertInterval /src/libchewing/src/tree.c:860:5",
+    "#5 0x5490c1 in DoDpPhrasing /src/libchewing/src/tree.c:977:19",
+    "#6 0x5447a9 in Phrasing /src/libchewing/src/tree.c:1019:9",
+    "#7 0x532cfc in CallPhrasing /src/libchewing/src/chewingutil.c:746:5",
+    "#8 0x51ca3c in chewing_handle_Default /src/libchewing/src/chewingio.c:1601:9",
+    "#9 0x51aaaf in chewing_handle_Space /src/libchewing/src/chewingio.c:811:16",
+    "#10 0x50fd2d in type_single_keystroke /src/libchewing/test/testhelper.c:174:13",
+    "#11 0x50ed82 in stress_main /src/libchewing/test/stress.c:222:7",
+    "#12 0x50ce27 in LLVMFuzzerTestOneInput /src/chewing_default_fuzzer.c:12:3"
+  ],
+  "minimized_stack_function_names": [
+    "DuplicateRecordAndInsertInterval",
+    "DoDpPhrasing",
+    "Phrasing",
+    "CallPhrasing",
+    "chewing_handle_Default",
+    "chewing_handle_Space",
+    "type_single_keystroke",
+    "stress_main",
+    "chewing_default_fuzzer.c"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

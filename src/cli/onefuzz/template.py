@@ -13,10 +13,11 @@ from .templates.afl import AFL
 from .templates.libfuzzer import Libfuzzer
 from .templates.ossfuzz import OssFuzz
 from .templates.radamsa import Radamsa
+from .templates.regression import Regression
 
 
 class Template(Command):
-    """ Pre-defined job templates """
+    """Pre-defined job templates"""
 
     def __init__(self, onefuzz: Onefuzz, logger: logging.Logger) -> None:
         super().__init__(onefuzz, logger)
@@ -24,6 +25,7 @@ class Template(Command):
         self.afl = AFL(onefuzz, logger)
         self.radamsa = Radamsa(onefuzz, logger)
         self.ossfuzz = OssFuzz(onefuzz, logger)
+        self.regression = Regression(onefuzz, logger)
 
     def stop(
         self,

@@ -185,7 +185,7 @@ class Pool(BASE_POOL, ORMMixin):
         self.save()
 
     def shutdown(self) -> None:
-        """ shutdown allows nodes to finish current work then delete """
+        """shutdown allows nodes to finish current work then delete"""
         from .nodes import Node
         from .scalesets import Scaleset
 
@@ -207,7 +207,7 @@ class Pool(BASE_POOL, ORMMixin):
         self.save()
 
     def halt(self) -> None:
-        """ halt the pool immediately """
+        """halt the pool immediately"""
 
         from .nodes import Node
         from .scalesets import Scaleset

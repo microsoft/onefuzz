@@ -1,0 +1,218 @@
+{
+  "text": "$ ASAN_OPTIONS=redzone=32:symbolize=0:detect_stack_use_after_return=1:alloc_dealloc_mismatch=0:detect_leaks=1:print_scariness=1:check_malloc_usable_size=0:max_uar_stack_size_log=16:use_sigaltstack=1:strict_memcmp=0:detect_container_overflow=1:coverage=0:detect_odr_violation=0:allocator_may_return_null=1:handle_segv=1:fast_unwind_on_fatal=1:handle_sigill=1:symbolize=1 ~/chromium/src/out/Release/d8 --random-seed=-559099136 --invoke-weak-callbacks --omit-quit ./clusterfuzz-testcase-5095632168812544.js\n\n\n#\n# Fatal error in ../../v8/src/vector.h, line 24\n# Check failed: length == 0 || (length > 0 && data != __null).\n#\n\n==== C stack trace ===============================\n\n    /home/user/chromium/src/out/Release/d8(backtrace+0x61) [0x7fe99fec1921]\n    /home/user/chromium/src/out/Release/./libv8_libbase.so(+0x25213) [0x7fe99fe24213]\n    /home/user/chromium/src/out/Release/./libv8_libbase.so(V8_Fatal+0x272) [0x7fe99fe1aa92]\n    /home/user/chromium/src/out/Release/./libv8.so(+0x741549) [0x7fe99db4b549]\n    /home/user/chromium/src/out/Release/./libv8.so(+0x7ded03) [0x7fe99dbe8d03]\n    /home/user/chromium/src/out/Release/./libv8.so(+0x194cd84) [0x7fe99ed56d84]\n    /home/user/chromium/src/out/Release/./libv8.so(+0x1946b08) [0x7fe99ed50b08]\n    /home/user/chromium/src/out/Release/./libv8.so(+0x75a0e0) [0x7fe99db640e0]\n    /home/user/chromium/src/out/Release/./libv8.so(+0x946efe) [0x7fe99dd50efe]\n    /home/user/chromium/src/out/Release/./libv8.so(+0x945120) [0x7fe99dd4f120]\n    /home/user/chromium/src/out/Release/./libv8.so(+0x9448a4) [0x7fe99dd4e8a4]\n    [0x7fe973504204]\nASAN:DEADLYSIGNAL\n=================================================================\n==51822==ERROR: AddressSanitizer: ILL on unknown address 0x7fe99fe2140c (pc 0x7fe99fe2140c bp 0x7ffe1dcb3c50 sp 0x7ffe1dcb3c50 T0)\nSCARINESS: 10 (signal)\n    #0 0x7fe99fe2140b in v8::base::OS::Abort() v8/src/base/platform/platform-posix.cc:253:5\n    #1 0x7fe99fe1aacd in V8_Fatal v8/src/base/logging.cc:66:3\n    #2 0x7fe99db4b548 in v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int) v8/src/vector.h:24:5\n    #3 0x7fe99dbe8d02 in v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*) v8/src/wasm/wasm-module.h:219:9\n    #4 0x7fe99ed56d83 in v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*) v8/src/wasm/wasm-js.cc:155:10\n    #5 0x7fe99ed50b07 in v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&) v8/src/wasm/wasm-js.cc:201:16\n    #6 0x7fe99db640df in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/api-arguments.cc:25:3\n    #7 0x7fe99dd50efd in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) v8/src/builtins/builtins-api.cc:111:36\n    #8 0x7fe99dd4f11f in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:140:5\n    #9 0x7fe99dd4e8a3 in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:128:1\n    #10 0x7fe973504203  (<unknown module>)\n    #11 0x7fe9736847df  (<unknown module>)\n    #12 0x7fe9735d4538  (<unknown module>)\n    #13 0x7fe9735295ac  (<unknown module>)\n    #14 0x7fe99e57824f in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>, v8::internal::Execution::MessageHandling) v8/src/execution.cc:144:13\n    #15 0x7fe99e57779f in v8::internal::(anonymous namespace)::CallInternal(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Execution::MessageHandling) v8/src/execution.cc:180:10\n    #16 0x7fe99e577574 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) v8/src/execution.cc:190:10\n    #17 0x7fe99db87c97 in v8::Script::Run(v8::Local<v8::Context>) v8/src/api.cc:2040:7\n    #18 0x7fe99ff4c607 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, bool, bool) v8/src/d8.cc:522:28\n    #19 0x7fe99ff611f3 in v8::SourceGroup::Execute(v8::Isolate*) v8/src/d8.cc:2106:10\n    #20 0x7fe99ff66e3a in v8::Shell::RunMain(v8::Isolate*, int, char**, bool) v8/src/d8.cc:2526:34\n    #21 0x7fe99ff68cbe in v8::Shell::Main(int, char**) v8/src/d8.cc:2978:16\n    #22 0x7fe99b3d4f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287\n\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ILL v8/src/base/platform/platform-posix.cc:253:5 in v8::base::OS::Abort()\n==51822==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ILL v8/src/base/platform/platform-posix.cc:253:5 in v8::base::OS::Abort()",
+  "fault_type": "ILL",
+  "call_stack": [
+    "#0 0x7fe99fe2140b in v8::base::OS::Abort() v8/src/base/platform/platform-posix.cc:253:5",
+    "#1 0x7fe99fe1aacd in V8_Fatal v8/src/base/logging.cc:66:3",
+    "#2 0x7fe99db4b548 in v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int) v8/src/vector.h:24:5",
+    "#3 0x7fe99dbe8d02 in v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*) v8/src/wasm/wasm-module.h:219:9",
+    "#4 0x7fe99ed56d83 in v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*) v8/src/wasm/wasm-js.cc:155:10",
+    "#5 0x7fe99ed50b07 in v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&) v8/src/wasm/wasm-js.cc:201:16",
+    "#6 0x7fe99db640df in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/api-arguments.cc:25:3",
+    "#7 0x7fe99dd50efd in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) v8/src/builtins/builtins-api.cc:111:36",
+    "#8 0x7fe99dd4f11f in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:140:5",
+    "#9 0x7fe99dd4e8a3 in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:128:1"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7fe99fe2140b in v8::base::OS::Abort() v8/src/base/platform/platform-posix.cc:253:5",
+      "address": 140641386501131,
+      "function_name": "v8::base::OS::Abort()",
+      "function_offset": 5,
+      "source_file_name": "platform-posix.cc",
+      "source_file_path": "v8/src/base/platform/platform-posix.cc",
+      "source_file_line": 253
+    },
+    {
+      "line": "#1 0x7fe99fe1aacd in V8_Fatal v8/src/base/logging.cc:66:3",
+      "address": 140641386474189,
+      "function_name": "V8_Fatal",
+      "function_offset": 3,
+      "source_file_name": "logging.cc",
+      "source_file_path": "v8/src/base/logging.cc",
+      "source_file_line": 66
+    },
+    {
+      "line": "#2 0x7fe99db4b548 in v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int) v8/src/vector.h:24:5",
+      "address": 140641349973320,
+      "function_name": "v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int)",
+      "function_offset": 5,
+      "source_file_name": "vector.h",
+      "source_file_path": "v8/src/vector.h",
+      "source_file_line": 24
+    },
+    {
+      "line": "#3 0x7fe99dbe8d02 in v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*) v8/src/wasm/wasm-module.h:219:9",
+      "address": 140641350618370,
+      "function_name": "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*)",
+      "function_offset": 9,
+      "source_file_name": "wasm-module.h",
+      "source_file_path": "v8/src/wasm/wasm-module.h",
+      "source_file_line": 219
+    },
+    {
+      "line": "#4 0x7fe99ed56d83 in v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*) v8/src/wasm/wasm-js.cc:155:10",
+      "address": 140641368894851,
+      "function_name": "v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*)",
+      "function_offset": 10,
+      "source_file_name": "wasm-js.cc",
+      "source_file_path": "v8/src/wasm/wasm-js.cc",
+      "source_file_line": 155
+    },
+    {
+      "line": "#5 0x7fe99ed50b07 in v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&) v8/src/wasm/wasm-js.cc:201:16",
+      "address": 140641368869639,
+      "function_name": "v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&)",
+      "function_offset": 16,
+      "source_file_name": "wasm-js.cc",
+      "source_file_path": "v8/src/wasm/wasm-js.cc",
+      "source_file_line": 201
+    },
+    {
+      "line": "#6 0x7fe99db640df in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/api-arguments.cc:25:3",
+      "address": 140641350074591,
+      "function_name": "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
+      "function_offset": 3,
+      "source_file_name": "api-arguments.cc",
+      "source_file_path": "v8/src/api-arguments.cc",
+      "source_file_line": 25
+    },
+    {
+      "line": "#7 0x7fe99dd50efd in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) v8/src/builtins/builtins-api.cc:111:36",
+      "address": 140641352093437,
+      "function_name": "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments)",
+      "function_offset": 36,
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "v8/src/builtins/builtins-api.cc",
+      "source_file_line": 111
+    },
+    {
+      "line": "#8 0x7fe99dd4f11f in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:140:5",
+      "address": 140641352085791,
+      "function_name": "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*)",
+      "function_offset": 5,
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "v8/src/builtins/builtins-api.cc",
+      "source_file_line": 140
+    },
+    {
+      "line": "#9 0x7fe99dd4e8a3 in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:128:1",
+      "address": 140641352083619,
+      "function_name": "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)",
+      "function_offset": 1,
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "v8/src/builtins/builtins-api.cc",
+      "source_file_line": 128
+    }
+  ],
+  "full_stack_names": [
+    "v8::base::OS::Abort",
+    "V8_Fatal",
+    "v8::internal::Vector<unsigned char const>::Vector",
+    "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes",
+    "v8::",
+    "v8::",
+    "v8::internal::FunctionCallbackArguments::Call",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::Builtin_Impl_HandleApiCall",
+    "v8::internal::Builtin_HandleApiCall"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#2 0x7fe99db4b548 in v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int) v8/src/vector.h:24:5",
+      "address": 140641349973320,
+      "function_name": "v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int)",
+      "function_offset": 5,
+      "source_file_name": "vector.h",
+      "source_file_path": "v8/src/vector.h",
+      "source_file_line": 24
+    },
+    {
+      "line": "#3 0x7fe99dbe8d02 in v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*) v8/src/wasm/wasm-module.h:219:9",
+      "address": 140641350618370,
+      "function_name": "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*)",
+      "function_offset": 9,
+      "source_file_name": "wasm-module.h",
+      "source_file_path": "v8/src/wasm/wasm-module.h",
+      "source_file_line": 219
+    },
+    {
+      "line": "#4 0x7fe99ed56d83 in v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*) v8/src/wasm/wasm-js.cc:155:10",
+      "address": 140641368894851,
+      "function_name": "v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*)",
+      "function_offset": 10,
+      "source_file_name": "wasm-js.cc",
+      "source_file_path": "v8/src/wasm/wasm-js.cc",
+      "source_file_line": 155
+    },
+    {
+      "line": "#5 0x7fe99ed50b07 in v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&) v8/src/wasm/wasm-js.cc:201:16",
+      "address": 140641368869639,
+      "function_name": "v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&)",
+      "function_offset": 16,
+      "source_file_name": "wasm-js.cc",
+      "source_file_path": "v8/src/wasm/wasm-js.cc",
+      "source_file_line": 201
+    },
+    {
+      "line": "#6 0x7fe99db640df in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/api-arguments.cc:25:3",
+      "address": 140641350074591,
+      "function_name": "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&))",
+      "function_offset": 3,
+      "source_file_name": "api-arguments.cc",
+      "source_file_path": "v8/src/api-arguments.cc",
+      "source_file_line": 25
+    },
+    {
+      "line": "#7 0x7fe99dd50efd in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) v8/src/builtins/builtins-api.cc:111:36",
+      "address": 140641352093437,
+      "function_name": "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments)",
+      "function_offset": 36,
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "v8/src/builtins/builtins-api.cc",
+      "source_file_line": 111
+    },
+    {
+      "line": "#8 0x7fe99dd4f11f in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:140:5",
+      "address": 140641352085791,
+      "function_name": "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*)",
+      "function_offset": 5,
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "v8/src/builtins/builtins-api.cc",
+      "source_file_line": 140
+    },
+    {
+      "line": "#9 0x7fe99dd4e8a3 in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:128:1",
+      "address": 140641352083619,
+      "function_name": "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*)",
+      "function_offset": 1,
+      "source_file_name": "builtins-api.cc",
+      "source_file_path": "v8/src/builtins/builtins-api.cc",
+      "source_file_line": 128
+    }
+  ],
+  "minimized_stack": [
+    "#2 0x7fe99db4b548 in v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int) v8/src/vector.h:24:5",
+    "#3 0x7fe99dbe8d02 in v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*) v8/src/wasm/wasm-module.h:219:9",
+    "#4 0x7fe99ed56d83 in v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*) v8/src/wasm/wasm-js.cc:155:10",
+    "#5 0x7fe99ed50b07 in v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&) v8/src/wasm/wasm-js.cc:201:16",
+    "#6 0x7fe99db640df in v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) v8/src/api-arguments.cc:25:3",
+    "#7 0x7fe99dd50efd in v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) v8/src/builtins/builtins-api.cc:111:36",
+    "#8 0x7fe99dd4f11f in v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:140:5",
+    "#9 0x7fe99dd4e8a3 in v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) v8/src/builtins/builtins-api.cc:128:1"
+  ],
+  "minimized_stack_function_names": [
+    "v8::internal::Vector<unsigned char const>::Vector",
+    "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes",
+    "v8::",
+    "v8::",
+    "v8::internal::FunctionCallbackArguments::Call",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
+    "v8::internal::Builtin_Impl_HandleApiCall",
+    "v8::internal::Builtin_HandleApiCall"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

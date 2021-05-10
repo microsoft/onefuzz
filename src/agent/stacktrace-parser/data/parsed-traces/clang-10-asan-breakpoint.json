@@ -1,0 +1,616 @@
+{
+  "text": "=================================================================\n==24004==ERROR: AddressSanitizer: breakpoint on unknown address 0x000000000000 (pc 0x7ffd10f6e42d bp 0x009369dfde00 sp 0x009369dfdd30 T0)\n==24004==The signal is caused by a READ memory access.\n==24004==Hint: address points to the zero page.\n==24004==*** WARNING: Failed to initialize DbgHelp!              ***\n==24004==*** Most likely this means that the app is already      ***\n==24004==*** using DbgHelp, possibly with incompatible flags.    ***\n==24004==*** Due to technical reasons, symbolization might crash ***\n==24004==*** or produce wrong results.                           ***\n    #0 0x7ffd10f6e42c  (C:\\test.dll+0x18a7fe42c)\n    #1 0x7ffd10e13e1f  (C:\\test.dll+0x18a6a3e1f)\n    #2 0x7ffd10e15bdf  (C:\\test.dll+0x18a6a5bdf)\n    #3 0x7ffd0ab31ac0  (C:\\test.dll+0x1843c1ac0)\n    #4 0x7ffd0ae49707  (C:\\test.dll+0x1846d9707)\n    #5 0x7ffd0a54a128  (C:\\test.dll+0x183dda128)\n    #6 0x7ffd0a549ed6  (C:\\test.dll+0x183dd9ed6)\n    #7 0x7ffd0af6b003  (C:\\test.dll+0x1847fb003)\n    #8 0x7ffd0af46cac  (C:\\test.dll+0x1847d6cac)\n    #9 0x7ffd0af4672a  (C:\\test.dll+0x1847d672a)\n    #10 0x7ffd0af46633  (C:\\test.dll+0x1847d6633)\n    #11 0x7ffd0b7b79fe  (C:\\test.dll+0x1850479fe)\n    #12 0x7ffd0b892cc5  (C:\\test.dll+0x185122cc5)\n    #13 0x7ffd0b886fe9  (C:\\test.dll+0x185116fe9)\n    #14 0x7ffd0b8866c3  (C:\\test.dll+0x1851166c3)\n    #15 0x7ffd0b7954ce  (C:\\test.dll+0x1850254ce)\n    #16 0x7ffd0b794ee9  (C:\\test.dll+0x185024ee9)\n    #17 0x7ffd0b78a8b5  (C:\\test.dll+0x18501a8b5)\n    #18 0x7ffd0b78b3f8  (C:\\test.dll+0x18501b3f8)\n    #19 0x7ffd0b78b877  (C:\\test.dll+0x18501b877)\n    #20 0x7ffd0bbdb28a  (C:\\test.dll+0x18546b28a)\n    #21 0x7ffd10edbc89  (C:\\test.dll+0x18a76bc89)\n    #22 0x7ffd13a8f11e  (C:\\test.dll+0x18d31f11e)\n    #23 0x7ffd13a8e82a  (C:\\test.dll+0x18d31e82a)\n    #24 0x7ffd10f8f130  (C:\\test.dll+0x18a81f130)\n    #25 0x7ffd10f8cc2f  (C:\\test.dll+0x18a81cc2f)\n    #26 0x7ffd13a90833  (C:\\test.dll+0x18d320833)\n    #27 0x7ffd10e8ecf1  (C:\\test.dll+0x18a71ecf1)\n    #28 0x7ffd13609469  (C:\\test.dll+0x18ce99469)\n    #29 0x7ffd09fa4753  (C:\\test.dll+0x183834753)\n    #30 0x7ffd09faa46b  (C:\\test.dll+0x18383a46b)\n    #31 0x7ffd09f9cbf0  (C:\\test.dll+0x18382cbf0)\n    #32 0x7ffd10b2287d  (C:\\test.dll+0x18a3b287d)\n    #33 0x7ffd10b25220  (C:\\test.dll+0x18a3b5220)\n    #34 0x7ffd10b243fc  (C:\\test.dll+0x18a3b43fc)\n    #35 0x7ffd10be2b6c  (C:\\test.dll+0x18a472b6c)\n    #36 0x7ffd10b22644  (C:\\test.dll+0x18a3b2644)\n    #37 0x7ffd0677162b  (C:\\test.dll+0x18000162b)\n    #38 0x7ff69ea06fd6  (C:\\test.exe+0x140006fd6)\n    #39 0x7ff69ea03d34  (C:\\test.exe+0x140003d34)\n    #40 0x7ff69ef2432f  (C:\\test.exe+0x14052432f)\n    #41 0x7ffdbbfe6fd3  (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)\n    #42 0x7ffdbc51cec0  (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)\n\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: breakpoint (C:\\test.dll+0x18a7fe42c) \n==24004==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: breakpoint (C:\\test.dll+0x18a7fe42c)",
+  "fault_type": "breakpoint",
+  "call_stack": [
+    "#0 0x7ffd10f6e42c  (C:\\test.dll+0x18a7fe42c)",
+    "#1 0x7ffd10e13e1f  (C:\\test.dll+0x18a6a3e1f)",
+    "#2 0x7ffd10e15bdf  (C:\\test.dll+0x18a6a5bdf)",
+    "#3 0x7ffd0ab31ac0  (C:\\test.dll+0x1843c1ac0)",
+    "#4 0x7ffd0ae49707  (C:\\test.dll+0x1846d9707)",
+    "#5 0x7ffd0a54a128  (C:\\test.dll+0x183dda128)",
+    "#6 0x7ffd0a549ed6  (C:\\test.dll+0x183dd9ed6)",
+    "#7 0x7ffd0af6b003  (C:\\test.dll+0x1847fb003)",
+    "#8 0x7ffd0af46cac  (C:\\test.dll+0x1847d6cac)",
+    "#9 0x7ffd0af4672a  (C:\\test.dll+0x1847d672a)",
+    "#10 0x7ffd0af46633  (C:\\test.dll+0x1847d6633)",
+    "#11 0x7ffd0b7b79fe  (C:\\test.dll+0x1850479fe)",
+    "#12 0x7ffd0b892cc5  (C:\\test.dll+0x185122cc5)",
+    "#13 0x7ffd0b886fe9  (C:\\test.dll+0x185116fe9)",
+    "#14 0x7ffd0b8866c3  (C:\\test.dll+0x1851166c3)",
+    "#15 0x7ffd0b7954ce  (C:\\test.dll+0x1850254ce)",
+    "#16 0x7ffd0b794ee9  (C:\\test.dll+0x185024ee9)",
+    "#17 0x7ffd0b78a8b5  (C:\\test.dll+0x18501a8b5)",
+    "#18 0x7ffd0b78b3f8  (C:\\test.dll+0x18501b3f8)",
+    "#19 0x7ffd0b78b877  (C:\\test.dll+0x18501b877)",
+    "#20 0x7ffd0bbdb28a  (C:\\test.dll+0x18546b28a)",
+    "#21 0x7ffd10edbc89  (C:\\test.dll+0x18a76bc89)",
+    "#22 0x7ffd13a8f11e  (C:\\test.dll+0x18d31f11e)",
+    "#23 0x7ffd13a8e82a  (C:\\test.dll+0x18d31e82a)",
+    "#24 0x7ffd10f8f130  (C:\\test.dll+0x18a81f130)",
+    "#25 0x7ffd10f8cc2f  (C:\\test.dll+0x18a81cc2f)",
+    "#26 0x7ffd13a90833  (C:\\test.dll+0x18d320833)",
+    "#27 0x7ffd10e8ecf1  (C:\\test.dll+0x18a71ecf1)",
+    "#28 0x7ffd13609469  (C:\\test.dll+0x18ce99469)",
+    "#29 0x7ffd09fa4753  (C:\\test.dll+0x183834753)",
+    "#30 0x7ffd09faa46b  (C:\\test.dll+0x18383a46b)",
+    "#31 0x7ffd09f9cbf0  (C:\\test.dll+0x18382cbf0)",
+    "#32 0x7ffd10b2287d  (C:\\test.dll+0x18a3b287d)",
+    "#33 0x7ffd10b25220  (C:\\test.dll+0x18a3b5220)",
+    "#34 0x7ffd10b243fc  (C:\\test.dll+0x18a3b43fc)",
+    "#35 0x7ffd10be2b6c  (C:\\test.dll+0x18a472b6c)",
+    "#36 0x7ffd10b22644  (C:\\test.dll+0x18a3b2644)",
+    "#37 0x7ffd0677162b  (C:\\test.dll+0x18000162b)",
+    "#38 0x7ff69ea06fd6  (C:\\test.exe+0x140006fd6)",
+    "#39 0x7ff69ea03d34  (C:\\test.exe+0x140003d34)",
+    "#40 0x7ff69ef2432f  (C:\\test.exe+0x14052432f)",
+    "#41 0x7ffdbbfe6fd3  (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)",
+    "#42 0x7ffdbc51cec0  (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7ffd10f6e42c  (C:\\test.dll+0x18a7fe42c)",
+      "address": 140724888069164,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6618604588
+    },
+    {
+      "line": "#1 0x7ffd10e13e1f  (C:\\test.dll+0x18a6a3e1f)",
+      "address": 140724886650399,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6617185823
+    },
+    {
+      "line": "#2 0x7ffd10e15bdf  (C:\\test.dll+0x18a6a5bdf)",
+      "address": 140724886658015,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6617193439
+    },
+    {
+      "line": "#3 0x7ffd0ab31ac0  (C:\\test.dll+0x1843c1ac0)",
+      "address": 140724782963392,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6513498816
+    },
+    {
+      "line": "#4 0x7ffd0ae49707  (C:\\test.dll+0x1846d9707)",
+      "address": 140724786206471,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6516741895
+    },
+    {
+      "line": "#5 0x7ffd0a54a128  (C:\\test.dll+0x183dda128)",
+      "address": 140724776771880,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6507307304
+    },
+    {
+      "line": "#6 0x7ffd0a549ed6  (C:\\test.dll+0x183dd9ed6)",
+      "address": 140724776771286,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6507306710
+    },
+    {
+      "line": "#7 0x7ffd0af6b003  (C:\\test.dll+0x1847fb003)",
+      "address": 140724787392515,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6517927939
+    },
+    {
+      "line": "#8 0x7ffd0af46cac  (C:\\test.dll+0x1847d6cac)",
+      "address": 140724787244204,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6517779628
+    },
+    {
+      "line": "#9 0x7ffd0af4672a  (C:\\test.dll+0x1847d672a)",
+      "address": 140724787242794,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6517778218
+    },
+    {
+      "line": "#10 0x7ffd0af46633  (C:\\test.dll+0x1847d6633)",
+      "address": 140724787242547,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6517777971
+    },
+    {
+      "line": "#11 0x7ffd0b7b79fe  (C:\\test.dll+0x1850479fe)",
+      "address": 140724796094974,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526630398
+    },
+    {
+      "line": "#12 0x7ffd0b892cc5  (C:\\test.dll+0x185122cc5)",
+      "address": 140724796992709,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6527528133
+    },
+    {
+      "line": "#13 0x7ffd0b886fe9  (C:\\test.dll+0x185116fe9)",
+      "address": 140724796944361,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6527479785
+    },
+    {
+      "line": "#14 0x7ffd0b8866c3  (C:\\test.dll+0x1851166c3)",
+      "address": 140724796942019,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6527477443
+    },
+    {
+      "line": "#15 0x7ffd0b7954ce  (C:\\test.dll+0x1850254ce)",
+      "address": 140724795954382,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526489806
+    },
+    {
+      "line": "#16 0x7ffd0b794ee9  (C:\\test.dll+0x185024ee9)",
+      "address": 140724795952873,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526488297
+    },
+    {
+      "line": "#17 0x7ffd0b78a8b5  (C:\\test.dll+0x18501a8b5)",
+      "address": 140724795910325,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526445749
+    },
+    {
+      "line": "#18 0x7ffd0b78b3f8  (C:\\test.dll+0x18501b3f8)",
+      "address": 140724795913208,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526448632
+    },
+    {
+      "line": "#19 0x7ffd0b78b877  (C:\\test.dll+0x18501b877)",
+      "address": 140724795914359,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526449783
+    },
+    {
+      "line": "#20 0x7ffd0bbdb28a  (C:\\test.dll+0x18546b28a)",
+      "address": 140724800434826,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6530970250
+    },
+    {
+      "line": "#21 0x7ffd10edbc89  (C:\\test.dll+0x18a76bc89)",
+      "address": 140724887469193,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6618004617
+    },
+    {
+      "line": "#22 0x7ffd13a8f11e  (C:\\test.dll+0x18d31f11e)",
+      "address": 140724933292318,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6663827742
+    },
+    {
+      "line": "#23 0x7ffd13a8e82a  (C:\\test.dll+0x18d31e82a)",
+      "address": 140724933290026,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6663825450
+    },
+    {
+      "line": "#24 0x7ffd10f8f130  (C:\\test.dll+0x18a81f130)",
+      "address": 140724888203568,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6618738992
+    },
+    {
+      "line": "#25 0x7ffd10f8cc2f  (C:\\test.dll+0x18a81cc2f)",
+      "address": 140724888194095,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6618729519
+    },
+    {
+      "line": "#26 0x7ffd13a90833  (C:\\test.dll+0x18d320833)",
+      "address": 140724933298227,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6663833651
+    },
+    {
+      "line": "#27 0x7ffd10e8ecf1  (C:\\test.dll+0x18a71ecf1)",
+      "address": 140724887153905,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6617689329
+    },
+    {
+      "line": "#28 0x7ffd13609469  (C:\\test.dll+0x18ce99469)",
+      "address": 140724928549993,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6659085417
+    },
+    {
+      "line": "#29 0x7ffd09fa4753  (C:\\test.dll+0x183834753)",
+      "address": 140724770850643,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6501386067
+    },
+    {
+      "line": "#30 0x7ffd09faa46b  (C:\\test.dll+0x18383a46b)",
+      "address": 140724770874475,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6501409899
+    },
+    {
+      "line": "#31 0x7ffd09f9cbf0  (C:\\test.dll+0x18382cbf0)",
+      "address": 140724770819056,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6501354480
+    },
+    {
+      "line": "#32 0x7ffd10b2287d  (C:\\test.dll+0x18a3b287d)",
+      "address": 140724883564669,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614100093
+    },
+    {
+      "line": "#33 0x7ffd10b25220  (C:\\test.dll+0x18a3b5220)",
+      "address": 140724883575328,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614110752
+    },
+    {
+      "line": "#34 0x7ffd10b243fc  (C:\\test.dll+0x18a3b43fc)",
+      "address": 140724883571708,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614107132
+    },
+    {
+      "line": "#35 0x7ffd10be2b6c  (C:\\test.dll+0x18a472b6c)",
+      "address": 140724884351852,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614887276
+    },
+    {
+      "line": "#36 0x7ffd10b22644  (C:\\test.dll+0x18a3b2644)",
+      "address": 140724883564100,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614099524
+    },
+    {
+      "line": "#37 0x7ffd0677162b  (C:\\test.dll+0x18000162b)",
+      "address": 140724711921195,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6442456619
+    },
+    {
+      "line": "#38 0x7ff69ea06fd6  (C:\\test.exe+0x140006fd6)",
+      "address": 140697199996886,
+      "module_path": "C:\\test.exe",
+      "module_offset": 5368737750
+    },
+    {
+      "line": "#39 0x7ff69ea03d34  (C:\\test.exe+0x140003d34)",
+      "address": 140697199983924,
+      "module_path": "C:\\test.exe",
+      "module_offset": 5368724788
+    },
+    {
+      "line": "#40 0x7ff69ef2432f  (C:\\test.exe+0x14052432f)",
+      "address": 140697205359407,
+      "module_path": "C:\\test.exe",
+      "module_offset": 5374100271
+    },
+    {
+      "line": "#41 0x7ffdbbfe6fd3  (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)",
+      "address": 140727757467603,
+      "module_path": "C:\\WINDOWS\\System32\\KERNEL32.DLL",
+      "module_offset": 6442545107
+    },
+    {
+      "line": "#42 0x7ffdbc51cec0  (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)",
+      "address": 140727762931392,
+      "module_path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "module_offset": 6442766016
+    }
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x7ffd10f6e42c  (C:\\test.dll+0x18a7fe42c)",
+      "address": 140724888069164,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6618604588
+    },
+    {
+      "line": "#1 0x7ffd10e13e1f  (C:\\test.dll+0x18a6a3e1f)",
+      "address": 140724886650399,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6617185823
+    },
+    {
+      "line": "#2 0x7ffd10e15bdf  (C:\\test.dll+0x18a6a5bdf)",
+      "address": 140724886658015,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6617193439
+    },
+    {
+      "line": "#3 0x7ffd0ab31ac0  (C:\\test.dll+0x1843c1ac0)",
+      "address": 140724782963392,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6513498816
+    },
+    {
+      "line": "#4 0x7ffd0ae49707  (C:\\test.dll+0x1846d9707)",
+      "address": 140724786206471,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6516741895
+    },
+    {
+      "line": "#5 0x7ffd0a54a128  (C:\\test.dll+0x183dda128)",
+      "address": 140724776771880,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6507307304
+    },
+    {
+      "line": "#6 0x7ffd0a549ed6  (C:\\test.dll+0x183dd9ed6)",
+      "address": 140724776771286,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6507306710
+    },
+    {
+      "line": "#7 0x7ffd0af6b003  (C:\\test.dll+0x1847fb003)",
+      "address": 140724787392515,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6517927939
+    },
+    {
+      "line": "#8 0x7ffd0af46cac  (C:\\test.dll+0x1847d6cac)",
+      "address": 140724787244204,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6517779628
+    },
+    {
+      "line": "#9 0x7ffd0af4672a  (C:\\test.dll+0x1847d672a)",
+      "address": 140724787242794,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6517778218
+    },
+    {
+      "line": "#10 0x7ffd0af46633  (C:\\test.dll+0x1847d6633)",
+      "address": 140724787242547,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6517777971
+    },
+    {
+      "line": "#11 0x7ffd0b7b79fe  (C:\\test.dll+0x1850479fe)",
+      "address": 140724796094974,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526630398
+    },
+    {
+      "line": "#12 0x7ffd0b892cc5  (C:\\test.dll+0x185122cc5)",
+      "address": 140724796992709,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6527528133
+    },
+    {
+      "line": "#13 0x7ffd0b886fe9  (C:\\test.dll+0x185116fe9)",
+      "address": 140724796944361,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6527479785
+    },
+    {
+      "line": "#14 0x7ffd0b8866c3  (C:\\test.dll+0x1851166c3)",
+      "address": 140724796942019,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6527477443
+    },
+    {
+      "line": "#15 0x7ffd0b7954ce  (C:\\test.dll+0x1850254ce)",
+      "address": 140724795954382,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526489806
+    },
+    {
+      "line": "#16 0x7ffd0b794ee9  (C:\\test.dll+0x185024ee9)",
+      "address": 140724795952873,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526488297
+    },
+    {
+      "line": "#17 0x7ffd0b78a8b5  (C:\\test.dll+0x18501a8b5)",
+      "address": 140724795910325,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526445749
+    },
+    {
+      "line": "#18 0x7ffd0b78b3f8  (C:\\test.dll+0x18501b3f8)",
+      "address": 140724795913208,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526448632
+    },
+    {
+      "line": "#19 0x7ffd0b78b877  (C:\\test.dll+0x18501b877)",
+      "address": 140724795914359,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6526449783
+    },
+    {
+      "line": "#20 0x7ffd0bbdb28a  (C:\\test.dll+0x18546b28a)",
+      "address": 140724800434826,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6530970250
+    },
+    {
+      "line": "#21 0x7ffd10edbc89  (C:\\test.dll+0x18a76bc89)",
+      "address": 140724887469193,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6618004617
+    },
+    {
+      "line": "#22 0x7ffd13a8f11e  (C:\\test.dll+0x18d31f11e)",
+      "address": 140724933292318,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6663827742
+    },
+    {
+      "line": "#23 0x7ffd13a8e82a  (C:\\test.dll+0x18d31e82a)",
+      "address": 140724933290026,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6663825450
+    },
+    {
+      "line": "#24 0x7ffd10f8f130  (C:\\test.dll+0x18a81f130)",
+      "address": 140724888203568,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6618738992
+    },
+    {
+      "line": "#25 0x7ffd10f8cc2f  (C:\\test.dll+0x18a81cc2f)",
+      "address": 140724888194095,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6618729519
+    },
+    {
+      "line": "#26 0x7ffd13a90833  (C:\\test.dll+0x18d320833)",
+      "address": 140724933298227,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6663833651
+    },
+    {
+      "line": "#27 0x7ffd10e8ecf1  (C:\\test.dll+0x18a71ecf1)",
+      "address": 140724887153905,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6617689329
+    },
+    {
+      "line": "#28 0x7ffd13609469  (C:\\test.dll+0x18ce99469)",
+      "address": 140724928549993,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6659085417
+    },
+    {
+      "line": "#29 0x7ffd09fa4753  (C:\\test.dll+0x183834753)",
+      "address": 140724770850643,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6501386067
+    },
+    {
+      "line": "#30 0x7ffd09faa46b  (C:\\test.dll+0x18383a46b)",
+      "address": 140724770874475,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6501409899
+    },
+    {
+      "line": "#31 0x7ffd09f9cbf0  (C:\\test.dll+0x18382cbf0)",
+      "address": 140724770819056,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6501354480
+    },
+    {
+      "line": "#32 0x7ffd10b2287d  (C:\\test.dll+0x18a3b287d)",
+      "address": 140724883564669,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614100093
+    },
+    {
+      "line": "#33 0x7ffd10b25220  (C:\\test.dll+0x18a3b5220)",
+      "address": 140724883575328,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614110752
+    },
+    {
+      "line": "#34 0x7ffd10b243fc  (C:\\test.dll+0x18a3b43fc)",
+      "address": 140724883571708,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614107132
+    },
+    {
+      "line": "#35 0x7ffd10be2b6c  (C:\\test.dll+0x18a472b6c)",
+      "address": 140724884351852,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614887276
+    },
+    {
+      "line": "#36 0x7ffd10b22644  (C:\\test.dll+0x18a3b2644)",
+      "address": 140724883564100,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6614099524
+    },
+    {
+      "line": "#37 0x7ffd0677162b  (C:\\test.dll+0x18000162b)",
+      "address": 140724711921195,
+      "module_path": "C:\\test.dll",
+      "module_offset": 6442456619
+    },
+    {
+      "line": "#38 0x7ff69ea06fd6  (C:\\test.exe+0x140006fd6)",
+      "address": 140697199996886,
+      "module_path": "C:\\test.exe",
+      "module_offset": 5368737750
+    },
+    {
+      "line": "#39 0x7ff69ea03d34  (C:\\test.exe+0x140003d34)",
+      "address": 140697199983924,
+      "module_path": "C:\\test.exe",
+      "module_offset": 5368724788
+    },
+    {
+      "line": "#40 0x7ff69ef2432f  (C:\\test.exe+0x14052432f)",
+      "address": 140697205359407,
+      "module_path": "C:\\test.exe",
+      "module_offset": 5374100271
+    },
+    {
+      "line": "#41 0x7ffdbbfe6fd3  (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)",
+      "address": 140727757467603,
+      "module_path": "C:\\WINDOWS\\System32\\KERNEL32.DLL",
+      "module_offset": 6442545107
+    },
+    {
+      "line": "#42 0x7ffdbc51cec0  (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)",
+      "address": 140727762931392,
+      "module_path": "C:\\WINDOWS\\SYSTEM32\\ntdll.dll",
+      "module_offset": 6442766016
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x7ffd10f6e42c  (C:\\test.dll+0x18a7fe42c)",
+    "#1 0x7ffd10e13e1f  (C:\\test.dll+0x18a6a3e1f)",
+    "#2 0x7ffd10e15bdf  (C:\\test.dll+0x18a6a5bdf)",
+    "#3 0x7ffd0ab31ac0  (C:\\test.dll+0x1843c1ac0)",
+    "#4 0x7ffd0ae49707  (C:\\test.dll+0x1846d9707)",
+    "#5 0x7ffd0a54a128  (C:\\test.dll+0x183dda128)",
+    "#6 0x7ffd0a549ed6  (C:\\test.dll+0x183dd9ed6)",
+    "#7 0x7ffd0af6b003  (C:\\test.dll+0x1847fb003)",
+    "#8 0x7ffd0af46cac  (C:\\test.dll+0x1847d6cac)",
+    "#9 0x7ffd0af4672a  (C:\\test.dll+0x1847d672a)",
+    "#10 0x7ffd0af46633  (C:\\test.dll+0x1847d6633)",
+    "#11 0x7ffd0b7b79fe  (C:\\test.dll+0x1850479fe)",
+    "#12 0x7ffd0b892cc5  (C:\\test.dll+0x185122cc5)",
+    "#13 0x7ffd0b886fe9  (C:\\test.dll+0x185116fe9)",
+    "#14 0x7ffd0b8866c3  (C:\\test.dll+0x1851166c3)",
+    "#15 0x7ffd0b7954ce  (C:\\test.dll+0x1850254ce)",
+    "#16 0x7ffd0b794ee9  (C:\\test.dll+0x185024ee9)",
+    "#17 0x7ffd0b78a8b5  (C:\\test.dll+0x18501a8b5)",
+    "#18 0x7ffd0b78b3f8  (C:\\test.dll+0x18501b3f8)",
+    "#19 0x7ffd0b78b877  (C:\\test.dll+0x18501b877)",
+    "#20 0x7ffd0bbdb28a  (C:\\test.dll+0x18546b28a)",
+    "#21 0x7ffd10edbc89  (C:\\test.dll+0x18a76bc89)",
+    "#22 0x7ffd13a8f11e  (C:\\test.dll+0x18d31f11e)",
+    "#23 0x7ffd13a8e82a  (C:\\test.dll+0x18d31e82a)",
+    "#24 0x7ffd10f8f130  (C:\\test.dll+0x18a81f130)",
+    "#25 0x7ffd10f8cc2f  (C:\\test.dll+0x18a81cc2f)",
+    "#26 0x7ffd13a90833  (C:\\test.dll+0x18d320833)",
+    "#27 0x7ffd10e8ecf1  (C:\\test.dll+0x18a71ecf1)",
+    "#28 0x7ffd13609469  (C:\\test.dll+0x18ce99469)",
+    "#29 0x7ffd09fa4753  (C:\\test.dll+0x183834753)",
+    "#30 0x7ffd09faa46b  (C:\\test.dll+0x18383a46b)",
+    "#31 0x7ffd09f9cbf0  (C:\\test.dll+0x18382cbf0)",
+    "#32 0x7ffd10b2287d  (C:\\test.dll+0x18a3b287d)",
+    "#33 0x7ffd10b25220  (C:\\test.dll+0x18a3b5220)",
+    "#34 0x7ffd10b243fc  (C:\\test.dll+0x18a3b43fc)",
+    "#35 0x7ffd10be2b6c  (C:\\test.dll+0x18a472b6c)",
+    "#36 0x7ffd10b22644  (C:\\test.dll+0x18a3b2644)",
+    "#37 0x7ffd0677162b  (C:\\test.dll+0x18000162b)",
+    "#38 0x7ff69ea06fd6  (C:\\test.exe+0x140006fd6)",
+    "#39 0x7ff69ea03d34  (C:\\test.exe+0x140003d34)",
+    "#40 0x7ff69ef2432f  (C:\\test.exe+0x14052432f)",
+    "#41 0x7ffdbbfe6fd3  (C:\\WINDOWS\\System32\\KERNEL32.DLL+0x180016fd3)",
+    "#42 0x7ffdbc51cec0  (C:\\WINDOWS\\SYSTEM32\\ntdll.dll+0x18004cec0)"
+  ]
+}

@@ -1,0 +1,333 @@
+{
+  "text": "==9152==ERROR: AddressSanitizer: heap-use-after-free on address 0x614000105688 at pc 0x5582ff46a32d bp 0x7f95382ce910 sp 0x7f95382ce908\nREAD of size 4 at 0x614000105688 thread T14 (TaskSchedulerFo)\nSCARINESS: 45 (4-byte-read-heap-use-after-free)\nThread T4 (TaskSchedulerFo) created by T0 (chrome) here:\n    #0 0x5582f45f0f6a in __interceptor_pthread_create /b/swarming/w/ir/k/src/third_party/llvm/compiler-rt/lib/asan/asan_interceptors.cc:209:3\n    #1 0x5582ff6ebecf in base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority) base/threading/platform_thread_posix.cc:120:13\n    #2 0x5582ff5c14b9 in base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*) base/task/task_scheduler/scheduler_worker.cc:79:3\n    #3 0x5582ff5be171 in operator() base/task/task_scheduler/scheduler_worker_pool_impl.cc:187:15\n    #4 0x5582ff5be171 in ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)> base/task/task_scheduler/scheduler_worker_pool_impl.cc:152\n    #5 0x5582ff5be171 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl() base/task/task_scheduler/scheduler_worker_pool_impl.cc:186\n    #6 0x5582ff5b5c47 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor() base/task/task_scheduler/scheduler_worker_pool_impl.cc:105:30\n    #7 0x5582ff5b5a57 in base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>) base/task/task_scheduler/scheduler_worker_pool_impl.cc:435:1\n    #8 0x5582ff59ec04 in base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*) base/task/task_scheduler/task_scheduler_impl.cc:142:21\n    #9 0x5582f7f9791b in content::StartBrowserTaskScheduler() content/browser/startup_helper.cc:95:39\n    #10 0x5582fe2d95d1 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:924:7\n    #11 0x5582fe2d8edb in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12\n    #12 0x5582fe4401c6 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:415:29\n    #13 0x5582fe2d2d3c in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10\n    #14 0x5582f4635c2e in ChromeMain chrome/app/chrome_main.cc:103:12\n    #15 0x7f954dbb92b0 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x202b0)\n\nSUMMARY: AddressSanitizer: heap-use-after-free base/memory/ref_counted.cc:43:3 in base::subtle::RefCountedBase::AddRefImpl() const\nShadow bytes around the buggy address:\n  0x0c2880018a80: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x0c2880018a90: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd\n  0x0c2880018aa0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd\n  0x0c2880018ab0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fa fa\n  0x0c2880018ac0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n=>0x0c2880018ad0: fd[fd]fd fd fd fd fd fd fd fd fd fd fd fd fd fd\n  0x0c2880018ae0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd\n  0x0c2880018af0: fd fd fd fd fd fd fd fd fd fa fa fa fa fa fa fa\n  0x0c2880018b00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x0c2880018b10: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd\n  0x0c2880018b20: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n  Shadow gap:              cc\n==9152==ABORTING\n\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: heap-use-after-free base/memory/ref_counted.cc:43:3 in base::subtle::RefCountedBase::AddRefImpl() const",
+  "fault_type": "heap-use-after-free",
+  "call_stack": [
+    "#0 0x5582f45f0f6a in __interceptor_pthread_create /b/swarming/w/ir/k/src/third_party/llvm/compiler-rt/lib/asan/asan_interceptors.cc:209:3",
+    "#1 0x5582ff6ebecf in base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority) base/threading/platform_thread_posix.cc:120:13",
+    "#2 0x5582ff5c14b9 in base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*) base/task/task_scheduler/scheduler_worker.cc:79:3",
+    "#3 0x5582ff5be171 in operator() base/task/task_scheduler/scheduler_worker_pool_impl.cc:187:15",
+    "#4 0x5582ff5be171 in ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)> base/task/task_scheduler/scheduler_worker_pool_impl.cc:152",
+    "#5 0x5582ff5be171 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl() base/task/task_scheduler/scheduler_worker_pool_impl.cc:186",
+    "#6 0x5582ff5b5c47 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor() base/task/task_scheduler/scheduler_worker_pool_impl.cc:105:30",
+    "#7 0x5582ff5b5a57 in base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>) base/task/task_scheduler/scheduler_worker_pool_impl.cc:435:1",
+    "#8 0x5582ff59ec04 in base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*) base/task/task_scheduler/task_scheduler_impl.cc:142:21",
+    "#9 0x5582f7f9791b in content::StartBrowserTaskScheduler() content/browser/startup_helper.cc:95:39",
+    "#10 0x5582fe2d95d1 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:924:7",
+    "#11 0x5582fe2d8edb in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
+    "#12 0x5582fe4401c6 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:415:29",
+    "#13 0x5582fe2d2d3c in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
+    "#14 0x5582f4635c2e in ChromeMain chrome/app/chrome_main.cc:103:12",
+    "#15 0x7f954dbb92b0 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x202b0)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x5582f45f0f6a in __interceptor_pthread_create /b/swarming/w/ir/k/src/third_party/llvm/compiler-rt/lib/asan/asan_interceptors.cc:209:3",
+      "address": 94020933980010,
+      "function_name": "__interceptor_pthread_create",
+      "function_offset": 3,
+      "source_file_name": "asan_interceptors.cc",
+      "source_file_path": "/b/swarming/w/ir/k/src/third_party/llvm/compiler-rt/lib/asan/asan_interceptors.cc",
+      "source_file_line": 209
+    },
+    {
+      "line": "#1 0x5582ff6ebecf in base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority) base/threading/platform_thread_posix.cc:120:13",
+      "address": 94021119557327,
+      "function_name": "base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority)",
+      "function_offset": 13,
+      "source_file_name": "platform_thread_posix.cc",
+      "source_file_path": "base/threading/platform_thread_posix.cc",
+      "source_file_line": 120
+    },
+    {
+      "line": "#2 0x5582ff5c14b9 in base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*) base/task/task_scheduler/scheduler_worker.cc:79:3",
+      "address": 94021118334137,
+      "function_name": "base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*)",
+      "function_offset": 3,
+      "source_file_name": "scheduler_worker.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker.cc",
+      "source_file_line": 79
+    },
+    {
+      "line": "#3 0x5582ff5be171 in operator() base/task/task_scheduler/scheduler_worker_pool_impl.cc:187:15",
+      "address": 94021118321009,
+      "function_name": "operator()",
+      "function_offset": 15,
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 187
+    },
+    {
+      "line": "#4 0x5582ff5be171 in ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)> base/task/task_scheduler/scheduler_worker_pool_impl.cc:152",
+      "address": 94021118321009,
+      "function_name": "ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)>",
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 152
+    },
+    {
+      "line": "#5 0x5582ff5be171 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl() base/task/task_scheduler/scheduler_worker_pool_impl.cc:186",
+      "address": 94021118321009,
+      "function_name": "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl()",
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 186
+    },
+    {
+      "line": "#6 0x5582ff5b5c47 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor() base/task/task_scheduler/scheduler_worker_pool_impl.cc:105:30",
+      "address": 94021118286919,
+      "function_name": "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor()",
+      "function_offset": 30,
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 105
+    },
+    {
+      "line": "#7 0x5582ff5b5a57 in base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>) base/task/task_scheduler/scheduler_worker_pool_impl.cc:435:1",
+      "address": 94021118286423,
+      "function_name": "base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>)",
+      "function_offset": 1,
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 435
+    },
+    {
+      "line": "#8 0x5582ff59ec04 in base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*) base/task/task_scheduler/task_scheduler_impl.cc:142:21",
+      "address": 94021118192644,
+      "function_name": "base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*)",
+      "function_offset": 21,
+      "source_file_name": "task_scheduler_impl.cc",
+      "source_file_path": "base/task/task_scheduler/task_scheduler_impl.cc",
+      "source_file_line": 142
+    },
+    {
+      "line": "#9 0x5582f7f9791b in content::StartBrowserTaskScheduler() content/browser/startup_helper.cc:95:39",
+      "address": 94020994431259,
+      "function_name": "content::StartBrowserTaskScheduler()",
+      "function_offset": 39,
+      "source_file_name": "startup_helper.cc",
+      "source_file_path": "content/browser/startup_helper.cc",
+      "source_file_line": 95
+    },
+    {
+      "line": "#10 0x5582fe2d95d1 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:924:7",
+      "address": 94021098509777,
+      "function_name": "content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool)",
+      "function_offset": 7,
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 924
+    },
+    {
+      "line": "#11 0x5582fe2d8edb in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
+      "address": 94021098507995,
+      "function_name": "content::ContentMainRunnerImpl::Run(bool)",
+      "function_offset": 12,
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 878
+    },
+    {
+      "line": "#12 0x5582fe4401c6 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:415:29",
+      "address": 94021099979206,
+      "function_name": "service_manager::Main(service_manager::MainParams const&)",
+      "function_offset": 29,
+      "source_file_name": "main.cc",
+      "source_file_path": "services/service_manager/embedder/main.cc",
+      "source_file_line": 415
+    },
+    {
+      "line": "#13 0x5582fe2d2d3c in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
+      "address": 94021098483004,
+      "function_name": "content::ContentMain(content::ContentMainParams const&)",
+      "function_offset": 10,
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#14 0x5582f4635c2e in ChromeMain chrome/app/chrome_main.cc:103:12",
+      "address": 94020934261806,
+      "function_name": "ChromeMain",
+      "function_offset": 12,
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 103
+    },
+    {
+      "line": "#15 0x7f954dbb92b0 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x202b0)",
+      "address": 140279230993072,
+      "function_name": "__libc_start_main",
+      "module_path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "module_offset": 131760
+    }
+  ],
+  "full_stack_names": [
+    "__interceptor_pthread_create",
+    "base::",
+    "base::internal::SchedulerWorker::Start",
+    "operator",
+    "ForEachWorker<",
+    "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl",
+    "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor",
+    "base::internal::SchedulerWorkerPoolImpl::Start",
+    "base::internal::TaskSchedulerImpl::Start",
+    "content::StartBrowserTaskScheduler",
+    "content::ContentMainRunnerImpl::RunServiceManager",
+    "content::ContentMainRunnerImpl::Run",
+    "service_manager::Main",
+    "content::ContentMain",
+    "ChromeMain",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x5582ff6ebecf in base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority) base/threading/platform_thread_posix.cc:120:13",
+      "address": 94021119557327,
+      "function_name": "base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority)",
+      "function_offset": 13,
+      "source_file_name": "platform_thread_posix.cc",
+      "source_file_path": "base/threading/platform_thread_posix.cc",
+      "source_file_line": 120
+    },
+    {
+      "line": "#2 0x5582ff5c14b9 in base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*) base/task/task_scheduler/scheduler_worker.cc:79:3",
+      "address": 94021118334137,
+      "function_name": "base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*)",
+      "function_offset": 3,
+      "source_file_name": "scheduler_worker.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker.cc",
+      "source_file_line": 79
+    },
+    {
+      "line": "#4 0x5582ff5be171 in ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)> base/task/task_scheduler/scheduler_worker_pool_impl.cc:152",
+      "address": 94021118321009,
+      "function_name": "ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)>",
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 152
+    },
+    {
+      "line": "#5 0x5582ff5be171 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl() base/task/task_scheduler/scheduler_worker_pool_impl.cc:186",
+      "address": 94021118321009,
+      "function_name": "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl()",
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 186
+    },
+    {
+      "line": "#6 0x5582ff5b5c47 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor() base/task/task_scheduler/scheduler_worker_pool_impl.cc:105:30",
+      "address": 94021118286919,
+      "function_name": "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor()",
+      "function_offset": 30,
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 105
+    },
+    {
+      "line": "#7 0x5582ff5b5a57 in base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>) base/task/task_scheduler/scheduler_worker_pool_impl.cc:435:1",
+      "address": 94021118286423,
+      "function_name": "base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>)",
+      "function_offset": 1,
+      "source_file_name": "scheduler_worker_pool_impl.cc",
+      "source_file_path": "base/task/task_scheduler/scheduler_worker_pool_impl.cc",
+      "source_file_line": 435
+    },
+    {
+      "line": "#8 0x5582ff59ec04 in base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*) base/task/task_scheduler/task_scheduler_impl.cc:142:21",
+      "address": 94021118192644,
+      "function_name": "base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*)",
+      "function_offset": 21,
+      "source_file_name": "task_scheduler_impl.cc",
+      "source_file_path": "base/task/task_scheduler/task_scheduler_impl.cc",
+      "source_file_line": 142
+    },
+    {
+      "line": "#9 0x5582f7f9791b in content::StartBrowserTaskScheduler() content/browser/startup_helper.cc:95:39",
+      "address": 94020994431259,
+      "function_name": "content::StartBrowserTaskScheduler()",
+      "function_offset": 39,
+      "source_file_name": "startup_helper.cc",
+      "source_file_path": "content/browser/startup_helper.cc",
+      "source_file_line": 95
+    },
+    {
+      "line": "#10 0x5582fe2d95d1 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:924:7",
+      "address": 94021098509777,
+      "function_name": "content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool)",
+      "function_offset": 7,
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 924
+    },
+    {
+      "line": "#11 0x5582fe2d8edb in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
+      "address": 94021098507995,
+      "function_name": "content::ContentMainRunnerImpl::Run(bool)",
+      "function_offset": 12,
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 878
+    },
+    {
+      "line": "#12 0x5582fe4401c6 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:415:29",
+      "address": 94021099979206,
+      "function_name": "service_manager::Main(service_manager::MainParams const&)",
+      "function_offset": 29,
+      "source_file_name": "main.cc",
+      "source_file_path": "services/service_manager/embedder/main.cc",
+      "source_file_line": 415
+    },
+    {
+      "line": "#13 0x5582fe2d2d3c in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
+      "address": 94021098483004,
+      "function_name": "content::ContentMain(content::ContentMainParams const&)",
+      "function_offset": 10,
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#14 0x5582f4635c2e in ChromeMain chrome/app/chrome_main.cc:103:12",
+      "address": 94020934261806,
+      "function_name": "ChromeMain",
+      "function_offset": 12,
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 103
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x5582ff6ebecf in base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority) base/threading/platform_thread_posix.cc:120:13",
+    "#2 0x5582ff5c14b9 in base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*) base/task/task_scheduler/scheduler_worker.cc:79:3",
+    "#4 0x5582ff5be171 in ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)> base/task/task_scheduler/scheduler_worker_pool_impl.cc:152",
+    "#5 0x5582ff5be171 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl() base/task/task_scheduler/scheduler_worker_pool_impl.cc:186",
+    "#6 0x5582ff5b5c47 in base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor() base/task/task_scheduler/scheduler_worker_pool_impl.cc:105:30",
+    "#7 0x5582ff5b5a57 in base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>) base/task/task_scheduler/scheduler_worker_pool_impl.cc:435:1",
+    "#8 0x5582ff59ec04 in base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*) base/task/task_scheduler/task_scheduler_impl.cc:142:21",
+    "#9 0x5582f7f9791b in content::StartBrowserTaskScheduler() content/browser/startup_helper.cc:95:39",
+    "#10 0x5582fe2d95d1 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:924:7",
+    "#11 0x5582fe2d8edb in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
+    "#12 0x5582fe4401c6 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:415:29",
+    "#13 0x5582fe2d2d3c in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
+    "#14 0x5582f4635c2e in ChromeMain chrome/app/chrome_main.cc:103:12"
+  ],
+  "minimized_stack_function_names": [
+    "base::",
+    "base::internal::SchedulerWorker::Start",
+    "ForEachWorker<",
+    "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl",
+    "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor",
+    "base::internal::SchedulerWorkerPoolImpl::Start",
+    "base::internal::TaskSchedulerImpl::Start",
+    "content::StartBrowserTaskScheduler",
+    "content::ContentMainRunnerImpl::RunServiceManager",
+    "content::ContentMainRunnerImpl::Run",
+    "service_manager::Main",
+    "content::ContentMain",
+    "ChromeMain"
+  ],
+  "scariness_score": 45,
+  "scariness_description": "4-byte-read-heap-use-after-free"
+}

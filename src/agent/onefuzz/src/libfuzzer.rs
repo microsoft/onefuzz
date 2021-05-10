@@ -4,15 +4,19 @@
 use crate::{
     env::{get_path_with_directory, LD_LIBRARY_PATH, PATH},
     expand::Expand,
+    fs::{list_files, write_file},
     input_tester::{TestResult, Tester},
 };
 use anyhow::{Context, Result};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 use std::{
     collections::HashMap,
     ffi::OsString,
     path::{Path, PathBuf},
     process::Stdio,
 };
+use tempfile::tempdir;
 use tokio::process::{Child, Command};
 
 const DEFAULT_MAX_TOTAL_SECONDS: i32 = 10 * 60;
@@ -45,18 +49,20 @@ impl<'a> LibFuzzer<'a> {
         }
     }
 
-    pub async fn check_help(&self) -> Result<()> {
-        // Verify -help=1 exits with a zero return code, which validates the
-        // libfuzzer works as we expect.
+    fn build_command(
+        &self,
+        fault_dir: Option<&Path>,
+        corpus_dir: Option<&Path>,
+        extra_corpus_dirs: Option<&[&Path]>,
+    ) -> Result<Command> {
         let mut cmd = Command::new(&self.exe);
-
         cmd.kill_on_drop(true)
             .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
             .env_remove("RUST_LOG")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .arg("-help=1");
+            .arg("-workers=1");
 
         if cfg!(target_family = "unix") {
             cmd.env(
@@ -68,7 +74,11 @@ impl<'a> LibFuzzer<'a> {
         let expand = Expand::new()
             .target_exe(&self.exe)
             .target_options(&self.options)
-            .setup_dir(&self.setup_dir);
+            .setup_dir(&self.setup_dir)
+            .set_optional(corpus_dir, |tester, corpus_dir| {
+                tester.input_corpus(&corpus_dir)
+            })
+            .set_optional(fault_dir, |tester, fault_dir| tester.crashes(&fault_dir));
 
         for (k, v) in self.env {
             cmd.env(k, expand.evaluate_value(v)?);
@@ -78,6 +88,103 @@ impl<'a> LibFuzzer<'a> {
         for o in expand.evaluate(self.options)? {
             cmd.arg(o);
         }
+
+        // Set the read/written main corpus directory.
+        if let Some(corpus_dir) = corpus_dir {
+            cmd.arg(corpus_dir);
+        }
+
+        // Set extra corpus directories that will be periodically rescanned.
+        if let Some(extra_corpus_dirs) = extra_corpus_dirs {
+            for dir in extra_corpus_dirs {
+                cmd.arg(dir);
+            }
+        }
+
+        // check if a max_time is already set
+        if self
+            .options
+            .iter()
+            .find(|o| o.starts_with("-max_total_time"))
+            .is_none()
+        {
+            cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
+        }
+
+        Ok(cmd)
+    }
+
+    pub async fn verify(
+        &self,
+        check_fuzzer_help: bool,
+        inputs: Option<Vec<PathBuf>>,
+    ) -> Result<()> {
+        if check_fuzzer_help {
+            self.check_help().await?;
+        }
+
+        let mut seen_inputs = false;
+
+        if let Some(inputs) = inputs {
+            // check the 5 files at random from the input directories
+            for input_dir in inputs {
+                if tokio::fs::metadata(&input_dir).await.is_ok() {
+                    let mut files = list_files(&input_dir).await?;
+                    {
+                        let mut rng = thread_rng();
+                        files.shuffle(&mut rng);
+                    }
+                    for file in files.iter().take(5) {
+                        self.check_input(&file).await.with_context(|| {
+                            format!("checking input corpus: {}", file.display())
+                        })?;
+                        seen_inputs = true;
+                    }
+                } else {
+                    println!("input dir doesn't exist: {:?}", input_dir);
+                }
+            }
+        }
+
+        if !seen_inputs {
+            let temp_dir = tempdir()?;
+            let empty = temp_dir.path().join("empty-file.txt");
+            write_file(&empty, "").await?;
+            self.check_input(&empty)
+                .await
+                .context("checking libFuzzer with empty input")?;
+        }
+
+        Ok(())
+    }
+
+    async fn check_input(&self, input: &Path) -> Result<()> {
+        // Verify that the libfuzzer exits with a zero return code with a known
+        // good input, which libfuzzer works as we expect.
+
+        let mut cmd = self.build_command(None, None, None)?;
+        cmd.arg(&input);
+
+        let result = cmd
+            .spawn()
+            .with_context(|| format_err!("libfuzzer failed to start: {}", self.exe.display()))?
+            .wait_with_output()
+            .await
+            .with_context(|| format_err!("libfuzzer failed to run: {}", self.exe.display()))?;
+        if !result.status.success() {
+            bail!(
+                "libFuzzer failed when parsing an initial seed {:?}: stdout:{:?} stderr:{:?}",
+                input.file_name().unwrap_or_else(|| input.as_ref()),
+                String::from_utf8_lossy(&result.stdout),
+                String::from_utf8_lossy(&result.stderr),
+            );
+        }
+        Ok(())
+    }
+
+    async fn check_help(&self) -> Result<()> {
+        let mut cmd = self.build_command(None, None, None)?;
+        cmd.arg("-help=1");
 
         let result = cmd
             .spawn()
@@ -97,69 +204,22 @@ impl<'a> LibFuzzer<'a> {
         corpus_dir: impl AsRef<Path>,
         extra_corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<Child> {
-        let corpus_dir = corpus_dir.as_ref();
-        let fault_dir = fault_dir.as_ref();
-
-        let expand = Expand::new()
-            .target_exe(&self.exe)
-            .target_options(&self.options)
-            .input_corpus(&corpus_dir)
-            .crashes(&fault_dir)
-            .setup_dir(&self.setup_dir);
-
-        let mut cmd = Command::new(&self.exe);
-        cmd.kill_on_drop(true)
-            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
-            .env_remove("RUST_LOG")
-            .stdout(Stdio::null())
-            .stderr(Stdio::piped());
-
-        // Set the environment.
-        for (k, v) in self.env {
-            cmd.env(k, expand.evaluate_value(v)?);
-        }
-
-        // Pass custom option arguments.
-        for o in expand.evaluate(self.options)? {
-            cmd.arg(o);
-        }
-
-        if cfg!(target_family = "unix") {
-            cmd.env(
-                LD_LIBRARY_PATH,
-                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
-            );
-        }
-
-        // check if a max_time is already set
-        if self
-            .options
-            .iter()
-            .find(|o| o.starts_with("-max_total_time"))
-            .is_none()
-        {
-            cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
-        }
+        let extra_corpus_dirs: Vec<&Path> = extra_corpus_dirs.iter().map(|x| x.as_ref()).collect();
+        let mut cmd = self.build_command(
+            Some(fault_dir.as_ref()),
+            Some(corpus_dir.as_ref()),
+            Some(&extra_corpus_dirs),
+        )?;
 
         // When writing a new faulting input, the libFuzzer runtime _exactly_
         // prepends the value of `-artifact_prefix` to the new file name. To
         // specify that a new file `crash-<digest>` should be written to a
         // _directory_ `<corpus_dir>`, we must ensure that the prefix includes a
         // trailing path separator.
-        let artifact_prefix: OsString = format!("-artifact_prefix={}/", fault_dir.display()).into();
+        let artifact_prefix: OsString =
+            format!("-artifact_prefix={}/", fault_dir.as_ref().display()).into();
 
         cmd.arg(&artifact_prefix);
-
-        // Force a single worker, so we can manage workers ourselves.
-        cmd.arg("-workers=1");
-
-        // Set the read/written main corpus directory.
-        cmd.arg(corpus_dir);
-
-        // Set extra corpus directories that will be periodically rescanned.
-        for dir in extra_corpus_dirs {
-            cmd.arg(dir.as_ref());
-        }
 
         let child = cmd
             .spawn()
@@ -193,44 +253,12 @@ impl<'a> LibFuzzer<'a> {
     pub async fn merge(
         &self,
         corpus_dir: impl AsRef<Path>,
-        corpus_dirs: &[impl AsRef<Path>],
+        extra_corpus_dirs: &[impl AsRef<Path>],
     ) -> Result<LibFuzzerMergeOutput> {
-        let expand = Expand::new()
-            .target_exe(&self.exe)
-            .target_options(&self.options)
-            .input_corpus(&corpus_dir)
-            .setup_dir(&self.setup_dir);
-
-        let mut cmd = Command::new(&self.exe);
-
-        cmd.kill_on_drop(true)
-            .env(PATH, get_path_with_directory(PATH, &self.setup_dir)?)
-            .env_remove("RUST_LOG")
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .arg("-merge=1")
-            .arg(corpus_dir.as_ref());
-
-        if cfg!(target_family = "unix") {
-            cmd.env(
-                LD_LIBRARY_PATH,
-                get_path_with_directory(LD_LIBRARY_PATH, &self.setup_dir)?,
-            );
-        }
-
-        for dir in corpus_dirs {
-            cmd.arg(dir.as_ref());
-        }
-
-        // Set the environment.
-        for (k, v) in self.env {
-            cmd.env(k, expand.evaluate_value(v)?);
-        }
-
-        // Pass custom option arguments.
-        for o in expand.evaluate(self.options)? {
-            cmd.arg(o);
-        }
+        let extra_corpus_dirs: Vec<&Path> = extra_corpus_dirs.iter().map(|x| x.as_ref()).collect();
+        let mut cmd =
+            self.build_command(None, Some(corpus_dir.as_ref()), Some(&extra_corpus_dirs))?;
+        cmd.arg("-merge=1");
 
         let output = cmd
             .spawn()
@@ -316,5 +344,65 @@ mod tests {
         let execs_sec = parsed.execs_sec();
         assert!(execs_sec.is_finite());
         assert!((execs_sec - expected).abs() < f64::EPSILON);
+    }
+
+    #[tokio::test]
+    #[cfg(target_family = "unix")]
+    async fn verify_initial_inputs() -> Result<()> {
+        let bad_bin = PathBuf::from("/bin/false");
+        let good_bin = PathBuf::from("/bin/echo");
+        let temp_setup_dir = tempdir()?;
+        let options = vec![];
+        let env = HashMap::new();
+
+        let input_file = temp_setup_dir.path().join("input.txt");
+        write_file(&input_file, "input").await?;
+
+        let fuzzer = LibFuzzer::new(bad_bin, &options, &env, &temp_setup_dir.path());
+
+        // verify catching bad exits with -help=1
+        assert!(
+            fuzzer.verify(true, None).await.is_err(),
+            "checking false with -help=1"
+        );
+
+        // verify catching bad exits with inputs
+        assert!(
+            fuzzer
+                .verify(false, Some(vec!(temp_setup_dir.path().to_path_buf())))
+                .await
+                .is_err(),
+            "checking false with basic input"
+        );
+
+        // verify catching bad exits with no inputs
+        assert!(
+            fuzzer.verify(false, None).await.is_err(),
+            "checking false without inputs"
+        );
+
+        let fuzzer = LibFuzzer::new(good_bin, &options, &env, &temp_setup_dir.path());
+        // verify good exits with -help=1
+        assert!(
+            fuzzer.verify(true, None).await.is_ok(),
+            "checking true with -help=1"
+        );
+
+        // verify good exits with inputs
+        assert!(
+            fuzzer
+                .verify(false, Some(vec!(temp_setup_dir.path().to_path_buf())))
+                .await
+                .is_ok(),
+            "checking true with basic inputs"
+        );
+
+        // verify good exits with no inputs
+        assert!(
+            fuzzer.verify(false, None).await.is_ok(),
+            "checking true without inputs"
+        );
+
+        Ok(())
     }
 }

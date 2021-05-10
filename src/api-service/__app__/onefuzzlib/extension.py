@@ -103,15 +103,19 @@ def build_pool_config(pool: Pool) -> str:
     config = AgentConfig(
         pool_name=pool.name,
         onefuzz_url=get_instance_url(),
-        instrumentation_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
         heartbeat_queue=get_queue_sas(
             "node-heartbeat",
             StorageType.config,
             add=True,
         ),
-        telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
+        instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
+        microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
         instance_id=get_instance_id(),
     )
+
+    multi_tenant_domain = os.environ.get("MULTI_TENANT_DOMAIN")
+    if multi_tenant_domain:
+        config.multi_tenant_domain = multi_tenant_domain
 
     filename = f"{pool.name}/config.json"
 
@@ -270,6 +274,9 @@ def repro_extensions(
     report = get_report(repro_config.container, repro_config.path)
     if report is None:
         raise Exception("invalid report: %s" % repro_config)
+
+    if report.input_blob is None:
+        raise Exception("unable to perform reproduction without an input blob")
 
     commands = []
     if setup_container:

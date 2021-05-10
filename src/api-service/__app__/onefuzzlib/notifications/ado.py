@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Iterator, List, Optional
+from typing import Iterator, List, Optional, Union
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
@@ -24,7 +24,7 @@ from azure.devops.v6_0.work_item_tracking.work_item_tracking_client import (
     WorkItemTrackingClient,
 )
 from memoization import cached
-from onefuzztypes.models import ADOTemplate, Report
+from onefuzztypes.models import ADOTemplate, RegressionReport, Report
 from onefuzztypes.primitives import Container
 
 from ..secrets import get_secret_string_value
@@ -51,7 +51,11 @@ def get_valid_fields(
 
 class ADO:
     def __init__(
-        self, container: Container, filename: str, config: ADOTemplate, report: Report
+        self,
+        container: Container,
+        filename: str,
+        config: ADOTemplate,
+        report: Report,
     ):
         self.config = config
         self.renderer = Render(container, filename, report)
@@ -203,8 +207,20 @@ class ADO:
 
 
 def notify_ado(
-    config: ADOTemplate, container: Container, filename: str, report: Report
+    config: ADOTemplate,
+    container: Container,
+    filename: str,
+    report: Union[Report, RegressionReport],
 ) -> None:
+    if isinstance(report, RegressionReport):
+        logging.info(
+            "ado integration does not support regression reports. "
+            "container:%s filename:%s",
+            container,
+            filename,
+        )
+        return
+
     logging.info(
         "notify ado: job_id:%s task_id:%s container:%s filename:%s",
         report.job_id,

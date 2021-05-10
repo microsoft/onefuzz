@@ -1,0 +1,45 @@
+{
+  "text": "==51==ERROR: AddressSanitizer: stack-use-after-return on address 0x7f05b02a0000 at pc 0x7f064c658e20 bp 0x7fffc6f420d0 sp 0x7fffc6f41890\nWRITE of size 32780 at 0x7f05b02a0000 thread T0 (chrome)\n    #0 0x7f064c658e1f in __asan_memset\n    #1 0x7f05d5ad4f3c in SomeFunction(TYPE*, TYPE const&, int) /usr/include/header.h:123\nAddressSanitizer can not describe address in more detail (wild memory access suspected).\nSUMMARY: AddressSanitizer: stack-use-after-return ??:0 ??\nShadow bytes around the buggy address:\n  0x0fe13604bfb0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x0fe13604bfc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x0fe13604bfd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x0fe13604bfe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x0fe13604bff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x0fe13604c000:[f5]f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5\n  0x0fe13604c010: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5\n  0x0fe13604c020: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5\n  0x0fe13604c030: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5\n  0x0fe13604c040: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5\n  0x0fe13604c050: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07\n  Heap left redzone:       fa\n  Heap right redzone:      fb\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack partial redzone:   f4\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  ASan internal:           fe\n==51==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: stack-use-after-return ??:0 ??",
+  "fault_type": "stack-use-after-return",
+  "call_stack": [
+    "#0 0x7f064c658e1f in __asan_memset",
+    "#1 0x7f05d5ad4f3c in SomeFunction(TYPE*, TYPE const&, int) /usr/include/header.h:123"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f064c658e1f in __asan_memset",
+      "address": 139665028255263,
+      "function_name": "__asan_memset"
+    },
+    {
+      "line": "#1 0x7f05d5ad4f3c in SomeFunction(TYPE*, TYPE const&, int) /usr/include/header.h:123",
+      "address": 139663036469052,
+      "function_name": "SomeFunction(TYPE*, TYPE const&, int)",
+      "source_file_name": "header.h",
+      "source_file_path": "/usr/include/header.h",
+      "source_file_line": 123
+    }
+  ],
+  "full_stack_names": [
+    "__asan_memset",
+    "SomeFunction"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x7f05d5ad4f3c in SomeFunction(TYPE*, TYPE const&, int) /usr/include/header.h:123",
+      "address": 139663036469052,
+      "function_name": "SomeFunction(TYPE*, TYPE const&, int)",
+      "source_file_name": "header.h",
+      "source_file_path": "/usr/include/header.h",
+      "source_file_line": 123
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x7f05d5ad4f3c in SomeFunction(TYPE*, TYPE const&, int) /usr/include/header.h:123"
+  ],
+  "minimized_stack_function_names": [
+    "SomeFunction"
+  ]
+}

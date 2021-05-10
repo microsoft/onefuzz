@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#![allow(clippy::upper_case_acronyms)]
+
 use std::ffi::OsStr;
 
 use anyhow::Result;

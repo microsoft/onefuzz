@@ -82,6 +82,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         region: Region,
         size: int,
         spot_instances: bool,
+        ephemeral_os_disks: bool,
         tags: Dict[str, str],
         client_id: Optional[UUID] = None,
         client_object_id: Optional[UUID] = None,
@@ -93,6 +94,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             region=region,
             size=size,
             spot_instances=spot_instances,
+            ephemeral_os_disks=ephemeral_os_disks,
             auth=build_auth(),
             client_id=client_id,
             client_object_id=client_object_id,
@@ -237,6 +239,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.image,
                 network_id,
                 self.spot_instances,
+                self.ephemeral_os_disks,
                 extensions,
                 self.auth.password,
                 self.auth.public_key,
@@ -437,9 +440,18 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         return
 
     def _resize_shrink(self, to_remove: int) -> None:
+        logging.info(
+            SCALESET_LOG_PREFIX + "shrinking scaleset. scaleset_id:%s to_remove:%d",
+            self.scaleset_id,
+            to_remove,
+        )
         queue = ScalesetShrinkQueue(self.scaleset_id)
         for _ in range(to_remove):
             queue.add_entry()
+
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
+        for node in nodes:
+            node.send_stop_if_free()
 
     def resize(self) -> None:
         # no longer needing to resize
@@ -465,6 +477,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "scaleset is unavailable. scaleset_id:%s",
                 self.scaleset_id,
             )
+            # if the scaleset is missing, this is an indication the scaleset
+            # was manually deleted, rather than having OneFuzz delete it.  As
+            # such, we should go thruogh the process of deleting it.
+            self.set_shutdown(now=True)
             return
 
         if size == self.size:

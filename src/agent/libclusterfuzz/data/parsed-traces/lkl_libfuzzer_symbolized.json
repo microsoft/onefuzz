@@ -1,0 +1,392 @@
+{
+  "text": "disk/temp-1028899/mutations /usr/local/google/home/mspector/DEBUG/localhost-46191/clusterfuzz/bot/inputs/fuzzer-testcases-disk/temp-1028899/subset\nBot: android-mspector-linuxworkstation.kir.corp.google.com-localhost:46191\nTime ran: 453.0651717185974\n\n[    0.000000] Linux version 5.4.58+-ab6926695 (build-user@build-host) (Android (6794702, based on r399163) clang version 11.0.4 (https://android.googlesource.com/toolchain/llvm-project 87f1315dfbea7c137aa2e6d362dbb457e388158d), GNU ld (GNU Binutils for Ubuntu) 2.24) #1 2020-10-16 23:03:14\n[    0.000000] memblock address range: 0x7f697c86b000 - 0x7f697fa6b000\n[    0.000000] KernelAddressSanitizer initialized\n[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 12625\n[    0.000000] Kernel command line: mem=50M\n[    0.000000] Dentry cache hash table entries: 8192 (order: 4, 65536 bytes, linear)\n[    0.000000] Inode-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)\n[    0.000000] mem auto-init: stack:off, heap alloc:off, heap free:off\n[    0.000000] Memory available: 50336k/51200k RAM\n[    0.000000] SLUB: HWalign=32, Order=0-3, MinObjects=0, CPUs=1, Nodes=1\n[    0.000000] NR_IRQS: 4096\n[    0.000000] lkl: irqs initialized\n[    0.000000] clocksource: lkl: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns\n[    0.000003] lkl: time and timers initialized (irq1)\nDone.\nBegin xxx\nVID=0104, PID=00C5, RDESC: 114 bytes, INPUT: 0 byetes\nRDESC::size=114\n00000000: 28 28 28 28 B1 28 28 28 28 28 28 B5 28 28 28 28 ((((.((((((.((((\n00000010: 28 28 28 28 28 28 28 28 28 28 28 01 2A 64 02 28 (((((((((((.*d.(\n00000020: 28 28 28 28 28 28 28 28 28 28 28 28 A8 28 28 28 ((((((((((((.(((\n00000030: 28 28 28 28 28 28 28 28 28 28 28 28 28 28 00 00 ((((((((((((((..\n00000040: 00 00 09 00 00 38 00 80 C0 01 09 00 09 02 00 75 .....8.........u\n00000050: 0A 31 02 81 00 5D C0 21 05 0C 09 47 81 06 95 81 .1...].!...G....\n00000060: 06 81 06 30 C0 05 28 0C 09 01 A1 01 D9 04 00 00 ...0..(.........\n00000070: 00 C0                                           ..\n\nINPUT::size=0\n\nDone.\nBegin xxx\nVID=3600, PID=8042, RDESC: 125 bytes, INPUT: 0 byetes\nRDESC::size=125\n00000000: 06 C0 C0 05 0C 09 [  126.008447] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.008497] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.008521] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.008536] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.008551] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x4\n[  126.008568] hid-generic 0003:3600:8042.81F8: ignoring exceeding usage max\n[  126.010925] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.010953] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x1\n[  126.010970] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.011047] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.011081] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.011108] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.011125] hid-generic 0003:3600:8042.81F8: unknown main item tag 0x0\n[  126.013085] ==================================================================\n[  126.013117] BUG: KASAN: slab-out-of-bounds in _etext+0x26eda/0x312104\n[  126.013128] Write of size 4 at addr 00007f5256480ddc by task kworker/0:1/11\n[  126.013133]\n[  126.013141] Linux Kernel Library Stack Trace:\n    #0 0x00000000005e6dda in print_address_description /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/report.c:375:2\n    #1 0x00000000005e7584 in __kasan_report /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/report.c:507:3\n    #2 0x00000000005e6af9 in kasan_report /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/common.c:636:1\n    #3 0x00000000005e7ccf in __asan_store4 /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/generic.c:250:1\n    #4 0x0000000000a60a36 in __hidinput_change_resolution_multipliers /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:0:31\n    #5 0x0000000000a4b8dc in hidinput_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:1615:7\n    #6 0x0000000000a40d00 in hid_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:1931:48\n    #7 0x0000000000a41818 in hid_hw_start /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2035:11\n    #8 0x00000000007bdb81 in hid_generic_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-generic.c:67:9\n    #9 0x0000000000a425d8 in hid_device_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2263:10\n    #10 0x0000000000755615 in really_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:566:13\n    #11 0x00000000007568c6 in __device_attach_driver /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:745:9\n    #12 0x00000000007521ad in bus_for_each_drv /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:430:11\n    #13 0x0000000000755c09 in __device_attach /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:918:9\n    #14 0x0000000000755c8e in device_initial_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:966:1\n    #15 0x000000000075244c in bus_probe_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:492:19\n    #16 0x000000000074cd35 in device_add /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/core.c:2820:6\n    #17 0x0000000000a43174 in hid_add_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2419:8\n    #18 0x0000000000a6ac58 in uhid_device_add_worker /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/uhid.c:62:8\n[  126.013377] #19 [<0x000000000054b0cc>] .str.8+0x2c/0x60\n    #19 0x000000000054cf38 in worker_thread /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/kernel/workqueue.c:2420:4\n[  126.013399] #21 [<0x000000000055322a>] .str.24+0x2a/0x40\n[  126.013418] #22 [<0x000000000051b21b>] .str.2+0x3b/0x50\n[  126.013428] #23 [<0x000000000051505a>] 0x51505a\n[  126.013434]\n[  126.013440]\n[  126.013446]\n[  126.013452] Memory state around the buggy address:\n[  126.013462]  00007f5256480c80: 00 00 00 00 00 00 00 04 fc fc fc fc fc fc fc fc\n[  126.013471]  00007f5256480d00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc\n[  126.013480] >00007f5256480d80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc\n[  126.013487]                                                     ^\n[  126.013496]  00007f5256480e00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc\n[  126.013505]  00007f5256480e80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc\n[  126.013511] ==================================================================\n[  126.013521] Disabling lock debugging due to kernel taint\n[  126.013533] Kernel panic - not syncing: panic_on_warn set ...\n[  126.013545] ---[ end Kernel panic - not syncing: panic_on_warn set ... ]---\nhid-fuzzer: lib/posix-host.c:191: void panic(void): Assertion `0' failed.\n==2434886== ERROR: libFuzzer: deadly signal\n    #0 0x510c60  (/usr/local/google/home/mspector/DEBUG/localhost-46191/clusterfuzz/bot/builds/android-haiku_host-lkl-userdebug_hid-fuzzer_77651789446b3c3a04b9f492ff141f003d437347/revisions/hid-fuzzer+0x510c60)\n    #1 0x4bc5f8  (/usr/local/google/home/mspector/DEBUG/localhost-46191/clusterfuzz/bot/builds/android-haiku_host-lkl-userdebug_hid-fuzzer_77651789446b3c3a04b9f492ff141f003d437347/revisions/hid-fuzzer+0x4bc5f8)\n    #2 0x4a19e3  (/usr/local/google/home/mspector/DEBUG/localhost-46191/clusterfuzz/bot/builds/android-haiku_host-lkl-userdebug_hid-fuzzer_77651789446b3c3a04b9f492ff141f003d437347/revisions/hid-fuzzer+0x4a19e3)\n    #3 0x7f525812113f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1413f)\n    #4 0x7f5257e1ddb0  (/lib/x86_64-linux-gnu/libc.so.6+0x3bdb0)\n    #5 0x7f5257e07536  (/lib/x86_64-linux-gnu/libc.so.6+0x25536)\n    #6 0x7f5257e0740e  (/lib/x86_64-linux-gnu/libc.so.6+0x2540e)\n    #7 0x7f5257e165b1  (/lib/x86_64-linux-gnu/libc.so.6+0x345b1)\n    #8 0x5147ff  (/usr/local/google/home/mspector/DEBUG/localhost-46191/clusterfuzz/bot/builds/android-haiku_host-lkl-userdebug_hid-fuzzer_77651789446b3c3a04b9f492ff141f003d437347/revisions/hid-fuzzer+0x5147ff)\n    #9 0x51ac70  (/usr/local/google/home/mspector/DEBUG/localhost-46191/clusterfuzz/bot/builds/android-haiku_host-lkl-userdebug_hid-fuzzer_77651789446b3c3a04b9f492ff141f003d437347/revisions/hid-fuzzer+0x51ac70)\n\nNOTE: libFuzzer has rudimentary signal handlers.\n      Combine libFuzzer with AddressSanitizer or similar for better crash reports.\nSUMMARY: libFuzzer: deadly signal\nMS: 1 ChangeBit-; base unit: 0f4f6db1f0a8dbaced22d98bef470b9fa32740b1\n0x94,0xa,0x0,0x6d,0x0,0x36,0x42,0x80,0x6,0xc0,0xc0,0x5,0xc,0x9,0x1,0xa1,0x1,0x85,0x81,0x3,0xac,0x6,0xbc,0x4e,0x4e,0x1,0x0,0x0,0x0,0x0,0x41,0x2d,0x4a,0x0,0x95,0x95,0x1,0x2a,0x1,0xf6,0xce,0x7f,0x5e,0xb1,0xb1,0xb1,0xb1,0x2a,0xff,0x2,0x81,0x0,0xc0,0x9,0x32,0x5,0x1,0x80,0xa1,0x1,0xa5,0x1,0xa1,0x4e,0x4e,0xe,0x4e,0x2a,0xff,0x2,0x81,0x0,0xc0,0x5,0x1,0x9,0x34,0x80,0xa1,0x1,0x1,0x0,0x13,0xec,0xf9,0x8,0x82,0x2,0x4f,0x4f,0x4f,0x4f,0x4f,0x4f,0x89,0x9,0x83,0x2a,0x81,0x0,0xb1,0x0,0x81,0x3,0xc0,0x6,0xbc,0x4e,0x4e,0x4e,0x2a,0x2,0x81,0x0,0xc0,0x5,0x27,0x1,0x9,0x34,0x80,0x3,0xc7,0x6,0xbc,0x4e,0x4e,0x4a,0x80,0x4e,0x4e,0x4e,0x0,\n\\x94\\x0a\\x00m\\x006B\\x80\\x06\\xc0\\xc0\\x05\\x0c\\x09\\x01\\xa1\\x01\\x85\\x81\\x03\\xac\\x06\\xbcNN\\x01\\x00\\x00\\x00\\x00A-J\\x00\\x95\\x95\\x01*\\x01\\xf6\\xce\\x7f^\\xb1\\xb1\\xb1\\xb1*\\xff\\x02\\x81\\x00\\xc0\\x092\\x05\\x01\\x80\\xa1\\x01\\xa5\\x01\\xa1NN\\x0eN*\\xff\\x02\\x81\\x00\\xc0\\x05\\x01\\x094\\x80\\xa1\\x01\\x01\\x00\\x13\\xec\\xf9\\x08\\x82\\x02OOOOOO\\x89\\x09\\x83*\\x81\\x00\\xb1\\x00\\x81\\x03\\xc0\\x06\\xbcNNN*\\x02\\x81\\x00\\xc0\\x05'\\x01\\x094\\x80\\x03\\xc7\\x06\\xbcNNJ\\x80NNN\\x00\nartifact_prefix='/usr/local/google/home/mspector/DEBUG/localhost-46191/clusterfuzz/bot/inputs/fuzzer-testcases/'; Test unit written to /usr/local/google/home/mspector/DEBUG/localhost-46191/clusterfuzz/bot/inputs/fuzzer-testcases/crash-ba41547c2c098e2e6688b9e4330de3ab3a6891e1\nBase64: lAoAbQA2QoAGwMAFDAkBoQGFgQOsBrxOTgEAAAAAQS1KAJWVASoB9s5/XrGxsbEq/wKBAMAJMgUBgKEBpQGhTk4OTir/AoEAwAUBCTSAoQEBABPs+QiCAk9PT09PT4kJgyqBALEAgQPABrxOTk4qAoEAwAUnAQk0gAPHBrxOTkqATk5OAA==",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: deadly signal",
+  "fault_type": "deadly signal",
+  "call_stack": [
+    "#0 0x00000000005e6dda in print_address_description /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/report.c:375:2",
+    "#1 0x00000000005e7584 in __kasan_report /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/report.c:507:3",
+    "#2 0x00000000005e6af9 in kasan_report /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/common.c:636:1",
+    "#3 0x00000000005e7ccf in __asan_store4 /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/generic.c:250:1",
+    "#4 0x0000000000a60a36 in __hidinput_change_resolution_multipliers /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:0:31",
+    "#5 0x0000000000a4b8dc in hidinput_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:1615:7",
+    "#6 0x0000000000a40d00 in hid_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:1931:48",
+    "#7 0x0000000000a41818 in hid_hw_start /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2035:11",
+    "#8 0x00000000007bdb81 in hid_generic_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-generic.c:67:9",
+    "#9 0x0000000000a425d8 in hid_device_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2263:10",
+    "#10 0x0000000000755615 in really_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:566:13",
+    "#11 0x00000000007568c6 in __device_attach_driver /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:745:9",
+    "#12 0x00000000007521ad in bus_for_each_drv /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:430:11",
+    "#13 0x0000000000755c09 in __device_attach /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:918:9",
+    "#14 0x0000000000755c8e in device_initial_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:966:1",
+    "#15 0x000000000075244c in bus_probe_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:492:19",
+    "#16 0x000000000074cd35 in device_add /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/core.c:2820:6",
+    "#17 0x0000000000a43174 in hid_add_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2419:8",
+    "#18 0x0000000000a6ac58 in uhid_device_add_worker /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/uhid.c:62:8"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x00000000005e6dda in print_address_description /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/report.c:375:2",
+      "address": 6188506,
+      "function_name": "print_address_description",
+      "function_offset": 2,
+      "source_file_name": "report.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/report.c",
+      "source_file_line": 375
+    },
+    {
+      "line": "#1 0x00000000005e7584 in __kasan_report /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/report.c:507:3",
+      "address": 6190468,
+      "function_name": "__kasan_report",
+      "function_offset": 3,
+      "source_file_name": "report.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/report.c",
+      "source_file_line": 507
+    },
+    {
+      "line": "#2 0x00000000005e6af9 in kasan_report /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/common.c:636:1",
+      "address": 6187769,
+      "function_name": "kasan_report",
+      "function_offset": 1,
+      "source_file_name": "common.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/common.c",
+      "source_file_line": 636
+    },
+    {
+      "line": "#3 0x00000000005e7ccf in __asan_store4 /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/generic.c:250:1",
+      "address": 6192335,
+      "function_name": "__asan_store4",
+      "function_offset": 1,
+      "source_file_name": "generic.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/mm/kasan/generic.c",
+      "source_file_line": 250
+    },
+    {
+      "line": "#4 0x0000000000a60a36 in __hidinput_change_resolution_multipliers /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:0:31",
+      "address": 10881590,
+      "function_name": "__hidinput_change_resolution_multipliers",
+      "function_offset": 31,
+      "source_file_name": "hid-input.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c",
+      "source_file_line": 0
+    },
+    {
+      "line": "#5 0x0000000000a4b8dc in hidinput_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:1615:7",
+      "address": 10795228,
+      "function_name": "hidinput_connect",
+      "function_offset": 7,
+      "source_file_name": "hid-input.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c",
+      "source_file_line": 1615
+    },
+    {
+      "line": "#6 0x0000000000a40d00 in hid_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:1931:48",
+      "address": 10751232,
+      "function_name": "hid_connect",
+      "function_offset": 48,
+      "source_file_name": "hid-core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c",
+      "source_file_line": 1931
+    },
+    {
+      "line": "#7 0x0000000000a41818 in hid_hw_start /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2035:11",
+      "address": 10754072,
+      "function_name": "hid_hw_start",
+      "function_offset": 11,
+      "source_file_name": "hid-core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c",
+      "source_file_line": 2035
+    },
+    {
+      "line": "#8 0x00000000007bdb81 in hid_generic_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-generic.c:67:9",
+      "address": 8117121,
+      "function_name": "hid_generic_probe",
+      "function_offset": 9,
+      "source_file_name": "hid-generic.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-generic.c",
+      "source_file_line": 67
+    },
+    {
+      "line": "#9 0x0000000000a425d8 in hid_device_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2263:10",
+      "address": 10757592,
+      "function_name": "hid_device_probe",
+      "function_offset": 10,
+      "source_file_name": "hid-core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c",
+      "source_file_line": 2263
+    },
+    {
+      "line": "#10 0x0000000000755615 in really_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:566:13",
+      "address": 7689749,
+      "function_name": "really_probe",
+      "function_offset": 13,
+      "source_file_name": "dd.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c",
+      "source_file_line": 566
+    },
+    {
+      "line": "#11 0x00000000007568c6 in __device_attach_driver /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:745:9",
+      "address": 7694534,
+      "function_name": "__device_attach_driver",
+      "function_offset": 9,
+      "source_file_name": "dd.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c",
+      "source_file_line": 745
+    },
+    {
+      "line": "#12 0x00000000007521ad in bus_for_each_drv /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:430:11",
+      "address": 7676333,
+      "function_name": "bus_for_each_drv",
+      "function_offset": 11,
+      "source_file_name": "bus.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c",
+      "source_file_line": 430
+    },
+    {
+      "line": "#13 0x0000000000755c09 in __device_attach /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:918:9",
+      "address": 7691273,
+      "function_name": "__device_attach",
+      "function_offset": 9,
+      "source_file_name": "dd.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c",
+      "source_file_line": 918
+    },
+    {
+      "line": "#14 0x0000000000755c8e in device_initial_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:966:1",
+      "address": 7691406,
+      "function_name": "device_initial_probe",
+      "function_offset": 1,
+      "source_file_name": "dd.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c",
+      "source_file_line": 966
+    },
+    {
+      "line": "#15 0x000000000075244c in bus_probe_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:492:19",
+      "address": 7677004,
+      "function_name": "bus_probe_device",
+      "function_offset": 19,
+      "source_file_name": "bus.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c",
+      "source_file_line": 492
+    },
+    {
+      "line": "#16 0x000000000074cd35 in device_add /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/core.c:2820:6",
+      "address": 7654709,
+      "function_name": "device_add",
+      "function_offset": 6,
+      "source_file_name": "core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/core.c",
+      "source_file_line": 2820
+    },
+    {
+      "line": "#17 0x0000000000a43174 in hid_add_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2419:8",
+      "address": 10760564,
+      "function_name": "hid_add_device",
+      "function_offset": 8,
+      "source_file_name": "hid-core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c",
+      "source_file_line": 2419
+    },
+    {
+      "line": "#18 0x0000000000a6ac58 in uhid_device_add_worker /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/uhid.c:62:8",
+      "address": 10923096,
+      "function_name": "uhid_device_add_worker",
+      "function_offset": 8,
+      "source_file_name": "uhid.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/uhid.c",
+      "source_file_line": 62
+    }
+  ],
+  "full_stack_names": [
+    "print_address_description",
+    "__kasan_report",
+    "kasan_report",
+    "__asan_store4",
+    "__hidinput_change_resolution_multipliers",
+    "hidinput_connect",
+    "hid_connect",
+    "hid_hw_start",
+    "hid_generic_probe",
+    "hid_device_probe",
+    "really_probe",
+    "__device_attach_driver",
+    "bus_for_each_drv",
+    "__device_attach",
+    "device_initial_probe",
+    "bus_probe_device",
+    "device_add",
+    "hid_add_device",
+    "uhid_device_add_worker"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x0000000000a60a36 in __hidinput_change_resolution_multipliers /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:0:31",
+      "address": 10881590,
+      "function_name": "__hidinput_change_resolution_multipliers",
+      "function_offset": 31,
+      "source_file_name": "hid-input.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c",
+      "source_file_line": 0
+    },
+    {
+      "line": "#5 0x0000000000a4b8dc in hidinput_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:1615:7",
+      "address": 10795228,
+      "function_name": "hidinput_connect",
+      "function_offset": 7,
+      "source_file_name": "hid-input.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c",
+      "source_file_line": 1615
+    },
+    {
+      "line": "#6 0x0000000000a40d00 in hid_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:1931:48",
+      "address": 10751232,
+      "function_name": "hid_connect",
+      "function_offset": 48,
+      "source_file_name": "hid-core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c",
+      "source_file_line": 1931
+    },
+    {
+      "line": "#7 0x0000000000a41818 in hid_hw_start /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2035:11",
+      "address": 10754072,
+      "function_name": "hid_hw_start",
+      "function_offset": 11,
+      "source_file_name": "hid-core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c",
+      "source_file_line": 2035
+    },
+    {
+      "line": "#8 0x00000000007bdb81 in hid_generic_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-generic.c:67:9",
+      "address": 8117121,
+      "function_name": "hid_generic_probe",
+      "function_offset": 9,
+      "source_file_name": "hid-generic.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-generic.c",
+      "source_file_line": 67
+    },
+    {
+      "line": "#9 0x0000000000a425d8 in hid_device_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2263:10",
+      "address": 10757592,
+      "function_name": "hid_device_probe",
+      "function_offset": 10,
+      "source_file_name": "hid-core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c",
+      "source_file_line": 2263
+    },
+    {
+      "line": "#10 0x0000000000755615 in really_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:566:13",
+      "address": 7689749,
+      "function_name": "really_probe",
+      "function_offset": 13,
+      "source_file_name": "dd.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c",
+      "source_file_line": 566
+    },
+    {
+      "line": "#11 0x00000000007568c6 in __device_attach_driver /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:745:9",
+      "address": 7694534,
+      "function_name": "__device_attach_driver",
+      "function_offset": 9,
+      "source_file_name": "dd.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c",
+      "source_file_line": 745
+    },
+    {
+      "line": "#12 0x00000000007521ad in bus_for_each_drv /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:430:11",
+      "address": 7676333,
+      "function_name": "bus_for_each_drv",
+      "function_offset": 11,
+      "source_file_name": "bus.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c",
+      "source_file_line": 430
+    },
+    {
+      "line": "#13 0x0000000000755c09 in __device_attach /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:918:9",
+      "address": 7691273,
+      "function_name": "__device_attach",
+      "function_offset": 9,
+      "source_file_name": "dd.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c",
+      "source_file_line": 918
+    },
+    {
+      "line": "#14 0x0000000000755c8e in device_initial_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:966:1",
+      "address": 7691406,
+      "function_name": "device_initial_probe",
+      "function_offset": 1,
+      "source_file_name": "dd.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c",
+      "source_file_line": 966
+    },
+    {
+      "line": "#15 0x000000000075244c in bus_probe_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:492:19",
+      "address": 7677004,
+      "function_name": "bus_probe_device",
+      "function_offset": 19,
+      "source_file_name": "bus.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c",
+      "source_file_line": 492
+    },
+    {
+      "line": "#16 0x000000000074cd35 in device_add /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/core.c:2820:6",
+      "address": 7654709,
+      "function_name": "device_add",
+      "function_offset": 6,
+      "source_file_name": "core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/core.c",
+      "source_file_line": 2820
+    },
+    {
+      "line": "#17 0x0000000000a43174 in hid_add_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2419:8",
+      "address": 10760564,
+      "function_name": "hid_add_device",
+      "function_offset": 8,
+      "source_file_name": "hid-core.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c",
+      "source_file_line": 2419
+    },
+    {
+      "line": "#18 0x0000000000a6ac58 in uhid_device_add_worker /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/uhid.c:62:8",
+      "address": 10923096,
+      "function_name": "uhid_device_add_worker",
+      "function_offset": 8,
+      "source_file_name": "uhid.c",
+      "source_file_path": "/buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/uhid.c",
+      "source_file_line": 62
+    }
+  ],
+  "minimized_stack": [
+    "#4 0x0000000000a60a36 in __hidinput_change_resolution_multipliers /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:0:31",
+    "#5 0x0000000000a4b8dc in hidinput_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-input.c:1615:7",
+    "#6 0x0000000000a40d00 in hid_connect /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:1931:48",
+    "#7 0x0000000000a41818 in hid_hw_start /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2035:11",
+    "#8 0x00000000007bdb81 in hid_generic_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-generic.c:67:9",
+    "#9 0x0000000000a425d8 in hid_device_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2263:10",
+    "#10 0x0000000000755615 in really_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:566:13",
+    "#11 0x00000000007568c6 in __device_attach_driver /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:745:9",
+    "#12 0x00000000007521ad in bus_for_each_drv /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:430:11",
+    "#13 0x0000000000755c09 in __device_attach /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:918:9",
+    "#14 0x0000000000755c8e in device_initial_probe /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/dd.c:966:1",
+    "#15 0x000000000075244c in bus_probe_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/bus.c:492:19",
+    "#16 0x000000000074cd35 in device_add /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/base/core.c:2820:6",
+    "#17 0x0000000000a43174 in hid_add_device /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/hid-core.c:2419:8",
+    "#18 0x0000000000a6ac58 in uhid_device_add_worker /buildbot/src/partner-android/android12-5.4-lkl/private/lkl/drivers/hid/uhid.c:62:8"
+  ],
+  "minimized_stack_function_names": [
+    "__hidinput_change_resolution_multipliers",
+    "hidinput_connect",
+    "hid_connect",
+    "hid_hw_start",
+    "hid_generic_probe",
+    "hid_device_probe",
+    "really_probe",
+    "__device_attach_driver",
+    "bus_for_each_drv",
+    "__device_attach",
+    "device_initial_probe",
+    "bus_probe_device",
+    "device_add",
+    "hid_add_device",
+    "uhid_device_add_worker"
+  ]
+}

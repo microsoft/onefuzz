@@ -1,0 +1,598 @@
+{
+  "text": "Xlib:  extension \"RANDR\" missing on display \":1\".\nXlib:  extension \"RANDR\" missing on display \":1\".\nLaunchProcess: failed to execvp:\nxdg-desktop-menu\n../../net/quic/quic_spdy_stream.cc:39:3: runtime error: member call on address 0x15577a7fc900 which does not point to an object of type net::QuicSpdySession\n0x15577a7fc900: note: object is of type net::QuicSession\n 00 00 00 00  38 f7 74 89 0e 7f 00 00  5c 9b 8c 07 fc ff ff ff  00 00 00 00 00 00 00 00  00 00 00 00\n              ^~~~~~~~~~~~~~~~~~~~~~~\n              vptr for net::QuicSession\n    #0 0x7f0e6dace963 in net::QuicSpdyStream::~QuicSpdyStream() net/quic/quic_spdy_stream.cc:39:3\n    #1 0x7f0e6e0a05ae in net::QuicChromiumClientStream::~QuicChromiumClientStream() net/quic/quic_chromium_client_stream.cc:31:55\n    #2 0x7f0e6de287b0 in STLDeleteContainerPointers<__gnu_cxx::__normal_iterator<net::ReliableQuicStream **, std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > > base/stl_util.h:44:5\n    #3 0x7f0e6de287b0 in STLDeleteElements<std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > base/stl_util.h:135\n    #4 0x7f0e6de287b0 in net::QuicSession::~QuicSession() net/quic/quic_session.cc:62\n    #5 0x7f0e6e0a7d35 in net::QuicClientSessionBase::~QuicClientSessionBase() net/quic/quic_client_session_base.cc:27:1\n    #6 0x7f0e6e07d6bf in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:351:1\n    #7 0x7f0e6e081d6e in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:233:57\n    #8 0x7f0e6dafab8f in net::QuicStreamFactory::OnSessionClosed(net::QuicChromiumClientSession*) net/quic/quic_stream_factory.cc:1136:3\n    #9 0x7f0e6e09452f in net::QuicChromiumClientSession::NotifyFactoryOfSessionClosed() net/quic/quic_chromium_client_session.cc:1067:5\n    #10 0x7f0e6e09fca9 in Run<> base/bind_internal.h:181:12\n    #11 0x7f0e6e09fca9 in MakeItSo<base::WeakPtr<net::QuicChromiumClientSession>> base/bind_internal.h:314\n    #12 0x7f0e6e09fca9 in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()>, void (net::QuicChromiumClientSession*), base::WeakPtr<net::QuicChromiumClientSession> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:352\n    #13 0x7f0e6c8cb713 in Run base/callback.h:397:12\n    #14 0x7f0e6c8cb713 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51\n    #15 0x7f0e6c74ee55 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3\n    #16 0x7f0e6c75086a in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5\n    #17 0x7f0e6c7514b1 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13\n    #18 0x7f0e6c6c6a46 in base::MessagePumpLibevent::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_libevent.cc:229:21\n    #19 0x7f0e6c7c65d5 in base::RunLoop::Run() base/run_loop.cc:35:3\n    #20 0x7f0e6c74b336 in base::MessageLoop::Run() base/message_loop/message_loop.cc:293:3\n    #21 0x7f0e7b2ff184 in content::BrowserThreadImpl::IOThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:215:3\n    #22 0x7f0e7b2ffa4e in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:251:14\n    #23 0x7f0e6c83f390 in base::Thread::ThreadMain() base/threading/thread.cc:254:3\n    #24 0x7f0e6c82bef4 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:68:3\n    #25 0x7f0e61070181 in start_thread /build/eglibc-3GlaMS/eglibc-2.19/nptl/pthread_create.c:312\n    #26 0x7f0e5fd6b47c in clone /build/eglibc-3GlaMS/eglibc-2.19/sysdeps/unix/sysv/linux/x86_64/clone.S:111\n\nSUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ../../net/quic/quic_spdy_stream.cc:39:3 in\n",
+  "sanitizer": "UndefinedBehaviorSanitizer",
+  "summary": "UndefinedBehaviorSanitizer: undefined-behavior ../../net/quic/quic_spdy_stream.cc:39:3 in",
+  "fault_type": "undefined-behavior",
+  "call_stack": [
+    "#0 0x7f0e6dace963 in net::QuicSpdyStream::~QuicSpdyStream() net/quic/quic_spdy_stream.cc:39:3",
+    "#1 0x7f0e6e0a05ae in net::QuicChromiumClientStream::~QuicChromiumClientStream() net/quic/quic_chromium_client_stream.cc:31:55",
+    "#2 0x7f0e6de287b0 in STLDeleteContainerPointers<__gnu_cxx::__normal_iterator<net::ReliableQuicStream **, std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > > base/stl_util.h:44:5",
+    "#3 0x7f0e6de287b0 in STLDeleteElements<std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > base/stl_util.h:135",
+    "#4 0x7f0e6de287b0 in net::QuicSession::~QuicSession() net/quic/quic_session.cc:62",
+    "#5 0x7f0e6e0a7d35 in net::QuicClientSessionBase::~QuicClientSessionBase() net/quic/quic_client_session_base.cc:27:1",
+    "#6 0x7f0e6e07d6bf in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:351:1",
+    "#7 0x7f0e6e081d6e in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:233:57",
+    "#8 0x7f0e6dafab8f in net::QuicStreamFactory::OnSessionClosed(net::QuicChromiumClientSession*) net/quic/quic_stream_factory.cc:1136:3",
+    "#9 0x7f0e6e09452f in net::QuicChromiumClientSession::NotifyFactoryOfSessionClosed() net/quic/quic_chromium_client_session.cc:1067:5",
+    "#10 0x7f0e6e09fca9 in Run<> base/bind_internal.h:181:12",
+    "#11 0x7f0e6e09fca9 in MakeItSo<base::WeakPtr<net::QuicChromiumClientSession>> base/bind_internal.h:314",
+    "#12 0x7f0e6e09fca9 in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()>, void (net::QuicChromiumClientSession*), base::WeakPtr<net::QuicChromiumClientSession> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:352",
+    "#13 0x7f0e6c8cb713 in Run base/callback.h:397:12",
+    "#14 0x7f0e6c8cb713 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51",
+    "#15 0x7f0e6c74ee55 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3",
+    "#16 0x7f0e6c75086a in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5",
+    "#17 0x7f0e6c7514b1 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13",
+    "#18 0x7f0e6c6c6a46 in base::MessagePumpLibevent::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_libevent.cc:229:21",
+    "#19 0x7f0e6c7c65d5 in base::RunLoop::Run() base/run_loop.cc:35:3",
+    "#20 0x7f0e6c74b336 in base::MessageLoop::Run() base/message_loop/message_loop.cc:293:3",
+    "#21 0x7f0e7b2ff184 in content::BrowserThreadImpl::IOThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:215:3",
+    "#22 0x7f0e7b2ffa4e in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:251:14",
+    "#23 0x7f0e6c83f390 in base::Thread::ThreadMain() base/threading/thread.cc:254:3",
+    "#24 0x7f0e6c82bef4 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:68:3",
+    "#25 0x7f0e61070181 in start_thread /build/eglibc-3GlaMS/eglibc-2.19/nptl/pthread_create.c:312",
+    "#26 0x7f0e5fd6b47c in clone /build/eglibc-3GlaMS/eglibc-2.19/sysdeps/unix/sysv/linux/x86_64/clone.S:111"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f0e6dace963 in net::QuicSpdyStream::~QuicSpdyStream() net/quic/quic_spdy_stream.cc:39:3",
+      "address": 139699946318179,
+      "function_name": "net::QuicSpdyStream::~QuicSpdyStream()",
+      "function_offset": 3,
+      "source_file_name": "quic_spdy_stream.cc",
+      "source_file_path": "net/quic/quic_spdy_stream.cc",
+      "source_file_line": 39
+    },
+    {
+      "line": "#1 0x7f0e6e0a05ae in net::QuicChromiumClientStream::~QuicChromiumClientStream() net/quic/quic_chromium_client_stream.cc:31:55",
+      "address": 139699952420270,
+      "function_name": "net::QuicChromiumClientStream::~QuicChromiumClientStream()",
+      "function_offset": 55,
+      "source_file_name": "quic_chromium_client_stream.cc",
+      "source_file_path": "net/quic/quic_chromium_client_stream.cc",
+      "source_file_line": 31
+    },
+    {
+      "line": "#2 0x7f0e6de287b0 in STLDeleteContainerPointers<__gnu_cxx::__normal_iterator<net::ReliableQuicStream **, std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > > base/stl_util.h:44:5",
+      "address": 139699949832112,
+      "function_name": "STLDeleteContainerPointers<__gnu_cxx::__normal_iterator<net::ReliableQuicStream **, std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > >",
+      "function_offset": 5,
+      "source_file_name": "stl_util.h",
+      "source_file_path": "base/stl_util.h",
+      "source_file_line": 44
+    },
+    {
+      "line": "#3 0x7f0e6de287b0 in STLDeleteElements<std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > base/stl_util.h:135",
+      "address": 139699949832112,
+      "function_name": "STLDeleteElements<std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > >",
+      "source_file_name": "stl_util.h",
+      "source_file_path": "base/stl_util.h",
+      "source_file_line": 135
+    },
+    {
+      "line": "#4 0x7f0e6de287b0 in net::QuicSession::~QuicSession() net/quic/quic_session.cc:62",
+      "address": 139699949832112,
+      "function_name": "net::QuicSession::~QuicSession()",
+      "source_file_name": "quic_session.cc",
+      "source_file_path": "net/quic/quic_session.cc",
+      "source_file_line": 62
+    },
+    {
+      "line": "#5 0x7f0e6e0a7d35 in net::QuicClientSessionBase::~QuicClientSessionBase() net/quic/quic_client_session_base.cc:27:1",
+      "address": 139699952450869,
+      "function_name": "net::QuicClientSessionBase::~QuicClientSessionBase()",
+      "function_offset": 1,
+      "source_file_name": "quic_client_session_base.cc",
+      "source_file_path": "net/quic/quic_client_session_base.cc",
+      "source_file_line": 27
+    },
+    {
+      "line": "#6 0x7f0e6e07d6bf in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:351:1",
+      "address": 139699952277183,
+      "function_name": "net::QuicChromiumClientSession::~QuicChromiumClientSession()",
+      "function_offset": 1,
+      "source_file_name": "quic_chromium_client_session.cc",
+      "source_file_path": "net/quic/quic_chromium_client_session.cc",
+      "source_file_line": 351
+    },
+    {
+      "line": "#7 0x7f0e6e081d6e in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:233:57",
+      "address": 139699952295278,
+      "function_name": "net::QuicChromiumClientSession::~QuicChromiumClientSession()",
+      "function_offset": 57,
+      "source_file_name": "quic_chromium_client_session.cc",
+      "source_file_path": "net/quic/quic_chromium_client_session.cc",
+      "source_file_line": 233
+    },
+    {
+      "line": "#8 0x7f0e6dafab8f in net::QuicStreamFactory::OnSessionClosed(net::QuicChromiumClientSession*) net/quic/quic_stream_factory.cc:1136:3",
+      "address": 139699946498959,
+      "function_name": "net::QuicStreamFactory::OnSessionClosed(net::QuicChromiumClientSession*)",
+      "function_offset": 3,
+      "source_file_name": "quic_stream_factory.cc",
+      "source_file_path": "net/quic/quic_stream_factory.cc",
+      "source_file_line": 1136
+    },
+    {
+      "line": "#9 0x7f0e6e09452f in net::QuicChromiumClientSession::NotifyFactoryOfSessionClosed() net/quic/quic_chromium_client_session.cc:1067:5",
+      "address": 139699952370991,
+      "function_name": "net::QuicChromiumClientSession::NotifyFactoryOfSessionClosed()",
+      "function_offset": 5,
+      "source_file_name": "quic_chromium_client_session.cc",
+      "source_file_path": "net/quic/quic_chromium_client_session.cc",
+      "source_file_line": 1067
+    },
+    {
+      "line": "#10 0x7f0e6e09fca9 in Run<> base/bind_internal.h:181:12",
+      "address": 139699952417961,
+      "function_name": "Run<>",
+      "function_offset": 12,
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 181
+    },
+    {
+      "line": "#11 0x7f0e6e09fca9 in MakeItSo<base::WeakPtr<net::QuicChromiumClientSession>> base/bind_internal.h:314",
+      "address": 139699952417961,
+      "function_name": "MakeItSo<base::WeakPtr<net::QuicChromiumClientSession>>",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 314
+    },
+    {
+      "line": "#12 0x7f0e6e09fca9 in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()>, void (net::QuicChromiumClientSession*), base::WeakPtr<net::QuicChromiumClientSession> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:352",
+      "address": 139699952417961,
+      "function_name": "base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()>, void (net::QuicChromiumClientSession*), base::WeakPtr<net::QuicChromiumClientSession> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()> >, void ()>::Run(base::internal::BindStateBase*)",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 352
+    },
+    {
+      "line": "#13 0x7f0e6c8cb713 in Run base/callback.h:397:12",
+      "address": 139699927430931,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 397
+    },
+    {
+      "line": "#14 0x7f0e6c8cb713 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51",
+      "address": 139699927430931,
+      "function_name": "base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&)",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 51
+    },
+    {
+      "line": "#15 0x7f0e6c74ee55 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3",
+      "address": 139699925872213,
+      "function_name": "base::MessageLoop::RunTask(base::PendingTask const&)",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 476
+    },
+    {
+      "line": "#16 0x7f0e6c75086a in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5",
+      "address": 139699925878890,
+      "function_name": "base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&)",
+      "function_offset": 5,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 485
+    },
+    {
+      "line": "#17 0x7f0e6c7514b1 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13",
+      "address": 139699925882033,
+      "function_name": "base::MessageLoop::DoWork()",
+      "function_offset": 13,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 597
+    },
+    {
+      "line": "#18 0x7f0e6c6c6a46 in base::MessagePumpLibevent::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_libevent.cc:229:21",
+      "address": 139699925314118,
+      "function_name": "base::MessagePumpLibevent::Run(base::MessagePump::Delegate*)",
+      "function_offset": 21,
+      "source_file_name": "message_pump_libevent.cc",
+      "source_file_path": "base/message_loop/message_pump_libevent.cc",
+      "source_file_line": 229
+    },
+    {
+      "line": "#19 0x7f0e6c7c65d5 in base::RunLoop::Run() base/run_loop.cc:35:3",
+      "address": 139699926361557,
+      "function_name": "base::RunLoop::Run()",
+      "function_offset": 3,
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#20 0x7f0e6c74b336 in base::MessageLoop::Run() base/message_loop/message_loop.cc:293:3",
+      "address": 139699925857078,
+      "function_name": "base::MessageLoop::Run()",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 293
+    },
+    {
+      "line": "#21 0x7f0e7b2ff184 in content::BrowserThreadImpl::IOThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:215:3",
+      "address": 139700173009284,
+      "function_name": "content::BrowserThreadImpl::IOThreadRun(base::MessageLoop*)",
+      "function_offset": 3,
+      "source_file_name": "browser_thread_impl.cc",
+      "source_file_path": "content/browser/browser_thread_impl.cc",
+      "source_file_line": 215
+    },
+    {
+      "line": "#22 0x7f0e7b2ffa4e in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:251:14",
+      "address": 139700173011534,
+      "function_name": "content::BrowserThreadImpl::Run(base::MessageLoop*)",
+      "function_offset": 14,
+      "source_file_name": "browser_thread_impl.cc",
+      "source_file_path": "content/browser/browser_thread_impl.cc",
+      "source_file_line": 251
+    },
+    {
+      "line": "#23 0x7f0e6c83f390 in base::Thread::ThreadMain() base/threading/thread.cc:254:3",
+      "address": 139699926856592,
+      "function_name": "base::Thread::ThreadMain()",
+      "function_offset": 3,
+      "source_file_name": "thread.cc",
+      "source_file_path": "base/threading/thread.cc",
+      "source_file_line": 254
+    },
+    {
+      "line": "#24 0x7f0e6c82bef4 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:68:3",
+      "address": 139699926777588,
+      "function_name": "base::(anonymous namespace)::ThreadFunc(void*)",
+      "function_offset": 3,
+      "source_file_name": "platform_thread_posix.cc",
+      "source_file_path": "base/threading/platform_thread_posix.cc",
+      "source_file_line": 68
+    },
+    {
+      "line": "#25 0x7f0e61070181 in start_thread /build/eglibc-3GlaMS/eglibc-2.19/nptl/pthread_create.c:312",
+      "address": 139699734118785,
+      "function_name": "start_thread",
+      "source_file_name": "pthread_create.c",
+      "source_file_path": "/build/eglibc-3GlaMS/eglibc-2.19/nptl/pthread_create.c",
+      "source_file_line": 312
+    },
+    {
+      "line": "#26 0x7f0e5fd6b47c in clone /build/eglibc-3GlaMS/eglibc-2.19/sysdeps/unix/sysv/linux/x86_64/clone.S:111",
+      "address": 139699714176124,
+      "function_name": "clone",
+      "source_file_name": "clone.S",
+      "source_file_path": "/build/eglibc-3GlaMS/eglibc-2.19/sysdeps/unix/sysv/linux/x86_64/clone.S",
+      "source_file_line": 111
+    }
+  ],
+  "full_stack_names": [
+    "net::QuicSpdyStream::~QuicSpdyStream",
+    "net::QuicChromiumClientStream::~QuicChromiumClientStream",
+    "STLDeleteContainerPointers<__gnu_cxx::__normal_iterator<net::ReliableQuicStream **, std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > >",
+    "STLDeleteElements<std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > >",
+    "net::QuicSession::~QuicSession",
+    "net::QuicClientSessionBase::~QuicClientSessionBase",
+    "net::QuicChromiumClientSession::~QuicChromiumClientSession",
+    "net::QuicChromiumClientSession::~QuicChromiumClientSession",
+    "net::QuicStreamFactory::OnSessionClosed",
+    "net::QuicChromiumClientSession::NotifyFactoryOfSessionClosed",
+    "Run<>",
+    "MakeItSo<base::WeakPtr<net::QuicChromiumClientSession>>",
+    "base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "Run",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpLibevent::Run",
+    "base::RunLoop::Run",
+    "base::MessageLoop::Run",
+    "content::BrowserThreadImpl::IOThreadRun",
+    "content::BrowserThreadImpl::Run",
+    "base::Thread::ThreadMain",
+    "base::",
+    "start_thread",
+    "clone"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x7f0e6dace963 in net::QuicSpdyStream::~QuicSpdyStream() net/quic/quic_spdy_stream.cc:39:3",
+      "address": 139699946318179,
+      "function_name": "net::QuicSpdyStream::~QuicSpdyStream()",
+      "function_offset": 3,
+      "source_file_name": "quic_spdy_stream.cc",
+      "source_file_path": "net/quic/quic_spdy_stream.cc",
+      "source_file_line": 39
+    },
+    {
+      "line": "#1 0x7f0e6e0a05ae in net::QuicChromiumClientStream::~QuicChromiumClientStream() net/quic/quic_chromium_client_stream.cc:31:55",
+      "address": 139699952420270,
+      "function_name": "net::QuicChromiumClientStream::~QuicChromiumClientStream()",
+      "function_offset": 55,
+      "source_file_name": "quic_chromium_client_stream.cc",
+      "source_file_path": "net/quic/quic_chromium_client_stream.cc",
+      "source_file_line": 31
+    },
+    {
+      "line": "#2 0x7f0e6de287b0 in STLDeleteContainerPointers<__gnu_cxx::__normal_iterator<net::ReliableQuicStream **, std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > > base/stl_util.h:44:5",
+      "address": 139699949832112,
+      "function_name": "STLDeleteContainerPointers<__gnu_cxx::__normal_iterator<net::ReliableQuicStream **, std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > >",
+      "function_offset": 5,
+      "source_file_name": "stl_util.h",
+      "source_file_path": "base/stl_util.h",
+      "source_file_line": 44
+    },
+    {
+      "line": "#3 0x7f0e6de287b0 in STLDeleteElements<std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > base/stl_util.h:135",
+      "address": 139699949832112,
+      "function_name": "STLDeleteElements<std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > >",
+      "source_file_name": "stl_util.h",
+      "source_file_path": "base/stl_util.h",
+      "source_file_line": 135
+    },
+    {
+      "line": "#4 0x7f0e6de287b0 in net::QuicSession::~QuicSession() net/quic/quic_session.cc:62",
+      "address": 139699949832112,
+      "function_name": "net::QuicSession::~QuicSession()",
+      "source_file_name": "quic_session.cc",
+      "source_file_path": "net/quic/quic_session.cc",
+      "source_file_line": 62
+    },
+    {
+      "line": "#5 0x7f0e6e0a7d35 in net::QuicClientSessionBase::~QuicClientSessionBase() net/quic/quic_client_session_base.cc:27:1",
+      "address": 139699952450869,
+      "function_name": "net::QuicClientSessionBase::~QuicClientSessionBase()",
+      "function_offset": 1,
+      "source_file_name": "quic_client_session_base.cc",
+      "source_file_path": "net/quic/quic_client_session_base.cc",
+      "source_file_line": 27
+    },
+    {
+      "line": "#6 0x7f0e6e07d6bf in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:351:1",
+      "address": 139699952277183,
+      "function_name": "net::QuicChromiumClientSession::~QuicChromiumClientSession()",
+      "function_offset": 1,
+      "source_file_name": "quic_chromium_client_session.cc",
+      "source_file_path": "net/quic/quic_chromium_client_session.cc",
+      "source_file_line": 351
+    },
+    {
+      "line": "#7 0x7f0e6e081d6e in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:233:57",
+      "address": 139699952295278,
+      "function_name": "net::QuicChromiumClientSession::~QuicChromiumClientSession()",
+      "function_offset": 57,
+      "source_file_name": "quic_chromium_client_session.cc",
+      "source_file_path": "net/quic/quic_chromium_client_session.cc",
+      "source_file_line": 233
+    },
+    {
+      "line": "#8 0x7f0e6dafab8f in net::QuicStreamFactory::OnSessionClosed(net::QuicChromiumClientSession*) net/quic/quic_stream_factory.cc:1136:3",
+      "address": 139699946498959,
+      "function_name": "net::QuicStreamFactory::OnSessionClosed(net::QuicChromiumClientSession*)",
+      "function_offset": 3,
+      "source_file_name": "quic_stream_factory.cc",
+      "source_file_path": "net/quic/quic_stream_factory.cc",
+      "source_file_line": 1136
+    },
+    {
+      "line": "#9 0x7f0e6e09452f in net::QuicChromiumClientSession::NotifyFactoryOfSessionClosed() net/quic/quic_chromium_client_session.cc:1067:5",
+      "address": 139699952370991,
+      "function_name": "net::QuicChromiumClientSession::NotifyFactoryOfSessionClosed()",
+      "function_offset": 5,
+      "source_file_name": "quic_chromium_client_session.cc",
+      "source_file_path": "net/quic/quic_chromium_client_session.cc",
+      "source_file_line": 1067
+    },
+    {
+      "line": "#10 0x7f0e6e09fca9 in Run<> base/bind_internal.h:181:12",
+      "address": 139699952417961,
+      "function_name": "Run<>",
+      "function_offset": 12,
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 181
+    },
+    {
+      "line": "#11 0x7f0e6e09fca9 in MakeItSo<base::WeakPtr<net::QuicChromiumClientSession>> base/bind_internal.h:314",
+      "address": 139699952417961,
+      "function_name": "MakeItSo<base::WeakPtr<net::QuicChromiumClientSession>>",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 314
+    },
+    {
+      "line": "#12 0x7f0e6e09fca9 in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()>, void (net::QuicChromiumClientSession*), base::WeakPtr<net::QuicChromiumClientSession> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:352",
+      "address": 139699952417961,
+      "function_name": "base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()>, void (net::QuicChromiumClientSession*), base::WeakPtr<net::QuicChromiumClientSession> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()> >, void ()>::Run(base::internal::BindStateBase*)",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 352
+    },
+    {
+      "line": "#13 0x7f0e6c8cb713 in Run base/callback.h:397:12",
+      "address": 139699927430931,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 397
+    },
+    {
+      "line": "#14 0x7f0e6c8cb713 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51",
+      "address": 139699927430931,
+      "function_name": "base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&)",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 51
+    },
+    {
+      "line": "#15 0x7f0e6c74ee55 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3",
+      "address": 139699925872213,
+      "function_name": "base::MessageLoop::RunTask(base::PendingTask const&)",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 476
+    },
+    {
+      "line": "#16 0x7f0e6c75086a in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5",
+      "address": 139699925878890,
+      "function_name": "base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&)",
+      "function_offset": 5,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 485
+    },
+    {
+      "line": "#17 0x7f0e6c7514b1 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13",
+      "address": 139699925882033,
+      "function_name": "base::MessageLoop::DoWork()",
+      "function_offset": 13,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 597
+    },
+    {
+      "line": "#18 0x7f0e6c6c6a46 in base::MessagePumpLibevent::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_libevent.cc:229:21",
+      "address": 139699925314118,
+      "function_name": "base::MessagePumpLibevent::Run(base::MessagePump::Delegate*)",
+      "function_offset": 21,
+      "source_file_name": "message_pump_libevent.cc",
+      "source_file_path": "base/message_loop/message_pump_libevent.cc",
+      "source_file_line": 229
+    },
+    {
+      "line": "#19 0x7f0e6c7c65d5 in base::RunLoop::Run() base/run_loop.cc:35:3",
+      "address": 139699926361557,
+      "function_name": "base::RunLoop::Run()",
+      "function_offset": 3,
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#20 0x7f0e6c74b336 in base::MessageLoop::Run() base/message_loop/message_loop.cc:293:3",
+      "address": 139699925857078,
+      "function_name": "base::MessageLoop::Run()",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 293
+    },
+    {
+      "line": "#21 0x7f0e7b2ff184 in content::BrowserThreadImpl::IOThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:215:3",
+      "address": 139700173009284,
+      "function_name": "content::BrowserThreadImpl::IOThreadRun(base::MessageLoop*)",
+      "function_offset": 3,
+      "source_file_name": "browser_thread_impl.cc",
+      "source_file_path": "content/browser/browser_thread_impl.cc",
+      "source_file_line": 215
+    },
+    {
+      "line": "#22 0x7f0e7b2ffa4e in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:251:14",
+      "address": 139700173011534,
+      "function_name": "content::BrowserThreadImpl::Run(base::MessageLoop*)",
+      "function_offset": 14,
+      "source_file_name": "browser_thread_impl.cc",
+      "source_file_path": "content/browser/browser_thread_impl.cc",
+      "source_file_line": 251
+    },
+    {
+      "line": "#23 0x7f0e6c83f390 in base::Thread::ThreadMain() base/threading/thread.cc:254:3",
+      "address": 139699926856592,
+      "function_name": "base::Thread::ThreadMain()",
+      "function_offset": 3,
+      "source_file_name": "thread.cc",
+      "source_file_path": "base/threading/thread.cc",
+      "source_file_line": 254
+    },
+    {
+      "line": "#24 0x7f0e6c82bef4 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:68:3",
+      "address": 139699926777588,
+      "function_name": "base::(anonymous namespace)::ThreadFunc(void*)",
+      "function_offset": 3,
+      "source_file_name": "platform_thread_posix.cc",
+      "source_file_path": "base/threading/platform_thread_posix.cc",
+      "source_file_line": 68
+    },
+    {
+      "line": "#25 0x7f0e61070181 in start_thread /build/eglibc-3GlaMS/eglibc-2.19/nptl/pthread_create.c:312",
+      "address": 139699734118785,
+      "function_name": "start_thread",
+      "source_file_name": "pthread_create.c",
+      "source_file_path": "/build/eglibc-3GlaMS/eglibc-2.19/nptl/pthread_create.c",
+      "source_file_line": 312
+    },
+    {
+      "line": "#26 0x7f0e5fd6b47c in clone /build/eglibc-3GlaMS/eglibc-2.19/sysdeps/unix/sysv/linux/x86_64/clone.S:111",
+      "address": 139699714176124,
+      "function_name": "clone",
+      "source_file_name": "clone.S",
+      "source_file_path": "/build/eglibc-3GlaMS/eglibc-2.19/sysdeps/unix/sysv/linux/x86_64/clone.S",
+      "source_file_line": 111
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x7f0e6dace963 in net::QuicSpdyStream::~QuicSpdyStream() net/quic/quic_spdy_stream.cc:39:3",
+    "#1 0x7f0e6e0a05ae in net::QuicChromiumClientStream::~QuicChromiumClientStream() net/quic/quic_chromium_client_stream.cc:31:55",
+    "#2 0x7f0e6de287b0 in STLDeleteContainerPointers<__gnu_cxx::__normal_iterator<net::ReliableQuicStream **, std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > > base/stl_util.h:44:5",
+    "#3 0x7f0e6de287b0 in STLDeleteElements<std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > base/stl_util.h:135",
+    "#4 0x7f0e6de287b0 in net::QuicSession::~QuicSession() net/quic/quic_session.cc:62",
+    "#5 0x7f0e6e0a7d35 in net::QuicClientSessionBase::~QuicClientSessionBase() net/quic/quic_client_session_base.cc:27:1",
+    "#6 0x7f0e6e07d6bf in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:351:1",
+    "#7 0x7f0e6e081d6e in net::QuicChromiumClientSession::~QuicChromiumClientSession() net/quic/quic_chromium_client_session.cc:233:57",
+    "#8 0x7f0e6dafab8f in net::QuicStreamFactory::OnSessionClosed(net::QuicChromiumClientSession*) net/quic/quic_stream_factory.cc:1136:3",
+    "#9 0x7f0e6e09452f in net::QuicChromiumClientSession::NotifyFactoryOfSessionClosed() net/quic/quic_chromium_client_session.cc:1067:5",
+    "#10 0x7f0e6e09fca9 in Run<> base/bind_internal.h:181:12",
+    "#11 0x7f0e6e09fca9 in MakeItSo<base::WeakPtr<net::QuicChromiumClientSession>> base/bind_internal.h:314",
+    "#12 0x7f0e6e09fca9 in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()>, void (net::QuicChromiumClientSession*), base::WeakPtr<net::QuicChromiumClientSession> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (net::QuicChromiumClientSession::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:352",
+    "#13 0x7f0e6c8cb713 in Run base/callback.h:397:12",
+    "#14 0x7f0e6c8cb713 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51",
+    "#15 0x7f0e6c74ee55 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3",
+    "#16 0x7f0e6c75086a in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5",
+    "#17 0x7f0e6c7514b1 in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13",
+    "#18 0x7f0e6c6c6a46 in base::MessagePumpLibevent::Run(base::MessagePump::Delegate*) base/message_loop/message_pump_libevent.cc:229:21",
+    "#19 0x7f0e6c7c65d5 in base::RunLoop::Run() base/run_loop.cc:35:3",
+    "#20 0x7f0e6c74b336 in base::MessageLoop::Run() base/message_loop/message_loop.cc:293:3",
+    "#21 0x7f0e7b2ff184 in content::BrowserThreadImpl::IOThreadRun(base::MessageLoop*) content/browser/browser_thread_impl.cc:215:3",
+    "#22 0x7f0e7b2ffa4e in content::BrowserThreadImpl::Run(base::MessageLoop*) content/browser/browser_thread_impl.cc:251:14",
+    "#23 0x7f0e6c83f390 in base::Thread::ThreadMain() base/threading/thread.cc:254:3",
+    "#24 0x7f0e6c82bef4 in base::(anonymous namespace)::ThreadFunc(void*) base/threading/platform_thread_posix.cc:68:3",
+    "#25 0x7f0e61070181 in start_thread /build/eglibc-3GlaMS/eglibc-2.19/nptl/pthread_create.c:312",
+    "#26 0x7f0e5fd6b47c in clone /build/eglibc-3GlaMS/eglibc-2.19/sysdeps/unix/sysv/linux/x86_64/clone.S:111"
+  ],
+  "minimized_stack_function_names": [
+    "net::QuicSpdyStream::~QuicSpdyStream",
+    "net::QuicChromiumClientStream::~QuicChromiumClientStream",
+    "STLDeleteContainerPointers<__gnu_cxx::__normal_iterator<net::ReliableQuicStream **, std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > > >",
+    "STLDeleteElements<std::vector<net::ReliableQuicStream *, std::allocator<net::ReliableQuicStream *> > >",
+    "net::QuicSession::~QuicSession",
+    "net::QuicClientSessionBase::~QuicClientSessionBase",
+    "net::QuicChromiumClientSession::~QuicChromiumClientSession",
+    "net::QuicChromiumClientSession::~QuicChromiumClientSession",
+    "net::QuicStreamFactory::OnSessionClosed",
+    "net::QuicChromiumClientSession::NotifyFactoryOfSessionClosed",
+    "Run<>",
+    "MakeItSo<base::WeakPtr<net::QuicChromiumClientSession>>",
+    "base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "Run",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpLibevent::Run",
+    "base::RunLoop::Run",
+    "base::MessageLoop::Run",
+    "content::BrowserThreadImpl::IOThreadRun",
+    "content::BrowserThreadImpl::Run",
+    "base::Thread::ThreadMain",
+    "base::",
+    "start_thread",
+    "clone"
+  ]
+}

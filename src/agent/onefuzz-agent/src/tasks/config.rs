@@ -2,7 +2,11 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::large_enum_variant)]
-use crate::tasks::{analysis, coverage, fuzz, heartbeat::*, merge, report};
+use crate::tasks::{
+    analysis, coverage, fuzz,
+    heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
+    merge, regression, report,
+};
 use anyhow::Result;
 use onefuzz::machine_id::{get_machine_id, get_scaleset_name};
 use onefuzz_telemetry::{
@@ -31,12 +35,8 @@ pub struct CommonConfig {
 
     pub heartbeat_queue: Option<Url>,
 
-    // TODO: remove the alias once the service has been updated to match
-    #[serde(alias = "instrumentation_key")]
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
 
-    // TODO: remove the alias once the service has been updated to match
-    #[serde(alias = "telemetry_key")]
     pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
 
     #[serde(default)]
@@ -70,6 +70,9 @@ pub enum Config {
     #[serde(alias = "libfuzzer_coverage")]
     LibFuzzerCoverage(coverage::libfuzzer_coverage::Config),
 
+    #[serde(alias = "libfuzzer_regression")]
+    LibFuzzerRegression(regression::libfuzzer::Config),
+
     #[serde(alias = "generic_analysis")]
     GenericAnalysis(analysis::generic::Config),
 
@@ -84,6 +87,9 @@ pub enum Config {
 
     #[serde(alias = "generic_crash_report")]
     GenericReport(report::generic::Config),
+
+    #[serde(alias = "generic_regression")]
+    GenericRegression(regression::generic::Config),
 }
 
 impl Config {
@@ -104,11 +110,13 @@ impl Config {
             Config::LibFuzzerMerge(c) => &mut c.common,
             Config::LibFuzzerReport(c) => &mut c.common,
             Config::LibFuzzerCoverage(c) => &mut c.common,
+            Config::LibFuzzerRegression(c) => &mut c.common,
             Config::GenericAnalysis(c) => &mut c.common,
             Config::GenericMerge(c) => &mut c.common,
             Config::GenericReport(c) => &mut c.common,
             Config::GenericSupervisor(c) => &mut c.common,
             Config::GenericGenerator(c) => &mut c.common,
+            Config::GenericRegression(c) => &mut c.common,
         }
     }
 
@@ -118,11 +126,13 @@ impl Config {
             Config::LibFuzzerMerge(c) => &c.common,
             Config::LibFuzzerReport(c) => &c.common,
             Config::LibFuzzerCoverage(c) => &c.common,
+            Config::LibFuzzerRegression(c) => &c.common,
             Config::GenericAnalysis(c) => &c.common,
             Config::GenericMerge(c) => &c.common,
             Config::GenericReport(c) => &c.common,
             Config::GenericSupervisor(c) => &c.common,
             Config::GenericGenerator(c) => &c.common,
+            Config::GenericRegression(c) => &c.common,
         }
     }
 
@@ -132,11 +142,13 @@ impl Config {
             Config::LibFuzzerMerge(_) => "libfuzzer_merge",
             Config::LibFuzzerReport(_) => "libfuzzer_crash_report",
             Config::LibFuzzerCoverage(_) => "libfuzzer_coverage",
+            Config::LibFuzzerRegression(_) => "libfuzzer_regression",
             Config::GenericAnalysis(_) => "generic_analysis",
             Config::GenericMerge(_) => "generic_merge",
             Config::GenericReport(_) => "generic_crash_report",
             Config::GenericSupervisor(_) => "generic_supervisor",
             Config::GenericGenerator(_) => "generic_generator",
+            Config::GenericRegression(_) => "generic_regression",
         };
 
         match self {
@@ -170,7 +182,7 @@ impl Config {
         match self {
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
-                    .managed_run()
+                    .run()
                     .await
             }
             Config::LibFuzzerReport(config) => {
@@ -192,6 +204,16 @@ impl Config {
             Config::GenericMerge(config) => merge::generic::spawn(Arc::new(config)).await,
             Config::GenericReport(config) => {
                 report::generic::ReportTask::new(config).managed_run().await
+            }
+            Config::GenericRegression(config) => {
+                regression::generic::GenericRegressionTask::new(config)
+                    .run()
+                    .await
+            }
+            Config::LibFuzzerRegression(config) => {
+                regression::libfuzzer::LibFuzzerRegressionTask::new(config)
+                    .run()
+                    .await
             }
         }
     }

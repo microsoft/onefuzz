@@ -1,0 +1,231 @@
+{
+  "text": "GLib:ERROR:../../src/glib/glib/gvariant-parser.c:709:ast_array_get_pattern: assertion failed: (j < i)\nUndefinedBehaviorSanitizer:DEADLYSIGNAL\n==1==ERROR: UndefinedBehaviorSanitizer: ABRT on unknown address 0x000000000001 (pc 0x7f2c2a6aa428 bp 0x7ffd4a2c6d90 sp 0x7ffd4a2c6bf8 T1)\n    #0 0x7f2c2a6aa427 in gsignal /build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54\n    #1 0x7f2c2a6ac029 in abort /build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c:89\n    #2 0x447348 in g_assertion_message /src/glib/glib/gtestutils.c:2621:5\n    #3 0x4473d3 in g_assertion_message_expr /src/glib/glib/gtestutils.c:2644:3\n    #4 0x46c316 in ast_array_get_pattern /src/glib/glib/gvariant-parser.c:709:15\n    #5 0x46bb76 in array_get_pattern /src/glib/glib/gvariant-parser.c:889:13\n    #6 0x467ef9 in ast_resolve /src/glib/glib/gvariant-parser.c:595:13\n    #7 0x467967 in g_variant_parse /src/glib/glib/gvariant-parser.c:2395:18\n    #8 0x4336ce in LLVMFuzzerTestOneInput /src/glib/fuzzing/fuzz_variant_text.c:12:13\n    #9 0x4b8948 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:571:15\n    #10 0x4a8f62 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6\n    #11 0x4acbdb in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:713:9\n    #12 0x4a8ce8 in main /src/libfuzzer/FuzzerMain.cpp:20:10\n    #13 0x7f2c2a69582f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291\n    #14 0x408138 in _start\nUndefinedBehaviorSanitizer can not provide additional info.\nSUMMARY: UndefinedBehaviorSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35427)\n==1==ABORTING\n",
+  "sanitizer": "UndefinedBehaviorSanitizer",
+  "summary": "UndefinedBehaviorSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35427)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7f2c2a6aa427 in gsignal /build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+    "#1 0x7f2c2a6ac029 in abort /build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c:89",
+    "#2 0x447348 in g_assertion_message /src/glib/glib/gtestutils.c:2621:5",
+    "#3 0x4473d3 in g_assertion_message_expr /src/glib/glib/gtestutils.c:2644:3",
+    "#4 0x46c316 in ast_array_get_pattern /src/glib/glib/gvariant-parser.c:709:15",
+    "#5 0x46bb76 in array_get_pattern /src/glib/glib/gvariant-parser.c:889:13",
+    "#6 0x467ef9 in ast_resolve /src/glib/glib/gvariant-parser.c:595:13",
+    "#7 0x467967 in g_variant_parse /src/glib/glib/gvariant-parser.c:2395:18",
+    "#8 0x4336ce in LLVMFuzzerTestOneInput /src/glib/fuzzing/fuzz_variant_text.c:12:13",
+    "#9 0x4b8948 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:571:15",
+    "#10 0x4a8f62 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6",
+    "#11 0x4acbdb in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:713:9",
+    "#12 0x4a8ce8 in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+    "#13 0x7f2c2a69582f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291",
+    "#14 0x408138 in _start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f2c2a6aa427 in gsignal /build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+      "address": 139827666920487,
+      "function_name": "gsignal",
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
+    },
+    {
+      "line": "#1 0x7f2c2a6ac029 in abort /build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c:89",
+      "address": 139827666927657,
+      "function_name": "abort",
+      "source_file_name": "abort.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c",
+      "source_file_line": 89
+    },
+    {
+      "line": "#2 0x447348 in g_assertion_message /src/glib/glib/gtestutils.c:2621:5",
+      "address": 4485960,
+      "function_name": "g_assertion_message",
+      "function_offset": 5,
+      "source_file_name": "gtestutils.c",
+      "source_file_path": "/src/glib/glib/gtestutils.c",
+      "source_file_line": 2621
+    },
+    {
+      "line": "#3 0x4473d3 in g_assertion_message_expr /src/glib/glib/gtestutils.c:2644:3",
+      "address": 4486099,
+      "function_name": "g_assertion_message_expr",
+      "function_offset": 3,
+      "source_file_name": "gtestutils.c",
+      "source_file_path": "/src/glib/glib/gtestutils.c",
+      "source_file_line": 2644
+    },
+    {
+      "line": "#4 0x46c316 in ast_array_get_pattern /src/glib/glib/gvariant-parser.c:709:15",
+      "address": 4637462,
+      "function_name": "ast_array_get_pattern",
+      "function_offset": 15,
+      "source_file_name": "gvariant-parser.c",
+      "source_file_path": "/src/glib/glib/gvariant-parser.c",
+      "source_file_line": 709
+    },
+    {
+      "line": "#5 0x46bb76 in array_get_pattern /src/glib/glib/gvariant-parser.c:889:13",
+      "address": 4635510,
+      "function_name": "array_get_pattern",
+      "function_offset": 13,
+      "source_file_name": "gvariant-parser.c",
+      "source_file_path": "/src/glib/glib/gvariant-parser.c",
+      "source_file_line": 889
+    },
+    {
+      "line": "#6 0x467ef9 in ast_resolve /src/glib/glib/gvariant-parser.c:595:13",
+      "address": 4620025,
+      "function_name": "ast_resolve",
+      "function_offset": 13,
+      "source_file_name": "gvariant-parser.c",
+      "source_file_path": "/src/glib/glib/gvariant-parser.c",
+      "source_file_line": 595
+    },
+    {
+      "line": "#7 0x467967 in g_variant_parse /src/glib/glib/gvariant-parser.c:2395:18",
+      "address": 4618599,
+      "function_name": "g_variant_parse",
+      "function_offset": 18,
+      "source_file_name": "gvariant-parser.c",
+      "source_file_path": "/src/glib/glib/gvariant-parser.c",
+      "source_file_line": 2395
+    },
+    {
+      "line": "#8 0x4336ce in LLVMFuzzerTestOneInput /src/glib/fuzzing/fuzz_variant_text.c:12:13",
+      "address": 4404942,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 13,
+      "source_file_name": "fuzz_variant_text.c",
+      "source_file_path": "/src/glib/fuzzing/fuzz_variant_text.c",
+      "source_file_line": 12
+    },
+    {
+      "line": "#9 0x4b8948 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:571:15",
+      "address": 4950344,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 15,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 571
+    },
+    {
+      "line": "#10 0x4a8f62 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6",
+      "address": 4886370,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 280
+    },
+    {
+      "line": "#11 0x4acbdb in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:713:9",
+      "address": 4901851,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 713
+    },
+    {
+      "line": "#12 0x4a8ce8 in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+      "address": 4885736,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#13 0x7f2c2a69582f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291",
+      "address": 139827666835503,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
+    },
+    {
+      "line": "#14 0x408138 in _start",
+      "address": 4227384,
+      "function_name": "_start"
+    }
+  ],
+  "full_stack_names": [
+    "gsignal",
+    "abort",
+    "g_assertion_message",
+    "g_assertion_message_expr",
+    "ast_array_get_pattern",
+    "array_get_pattern",
+    "ast_resolve",
+    "g_variant_parse",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x46c316 in ast_array_get_pattern /src/glib/glib/gvariant-parser.c:709:15",
+      "address": 4637462,
+      "function_name": "ast_array_get_pattern",
+      "function_offset": 15,
+      "source_file_name": "gvariant-parser.c",
+      "source_file_path": "/src/glib/glib/gvariant-parser.c",
+      "source_file_line": 709
+    },
+    {
+      "line": "#5 0x46bb76 in array_get_pattern /src/glib/glib/gvariant-parser.c:889:13",
+      "address": 4635510,
+      "function_name": "array_get_pattern",
+      "function_offset": 13,
+      "source_file_name": "gvariant-parser.c",
+      "source_file_path": "/src/glib/glib/gvariant-parser.c",
+      "source_file_line": 889
+    },
+    {
+      "line": "#6 0x467ef9 in ast_resolve /src/glib/glib/gvariant-parser.c:595:13",
+      "address": 4620025,
+      "function_name": "ast_resolve",
+      "function_offset": 13,
+      "source_file_name": "gvariant-parser.c",
+      "source_file_path": "/src/glib/glib/gvariant-parser.c",
+      "source_file_line": 595
+    },
+    {
+      "line": "#7 0x467967 in g_variant_parse /src/glib/glib/gvariant-parser.c:2395:18",
+      "address": 4618599,
+      "function_name": "g_variant_parse",
+      "function_offset": 18,
+      "source_file_name": "gvariant-parser.c",
+      "source_file_path": "/src/glib/glib/gvariant-parser.c",
+      "source_file_line": 2395
+    },
+    {
+      "line": "#8 0x4336ce in LLVMFuzzerTestOneInput /src/glib/fuzzing/fuzz_variant_text.c:12:13",
+      "address": 4404942,
+      "function_name": "fuzz_variant_text.c",
+      "function_offset": 13,
+      "source_file_name": "fuzz_variant_text.c",
+      "source_file_path": "/src/glib/fuzzing/fuzz_variant_text.c",
+      "source_file_line": 12
+    }
+  ],
+  "minimized_stack": [
+    "#4 0x46c316 in ast_array_get_pattern /src/glib/glib/gvariant-parser.c:709:15",
+    "#5 0x46bb76 in array_get_pattern /src/glib/glib/gvariant-parser.c:889:13",
+    "#6 0x467ef9 in ast_resolve /src/glib/glib/gvariant-parser.c:595:13",
+    "#7 0x467967 in g_variant_parse /src/glib/glib/gvariant-parser.c:2395:18",
+    "#8 0x4336ce in LLVMFuzzerTestOneInput /src/glib/fuzzing/fuzz_variant_text.c:12:13"
+  ],
+  "minimized_stack_function_names": [
+    "ast_array_get_pattern",
+    "array_get_pattern",
+    "ast_resolve",
+    "g_variant_parse",
+    "fuzz_variant_text.c"
+  ]
+}

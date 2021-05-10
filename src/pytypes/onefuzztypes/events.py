@@ -8,17 +8,24 @@ from enum import Enum
 from typing import List, Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Field
 
 from .enums import OS, Architecture, NodeState, TaskState, TaskType
-from .models import AutoScaleConfig, Error, JobConfig, Report, TaskConfig, UserInfo
+from .models import (
+    AutoScaleConfig,
+    Error,
+    JobConfig,
+    RegressionReport,
+    Report,
+    TaskConfig,
+    UserInfo,
+)
 from .primitives import Container, PoolName, Region
 from .responses import BaseResponse
 
 
 class BaseEvent(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    pass
 
 
 class EventTaskStopped(BaseEvent):
@@ -154,6 +161,14 @@ class EventCrashReported(BaseEvent):
     report: Report
     container: Container
     filename: str
+    task_config: Optional[TaskConfig]
+
+
+class EventRegressionReported(BaseEvent):
+    regression_report: RegressionReport
+    container: Container
+    filename: str
+    task_config: Optional[TaskConfig]
 
 
 class EventFileAdded(BaseEvent):
@@ -183,6 +198,7 @@ Event = Union[
     EventTaskStopped,
     EventTaskHeartbeat,
     EventCrashReported,
+    EventRegressionReported,
     EventFileAdded,
 ]
 
@@ -207,6 +223,7 @@ class EventType(Enum):
     task_state_updated = "task_state_updated"
     task_stopped = "task_stopped"
     crash_reported = "crash_reported"
+    regression_reported = "regression_reported"
     file_added = "file_added"
     task_heartbeat = "task_heartbeat"
     node_heartbeat = "node_heartbeat"
@@ -234,6 +251,7 @@ EventTypeMap = {
     EventType.task_heartbeat: EventTaskHeartbeat,
     EventType.task_stopped: EventTaskStopped,
     EventType.crash_reported: EventCrashReported,
+    EventType.regression_reported: EventRegressionReported,
     EventType.file_added: EventFileAdded,
 }
 

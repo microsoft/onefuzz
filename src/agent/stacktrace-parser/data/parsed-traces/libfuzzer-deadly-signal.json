@@ -1,0 +1,200 @@
+{
+  "text": "INFO: Seed: 1417742161\nINFO: Loaded 2 modules   (16763 inline 8-bit counters): 14323 [0x7f1ee459ce50, 0x7f1ee45a0643), 2440 [0x56512aac5ae0, 0x56512aac6468), \nINFO: Loaded 2 PC tables (16763 PCs): 14323 [0x7f1ee45a0648,0x7f1ee45d8578), 2440 [0x56512aac6468,0x56512aacfce8), \n../linux_x64_asan_libfuzz_release/jsoncpp_fuzzer: Running 1 inputs 1 time(s) each.\nRunning: ./crash-975f93376ba7c1af9f1f2fd891f9e5714f06e69c\n==23788== ERROR: libFuzzer: deadly signal\n    #0 0x56512a9c1418 in __sanitizer_print_stack_trace /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_stack.cpp:86:3\n    #1 0x56512aaaa42d in fuzzer::PrintStackTrace() third_party/libFuzzer/src/FuzzerUtil.cpp:205:5\n    #2 0x56512aa6a85e in fuzzer::Fuzzer::CrashCallback() third_party/libFuzzer/src/FuzzerLoop.cpp:232:3\n    #3 0x56512aa6a7df in fuzzer::Fuzzer::StaticCrashSignalCallback() third_party/libFuzzer/src/FuzzerLoop.cpp:203:6\n    #4 0x56512aaab948 in fuzzer::CrashHandler(int, siginfo_t*, void*) third_party/libFuzzer/src/FuzzerUtilPosix.cpp:46:3\n    #5 0x7f1ee3f0188f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1288f)\n    #6 0x56512a9e5aa1 in Json::OurReader::parse(char const*, char const*, Json::Value&, bool) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1062:10\n    #7 0x56512a9eedb4 in Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1899:23\n    #8 0x56512a9e03a3 in LLVMFuzzerTestOneInput third_party/jsoncpp/fuzzers/json_fuzzer.cc:39:24\n    #9 0x56512aa6d0cf in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:556:15\n    #10 0x56512aa3b7da in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:292:6\n    #11 0x56512aa4108a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:774:9\n    #12 0x56512aa821ac in main third_party/libFuzzer/src/FuzzerMain.cpp:19:10\n    #13 0x7f1ee3361b96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310\n\nNOTE: libFuzzer has rudimentary signal handlers.\n      Combine libFuzzer with AddressSanitizer or similar for better crash reports.\nSUMMARY: libFuzzer: deadly signal\n",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: deadly signal",
+  "fault_type": "deadly signal",
+  "call_stack": [
+    "#0 0x56512a9c1418 in __sanitizer_print_stack_trace /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_stack.cpp:86:3",
+    "#1 0x56512aaaa42d in fuzzer::PrintStackTrace() third_party/libFuzzer/src/FuzzerUtil.cpp:205:5",
+    "#2 0x56512aa6a85e in fuzzer::Fuzzer::CrashCallback() third_party/libFuzzer/src/FuzzerLoop.cpp:232:3",
+    "#3 0x56512aa6a7df in fuzzer::Fuzzer::StaticCrashSignalCallback() third_party/libFuzzer/src/FuzzerLoop.cpp:203:6",
+    "#4 0x56512aaab948 in fuzzer::CrashHandler(int, siginfo_t*, void*) third_party/libFuzzer/src/FuzzerUtilPosix.cpp:46:3",
+    "#5 0x7f1ee3f0188f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1288f)",
+    "#6 0x56512a9e5aa1 in Json::OurReader::parse(char const*, char const*, Json::Value&, bool) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1062:10",
+    "#7 0x56512a9eedb4 in Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1899:23",
+    "#8 0x56512a9e03a3 in LLVMFuzzerTestOneInput third_party/jsoncpp/fuzzers/json_fuzzer.cc:39:24",
+    "#9 0x56512aa6d0cf in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:556:15",
+    "#10 0x56512aa3b7da in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:292:6",
+    "#11 0x56512aa4108a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:774:9",
+    "#12 0x56512aa821ac in main third_party/libFuzzer/src/FuzzerMain.cpp:19:10",
+    "#13 0x7f1ee3361b96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x56512a9c1418 in __sanitizer_print_stack_trace /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_stack.cpp:86:3",
+      "address": 94906607211544,
+      "function_name": "__sanitizer_print_stack_trace",
+      "function_offset": 3,
+      "source_file_name": "asan_stack.cpp",
+      "source_file_path": "/b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_stack.cpp",
+      "source_file_line": 86
+    },
+    {
+      "line": "#1 0x56512aaaa42d in fuzzer::PrintStackTrace() third_party/libFuzzer/src/FuzzerUtil.cpp:205:5",
+      "address": 94906608165933,
+      "function_name": "fuzzer::PrintStackTrace()",
+      "function_offset": 5,
+      "source_file_name": "FuzzerUtil.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerUtil.cpp",
+      "source_file_line": 205
+    },
+    {
+      "line": "#2 0x56512aa6a85e in fuzzer::Fuzzer::CrashCallback() third_party/libFuzzer/src/FuzzerLoop.cpp:232:3",
+      "address": 94906607904862,
+      "function_name": "fuzzer::Fuzzer::CrashCallback()",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 232
+    },
+    {
+      "line": "#3 0x56512aa6a7df in fuzzer::Fuzzer::StaticCrashSignalCallback() third_party/libFuzzer/src/FuzzerLoop.cpp:203:6",
+      "address": 94906607904735,
+      "function_name": "fuzzer::Fuzzer::StaticCrashSignalCallback()",
+      "function_offset": 6,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 203
+    },
+    {
+      "line": "#4 0x56512aaab948 in fuzzer::CrashHandler(int, siginfo_t*, void*) third_party/libFuzzer/src/FuzzerUtilPosix.cpp:46:3",
+      "address": 94906608171336,
+      "function_name": "fuzzer::CrashHandler(int, siginfo_t*, void*)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerUtilPosix.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerUtilPosix.cpp",
+      "source_file_line": 46
+    },
+    {
+      "line": "#5 0x7f1ee3f0188f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1288f)",
+      "address": 139770649909391,
+      "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
+      "module_offset": 75919
+    },
+    {
+      "line": "#6 0x56512a9e5aa1 in Json::OurReader::parse(char const*, char const*, Json::Value&, bool) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1062:10",
+      "address": 94906607360673,
+      "function_name": "Json::OurReader::parse(char const*, char const*, Json::Value&, bool)",
+      "function_offset": 10,
+      "source_file_name": "json_reader.cpp",
+      "source_file_path": "third_party/jsoncpp/source/src/lib_json/json_reader.cpp",
+      "source_file_line": 1062
+    },
+    {
+      "line": "#7 0x56512a9eedb4 in Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1899:23",
+      "address": 94906607398324,
+      "function_name": "Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*)",
+      "function_offset": 23,
+      "source_file_name": "json_reader.cpp",
+      "source_file_path": "third_party/jsoncpp/source/src/lib_json/json_reader.cpp",
+      "source_file_line": 1899
+    },
+    {
+      "line": "#8 0x56512a9e03a3 in LLVMFuzzerTestOneInput third_party/jsoncpp/fuzzers/json_fuzzer.cc:39:24",
+      "address": 94906607338403,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 24,
+      "source_file_name": "json_fuzzer.cc",
+      "source_file_path": "third_party/jsoncpp/fuzzers/json_fuzzer.cc",
+      "source_file_line": 39
+    },
+    {
+      "line": "#9 0x56512aa6d0cf in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:556:15",
+      "address": 94906607915215,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 15,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 556
+    },
+    {
+      "line": "#10 0x56512aa3b7da in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:292:6",
+      "address": 94906607712218,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 292
+    },
+    {
+      "line": "#11 0x56512aa4108a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:774:9",
+      "address": 94906607734922,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 774
+    },
+    {
+      "line": "#12 0x56512aa821ac in main third_party/libFuzzer/src/FuzzerMain.cpp:19:10",
+      "address": 94906608001452,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerMain.cpp",
+      "source_file_line": 19
+    },
+    {
+      "line": "#13 0x7f1ee3361b96 in __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310",
+      "address": 139770637720470,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c",
+      "source_file_line": 310
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::CrashCallback",
+    "fuzzer::Fuzzer::StaticCrashSignalCallback",
+    "fuzzer::CrashHandler",
+    "Json::OurReader::parse",
+    "Json::OurCharReader::parse",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#6 0x56512a9e5aa1 in Json::OurReader::parse(char const*, char const*, Json::Value&, bool) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1062:10",
+      "address": 94906607360673,
+      "function_name": "Json::OurReader::parse(char const*, char const*, Json::Value&, bool)",
+      "function_offset": 10,
+      "source_file_name": "json_reader.cpp",
+      "source_file_path": "third_party/jsoncpp/source/src/lib_json/json_reader.cpp",
+      "source_file_line": 1062
+    },
+    {
+      "line": "#7 0x56512a9eedb4 in Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1899:23",
+      "address": 94906607398324,
+      "function_name": "Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*)",
+      "function_offset": 23,
+      "source_file_name": "json_reader.cpp",
+      "source_file_path": "third_party/jsoncpp/source/src/lib_json/json_reader.cpp",
+      "source_file_line": 1899
+    },
+    {
+      "line": "#8 0x56512a9e03a3 in LLVMFuzzerTestOneInput third_party/jsoncpp/fuzzers/json_fuzzer.cc:39:24",
+      "address": 94906607338403,
+      "function_name": "json_fuzzer.cc",
+      "function_offset": 24,
+      "source_file_name": "json_fuzzer.cc",
+      "source_file_path": "third_party/jsoncpp/fuzzers/json_fuzzer.cc",
+      "source_file_line": 39
+    }
+  ],
+  "minimized_stack": [
+    "#6 0x56512a9e5aa1 in Json::OurReader::parse(char const*, char const*, Json::Value&, bool) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1062:10",
+    "#7 0x56512a9eedb4 in Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*) third_party/jsoncpp/source/src/lib_json/json_reader.cpp:1899:23",
+    "#8 0x56512a9e03a3 in LLVMFuzzerTestOneInput third_party/jsoncpp/fuzzers/json_fuzzer.cc:39:24"
+  ],
+  "minimized_stack_function_names": [
+    "Json::OurReader::parse",
+    "Json::OurCharReader::parse",
+    "json_fuzzer.cc"
+  ]
+}

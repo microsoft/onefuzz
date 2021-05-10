@@ -103,29 +103,36 @@ impl FileQueueClient {
     }
 }
 
-use tokio::sync::mpsc::{
-    error::TryRecvError, unbounded_channel, UnboundedReceiver, UnboundedSender,
-};
+use flume::{unbounded, Receiver, Sender, TryRecvError};
 
 /// Queue based on mpsc channel
 #[derive(Debug, Clone)]
 pub struct ChannelQueueClient {
-    sender: Arc<Mutex<UnboundedSender<Vec<u8>>>>,
-    receiver: Arc<Mutex<UnboundedReceiver<Vec<u8>>>>,
+    sender: Arc<Mutex<Sender<Vec<u8>>>>,
+    receiver: Arc<Mutex<Receiver<Vec<u8>>>>,
     pub url: reqwest::Url,
+    low_resource: bool,
 }
 
 impl ChannelQueueClient {
     pub fn new() -> Result<Self> {
-        let (sender, receiver) = unbounded_channel();
+        let (sender, receiver) = unbounded();
+        let cpus = num_cpus::get();
+        let low_resource = cpus < 4;
         Ok(ChannelQueueClient {
             sender: Arc::new(Mutex::new(sender)),
             receiver: Arc::new(Mutex::new(receiver)),
             url: reqwest::Url::parse("mpsc://channel")?,
+            low_resource,
         })
     }
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
+        // temporary fix. Forcing a yield to allow other tasks to proceed
+        // in a low core count environment such as github action machines
+        if self.low_resource {
+            tokio::task::yield_now().await;
+        }
         let sender = self
             .sender
             .lock()
@@ -138,7 +145,12 @@ impl ChannelQueueClient {
     }
 
     pub async fn pop(&self) -> Result<Option<LocalQueueMessage>> {
-        let mut receiver = self
+        // temporary fix. Forcing a yield to allow other tasks to proceed
+        // in a low core count environment such as github action machines
+        if self.low_resource {
+            tokio::task::yield_now().await;
+        }
+        let receiver = self
             .receiver
             .lock()
             .map_err(|_| anyhow::anyhow!("unable to acquire lock"))?;

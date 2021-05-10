@@ -4,7 +4,6 @@
 use std::{
     fmt::{self, Display, Formatter},
     hash::{Hash, Hasher},
-    path::Path,
 };
 
 use anyhow::Result;
@@ -14,7 +13,7 @@ use serde::{Serialize, Serializer};
 use win_util::memory;
 use winapi::{shared::minwindef::DWORD, um::winnt::HANDLE};
 
-use crate::dbghelp::{self, DebugHelpGuard, ModuleInfo, SymLineInfo};
+use crate::dbghelp::{self, DebugHelpGuard, ModuleInfo, SymInfo, SymLineInfo};
 
 const UNKNOWN_MODULE: &str = "<UnknownModule>";
 
@@ -40,59 +39,29 @@ impl From<&SymLineInfo> for FileInfo {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq)]
-pub struct DebugFunctionLocation {
-    /// File/line if available
-    ///
-    /// Should be stable - ASLR and JIT should not change source position,
-    /// but some precision is lost.
-    ///
-    /// We mitigate this loss of precision by collecting multiple samples
-    /// for the same hash bucket.
-    pub file_info: Option<FileInfo>,
-
-    /// Offset if line information not available.
-    pub displacement: u64,
-}
-
-impl DebugFunctionLocation {
-    pub fn new(displacement: u64) -> Self {
-        DebugFunctionLocation {
-            displacement,
-            file_info: None,
-        }
-    }
-
-    pub fn new_with_file_info(displacement: u64, file_info: FileInfo) -> Self {
-        DebugFunctionLocation {
-            displacement,
-            file_info: Some(file_info),
-        }
-    }
-}
-
-impl Display for DebugFunctionLocation {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-        if let Some(file_info) = &self.file_info {
-            write!(formatter, "{}", file_info)?;
-        } else {
-            write!(formatter, "0x{:x}", self.displacement)?;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug, Hash, PartialEq)]
 pub enum DebugStackFrame {
     Frame {
-        function: String,
-        location: DebugFunctionLocation,
+        module_name: String,
+        module_offset: u64,
+        symbol: Option<SymInfo>,
+        file_info: Option<FileInfo>,
     },
     CorruptFrame,
 }
 
 impl DebugStackFrame {
-    pub fn new(function: String, location: DebugFunctionLocation) -> DebugStackFrame {
-        DebugStackFrame::Frame { function, location }
+    pub fn new(
+        module_name: String,
+        module_offset: u64,
+        symbol: Option<SymInfo>,
+        file_info: Option<FileInfo>,
+    ) -> DebugStackFrame {
+        DebugStackFrame::Frame {
+            module_name,
+            module_offset,
+            symbol,
+            file_info,
+        }
     }
 
     pub fn corrupt_frame() -> DebugStackFrame {
@@ -110,13 +79,31 @@ impl DebugStackFrame {
 impl Display for DebugStackFrame {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         match self {
-            DebugStackFrame::Frame { function, location } => {
-                if let Some(file_info) = &location.file_info {
-                    write!(formatter, "{} {}", function, file_info)
-                } else {
-                    write!(formatter, "{}+0x{:x}", function, location.displacement)
+            DebugStackFrame::Frame {
+                module_name,
+                module_offset,
+                symbol,
+                file_info,
+            } => match (symbol, file_info) {
+                (Some(symbol), Some(file_info)) => write!(
+                    formatter,
+                    "{}!{}+0x{:x} {}",
+                    module_name,
+                    symbol.symbol(),
+                    symbol.displacement(),
+                    file_info
+                ),
+                (Some(symbol), None) => write!(
+                    formatter,
+                    "{}!{}+0x{:x}",
+                    module_name,
+                    symbol.symbol(),
+                    symbol.displacement(),
+                ),
+                _ => {
+                    write!(formatter, "{}+0x{:x}", module_name, module_offset)
                 }
-            }
+            },
             DebugStackFrame::CorruptFrame => formatter.write_str("<corrupt frame(s)>"),
         }
     }
@@ -145,7 +132,7 @@ impl DebugStack {
         // Corrupted stacks and jit can result in stacks that vary from run to run, so we exclude
         // those frames and anything below them for a more stable hash.
         let first_unstable_frame = self.frames.iter().position(|f| match f {
-            DebugStackFrame::Frame { function, .. } => function == UNKNOWN_MODULE,
+            DebugStackFrame::Frame { module_name, .. } => module_name == UNKNOWN_MODULE,
             DebugStackFrame::CorruptFrame => true,
         });
 
@@ -182,34 +169,26 @@ fn get_function_location_in_module(
     program_counter: u64,
     inline_context: DWORD,
 ) -> DebugStackFrame {
+    let module_name = module_info.name().to_string_lossy().to_string();
+    let module_offset = program_counter - module_info.base_address();
+
     if let Ok(sym_info) =
         dbghlp.sym_from_inline_context(process_handle, program_counter, inline_context)
     {
-        let function = format!(
-            "{}!{}",
-            Path::new(module_info.name()).display(),
-            sym_info.symbol()
-        );
+        let file_info =
+            match dbghlp.sym_get_file_and_line(process_handle, program_counter, inline_context) {
+                // Don't use file/line for these magic line numbers.
+                Ok(ref sym_line_info) if !sym_line_info.is_fake_line_number() => {
+                    Some(sym_line_info.into())
+                }
+                _ => None,
+            };
 
-        let sym_line_info =
-            dbghlp.sym_get_file_and_line(process_handle, program_counter, inline_context);
-
-        let displacement = sym_info.displacement();
-        let location = match sym_line_info {
-            // Don't use file/line for these magic line numbers.
-            Ok(ref sym_line_info) if !sym_line_info.is_fake_line_number() => {
-                DebugFunctionLocation::new_with_file_info(displacement, sym_line_info.into())
-            }
-
-            _ => DebugFunctionLocation::new(displacement),
-        };
-
-        DebugStackFrame::new(function, location)
+        DebugStackFrame::new(module_name, module_offset, Some(sym_info), file_info)
     } else {
         // No function - assume we have an exe with no pdb (so no exports). This should be
         // common, so we won't report an error. We do want a nice(ish) location though.
-        let location = DebugFunctionLocation::new(program_counter - module_info.base_address());
-        DebugStackFrame::new(module_info.name().to_string_lossy().into(), location)
+        DebugStackFrame::new(module_name, module_offset, None, None)
     }
 }
 
@@ -222,12 +201,11 @@ fn get_frame_with_unknown_module(process_handle: HANDLE, program_counter: u64) -
     match memory::get_memory_info(process_handle, program_counter) {
         Ok(mi) => {
             if mi.is_executable() {
-                let offset = program_counter
+                let module_offset = program_counter
                     .checked_sub(mi.base_address())
                     .expect("logic error computing fake rva");
 
-                let location = DebugFunctionLocation::new(offset);
-                DebugStackFrame::new(UNKNOWN_MODULE.into(), location)
+                DebugStackFrame::new(UNKNOWN_MODULE.to_owned(), module_offset, None, None)
             } else {
                 DebugStackFrame::corrupt_frame()
             }
@@ -250,39 +228,45 @@ pub fn get_stack(
 
     let mut stack = vec![];
 
-    dbghlp.stackwalk_ex(process_handle, thread_handle, |frame| {
-        let program_counter = frame.AddrPC.Offset;
+    dbghlp.stackwalk_ex(
+        process_handle,
+        thread_handle,
+        true, /* visit inline frames */
+        |frame| {
+            let program_counter = frame.AddrPC.Offset;
 
-        let debug_stack_frame = if resolve_symbols {
-            if let Ok(module_info) = dbghlp.sym_get_module_info(process_handle, program_counter) {
-                get_function_location_in_module(
-                    &dbghlp,
-                    &module_info,
-                    process_handle,
-                    program_counter,
-                    frame.InlineFrameContext,
-                )
+            let debug_stack_frame = if resolve_symbols {
+                if let Ok(module_info) = dbghlp.sym_get_module_info(process_handle, program_counter)
+                {
+                    get_function_location_in_module(
+                        &dbghlp,
+                        &module_info,
+                        process_handle,
+                        program_counter,
+                        frame.InlineFrameContext,
+                    )
+                } else {
+                    // We ignore the error from sym_get_module_info because corrupt stacks in the
+                    // target are a common cause of not finding the module - a condition we expect.
+                    get_frame_with_unknown_module(process_handle, program_counter)
+                }
             } else {
-                // We ignore the error from sym_get_module_info because corrupt stacks in the
-                // target are a common cause of not finding the module - a condition we expect.
                 get_frame_with_unknown_module(process_handle, program_counter)
-            }
-        } else {
-            get_frame_with_unknown_module(process_handle, program_counter)
-        };
+            };
 
-        // Avoid pushing consecutive corrupt frames.
-        if !debug_stack_frame.is_corrupt_frame()
-            || stack
-                .last()
-                .map_or(true, |f: &DebugStackFrame| !f.is_corrupt_frame())
-        {
-            stack.push(debug_stack_frame);
-        };
+            // Avoid pushing consecutive corrupt frames.
+            if !debug_stack_frame.is_corrupt_frame()
+                || stack
+                    .last()
+                    .map_or(true, |f: &DebugStackFrame| !f.is_corrupt_frame())
+            {
+                stack.push(debug_stack_frame);
+            };
 
-        // We want all frames, so continue walking.
-        true
-    })?;
+            // We want all frames, so continue walking.
+            true
+        },
+    )?;
 
     Ok(DebugStack::new(stack))
 }
@@ -292,20 +276,19 @@ mod test {
     use super::*;
 
     macro_rules! frame {
-        ($name: expr, disp: $disp: expr) => {
-            DebugStackFrame::new($name.to_string(), DebugFunctionLocation::new($disp))
+        ($module: expr, disp: $location: expr) => {
+            DebugStackFrame::new($module.to_string(), $location, None, None)
         };
 
-        ($name: expr, disp: $disp: expr, line: ($file: expr, $line: expr)) => {
+        ($module: expr, disp: $location: expr, line: ($file: expr, $line: expr)) => {
             DebugStackFrame::new(
-                $name.to_string(),
-                DebugFunctionLocation::new_with_file_info(
-                    $disp,
-                    FileInfo {
-                        file: $file.to_string(),
-                        line: $line,
-                    },
-                ),
+                $module.to_string(),
+                $location,
+                None,
+                Some(FileInfo {
+                    file: $file.to_string(),
+                    line: $line,
+                }),
             )
         };
     }
@@ -321,7 +304,7 @@ mod test {
 
         // Hard coded hash constant is what we want to ensure
         // the hash function is relatively stable.
-        assert_eq!(stack.stable_hash(), 4643290346391834992);
+        assert_eq!(stack.stable_hash(), 3072338388009340488);
     }
 
     #[test]

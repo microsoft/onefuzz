@@ -1,0 +1,200 @@
+{
+  "text": "Running command: /mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_gdal_8f5d9038564387e8bdf28161d9e03f1ffb4dfbad/revisions/shape_fuzzer -runs=100 -max_len=3200 -rss_limit_mb=2048 -timeout=25 /54b7eabbbe749c835671693b6efc8858e74f7a6da9e992c7b540801c43a4675c9a7a02522ec4bd1b53f730ab0e78ead1d4ca085deb5433447c45f7987c782ace5a11624a4f77924f3f7c5c0717967c164a40975f5bb5319115786b590df67b52d1ab06fe330fe0f274497c0e0a631458fuzz-1-gdal_shape_fuzzer\nINFO: Seed: 2268466465\nINFO: Loaded 1 modules (468700 guards): [0x57d8ad0, 0x59a2640),\n/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_gdal_8f5d9038564387e8bdf28161d9e03f1ffb4dfbad/revisions/shape_fuzzer: Running 1 inputs 100 time(s) each.\nRunning: /54b7eabbbe749c835671693b6efc8858e74f7a6da9e992c7b540801c43a4675c9a7a02522ec4bd1b53f730ab0e78ead1d4ca085deb5433447c45f7987c782ace5a11624a4f77924f3f7c5c0717967c164a40975f5bb5319115786b590df67b52d1ab06fe330fe0f274497c0e0a631458fuzz-1-gdal_shape_fuzzer\nshape2ogr.cpp:184:49: runtime error: load of null pointer of type double\n#0 0x1466597 in SHPReadOGRObject(SHPInfo*, int, tagSHPObject*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:184:49\n#1 0x14685c7 in SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:1217:26\n#2 0x1257a83 in OGRShapeLayer::GetNextFeature() /src/gdal/gdal/ogr/ogrsf_frmts/shape/ogrshapelayer.cpp:843:33\n#3 0x4c01ce in OGR_L_GetNextFeature /src/gdal/gdal/ogr/ogrsf_frmts/generic/ogrlayer.cpp:549:48\n#4 0x4392ef in LLVMFuzzerTestOneInput /src/gdal/gdal/fuzzers/shape_fuzzer.cpp:53:32\n#5 0x447dad in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:458:13\n#6 0x448187 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:397:3\n#7 0x439744 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6\n#8 0x43d82b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:683:9\n#9 0x4393cc in main /src/libfuzzer/FuzzerMain.cpp:20:10\n#10 0x7fdf25e7d82f in __libc_start_main /build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c:291\n#11 0x4120d8 in _start\nSUMMARY: UndefinedBehaviorSanitizer: undefined-behavior shape2ogr.cpp:184:49 in\nMS: 0 ; base unit: 0000000000000000000000000000000000000000",
+  "sanitizer": "UndefinedBehaviorSanitizer",
+  "summary": "UndefinedBehaviorSanitizer: undefined-behavior shape2ogr.cpp:184:49 in",
+  "fault_type": "undefined-behavior",
+  "call_stack": [
+    "#0 0x1466597 in SHPReadOGRObject(SHPInfo*, int, tagSHPObject*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:184:49",
+    "#1 0x14685c7 in SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:1217:26",
+    "#2 0x1257a83 in OGRShapeLayer::GetNextFeature() /src/gdal/gdal/ogr/ogrsf_frmts/shape/ogrshapelayer.cpp:843:33",
+    "#3 0x4c01ce in OGR_L_GetNextFeature /src/gdal/gdal/ogr/ogrsf_frmts/generic/ogrlayer.cpp:549:48",
+    "#4 0x4392ef in LLVMFuzzerTestOneInput /src/gdal/gdal/fuzzers/shape_fuzzer.cpp:53:32",
+    "#5 0x447dad in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:458:13",
+    "#6 0x448187 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:397:3",
+    "#7 0x439744 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6",
+    "#8 0x43d82b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:683:9",
+    "#9 0x4393cc in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+    "#10 0x7fdf25e7d82f in __libc_start_main /build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c:291",
+    "#11 0x4120d8 in _start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x1466597 in SHPReadOGRObject(SHPInfo*, int, tagSHPObject*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:184:49",
+      "address": 21390743,
+      "function_name": "SHPReadOGRObject(SHPInfo*, int, tagSHPObject*)",
+      "function_offset": 49,
+      "source_file_name": "shape2ogr.cpp",
+      "source_file_path": "/src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp",
+      "source_file_line": 184
+    },
+    {
+      "line": "#1 0x14685c7 in SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:1217:26",
+      "address": 21398983,
+      "function_name": "SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*)",
+      "function_offset": 26,
+      "source_file_name": "shape2ogr.cpp",
+      "source_file_path": "/src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp",
+      "source_file_line": 1217
+    },
+    {
+      "line": "#2 0x1257a83 in OGRShapeLayer::GetNextFeature() /src/gdal/gdal/ogr/ogrsf_frmts/shape/ogrshapelayer.cpp:843:33",
+      "address": 19233411,
+      "function_name": "OGRShapeLayer::GetNextFeature()",
+      "function_offset": 33,
+      "source_file_name": "ogrshapelayer.cpp",
+      "source_file_path": "/src/gdal/gdal/ogr/ogrsf_frmts/shape/ogrshapelayer.cpp",
+      "source_file_line": 843
+    },
+    {
+      "line": "#3 0x4c01ce in OGR_L_GetNextFeature /src/gdal/gdal/ogr/ogrsf_frmts/generic/ogrlayer.cpp:549:48",
+      "address": 4981198,
+      "function_name": "OGR_L_GetNextFeature",
+      "function_offset": 48,
+      "source_file_name": "ogrlayer.cpp",
+      "source_file_path": "/src/gdal/gdal/ogr/ogrsf_frmts/generic/ogrlayer.cpp",
+      "source_file_line": 549
+    },
+    {
+      "line": "#4 0x4392ef in LLVMFuzzerTestOneInput /src/gdal/gdal/fuzzers/shape_fuzzer.cpp:53:32",
+      "address": 4428527,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 32,
+      "source_file_name": "shape_fuzzer.cpp",
+      "source_file_path": "/src/gdal/gdal/fuzzers/shape_fuzzer.cpp",
+      "source_file_line": 53
+    },
+    {
+      "line": "#5 0x447dad in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:458:13",
+      "address": 4488621,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 458
+    },
+    {
+      "line": "#6 0x448187 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:397:3",
+      "address": 4489607,
+      "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 397
+    },
+    {
+      "line": "#7 0x439744 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6",
+      "address": 4429636,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 268
+    },
+    {
+      "line": "#8 0x43d82b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:683:9",
+      "address": 4446251,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 683
+    },
+    {
+      "line": "#9 0x4393cc in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+      "address": 4428748,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#10 0x7fdf25e7d82f in __libc_start_main /build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c:291",
+      "address": 140596390385711,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-9tT8Do/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
+    },
+    {
+      "line": "#11 0x4120d8 in _start",
+      "address": 4268248,
+      "function_name": "_start"
+    }
+  ],
+  "full_stack_names": [
+    "SHPReadOGRObject",
+    "SHPReadOGRFeature",
+    "OGRShapeLayer::GetNextFeature",
+    "OGR_L_GetNextFeature",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x1466597 in SHPReadOGRObject(SHPInfo*, int, tagSHPObject*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:184:49",
+      "address": 21390743,
+      "function_name": "SHPReadOGRObject(SHPInfo*, int, tagSHPObject*)",
+      "function_offset": 49,
+      "source_file_name": "shape2ogr.cpp",
+      "source_file_path": "/src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp",
+      "source_file_line": 184
+    },
+    {
+      "line": "#1 0x14685c7 in SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:1217:26",
+      "address": 21398983,
+      "function_name": "SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*)",
+      "function_offset": 26,
+      "source_file_name": "shape2ogr.cpp",
+      "source_file_path": "/src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp",
+      "source_file_line": 1217
+    },
+    {
+      "line": "#2 0x1257a83 in OGRShapeLayer::GetNextFeature() /src/gdal/gdal/ogr/ogrsf_frmts/shape/ogrshapelayer.cpp:843:33",
+      "address": 19233411,
+      "function_name": "OGRShapeLayer::GetNextFeature()",
+      "function_offset": 33,
+      "source_file_name": "ogrshapelayer.cpp",
+      "source_file_path": "/src/gdal/gdal/ogr/ogrsf_frmts/shape/ogrshapelayer.cpp",
+      "source_file_line": 843
+    },
+    {
+      "line": "#3 0x4c01ce in OGR_L_GetNextFeature /src/gdal/gdal/ogr/ogrsf_frmts/generic/ogrlayer.cpp:549:48",
+      "address": 4981198,
+      "function_name": "OGR_L_GetNextFeature",
+      "function_offset": 48,
+      "source_file_name": "ogrlayer.cpp",
+      "source_file_path": "/src/gdal/gdal/ogr/ogrsf_frmts/generic/ogrlayer.cpp",
+      "source_file_line": 549
+    },
+    {
+      "line": "#4 0x4392ef in LLVMFuzzerTestOneInput /src/gdal/gdal/fuzzers/shape_fuzzer.cpp:53:32",
+      "address": 4428527,
+      "function_name": "shape_fuzzer.cpp",
+      "function_offset": 32,
+      "source_file_name": "shape_fuzzer.cpp",
+      "source_file_path": "/src/gdal/gdal/fuzzers/shape_fuzzer.cpp",
+      "source_file_line": 53
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x1466597 in SHPReadOGRObject(SHPInfo*, int, tagSHPObject*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:184:49",
+    "#1 0x14685c7 in SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*) /src/gdal/gdal/ogr/ogrsf_frmts/shape/shape2ogr.cpp:1217:26",
+    "#2 0x1257a83 in OGRShapeLayer::GetNextFeature() /src/gdal/gdal/ogr/ogrsf_frmts/shape/ogrshapelayer.cpp:843:33",
+    "#3 0x4c01ce in OGR_L_GetNextFeature /src/gdal/gdal/ogr/ogrsf_frmts/generic/ogrlayer.cpp:549:48",
+    "#4 0x4392ef in LLVMFuzzerTestOneInput /src/gdal/gdal/fuzzers/shape_fuzzer.cpp:53:32"
+  ],
+  "minimized_stack_function_names": [
+    "SHPReadOGRObject",
+    "SHPReadOGRFeature",
+    "OGRShapeLayer::GetNextFeature",
+    "OGR_L_GetNextFeature",
+    "shape_fuzzer.cpp"
+  ]
+}

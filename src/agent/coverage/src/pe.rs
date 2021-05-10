@@ -3,29 +3,18 @@
 
 #![allow(clippy::manual_swap)]
 
-use std::{ffi::CStr, fs::File, path::Path};
+use std::{fs::File, path::Path};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use fixedbitset::FixedBitSet;
-use goblin::pe::{debug::DebugData, PE};
-use log::trace;
+use goblin::pe::PE;
 use memmap2::Mmap;
 use pdb::{
     AddressMap, FallibleIterator, PdbInternalSectionOffset, ProcedureSymbol, TypeIndex, PDB,
 };
-use uuid::Uuid;
-use winapi::um::winnt::{IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386};
+use winapi::um::winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386};
 
 use crate::intel;
-
-fn uuid_from_bytes_le(mut bytes: [u8; 16]) -> Uuid {
-    for (i, j) in [(0, 3), (1, 2), (4, 5), (6, 7)].iter() {
-        let tmp = bytes[*i];
-        bytes[*i] = bytes[*j];
-        bytes[*j] = tmp;
-    }
-    Uuid::from_bytes(bytes)
-}
 
 struct JumpTableData {
     pub offset: PdbInternalSectionOffset,
@@ -152,7 +141,7 @@ fn find_blocks(
     blocks: &mut FixedBitSet,
     address_map: &AddressMap,
     pe: &PE,
-    mmap: &Mmap,
+    data: &[u8],
     functions_only: bool,
 ) -> Result<()> {
     let file_alignment = pe
@@ -208,7 +197,7 @@ fn find_blocks(
                     }
                 }
 
-                trace!(
+                log::trace!(
                     "analyzing func: {} rva: 0x{:x} file_offset: 0x{:x}",
                     &proc.name,
                     rva.0,
@@ -217,7 +206,7 @@ fn find_blocks(
 
                 intel::find_blocks(
                     bitness,
-                    &mmap[file_offset..file_offset + (code_len as usize)],
+                    &data[file_offset..file_offset + (code_len as usize)],
                     rva.0,
                     blocks,
                 );
@@ -228,63 +217,67 @@ fn find_blocks(
     Ok(())
 }
 
-pub fn process_image<P: AsRef<Path>>(image_path: P, functions_only: bool) -> Result<FixedBitSet> {
-    let file = File::open(image_path.as_ref())?;
-    let mmap = unsafe { Mmap::map(&file)? };
+pub fn process_module(
+    pe_path: impl AsRef<Path>,
+    data: &[u8],
+    pe: &PE,
+    functions_only: bool,
+    target_handle: Option<HANDLE>,
+) -> Result<FixedBitSet> {
+    let pdb_path = crate::pdb::find_pdb_path(pe_path.as_ref(), pe, target_handle)
+        .with_context(|| format!("searching for PDB for PE: {}", pe_path.as_ref().display()))?;
 
-    let pe = PE::parse(mmap.as_ref())?;
+    log::info!("found PDB: {}", pdb_path.display());
 
-    if let Some(DebugData {
-        image_debug_directory: _,
-        codeview_pdb70_debug_info: Some(cv),
-    }) = pe.debug_data
-    {
-        let pdb_path = CStr::from_bytes_with_nul(cv.filename)?.to_str()?;
-        let pdb_file = File::open(pdb_path)?;
-        let mut pdb = PDB::open(pdb_file)?;
-        let pdbi = pdb.pdb_information()?;
+    process_pdb(data, pe, functions_only, &pdb_path)
+        .with_context(|| format!("processing PDB: {}", pdb_path.display()))
+}
 
-        if pdbi.guid != uuid_from_bytes_le(cv.signature) || pdbi.age < cv.age {
-            anyhow::bail!(
-                "pdb `{}` doesn't match image `{}`",
-                pdb_path,
-                image_path.as_ref().display()
-            );
+fn process_pdb(data: &[u8], pe: &PE, functions_only: bool, pdb_path: &Path) -> Result<FixedBitSet> {
+    let pdb_file = File::open(&pdb_path).context("opening PDB")?;
+    let mut pdb = PDB::open(pdb_file).context("parsing PDB")?;
+
+    let address_map = pdb.address_map()?;
+    let mut blocks = FixedBitSet::with_capacity(data.len());
+    let proc_sym_info = collect_proc_symbols(&mut pdb.global_symbols()?.iter())?;
+
+    find_blocks(
+        &proc_sym_info[..],
+        &mut blocks,
+        &address_map,
+        &pe,
+        data,
+        functions_only,
+    )?;
+
+    // Modules in the PDB correspond to object files.
+    let dbi = pdb.debug_information()?;
+    let mut modules = dbi.modules()?;
+    while let Some(module) = modules.next()? {
+        if let Some(info) = pdb.module_info(&module)? {
+            let proc_sym_info = collect_proc_symbols(&mut info.symbols()?)?;
+            find_blocks(
+                &proc_sym_info[..],
+                &mut blocks,
+                &address_map,
+                &pe,
+                data,
+                functions_only,
+            )?;
         }
-
-        let address_map = pdb.address_map()?;
-
-        let mut blocks = FixedBitSet::with_capacity(mmap.len());
-
-        let proc_sym_info = collect_proc_symbols(&mut pdb.global_symbols()?.iter())?;
-        find_blocks(
-            &proc_sym_info[..],
-            &mut blocks,
-            &address_map,
-            &pe,
-            &mmap,
-            functions_only,
-        )?;
-
-        // Modules in the pdb correspond to object files.
-        let dbi = pdb.debug_information()?;
-        let mut modules = dbi.modules()?;
-        while let Some(module) = modules.next()? {
-            if let Some(info) = pdb.module_info(&module)? {
-                let proc_sym_info = collect_proc_symbols(&mut info.symbols()?)?;
-                find_blocks(
-                    &proc_sym_info[..],
-                    &mut blocks,
-                    &address_map,
-                    &pe,
-                    &mmap,
-                    functions_only,
-                )?;
-            }
-        }
-
-        return Ok(blocks);
     }
 
-    anyhow::bail!("PE missing codeview pdb debug info")
+    Ok(blocks)
+}
+
+pub fn process_image(
+    path: impl AsRef<Path>,
+    functions_only: bool,
+    handle: Option<HANDLE>,
+) -> Result<FixedBitSet> {
+    let file = File::open(path.as_ref())?;
+    let mmap = unsafe { Mmap::map(&file)? };
+    let pe = PE::parse(&mmap)?;
+
+    process_module(path, &mmap, &pe, functions_only, handle)
 }

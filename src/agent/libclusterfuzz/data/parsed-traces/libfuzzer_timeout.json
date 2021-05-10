@@ -1,0 +1,462 @@
+{
+  "text": "ALARM: working on the last Unit for 5 seconds\n       and the timeout value is 4 (use -timeout=N to change)\n==2855== ERROR: libFuzzer: timeout after 5 seconds\n    #0 0x4c2c5e in __sanitizer_print_stack_trace (/mnt/ssd/chromium/src/out/Fuzzer/pdfium_fuzzer+0x4c2c5e)\n    #1 0x53a6e2 in fuzzer::Fuzzer::AlarmCallback() out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:247:7\n    #2 0x539966 in fuzzer::Fuzzer::StaticAlarmCallback() out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:195:6\n    #3 0x5b9127 in fuzzer::AlarmHandler(int, siginfo*, void*) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerUtil.cpp:76:3\n    #4 0x7f614710832f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1032f)\n    #5 0x39cb930 in CFX_ImageTransformer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:549:30\n    #6 0x39c373c in CFX_DIBSource::TransformTo(CFX_Matrix const*, int&, int&, unsigned int, FX_RECT const*) const out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:307:15\n    #7 0x3497933 in CPDF_Type3Cache::RenderGlyph(CPDF_Type3Glyphs*, unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:209:31\n    #8 0x3495842 in CPDF_Type3Cache::LoadGlyph(unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:79:7\n    #9 0x349deda in CPDF_RenderStatus::ProcessType3Text(CPDF_TextObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:472:44\n    #10 0x3499c5d in CPDF_RenderStatus::ProcessText(CPDF_TextObject const*, CFX_Matrix const*, CFX_PathData*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:234:12\n    #11 0x33fbb69 in CPDF_RenderStatus::ProcessObjectNoClip(CPDF_PageObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:325:14\n    #12 0x33fcf16 in CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject const*, CFX_Matrix const*, IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:293:3\n    #13 0x340c56a in CPDF_ProgressiveRenderer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:1026:30\n    #14 0x340a959 in CPDF_ProgressiveRenderer::Start(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:987:3\n    #15 0x314b4b0 in FPDF_RenderPage_Retail(CRenderContext*, void*, int, int, int, int, int, int, int, IFSDK_PAUSE_Adapter*) out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:884:26\n    #16 0x3149ed8 in FPDF_RenderPageBitmap out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:620:3\n    #17 0x4e81eb in RenderPage(void* const&, void* const&, int) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:72:5\n    #18 0x4e7bc9 in RenderPdf(char const*, unsigned long) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:164:5\n    #19 0x4e6f8b in LLVMFuzzerTestOneInput out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:220:3\n    #20 0x547d14 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:490:13\n    #21 0x543b56 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:446:3\n    #22 0x50a823 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerDriver.cpp:257:6\n    #23 0x50e5a8 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerDriver.cpp:379:9\n    #24 0x5897be in main out/Fuzzer/../../third_party/libFuzzer/src/FuzzerMain.cpp:21:10\n    #25 0x7f6146b3ef44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287\n\nSUMMARY: libFuzzer: timeout\n",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: timeout",
+  "fault_type": "timeout",
+  "call_stack": [
+    "#0 0x4c2c5e in __sanitizer_print_stack_trace (/mnt/ssd/chromium/src/out/Fuzzer/pdfium_fuzzer+0x4c2c5e)",
+    "#1 0x53a6e2 in fuzzer::Fuzzer::AlarmCallback() out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:247:7",
+    "#2 0x539966 in fuzzer::Fuzzer::StaticAlarmCallback() out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:195:6",
+    "#3 0x5b9127 in fuzzer::AlarmHandler(int, siginfo*, void*) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerUtil.cpp:76:3",
+    "#4 0x7f614710832f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1032f)",
+    "#5 0x39cb930 in CFX_ImageTransformer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:549:30",
+    "#6 0x39c373c in CFX_DIBSource::TransformTo(CFX_Matrix const*, int&, int&, unsigned int, FX_RECT const*) const out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:307:15",
+    "#7 0x3497933 in CPDF_Type3Cache::RenderGlyph(CPDF_Type3Glyphs*, unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:209:31",
+    "#8 0x3495842 in CPDF_Type3Cache::LoadGlyph(unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:79:7",
+    "#9 0x349deda in CPDF_RenderStatus::ProcessType3Text(CPDF_TextObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:472:44",
+    "#10 0x3499c5d in CPDF_RenderStatus::ProcessText(CPDF_TextObject const*, CFX_Matrix const*, CFX_PathData*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:234:12",
+    "#11 0x33fbb69 in CPDF_RenderStatus::ProcessObjectNoClip(CPDF_PageObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:325:14",
+    "#12 0x33fcf16 in CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject const*, CFX_Matrix const*, IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:293:3",
+    "#13 0x340c56a in CPDF_ProgressiveRenderer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:1026:30",
+    "#14 0x340a959 in CPDF_ProgressiveRenderer::Start(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:987:3",
+    "#15 0x314b4b0 in FPDF_RenderPage_Retail(CRenderContext*, void*, int, int, int, int, int, int, int, IFSDK_PAUSE_Adapter*) out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:884:26",
+    "#16 0x3149ed8 in FPDF_RenderPageBitmap out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:620:3",
+    "#17 0x4e81eb in RenderPage(void* const&, void* const&, int) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:72:5",
+    "#18 0x4e7bc9 in RenderPdf(char const*, unsigned long) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:164:5",
+    "#19 0x4e6f8b in LLVMFuzzerTestOneInput out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:220:3",
+    "#20 0x547d14 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:490:13",
+    "#21 0x543b56 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:446:3",
+    "#22 0x50a823 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerDriver.cpp:257:6",
+    "#23 0x50e5a8 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerDriver.cpp:379:9",
+    "#24 0x5897be in main out/Fuzzer/../../third_party/libFuzzer/src/FuzzerMain.cpp:21:10",
+    "#25 0x7f6146b3ef44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x4c2c5e in __sanitizer_print_stack_trace (/mnt/ssd/chromium/src/out/Fuzzer/pdfium_fuzzer+0x4c2c5e)",
+      "address": 4992094,
+      "function_name": "__sanitizer_print_stack_trace",
+      "module_path": "/mnt/ssd/chromium/src/out/Fuzzer/pdfium_fuzzer",
+      "module_offset": 4992094
+    },
+    {
+      "line": "#1 0x53a6e2 in fuzzer::Fuzzer::AlarmCallback() out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:247:7",
+      "address": 5482210,
+      "function_name": "fuzzer::Fuzzer::AlarmCallback()",
+      "function_offset": 7,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 247
+    },
+    {
+      "line": "#2 0x539966 in fuzzer::Fuzzer::StaticAlarmCallback() out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:195:6",
+      "address": 5478758,
+      "function_name": "fuzzer::Fuzzer::StaticAlarmCallback()",
+      "function_offset": 6,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 195
+    },
+    {
+      "line": "#3 0x5b9127 in fuzzer::AlarmHandler(int, siginfo*, void*) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerUtil.cpp:76:3",
+      "address": 6000935,
+      "function_name": "fuzzer::AlarmHandler(int, siginfo*, void*)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerUtil.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/libFuzzer/src/FuzzerUtil.cpp",
+      "source_file_line": 76
+    },
+    {
+      "line": "#4 0x7f614710832f  (/lib/x86_64-linux-gnu/libpthread.so.0+0x1032f)",
+      "address": 140055780819759,
+      "module_path": "/lib/x86_64-linux-gnu/libpthread.so.0",
+      "module_offset": 66351
+    },
+    {
+      "line": "#5 0x39cb930 in CFX_ImageTransformer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:549:30",
+      "address": 60602672,
+      "function_name": "CFX_ImageTransformer::Continue(IFX_Pause*)",
+      "function_offset": 30,
+      "source_file_name": "fx_dib_transform.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp",
+      "source_file_line": 549
+    },
+    {
+      "line": "#6 0x39c373c in CFX_DIBSource::TransformTo(CFX_Matrix const*, int&, int&, unsigned int, FX_RECT const*) const out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:307:15",
+      "address": 60569404,
+      "function_name": "CFX_DIBSource::TransformTo(CFX_Matrix const*, int&, int&, unsigned int, FX_RECT const*) const",
+      "function_offset": 15,
+      "source_file_name": "fx_dib_transform.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp",
+      "source_file_line": 307
+    },
+    {
+      "line": "#7 0x3497933 in CPDF_Type3Cache::RenderGlyph(CPDF_Type3Glyphs*, unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:209:31",
+      "address": 55146803,
+      "function_name": "CPDF_Type3Cache::RenderGlyph(CPDF_Type3Glyphs*, unsigned int, CFX_Matrix const*, float, float)",
+      "function_offset": 31,
+      "source_file_name": "fpdf_render_text.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp",
+      "source_file_line": 209
+    },
+    {
+      "line": "#8 0x3495842 in CPDF_Type3Cache::LoadGlyph(unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:79:7",
+      "address": 55138370,
+      "function_name": "CPDF_Type3Cache::LoadGlyph(unsigned int, CFX_Matrix const*, float, float)",
+      "function_offset": 7,
+      "source_file_name": "fpdf_render_text.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp",
+      "source_file_line": 79
+    },
+    {
+      "line": "#9 0x349deda in CPDF_RenderStatus::ProcessType3Text(CPDF_TextObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:472:44",
+      "address": 55172826,
+      "function_name": "CPDF_RenderStatus::ProcessType3Text(CPDF_TextObject const*, CFX_Matrix const*)",
+      "function_offset": 44,
+      "source_file_name": "fpdf_render_text.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp",
+      "source_file_line": 472
+    },
+    {
+      "line": "#10 0x3499c5d in CPDF_RenderStatus::ProcessText(CPDF_TextObject const*, CFX_Matrix const*, CFX_PathData*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:234:12",
+      "address": 55155805,
+      "function_name": "CPDF_RenderStatus::ProcessText(CPDF_TextObject const*, CFX_Matrix const*, CFX_PathData*)",
+      "function_offset": 12,
+      "source_file_name": "fpdf_render_text.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp",
+      "source_file_line": 234
+    },
+    {
+      "line": "#11 0x33fbb69 in CPDF_RenderStatus::ProcessObjectNoClip(CPDF_PageObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:325:14",
+      "address": 54508393,
+      "function_name": "CPDF_RenderStatus::ProcessObjectNoClip(CPDF_PageObject const*, CFX_Matrix const*)",
+      "function_offset": 14,
+      "source_file_name": "fpdf_render.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp",
+      "source_file_line": 325
+    },
+    {
+      "line": "#12 0x33fcf16 in CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject const*, CFX_Matrix const*, IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:293:3",
+      "address": 54513430,
+      "function_name": "CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject const*, CFX_Matrix const*, IFX_Pause*)",
+      "function_offset": 3,
+      "source_file_name": "fpdf_render.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp",
+      "source_file_line": 293
+    },
+    {
+      "line": "#13 0x340c56a in CPDF_ProgressiveRenderer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:1026:30",
+      "address": 54576490,
+      "function_name": "CPDF_ProgressiveRenderer::Continue(IFX_Pause*)",
+      "function_offset": 30,
+      "source_file_name": "fpdf_render.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp",
+      "source_file_line": 1026
+    },
+    {
+      "line": "#14 0x340a959 in CPDF_ProgressiveRenderer::Start(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:987:3",
+      "address": 54569305,
+      "function_name": "CPDF_ProgressiveRenderer::Start(IFX_Pause*)",
+      "function_offset": 3,
+      "source_file_name": "fpdf_render.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp",
+      "source_file_line": 987
+    },
+    {
+      "line": "#15 0x314b4b0 in FPDF_RenderPage_Retail(CRenderContext*, void*, int, int, int, int, int, int, int, IFSDK_PAUSE_Adapter*) out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:884:26",
+      "address": 51688624,
+      "function_name": "FPDF_RenderPage_Retail(CRenderContext*, void*, int, int, int, int, int, int, int, IFSDK_PAUSE_Adapter*)",
+      "function_offset": 26,
+      "source_file_name": "fpdfview.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp",
+      "source_file_line": 884
+    },
+    {
+      "line": "#16 0x3149ed8 in FPDF_RenderPageBitmap out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:620:3",
+      "address": 51683032,
+      "function_name": "FPDF_RenderPageBitmap",
+      "function_offset": 3,
+      "source_file_name": "fpdfview.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp",
+      "source_file_line": 620
+    },
+    {
+      "line": "#17 0x4e81eb in RenderPage(void* const&, void* const&, int) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:72:5",
+      "address": 5145067,
+      "function_name": "RenderPage(void* const&, void* const&, int)",
+      "function_offset": 5,
+      "source_file_name": "pdfium_fuzzer.cc",
+      "source_file_path": "out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc",
+      "source_file_line": 72
+    },
+    {
+      "line": "#18 0x4e7bc9 in RenderPdf(char const*, unsigned long) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:164:5",
+      "address": 5143497,
+      "function_name": "RenderPdf(char const*, unsigned long)",
+      "function_offset": 5,
+      "source_file_name": "pdfium_fuzzer.cc",
+      "source_file_path": "out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc",
+      "source_file_line": 164
+    },
+    {
+      "line": "#19 0x4e6f8b in LLVMFuzzerTestOneInput out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:220:3",
+      "address": 5140363,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 3,
+      "source_file_name": "pdfium_fuzzer.cc",
+      "source_file_path": "out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc",
+      "source_file_line": 220
+    },
+    {
+      "line": "#20 0x547d14 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:490:13",
+      "address": 5537044,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 490
+    },
+    {
+      "line": "#21 0x543b56 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp:446:3",
+      "address": 5520214,
+      "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 446
+    },
+    {
+      "line": "#22 0x50a823 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerDriver.cpp:257:6",
+      "address": 5285923,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 257
+    },
+    {
+      "line": "#23 0x50e5a8 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) out/Fuzzer/../../third_party/libFuzzer/src/FuzzerDriver.cpp:379:9",
+      "address": 5301672,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 379
+    },
+    {
+      "line": "#24 0x5897be in main out/Fuzzer/../../third_party/libFuzzer/src/FuzzerMain.cpp:21:10",
+      "address": 5806014,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/libFuzzer/src/FuzzerMain.cpp",
+      "source_file_line": 21
+    },
+    {
+      "line": "#25 0x7f6146b3ef44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287",
+      "address": 140055774752580,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c",
+      "source_file_line": 287
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "fuzzer::Fuzzer::AlarmCallback",
+    "fuzzer::Fuzzer::StaticAlarmCallback",
+    "fuzzer::AlarmHandler",
+    "CFX_ImageTransformer::Continue",
+    "CFX_DIBSource::TransformTo",
+    "CPDF_Type3Cache::RenderGlyph",
+    "CPDF_Type3Cache::LoadGlyph",
+    "CPDF_RenderStatus::ProcessType3Text",
+    "CPDF_RenderStatus::ProcessText",
+    "CPDF_RenderStatus::ProcessObjectNoClip",
+    "CPDF_RenderStatus::ContinueSingleObject",
+    "CPDF_ProgressiveRenderer::Continue",
+    "CPDF_ProgressiveRenderer::Start",
+    "FPDF_RenderPage_Retail",
+    "FPDF_RenderPageBitmap",
+    "RenderPage",
+    "RenderPdf",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#5 0x39cb930 in CFX_ImageTransformer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:549:30",
+      "address": 60602672,
+      "function_name": "CFX_ImageTransformer::Continue(IFX_Pause*)",
+      "function_offset": 30,
+      "source_file_name": "fx_dib_transform.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp",
+      "source_file_line": 549
+    },
+    {
+      "line": "#6 0x39c373c in CFX_DIBSource::TransformTo(CFX_Matrix const*, int&, int&, unsigned int, FX_RECT const*) const out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:307:15",
+      "address": 60569404,
+      "function_name": "CFX_DIBSource::TransformTo(CFX_Matrix const*, int&, int&, unsigned int, FX_RECT const*) const",
+      "function_offset": 15,
+      "source_file_name": "fx_dib_transform.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp",
+      "source_file_line": 307
+    },
+    {
+      "line": "#7 0x3497933 in CPDF_Type3Cache::RenderGlyph(CPDF_Type3Glyphs*, unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:209:31",
+      "address": 55146803,
+      "function_name": "CPDF_Type3Cache::RenderGlyph(CPDF_Type3Glyphs*, unsigned int, CFX_Matrix const*, float, float)",
+      "function_offset": 31,
+      "source_file_name": "fpdf_render_text.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp",
+      "source_file_line": 209
+    },
+    {
+      "line": "#8 0x3495842 in CPDF_Type3Cache::LoadGlyph(unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:79:7",
+      "address": 55138370,
+      "function_name": "CPDF_Type3Cache::LoadGlyph(unsigned int, CFX_Matrix const*, float, float)",
+      "function_offset": 7,
+      "source_file_name": "fpdf_render_text.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp",
+      "source_file_line": 79
+    },
+    {
+      "line": "#9 0x349deda in CPDF_RenderStatus::ProcessType3Text(CPDF_TextObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:472:44",
+      "address": 55172826,
+      "function_name": "CPDF_RenderStatus::ProcessType3Text(CPDF_TextObject const*, CFX_Matrix const*)",
+      "function_offset": 44,
+      "source_file_name": "fpdf_render_text.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp",
+      "source_file_line": 472
+    },
+    {
+      "line": "#10 0x3499c5d in CPDF_RenderStatus::ProcessText(CPDF_TextObject const*, CFX_Matrix const*, CFX_PathData*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:234:12",
+      "address": 55155805,
+      "function_name": "CPDF_RenderStatus::ProcessText(CPDF_TextObject const*, CFX_Matrix const*, CFX_PathData*)",
+      "function_offset": 12,
+      "source_file_name": "fpdf_render_text.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp",
+      "source_file_line": 234
+    },
+    {
+      "line": "#11 0x33fbb69 in CPDF_RenderStatus::ProcessObjectNoClip(CPDF_PageObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:325:14",
+      "address": 54508393,
+      "function_name": "CPDF_RenderStatus::ProcessObjectNoClip(CPDF_PageObject const*, CFX_Matrix const*)",
+      "function_offset": 14,
+      "source_file_name": "fpdf_render.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp",
+      "source_file_line": 325
+    },
+    {
+      "line": "#12 0x33fcf16 in CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject const*, CFX_Matrix const*, IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:293:3",
+      "address": 54513430,
+      "function_name": "CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject const*, CFX_Matrix const*, IFX_Pause*)",
+      "function_offset": 3,
+      "source_file_name": "fpdf_render.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp",
+      "source_file_line": 293
+    },
+    {
+      "line": "#13 0x340c56a in CPDF_ProgressiveRenderer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:1026:30",
+      "address": 54576490,
+      "function_name": "CPDF_ProgressiveRenderer::Continue(IFX_Pause*)",
+      "function_offset": 30,
+      "source_file_name": "fpdf_render.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp",
+      "source_file_line": 1026
+    },
+    {
+      "line": "#14 0x340a959 in CPDF_ProgressiveRenderer::Start(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:987:3",
+      "address": 54569305,
+      "function_name": "CPDF_ProgressiveRenderer::Start(IFX_Pause*)",
+      "function_offset": 3,
+      "source_file_name": "fpdf_render.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp",
+      "source_file_line": 987
+    },
+    {
+      "line": "#15 0x314b4b0 in FPDF_RenderPage_Retail(CRenderContext*, void*, int, int, int, int, int, int, int, IFSDK_PAUSE_Adapter*) out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:884:26",
+      "address": 51688624,
+      "function_name": "FPDF_RenderPage_Retail(CRenderContext*, void*, int, int, int, int, int, int, int, IFSDK_PAUSE_Adapter*)",
+      "function_offset": 26,
+      "source_file_name": "fpdfview.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp",
+      "source_file_line": 884
+    },
+    {
+      "line": "#16 0x3149ed8 in FPDF_RenderPageBitmap out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:620:3",
+      "address": 51683032,
+      "function_name": "FPDF_RenderPageBitmap",
+      "function_offset": 3,
+      "source_file_name": "fpdfview.cpp",
+      "source_file_path": "out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp",
+      "source_file_line": 620
+    },
+    {
+      "line": "#17 0x4e81eb in RenderPage(void* const&, void* const&, int) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:72:5",
+      "address": 5145067,
+      "function_name": "RenderPage(void* const&, void* const&, int)",
+      "function_offset": 5,
+      "source_file_name": "pdfium_fuzzer.cc",
+      "source_file_path": "out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc",
+      "source_file_line": 72
+    },
+    {
+      "line": "#18 0x4e7bc9 in RenderPdf(char const*, unsigned long) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:164:5",
+      "address": 5143497,
+      "function_name": "RenderPdf(char const*, unsigned long)",
+      "function_offset": 5,
+      "source_file_name": "pdfium_fuzzer.cc",
+      "source_file_path": "out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc",
+      "source_file_line": 164
+    },
+    {
+      "line": "#19 0x4e6f8b in LLVMFuzzerTestOneInput out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:220:3",
+      "address": 5140363,
+      "function_name": "pdfium_fuzzer.cc",
+      "function_offset": 3,
+      "source_file_name": "pdfium_fuzzer.cc",
+      "source_file_path": "out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc",
+      "source_file_line": 220
+    }
+  ],
+  "minimized_stack": [
+    "#5 0x39cb930 in CFX_ImageTransformer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:549:30",
+    "#6 0x39c373c in CFX_DIBSource::TransformTo(CFX_Matrix const*, int&, int&, unsigned int, FX_RECT const*) const out/Fuzzer/../../third_party/pdfium/core/fxge/dib/fx_dib_transform.cpp:307:15",
+    "#7 0x3497933 in CPDF_Type3Cache::RenderGlyph(CPDF_Type3Glyphs*, unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:209:31",
+    "#8 0x3495842 in CPDF_Type3Cache::LoadGlyph(unsigned int, CFX_Matrix const*, float, float) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:79:7",
+    "#9 0x349deda in CPDF_RenderStatus::ProcessType3Text(CPDF_TextObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:472:44",
+    "#10 0x3499c5d in CPDF_RenderStatus::ProcessText(CPDF_TextObject const*, CFX_Matrix const*, CFX_PathData*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_text.cpp:234:12",
+    "#11 0x33fbb69 in CPDF_RenderStatus::ProcessObjectNoClip(CPDF_PageObject const*, CFX_Matrix const*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:325:14",
+    "#12 0x33fcf16 in CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject const*, CFX_Matrix const*, IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:293:3",
+    "#13 0x340c56a in CPDF_ProgressiveRenderer::Continue(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:1026:30",
+    "#14 0x340a959 in CPDF_ProgressiveRenderer::Start(IFX_Pause*) out/Fuzzer/../../third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:987:3",
+    "#15 0x314b4b0 in FPDF_RenderPage_Retail(CRenderContext*, void*, int, int, int, int, int, int, int, IFSDK_PAUSE_Adapter*) out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:884:26",
+    "#16 0x3149ed8 in FPDF_RenderPageBitmap out/Fuzzer/../../third_party/pdfium/fpdfsdk/fpdfview.cpp:620:3",
+    "#17 0x4e81eb in RenderPage(void* const&, void* const&, int) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:72:5",
+    "#18 0x4e7bc9 in RenderPdf(char const*, unsigned long) out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:164:5",
+    "#19 0x4e6f8b in LLVMFuzzerTestOneInput out/Fuzzer/../../pdf/pdfium/fuzzers/pdfium_fuzzer.cc:220:3"
+  ],
+  "minimized_stack_function_names": [
+    "CFX_ImageTransformer::Continue",
+    "CFX_DIBSource::TransformTo",
+    "CPDF_Type3Cache::RenderGlyph",
+    "CPDF_Type3Cache::LoadGlyph",
+    "CPDF_RenderStatus::ProcessType3Text",
+    "CPDF_RenderStatus::ProcessText",
+    "CPDF_RenderStatus::ProcessObjectNoClip",
+    "CPDF_RenderStatus::ContinueSingleObject",
+    "CPDF_ProgressiveRenderer::Continue",
+    "CPDF_ProgressiveRenderer::Start",
+    "FPDF_RenderPage_Retail",
+    "FPDF_RenderPageBitmap",
+    "RenderPage",
+    "RenderPdf",
+    "pdfium_fuzzer.cc"
+  ]
+}

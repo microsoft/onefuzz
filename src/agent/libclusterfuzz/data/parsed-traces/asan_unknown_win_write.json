@@ -1,0 +1,567 @@
+{
+  "text": "=================================================================\n==3316==ERROR: AddressSanitizer: access-violation on unknown address 0x00010008 (pc 0x59565ab9 bp 0x001ad27c sp 0x001ad000 T0)\n==3316==The signal is caused by a WRITE memory access.\n==3316==Hint: address points to the zero page.\nSCARINESS: 10 (null-deref)\n==3316==*** WARNING: Failed to initialize DbgHelp!              ***\n==3316==*** Most likely this means that the app is already      ***\n==3316==*** using DbgHelp, possibly with incompatible flags.    ***\n==3316==*** Due to technical reasons, symbolization might crash ***\n==3316==*** or produce wrong results.                           ***\n==3316==WARNING: Failed to use and restart external symbolizer!\n  #0 0x59565ab8 in blink::SVGEnumerationBase::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGEnumeration.cpp:90\n  #1 0x594c249e in blink::SVGAnimateElement::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGAnimateElement.cpp:378\n  #2 0x594748c6 in blink::SVGAnimationElement::updateAnimation third_party/WebKit/Source/core/svg/SVGAnimationElement.cpp:617\n  #3 0x59556967 in blink::SMILTimeContainer::updateAnimations third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:485\n  #4 0x595588d9 in blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:414\n  #5 0x5955490c in blink::SMILTimeContainer::wakeupTimerFired third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:289\n  #6 0x58afdd31 in blink::TaskRunnerTimer<blink::EventHandler>::fired third_party/WebKit/Source/platform/Timer.h:144\n  #7 0x56fb5842 in blink::TimerBase::runInternal third_party/WebKit/Source/platform/Timer.cpp:174\n  #8 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57\n  #9 0x5718efce in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:533\n  #10 0x5718a666 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:331\n  #11 0x5a99ba44 in base::internal::Invoker<base::internal::BindState<void (content::WebMediaPlayerMS::*)(bool) __attribute__((thiscall)),base::WeakPtr<content::WebMediaPlayerMS>,bool>,void ()>::Run base/bind_internal.h:340\n  #12 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57\n  #13 0x5471fa1f in base::MessageLoop::RunTask base/message_loop/message_loop.cc:423\n  #14 0x547208d6 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:434\n  #15 0x54721bf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:527\n  #16 0x5487c3ba in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33\n  #17 0x5471ea59 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:387\n  #18 0x547a0efd in base::RunLoop::Run base/run_loop.cc:37\n  #19 0x5a853a26 in content::RendererMain content/renderer/renderer_main.cc:200\n  #20 0x545a0015 in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:491\n  #21 0x545a13da in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:836\n  #22 0x5459fc00 in content::ContentMain content/app/content_main.cc:20\n  #23 0x514a11c2 in ChromeMain chrome/app/chrome_main.cc:121\n  #24 0x9a97d9 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:201\n  #25 0x9a1926 in main chrome/app/chrome_exe_main_win.cc:271\n  #26 0xbe26ba in __scrt_common_main_seh f:\\dd\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl:253\n  #27 0x76837c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x17c03)\n  #28 0x7712ab8e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab8e)\n  #29 0x7712ab59 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab59)\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: access-violation third_party\\WebKit\\Source\\core\\svg\\SVGEnumeration.cpp:90 in blink::SVGEnumerationBase::calculateAnimatedValue\n==3316==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: access-violation third_party\\WebKit\\Source\\core\\svg\\SVGEnumeration.cpp:90 in blink::SVGEnumerationBase::calculateAnimatedValue",
+  "fault_type": "access-violation",
+  "call_stack": [
+    "#0 0x59565ab8 in blink::SVGEnumerationBase::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGEnumeration.cpp:90",
+    "#1 0x594c249e in blink::SVGAnimateElement::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGAnimateElement.cpp:378",
+    "#2 0x594748c6 in blink::SVGAnimationElement::updateAnimation third_party/WebKit/Source/core/svg/SVGAnimationElement.cpp:617",
+    "#3 0x59556967 in blink::SMILTimeContainer::updateAnimations third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:485",
+    "#4 0x595588d9 in blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:414",
+    "#5 0x5955490c in blink::SMILTimeContainer::wakeupTimerFired third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:289",
+    "#6 0x58afdd31 in blink::TaskRunnerTimer<blink::EventHandler>::fired third_party/WebKit/Source/platform/Timer.h:144",
+    "#7 0x56fb5842 in blink::TimerBase::runInternal third_party/WebKit/Source/platform/Timer.cpp:174",
+    "#8 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+    "#9 0x5718efce in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:533",
+    "#10 0x5718a666 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:331",
+    "#11 0x5a99ba44 in base::internal::Invoker<base::internal::BindState<void (content::WebMediaPlayerMS::*)(bool) __attribute__((thiscall)),base::WeakPtr<content::WebMediaPlayerMS>,bool>,void ()>::Run base/bind_internal.h:340",
+    "#12 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+    "#13 0x5471fa1f in base::MessageLoop::RunTask base/message_loop/message_loop.cc:423",
+    "#14 0x547208d6 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:434",
+    "#15 0x54721bf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:527",
+    "#16 0x5487c3ba in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+    "#17 0x5471ea59 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:387",
+    "#18 0x547a0efd in base::RunLoop::Run base/run_loop.cc:37",
+    "#19 0x5a853a26 in content::RendererMain content/renderer/renderer_main.cc:200",
+    "#20 0x545a0015 in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:491",
+    "#21 0x545a13da in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:836",
+    "#22 0x5459fc00 in content::ContentMain content/app/content_main.cc:20",
+    "#23 0x514a11c2 in ChromeMain chrome/app/chrome_main.cc:121",
+    "#24 0x9a97d9 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:201",
+    "#25 0x9a1926 in main chrome/app/chrome_exe_main_win.cc:271",
+    "#26 0xbe26ba in __scrt_common_main_seh f:\\dd\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl:253",
+    "#27 0x76837c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x17c03)",
+    "#28 0x7712ab8e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab8e)",
+    "#29 0x7712ab59 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab59)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x59565ab8 in blink::SVGEnumerationBase::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGEnumeration.cpp:90",
+      "address": 1498831544,
+      "function_name": "blink::SVGEnumerationBase::calculateAnimatedValue",
+      "source_file_name": "SVGEnumeration.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/SVGEnumeration.cpp",
+      "source_file_line": 90
+    },
+    {
+      "line": "#1 0x594c249e in blink::SVGAnimateElement::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGAnimateElement.cpp:378",
+      "address": 1498162334,
+      "function_name": "blink::SVGAnimateElement::calculateAnimatedValue",
+      "source_file_name": "SVGAnimateElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/SVGAnimateElement.cpp",
+      "source_file_line": 378
+    },
+    {
+      "line": "#2 0x594748c6 in blink::SVGAnimationElement::updateAnimation third_party/WebKit/Source/core/svg/SVGAnimationElement.cpp:617",
+      "address": 1497843910,
+      "function_name": "blink::SVGAnimationElement::updateAnimation",
+      "source_file_name": "SVGAnimationElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/SVGAnimationElement.cpp",
+      "source_file_line": 617
+    },
+    {
+      "line": "#3 0x59556967 in blink::SMILTimeContainer::updateAnimations third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:485",
+      "address": 1498769767,
+      "function_name": "blink::SMILTimeContainer::updateAnimations",
+      "source_file_name": "SMILTimeContainer.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp",
+      "source_file_line": 485
+    },
+    {
+      "line": "#4 0x595588d9 in blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:414",
+      "address": 1498777817,
+      "function_name": "blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded",
+      "source_file_name": "SMILTimeContainer.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp",
+      "source_file_line": 414
+    },
+    {
+      "line": "#5 0x5955490c in blink::SMILTimeContainer::wakeupTimerFired third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:289",
+      "address": 1498761484,
+      "function_name": "blink::SMILTimeContainer::wakeupTimerFired",
+      "source_file_name": "SMILTimeContainer.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp",
+      "source_file_line": 289
+    },
+    {
+      "line": "#6 0x58afdd31 in blink::TaskRunnerTimer<blink::EventHandler>::fired third_party/WebKit/Source/platform/Timer.h:144",
+      "address": 1487920433,
+      "function_name": "blink::TaskRunnerTimer<blink::EventHandler>::fired",
+      "source_file_name": "Timer.h",
+      "source_file_path": "third_party/WebKit/Source/platform/Timer.h",
+      "source_file_line": 144
+    },
+    {
+      "line": "#7 0x56fb5842 in blink::TimerBase::runInternal third_party/WebKit/Source/platform/Timer.cpp:174",
+      "address": 1459312706,
+      "function_name": "blink::TimerBase::runInternal",
+      "source_file_name": "Timer.cpp",
+      "source_file_path": "third_party/WebKit/Source/platform/Timer.cpp",
+      "source_file_line": 174
+    },
+    {
+      "line": "#8 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+      "address": 1418158136,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#9 0x5718efce in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:533",
+      "address": 1461252046,
+      "function_name": "blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 533
+    },
+    {
+      "line": "#10 0x5718a666 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:331",
+      "address": 1461233254,
+      "function_name": "blink::scheduler::TaskQueueManager::DoWork",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 331
+    },
+    {
+      "line": "#11 0x5a99ba44 in base::internal::Invoker<base::internal::BindState<void (content::WebMediaPlayerMS::*)(bool) __attribute__((thiscall)),base::WeakPtr<content::WebMediaPlayerMS>,bool>,void ()>::Run base/bind_internal.h:340",
+      "address": 1520024132,
+      "function_name": "base::internal::Invoker<base::internal::BindState<void (content::WebMediaPlayerMS::*)(bool) __attribute__((thiscall)),base::WeakPtr<content::WebMediaPlayerMS>,bool>,void ()>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 340
+    },
+    {
+      "line": "#12 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+      "address": 1418158136,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#13 0x5471fa1f in base::MessageLoop::RunTask base/message_loop/message_loop.cc:423",
+      "address": 1416755743,
+      "function_name": "base::MessageLoop::RunTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 423
+    },
+    {
+      "line": "#14 0x547208d6 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:434",
+      "address": 1416759510,
+      "function_name": "base::MessageLoop::DeferOrRunPendingTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 434
+    },
+    {
+      "line": "#15 0x54721bf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:527",
+      "address": 1416764406,
+      "function_name": "base::MessageLoop::DoWork",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 527
+    },
+    {
+      "line": "#16 0x5487c3ba in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+      "address": 1418183610,
+      "function_name": "base::MessagePumpDefault::Run",
+      "source_file_name": "message_pump_default.cc",
+      "source_file_path": "base/message_loop/message_pump_default.cc",
+      "source_file_line": 33
+    },
+    {
+      "line": "#17 0x5471ea59 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:387",
+      "address": 1416751705,
+      "function_name": "base::MessageLoop::RunHandler",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 387
+    },
+    {
+      "line": "#18 0x547a0efd in base::RunLoop::Run base/run_loop.cc:37",
+      "address": 1417285373,
+      "function_name": "base::RunLoop::Run",
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 37
+    },
+    {
+      "line": "#19 0x5a853a26 in content::RendererMain content/renderer/renderer_main.cc:200",
+      "address": 1518680614,
+      "function_name": "content::RendererMain",
+      "source_file_name": "renderer_main.cc",
+      "source_file_path": "content/renderer/renderer_main.cc",
+      "source_file_line": 200
+    },
+    {
+      "line": "#20 0x545a0015 in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:491",
+      "address": 1415184405,
+      "function_name": "content::RunNamedProcessTypeMain",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 491
+    },
+    {
+      "line": "#21 0x545a13da in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:836",
+      "address": 1415189466,
+      "function_name": "content::ContentMainRunnerImpl::Run",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 836
+    },
+    {
+      "line": "#22 0x5459fc00 in content::ContentMain content/app/content_main.cc:20",
+      "address": 1415183360,
+      "function_name": "content::ContentMain",
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 20
+    },
+    {
+      "line": "#23 0x514a11c2 in ChromeMain chrome/app/chrome_main.cc:121",
+      "address": 1363808706,
+      "function_name": "ChromeMain",
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 121
+    },
+    {
+      "line": "#24 0x9a97d9 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:201",
+      "address": 10131417,
+      "function_name": "MainDllLoader::Launch",
+      "source_file_name": "main_dll_loader_win.cc",
+      "source_file_path": "chrome/app/main_dll_loader_win.cc",
+      "source_file_line": 201
+    },
+    {
+      "line": "#25 0x9a1926 in main chrome/app/chrome_exe_main_win.cc:271",
+      "address": 10098982,
+      "function_name": "main",
+      "source_file_name": "chrome_exe_main_win.cc",
+      "source_file_path": "chrome/app/chrome_exe_main_win.cc",
+      "source_file_line": 271
+    },
+    {
+      "line": "#26 0xbe26ba in __scrt_common_main_seh f:\\dd\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl:253",
+      "address": 12461754,
+      "function_name": "__scrt_common_main_seh",
+      "source_file_name": "exe_common.inl",
+      "source_file_path": "f:\\dd\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl",
+      "source_file_line": 253
+    },
+    {
+      "line": "#27 0x76837c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x17c03)",
+      "address": 1988328451,
+      "function_name": "BaseThreadInitThunk+0x23",
+      "module_path": "C:\\windows\\SYSTEM32\\KERNEL32.DLL",
+      "module_offset": 97283
+    },
+    {
+      "line": "#28 0x7712ab8e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab8e)",
+      "address": 1997712270,
+      "function_name": "RtlInitializeExceptionChain+0x8e",
+      "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
+      "module_offset": 371598
+    },
+    {
+      "line": "#29 0x7712ab59 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab59)",
+      "address": 1997712217,
+      "function_name": "RtlInitializeExceptionChain+0x59",
+      "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
+      "module_offset": 371545
+    }
+  ],
+  "full_stack_names": [
+    "blink::SVGEnumerationBase::calculateAnimatedValue",
+    "blink::SVGAnimateElement::calculateAnimatedValue",
+    "blink::SVGAnimationElement::updateAnimation",
+    "blink::SMILTimeContainer::updateAnimations",
+    "blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded",
+    "blink::SMILTimeContainer::wakeupTimerFired",
+    "blink::TaskRunnerTimer<blink::EventHandler>::fired",
+    "blink::TimerBase::runInternal",
+    "base::debug::TaskAnnotator::RunTask",
+    "blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+    "blink::scheduler::TaskQueueManager::DoWork",
+    "base::internal::Invoker<base::internal::BindState<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpDefault::Run",
+    "base::MessageLoop::RunHandler",
+    "base::RunLoop::Run",
+    "content::RendererMain",
+    "content::RunNamedProcessTypeMain",
+    "content::ContentMainRunnerImpl::Run",
+    "content::ContentMain",
+    "ChromeMain",
+    "MainDllLoader::Launch",
+    "main",
+    "__scrt_common_main_seh",
+    "BaseThreadInitThunk+0x23",
+    "RtlInitializeExceptionChain+0x8e",
+    "RtlInitializeExceptionChain+0x59"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x59565ab8 in blink::SVGEnumerationBase::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGEnumeration.cpp:90",
+      "address": 1498831544,
+      "function_name": "blink::SVGEnumerationBase::calculateAnimatedValue",
+      "source_file_name": "SVGEnumeration.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/SVGEnumeration.cpp",
+      "source_file_line": 90
+    },
+    {
+      "line": "#1 0x594c249e in blink::SVGAnimateElement::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGAnimateElement.cpp:378",
+      "address": 1498162334,
+      "function_name": "blink::SVGAnimateElement::calculateAnimatedValue",
+      "source_file_name": "SVGAnimateElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/SVGAnimateElement.cpp",
+      "source_file_line": 378
+    },
+    {
+      "line": "#2 0x594748c6 in blink::SVGAnimationElement::updateAnimation third_party/WebKit/Source/core/svg/SVGAnimationElement.cpp:617",
+      "address": 1497843910,
+      "function_name": "blink::SVGAnimationElement::updateAnimation",
+      "source_file_name": "SVGAnimationElement.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/SVGAnimationElement.cpp",
+      "source_file_line": 617
+    },
+    {
+      "line": "#3 0x59556967 in blink::SMILTimeContainer::updateAnimations third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:485",
+      "address": 1498769767,
+      "function_name": "blink::SMILTimeContainer::updateAnimations",
+      "source_file_name": "SMILTimeContainer.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp",
+      "source_file_line": 485
+    },
+    {
+      "line": "#4 0x595588d9 in blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:414",
+      "address": 1498777817,
+      "function_name": "blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded",
+      "source_file_name": "SMILTimeContainer.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp",
+      "source_file_line": 414
+    },
+    {
+      "line": "#5 0x5955490c in blink::SMILTimeContainer::wakeupTimerFired third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:289",
+      "address": 1498761484,
+      "function_name": "blink::SMILTimeContainer::wakeupTimerFired",
+      "source_file_name": "SMILTimeContainer.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp",
+      "source_file_line": 289
+    },
+    {
+      "line": "#6 0x58afdd31 in blink::TaskRunnerTimer<blink::EventHandler>::fired third_party/WebKit/Source/platform/Timer.h:144",
+      "address": 1487920433,
+      "function_name": "blink::TaskRunnerTimer<blink::EventHandler>::fired",
+      "source_file_name": "Timer.h",
+      "source_file_path": "third_party/WebKit/Source/platform/Timer.h",
+      "source_file_line": 144
+    },
+    {
+      "line": "#7 0x56fb5842 in blink::TimerBase::runInternal third_party/WebKit/Source/platform/Timer.cpp:174",
+      "address": 1459312706,
+      "function_name": "blink::TimerBase::runInternal",
+      "source_file_name": "Timer.cpp",
+      "source_file_path": "third_party/WebKit/Source/platform/Timer.cpp",
+      "source_file_line": 174
+    },
+    {
+      "line": "#8 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+      "address": 1418158136,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#9 0x5718efce in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:533",
+      "address": 1461252046,
+      "function_name": "blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 533
+    },
+    {
+      "line": "#10 0x5718a666 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:331",
+      "address": 1461233254,
+      "function_name": "blink::scheduler::TaskQueueManager::DoWork",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 331
+    },
+    {
+      "line": "#11 0x5a99ba44 in base::internal::Invoker<base::internal::BindState<void (content::WebMediaPlayerMS::*)(bool) __attribute__((thiscall)),base::WeakPtr<content::WebMediaPlayerMS>,bool>,void ()>::Run base/bind_internal.h:340",
+      "address": 1520024132,
+      "function_name": "base::internal::Invoker<base::internal::BindState<void (content::WebMediaPlayerMS::*)(bool) __attribute__((thiscall)),base::WeakPtr<content::WebMediaPlayerMS>,bool>,void ()>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 340
+    },
+    {
+      "line": "#12 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+      "address": 1418158136,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#13 0x5471fa1f in base::MessageLoop::RunTask base/message_loop/message_loop.cc:423",
+      "address": 1416755743,
+      "function_name": "base::MessageLoop::RunTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 423
+    },
+    {
+      "line": "#14 0x547208d6 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:434",
+      "address": 1416759510,
+      "function_name": "base::MessageLoop::DeferOrRunPendingTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 434
+    },
+    {
+      "line": "#15 0x54721bf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:527",
+      "address": 1416764406,
+      "function_name": "base::MessageLoop::DoWork",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 527
+    },
+    {
+      "line": "#16 0x5487c3ba in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+      "address": 1418183610,
+      "function_name": "base::MessagePumpDefault::Run",
+      "source_file_name": "message_pump_default.cc",
+      "source_file_path": "base/message_loop/message_pump_default.cc",
+      "source_file_line": 33
+    },
+    {
+      "line": "#17 0x5471ea59 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:387",
+      "address": 1416751705,
+      "function_name": "base::MessageLoop::RunHandler",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 387
+    },
+    {
+      "line": "#18 0x547a0efd in base::RunLoop::Run base/run_loop.cc:37",
+      "address": 1417285373,
+      "function_name": "base::RunLoop::Run",
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 37
+    },
+    {
+      "line": "#19 0x5a853a26 in content::RendererMain content/renderer/renderer_main.cc:200",
+      "address": 1518680614,
+      "function_name": "content::RendererMain",
+      "source_file_name": "renderer_main.cc",
+      "source_file_path": "content/renderer/renderer_main.cc",
+      "source_file_line": 200
+    },
+    {
+      "line": "#20 0x545a0015 in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:491",
+      "address": 1415184405,
+      "function_name": "content::RunNamedProcessTypeMain",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 491
+    },
+    {
+      "line": "#21 0x545a13da in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:836",
+      "address": 1415189466,
+      "function_name": "content::ContentMainRunnerImpl::Run",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 836
+    },
+    {
+      "line": "#22 0x5459fc00 in content::ContentMain content/app/content_main.cc:20",
+      "address": 1415183360,
+      "function_name": "content::ContentMain",
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 20
+    },
+    {
+      "line": "#23 0x514a11c2 in ChromeMain chrome/app/chrome_main.cc:121",
+      "address": 1363808706,
+      "function_name": "ChromeMain",
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 121
+    },
+    {
+      "line": "#24 0x9a97d9 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:201",
+      "address": 10131417,
+      "function_name": "MainDllLoader::Launch",
+      "source_file_name": "main_dll_loader_win.cc",
+      "source_file_path": "chrome/app/main_dll_loader_win.cc",
+      "source_file_line": 201
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x59565ab8 in blink::SVGEnumerationBase::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGEnumeration.cpp:90",
+    "#1 0x594c249e in blink::SVGAnimateElement::calculateAnimatedValue third_party/WebKit/Source/core/svg/SVGAnimateElement.cpp:378",
+    "#2 0x594748c6 in blink::SVGAnimationElement::updateAnimation third_party/WebKit/Source/core/svg/SVGAnimationElement.cpp:617",
+    "#3 0x59556967 in blink::SMILTimeContainer::updateAnimations third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:485",
+    "#4 0x595588d9 in blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:414",
+    "#5 0x5955490c in blink::SMILTimeContainer::wakeupTimerFired third_party/WebKit/Source/core/svg/animation/SMILTimeContainer.cpp:289",
+    "#6 0x58afdd31 in blink::TaskRunnerTimer<blink::EventHandler>::fired third_party/WebKit/Source/platform/Timer.h:144",
+    "#7 0x56fb5842 in blink::TimerBase::runInternal third_party/WebKit/Source/platform/Timer.cpp:174",
+    "#8 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+    "#9 0x5718efce in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:533",
+    "#10 0x5718a666 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:331",
+    "#11 0x5a99ba44 in base::internal::Invoker<base::internal::BindState<void (content::WebMediaPlayerMS::*)(bool) __attribute__((thiscall)),base::WeakPtr<content::WebMediaPlayerMS>,bool>,void ()>::Run base/bind_internal.h:340",
+    "#12 0x54876038 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+    "#13 0x5471fa1f in base::MessageLoop::RunTask base/message_loop/message_loop.cc:423",
+    "#14 0x547208d6 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:434",
+    "#15 0x54721bf6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:527",
+    "#16 0x5487c3ba in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+    "#17 0x5471ea59 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:387",
+    "#18 0x547a0efd in base::RunLoop::Run base/run_loop.cc:37",
+    "#19 0x5a853a26 in content::RendererMain content/renderer/renderer_main.cc:200",
+    "#20 0x545a0015 in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:491",
+    "#21 0x545a13da in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:836",
+    "#22 0x5459fc00 in content::ContentMain content/app/content_main.cc:20",
+    "#23 0x514a11c2 in ChromeMain chrome/app/chrome_main.cc:121",
+    "#24 0x9a97d9 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:201"
+  ],
+  "minimized_stack_function_names": [
+    "blink::SVGEnumerationBase::calculateAnimatedValue",
+    "blink::SVGAnimateElement::calculateAnimatedValue",
+    "blink::SVGAnimationElement::updateAnimation",
+    "blink::SMILTimeContainer::updateAnimations",
+    "blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded",
+    "blink::SMILTimeContainer::wakeupTimerFired",
+    "blink::TaskRunnerTimer<blink::EventHandler>::fired",
+    "blink::TimerBase::runInternal",
+    "base::debug::TaskAnnotator::RunTask",
+    "blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+    "blink::scheduler::TaskQueueManager::DoWork",
+    "base::internal::Invoker<base::internal::BindState<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpDefault::Run",
+    "base::MessageLoop::RunHandler",
+    "base::RunLoop::Run",
+    "content::RendererMain",
+    "content::RunNamedProcessTypeMain",
+    "content::ContentMainRunnerImpl::Run",
+    "content::ContentMain",
+    "ChromeMain",
+    "MainDllLoader::Launch"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "null-deref"
+}

@@ -40,6 +40,13 @@ pub struct AzureQueueMessage {
     pub messages_url: Option<Url>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(rename = "QueueMessage")]
+pub struct AzureQueueMessageSend {
+    pub message_text: String,
+}
+
 impl AzureQueueMessage {
     pub fn parse<T>(&self, parser: impl FnOnce(&[u8]) -> Result<T>) -> Result<T> {
         let decoded = base64::decode(&self.message_text)?;
@@ -58,8 +65,10 @@ impl AzureQueueMessage {
             let http = Client::new();
             http.delete(url)
                 .send_retry_default()
-                .await?
-                .error_for_status()?;
+                .await
+                .context("AzureQueueMessage.claim")?
+                .error_for_status()
+                .context("AzureQueueMessage.claim status body")?;
         }
         let decoded = base64::decode(self.message_text)?;
         let value: T = serde_json::from_slice(&decoded)?;
@@ -122,15 +131,15 @@ impl AzureQueueClient {
 
     pub async fn enqueue(&self, data: impl Serialize) -> Result<()> {
         let serialized = serde_json::to_string(&data).unwrap();
-        let body = serde_xml_rs::to_string(&base64::encode(&serialized)).unwrap();
-        let r = self
-            .http
+        let body = serde_xml_rs::to_string(&AzureQueueMessageSend {
+            message_text: base64::encode(&serialized),
+        })?;
+        self.http
             .post(self.messages_url.clone())
             .body(body)
             .send_retry_default()
             .await
-            .context("storage queue enqueue failed")?;
-        let _ = r
+            .context("storage queue enqueue failed")?
             .error_for_status()
             .context("storage queue enqueue failed with error")?;
         Ok(())

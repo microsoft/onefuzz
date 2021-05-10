@@ -1,1 +1,1 @@
-pydantic~=1.7.3 --no-binary=pydantic
+pydantic~=1.8.1 --no-binary=pydantic

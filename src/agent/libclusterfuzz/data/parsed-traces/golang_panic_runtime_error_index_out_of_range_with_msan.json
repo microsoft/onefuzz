@@ -1,0 +1,22 @@
+{
+  "text": "panic: runtime error: index out of range\ngoroutine 108 [running]:\nnet/http.(*conn).serve.func1(0xc420115a40)\n  /syzkaller/go/src/net/http/server.go:1726 +0xd0\npanic(0xc30720, 0x144ca60)\n  /syzkaller/go/src/runtime/panic.go:502 +0x229\nmain.(*Manager).httpPrio(0xc4201dab60, 0xf2dac0, 0xc4211800e0, 0xc4203bc200)\n  /syzkaller/gopath/src/github.com/google/syzkaller/syz-manager/html.go:298 +0x5f4\nmain.(*Manager).(main.httpPrio)-fm(0xf2dac0, 0xc4211800e0, 0xc4203bc200)\n  /syzkaller/gopath/src/github.com/google/syzkaller/syz-manager/html.go:37 +0x48\nnet/http.HandlerFunc.ServeHTTP(0xc420272400, 0xf2dac0, 0xc4211800e0, 0xc4203bc200)\n  /syzkaller/go/src/net/http/server.go:1947 +0x44\nnet/http.(*ServeMux).ServeHTTP(0x2e82ba0, 0xf2dac0, 0xc4211800e0, 0xc4203bc200)\n  /syzkaller/go/src/net/http/server.go:2337 +0x130\nnet/http.serverHandler.ServeHTTP(0xc4203ac000, 0xf2dac0, 0xc4211800e0, 0xc4203bc200)\n  /syzkaller/go/src/net/http/server.go:2694 +0xbc\nnet/http.(*conn).serve(0xc420115a40, 0xf2e540, 0xc420134800)\n  /syzkaller/go/src/net/http/server.go:1830 +0x651\ncreated by net/http.(*Server).Serve\n  /syzkaller/go/src/net/http/server.go:2795 +0x27b\nMemorySanitizer:DEADLYSIGNAL\n==682278==ERROR: MemorySanitizer: ABRT on unknown address 0x0539000a6926 (pc 0x55a0c2ff2761 bp 0x00c0000527e8 sp 0x00c0000527d0 T682278)\n    #0 0x55a0c2ff2761 in runtime.raise /syzkaller/go/gc/src/runtime/sys_linux_amd64.s:165\nMemorySanitizer can not provide additional info.\nSUMMARY: MemorySanitizer: ABRT (/fuzzer+0x1116761)\n==682278==ABORTING",
+  "sanitizer": "MemorySanitizer",
+  "summary": "MemorySanitizer: ABRT (/fuzzer+0x1116761)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x55a0c2ff2761 in runtime.raise /syzkaller/go/gc/src/runtime/sys_linux_amd64.s:165"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x55a0c2ff2761 in runtime.raise /syzkaller/go/gc/src/runtime/sys_linux_amd64.s:165",
+      "address": 94148954629985,
+      "function_name": "runtime.raise",
+      "source_file_name": "sys_linux_amd64.s",
+      "source_file_path": "/syzkaller/go/gc/src/runtime/sys_linux_amd64.s",
+      "source_file_line": 165
+    }
+  ],
+  "full_stack_names": [
+    "runtime.raise"
+  ]
+}

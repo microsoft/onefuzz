@@ -3,10 +3,10 @@
 
 use crate::tasks::{
     config::CommonConfig,
-    heartbeat::*,
+    heartbeat::HeartbeatSender,
     utils::{self, default_bool_true},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz::{
     http::ResponseExt,
     jitter::delay_with_jitter,
@@ -47,15 +47,13 @@ pub struct Config {
 }
 
 pub async fn spawn(config: Arc<Config>) -> Result<()> {
-    if config.check_fuzzer_help {
-        let target = LibFuzzer::new(
-            &config.target_exe,
-            &config.target_options,
-            &config.target_env,
-            &config.common.setup_dir,
-        );
-        target.check_help().await?;
-    }
+    let fuzzer = LibFuzzer::new(
+        &config.target_exe,
+        &config.target_options,
+        &config.target_env,
+        &config.common.setup_dir,
+    );
+    fuzzer.verify(config.check_fuzzer_help, None).await?;
 
     config.unique_inputs.init().await?;
     if let Some(queue) = config.input_queue.clone() {
@@ -72,7 +70,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             input.init().await?;
             input.sync_pull().await?;
         }
-        let input_paths = config.inputs.iter().map(|i| &i.path).collect();
+        let input_paths = config.inputs.iter().map(|i| &i.local_path).collect();
         sync_and_merge(
             config.clone(),
             input_paths,
@@ -168,19 +166,21 @@ pub async fn merge_inputs(
         &config.target_env,
         &config.common.setup_dir,
     );
-    merger.merge(&config.unique_inputs.path, &candidates).await
+    merger
+        .merge(&config.unique_inputs.local_path, &candidates)
+        .await
 }
 
 async fn try_delete_blob(input_url: Url) -> Result<()> {
     let http_client = reqwest::Client::new();
-    match http_client
+    http_client
         .delete(input_url)
         .send_retry_default()
-        .await?
+        .await
+        .context("try_delete_blob")?
         .error_for_status_with_body()
         .await
-    {
-        Ok(_) => Ok(()),
-        Err(err) => Err(err),
-    }
+        .context("try_delete_blob status body")?;
+
+    Ok(())
 }

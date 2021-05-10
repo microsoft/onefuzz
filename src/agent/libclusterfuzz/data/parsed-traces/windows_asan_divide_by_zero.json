@@ -1,0 +1,2107 @@
+{
+  "text": "==1284==ERROR: AddressSanitizer: int-divide-by-zero on unknown address 0x00000000 (pc 0x16c23cb5 bp 0x0049fcac sp 0x0049fc40 T0)\n==1284==The signal is caused by a READ memory access.\n==1284==Hint: address points to the zero page.\nSCARINESS: 10 (null-deref)\n==1284==*** WARNING: Failed to initialize DbgHelp!              ***\n==1284==*** Most likely this means that the app is already      ***\n==1284==*** using DbgHelp, possibly with incompatible flags.    ***\n==1284==*** Due to technical reasons, symbolization might crash ***\n==1284==*** or produce wrong results.                           ***\n==1284==WARNING: Failed to use and restart external symbolizer!\n#0 0x16c23cb4 in blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutMultiColumnSet.cpp:146\n#1 0x16abdde7 in blink::LayoutFlowThread::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:187\n#2 0x169c9374 in blink::LayoutBox::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutBox.cpp:5756\n#3 0x169f5342 in blink::LayoutBlockFlow::AdjustedMarginBeforeForPagination third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1655\n#4 0x169e926b in blink::LayoutBlockFlow::EstimateLogicalTopPosition third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:2139\n#5 0x169e72de in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:795\n#6 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505\n#7 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555\n#8 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436\n#9 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429\n#10 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114\n#11 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321\n#12 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570\n#13 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274\n#14 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455\n#15 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555\n#16 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436\n#17 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429\n#18 0x16a08ddb in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3790\n#19 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706\n#20 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48\n#21 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76\n#22 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153\n#23 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033\n#24 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021\n#25 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553\n#26 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436\n#27 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429\n#28 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114\n#29 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321\n#30 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570\n#31 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274\n#32 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455\n#33 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555\n#34 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436\n#35 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429\n#36 0x16a089e2 in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3756\n#37 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706\n#38 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48\n#39 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76\n#40 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153\n#41 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033\n#42 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021\n#43 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553\n#44 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436\n#45 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429\n#46 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114\n#47 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321\n#48 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570\n#49 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274\n#50 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455\n#51 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555\n#52 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436\n#53 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429\n#54 0x16a8715e in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2004\n#55 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553\n#56 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436\n#57 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429\n#58 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745\n#59 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808\n#60 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505\n#61 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555\n#62 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436\n#63 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429\n#64 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745\n#65 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808\n#66 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505\n#67 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555\n#68 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436\n#69 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429\n#70 0x16c4ac82 in blink::LayoutView::UpdateLayout third_party/WebKit/Source/core/layout/LayoutView.cpp:305\n#71 0x167cf3c9 in blink::FrameView::PerformLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1143\n#72 0x167c8481 in blink::FrameView::UpdateLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1313\n#73 0x167eb259 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursiveInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3391\n#74 0x167e67e7 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursive third_party/WebKit/Source/core/frame/FrameView.cpp:3364\n#75 0x167e4006 in blink::FrameView::UpdateLifecyclePhasesInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3105\n#76 0x167e3ddd in blink::FrameView::UpdateAllLifecyclePhases third_party/WebKit/Source/core/frame/FrameView.cpp:2957\n#77 0x16ef631c in blink::PageAnimator::UpdateAllLifecyclePhases third_party/WebKit/Source/core/page/PageAnimator.cpp:100\n#78 0x17405099 in blink::PageWidgetDelegate::UpdateAllLifecyclePhases third_party/WebKit/Source/web/PageWidgetDelegate.cpp:60\n#79 0x1738298b in blink::WebViewImpl::UpdateAllLifecyclePhases third_party/WebKit/Source/web/WebViewImpl.cpp:2030\n#80 0x179f4c40 in content::RenderWidget::UpdateVisualState content/renderer/render_widget.cc:962\n#81 0x15af328b in cc::ProxyMain::BeginMainFrame cc/trees/proxy_main.cc:196\n#82 0x1b5577bc in base::internal::FunctorTraits<void (blink::BackgroundHTMLParser::*)(std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> >) __attribute__((thiscall)),void>::Invoke<const base::WeakPtr<blink::BackgroundHTMLParser> &,std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> > > base/bind_internal.h:214\n#83 0x15b2bcd5 in base::internal::Invoker<base::internal::BindState<void (cc::ProxyMain::*)(std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> >) __attribute__((thiscall)),base::WeakPtr<cc::ProxyMain>,base::internal::PassedWrapper<std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> > > >,void ()>::RunOnce base/bind_internal.h:319\n#84 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57\n#85 0x16656629 in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:531\n#86 0x16651647 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:329\n#87 0x1665fe2c in base::internal::Invoker<base::internal::BindState<void (blink::scheduler::TaskQueueManager::*)(bool) __attribute__((thiscall)),base::WeakPtr<blink::scheduler::TaskQueueManager>,bool>,void ()>::Run base/bind_internal.h:340\n#88 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57\n#89 0x12e473c0 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:404\n#90 0x12e485e0 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:415\n#91 0x12e492a6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:503\n#92 0x12fa18ca in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33\n#93 0x12e463c1 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:368\n#94 0x12ee23a8 in base::RunLoop::Run base/run_loop.cc:105\n#95 0x17954b78 in content::RendererMain content/renderer/renderer_main.cc:200\n#96 0x12d0969c in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:412\n#97 0x12d0ac8f in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:705\n#98 0x12d0cea3 in service_manager::Main services/service_manager/embedder/main.cc:468\n#99 0x12d09380 in content::ContentMain content/app/content_main.cc:19\n#100 0xf971232 in ChromeMain chrome/app/chrome_main.cc:111\n#101 0xd99e95 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:202\n#102 0xd91b84 in main chrome/app/chrome_exe_main_win.cc:271\n#103 0x100366a in __scrt_common_main_seh f:\\dd\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl:253\n#104 0x767d7c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x17c03)\n#105 0x773fab8e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab8e)\n#106 0x773fab59 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab59)\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: int-divide-by-zero third_party\\WebKit\\Source\\core\\layout\\LayoutMultiColumnSet.cpp:146 in blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset\n==1284==ABORTING",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: int-divide-by-zero third_party\\WebKit\\Source\\core\\layout\\LayoutMultiColumnSet.cpp:146 in blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset",
+  "fault_type": "int-divide-by-zero",
+  "call_stack": [
+    "#0 0x16c23cb4 in blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutMultiColumnSet.cpp:146",
+    "#1 0x16abdde7 in blink::LayoutFlowThread::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:187",
+    "#2 0x169c9374 in blink::LayoutBox::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutBox.cpp:5756",
+    "#3 0x169f5342 in blink::LayoutBlockFlow::AdjustedMarginBeforeForPagination third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1655",
+    "#4 0x169e926b in blink::LayoutBlockFlow::EstimateLogicalTopPosition third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:2139",
+    "#5 0x169e72de in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:795",
+    "#6 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+    "#7 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#8 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#9 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#10 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+    "#11 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+    "#12 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+    "#13 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+    "#14 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+    "#15 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#16 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#17 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#18 0x16a08ddb in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3790",
+    "#19 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706",
+    "#20 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48",
+    "#21 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76",
+    "#22 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153",
+    "#23 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033",
+    "#24 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021",
+    "#25 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+    "#26 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#27 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#28 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+    "#29 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+    "#30 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+    "#31 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+    "#32 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+    "#33 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#34 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#35 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#36 0x16a089e2 in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3756",
+    "#37 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706",
+    "#38 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48",
+    "#39 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76",
+    "#40 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153",
+    "#41 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033",
+    "#42 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021",
+    "#43 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+    "#44 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#45 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#46 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+    "#47 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+    "#48 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+    "#49 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+    "#50 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+    "#51 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#52 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#53 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#54 0x16a8715e in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2004",
+    "#55 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+    "#56 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#57 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#58 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745",
+    "#59 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808",
+    "#60 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+    "#61 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#62 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#63 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#64 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745",
+    "#65 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808",
+    "#66 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+    "#67 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#68 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#69 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#70 0x16c4ac82 in blink::LayoutView::UpdateLayout third_party/WebKit/Source/core/layout/LayoutView.cpp:305",
+    "#71 0x167cf3c9 in blink::FrameView::PerformLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1143",
+    "#72 0x167c8481 in blink::FrameView::UpdateLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1313",
+    "#73 0x167eb259 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursiveInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3391",
+    "#74 0x167e67e7 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursive third_party/WebKit/Source/core/frame/FrameView.cpp:3364",
+    "#75 0x167e4006 in blink::FrameView::UpdateLifecyclePhasesInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3105",
+    "#76 0x167e3ddd in blink::FrameView::UpdateAllLifecyclePhases third_party/WebKit/Source/core/frame/FrameView.cpp:2957",
+    "#77 0x16ef631c in blink::PageAnimator::UpdateAllLifecyclePhases third_party/WebKit/Source/core/page/PageAnimator.cpp:100",
+    "#78 0x17405099 in blink::PageWidgetDelegate::UpdateAllLifecyclePhases third_party/WebKit/Source/web/PageWidgetDelegate.cpp:60",
+    "#79 0x1738298b in blink::WebViewImpl::UpdateAllLifecyclePhases third_party/WebKit/Source/web/WebViewImpl.cpp:2030",
+    "#80 0x179f4c40 in content::RenderWidget::UpdateVisualState content/renderer/render_widget.cc:962",
+    "#81 0x15af328b in cc::ProxyMain::BeginMainFrame cc/trees/proxy_main.cc:196",
+    "#82 0x1b5577bc in base::internal::FunctorTraits<void (blink::BackgroundHTMLParser::*)(std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> >) __attribute__((thiscall)),void>::Invoke<const base::WeakPtr<blink::BackgroundHTMLParser> &,std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> > > base/bind_internal.h:214",
+    "#83 0x15b2bcd5 in base::internal::Invoker<base::internal::BindState<void (cc::ProxyMain::*)(std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> >) __attribute__((thiscall)),base::WeakPtr<cc::ProxyMain>,base::internal::PassedWrapper<std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> > > >,void ()>::RunOnce base/bind_internal.h:319",
+    "#84 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+    "#85 0x16656629 in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:531",
+    "#86 0x16651647 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:329",
+    "#87 0x1665fe2c in base::internal::Invoker<base::internal::BindState<void (blink::scheduler::TaskQueueManager::*)(bool) __attribute__((thiscall)),base::WeakPtr<blink::scheduler::TaskQueueManager>,bool>,void ()>::Run base/bind_internal.h:340",
+    "#88 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+    "#89 0x12e473c0 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:404",
+    "#90 0x12e485e0 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:415",
+    "#91 0x12e492a6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:503",
+    "#92 0x12fa18ca in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+    "#93 0x12e463c1 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:368",
+    "#94 0x12ee23a8 in base::RunLoop::Run base/run_loop.cc:105",
+    "#95 0x17954b78 in content::RendererMain content/renderer/renderer_main.cc:200",
+    "#96 0x12d0969c in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:412",
+    "#97 0x12d0ac8f in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:705",
+    "#98 0x12d0cea3 in service_manager::Main services/service_manager/embedder/main.cc:468",
+    "#99 0x12d09380 in content::ContentMain content/app/content_main.cc:19",
+    "#100 0xf971232 in ChromeMain chrome/app/chrome_main.cc:111",
+    "#101 0xd99e95 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:202",
+    "#102 0xd91b84 in main chrome/app/chrome_exe_main_win.cc:271",
+    "#103 0x100366a in __scrt_common_main_seh f:\\dd\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl:253",
+    "#104 0x767d7c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x17c03)",
+    "#105 0x773fab8e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab8e)",
+    "#106 0x773fab59 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab59)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x16c23cb4 in blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutMultiColumnSet.cpp:146",
+      "address": 381828276,
+      "function_name": "blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset",
+      "source_file_name": "LayoutMultiColumnSet.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnSet.cpp",
+      "source_file_line": 146
+    },
+    {
+      "line": "#1 0x16abdde7 in blink::LayoutFlowThread::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:187",
+      "address": 380362215,
+      "function_name": "blink::LayoutFlowThread::PageRemainingLogicalHeightForOffset",
+      "source_file_name": "LayoutFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp",
+      "source_file_line": 187
+    },
+    {
+      "line": "#2 0x169c9374 in blink::LayoutBox::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutBox.cpp:5756",
+      "address": 379360116,
+      "function_name": "blink::LayoutBox::PageRemainingLogicalHeightForOffset",
+      "source_file_name": "LayoutBox.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBox.cpp",
+      "source_file_line": 5756
+    },
+    {
+      "line": "#3 0x169f5342 in blink::LayoutBlockFlow::AdjustedMarginBeforeForPagination third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1655",
+      "address": 379540290,
+      "function_name": "blink::LayoutBlockFlow::AdjustedMarginBeforeForPagination",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1655
+    },
+    {
+      "line": "#4 0x169e926b in blink::LayoutBlockFlow::EstimateLogicalTopPosition third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:2139",
+      "address": 379490923,
+      "function_name": "blink::LayoutBlockFlow::EstimateLogicalTopPosition",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 2139
+    },
+    {
+      "line": "#5 0x169e72de in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:795",
+      "address": 379482846,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 795
+    },
+    {
+      "line": "#6 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+      "address": 379468126,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1505
+    },
+    {
+      "line": "#7 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#8 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#9 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#10 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+      "address": 380357929,
+      "function_name": "blink::LayoutFlowThread::UpdateLayout",
+      "source_file_name": "LayoutFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp",
+      "source_file_line": 114
+    },
+    {
+      "line": "#11 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+      "address": 381747833,
+      "function_name": "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 1321
+    },
+    {
+      "line": "#12 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+      "address": 381716999,
+      "function_name": "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 570
+    },
+    {
+      "line": "#13 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+      "address": 379429537,
+      "function_name": "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 274
+    },
+    {
+      "line": "#14 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+      "address": 379465613,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1455
+    },
+    {
+      "line": "#15 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#16 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#17 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#18 0x16a08ddb in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3790",
+      "address": 379620827,
+      "function_name": "blink::LayoutBlockFlow::PositionAndLayoutFloat",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 3790
+    },
+    {
+      "line": "#19 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706",
+      "address": 379556490,
+      "function_name": "blink::LayoutBlockFlow::PlaceNewFloats",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 3706
+    },
+    {
+      "line": "#20 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48",
+      "address": 382827169,
+      "function_name": "blink::LineBreaker::SkipLeadingWhitespace",
+      "source_file_name": "LineBreaker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/line/LineBreaker.cpp",
+      "source_file_line": 48
+    },
+    {
+      "line": "#21 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76",
+      "address": 382830499,
+      "function_name": "blink::LineBreaker::NextLineBreak",
+      "source_file_name": "LineBreaker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/line/LineBreaker.cpp",
+      "source_file_line": 76
+    },
+    {
+      "line": "#22 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153",
+      "address": 380087226,
+      "function_name": "blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 1153
+    },
+    {
+      "line": "#23 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033",
+      "address": 380072839,
+      "function_name": "blink::LayoutBlockFlow::LayoutRunsAndFloats",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 1033
+    },
+    {
+      "line": "#24 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021",
+      "address": 380140201,
+      "function_name": "blink::LayoutBlockFlow::LayoutInlineChildren",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 2021
+    },
+    {
+      "line": "#25 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+      "address": 379443501,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 553
+    },
+    {
+      "line": "#26 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#27 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#28 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+      "address": 380357929,
+      "function_name": "blink::LayoutFlowThread::UpdateLayout",
+      "source_file_name": "LayoutFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp",
+      "source_file_line": 114
+    },
+    {
+      "line": "#29 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+      "address": 381747833,
+      "function_name": "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 1321
+    },
+    {
+      "line": "#30 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+      "address": 381716999,
+      "function_name": "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 570
+    },
+    {
+      "line": "#31 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+      "address": 379429537,
+      "function_name": "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 274
+    },
+    {
+      "line": "#32 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+      "address": 379465613,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1455
+    },
+    {
+      "line": "#33 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#34 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#35 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#36 0x16a089e2 in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3756",
+      "address": 379619810,
+      "function_name": "blink::LayoutBlockFlow::PositionAndLayoutFloat",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 3756
+    },
+    {
+      "line": "#37 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706",
+      "address": 379556490,
+      "function_name": "blink::LayoutBlockFlow::PlaceNewFloats",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 3706
+    },
+    {
+      "line": "#38 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48",
+      "address": 382827169,
+      "function_name": "blink::LineBreaker::SkipLeadingWhitespace",
+      "source_file_name": "LineBreaker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/line/LineBreaker.cpp",
+      "source_file_line": 48
+    },
+    {
+      "line": "#39 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76",
+      "address": 382830499,
+      "function_name": "blink::LineBreaker::NextLineBreak",
+      "source_file_name": "LineBreaker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/line/LineBreaker.cpp",
+      "source_file_line": 76
+    },
+    {
+      "line": "#40 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153",
+      "address": 380087226,
+      "function_name": "blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 1153
+    },
+    {
+      "line": "#41 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033",
+      "address": 380072839,
+      "function_name": "blink::LayoutBlockFlow::LayoutRunsAndFloats",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 1033
+    },
+    {
+      "line": "#42 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021",
+      "address": 380140201,
+      "function_name": "blink::LayoutBlockFlow::LayoutInlineChildren",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 2021
+    },
+    {
+      "line": "#43 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+      "address": 379443501,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 553
+    },
+    {
+      "line": "#44 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#45 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#46 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+      "address": 380357929,
+      "function_name": "blink::LayoutFlowThread::UpdateLayout",
+      "source_file_name": "LayoutFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp",
+      "source_file_line": 114
+    },
+    {
+      "line": "#47 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+      "address": 381747833,
+      "function_name": "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 1321
+    },
+    {
+      "line": "#48 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+      "address": 381716999,
+      "function_name": "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 570
+    },
+    {
+      "line": "#49 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+      "address": 379429537,
+      "function_name": "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 274
+    },
+    {
+      "line": "#50 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+      "address": 379465613,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1455
+    },
+    {
+      "line": "#51 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#52 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#53 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#54 0x16a8715e in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2004",
+      "address": 380137822,
+      "function_name": "blink::LayoutBlockFlow::LayoutInlineChildren",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 2004
+    },
+    {
+      "line": "#55 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+      "address": 379443501,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 553
+    },
+    {
+      "line": "#56 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#57 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#58 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745",
+      "address": 379478884,
+      "function_name": "blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 745
+    },
+    {
+      "line": "#59 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808",
+      "address": 379483124,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 808
+    },
+    {
+      "line": "#60 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+      "address": 379468126,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1505
+    },
+    {
+      "line": "#61 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#62 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#63 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#64 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745",
+      "address": 379478884,
+      "function_name": "blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 745
+    },
+    {
+      "line": "#65 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808",
+      "address": 379483124,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 808
+    },
+    {
+      "line": "#66 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+      "address": 379468126,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1505
+    },
+    {
+      "line": "#67 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#68 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#69 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#70 0x16c4ac82 in blink::LayoutView::UpdateLayout third_party/WebKit/Source/core/layout/LayoutView.cpp:305",
+      "address": 381987970,
+      "function_name": "blink::LayoutView::UpdateLayout",
+      "source_file_name": "LayoutView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutView.cpp",
+      "source_file_line": 305
+    },
+    {
+      "line": "#71 0x167cf3c9 in blink::FrameView::PerformLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1143",
+      "address": 377287625,
+      "function_name": "blink::FrameView::PerformLayout",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 1143
+    },
+    {
+      "line": "#72 0x167c8481 in blink::FrameView::UpdateLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1313",
+      "address": 377259137,
+      "function_name": "blink::FrameView::UpdateLayout",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 1313
+    },
+    {
+      "line": "#73 0x167eb259 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursiveInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3391",
+      "address": 377401945,
+      "function_name": "blink::FrameView::UpdateStyleAndLayoutIfNeededRecursiveInternal",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 3391
+    },
+    {
+      "line": "#74 0x167e67e7 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursive third_party/WebKit/Source/core/frame/FrameView.cpp:3364",
+      "address": 377382887,
+      "function_name": "blink::FrameView::UpdateStyleAndLayoutIfNeededRecursive",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 3364
+    },
+    {
+      "line": "#75 0x167e4006 in blink::FrameView::UpdateLifecyclePhasesInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3105",
+      "address": 377372678,
+      "function_name": "blink::FrameView::UpdateLifecyclePhasesInternal",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 3105
+    },
+    {
+      "line": "#76 0x167e3ddd in blink::FrameView::UpdateAllLifecyclePhases third_party/WebKit/Source/core/frame/FrameView.cpp:2957",
+      "address": 377372125,
+      "function_name": "blink::FrameView::UpdateAllLifecyclePhases",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 2957
+    },
+    {
+      "line": "#77 0x16ef631c in blink::PageAnimator::UpdateAllLifecyclePhases third_party/WebKit/Source/core/page/PageAnimator.cpp:100",
+      "address": 384787228,
+      "function_name": "blink::PageAnimator::UpdateAllLifecyclePhases",
+      "source_file_name": "PageAnimator.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/page/PageAnimator.cpp",
+      "source_file_line": 100
+    },
+    {
+      "line": "#78 0x17405099 in blink::PageWidgetDelegate::UpdateAllLifecyclePhases third_party/WebKit/Source/web/PageWidgetDelegate.cpp:60",
+      "address": 390090905,
+      "function_name": "blink::PageWidgetDelegate::UpdateAllLifecyclePhases",
+      "source_file_name": "PageWidgetDelegate.cpp",
+      "source_file_path": "third_party/WebKit/Source/web/PageWidgetDelegate.cpp",
+      "source_file_line": 60
+    },
+    {
+      "line": "#79 0x1738298b in blink::WebViewImpl::UpdateAllLifecyclePhases third_party/WebKit/Source/web/WebViewImpl.cpp:2030",
+      "address": 389556619,
+      "function_name": "blink::WebViewImpl::UpdateAllLifecyclePhases",
+      "source_file_name": "WebViewImpl.cpp",
+      "source_file_path": "third_party/WebKit/Source/web/WebViewImpl.cpp",
+      "source_file_line": 2030
+    },
+    {
+      "line": "#80 0x179f4c40 in content::RenderWidget::UpdateVisualState content/renderer/render_widget.cc:962",
+      "address": 396315712,
+      "function_name": "content::RenderWidget::UpdateVisualState",
+      "source_file_name": "render_widget.cc",
+      "source_file_path": "content/renderer/render_widget.cc",
+      "source_file_line": 962
+    },
+    {
+      "line": "#81 0x15af328b in cc::ProxyMain::BeginMainFrame cc/trees/proxy_main.cc:196",
+      "address": 363803275,
+      "function_name": "cc::ProxyMain::BeginMainFrame",
+      "source_file_name": "proxy_main.cc",
+      "source_file_path": "cc/trees/proxy_main.cc",
+      "source_file_line": 196
+    },
+    {
+      "line": "#82 0x1b5577bc in base::internal::FunctorTraits<void (blink::BackgroundHTMLParser::*)(std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> >) __attribute__((thiscall)),void>::Invoke<const base::WeakPtr<blink::BackgroundHTMLParser> &,std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> > > base/bind_internal.h:214",
+      "address": 458586044,
+      "function_name": "base::internal::FunctorTraits<void (blink::BackgroundHTMLParser::*)(std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> >) __attribute__((thiscall)),void>::Invoke<const base::WeakPtr<blink::BackgroundHTMLParser> &,std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> > >",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 214
+    },
+    {
+      "line": "#83 0x15b2bcd5 in base::internal::Invoker<base::internal::BindState<void (cc::ProxyMain::*)(std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> >) __attribute__((thiscall)),base::WeakPtr<cc::ProxyMain>,base::internal::PassedWrapper<std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> > > >,void ()>::RunOnce base/bind_internal.h:319",
+      "address": 364035285,
+      "function_name": "base::internal::Invoker<base::internal::BindState<void (cc::ProxyMain::*)(std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> >) __attribute__((thiscall)),base::WeakPtr<cc::ProxyMain>,base::internal::PassedWrapper<std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> > > >,void ()>::RunOnce",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 319
+    },
+    {
+      "line": "#84 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+      "address": 318354182,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#85 0x16656629 in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:531",
+      "address": 375744041,
+      "function_name": "blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 531
+    },
+    {
+      "line": "#86 0x16651647 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:329",
+      "address": 375723591,
+      "function_name": "blink::scheduler::TaskQueueManager::DoWork",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 329
+    },
+    {
+      "line": "#87 0x1665fe2c in base::internal::Invoker<base::internal::BindState<void (blink::scheduler::TaskQueueManager::*)(bool) __attribute__((thiscall)),base::WeakPtr<blink::scheduler::TaskQueueManager>,bool>,void ()>::Run base/bind_internal.h:340",
+      "address": 375782956,
+      "function_name": "base::internal::Invoker<base::internal::BindState<void (blink::scheduler::TaskQueueManager::*)(bool) __attribute__((thiscall)),base::WeakPtr<blink::scheduler::TaskQueueManager>,bool>,void ()>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 340
+    },
+    {
+      "line": "#88 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+      "address": 318354182,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#89 0x12e473c0 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:404",
+      "address": 316961728,
+      "function_name": "base::MessageLoop::RunTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 404
+    },
+    {
+      "line": "#90 0x12e485e0 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:415",
+      "address": 316966368,
+      "function_name": "base::MessageLoop::DeferOrRunPendingTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 415
+    },
+    {
+      "line": "#91 0x12e492a6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:503",
+      "address": 316969638,
+      "function_name": "base::MessageLoop::DoWork",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 503
+    },
+    {
+      "line": "#92 0x12fa18ca in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+      "address": 318380234,
+      "function_name": "base::MessagePumpDefault::Run",
+      "source_file_name": "message_pump_default.cc",
+      "source_file_path": "base/message_loop/message_pump_default.cc",
+      "source_file_line": 33
+    },
+    {
+      "line": "#93 0x12e463c1 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:368",
+      "address": 316957633,
+      "function_name": "base::MessageLoop::RunHandler",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 368
+    },
+    {
+      "line": "#94 0x12ee23a8 in base::RunLoop::Run base/run_loop.cc:105",
+      "address": 317596584,
+      "function_name": "base::RunLoop::Run",
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 105
+    },
+    {
+      "line": "#95 0x17954b78 in content::RendererMain content/renderer/renderer_main.cc:200",
+      "address": 395660152,
+      "function_name": "content::RendererMain",
+      "source_file_name": "renderer_main.cc",
+      "source_file_path": "content/renderer/renderer_main.cc",
+      "source_file_line": 200
+    },
+    {
+      "line": "#96 0x12d0969c in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:412",
+      "address": 315659932,
+      "function_name": "content::RunNamedProcessTypeMain",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 412
+    },
+    {
+      "line": "#97 0x12d0ac8f in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:705",
+      "address": 315665551,
+      "function_name": "content::ContentMainRunnerImpl::Run",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 705
+    },
+    {
+      "line": "#98 0x12d0cea3 in service_manager::Main services/service_manager/embedder/main.cc:468",
+      "address": 315674275,
+      "function_name": "service_manager::Main",
+      "source_file_name": "main.cc",
+      "source_file_path": "services/service_manager/embedder/main.cc",
+      "source_file_line": 468
+    },
+    {
+      "line": "#99 0x12d09380 in content::ContentMain content/app/content_main.cc:19",
+      "address": 315659136,
+      "function_name": "content::ContentMain",
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#100 0xf971232 in ChromeMain chrome/app/chrome_main.cc:111",
+      "address": 261558834,
+      "function_name": "ChromeMain",
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 111
+    },
+    {
+      "line": "#101 0xd99e95 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:202",
+      "address": 14261909,
+      "function_name": "MainDllLoader::Launch",
+      "source_file_name": "main_dll_loader_win.cc",
+      "source_file_path": "chrome/app/main_dll_loader_win.cc",
+      "source_file_line": 202
+    },
+    {
+      "line": "#102 0xd91b84 in main chrome/app/chrome_exe_main_win.cc:271",
+      "address": 14228356,
+      "function_name": "main",
+      "source_file_name": "chrome_exe_main_win.cc",
+      "source_file_path": "chrome/app/chrome_exe_main_win.cc",
+      "source_file_line": 271
+    },
+    {
+      "line": "#103 0x100366a in __scrt_common_main_seh f:\\dd\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl:253",
+      "address": 16791146,
+      "function_name": "__scrt_common_main_seh",
+      "source_file_name": "exe_common.inl",
+      "source_file_path": "f:\\dd\\vctools\\crt\\vcstartup\\src\\startup\\exe_common.inl",
+      "source_file_line": 253
+    },
+    {
+      "line": "#104 0x767d7c03 in BaseThreadInitThunk+0x23 (C:\\windows\\SYSTEM32\\KERNEL32.DLL+0x17c03)",
+      "address": 1987935235,
+      "function_name": "BaseThreadInitThunk+0x23",
+      "module_path": "C:\\windows\\SYSTEM32\\KERNEL32.DLL",
+      "module_offset": 97283
+    },
+    {
+      "line": "#105 0x773fab8e in RtlInitializeExceptionChain+0x8e (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab8e)",
+      "address": 2000661390,
+      "function_name": "RtlInitializeExceptionChain+0x8e",
+      "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
+      "module_offset": 371598
+    },
+    {
+      "line": "#106 0x773fab59 in RtlInitializeExceptionChain+0x59 (C:\\windows\\SYSTEM32\\ntdll.dll+0x5ab59)",
+      "address": 2000661337,
+      "function_name": "RtlInitializeExceptionChain+0x59",
+      "module_path": "C:\\windows\\SYSTEM32\\ntdll.dll",
+      "module_offset": 371545
+    }
+  ],
+  "full_stack_names": [
+    "blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset",
+    "blink::LayoutFlowThread::PageRemainingLogicalHeightForOffset",
+    "blink::LayoutBox::PageRemainingLogicalHeightForOffset",
+    "blink::LayoutBlockFlow::AdjustedMarginBeforeForPagination",
+    "blink::LayoutBlockFlow::EstimateLogicalTopPosition",
+    "blink::LayoutBlockFlow::LayoutBlockChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+    "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::PositionAndLayoutFloat",
+    "blink::LayoutBlockFlow::PlaceNewFloats",
+    "blink::LineBreaker::SkipLeadingWhitespace",
+    "blink::LineBreaker::NextLineBreak",
+    "blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange",
+    "blink::LayoutBlockFlow::LayoutRunsAndFloats",
+    "blink::LayoutBlockFlow::LayoutInlineChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+    "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::PositionAndLayoutFloat",
+    "blink::LayoutBlockFlow::PlaceNewFloats",
+    "blink::LineBreaker::SkipLeadingWhitespace",
+    "blink::LineBreaker::NextLineBreak",
+    "blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange",
+    "blink::LayoutBlockFlow::LayoutRunsAndFloats",
+    "blink::LayoutBlockFlow::LayoutInlineChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+    "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::LayoutInlineChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded",
+    "blink::LayoutBlockFlow::LayoutBlockChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded",
+    "blink::LayoutBlockFlow::LayoutBlockChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutView::UpdateLayout",
+    "blink::FrameView::PerformLayout",
+    "blink::FrameView::UpdateLayout",
+    "blink::FrameView::UpdateStyleAndLayoutIfNeededRecursiveInternal",
+    "blink::FrameView::UpdateStyleAndLayoutIfNeededRecursive",
+    "blink::FrameView::UpdateLifecyclePhasesInternal",
+    "blink::FrameView::UpdateAllLifecyclePhases",
+    "blink::PageAnimator::UpdateAllLifecyclePhases",
+    "blink::PageWidgetDelegate::UpdateAllLifecyclePhases",
+    "blink::WebViewImpl::UpdateAllLifecyclePhases",
+    "content::RenderWidget::UpdateVisualState",
+    "cc::ProxyMain::BeginMainFrame",
+    "base::internal::FunctorTraits<void ",
+    "base::internal::Invoker<base::internal::BindState<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+    "blink::scheduler::TaskQueueManager::DoWork",
+    "base::internal::Invoker<base::internal::BindState<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpDefault::Run",
+    "base::MessageLoop::RunHandler",
+    "base::RunLoop::Run",
+    "content::RendererMain",
+    "content::RunNamedProcessTypeMain",
+    "content::ContentMainRunnerImpl::Run",
+    "service_manager::Main",
+    "content::ContentMain",
+    "ChromeMain",
+    "MainDllLoader::Launch",
+    "main",
+    "__scrt_common_main_seh",
+    "BaseThreadInitThunk+0x23",
+    "RtlInitializeExceptionChain+0x8e",
+    "RtlInitializeExceptionChain+0x59"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x16c23cb4 in blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutMultiColumnSet.cpp:146",
+      "address": 381828276,
+      "function_name": "blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset",
+      "source_file_name": "LayoutMultiColumnSet.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnSet.cpp",
+      "source_file_line": 146
+    },
+    {
+      "line": "#1 0x16abdde7 in blink::LayoutFlowThread::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:187",
+      "address": 380362215,
+      "function_name": "blink::LayoutFlowThread::PageRemainingLogicalHeightForOffset",
+      "source_file_name": "LayoutFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp",
+      "source_file_line": 187
+    },
+    {
+      "line": "#2 0x169c9374 in blink::LayoutBox::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutBox.cpp:5756",
+      "address": 379360116,
+      "function_name": "blink::LayoutBox::PageRemainingLogicalHeightForOffset",
+      "source_file_name": "LayoutBox.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBox.cpp",
+      "source_file_line": 5756
+    },
+    {
+      "line": "#3 0x169f5342 in blink::LayoutBlockFlow::AdjustedMarginBeforeForPagination third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1655",
+      "address": 379540290,
+      "function_name": "blink::LayoutBlockFlow::AdjustedMarginBeforeForPagination",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1655
+    },
+    {
+      "line": "#4 0x169e926b in blink::LayoutBlockFlow::EstimateLogicalTopPosition third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:2139",
+      "address": 379490923,
+      "function_name": "blink::LayoutBlockFlow::EstimateLogicalTopPosition",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 2139
+    },
+    {
+      "line": "#5 0x169e72de in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:795",
+      "address": 379482846,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 795
+    },
+    {
+      "line": "#6 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+      "address": 379468126,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1505
+    },
+    {
+      "line": "#7 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#8 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#9 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#10 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+      "address": 380357929,
+      "function_name": "blink::LayoutFlowThread::UpdateLayout",
+      "source_file_name": "LayoutFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp",
+      "source_file_line": 114
+    },
+    {
+      "line": "#11 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+      "address": 381747833,
+      "function_name": "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 1321
+    },
+    {
+      "line": "#12 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+      "address": 381716999,
+      "function_name": "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 570
+    },
+    {
+      "line": "#13 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+      "address": 379429537,
+      "function_name": "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 274
+    },
+    {
+      "line": "#14 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+      "address": 379465613,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1455
+    },
+    {
+      "line": "#15 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#16 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#17 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#18 0x16a08ddb in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3790",
+      "address": 379620827,
+      "function_name": "blink::LayoutBlockFlow::PositionAndLayoutFloat",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 3790
+    },
+    {
+      "line": "#19 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706",
+      "address": 379556490,
+      "function_name": "blink::LayoutBlockFlow::PlaceNewFloats",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 3706
+    },
+    {
+      "line": "#20 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48",
+      "address": 382827169,
+      "function_name": "blink::LineBreaker::SkipLeadingWhitespace",
+      "source_file_name": "LineBreaker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/line/LineBreaker.cpp",
+      "source_file_line": 48
+    },
+    {
+      "line": "#21 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76",
+      "address": 382830499,
+      "function_name": "blink::LineBreaker::NextLineBreak",
+      "source_file_name": "LineBreaker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/line/LineBreaker.cpp",
+      "source_file_line": 76
+    },
+    {
+      "line": "#22 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153",
+      "address": 380087226,
+      "function_name": "blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 1153
+    },
+    {
+      "line": "#23 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033",
+      "address": 380072839,
+      "function_name": "blink::LayoutBlockFlow::LayoutRunsAndFloats",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 1033
+    },
+    {
+      "line": "#24 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021",
+      "address": 380140201,
+      "function_name": "blink::LayoutBlockFlow::LayoutInlineChildren",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 2021
+    },
+    {
+      "line": "#25 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+      "address": 379443501,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 553
+    },
+    {
+      "line": "#26 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#27 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#28 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+      "address": 380357929,
+      "function_name": "blink::LayoutFlowThread::UpdateLayout",
+      "source_file_name": "LayoutFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp",
+      "source_file_line": 114
+    },
+    {
+      "line": "#29 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+      "address": 381747833,
+      "function_name": "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 1321
+    },
+    {
+      "line": "#30 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+      "address": 381716999,
+      "function_name": "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 570
+    },
+    {
+      "line": "#31 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+      "address": 379429537,
+      "function_name": "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 274
+    },
+    {
+      "line": "#32 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+      "address": 379465613,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1455
+    },
+    {
+      "line": "#33 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#34 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#35 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#36 0x16a089e2 in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3756",
+      "address": 379619810,
+      "function_name": "blink::LayoutBlockFlow::PositionAndLayoutFloat",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 3756
+    },
+    {
+      "line": "#37 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706",
+      "address": 379556490,
+      "function_name": "blink::LayoutBlockFlow::PlaceNewFloats",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 3706
+    },
+    {
+      "line": "#38 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48",
+      "address": 382827169,
+      "function_name": "blink::LineBreaker::SkipLeadingWhitespace",
+      "source_file_name": "LineBreaker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/line/LineBreaker.cpp",
+      "source_file_line": 48
+    },
+    {
+      "line": "#39 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76",
+      "address": 382830499,
+      "function_name": "blink::LineBreaker::NextLineBreak",
+      "source_file_name": "LineBreaker.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/line/LineBreaker.cpp",
+      "source_file_line": 76
+    },
+    {
+      "line": "#40 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153",
+      "address": 380087226,
+      "function_name": "blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 1153
+    },
+    {
+      "line": "#41 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033",
+      "address": 380072839,
+      "function_name": "blink::LayoutBlockFlow::LayoutRunsAndFloats",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 1033
+    },
+    {
+      "line": "#42 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021",
+      "address": 380140201,
+      "function_name": "blink::LayoutBlockFlow::LayoutInlineChildren",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 2021
+    },
+    {
+      "line": "#43 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+      "address": 379443501,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 553
+    },
+    {
+      "line": "#44 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#45 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#46 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+      "address": 380357929,
+      "function_name": "blink::LayoutFlowThread::UpdateLayout",
+      "source_file_name": "LayoutFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp",
+      "source_file_line": 114
+    },
+    {
+      "line": "#47 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+      "address": 381747833,
+      "function_name": "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 1321
+    },
+    {
+      "line": "#48 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+      "address": 381716999,
+      "function_name": "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+      "source_file_name": "LayoutMultiColumnFlowThread.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp",
+      "source_file_line": 570
+    },
+    {
+      "line": "#49 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+      "address": 379429537,
+      "function_name": "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 274
+    },
+    {
+      "line": "#50 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+      "address": 379465613,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1455
+    },
+    {
+      "line": "#51 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#52 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#53 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#54 0x16a8715e in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2004",
+      "address": 380137822,
+      "function_name": "blink::LayoutBlockFlow::LayoutInlineChildren",
+      "source_file_name": "LayoutBlockFlowLine.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp",
+      "source_file_line": 2004
+    },
+    {
+      "line": "#55 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+      "address": 379443501,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 553
+    },
+    {
+      "line": "#56 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#57 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#58 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745",
+      "address": 379478884,
+      "function_name": "blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 745
+    },
+    {
+      "line": "#59 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808",
+      "address": 379483124,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 808
+    },
+    {
+      "line": "#60 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+      "address": 379468126,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1505
+    },
+    {
+      "line": "#61 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#62 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#63 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#64 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745",
+      "address": 379478884,
+      "function_name": "blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 745
+    },
+    {
+      "line": "#65 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808",
+      "address": 379483124,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChild",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 808
+    },
+    {
+      "line": "#66 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+      "address": 379468126,
+      "function_name": "blink::LayoutBlockFlow::LayoutBlockChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 1505
+    },
+    {
+      "line": "#67 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+      "address": 379443484,
+      "function_name": "blink::LayoutBlockFlow::LayoutChildren",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 555
+    },
+    {
+      "line": "#68 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+      "address": 379439378,
+      "function_name": "blink::LayoutBlockFlow::UpdateBlockLayout",
+      "source_file_name": "LayoutBlockFlow.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp",
+      "source_file_line": 436
+    },
+    {
+      "line": "#69 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+      "address": 378810044,
+      "function_name": "blink::LayoutBlock::UpdateLayout",
+      "source_file_name": "LayoutBlock.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutBlock.cpp",
+      "source_file_line": 429
+    },
+    {
+      "line": "#70 0x16c4ac82 in blink::LayoutView::UpdateLayout third_party/WebKit/Source/core/layout/LayoutView.cpp:305",
+      "address": 381987970,
+      "function_name": "blink::LayoutView::UpdateLayout",
+      "source_file_name": "LayoutView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/layout/LayoutView.cpp",
+      "source_file_line": 305
+    },
+    {
+      "line": "#71 0x167cf3c9 in blink::FrameView::PerformLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1143",
+      "address": 377287625,
+      "function_name": "blink::FrameView::PerformLayout",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 1143
+    },
+    {
+      "line": "#72 0x167c8481 in blink::FrameView::UpdateLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1313",
+      "address": 377259137,
+      "function_name": "blink::FrameView::UpdateLayout",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 1313
+    },
+    {
+      "line": "#73 0x167eb259 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursiveInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3391",
+      "address": 377401945,
+      "function_name": "blink::FrameView::UpdateStyleAndLayoutIfNeededRecursiveInternal",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 3391
+    },
+    {
+      "line": "#74 0x167e67e7 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursive third_party/WebKit/Source/core/frame/FrameView.cpp:3364",
+      "address": 377382887,
+      "function_name": "blink::FrameView::UpdateStyleAndLayoutIfNeededRecursive",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 3364
+    },
+    {
+      "line": "#75 0x167e4006 in blink::FrameView::UpdateLifecyclePhasesInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3105",
+      "address": 377372678,
+      "function_name": "blink::FrameView::UpdateLifecyclePhasesInternal",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 3105
+    },
+    {
+      "line": "#76 0x167e3ddd in blink::FrameView::UpdateAllLifecyclePhases third_party/WebKit/Source/core/frame/FrameView.cpp:2957",
+      "address": 377372125,
+      "function_name": "blink::FrameView::UpdateAllLifecyclePhases",
+      "source_file_name": "FrameView.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/frame/FrameView.cpp",
+      "source_file_line": 2957
+    },
+    {
+      "line": "#77 0x16ef631c in blink::PageAnimator::UpdateAllLifecyclePhases third_party/WebKit/Source/core/page/PageAnimator.cpp:100",
+      "address": 384787228,
+      "function_name": "blink::PageAnimator::UpdateAllLifecyclePhases",
+      "source_file_name": "PageAnimator.cpp",
+      "source_file_path": "third_party/WebKit/Source/core/page/PageAnimator.cpp",
+      "source_file_line": 100
+    },
+    {
+      "line": "#78 0x17405099 in blink::PageWidgetDelegate::UpdateAllLifecyclePhases third_party/WebKit/Source/web/PageWidgetDelegate.cpp:60",
+      "address": 390090905,
+      "function_name": "blink::PageWidgetDelegate::UpdateAllLifecyclePhases",
+      "source_file_name": "PageWidgetDelegate.cpp",
+      "source_file_path": "third_party/WebKit/Source/web/PageWidgetDelegate.cpp",
+      "source_file_line": 60
+    },
+    {
+      "line": "#79 0x1738298b in blink::WebViewImpl::UpdateAllLifecyclePhases third_party/WebKit/Source/web/WebViewImpl.cpp:2030",
+      "address": 389556619,
+      "function_name": "blink::WebViewImpl::UpdateAllLifecyclePhases",
+      "source_file_name": "WebViewImpl.cpp",
+      "source_file_path": "third_party/WebKit/Source/web/WebViewImpl.cpp",
+      "source_file_line": 2030
+    },
+    {
+      "line": "#80 0x179f4c40 in content::RenderWidget::UpdateVisualState content/renderer/render_widget.cc:962",
+      "address": 396315712,
+      "function_name": "content::RenderWidget::UpdateVisualState",
+      "source_file_name": "render_widget.cc",
+      "source_file_path": "content/renderer/render_widget.cc",
+      "source_file_line": 962
+    },
+    {
+      "line": "#81 0x15af328b in cc::ProxyMain::BeginMainFrame cc/trees/proxy_main.cc:196",
+      "address": 363803275,
+      "function_name": "cc::ProxyMain::BeginMainFrame",
+      "source_file_name": "proxy_main.cc",
+      "source_file_path": "cc/trees/proxy_main.cc",
+      "source_file_line": 196
+    },
+    {
+      "line": "#82 0x1b5577bc in base::internal::FunctorTraits<void (blink::BackgroundHTMLParser::*)(std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> >) __attribute__((thiscall)),void>::Invoke<const base::WeakPtr<blink::BackgroundHTMLParser> &,std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> > > base/bind_internal.h:214",
+      "address": 458586044,
+      "function_name": "base::internal::FunctorTraits<void (blink::BackgroundHTMLParser::*)(std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> >) __attribute__((thiscall)),void>::Invoke<const base::WeakPtr<blink::BackgroundHTMLParser> &,std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> > >",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 214
+    },
+    {
+      "line": "#83 0x15b2bcd5 in base::internal::Invoker<base::internal::BindState<void (cc::ProxyMain::*)(std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> >) __attribute__((thiscall)),base::WeakPtr<cc::ProxyMain>,base::internal::PassedWrapper<std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> > > >,void ()>::RunOnce base/bind_internal.h:319",
+      "address": 364035285,
+      "function_name": "base::internal::Invoker<base::internal::BindState<void (cc::ProxyMain::*)(std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> >) __attribute__((thiscall)),base::WeakPtr<cc::ProxyMain>,base::internal::PassedWrapper<std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> > > >,void ()>::RunOnce",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 319
+    },
+    {
+      "line": "#84 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+      "address": 318354182,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#85 0x16656629 in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:531",
+      "address": 375744041,
+      "function_name": "blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 531
+    },
+    {
+      "line": "#86 0x16651647 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:329",
+      "address": 375723591,
+      "function_name": "blink::scheduler::TaskQueueManager::DoWork",
+      "source_file_name": "task_queue_manager.cc",
+      "source_file_path": "third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc",
+      "source_file_line": 329
+    },
+    {
+      "line": "#87 0x1665fe2c in base::internal::Invoker<base::internal::BindState<void (blink::scheduler::TaskQueueManager::*)(bool) __attribute__((thiscall)),base::WeakPtr<blink::scheduler::TaskQueueManager>,bool>,void ()>::Run base/bind_internal.h:340",
+      "address": 375782956,
+      "function_name": "base::internal::Invoker<base::internal::BindState<void (blink::scheduler::TaskQueueManager::*)(bool) __attribute__((thiscall)),base::WeakPtr<blink::scheduler::TaskQueueManager>,bool>,void ()>::Run",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 340
+    },
+    {
+      "line": "#88 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+      "address": 318354182,
+      "function_name": "base::debug::TaskAnnotator::RunTask",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#89 0x12e473c0 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:404",
+      "address": 316961728,
+      "function_name": "base::MessageLoop::RunTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 404
+    },
+    {
+      "line": "#90 0x12e485e0 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:415",
+      "address": 316966368,
+      "function_name": "base::MessageLoop::DeferOrRunPendingTask",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 415
+    },
+    {
+      "line": "#91 0x12e492a6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:503",
+      "address": 316969638,
+      "function_name": "base::MessageLoop::DoWork",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 503
+    },
+    {
+      "line": "#92 0x12fa18ca in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+      "address": 318380234,
+      "function_name": "base::MessagePumpDefault::Run",
+      "source_file_name": "message_pump_default.cc",
+      "source_file_path": "base/message_loop/message_pump_default.cc",
+      "source_file_line": 33
+    },
+    {
+      "line": "#93 0x12e463c1 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:368",
+      "address": 316957633,
+      "function_name": "base::MessageLoop::RunHandler",
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 368
+    },
+    {
+      "line": "#94 0x12ee23a8 in base::RunLoop::Run base/run_loop.cc:105",
+      "address": 317596584,
+      "function_name": "base::RunLoop::Run",
+      "source_file_name": "run_loop.cc",
+      "source_file_path": "base/run_loop.cc",
+      "source_file_line": 105
+    },
+    {
+      "line": "#95 0x17954b78 in content::RendererMain content/renderer/renderer_main.cc:200",
+      "address": 395660152,
+      "function_name": "content::RendererMain",
+      "source_file_name": "renderer_main.cc",
+      "source_file_path": "content/renderer/renderer_main.cc",
+      "source_file_line": 200
+    },
+    {
+      "line": "#96 0x12d0969c in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:412",
+      "address": 315659932,
+      "function_name": "content::RunNamedProcessTypeMain",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 412
+    },
+    {
+      "line": "#97 0x12d0ac8f in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:705",
+      "address": 315665551,
+      "function_name": "content::ContentMainRunnerImpl::Run",
+      "source_file_name": "content_main_runner.cc",
+      "source_file_path": "content/app/content_main_runner.cc",
+      "source_file_line": 705
+    },
+    {
+      "line": "#98 0x12d0cea3 in service_manager::Main services/service_manager/embedder/main.cc:468",
+      "address": 315674275,
+      "function_name": "service_manager::Main",
+      "source_file_name": "main.cc",
+      "source_file_path": "services/service_manager/embedder/main.cc",
+      "source_file_line": 468
+    },
+    {
+      "line": "#99 0x12d09380 in content::ContentMain content/app/content_main.cc:19",
+      "address": 315659136,
+      "function_name": "content::ContentMain",
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#100 0xf971232 in ChromeMain chrome/app/chrome_main.cc:111",
+      "address": 261558834,
+      "function_name": "ChromeMain",
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 111
+    },
+    {
+      "line": "#101 0xd99e95 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:202",
+      "address": 14261909,
+      "function_name": "MainDllLoader::Launch",
+      "source_file_name": "main_dll_loader_win.cc",
+      "source_file_path": "chrome/app/main_dll_loader_win.cc",
+      "source_file_line": 202
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x16c23cb4 in blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutMultiColumnSet.cpp:146",
+    "#1 0x16abdde7 in blink::LayoutFlowThread::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:187",
+    "#2 0x169c9374 in blink::LayoutBox::PageRemainingLogicalHeightForOffset third_party/WebKit/Source/core/layout/LayoutBox.cpp:5756",
+    "#3 0x169f5342 in blink::LayoutBlockFlow::AdjustedMarginBeforeForPagination third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1655",
+    "#4 0x169e926b in blink::LayoutBlockFlow::EstimateLogicalTopPosition third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:2139",
+    "#5 0x169e72de in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:795",
+    "#6 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+    "#7 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#8 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#9 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#10 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+    "#11 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+    "#12 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+    "#13 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+    "#14 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+    "#15 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#16 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#17 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#18 0x16a08ddb in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3790",
+    "#19 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706",
+    "#20 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48",
+    "#21 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76",
+    "#22 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153",
+    "#23 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033",
+    "#24 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021",
+    "#25 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+    "#26 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#27 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#28 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+    "#29 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+    "#30 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+    "#31 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+    "#32 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+    "#33 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#34 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#35 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#36 0x16a089e2 in blink::LayoutBlockFlow::PositionAndLayoutFloat third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3756",
+    "#37 0x169f928a in blink::LayoutBlockFlow::PlaceNewFloats third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:3706",
+    "#38 0x16d17aa1 in blink::LineBreaker::SkipLeadingWhitespace third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:48",
+    "#39 0x16d187a3 in blink::LineBreaker::NextLineBreak third_party/WebKit/Source/core/layout/line/LineBreaker.cpp:76",
+    "#40 0x16a7abba in blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1153",
+    "#41 0x16a77387 in blink::LayoutBlockFlow::LayoutRunsAndFloats third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:1033",
+    "#42 0x16a87aa9 in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2021",
+    "#43 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+    "#44 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#45 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#46 0x16abcd29 in blink::LayoutFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutFlowThread.cpp:114",
+    "#47 0x16c10279 in blink::LayoutMultiColumnFlowThread::UpdateLayout third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:1321",
+    "#48 0x16c08a07 in blink::LayoutMultiColumnFlowThread::LayoutColumns third_party/WebKit/Source/core/layout/LayoutMultiColumnFlowThread.cpp:570",
+    "#49 0x169da2a1 in blink::LayoutBlockFlow::LayoutSpecialExcludedChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:274",
+    "#50 0x169e2f8d in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1455",
+    "#51 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#52 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#53 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#54 0x16a8715e in blink::LayoutBlockFlow::LayoutInlineChildren third_party/WebKit/Source/core/layout/LayoutBlockFlowLine.cpp:2004",
+    "#55 0x169dd92d in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:553",
+    "#56 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#57 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#58 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745",
+    "#59 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808",
+    "#60 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+    "#61 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#62 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#63 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#64 0x169e6364 in blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:745",
+    "#65 0x169e73f4 in blink::LayoutBlockFlow::LayoutBlockChild third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:808",
+    "#66 0x169e395e in blink::LayoutBlockFlow::LayoutBlockChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:1505",
+    "#67 0x169dd91c in blink::LayoutBlockFlow::LayoutChildren third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:555",
+    "#68 0x169dc912 in blink::LayoutBlockFlow::UpdateBlockLayout third_party/WebKit/Source/core/layout/LayoutBlockFlow.cpp:436",
+    "#69 0x16942ebc in blink::LayoutBlock::UpdateLayout third_party/WebKit/Source/core/layout/LayoutBlock.cpp:429",
+    "#70 0x16c4ac82 in blink::LayoutView::UpdateLayout third_party/WebKit/Source/core/layout/LayoutView.cpp:305",
+    "#71 0x167cf3c9 in blink::FrameView::PerformLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1143",
+    "#72 0x167c8481 in blink::FrameView::UpdateLayout third_party/WebKit/Source/core/frame/FrameView.cpp:1313",
+    "#73 0x167eb259 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursiveInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3391",
+    "#74 0x167e67e7 in blink::FrameView::UpdateStyleAndLayoutIfNeededRecursive third_party/WebKit/Source/core/frame/FrameView.cpp:3364",
+    "#75 0x167e4006 in blink::FrameView::UpdateLifecyclePhasesInternal third_party/WebKit/Source/core/frame/FrameView.cpp:3105",
+    "#76 0x167e3ddd in blink::FrameView::UpdateAllLifecyclePhases third_party/WebKit/Source/core/frame/FrameView.cpp:2957",
+    "#77 0x16ef631c in blink::PageAnimator::UpdateAllLifecyclePhases third_party/WebKit/Source/core/page/PageAnimator.cpp:100",
+    "#78 0x17405099 in blink::PageWidgetDelegate::UpdateAllLifecyclePhases third_party/WebKit/Source/web/PageWidgetDelegate.cpp:60",
+    "#79 0x1738298b in blink::WebViewImpl::UpdateAllLifecyclePhases third_party/WebKit/Source/web/WebViewImpl.cpp:2030",
+    "#80 0x179f4c40 in content::RenderWidget::UpdateVisualState content/renderer/render_widget.cc:962",
+    "#81 0x15af328b in cc::ProxyMain::BeginMainFrame cc/trees/proxy_main.cc:196",
+    "#82 0x1b5577bc in base::internal::FunctorTraits<void (blink::BackgroundHTMLParser::*)(std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> >) __attribute__((thiscall)),void>::Invoke<const base::WeakPtr<blink::BackgroundHTMLParser> &,std::unique_ptr<blink::BackgroundHTMLParser::Checkpoint,std::default_delete<blink::BackgroundHTMLParser::Checkpoint> > > base/bind_internal.h:214",
+    "#83 0x15b2bcd5 in base::internal::Invoker<base::internal::BindState<void (cc::ProxyMain::*)(std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> >) __attribute__((thiscall)),base::WeakPtr<cc::ProxyMain>,base::internal::PassedWrapper<std::unique_ptr<cc::BeginMainFrameAndCommitState,std::default_delete<cc::BeginMainFrameAndCommitState> > > >,void ()>::RunOnce base/bind_internal.h:319",
+    "#84 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+    "#85 0x16656629 in blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:531",
+    "#86 0x16651647 in blink::scheduler::TaskQueueManager::DoWork third_party/WebKit/Source/platform/scheduler/base/task_queue_manager.cc:329",
+    "#87 0x1665fe2c in base::internal::Invoker<base::internal::BindState<void (blink::scheduler::TaskQueueManager::*)(bool) __attribute__((thiscall)),base::WeakPtr<blink::scheduler::TaskQueueManager>,bool>,void ()>::Run base/bind_internal.h:340",
+    "#88 0x12f9b306 in base::debug::TaskAnnotator::RunTask base/debug/task_annotator.cc:57",
+    "#89 0x12e473c0 in base::MessageLoop::RunTask base/message_loop/message_loop.cc:404",
+    "#90 0x12e485e0 in base::MessageLoop::DeferOrRunPendingTask base/message_loop/message_loop.cc:415",
+    "#91 0x12e492a6 in base::MessageLoop::DoWork base/message_loop/message_loop.cc:503",
+    "#92 0x12fa18ca in base::MessagePumpDefault::Run base/message_loop/message_pump_default.cc:33",
+    "#93 0x12e463c1 in base::MessageLoop::RunHandler base/message_loop/message_loop.cc:368",
+    "#94 0x12ee23a8 in base::RunLoop::Run base/run_loop.cc:105",
+    "#95 0x17954b78 in content::RendererMain content/renderer/renderer_main.cc:200",
+    "#96 0x12d0969c in content::RunNamedProcessTypeMain content/app/content_main_runner.cc:412",
+    "#97 0x12d0ac8f in content::ContentMainRunnerImpl::Run content/app/content_main_runner.cc:705",
+    "#98 0x12d0cea3 in service_manager::Main services/service_manager/embedder/main.cc:468",
+    "#99 0x12d09380 in content::ContentMain content/app/content_main.cc:19",
+    "#100 0xf971232 in ChromeMain chrome/app/chrome_main.cc:111",
+    "#101 0xd99e95 in MainDllLoader::Launch chrome/app/main_dll_loader_win.cc:202"
+  ],
+  "minimized_stack_function_names": [
+    "blink::LayoutMultiColumnSet::PageRemainingLogicalHeightForOffset",
+    "blink::LayoutFlowThread::PageRemainingLogicalHeightForOffset",
+    "blink::LayoutBox::PageRemainingLogicalHeightForOffset",
+    "blink::LayoutBlockFlow::AdjustedMarginBeforeForPagination",
+    "blink::LayoutBlockFlow::EstimateLogicalTopPosition",
+    "blink::LayoutBlockFlow::LayoutBlockChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+    "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::PositionAndLayoutFloat",
+    "blink::LayoutBlockFlow::PlaceNewFloats",
+    "blink::LineBreaker::SkipLeadingWhitespace",
+    "blink::LineBreaker::NextLineBreak",
+    "blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange",
+    "blink::LayoutBlockFlow::LayoutRunsAndFloats",
+    "blink::LayoutBlockFlow::LayoutInlineChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+    "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::PositionAndLayoutFloat",
+    "blink::LayoutBlockFlow::PlaceNewFloats",
+    "blink::LineBreaker::SkipLeadingWhitespace",
+    "blink::LineBreaker::NextLineBreak",
+    "blink::LayoutBlockFlow::LayoutRunsAndFloatsInRange",
+    "blink::LayoutBlockFlow::LayoutRunsAndFloats",
+    "blink::LayoutBlockFlow::LayoutInlineChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::UpdateLayout",
+    "blink::LayoutMultiColumnFlowThread::LayoutColumns",
+    "blink::LayoutBlockFlow::LayoutSpecialExcludedChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::LayoutInlineChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded",
+    "blink::LayoutBlockFlow::LayoutBlockChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutBlockFlow::PositionAndLayoutOnceIfNeeded",
+    "blink::LayoutBlockFlow::LayoutBlockChild",
+    "blink::LayoutBlockFlow::LayoutBlockChildren",
+    "blink::LayoutBlockFlow::LayoutChildren",
+    "blink::LayoutBlockFlow::UpdateBlockLayout",
+    "blink::LayoutBlock::UpdateLayout",
+    "blink::LayoutView::UpdateLayout",
+    "blink::FrameView::PerformLayout",
+    "blink::FrameView::UpdateLayout",
+    "blink::FrameView::UpdateStyleAndLayoutIfNeededRecursiveInternal",
+    "blink::FrameView::UpdateStyleAndLayoutIfNeededRecursive",
+    "blink::FrameView::UpdateLifecyclePhasesInternal",
+    "blink::FrameView::UpdateAllLifecyclePhases",
+    "blink::PageAnimator::UpdateAllLifecyclePhases",
+    "blink::PageWidgetDelegate::UpdateAllLifecyclePhases",
+    "blink::WebViewImpl::UpdateAllLifecyclePhases",
+    "content::RenderWidget::UpdateVisualState",
+    "cc::ProxyMain::BeginMainFrame",
+    "base::internal::FunctorTraits<void ",
+    "base::internal::Invoker<base::internal::BindState<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue",
+    "blink::scheduler::TaskQueueManager::DoWork",
+    "base::internal::Invoker<base::internal::BindState<void ",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "base::MessagePumpDefault::Run",
+    "base::MessageLoop::RunHandler",
+    "base::RunLoop::Run",
+    "content::RendererMain",
+    "content::RunNamedProcessTypeMain",
+    "content::ContentMainRunnerImpl::Run",
+    "service_manager::Main",
+    "content::ContentMain",
+    "ChromeMain",
+    "MainDllLoader::Launch"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "null-deref"
+}

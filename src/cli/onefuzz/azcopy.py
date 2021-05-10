@@ -4,7 +4,7 @@ import subprocess  # nosec
 
 
 def azcopy_sync(src: str, dst: str) -> None:
-    """ Expose azcopy for uploading/downloading files """
+    """Expose azcopy for uploading/downloading files"""
 
     azcopy = os.environ.get("AZCOPY") or shutil.which("azcopy")
     if not azcopy:

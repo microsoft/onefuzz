@@ -10,7 +10,7 @@ from pathlib import Path
 
 from onefuzztypes.models import Report
 
-from __app__.onefuzzlib.reports import parse_report
+from __app__.onefuzzlib.reports import parse_report_or_regression
 
 
 class TestReportParse(unittest.TestCase):
@@ -20,16 +20,19 @@ class TestReportParse(unittest.TestCase):
             data = json.load(handle)
 
         invalid = {"unused_field_1": 3}
-        report = parse_report(json.dumps(data))
+        report = parse_report_or_regression(json.dumps(data))
         self.assertIsInstance(report, Report)
 
         with self.assertLogs(level="ERROR"):
-            self.assertIsNone(parse_report('"invalid"'))
+            self.assertIsNone(
+                parse_report_or_regression('"invalid"', expect_reports=True)
+            )
 
         with self.assertLogs(level="WARNING") as logs:
-            self.assertIsNone(parse_report(json.dumps(invalid)))
-
-        self.assertTrue(any(["unable to parse report" in x for x in logs.output]))
+            self.assertIsNone(
+                parse_report_or_regression(json.dumps(invalid), expect_reports=True)
+            )
+            self.assertTrue(any(["unable to parse report" in x for x in logs.output]))
 
 
 if __name__ == "__main__":

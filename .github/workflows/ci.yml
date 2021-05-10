@@ -87,8 +87,9 @@ jobs:
         python setup.py sdist bdist_wheel
         pip install -r ./requirements.txt ../../artifacts/sdk/*.whl
         pip install six
-        pyinstaller onefuzz/__main__.py --onefile --name onefuzz --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean
+        pyinstaller onefuzz/__main__.py --onefile --name onefuzz --additional-hooks-dir extra/pyinstaller --hidden-import='pkg_resources.py2_warn' --exclude-module tkinter --exclude-module PySide2 --exclude-module PIL.ImageDraw --exclude-module Pillow --clean --add-data "onefuzz/data/privacy.txt;onefuzz/data" --add-data "onefuzz/data/licenses.json;onefuzz/data"
         ./dist/onefuzz.exe --version
+        ./dist/onefuzz.exe privacy_statement
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/windows-cli/
         mkdir -p ${GITHUB_WORKSPACE}/artifacts/sdk/
         cp dist/*.tar.gz dist/*.whl ${GITHUB_WORKSPACE}/artifacts/sdk/
@@ -358,6 +359,10 @@ jobs:
           (cd libfuzzer ; make )
           cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer
 
+          mkdir -p artifacts/linux-libfuzzer-regression
+          (cd libfuzzer-regression ; make )
+          cp -r libfuzzer-regression/broken.exe libfuzzer-regression/fixed.exe libfuzzer-regression/seeds artifacts/linux-libfuzzer-regression
+
           mkdir -p artifacts/linux-trivial-crash
           (cd trivial-crash ; make )
           cp -r trivial-crash/fuzz.exe trivial-crash/seeds artifacts/linux-trivial-crash
@@ -429,6 +434,12 @@ jobs:
           cd libfuzzer-linked-library
           make -f Makefile.windows
           cp fuzz.exe,fuzz.pdb,bad1.dll,bad1.pdb,bad2.dll,bad2.pdb,seeds ../artifacts/windows-libfuzzer-linked-library -Recurse
+          cd ../
+          
+          mkdir artifacts/windows-libfuzzer-load-library
+          cd libfuzzer-load-library
+          make
+          cp fuzz.exe,fuzz.pdb,bad.dll,bad.pdb,seeds ../artifacts/windows-libfuzzer-load-library -Recurse
           cd ../
 
           mkdir artifacts/windows-trivial-crash-asan

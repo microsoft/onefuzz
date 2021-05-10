@@ -2,10 +2,11 @@
 // Licensed under the MIT License.
 
 use std::collections::BTreeMap;
+use std::convert::TryInto;
 use std::ffi::OsStr;
 use std::process::Command;
 
-use anyhow::{format_err, Result};
+use anyhow::{format_err, Context, Result};
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
 
@@ -16,27 +17,45 @@ use crate::demangle::Demangler;
 use crate::region::Region;
 
 pub fn record(cmd: Command) -> Result<CommandBlockCov> {
-    let mut recorder = Recorder::default();
+    let mut cache = ModuleCache::default();
+    let filter = CmdFilter::default();
+    let mut recorder = Recorder::new(&mut cache, filter);
     recorder.record(cmd)?;
-    Ok(recorder.coverage)
+    Ok(recorder.into_coverage())
 }
 
-#[derive(Default, Debug)]
-pub struct Recorder {
+#[derive(Debug)]
+pub struct Recorder<'c> {
     breakpoints: Breakpoints,
-    pub coverage: CommandBlockCov,
+    cache: &'c mut ModuleCache,
+    coverage: CommandBlockCov,
     demangler: Demangler,
-    images: Option<Images>,
-    pub modules: ModuleCache,
     filter: CmdFilter,
+    images: Option<Images>,
 }
 
-impl Recorder {
-    pub fn new(filter: CmdFilter) -> Self {
+impl<'c> Recorder<'c> {
+    pub fn new(cache: &'c mut ModuleCache, filter: CmdFilter) -> Self {
         Self {
+            breakpoints: Breakpoints::default(),
+            cache,
+            coverage: CommandBlockCov::default(),
+            demangler: Demangler::default(),
             filter,
-            ..Self::default()
+            images: None,
         }
+    }
+
+    pub fn coverage(&self) -> &CommandBlockCov {
+        &self.coverage
+    }
+
+    pub fn into_coverage(self) -> CommandBlockCov {
+        self.coverage
+    }
+
+    pub fn module_cache(&self) -> &ModuleCache {
+        self.cache
     }
 
     pub fn record(&mut self, cmd: Command) -> Result<()> {
@@ -122,8 +141,8 @@ impl Recorder {
                 .find_va_image(pc)
                 .ok_or_else(|| format_err!("unable to find image for va = {:x}", pc))?;
 
-            let offset = image.va_to_offset(pc);
-            self.coverage.increment(image.path(), offset)?;
+            let offset = image.va_to_offset(pc)?;
+            self.coverage.increment(image.path(), offset);
 
             // Execute clobbered instruction on restart.
             regs.rip = pc;
@@ -147,7 +166,7 @@ impl Recorder {
 
         // Fetch disassembled module info via cache.
         let info = self
-            .modules
+            .cache
             .fetch(image.path())?
             .ok_or_else(|| format_err!("unable to fetch info for module: {}", image.path()))?;
 
@@ -164,7 +183,15 @@ impl Recorder {
 
             // Check the maybe-demangled against the coverage filter.
             if self.filter.includes_symbol(&info.module.path, symbol_name) {
-                for offset in info.blocks.range(symbol.range()) {
+                // Convert range bounds to an `offset`-sized type.
+                let range = {
+                    let range = symbol.range();
+                    let lo: u32 = range.start.try_into()?;
+                    let hi: u32 = range.end.try_into()?;
+                    lo..hi
+                };
+
+                for offset in info.blocks.range(range) {
                     allowed_blocks.push(*offset);
                 }
             }
@@ -289,12 +316,16 @@ impl ModuleImage {
         (self.map.address.0)..(self.map.address.1)
     }
 
-    pub fn va_to_offset(&self, va: u64) -> u64 {
-        va - self.base()
+    pub fn va_to_offset(&self, va: u64) -> Result<u32> {
+        if let Some(offset) = va.checked_sub(self.base()) {
+            Ok(offset.try_into().context("ELF offset overflowed `u32`")?)
+        } else {
+            anyhow::bail!("underflow converting VA to image offset")
+        }
     }
 
-    pub fn offset_to_va(&self, offset: u64) -> u64 {
-        self.base() + offset
+    pub fn offset_to_va(&self, offset: u32) -> u64 {
+        self.base() + (offset as u64)
     }
 }
 

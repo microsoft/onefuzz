@@ -11,6 +11,9 @@ use uuid::Uuid;
 use z3_sys::ErrorCode as Z3ErrorCode;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
+use tokio::sync::broadcast::{self, Receiver};
+#[macro_use]
+extern crate lazy_static;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(transparent)]
@@ -95,6 +98,8 @@ pub enum Event {
     new_report,
     new_unique_report,
     new_unable_to_reproduce,
+    regression_report,
+    regression_unable_to_reproduce,
 }
 
 impl Event {
@@ -109,13 +114,15 @@ impl Event {
             Self::new_report => "new_report",
             Self::new_unique_report => "new_unique_report",
             Self::new_unable_to_reproduce => "new_unable_to_reproduce",
+            Self::regression_report => "regression_report",
+            Self::regression_unable_to_reproduce => "regression_unable_to_reproduce",
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum EventData {
-    WorkerId(u64),
+    WorkerId(usize),
     InstanceId(Uuid),
     JobId(Uuid),
     TaskId(Uuid),
@@ -334,6 +341,8 @@ mod global {
         RwLock,
     };
 
+    use tokio::sync::broadcast::Sender;
+
     use super::*;
 
     #[derive(Default)]
@@ -346,6 +355,14 @@ mod global {
         instance: None,
         microsoft: None,
     };
+
+    lazy_static! {
+        pub static ref EVENT_SOURCE: Sender<(Event, Vec<EventData>)> = {
+            let (telemetry_event_source, _) = broadcast::channel::<_>(100);
+            telemetry_event_source
+        };
+    }
+
     const UNSET: usize = 0;
     const SETTING: usize = 1;
     const SET: usize = 2;
@@ -488,23 +505,33 @@ pub fn set_property(entry: EventData) {
     }
 }
 
-fn local_log_event(event: &Event, properties: &[EventData]) {
-    let as_values = properties
+pub fn format_events(events: &[EventData]) -> String {
+    events
         .iter()
         .map(|x| x.as_values())
         .map(|(x, y)| format!("{}:{}", x, y))
         .collect::<Vec<String>>()
-        .join(" ");
-    log::log!(log::Level::Info, "{} {}", event.as_str(), as_values);
+        .join(" ")
 }
 
-pub fn track_event(event: Event, properties: Vec<EventData>) {
+fn try_broadcast_event(event: &Event, properties: &[EventData]) -> bool {
+    // we ignore any send error here because they indicate that
+    // there are no receivers on the other end
+    let (event, properties) = (event.clone(), properties.to_vec());
+    global::EVENT_SOURCE.send((event, properties)).is_ok()
+}
+
+pub fn subscribe_to_events() -> Receiver<(Event, Vec<EventData>)> {
+    global::EVENT_SOURCE.subscribe()
+}
+
+pub fn track_event(event: &Event, properties: &[EventData]) {
     use appinsights::telemetry::Telemetry;
 
     if let Some(client) = client(ClientType::Instance) {
         let mut evt = appinsights::telemetry::EventTelemetry::new(event.as_str());
         let props = evt.properties_mut();
-        for property in &properties {
+        for property in properties {
             let (name, val) = property.as_values();
             props.insert(name.to_string(), val);
         }
@@ -515,7 +542,7 @@ pub fn track_event(event: Event, properties: Vec<EventData>) {
         let mut evt = appinsights::telemetry::EventTelemetry::new(event.as_str());
         let props = evt.properties_mut();
 
-        for property in &properties {
+        for property in properties {
             if property.can_share_with_microsoft() {
                 let (name, val) = property.as_values();
                 props.insert(name.to_string(), val);
@@ -523,7 +550,7 @@ pub fn track_event(event: Event, properties: Vec<EventData>) {
         }
         client.track(evt);
     }
-    local_log_event(&event, &properties);
+    try_broadcast_event(event, properties);
 }
 
 pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {
@@ -536,16 +563,22 @@ pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level
     }
 }
 
-pub fn should_log(level: &appinsights::telemetry::SeverityLevel) -> bool {
-    to_log_level(level) <= log::max_level()
-}
-
 pub fn log_message(level: appinsights::telemetry::SeverityLevel, msg: String) {
-    let log_level = to_log_level(&level);
-    log::log!(log_level, "{}", msg);
     if let Some(client) = client(ClientType::Instance) {
         client.track_trace(msg, level);
     }
+}
+
+#[macro_export]
+macro_rules! log_events {
+    ($name: expr; $events: expr) => {{
+        onefuzz_telemetry::track_event(&$name, &$events);
+        log::info!(
+            "{} {}",
+            $name.as_str(),
+            onefuzz_telemetry::format_events(&$events)
+        );
+    }};
 }
 
 #[macro_export]
@@ -558,15 +591,17 @@ macro_rules! event {
 
         })*;
 
-        onefuzz_telemetry::track_event($name, events);
+        log_events!($name; events);
     }};
 }
 
 #[macro_export]
 macro_rules! log {
     ($level: expr, $($arg: tt)+) => {{
-        if onefuzz_telemetry::should_log(&$level) {
+        let log_level = onefuzz_telemetry::to_log_level(&$level);
+        if log_level <= log::max_level() {
             let msg = format!("{}", format_args!($($arg)+));
+            log::log!(log_level, "{}", msg);
             onefuzz_telemetry::log_message($level, msg.to_string());
         }
     }};

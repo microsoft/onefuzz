@@ -40,7 +40,7 @@ def get_auth_token(request: func.HttpRequest) -> Optional[str]:
 
 
 def parse_jwt_token(request: func.HttpRequest) -> Result[UserInfo]:
-    """ Obtains the Access Token from the Authorization Header """
+    """Obtains the Access Token from the Authorization Header"""
     token_str = get_auth_token(request)
     if token_str is None:
         return Error(

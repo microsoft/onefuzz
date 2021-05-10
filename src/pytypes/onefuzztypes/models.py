@@ -170,6 +170,8 @@ class TaskDetails(BaseModel):
     target_timeout: Optional[int]
     ensemble_sync_delay: Optional[int]
     preserve_existing_outputs: Optional[bool]
+    report_list: Optional[List[str]]
+    minimized_stack_depth: Optional[int]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:
@@ -237,7 +239,7 @@ class BlobRef(BaseModel):
 
 class Report(BaseModel):
     input_url: Optional[str]
-    input_blob: BlobRef
+    input_blob: Optional[BlobRef]
     executable: str
     crash_type: str
     crash_site: str
@@ -249,6 +251,30 @@ class Report(BaseModel):
     job_id: UUID
     scariness_score: Optional[int]
     scariness_description: Optional[str]
+    minimized_stack: Optional[List[str]]
+    minimized_stack_sha256: Optional[str]
+    minimized_stack_function_names: Optional[List[str]]
+    minimized_stack_function_names_sha256: Optional[str]
+
+
+class NoReproReport(BaseModel):
+    input_sha256: str
+    input_blob: Optional[BlobRef]
+    executable: str
+    task_id: UUID
+    job_id: UUID
+    tries: int
+    error: Optional[str]
+
+
+class CrashTestResult(BaseModel):
+    crash_report: Optional[Report]
+    no_repro: Optional[NoReproReport]
+
+
+class RegressionReport(BaseModel):
+    crash_test_result: CrashTestResult
+    original_crash_test_result: Optional[CrashTestResult]
 
 
 class ADODuplicateTemplate(BaseModel):
@@ -336,8 +362,9 @@ class AgentConfig(BaseModel):
     onefuzz_url: str
     pool_name: PoolName
     heartbeat_queue: Optional[str]
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
+    multi_tenant_domain: Optional[str]
     instance_id: UUID
 
 
@@ -346,8 +373,8 @@ class TaskUnitConfig(BaseModel):
     job_id: UUID
     task_id: UUID
     task_type: TaskType
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
     heartbeat_queue: str
     # command_queue: str
     input_queue: Optional[str]
@@ -377,6 +404,8 @@ class TaskUnitConfig(BaseModel):
     stats_file: Optional[str]
     stats_format: Optional[StatsFormat]
     ensemble_sync_delay: Optional[int]
+    report_list: Optional[List[str]]
+    minimized_stack_depth: Optional[int]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes
@@ -390,6 +419,7 @@ class TaskUnitConfig(BaseModel):
     tools: CONTAINER_DEF
     unique_inputs: CONTAINER_DEF
     unique_reports: CONTAINER_DEF
+    regression_reports: CONTAINER_DEF
 
 
 class Forward(BaseModel):
@@ -403,8 +433,8 @@ class ProxyConfig(BaseModel):
     notification: str
     region: Region
     forwards: List[Forward]
-    instrumentation_key: Optional[str]
-    telemetry_key: Optional[str]
+    instance_telemetry_key: Optional[str]
+    microsoft_telemetry_key: Optional[str]
     instance_id: UUID
 
 
@@ -505,6 +535,7 @@ class JobTaskInfo(BaseModel):
 
 
 class Job(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     job_id: UUID = Field(default_factory=uuid4)
     state: JobState = Field(default=JobState.init)
     config: JobConfig
@@ -526,12 +557,42 @@ class NodeHeartbeatEntry(BaseModel):
     data: List[Dict[str, HeartbeatType]]
 
 
+class NodeCommandStopIfFree(BaseModel):
+    pass
+
+
+class StopNodeCommand(BaseModel):
+    pass
+
+
+class StopTaskNodeCommand(BaseModel):
+    task_id: UUID
+
+
+class NodeCommandAddSshKey(BaseModel):
+    public_key: str
+
+
+class NodeCommand(EnumModel):
+    stop: Optional[StopNodeCommand]
+    stop_task: Optional[StopTaskNodeCommand]
+    add_ssh_key: Optional[NodeCommandAddSshKey]
+    stop_if_free: Optional[NodeCommandStopIfFree]
+
+
+class NodeCommandEnvelope(BaseModel):
+    command: NodeCommand
+    message_id: str
+
+
 class Node(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     pool_name: PoolName
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
     tasks: Optional[List[Tuple[UUID, NodeTaskState]]] = None
+    messages: Optional[List[NodeCommand]] = None
     heartbeat: Optional[datetime]
     version: str = Field(default="1.0.0")
     reimage_requested: bool = Field(default=False)
@@ -557,6 +618,7 @@ class AutoScaleConfig(BaseModel):
     region: Optional[Region]
     scaleset_size: int  # Individual scaleset size
     spot_instances: bool = Field(default=False)
+    ephemeral_os_disks: bool = Field(default=False)
     vm_sku: str
 
     @validator("scaleset_size", allow_reuse=True)
@@ -589,6 +651,7 @@ class AutoScaleConfig(BaseModel):
 
 
 class Pool(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     name: PoolName
     pool_id: UUID = Field(default_factory=uuid4)
     os: OS
@@ -616,6 +679,7 @@ class ScalesetNodeState(BaseModel):
 
 
 class Scaleset(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     pool_name: PoolName
     scaleset_id: UUID = Field(default_factory=uuid4)
     state: ScalesetState = Field(default=ScalesetState.init)
@@ -625,6 +689,7 @@ class Scaleset(BaseModel):
     region: Region
     size: int
     spot_instances: bool
+    ephemeral_os_disks: bool = Field(default=False)
     needs_config_update: bool = Field(default=False)
     error: Optional[Error]
     nodes: Optional[List[ScalesetNodeState]]
@@ -644,6 +709,7 @@ class NotificationConfig(BaseModel):
 
 
 class Repro(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     vm_id: UUID = Field(default_factory=uuid4)
     task_id: UUID
     config: ReproConfig
@@ -739,30 +805,8 @@ class NodeEventEnvelope(BaseModel):
     event: NodeEventShim
 
 
-class StopNodeCommand(BaseModel):
-    pass
-
-
-class StopTaskNodeCommand(BaseModel):
-    task_id: UUID
-
-
-class NodeCommandAddSshKey(BaseModel):
-    public_key: str
-
-
-class NodeCommand(EnumModel):
-    stop: Optional[StopNodeCommand]
-    stop_task: Optional[StopTaskNodeCommand]
-    add_ssh_key: Optional[NodeCommandAddSshKey]
-
-
-class NodeCommandEnvelope(BaseModel):
-    command: NodeCommand
-    message_id: str
-
-
 class TaskEvent(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     task_id: UUID
     machine_id: UUID
     event_data: WorkerEvent
@@ -781,6 +825,7 @@ class NodeAssignment(BaseModel):
 
 
 class Task(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     job_id: UUID
     task_id: UUID = Field(default_factory=uuid4)
     state: TaskState = Field(default=TaskState.init)

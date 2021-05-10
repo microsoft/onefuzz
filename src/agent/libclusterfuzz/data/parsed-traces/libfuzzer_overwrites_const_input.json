@@ -1,0 +1,123 @@
+{
+  "text": "==1== ERROR: libFuzzer: fuzz target overwrites its const input\n    #0 0x52a761 in __sanitizer_print_stack_trace /src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp:86:3\n    #1 0x4746f8 in fuzzer::PrintStackTrace() /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerUtil.cpp:205:5\n    #2 0x45b483 in fuzzer::Fuzzer::CrashOnOverwrittenData() /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:518:3\n    #3 0x45a49c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:564:5\n    #4 0x444f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6\n    #5 0x44ac4e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:774:9\n    #6 0x474dc2 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10\n    #7 0x7ff9d5db082f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c:291\n    #8 0x41e348 in _start\nSUMMARY: libFuzzer: overwrites-const-input\n",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: overwrites-const-input",
+  "fault_type": "overwrites-const-input",
+  "call_stack": [
+    "#0 0x52a761 in __sanitizer_print_stack_trace /src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp:86:3",
+    "#1 0x4746f8 in fuzzer::PrintStackTrace() /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerUtil.cpp:205:5",
+    "#2 0x45b483 in fuzzer::Fuzzer::CrashOnOverwrittenData() /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:518:3",
+    "#3 0x45a49c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:564:5",
+    "#4 0x444f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6",
+    "#5 0x44ac4e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:774:9",
+    "#6 0x474dc2 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10",
+    "#7 0x7ff9d5db082f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c:291",
+    "#8 0x41e348 in _start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x52a761 in __sanitizer_print_stack_trace /src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp:86:3",
+      "address": 5416801,
+      "function_name": "__sanitizer_print_stack_trace",
+      "function_offset": 3,
+      "source_file_name": "asan_stack.cpp",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/asan/asan_stack.cpp",
+      "source_file_line": 86
+    },
+    {
+      "line": "#1 0x4746f8 in fuzzer::PrintStackTrace() /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerUtil.cpp:205:5",
+      "address": 4671224,
+      "function_name": "fuzzer::PrintStackTrace()",
+      "function_offset": 5,
+      "source_file_name": "FuzzerUtil.cpp",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerUtil.cpp",
+      "source_file_line": 205
+    },
+    {
+      "line": "#2 0x45b483 in fuzzer::Fuzzer::CrashOnOverwrittenData() /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:518:3",
+      "address": 4568195,
+      "function_name": "fuzzer::Fuzzer::CrashOnOverwrittenData()",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 518
+    },
+    {
+      "line": "#3 0x45a49c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:564:5",
+      "address": 4564124,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 5,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 564
+    },
+    {
+      "line": "#4 0x444f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6",
+      "address": 4476817,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 292
+    },
+    {
+      "line": "#5 0x44ac4e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:774:9",
+      "address": 4500558,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 774
+    },
+    {
+      "line": "#6 0x474dc2 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10",
+      "address": 4672962,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp",
+      "source_file_line": 19
+    },
+    {
+      "line": "#7 0x7ff9d5db082f in __libc_start_main /build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c:291",
+      "address": 140711011485743,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-LK5gWL/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
+    },
+    {
+      "line": "#8 0x41e348 in _start",
+      "address": 4318024,
+      "function_name": "_start"
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::CrashOnOverwrittenData",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#4 0x444f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6",
+      "address": 4476817,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 292
+    }
+  ],
+  "minimized_stack": [
+    "#4 0x444f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6"
+  ],
+  "minimized_stack_function_names": [
+    "fuzzer::RunOneTest"
+  ]
+}

@@ -13,12 +13,11 @@ pub fn save_failure(err: &Error) -> Result<()> {
     let path = failure_path()?;
     let message = format!("{}", err);
     fs::write(&path, message)
-        .with_context(|| format!("unable to write failure log: {}", path.display()))?;
-    Ok(())
+        .with_context(|| format!("unable to write failure log: {}", path.display()))
 }
 
 pub fn read_failure() -> Result<String> {
     let path = failure_path()?;
-    Ok(fs::read_to_string(&path)
-        .with_context(|| format!("unable to read failure log: {}", path.display()))?)
+    fs::read_to_string(&path)
+        .with_context(|| format!("unable to read failure log: {}", path.display()))
 }

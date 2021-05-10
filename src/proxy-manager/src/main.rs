@@ -20,7 +20,7 @@ use std::{
 };
 use tokio::{
     runtime::Runtime,
-    time::{delay_for, Duration},
+    time::{sleep, Duration},
 };
 
 const MINIMUM_NOTIFY_INTERVAL: Duration = Duration::from_secs(120);
@@ -37,14 +37,14 @@ async fn run_loop(mut proxy_config: Config) -> Result<()> {
             last_notified = Instant::now();
         }
 
-        delay_for(POLL_INTERVAL).await;
+        sleep(POLL_INTERVAL).await;
     }
 }
 
 async fn run(proxy_config: Config) -> Result<()> {
     let result = run_loop(proxy_config).await;
     if let Err(err) = &result {
-        error!("run loop failed: {}", err);
+        error!("run loop failed: {:?}", err);
     }
     onefuzz_telemetry::try_flush_and_close();
     result
@@ -85,6 +85,6 @@ fn main() -> Result<()> {
     let proxy = Config::from_file(config_path)?;
 
     info!("parsed initial config");
-    let mut rt = Runtime::new()?;
+    let rt = Runtime::new()?;
     rt.block_on(run(proxy))
 }

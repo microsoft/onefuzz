@@ -9,9 +9,9 @@ $env:RUST_LOG = "info"
 
 $logFile = "C:\onefuzz.log"
 function log ($message) {
-  $timestamp = [DateTime]::Now.ToString("yyyy-MM-dd HH:mm")
+  $timestamp = [DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss")
   "$timestamp $message" | Add-Content $logFile
-  Write-Host -ForegroundColor Yellow $message @args
+  Write-Host -ForegroundColor Yellow $timestamp $message @args
 }
 
 function Uninstall-OneDrive {

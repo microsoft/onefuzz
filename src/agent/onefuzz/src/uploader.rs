@@ -3,28 +3,30 @@
 
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::TryStreamExt;
-use reqwest as r;
-use reqwest_retry::{send_retry_reqwest_default, SendRetry};
+use reqwest::{Body, Client, Response, StatusCode, Url};
+use reqwest_retry::{
+    send_retry_reqwest_default, RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS,
+};
 use serde::Serialize;
 use tokio::{fs, io};
 use tokio_util::codec;
 
 #[derive(Clone)]
 pub struct BlobUploader {
-    client: r::Client,
-    url: r::Url,
+    client: Client,
+    url: Url,
 }
 
 impl BlobUploader {
-    pub fn new(url: r::Url) -> Self {
-        let client = r::Client::new();
+    pub fn new(url: Url) -> Self {
+        let client = Client::new();
 
         Self { client, url }
     }
 
-    pub async fn upload(&mut self, file_path: impl AsRef<Path>) -> Result<r::Response> {
+    pub async fn upload(&mut self, file_path: impl AsRef<Path>) -> Result<Response> {
         let file_path = file_path.as_ref();
 
         let file_name = file_path.file_name().unwrap().to_str().unwrap();
@@ -41,9 +43,22 @@ impl BlobUploader {
         };
 
         // Check if the file already exists before uploading
-        let head = self.client.head(url.clone()).send_retry_default().await?;
-        if head.status() == reqwest::StatusCode::OK {
-            return Ok(head);
+        if let Ok(head) = self
+            .client
+            .head(url.clone())
+            .send_retry(
+                |code| match code {
+                    StatusCode::NOT_FOUND => RetryCheck::Fail,
+                    _ => RetryCheck::Retry,
+                },
+                DEFAULT_RETRY_PERIOD,
+                MAX_RETRY_ATTEMPTS,
+            )
+            .await
+        {
+            if head.status() == StatusCode::OK {
+                return Ok(head);
+            }
         }
 
         let content_length = format!("{}", file_len);
@@ -52,18 +67,21 @@ impl BlobUploader {
             let file = fs::File::from_std(std::fs::File::open(file_path)?);
             let reader = io::BufReader::new(file);
             let codec = codec::BytesCodec::new();
-            let file_stream = codec::FramedRead::new(reader, codec).map_ok(bytes::BytesMut::freeze);
+            let file_stream = codec::FramedRead::new(reader, codec)
+                .map_ok(bytes::BytesMut::freeze)
+                .into_stream();
 
             let request_builder = self
                 .client
                 .put(url.clone())
                 .header("Content-Length", &content_length)
                 .header("x-ms-blob-type", "BlockBlob")
-                .body(r::Body::wrap_stream(file_stream));
+                .body(Body::wrap_stream(file_stream));
 
             Ok(request_builder)
         })
-        .await?;
+        .await
+        .context("BlobUploader.upload")?;
 
         Ok(resp)
     }
@@ -72,7 +90,7 @@ impl BlobUploader {
         &mut self,
         data: D,
         name: impl AsRef<str>,
-    ) -> Result<r::Response> {
+    ) -> Result<Response> {
         let url = {
             let url_path = self.url.path();
             let blob_path = format!("{}/{}", url_path, name.as_ref());
@@ -87,7 +105,8 @@ impl BlobUploader {
             .header("x-ms-blob-type", "BlockBlob")
             .json(&data)
             .send_retry_default()
-            .await?;
+            .await
+            .context("BlobUploader.upload_json")?;
 
         Ok(resp)
     }

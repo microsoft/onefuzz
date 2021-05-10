@@ -136,7 +136,7 @@ def get_extension(vm_name: str, extension_name: str) -> Optional[Any]:
             resource_group, vm_name, extension_name
         )
     except (ResourceNotFoundError, CloudError) as err:
-        logging.error("extension does not exist %s", err)
+        logging.info("extension does not exist %s", err)
         return None
 
 

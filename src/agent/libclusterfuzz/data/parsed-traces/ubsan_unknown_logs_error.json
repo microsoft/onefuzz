@@ -1,0 +1,84 @@
+{
+  "text": "Running: /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/crash-1ecd3fd5c9ee4c8545301c3dd5ddc333dbe7360c\n../../third_party/freetype/src/src/cff/cffload.c:2060:51: runtime error: unsupported ubsan error that needs a new signature\n    #0 0x564ca63e03d4 in a ../../file:1234:1\n    #1 0x564ca63de001 in b ../../file:1234:1\n    #2 0x564ca63d2426 in c ../../file:1234:1\nSUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ../../file:1234:1\nExecuted /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/crash-1ecd3fd5c9ee4c8545301c3dd5ddc333dbe7360c in 1 ms",
+  "sanitizer": "UndefinedBehaviorSanitizer",
+  "summary": "UndefinedBehaviorSanitizer: undefined-behavior ../../file:1234:1",
+  "fault_type": "undefined-behavior",
+  "call_stack": [
+    "#0 0x564ca63e03d4 in a ../../file:1234:1",
+    "#1 0x564ca63de001 in b ../../file:1234:1",
+    "#2 0x564ca63d2426 in c ../../file:1234:1"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x564ca63e03d4 in a ../../file:1234:1",
+      "address": 94887206585300,
+      "function_name": "a",
+      "function_offset": 1,
+      "source_file_name": "file",
+      "source_file_path": "../../file",
+      "source_file_line": 1234
+    },
+    {
+      "line": "#1 0x564ca63de001 in b ../../file:1234:1",
+      "address": 94887206576129,
+      "function_name": "b",
+      "function_offset": 1,
+      "source_file_name": "file",
+      "source_file_path": "../../file",
+      "source_file_line": 1234
+    },
+    {
+      "line": "#2 0x564ca63d2426 in c ../../file:1234:1",
+      "address": 94887206528038,
+      "function_name": "c",
+      "function_offset": 1,
+      "source_file_name": "file",
+      "source_file_path": "../../file",
+      "source_file_line": 1234
+    }
+  ],
+  "full_stack_names": [
+    "a",
+    "b",
+    "c"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x564ca63e03d4 in a ../../file:1234:1",
+      "address": 94887206585300,
+      "function_name": "a",
+      "function_offset": 1,
+      "source_file_name": "file",
+      "source_file_path": "../../file",
+      "source_file_line": 1234
+    },
+    {
+      "line": "#1 0x564ca63de001 in b ../../file:1234:1",
+      "address": 94887206576129,
+      "function_name": "b",
+      "function_offset": 1,
+      "source_file_name": "file",
+      "source_file_path": "../../file",
+      "source_file_line": 1234
+    },
+    {
+      "line": "#2 0x564ca63d2426 in c ../../file:1234:1",
+      "address": 94887206528038,
+      "function_name": "c",
+      "function_offset": 1,
+      "source_file_name": "file",
+      "source_file_path": "../../file",
+      "source_file_line": 1234
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x564ca63e03d4 in a ../../file:1234:1",
+    "#1 0x564ca63de001 in b ../../file:1234:1",
+    "#2 0x564ca63d2426 in c ../../file:1234:1"
+  ],
+  "minimized_stack_function_names": [
+    "a",
+    "b",
+    "c"
+  ]
+}

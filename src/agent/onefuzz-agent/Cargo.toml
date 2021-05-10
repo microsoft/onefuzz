@@ -11,29 +11,34 @@ integration_test=[]
 
 [dependencies]
 anyhow = "1.0"
+arraydeque = "0.4.5"
 appinsights = "0.1"
 async-trait = "0.1"
+atexit = { path = "../atexit" }
 backoff = { version = "0.3", features = ["async-std"] }
 clap = "2.33"
-tempfile = "3.2"
+crossterm = "0.18"
 env_logger = "0.8"
-futures = "0.3"
+flume = "0.10.4"
+futures = "0.3.14"
 hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 num_cpus = "1.13"
-reqwest = { version = "0.10", features = ["json", "stream"] }
+reqwest = { version = "0.11.3", features = ["json", "stream"] }
 serde = "1.0"
 serde_json = "1.0"
-tokio = { version = "0.2", features = ["full"] }
-tokio-util = { version = "0.3", features = ["full"] }
-url = { version = "2.2", features = ["serde"] }
-uuid = { version = "0.8", features = ["serde", "v4"] }
 onefuzz = { path = "../onefuzz" }
-storage-queue = { path = "../storage-queue" }
-reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 path-absolutize = "3.0.6"
-
-[dev-dependencies]
+reqwest-retry = { path = "../reqwest-retry" }
+stacktrace-parser = { path = "../stacktrace-parser" }
+storage-queue = { path = "../storage-queue" }
 tempfile = "3.2"
+thiserror = "1.0"
+tokio = { version = "1.5.0", features = ["full"] }
+tokio-util = { version = "0.6.6", features = ["full"] }
+tokio-stream = "0.1.5"
+tui = { version = "0.14", default-features = false, features = ['crossterm'] }
+url = { version = "2.2", features = ["serde"] }
+uuid = { version = "0.8", features = ["serde", "v4"] }

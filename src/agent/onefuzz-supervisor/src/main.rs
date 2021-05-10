@@ -14,8 +14,8 @@ extern crate onefuzz_telemetry;
 extern crate onefuzz;
 
 use crate::{
-    config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::*, work::WorkSet,
-    worker::WorkerEvent,
+    config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,
+    work::WorkSet, worker::WorkerEvent,
 };
 use std::path::PathBuf;
 
@@ -104,7 +104,7 @@ fn run(opt: RunOpt) -> Result<()> {
 
     let config = config?;
 
-    let mut rt = tokio::runtime::Runtime::new()?;
+    let rt = tokio::runtime::Runtime::new()?;
     let result = rt.block_on(run_agent(config));
 
     if let Err(err) = &result {

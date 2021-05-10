@@ -3,7 +3,6 @@
 
 use crate::config::ConfigData;
 use anyhow::Result;
-use futures::stream::StreamExt;
 use std::{collections::HashMap, path::Path};
 use tokio::process::Command;
 
@@ -72,14 +71,14 @@ async fn restart_systemd() -> Result<()> {
     Ok(())
 }
 
-pub async fn update(data: &ConfigData) -> Result<bool> {
+pub async fn update(data: &ConfigData) -> Result<()> {
     let configs = build(data);
-    let mut changed = false;
 
     let mut config_dir = tokio::fs::read_dir(SYSTEMD_CONFIG_DIR).await?;
-    while let Some(entry) = config_dir.next().await {
-        let entry = match entry {
-            Ok(entry) => entry,
+    loop {
+        let entry = match config_dir.next_entry().await {
+            Ok(Some(entry)) => entry,
+            Ok(None) => break,
             Err(err) => {
                 error!("error listing files {}", err);
                 continue;
@@ -107,7 +106,6 @@ pub async fn update(data: &ConfigData) -> Result<bool> {
 
                 tokio::fs::write(&path, configs[&file_name].clone()).await?;
                 start_service(&file_name).await?;
-                changed = true;
             }
         } else {
             info!("stopping proxy {}", file_name);
@@ -115,7 +113,6 @@ pub async fn update(data: &ConfigData) -> Result<bool> {
             tokio::fs::remove_file(&path).await?;
             stop_service(&file_name).await?;
             restart_systemd().await?;
-            changed = true;
         }
     }
 
@@ -125,9 +122,8 @@ pub async fn update(data: &ConfigData) -> Result<bool> {
             info!("adding service {}", file_name);
             tokio::fs::write(&path, content).await?;
             start_service(&file_name).await?;
-            changed = true;
         }
     }
 
-    Ok(changed)
+    Ok(())
 }

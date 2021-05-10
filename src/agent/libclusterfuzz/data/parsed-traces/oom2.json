@@ -1,0 +1,273 @@
+{
+  "text": "==25416==WARNING: AddressSanitizer failed to allocate 0x9a9a9a9a000000 bytes\n=================================================================\n==25416==ERROR: AddressSanitizer: allocator is out of memory trying to allocate 0x9a9a9a9a000000 bytes\n    #0 0x10c80e0c2 in __sanitizer_finish_switch_fiber\n    #1 0x10b46ada9 in __libcpp_allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/new:259:10\n    #2 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1799\n    #3 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1548\n    #4 0x10b46ada9 in std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer(unsigned long, unsigned long, std::__1::allocator<unsigned char>&) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__split_buffer:311\n    #5 0x10b46a6b8 in std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append(unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1047:53\n    #6 0x10b4648fa in safe_browsing::dmg::HFSForkReadStream::Read(unsigned char*, unsigned long, unsigned long*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:381:28\n    #7 0x10b46d626 in safe_browsing::dmg::ReadStream::ReadExact(unsigned char*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/read_stream.cc:20:10\n    #8 0x10b463f37 in safe_browsing::dmg::HFSBTreeIterator::Init(safe_browsing::dmg::ReadStream*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:486:17\n    #9 0x10b4610bd in LLVMFuzzerTestOneInput /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs_fuzzer.cc:19:21\n    #10 0x10b48cdeb in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerLoop.cpp:515:13\n    #11 0x10b46ee85 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerDriver.cpp:280:6\n    #12 0x10b4746c4 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerDriver.cpp:703:9\n    #13 0x10b49d681 in main /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerMain.cpp:20:10\n    #14 0x7fff9af635ac in start\n\n==25416==HINT: if you don't care about these errors you may set ASAN_OPTIONS=allocator_may_return_null=1\nSUMMARY: AddressSanitizer: out-of-memory (/b/clusterfuzz/bot/builds/chromium-browser-libfuzzer_mac-release-asan_53aadfd01f0d682b1d94abd5ad7af8a887b5763e/revisions/libfuzzer-mac-release-550895/libclang_rt.asan_osx_dynamic.dylib:x86_64+0x650c2)\n==25416==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: out-of-memory (/b/clusterfuzz/bot/builds/chromium-browser-libfuzzer_mac-release-asan_53aadfd01f0d682b1d94abd5ad7af8a887b5763e/revisions/libfuzzer-mac-release-550895/libclang_rt.asan_osx_dynamic.dylib:x86_64+0x650c2)",
+  "fault_type": "out-of-memory",
+  "call_stack": [
+    "#0 0x10c80e0c2 in __sanitizer_finish_switch_fiber",
+    "#1 0x10b46ada9 in __libcpp_allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/new:259:10",
+    "#2 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1799",
+    "#3 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1548",
+    "#4 0x10b46ada9 in std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer(unsigned long, unsigned long, std::__1::allocator<unsigned char>&) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__split_buffer:311",
+    "#5 0x10b46a6b8 in std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append(unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1047:53",
+    "#6 0x10b4648fa in safe_browsing::dmg::HFSForkReadStream::Read(unsigned char*, unsigned long, unsigned long*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:381:28",
+    "#7 0x10b46d626 in safe_browsing::dmg::ReadStream::ReadExact(unsigned char*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/read_stream.cc:20:10",
+    "#8 0x10b463f37 in safe_browsing::dmg::HFSBTreeIterator::Init(safe_browsing::dmg::ReadStream*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:486:17",
+    "#9 0x10b4610bd in LLVMFuzzerTestOneInput /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs_fuzzer.cc:19:21",
+    "#10 0x10b48cdeb in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerLoop.cpp:515:13",
+    "#11 0x10b46ee85 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerDriver.cpp:280:6",
+    "#12 0x10b4746c4 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerDriver.cpp:703:9",
+    "#13 0x10b49d681 in main /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+    "#14 0x7fff9af635ac in start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x10c80e0c2 in __sanitizer_finish_switch_fiber",
+      "address": 4504740034,
+      "function_name": "__sanitizer_finish_switch_fiber"
+    },
+    {
+      "line": "#1 0x10b46ada9 in __libcpp_allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/new:259:10",
+      "address": 4484148649,
+      "function_name": "__libcpp_allocate",
+      "function_offset": 10,
+      "source_file_name": "new",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/new",
+      "source_file_line": 259
+    },
+    {
+      "line": "#2 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1799",
+      "address": 4484148649,
+      "function_name": "allocate",
+      "source_file_name": "memory",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 1799
+    },
+    {
+      "line": "#3 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1548",
+      "address": 4484148649,
+      "function_name": "allocate",
+      "source_file_name": "memory",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 1548
+    },
+    {
+      "line": "#4 0x10b46ada9 in std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer(unsigned long, unsigned long, std::__1::allocator<unsigned char>&) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__split_buffer:311",
+      "address": 4484148649,
+      "function_name": "std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer(unsigned long, unsigned long, std::__1::allocator<unsigned char>&)",
+      "source_file_name": "__split_buffer",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__split_buffer",
+      "source_file_line": 311
+    },
+    {
+      "line": "#5 0x10b46a6b8 in std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append(unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1047:53",
+      "address": 4484146872,
+      "function_name": "std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append(unsigned long)",
+      "function_offset": 53,
+      "source_file_name": "vector",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/vector",
+      "source_file_line": 1047
+    },
+    {
+      "line": "#6 0x10b4648fa in safe_browsing::dmg::HFSForkReadStream::Read(unsigned char*, unsigned long, unsigned long*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:381:28",
+      "address": 4484122874,
+      "function_name": "safe_browsing::dmg::HFSForkReadStream::Read(unsigned char*, unsigned long, unsigned long*)",
+      "function_offset": 28,
+      "source_file_name": "hfs.cc",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc",
+      "source_file_line": 381
+    },
+    {
+      "line": "#7 0x10b46d626 in safe_browsing::dmg::ReadStream::ReadExact(unsigned char*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/read_stream.cc:20:10",
+      "address": 4484159014,
+      "function_name": "safe_browsing::dmg::ReadStream::ReadExact(unsigned char*, unsigned long)",
+      "function_offset": 10,
+      "source_file_name": "read_stream.cc",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/read_stream.cc",
+      "source_file_line": 20
+    },
+    {
+      "line": "#8 0x10b463f37 in safe_browsing::dmg::HFSBTreeIterator::Init(safe_browsing::dmg::ReadStream*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:486:17",
+      "address": 4484120375,
+      "function_name": "safe_browsing::dmg::HFSBTreeIterator::Init(safe_browsing::dmg::ReadStream*)",
+      "function_offset": 17,
+      "source_file_name": "hfs.cc",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc",
+      "source_file_line": 486
+    },
+    {
+      "line": "#9 0x10b4610bd in LLVMFuzzerTestOneInput /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs_fuzzer.cc:19:21",
+      "address": 4484108477,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 21,
+      "source_file_name": "hfs_fuzzer.cc",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs_fuzzer.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#10 0x10b48cdeb in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerLoop.cpp:515:13",
+      "address": 4484287979,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 515
+    },
+    {
+      "line": "#11 0x10b46ee85 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerDriver.cpp:280:6",
+      "address": 4484165253,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 280
+    },
+    {
+      "line": "#12 0x10b4746c4 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerDriver.cpp:703:9",
+      "address": 4484187844,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 703
+    },
+    {
+      "line": "#13 0x10b49d681 in main /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+      "address": 4484355713,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/libFuzzer/src/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#14 0x7fff9af635ac in start",
+      "address": 140735793214892,
+      "module_path": "start"
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_finish_switch_fiber",
+    "__libcpp_allocate",
+    "allocate",
+    "allocate",
+    "std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer",
+    "std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append",
+    "safe_browsing::dmg::HFSForkReadStream::Read",
+    "safe_browsing::dmg::ReadStream::ReadExact",
+    "safe_browsing::dmg::HFSBTreeIterator::Init",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x10b46ada9 in __libcpp_allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/new:259:10",
+      "address": 4484148649,
+      "function_name": "__libcpp_allocate",
+      "function_offset": 10,
+      "source_file_name": "new",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/new",
+      "source_file_line": 259
+    },
+    {
+      "line": "#2 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1799",
+      "address": 4484148649,
+      "function_name": "allocate",
+      "source_file_name": "memory",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 1799
+    },
+    {
+      "line": "#3 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1548",
+      "address": 4484148649,
+      "function_name": "allocate",
+      "source_file_name": "memory",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory",
+      "source_file_line": 1548
+    },
+    {
+      "line": "#4 0x10b46ada9 in std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer(unsigned long, unsigned long, std::__1::allocator<unsigned char>&) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__split_buffer:311",
+      "address": 4484148649,
+      "function_name": "std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer(unsigned long, unsigned long, std::__1::allocator<unsigned char>&)",
+      "source_file_name": "__split_buffer",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__split_buffer",
+      "source_file_line": 311
+    },
+    {
+      "line": "#5 0x10b46a6b8 in std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append(unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1047:53",
+      "address": 4484146872,
+      "function_name": "std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append(unsigned long)",
+      "function_offset": 53,
+      "source_file_name": "vector",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/vector",
+      "source_file_line": 1047
+    },
+    {
+      "line": "#6 0x10b4648fa in safe_browsing::dmg::HFSForkReadStream::Read(unsigned char*, unsigned long, unsigned long*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:381:28",
+      "address": 4484122874,
+      "function_name": "safe_browsing::dmg::HFSForkReadStream::Read(unsigned char*, unsigned long, unsigned long*)",
+      "function_offset": 28,
+      "source_file_name": "hfs.cc",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc",
+      "source_file_line": 381
+    },
+    {
+      "line": "#7 0x10b46d626 in safe_browsing::dmg::ReadStream::ReadExact(unsigned char*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/read_stream.cc:20:10",
+      "address": 4484159014,
+      "function_name": "safe_browsing::dmg::ReadStream::ReadExact(unsigned char*, unsigned long)",
+      "function_offset": 10,
+      "source_file_name": "read_stream.cc",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/read_stream.cc",
+      "source_file_line": 20
+    },
+    {
+      "line": "#8 0x10b463f37 in safe_browsing::dmg::HFSBTreeIterator::Init(safe_browsing::dmg::ReadStream*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:486:17",
+      "address": 4484120375,
+      "function_name": "safe_browsing::dmg::HFSBTreeIterator::Init(safe_browsing::dmg::ReadStream*)",
+      "function_offset": 17,
+      "source_file_name": "hfs.cc",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc",
+      "source_file_line": 486
+    },
+    {
+      "line": "#9 0x10b4610bd in LLVMFuzzerTestOneInput /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs_fuzzer.cc:19:21",
+      "address": 4484108477,
+      "function_name": "hfs_fuzzer.cc",
+      "function_offset": 21,
+      "source_file_name": "hfs_fuzzer.cc",
+      "source_file_path": "/b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs_fuzzer.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#14 0x7fff9af635ac in start",
+      "address": 140735793214892,
+      "module_path": "start"
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x10b46ada9 in __libcpp_allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/new:259:10",
+    "#2 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1799",
+    "#3 0x10b46ada9 in allocate /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/memory:1548",
+    "#4 0x10b46ada9 in std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer(unsigned long, unsigned long, std::__1::allocator<unsigned char>&) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/__split_buffer:311",
+    "#5 0x10b46a6b8 in std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append(unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/third_party/llvm-build/Release+Asserts/include/c++/v1/vector:1047:53",
+    "#6 0x10b4648fa in safe_browsing::dmg::HFSForkReadStream::Read(unsigned char*, unsigned long, unsigned long*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:381:28",
+    "#7 0x10b46d626 in safe_browsing::dmg::ReadStream::ReadExact(unsigned char*, unsigned long) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/read_stream.cc:20:10",
+    "#8 0x10b463f37 in safe_browsing::dmg::HFSBTreeIterator::Init(safe_browsing::dmg::ReadStream*) /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs.cc:486:17",
+    "#9 0x10b4610bd in LLVMFuzzerTestOneInput /b/build/slave/Libfuzzer_Upload_Mac_ASan/build/src/chrome/utility/safe_browsing/mac/hfs_fuzzer.cc:19:21",
+    "#14 0x7fff9af635ac in start"
+  ],
+  "minimized_stack_function_names": [
+    "__libcpp_allocate",
+    "allocate",
+    "allocate",
+    "std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer",
+    "std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append",
+    "safe_browsing::dmg::HFSForkReadStream::Read",
+    "safe_browsing::dmg::ReadStream::ReadExact",
+    "safe_browsing::dmg::HFSBTreeIterator::Init",
+    "hfs_fuzzer.cc"
+  ]
+}

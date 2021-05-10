@@ -1,0 +1,6 @@
+{
+  "text": "==3304==ERROR: AddressSanitizer: access-violation on unknown address 0x0ec3fdec (pc 0x0ec3fdec bp 0x00000000 sp 0x0ec3fde8 T16777215)\n[0624/081056:ERROR:client_util.cc(272)] Could not find exported function RelaunchChromeBrowserWithNewCommandLineIfNeeded\n    #0 0xec3fdeb  (<unknown module>)\n\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: SEGV (<unknown module>)\n==3304==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: SEGV (<unknown module>)",
+  "fault_type": "SEGV"
+}

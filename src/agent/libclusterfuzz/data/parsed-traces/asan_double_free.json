@@ -1,0 +1,178 @@
+{
+  "text": "Rendering PDF file /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/bug_649229.pdf.\n=================================================================\n==7009==ERROR: AddressSanitizer: attempting double-free on 0x610000022b80 in thread T0:\nSCARINESS: 42 (double-free)\n    #0 0x4f13bb in operator delete(void*)\n    #1 0x29f0bb3 in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5\n    #2 0x29f0bb3 in CPDF_DocPageData::Clear(int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:60\n    #3 0x29f0168 in CPDF_DocPageData::~CPDF_DocPageData() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:36:3\n    #4 0x2a2e1bb in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:422:3\n    #5 0x2a2e46a in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:421:33\n    #6 0x4ff389 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:794:3\n    #7 0x500f4b in main third_party/pdfium/samples/pdfium_test.cc:918:5\n    #8 0x7f4bd1954f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287\n0x610000022b80 is located 0 bytes inside of 120-byte region [0x610000022b80,0x610000022bf8)\nfreed by thread T0 here:\n    #0 0x4f13bb in operator delete(void*)\n    #1 0x29f75bc in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5\n    #2 0x29f75bc in CPDF_DocPageData::ReleasePattern(CPDF_Object const*) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:400\n    #3 0x2b1847e in ReleaseBuffer third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_color.cpp:36:20\n    #4 0x2b1847e in CPDF_Color::~CPDF_Color() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_color.cpp:17\n    #5 0x2b28835 in ~ColorData third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_colorstate.cpp:147:43\n    #6 0x2b28835 in Release third_party/pdfium/core/fxcrt/include/cfx_count_ref.h:64\n    #7 0x2b28835 in operator() third_party/pdfium/core/fxcrt/include/fx_memory.h:101\n    #8 0x2b28835 in reset buildtools/third_party/libc++/trunk/include/memory:2735\n    #9 0x2b28835 in ~unique_ptr buildtools/third_party/libc++/trunk/include/memory:2703\n    #10 0x2b28835 in ~CFX_RetainPtr third_party/pdfium/core/fxcrt/include/cfx_retain_ptr.h:13\n    #11 0x2b28835 in ~CFX_CountRef third_party/pdfium/core/fxcrt/include/cfx_count_ref.h:20\n    #12 0x2b28835 in CPDF_ColorState::~CPDF_ColorState() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_colorstate.cpp:18\n    #13 0x2b2d2c7 in CPDF_GraphicStates::~CPDF_GraphicStates() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_graphicstates.cpp:11:44\n    #14 0x29ebc4d in ~CPDF_PathObject third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_pathobject.cpp:11:38\n    #15 0x29ebc4d in CPDF_PathObject::~CPDF_PathObject() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_pathobject.cpp:11\n    #16 0x29eb6be in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13\n    #17 0x29eb6be in reset buildtools/third_party/libc++/trunk/include/memory:2735\n    #18 0x29eb6be in ~unique_ptr buildtools/third_party/libc++/trunk/include/memory:2703\n    #19 0x29eb6be in destroy buildtools/third_party/libc++/trunk/include/memory:1795\n    #20 0x29eb6be in __destroy<std::__1::unique_ptr<CPDF_PageObject, std::__1::default_delete<CPDF_PageObject> > > buildtools/third_party/libc++/trunk/include/memory:1668\n    #21 0x29eb6be in destroy<std::__1::unique_ptr<CPDF_PageObject, std::__1::default_delete<CPDF_PageObject> > > buildtools/third_party/libc++/trunk/include/memory:1536\n    #22 0x29eb6be in std::__1::__deque_base<std::__1::unique_ptr<CPDF_PageObject, std::__1::default_delete<CPDF_PageObject> >, std::__1::allocator<std::__1::unique_ptr<CPDF_PageObject, std::__1::default_delete<CPDF_PageObject> > > >::clear() buildtools/third_party/libc++/trunk/include/deque:1171\n    #23 0x29ea01c in ~__deque_base buildtools/third_party/libc++/trunk/include/deque:1108:5\n    #24 0x29ea01c in CPDF_PageObjectHolder::~CPDF_PageObjectHolder() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_pageobjectholder.cpp:24\n    #25 0x2b2c90a in ~CPDF_Form third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_form.cpp:32:26\n    #26 0x2b2c90a in CPDF_Form::~CPDF_Form() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_form.cpp:32\n    #27 0x29e2b72 in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13\n    #28 0x29e2b72 in reset buildtools/third_party/libc++/trunk/include/memory:2735\n    #29 0x29e2b72 in ~unique_ptr buildtools/third_party/libc++/trunk/include/memory:2703\n    #30 0x29e2b72 in ~CPDF_FormObject third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_formobject.cpp:13\n    #31 0x29e2b72 in CPDF_FormObject::~CPDF_FormObject() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_formobject.cpp:13\n    #32 0x29eb6be in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13\n    #33 0x29eb6be in reset buildtools/third_party/libc++/trunk/include/memory:2735\n    #34 0x29eb6be in ~unique_ptr buildtools/third_party/libc++/trunk/include/memory:2703\n    #35 0x29eb6be in destroy buildtools/third_party/libc++/trunk/include/memory:1795\n    #36 0x29eb6be in __destroy<std::__1::unique_ptr<CPDF_PageObject, std::__1::default_delete<CPDF_PageObject> > > buildtools/third_party/libc++/trunk/include/memory:1668\n    #37 0x29eb6be in destroy<std::__1::unique_ptr<CPDF_PageObject, std::__1::default_delete<CPDF_PageObject> > > buildtools/third_party/libc++/trunk/include/memory:1536\n    #38 0x29eb6be in std::__1::__deque_base<std::__1::unique_ptr<CPDF_PageObject, std::__1::default_delete<CPDF_PageObject> >, std::__1::allocator<std::__1::unique_ptr<CPDF_PageObject, std::__1::default_delete<CPDF_PageObject> > > >::clear() buildtools/third_party/libc++/trunk/include/deque:1171\n    #39 0x29ea01c in ~__deque_base buildtools/third_party/libc++/trunk/include/deque:1108:5\n    #40 0x29ea01c in CPDF_PageObjectHolder::~CPDF_PageObjectHolder() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_pageobjectholder.cpp:24\n    #41 0x2b2c90a in ~CPDF_Form third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_form.cpp:32:26\n    #42 0x2b2c90a in CPDF_Form::~CPDF_Form() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_form.cpp:32\n    #43 0x2b3b0c2 in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13\n    #44 0x2b3b0c2 in reset buildtools/third_party/libc++/trunk/include/memory:2735\n    #45 0x2b3b0c2 in ~unique_ptr buildtools/third_party/libc++/trunk/include/memory:2703\n    #46 0x2b3b0c2 in ~CPDF_TilingPattern third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_tilingpattern.cpp:25\n    #47 0x2b3b0c2 in CPDF_TilingPattern::~CPDF_TilingPattern() third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_tilingpattern.cpp:24\n    #48 0x29f0bb3 in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5\n    #49 0x29f0bb3 in CPDF_DocPageData::Clear(int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:60\n    #50 0x29f0168 in CPDF_DocPageData::~CPDF_DocPageData() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:36:3\n    #51 0x2a2e1bb in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:422:3\n    #52 0x2a2e46a in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:421:33\n    #53 0x4ff389 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:794:3\n    #54 0x500f4b in main third_party/pdfium/samples/pdfium_test.cc:918:5\n    #55 0x7f4bd1954f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287\npreviously allocated by thread T0 here:\n    #0 0x4f077b in operator new(unsigned long)\n    #1 0x29f69ae in CPDF_DocPageData::GetPattern(CPDF_Object*, int, CFX_Matrix const&) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:364:20\n    #2 0x2b74359 in CPDF_StreamContentParser::FindPattern(CFX_ByteString const&, bool) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_parser.cpp:1198:23\n    #3 0x2b69b69 in CPDF_StreamContentParser::Handle_SetColorPS_Fill() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_parser.cpp:1038:30\n    #4 0x2b762eb in CPDF_StreamContentParser::Parse(unsigned char const*, unsigned int, unsigned int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_parser.cpp:1513:9\n    #5 0x2a05e71 in CPDF_ContentParser::Continue(IFX_Pause*) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_parser_old.cpp:782:24\n    #6 0x29ea33b in CPDF_PageObjectHolder::ContinueParse(IFX_Pause*) third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_pageobjectholder.cpp:30:14\n    #7 0x2aa80e1 in CPDF_RenderStatus::LoadSMask(CPDF_Dictionary*, FX_RECT*, CFX_Matrix const*) third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render_image.cpp:977:8\n    #8 0x2a89e4b in CPDF_RenderStatus::ProcessTransparency(CPDF_PageObject*, CFX_Matrix const*) third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:813:9\n    #9 0x2a8af74 in CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject*, CFX_Matrix const*, IFX_Pause*) third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:300:7\n    #10 0x2a9516e in CPDF_ProgressiveRenderer::Continue(IFX_Pause*) third_party/pdfium/core/fpdfapi/fpdf_render/fpdf_render.cpp:1044:30\n    #11 0x2904ec4 in FPDF_RenderPage_Retail(CPDF_PageRenderContext*, void*, int, int, int, int, int, int, int, IFSDK_PAUSE_Adapter*) third_party/pdfium/fpdfsdk/fpdfview.cpp:906:26\n    #12 0x2904346 in FPDF_RenderPageBitmap third_party/pdfium/fpdfsdk/fpdfview.cpp:642:3\n    #13 0x4fd5f2 in RenderPage(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, void*, void*&, FPDF_FORMFILLINFO_PDFiumTest&, int, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:589:5\n    #14 0x4ff730 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:778:9\n    #15 0x500f4b in main third_party/pdfium/samples/pdfium_test.cc:918:5\n    #16 0x7f4bd1954f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287\nSUMMARY: AddressSanitizer: double-free (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-asan_linux-release_4392242b7f59878a2775b4607420a2b37e17ff13/symbolized/release/asan-linux-release-420300/pdfium_test+0x4f13bb)\n==7009==ABORTING",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: double-free (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-asan_linux-release_4392242b7f59878a2775b4607420a2b37e17ff13/symbolized/release/asan-linux-release-420300/pdfium_test+0x4f13bb)",
+  "fault_type": "double-free",
+  "call_stack": [
+    "#0 0x4f13bb in operator delete(void*)",
+    "#1 0x29f0bb3 in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5",
+    "#2 0x29f0bb3 in CPDF_DocPageData::Clear(int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:60",
+    "#3 0x29f0168 in CPDF_DocPageData::~CPDF_DocPageData() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:36:3",
+    "#4 0x2a2e1bb in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:422:3",
+    "#5 0x2a2e46a in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:421:33",
+    "#6 0x4ff389 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:794:3",
+    "#7 0x500f4b in main third_party/pdfium/samples/pdfium_test.cc:918:5",
+    "#8 0x7f4bd1954f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x4f13bb in operator delete(void*)",
+      "address": 5182395,
+      "function_name": "operator delete(void*)"
+    },
+    {
+      "line": "#1 0x29f0bb3 in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5",
+      "address": 43977651,
+      "function_name": "clear",
+      "function_offset": 5,
+      "source_file_name": "cpdf_countedobject.h",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h",
+      "source_file_line": 23
+    },
+    {
+      "line": "#2 0x29f0bb3 in CPDF_DocPageData::Clear(int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:60",
+      "address": 43977651,
+      "function_name": "CPDF_DocPageData::Clear(int)",
+      "source_file_name": "fpdf_page_doc.cpp",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp",
+      "source_file_line": 60
+    },
+    {
+      "line": "#3 0x29f0168 in CPDF_DocPageData::~CPDF_DocPageData() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:36:3",
+      "address": 43975016,
+      "function_name": "CPDF_DocPageData::~CPDF_DocPageData()",
+      "function_offset": 3,
+      "source_file_name": "fpdf_page_doc.cpp",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp",
+      "source_file_line": 36
+    },
+    {
+      "line": "#4 0x2a2e1bb in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:422:3",
+      "address": 44229051,
+      "function_name": "CPDF_Document::~CPDF_Document()",
+      "function_offset": 3,
+      "source_file_name": "cpdf_document.cpp",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp",
+      "source_file_line": 422
+    },
+    {
+      "line": "#5 0x2a2e46a in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:421:33",
+      "address": 44229738,
+      "function_name": "CPDF_Document::~CPDF_Document()",
+      "function_offset": 33,
+      "source_file_name": "cpdf_document.cpp",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp",
+      "source_file_line": 421
+    },
+    {
+      "line": "#6 0x4ff389 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:794:3",
+      "address": 5239689,
+      "function_name": "RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+      "function_offset": 3,
+      "source_file_name": "pdfium_test.cc",
+      "source_file_path": "third_party/pdfium/samples/pdfium_test.cc",
+      "source_file_line": 794
+    },
+    {
+      "line": "#7 0x500f4b in main third_party/pdfium/samples/pdfium_test.cc:918:5",
+      "address": 5246795,
+      "function_name": "main",
+      "function_offset": 5,
+      "source_file_name": "pdfium_test.cc",
+      "source_file_path": "third_party/pdfium/samples/pdfium_test.cc",
+      "source_file_line": 918
+    },
+    {
+      "line": "#8 0x7f4bd1954f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287",
+      "address": 139963615498052,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c",
+      "source_file_line": 287
+    }
+  ],
+  "full_stack_names": [
+    "operator delete",
+    "clear",
+    "CPDF_DocPageData::Clear",
+    "CPDF_DocPageData::~CPDF_DocPageData",
+    "CPDF_Document::~CPDF_Document",
+    "CPDF_Document::~CPDF_Document",
+    "RenderPdf",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x29f0bb3 in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5",
+      "address": 43977651,
+      "function_name": "clear",
+      "function_offset": 5,
+      "source_file_name": "cpdf_countedobject.h",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h",
+      "source_file_line": 23
+    },
+    {
+      "line": "#2 0x29f0bb3 in CPDF_DocPageData::Clear(int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:60",
+      "address": 43977651,
+      "function_name": "CPDF_DocPageData::Clear(int)",
+      "source_file_name": "fpdf_page_doc.cpp",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp",
+      "source_file_line": 60
+    },
+    {
+      "line": "#3 0x29f0168 in CPDF_DocPageData::~CPDF_DocPageData() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:36:3",
+      "address": 43975016,
+      "function_name": "CPDF_DocPageData::~CPDF_DocPageData()",
+      "function_offset": 3,
+      "source_file_name": "fpdf_page_doc.cpp",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp",
+      "source_file_line": 36
+    },
+    {
+      "line": "#4 0x2a2e1bb in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:422:3",
+      "address": 44229051,
+      "function_name": "CPDF_Document::~CPDF_Document()",
+      "function_offset": 3,
+      "source_file_name": "cpdf_document.cpp",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp",
+      "source_file_line": 422
+    },
+    {
+      "line": "#5 0x2a2e46a in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:421:33",
+      "address": 44229738,
+      "function_name": "CPDF_Document::~CPDF_Document()",
+      "function_offset": 33,
+      "source_file_name": "cpdf_document.cpp",
+      "source_file_path": "third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp",
+      "source_file_line": 421
+    },
+    {
+      "line": "#6 0x4ff389 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:794:3",
+      "address": 5239689,
+      "function_name": "RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+      "function_offset": 3,
+      "source_file_name": "pdfium_test.cc",
+      "source_file_path": "third_party/pdfium/samples/pdfium_test.cc",
+      "source_file_line": 794
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x29f0bb3 in clear third_party/pdfium/core/fpdfapi/fpdf_page/cpdf_countedobject.h:23:5",
+    "#2 0x29f0bb3 in CPDF_DocPageData::Clear(int) third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:60",
+    "#3 0x29f0168 in CPDF_DocPageData::~CPDF_DocPageData() third_party/pdfium/core/fpdfapi/fpdf_page/fpdf_page_doc.cpp:36:3",
+    "#4 0x2a2e1bb in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:422:3",
+    "#5 0x2a2e46a in CPDF_Document::~CPDF_Document() third_party/pdfium/core/fpdfapi/fpdf_parser/cpdf_document.cpp:421:33",
+    "#6 0x4ff389 in RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) third_party/pdfium/samples/pdfium_test.cc:794:3"
+  ],
+  "minimized_stack_function_names": [
+    "clear",
+    "CPDF_DocPageData::Clear",
+    "CPDF_DocPageData::~CPDF_DocPageData",
+    "CPDF_Document::~CPDF_Document",
+    "CPDF_Document::~CPDF_Document",
+    "RenderPdf"
+  ],
+  "scariness_score": 42,
+  "scariness_description": "double-free"
+}

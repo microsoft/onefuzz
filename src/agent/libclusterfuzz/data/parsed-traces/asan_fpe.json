@@ -1,0 +1,852 @@
+{
+  "text": "ASAN:DEADLYSIGNAL\n=================================================================\n==13370==ERROR: AddressSanitizer: FPE on unknown address 0x7fdc48869a7c (pc 0x7fdc48869a7c bp 0x7ffdcfaf8350 sp 0x7ffdcfaf8240 T0)\n    #0 0x7fdc48869a7b in ash::WindowGrid::PositionWindows(bool) ash/wm/overview/window_grid.cc:252:49\n    #1 0x7fdc487fd825 in ash::WindowSelector::Init(std::vector<aura::Window*, std::allocator<aura::Window*> > const&) ash/wm/overview/window_selector.cc:309:7\n    #2 0x7fdc4865e376 in ash::WindowSelectorController::ToggleOverview() ash/wm/overview/window_selector_controller.cc:62:5\n    #3 0x7fdc4838639b in HandleToggleOverview ash/accelerators/accelerator_controller.cc:394:3\n    #4 0x7fdc4838639b in ash::AcceleratorController::PerformAction(ash::AcceleratorAction, ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:1089\n    #5 0x7fdc4838a67d in ash::AcceleratorController::AcceleratorPressed(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:733:5\n    #6 0x7fdc50d8fa5e in ui::AcceleratorManager::Process(ui::Accelerator const&) ui/base/accelerators/accelerator_manager.cc:88:11\n    #7 0x7fdc4838186f in ash::AcceleratorController::Process(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:658:12\n    #8 0x7fdc486dcce9 in ash::AcceleratorDelegate::ProcessAccelerator(ui::KeyEvent const&, ui::Accelerator const&, wm::AcceleratorDelegate::KeyType) ash/accelerators/accelerator_delegate.cc:32:5\n    #9 0x7fdc4b28c7a3 in wm::AcceleratorFilter::OnKeyEvent(ui::KeyEvent*) ui/wm/core/accelerator_filter.cc:70:7\n    #10 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5\n    #11 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3\n    #12 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168\n    #13 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3\n    #14 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3\n    #15 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57\n    #16 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15\n    #17 0x7fdc4846d17c in DispatchKeyEventPostIME ash/host/ash_window_tree_host_x11.cc:243:7\n    #18 0x7fdc4846d17c in non-virtual thunk to ash::AshWindowTreeHostX11::DispatchKeyEventPostIME(ui::KeyEvent*) ash/host/ash_window_tree_host_x11.cc:239\n    #19 0x7fdc5144470f in ui::InputMethodBase::DispatchKeyEventPostIME(ui::KeyEvent*) const ui/base/ime/input_method_base.cc:111:15\n    #20 0x7fdc514319d1 in ui::InputMethodChromeOS::ProcessUnfilteredKeyPressEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:395:17\n    #21 0x7fdc51431297 in ui::InputMethodChromeOS::DispatchKeyEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:130:7\n    #22 0x7fdc4846f5f9 in ash::InputMethodEventHandler::OnKeyEvent(ui::KeyEvent*) ash/ime/input_method_event_handler.cc:35:3\n    #23 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5\n    #24 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3\n    #25 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168\n    #26 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3\n    #27 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3\n    #28 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57\n    #29 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15\n    #30 0x7fdc50e1642b in DeliverEventToProcessor ui/events/event_source.cc:73:10\n    #31 0x7fdc50e1642b in ui::EventSource::SendEventToProcessor(ui::Event*) ui/events/event_source.cc:51\n    #32 0x7fdc5144d04c in aura::WindowTreeHostX11::DispatchEvent(_XEvent* const&) ui/aura/window_tree_host_x11.cc:343:9\n    #33 0x7fdc3d35fd47 in ui::PlatformEventSource::DispatchEvent(_XEvent*) ui/events/platform/platform_event_source.cc:82:18\n    #34 0x7fdc50ea2348 in ui::X11EventSource::DispatchEvent(_XEvent*) ui/events/platform/x11/x11_event_source.cc:136:21\n    #35 0x7fdc50ea1c22 in ExtractCookieDataDispatchEvent ui/events/platform/x11/x11_event_source.cc:129:21\n    #36 0x7fdc50ea1c22 in ui::X11EventSource::DispatchXEvents() ui/events/platform/x11/x11_event_source.cc:106\n    #37 0x7fdc50ea108a in ui::(anonymous namespace)::XSourceDispatch(_GSource*, int (*)(void*), void*) ui/events/platform/x11/x11_event_source_glib.cc:39:3\n    #38 0x7fdc3512bce4 in g_main_context_dispatch\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: FPE (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-asan_linux-release-chromeos_4392242b7f59878a2775b4607420a2b37e17ff13/symbolized/release/asan-linux-release-344814/chrome+0x127f6a7b)\n==13370==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: FPE (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-asan_linux-release-chromeos_4392242b7f59878a2775b4607420a2b37e17ff13/symbolized/release/asan-linux-release-344814/chrome+0x127f6a7b)",
+  "fault_type": "FPE",
+  "call_stack": [
+    "#0 0x7fdc48869a7b in ash::WindowGrid::PositionWindows(bool) ash/wm/overview/window_grid.cc:252:49",
+    "#1 0x7fdc487fd825 in ash::WindowSelector::Init(std::vector<aura::Window*, std::allocator<aura::Window*> > const&) ash/wm/overview/window_selector.cc:309:7",
+    "#2 0x7fdc4865e376 in ash::WindowSelectorController::ToggleOverview() ash/wm/overview/window_selector_controller.cc:62:5",
+    "#3 0x7fdc4838639b in HandleToggleOverview ash/accelerators/accelerator_controller.cc:394:3",
+    "#4 0x7fdc4838639b in ash::AcceleratorController::PerformAction(ash::AcceleratorAction, ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:1089",
+    "#5 0x7fdc4838a67d in ash::AcceleratorController::AcceleratorPressed(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:733:5",
+    "#6 0x7fdc50d8fa5e in ui::AcceleratorManager::Process(ui::Accelerator const&) ui/base/accelerators/accelerator_manager.cc:88:11",
+    "#7 0x7fdc4838186f in ash::AcceleratorController::Process(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:658:12",
+    "#8 0x7fdc486dcce9 in ash::AcceleratorDelegate::ProcessAccelerator(ui::KeyEvent const&, ui::Accelerator const&, wm::AcceleratorDelegate::KeyType) ash/accelerators/accelerator_delegate.cc:32:5",
+    "#9 0x7fdc4b28c7a3 in wm::AcceleratorFilter::OnKeyEvent(ui::KeyEvent*) ui/wm/core/accelerator_filter.cc:70:7",
+    "#10 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5",
+    "#11 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3",
+    "#12 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168",
+    "#13 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3",
+    "#14 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3",
+    "#15 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57",
+    "#16 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15",
+    "#17 0x7fdc4846d17c in DispatchKeyEventPostIME ash/host/ash_window_tree_host_x11.cc:243:7",
+    "#18 0x7fdc4846d17c in non-virtual thunk to ash::AshWindowTreeHostX11::DispatchKeyEventPostIME(ui::KeyEvent*) ash/host/ash_window_tree_host_x11.cc:239",
+    "#19 0x7fdc5144470f in ui::InputMethodBase::DispatchKeyEventPostIME(ui::KeyEvent*) const ui/base/ime/input_method_base.cc:111:15",
+    "#20 0x7fdc514319d1 in ui::InputMethodChromeOS::ProcessUnfilteredKeyPressEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:395:17",
+    "#21 0x7fdc51431297 in ui::InputMethodChromeOS::DispatchKeyEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:130:7",
+    "#22 0x7fdc4846f5f9 in ash::InputMethodEventHandler::OnKeyEvent(ui::KeyEvent*) ash/ime/input_method_event_handler.cc:35:3",
+    "#23 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5",
+    "#24 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3",
+    "#25 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168",
+    "#26 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3",
+    "#27 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3",
+    "#28 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57",
+    "#29 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15",
+    "#30 0x7fdc50e1642b in DeliverEventToProcessor ui/events/event_source.cc:73:10",
+    "#31 0x7fdc50e1642b in ui::EventSource::SendEventToProcessor(ui::Event*) ui/events/event_source.cc:51",
+    "#32 0x7fdc5144d04c in aura::WindowTreeHostX11::DispatchEvent(_XEvent* const&) ui/aura/window_tree_host_x11.cc:343:9",
+    "#33 0x7fdc3d35fd47 in ui::PlatformEventSource::DispatchEvent(_XEvent*) ui/events/platform/platform_event_source.cc:82:18",
+    "#34 0x7fdc50ea2348 in ui::X11EventSource::DispatchEvent(_XEvent*) ui/events/platform/x11/x11_event_source.cc:136:21",
+    "#35 0x7fdc50ea1c22 in ExtractCookieDataDispatchEvent ui/events/platform/x11/x11_event_source.cc:129:21",
+    "#36 0x7fdc50ea1c22 in ui::X11EventSource::DispatchXEvents() ui/events/platform/x11/x11_event_source.cc:106",
+    "#37 0x7fdc50ea108a in ui::(anonymous namespace)::XSourceDispatch(_GSource*, int (*)(void*), void*) ui/events/platform/x11/x11_event_source_glib.cc:39:3",
+    "#38 0x7fdc3512bce4 in g_main_context_dispatch"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7fdc48869a7b in ash::WindowGrid::PositionWindows(bool) ash/wm/overview/window_grid.cc:252:49",
+      "address": 140584086313595,
+      "function_name": "ash::WindowGrid::PositionWindows(bool)",
+      "function_offset": 49,
+      "source_file_name": "window_grid.cc",
+      "source_file_path": "ash/wm/overview/window_grid.cc",
+      "source_file_line": 252
+    },
+    {
+      "line": "#1 0x7fdc487fd825 in ash::WindowSelector::Init(std::vector<aura::Window*, std::allocator<aura::Window*> > const&) ash/wm/overview/window_selector.cc:309:7",
+      "address": 140584085870629,
+      "function_name": "ash::WindowSelector::Init(std::vector<aura::Window*, std::allocator<aura::Window*> > const&)",
+      "function_offset": 7,
+      "source_file_name": "window_selector.cc",
+      "source_file_path": "ash/wm/overview/window_selector.cc",
+      "source_file_line": 309
+    },
+    {
+      "line": "#2 0x7fdc4865e376 in ash::WindowSelectorController::ToggleOverview() ash/wm/overview/window_selector_controller.cc:62:5",
+      "address": 140584084169590,
+      "function_name": "ash::WindowSelectorController::ToggleOverview()",
+      "function_offset": 5,
+      "source_file_name": "window_selector_controller.cc",
+      "source_file_path": "ash/wm/overview/window_selector_controller.cc",
+      "source_file_line": 62
+    },
+    {
+      "line": "#3 0x7fdc4838639b in HandleToggleOverview ash/accelerators/accelerator_controller.cc:394:3",
+      "address": 140584081187739,
+      "function_name": "HandleToggleOverview",
+      "function_offset": 3,
+      "source_file_name": "accelerator_controller.cc",
+      "source_file_path": "ash/accelerators/accelerator_controller.cc",
+      "source_file_line": 394
+    },
+    {
+      "line": "#4 0x7fdc4838639b in ash::AcceleratorController::PerformAction(ash::AcceleratorAction, ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:1089",
+      "address": 140584081187739,
+      "function_name": "ash::AcceleratorController::PerformAction(ash::AcceleratorAction, ui::Accelerator const&)",
+      "source_file_name": "accelerator_controller.cc",
+      "source_file_path": "ash/accelerators/accelerator_controller.cc",
+      "source_file_line": 1089
+    },
+    {
+      "line": "#5 0x7fdc4838a67d in ash::AcceleratorController::AcceleratorPressed(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:733:5",
+      "address": 140584081204861,
+      "function_name": "ash::AcceleratorController::AcceleratorPressed(ui::Accelerator const&)",
+      "function_offset": 5,
+      "source_file_name": "accelerator_controller.cc",
+      "source_file_path": "ash/accelerators/accelerator_controller.cc",
+      "source_file_line": 733
+    },
+    {
+      "line": "#6 0x7fdc50d8fa5e in ui::AcceleratorManager::Process(ui::Accelerator const&) ui/base/accelerators/accelerator_manager.cc:88:11",
+      "address": 140584225929822,
+      "function_name": "ui::AcceleratorManager::Process(ui::Accelerator const&)",
+      "function_offset": 11,
+      "source_file_name": "accelerator_manager.cc",
+      "source_file_path": "ui/base/accelerators/accelerator_manager.cc",
+      "source_file_line": 88
+    },
+    {
+      "line": "#7 0x7fdc4838186f in ash::AcceleratorController::Process(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:658:12",
+      "address": 140584081168495,
+      "function_name": "ash::AcceleratorController::Process(ui::Accelerator const&)",
+      "function_offset": 12,
+      "source_file_name": "accelerator_controller.cc",
+      "source_file_path": "ash/accelerators/accelerator_controller.cc",
+      "source_file_line": 658
+    },
+    {
+      "line": "#8 0x7fdc486dcce9 in ash::AcceleratorDelegate::ProcessAccelerator(ui::KeyEvent const&, ui::Accelerator const&, wm::AcceleratorDelegate::KeyType) ash/accelerators/accelerator_delegate.cc:32:5",
+      "address": 140584084688105,
+      "function_name": "ash::AcceleratorDelegate::ProcessAccelerator(ui::KeyEvent const&, ui::Accelerator const&, wm::AcceleratorDelegate::KeyType)",
+      "function_offset": 5,
+      "source_file_name": "accelerator_delegate.cc",
+      "source_file_path": "ash/accelerators/accelerator_delegate.cc",
+      "source_file_line": 32
+    },
+    {
+      "line": "#9 0x7fdc4b28c7a3 in wm::AcceleratorFilter::OnKeyEvent(ui::KeyEvent*) ui/wm/core/accelerator_filter.cc:70:7",
+      "address": 140584130496419,
+      "function_name": "wm::AcceleratorFilter::OnKeyEvent(ui::KeyEvent*)",
+      "function_offset": 7,
+      "source_file_name": "accelerator_filter.cc",
+      "source_file_path": "ui/wm/core/accelerator_filter.cc",
+      "source_file_line": 70
+    },
+    {
+      "line": "#10 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5",
+      "address": 140584226471248,
+      "function_name": "ui::EventHandler::OnEvent(ui::Event*)",
+      "function_offset": 5,
+      "source_file_name": "event_handler.cc",
+      "source_file_path": "ui/events/event_handler.cc",
+      "source_file_line": 37
+    },
+    {
+      "line": "#11 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3",
+      "address": 140584226462542,
+      "function_name": "DispatchEvent",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 189
+    },
+    {
+      "line": "#12 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168",
+      "address": 140584226462542,
+      "function_name": "ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*)",
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 168
+    },
+    {
+      "line": "#13 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3",
+      "address": 140584226456150,
+      "function_name": "ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*)",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 126
+    },
+    {
+      "line": "#14 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3",
+      "address": 140584226454128,
+      "function_name": "DispatchEventToTarget",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 85
+    },
+    {
+      "line": "#15 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57",
+      "address": 140584226454128,
+      "function_name": "ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*)",
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#16 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15",
+      "address": 140584226473995,
+      "function_name": "ui::EventProcessor::OnEventFromSource(ui::Event*)",
+      "function_offset": 15,
+      "source_file_name": "event_processor.cc",
+      "source_file_path": "ui/events/event_processor.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#17 0x7fdc4846d17c in DispatchKeyEventPostIME ash/host/ash_window_tree_host_x11.cc:243:7",
+      "address": 140584082133372,
+      "function_name": "DispatchKeyEventPostIME",
+      "function_offset": 7,
+      "source_file_name": "ash_window_tree_host_x11.cc",
+      "source_file_path": "ash/host/ash_window_tree_host_x11.cc",
+      "source_file_line": 243
+    },
+    {
+      "line": "#18 0x7fdc4846d17c in non-virtual thunk to ash::AshWindowTreeHostX11::DispatchKeyEventPostIME(ui::KeyEvent*) ash/host/ash_window_tree_host_x11.cc:239",
+      "address": 140584082133372,
+      "function_name": "non-virtual thunk to ash::AshWindowTreeHostX11::DispatchKeyEventPostIME(ui::KeyEvent*)",
+      "source_file_name": "ash_window_tree_host_x11.cc",
+      "source_file_path": "ash/host/ash_window_tree_host_x11.cc",
+      "source_file_line": 239
+    },
+    {
+      "line": "#19 0x7fdc5144470f in ui::InputMethodBase::DispatchKeyEventPostIME(ui::KeyEvent*) const ui/base/ime/input_method_base.cc:111:15",
+      "address": 140584232961807,
+      "function_name": "ui::InputMethodBase::DispatchKeyEventPostIME(ui::KeyEvent*) const",
+      "function_offset": 15,
+      "source_file_name": "input_method_base.cc",
+      "source_file_path": "ui/base/ime/input_method_base.cc",
+      "source_file_line": 111
+    },
+    {
+      "line": "#20 0x7fdc514319d1 in ui::InputMethodChromeOS::ProcessUnfilteredKeyPressEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:395:17",
+      "address": 140584232884689,
+      "function_name": "ui::InputMethodChromeOS::ProcessUnfilteredKeyPressEvent(ui::KeyEvent*)",
+      "function_offset": 17,
+      "source_file_name": "input_method_chromeos.cc",
+      "source_file_path": "ui/base/ime/input_method_chromeos.cc",
+      "source_file_line": 395
+    },
+    {
+      "line": "#21 0x7fdc51431297 in ui::InputMethodChromeOS::DispatchKeyEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:130:7",
+      "address": 140584232882839,
+      "function_name": "ui::InputMethodChromeOS::DispatchKeyEvent(ui::KeyEvent*)",
+      "function_offset": 7,
+      "source_file_name": "input_method_chromeos.cc",
+      "source_file_path": "ui/base/ime/input_method_chromeos.cc",
+      "source_file_line": 130
+    },
+    {
+      "line": "#22 0x7fdc4846f5f9 in ash::InputMethodEventHandler::OnKeyEvent(ui::KeyEvent*) ash/ime/input_method_event_handler.cc:35:3",
+      "address": 140584082142713,
+      "function_name": "ash::InputMethodEventHandler::OnKeyEvent(ui::KeyEvent*)",
+      "function_offset": 3,
+      "source_file_name": "input_method_event_handler.cc",
+      "source_file_path": "ash/ime/input_method_event_handler.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#23 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5",
+      "address": 140584226471248,
+      "function_name": "ui::EventHandler::OnEvent(ui::Event*)",
+      "function_offset": 5,
+      "source_file_name": "event_handler.cc",
+      "source_file_path": "ui/events/event_handler.cc",
+      "source_file_line": 37
+    },
+    {
+      "line": "#24 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3",
+      "address": 140584226462542,
+      "function_name": "DispatchEvent",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 189
+    },
+    {
+      "line": "#25 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168",
+      "address": 140584226462542,
+      "function_name": "ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*)",
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 168
+    },
+    {
+      "line": "#26 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3",
+      "address": 140584226456150,
+      "function_name": "ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*)",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 126
+    },
+    {
+      "line": "#27 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3",
+      "address": 140584226454128,
+      "function_name": "DispatchEventToTarget",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 85
+    },
+    {
+      "line": "#28 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57",
+      "address": 140584226454128,
+      "function_name": "ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*)",
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#29 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15",
+      "address": 140584226473995,
+      "function_name": "ui::EventProcessor::OnEventFromSource(ui::Event*)",
+      "function_offset": 15,
+      "source_file_name": "event_processor.cc",
+      "source_file_path": "ui/events/event_processor.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#30 0x7fdc50e1642b in DeliverEventToProcessor ui/events/event_source.cc:73:10",
+      "address": 140584226481195,
+      "function_name": "DeliverEventToProcessor",
+      "function_offset": 10,
+      "source_file_name": "event_source.cc",
+      "source_file_path": "ui/events/event_source.cc",
+      "source_file_line": 73
+    },
+    {
+      "line": "#31 0x7fdc50e1642b in ui::EventSource::SendEventToProcessor(ui::Event*) ui/events/event_source.cc:51",
+      "address": 140584226481195,
+      "function_name": "ui::EventSource::SendEventToProcessor(ui::Event*)",
+      "source_file_name": "event_source.cc",
+      "source_file_path": "ui/events/event_source.cc",
+      "source_file_line": 51
+    },
+    {
+      "line": "#32 0x7fdc5144d04c in aura::WindowTreeHostX11::DispatchEvent(_XEvent* const&) ui/aura/window_tree_host_x11.cc:343:9",
+      "address": 140584232996940,
+      "function_name": "aura::WindowTreeHostX11::DispatchEvent(_XEvent* const&)",
+      "function_offset": 9,
+      "source_file_name": "window_tree_host_x11.cc",
+      "source_file_path": "ui/aura/window_tree_host_x11.cc",
+      "source_file_line": 343
+    },
+    {
+      "line": "#33 0x7fdc3d35fd47 in ui::PlatformEventSource::DispatchEvent(_XEvent*) ui/events/platform/platform_event_source.cc:82:18",
+      "address": 140583896481095,
+      "function_name": "ui::PlatformEventSource::DispatchEvent(_XEvent*)",
+      "function_offset": 18,
+      "source_file_name": "platform_event_source.cc",
+      "source_file_path": "ui/events/platform/platform_event_source.cc",
+      "source_file_line": 82
+    },
+    {
+      "line": "#34 0x7fdc50ea2348 in ui::X11EventSource::DispatchEvent(_XEvent*) ui/events/platform/x11/x11_event_source.cc:136:21",
+      "address": 140584227054408,
+      "function_name": "ui::X11EventSource::DispatchEvent(_XEvent*)",
+      "function_offset": 21,
+      "source_file_name": "x11_event_source.cc",
+      "source_file_path": "ui/events/platform/x11/x11_event_source.cc",
+      "source_file_line": 136
+    },
+    {
+      "line": "#35 0x7fdc50ea1c22 in ExtractCookieDataDispatchEvent ui/events/platform/x11/x11_event_source.cc:129:21",
+      "address": 140584227052578,
+      "function_name": "ExtractCookieDataDispatchEvent",
+      "function_offset": 21,
+      "source_file_name": "x11_event_source.cc",
+      "source_file_path": "ui/events/platform/x11/x11_event_source.cc",
+      "source_file_line": 129
+    },
+    {
+      "line": "#36 0x7fdc50ea1c22 in ui::X11EventSource::DispatchXEvents() ui/events/platform/x11/x11_event_source.cc:106",
+      "address": 140584227052578,
+      "function_name": "ui::X11EventSource::DispatchXEvents()",
+      "source_file_name": "x11_event_source.cc",
+      "source_file_path": "ui/events/platform/x11/x11_event_source.cc",
+      "source_file_line": 106
+    },
+    {
+      "line": "#37 0x7fdc50ea108a in ui::(anonymous namespace)::XSourceDispatch(_GSource*, int (*)(void*), void*) ui/events/platform/x11/x11_event_source_glib.cc:39:3",
+      "address": 140584227049610,
+      "function_name": "ui::(anonymous namespace)::XSourceDispatch(_GSource*, int (*)(void*), void*)",
+      "function_offset": 3,
+      "source_file_name": "x11_event_source_glib.cc",
+      "source_file_path": "ui/events/platform/x11/x11_event_source_glib.cc",
+      "source_file_line": 39
+    },
+    {
+      "line": "#38 0x7fdc3512bce4 in g_main_context_dispatch",
+      "address": 140583759953124,
+      "function_name": "g_main_context_dispatch"
+    }
+  ],
+  "full_stack_names": [
+    "ash::WindowGrid::PositionWindows",
+    "ash::WindowSelector::Init",
+    "ash::WindowSelectorController::ToggleOverview",
+    "HandleToggleOverview",
+    "ash::AcceleratorController::PerformAction",
+    "ash::AcceleratorController::AcceleratorPressed",
+    "ui::AcceleratorManager::Process",
+    "ash::AcceleratorController::Process",
+    "ash::AcceleratorDelegate::ProcessAccelerator",
+    "wm::AcceleratorFilter::OnKeyEvent",
+    "ui::EventHandler::OnEvent",
+    "DispatchEvent",
+    "ui::EventDispatcher::DispatchEventToEventHandlers",
+    "ui::EventDispatcher::ProcessEvent",
+    "DispatchEventToTarget",
+    "ui::EventDispatcherDelegate::DispatchEvent",
+    "ui::EventProcessor::OnEventFromSource",
+    "DispatchKeyEventPostIME",
+    "non-virtual thunk to ash::AshWindowTreeHostX11::DispatchKeyEventPostIME",
+    "ui::InputMethodBase::DispatchKeyEventPostIME",
+    "ui::InputMethodChromeOS::ProcessUnfilteredKeyPressEvent",
+    "ui::InputMethodChromeOS::DispatchKeyEvent",
+    "ash::InputMethodEventHandler::OnKeyEvent",
+    "ui::EventHandler::OnEvent",
+    "DispatchEvent",
+    "ui::EventDispatcher::DispatchEventToEventHandlers",
+    "ui::EventDispatcher::ProcessEvent",
+    "DispatchEventToTarget",
+    "ui::EventDispatcherDelegate::DispatchEvent",
+    "ui::EventProcessor::OnEventFromSource",
+    "DeliverEventToProcessor",
+    "ui::EventSource::SendEventToProcessor",
+    "aura::WindowTreeHostX11::DispatchEvent",
+    "ui::PlatformEventSource::DispatchEvent",
+    "ui::X11EventSource::DispatchEvent",
+    "ExtractCookieDataDispatchEvent",
+    "ui::X11EventSource::DispatchXEvents",
+    "ui::",
+    "g_main_context_dispatch"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x7fdc48869a7b in ash::WindowGrid::PositionWindows(bool) ash/wm/overview/window_grid.cc:252:49",
+      "address": 140584086313595,
+      "function_name": "ash::WindowGrid::PositionWindows(bool)",
+      "function_offset": 49,
+      "source_file_name": "window_grid.cc",
+      "source_file_path": "ash/wm/overview/window_grid.cc",
+      "source_file_line": 252
+    },
+    {
+      "line": "#1 0x7fdc487fd825 in ash::WindowSelector::Init(std::vector<aura::Window*, std::allocator<aura::Window*> > const&) ash/wm/overview/window_selector.cc:309:7",
+      "address": 140584085870629,
+      "function_name": "ash::WindowSelector::Init(std::vector<aura::Window*, std::allocator<aura::Window*> > const&)",
+      "function_offset": 7,
+      "source_file_name": "window_selector.cc",
+      "source_file_path": "ash/wm/overview/window_selector.cc",
+      "source_file_line": 309
+    },
+    {
+      "line": "#2 0x7fdc4865e376 in ash::WindowSelectorController::ToggleOverview() ash/wm/overview/window_selector_controller.cc:62:5",
+      "address": 140584084169590,
+      "function_name": "ash::WindowSelectorController::ToggleOverview()",
+      "function_offset": 5,
+      "source_file_name": "window_selector_controller.cc",
+      "source_file_path": "ash/wm/overview/window_selector_controller.cc",
+      "source_file_line": 62
+    },
+    {
+      "line": "#3 0x7fdc4838639b in HandleToggleOverview ash/accelerators/accelerator_controller.cc:394:3",
+      "address": 140584081187739,
+      "function_name": "HandleToggleOverview",
+      "function_offset": 3,
+      "source_file_name": "accelerator_controller.cc",
+      "source_file_path": "ash/accelerators/accelerator_controller.cc",
+      "source_file_line": 394
+    },
+    {
+      "line": "#4 0x7fdc4838639b in ash::AcceleratorController::PerformAction(ash::AcceleratorAction, ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:1089",
+      "address": 140584081187739,
+      "function_name": "ash::AcceleratorController::PerformAction(ash::AcceleratorAction, ui::Accelerator const&)",
+      "source_file_name": "accelerator_controller.cc",
+      "source_file_path": "ash/accelerators/accelerator_controller.cc",
+      "source_file_line": 1089
+    },
+    {
+      "line": "#5 0x7fdc4838a67d in ash::AcceleratorController::AcceleratorPressed(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:733:5",
+      "address": 140584081204861,
+      "function_name": "ash::AcceleratorController::AcceleratorPressed(ui::Accelerator const&)",
+      "function_offset": 5,
+      "source_file_name": "accelerator_controller.cc",
+      "source_file_path": "ash/accelerators/accelerator_controller.cc",
+      "source_file_line": 733
+    },
+    {
+      "line": "#6 0x7fdc50d8fa5e in ui::AcceleratorManager::Process(ui::Accelerator const&) ui/base/accelerators/accelerator_manager.cc:88:11",
+      "address": 140584225929822,
+      "function_name": "ui::AcceleratorManager::Process(ui::Accelerator const&)",
+      "function_offset": 11,
+      "source_file_name": "accelerator_manager.cc",
+      "source_file_path": "ui/base/accelerators/accelerator_manager.cc",
+      "source_file_line": 88
+    },
+    {
+      "line": "#7 0x7fdc4838186f in ash::AcceleratorController::Process(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:658:12",
+      "address": 140584081168495,
+      "function_name": "ash::AcceleratorController::Process(ui::Accelerator const&)",
+      "function_offset": 12,
+      "source_file_name": "accelerator_controller.cc",
+      "source_file_path": "ash/accelerators/accelerator_controller.cc",
+      "source_file_line": 658
+    },
+    {
+      "line": "#8 0x7fdc486dcce9 in ash::AcceleratorDelegate::ProcessAccelerator(ui::KeyEvent const&, ui::Accelerator const&, wm::AcceleratorDelegate::KeyType) ash/accelerators/accelerator_delegate.cc:32:5",
+      "address": 140584084688105,
+      "function_name": "ash::AcceleratorDelegate::ProcessAccelerator(ui::KeyEvent const&, ui::Accelerator const&, wm::AcceleratorDelegate::KeyType)",
+      "function_offset": 5,
+      "source_file_name": "accelerator_delegate.cc",
+      "source_file_path": "ash/accelerators/accelerator_delegate.cc",
+      "source_file_line": 32
+    },
+    {
+      "line": "#9 0x7fdc4b28c7a3 in wm::AcceleratorFilter::OnKeyEvent(ui::KeyEvent*) ui/wm/core/accelerator_filter.cc:70:7",
+      "address": 140584130496419,
+      "function_name": "wm::AcceleratorFilter::OnKeyEvent(ui::KeyEvent*)",
+      "function_offset": 7,
+      "source_file_name": "accelerator_filter.cc",
+      "source_file_path": "ui/wm/core/accelerator_filter.cc",
+      "source_file_line": 70
+    },
+    {
+      "line": "#10 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5",
+      "address": 140584226471248,
+      "function_name": "ui::EventHandler::OnEvent(ui::Event*)",
+      "function_offset": 5,
+      "source_file_name": "event_handler.cc",
+      "source_file_path": "ui/events/event_handler.cc",
+      "source_file_line": 37
+    },
+    {
+      "line": "#11 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3",
+      "address": 140584226462542,
+      "function_name": "DispatchEvent",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 189
+    },
+    {
+      "line": "#12 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168",
+      "address": 140584226462542,
+      "function_name": "ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*)",
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 168
+    },
+    {
+      "line": "#13 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3",
+      "address": 140584226456150,
+      "function_name": "ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*)",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 126
+    },
+    {
+      "line": "#14 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3",
+      "address": 140584226454128,
+      "function_name": "DispatchEventToTarget",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 85
+    },
+    {
+      "line": "#15 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57",
+      "address": 140584226454128,
+      "function_name": "ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*)",
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#16 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15",
+      "address": 140584226473995,
+      "function_name": "ui::EventProcessor::OnEventFromSource(ui::Event*)",
+      "function_offset": 15,
+      "source_file_name": "event_processor.cc",
+      "source_file_path": "ui/events/event_processor.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#17 0x7fdc4846d17c in DispatchKeyEventPostIME ash/host/ash_window_tree_host_x11.cc:243:7",
+      "address": 140584082133372,
+      "function_name": "DispatchKeyEventPostIME",
+      "function_offset": 7,
+      "source_file_name": "ash_window_tree_host_x11.cc",
+      "source_file_path": "ash/host/ash_window_tree_host_x11.cc",
+      "source_file_line": 243
+    },
+    {
+      "line": "#18 0x7fdc4846d17c in non-virtual thunk to ash::AshWindowTreeHostX11::DispatchKeyEventPostIME(ui::KeyEvent*) ash/host/ash_window_tree_host_x11.cc:239",
+      "address": 140584082133372,
+      "function_name": "non-virtual thunk to ash::AshWindowTreeHostX11::DispatchKeyEventPostIME(ui::KeyEvent*)",
+      "source_file_name": "ash_window_tree_host_x11.cc",
+      "source_file_path": "ash/host/ash_window_tree_host_x11.cc",
+      "source_file_line": 239
+    },
+    {
+      "line": "#19 0x7fdc5144470f in ui::InputMethodBase::DispatchKeyEventPostIME(ui::KeyEvent*) const ui/base/ime/input_method_base.cc:111:15",
+      "address": 140584232961807,
+      "function_name": "ui::InputMethodBase::DispatchKeyEventPostIME(ui::KeyEvent*) const",
+      "function_offset": 15,
+      "source_file_name": "input_method_base.cc",
+      "source_file_path": "ui/base/ime/input_method_base.cc",
+      "source_file_line": 111
+    },
+    {
+      "line": "#20 0x7fdc514319d1 in ui::InputMethodChromeOS::ProcessUnfilteredKeyPressEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:395:17",
+      "address": 140584232884689,
+      "function_name": "ui::InputMethodChromeOS::ProcessUnfilteredKeyPressEvent(ui::KeyEvent*)",
+      "function_offset": 17,
+      "source_file_name": "input_method_chromeos.cc",
+      "source_file_path": "ui/base/ime/input_method_chromeos.cc",
+      "source_file_line": 395
+    },
+    {
+      "line": "#21 0x7fdc51431297 in ui::InputMethodChromeOS::DispatchKeyEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:130:7",
+      "address": 140584232882839,
+      "function_name": "ui::InputMethodChromeOS::DispatchKeyEvent(ui::KeyEvent*)",
+      "function_offset": 7,
+      "source_file_name": "input_method_chromeos.cc",
+      "source_file_path": "ui/base/ime/input_method_chromeos.cc",
+      "source_file_line": 130
+    },
+    {
+      "line": "#22 0x7fdc4846f5f9 in ash::InputMethodEventHandler::OnKeyEvent(ui::KeyEvent*) ash/ime/input_method_event_handler.cc:35:3",
+      "address": 140584082142713,
+      "function_name": "ash::InputMethodEventHandler::OnKeyEvent(ui::KeyEvent*)",
+      "function_offset": 3,
+      "source_file_name": "input_method_event_handler.cc",
+      "source_file_path": "ash/ime/input_method_event_handler.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#23 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5",
+      "address": 140584226471248,
+      "function_name": "ui::EventHandler::OnEvent(ui::Event*)",
+      "function_offset": 5,
+      "source_file_name": "event_handler.cc",
+      "source_file_path": "ui/events/event_handler.cc",
+      "source_file_line": 37
+    },
+    {
+      "line": "#24 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3",
+      "address": 140584226462542,
+      "function_name": "DispatchEvent",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 189
+    },
+    {
+      "line": "#25 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168",
+      "address": 140584226462542,
+      "function_name": "ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*)",
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 168
+    },
+    {
+      "line": "#26 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3",
+      "address": 140584226456150,
+      "function_name": "ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*)",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 126
+    },
+    {
+      "line": "#27 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3",
+      "address": 140584226454128,
+      "function_name": "DispatchEventToTarget",
+      "function_offset": 3,
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 85
+    },
+    {
+      "line": "#28 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57",
+      "address": 140584226454128,
+      "function_name": "ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*)",
+      "source_file_name": "event_dispatcher.cc",
+      "source_file_path": "ui/events/event_dispatcher.cc",
+      "source_file_line": 57
+    },
+    {
+      "line": "#29 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15",
+      "address": 140584226473995,
+      "function_name": "ui::EventProcessor::OnEventFromSource(ui::Event*)",
+      "function_offset": 15,
+      "source_file_name": "event_processor.cc",
+      "source_file_path": "ui/events/event_processor.cc",
+      "source_file_line": 35
+    },
+    {
+      "line": "#30 0x7fdc50e1642b in DeliverEventToProcessor ui/events/event_source.cc:73:10",
+      "address": 140584226481195,
+      "function_name": "DeliverEventToProcessor",
+      "function_offset": 10,
+      "source_file_name": "event_source.cc",
+      "source_file_path": "ui/events/event_source.cc",
+      "source_file_line": 73
+    },
+    {
+      "line": "#31 0x7fdc50e1642b in ui::EventSource::SendEventToProcessor(ui::Event*) ui/events/event_source.cc:51",
+      "address": 140584226481195,
+      "function_name": "ui::EventSource::SendEventToProcessor(ui::Event*)",
+      "source_file_name": "event_source.cc",
+      "source_file_path": "ui/events/event_source.cc",
+      "source_file_line": 51
+    },
+    {
+      "line": "#32 0x7fdc5144d04c in aura::WindowTreeHostX11::DispatchEvent(_XEvent* const&) ui/aura/window_tree_host_x11.cc:343:9",
+      "address": 140584232996940,
+      "function_name": "aura::WindowTreeHostX11::DispatchEvent(_XEvent* const&)",
+      "function_offset": 9,
+      "source_file_name": "window_tree_host_x11.cc",
+      "source_file_path": "ui/aura/window_tree_host_x11.cc",
+      "source_file_line": 343
+    },
+    {
+      "line": "#33 0x7fdc3d35fd47 in ui::PlatformEventSource::DispatchEvent(_XEvent*) ui/events/platform/platform_event_source.cc:82:18",
+      "address": 140583896481095,
+      "function_name": "ui::PlatformEventSource::DispatchEvent(_XEvent*)",
+      "function_offset": 18,
+      "source_file_name": "platform_event_source.cc",
+      "source_file_path": "ui/events/platform/platform_event_source.cc",
+      "source_file_line": 82
+    },
+    {
+      "line": "#34 0x7fdc50ea2348 in ui::X11EventSource::DispatchEvent(_XEvent*) ui/events/platform/x11/x11_event_source.cc:136:21",
+      "address": 140584227054408,
+      "function_name": "ui::X11EventSource::DispatchEvent(_XEvent*)",
+      "function_offset": 21,
+      "source_file_name": "x11_event_source.cc",
+      "source_file_path": "ui/events/platform/x11/x11_event_source.cc",
+      "source_file_line": 136
+    },
+    {
+      "line": "#35 0x7fdc50ea1c22 in ExtractCookieDataDispatchEvent ui/events/platform/x11/x11_event_source.cc:129:21",
+      "address": 140584227052578,
+      "function_name": "ExtractCookieDataDispatchEvent",
+      "function_offset": 21,
+      "source_file_name": "x11_event_source.cc",
+      "source_file_path": "ui/events/platform/x11/x11_event_source.cc",
+      "source_file_line": 129
+    },
+    {
+      "line": "#36 0x7fdc50ea1c22 in ui::X11EventSource::DispatchXEvents() ui/events/platform/x11/x11_event_source.cc:106",
+      "address": 140584227052578,
+      "function_name": "ui::X11EventSource::DispatchXEvents()",
+      "source_file_name": "x11_event_source.cc",
+      "source_file_path": "ui/events/platform/x11/x11_event_source.cc",
+      "source_file_line": 106
+    },
+    {
+      "line": "#37 0x7fdc50ea108a in ui::(anonymous namespace)::XSourceDispatch(_GSource*, int (*)(void*), void*) ui/events/platform/x11/x11_event_source_glib.cc:39:3",
+      "address": 140584227049610,
+      "function_name": "ui::(anonymous namespace)::XSourceDispatch(_GSource*, int (*)(void*), void*)",
+      "function_offset": 3,
+      "source_file_name": "x11_event_source_glib.cc",
+      "source_file_path": "ui/events/platform/x11/x11_event_source_glib.cc",
+      "source_file_line": 39
+    },
+    {
+      "line": "#38 0x7fdc3512bce4 in g_main_context_dispatch",
+      "address": 140583759953124,
+      "function_name": "g_main_context_dispatch"
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x7fdc48869a7b in ash::WindowGrid::PositionWindows(bool) ash/wm/overview/window_grid.cc:252:49",
+    "#1 0x7fdc487fd825 in ash::WindowSelector::Init(std::vector<aura::Window*, std::allocator<aura::Window*> > const&) ash/wm/overview/window_selector.cc:309:7",
+    "#2 0x7fdc4865e376 in ash::WindowSelectorController::ToggleOverview() ash/wm/overview/window_selector_controller.cc:62:5",
+    "#3 0x7fdc4838639b in HandleToggleOverview ash/accelerators/accelerator_controller.cc:394:3",
+    "#4 0x7fdc4838639b in ash::AcceleratorController::PerformAction(ash::AcceleratorAction, ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:1089",
+    "#5 0x7fdc4838a67d in ash::AcceleratorController::AcceleratorPressed(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:733:5",
+    "#6 0x7fdc50d8fa5e in ui::AcceleratorManager::Process(ui::Accelerator const&) ui/base/accelerators/accelerator_manager.cc:88:11",
+    "#7 0x7fdc4838186f in ash::AcceleratorController::Process(ui::Accelerator const&) ash/accelerators/accelerator_controller.cc:658:12",
+    "#8 0x7fdc486dcce9 in ash::AcceleratorDelegate::ProcessAccelerator(ui::KeyEvent const&, ui::Accelerator const&, wm::AcceleratorDelegate::KeyType) ash/accelerators/accelerator_delegate.cc:32:5",
+    "#9 0x7fdc4b28c7a3 in wm::AcceleratorFilter::OnKeyEvent(ui::KeyEvent*) ui/wm/core/accelerator_filter.cc:70:7",
+    "#10 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5",
+    "#11 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3",
+    "#12 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168",
+    "#13 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3",
+    "#14 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3",
+    "#15 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57",
+    "#16 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15",
+    "#17 0x7fdc4846d17c in DispatchKeyEventPostIME ash/host/ash_window_tree_host_x11.cc:243:7",
+    "#18 0x7fdc4846d17c in non-virtual thunk to ash::AshWindowTreeHostX11::DispatchKeyEventPostIME(ui::KeyEvent*) ash/host/ash_window_tree_host_x11.cc:239",
+    "#19 0x7fdc5144470f in ui::InputMethodBase::DispatchKeyEventPostIME(ui::KeyEvent*) const ui/base/ime/input_method_base.cc:111:15",
+    "#20 0x7fdc514319d1 in ui::InputMethodChromeOS::ProcessUnfilteredKeyPressEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:395:17",
+    "#21 0x7fdc51431297 in ui::InputMethodChromeOS::DispatchKeyEvent(ui::KeyEvent*) ui/base/ime/input_method_chromeos.cc:130:7",
+    "#22 0x7fdc4846f5f9 in ash::InputMethodEventHandler::OnKeyEvent(ui::KeyEvent*) ash/ime/input_method_event_handler.cc:35:3",
+    "#23 0x7fdc50e13d50 in ui::EventHandler::OnEvent(ui::Event*) ui/events/event_handler.cc:37:5",
+    "#24 0x7fdc50e11b4e in DispatchEvent ui/events/event_dispatcher.cc:189:3",
+    "#25 0x7fdc50e11b4e in ui::EventDispatcher::DispatchEventToEventHandlers(std::vector<ui::EventHandler*, std::allocator<ui::EventHandler*> >*, ui::Event*) ui/events/event_dispatcher.cc:168",
+    "#26 0x7fdc50e10256 in ui::EventDispatcher::ProcessEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:126:3",
+    "#27 0x7fdc50e0fa70 in DispatchEventToTarget ui/events/event_dispatcher.cc:85:3",
+    "#28 0x7fdc50e0fa70 in ui::EventDispatcherDelegate::DispatchEvent(ui::EventTarget*, ui::Event*) ui/events/event_dispatcher.cc:57",
+    "#29 0x7fdc50e1480b in ui::EventProcessor::OnEventFromSource(ui::Event*) ui/events/event_processor.cc:35:15",
+    "#30 0x7fdc50e1642b in DeliverEventToProcessor ui/events/event_source.cc:73:10",
+    "#31 0x7fdc50e1642b in ui::EventSource::SendEventToProcessor(ui::Event*) ui/events/event_source.cc:51",
+    "#32 0x7fdc5144d04c in aura::WindowTreeHostX11::DispatchEvent(_XEvent* const&) ui/aura/window_tree_host_x11.cc:343:9",
+    "#33 0x7fdc3d35fd47 in ui::PlatformEventSource::DispatchEvent(_XEvent*) ui/events/platform/platform_event_source.cc:82:18",
+    "#34 0x7fdc50ea2348 in ui::X11EventSource::DispatchEvent(_XEvent*) ui/events/platform/x11/x11_event_source.cc:136:21",
+    "#35 0x7fdc50ea1c22 in ExtractCookieDataDispatchEvent ui/events/platform/x11/x11_event_source.cc:129:21",
+    "#36 0x7fdc50ea1c22 in ui::X11EventSource::DispatchXEvents() ui/events/platform/x11/x11_event_source.cc:106",
+    "#37 0x7fdc50ea108a in ui::(anonymous namespace)::XSourceDispatch(_GSource*, int (*)(void*), void*) ui/events/platform/x11/x11_event_source_glib.cc:39:3",
+    "#38 0x7fdc3512bce4 in g_main_context_dispatch"
+  ],
+  "minimized_stack_function_names": [
+    "ash::WindowGrid::PositionWindows",
+    "ash::WindowSelector::Init",
+    "ash::WindowSelectorController::ToggleOverview",
+    "HandleToggleOverview",
+    "ash::AcceleratorController::PerformAction",
+    "ash::AcceleratorController::AcceleratorPressed",
+    "ui::AcceleratorManager::Process",
+    "ash::AcceleratorController::Process",
+    "ash::AcceleratorDelegate::ProcessAccelerator",
+    "wm::AcceleratorFilter::OnKeyEvent",
+    "ui::EventHandler::OnEvent",
+    "DispatchEvent",
+    "ui::EventDispatcher::DispatchEventToEventHandlers",
+    "ui::EventDispatcher::ProcessEvent",
+    "DispatchEventToTarget",
+    "ui::EventDispatcherDelegate::DispatchEvent",
+    "ui::EventProcessor::OnEventFromSource",
+    "DispatchKeyEventPostIME",
+    "non-virtual thunk to ash::AshWindowTreeHostX11::DispatchKeyEventPostIME",
+    "ui::InputMethodBase::DispatchKeyEventPostIME",
+    "ui::InputMethodChromeOS::ProcessUnfilteredKeyPressEvent",
+    "ui::InputMethodChromeOS::DispatchKeyEvent",
+    "ash::InputMethodEventHandler::OnKeyEvent",
+    "ui::EventHandler::OnEvent",
+    "DispatchEvent",
+    "ui::EventDispatcher::DispatchEventToEventHandlers",
+    "ui::EventDispatcher::ProcessEvent",
+    "DispatchEventToTarget",
+    "ui::EventDispatcherDelegate::DispatchEvent",
+    "ui::EventProcessor::OnEventFromSource",
+    "DeliverEventToProcessor",
+    "ui::EventSource::SendEventToProcessor",
+    "aura::WindowTreeHostX11::DispatchEvent",
+    "ui::PlatformEventSource::DispatchEvent",
+    "ui::X11EventSource::DispatchEvent",
+    "ExtractCookieDataDispatchEvent",
+    "ui::X11EventSource::DispatchXEvents",
+    "ui::",
+    "g_main_context_dispatch"
+  ]
+}

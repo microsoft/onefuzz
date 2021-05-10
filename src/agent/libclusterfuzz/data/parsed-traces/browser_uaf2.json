@@ -1,0 +1,182 @@
+{
+  "text": "==1==ERROR: AddressSanitizer: heap-use-after-free on address 0x60f00003b280 at pc 0x7efd4a2a3e03 bp 0x7ffd1ed50680 sp 0x7ffd1ed50678\npreviously allocated by thread T0 (chrome) here:\n    #0 0xe9e9e9e9e955 in base::Thread::StartWithOptions(base::Thread::Options const&) base/threading/thread.cc:119:15\n    #1 0xe9e9e9e9e9e5 in content::BrowserProcessSubThread::CreateIOThread() content/browser/browser_process_sub_thread.cc:92:19\n    #2 0xe9e9e9e9e9c0 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:962:31\n    #3 0xe9e9e9e9e95b in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12\n    #4 0xe9e9e9e9e948 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:416:29\n    #5 0xe9e9e9e9e9bc in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10\n    #6 0xe9e9e9e9e90e in ChromeMain chrome/app/chrome_main.cc:103:12\n    #7 0xe9e9e9e9e92f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291\n\nSUMMARY: AddressSanitizer: heap-use-after-free (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-asan_linux-release_4392242b7f59878a2775b4607420a2b37e17ff13/symbolized/release/asan-symbolized-linux-release-365513/chrome+0xa091e02)\nShadow bytes around the buggy address:\n  0x0c1e7ffff600: fd fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x0c1e7ffff610: fa fa fd fd fd fd fd fd fd fd fd fd fd fd fd fa\n  0x0c1e7ffff620: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x0c1e7ffff630: fd fd fd fd fd fd fd fd fd fd fd fd fd fa fa fa\n  0x0c1e7ffff640: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fd fd\n=>0x0c1e7ffff650:[fd]fd fd fd fd fd fd fd fd fd fd fd fa fa fa fa\n  0x0c1e7ffff660: fa fa fa fa fa fa fa fa fa fa fa fa fd fd fd fd\n  0x0c1e7ffff670: fd fd fd fd fd fd fd fd fd fa fa fa fa fa fa fa\n  0x0c1e7ffff680: fa fa fa fa fa fa fa fa fa fa 00 00 00 00 00 00\n  0x0c1e7ffff690: 00 00 00 00 00 00 00 fa fa fa fa fa fa fa fa fa\n  0x0c1e7ffff6a0: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07\n  Heap left redzone:       fa\n  Heap right redzone:      fb\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack partial redzone:   f4\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==1==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: heap-use-after-free (/mnt/scratch0/clusterfuzz/bot/builds/chromium-browser-asan_linux-release_4392242b7f59878a2775b4607420a2b37e17ff13/symbolized/release/asan-symbolized-linux-release-365513/chrome+0xa091e02)",
+  "fault_type": "heap-use-after-free",
+  "call_stack": [
+    "#0 0xe9e9e9e9e955 in base::Thread::StartWithOptions(base::Thread::Options const&) base/threading/thread.cc:119:15",
+    "#1 0xe9e9e9e9e9e5 in content::BrowserProcessSubThread::CreateIOThread() content/browser/browser_process_sub_thread.cc:92:19",
+    "#2 0xe9e9e9e9e9c0 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:962:31",
+    "#3 0xe9e9e9e9e95b in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
+    "#4 0xe9e9e9e9e948 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:416:29",
+    "#5 0xe9e9e9e9e9bc in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
+    "#6 0xe9e9e9e9e90e in ChromeMain chrome/app/chrome_main.cc:103:12",
+    "#7 0xe9e9e9e9e92f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0xe9e9e9e9e955 in base::Thread::StartWithOptions(base::Thread::Options const&) base/threading/thread.cc:119:15",
+      "address": 257190861072725,
+      "function_name": "base::Thread::StartWithOptions(base::Thread::Options const&)",
+      "function_offset": 15,
+      "source_file_name": "thread.cc",
+      "source_file_path": "base/threading/thread.cc",
+      "source_file_line": 119
+    },
+    {
+      "line": "#1 0xe9e9e9e9e9e5 in content::BrowserProcessSubThread::CreateIOThread() content/browser/browser_process_sub_thread.cc:92:19",
+      "address": 257190861072869,
+      "function_name": "content::BrowserProcessSubThread::CreateIOThread()",
+      "function_offset": 19,
+      "source_file_name": "browser_process_sub_thread.cc",
+      "source_file_path": "content/browser/browser_process_sub_thread.cc",
+      "source_file_line": 92
+    },
+    {
+      "line": "#2 0xe9e9e9e9e9c0 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:962:31",
+      "address": 257190861072832,
+      "function_name": "content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool)",
+      "function_offset": 31,
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 962
+    },
+    {
+      "line": "#3 0xe9e9e9e9e95b in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
+      "address": 257190861072731,
+      "function_name": "content::ContentMainRunnerImpl::Run(bool)",
+      "function_offset": 12,
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 878
+    },
+    {
+      "line": "#4 0xe9e9e9e9e948 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:416:29",
+      "address": 257190861072712,
+      "function_name": "service_manager::Main(service_manager::MainParams const&)",
+      "function_offset": 29,
+      "source_file_name": "main.cc",
+      "source_file_path": "services/service_manager/embedder/main.cc",
+      "source_file_line": 416
+    },
+    {
+      "line": "#5 0xe9e9e9e9e9bc in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
+      "address": 257190861072828,
+      "function_name": "content::ContentMain(content::ContentMainParams const&)",
+      "function_offset": 10,
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#6 0xe9e9e9e9e90e in ChromeMain chrome/app/chrome_main.cc:103:12",
+      "address": 257190861072654,
+      "function_name": "ChromeMain",
+      "function_offset": 12,
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 103
+    },
+    {
+      "line": "#7 0xe9e9e9e9e92f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291",
+      "address": 257190861072687,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
+    }
+  ],
+  "full_stack_names": [
+    "base::Thread::StartWithOptions",
+    "content::BrowserProcessSubThread::CreateIOThread",
+    "content::ContentMainRunnerImpl::RunServiceManager",
+    "content::ContentMainRunnerImpl::Run",
+    "service_manager::Main",
+    "content::ContentMain",
+    "ChromeMain",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0xe9e9e9e9e955 in base::Thread::StartWithOptions(base::Thread::Options const&) base/threading/thread.cc:119:15",
+      "address": 257190861072725,
+      "function_name": "base::Thread::StartWithOptions(base::Thread::Options const&)",
+      "function_offset": 15,
+      "source_file_name": "thread.cc",
+      "source_file_path": "base/threading/thread.cc",
+      "source_file_line": 119
+    },
+    {
+      "line": "#1 0xe9e9e9e9e9e5 in content::BrowserProcessSubThread::CreateIOThread() content/browser/browser_process_sub_thread.cc:92:19",
+      "address": 257190861072869,
+      "function_name": "content::BrowserProcessSubThread::CreateIOThread()",
+      "function_offset": 19,
+      "source_file_name": "browser_process_sub_thread.cc",
+      "source_file_path": "content/browser/browser_process_sub_thread.cc",
+      "source_file_line": 92
+    },
+    {
+      "line": "#2 0xe9e9e9e9e9c0 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:962:31",
+      "address": 257190861072832,
+      "function_name": "content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool)",
+      "function_offset": 31,
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 962
+    },
+    {
+      "line": "#3 0xe9e9e9e9e95b in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
+      "address": 257190861072731,
+      "function_name": "content::ContentMainRunnerImpl::Run(bool)",
+      "function_offset": 12,
+      "source_file_name": "content_main_runner_impl.cc",
+      "source_file_path": "content/app/content_main_runner_impl.cc",
+      "source_file_line": 878
+    },
+    {
+      "line": "#4 0xe9e9e9e9e948 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:416:29",
+      "address": 257190861072712,
+      "function_name": "service_manager::Main(service_manager::MainParams const&)",
+      "function_offset": 29,
+      "source_file_name": "main.cc",
+      "source_file_path": "services/service_manager/embedder/main.cc",
+      "source_file_line": 416
+    },
+    {
+      "line": "#5 0xe9e9e9e9e9bc in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
+      "address": 257190861072828,
+      "function_name": "content::ContentMain(content::ContentMainParams const&)",
+      "function_offset": 10,
+      "source_file_name": "content_main.cc",
+      "source_file_path": "content/app/content_main.cc",
+      "source_file_line": 19
+    },
+    {
+      "line": "#6 0xe9e9e9e9e90e in ChromeMain chrome/app/chrome_main.cc:103:12",
+      "address": 257190861072654,
+      "function_name": "ChromeMain",
+      "function_offset": 12,
+      "source_file_name": "chrome_main.cc",
+      "source_file_path": "chrome/app/chrome_main.cc",
+      "source_file_line": 103
+    }
+  ],
+  "minimized_stack": [
+    "#0 0xe9e9e9e9e955 in base::Thread::StartWithOptions(base::Thread::Options const&) base/threading/thread.cc:119:15",
+    "#1 0xe9e9e9e9e9e5 in content::BrowserProcessSubThread::CreateIOThread() content/browser/browser_process_sub_thread.cc:92:19",
+    "#2 0xe9e9e9e9e9c0 in content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content/app/content_main_runner_impl.cc:962:31",
+    "#3 0xe9e9e9e9e95b in content::ContentMainRunnerImpl::Run(bool) content/app/content_main_runner_impl.cc:878:12",
+    "#4 0xe9e9e9e9e948 in service_manager::Main(service_manager::MainParams const&) services/service_manager/embedder/main.cc:416:29",
+    "#5 0xe9e9e9e9e9bc in content::ContentMain(content::ContentMainParams const&) content/app/content_main.cc:19:10",
+    "#6 0xe9e9e9e9e90e in ChromeMain chrome/app/chrome_main.cc:103:12"
+  ],
+  "minimized_stack_function_names": [
+    "base::Thread::StartWithOptions",
+    "content::BrowserProcessSubThread::CreateIOThread",
+    "content::ContentMainRunnerImpl::RunServiceManager",
+    "content::ContentMainRunnerImpl::Run",
+    "service_manager::Main",
+    "content::ContentMain",
+    "ChromeMain"
+  ]
+}

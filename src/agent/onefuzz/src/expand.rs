@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use crate::sha256::digest_file_blocking;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use std::path::{Path, PathBuf};
 use std::{collections::HashMap, hash::Hash};
@@ -314,7 +314,13 @@ impl<'a> Expand<'a> {
     ) -> Result<String> {
         match ev {
             ExpandedValue::Path(v) => {
-                let path = String::from(dunce::canonicalize(v)?.to_string_lossy());
+                let path = String::from(
+                    dunce::canonicalize(&v)
+                        .with_context(|| {
+                            format!("unable to canonicalize path during extension: {}", v)
+                        })?
+                        .to_string_lossy(),
+                );
                 arg = arg.replace(fmtstr, &path);
                 Ok(arg)
             }
@@ -348,7 +354,11 @@ impl<'a> Expand<'a> {
                 arg.contains(fmtstr),
                 self.values.get(&placeholder.get_string()),
             ) {
-                (true, Some(ev)) => arg = self.replace_value(fmtstr, arg, ev)?,
+                (true, Some(ev)) => {
+                    arg = self
+                        .replace_value(fmtstr, arg.clone(), ev)
+                        .with_context(|| format!("replace_value failed: {} {}", fmtstr, arg))?
+                }
                 (true, None) => bail!("missing argument {}", fmtstr),
                 (false, _) => (),
             }
@@ -359,7 +369,9 @@ impl<'a> Expand<'a> {
     pub fn evaluate<T: AsRef<str>>(&self, args: &[T]) -> Result<Vec<String>> {
         let mut result = Vec::new();
         for arg in args {
-            let arg = self.evaluate_value(arg)?;
+            let arg = self
+                .evaluate_value(arg)
+                .with_context(|| format!("evaluating argument failed: {}", arg.as_ref()))?;
             result.push(arg);
         }
         Ok(result)
@@ -369,7 +381,7 @@ impl<'a> Expand<'a> {
 #[cfg(test)]
 mod tests {
     use super::Expand;
-    use anyhow::Result;
+    use anyhow::{Context, Result};
     use std::path::Path;
 
     #[test]
@@ -415,8 +427,8 @@ mod tests {
         ];
 
         // The paths need to exist for canonicalization.
-        let input_path = "data/libfuzzer-asan-log.txt";
-        let input_corpus_dir = "data";
+        let input_path = "src/lib.rs";
+        let input_corpus_dir = "src";
         let generated_inputs_dir = "src";
 
         let result = Expand::new()
@@ -430,7 +442,7 @@ mod tests {
         let expected_input_corpus = input_corpus_path.to_string_lossy();
         let generated_inputs_path = dunce::canonicalize(generated_inputs_dir)?;
         let expected_generated_inputs = generated_inputs_path.to_string_lossy();
-        let input_full_path = dunce::canonicalize(input_path)?;
+        let input_full_path = dunce::canonicalize(input_path).context("canonicalize failed")?;
         let expected_input = input_full_path.to_string_lossy();
         let expected_options = format!(
             "inner {} then {} {}",
@@ -447,7 +459,7 @@ mod tests {
                 "c",
                 &expected_options,
                 "d",
-                "libfuzzer-asan-log",
+                "lib",
                 &expected_input,
                 &expected_input
             ]

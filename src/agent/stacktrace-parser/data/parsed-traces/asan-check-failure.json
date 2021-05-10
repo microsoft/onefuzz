@@ -1,0 +1,155 @@
+{
+  "text": "=================================================================\n==31189==AddressSanitizer CHECK failed: /build/llvm-toolchain-9-uSl4bC/llvm-toolchain-9-9/projects/compiler-rt/lib/asan/asan_descriptions.cc:80 \"((0 && \"Address is not in memory and not in shadow?\")) != (0)\" (0x0, 0x0)\n    #0 0x49a92e in __asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)\n    #1 0x4aef3f in __sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)\n    #2 0x423516 in __asan::GetShadowAddressInformation(unsigned long, __asan::ShadowAddressDescription*) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)\n    #3 0x4245b6 in __asan::AddressDescription::AddressDescription(unsigned long, unsigned long, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)\n    #4 0x4261b2 in __asan::ErrorGeneric::ErrorGeneric(unsigned int, unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)\n    #5 0x498180 in __asan::ReportGenericError(unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned int, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)\n    #6 0x47ef01 in strncpy (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)\n    #7 0x4c2223 in check /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:21:3\n    #8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12\n    #9 0x4c274d in main /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:81:12\n    #10 0x7ffff6e22bf6 in __libc_start_main /build/glibc-S7xCS9/glibc-2.27/csu/../csu/libc-start.c:310\n    #11 0x41ab39 in _start (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)\n\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer CHECK failed: /build/llvm-toolchain-9-uSl4bC/llvm-toolchain-9-9/projects/compiler-rt/lib/asan/asan_descriptions.cc:80",
+  "fault_type": "CHECK failed",
+  "call_stack": [
+    "#0 0x49a92e in __asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)",
+    "#1 0x4aef3f in __sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)",
+    "#2 0x423516 in __asan::GetShadowAddressInformation(unsigned long, __asan::ShadowAddressDescription*) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)",
+    "#3 0x4245b6 in __asan::AddressDescription::AddressDescription(unsigned long, unsigned long, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)",
+    "#4 0x4261b2 in __asan::ErrorGeneric::ErrorGeneric(unsigned int, unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)",
+    "#5 0x498180 in __asan::ReportGenericError(unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned int, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)",
+    "#6 0x47ef01 in strncpy (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)",
+    "#7 0x4c2223 in check /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:21:3",
+    "#8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12",
+    "#9 0x4c274d in main /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:81:12",
+    "#10 0x7ffff6e22bf6 in __libc_start_main /build/glibc-S7xCS9/glibc-2.27/csu/../csu/libc-start.c:310",
+    "#11 0x41ab39 in _start (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x49a92e in __asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x49a92e)",
+      "address": 4827438,
+      "function_name": "__asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long)",
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4827438
+    },
+    {
+      "line": "#1 0x4aef3f in __sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4aef3f)",
+      "address": 4910911,
+      "function_name": "__sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long)",
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4910911
+    },
+    {
+      "line": "#2 0x423516 in __asan::GetShadowAddressInformation(unsigned long, __asan::ShadowAddressDescription*) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x423516)",
+      "address": 4338966,
+      "function_name": "__asan::GetShadowAddressInformation(unsigned long, __asan::ShadowAddressDescription*)",
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4338966
+    },
+    {
+      "line": "#3 0x4245b6 in __asan::AddressDescription::AddressDescription(unsigned long, unsigned long, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4245b6)",
+      "address": 4343222,
+      "function_name": "__asan::AddressDescription::AddressDescription(unsigned long, unsigned long, bool)",
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4343222
+    },
+    {
+      "line": "#4 0x4261b2 in __asan::ErrorGeneric::ErrorGeneric(unsigned int, unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x4261b2)",
+      "address": 4350386,
+      "function_name": "__asan::ErrorGeneric::ErrorGeneric(unsigned int, unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long)",
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4350386
+    },
+    {
+      "line": "#5 0x498180 in __asan::ReportGenericError(unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned int, bool) (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x498180)",
+      "address": 4817280,
+      "function_name": "__asan::ReportGenericError(unsigned long, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned int, bool)",
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4817280
+    },
+    {
+      "line": "#6 0x47ef01 in strncpy (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x47ef01)",
+      "address": 4714241,
+      "function_name": "strncpy",
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4714241
+    },
+    {
+      "line": "#7 0x4c2223 in check /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:21:3",
+      "address": 4989475,
+      "function_name": "check",
+      "function_offset": 3,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
+      "source_file_line": 21
+    },
+    {
+      "line": "#8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12",
+      "address": 4990647,
+      "function_name": "from_file",
+      "function_offset": 12,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
+      "source_file_line": 67
+    },
+    {
+      "line": "#9 0x4c274d in main /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:81:12",
+      "address": 4990797,
+      "function_name": "main",
+      "function_offset": 12,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
+      "source_file_line": 81
+    },
+    {
+      "line": "#10 0x7ffff6e22bf6 in __libc_start_main /build/glibc-S7xCS9/glibc-2.27/csu/../csu/libc-start.c:310",
+      "address": 140737335405558,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-S7xCS9/glibc-2.27/csu/../csu/libc-start.c",
+      "source_file_line": 310
+    },
+    {
+      "line": "#11 0x41ab39 in _start (/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe+0x41ab39)",
+      "address": 4303673,
+      "function_name": "_start",
+      "module_path": "/onefuzz/blob-containers/oft-setup-7dd77f97cb7557789a822f10f227df19/fuzz.exe",
+      "module_offset": 4303673
+    }
+  ],
+  "full_stack_names": [
+    "__asan::AsanCheckFailed",
+    "__sanitizer::CheckFailed",
+    "__asan::GetShadowAddressInformation",
+    "__asan::AddressDescription::AddressDescription",
+    "__asan::ErrorGeneric::ErrorGeneric",
+    "__asan::ReportGenericError",
+    "strncpy",
+    "check",
+    "from_file",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#7 0x4c2223 in check /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:21:3",
+      "address": 4989475,
+      "function_name": "check",
+      "function_offset": 3,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
+      "source_file_line": 21
+    },
+    {
+      "line": "#8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12",
+      "address": 4990647,
+      "function_name": "from_file",
+      "function_offset": 12,
+      "source_file_name": "fuzz.c",
+      "source_file_path": "/home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c",
+      "source_file_line": 67
+    }
+  ],
+  "minimized_stack": [
+    "#7 0x4c2223 in check /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:21:3",
+    "#8 0x4c26b7 in from_file /home/runner/work/onefuzz/onefuzz/src/integration-tests/trivial-crash/fuzz.c:67:12"
+  ],
+  "minimized_stack_function_names": [
+    "check",
+    "from_file"
+  ]
+}

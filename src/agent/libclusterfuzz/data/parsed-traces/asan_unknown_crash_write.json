@@ -1,0 +1,233 @@
+{
+  "text": "==1==ERROR: AddressSanitizer: unknown-crash on address 0x000000123456 at pc 0x00000056d8b2 bp 0x7fffff869d10 sp 0x7fffff869d08\nWRITE of size 8 at 0x000000123456 thread T0\nSCARINESS: 32 (8-byte-write-unknown-crash)\n#0 0x56d8b1 in void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int, rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:0:7\n#1 0x56d8b1 in rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:215\n#2 0x57c3d7 in rawspeed::FujiDecompressor::fuji_decode_strip(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:729:7\n#3 0x57cda3 in rawspeed::FujiDecompressor::decompressThreaded(rawspeed::RawDecompressorThread const*) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:779:5\n#4 0x567893 in rawspeed::RawDecompressorThread::start_routine(void*) librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.h:67:22\n#5 0x567393 in rawspeed::AbstractParallelizedDecompressor::decompressOne(unsigned int) const librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.cpp:39:3\n#6 0x55318b in LLVMFuzzerTestOneInput librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp:47:7\n#7 0x5b65c0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:515:13\n#8 0x58d175 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6\n#9 0x598b5b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:703:9\n#10 0x58c818 in main /src/libfuzzer/FuzzerMain.cpp:20:10\n#11 0x7fb3bc0f282f in __libc_start_main /build/glibc-bfm8X4/glibc-2.23/csu/libc-start.c:291\n#12 0x453e78 in _start\nAddress 0x000000123456 is a wild pointer.\nSUMMARY: AddressSanitizer: unknown-crash (/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_librawspeed_2ff020846f4a5625cb7009ec90f5f5a6dff4f645/revisions/FujiDecompressorFuzzer+0x56d8b1)\nShadow bytes around the buggy address:\n=>0x00007fff8000:[00]00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n0x00007fff8010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n0x00007fff8020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n0x00007fff8030: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n0x00007fff8040: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n0x00007fff8050: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\nShadow byte legend (one shadow byte represents 8 application bytes):\nAddressable:           00\nPartially addressable: 01 02 03 04 05 06 07\nHeap left redzone:       fa\nFreed heap region:       fd\nStack left redzone:      f1\nStack mid redzone:       f2\nStack right redzone:     f3\nStack after return:      f5\nStack use after scope:   f8\nGlobal redzone:          f9\nGlobal init order:       f6\nPoisoned by user:        f7\nContainer overflow:      fc\nArray cookie:            ac\nIntra object redzone:    bb\nASan internal:           fe\nLeft alloca redzone:     ca\nRight alloca redzone:    cb\n==1==ABORTING",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: unknown-crash (/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_librawspeed_2ff020846f4a5625cb7009ec90f5f5a6dff4f645/revisions/FujiDecompressorFuzzer+0x56d8b1)",
+  "fault_type": "unknown-crash",
+  "call_stack": [
+    "#0 0x56d8b1 in void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int, rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:0:7",
+    "#1 0x56d8b1 in rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:215",
+    "#2 0x57c3d7 in rawspeed::FujiDecompressor::fuji_decode_strip(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:729:7",
+    "#3 0x57cda3 in rawspeed::FujiDecompressor::decompressThreaded(rawspeed::RawDecompressorThread const*) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:779:5",
+    "#4 0x567893 in rawspeed::RawDecompressorThread::start_routine(void*) librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.h:67:22",
+    "#5 0x567393 in rawspeed::AbstractParallelizedDecompressor::decompressOne(unsigned int) const librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.cpp:39:3",
+    "#6 0x55318b in LLVMFuzzerTestOneInput librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp:47:7",
+    "#7 0x5b65c0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:515:13",
+    "#8 0x58d175 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6",
+    "#9 0x598b5b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:703:9",
+    "#10 0x58c818 in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+    "#11 0x7fb3bc0f282f in __libc_start_main /build/glibc-bfm8X4/glibc-2.23/csu/libc-start.c:291",
+    "#12 0x453e78 in _start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x56d8b1 in void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int, rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:0:7",
+      "address": 5691569,
+      "function_name": "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int, rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&) const",
+      "function_offset": 7,
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 0
+    },
+    {
+      "line": "#1 0x56d8b1 in rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:215",
+      "address": 5691569,
+      "function_name": "rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const",
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 215
+    },
+    {
+      "line": "#2 0x57c3d7 in rawspeed::FujiDecompressor::fuji_decode_strip(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:729:7",
+      "address": 5751767,
+      "function_name": "rawspeed::FujiDecompressor::fuji_decode_strip(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&) const",
+      "function_offset": 7,
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 729
+    },
+    {
+      "line": "#3 0x57cda3 in rawspeed::FujiDecompressor::decompressThreaded(rawspeed::RawDecompressorThread const*) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:779:5",
+      "address": 5754275,
+      "function_name": "rawspeed::FujiDecompressor::decompressThreaded(rawspeed::RawDecompressorThread const*) const",
+      "function_offset": 5,
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 779
+    },
+    {
+      "line": "#4 0x567893 in rawspeed::RawDecompressorThread::start_routine(void*) librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.h:67:22",
+      "address": 5666963,
+      "function_name": "rawspeed::RawDecompressorThread::start_routine(void*)",
+      "function_offset": 22,
+      "source_file_name": "AbstractParallelizedDecompressor.h",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.h",
+      "source_file_line": 67
+    },
+    {
+      "line": "#5 0x567393 in rawspeed::AbstractParallelizedDecompressor::decompressOne(unsigned int) const librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.cpp:39:3",
+      "address": 5665683,
+      "function_name": "rawspeed::AbstractParallelizedDecompressor::decompressOne(unsigned int) const",
+      "function_offset": 3,
+      "source_file_name": "AbstractParallelizedDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.cpp",
+      "source_file_line": 39
+    },
+    {
+      "line": "#6 0x55318b in LLVMFuzzerTestOneInput librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp:47:7",
+      "address": 5583243,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 7,
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 47
+    },
+    {
+      "line": "#7 0x5b65c0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:515:13",
+      "address": 5989824,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 515
+    },
+    {
+      "line": "#8 0x58d175 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6",
+      "address": 5820789,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 280
+    },
+    {
+      "line": "#9 0x598b5b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:703:9",
+      "address": 5868379,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 703
+    },
+    {
+      "line": "#10 0x58c818 in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+      "address": 5818392,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#11 0x7fb3bc0f282f in __libc_start_main /build/glibc-bfm8X4/glibc-2.23/csu/libc-start.c:291",
+      "address": 140409930983471,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-bfm8X4/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
+    },
+    {
+      "line": "#12 0x453e78 in _start",
+      "address": 4537976,
+      "function_name": "_start"
+    }
+  ],
+  "full_stack_names": [
+    "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans",
+    "rawspeed::FujiDecompressor::copy_line_to_xtrans",
+    "rawspeed::FujiDecompressor::fuji_decode_strip",
+    "rawspeed::FujiDecompressor::decompressThreaded",
+    "rawspeed::RawDecompressorThread::start_routine",
+    "rawspeed::AbstractParallelizedDecompressor::decompressOne",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#0 0x56d8b1 in void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int, rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:0:7",
+      "address": 5691569,
+      "function_name": "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int, rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&) const",
+      "function_offset": 7,
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 0
+    },
+    {
+      "line": "#1 0x56d8b1 in rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:215",
+      "address": 5691569,
+      "function_name": "rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const",
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 215
+    },
+    {
+      "line": "#2 0x57c3d7 in rawspeed::FujiDecompressor::fuji_decode_strip(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:729:7",
+      "address": 5751767,
+      "function_name": "rawspeed::FujiDecompressor::fuji_decode_strip(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&) const",
+      "function_offset": 7,
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 729
+    },
+    {
+      "line": "#3 0x57cda3 in rawspeed::FujiDecompressor::decompressThreaded(rawspeed::RawDecompressorThread const*) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:779:5",
+      "address": 5754275,
+      "function_name": "rawspeed::FujiDecompressor::decompressThreaded(rawspeed::RawDecompressorThread const*) const",
+      "function_offset": 5,
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 779
+    },
+    {
+      "line": "#4 0x567893 in rawspeed::RawDecompressorThread::start_routine(void*) librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.h:67:22",
+      "address": 5666963,
+      "function_name": "rawspeed::RawDecompressorThread::start_routine(void*)",
+      "function_offset": 22,
+      "source_file_name": "AbstractParallelizedDecompressor.h",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.h",
+      "source_file_line": 67
+    },
+    {
+      "line": "#5 0x567393 in rawspeed::AbstractParallelizedDecompressor::decompressOne(unsigned int) const librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.cpp:39:3",
+      "address": 5665683,
+      "function_name": "rawspeed::AbstractParallelizedDecompressor::decompressOne(unsigned int) const",
+      "function_offset": 3,
+      "source_file_name": "AbstractParallelizedDecompressor.cpp",
+      "source_file_path": "librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.cpp",
+      "source_file_line": 39
+    },
+    {
+      "line": "#6 0x55318b in LLVMFuzzerTestOneInput librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp:47:7",
+      "address": 5583243,
+      "function_name": "FujiDecompressor.cpp",
+      "function_offset": 7,
+      "source_file_name": "FujiDecompressor.cpp",
+      "source_file_path": "librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp",
+      "source_file_line": 47
+    }
+  ],
+  "minimized_stack": [
+    "#0 0x56d8b1 in void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int, rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:0:7",
+    "#1 0x56d8b1 in rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:215",
+    "#2 0x57c3d7 in rawspeed::FujiDecompressor::fuji_decode_strip(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:729:7",
+    "#3 0x57cda3 in rawspeed::FujiDecompressor::decompressThreaded(rawspeed::RawDecompressorThread const*) const librawspeed/src/librawspeed/decompressors/FujiDecompressor.cpp:779:5",
+    "#4 0x567893 in rawspeed::RawDecompressorThread::start_routine(void*) librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.h:67:22",
+    "#5 0x567393 in rawspeed::AbstractParallelizedDecompressor::decompressOne(unsigned int) const librawspeed/src/librawspeed/decompressors/AbstractParallelizedDecompressor.cpp:39:3",
+    "#6 0x55318b in LLVMFuzzerTestOneInput librawspeed/fuzz/librawspeed/decompressors/FujiDecompressor.cpp:47:7"
+  ],
+  "minimized_stack_function_names": [
+    "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans",
+    "rawspeed::FujiDecompressor::copy_line_to_xtrans",
+    "rawspeed::FujiDecompressor::fuji_decode_strip",
+    "rawspeed::FujiDecompressor::decompressThreaded",
+    "rawspeed::RawDecompressorThread::start_routine",
+    "rawspeed::AbstractParallelizedDecompressor::decompressOne",
+    "FujiDecompressor.cpp"
+  ],
+  "scariness_score": 32,
+  "scariness_description": "8-byte-write-unknown-crash"
+}

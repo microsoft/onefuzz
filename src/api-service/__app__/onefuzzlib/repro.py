@@ -164,6 +164,12 @@ class Repro(BASE_REPRO, ORMMixin):
         if report is None:
             return Error(code=ErrorCode.VM_CREATE_FAILED, errors=["missing report"])
 
+        if report.input_blob is None:
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED,
+                errors=["unable to perform repro for crash reports without inputs"],
+            )
+
         files = {}
 
         if task.os == OS.windows:

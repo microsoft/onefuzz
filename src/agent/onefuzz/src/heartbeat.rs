@@ -35,7 +35,7 @@ where
     T: Clone + Sync + Send,
 {
     fn drop(&mut self) {
-        self.context.cancelled.notify();
+        self.context.cancelled.notify_one();
     }
 }
 

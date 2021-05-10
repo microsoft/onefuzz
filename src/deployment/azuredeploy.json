@@ -17,6 +17,15 @@
         "signedExpiry": {
             "type": "string"
         },
+        "app_func_issuer": {
+            "type": "string"
+        },
+        "app_func_audience": {
+            "type": "string"
+        },
+        "multi_tenant_domain": {
+            "type": "string"
+        },
         "diagnosticsLogsLevel": {
             "type": "string",
             "defaultValue": "Verbose",
@@ -203,6 +212,10 @@
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountNameFunc'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
                         },
                         {
+                            "name": "MULTI_TENANT_DOMAIN",
+                            "value": "[parameters('multi_tenant_domain')]"
+                        },
+                        {
                             "name": "AzureWebJobsDisableHomepage",
                             "value": "true"
                         },
@@ -262,11 +275,9 @@
                         "tokenStoreEnabled": true,
                         "clientId": "[parameters('clientId')]",
                         "clientSecret": "[parameters('clientSecret')]",
-                        "issuer": "[concat('https://sts.windows.net/', subscription().tenantId, '/')]",
+                        "issuer": "[parameters('app_func_issuer')]",
                         "defaultProvider": "AzureActiveDirectory",
-                        "allowedAudiences": [
-                            "[concat('https://', parameters('name'), '.azurewebsites.net')]"
-                        ],
+                        "allowedAudiences": ["[parameters('app_func_audience')]"],
                         "isAadAutoProvisioned": false
                     }
                 },

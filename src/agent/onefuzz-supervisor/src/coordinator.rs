@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
-use reqwest::{Client, Request, Response, StatusCode};
+use reqwest::{Client, RequestBuilder, Response, StatusCode};
+use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -24,6 +25,7 @@ pub enum NodeCommand {
     AddSshKey(SshKeyInfo),
     StopTask(StopTask),
     Stop {},
+    StopIfFree {},
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -191,13 +193,13 @@ impl Coordinator {
     /// If the request fails due to an expired access token, we will retry once
     /// with a fresh one.
     pub async fn poll_commands(&mut self) -> Result<Option<NodeCommand>> {
-        let response = self.send_with_auth_retry(RequestType::PollCommands).await?;
+        let response = self.send(RequestType::PollCommands).await?;
         let data = response.bytes().await?;
         let pending: PendingNodeCommand = serde_json::from_slice(&data)?;
 
         if let Some(envelope) = pending.envelope {
             let request = RequestType::ClaimCommand(envelope.message_id);
-            self.send_with_auth_retry(request).await?;
+            self.send(request).await?;
 
             Ok(Some(envelope.command))
         } else {
@@ -211,14 +213,14 @@ impl Coordinator {
             machine_id: self.registration.machine_id,
         };
         let request = RequestType::EmitEvent(&envelope);
-        self.send_with_auth_retry(request).await?;
+        self.send(request).await?;
 
         Ok(())
     }
 
     async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
         let request = RequestType::CanSchedule(work_set);
-        let response = self.send_with_auth_retry(request).await?;
+        let response = self.send(request).await?;
 
         let can_schedule: CanSchedule = response.json().await?;
 
@@ -228,12 +230,19 @@ impl Coordinator {
     // The lifetime is needed by an argument type. We can't make it anonymous,
     // as clippy suggests, because `'_` is not allowed in this binding site.
     #[allow(clippy::needless_lifetimes)]
-    async fn send_with_auth_retry<'a>(
-        &mut self,
-        request_type: RequestType<'a>,
-    ) -> Result<Response> {
-        let request = self.build_request(request_type.clone())?;
-        let mut response = self.client.execute(request).await?;
+    async fn send<'a>(&mut self, request_type: RequestType<'a>) -> Result<Response> {
+        let request = self.get_request_builder(request_type.clone());
+        let mut response = request
+            .send_retry(
+                |code| match code {
+                    StatusCode::UNAUTHORIZED => RetryCheck::Fail,
+                    _ => RetryCheck::Retry,
+                },
+                DEFAULT_RETRY_PERIOD,
+                MAX_RETRY_ATTEMPTS,
+            )
+            .await
+            .context("Coordinator.send")?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
             debug!("access token expired, renewing");
@@ -244,18 +253,24 @@ impl Coordinator {
             debug!("retrying request after refreshing access token");
 
             // And try one more time.
-            let request = self.build_request(request_type)?;
-            response = self.client.execute(request).await?;
+            let request = self.get_request_builder(request_type);
+            response = request
+                .send_retry_default()
+                .await
+                .context("Coordinator.send after refreshing access token")?;
         };
 
         // We've retried if we got a `401 Unauthorized`. If it happens again, we
         // really want to bail this time.
-        let response = response.error_for_status_with_body().await?;
+        let response = response
+            .error_for_status_with_body()
+            .await
+            .context("Coordinator.send status body")?;
 
         Ok(response)
     }
 
-    fn build_request(&self, request_type: RequestType<'_>) -> Result<Request> {
+    fn get_request_builder(&self, request_type: RequestType<'_>) -> RequestBuilder {
         match request_type {
             RequestType::PollCommands => self.poll_commands_request(),
             RequestType::ClaimCommand(message_id) => self.claim_command_request(message_id),
@@ -264,52 +279,49 @@ impl Coordinator {
         }
     }
 
-    fn poll_commands_request(&self) -> Result<Request> {
+    fn poll_commands_request(&self) -> RequestBuilder {
         let request = PollCommandsRequest {
             machine_id: self.registration.machine_id,
         };
 
         let url = self.registration.dynamic_config.commands_url.clone();
-        let request = self
+        let request_builder = self
             .client
             .get(url)
             .bearer_auth(self.token.secret().expose_ref())
-            .json(&request)
-            .build()?;
+            .json(&request);
 
-        Ok(request)
+        request_builder
     }
 
-    fn claim_command_request(&self, message_id: String) -> Result<Request> {
+    fn claim_command_request(&self, message_id: String) -> RequestBuilder {
         let request = ClaimNodeCommandRequest {
             machine_id: self.registration.machine_id,
             message_id,
         };
 
         let url = self.registration.dynamic_config.commands_url.clone();
-        let request = self
+        let request_builder = self
             .client
             .delete(url)
             .bearer_auth(self.token.secret().expose_ref())
-            .json(&request)
-            .build()?;
+            .json(&request);
 
-        Ok(request)
+        request_builder
     }
 
-    fn emit_event_request(&self, event: &NodeEventEnvelope) -> Result<Request> {
+    fn emit_event_request(&self, event: &NodeEventEnvelope) -> RequestBuilder {
         let url = self.registration.dynamic_config.events_url.clone();
-        let request = self
+        let request_builder = self
             .client
             .post(url)
             .bearer_auth(self.token.secret().expose_ref())
-            .json(event)
-            .build()?;
+            .json(event);
 
-        Ok(request)
+        request_builder
     }
 
-    fn can_schedule_request(&self, work_set: &WorkSet) -> Result<Request> {
+    fn can_schedule_request(&self, work_set: &WorkSet) -> RequestBuilder {
         // Temporary: assume one work unit per work set.
         //
         // In the future, we will probably want the same behavior, but we will
@@ -325,14 +337,13 @@ impl Coordinator {
 
         let mut url = self.registration.config.onefuzz_url.clone();
         url.set_path("/api/agents/can_schedule");
-        let request = self
+        let request_builder = self
             .client
             .post(url)
             .bearer_auth(self.token.secret().expose_ref())
-            .json(&can_schedule)
-            .build()?;
+            .json(&can_schedule);
 
-        Ok(request)
+        request_builder
     }
 }
 

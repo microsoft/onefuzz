@@ -204,7 +204,7 @@ class Builder:
     def parse_param(
         self, name: str, param: inspect.Parameter, help_doc: Optional[str] = None
     ) -> Tuple[List[str], Dict[str, Any]]:
-        """ Parse a single parameter """
+        """Parse a single parameter"""
 
         default = param.default
         annotation = param.annotation
@@ -416,7 +416,7 @@ class Builder:
     def parse_instance(
         self, inst: Callable, subparser: argparse._SubParsersAction
     ) -> None:
-        """ Expose every non-private callable in a class instance """
+        """Expose every non-private callable in a class instance"""
         for (name, func) in self.get_children(inst, is_callable=True):
             sub = subparser.add_parser(name, help=self.get_help(func))
             add_base(sub)
@@ -505,6 +505,14 @@ def output(result: Any, output_format: str, expression: Optional[Any]) -> None:
             print(result, flush=True)
 
 
+def log_exception(args: argparse.Namespace, err: Exception) -> None:
+    if args.verbose > 0:
+        entry = traceback.format_exc()
+        for x in entry.split("\n"):
+            LOGGER.error("traceback: %s", x)
+    LOGGER.error("command failed: %s", " ".join([str(x) for x in err.args]))
+
+
 def execute_api(api: Any, api_types: List[Any], version: str) -> int:
     builder = Builder(api_types)
     builder.add_version(version)
@@ -545,11 +553,7 @@ def execute_api(api: Any, api_types: List[Any], version: str) -> int:
     try:
         result = call_func(args.func, args)
     except Exception as err:
-        if args.verbose > 0:
-            entry = traceback.format_exc()
-            for x in entry.split("\n"):
-                LOGGER.error("traceback: %s", x)
-        LOGGER.error("command failed: %s", " ".join([str(x) for x in err.args]))
+        log_exception(args, err)
         return 1
 
     output(result, args.format, expression)

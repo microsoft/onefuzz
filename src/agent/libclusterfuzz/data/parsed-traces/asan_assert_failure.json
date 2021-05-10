@@ -1,0 +1,733 @@
+{
+  "text": "[2018-05-17 07:01:35.491][1][info][main] source/server/server.cc:203]   transport_sockets.upstream: envoy.transport_sockets.capture,raw_buffer,ssl\n[2018-05-17 07:01:35.506][1][critical][assert] source/common/network/address_impl.cc:87] assert failure: ss_len == 0 || ss_len >= offsetof(struct sockaddr_un, sun_path) + 1\nAddressSanitizer:DEADLYSIGNAL\n=================================================================\n==1==ERROR: AddressSanitizer: ABRT on unknown address 0x000000000001 (pc 0x7f7fc7ff6428 bp 0x7ffe6ecd35f0 sp 0x7ffe6ecd32a8 T0)\nSCARINESS: 10 (signal)\n#0 0x7f7fc7ff6427 in gsignal /build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54\n#1 0x7f7fc7ff8029 in abort /build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c:89\n#2 0x1fefa77 in Envoy::Network::Address::addressFromSockAddr(sockaddr_storage const&, unsigned int, bool) /proc/self/cwd/source/common/network/address_impl.cc:87:5\n#3 0x1fefe18 in Envoy::Network::Address::addressFromFd(int) /proc/self/cwd/source/common/network/address_impl.cc:109:10\n#4 0x11fcb3c in Envoy::Network::AddrFailyAwareSocketOptionImpl::setIpSocketOption(Envoy::Network::Socket&, Envoy::Network::Socket::SocketState, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&) /proc/self/cwd/source/common/network/addr_family_aware_socket_option_impl.cc:31:17\n#5 0x6f1410 in Envoy::Network::Socket::applyOptions(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&, Envoy::Network::Socket&, Envoy::Network::Socket::SocketState) /proc/self/cwd/bazel-out/k8-fastbuild/bin/include/envoy/network/_virtual_includes/listen_socket_interface/envoy/network/listen_socket.h:81:20\n#6 0x74b155 in Envoy::Network::ClientConnectionImpl::ClientConnectionImpl(Envoy::Event::Dispatcher&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/network/connection_impl.cc:538:8\n#7 0x736312 in make_unique<Envoy::Network::ClientConnectionImpl, Envoy::Event::DispatcherImpl &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >, const std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<const Envoy::Network::Socket::Option>, std::__1::allocator<std::__1::shared_ptr<const Envoy::Network::Socket::Option> > > > &> /usr/local/include/c++/v1/memory:3114:32\n#8 0x736312 in Envoy::Event::DispatcherImpl::createClientConnection(std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/event/dispatcher_impl.cc:89\n#9 0x1139ad9 in Envoy::Upstream::HostImpl::createConnection(Envoy::Event::Dispatcher&, Envoy::Upstream::ClusterInfo const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:134:56\n#10 0x113a2a7 in Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:112:11\n#11 0x113a5af in non-virtual thunk to Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:0\n#12 0x11922df in Envoy::Upstream::TcpHealthCheckerImpl::TcpActiveHealthCheckSession::onInterval() /proc/self/cwd/source/common/upstream/health_checker_impl.cc:304:22\n#13 0x12e3a38 in Envoy::Upstream::HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase() /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:250:3\n#14 0x12e0c79 in Envoy::Upstream::HealthCheckerImplBase::addHosts(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:103:29\n#15 0x12e0fbf in Envoy::Upstream::HealthCheckerImplBase::onClusterMemberUpdate(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:109:3\n#16 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12\n#17 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7\n#18 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12\n#19 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7\n#20 0x113bc59 in Envoy::Upstream::HostSetImpl::updateHosts(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<std::__1::vector<unsigned int, std::__1::allocator<unsigned int> > const>, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:193:3\n#21 0x114de37 in Envoy::Upstream::StaticClusterImpl::startPreInit() /proc/self/cwd/source/common/upstream/upstream_impl.cc:652:18\n#22 0x78153f in Envoy::Upstream::ClusterManagerInitHelper::addCluster(Envoy::Upstream::Cluster&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:48:13\n#23 0x784458 in Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:287:18\n#24 0x793919 in Envoy::Upstream::ProdClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:941:32\n#25 0x1982c9f in Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&) /proc/self/cwd/source/server/configuration_impl.cc:49:46\n#26 0x6c218f in Envoy::Server::InstanceImpl::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) /proc/self/cwd/source/server/server.cc:272:16\n#27 0x6be506 in Envoy::Server::InstanceImpl::InstanceImpl(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::TestHooks&, Envoy::Server::HotRestart&, Envoy::Stats::StoreRoot&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&, std::__1::unique_ptr<Envoy::Runtime::RandomGenerator, std::__1::default_delete<Envoy::Runtime::RandomGenerator> >&&, Envoy::ThreadLocal::Instance&) /proc/self/cwd/source/server/server.cc:73:5\n#28 0x5fa709 in make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &> /usr/local/include/c++/v1/memory:3114:32\n#29 0x5fa709 in Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) /proc/self/cwd/test/server/server_fuzz_test.cc:36\n#30 0x5f9e5d in LLVMFuzzerTestOneInput /proc/self/cwd/test/server/server_fuzz_test.cc:18:1\n#31 0x258ef6c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:524:13\n#32 0x256deba in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6\n#33 0x2579268 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:705:9\n#34 0x256d55c in main /src/libfuzzer/FuzzerMain.cpp:20:10\n#35 0x7f7fc7fe182f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291\n#36 0x4e9428 in _start\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35427)\n==1==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ABRT (/lib/x86_64-linux-gnu/libc.so.6+0x35427)",
+  "fault_type": "ABRT",
+  "call_stack": [
+    "#0 0x7f7fc7ff6427 in gsignal /build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+    "#1 0x7f7fc7ff8029 in abort /build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c:89",
+    "#2 0x1fefa77 in Envoy::Network::Address::addressFromSockAddr(sockaddr_storage const&, unsigned int, bool) /proc/self/cwd/source/common/network/address_impl.cc:87:5",
+    "#3 0x1fefe18 in Envoy::Network::Address::addressFromFd(int) /proc/self/cwd/source/common/network/address_impl.cc:109:10",
+    "#4 0x11fcb3c in Envoy::Network::AddrFailyAwareSocketOptionImpl::setIpSocketOption(Envoy::Network::Socket&, Envoy::Network::Socket::SocketState, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&) /proc/self/cwd/source/common/network/addr_family_aware_socket_option_impl.cc:31:17",
+    "#5 0x6f1410 in Envoy::Network::Socket::applyOptions(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&, Envoy::Network::Socket&, Envoy::Network::Socket::SocketState) /proc/self/cwd/bazel-out/k8-fastbuild/bin/include/envoy/network/_virtual_includes/listen_socket_interface/envoy/network/listen_socket.h:81:20",
+    "#6 0x74b155 in Envoy::Network::ClientConnectionImpl::ClientConnectionImpl(Envoy::Event::Dispatcher&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/network/connection_impl.cc:538:8",
+    "#7 0x736312 in make_unique<Envoy::Network::ClientConnectionImpl, Envoy::Event::DispatcherImpl &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >, const std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<const Envoy::Network::Socket::Option>, std::__1::allocator<std::__1::shared_ptr<const Envoy::Network::Socket::Option> > > > &> /usr/local/include/c++/v1/memory:3114:32",
+    "#8 0x736312 in Envoy::Event::DispatcherImpl::createClientConnection(std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/event/dispatcher_impl.cc:89",
+    "#9 0x1139ad9 in Envoy::Upstream::HostImpl::createConnection(Envoy::Event::Dispatcher&, Envoy::Upstream::ClusterInfo const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:134:56",
+    "#10 0x113a2a7 in Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:112:11",
+    "#11 0x113a5af in non-virtual thunk to Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:0",
+    "#12 0x11922df in Envoy::Upstream::TcpHealthCheckerImpl::TcpActiveHealthCheckSession::onInterval() /proc/self/cwd/source/common/upstream/health_checker_impl.cc:304:22",
+    "#13 0x12e3a38 in Envoy::Upstream::HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase() /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:250:3",
+    "#14 0x12e0c79 in Envoy::Upstream::HealthCheckerImplBase::addHosts(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:103:29",
+    "#15 0x12e0fbf in Envoy::Upstream::HealthCheckerImplBase::onClusterMemberUpdate(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:109:3",
+    "#16 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12",
+    "#17 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7",
+    "#18 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12",
+    "#19 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7",
+    "#20 0x113bc59 in Envoy::Upstream::HostSetImpl::updateHosts(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<std::__1::vector<unsigned int, std::__1::allocator<unsigned int> > const>, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:193:3",
+    "#21 0x114de37 in Envoy::Upstream::StaticClusterImpl::startPreInit() /proc/self/cwd/source/common/upstream/upstream_impl.cc:652:18",
+    "#22 0x78153f in Envoy::Upstream::ClusterManagerInitHelper::addCluster(Envoy::Upstream::Cluster&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:48:13",
+    "#23 0x784458 in Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:287:18",
+    "#24 0x793919 in Envoy::Upstream::ProdClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:941:32",
+    "#25 0x1982c9f in Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&) /proc/self/cwd/source/server/configuration_impl.cc:49:46",
+    "#26 0x6c218f in Envoy::Server::InstanceImpl::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) /proc/self/cwd/source/server/server.cc:272:16",
+    "#27 0x6be506 in Envoy::Server::InstanceImpl::InstanceImpl(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::TestHooks&, Envoy::Server::HotRestart&, Envoy::Stats::StoreRoot&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&, std::__1::unique_ptr<Envoy::Runtime::RandomGenerator, std::__1::default_delete<Envoy::Runtime::RandomGenerator> >&&, Envoy::ThreadLocal::Instance&) /proc/self/cwd/source/server/server.cc:73:5",
+    "#28 0x5fa709 in make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &> /usr/local/include/c++/v1/memory:3114:32",
+    "#29 0x5fa709 in Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) /proc/self/cwd/test/server/server_fuzz_test.cc:36",
+    "#30 0x5f9e5d in LLVMFuzzerTestOneInput /proc/self/cwd/test/server/server_fuzz_test.cc:18:1",
+    "#31 0x258ef6c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:524:13",
+    "#32 0x256deba in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6",
+    "#33 0x2579268 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:705:9",
+    "#34 0x256d55c in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+    "#35 0x7f7fc7fe182f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291",
+    "#36 0x4e9428 in _start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f7fc7ff6427 in gsignal /build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+      "address": 140186792977447,
+      "function_name": "gsignal",
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
+    },
+    {
+      "line": "#1 0x7f7fc7ff8029 in abort /build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c:89",
+      "address": 140186792984617,
+      "function_name": "abort",
+      "source_file_name": "abort.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/stdlib/abort.c",
+      "source_file_line": 89
+    },
+    {
+      "line": "#2 0x1fefa77 in Envoy::Network::Address::addressFromSockAddr(sockaddr_storage const&, unsigned int, bool) /proc/self/cwd/source/common/network/address_impl.cc:87:5",
+      "address": 33487479,
+      "function_name": "Envoy::Network::Address::addressFromSockAddr(sockaddr_storage const&, unsigned int, bool)",
+      "function_offset": 5,
+      "source_file_name": "address_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/network/address_impl.cc",
+      "source_file_line": 87
+    },
+    {
+      "line": "#3 0x1fefe18 in Envoy::Network::Address::addressFromFd(int) /proc/self/cwd/source/common/network/address_impl.cc:109:10",
+      "address": 33488408,
+      "function_name": "Envoy::Network::Address::addressFromFd(int)",
+      "function_offset": 10,
+      "source_file_name": "address_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/network/address_impl.cc",
+      "source_file_line": 109
+    },
+    {
+      "line": "#4 0x11fcb3c in Envoy::Network::AddrFailyAwareSocketOptionImpl::setIpSocketOption(Envoy::Network::Socket&, Envoy::Network::Socket::SocketState, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&) /proc/self/cwd/source/common/network/addr_family_aware_socket_option_impl.cc:31:17",
+      "address": 18860860,
+      "function_name": "Envoy::Network::AddrFailyAwareSocketOptionImpl::setIpSocketOption(Envoy::Network::Socket&, Envoy::Network::Socket::SocketState, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&)",
+      "function_offset": 17,
+      "source_file_name": "addr_family_aware_socket_option_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/network/addr_family_aware_socket_option_impl.cc",
+      "source_file_line": 31
+    },
+    {
+      "line": "#5 0x6f1410 in Envoy::Network::Socket::applyOptions(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&, Envoy::Network::Socket&, Envoy::Network::Socket::SocketState) /proc/self/cwd/bazel-out/k8-fastbuild/bin/include/envoy/network/_virtual_includes/listen_socket_interface/envoy/network/listen_socket.h:81:20",
+      "address": 7279632,
+      "function_name": "Envoy::Network::Socket::applyOptions(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&, Envoy::Network::Socket&, Envoy::Network::Socket::SocketState)",
+      "function_offset": 20,
+      "source_file_name": "listen_socket.h",
+      "source_file_path": "/proc/self/cwd/bazel-out/k8-fastbuild/bin/include/envoy/network/_virtual_includes/listen_socket_interface/envoy/network/listen_socket.h",
+      "source_file_line": 81
+    },
+    {
+      "line": "#6 0x74b155 in Envoy::Network::ClientConnectionImpl::ClientConnectionImpl(Envoy::Event::Dispatcher&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/network/connection_impl.cc:538:8",
+      "address": 7647573,
+      "function_name": "Envoy::Network::ClientConnectionImpl::ClientConnectionImpl(Envoy::Event::Dispatcher&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&)",
+      "function_offset": 8,
+      "source_file_name": "connection_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/network/connection_impl.cc",
+      "source_file_line": 538
+    },
+    {
+      "line": "#7 0x736312 in make_unique<Envoy::Network::ClientConnectionImpl, Envoy::Event::DispatcherImpl &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >, const std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<const Envoy::Network::Socket::Option>, std::__1::allocator<std::__1::shared_ptr<const Envoy::Network::Socket::Option> > > > &> /usr/local/include/c++/v1/memory:3114:32",
+      "address": 7562002,
+      "function_name": "make_unique<Envoy::Network::ClientConnectionImpl, Envoy::Event::DispatcherImpl &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >, const std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<const Envoy::Network::Socket::Option>, std::__1::allocator<std::__1::shared_ptr<const Envoy::Network::Socket::Option> > > > &>",
+      "function_offset": 32,
+      "source_file_name": "memory",
+      "source_file_path": "/usr/local/include/c++/v1/memory",
+      "source_file_line": 3114
+    },
+    {
+      "line": "#8 0x736312 in Envoy::Event::DispatcherImpl::createClientConnection(std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/event/dispatcher_impl.cc:89",
+      "address": 7562002,
+      "function_name": "Envoy::Event::DispatcherImpl::createClientConnection(std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&)",
+      "source_file_name": "dispatcher_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/event/dispatcher_impl.cc",
+      "source_file_line": 89
+    },
+    {
+      "line": "#9 0x1139ad9 in Envoy::Upstream::HostImpl::createConnection(Envoy::Event::Dispatcher&, Envoy::Upstream::ClusterInfo const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:134:56",
+      "address": 18062041,
+      "function_name": "Envoy::Upstream::HostImpl::createConnection(Envoy::Event::Dispatcher&, Envoy::Upstream::ClusterInfo const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&)",
+      "function_offset": 56,
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 134
+    },
+    {
+      "line": "#10 0x113a2a7 in Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:112:11",
+      "address": 18064039,
+      "function_name": "Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const",
+      "function_offset": 11,
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 112
+    },
+    {
+      "line": "#11 0x113a5af in non-virtual thunk to Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:0",
+      "address": 18064815,
+      "function_name": "non-virtual thunk to Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const",
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 0
+    },
+    {
+      "line": "#12 0x11922df in Envoy::Upstream::TcpHealthCheckerImpl::TcpActiveHealthCheckSession::onInterval() /proc/self/cwd/source/common/upstream/health_checker_impl.cc:304:22",
+      "address": 18424543,
+      "function_name": "Envoy::Upstream::TcpHealthCheckerImpl::TcpActiveHealthCheckSession::onInterval()",
+      "function_offset": 22,
+      "source_file_name": "health_checker_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/health_checker_impl.cc",
+      "source_file_line": 304
+    },
+    {
+      "line": "#13 0x12e3a38 in Envoy::Upstream::HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase() /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:250:3",
+      "address": 19806776,
+      "function_name": "Envoy::Upstream::HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase()",
+      "function_offset": 3,
+      "source_file_name": "health_checker_base_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/health_checker_base_impl.cc",
+      "source_file_line": 250
+    },
+    {
+      "line": "#14 0x12e0c79 in Envoy::Upstream::HealthCheckerImplBase::addHosts(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:103:29",
+      "address": 19795065,
+      "function_name": "Envoy::Upstream::HealthCheckerImplBase::addHosts(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 29,
+      "source_file_name": "health_checker_base_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/health_checker_base_impl.cc",
+      "source_file_line": 103
+    },
+    {
+      "line": "#15 0x12e0fbf in Envoy::Upstream::HealthCheckerImplBase::onClusterMemberUpdate(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:109:3",
+      "address": 19795903,
+      "function_name": "Envoy::Upstream::HealthCheckerImplBase::onClusterMemberUpdate(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 3,
+      "source_file_name": "health_checker_base_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/health_checker_base_impl.cc",
+      "source_file_line": 109
+    },
+    {
+      "line": "#16 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12",
+      "address": 8015282,
+      "function_name": "std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const",
+      "function_offset": 12,
+      "source_file_name": "functional",
+      "source_file_path": "/usr/local/include/c++/v1/functional",
+      "source_file_line": 1913
+    },
+    {
+      "line": "#17 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7",
+      "address": 8014882,
+      "function_name": "Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 7,
+      "source_file_name": "callback_impl.h",
+      "source_file_path": "/proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h",
+      "source_file_line": 40
+    },
+    {
+      "line": "#18 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12",
+      "address": 8015282,
+      "function_name": "std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const",
+      "function_offset": 12,
+      "source_file_name": "functional",
+      "source_file_path": "/usr/local/include/c++/v1/functional",
+      "source_file_line": 1913
+    },
+    {
+      "line": "#19 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7",
+      "address": 8014882,
+      "function_name": "Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 7,
+      "source_file_name": "callback_impl.h",
+      "source_file_path": "/proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h",
+      "source_file_line": 40
+    },
+    {
+      "line": "#20 0x113bc59 in Envoy::Upstream::HostSetImpl::updateHosts(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<std::__1::vector<unsigned int, std::__1::allocator<unsigned int> > const>, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:193:3",
+      "address": 18070617,
+      "function_name": "Envoy::Upstream::HostSetImpl::updateHosts(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<std::__1::vector<unsigned int, std::__1::allocator<unsigned int> > const>, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 3,
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 193
+    },
+    {
+      "line": "#21 0x114de37 in Envoy::Upstream::StaticClusterImpl::startPreInit() /proc/self/cwd/source/common/upstream/upstream_impl.cc:652:18",
+      "address": 18144823,
+      "function_name": "Envoy::Upstream::StaticClusterImpl::startPreInit()",
+      "function_offset": 18,
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 652
+    },
+    {
+      "line": "#22 0x78153f in Envoy::Upstream::ClusterManagerInitHelper::addCluster(Envoy::Upstream::Cluster&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:48:13",
+      "address": 7869759,
+      "function_name": "Envoy::Upstream::ClusterManagerInitHelper::addCluster(Envoy::Upstream::Cluster&)",
+      "function_offset": 13,
+      "source_file_name": "cluster_manager_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/cluster_manager_impl.cc",
+      "source_file_line": 48
+    },
+    {
+      "line": "#23 0x784458 in Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:287:18",
+      "address": 7881816,
+      "function_name": "Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&)",
+      "function_offset": 18,
+      "source_file_name": "cluster_manager_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/cluster_manager_impl.cc",
+      "source_file_line": 287
+    },
+    {
+      "line": "#24 0x793919 in Envoy::Upstream::ProdClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:941:32",
+      "address": 7944473,
+      "function_name": "Envoy::Upstream::ProdClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&)",
+      "function_offset": 32,
+      "source_file_name": "cluster_manager_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/cluster_manager_impl.cc",
+      "source_file_line": 941
+    },
+    {
+      "line": "#25 0x1982c9f in Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&) /proc/self/cwd/source/server/configuration_impl.cc:49:46",
+      "address": 26750111,
+      "function_name": "Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&)",
+      "function_offset": 46,
+      "source_file_name": "configuration_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/server/configuration_impl.cc",
+      "source_file_line": 49
+    },
+    {
+      "line": "#26 0x6c218f in Envoy::Server::InstanceImpl::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) /proc/self/cwd/source/server/server.cc:272:16",
+      "address": 7086479,
+      "function_name": "Envoy::Server::InstanceImpl::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&)",
+      "function_offset": 16,
+      "source_file_name": "server.cc",
+      "source_file_path": "/proc/self/cwd/source/server/server.cc",
+      "source_file_line": 272
+    },
+    {
+      "line": "#27 0x6be506 in Envoy::Server::InstanceImpl::InstanceImpl(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::TestHooks&, Envoy::Server::HotRestart&, Envoy::Stats::StoreRoot&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&, std::__1::unique_ptr<Envoy::Runtime::RandomGenerator, std::__1::default_delete<Envoy::Runtime::RandomGenerator> >&&, Envoy::ThreadLocal::Instance&) /proc/self/cwd/source/server/server.cc:73:5",
+      "address": 7070982,
+      "function_name": "Envoy::Server::InstanceImpl::InstanceImpl(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::TestHooks&, Envoy::Server::HotRestart&, Envoy::Stats::StoreRoot&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&, std::__1::unique_ptr<Envoy::Runtime::RandomGenerator, std::__1::default_delete<Envoy::Runtime::RandomGenerator> >&&, Envoy::ThreadLocal::Instance&)",
+      "function_offset": 5,
+      "source_file_name": "server.cc",
+      "source_file_path": "/proc/self/cwd/source/server/server.cc",
+      "source_file_line": 73
+    },
+    {
+      "line": "#28 0x5fa709 in make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &> /usr/local/include/c++/v1/memory:3114:32",
+      "address": 6268681,
+      "function_name": "make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &>",
+      "function_offset": 32,
+      "source_file_name": "memory",
+      "source_file_path": "/usr/local/include/c++/v1/memory",
+      "source_file_line": 3114
+    },
+    {
+      "line": "#29 0x5fa709 in Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) /proc/self/cwd/test/server/server_fuzz_test.cc:36",
+      "address": 6268681,
+      "function_name": "Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&)",
+      "source_file_name": "server_fuzz_test.cc",
+      "source_file_path": "/proc/self/cwd/test/server/server_fuzz_test.cc",
+      "source_file_line": 36
+    },
+    {
+      "line": "#30 0x5f9e5d in LLVMFuzzerTestOneInput /proc/self/cwd/test/server/server_fuzz_test.cc:18:1",
+      "address": 6266461,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 1,
+      "source_file_name": "server_fuzz_test.cc",
+      "source_file_path": "/proc/self/cwd/test/server/server_fuzz_test.cc",
+      "source_file_line": 18
+    },
+    {
+      "line": "#31 0x258ef6c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:524:13",
+      "address": 39382892,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerLoop.cpp",
+      "source_file_line": 524
+    },
+    {
+      "line": "#32 0x256deba in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6",
+      "address": 39247546,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 280
+    },
+    {
+      "line": "#33 0x2579268 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:705:9",
+      "address": 39293544,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerDriver.cpp",
+      "source_file_line": 705
+    },
+    {
+      "line": "#34 0x256d55c in main /src/libfuzzer/FuzzerMain.cpp:20:10",
+      "address": 39245148,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/libfuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#35 0x7f7fc7fe182f in __libc_start_main /build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c:291",
+      "address": 140186792892463,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-Cl5G7W/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
+    },
+    {
+      "line": "#36 0x4e9428 in _start",
+      "address": 5149736,
+      "function_name": "_start"
+    }
+  ],
+  "full_stack_names": [
+    "gsignal",
+    "abort",
+    "Envoy::Network::Address::addressFromSockAddr",
+    "Envoy::Network::Address::addressFromFd",
+    "Envoy::Network::AddrFailyAwareSocketOptionImpl::setIpSocketOption",
+    "Envoy::Network::Socket::applyOptions",
+    "Envoy::Network::ClientConnectionImpl::ClientConnectionImpl",
+    "make_unique<Envoy::Network::ClientConnectionImpl, Envoy::Event::DispatcherImpl &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >, const std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<const Envoy::Network::Socket::Option>, std::__1::allocator<std::__1::shared_ptr<const Envoy::Network::Socket::Option> > > > &>",
+    "Envoy::Event::DispatcherImpl::createClientConnection",
+    "Envoy::Upstream::HostImpl::createConnection",
+    "Envoy::Upstream::HostImpl::createHealthCheckConnection",
+    "non-virtual thunk to Envoy::Upstream::HostImpl::createHealthCheckConnection",
+    "Envoy::Upstream::TcpHealthCheckerImpl::TcpActiveHealthCheckSession::onInterval",
+    "Envoy::Upstream::HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase",
+    "Envoy::Upstream::HealthCheckerImplBase::addHosts",
+    "Envoy::Upstream::HealthCheckerImplBase::onClusterMemberUpdate",
+    "std::__1::function<void ",
+    "Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks",
+    "std::__1::function<void ",
+    "Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks",
+    "Envoy::Upstream::HostSetImpl::updateHosts",
+    "Envoy::Upstream::StaticClusterImpl::startPreInit",
+    "Envoy::Upstream::ClusterManagerInitHelper::addCluster",
+    "Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl",
+    "Envoy::Upstream::ProdClusterManagerFactory::clusterManagerFromProto",
+    "Envoy::Server::Configuration::MainImpl::initialize",
+    "Envoy::Server::InstanceImpl::initialize",
+    "Envoy::Server::InstanceImpl::InstanceImpl",
+    "make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &>",
+    "Envoy::Server::TestOneProtoInput",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#2 0x1fefa77 in Envoy::Network::Address::addressFromSockAddr(sockaddr_storage const&, unsigned int, bool) /proc/self/cwd/source/common/network/address_impl.cc:87:5",
+      "address": 33487479,
+      "function_name": "Envoy::Network::Address::addressFromSockAddr(sockaddr_storage const&, unsigned int, bool)",
+      "function_offset": 5,
+      "source_file_name": "address_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/network/address_impl.cc",
+      "source_file_line": 87
+    },
+    {
+      "line": "#3 0x1fefe18 in Envoy::Network::Address::addressFromFd(int) /proc/self/cwd/source/common/network/address_impl.cc:109:10",
+      "address": 33488408,
+      "function_name": "Envoy::Network::Address::addressFromFd(int)",
+      "function_offset": 10,
+      "source_file_name": "address_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/network/address_impl.cc",
+      "source_file_line": 109
+    },
+    {
+      "line": "#4 0x11fcb3c in Envoy::Network::AddrFailyAwareSocketOptionImpl::setIpSocketOption(Envoy::Network::Socket&, Envoy::Network::Socket::SocketState, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&) /proc/self/cwd/source/common/network/addr_family_aware_socket_option_impl.cc:31:17",
+      "address": 18860860,
+      "function_name": "Envoy::Network::AddrFailyAwareSocketOptionImpl::setIpSocketOption(Envoy::Network::Socket&, Envoy::Network::Socket::SocketState, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&)",
+      "function_offset": 17,
+      "source_file_name": "addr_family_aware_socket_option_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/network/addr_family_aware_socket_option_impl.cc",
+      "source_file_line": 31
+    },
+    {
+      "line": "#5 0x6f1410 in Envoy::Network::Socket::applyOptions(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&, Envoy::Network::Socket&, Envoy::Network::Socket::SocketState) /proc/self/cwd/bazel-out/k8-fastbuild/bin/include/envoy/network/_virtual_includes/listen_socket_interface/envoy/network/listen_socket.h:81:20",
+      "address": 7279632,
+      "function_name": "Envoy::Network::Socket::applyOptions(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&, Envoy::Network::Socket&, Envoy::Network::Socket::SocketState)",
+      "function_offset": 20,
+      "source_file_name": "listen_socket.h",
+      "source_file_path": "/proc/self/cwd/bazel-out/k8-fastbuild/bin/include/envoy/network/_virtual_includes/listen_socket_interface/envoy/network/listen_socket.h",
+      "source_file_line": 81
+    },
+    {
+      "line": "#6 0x74b155 in Envoy::Network::ClientConnectionImpl::ClientConnectionImpl(Envoy::Event::Dispatcher&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/network/connection_impl.cc:538:8",
+      "address": 7647573,
+      "function_name": "Envoy::Network::ClientConnectionImpl::ClientConnectionImpl(Envoy::Event::Dispatcher&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&)",
+      "function_offset": 8,
+      "source_file_name": "connection_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/network/connection_impl.cc",
+      "source_file_line": 538
+    },
+    {
+      "line": "#7 0x736312 in make_unique<Envoy::Network::ClientConnectionImpl, Envoy::Event::DispatcherImpl &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >, const std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<const Envoy::Network::Socket::Option>, std::__1::allocator<std::__1::shared_ptr<const Envoy::Network::Socket::Option> > > > &> /usr/local/include/c++/v1/memory:3114:32",
+      "address": 7562002,
+      "function_name": "make_unique<Envoy::Network::ClientConnectionImpl, Envoy::Event::DispatcherImpl &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >, const std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<const Envoy::Network::Socket::Option>, std::__1::allocator<std::__1::shared_ptr<const Envoy::Network::Socket::Option> > > > &>",
+      "function_offset": 32,
+      "source_file_name": "memory",
+      "source_file_path": "/usr/local/include/c++/v1/memory",
+      "source_file_line": 3114
+    },
+    {
+      "line": "#8 0x736312 in Envoy::Event::DispatcherImpl::createClientConnection(std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/event/dispatcher_impl.cc:89",
+      "address": 7562002,
+      "function_name": "Envoy::Event::DispatcherImpl::createClientConnection(std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&)",
+      "source_file_name": "dispatcher_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/event/dispatcher_impl.cc",
+      "source_file_line": 89
+    },
+    {
+      "line": "#9 0x1139ad9 in Envoy::Upstream::HostImpl::createConnection(Envoy::Event::Dispatcher&, Envoy::Upstream::ClusterInfo const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:134:56",
+      "address": 18062041,
+      "function_name": "Envoy::Upstream::HostImpl::createConnection(Envoy::Event::Dispatcher&, Envoy::Upstream::ClusterInfo const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&)",
+      "function_offset": 56,
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 134
+    },
+    {
+      "line": "#10 0x113a2a7 in Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:112:11",
+      "address": 18064039,
+      "function_name": "Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const",
+      "function_offset": 11,
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 112
+    },
+    {
+      "line": "#11 0x113a5af in non-virtual thunk to Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:0",
+      "address": 18064815,
+      "function_name": "non-virtual thunk to Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const",
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 0
+    },
+    {
+      "line": "#12 0x11922df in Envoy::Upstream::TcpHealthCheckerImpl::TcpActiveHealthCheckSession::onInterval() /proc/self/cwd/source/common/upstream/health_checker_impl.cc:304:22",
+      "address": 18424543,
+      "function_name": "Envoy::Upstream::TcpHealthCheckerImpl::TcpActiveHealthCheckSession::onInterval()",
+      "function_offset": 22,
+      "source_file_name": "health_checker_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/health_checker_impl.cc",
+      "source_file_line": 304
+    },
+    {
+      "line": "#13 0x12e3a38 in Envoy::Upstream::HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase() /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:250:3",
+      "address": 19806776,
+      "function_name": "Envoy::Upstream::HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase()",
+      "function_offset": 3,
+      "source_file_name": "health_checker_base_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/health_checker_base_impl.cc",
+      "source_file_line": 250
+    },
+    {
+      "line": "#14 0x12e0c79 in Envoy::Upstream::HealthCheckerImplBase::addHosts(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:103:29",
+      "address": 19795065,
+      "function_name": "Envoy::Upstream::HealthCheckerImplBase::addHosts(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 29,
+      "source_file_name": "health_checker_base_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/health_checker_base_impl.cc",
+      "source_file_line": 103
+    },
+    {
+      "line": "#15 0x12e0fbf in Envoy::Upstream::HealthCheckerImplBase::onClusterMemberUpdate(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:109:3",
+      "address": 19795903,
+      "function_name": "Envoy::Upstream::HealthCheckerImplBase::onClusterMemberUpdate(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 3,
+      "source_file_name": "health_checker_base_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/health_checker_base_impl.cc",
+      "source_file_line": 109
+    },
+    {
+      "line": "#16 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12",
+      "address": 8015282,
+      "function_name": "std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const",
+      "function_offset": 12,
+      "source_file_name": "functional",
+      "source_file_path": "/usr/local/include/c++/v1/functional",
+      "source_file_line": 1913
+    },
+    {
+      "line": "#17 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7",
+      "address": 8014882,
+      "function_name": "Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 7,
+      "source_file_name": "callback_impl.h",
+      "source_file_path": "/proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h",
+      "source_file_line": 40
+    },
+    {
+      "line": "#18 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12",
+      "address": 8015282,
+      "function_name": "std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const",
+      "function_offset": 12,
+      "source_file_name": "functional",
+      "source_file_path": "/usr/local/include/c++/v1/functional",
+      "source_file_line": 1913
+    },
+    {
+      "line": "#19 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7",
+      "address": 8014882,
+      "function_name": "Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 7,
+      "source_file_name": "callback_impl.h",
+      "source_file_path": "/proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h",
+      "source_file_line": 40
+    },
+    {
+      "line": "#20 0x113bc59 in Envoy::Upstream::HostSetImpl::updateHosts(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<std::__1::vector<unsigned int, std::__1::allocator<unsigned int> > const>, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:193:3",
+      "address": 18070617,
+      "function_name": "Envoy::Upstream::HostSetImpl::updateHosts(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<std::__1::vector<unsigned int, std::__1::allocator<unsigned int> > const>, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)",
+      "function_offset": 3,
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 193
+    },
+    {
+      "line": "#21 0x114de37 in Envoy::Upstream::StaticClusterImpl::startPreInit() /proc/self/cwd/source/common/upstream/upstream_impl.cc:652:18",
+      "address": 18144823,
+      "function_name": "Envoy::Upstream::StaticClusterImpl::startPreInit()",
+      "function_offset": 18,
+      "source_file_name": "upstream_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/upstream_impl.cc",
+      "source_file_line": 652
+    },
+    {
+      "line": "#22 0x78153f in Envoy::Upstream::ClusterManagerInitHelper::addCluster(Envoy::Upstream::Cluster&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:48:13",
+      "address": 7869759,
+      "function_name": "Envoy::Upstream::ClusterManagerInitHelper::addCluster(Envoy::Upstream::Cluster&)",
+      "function_offset": 13,
+      "source_file_name": "cluster_manager_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/cluster_manager_impl.cc",
+      "source_file_line": 48
+    },
+    {
+      "line": "#23 0x784458 in Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:287:18",
+      "address": 7881816,
+      "function_name": "Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&)",
+      "function_offset": 18,
+      "source_file_name": "cluster_manager_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/cluster_manager_impl.cc",
+      "source_file_line": 287
+    },
+    {
+      "line": "#24 0x793919 in Envoy::Upstream::ProdClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:941:32",
+      "address": 7944473,
+      "function_name": "Envoy::Upstream::ProdClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&)",
+      "function_offset": 32,
+      "source_file_name": "cluster_manager_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/common/upstream/cluster_manager_impl.cc",
+      "source_file_line": 941
+    },
+    {
+      "line": "#25 0x1982c9f in Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&) /proc/self/cwd/source/server/configuration_impl.cc:49:46",
+      "address": 26750111,
+      "function_name": "Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&)",
+      "function_offset": 46,
+      "source_file_name": "configuration_impl.cc",
+      "source_file_path": "/proc/self/cwd/source/server/configuration_impl.cc",
+      "source_file_line": 49
+    },
+    {
+      "line": "#26 0x6c218f in Envoy::Server::InstanceImpl::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) /proc/self/cwd/source/server/server.cc:272:16",
+      "address": 7086479,
+      "function_name": "Envoy::Server::InstanceImpl::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&)",
+      "function_offset": 16,
+      "source_file_name": "server.cc",
+      "source_file_path": "/proc/self/cwd/source/server/server.cc",
+      "source_file_line": 272
+    },
+    {
+      "line": "#27 0x6be506 in Envoy::Server::InstanceImpl::InstanceImpl(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::TestHooks&, Envoy::Server::HotRestart&, Envoy::Stats::StoreRoot&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&, std::__1::unique_ptr<Envoy::Runtime::RandomGenerator, std::__1::default_delete<Envoy::Runtime::RandomGenerator> >&&, Envoy::ThreadLocal::Instance&) /proc/self/cwd/source/server/server.cc:73:5",
+      "address": 7070982,
+      "function_name": "Envoy::Server::InstanceImpl::InstanceImpl(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::TestHooks&, Envoy::Server::HotRestart&, Envoy::Stats::StoreRoot&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&, std::__1::unique_ptr<Envoy::Runtime::RandomGenerator, std::__1::default_delete<Envoy::Runtime::RandomGenerator> >&&, Envoy::ThreadLocal::Instance&)",
+      "function_offset": 5,
+      "source_file_name": "server.cc",
+      "source_file_path": "/proc/self/cwd/source/server/server.cc",
+      "source_file_line": 73
+    },
+    {
+      "line": "#28 0x5fa709 in make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &> /usr/local/include/c++/v1/memory:3114:32",
+      "address": 6268681,
+      "function_name": "make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &>",
+      "function_offset": 32,
+      "source_file_name": "memory",
+      "source_file_path": "/usr/local/include/c++/v1/memory",
+      "source_file_line": 3114
+    },
+    {
+      "line": "#29 0x5fa709 in Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) /proc/self/cwd/test/server/server_fuzz_test.cc:36",
+      "address": 6268681,
+      "function_name": "Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&)",
+      "source_file_name": "server_fuzz_test.cc",
+      "source_file_path": "/proc/self/cwd/test/server/server_fuzz_test.cc",
+      "source_file_line": 36
+    },
+    {
+      "line": "#30 0x5f9e5d in LLVMFuzzerTestOneInput /proc/self/cwd/test/server/server_fuzz_test.cc:18:1",
+      "address": 6266461,
+      "function_name": "server_fuzz_test.cc",
+      "function_offset": 1,
+      "source_file_name": "server_fuzz_test.cc",
+      "source_file_path": "/proc/self/cwd/test/server/server_fuzz_test.cc",
+      "source_file_line": 18
+    }
+  ],
+  "minimized_stack": [
+    "#2 0x1fefa77 in Envoy::Network::Address::addressFromSockAddr(sockaddr_storage const&, unsigned int, bool) /proc/self/cwd/source/common/network/address_impl.cc:87:5",
+    "#3 0x1fefe18 in Envoy::Network::Address::addressFromFd(int) /proc/self/cwd/source/common/network/address_impl.cc:109:10",
+    "#4 0x11fcb3c in Envoy::Network::AddrFailyAwareSocketOptionImpl::setIpSocketOption(Envoy::Network::Socket&, Envoy::Network::Socket::SocketState, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&, std::__1::unique_ptr<Envoy::Network::SocketOptionImpl, std::__1::default_delete<Envoy::Network::SocketOptionImpl> > const&) /proc/self/cwd/source/common/network/addr_family_aware_socket_option_impl.cc:31:17",
+    "#5 0x6f1410 in Envoy::Network::Socket::applyOptions(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&, Envoy::Network::Socket&, Envoy::Network::Socket::SocketState) /proc/self/cwd/bazel-out/k8-fastbuild/bin/include/envoy/network/_virtual_includes/listen_socket_interface/envoy/network/listen_socket.h:81:20",
+    "#6 0x74b155 in Envoy::Network::ClientConnectionImpl::ClientConnectionImpl(Envoy::Event::Dispatcher&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const> const&, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/network/connection_impl.cc:538:8",
+    "#7 0x736312 in make_unique<Envoy::Network::ClientConnectionImpl, Envoy::Event::DispatcherImpl &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >, const std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<const Envoy::Network::Socket::Option>, std::__1::allocator<std::__1::shared_ptr<const Envoy::Network::Socket::Option> > > > &> /usr/local/include/c++/v1/memory:3114:32",
+    "#8 0x736312 in Envoy::Event::DispatcherImpl::createClientConnection(std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >&&, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/event/dispatcher_impl.cc:89",
+    "#9 0x1139ad9 in Envoy::Upstream::HostImpl::createConnection(Envoy::Event::Dispatcher&, Envoy::Upstream::ClusterInfo const&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Network::Socket::Option const>, std::__1::allocator<std::__1::shared_ptr<Envoy::Network::Socket::Option const> > > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:134:56",
+    "#10 0x113a2a7 in Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:112:11",
+    "#11 0x113a5af in non-virtual thunk to Envoy::Upstream::HostImpl::createHealthCheckConnection(Envoy::Event::Dispatcher&) const /proc/self/cwd/source/common/upstream/upstream_impl.cc:0",
+    "#12 0x11922df in Envoy::Upstream::TcpHealthCheckerImpl::TcpActiveHealthCheckSession::onInterval() /proc/self/cwd/source/common/upstream/health_checker_impl.cc:304:22",
+    "#13 0x12e3a38 in Envoy::Upstream::HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase() /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:250:3",
+    "#14 0x12e0c79 in Envoy::Upstream::HealthCheckerImplBase::addHosts(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:103:29",
+    "#15 0x12e0fbf in Envoy::Upstream::HealthCheckerImplBase::onClusterMemberUpdate(std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/health_checker_base_impl.cc:109:3",
+    "#16 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12",
+    "#17 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7",
+    "#18 0x7a4db2 in std::__1::function<void (unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&)>::operator()(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) const /usr/local/include/c++/v1/functional:1913:12",
+    "#19 0x7a4c22 in Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks(unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/bazel-out/k8-fastbuild/bin/source/common/common/_virtual_includes/callback_impl_lib/common/common/callback_impl.h:40:7",
+    "#20 0x113bc59 in Envoy::Upstream::HostSetImpl::updateHosts(std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<Envoy::Upstream::HostsPerLocality const>, std::__1::shared_ptr<std::__1::vector<unsigned int, std::__1::allocator<unsigned int> > const>, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&) /proc/self/cwd/source/common/upstream/upstream_impl.cc:193:3",
+    "#21 0x114de37 in Envoy::Upstream::StaticClusterImpl::startPreInit() /proc/self/cwd/source/common/upstream/upstream_impl.cc:652:18",
+    "#22 0x78153f in Envoy::Upstream::ClusterManagerInitHelper::addCluster(Envoy::Upstream::Cluster&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:48:13",
+    "#23 0x784458 in Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:287:18",
+    "#24 0x793919 in Envoy::Upstream::ProdClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&) /proc/self/cwd/source/common/upstream/cluster_manager_impl.cc:941:32",
+    "#25 0x1982c9f in Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&) /proc/self/cwd/source/server/configuration_impl.cc:49:46",
+    "#26 0x6c218f in Envoy::Server::InstanceImpl::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) /proc/self/cwd/source/server/server.cc:272:16",
+    "#27 0x6be506 in Envoy::Server::InstanceImpl::InstanceImpl(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::TestHooks&, Envoy::Server::HotRestart&, Envoy::Stats::StoreRoot&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&, std::__1::unique_ptr<Envoy::Runtime::RandomGenerator, std::__1::default_delete<Envoy::Runtime::RandomGenerator> >&&, Envoy::ThreadLocal::Instance&) /proc/self/cwd/source/server/server.cc:73:5",
+    "#28 0x5fa709 in make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &> /usr/local/include/c++/v1/memory:3114:32",
+    "#29 0x5fa709 in Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) /proc/self/cwd/test/server/server_fuzz_test.cc:36",
+    "#30 0x5f9e5d in LLVMFuzzerTestOneInput /proc/self/cwd/test/server/server_fuzz_test.cc:18:1"
+  ],
+  "minimized_stack_function_names": [
+    "Envoy::Network::Address::addressFromSockAddr",
+    "Envoy::Network::Address::addressFromFd",
+    "Envoy::Network::AddrFailyAwareSocketOptionImpl::setIpSocketOption",
+    "Envoy::Network::Socket::applyOptions",
+    "Envoy::Network::ClientConnectionImpl::ClientConnectionImpl",
+    "make_unique<Envoy::Network::ClientConnectionImpl, Envoy::Event::DispatcherImpl &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::shared_ptr<const Envoy::Network::Address::Instance> &, std::__1::unique_ptr<Envoy::Network::TransportSocket, std::__1::default_delete<Envoy::Network::TransportSocket> >, const std::__1::shared_ptr<std::__1::vector<std::__1::shared_ptr<const Envoy::Network::Socket::Option>, std::__1::allocator<std::__1::shared_ptr<const Envoy::Network::Socket::Option> > > > &>",
+    "Envoy::Event::DispatcherImpl::createClientConnection",
+    "Envoy::Upstream::HostImpl::createConnection",
+    "Envoy::Upstream::HostImpl::createHealthCheckConnection",
+    "non-virtual thunk to Envoy::Upstream::HostImpl::createHealthCheckConnection",
+    "Envoy::Upstream::TcpHealthCheckerImpl::TcpActiveHealthCheckSession::onInterval",
+    "Envoy::Upstream::HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase",
+    "Envoy::Upstream::HealthCheckerImplBase::addHosts",
+    "Envoy::Upstream::HealthCheckerImplBase::onClusterMemberUpdate",
+    "std::__1::function<void ",
+    "Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks",
+    "std::__1::function<void ",
+    "Envoy::Common::CallbackManager<unsigned int, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&, std::__1::vector<std::__1::shared_ptr<Envoy::Upstream::Host>, std::__1::allocator<std::__1::shared_ptr<Envoy::Upstream::Host> > > const&>::runCallbacks",
+    "Envoy::Upstream::HostSetImpl::updateHosts",
+    "Envoy::Upstream::StaticClusterImpl::startPreInit",
+    "Envoy::Upstream::ClusterManagerInitHelper::addCluster",
+    "Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl",
+    "Envoy::Upstream::ProdClusterManagerFactory::clusterManagerFromProto",
+    "Envoy::Server::Configuration::MainImpl::initialize",
+    "Envoy::Server::InstanceImpl::initialize",
+    "Envoy::Server::InstanceImpl::InstanceImpl",
+    "make_unique<Envoy::Server::InstanceImpl, testing::NiceMock<Envoy::Server::MockOptions> &, std::__1::shared_ptr<Envoy::Network::Address::Ipv4Instance>, Envoy::DefaultTestHooks &, testing::NiceMock<Envoy::Server::MockHotRestart> &, Envoy::Stats::TestIsolatedStoreImpl &, Envoy::Thread::MutexBasicLockable &, Envoy::Server::TestComponentFactory &, std::__1::unique_ptr<Envoy::Runtime::RandomGeneratorImpl, std::__1::default_delete<Envoy::Runtime::RandomGeneratorImpl> >, Envoy::ThreadLocal::InstanceImpl &>",
+    "Envoy::Server::TestOneProtoInput",
+    "server_fuzz_test.cc"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}

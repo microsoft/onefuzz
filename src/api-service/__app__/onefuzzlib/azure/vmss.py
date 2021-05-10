@@ -8,7 +8,11 @@ import os
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
 
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import (
+    HttpResponseError,
+    ResourceExistsError,
+    ResourceNotFoundError,
+)
 from azure.mgmt.compute.models import (
     ResourceSku,
     ResourceSkuRestrictionsType,
@@ -208,6 +212,7 @@ def create_vmss(
     image: str,
     network_id: str,
     spot_instances: bool,
+    ephemeral_os_disks: bool,
     extensions: List[Any],
     password: str,
     ssh_public_key: str,
@@ -259,7 +264,9 @@ def create_vmss(
         },
         "virtual_machine_profile": {
             "priority": "Regular",
-            "storage_profile": {"image_reference": image_ref},
+            "storage_profile": {
+                "image_reference": image_ref,
+            },
             "os_profile": {
                 "computer_name_prefix": "node",
                 "admin_username": "onefuzz",
@@ -298,6 +305,13 @@ def create_vmss(
                     }
                 ]
             },
+        }
+
+    if ephemeral_os_disks:
+        params["virtual_machine_profile"]["storage_profile"]["os_disk"] = {
+            "diffDiskSettings": {"option": "Local"},
+            "caching": "ReadOnly",
+            "createOption": "FromImage",
         }
 
     if spot_instances:
@@ -340,6 +354,18 @@ def create_vmss(
             code=ErrorCode.VM_CREATE_FAILED,
             errors=["creating vmss: %s" % err],
         )
+    except HttpResponseError as err:
+        err_str = str(err)
+        # Catch Gen2 Hypervisor / Image mismatch errors
+        # See https://github.com/microsoft/lisa/pull/716 for an example
+        if (
+            "check that the Hypervisor Generation of the Image matches the "
+            "Hypervisor Generation of the selected VM Size"
+        ) in err_str:
+            return Error(
+                code=ErrorCode.VM_CREATE_FAILED, errors=[f"creating vmss: {err_str}"]
+            )
+        raise err
 
     return None
 

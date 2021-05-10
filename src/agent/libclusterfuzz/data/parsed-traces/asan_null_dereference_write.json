@@ -1,0 +1,678 @@
+{
+  "text": "ASAN:DEADLYSIGNAL\n=================================================================\n==29409==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000178 (pc 0x7f5eae7977d1 bp 0x7ffcc670d840 sp 0x7ffcc670cfd8 T0)\n==29409==The signal is caused by a WRITE memory access.\n==29409==Hint: address points to the zero page.\n    #0 0x7f5eae7977d0 in memcpy-ssse3-back.S:1702 /build/eglibc-rrybNj/eglibc-2.15/sysdeps/x86_64/multiarch/memcpy-ssse3-back.S:1702\n    #1 0x7f5eba8358a1 in SetTaskInfo base/timer/timer.cc:145:16\n    #2 0x7f5eba8358a1 in base::Timer::Start(tracked_objects::Location const&, base::TimeDelta, base::Callback<void ()> const&) base/timer/timer.cc:105\n    #3 0x7f5eca365821 in Start<views::MenuController> base/timer/timer.h:224:5\n    #4 0x7f5eca365821 in StartCancelAllTimer ui/views/controls/menu/menu_controller.cc:1832\n    #5 0x7f5eca365821 in views::MenuController::OnDragExited(views::SubmenuView*) ui/views/controls/menu/menu_controller.cc:925\n    #6 0x7f5eca59bd42 in NotifyDragExit ui/views/widget/drop_helper.cc:154:5\n    #7 0x7f5eca59bd42 in views::DropHelper::OnDragExit() ui/views/widget/drop_helper.cc:47\n    #8 0x7f5eca5c18f0 in NotifyDragLeave ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:1019:5\n    #9 0x7f5eca5c18f0 in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:447\n    #10 0x7f5eca5c1f0a in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:443:63\n    #11 0x7f5eca52b660 in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13\n    #12 0x7f5eca52b660 in reset buildtools/third_party/libc++/trunk/include/memory:2735\n    #13 0x7f5eca52b660 in views::DesktopNativeWidgetAura::OnDesktopWindowTreeHostDestroyed(aura::WindowTreeHost*) ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:355\n    #14 0x7f5eca5438d9 in views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:184:3\n    #15 0x7f5eca543f3e in ~DesktopWindowTreeHostX11 ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181:55\n    #16 0x7f5eca543f3e in non-virtual thunk to views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181\n    #17 0x7f5eca52b012 in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13\n    #18 0x7f5eca52b012 in reset buildtools/third_party/libc++/trunk/include/memory:2735\n    #19 0x7f5eca52b012 in views::DesktopNativeWidgetAura::OnHostClosed() ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:330\n    #20 0x7f5eca54d397 in views::DesktopWindowTreeHostX11::CloseNow() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:392:3\n    #21 0x7f5eca567bdf in Run<> base/bind_internal.h:181:12\n    #22 0x7f5eca567bdf in MakeItSo<base::WeakPtr<views::DesktopWindowTreeHostX11>> base/bind_internal.h:314\n    #23 0x7f5eca567bdf in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()>, void (views::DesktopWindowTreeHostX11*), base::WeakPtr<views::DesktopWindowTreeHostX11> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:351\n    #24 0x7f5eba8c5fe9 in Run base/callback.h:394:12\n    #25 0x7f5eba8c5fe9 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51\n    #26 0x7f5eba6fc007 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3\n    #27 0x7f5eba6fd05b in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5\n    #28 0x7f5eba6fdd7a in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13\n    #29 0x7f5eba8be1d7 in HandleDispatch base/message_loop/message_pump_glib.cc:267:7\n    #30 0x7f5eba8be1d7 in base::(anonymous namespace)::WorkSourceDispatch(_GSource*, int (*)(void*), void*) base/message_loop/message_pump_glib.cc:109\n    #31 0x7f5eb5767d12 in g_main_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:2539\n    #32 0x7f5eb5767d12 in g_main_context_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:3075\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0x14e7d0)\n==29409==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0x14e7d0)",
+  "fault_type": "SEGV",
+  "call_stack": [
+    "#0 0x7f5eae7977d0 in memcpy-ssse3-back.S:1702 /build/eglibc-rrybNj/eglibc-2.15/sysdeps/x86_64/multiarch/memcpy-ssse3-back.S:1702",
+    "#1 0x7f5eba8358a1 in SetTaskInfo base/timer/timer.cc:145:16",
+    "#2 0x7f5eba8358a1 in base::Timer::Start(tracked_objects::Location const&, base::TimeDelta, base::Callback<void ()> const&) base/timer/timer.cc:105",
+    "#3 0x7f5eca365821 in Start<views::MenuController> base/timer/timer.h:224:5",
+    "#4 0x7f5eca365821 in StartCancelAllTimer ui/views/controls/menu/menu_controller.cc:1832",
+    "#5 0x7f5eca365821 in views::MenuController::OnDragExited(views::SubmenuView*) ui/views/controls/menu/menu_controller.cc:925",
+    "#6 0x7f5eca59bd42 in NotifyDragExit ui/views/widget/drop_helper.cc:154:5",
+    "#7 0x7f5eca59bd42 in views::DropHelper::OnDragExit() ui/views/widget/drop_helper.cc:47",
+    "#8 0x7f5eca5c18f0 in NotifyDragLeave ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:1019:5",
+    "#9 0x7f5eca5c18f0 in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:447",
+    "#10 0x7f5eca5c1f0a in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:443:63",
+    "#11 0x7f5eca52b660 in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13",
+    "#12 0x7f5eca52b660 in reset buildtools/third_party/libc++/trunk/include/memory:2735",
+    "#13 0x7f5eca52b660 in views::DesktopNativeWidgetAura::OnDesktopWindowTreeHostDestroyed(aura::WindowTreeHost*) ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:355",
+    "#14 0x7f5eca5438d9 in views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:184:3",
+    "#15 0x7f5eca543f3e in ~DesktopWindowTreeHostX11 ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181:55",
+    "#16 0x7f5eca543f3e in non-virtual thunk to views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181",
+    "#17 0x7f5eca52b012 in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13",
+    "#18 0x7f5eca52b012 in reset buildtools/third_party/libc++/trunk/include/memory:2735",
+    "#19 0x7f5eca52b012 in views::DesktopNativeWidgetAura::OnHostClosed() ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:330",
+    "#20 0x7f5eca54d397 in views::DesktopWindowTreeHostX11::CloseNow() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:392:3",
+    "#21 0x7f5eca567bdf in Run<> base/bind_internal.h:181:12",
+    "#22 0x7f5eca567bdf in MakeItSo<base::WeakPtr<views::DesktopWindowTreeHostX11>> base/bind_internal.h:314",
+    "#23 0x7f5eca567bdf in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()>, void (views::DesktopWindowTreeHostX11*), base::WeakPtr<views::DesktopWindowTreeHostX11> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:351",
+    "#24 0x7f5eba8c5fe9 in Run base/callback.h:394:12",
+    "#25 0x7f5eba8c5fe9 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51",
+    "#26 0x7f5eba6fc007 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3",
+    "#27 0x7f5eba6fd05b in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5",
+    "#28 0x7f5eba6fdd7a in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13",
+    "#29 0x7f5eba8be1d7 in HandleDispatch base/message_loop/message_pump_glib.cc:267:7",
+    "#30 0x7f5eba8be1d7 in base::(anonymous namespace)::WorkSourceDispatch(_GSource*, int (*)(void*), void*) base/message_loop/message_pump_glib.cc:109",
+    "#31 0x7f5eb5767d12 in g_main_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:2539",
+    "#32 0x7f5eb5767d12 in g_main_context_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:3075"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x7f5eae7977d0 in memcpy-ssse3-back.S:1702 /build/eglibc-rrybNj/eglibc-2.15/sysdeps/x86_64/multiarch/memcpy-ssse3-back.S:1702",
+      "address": 140044630849488,
+      "function_name": "memcpy-ssse3-back.S:1702",
+      "source_file_name": "memcpy-ssse3-back.S",
+      "source_file_path": "/build/eglibc-rrybNj/eglibc-2.15/sysdeps/x86_64/multiarch/memcpy-ssse3-back.S",
+      "source_file_line": 1702
+    },
+    {
+      "line": "#1 0x7f5eba8358a1 in SetTaskInfo base/timer/timer.cc:145:16",
+      "address": 140044832823457,
+      "function_name": "SetTaskInfo",
+      "function_offset": 16,
+      "source_file_name": "timer.cc",
+      "source_file_path": "base/timer/timer.cc",
+      "source_file_line": 145
+    },
+    {
+      "line": "#2 0x7f5eba8358a1 in base::Timer::Start(tracked_objects::Location const&, base::TimeDelta, base::Callback<void ()> const&) base/timer/timer.cc:105",
+      "address": 140044832823457,
+      "function_name": "base::Timer::Start(tracked_objects::Location const&, base::TimeDelta, base::Callback<void ()> const&)",
+      "source_file_name": "timer.cc",
+      "source_file_path": "base/timer/timer.cc",
+      "source_file_line": 105
+    },
+    {
+      "line": "#3 0x7f5eca365821 in Start<views::MenuController> base/timer/timer.h:224:5",
+      "address": 140045096212513,
+      "function_name": "Start<views::MenuController>",
+      "function_offset": 5,
+      "source_file_name": "timer.h",
+      "source_file_path": "base/timer/timer.h",
+      "source_file_line": 224
+    },
+    {
+      "line": "#4 0x7f5eca365821 in StartCancelAllTimer ui/views/controls/menu/menu_controller.cc:1832",
+      "address": 140045096212513,
+      "function_name": "StartCancelAllTimer",
+      "source_file_name": "menu_controller.cc",
+      "source_file_path": "ui/views/controls/menu/menu_controller.cc",
+      "source_file_line": 1832
+    },
+    {
+      "line": "#5 0x7f5eca365821 in views::MenuController::OnDragExited(views::SubmenuView*) ui/views/controls/menu/menu_controller.cc:925",
+      "address": 140045096212513,
+      "function_name": "views::MenuController::OnDragExited(views::SubmenuView*)",
+      "source_file_name": "menu_controller.cc",
+      "source_file_path": "ui/views/controls/menu/menu_controller.cc",
+      "source_file_line": 925
+    },
+    {
+      "line": "#6 0x7f5eca59bd42 in NotifyDragExit ui/views/widget/drop_helper.cc:154:5",
+      "address": 140045098532162,
+      "function_name": "NotifyDragExit",
+      "function_offset": 5,
+      "source_file_name": "drop_helper.cc",
+      "source_file_path": "ui/views/widget/drop_helper.cc",
+      "source_file_line": 154
+    },
+    {
+      "line": "#7 0x7f5eca59bd42 in views::DropHelper::OnDragExit() ui/views/widget/drop_helper.cc:47",
+      "address": 140045098532162,
+      "function_name": "views::DropHelper::OnDragExit()",
+      "source_file_name": "drop_helper.cc",
+      "source_file_path": "ui/views/widget/drop_helper.cc",
+      "source_file_line": 47
+    },
+    {
+      "line": "#8 0x7f5eca5c18f0 in NotifyDragLeave ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:1019:5",
+      "address": 140045098686704,
+      "function_name": "NotifyDragLeave",
+      "function_offset": 5,
+      "source_file_name": "desktop_drag_drop_client_aurax11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc",
+      "source_file_line": 1019
+    },
+    {
+      "line": "#9 0x7f5eca5c18f0 in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:447",
+      "address": 140045098686704,
+      "function_name": "views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11()",
+      "source_file_name": "desktop_drag_drop_client_aurax11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc",
+      "source_file_line": 447
+    },
+    {
+      "line": "#10 0x7f5eca5c1f0a in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:443:63",
+      "address": 140045098688266,
+      "function_name": "views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11()",
+      "function_offset": 63,
+      "source_file_name": "desktop_drag_drop_client_aurax11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc",
+      "source_file_line": 443
+    },
+    {
+      "line": "#11 0x7f5eca52b660 in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13",
+      "address": 140045098071648,
+      "function_name": "operator()",
+      "function_offset": 13,
+      "source_file_name": "memory",
+      "source_file_path": "buildtools/third_party/libc++/trunk/include/memory",
+      "source_file_line": 2529
+    },
+    {
+      "line": "#12 0x7f5eca52b660 in reset buildtools/third_party/libc++/trunk/include/memory:2735",
+      "address": 140045098071648,
+      "function_name": "reset",
+      "source_file_name": "memory",
+      "source_file_path": "buildtools/third_party/libc++/trunk/include/memory",
+      "source_file_line": 2735
+    },
+    {
+      "line": "#13 0x7f5eca52b660 in views::DesktopNativeWidgetAura::OnDesktopWindowTreeHostDestroyed(aura::WindowTreeHost*) ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:355",
+      "address": 140045098071648,
+      "function_name": "views::DesktopNativeWidgetAura::OnDesktopWindowTreeHostDestroyed(aura::WindowTreeHost*)",
+      "source_file_name": "desktop_native_widget_aura.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_native_widget_aura.cc",
+      "source_file_line": 355
+    },
+    {
+      "line": "#14 0x7f5eca5438d9 in views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:184:3",
+      "address": 140045098170585,
+      "function_name": "views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11()",
+      "function_offset": 3,
+      "source_file_name": "desktop_window_tree_host_x11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc",
+      "source_file_line": 184
+    },
+    {
+      "line": "#15 0x7f5eca543f3e in ~DesktopWindowTreeHostX11 ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181:55",
+      "address": 140045098172222,
+      "function_name": "~DesktopWindowTreeHostX11",
+      "function_offset": 55,
+      "source_file_name": "desktop_window_tree_host_x11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc",
+      "source_file_line": 181
+    },
+    {
+      "line": "#16 0x7f5eca543f3e in non-virtual thunk to views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181",
+      "address": 140045098172222,
+      "function_name": "non-virtual thunk to views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11()",
+      "source_file_name": "desktop_window_tree_host_x11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc",
+      "source_file_line": 181
+    },
+    {
+      "line": "#17 0x7f5eca52b012 in operator() buildtools/third_party/libc++/trunk/include/memory:2529:13",
+      "address": 140045098070034,
+      "function_name": "operator()",
+      "function_offset": 13,
+      "source_file_name": "memory",
+      "source_file_path": "buildtools/third_party/libc++/trunk/include/memory",
+      "source_file_line": 2529
+    },
+    {
+      "line": "#18 0x7f5eca52b012 in reset buildtools/third_party/libc++/trunk/include/memory:2735",
+      "address": 140045098070034,
+      "function_name": "reset",
+      "source_file_name": "memory",
+      "source_file_path": "buildtools/third_party/libc++/trunk/include/memory",
+      "source_file_line": 2735
+    },
+    {
+      "line": "#19 0x7f5eca52b012 in views::DesktopNativeWidgetAura::OnHostClosed() ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:330",
+      "address": 140045098070034,
+      "function_name": "views::DesktopNativeWidgetAura::OnHostClosed()",
+      "source_file_name": "desktop_native_widget_aura.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_native_widget_aura.cc",
+      "source_file_line": 330
+    },
+    {
+      "line": "#20 0x7f5eca54d397 in views::DesktopWindowTreeHostX11::CloseNow() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:392:3",
+      "address": 140045098210199,
+      "function_name": "views::DesktopWindowTreeHostX11::CloseNow()",
+      "function_offset": 3,
+      "source_file_name": "desktop_window_tree_host_x11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc",
+      "source_file_line": 392
+    },
+    {
+      "line": "#21 0x7f5eca567bdf in Run<> base/bind_internal.h:181:12",
+      "address": 140045098318815,
+      "function_name": "Run<>",
+      "function_offset": 12,
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 181
+    },
+    {
+      "line": "#22 0x7f5eca567bdf in MakeItSo<base::WeakPtr<views::DesktopWindowTreeHostX11>> base/bind_internal.h:314",
+      "address": 140045098318815,
+      "function_name": "MakeItSo<base::WeakPtr<views::DesktopWindowTreeHostX11>>",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 314
+    },
+    {
+      "line": "#23 0x7f5eca567bdf in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()>, void (views::DesktopWindowTreeHostX11*), base::WeakPtr<views::DesktopWindowTreeHostX11> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:351",
+      "address": 140045098318815,
+      "function_name": "base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()>, void (views::DesktopWindowTreeHostX11*), base::WeakPtr<views::DesktopWindowTreeHostX11> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()> >, void ()>::Run(base::internal::BindStateBase*)",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 351
+    },
+    {
+      "line": "#24 0x7f5eba8c5fe9 in Run base/callback.h:394:12",
+      "address": 140044833415145,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 394
+    },
+    {
+      "line": "#25 0x7f5eba8c5fe9 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51",
+      "address": 140044833415145,
+      "function_name": "base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&)",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 51
+    },
+    {
+      "line": "#26 0x7f5eba6fc007 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3",
+      "address": 140044831539207,
+      "function_name": "base::MessageLoop::RunTask(base::PendingTask const&)",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 476
+    },
+    {
+      "line": "#27 0x7f5eba6fd05b in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5",
+      "address": 140044831543387,
+      "function_name": "base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&)",
+      "function_offset": 5,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 485
+    },
+    {
+      "line": "#28 0x7f5eba6fdd7a in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13",
+      "address": 140044831546746,
+      "function_name": "base::MessageLoop::DoWork()",
+      "function_offset": 13,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 597
+    },
+    {
+      "line": "#29 0x7f5eba8be1d7 in HandleDispatch base/message_loop/message_pump_glib.cc:267:7",
+      "address": 140044833382871,
+      "function_name": "HandleDispatch",
+      "function_offset": 7,
+      "source_file_name": "message_pump_glib.cc",
+      "source_file_path": "base/message_loop/message_pump_glib.cc",
+      "source_file_line": 267
+    },
+    {
+      "line": "#30 0x7f5eba8be1d7 in base::(anonymous namespace)::WorkSourceDispatch(_GSource*, int (*)(void*), void*) base/message_loop/message_pump_glib.cc:109",
+      "address": 140044833382871,
+      "function_name": "base::(anonymous namespace)::WorkSourceDispatch(_GSource*, int (*)(void*), void*)",
+      "source_file_name": "message_pump_glib.cc",
+      "source_file_path": "base/message_loop/message_pump_glib.cc",
+      "source_file_line": 109
+    },
+    {
+      "line": "#31 0x7f5eb5767d12 in g_main_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:2539",
+      "address": 140044748094738,
+      "function_name": "g_main_dispatch",
+      "source_file_name": "gmain.c",
+      "source_file_path": "/build/buildd/glib2.0-2.32.4/glib/gmain.c",
+      "source_file_line": 2539
+    },
+    {
+      "line": "#32 0x7f5eb5767d12 in g_main_context_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:3075",
+      "address": 140044748094738,
+      "function_name": "g_main_context_dispatch",
+      "source_file_name": "gmain.c",
+      "source_file_path": "/build/buildd/glib2.0-2.32.4/glib/gmain.c",
+      "source_file_line": 3075
+    }
+  ],
+  "full_stack_names": [
+    "memcpy-ssse3-back.S:1702",
+    "SetTaskInfo",
+    "base::Timer::Start",
+    "Start<views::MenuController>",
+    "StartCancelAllTimer",
+    "views::MenuController::OnDragExited",
+    "NotifyDragExit",
+    "views::DropHelper::OnDragExit",
+    "NotifyDragLeave",
+    "views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11",
+    "views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11",
+    "operator",
+    "reset",
+    "views::DesktopNativeWidgetAura::OnDesktopWindowTreeHostDestroyed",
+    "views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11",
+    "~DesktopWindowTreeHostX11",
+    "non-virtual thunk to views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11",
+    "operator",
+    "reset",
+    "views::DesktopNativeWidgetAura::OnHostClosed",
+    "views::DesktopWindowTreeHostX11::CloseNow",
+    "Run<>",
+    "MakeItSo<base::WeakPtr<views::DesktopWindowTreeHostX11>>",
+    "base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "Run",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "HandleDispatch",
+    "base::",
+    "g_main_dispatch",
+    "g_main_context_dispatch"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x7f5eba8358a1 in SetTaskInfo base/timer/timer.cc:145:16",
+      "address": 140044832823457,
+      "function_name": "SetTaskInfo",
+      "function_offset": 16,
+      "source_file_name": "timer.cc",
+      "source_file_path": "base/timer/timer.cc",
+      "source_file_line": 145
+    },
+    {
+      "line": "#2 0x7f5eba8358a1 in base::Timer::Start(tracked_objects::Location const&, base::TimeDelta, base::Callback<void ()> const&) base/timer/timer.cc:105",
+      "address": 140044832823457,
+      "function_name": "base::Timer::Start(tracked_objects::Location const&, base::TimeDelta, base::Callback<void ()> const&)",
+      "source_file_name": "timer.cc",
+      "source_file_path": "base/timer/timer.cc",
+      "source_file_line": 105
+    },
+    {
+      "line": "#3 0x7f5eca365821 in Start<views::MenuController> base/timer/timer.h:224:5",
+      "address": 140045096212513,
+      "function_name": "Start<views::MenuController>",
+      "function_offset": 5,
+      "source_file_name": "timer.h",
+      "source_file_path": "base/timer/timer.h",
+      "source_file_line": 224
+    },
+    {
+      "line": "#4 0x7f5eca365821 in StartCancelAllTimer ui/views/controls/menu/menu_controller.cc:1832",
+      "address": 140045096212513,
+      "function_name": "StartCancelAllTimer",
+      "source_file_name": "menu_controller.cc",
+      "source_file_path": "ui/views/controls/menu/menu_controller.cc",
+      "source_file_line": 1832
+    },
+    {
+      "line": "#5 0x7f5eca365821 in views::MenuController::OnDragExited(views::SubmenuView*) ui/views/controls/menu/menu_controller.cc:925",
+      "address": 140045096212513,
+      "function_name": "views::MenuController::OnDragExited(views::SubmenuView*)",
+      "source_file_name": "menu_controller.cc",
+      "source_file_path": "ui/views/controls/menu/menu_controller.cc",
+      "source_file_line": 925
+    },
+    {
+      "line": "#6 0x7f5eca59bd42 in NotifyDragExit ui/views/widget/drop_helper.cc:154:5",
+      "address": 140045098532162,
+      "function_name": "NotifyDragExit",
+      "function_offset": 5,
+      "source_file_name": "drop_helper.cc",
+      "source_file_path": "ui/views/widget/drop_helper.cc",
+      "source_file_line": 154
+    },
+    {
+      "line": "#7 0x7f5eca59bd42 in views::DropHelper::OnDragExit() ui/views/widget/drop_helper.cc:47",
+      "address": 140045098532162,
+      "function_name": "views::DropHelper::OnDragExit()",
+      "source_file_name": "drop_helper.cc",
+      "source_file_path": "ui/views/widget/drop_helper.cc",
+      "source_file_line": 47
+    },
+    {
+      "line": "#8 0x7f5eca5c18f0 in NotifyDragLeave ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:1019:5",
+      "address": 140045098686704,
+      "function_name": "NotifyDragLeave",
+      "function_offset": 5,
+      "source_file_name": "desktop_drag_drop_client_aurax11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc",
+      "source_file_line": 1019
+    },
+    {
+      "line": "#9 0x7f5eca5c18f0 in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:447",
+      "address": 140045098686704,
+      "function_name": "views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11()",
+      "source_file_name": "desktop_drag_drop_client_aurax11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc",
+      "source_file_line": 447
+    },
+    {
+      "line": "#10 0x7f5eca5c1f0a in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:443:63",
+      "address": 140045098688266,
+      "function_name": "views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11()",
+      "function_offset": 63,
+      "source_file_name": "desktop_drag_drop_client_aurax11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc",
+      "source_file_line": 443
+    },
+    {
+      "line": "#12 0x7f5eca52b660 in reset buildtools/third_party/libc++/trunk/include/memory:2735",
+      "address": 140045098071648,
+      "function_name": "reset",
+      "source_file_name": "memory",
+      "source_file_path": "buildtools/third_party/libc++/trunk/include/memory",
+      "source_file_line": 2735
+    },
+    {
+      "line": "#13 0x7f5eca52b660 in views::DesktopNativeWidgetAura::OnDesktopWindowTreeHostDestroyed(aura::WindowTreeHost*) ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:355",
+      "address": 140045098071648,
+      "function_name": "views::DesktopNativeWidgetAura::OnDesktopWindowTreeHostDestroyed(aura::WindowTreeHost*)",
+      "source_file_name": "desktop_native_widget_aura.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_native_widget_aura.cc",
+      "source_file_line": 355
+    },
+    {
+      "line": "#14 0x7f5eca5438d9 in views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:184:3",
+      "address": 140045098170585,
+      "function_name": "views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11()",
+      "function_offset": 3,
+      "source_file_name": "desktop_window_tree_host_x11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc",
+      "source_file_line": 184
+    },
+    {
+      "line": "#15 0x7f5eca543f3e in ~DesktopWindowTreeHostX11 ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181:55",
+      "address": 140045098172222,
+      "function_name": "~DesktopWindowTreeHostX11",
+      "function_offset": 55,
+      "source_file_name": "desktop_window_tree_host_x11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc",
+      "source_file_line": 181
+    },
+    {
+      "line": "#16 0x7f5eca543f3e in non-virtual thunk to views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181",
+      "address": 140045098172222,
+      "function_name": "non-virtual thunk to views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11()",
+      "source_file_name": "desktop_window_tree_host_x11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc",
+      "source_file_line": 181
+    },
+    {
+      "line": "#18 0x7f5eca52b012 in reset buildtools/third_party/libc++/trunk/include/memory:2735",
+      "address": 140045098070034,
+      "function_name": "reset",
+      "source_file_name": "memory",
+      "source_file_path": "buildtools/third_party/libc++/trunk/include/memory",
+      "source_file_line": 2735
+    },
+    {
+      "line": "#19 0x7f5eca52b012 in views::DesktopNativeWidgetAura::OnHostClosed() ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:330",
+      "address": 140045098070034,
+      "function_name": "views::DesktopNativeWidgetAura::OnHostClosed()",
+      "source_file_name": "desktop_native_widget_aura.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_native_widget_aura.cc",
+      "source_file_line": 330
+    },
+    {
+      "line": "#20 0x7f5eca54d397 in views::DesktopWindowTreeHostX11::CloseNow() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:392:3",
+      "address": 140045098210199,
+      "function_name": "views::DesktopWindowTreeHostX11::CloseNow()",
+      "function_offset": 3,
+      "source_file_name": "desktop_window_tree_host_x11.cc",
+      "source_file_path": "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc",
+      "source_file_line": 392
+    },
+    {
+      "line": "#21 0x7f5eca567bdf in Run<> base/bind_internal.h:181:12",
+      "address": 140045098318815,
+      "function_name": "Run<>",
+      "function_offset": 12,
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 181
+    },
+    {
+      "line": "#22 0x7f5eca567bdf in MakeItSo<base::WeakPtr<views::DesktopWindowTreeHostX11>> base/bind_internal.h:314",
+      "address": 140045098318815,
+      "function_name": "MakeItSo<base::WeakPtr<views::DesktopWindowTreeHostX11>>",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 314
+    },
+    {
+      "line": "#23 0x7f5eca567bdf in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()>, void (views::DesktopWindowTreeHostX11*), base::WeakPtr<views::DesktopWindowTreeHostX11> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:351",
+      "address": 140045098318815,
+      "function_name": "base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()>, void (views::DesktopWindowTreeHostX11*), base::WeakPtr<views::DesktopWindowTreeHostX11> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()> >, void ()>::Run(base::internal::BindStateBase*)",
+      "source_file_name": "bind_internal.h",
+      "source_file_path": "base/bind_internal.h",
+      "source_file_line": 351
+    },
+    {
+      "line": "#24 0x7f5eba8c5fe9 in Run base/callback.h:394:12",
+      "address": 140044833415145,
+      "function_name": "Run",
+      "function_offset": 12,
+      "source_file_name": "callback.h",
+      "source_file_path": "base/callback.h",
+      "source_file_line": 394
+    },
+    {
+      "line": "#25 0x7f5eba8c5fe9 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51",
+      "address": 140044833415145,
+      "function_name": "base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&)",
+      "source_file_name": "task_annotator.cc",
+      "source_file_path": "base/debug/task_annotator.cc",
+      "source_file_line": 51
+    },
+    {
+      "line": "#26 0x7f5eba6fc007 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3",
+      "address": 140044831539207,
+      "function_name": "base::MessageLoop::RunTask(base::PendingTask const&)",
+      "function_offset": 3,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 476
+    },
+    {
+      "line": "#27 0x7f5eba6fd05b in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5",
+      "address": 140044831543387,
+      "function_name": "base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&)",
+      "function_offset": 5,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 485
+    },
+    {
+      "line": "#28 0x7f5eba6fdd7a in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13",
+      "address": 140044831546746,
+      "function_name": "base::MessageLoop::DoWork()",
+      "function_offset": 13,
+      "source_file_name": "message_loop.cc",
+      "source_file_path": "base/message_loop/message_loop.cc",
+      "source_file_line": 597
+    },
+    {
+      "line": "#29 0x7f5eba8be1d7 in HandleDispatch base/message_loop/message_pump_glib.cc:267:7",
+      "address": 140044833382871,
+      "function_name": "HandleDispatch",
+      "function_offset": 7,
+      "source_file_name": "message_pump_glib.cc",
+      "source_file_path": "base/message_loop/message_pump_glib.cc",
+      "source_file_line": 267
+    },
+    {
+      "line": "#30 0x7f5eba8be1d7 in base::(anonymous namespace)::WorkSourceDispatch(_GSource*, int (*)(void*), void*) base/message_loop/message_pump_glib.cc:109",
+      "address": 140044833382871,
+      "function_name": "base::(anonymous namespace)::WorkSourceDispatch(_GSource*, int (*)(void*), void*)",
+      "source_file_name": "message_pump_glib.cc",
+      "source_file_path": "base/message_loop/message_pump_glib.cc",
+      "source_file_line": 109
+    },
+    {
+      "line": "#31 0x7f5eb5767d12 in g_main_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:2539",
+      "address": 140044748094738,
+      "function_name": "g_main_dispatch",
+      "source_file_name": "gmain.c",
+      "source_file_path": "/build/buildd/glib2.0-2.32.4/glib/gmain.c",
+      "source_file_line": 2539
+    },
+    {
+      "line": "#32 0x7f5eb5767d12 in g_main_context_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:3075",
+      "address": 140044748094738,
+      "function_name": "g_main_context_dispatch",
+      "source_file_name": "gmain.c",
+      "source_file_path": "/build/buildd/glib2.0-2.32.4/glib/gmain.c",
+      "source_file_line": 3075
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x7f5eba8358a1 in SetTaskInfo base/timer/timer.cc:145:16",
+    "#2 0x7f5eba8358a1 in base::Timer::Start(tracked_objects::Location const&, base::TimeDelta, base::Callback<void ()> const&) base/timer/timer.cc:105",
+    "#3 0x7f5eca365821 in Start<views::MenuController> base/timer/timer.h:224:5",
+    "#4 0x7f5eca365821 in StartCancelAllTimer ui/views/controls/menu/menu_controller.cc:1832",
+    "#5 0x7f5eca365821 in views::MenuController::OnDragExited(views::SubmenuView*) ui/views/controls/menu/menu_controller.cc:925",
+    "#6 0x7f5eca59bd42 in NotifyDragExit ui/views/widget/drop_helper.cc:154:5",
+    "#7 0x7f5eca59bd42 in views::DropHelper::OnDragExit() ui/views/widget/drop_helper.cc:47",
+    "#8 0x7f5eca5c18f0 in NotifyDragLeave ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:1019:5",
+    "#9 0x7f5eca5c18f0 in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:447",
+    "#10 0x7f5eca5c1f0a in views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11() ui/views/widget/desktop_aura/desktop_drag_drop_client_aurax11.cc:443:63",
+    "#12 0x7f5eca52b660 in reset buildtools/third_party/libc++/trunk/include/memory:2735",
+    "#13 0x7f5eca52b660 in views::DesktopNativeWidgetAura::OnDesktopWindowTreeHostDestroyed(aura::WindowTreeHost*) ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:355",
+    "#14 0x7f5eca5438d9 in views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:184:3",
+    "#15 0x7f5eca543f3e in ~DesktopWindowTreeHostX11 ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181:55",
+    "#16 0x7f5eca543f3e in non-virtual thunk to views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:181",
+    "#18 0x7f5eca52b012 in reset buildtools/third_party/libc++/trunk/include/memory:2735",
+    "#19 0x7f5eca52b012 in views::DesktopNativeWidgetAura::OnHostClosed() ui/views/widget/desktop_aura/desktop_native_widget_aura.cc:330",
+    "#20 0x7f5eca54d397 in views::DesktopWindowTreeHostX11::CloseNow() ui/views/widget/desktop_aura/desktop_window_tree_host_x11.cc:392:3",
+    "#21 0x7f5eca567bdf in Run<> base/bind_internal.h:181:12",
+    "#22 0x7f5eca567bdf in MakeItSo<base::WeakPtr<views::DesktopWindowTreeHostX11>> base/bind_internal.h:314",
+    "#23 0x7f5eca567bdf in base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()>, void (views::DesktopWindowTreeHostX11*), base::WeakPtr<views::DesktopWindowTreeHostX11> >, base::internal::InvokeHelper<true, void, base::internal::RunnableAdapter<void (views::DesktopWindowTreeHostX11::*)()> >, void ()>::Run(base::internal::BindStateBase*) base/bind_internal.h:351",
+    "#24 0x7f5eba8c5fe9 in Run base/callback.h:394:12",
+    "#25 0x7f5eba8c5fe9 in base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) base/debug/task_annotator.cc:51",
+    "#26 0x7f5eba6fc007 in base::MessageLoop::RunTask(base::PendingTask const&) base/message_loop/message_loop.cc:476:3",
+    "#27 0x7f5eba6fd05b in base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) base/message_loop/message_loop.cc:485:5",
+    "#28 0x7f5eba6fdd7a in base::MessageLoop::DoWork() base/message_loop/message_loop.cc:597:13",
+    "#29 0x7f5eba8be1d7 in HandleDispatch base/message_loop/message_pump_glib.cc:267:7",
+    "#30 0x7f5eba8be1d7 in base::(anonymous namespace)::WorkSourceDispatch(_GSource*, int (*)(void*), void*) base/message_loop/message_pump_glib.cc:109",
+    "#31 0x7f5eb5767d12 in g_main_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:2539",
+    "#32 0x7f5eb5767d12 in g_main_context_dispatch /build/buildd/glib2.0-2.32.4/glib/gmain.c:3075"
+  ],
+  "minimized_stack_function_names": [
+    "SetTaskInfo",
+    "base::Timer::Start",
+    "Start<views::MenuController>",
+    "StartCancelAllTimer",
+    "views::MenuController::OnDragExited",
+    "NotifyDragExit",
+    "views::DropHelper::OnDragExit",
+    "NotifyDragLeave",
+    "views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11",
+    "views::DesktopDragDropClientAuraX11::~DesktopDragDropClientAuraX11",
+    "reset",
+    "views::DesktopNativeWidgetAura::OnDesktopWindowTreeHostDestroyed",
+    "views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11",
+    "~DesktopWindowTreeHostX11",
+    "non-virtual thunk to views::DesktopWindowTreeHostX11::~DesktopWindowTreeHostX11",
+    "reset",
+    "views::DesktopNativeWidgetAura::OnHostClosed",
+    "views::DesktopWindowTreeHostX11::CloseNow",
+    "Run<>",
+    "MakeItSo<base::WeakPtr<views::DesktopWindowTreeHostX11>>",
+    "base::internal::Invoker<base::IndexSequence<0ul>, base::internal::BindState<base::internal::RunnableAdapter<void ",
+    "Run",
+    "base::debug::TaskAnnotator::RunTask",
+    "base::MessageLoop::RunTask",
+    "base::MessageLoop::DeferOrRunPendingTask",
+    "base::MessageLoop::DoWork",
+    "HandleDispatch",
+    "base::",
+    "g_main_dispatch",
+    "g_main_context_dispatch"
+  ]
+}

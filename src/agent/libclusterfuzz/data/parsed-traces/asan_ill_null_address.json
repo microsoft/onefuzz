@@ -1,0 +1,171 @@
+{
+  "text": "$ ASAN_OPTIONS=handle_sigill=1:symbolize=1 ~/chromium/src/out/Release/v8_wasm_code_fuzzer ./clusterfuzz-testcase-6080637904879616 \nINFO: Seed: 56440552\nINFO: Loaded 0 modules (0 guards): \n/home/user/chromium/src/out/Release/v8_wasm_code_fuzzer: Running 1 inputs 1 time(s) each.\nRunning: ./clusterfuzz-testcase-6080637904879616\nASAN:DEADLYSIGNAL\n=================================================================\n==89063==ERROR: AddressSanitizer: ILL on unknown address 0x000000000000 (pc 0x000000000000 bp 0x7ffd2297fd70 sp 0x7ffd2297fd58 T0)\n    #0 0x000000000000  (<unknown module>)\n    #1 0x4f6b78 in boom_internal() v8/test/fuzzer/wasm-code.cc:76:7\n    #2 0x4f6c08 in boom_intermediate() v8/test/fuzzer/wasm-code.cc:83:14\n    #3 0x4f6c38 in boom() v8/test/fuzzer/wasm-code.cc:87:7\n    #4 0x4f6cd3 in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-code.cc:100:6\n    #5 0x5125bd in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:550:13\n    #6 0x512aeb in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:501:3\n    #7 0x4f7997 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:268:6\n    #8 0x4faa80 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:517:9\n    #9 0x51a108 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10\n    #10 0x7fc7047d7f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287\n\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: ILL (<unknown module>) \n==89063==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: ILL (<unknown module>)",
+  "fault_type": "ILL",
+  "call_stack": [
+    "#1 0x4f6b78 in boom_internal() v8/test/fuzzer/wasm-code.cc:76:7",
+    "#2 0x4f6c08 in boom_intermediate() v8/test/fuzzer/wasm-code.cc:83:14",
+    "#3 0x4f6c38 in boom() v8/test/fuzzer/wasm-code.cc:87:7",
+    "#4 0x4f6cd3 in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-code.cc:100:6",
+    "#5 0x5125bd in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:550:13",
+    "#6 0x512aeb in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:501:3",
+    "#7 0x4f7997 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:268:6",
+    "#8 0x4faa80 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:517:9",
+    "#9 0x51a108 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+    "#10 0x7fc7047d7f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#1 0x4f6b78 in boom_internal() v8/test/fuzzer/wasm-code.cc:76:7",
+      "address": 5204856,
+      "function_name": "boom_internal()",
+      "function_offset": 7,
+      "source_file_name": "wasm-code.cc",
+      "source_file_path": "v8/test/fuzzer/wasm-code.cc",
+      "source_file_line": 76
+    },
+    {
+      "line": "#2 0x4f6c08 in boom_intermediate() v8/test/fuzzer/wasm-code.cc:83:14",
+      "address": 5205000,
+      "function_name": "boom_intermediate()",
+      "function_offset": 14,
+      "source_file_name": "wasm-code.cc",
+      "source_file_path": "v8/test/fuzzer/wasm-code.cc",
+      "source_file_line": 83
+    },
+    {
+      "line": "#3 0x4f6c38 in boom() v8/test/fuzzer/wasm-code.cc:87:7",
+      "address": 5205048,
+      "function_name": "boom()",
+      "function_offset": 7,
+      "source_file_name": "wasm-code.cc",
+      "source_file_path": "v8/test/fuzzer/wasm-code.cc",
+      "source_file_line": 87
+    },
+    {
+      "line": "#4 0x4f6cd3 in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-code.cc:100:6",
+      "address": 5205203,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 6,
+      "source_file_name": "wasm-code.cc",
+      "source_file_path": "v8/test/fuzzer/wasm-code.cc",
+      "source_file_line": 100
+    },
+    {
+      "line": "#5 0x5125bd in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:550:13",
+      "address": 5318077,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 13,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 550
+    },
+    {
+      "line": "#6 0x512aeb in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) third_party/libFuzzer/src/FuzzerLoop.cpp:501:3",
+      "address": 5319403,
+      "function_name": "fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long)",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerLoop.cpp",
+      "source_file_line": 501
+    },
+    {
+      "line": "#7 0x4f7997 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) third_party/libFuzzer/src/FuzzerDriver.cpp:268:6",
+      "address": 5208471,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 268
+    },
+    {
+      "line": "#8 0x4faa80 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) third_party/libFuzzer/src/FuzzerDriver.cpp:517:9",
+      "address": 5220992,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerDriver.cpp",
+      "source_file_line": 517
+    },
+    {
+      "line": "#9 0x51a108 in main third_party/libFuzzer/src/FuzzerMain.cpp:20:10",
+      "address": 5349640,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "third_party/libFuzzer/src/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#10 0x7fc7047d7f44 in __libc_start_main /build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c:287",
+      "address": 140492750552900,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/eglibc-oGUzwX/eglibc-2.19/csu/libc-start.c",
+      "source_file_line": 287
+    }
+  ],
+  "full_stack_names": [
+    "boom_internal",
+    "boom_intermediate",
+    "boom",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::Fuzzer::RunOne",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#1 0x4f6b78 in boom_internal() v8/test/fuzzer/wasm-code.cc:76:7",
+      "address": 5204856,
+      "function_name": "boom_internal()",
+      "function_offset": 7,
+      "source_file_name": "wasm-code.cc",
+      "source_file_path": "v8/test/fuzzer/wasm-code.cc",
+      "source_file_line": 76
+    },
+    {
+      "line": "#2 0x4f6c08 in boom_intermediate() v8/test/fuzzer/wasm-code.cc:83:14",
+      "address": 5205000,
+      "function_name": "boom_intermediate()",
+      "function_offset": 14,
+      "source_file_name": "wasm-code.cc",
+      "source_file_path": "v8/test/fuzzer/wasm-code.cc",
+      "source_file_line": 83
+    },
+    {
+      "line": "#3 0x4f6c38 in boom() v8/test/fuzzer/wasm-code.cc:87:7",
+      "address": 5205048,
+      "function_name": "boom()",
+      "function_offset": 7,
+      "source_file_name": "wasm-code.cc",
+      "source_file_path": "v8/test/fuzzer/wasm-code.cc",
+      "source_file_line": 87
+    },
+    {
+      "line": "#4 0x4f6cd3 in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-code.cc:100:6",
+      "address": 5205203,
+      "function_name": "wasm-code.cc",
+      "function_offset": 6,
+      "source_file_name": "wasm-code.cc",
+      "source_file_path": "v8/test/fuzzer/wasm-code.cc",
+      "source_file_line": 100
+    }
+  ],
+  "minimized_stack": [
+    "#1 0x4f6b78 in boom_internal() v8/test/fuzzer/wasm-code.cc:76:7",
+    "#2 0x4f6c08 in boom_intermediate() v8/test/fuzzer/wasm-code.cc:83:14",
+    "#3 0x4f6c38 in boom() v8/test/fuzzer/wasm-code.cc:87:7",
+    "#4 0x4f6cd3 in LLVMFuzzerTestOneInput v8/test/fuzzer/wasm-code.cc:100:6"
+  ],
+  "minimized_stack_function_names": [
+    "boom_internal",
+    "boom_intermediate",
+    "boom",
+    "wasm-code.cc"
+  ]
+}

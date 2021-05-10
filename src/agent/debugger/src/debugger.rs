@@ -2,13 +2,13 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_else_if)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::unreadable_literal)]
 #![allow(clippy::single_match)]
 #![allow(clippy::redundant_closure)]
 #![allow(clippy::redundant_clone)]
 use std::{
-    collections::HashMap,
     ffi::OsString,
     mem::MaybeUninit,
     os::windows::process::CommandExt,
@@ -17,7 +17,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use log::{debug, error, trace};
+use log::{error, trace};
 use win_util::{check_winapi, last_os_error, process};
 use winapi::{
     shared::{
@@ -34,11 +34,11 @@ use winapi::{
     },
 };
 
-use crate::target::{Module, Target};
 use crate::{
     dbghelp::{self, ModuleInfo, SymInfo, SymLineInfo},
     debug_event::{DebugEvent, DebugEventInfo},
     stack,
+    target::Target,
 };
 
 // When debugging a WoW64 process, we see STATUS_WX86_BREAKPOINT in addition to EXCEPTION_BREAKPOINT
@@ -48,131 +48,10 @@ const STATUS_WX86_BREAKPOINT: u32 = ::winapi::shared::ntstatus::STATUS_WX86_BREA
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BreakpointId(pub u64);
 
-#[derive(Copy, Clone)]
-pub(crate) enum StepState {
-    RemoveBreakpoint { pc: u64, original_byte: u8 },
-    SingleStep,
-}
-
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum BreakpointType {
     Counter,
     OneTime,
-}
-
-pub(crate) struct ModuleBreakpoint {
-    rva: u64,
-    kind: BreakpointType,
-    id: BreakpointId,
-}
-
-impl ModuleBreakpoint {
-    pub fn new(rva: u64, kind: BreakpointType, id: BreakpointId) -> Self {
-        ModuleBreakpoint { rva, kind, id }
-    }
-
-    pub fn rva(&self) -> u64 {
-        self.rva
-    }
-
-    pub fn kind(&self) -> BreakpointType {
-        self.kind
-    }
-
-    pub fn id(&self) -> BreakpointId {
-        self.id
-    }
-}
-
-#[allow(unused)]
-struct UnresolvedBreakpoint {
-    sym: String,
-    kind: BreakpointType,
-    id: BreakpointId,
-}
-
-/// A breakpoint for a specific target. We can say it is bound because we know exactly
-/// where to set it, but it might disabled.
-#[derive(Clone)]
-pub struct Breakpoint {
-    /// The address of the breakpoint.
-    ip: u64,
-
-    kind: BreakpointType,
-
-    /// Currently active?
-    enabled: bool,
-
-    /// Holds the original byte at the location.
-    original_byte: Option<u8>,
-
-    hit_count: usize,
-
-    id: BreakpointId,
-}
-
-impl Breakpoint {
-    pub fn new(
-        ip: u64,
-        kind: BreakpointType,
-        enabled: bool,
-        original_byte: Option<u8>,
-        hit_count: usize,
-        id: BreakpointId,
-    ) -> Self {
-        Breakpoint {
-            ip,
-            kind,
-            enabled,
-            original_byte,
-            hit_count,
-            id,
-        }
-    }
-
-    pub fn ip(&self) -> u64 {
-        self.ip
-    }
-
-    pub fn kind(&self) -> BreakpointType {
-        self.kind
-    }
-
-    pub(crate) fn set_kind(&mut self, kind: BreakpointType) {
-        self.kind = kind;
-    }
-
-    pub fn enabled(&self) -> bool {
-        self.enabled
-    }
-
-    pub fn set_enabled(&mut self, enabled: bool) {
-        self.enabled = enabled;
-    }
-
-    pub fn original_byte(&self) -> Option<u8> {
-        self.original_byte
-    }
-
-    pub(crate) fn set_original_byte(&mut self, original_byte: Option<u8>) {
-        self.original_byte = original_byte;
-    }
-
-    pub fn hit_count(&self) -> usize {
-        self.hit_count
-    }
-
-    pub(crate) fn increment_hit_count(&mut self) {
-        self.hit_count += 1;
-    }
-
-    pub fn id(&self) -> BreakpointId {
-        self.id
-    }
-
-    pub(crate) fn set_id(&mut self, id: BreakpointId) {
-        self.id = id;
-    }
 }
 
 pub struct StackFrame {
@@ -197,6 +76,33 @@ impl StackFrame {
     }
 }
 
+pub struct ModuleLoadInfo {
+    path: PathBuf,
+    base_address: u64,
+}
+
+impl ModuleLoadInfo {
+    pub fn new(path: impl AsRef<Path>, base_address: u64) -> Self {
+        ModuleLoadInfo {
+            path: path.as_ref().into(),
+            base_address,
+        }
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    pub fn base_address(&self) -> u64 {
+        self.base_address
+    }
+
+    pub fn name(&self) -> &Path {
+        // Unwrap guaranteed by construction, we always have a filename.
+        self.path.file_stem().unwrap().as_ref()
+    }
+}
+
 #[rustfmt::skip]
 #[allow(clippy::trivially_copy_pass_by_ref)]
 pub trait DebugEventHandler {
@@ -204,11 +110,11 @@ pub trait DebugEventHandler {
         // Continue normal exception handling processing
         DBG_EXCEPTION_NOT_HANDLED
     }
-    fn on_create_process(&mut self, _debugger: &mut Debugger, _module: &Module) {}
+    fn on_create_process(&mut self, _debugger: &mut Debugger, _module: &ModuleLoadInfo) {}
     fn on_create_thread(&mut self, _debugger: &mut Debugger) {}
     fn on_exit_process(&mut self, _debugger: &mut Debugger, _exit_code: u32) {}
     fn on_exit_thread(&mut self, _debugger: &mut Debugger, _exit_code: u32) {}
-    fn on_load_dll(&mut self, _debugger: &mut Debugger, _module: &Module) {}
+    fn on_load_dll(&mut self, _debugger: &mut Debugger, _module: &ModuleLoadInfo) {}
     fn on_unload_dll(&mut self, _debugger: &mut Debugger, _base_address: u64) {}
     fn on_output_debug_string(&mut self, _debugger: &mut Debugger, _message: String) {}
     fn on_output_debug_os_string(&mut self, _debugger: &mut Debugger, _message: OsString) {}
@@ -227,8 +133,6 @@ struct ContinueDebugEventArguments {
 pub struct Debugger {
     target: Target,
     continue_args: Option<ContinueDebugEventArguments>,
-    registered_breakpoints: HashMap<PathBuf, Vec<ModuleBreakpoint>>,
-    symbolic_breakpoints: HashMap<PathBuf, Vec<UnresolvedBreakpoint>>,
     breakpoint_count: u64,
 }
 
@@ -275,8 +179,6 @@ impl Debugger {
             let mut debugger = Debugger {
                 target,
                 continue_args: None,
-                registered_breakpoints: HashMap::default(),
-                symbolic_breakpoints: HashMap::default(),
                 breakpoint_count: 0,
             };
             callbacks.on_create_process(&mut debugger, &module);
@@ -302,7 +204,7 @@ impl Debugger {
         id
     }
 
-    pub fn register_symbolic_breakpoint(
+    pub fn new_symbolic_breakpoint(
         &mut self,
         sym: &str,
         kind: BreakpointType,
@@ -312,57 +214,28 @@ impl Debugger {
         } else {
             anyhow::bail!("no module name specified for breakpoint {}", sym);
         };
-
         let id = self.next_breakpoint_id();
-
-        if self.target.saw_initial_bp() {
-            self.target
-                .set_symbolic_breakpoint(module, func, kind, id)?;
-        } else {
-            // Defer setting the breakpoint until seeing the initial breakpoint.
-            let values = self
-                .symbolic_breakpoints
-                .entry(module.into())
-                .or_insert_with(|| Vec::new());
-
-            values.push(UnresolvedBreakpoint {
-                kind,
-                id,
-                sym: func.into(),
-            });
-        }
-
-        Ok(id)
+        self.target.new_symbolic_breakpoint(id, module, func, kind)
     }
 
-    pub fn register_breakpoint(
+    pub fn new_rva_breakpoint(
         &mut self,
         module: &Path,
         rva: u64,
         kind: BreakpointType,
-    ) -> BreakpointId {
+    ) -> Result<BreakpointId> {
         let id = self.next_breakpoint_id();
-
-        let module_breakpoints = self
-            .registered_breakpoints
-            .entry(module.into())
-            .or_insert_with(|| vec![]);
-
-        module_breakpoints.push(ModuleBreakpoint::new(rva, kind, id));
-        id
+        let module = format!("{}", module.display());
+        self.target.new_rva_breakpoint(id, module, rva, kind)
     }
 
-    pub fn register_absolute_breakpoint(
+    pub fn new_address_breakpoint(
         &mut self,
         address: u64,
         kind: BreakpointType,
     ) -> Result<BreakpointId> {
         let id = self.next_breakpoint_id();
-
-        self.target.apply_absolute_breakpoint(address, kind, id)?;
-        // TODO: find module the address belongs to and add to registered_breakpoints
-
-        Ok(id)
+        self.target.new_absolute_breakpoint(id, address, kind)
     }
 
     /// Return true if an event was process, false if timing out, or an error.
@@ -459,14 +332,6 @@ impl Debugger {
                 match self.target.load_module(info.hFile, info.lpBaseOfDll as u64) {
                     Ok(Some(module)) => {
                         callbacks.on_load_dll(self, &module);
-
-                        // We must defer adding any breakpoints until we've seen the initial
-                        // breakpoint notification from the OS. Otherwise we may set
-                        // breakpoints in startup code before the debugger is properly
-                        // initialized.
-                        if self.target.saw_initial_bp() {
-                            self.apply_module_breakpoints(module.name(), module.base_address())
-                        }
                     }
                     Ok(None) => {}
                     Err(e) => {
@@ -547,25 +412,14 @@ impl Debugger {
         match is_debugger_notification(
             info.ExceptionRecord.ExceptionCode,
             info.ExceptionRecord.ExceptionAddress as u64,
-            &self.target,
+            &mut self.target,
         ) {
             Some(DebuggerNotification::InitialBreak) => {
-                let modules = {
-                    self.target.set_saw_initial_bp();
-                    let load_symbols = !self.symbolic_breakpoints.is_empty();
-                    self.target.initial_bp(load_symbols)?;
-                    self.target
-                        .modules()
-                        .map(|(addr, module)| (*addr, (*module).name().to_owned()))
-                        .collect::<Vec<(u64, PathBuf)>>()
-                };
-                for (base_address, module) in modules {
-                    self.apply_module_breakpoints(module, base_address)
-                }
+                self.target.initial_bp()?;
                 Ok(DBG_CONTINUE)
             }
             Some(DebuggerNotification::InitialWow64Break) => {
-                self.target.set_saw_initial_wow64_bp();
+                self.target.initial_wow64_bp();
                 Ok(DBG_CONTINUE)
             }
             Some(DebuggerNotification::Clr) => Ok(DBG_CONTINUE),
@@ -576,66 +430,12 @@ impl Debugger {
                 Ok(DBG_CONTINUE)
             }
             Some(DebuggerNotification::SingleStep { thread_id }) => {
-                self.target.complete_single_step(thread_id);
+                self.target.complete_single_step(thread_id)?;
                 Ok(DBG_CONTINUE)
             }
             None => {
                 let process_handle = self.target.process_handle();
                 Ok(callbacks.on_exception(self, info, process_handle))
-            }
-        }
-    }
-
-    fn apply_module_breakpoints(&mut self, module_name: impl AsRef<Path>, base_address: u64) {
-        // We remove because we only need to resolve the RVA once even if the dll is loaded
-        // multiple times (e.g. in the same process via LoadLibrary/FreeLibrary) or if the
-        // same dll is loaded in different processes.
-        if let Some(unresolved_breakpoints) = self.symbolic_breakpoints.remove(module_name.as_ref())
-        {
-            let cloned_module_name = PathBuf::from(module_name.as_ref()).to_owned();
-            let rva_breakpoints = self
-                .registered_breakpoints
-                .entry(cloned_module_name)
-                .or_insert_with(|| Vec::new());
-
-            match dbghelp::lock() {
-                Ok(dbghelp) => {
-                    for bp in unresolved_breakpoints {
-                        match dbghelp.sym_from_name(
-                            self.target.process_handle(),
-                            module_name.as_ref(),
-                            &bp.sym,
-                        ) {
-                            Ok(sym) => {
-                                rva_breakpoints.push(ModuleBreakpoint::new(
-                                    sym.address() - base_address,
-                                    bp.kind,
-                                    bp.id,
-                                ));
-                            }
-                            Err(e) => {
-                                debug!(
-                                    "Can't set symbolic breakpoint {}!{}: {}",
-                                    module_name.as_ref().display(),
-                                    bp.sym,
-                                    e
-                                );
-                            }
-                        }
-                    }
-                }
-                Err(e) => {
-                    error!("Can't set symbolic breakpoints: {}", e);
-                }
-            }
-        }
-
-        if let Some(breakpoints) = self.registered_breakpoints.get(module_name.as_ref()) {
-            if let Err(e) = self
-                .target
-                .apply_module_breakpoints(base_address, breakpoints)
-            {
-                error!("Error applying breakpoints: {}", e);
             }
         }
     }
@@ -647,7 +447,7 @@ impl Debugger {
         // We could retry in a loop (apparently it can fail but later
         // succeed), but symbols aren't strictly necessary, so we won't
         // be too aggressive in dealing with failures.
-        let resolve_symbols = self.target.sym_initialize().is_ok();
+        let resolve_symbols = self.target.maybe_sym_initialize().is_ok();
         return stack::get_stack(
             self.target.process_handle(),
             self.target.current_thread_handle(),
@@ -678,17 +478,16 @@ impl Debugger {
         self.target.read_register_u64(reg)
     }
 
+    pub fn read_program_counter(&mut self) -> Result<u64> {
+        self.target.read_program_counter()
+    }
+
     pub fn read_flags_register(&mut self) -> Result<u32> {
         self.target.read_flags_register()
     }
 
-    pub fn get_current_target_memory<T: Copy>(
-        &self,
-        remote_address: LPCVOID,
-        buf: &mut [T],
-    ) -> Result<()> {
-        process::read_memory_array(self.target.process_handle(), remote_address, buf)?;
-        Ok(())
+    pub fn read_memory(&mut self, remote_address: LPCVOID, buf: &mut [impl Copy]) -> Result<()> {
+        self.target.read_memory(remote_address, buf)
     }
 
     pub fn get_current_frame(&self) -> Result<StackFrame> {
@@ -699,6 +498,7 @@ impl Debugger {
         dbghlp.stackwalk_ex(
             self.target.process_handle(),
             self.target.current_thread_handle(),
+            false, /* ignore inline frames */
             |frame| {
                 return_address = frame.AddrReturn;
                 stack_pointer = frame.AddrStack;
@@ -729,7 +529,7 @@ enum DebuggerNotification {
 fn is_debugger_notification(
     exception_code: u32,
     exception_address: u64,
-    target: &Target,
+    target: &mut Target,
 ) -> Option<DebuggerNotification> {
     // The CLR debugger notification exception is not a crash:
     //   https://github.com/dotnet/coreclr/blob/9ee6b8a33741cc5f3eb82e990646dd3a81de996a/src/debug/inc/dbgipcevents.h#L37
