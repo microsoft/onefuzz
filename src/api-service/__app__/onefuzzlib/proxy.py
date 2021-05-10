@@ -180,7 +180,7 @@ class Proxy(ORMMixin):
             ):
                 logging.info(
                     PROXY_LOG_PREFIX
-                    + "proxy older than 7 days: proxy-created:%s state:%s",
+                    + "proxy older than 7 days:proxy-created:%s state:%s",
                     self.created_timestamp,
                     self.state,
                 )
