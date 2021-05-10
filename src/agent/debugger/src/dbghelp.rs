@@ -8,6 +8,7 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::upper_case_acronyms)]
+
 /// This module defines a wrapper around dbghelp apis so they can be used in a thread safe manner
 /// as well as providing a more Rust like api.
 use std::{
@@ -34,8 +35,9 @@ use winapi::{
         dbghelp::{
             AddrModeFlat, StackWalkEx, SymCleanup, SymFindFileInPathW, SymFromNameW,
             SymFunctionTableAccess64, SymGetModuleBase64, SymInitializeW, SymLoadModuleExW,
-            IMAGEHLP_LINEW64, PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW,
-            SYMOPT_DEBUG, SYMOPT_DEFERRED_LOADS, SYMOPT_FAIL_CRITICAL_ERRORS, SYMOPT_NO_PROMPTS,
+            IMAGEHLP_LINEW64, INLINE_FRAME_CONTEXT_IGNORE, INLINE_FRAME_CONTEXT_INIT,
+            PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW, SYMOPT_DEBUG,
+            SYMOPT_DEFERRED_LOADS, SYMOPT_FAIL_CRITICAL_ERRORS, SYMOPT_NO_PROMPTS,
             SYM_STKWALK_DEFAULT,
         },
         errhandlingapi::GetLastError,
@@ -537,6 +539,7 @@ impl DebugHelpGuard {
         &self,
         process_handle: HANDLE,
         thread_handle: HANDLE,
+        walk_inline_frames: bool,
         mut f: F,
     ) -> Result<()> {
         let mut frame_context = get_thread_frame(process_handle, thread_handle)?;
@@ -548,6 +551,11 @@ impl DebugHelpGuard {
         frame.AddrStack.Mode = AddrModeFlat;
         frame.AddrFrame.Offset = frame_context.frame_pointer();
         frame.AddrFrame.Mode = AddrModeFlat;
+        frame.InlineFrameContext = if walk_inline_frames {
+            INLINE_FRAME_CONTEXT_INIT
+        } else {
+            INLINE_FRAME_CONTEXT_IGNORE
+        };
 
         loop {
             let success = unsafe {
