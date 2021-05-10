@@ -31,8 +31,8 @@ from ..__version__ import __version__
 from ..azure.vmss import get_instance_id
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
-from .shrink_queue import ShrinkQueue
 from ..versions import is_minimum_version
+from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
