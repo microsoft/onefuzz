@@ -40,4 +40,6 @@ fn main() -> Result<()> {
 }
 
 #[cfg(target_os = "linux")]
-fn main() {}
+fn main() -> Result<()> {
+    Ok(())
+}

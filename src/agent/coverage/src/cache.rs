@@ -72,11 +72,20 @@ pub struct ModuleInfo {
 impl ModuleInfo {
     #[cfg(target_os = "linux")]
     pub fn new_elf(path: &ModulePath) -> Result<Self> {
+        use crate::elf::{ElfContext, ElfSancovBasicBlockProvider};
+
         let data = std::fs::read(path)?;
         let elf = goblin::elf::Elf::parse(&data)?;
         let module = ModuleIndex::index_elf(path.clone(), &elf)?;
-        let disasm = crate::disasm::ModuleDisassembler::new(&module, &data)?;
-        let blocks = disasm.find_blocks();
+
+        let ctx = ElfContext::new(&data, &elf)?;
+        let mut sancov_provider = ElfSancovBasicBlockProvider::new(ctx);
+        let blocks = if let Ok(blocks) = sancov_provider.provide() {
+            blocks
+        } else {
+            let disasm = crate::disasm::ModuleDisassembler::new(&module, &data)?;
+            disasm.find_blocks()
+        };
 
         Ok(Self { module, blocks })
     }
