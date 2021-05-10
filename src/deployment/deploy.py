@@ -65,9 +65,10 @@ from data_migration import migrate
 from registration import (
     OnefuzzAppRole,
     add_application_password,
-    assign_scaleset_role,
+    assign_app_role,
     authorize_application,
     register_application,
+    set_app_audience,
     update_pool_registration,
 )
 
@@ -76,6 +77,7 @@ ONEFUZZ_CLI_APP = "72f1562a-8c0c-41ea-beb9-fa2b71c80134"
 ONEFUZZ_CLI_AUTHORITY = (
     "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
 )
+COMMON_AUTHORITY = "https://login.microsoftonline.com/common"
 TELEMETRY_NOTICE = (
     "Telemetry collection on stats and OneFuzz failures are sent to Microsoft. "
     "To disable, delete the ONEFUZZ_TELEMETRY application setting in the "
@@ -118,8 +120,11 @@ class Client:
         migrations: List[str],
         export_appinsights: bool,
         log_service_principal: bool,
+        multi_tenant_domain: str,
         upgrade: bool,
+        subscription_id: Optional[str],
     ):
+        self.subscription_id = subscription_id
         self.resource_group = resource_group
         self.arm_template = arm_template
         self.location = location
@@ -130,14 +135,19 @@ class Client:
         self.instance_specific = instance_specific
         self.third_party = third_party
         self.create_registration = create_registration
+        self.multi_tenant_domain = multi_tenant_domain
         self.upgrade = upgrade
         self.results: Dict = {
             "client_id": client_id,
             "client_secret": client_secret,
         }
+        if self.multi_tenant_domain:
+            authority = COMMON_AUTHORITY
+        else:
+            authority = ONEFUZZ_CLI_AUTHORITY
         self.cli_config: Dict[str, Union[str, UUID]] = {
             "client_id": ONEFUZZ_CLI_APP,
-            "authority": ONEFUZZ_CLI_AUTHORITY,
+            "authority": authority,
         }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
@@ -163,11 +173,16 @@ class Client:
             self.workbook_data = json.load(f)
 
     def get_subscription_id(self) -> str:
+        if self.subscription_id:
+            return self.subscription_id
         profile = get_cli_profile()
-        return cast(str, profile.get_subscription_id())
+        self.subscription_id = cast(str, profile.get_subscription_id())
+        return self.subscription_id
 
     def get_location_display_name(self) -> str:
-        location_client = get_client_from_cli_profile(SubscriptionClient)
+        location_client = get_client_from_cli_profile(
+            SubscriptionClient, subscription_id=self.get_subscription_id()
+        )
         locations = location_client.subscriptions.list_locations(
             self.get_subscription_id()
         )
@@ -186,7 +201,9 @@ class Client:
         with open(self.arm_template, "r") as handle:
             arm = json.load(handle)
 
-        client = get_client_from_cli_profile(ResourceManagementClient)
+        client = get_client_from_cli_profile(
+            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        )
         providers = {x.namespace: x for x in client.providers.list()}
 
         unsupported = []
@@ -225,12 +242,11 @@ class Client:
             sys.exit(1)
 
     def create_password(self, object_id: UUID) -> Tuple[str, str]:
-        return add_application_password(object_id)
+        return add_application_password(object_id, self.get_subscription_id())
 
     def setup_rbac(self) -> None:
         """
         Setup the client application for the OneFuzz instance.
-
         By default, Service Principals do not have access to create
         client applications in AAD.
         """
@@ -238,7 +254,9 @@ class Client:
             logger.info("using existing client application")
             return
 
-        client = get_client_from_cli_profile(GraphRbacManagementClient)
+        client = get_client_from_cli_profile(
+            GraphRbacManagementClient, subscription_id=self.get_subscription_id()
+        )
         logger.info("checking if RBAC already exists")
 
         try:
@@ -274,7 +292,14 @@ class Client:
 
         if not existing:
             logger.info("creating Application registration")
-            url = "https://%s.azurewebsites.net" % self.application_name
+
+            if self.multi_tenant_domain:
+                url = "https://%s/%s" % (
+                    self.multi_tenant_domain,
+                    self.application_name,
+                )
+            else:
+                url = "https://%s.azurewebsites.net" % self.application_name
 
             params = ApplicationCreateParameters(
                 display_name=self.application_name,
@@ -291,6 +316,7 @@ class Client:
                 ],
                 app_roles=app_roles,
             )
+
             app = client.applications.create(params)
 
             logger.info("creating service principal")
@@ -300,7 +326,33 @@ class Client:
                 service_principal_type="Application",
                 app_id=app.app_id,
             )
-            client.service_principals.create(service_principal_params)
+
+            def try_sp_create() -> None:
+                error: Optional[Exception] = None
+                for _ in range(10):
+                    try:
+                        client.service_principals.create(service_principal_params)
+                        return
+                    except GraphErrorException as err:
+                        # work around timing issue when creating service principal
+                        # https://github.com/Azure/azure-cli/issues/14767
+                        if (
+                            "service principal being created must in the local tenant"
+                            not in str(err)
+                        ):
+                            raise err
+                    logging.warning(
+                        "creating service principal failed with an error that occurs "
+                        "due to AAD race conditions"
+                    )
+                    time.sleep(60)
+                if error is None:
+                    raise Exception("service principal creation failed")
+                else:
+                    raise error
+
+            try_sp_create()
+
         else:
             app = existing[0]
             existing_role_values = [app_role.value for app_role in app.app_roles]
@@ -323,6 +375,27 @@ class Client:
                     app.object_id, ApplicationUpdateParameters(app_roles=app_roles)
                 )
 
+        if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
+            url = "https://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+            client.applications.patch(
+                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+            )
+            set_app_audience(app.object_id, "AzureADMultipleOrgs")
+        elif (
+            not self.multi_tenant_domain
+            and app.sign_in_audience == "AzureADMultipleOrgs"
+        ):
+            set_app_audience(app.object_id, "AzureADMyOrg")
+            url = "https://%s.azurewebsites.net" % self.application_name
+            client.applications.patch(
+                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+            )
+        else:
+            logger.debug("No change to App Registration signInAudence setting")
+
             creds = list(client.applications.list_password_credentials(app.object_id))
             client.applications.update_password_credentials(app.object_id, creds)
 
@@ -338,15 +411,30 @@ class Client:
                 "subscription, creating a new one"
             )
             app_info = register_application(
-                "onefuzz-cli", self.application_name, OnefuzzAppRole.CliClient
+                "onefuzz-cli",
+                self.application_name,
+                OnefuzzAppRole.CliClient,
+                self.get_subscription_id(),
             )
+            if self.multi_tenant_domain:
+                authority = COMMON_AUTHORITY
+            else:
+                authority = app_info.authority
             self.cli_config = {
                 "client_id": app_info.client_id,
-                "authority": app_info.authority,
+                "authority": authority,
             }
 
         else:
             authorize_application(uuid.UUID(ONEFUZZ_CLI_APP), app.app_id)
+            if self.multi_tenant_domain:
+                authority = COMMON_AUTHORITY
+            else:
+                authority = cli_app.authority
+            self.cli_config = {
+                "client_id": cli_app.client_id,
+                "authority": authority,
+            }
 
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password
@@ -363,7 +451,9 @@ class Client:
         with open(self.arm_template, "r") as template_handle:
             template = json.load(template_handle)
 
-        client = get_client_from_cli_profile(ResourceManagementClient)
+        client = get_client_from_cli_profile(
+            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        )
         client.resource_groups.create_or_update(
             self.resource_group, {"location": self.location}
         )
@@ -371,12 +461,31 @@ class Client:
         expiry = (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
+
+        if self.multi_tenant_domain:
+            # clear the value in the Issuer Url field:
+            # https://docs.microsoft.com/en-us/sharepoint/dev/spfx/use-aadhttpclient-enterpriseapi-multitenant
+            app_func_audience = "https://%s/%s" % (
+                self.multi_tenant_domain,
+                self.application_name,
+            )
+            app_func_issuer = ""
+            multi_tenant_domain = {"value": self.multi_tenant_domain}
+        else:
+            app_func_audience = "https://%s.azurewebsites.net" % self.application_name
+            tenant_oid = str(self.cli_config["authority"]).split("/")[-1]
+            app_func_issuer = "https://sts.windows.net/%s/" % tenant_oid
+            multi_tenant_domain = {"value": ""}
+
         params = {
+            "app_func_audience": {"value": app_func_audience},
             "name": {"value": self.application_name},
             "owner": {"value": self.owner},
             "clientId": {"value": self.results["client_id"]},
             "clientSecret": {"value": self.results["client_secret"]},
+            "app_func_issuer": {"value": app_func_issuer},
             "signedExpiry": {"value": expiry},
+            "multi_tenant_domain": multi_tenant_domain,
             "workbookData": {"value": self.workbook_data},
         }
         deployment = Deployment(
@@ -424,9 +533,11 @@ class Client:
             logger.info("Upgrading: skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
-        assign_scaleset_role(
+        assign_app_role(
             self.application_name,
             self.results["deploy"]["scaleset-identity"]["value"],
+            self.get_subscription_id(),
+            OnefuzzAppRole.ManagedNode,
         )
 
     def apply_migrations(self) -> None:
@@ -463,7 +574,9 @@ class Client:
         logger.info("creating eventgrid subscription")
         src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
         dst_resource_id = self.results["deploy"]["func-storage"]["value"]
-        client = get_client_from_cli_profile(StorageManagementClient)
+        client = get_client_from_cli_profile(
+            StorageManagementClient, subscription_id=self.get_subscription_id()
+        )
         event_subscription_info = EventSubscription(
             destination=StorageQueueEventSubscriptionDestination(
                 resource_id=dst_resource_id, queue_name="file-changes"
@@ -480,7 +593,9 @@ class Client:
             ),
         )
 
-        client = get_client_from_cli_profile(EventGridManagementClient)
+        client = get_client_from_cli_profile(
+            EventGridManagementClient, subscription_id=self.get_subscription_id()
+        )
         result = client.event_subscriptions.create_or_update(
             src_resource_id, "onefuzz1", event_subscription_info
         ).result()
@@ -554,7 +669,8 @@ class Client:
         )
 
         app_insight_client = get_client_from_cli_profile(
-            ApplicationInsightsManagementClient
+            ApplicationInsightsManagementClient,
+            subscription_id=self.get_subscription_id(),
         )
 
         to_delete = []
@@ -744,7 +860,7 @@ class Client:
     def update_registration(self) -> None:
         if not self.create_registration:
             return
-        update_pool_registration(self.application_name)
+        update_pool_registration(self.application_name, self.get_subscription_id())
 
     def done(self) -> None:
         logger.info(TELEMETRY_NOTICE)
@@ -753,13 +869,17 @@ class Client:
             if "client_secret" in self.cli_config
             else ""
         )
+        multi_tenant_domain = ""
+        if self.multi_tenant_domain:
+            multi_tenant_domain = "--tenant_domain %s" % self.multi_tenant_domain
         logger.info(
             "Update your CLI config via: onefuzz config --endpoint "
-            "https://%s.azurewebsites.net --authority %s --client_id %s %s",
+            "https://%s.azurewebsites.net --authority %s --client_id %s %s %s",
             self.application_name,
             self.cli_config["authority"],
             self.cli_config["client_id"],
             client_secret_arg,
+            multi_tenant_domain,
         )
 
 
@@ -776,11 +896,14 @@ def arg_file(arg: str) -> str:
 
 
 def main() -> None:
-    states = [
+    rbac_only_states = [
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
+    ]
+
+    full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
@@ -836,8 +959,8 @@ def main() -> None:
     parser.add_argument("--client_secret")
     parser.add_argument(
         "--start_at",
-        default=states[0][0],
-        choices=[x[0] for x in states],
+        default=full_deployment_states[0][0],
+        choices=[x[0] for x in full_deployment_states],
         help=(
             "Debug deployments by starting at a specific state.  "
             "NOT FOR PRODUCTION USE.  (default: %(default)s)"
@@ -872,6 +995,22 @@ def main() -> None:
         action="store_true",
         help="display service prinipal with info log level",
     )
+    parser.add_argument(
+        "--multi_tenant_domain",
+        type=str,
+        default=None,
+        help="enable multi-tenant authentication with this tenant domain",
+    )
+    parser.add_argument(
+        "--subscription_id",
+        type=str,
+    )
+    parser.add_argument(
+        "--rbac_only",
+        action="store_true",
+        help="execute only the steps required to create the rbac resources",
+    )
+
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -895,7 +1034,9 @@ def main() -> None:
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
         log_service_principal=args.log_service_principal,
+        multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
+        subscription_id=args.subscription_id,
     )
     if args.verbose:
         level = logging.DEBUG
@@ -905,6 +1046,15 @@ def main() -> None:
     logging.basicConfig(level=level)
 
     logging.getLogger("deploy").setLevel(logging.INFO)
+
+    if args.rbac_only:
+        logger.warning(
+            "'rbac_only' specified. The deployment will execute "
+            "only the steps required to create the rbac resources"
+        )
+        states = rbac_only_states
+    else:
+        states = full_deployment_states
 
     if args.start_at != states[0][0]:
         logger.warning(
