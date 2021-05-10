@@ -194,6 +194,10 @@ pub fn new_test_result(
         test_stdout: debugger_result.stdout,
         test_stderr: debugger_result.stderr,
         exit_status: debugger_result.exit_status,
+        covered_blocks: debugger_result
+            .coverage
+            .as_ref()
+            .map_or(0, |c| c.covered_blocks()),
     }
 }
 
@@ -297,6 +301,9 @@ pub struct TestResult {
 
     /// How did the program exit - normally (so we have a proper exit code) or was it terminated?
     pub exit_status: ExitStatus,
+
+    /// Count of blocks covered
+    pub covered_blocks: u64,
 }
 
 impl TestResult {

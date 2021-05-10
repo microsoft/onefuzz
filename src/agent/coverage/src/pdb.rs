@@ -41,7 +41,7 @@ pub fn find_pdb_path(pe_path: &Path, pe: &PE, target_handle: Option<HANDLE>) -> 
     let cv_filename = Path::new(cv_filename);
 
     // If the PE-specified PDB file exists on disk, use that.
-    if std::fs::metadata(&cv_filename)?.is_file() {
+    if std::fs::metadata(&cv_filename).map_or(false, |md| md.is_file()) {
         return Ok(cv_filename.to_owned());
     }
 

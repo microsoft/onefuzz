@@ -19,7 +19,7 @@ use winapi::{
 };
 
 use crate::{
-    breakpoint::{self, ResolvedBreakpoint, UnresolvedBreakpoint},
+    breakpoint::{self, ResolvedBreakpoint, UnresolvedBreakpoint, UnresolvedCoverageBreakpoints},
     dbghelp::{self, FrameContext},
     debugger::{BreakpointId, BreakpointType, ModuleLoadInfo},
     module::{self, Machine, Module},
@@ -83,13 +83,6 @@ impl ThreadInfo {
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
-enum SymInitalizeState {
-    NotInitialized,
-    InitializeNeeded,
-    Initialized,
-}
-
 pub struct Target {
     process_id: DWORD,
     process_handle: HANDLE,
@@ -99,9 +92,6 @@ pub struct Target {
     saw_initial_wow64_bp: bool,
     wow64: bool,
 
-    // Track if we need to call SymInitialize for the process and if we need to notify
-    // dbghelp about loaded/unloaded dlls.
-    sym_initialize_state: SymInitalizeState,
     exited: bool,
 
     thread_info: fnv::FnvHashMap<DWORD, ThreadInfo>,
@@ -118,6 +108,8 @@ pub struct Target {
     // Breakpoints that are not yet resolved to a virtual address, so either an RVA or symbol.
     unresolved_breakpoints: Vec<UnresolvedBreakpoint>,
 
+    unresolved_coverage_breakpoints: Vec<UnresolvedCoverageBreakpoints>,
+
     // Map of thread to stepping state (e.g. breakpoint address to restore breakpoints)
     single_step: fnv::FnvHashMap<DWORD, StepState>,
 
@@ -133,12 +125,25 @@ impl Target {
         thread_id: DWORD,
         process_handle: HANDLE,
         thread_handle: HANDLE,
-    ) -> Self {
+    ) -> Result<Self> {
         let mut thread_handles = fnv::FnvHashMap::default();
         let wow64 = process::is_wow64_process(process_handle);
         thread_handles.insert(thread_id, ThreadInfo::new(thread_id, thread_handle, wow64));
 
-        Self {
+        {
+            let dbghelp = dbghelp::lock()?;
+            if let Err(e) = dbghelp.sym_initialize(process_handle) {
+                error!("Error in SymInitializeW: {:?}", e);
+
+                if let Err(e) = dbghelp.sym_cleanup(process_handle) {
+                    error!("Error in SymCleanup: {:?}", e);
+                }
+
+                return Err(e);
+            }
+        }
+
+        Ok(Self {
             process_id,
             current_thread_handle: thread_handle,
             current_thread_id: thread_id,
@@ -146,15 +151,15 @@ impl Target {
             saw_initial_bp: false,
             saw_initial_wow64_bp: false,
             wow64,
-            sym_initialize_state: SymInitalizeState::NotInitialized,
             exited: false,
             thread_info: thread_handles,
             current_context: None,
             modules: fnv::FnvHashMap::default(),
             unresolved_breakpoints: vec![],
+            unresolved_coverage_breakpoints: vec![],
             single_step: fnv::FnvHashMap::default(),
             restore_breakpoint_pc: None,
-        }
+        })
     }
 
     pub fn current_thread_handle(&self) -> HANDLE {
@@ -205,8 +210,9 @@ impl Target {
     pub fn initial_bp(&mut self) -> Result<()> {
         self.saw_initial_bp = true;
 
-        if !self.unresolved_breakpoints.is_empty() {
-            self.maybe_sym_initialize()?;
+        if !self.unresolved_breakpoints.is_empty()
+            || !self.unresolved_coverage_breakpoints.is_empty()
+        {
             self.try_resolve_all_unresolved_breakpoints();
             for module in self.modules.values_mut() {
                 module.apply_breakpoints(self.process_handle)?;
@@ -221,17 +227,36 @@ impl Target {
     }
 
     fn try_resolve_all_unresolved_breakpoints(&mut self) {
-        // borrowck - take ownership from self so we call `try_resolve_unresolved_breakpoint`.
-        let mut unresolved_breakpoints = std::mem::take(&mut self.unresolved_breakpoints);
-        unresolved_breakpoints.retain(|bp| match self.try_resolve_unresolved_breakpoint(bp) {
-            Ok(resolved) => !resolved,
-            Err(err) => {
-                debug!("Error resolving breakpoint: {:?}", err);
-                true
-            }
-        });
-        assert!(self.unresolved_breakpoints.is_empty());
-        self.unresolved_breakpoints = unresolved_breakpoints;
+        if !self.unresolved_breakpoints.is_empty() {
+            // borrowck - take ownership from self so we call `try_resolve_unresolved_breakpoint`.
+            let mut unresolved_breakpoints = std::mem::take(&mut self.unresolved_breakpoints);
+            unresolved_breakpoints.retain(|bp| match self.try_resolve_unresolved_breakpoint(bp) {
+                Ok(resolved) => !resolved,
+                Err(err) => {
+                    debug!("Error resolving breakpoint: {:?}", err);
+                    true
+                }
+            });
+            assert!(self.unresolved_breakpoints.is_empty());
+            self.unresolved_breakpoints = unresolved_breakpoints;
+        }
+
+        if !self.unresolved_coverage_breakpoints.is_empty() {
+            // borrowck - take ownership from self so we call `try_resolve_unresolved_breakpoint`.
+            let mut unresolved_coverage_breakpoints =
+                std::mem::take(&mut self.unresolved_coverage_breakpoints);
+            unresolved_coverage_breakpoints.retain(|bps| {
+                match self.try_resolve_coverage_breakpoints(bps) {
+                    Ok(resolved) => !resolved,
+                    Err(err) => {
+                        debug!("Error resolving coverage breakpoints: {:?}", err);
+                        true
+                    }
+                }
+            });
+            assert!(self.unresolved_coverage_breakpoints.is_empty());
+            self.unresolved_coverage_breakpoints = unresolved_coverage_breakpoints;
+        }
     }
 
     /// Try to resolve a single unresolved breakpoint, returning true if the breakpoint
@@ -249,7 +274,7 @@ impl Target {
         match breakpoint.extra_info() {
             breakpoint::ExtraInfo::Rva(rva) => {
                 if let Some(module) = self.module_from_name_mut(breakpoint.module()) {
-                    let address = module.base_address() + *rva;
+                    let address = module.base_address() + *rva as u64;
                     module.new_breakpoint(
                         breakpoint.id(),
                         breakpoint.kind(),
@@ -289,6 +314,22 @@ impl Target {
         Ok(resolved)
     }
 
+    fn try_resolve_coverage_breakpoints(
+        &mut self,
+        breakpoints: &UnresolvedCoverageBreakpoints,
+    ) -> Result<bool> {
+        if !self.saw_initial_bp {
+            return Ok(false);
+        }
+
+        let process_handle = self.process_handle; // borrowck
+        if let Some(module) = self.module_from_name_mut(breakpoints.module()) {
+            module.add_coverage_breakpoints(breakpoints, process_handle)?;
+        }
+
+        Ok(true)
+    }
+
     pub fn new_symbolic_breakpoint(
         &mut self,
         id: BreakpointId,
@@ -296,7 +337,6 @@ impl Target {
         func: impl AsRef<str>,
         kind: BreakpointType,
     ) -> Result<BreakpointId> {
-        self.maybe_sym_initialize()?;
         let bp = UnresolvedBreakpoint::from_symbol(id, kind, module.as_ref(), func.as_ref());
         if !self.try_resolve_unresolved_breakpoint(&bp)? {
             self.unresolved_breakpoints.push(bp);
@@ -308,7 +348,7 @@ impl Target {
         &mut self,
         id: BreakpointId,
         module: impl AsRef<str>,
-        rva: u64,
+        rva: u32,
         kind: BreakpointType,
     ) -> Result<BreakpointId> {
         let bp = UnresolvedBreakpoint::from_rva(id, kind, module.as_ref(), rva);
@@ -316,6 +356,20 @@ impl Target {
             self.unresolved_breakpoints.push(bp);
         }
         Ok(id)
+    }
+
+    pub fn new_coverage_breakpoints(
+        &mut self,
+        module: impl AsRef<str>,
+        pairs: &[(BreakpointId, u32)],
+        kind: BreakpointType,
+    ) -> Result<()> {
+        let bps = UnresolvedCoverageBreakpoints::new(module.as_ref(), pairs.to_vec(), kind);
+        if !self.try_resolve_coverage_breakpoints(&bps)? {
+            self.unresolved_coverage_breakpoints.push(bps);
+        }
+
+        Ok(())
     }
 
     pub fn new_absolute_breakpoint(
@@ -382,48 +436,6 @@ impl Target {
         Ok(())
     }
 
-    pub fn maybe_sym_initialize(&mut self) -> Result<()> {
-        if self.sym_initialize_state == SymInitalizeState::Initialized {
-            return Ok(());
-        }
-
-        if self.sym_initialize_state == SymInitalizeState::NotInitialized {
-            self.sym_initialize_state = SymInitalizeState::InitializeNeeded;
-        }
-
-        if self.saw_initial_bp && self.sym_initialize_state == SymInitalizeState::InitializeNeeded {
-            self.sym_initialize()?;
-            self.sym_initialize_state = SymInitalizeState::Initialized;
-        }
-
-        Ok(())
-    }
-
-    fn sym_initialize(&mut self) -> Result<()> {
-        let dbghelp = dbghelp::lock()?;
-        if let Err(e) = dbghelp.sym_initialize(self.process_handle) {
-            error!("Error in SymInitializeW: {:?}", e);
-
-            if let Err(e) = dbghelp.sym_cleanup(self.process_handle) {
-                error!("Error in SymCleanup: {:?}", e);
-            }
-
-            return Err(e);
-        }
-
-        for (_, module) in self.modules.iter_mut() {
-            if let Err(e) = module.sym_load_module(self.process_handle) {
-                error!(
-                    "Error loading symbols for module {}: {:?}",
-                    module.path().display(),
-                    e
-                );
-            }
-        }
-
-        Ok(())
-    }
-
     /// Register the module loaded at `base_address`, returning the module name if the module
     /// is not a native dll in a wow64 process.
     pub fn load_module(
@@ -444,10 +456,8 @@ impl Target {
             return Ok(None);
         }
 
-        if self.sym_initialize_state == SymInitalizeState::Initialized {
-            if let Err(e) = module.sym_load_module(self.process_handle) {
-                error!("Error loading symbols: {:?}", e);
-            }
+        if let Err(e) = module.sym_load_module(self.process_handle) {
+            error!("Error loading symbols: {:?}", e);
         }
 
         let module_load_info = ModuleLoadInfo::new(module.path(), base_address);
@@ -638,10 +648,9 @@ impl Target {
     pub fn set_exited(&mut self) -> Result<()> {
         self.exited = true;
 
-        if self.sym_initialize_state == SymInitalizeState::Initialized {
-            let dbghelp = dbghelp::lock()?;
-            dbghelp.sym_cleanup(self.process_handle)?;
-        }
+        let dbghelp = dbghelp::lock()?;
+        dbghelp.sym_cleanup(self.process_handle)?;
+
         Ok(())
     }
 }

@@ -105,16 +105,6 @@ impl<'c> Recorder<'c> {
 
     pub fn on_create_process(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) -> Result<()> {
         log::debug!("process created: {}", module.path().display());
-
-        // TODO: we should avoid loading symbols if the module is in the cache.
-        if let Err(err) = dbg.target().maybe_sym_initialize() {
-            log::error!(
-                "unable to initialize symbol handler for new process {}: {:?}",
-                module.path().display(),
-                err,
-            );
-        }
-
         self.insert_module(dbg, module)
     }
 
@@ -251,11 +241,10 @@ impl Breakpoints {
         let module_index = self.modules.len();
         self.modules.push(module_path);
 
-        for offset in offsets {
-            // Register the breakpoint in the running target address space.
-            let id =
-                dbg.new_rva_breakpoint(module.name(), offset as u64, BreakpointType::OneTime)?;
-
+        // Register the breakpoints in the running target address space.
+        let id_offset_pairs =
+            dbg.new_coverage_breakpoints(module.name(), offsets, BreakpointType::OneTime)?;
+        for (id, offset) in id_offset_pairs {
             // Associate the opaque `BreakpointId` with the module and offset.
             self.registered.insert(id, (module_index, offset));
         }

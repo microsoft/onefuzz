@@ -168,7 +168,7 @@ impl Debugger {
             trace!("{}", de);
 
             let mut target =
-                Target::new(de.process_id(), de.thread_id(), info.hProcess, info.hThread);
+                Target::new(de.process_id(), de.thread_id(), info.hProcess, info.hThread)?;
 
             let base_address = info.lpBaseOfImage as u64;
             let module = target
@@ -221,12 +221,28 @@ impl Debugger {
     pub fn new_rva_breakpoint(
         &mut self,
         module: &Path,
-        rva: u64,
+        rva: u32,
         kind: BreakpointType,
     ) -> Result<BreakpointId> {
         let id = self.next_breakpoint_id();
         let module = format!("{}", module.display());
         self.target.new_rva_breakpoint(id, module, rva, kind)
+    }
+
+    pub fn new_coverage_breakpoints(
+        &mut self,
+        module: &Path,
+        rvas: impl Iterator<Item = u32>,
+        kind: BreakpointType,
+    ) -> Result<Vec<(BreakpointId, u32)>> {
+        let mut pairs = vec![];
+        for rva in rvas {
+            pairs.push((self.next_breakpoint_id(), rva));
+        }
+
+        let module = format!("{}", module.display());
+        self.target.new_coverage_breakpoints(module, &pairs, kind)?;
+        Ok(pairs)
     }
 
     pub fn new_address_breakpoint(
@@ -441,17 +457,10 @@ impl Debugger {
     }
 
     pub fn get_current_stack(&mut self) -> Result<stack::DebugStack> {
-        // If we fail to initialize symbols, we'll skip collecting symbols
-        // when walking the stack. Note that if we see multiple exceptions
-        // in the same process, we will retry initializing symbols.
-        // We could retry in a loop (apparently it can fail but later
-        // succeed), but symbols aren't strictly necessary, so we won't
-        // be too aggressive in dealing with failures.
-        let resolve_symbols = self.target.maybe_sym_initialize().is_ok();
         return stack::get_stack(
             self.target.process_handle(),
             self.target.current_thread_handle(),
-            resolve_symbols,
+            true,
         );
     }
 

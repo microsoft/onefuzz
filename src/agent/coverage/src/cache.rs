@@ -3,7 +3,7 @@
 
 use std::collections::{BTreeSet, HashMap};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 #[cfg(target_os = "windows")]
@@ -96,15 +96,18 @@ impl ModuleInfo {
 
         let handle = handle.into();
 
-        let file = std::fs::File::open(path)?;
+        let file = std::fs::File::open(path).with_context(|| format!("mapping {}", path))?;
         let data = unsafe { memmap2::Mmap::map(&file)? };
 
-        let pe = goblin::pe::PE::parse(&data)?;
+        let pe = goblin::pe::PE::parse(&data).context("parsing PE")?;
         let module = ModuleIndex::index_pe(path.clone(), &pe);
 
-        let pdb_path = crate::pdb::find_pdb_path(path.as_ref(), &pe, handle)?;
-        let pdb = std::fs::File::open(&pdb_path)?;
-        let mut pdb = pdb::PDB::open(pdb)?;
+        let pdb_path =
+            crate::pdb::find_pdb_path(path.as_ref(), &pe, handle).context("searching for pdb")?;
+        let pdb = std::fs::File::open(&pdb_path)
+            .with_context(|| format!("reading pdb {}", pdb_path.display()))?;
+        let mut pdb =
+            pdb::PDB::open(pdb).with_context(|| format!("reading pdb {}", pdb_path.display()))?;
 
         let mut sancov_provider = PeSancovBasicBlockProvider::new(&data, &pe, &mut pdb);
 

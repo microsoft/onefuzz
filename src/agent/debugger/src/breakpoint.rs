@@ -4,6 +4,7 @@
 use std::{
     collections::{btree_map::Range, BTreeMap},
     ops::RangeBounds,
+    slice::Iter,
 };
 
 use anyhow::Result;
@@ -13,7 +14,7 @@ use winapi::um::winnt::HANDLE;
 use crate::debugger::{BreakpointId, BreakpointType};
 
 pub(crate) enum ExtraInfo {
-    Rva(u64),
+    Rva(u32),
     Function(String),
 }
 
@@ -43,7 +44,7 @@ impl UnresolvedBreakpoint {
         id: BreakpointId,
         kind: BreakpointType,
         module: impl ToString,
-        rva: u64,
+        rva: u32,
     ) -> Self {
         UnresolvedBreakpoint {
             id,
@@ -67,6 +68,38 @@ impl UnresolvedBreakpoint {
 
     pub(crate) fn extra_info(&self) -> &ExtraInfo {
         &self.extra_info
+    }
+}
+
+pub struct UnresolvedCoverageBreakpoints {
+    module: String,
+    pairs: Vec<(BreakpointId, u32)>,
+    kind: BreakpointType,
+}
+
+impl UnresolvedCoverageBreakpoints {
+    pub(crate) fn new(
+        module: impl ToString,
+        pairs: Vec<(BreakpointId, u32)>,
+        kind: BreakpointType,
+    ) -> Self {
+        UnresolvedCoverageBreakpoints {
+            pairs,
+            module: module.to_string(),
+            kind,
+        }
+    }
+
+    pub(crate) fn kind(&self) -> BreakpointType {
+        self.kind
+    }
+
+    pub(crate) fn module(&self) -> &str {
+        &self.module
+    }
+
+    pub(crate) fn iter(&self) -> Iter<(BreakpointId, u32)> {
+        self.pairs.iter()
     }
 }
 

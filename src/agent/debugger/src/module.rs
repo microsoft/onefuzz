@@ -16,6 +16,7 @@ use winapi::um::{
     winnt::{HANDLE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_I386},
 };
 
+use crate::breakpoint::UnresolvedCoverageBreakpoints;
 use crate::{
     breakpoint::{BreakpointCollection, ResolvedBreakpoint},
     dbghelp,
@@ -133,6 +134,25 @@ impl Module {
         }
 
         Ok(())
+    }
+
+    pub fn add_coverage_breakpoints(
+        &mut self,
+        breakpoints: &UnresolvedCoverageBreakpoints,
+        process_handle: HANDLE,
+    ) -> Result<()> {
+        let kind = breakpoints.kind();
+        for (id, offset) in breakpoints.iter() {
+            let address = self.base_address + *offset as u64;
+            if let Some(breakpoint) = self.breakpoints.get_mut(address) {
+                breakpoint.update(*id, kind);
+            } else {
+                let breakpoint = ResolvedBreakpoint::new(*id, kind, address);
+                self.breakpoints.insert(address, breakpoint);
+            }
+        }
+
+        self.apply_breakpoints(process_handle)
     }
 
     #[allow(unused)]
