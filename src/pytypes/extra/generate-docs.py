@@ -3,6 +3,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+from getopt import GetoptError, getopt
+from io import TextIOWrapper
+from os import path
+from sys import argv, exit
 from typing import List, Optional
 from uuid import UUID
 
@@ -61,26 +65,54 @@ from onefuzztypes.webhooks import WebhookMessage
 
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
-output = open("../../../docs/webhook_events.md", "w", newline="\n", encoding="ascii")
 
 
-def layer(depth: int, title: str, content: Optional[str] = None) -> None:
+def layer(
+    depth: int, title: str, outputfile: TextIOWrapper, content: Optional[str] = None
+) -> None:
     print(f"{'#' * depth} {title}\n")
-    output.write(f"{'#' * depth} {title}\n")
-    output.write("\n")
+    outputfile.write(f"{'#' * depth} {title}\n")
+    outputfile.write("\n")
     if content is not None:
         print(f"{content}\n")
-        output.write(f"{content}\n")
-        output.write("\n")
+        outputfile.write(f"{content}\n")
+        outputfile.write("\n")
 
 
-def typed(depth: int, title: str, content: str, data_type: str) -> None:
+def typed(
+    depth: int, title: str, content: str, data_type: str, outputfile: TextIOWrapper
+) -> None:
     print(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
-    output.write(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
-    output.write("\n")
+    outputfile.write(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
+    outputfile.write("\n")
 
 
 def main() -> None:
+
+    outputfilename = "webhook_events.md"
+    outputfilepath = "./"
+    try:
+        opts, args = getopt(argv[1:], "hi:o:", ["ifile=", "ofile="])
+    except GetoptError:
+        print("Incorrect command line arguments: generate-docs.py -o <outputfilepath>")
+        exit(2)
+    for opt, arg in opts:
+        if opt == "-h":
+            print("Proper command line arguments: generate-docs.py -o <outputfilepath>")
+            exit()
+        elif opt in ("-o", "--ofile"):
+            outputfilepath = arg
+
+    outputfiledir = outputfilepath + outputfilename
+    append_write = "x"
+    if path.exists(outputfiledir):
+        append_write = "a"
+    else:
+        append_write = "w"
+
+    print("Output file is ", outputfiledir)
+    outputfile = open(outputfiledir, append_write, newline="\n", encoding="ascii")
+
     task_config = TaskConfig(
         job_id=UUID(int=0),
         task=TaskDetails(
@@ -268,43 +300,62 @@ def main() -> None:
     layer(
         1,
         "Webhook Events",
+        outputfile,
         "This document describes the basic webhook event subscriptions "
         "available in OneFuzz",
     )
     layer(
         2,
         "Payload",
+        outputfile,
         "Each event will be submitted via HTTP POST to the user provided URL.",
     )
 
     typed(
-        3, "Example", message.json(indent=4, exclude_none=True, sort_keys=True), "json"
+        3,
+        "Example",
+        message.json(indent=4, exclude_none=True, sort_keys=True),
+        "json",
+        outputfile,
     )
-    layer(2, "Event Types (EventType)")
+    layer(2, "Event Types (EventType)", outputfile)
 
     event_map = {get_event_type(x).name: x for x in examples}
 
     for name in sorted(event_map.keys()):
         print(f"* [{name}](#{name})")
-        output.write(f"* [{name}](#{name})")
-        output.write("\n")
+        outputfile.write(f"* [{name}](#{name})")
+        outputfile.write("\n")
 
     print()
-    output.write("\n")
+    outputfile.write("\n")
 
     for name in sorted(event_map.keys()):
         example = event_map[name]
-        layer(3, name)
+        layer(3, name, outputfile)
         typed(
             4,
             "Example",
             example.json(indent=4, exclude_none=True, sort_keys=True),
             "json",
+            outputfile,
         )
-        typed(4, "Schema", example.schema_json(indent=4, sort_keys=True), "json")
+        typed(
+            4,
+            "Schema",
+            example.schema_json(indent=4, sort_keys=True),
+            "json",
+            outputfile,
+        )
 
-    typed(2, "Full Event Schema", message.schema_json(indent=4, sort_keys=True), "json")
-    output.close()
+    typed(
+        2,
+        "Full Event Schema",
+        message.schema_json(indent=4, sort_keys=True),
+        "json",
+        outputfile,
+    )
+    outputfile.close()
 
 
 if __name__ == "__main__":
