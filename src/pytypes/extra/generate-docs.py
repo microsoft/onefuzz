@@ -65,26 +65,27 @@ from onefuzztypes.webhooks import WebhookMessage
 
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
-
+OUTPUT_FILE_DIR = "./webhook_events.md"
+OUTPUT_FILE = open(OUTPUT_FILE_DIR, "w", newline="\n", encoding="ascii")
 
 def layer(
-    depth: int, title: str, outputfile: FileIO, content: Optional[str] = None
+    depth: int, title: str, content: Optional[str] = None
 ) -> None:
     print(f"{'#' * depth} {title}\n")
-    outputfile.write(f"{'#' * depth} {title}\n")
-    outputfile.write("\n")
+    OUTPUT_FILE.write(f"{'#' * depth} {title}\n")
+    OUTPUT_FILE.write("\n")
     if content is not None:
         print(f"{content}\n")
-        outputfile.write(f"{content}\n")
-        outputfile.write("\n")
+        OUTPUT_FILE.write(f"{content}\n")
+        OUTPUT_FILE.write("\n")
 
 
 def typed(
-    depth: int, title: str, content: str, data_type: str, outputfile: FileIO
+    depth: int, title: str, content: str, data_type: str
 ) -> None:
     print(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
-    outputfile.write(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
-    outputfile.write("\n")
+    OUTPUT_FILE.write(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
+    OUTPUT_FILE.write("\n")
 
 
 def main() -> None:
@@ -103,15 +104,15 @@ def main() -> None:
         elif opt in ("-o", "--ofile"):
             outputfilepath = arg
 
-    outputfiledir = outputfilepath + outputfilename
+    OUTPUT_FILE_DIR = outputfilepath + outputfilename
     append_write = "x"
-    if path.exists(outputfiledir):
+    if path.exists(OUTPUT_FILE_DIR):
         append_write = "a"
     else:
         append_write = "w"
 
-    print("Output file is ", outputfiledir)
-    outputfile = open(outputfiledir, append_write, newline="\n", encoding="ascii")
+    print("Output file is ", OUTPUT_FILE_DIR)
+    OUTPUT_FILE = open(OUTPUT_FILE_DIR, append_write, newline="\n", encoding="ascii")
 
     task_config = TaskConfig(
         job_id=UUID(int=0),
@@ -300,14 +301,12 @@ def main() -> None:
     layer(
         1,
         "Webhook Events",
-        outputfile,
         "This document describes the basic webhook event subscriptions "
         "available in OneFuzz",
     )
     layer(
         2,
         "Payload",
-        outputfile,
         "Each event will be submitted via HTTP POST to the user provided URL.",
     )
 
@@ -316,46 +315,42 @@ def main() -> None:
         "Example",
         message.json(indent=4, exclude_none=True, sort_keys=True),
         "json",
-        outputfile,
     )
-    layer(2, "Event Types (EventType)", outputfile)
+    layer(2, "Event Types (EventType)")
 
     event_map = {get_event_type(x).name: x for x in examples}
 
     for name in sorted(event_map.keys()):
         print(f"* [{name}](#{name})")
-        outputfile.write(f"* [{name}](#{name})")
-        outputfile.write("\n")
+        OUTPUT_FILE.write(f"* [{name}](#{name})")
+        OUTPUT_FILE.write("\n")
 
     print()
-    outputfile.write("\n")
+    OUTPUT_FILE.write("\n")
 
     for name in sorted(event_map.keys()):
         example = event_map[name]
-        layer(3, name, outputfile)
+        layer(3, name)
         typed(
             4,
             "Example",
             example.json(indent=4, exclude_none=True, sort_keys=True),
-            "json",
-            outputfile,
+            "json"
         )
         typed(
             4,
             "Schema",
             example.schema_json(indent=4, sort_keys=True),
-            "json",
-            outputfile,
+            "json"
         )
 
     typed(
         2,
         "Full Event Schema",
         message.schema_json(indent=4, sort_keys=True),
-        "json",
-        outputfile,
+        "json"
     )
-    outputfile.close()
+    OUTPUT_FILE.close()
 
 
 if __name__ == "__main__":
