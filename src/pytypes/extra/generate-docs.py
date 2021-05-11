@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 from getopt import GetoptError, getopt
-from io import FileIO
 from os import path
 from sys import argv, exit
 from typing import List, Optional
