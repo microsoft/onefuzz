@@ -65,7 +65,7 @@ EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 
 
-def generate_file():
+def generate_file() -> str:
     outputfilename = "webhook_events.md"
     outputfilepath = "./"
     try:
@@ -81,13 +81,12 @@ def generate_file():
             outputfilepath = arg
 
     outputfiledir = outputfilepath + outputfilename
-    append_write = "w"
 
     print("Output file is ", outputfiledir)
-    return open(outputfiledir, append_write, newline="\n", encoding="ascii")
+    return outputfiledir
 
 
-OUTPUT_FILE = generate_file()
+OUTPUT_FILE = open(generate_file(), "w", newline="\n", encoding="ascii")
 
 
 def layer(depth: int, title: str, content: Optional[str] = None) -> None:
