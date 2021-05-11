@@ -65,6 +65,7 @@ from onefuzztypes.webhooks import WebhookMessage
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 
+
 def generate_file():
     outputfilename = "webhook_events.md"
     outputfilepath = "./"
@@ -86,8 +87,10 @@ def generate_file():
     print("Output file is ", outputfiledir)
     return open(outputfiledir, append_write, newline="\n", encoding="ascii")
 
+
 OUTPUT_FILE = generate_file()
-    
+
+
 def layer(depth: int, title: str, content: Optional[str] = None) -> None:
     print(f"{'#' * depth} {title}\n")
     OUTPUT_FILE.write(f"{'#' * depth} {title}\n")
