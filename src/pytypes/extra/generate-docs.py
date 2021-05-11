@@ -61,16 +61,23 @@ from onefuzztypes.webhooks import WebhookMessage
 
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
+output = open('../../../docs/webhook_events.md', 'w', newline='\n', encoding='ascii')
 
 
 def layer(depth: int, title: str, content: Optional[str] = None) -> None:
     print(f"{'#' * depth} {title}\n")
+    output.write(f"{'#' * depth} {title}\n")
+    output.write("\n")
     if content is not None:
         print(f"{content}\n")
+        output.write(f"{content}\n")
+        output.write("\n")
 
 
 def typed(depth: int, title: str, content: str, data_type: str) -> None:
     print(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
+    output.write(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
+    output.write("\n")
 
 
 def main() -> None:
@@ -279,8 +286,11 @@ def main() -> None:
 
     for name in sorted(event_map.keys()):
         print(f"* [{name}](#{name})")
+        output.write(f"* [{name}](#{name})")
+        output.write("\n")
 
     print()
+    output.write("\n")
 
     for name in sorted(event_map.keys()):
         example = event_map[name]
@@ -294,6 +304,7 @@ def main() -> None:
         typed(4, "Schema", example.schema_json(indent=4, sort_keys=True), "json")
 
     typed(2, "Full Event Schema", message.schema_json(indent=4, sort_keys=True), "json")
+    output.close()
 
 
 if __name__ == "__main__":
