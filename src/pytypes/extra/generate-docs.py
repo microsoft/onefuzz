@@ -68,9 +68,8 @@ ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 OUTPUT_FILE_DIR = "./webhook_events.md"
 OUTPUT_FILE = open(OUTPUT_FILE_DIR, "w", newline="\n", encoding="ascii")
 
-def layer(
-    depth: int, title: str, content: Optional[str] = None
-) -> None:
+
+def layer(depth: int, title: str, content: Optional[str] = None) -> None:
     print(f"{'#' * depth} {title}\n")
     OUTPUT_FILE.write(f"{'#' * depth} {title}\n")
     OUTPUT_FILE.write("\n")
@@ -80,9 +79,7 @@ def layer(
         OUTPUT_FILE.write("\n")
 
 
-def typed(
-    depth: int, title: str, content: str, data_type: str
-) -> None:
+def typed(depth: int, title: str, content: str, data_type: str) -> None:
     print(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
     OUTPUT_FILE.write(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
     OUTPUT_FILE.write("\n")
@@ -335,21 +332,11 @@ def main() -> None:
             4,
             "Example",
             example.json(indent=4, exclude_none=True, sort_keys=True),
-            "json"
+            "json",
         )
-        typed(
-            4,
-            "Schema",
-            example.schema_json(indent=4, sort_keys=True),
-            "json"
-        )
+        typed(4, "Schema", example.schema_json(indent=4, sort_keys=True), "json")
 
-    typed(
-        2,
-        "Full Event Schema",
-        message.schema_json(indent=4, sort_keys=True),
-        "json"
-    )
+    typed(2, "Full Event Schema", message.schema_json(indent=4, sort_keys=True), "json")
     OUTPUT_FILE.close()
 
 
