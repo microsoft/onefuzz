@@ -117,9 +117,21 @@ impl Module {
         address: u64,
         process_handle: HANDLE,
     ) -> Result<()> {
-        let mut breakpoint = ResolvedBreakpoint::new(id, kind, address);
-        breakpoint.enable(process_handle)?;
-        self.breakpoints.insert(address, breakpoint);
+        if let Some(breakpoint) = self.breakpoints.get_mut(address) {
+            // Update the existing breakpoint with a (probably new) id and (probably not new) kind.
+            breakpoint.update(id, kind);
+            if breakpoint.is_disabled() {
+                // Existing breakpoint was disabled, but the caller wants a new
+                // breakpoint that by luck or otherwise, was at the same address
+                // as an existing breakpoint, so we go ahead and enable.
+                breakpoint.enable(process_handle)?;
+            }
+        } else {
+            let mut breakpoint = ResolvedBreakpoint::new(id, kind, address);
+            breakpoint.enable(process_handle)?;
+            self.breakpoints.insert(address, breakpoint);
+        }
+
         Ok(())
     }
 
