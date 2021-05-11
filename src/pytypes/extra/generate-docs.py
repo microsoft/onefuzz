@@ -61,7 +61,7 @@ from onefuzztypes.webhooks import WebhookMessage
 
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
-output = open('../../../docs/webhook_events.md', 'w', newline='\n', encoding='ascii')
+output = open("../../../docs/webhook_events.md", "w", newline="\n", encoding="ascii")
 
 
 def layer(depth: int, title: str, content: Optional[str] = None) -> None:
