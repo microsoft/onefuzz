@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from getopt import GetoptError, getopt
-from io import TextIOWrapper
+from io import FileIO
 from os import path
 from sys import argv, exit
 from typing import List, Optional
@@ -68,7 +68,7 @@ ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 
 
 def layer(
-    depth: int, title: str, outputfile: TextIOWrapper, content: Optional[str] = None
+    depth: int, title: str, outputfile: FileIO, content: Optional[str] = None
 ) -> None:
     print(f"{'#' * depth} {title}\n")
     outputfile.write(f"{'#' * depth} {title}\n")
@@ -80,7 +80,7 @@ def layer(
 
 
 def typed(
-    depth: int, title: str, content: str, data_type: str, outputfile: TextIOWrapper
+    depth: int, title: str, content: str, data_type: str, outputfile: FileIO
 ) -> None:
     print(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
     outputfile.write(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
