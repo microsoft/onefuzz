@@ -103,6 +103,11 @@ impl ResolvedBreakpoint {
         self.kind
     }
 
+    pub fn update(&mut self, id: BreakpointId, kind: BreakpointType) {
+        self.id = id;
+        self.kind = kind;
+    }
+
     #[allow(unused)]
     pub fn is_enabled(&self) -> bool {
         !self.is_disabled()
@@ -119,10 +124,8 @@ impl ResolvedBreakpoint {
     pub(crate) fn disable(&mut self, process_handle: HANDLE) -> Result<()> {
         self.disabled = self.disabled.saturating_add(1);
 
-        if self.is_disabled() {
-            if let Some(original_byte) = self.original_byte.take() {
-                write_instruction_byte(process_handle, self.address, original_byte)?;
-            }
+        if let Some(original_byte) = self.original_byte.take() {
+            write_instruction_byte(process_handle, self.address, original_byte)?;
         }
 
         Ok(())
@@ -131,9 +134,10 @@ impl ResolvedBreakpoint {
     pub fn enable(&mut self, process_handle: HANDLE) -> Result<()> {
         self.disabled = self.disabled.saturating_sub(1);
 
-        let new_original_byte = process::read_memory(process_handle, self.address as _)?;
-        self.original_byte = Some(new_original_byte);
-        write_instruction_byte(process_handle, self.address, 0xcc)?;
+        if self.original_byte.is_none() {
+            self.original_byte = Some(process::read_memory(process_handle, self.address as _)?);
+            write_instruction_byte(process_handle, self.address, 0xcc)?;
+        }
 
         Ok(())
     }
