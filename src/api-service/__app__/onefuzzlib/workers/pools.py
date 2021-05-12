@@ -222,8 +222,7 @@ class Pool(BASE_POOL, ORMMixin):
             return
 
         for scaleset in scalesets:
-            scaleset.state = ScalesetState.halt
-            scaleset.save()
+            scaleset.set_state(ScalesetState.halt)
 
         for node in nodes:
             node.set_halt()
