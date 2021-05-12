@@ -6,6 +6,7 @@
 from typing import Optional
 
 import azure.functions as func
+import logging
 from onefuzztypes.enums import ErrorCode, VmState
 from onefuzztypes.models import Error
 from onefuzztypes.requests import ProxyCreate, ProxyDelete, ProxyGet, ProxyReset
@@ -89,6 +90,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(request, context="ProxyReset")
 
     proxy = Proxy.get(request.region)
+    logging.info(proxy.region)
     if proxy is not None:
         proxy.state = VmState.stopping
         proxy.save()
