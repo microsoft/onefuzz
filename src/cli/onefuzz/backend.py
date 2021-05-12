@@ -318,11 +318,11 @@ class ContainerWrapper:
             name=blob_name, data=data, overwrite=True, max_concurrency=10
         )
 
-    def upload_dir(self, dir_path: str, recursive: bool = True) -> None:
-        for path in glob.glob(os.path.join(dir_path, "**"), recursive=recursive):
-            if os.path.isfile(path):
-                blob_name = os.path.relpath(path, start=dir_path)
-                self.upload_file(path, blob_name)
+    def upload_dir(self, dir_path: str) -> None:
+        # security note: the src for azcopy comes from the server which is
+        # trusted in this context, while the destination is provided by the
+        # user
+        azcopy_sync(dir_path, self.container_url)
 
     def download_dir(self, dir_path: str) -> None:
         # security note: the src for azcopy comes from the server which is
