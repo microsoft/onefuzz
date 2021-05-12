@@ -18,7 +18,7 @@ def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
     logging.info(PROXY_LOG_PREFIX + "heartbeat: %s", body)
     raw = json.loads(body)
     heartbeat = ProxyHeartbeat.parse_obj(raw)
-    proxy = Proxy.get(heartbeat.region)
+    proxy = Proxy.get(heartbeat.region, heartbeat.proxy_id)
     if proxy is None:
         logging.warning(
             PROXY_LOG_PREFIX + "received heartbeat for missing proxy: %s", body
