@@ -76,6 +76,9 @@ class HasState(Protocol):
     # the JobState,TaskState,etc enums.
     state: Any
 
+    def get_keys(self) -> Tuple[KEY, KEY]:
+        ...
+
 
 def process_state_update(obj: HasState) -> None:
     """
@@ -87,10 +90,9 @@ def process_state_update(obj: HasState) -> None:
     if func is None:
         return
 
-    get_keys = getattr(obj, "get_keys", None)
-    if get_keys is not None:
-        logging.info("processing state update: %s - %s", get_keys(), obj.state.name)
+    keys = obj.get_keys()
 
+    logging.info("processing state update: %s - %s", keys, obj.state.name)
     func()
 
 
