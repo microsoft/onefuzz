@@ -65,28 +65,28 @@ EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 
 
-def generate_file() -> str:
-    outputfilename = "webhook_events.md"
-    outputfilepath = "./"
-    try:
-        opts, args = getopt(argv[1:], "hi:o:", ["ifile=", "ofile="])
-    except GetoptError:
-        print("Incorrect command line arguments: generate-docs.py -o <outputfilepath>")
-        exit(2)
-    for opt, arg in opts:
-        if opt == "-h":
-            print("Proper command line arguments: generate-docs.py -o <outputfilepath>")
-            exit()
-        elif opt in ("-o", "--ofile"):
-            outputfilepath = arg
+# def generate_file() -> str:
+#     outputfilename = "webhook_events.md"
+#     outputfilepath = "./"
+#     try:
+#         opts, args = getopt(argv[1:], "hi:o:", ["ifile=", "ofile="])
+#     except GetoptError:
+#         print("Incorrect command line arguments: generate-docs.py -o <outputfilepath>")
+#         exit(2)
+#     for opt, arg in opts:
+#         if opt == "-h":
+#             print("Proper command line arguments: generate-docs.py -o <outputfilepath>")
+#             exit()
+#         elif opt in ("-o", "--ofile"):
+#             outputfilepath = arg
 
-    outputfiledir = outputfilepath + outputfilename
+#     outputfiledir = outputfilepath + outputfilename
 
-    print("Output file is ", outputfiledir)
-    return outputfiledir
+#     print("Output file is ", outputfiledir)
+#     return outputfiledir
 
 
-OUTPUT_FILE = open(generate_file(), "w", newline="\n", encoding="ascii")
+OUTPUT_FILE = open('../../../docs/webhook_events.md', 'w', newline='\n', encoding='ascii')
 
 
 def layer(depth: int, title: str, content: Optional[str] = None) -> None:
@@ -106,7 +106,6 @@ def typed(depth: int, title: str, content: str, data_type: str) -> None:
 
 
 def main() -> None:
-    generate_file()
     task_config = TaskConfig(
         job_id=UUID(int=0),
         task=TaskDetails(
