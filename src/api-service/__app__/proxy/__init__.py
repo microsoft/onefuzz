@@ -68,6 +68,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(scaleset, context="debug_proxy create")
 
     proxy = Proxy.get_or_create(scaleset.region)
+    forward = None
     if isinstance(proxy, Error):
         return not_ok(request, context="debug_proxy create")
     if proxy:
@@ -81,8 +82,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             dst_port=request.dst_port,
             duration=request.duration,
         )
-        if isinstance(forward, Error):
-            return not_ok(forward, context="debug_proxy create")
+    if isinstance(forward, Error):
+        return not_ok(forward, context="debug_proxy create")
 
     return ok(get_result(forward, proxy))
 
