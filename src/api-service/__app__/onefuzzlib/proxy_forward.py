@@ -26,6 +26,7 @@ class ProxyForward(ORMMixin):
     port: int
     scaleset_id: UUID
     machine_id: UUID
+    proxy_id: UUID
     dst_ip: str
     dst_port: int
     endtime: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
@@ -40,6 +41,7 @@ class ProxyForward(ORMMixin):
         region: Region,
         scaleset_id: UUID,
         machine_id: UUID,
+        proxy_id: UUID,
         dst_port: int,
         duration: int,
     ) -> Union["ProxyForward", Error]:
@@ -52,6 +54,7 @@ class ProxyForward(ORMMixin):
         entries = cls.search_forward(
             scaleset_id=scaleset_id,
             machine_id=machine_id,
+            proxy_id=proxy_id,
             dst_port=dst_port,
             region=region,
         )
@@ -93,11 +96,12 @@ class ProxyForward(ORMMixin):
         cls,
         scaleset_id: UUID,
         *,
+        proxy_id: Optional[UUID] = None,
         machine_id: Optional[UUID] = None,
         dst_port: Optional[int] = None,
     ) -> List[Region]:
         entries = cls.search_forward(
-            scaleset_id=scaleset_id, machine_id=machine_id, dst_port=dst_port
+            scaleset_id=scaleset_id, machine_id=machine_id, proxy_id=proxy_id, dst_port=dst_port
         )
         regions = set()
         for entry in entries:
@@ -112,6 +116,7 @@ class ProxyForward(ORMMixin):
         scaleset_id: Optional[UUID] = None,
         region: Optional[Region] = None,
         machine_id: Optional[UUID] = None,
+        proxy_id: Optional[UUID] = None, 
         dst_port: Optional[int] = None,
     ) -> List["ProxyForward"]:
 

@@ -432,6 +432,7 @@ class ProxyConfig(BaseModel):
     url: str
     notification: str
     region: Region
+    proxy: UUID
     forwards: List[Forward]
     instance_telemetry_key: Optional[str]
     microsoft_telemetry_key: Optional[str]

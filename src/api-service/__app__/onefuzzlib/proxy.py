@@ -228,7 +228,7 @@ class Proxy(ORMMixin):
 
     def get_forwards(self) -> List[Forward]:
         forwards: List[Forward] = []
-        for entry in ProxyForward.search_forward(region=self.region):
+        for entry in ProxyForward.search_forward(region=self.region, proxy_id=self.proxy_id):
             if entry.endtime < datetime.datetime.now(tz=datetime.timezone.utc):
                 entry.delete()
             else:
@@ -257,6 +257,7 @@ class Proxy(ORMMixin):
             ),
             forwards=forwards,
             region=self.region,
+            proxy_id=self.proxy_id,
             instance_telemetry_key=os.environ.get("APPINSIGHTS_INSTRUMENTATIONKEY"),
             microsoft_telemetry_key=os.environ.get("ONEFUZZ_TELEMETRY"),
             instance_id=get_instance_id(),
@@ -277,7 +278,6 @@ class Proxy(ORMMixin):
         return cls.search(query=query)
 
     @classmethod
-    # Question - Why does this not include is_used to check forwards?
     def get_or_create(cls, region: Region) -> Optional["Proxy"]:
         proxy_list = Proxy.search(
             query={"region": [region], "outdated": [False]}, num_results=1
