@@ -441,6 +441,7 @@ class ProxyConfig(BaseModel):
 
 class ProxyHeartbeat(BaseModel):
     region: Region
+    proxy_id: UUID
     forwards: List[Forward]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
