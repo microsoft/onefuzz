@@ -514,7 +514,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 machine_ids.append(node.machine_id)
 
         logging.info(
-            SCALESET_LOG_PREFIX + "deleting scaleset_id:%s machine_id:%s",
+            SCALESET_LOG_PREFIX + "deleting nodes scaleset_id:%s machine_id:%s",
             self.scaleset_id,
             machine_ids,
         )
