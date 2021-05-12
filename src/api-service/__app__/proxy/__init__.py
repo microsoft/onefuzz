@@ -45,7 +45,6 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     forwards = ProxyForward.search_forward(
         scaleset_id=request.scaleset_id,
         machine_id=request.machine_id,
-        proxy_id=proxy.proxy_id,
         dst_port=request.dst_port,
     )
     if not forwards:
@@ -70,6 +69,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(scaleset, context="debug_proxy create")
 
     proxy = Proxy.get_or_create(scaleset.region)
+    if isinstance(proxy, Error):
+        return not_ok(request, context="debug_proxy create")
     if proxy:
         proxy.save_proxy_config()
 
@@ -93,7 +94,6 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
         return not_ok(request, context="ProxyReset")
 
     proxy = Proxy.get(request.region)
-    logging.info(proxy.region)
     if proxy is not None:
         proxy.state = VmState.stopping
         proxy.save()

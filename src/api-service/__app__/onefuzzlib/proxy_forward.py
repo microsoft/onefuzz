@@ -76,6 +76,7 @@ class ProxyForward(ORMMixin):
                 port=port,
                 scaleset_id=scaleset_id,
                 machine_id=machine_id,
+                proxy_id=proxy_id,
                 dst_ip=private_ip,
                 dst_port=dst_port,
                 endtime=datetime.datetime.utcnow() + datetime.timedelta(hours=duration),
