@@ -101,7 +101,10 @@ class ProxyForward(ORMMixin):
         dst_port: Optional[int] = None,
     ) -> List[Region]:
         entries = cls.search_forward(
-            scaleset_id=scaleset_id, machine_id=machine_id, proxy_id=proxy_id, dst_port=dst_port
+            scaleset_id=scaleset_id,
+            machine_id=machine_id,
+            proxy_id=proxy_id,
+            dst_port=dst_port,
         )
         regions = set()
         for entry in entries:
@@ -116,7 +119,7 @@ class ProxyForward(ORMMixin):
         scaleset_id: Optional[UUID] = None,
         region: Optional[Region] = None,
         machine_id: Optional[UUID] = None,
-        proxy_id: Optional[UUID] = None, 
+        proxy_id: Optional[UUID] = None,
         dst_port: Optional[int] = None,
     ) -> List["ProxyForward"]:
 
