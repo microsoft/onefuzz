@@ -41,7 +41,7 @@ class ProxyForward(ORMMixin):
         region: Region,
         scaleset_id: UUID,
         machine_id: UUID,
-        proxy_id: UUID,
+        # proxy_id: UUID,
         dst_port: int,
         duration: int,
     ) -> Union["ProxyForward", Error]:
@@ -54,7 +54,7 @@ class ProxyForward(ORMMixin):
         entries = cls.search_forward(
             scaleset_id=scaleset_id,
             machine_id=machine_id,
-            proxy_id=proxy_id,
+            # proxy_id=proxy_id,
             dst_port=dst_port,
             region=region,
         )
@@ -76,7 +76,7 @@ class ProxyForward(ORMMixin):
                 port=port,
                 scaleset_id=scaleset_id,
                 machine_id=machine_id,
-                proxy_id=proxy_id,
+                # proxy_id=proxy_id,
                 dst_ip=private_ip,
                 dst_port=dst_port,
                 endtime=datetime.datetime.utcnow() + datetime.timedelta(hours=duration),
@@ -97,14 +97,14 @@ class ProxyForward(ORMMixin):
         cls,
         scaleset_id: UUID,
         *,
-        proxy_id: Optional[UUID] = None,
+        # proxy_id: Optional[UUID] = None,
         machine_id: Optional[UUID] = None,
         dst_port: Optional[int] = None,
     ) -> List[Region]:
         entries = cls.search_forward(
             scaleset_id=scaleset_id,
             machine_id=machine_id,
-            proxy_id=proxy_id,
+            # proxy_id=proxy_id,
             dst_port=dst_port,
         )
         regions = set()
@@ -120,7 +120,7 @@ class ProxyForward(ORMMixin):
         scaleset_id: Optional[UUID] = None,
         region: Optional[Region] = None,
         machine_id: Optional[UUID] = None,
-        proxy_id: Optional[UUID] = None,
+        # proxy_id: Optional[UUID] = None,
         dst_port: Optional[int] = None,
     ) -> List["ProxyForward"]:
 
@@ -133,6 +133,9 @@ class ProxyForward(ORMMixin):
 
         if machine_id is not None:
             query["machine_id"] = [machine_id]
+
+        # if proxy_id is not None:
+        #     query["proxy_id"] = [proxy_id]
 
         if dst_port is not None:
             query["dst_port"] = [dst_port]

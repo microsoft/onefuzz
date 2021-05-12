@@ -78,7 +78,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             region=scaleset.region,
             scaleset_id=scaleset.scaleset_id,
             machine_id=request.machine_id,
-            proxy_id=proxy.proxy_id,
+            # proxy_id=proxy.proxy_id,
             dst_port=request.dst_port,
             duration=request.duration,
         )
