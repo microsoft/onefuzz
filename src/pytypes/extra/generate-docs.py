@@ -81,7 +81,7 @@ def generate_file() -> str:
             outputfilepath = arg
 
     outputfiledir = outputfilepath + outputfilename
-    
+
     return outputfiledir
 
 
