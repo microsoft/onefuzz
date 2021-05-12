@@ -92,7 +92,9 @@ def process_state_update(obj: HasState) -> None:
 
     keys = obj.get_keys()
 
-    logging.info("processing state update: %s - %s", keys, obj.state.name)
+    logging.info(
+        "processing state update: %s - %s - %s", type(obj), keys, obj.state.name
+    )
     func()
 
 
