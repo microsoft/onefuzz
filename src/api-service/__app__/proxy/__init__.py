@@ -3,7 +3,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import logging
 from typing import Optional
 
 import azure.functions as func
