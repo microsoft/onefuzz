@@ -3,10 +3,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import logging
 from typing import Optional
 
 import azure.functions as func
-import logging
 from onefuzztypes.enums import ErrorCode, VmState
 from onefuzztypes.models import Error
 from onefuzztypes.requests import ProxyCreate, ProxyDelete, ProxyGet, ProxyReset
