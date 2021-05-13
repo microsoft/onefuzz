@@ -71,7 +71,6 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         region=scaleset.region,
         scaleset_id=scaleset.scaleset_id,
         machine_id=request.machine_id,
-        # proxy_id=proxy.proxy_id,
         dst_port=request.dst_port,
         duration=request.duration,
     )
@@ -81,6 +80,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     proxy = Proxy.get_or_create(scaleset.region)
     if proxy:
         proxy.save_proxy_config()
+        forward.proxy_id = proxy.proxy_id
     return ok(get_result(forward, proxy))
 
 
