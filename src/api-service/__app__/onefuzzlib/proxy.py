@@ -299,8 +299,8 @@ class Proxy(ORMMixin):
                 if proxy.state != VmState.stopping and not proxy.is_used():
                     # If the proxy is out-of-date, delete and re-create it
                     proxy.state = VmState.stopping
-                    proxy.save()
                 proxy.outdated = True
+                proxy.save()
                 return None
             if proxy.created_timestamp is not None:
                 proxy_timestamp = proxy.created_timestamp
@@ -317,8 +317,8 @@ class Proxy(ORMMixin):
                     if proxy.state != VmState.stopping and not proxy.is_used():
                         # If the proxy is out-of-date, delete and re-create it
                         proxy.state = VmState.stopping
-                        proxy.save()
                     proxy.outdated = True
+                    proxy.save()
                     return None
             return proxy
 
