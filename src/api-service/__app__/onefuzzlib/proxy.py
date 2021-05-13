@@ -229,7 +229,7 @@ class Proxy(ORMMixin):
     def get_forwards(self) -> List[Forward]:
         forwards: List[Forward] = []
         for entry in ProxyForward.search_forward(
-            region=self.region,
+            region=self.region, 
             # proxy_id=self.proxy_id
         ):
             if entry.endtime < datetime.datetime.now(tz=datetime.timezone.utc):
@@ -296,7 +296,7 @@ class Proxy(ORMMixin):
                     __version__,
                     proxy.state,
                 )
-                if proxy.state != VmState.stopping:
+                if proxy.state != VmState.stopping and not proxy.is_used():
                     # If the proxy is out-of-date, delete and re-create it
                     proxy.state = VmState.stopping
                     proxy.save()
@@ -314,7 +314,7 @@ class Proxy(ORMMixin):
                         proxy.created_timestamp,
                         proxy.state,
                     )
-                    if proxy.state != VmState.stopping:
+                    if proxy.state != VmState.stopping and not proxy.is_used():
                         # If the proxy is out-of-date, delete and re-create it
                         proxy.state = VmState.stopping
                         proxy.save()
