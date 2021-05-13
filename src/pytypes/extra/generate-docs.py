@@ -310,7 +310,6 @@ def main() -> None:
         2, "Full Event Schema", message.schema_json(indent=4, sort_keys=True), "json"
     )
 
-    filename = sys.argv[1]
     with open(filename, "w", newline="\n", encoding="ascii") as handle:
         handle.write(result)
 
