@@ -310,7 +310,7 @@ def main() -> None:
         2, "Full Event Schema", message.schema_json(indent=4, sort_keys=True), "json"
     )
 
-    with open(filename, "w", newline="\n", encoding="ascii") as handle:
+    with open(filename, "w", newline="\n", encoding="utf8") as handle:
         handle.write(result)
 
 
