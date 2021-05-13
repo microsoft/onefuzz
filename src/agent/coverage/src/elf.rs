@@ -122,8 +122,8 @@ impl<'d, 'e> ElfSancovBasicBlockProvider<'d, 'e> {
     pub fn new(ctx: ElfContext<'d, 'e>) -> Self {
         let check_pc_table = true;
         Self {
-            check_pc_table,
             ctx,
+            check_pc_table,
         }
     }
 
