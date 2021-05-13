@@ -95,12 +95,12 @@ pub(crate) fn parse_asan_call_stack(text: &str) -> Result<Vec<StackEntry>> {
                     line,
                     address,
                     function_name,
-                    source_file_path,
+                    function_offset,
                     source_file_name,
+                    source_file_path,
                     source_file_line,
                     module_path,
                     module_offset,
-                    function_offset,
                 };
                 stack.push(entry);
             }
@@ -114,7 +114,7 @@ pub(crate) fn parse_scariness(text: &str) -> Option<(u32, String)> {
     let pattern = r"(?m)^SCARINESS: (\d+) \(([^\)]+)\)\r?$";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
-    let index = u32::from_str_radix(captures.get(1)?.as_str(), 10).ok()?;
+    let index = captures.get(1)?.as_str().parse::<u32>().ok()?;
     let value = captures.get(2)?.as_str().trim();
 
     Some((index, value.into()))

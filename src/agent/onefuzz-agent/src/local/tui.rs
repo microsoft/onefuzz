@@ -487,8 +487,8 @@ impl TerminalUi {
         Ok(UiLoopState {
             logs,
             file_count,
-            terminal,
             log_event_receiver,
+            terminal,
             events,
             ..ui_state
         })
