@@ -229,7 +229,7 @@ class Proxy(ORMMixin):
     def get_forwards(self) -> List[Forward]:
         forwards: List[Forward] = []
         for entry in ProxyForward.search_forward(
-            region=self.region, 
+            region=self.region,
             # proxy_id=self.proxy_id
         ):
             if entry.endtime < datetime.datetime.now(tz=datetime.timezone.utc):
