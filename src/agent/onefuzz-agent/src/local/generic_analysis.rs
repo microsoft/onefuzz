@@ -51,19 +51,19 @@ pub fn build_analysis_config(
         .monitor_count(&event_sender)?;
 
     let config = Config {
-        target_exe,
-        target_options,
-        crashes,
-        input_queue,
         analyzer_exe,
         analyzer_options,
         analyzer_env,
+        target_exe,
+        target_options,
+        input_queue,
+        crashes,
         analysis,
         tools,
-        common,
         reports,
         unique_reports,
         no_repro,
+        common,
     };
 
     Ok(config)

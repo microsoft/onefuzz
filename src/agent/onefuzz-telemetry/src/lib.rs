@@ -417,13 +417,11 @@ mod global {
 
         let mut clients = Vec::new();
 
-        for client in vec![instance, microsoft] {
-            if let Some(client) = client {
-                match client.into_inner() {
-                    Ok(c) => clients.push(c),
-                    Err(e) => panic!("Failed to extract telemetry client: {}", e),
-                };
-            }
+        for client in vec![instance, microsoft].into_iter().flatten() {
+            match client.into_inner() {
+                Ok(c) => clients.push(c),
+                Err(e) => panic!("Failed to extract telemetry client: {}", e),
+            };
         }
         clients
     }
