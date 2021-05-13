@@ -50,21 +50,21 @@ pub fn build_fuzz_config(
     let ensemble_sync_delay = None;
 
     let config = Config {
-        tools,
         generator_exe,
         generator_env,
         generator_options,
+        readonly_inputs,
+        crashes,
+        tools,
         target_exe,
         target_env,
         target_options,
         target_timeout,
-        readonly_inputs,
-        crashes,
-        ensemble_sync_delay,
         check_asan_log,
         check_debugger,
         check_retry_count,
         rename_output,
+        ensemble_sync_delay,
         common,
     };
 
