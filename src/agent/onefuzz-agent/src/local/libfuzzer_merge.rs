@@ -41,12 +41,12 @@ pub fn build_merge_config(
         target_exe,
         target_env,
         target_options,
-        check_fuzzer_help,
         input_queue,
-        common,
         inputs,
         unique_inputs,
         preserve_existing_outputs,
+        check_fuzzer_help,
+        common,
     };
 
     Ok(config)
