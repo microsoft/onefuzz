@@ -426,13 +426,14 @@ class Client:
             }
 
         else:
+            onefuzz_cli_app = cli_app[0].app_id
             authorize_application(uuid.UUID(ONEFUZZ_CLI_APP), app.app_id)
             if self.multi_tenant_domain:
                 authority = COMMON_AUTHORITY
             else:
-                authority = cli_app.authority
+                authority = onefuzz_cli_app.authority
             self.cli_config = {
-                "client_id": cli_app.client_id,
+                "client_id": onefuzz_cli_app.client_id,
                 "authority": authority,
             }
 
