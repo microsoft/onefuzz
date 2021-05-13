@@ -297,7 +297,7 @@ class Proxy(ORMMixin):
                     proxy.state,
                 )
                 if proxy.state != VmState.stopping and not proxy.is_used():
-                    # If the proxy is out-of-date, delete and re-create it
+                    # If the proxy is out-of-date, delete and recreate it
                     proxy.state = VmState.stopping
                 proxy.outdated = True
                 proxy.save()
