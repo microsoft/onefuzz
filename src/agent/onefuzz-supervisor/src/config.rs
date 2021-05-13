@@ -134,7 +134,6 @@ impl StaticConfig {
         .into();
 
         Ok(Self {
-            instance_id,
             credentials,
             pool_name,
             onefuzz_url,
@@ -142,6 +141,7 @@ impl StaticConfig {
             instance_telemetry_key,
             microsoft_telemetry_key,
             heartbeat_queue,
+            instance_id,
         })
     }
 
