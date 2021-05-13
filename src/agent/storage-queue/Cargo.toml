@@ -24,4 +24,3 @@ serde-xml-rs = "0.4"
 tokio = { version = "1.5.0" , features=["full"] }
 queue-file = "1.1"
 uuid = { version = "0.8", features = ["serde", "v4"] }
-yaque = "0.5.1"
