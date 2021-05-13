@@ -18,7 +18,7 @@ from onefuzz.backend import container_file_path
 
 from . import JobHelper
 
-VM_SKU = "Standard_D2s_v3"
+VM_SKU = "Standard_D4s_v3"
 VM_COUNT = 1
 
 
