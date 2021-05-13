@@ -71,11 +71,11 @@ def generate_file() -> str:
     try:
         opts, args = getopt(argv[1:], "hi:o:", ["ifile=", "ofile="])
     except GetoptError:
-        print("Incorrect command line arguments: generate-docs.py -o <outputfilepath>")
+        print("Incorrect command line argument: generate-docs.py -o <outputfilepath>")
         exit(2)
     for opt, arg in opts:
         if opt == "-h":
-            print("Proper command line arguments: generate-docs.py -o <outputfilepath>")
+            print("Proper command line argument: generate-docs.py -o <outputfilepath>")
             exit()
         elif opt in ("-o", "--ofile"):
             outputfilepath = arg
