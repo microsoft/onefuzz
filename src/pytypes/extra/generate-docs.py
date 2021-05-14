@@ -13,6 +13,7 @@ from onefuzztypes.enums import (
     ContainerType,
     ErrorCode,
     NodeState,
+    ScalesetState,
     TaskState,
     TaskType,
 )
@@ -36,6 +37,7 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
+    EventScalesetStateUpdated,
     EventTaskCreated,
     EventTaskFailed,
     EventTaskHeartbeat,
@@ -183,6 +185,11 @@ def main() -> None:
             ),
         ),
         EventScalesetDeleted(scaleset_id=UUID(int=0), pool_name=PoolName("example")),
+        EventScalesetStateUpdated(
+            scaleset_id=UUID(int=0),
+            pool_name=PoolName("example"),
+            state=ScalesetState.init,
+        ),
         EventJobCreated(
             job_id=UUID(int=0),
             config=JobConfig(
