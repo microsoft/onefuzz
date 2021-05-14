@@ -300,7 +300,6 @@ def main() -> None:
 
     result += "\n"
 
-
     for name in sorted(event_map.keys()):
         example = event_map[name]
         result += layer(3, name)
