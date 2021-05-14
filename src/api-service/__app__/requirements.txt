@@ -5,7 +5,7 @@ azure-cosmosdb-table==1.0.6
 azure-devops==6.0.0b4
 azure-functions==1.5.0
 azure-graphrbac~=0.61.1
-azure-identity==1.5.0
+azure-identity==1.6.0
 azure-keyvault-keys~=4.3.1
 azure-keyvault-secrets~=4.2.0
 azure-keyvault~=4.1.0
