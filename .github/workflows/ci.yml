@@ -32,7 +32,7 @@ jobs:
         path: |
           sccache
           src/agent/target
-        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-2021-01-14-01
+        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-2021-05-14-01
         restore-keys: |
            agent-${{ runner.os }}
     - name: Linux Prereqs
