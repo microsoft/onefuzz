@@ -19,7 +19,8 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     for proxy in Proxy.search():
         if (
             proxy.is_outdated()
-            and len(Proxy.search(query={"region": [region], "outdated": [False]})) == 0
+            and len(Proxy.search(query={"region": [proxy.region], "outdated": [False]}))
+            == 0
         ):
             logging.info("outdated proxy, creating new one.")
             new_proxy = Proxy(region=proxy.region)
