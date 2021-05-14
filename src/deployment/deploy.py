@@ -433,7 +433,10 @@ class Client:
                 authority = COMMON_AUTHORITY
             else:
                 onefuzz_client = get_graph_client(self.get_subscription_id())
-                authority = "https://login.microsoftonline.com/%s" % onefuzz_client.config.tenant_id
+                authority = (
+                    "https://login.microsoftonline.com/%s"
+                    % onefuzz_client.config.tenant_id
+                )
             self.cli_config = {
                 "client_id": onefuzz_cli_app.client_id,
                 "authority": authority,
