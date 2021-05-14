@@ -12,6 +12,9 @@ pub mod pdb;
 #[cfg(target_os = "windows")]
 pub mod pe;
 
+#[cfg(target_os = "linux")]
+pub mod elf;
+
 pub mod block;
 pub mod cache;
 pub mod code;
