@@ -40,8 +40,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
                 else:
                     scaleset.size = max_size
                     nodes_needed = nodes_needed - (max_size - current_size)
-                scaleset.state = ScalesetState.resize
-                scaleset.save()
+                scaleset.set_state(ScalesetState.resize)
 
             else:
                 continue
@@ -90,8 +89,7 @@ def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
             ScalesetState.shutdown,
             ScalesetState.halt,
         ]:
-            scaleset.state = ScalesetState.resize
-            scaleset.save()
+            scaleset.set_state(ScalesetState.resize)
 
         free_nodes = Node.search_states(
             scaleset_id=scaleset.scaleset_id,
@@ -107,9 +105,8 @@ def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
             max_nodes_remove = min(len(nodes), nodes_to_remove)
             # All nodes in scaleset are free. Can shutdown VMSS
             if max_nodes_remove >= scaleset.size and len(nodes) >= scaleset.size:
-                scaleset.state = ScalesetState.shutdown
+                scaleset.set_state(ScalesetState.shutdown)
                 nodes_to_remove = nodes_to_remove - scaleset.size
-                scaleset.save()
                 for node in nodes:
                     node.set_shutdown()
                 continue
@@ -117,8 +114,7 @@ def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
             # Resize of VMSS needed
             scaleset.size = scaleset.size - max_nodes_remove
             nodes_to_remove = nodes_to_remove - max_nodes_remove
-            scaleset.state = ScalesetState.resize
-            scaleset.save()
+            scaleset.set_state(ScalesetState.resize)
 
 
 def get_vm_count(tasks: List[Task]) -> int:
