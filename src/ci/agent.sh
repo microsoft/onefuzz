@@ -28,6 +28,12 @@ fi
 mkdir -p artifacts/agent
 
 cd src/agent
+
+# unless we're doing incremental builds, start clean during CI
+if [ X${CARGO_INCREMENTAL} == X ]; then
+    cargo clean
+fi
+
 cargo fmt -- --check
 # RUSTSEC-2020-0016: a dependency net2 (pulled in from tokio) is deprecated
 # RUSTSEC-2020-0036: a dependency failure (pulled from proc-maps) is deprecated
