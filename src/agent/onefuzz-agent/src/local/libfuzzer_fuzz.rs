@@ -48,8 +48,8 @@ pub fn build_fuzz_config(
         target_options,
         target_workers,
         ensemble_sync_delay,
-        expect_crash_on_failure,
         check_fuzzer_help,
+        expect_crash_on_failure,
         common,
     };
 
