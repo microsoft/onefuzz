@@ -26,7 +26,7 @@ class ProxyForward(ORMMixin):
     port: int
     scaleset_id: UUID
     machine_id: UUID
-    proxy_id: UUID
+    proxy_id: Optional[UUID]
     dst_ip: str
     dst_port: int
     endtime: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
