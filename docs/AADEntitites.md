@@ -15,7 +15,7 @@ This is the registration of the OneFuzz instance:
     * User.Read (Microsoft Graph)
 * scope
     * user_impersonation
-* Authorozed application:
+* Authorized application:
     * Onefuzz cli registration
 
 ### Onefuzz Application Service Principal
