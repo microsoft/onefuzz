@@ -36,7 +36,7 @@ service principal linked to the onefuzz cli application registration
     * CliClient (from OneFuzz Application registration)
 
 ### Managed node Service Principal
-This entity is available after the first deployment. This is the service principal associated with the user managed identity <instance_name>-scalesetid
+This entity is available after the first deployment. This is the service principal associated with the user-assigned managed identity `<instance_name>-scalesetid`.
 
 * name: <instance_name>-scalesetid
 * Service Principal
