@@ -1,7 +1,7 @@
 # Azure Active Directory Entities
 This document describes the configuration of entities create in Azure AD by our [deployment script](../src/deployment/deploy.sh)
 
-### Onefuzz Application registration
+### OneFuzz Application Registration
 This is the registration of the onefuzz instance
 * name : <instance_name>
 * app roles
