@@ -30,7 +30,7 @@ The registration for the command line interface:
 ### OneFuzz CLI Service Principal
 Service principal linked to the OneFuzz CLI application registration:
 * name: <instance_name>-cli
-* Application Id: <Onefuzz cli registration app_id>
+* Application Id: <OneFuzz CLI registration app_id>
 * User Assignment required: true
 * Permission
     * CliClient (from OneFuzz Application registration)
