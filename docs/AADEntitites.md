@@ -1,5 +1,5 @@
 # Azure Active Directory Entities
-This document describes the configuration of entities create in Azure AD by our [deployment script](../src/deployment/deploy.sh)
+This document describes the configuration of entities create in Azure AD by our [deployment script](../src/deployment/deploy.py)
 
 ### OneFuzz Application Registration
 This is the registration of the OneFuzz instance:
@@ -41,4 +41,4 @@ This entity is available after the first deployment. This is the service princip
 * name: <instance_name>-scalesetid
 * Service Principal
     * Permission
-        * ManagedNode (from Onefuzz Application registration)
+        * ManagedNode (from OneFuzz Application registration)
