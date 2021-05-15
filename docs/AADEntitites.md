@@ -2,7 +2,7 @@
 This document describes the configuration of entities create in Azure AD by our [deployment script](../src/deployment/deploy.py)
 
 ### OneFuzz Application Registration
-This is the registration of the OneFuzz instance:
+This is the registration of the OneFuzz instance.
 * name : <instance_name>
 * app roles
     * ManagedNode
@@ -19,26 +19,26 @@ This is the registration of the OneFuzz instance:
     * OneFuzz CLI registration
 
 ### Onefuzz Application Service Principal
-Service principal linked to the OneFuzz application registration:
-* name: <instance_name>
+Service principal linked to the OneFuzz application registration.
+* name: `<instance_name>`
 * Application Id: <OneFuzz Application registration app_id>
 
 ### OneFuzz CLI registration
-The registration for the command line interface:
-* name: <instance_name>-cli
+The registration for the command line interface.
+* name: `<instance_name>-cli`
 
 ### OneFuzz CLI Service Principal
-Service principal linked to the OneFuzz CLI application registration:
-* name: <instance_name>-cli
+Service principal linked to the OneFuzz CLI application registration.
+* name: `<instance_name>-cli`
 * Application Id: <OneFuzz CLI registration app_id>
 * User Assignment required: true
 * Permission
     * CliClient (from OneFuzz Application registration)
 
-### Managed node Service Principal
+### Managed Node Service Principal
 This entity is available after the first deployment. This is the service principal associated with the user-assigned managed identity `<instance_name>-scalesetid`.
 
-* name: <instance_name>-scalesetid
+* name: `<instance_name>-<scaleset_id>`
 * Service Principal
     * Permission
         * ManagedNode (from OneFuzz Application registration)
