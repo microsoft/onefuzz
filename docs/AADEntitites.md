@@ -11,7 +11,7 @@ This is the registration of the OneFuzz instance:
     * CliClient
         * value: ManagedNode
         * Allowed Member types: Applications
-* Api Permissions
+* API Permissions
     * User.Read (Microsoft Graph)
 * scope
     * user_impersonation
