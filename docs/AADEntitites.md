@@ -16,7 +16,7 @@ This is the registration of the OneFuzz instance:
 * scope
     * user_impersonation
 * Authorized application:
-    * Onefuzz cli registration
+    * OneFuzz CLI registration
 
 ### Onefuzz Application Service Principal
 service principal linked to the onefuzz application registration
