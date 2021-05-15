@@ -33,7 +33,7 @@ service principal linked to the onefuzz cli application registration
 * Application Id: <Onefuzz cli registration app_id>
 * User Assignment required: true
 * Permission
-    * CliClient (from Onefuzz Application registration)
+    * CliClient (from OneFuzz Application registration)
 
 ### Managed node Service Principal
 This entity is available after the first deployment. This is the service principal associated with the user managed identity <instance_name>-scalesetid
