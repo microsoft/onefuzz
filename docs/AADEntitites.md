@@ -2,7 +2,7 @@
 This document describes the configuration of entities create in Azure AD by our [deployment script](../src/deployment/deploy.sh)
 
 ### OneFuzz Application Registration
-This is the registration of the onefuzz instance
+This is the registration of the OneFuzz instance:
 * name : <instance_name>
 * app roles
     * ManagedNode
