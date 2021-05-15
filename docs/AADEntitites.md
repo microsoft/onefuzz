@@ -23,7 +23,7 @@ Service principal linked to the OneFuzz application registration:
 * name: <instance_name>
 * Application Id: <Onefuzz Application registration app_id>
 
-### Onefuzz cli registration
+### OneFuzz CLI registration
 The registration for the Command line interface
 * name: <instance_name>-cli
 
