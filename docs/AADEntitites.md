@@ -19,7 +19,7 @@ This is the registration of the OneFuzz instance:
     * OneFuzz CLI registration
 
 ### Onefuzz Application Service Principal
-service principal linked to the onefuzz application registration
+Service principal linked to the OneFuzz application registration:
 * name: <instance_name>
 * Application Id: <Onefuzz Application registration app_id>
 
