@@ -8,7 +8,7 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
-backoff = { version = "0.3", features = ["async-std"] }
+backoff = { version = "0.3", features = ["tokio"] }
 base64 = "0.13"
 bytes = "0.5"
 derivative = "2.2.0"

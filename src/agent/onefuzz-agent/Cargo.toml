@@ -15,7 +15,7 @@ arraydeque = "0.4.5"
 appinsights = "0.1"
 async-trait = "0.1"
 atexit = { path = "../atexit" }
-backoff = { version = "0.3", features = ["async-std"] }
+backoff = { version = "0.3", features = ["tokio"] }
 clap = "2.33"
 crossterm = "0.18"
 env_logger = "0.8"
