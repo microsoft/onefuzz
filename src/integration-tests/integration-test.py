@@ -216,16 +216,15 @@ class TestOnefuzz:
         self,
         *,
         region: Optional[Region] = None,
-        pool_size: int,
         os_list: List[OS],
     ) -> None:
         self.inject_log(self.start_log_marker)
         for entry in os_list:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
             self.logger.info("creating pool: %s:%s", entry.name, name)
-            self.pools[entry] = self.of.pools.create(name, entry)
-            self.logger.info("creating scaleset for pool: %s", name)
-            self.of.scalesets.create(name, pool_size, region=region)
+            self.pools[entry] = self.of.pools.create_autoscale(
+                name, entry, region=region
+            )
 
     def launch(
         self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
@@ -833,7 +832,6 @@ class Run(Command):
         samples: Directory,
         *,
         endpoint: Optional[str] = None,
-        pool_size: int = 10,
         region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         targets: List[str] = list(TARGETS.keys()),
@@ -846,7 +844,7 @@ class Run(Command):
 
         self.onefuzz.__setup__(endpoint=endpoint)
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
-        tester.setup(region=region, pool_size=pool_size, os_list=os_list)
+        tester.setup(region=region, os_list=os_list)
         tester.launch(samples, os_list=os_list, targets=targets, duration=duration)
         return test_id
 
@@ -865,7 +863,6 @@ class Run(Command):
         samples: Directory,
         *,
         endpoint: Optional[str] = None,
-        pool_size: int = 15,
         region: Optional[Region] = None,
         os_list: List[OS] = [OS.linux, OS.windows],
         targets: List[str] = list(TARGETS.keys()),
@@ -880,7 +877,6 @@ class Run(Command):
             self.launch(
                 samples,
                 endpoint=endpoint,
-                pool_size=pool_size,
                 region=region,
                 os_list=os_list,
                 targets=targets,
