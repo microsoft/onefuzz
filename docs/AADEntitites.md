@@ -5,14 +5,14 @@ This document describes the configuration of entities create in Azure AD by our 
 This is the registration of the OneFuzz instance.
 * name : `<instance_name>`
 * app roles
-    * ManagedNode
+    * _ManagedNode_
         * value: ManagedNode
         * Allowed Member types: Applications
-    * CliClient
+    * _CliClient_
         * value: ManagedNode
         * Allowed Member types: Applications
 * API Permissions
-    * User.Read (Microsoft Graph)
+    * _User.Read_ ([Microsoft Graph](https://docs.microsoft.com/en-us/graph/permissions-reference#user-permissions))
 * scope
     * `user_impersonation`
 * Authorized application:
@@ -21,7 +21,7 @@ This is the registration of the OneFuzz instance.
 ### Onefuzz Application Service Principal
 Service principal linked to the OneFuzz application registration.
 * name: `<instance_name>`
-* Application Id: <OneFuzz Application registration app_id>
+* Application Id: `<OneFuzz Application registration app_id>`
 
 ### OneFuzz CLI registration
 The registration for the command line interface.
@@ -30,10 +30,10 @@ The registration for the command line interface.
 ### OneFuzz CLI Service Principal
 Service principal linked to the OneFuzz CLI application registration.
 * name: `<instance_name>-cli`
-* Application Id: <OneFuzz CLI registration app_id>
-* User Assignment required: true
+* Application Id: `<OneFuzz CLI registration app_id>`
+* User Assignment required: _true_
 * Permission
-    * CliClient (from OneFuzz Application registration)
+    * _CliClient_ (from OneFuzz Application registration)
 
 ### Managed Node Service Principal
 This entity is available after the first deployment. This is the service principal associated with the user-assigned managed identity `<instance_name>-<scaleset_id>`.
@@ -41,4 +41,4 @@ This entity is available after the first deployment. This is the service princip
 * name: `<instance_name>-<scaleset_id>`
 * Service Principal
     * Permission
-        * ManagedNode (from OneFuzz Application registration)
+        * _ManagedNode_ (from OneFuzz Application registration)
