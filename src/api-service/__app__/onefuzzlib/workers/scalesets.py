@@ -6,7 +6,7 @@
 import datetime
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from onefuzztypes.enums import ErrorCode, NodeState, PoolState, ScalesetState
 from onefuzztypes.events import (
@@ -20,6 +20,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.models import Scaleset as BASE_SCALESET
 from onefuzztypes.models import ScalesetNodeState
 from onefuzztypes.primitives import PoolName, Region
+from pydantic import BaseModel, Field
 
 from ..__version__ import __version__
 from ..azure.auth import build_auth
