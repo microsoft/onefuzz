@@ -3,7 +3,7 @@ This document describes the configuration of entities create in Azure AD by our 
 
 ### OneFuzz Application Registration
 This is the registration of the OneFuzz instance.
-* name : <instance_name>
+* name : `<instance_name>`
 * app roles
     * ManagedNode
         * value: ManagedNode
@@ -14,7 +14,7 @@ This is the registration of the OneFuzz instance.
 * API Permissions
     * User.Read (Microsoft Graph)
 * scope
-    * user_impersonation
+    * `user_impersonation`
 * Authorized application:
     * OneFuzz CLI registration
 
@@ -36,7 +36,7 @@ Service principal linked to the OneFuzz CLI application registration.
     * CliClient (from OneFuzz Application registration)
 
 ### Managed Node Service Principal
-This entity is available after the first deployment. This is the service principal associated with the user-assigned managed identity `<instance_name>-scalesetid`.
+This entity is available after the first deployment. This is the service principal associated with the user-assigned managed identity `<instance_name>-<scaleset_id>`.
 
 * name: `<instance_name>-<scaleset_id>`
 * Service Principal
