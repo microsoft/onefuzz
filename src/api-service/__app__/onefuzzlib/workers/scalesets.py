@@ -26,6 +26,14 @@ from ..__version__ import __version__
 from ..azure.auth import build_auth
 from ..azure.image import get_os
 from ..azure.network import Network
+from ..azure.queue import (
+    clear_queue,
+    create_queue,
+    delete_queue,
+    queue_object,
+    remove_first_message,
+)
+from ..azure.storage import StorageType
 from ..azure.vmss import (
     UnableToUpdate,
     create_vmss,
