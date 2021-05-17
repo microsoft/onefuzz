@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.17.0
 ### Added
-* Documentation: Added [descriptions](docs/AADEntitites.md) for the Azure AD entities used by OneAzure. [#886](https://github.com/microsoft/onefuzz/pull/896)
+* Documentation: Added [descriptions](docs/AADEntitites.md) for the Azure AD entities used by OneFuzz. [#896](https://github.com/microsoft/onefuzz/pull/896)
 * Service: Added the [scaleset\_state\_updated](docs/webhook_events.md#scaleset_state_updated) event.  [#882](https://github.com/microsoft/onefuzz/pull/882)
 
 ### Changes
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * SDK/CLI: Replaced Python based directory uploading with `azcopy sync`.  [#878](https://github.com/microsoft/onefuzz/pull/878)
 
 ### Fixed
-* Service/Supervisor: Fixed an issue where scalesets do not shrink or shutdown upon completion of work as expected. [#866](https://github.com/microsoft/onefuzz/pull/866)
+* Service/Supervisor: Fixed an issue shrinking scalesets where idle nodes would not shut down as expected. [#866](https://github.com/microsoft/onefuzz/pull/866)
 * Deployment: Fixed an issue deploying to non-Microsoft single-tenant instances. [#872](https://github.com/microsoft/onefuzz/pull/872), [#898](https://github.com/microsoft/onefuzz/pull/898)
 
 ## 2.16.0
