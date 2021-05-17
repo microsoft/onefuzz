@@ -13,4 +13,4 @@ def azcopy_sync(src: str, dst: str) -> None:
         )
 
     # security note: callers need to understand the src/dst for this.
-    subprocess.check_output([azcopy, "sync", src, dst])  # nosec
+    subprocess.check_output([azcopy, "sync", src, dst, "--recursive=true"])  # nosec
