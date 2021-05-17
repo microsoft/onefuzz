@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Service/Supervisor: Fixed an issue where scalesets do not shrink or shutdown upon completion of work as expected. [#866](https://github.com/microsoft/onefuzz/pull/866)
-* Deployment: Fixed an issue deploying to non-Microsoft single-tenant instances. [#872](https://github.com/microsoft/onefuzz/pull/872)
+* Deployment: Fixed an issue deploying to non-Microsoft single-tenant instances. [#872](https://github.com/microsoft/onefuzz/pull/872), [#898](https://github.com/microsoft/onefuzz/pull/898)
 
 ## 2.16.0
 ### Aded
