@@ -67,12 +67,18 @@ from registration import (
     add_application_password,
     assign_app_role,
     authorize_application,
+    get_graph_client,
     register_application,
     set_app_audience,
     update_pool_registration,
 )
 
-USER_IMPERSONATION = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
+# Found by manually assigning the User.Read permission to application
+# registration in the admin portal. The values are in the manifest under
+# the section "requiredResourceAccess"
+USER_READ_PERMISSION = "e1fe6dd8-ba31-4d61-89e7-88639da4683d"
+MICROSOFT_GRAPH_APP_ID = "00000003-0000-0000-c000-000000000000"
+
 ONEFUZZ_CLI_APP = "72f1562a-8c0c-41ea-beb9-fa2b71c80134"
 ONEFUZZ_CLI_AUTHORITY = (
     "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
@@ -309,9 +315,9 @@ class Client:
                 required_resource_access=[
                     RequiredResourceAccess(
                         resource_access=[
-                            ResourceAccess(id=USER_IMPERSONATION, type="Scope")
+                            ResourceAccess(id=USER_READ_PERMISSION, type="Scope")
                         ],
-                        resource_app_id="00000002-0000-0000-c000-000000000000",
+                        resource_app_id=MICROSOFT_GRAPH_APP_ID,
                     )
                 ],
                 app_roles=app_roles,
@@ -426,7 +432,20 @@ class Client:
             }
 
         else:
-            authorize_application(uuid.UUID(ONEFUZZ_CLI_APP), app.app_id)
+            onefuzz_cli_app = cli_app[0]
+            authorize_application(uuid.UUID(onefuzz_cli_app.app_id), app.app_id)
+            if self.multi_tenant_domain:
+                authority = COMMON_AUTHORITY
+            else:
+                onefuzz_client = get_graph_client(self.get_subscription_id())
+                authority = (
+                    "https://login.microsoftonline.com/%s"
+                    % onefuzz_client.config.tenant_id
+                )
+            self.cli_config = {
+                "client_id": onefuzz_cli_app.app_id,
+                "authority": authority,
+            }
 
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password

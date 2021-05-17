@@ -26,7 +26,7 @@ from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..proxy_forward import ProxyForward
-from ..workers.nodes import Node
+from ..workers.nodes import Node, NodeTasks
 from ..workers.pools import Pool
 from ..workers.scalesets import Scaleset
 
@@ -124,13 +124,18 @@ class Task(BASE_TASK, ORMMixin):
         self.set_state(TaskState.waiting)
 
     def stopping(self) -> None:
-        # TODO: we need to 'unschedule' this task from the existing pools
-        from ..jobs import Job
-
         logging.info("stopping task: %s:%s", self.job_id, self.task_id)
         delete_queue(str(self.task_id), StorageType.corpus)
         Node.stop_task(self.task_id)
+        if not NodeTasks.get_nodes_by_task_id(self.task_id):
+            self.stopped()
+
+    def stopped(self) -> None:
         self.set_state(TaskState.stopped)
+        delete_queue(str(self.task_id), StorageType.corpus)
+
+        # TODO: we need to 'unschedule' this task from the existing pools
+        from ..jobs import Job
 
         job = Job.get(self.job_id)
         if job:
