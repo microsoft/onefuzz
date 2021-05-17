@@ -176,7 +176,7 @@ class Proxy(ORMMixin):
             proxy_timestamp = self.created_timestamp
             if proxy_timestamp < (
                 datetime.datetime.now(tz=datetime.timezone.utc)
-                - datetime.timedelta(minutes=30)
+                - datetime.timedelta(minutes=5)
             ):
                 logging.info(
                     PROXY_LOG_PREFIX
@@ -305,7 +305,7 @@ class Proxy(ORMMixin):
                 proxy_timestamp = proxy.created_timestamp
                 if proxy_timestamp < (
                     datetime.datetime.now(tz=datetime.timezone.utc)
-                    - datetime.timedelta(minutes=30)
+                    - datetime.timedelta(minutes=5)
                 ):
                     logging.info(
                         PROXY_LOG_PREFIX
