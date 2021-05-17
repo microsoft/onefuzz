@@ -25,7 +25,6 @@ from ..azure.queue import create_queue, delete_queue
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
-from ..proxy_forward import ProxyForward
 from ..workers.nodes import Node, NodeTasks
 from ..workers.pools import Pool
 from ..workers.scalesets import Scaleset
