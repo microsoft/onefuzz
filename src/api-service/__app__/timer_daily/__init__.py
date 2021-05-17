@@ -17,15 +17,20 @@ from ..onefuzzlib.workers.scalesets import Scaleset
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
     for proxy in Proxy.search():
-        if (
-            proxy.is_outdated()
-            and len(Proxy.search(query={"region": [proxy.region], "outdated": [False]}))
-            == 0
-        ):
-            logging.info("outdated proxy, creating new one.")
-            new_proxy = Proxy(region=proxy.region)
-            new_proxy.save()
-            send_event(EventProxyCreated(region=proxy.region, proxy_id=proxy.proxy_id))
+        if proxy.is_outdated():
+            logging.info("marking proxy as outdated.")
+            proxy.outdated = True
+            proxy.save()
+            if (
+                len(Proxy.search(query={"region": [proxy.region], "outdated": [False]}))
+                == 0
+            ):
+                logging.info("outdated proxy, creating new one.")
+                new_proxy = Proxy(region=proxy.region)
+                new_proxy.save()
+                send_event(
+                    EventProxyCreated(region=proxy.region, proxy_id=proxy.proxy_id)
+                )
         if not proxy.is_used():
             logging.info("stopping proxy")
             proxy.state = VmState.stopping

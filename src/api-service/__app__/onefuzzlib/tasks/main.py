@@ -128,7 +128,6 @@ class Task(BASE_TASK, ORMMixin):
         from ..jobs import Job
 
         logging.info("stopping task: %s:%s", self.job_id, self.task_id)
-        ProxyForward.remove_forward(self.task_id)
         delete_queue(str(self.task_id), StorageType.corpus)
         Node.stop_task(self.task_id)
         self.set_state(TaskState.stopped)
