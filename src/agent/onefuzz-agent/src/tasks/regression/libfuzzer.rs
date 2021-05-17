@@ -79,14 +79,15 @@ impl LibFuzzerRegressionTask {
 
     pub async fn run(&self) -> Result<()> {
         let mut report_dirs = vec![];
-        for dir in &[
+        for dir in vec![
             &self.config.reports,
             &self.config.unique_reports,
             &self.config.no_repro,
-        ] {
-            if let Some(dir) = dir {
-                report_dirs.push(dir);
-            }
+        ]
+        .into_iter()
+        .flatten()
+        {
+            report_dirs.push(dir);
         }
 
         let heartbeat_client = self.config.common.init_heartbeat().await?;
