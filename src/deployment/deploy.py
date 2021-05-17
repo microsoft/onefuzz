@@ -438,7 +438,7 @@ class Client:
                     % onefuzz_client.config.tenant_id
                 )
             self.cli_config = {
-                "client_id": onefuzz_cli_app.client_id,
+                "client_id": onefuzz_cli_app.app_id,
                 "authority": authority,
             }
 
