@@ -239,6 +239,8 @@ class Node(BASE_NODE, ORMMixin):
             task = Task.get_by_task_id(entry.task_id)
             if isinstance(task, Task):
                 task.mark_failed(error)
+            if not self.debug_keep_node:
+                entry.delete()
 
     def could_shrink_scaleset(self) -> bool:
         from .scalesets import ScalesetShrinkQueue
