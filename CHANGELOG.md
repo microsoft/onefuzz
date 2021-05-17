@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.17.0
+### Added
+* Documentation: Added [descriptions](docs/AADEntitites.md) for the Azure AD entities used by OneFuzz. [#896](https://github.com/microsoft/onefuzz/pull/896)
+* Service: Added the [scaleset\_state\_updated](docs/webhook_events.md#scaleset_state_updated) event.  [#882](https://github.com/microsoft/onefuzz/pull/882)
+
+### Changes
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#884](https://github.com/microsoft/onefuzz/pull/884)
+* Agent/Supervisor/Proxy: Updated and removed third-party Rust dependencies.  [#892](https://github.com/microsoft/onefuzz/pull/892), [#873](https://github.com/microsoft/onefuzz/pull/873), [#865](https://github.com/microsoft/onefuzz/pull/865)
+* Service: Improved the Python typing signatures used in the service.  [#881](https://github.com/microsoft/onefuzz/pull/881)
+* Service: Updated multiple first-party and third-party Python libraries.  [#893](https://github.com/microsoft/onefuzz/pull/893), [#889](https://github.com/microsoft/onefuzz/pull/889), [#866](https://github.com/microsoft/onefuzz/pull/886), [#885](https://github.com/microsoft/onefuzz/pull/885), [#861](https://github.com/microsoft/onefuzz/pull/861), [#890](https://github.com/microsoft/onefuzz/pull/890), 
+* Supervisor: The supervisor now includes the full error context upon failure. [#879](https://github.com/microsoft/onefuzz/pull/879)
+* Service: Cleaned up scaleset update logs. [#880](https://github.com/microsoft/onefuzz/pull/880)
+* Agent: Continued development related to upcoming features. [#874](https://github.com/microsoft/onefuzz/pull/874), [#868](https://github.com/microsoft/onefuzz/pull/868), [#864](https://github.com/microsoft/onefuzz/pull/864)
+* SDK/CLI: Replaced Python based directory uploading with `azcopy sync`.  [#878](https://github.com/microsoft/onefuzz/pull/878)
+
+### Fixed
+* Service/Supervisor: Fixed an issue shrinking scalesets where idle nodes would not shut down as expected. [#866](https://github.com/microsoft/onefuzz/pull/866)
+* Deployment: Fixed an issue deploying to non-Microsoft single-tenant instances. [#872](https://github.com/microsoft/onefuzz/pull/872), [#898](https://github.com/microsoft/onefuzz/pull/898)
+
 ## 2.16.0
 ### Aded
 * Deployment: Added ability to only deploy RBAC rsources. [#818](https://github.com/microsoft/onefuzz/pull/818)
