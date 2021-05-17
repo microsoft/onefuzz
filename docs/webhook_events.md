@@ -42,6 +42,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [scaleset_deleted](#scaleset_deleted)
 * [scaleset_failed](#scaleset_failed)
 * [scaleset_resize_scheduled](#scaleset_resize_scheduled)
+* [scaleset_state_updated](#scaleset_state_updated)
 * [task_created](#task_created)
 * [task_failed](#task_failed)
 * [task_heartbeat](#task_heartbeat)
@@ -2235,6 +2236,61 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "size"
     ],
     "title": "EventScalesetResizeScheduled",
+    "type": "object"
+}
+```
+
+### scaleset_state_updated
+
+#### Example
+
+```json
+{
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "state": "init"
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "ScalesetState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "setup",
+                "resize",
+                "running",
+                "shutdown",
+                "halt",
+                "creation_failed"
+            ],
+            "title": "ScalesetState"
+        }
+    },
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/ScalesetState"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "state"
+    ],
+    "title": "EventScalesetStateUpdated",
     "type": "object"
 }
 ```
@@ -5034,6 +5090,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventScalesetResizeScheduled",
             "type": "object"
         },
+        "EventScalesetStateUpdated": {
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/ScalesetState"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "state"
+            ],
+            "title": "EventScalesetStateUpdated",
+            "type": "object"
+        },
         "EventTaskCreated": {
             "properties": {
                 "config": {
@@ -5194,6 +5273,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "scaleset_deleted",
                 "scaleset_failed",
                 "scaleset_resize_scheduled",
+                "scaleset_state_updated",
                 "task_created",
                 "task_failed",
                 "task_state_updated",
@@ -5428,6 +5508,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "Report",
             "type": "object"
+        },
+        "ScalesetState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "setup",
+                "resize",
+                "running",
+                "shutdown",
+                "halt",
+                "creation_failed"
+            ],
+            "title": "ScalesetState"
         },
         "StatsFormat": {
             "description": "An enumeration.",
@@ -5839,6 +5932,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventScalesetResizeScheduled"
+                },
+                {
+                    "$ref": "#/definitions/EventScalesetStateUpdated"
                 },
                 {
                     "$ref": "#/definitions/EventTaskFailed"

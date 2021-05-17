@@ -14,6 +14,7 @@ from onefuzztypes.events import (
     EventScalesetDeleted,
     EventScalesetFailed,
     EventScalesetResizeScheduled,
+    EventScalesetStateUpdated,
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Scaleset as BASE_SCALESET
@@ -134,8 +135,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             return
 
         self.error = error
-        self.state = ScalesetState.creation_failed
-        self.save()
+        self.set_state(ScalesetState.creation_failed)
 
         send_event(
             EventScalesetFailed(
@@ -177,11 +177,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.set_failed(error)
                 return
             else:
-                self.state = ScalesetState.setup
+                self.set_state(ScalesetState.setup)
         else:
-            self.state = ScalesetState.setup
-
-        self.save()
+            self.set_state(ScalesetState.setup)
 
     def setup(self) -> None:
         from .pools import Pool
@@ -262,7 +260,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.set_failed(identity_result)
                 return
             else:
-                self.state = ScalesetState.running
+                self.set_state(ScalesetState.running)
         self.save()
 
     def try_set_identity(self, vmss: Any) -> Optional[Error]:
@@ -428,9 +426,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         node_count = len(Node.search_states(scaleset_id=self.scaleset_id))
         if node_count == self.size:
             logging.info(SCALESET_LOG_PREFIX + "resize finished: %s", self.scaleset_id)
-            self.state = ScalesetState.running
-            self.save()
-            return
+            self.set_state(ScalesetState.running)
         else:
             logging.info(
                 SCALESET_LOG_PREFIX
@@ -440,7 +436,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 node_count,
                 self.size,
             )
-            return
 
     def _resize_grow(self) -> None:
         try:
@@ -554,7 +549,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 machine_ids.append(node.machine_id)
 
         logging.info(
-            SCALESET_LOG_PREFIX + "deleting scaleset_id:%s machine_id:%s",
+            SCALESET_LOG_PREFIX + "deleting nodes scaleset_id:%s machine_id:%s",
             self.scaleset_id,
             machine_ids,
         )
@@ -612,10 +607,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if self.state in [ScalesetState.halt, ScalesetState.shutdown]:
             return
 
+        logging.info(
+            SCALESET_LOG_PREFIX + "scaleset set_shutdown: scaleset_id:%s now:%s",
+            self.scaleset_id,
+            now,
+        )
+
         if now:
-            self.state = ScalesetState.halt
+            self.set_state(ScalesetState.halt)
         else:
-            self.state = ScalesetState.shutdown
+            self.set_state(ScalesetState.shutdown)
 
         self.save()
 
@@ -783,3 +784,42 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         send_event(
             EventScalesetDeleted(scaleset_id=self.scaleset_id, pool_name=self.pool_name)
         )
+
+    def set_state(self, state: ScalesetState) -> None:
+        if self.state == state:
+            return
+
+        self.state = state
+        self.save()
+        send_event(
+            EventScalesetStateUpdated(
+                scaleset_id=self.scaleset_id, pool_name=self.pool_name, state=self.state
+            )
+        )
+
+
+class ShrinkEntry(BaseModel):
+    shrink_id: UUID = Field(default_factory=uuid4)
+
+
+class ScalesetShrinkQueue:
+    def __init__(self, scaleset_id: UUID):
+        self.scaleset_id = scaleset_id
+
+    def queue_name(self) -> str:
+        return "to-shrink-%s" % self.scaleset_id.hex
+
+    def clear(self) -> None:
+        clear_queue(self.queue_name(), StorageType.config)
+
+    def create(self) -> None:
+        create_queue(self.queue_name(), StorageType.config)
+
+    def delete(self) -> None:
+        delete_queue(self.queue_name(), StorageType.config)
+
+    def add_entry(self) -> None:
+        queue_object(self.queue_name(), ShrinkEntry(), StorageType.config)
+
+    def should_shrink(self) -> bool:
+        return remove_first_message(self.queue_name(), StorageType.config)

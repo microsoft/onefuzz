@@ -28,42 +28,42 @@ pub async fn read_stats(output_path: impl AsRef<Path>) -> Result<Vec<EventData>,
                 stats.push(EventData::Mode(value.to_string()));
             }
             "paths_total" => {
-                if let Ok(value) = u64::from_str_radix(&value, 10) {
+                if let Ok(value) = value.parse::<u64>() {
                     stats.push(EventData::CoveragePaths(value));
                 } else {
                     error!("unable to parse telemetry: {:?} {:?}", name, value);
                 }
             }
             "fuzzer_pid" => {
-                if let Ok(value) = u32::from_str_radix(&value, 10) {
+                if let Ok(value) = value.parse::<u32>() {
                     stats.push(EventData::Pid(value));
                 } else {
                     error!("unable to parse telemetry: {:?} {:?}", name, value);
                 }
             }
             "execs_done" => {
-                if let Ok(value) = u64::from_str_radix(&value, 10) {
+                if let Ok(value) = value.parse::<u64>() {
                     stats.push(EventData::Count(value));
                 } else {
                     error!("unable to parse telemetry: {:?} {:?}", name, value);
                 }
             }
             "paths_favored" => {
-                if let Ok(value) = u64::from_str_radix(&value, 10) {
+                if let Ok(value) = value.parse::<u64>() {
                     stats.push(EventData::CoveragePathsFavored(value));
                 } else {
                     error!("unable to parse telemetry: {:?} {:?}", name, value);
                 }
             }
             "paths_found" => {
-                if let Ok(value) = u64::from_str_radix(&value, 10) {
+                if let Ok(value) = value.parse::<u64>() {
                     stats.push(EventData::CoveragePathsFound(value));
                 } else {
                     error!("unable to parse telemetry: {:?} {:?}", name, value);
                 }
             }
             "paths_imported" => {
-                if let Ok(value) = u64::from_str_radix(&value, 10) {
+                if let Ok(value) = value.parse::<u64>() {
                     stats.push(EventData::CoveragePathsImported(value));
                 } else {
                     error!("unable to parse telemetry: {:?} {:?}", name, value);

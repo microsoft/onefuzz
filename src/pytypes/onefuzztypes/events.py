@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
-from .enums import OS, Architecture, NodeState, TaskState, TaskType
+from .enums import OS, Architecture, NodeState, ScalesetState, TaskState, TaskType
 from .models import (
     AutoScaleConfig,
     Error,
@@ -156,6 +156,12 @@ class EventNodeDeleted(BaseEvent):
     pool_name: PoolName
 
 
+class EventScalesetStateUpdated(BaseEvent):
+    scaleset_id: UUID
+    pool_name: PoolName
+    state: ScalesetState
+
+
 class EventNodeStateUpdated(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
@@ -199,6 +205,7 @@ Event = Union[
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetResizeScheduled,
+    EventScalesetStateUpdated,
     EventTaskFailed,
     EventTaskStateUpdated,
     EventTaskCreated,
@@ -226,6 +233,7 @@ class EventType(Enum):
     scaleset_deleted = "scaleset_deleted"
     scaleset_failed = "scaleset_failed"
     scaleset_resize_scheduled = "scaleset_resize_scheduled"
+    scaleset_state_updated = "scaleset_state_updated"
     task_created = "task_created"
     task_failed = "task_failed"
     task_state_updated = "task_state_updated"
@@ -254,6 +262,7 @@ EventTypeMap = {
     EventType.scaleset_deleted: EventScalesetDeleted,
     EventType.scaleset_failed: EventScalesetFailed,
     EventType.scaleset_resize_scheduled: EventScalesetResizeScheduled,
+    EventType.scaleset_state_updated: EventScalesetStateUpdated,
     EventType.task_created: EventTaskCreated,
     EventType.task_failed: EventTaskFailed,
     EventType.task_state_updated: EventTaskStateUpdated,
