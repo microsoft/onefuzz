@@ -28,7 +28,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         if proxy.outdated:
             region_list = list(
                 filter(
-                    lambda x: (x.region == proxy.region and x.outdated == False),
+                    lambda x: (x.region == proxy.region and not x.outdated),
                     proxy_list,
                 )
             )
