@@ -124,7 +124,6 @@ class Task(BASE_TASK, ORMMixin):
 
     def stopping(self) -> None:
         logging.info("stopping task: %s:%s", self.job_id, self.task_id)
-        delete_queue(str(self.task_id), StorageType.corpus)
         Node.stop_task(self.task_id)
         if not NodeTasks.get_nodes_by_task_id(self.task_id):
             self.stopped()
