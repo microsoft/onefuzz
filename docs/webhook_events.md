@@ -1276,8 +1276,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         }
     },
     "required": [
-        "region",
-        "proxy_id"
+        "region"
     ],
     "title": "EventProxyCreated",
     "type": "object"
@@ -1311,8 +1310,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         }
     },
     "required": [
-        "region",
-        "proxy_id"
+        "region"
     ],
     "title": "EventProxyDeleted",
     "type": "object"
@@ -1406,7 +1404,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
     },
     "required": [
         "region",
-        "proxy_id",
         "error"
     ],
     "title": "EventProxyFailed",
@@ -4921,8 +4918,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "required": [
-                "region",
-                "proxy_id"
+                "region"
             ],
             "title": "EventProxyCreated",
             "type": "object"
@@ -4940,8 +4936,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 }
             },
             "required": [
-                "region",
-                "proxy_id"
+                "region"
             ],
             "title": "EventProxyDeleted",
             "type": "object"
@@ -4963,7 +4958,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "required": [
                 "region",
-                "proxy_id",
                 "error"
             ],
             "title": "EventProxyFailed",
