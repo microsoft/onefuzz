@@ -38,6 +38,7 @@ from .proxy_forward import ProxyForward
 PROXY_SKU = "Standard_B2s"
 PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
 PROXY_LOG_PREFIX = "scaleset-proxy: "
+PROXY_LIFESPAN = 7  # days
 
 
 # This isn't intended to ever be shared to the client, hence not being in
@@ -170,13 +171,12 @@ class Proxy(ORMMixin):
                 __version__,
                 self.state,
             )
-            self.outdated = True
             return True
         if self.created_timestamp is not None:
             proxy_timestamp = self.created_timestamp
             if proxy_timestamp < (
                 datetime.datetime.now(tz=datetime.timezone.utc)
-                - datetime.timedelta(days=7)
+                - datetime.timedelta(days=PROXY_LIFESPAN)
             ):
                 logging.info(
                     PROXY_LOG_PREFIX
@@ -184,7 +184,6 @@ class Proxy(ORMMixin):
                     self.created_timestamp,
                     self.state,
                 )
-                self.outdated = True
                 return True
         return False
 

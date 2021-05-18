@@ -121,17 +121,17 @@ class EventPoolCreated(BaseEvent):
 
 class EventProxyCreated(BaseEvent):
     region: Region
-    proxy_id: UUID
+    proxy_id: Optional[UUID]
 
 
 class EventProxyDeleted(BaseEvent):
     region: Region
-    proxy_id: UUID
+    proxy_id: Optional[UUID]
 
 
 class EventProxyFailed(BaseEvent):
     region: Region
-    proxy_id: UUID
+    proxy_id: Optional[UUID]
     error: Error
 
 

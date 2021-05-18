@@ -21,7 +21,7 @@ pytest -v tests
 
 cp dist/*.* ../../artifacts/sdk
 
-echo 'verify  webhook docs are up-to-date'
+echo 'verify webhook docs are up-to-date'
 python -m venv build-docs
 . build-docs/bin/activate
 pip install -e .
