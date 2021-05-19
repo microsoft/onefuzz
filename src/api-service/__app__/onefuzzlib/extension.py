@@ -7,7 +7,7 @@ import os
 from typing import List, Optional
 from uuid import UUID
 
-from onefuzztypes.enums import OS, AgentMode
+from onefuzztypes.enums import OS, AgentMode, ScalesetExtension
 from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
 from onefuzztypes.primitives import Container, Extension, Region
 
@@ -18,14 +18,25 @@ from .azure.queue import get_queue_sas
 from .azure.storage import StorageType
 from .reports import get_report
 
+DEFAULT_EXTENSIONS = [
+    ScalesetExtension.OMS_EXTENSION,
+    ScalesetExtension.DEPENDENCY_AGENT,
+    ScalesetExtension.CUSTOM_SCRIPT_EXTENSION,
+]
 
-def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
-    extensions = [monitor_extension(region, vm_os)]
+
+def generic_extensions(
+    region: Region, extension_list: List[str], vm_os: OS
+) -> List[Extension]:
+    extensions = []
     depedency = dependency_extension(region, vm_os)
-    if depedency:
+    if depedency and ScalesetExtension.OMS_EXTENSION in extension_list:
         extensions.append(depedency)
-    if vm_os == OS.windows:
-        geneva = geneva_extension(region, vm_os)
+    monitor = monitor_extension(region, vm_os)
+    if monitor and ScalesetExtension.DEPENDENCY_AGENT in extension_list:
+        extensions.append(monitor)
+    geneva = geneva_extension(region, vm_os)
+    if geneva and ScalesetExtension.GENEVA_MONITORING in extension_list:
         extensions.append(geneva)
 
     return extensions
@@ -275,7 +286,7 @@ def agent_config(
 def fuzz_extensions(pool: Pool, scaleset: Scaleset) -> List[Extension]:
     urls = [build_pool_config(pool), build_scaleset_script(pool, scaleset)]
     fuzz_extension = agent_config(scaleset.region, pool.os, AgentMode.fuzz, urls=urls)
-    extensions = generic_extensions(scaleset.region, pool.os)
+    extensions = generic_extensions(scaleset.region, scaleset.extensions, pool.os)
     extensions += [fuzz_extension]
     return extensions
 
@@ -353,7 +364,7 @@ def repro_extensions(
         ]
 
     base_extension = agent_config(region, repro_os, AgentMode.repro, urls=urls)
-    extensions = generic_extensions(region, repro_os)
+    extensions = generic_extensions(region, DEFAULT_EXTENSIONS, repro_os)
     extensions += [base_extension]
     return extensions
 
@@ -375,6 +386,6 @@ def proxy_manager_extensions(region: Region) -> List[Extension]:
     ]
 
     base_extension = agent_config(region, OS.linux, AgentMode.proxy, urls=urls)
-    extensions = generic_extensions(region, OS.linux)
+    extensions = generic_extensions(region, DEFAULT_EXTENSIONS, OS.linux)
     extensions += [base_extension]
     return extensions

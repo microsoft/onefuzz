@@ -1281,6 +1281,11 @@ class Scaleset(Endpoint):
         spot_instances: bool = False,
         ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
+        extensions: Optional[List[str]] = [
+            enums.ScalesetExtension.OMS_EXTENSION,
+            enums.ScalesetExtension.DEPENDENCY_AGENT,
+            enums.ScalesetExtension.CUSTOM_SCRIPT_EXTENSION,
+        ],
     ) -> models.Scaleset:
         self.logger.debug("create scaleset")
 
@@ -1308,6 +1313,7 @@ class Scaleset(Endpoint):
                 spot_instances=spot_instances,
                 ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
+                extensions=extensions,
             ),
         )
 

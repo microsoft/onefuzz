@@ -325,6 +325,13 @@ class ScalesetState(Enum):
         ]
 
 
+class ScalesetExtension(Enum):
+    OMS_EXTENSION = "OMSExtension"
+    DEPENDENCY_AGENT = "DependencyAgent"
+    CUSTOM_SCRIPT_EXTENSION = "CustomScriptExtension"
+    GENEVA_MONITORING = "GenevaMonitoring"
+
+
 class Architecture(Enum):
     x86_64 = "x86_64"
 

@@ -87,6 +87,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         tags: Dict[str, str],
         client_id: Optional[UUID] = None,
         client_object_id: Optional[UUID] = None,
+        extensions: Optional[List[str]]
     ) -> "Scaleset":
         entry = cls(
             pool_name=pool_name,
@@ -100,6 +101,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             client_id=client_id,
             client_object_id=client_object_id,
             tags=tags,
+            extensions=extensions,
         )
         entry.save()
         send_event(
