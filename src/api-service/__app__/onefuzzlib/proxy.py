@@ -284,7 +284,7 @@ class Proxy(ORMMixin):
             query={"region": [region], "outdated": [False]}, num_results=1
         )
         proxy_timestamp = None
-        if len(proxy_list) != 0:
+        if proxy_list:
             proxy = proxy_list[0]
             if proxy.version != __version__:
                 logging.info(
