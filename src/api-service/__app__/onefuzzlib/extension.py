@@ -64,8 +64,8 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
         "publisher": "Microsoft.Azure.Geneva",
         "type": "GenevaMonitoring",
         "typeHandlerVersion": "2.0",
-        "autoUpgradeMinorVersion": true,
-        "enableAutomaticUpgrade": true,
+        "autoUpgradeMinorVersion": True,
+        "enableAutomaticUpgrade": True,
         "settings": {},
         "protectedSettings": {},
     }
