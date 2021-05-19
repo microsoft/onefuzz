@@ -8,7 +8,6 @@ set -ex
 cd src/api-service
 
 pip install -r requirements-dev.txt
-# pip install -r requirements-lint.txt
 
 black ./__app__ --check
 flake8 ./__app__

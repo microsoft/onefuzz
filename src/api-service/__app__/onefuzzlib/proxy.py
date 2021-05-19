@@ -289,7 +289,7 @@ class Proxy(ORMMixin):
             if proxy.version != __version__:
                 logging.info(
                     PROXY_LOG_PREFIX
-                    + "mismatch  version: proxy :%s service:%s state:%s",
+                    + "mismatch version: proxy :%s service:%s state:%s",
                     proxy.version,
                     __version__,
                     proxy.state,
@@ -320,7 +320,7 @@ class Proxy(ORMMixin):
                     return None
             return proxy
 
-        logging.info(PROXY_LOG_PREFIX + "creating proxy : region:%s", region)
+        logging.info(PROXY_LOG_PREFIX + "creating proxy: region:%s", region)
         proxy = Proxy(region=region)
         proxy.save()
         send_event(EventProxyCreated(region=region, proxy_id=proxy.proxy_id))
