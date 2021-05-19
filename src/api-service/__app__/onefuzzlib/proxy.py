@@ -38,7 +38,7 @@ from .proxy_forward import ProxyForward
 PROXY_SKU = "Standard_B2s"
 PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
 PROXY_LOG_PREFIX = "scaleset-proxy: "
-PROXY_LIFESPAN = 7  # days
+PROXY_LIFESPAN = datetime.timedelta(days=7)
 
 
 # This isn't intended to ever be shared to the client, hence not being in
@@ -176,7 +176,7 @@ class Proxy(ORMMixin):
             proxy_timestamp = self.created_timestamp
             if proxy_timestamp < (
                 datetime.datetime.now(tz=datetime.timezone.utc)
-                - datetime.timedelta(days=PROXY_LIFESPAN)
+                - PROXY_LIFESPAN
             ):
                 logging.info(
                     PROXY_LOG_PREFIX
