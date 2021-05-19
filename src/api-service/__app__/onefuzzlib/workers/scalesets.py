@@ -8,7 +8,13 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
-from onefuzztypes.enums import ErrorCode, NodeState, PoolState, ScalesetState
+from onefuzztypes.enums import (
+    ErrorCode,
+    NodeState,
+    PoolState,
+    ScalesetExtension,
+    ScalesetState,
+)
 from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
@@ -87,7 +93,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         tags: Dict[str, str],
         client_id: Optional[UUID] = None,
         client_object_id: Optional[UUID] = None,
-        extensions: Optional[List[str]]
+        extensions: Optional[List[ScalesetExtension]]
     ) -> "Scaleset":
         entry = cls(
             pool_name=pool_name,

@@ -1281,7 +1281,7 @@ class Scaleset(Endpoint):
         spot_instances: bool = False,
         ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
-        extensions: Optional[List[str]] = [
+        extensions: Optional[List[ScalesetExtension]] = [
             enums.ScalesetExtension.OMS_EXTENSION,
             enums.ScalesetExtension.DEPENDENCY_AGENT,
             enums.ScalesetExtension.CUSTOM_SCRIPT_EXTENSION,
