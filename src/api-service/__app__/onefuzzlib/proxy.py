@@ -291,7 +291,6 @@ class Proxy(ORMMixin):
                 continue
             if proxy.state not in VmState.available():
                 continue
-                    continue
             return proxy
 
         logging.info(PROXY_LOG_PREFIX + "creating proxy: region:%s", region)
