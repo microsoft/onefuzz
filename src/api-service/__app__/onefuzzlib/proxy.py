@@ -299,26 +299,6 @@ class Proxy(ORMMixin):
                 if proxy.state != VmState.stopping and not proxy.is_used():
                     # If the proxy is out-of-date, delete and re-create it
                     proxy.state = VmState.stopping
-                proxy.outdated = True
-                proxy.save()
-                continue
-            if proxy.created_timestamp is not None:
-                proxy_timestamp = proxy.created_timestamp
-                if proxy_timestamp < (
-                    datetime.datetime.now(tz=datetime.timezone.utc)
-                    - datetime.timedelta(days=7)
-                ):
-                    logging.info(
-                        PROXY_LOG_PREFIX
-                        + "proxy older than 7 days: proxy-created:%s state:%s",
-                        proxy.created_timestamp,
-                        proxy.state,
-                    )
-                    if proxy.state != VmState.stopping and not proxy.is_used():
-                        # If the proxy is out-of-date, delete and re-create it
-                        proxy.state = VmState.stopping
-                    proxy.outdated = True
-                    proxy.save()
                     continue
             return proxy
 
