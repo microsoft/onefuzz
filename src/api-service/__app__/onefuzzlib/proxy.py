@@ -283,7 +283,6 @@ class Proxy(ORMMixin):
         proxy_list = Proxy.search(
             query={"region": [region], "outdated": [False]}, num_results=1
         )
-        proxy_timestamp = None
         for proxy in proxy_list:
             if proxy.is_oudated():
                 proxy.outdated = True
