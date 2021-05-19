@@ -26,7 +26,7 @@ DEFAULT_EXTENSIONS = [
 
 
 def generic_extensions(
-    region: Region, extension_list: List[str], vm_os: OS
+    region: Region, extension_list: List[ScalesetExtension], vm_os: OS
 ) -> List[Extension]:
     extensions = []
     depedency = dependency_extension(region, vm_os)

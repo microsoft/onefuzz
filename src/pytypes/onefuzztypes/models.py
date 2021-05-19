@@ -25,6 +25,7 @@ from .enums import (
     NodeState,
     NodeTaskState,
     PoolState,
+    ScalesetExtension,
     ScalesetState,
     StatsFormat,
     TaskDebugFlag,
@@ -696,6 +697,7 @@ class Scaleset(BaseModel):
     client_id: Optional[UUID]
     client_object_id: Optional[UUID]
     tags: Dict[str, str] = Field(default_factory=lambda: {})
+    extensions: Optional[List[ScalesetExtension]]
 
     @validator("size", allow_reuse=True)
     def check_size(cls, value: int) -> int:
