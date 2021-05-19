@@ -281,7 +281,7 @@ class Proxy(ORMMixin):
     @classmethod
     def get_or_create(cls, region: Region) -> Optional["Proxy"]:
         proxy_list = Proxy.search(
-            query={"region": [region], "outdated": [False]}, num_results=1
+            query={"region": [region], "outdated": [False]}
         )
         for proxy in proxy_list:
             if proxy.is_oudated():
