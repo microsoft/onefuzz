@@ -15,6 +15,7 @@ from .enums import (
     JobState,
     NodeState,
     PoolState,
+    ScalesetExtension,
     ScalesetState,
     TaskState,
 )
@@ -178,7 +179,7 @@ class ScalesetCreate(BaseRequest):
     spot_instances: bool
     ephemeral_os_disks: bool = Field(default=False)
     tags: Dict[str, str]
-    extensions: List[str]
+    extensions: Optional[List[ScalesetExtension]]
 
     @validator("size", allow_reuse=True)
     def check_size(cls, value: int) -> int:

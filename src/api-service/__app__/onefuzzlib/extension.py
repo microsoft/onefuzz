@@ -286,9 +286,10 @@ def agent_config(
 def fuzz_extensions(pool: Pool, scaleset: Scaleset) -> List[Extension]:
     urls = [build_pool_config(pool), build_scaleset_script(pool, scaleset)]
     fuzz_extension = agent_config(scaleset.region, pool.os, AgentMode.fuzz, urls=urls)
-    extensions = DEFAULT_EXTENSIONS
-    extensions.append(scaleset.extensions)
-    extensions = generic_extensions(scaleset.region, extensions, pool.os)
+    input_extensions = DEFAULT_EXTENSIONS
+    if scaleset.extensions:
+        input_extensions.extend(scaleset.extensions)
+    extensions = generic_extensions(scaleset.region, input_extensions, pool.os)
     extensions += [fuzz_extension]
     return extensions
 
