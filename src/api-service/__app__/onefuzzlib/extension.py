@@ -61,9 +61,11 @@ def monitor_extension(region: Region, vm_os: OS) -> Extension:
 
 def geneva_extension(region: Region, vm_os: OS) -> Extension:
     return {
+        "name": "Microsoft.Azure.Geneva.GenevaMonitoring",
         "publisher": "Microsoft.Azure.Geneva",
         "type": "GenevaMonitoring",
         "typeHandlerVersion": "2.0",
+        "location": region,
         "autoUpgradeMinorVersion": True,
         "enableAutomaticUpgrade": True,
         "settings": {},
