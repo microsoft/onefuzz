@@ -24,6 +24,9 @@ def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
     depedency = dependency_extension(region, vm_os)
     if depedency:
         extensions.append(depedency)
+    if vm_os == OS.windows:
+        geneva = geneva_extension(region, vm_os)
+        extensions.append(geneva)
 
     return extensions
 
@@ -54,6 +57,18 @@ def monitor_extension(region: Region, vm_os: OS) -> Extension:
             "protectedSettings": {"workspaceKey": settings["key"]},
         }
     raise NotImplementedError("unsupported os: %s" % vm_os)
+
+
+def geneva_extension(region: Region, vm_os: OS) -> Extension:
+    return {
+        "publisher": "Microsoft.Azure.Geneva",
+        "type": "GenevaMonitoring",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {},
+        "protectedSettings": {},
+    }
 
 
 def dependency_extension(region: Region, vm_os: OS) -> Optional[Extension]:
