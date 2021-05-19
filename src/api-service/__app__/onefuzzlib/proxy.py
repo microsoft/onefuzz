@@ -175,8 +175,7 @@ class Proxy(ORMMixin):
         if self.created_timestamp is not None:
             proxy_timestamp = self.created_timestamp
             if proxy_timestamp < (
-                datetime.datetime.now(tz=datetime.timezone.utc)
-                - PROXY_LIFESPAN
+                datetime.datetime.now(tz=datetime.timezone.utc) - PROXY_LIFESPAN
             ):
                 logging.info(
                     PROXY_LOG_PREFIX
