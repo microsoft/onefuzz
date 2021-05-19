@@ -61,22 +61,15 @@ def monitor_extension(region: Region, vm_os: OS) -> Extension:
 
 def geneva_extension(region: Region, vm_os: OS) -> Extension:
     return {
-        "apiVersion": "2018-10-01",
-        "name": "[concat(variables('vmName'), '/Microsoft.Azure.Geneva.GenevaMonitoring')]",
-        "type": "Microsoft.Compute/virtualMachines/extensions",
-        "location": "[resourceGroup().location]",
-        "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
-        ],
-        "properties": {
-            "publisher": "Microsoft.Azure.Geneva",
-            "type": "GenevaMonitoring",
-            "typeHandlerVersion": "2.0",
-            "autoUpgradeMinorVersion": False,
-            "enableAutomaticUpgrade": False,
-            "settings": {},
-            "protectedSettings": {},
-        },
+        "name": "Microsoft.Azure.Geneva.GenevaMonitoring",
+        "publisher": "Microsoft.Azure.Geneva",
+        "type": "GenevaMonitoring",
+        "typeHandlerVersion": "2.0",
+        "location": region,
+        "autoUpgradeMinorVersion": True,
+        "enableAutomaticUpgrade": True,
+        "settings": {},
+        "protectedSettings": {},
     }
 
 
