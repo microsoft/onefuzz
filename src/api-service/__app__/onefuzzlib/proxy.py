@@ -284,8 +284,7 @@ class Proxy(ORMMixin):
             query={"region": [region], "outdated": [False]}, num_results=1
         )
         proxy_timestamp = None
-        if proxy_list:
-            proxy = proxy_list[0]
+        for proxy in proxy_list:
             if proxy.version != __version__:
                 logging.info(
                     PROXY_LOG_PREFIX
@@ -299,7 +298,7 @@ class Proxy(ORMMixin):
                     proxy.state = VmState.stopping
                 proxy.outdated = True
                 proxy.save()
-                return None
+                continue
             if proxy.created_timestamp is not None:
                 proxy_timestamp = proxy.created_timestamp
                 if proxy_timestamp < (
@@ -317,7 +316,7 @@ class Proxy(ORMMixin):
                         proxy.state = VmState.stopping
                     proxy.outdated = True
                     proxy.save()
-                    return None
+                    continue
             return proxy
 
         logging.info(PROXY_LOG_PREFIX + "creating proxy: region:%s", region)
