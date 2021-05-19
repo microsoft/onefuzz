@@ -285,7 +285,10 @@ class Proxy(ORMMixin):
         )
         proxy_timestamp = None
         for proxy in proxy_list:
-            if proxy.version != __version__:
+            if proxy.is_oudated():
+                proxy.outdated = True
+                proxy.save()
+                continue
                 logging.info(
                     PROXY_LOG_PREFIX
                     + "mismatch version: proxy :%s service:%s state:%s",
