@@ -1255,6 +1255,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1264,6 +1265,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1283,6 +1289,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1292,6 +1299,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1317,6 +1329,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "example error message"
         ]
     },
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1378,6 +1391,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
     "properties": {
         "error": {
             "$ref": "#/definitions/Error"
+        },
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
         },
         "region": {
             "title": "Region",
@@ -4889,6 +4907,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "EventProxyCreated": {
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4902,6 +4925,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "EventProxyDeleted": {
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4917,6 +4945,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Error"
+                },
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
                 },
                 "region": {
                     "title": "Region",

@@ -48,6 +48,7 @@ pub struct ConfigData {
     pub instance_telemetry_key: Option<InstanceTelemetryKey>,
     pub microsoft_telemetry_key: Option<MicrosoftTelemetryKey>,
     pub region: String,
+    pub proxy_id: Uuid,
     pub url: Url,
     pub notification: Url,
     pub forwards: Vec<Forward>,
@@ -56,6 +57,7 @@ pub struct ConfigData {
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct NotifyResponse<'a> {
     pub region: &'a str,
+    pub proxy_id: Uuid,
     pub forwards: Vec<Forward>,
 }
 
@@ -141,6 +143,7 @@ impl Config {
         client
             .enqueue(NotifyResponse {
                 region: &self.data.region,
+                proxy_id: self.data.proxy_id,
                 forwards: self.data.forwards.clone(),
             })
             .await?;
