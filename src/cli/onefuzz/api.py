@@ -1468,6 +1468,11 @@ class ScalesetProxy(Endpoint):
             ),
         )
 
+    def list(self) -> List[responses.ProxyInfo]:
+        return self._req_model_list(
+            "GET", responses.ProxyInfo, data=requests.ProxyGet()
+        )
+
 
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):

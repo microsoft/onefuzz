@@ -3,11 +3,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
 
+from .enums import VmState
 from .models import Forward, NodeCommandEnvelope
 from .primitives import Region
 
@@ -23,6 +24,16 @@ class BoolResult(BaseResponse):
 class ProxyGetResult(BaseResponse):
     ip: Optional[str]
     forward: Forward
+
+
+class ProxyInfo(BaseModel):
+    region: Region
+    proxy_id: UUID
+    state: VmState
+
+
+class ProxyList(BaseResponse):
+    proxies: List[ProxyInfo]
 
 
 class Version(BaseResponse):
