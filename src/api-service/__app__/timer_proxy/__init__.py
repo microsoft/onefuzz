@@ -17,21 +17,21 @@ from ..onefuzzlib.workers.scalesets import Scaleset
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
     proxies = Proxy.search()
     for proxy in proxies:
-        # Note, outdated checked at the start, but set at the end of this loop.
-        # As this function is called via a timer, this works around a user
-        # requesting to use the proxy while this function is checking if it's
-        # out of date
-        if proxy.outdated and not proxy.is_used():
-            proxy.set_state(VmState.stopping)
-
-        # If something is "wrong" with a proxy, delete & recreate it
-        if not proxy.is_alive():
-            logging.error(
-                PROXY_LOG_PREFIX + "alive check failed, stopping: %s", proxy.region
-            )
-            proxy.set_state(VmState.stopping)
-        else:
-            proxy.save_proxy_config()
+        if proxy.state in VmState.available():
+            # Note, outdated checked at the start, but set at the end of this loop.
+            # As this function is called via a timer, this works around a user
+            # requesting to use the proxy while this function is checking if it's
+            # out of date
+            if proxy.outdated and not proxy.is_used():
+                proxy.set_state(VmState.stopping)
+            # If something is "wrong" with a proxy, delete & recreate it
+            elif not proxy.is_alive():
+                logging.error(
+                    PROXY_LOG_PREFIX + "alive check failed, stopping: %s", proxy.region
+                )
+                proxy.set_state(VmState.stopping)
+            else:
+                proxy.save_proxy_config()
 
         if proxy.state in VmState.needs_work():
             logging.info(
