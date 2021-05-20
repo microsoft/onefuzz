@@ -11,7 +11,12 @@ from uuid import UUID, uuid4
 
 from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import ErrorCode, VmState
-from onefuzztypes.events import EventProxyCreated, EventProxyDeleted, EventProxyFailed
+from onefuzztypes.events import (
+    EventProxyCreated,
+    EventProxyDeleted,
+    EventProxyFailed,
+    EventProxyStateUpdated,
+)
 from onefuzztypes.models import (
     Authentication,
     Error,
@@ -81,7 +86,7 @@ class Proxy(ORMMixin):
                 return
             else:
                 self.save_proxy_config()
-                self.state = VmState.extensions_launch
+                self.set_state(VmState.extensions_launch)
         else:
             result = vm.create()
             if isinstance(result, Error):
@@ -115,8 +120,7 @@ class Proxy(ORMMixin):
             EventProxyFailed(region=self.region, proxy_id=self.proxy_id, error=error)
         )
         self.error = error
-        self.state = VmState.stopping
-        self.save()
+        self.set_state(VmState.stopping)
 
     def extensions_launch(self) -> None:
         vm = self.get_vm()
@@ -146,7 +150,7 @@ class Proxy(ORMMixin):
             self.set_failed(result)
             return
         elif result:
-            self.state = VmState.running
+            self.set_state(VmState.running)
 
         self.save()
 
@@ -164,6 +168,9 @@ class Proxy(ORMMixin):
         self.delete()
 
     def is_outdated(self) -> bool:
+        if self.state not in VmState.available():
+            return True
+
         if self.version != __version__:
             logging.info(
                 PROXY_LOG_PREFIX + "mismatch version: proxy:%s service:%s state:%s",
@@ -298,3 +305,16 @@ class Proxy(ORMMixin):
     def delete(self) -> None:
         super().delete()
         send_event(EventProxyDeleted(region=self.region, proxy_id=self.proxy_id))
+
+    def set_state(self, state: VmState) -> None:
+        if self.state == state:
+            return
+
+        self.state = state
+        self.save()
+
+        send_event(
+            EventProxyStateUpdated(
+                region=self.region, proxy_id=self.proxy_id, state=self.state
+            )
+        )

@@ -10,7 +10,15 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
-from .enums import OS, Architecture, NodeState, ScalesetState, TaskState, TaskType
+from .enums import (
+    OS,
+    Architecture,
+    NodeState,
+    ScalesetState,
+    TaskState,
+    TaskType,
+    VmState,
+)
 from .models import (
     AutoScaleConfig,
     Error,
@@ -124,6 +132,12 @@ class EventProxyCreated(BaseEvent):
     proxy_id: Optional[UUID]
 
 
+class EventProxyStateUpdated(BaseEvent):
+    region: Region
+    proxy_id: UUID
+    state: VmState
+
+
 class EventProxyDeleted(BaseEvent):
     region: Region
     proxy_id: Optional[UUID]
@@ -198,6 +212,7 @@ Event = Union[
     EventProxyFailed,
     EventProxyCreated,
     EventProxyDeleted,
+    EventProxyStateUpdated,
     EventScalesetFailed,
     EventScalesetCreated,
     EventScalesetDeleted,
@@ -225,6 +240,7 @@ class EventType(Enum):
     proxy_created = "proxy_created"
     proxy_deleted = "proxy_deleted"
     proxy_failed = "proxy_failed"
+    proxy_state_updated = "proxy_state_updated"
     scaleset_created = "scaleset_created"
     scaleset_deleted = "scaleset_deleted"
     scaleset_failed = "scaleset_failed"
@@ -251,6 +267,7 @@ EventTypeMap = {
     EventType.pool_created: EventPoolCreated,
     EventType.pool_deleted: EventPoolDeleted,
     EventType.proxy_created: EventProxyCreated,
+    EventType.proxy_state_updated: EventProxyStateUpdated,
     EventType.proxy_deleted: EventProxyDeleted,
     EventType.proxy_failed: EventProxyFailed,
     EventType.scaleset_created: EventScalesetCreated,

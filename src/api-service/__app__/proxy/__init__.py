@@ -92,8 +92,7 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
 
     proxy = Proxy.get(request.region)
     if proxy is not None:
-        proxy.state = VmState.stopping
-        proxy.save()
+        proxy.set_state(VmState.stopping)
         return ok(BoolResult(result=True))
 
     return ok(BoolResult(result=False))
