@@ -19,9 +19,9 @@ from .azure.storage import StorageType
 from .reports import get_report
 
 DEFAULT_EXTENSIONS = [
-    ScalesetExtension.OMS_EXTENSION,
-    ScalesetExtension.DEPENDENCY_AGENT,
-    ScalesetExtension.CUSTOM_SCRIPT_EXTENSION,
+    ScalesetExtension.OMSExtension,
+    ScalesetExtension.DependencyAgent,
+    ScalesetExtension.CustomScriptExtension,
 ]
 
 
@@ -30,13 +30,13 @@ def generic_extensions(
 ) -> List[Extension]:
     extensions = []
     depedency = dependency_extension(region, vm_os)
-    if depedency and ScalesetExtension.OMS_EXTENSION in extension_list:
+    if depedency and ScalesetExtension.OMSExtension in extension_list:
         extensions.append(depedency)
     monitor = monitor_extension(region, vm_os)
-    if monitor and ScalesetExtension.DEPENDENCY_AGENT in extension_list:
+    if monitor and ScalesetExtension.DependencyAgent in extension_list:
         extensions.append(monitor)
     geneva = geneva_extension(region, vm_os)
-    if geneva and ScalesetExtension.GENEVA_MONITORING in extension_list:
+    if geneva and ScalesetExtension.GenevaMonitoring in extension_list:
         extensions.append(geneva)
 
     return extensions

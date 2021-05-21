@@ -326,10 +326,10 @@ class ScalesetState(Enum):
 
 
 class ScalesetExtension(Enum):
-    OMS_EXTENSION = "OMSExtension"
-    DEPENDENCY_AGENT = "DependencyAgent"
-    CUSTOM_SCRIPT_EXTENSION = "CustomScriptExtension"
-    GENEVA_MONITORING = "GenevaMonitoring"
+    OMSExtension = "OMSExtension"
+    DependencyAgent = "DependencyAgent"
+    CustomScriptExtension = "CustomScriptExtension"
+    GenevaMonitoring = "GenevaMonitoring"
 
 
 class Architecture(Enum):
