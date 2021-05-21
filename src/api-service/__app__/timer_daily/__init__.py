@@ -41,8 +41,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
                 )
             if not proxy.is_used():
                 logging.info("stopping one proxy in %s.", proxy.region)
-                proxy.state = VmState.stopping
-                proxy.save()
+                proxy.set_state(VmState.stopping)
 
     scalesets = Scaleset.search()
     for scaleset in scalesets:
