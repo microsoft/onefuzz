@@ -16,6 +16,7 @@ from onefuzztypes.enums import (
     ScalesetState,
     TaskState,
     TaskType,
+    VmState,
 )
 from onefuzztypes.events import (
     Event,
@@ -33,6 +34,7 @@ from onefuzztypes.events import (
     EventProxyCreated,
     EventProxyDeleted,
     EventProxyFailed,
+    EventProxyStateUpdated,
     EventRegressionReported,
     EventScalesetCreated,
     EventScalesetDeleted,
@@ -162,6 +164,11 @@ def main() -> None:
             region=Region("eastus"),
             proxy_id=UUID(int=0),
             error=Error(code=ErrorCode.PROXY_FAILED, errors=["example error message"]),
+        ),
+        EventProxyStateUpdated(
+            region=Region("eastus"),
+            proxy_id=UUID(int=0),
+            state=VmState.init,
         ),
         EventPoolCreated(
             pool_name=PoolName("example"),
