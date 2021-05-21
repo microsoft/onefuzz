@@ -9,6 +9,7 @@ import os
 from typing import List, Optional, Tuple
 from uuid import UUID, uuid4
 
+import base58
 from azure.mgmt.compute.models import VirtualMachine
 from onefuzztypes.enums import ErrorCode, VmState
 from onefuzztypes.events import EventProxyCreated, EventProxyDeleted, EventProxyFailed
@@ -64,7 +65,7 @@ class Proxy(ORMMixin):
 
     def get_vm(self) -> VM:
         vm = VM(
-            name="proxy-%s-%s" % (self.region, self.proxy_id),
+            name="proxy-%s" % base58.b58encode(self.proxy_id).decode(),
             region=self.region,
             sku=PROXY_SKU,
             image=PROXY_IMAGE,
