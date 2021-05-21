@@ -303,6 +303,13 @@ class Builder:
             ) -> None:
                 if values is None:
                     return
+
+                for arg in values:
+                    if "=" not in arg:
+                        raise argparse.ArgumentTypeError(
+                            "unable to parse value as a key=value pair: %s" % repr(arg)
+                        )
+
                 as_dict: Dict[str, str] = {
                     key_arg(k): val_arg(v) for k, v in (x.split("=", 1) for x in values)
                 }
