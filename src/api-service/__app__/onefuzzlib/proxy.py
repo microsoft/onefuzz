@@ -168,6 +168,9 @@ class Proxy(ORMMixin):
         self.delete()
 
     def is_outdated(self) -> bool:
+        if self.state not in VmState.available():
+            return True
+
         if self.version != __version__:
             logging.info(
                 PROXY_LOG_PREFIX + "mismatch version: proxy:%s service:%s state:%s",
