@@ -65,7 +65,7 @@ class Proxy(ORMMixin):
 
     def get_vm(self) -> VM:
         vm = VM(
-            name="proxy-%s" % base58.b58encode(self.proxy_id).decode(),
+            name="proxy-%s" % base58.b58encode(self.proxy_id.bytes).decode(),
             region=self.region,
             sku=PROXY_SKU,
             image=PROXY_IMAGE,
