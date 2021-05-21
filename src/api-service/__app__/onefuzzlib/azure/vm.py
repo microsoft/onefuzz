@@ -220,6 +220,8 @@ class VM(BaseModel):
     def check_name(cls, value: Union[UUID, str]) -> Union[UUID, str]:
         if isinstance(value, str):
             if len(value) > 40:
+                # Azure truncates resources if the names are longer than 40
+                # bytes
                 raise ValueError("VM name too long")
         return value
 
