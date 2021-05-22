@@ -16,6 +16,7 @@ use serde::de::DeserializeOwned;
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
 use tokio::task::spawn_blocking;
+use tokio_stream::wrappers::ReadDirStream;
 use url::Url;
 
 use crate::tasks::config::CommonConfig;
@@ -57,7 +58,7 @@ impl CoverageTask {
 
         let cache = deserialize_or_default(MODULE_CACHE_FILE).await?;
 
-        let coverage_file = self.config.coverage.path.join(COVERAGE_FILE);
+        let coverage_file = self.config.coverage.local_path.join(COVERAGE_FILE);
         let coverage = deserialize_or_default(coverage_file).await?;
 
         let heartbeat = self.config.common.init_heartbeat().await?;
@@ -68,10 +69,10 @@ impl CoverageTask {
         let mut seen_inputs = false;
 
         for dir in &self.config.readonly_inputs {
-            debug!("recording coverage for {}", dir.path.display());
+            debug!("recording coverage for {}", dir.local_path.display());
 
             dir.init_pull().await?;
-            let dir_count = context.record_corpus(&dir.path).await?;
+            let dir_count = context.record_corpus(&dir.local_path).await?;
 
             if dir_count > 0 {
                 seen_inputs = true;
@@ -80,7 +81,7 @@ impl CoverageTask {
             info!(
                 "recorded coverage for {} inputs from {}",
                 dir_count,
-                dir.path.display()
+                dir.local_path.display()
             );
 
             context.heartbeat.alive();
@@ -199,6 +200,7 @@ impl<'a> TaskContext<'a> {
 
         let mut corpus = fs::read_dir(dir)
             .await
+            .map(ReadDirStream::new)
             .with_context(|| format!("unable to read corpus directory: {}", dir.display()))?;
 
         let mut count = 0;
@@ -233,7 +235,7 @@ impl<'a> TaskContext<'a> {
     }
 
     pub async fn save_and_sync_coverage(&self) -> Result<()> {
-        let path = self.config.coverage.path.join(COVERAGE_FILE);
+        let path = self.config.coverage.local_path.join(COVERAGE_FILE);
         let text = serde_json::to_string(&self.coverage).context("serializing coverage to JSON")?;
 
         fs::write(&path, &text)
