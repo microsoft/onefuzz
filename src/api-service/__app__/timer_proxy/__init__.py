@@ -49,7 +49,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     scalesets = Scaleset.search()
     regions = set(x.region for x in scalesets)
     for region in regions:
-        if not any(not x.outdated for x in proxies if x.region == region):
+        if all(x.outdated for x in proxies if x.region == region):
             Proxy.get_or_create(region)
 
     events = get_events()
