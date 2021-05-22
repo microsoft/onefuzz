@@ -11,6 +11,9 @@ use uuid::Uuid;
 use z3_sys::ErrorCode as Z3ErrorCode;
 
 pub use appinsights::telemetry::SeverityLevel::{Critical, Error, Information, Verbose, Warning};
+use tokio::sync::broadcast::{self, Receiver};
+#[macro_use]
+extern crate lazy_static;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(transparent)]
@@ -338,6 +341,8 @@ mod global {
         RwLock,
     };
 
+    use tokio::sync::broadcast::Sender;
+
     use super::*;
 
     #[derive(Default)]
@@ -350,6 +355,14 @@ mod global {
         instance: None,
         microsoft: None,
     };
+
+    lazy_static! {
+        pub static ref EVENT_SOURCE: Sender<(Event, Vec<EventData>)> = {
+            let (telemetry_event_source, _) = broadcast::channel::<_>(100);
+            telemetry_event_source
+        };
+    }
+
     const UNSET: usize = 0;
     const SETTING: usize = 1;
     const SET: usize = 2;
@@ -404,13 +417,11 @@ mod global {
 
         let mut clients = Vec::new();
 
-        for client in vec![instance, microsoft] {
-            if let Some(client) = client {
-                match client.into_inner() {
-                    Ok(c) => clients.push(c),
-                    Err(e) => panic!("Failed to extract telemetry client: {}", e),
-                };
-            }
+        for client in vec![instance, microsoft].into_iter().flatten() {
+            match client.into_inner() {
+                Ok(c) => clients.push(c),
+                Err(e) => panic!("Failed to extract telemetry client: {}", e),
+            };
         }
         clients
     }
@@ -501,6 +512,17 @@ pub fn format_events(events: &[EventData]) -> String {
         .join(" ")
 }
 
+fn try_broadcast_event(event: &Event, properties: &[EventData]) -> bool {
+    // we ignore any send error here because they indicate that
+    // there are no receivers on the other end
+    let (event, properties) = (event.clone(), properties.to_vec());
+    global::EVENT_SOURCE.send((event, properties)).is_ok()
+}
+
+pub fn subscribe_to_events() -> Receiver<(Event, Vec<EventData>)> {
+    global::EVENT_SOURCE.subscribe()
+}
+
 pub fn track_event(event: &Event, properties: &[EventData]) {
     use appinsights::telemetry::Telemetry;
 
@@ -526,6 +548,7 @@ pub fn track_event(event: &Event, properties: &[EventData]) {
         }
         client.track(evt);
     }
+    try_broadcast_event(event, properties);
 }
 
 pub fn to_log_level(level: &appinsights::telemetry::SeverityLevel) -> log::Level {

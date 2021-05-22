@@ -7,6 +7,7 @@ use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
 
 pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     let config_path = value_t!(args, "config", PathBuf)?;
     let setup_dir = value_t!(args, "setup_dir", PathBuf)?;
     let config = Config::from_file(config_path, setup_dir)?;
@@ -15,7 +16,7 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
     let result = config.run().await;
 
     if let Err(err) = &result {
-        error!("error running task: {}", err);
+        error!("error running task: {:?}", err);
     }
 
     onefuzz_telemetry::try_flush_and_close();

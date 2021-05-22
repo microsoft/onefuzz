@@ -97,6 +97,26 @@ def get_notifications(container: Container) -> List[Notification]:
     return Notification.search(query={"container": [container]})
 
 
+def get_regression_report_task(report: RegressionReport) -> Optional[Task]:
+    # crash_test_result is required, but report & no_repro are not
+    if report.crash_test_result.crash_report:
+        return Task.get(
+            report.crash_test_result.crash_report.job_id,
+            report.crash_test_result.crash_report.task_id,
+        )
+    if report.crash_test_result.no_repro:
+        return Task.get(
+            report.crash_test_result.no_repro.job_id,
+            report.crash_test_result.no_repro.task_id,
+        )
+
+    logging.error(
+        "unable to find crash_report or no_repro entry for report: %s",
+        report.json(include_none=False),
+    )
+    return None
+
+
 @cached(ttl=10)
 def get_queue_tasks() -> Sequence[Tuple[Task, Sequence[str]]]:
     results = []
@@ -143,14 +163,21 @@ def new_files(container: Container, filename: str) -> None:
             send_message(task.task_id, bytes(url, "utf-8"), StorageType.corpus)
 
     if isinstance(report, Report):
-        send_event(
-            EventCrashReported(report=report, container=container, filename=filename)
+        crash_report_event = EventCrashReported(
+            report=report, container=container, filename=filename
         )
+        report_task = Task.get(report.job_id, report.task_id)
+        if report_task:
+            crash_report_event.task_config = report_task.config
+        send_event(crash_report_event)
     elif isinstance(report, RegressionReport):
-        send_event(
-            EventRegressionReported(
-                regression_report=report, container=container, filename=filename
-            )
+        regression_event = EventRegressionReported(
+            regression_report=report, container=container, filename=filename
         )
+
+        report_task = get_regression_report_task(report)
+        if report_task:
+            regression_event.task_config = report_task.config
+        send_event(regression_event)
     else:
         send_event(EventFileAdded(container=container, filename=filename))

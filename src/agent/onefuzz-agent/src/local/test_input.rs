@@ -3,17 +3,19 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, CmdType, CHECK_ASAN_LOG, CHECK_RETRY_COUNT,
-        DISABLE_CHECK_DEBUGGER, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS, TARGET_TIMEOUT,
+        build_local_context, get_cmd_arg, get_cmd_env, CmdType, UiEvent, CHECK_ASAN_LOG,
+        CHECK_RETRY_COUNT, DISABLE_CHECK_DEBUGGER, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
+        TARGET_TIMEOUT,
     },
     tasks::report::generic::{test_input, TestInputArgs},
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use flume::Sender;
 use std::path::PathBuf;
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args, false)?;
+pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
+    let context = build_local_context(args, false, event_sender)?;
 
     let target_exe = value_t!(args, TARGET_EXE, PathBuf)?;
     let target_env = get_cmd_env(CmdType::Target, args)?;
@@ -30,11 +32,11 @@ pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
         target_options: &target_options,
         input_url: None,
         input: input.as_path(),
-        job_id: common.job_id,
-        task_id: common.task_id,
+        job_id: context.common_config.job_id,
+        task_id: context.common_config.task_id,
         target_timeout,
         check_retry_count,
-        setup_dir: &common.setup_dir,
+        setup_dir: &context.common_config.setup_dir,
         minimized_stack_depth: None,
         check_asan_log,
         check_debugger,

@@ -3,10 +3,10 @@
 
 use crate::{
     local::common::{
-        build_common_config, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
-        CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, COVERAGE_DIR, CRASHES_DIR, NO_REPRO_DIR,
-        REGRESSION_REPORTS_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE, TARGET_OPTIONS,
-        TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
+        build_local_context, get_cmd_arg, get_cmd_env, get_cmd_exe, get_synced_dir, CmdType,
+        SyncCountDirMonitor, UiEvent, CHECK_FUZZER_HELP, CHECK_RETRY_COUNT, COVERAGE_DIR,
+        CRASHES_DIR, NO_REPRO_DIR, REGRESSION_REPORTS_DIR, REPORTS_DIR, TARGET_ENV, TARGET_EXE,
+        TARGET_OPTIONS, TARGET_TIMEOUT, UNIQUE_REPORTS_DIR,
     },
     tasks::{
         config::CommonConfig,
@@ -15,26 +15,35 @@ use crate::{
 };
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use flume::Sender;
 
 const REPORT_NAMES: &str = "report_names";
 
 pub fn build_regression_config(
     args: &clap::ArgMatches<'_>,
     common: CommonConfig,
+    event_sender: Option<Sender<UiEvent>>,
 ) -> Result<Config> {
     let target_exe = get_cmd_exe(CmdType::Target, args)?.into();
     let target_env = get_cmd_env(CmdType::Target, args)?;
     let target_options = get_cmd_arg(CmdType::Target, args);
     let target_timeout = value_t!(args, TARGET_TIMEOUT, u64).ok();
-    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?;
+    let crashes = get_synced_dir(CRASHES_DIR, common.job_id, common.task_id, args)?
+        .monitor_count(&event_sender)?;
     let regression_reports =
-        get_synced_dir(REGRESSION_REPORTS_DIR, common.job_id, common.task_id, args)?;
+        get_synced_dir(REGRESSION_REPORTS_DIR, common.job_id, common.task_id, args)?
+            .monitor_count(&event_sender)?;
     let check_retry_count = value_t!(args, CHECK_RETRY_COUNT, u64)?;
 
-    let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args).ok();
-    let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args).ok();
-    let unique_reports =
-        get_synced_dir(UNIQUE_REPORTS_DIR, common.job_id, common.task_id, args).ok();
+    let reports = get_synced_dir(REPORTS_DIR, common.job_id, common.task_id, args)
+        .ok()
+        .monitor_count(&event_sender)?;
+    let no_repro = get_synced_dir(NO_REPRO_DIR, common.job_id, common.task_id, args)
+        .ok()
+        .monitor_count(&event_sender)?;
+    let unique_reports = get_synced_dir(UNIQUE_REPORTS_DIR, common.job_id, common.task_id, args)
+        .ok()
+        .monitor_count(&event_sender)?;
 
     let report_list = if args.is_present(REPORT_NAMES) {
         Some(values_t!(args, REPORT_NAMES, String)?)
@@ -64,9 +73,9 @@ pub fn build_regression_config(
     Ok(config)
 }
 
-pub async fn run(args: &clap::ArgMatches<'_>) -> Result<()> {
-    let common = build_common_config(args, true)?;
-    let config = build_regression_config(args, common)?;
+pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEvent>>) -> Result<()> {
+    let context = build_local_context(args, true, event_sender.clone())?;
+    let config = build_regression_config(args, context.common_config.clone(), event_sender)?;
     LibFuzzerRegressionTask::new(config).run().await
 }
 

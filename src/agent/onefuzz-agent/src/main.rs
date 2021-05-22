@@ -22,8 +22,6 @@ const LOCAL_CMD: &str = "local";
 const MANAGED_CMD: &str = "managed";
 
 fn main() -> Result<()> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-
     let built_version = format!(
         "{} onefuzz:{} git:{}",
         crate_version!(),
@@ -39,16 +37,16 @@ fn main() -> Result<()> {
 
     let matches = app.get_matches();
 
-    let mut rt = tokio::runtime::Runtime::new()?;
+    let rt = tokio::runtime::Runtime::new()?;
     let result = rt.block_on(run(matches));
     atexit::execute();
     result
 }
 
-async fn run(args: ArgMatches<'_>) -> Result<()> {
+async fn run(args: ArgMatches<'static>) -> Result<()> {
     match args.subcommand() {
         (LICENSE_CMD, Some(_)) => licenses(),
-        (LOCAL_CMD, Some(sub)) => local::cmd::run(sub).await,
+        (LOCAL_CMD, Some(sub)) => local::cmd::run(sub.to_owned()).await,
         (MANAGED_CMD, Some(sub)) => managed::cmd::run(sub).await,
         _ => {
             anyhow::bail!("missing subcommand\nUSAGE: {}", args.usage());

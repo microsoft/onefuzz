@@ -230,7 +230,7 @@ class TestOnefuzz:
     def launch(
         self, path: Directory, *, os_list: List[OS], targets: List[str], duration=int
     ) -> None:
-        """ Launch all of the fuzzing templates """
+        """Launch all of the fuzzing templates"""
         for target, config in TARGETS.items():
             if target not in targets:
                 continue
@@ -364,7 +364,7 @@ class TestOnefuzz:
     def check_jobs(
         self, poll: bool = False, stop_on_complete_check: bool = False
     ) -> bool:
-        """ Check all of the integration jobs """
+        """Check all of the integration jobs"""
         jobs: Dict[UUID, Job] = {x.job_id: x for x in self.get_jobs()}
         job_tasks: Dict[UUID, List[Task]] = {}
         check_containers: Dict[UUID, Dict[Container, Tuple[ContainerWrapper, int]]] = {}
@@ -647,7 +647,7 @@ class TestOnefuzz:
         return pools
 
     def cleanup(self) -> None:
-        """ cleanup all of the integration pools & jobs """
+        """cleanup all of the integration pools & jobs"""
 
         self.logger.info("cleaning up")
         errors: List[Exception] = []
@@ -775,6 +775,22 @@ class TestOnefuzz:
                 and "ResourceNotFound" in message
                 and entry.get("sdkVersion", "").startswith("azurefunctions")
             ):
+                continue
+
+            # ignore analyzer output, as we can't control what applications
+            # being fuzzed send to stdout or stderr. (most importantly, cdb
+            # prints "Symbol Loading Error Summary")
+            if message.startswith("process (stdout) analyzer:") or message.startswith(
+                "process (stderr) analyzer:"
+            ):
+                continue
+
+            # TODO: ignore queue errors until tasks are shut down before
+            # deleting queues https://github.com/microsoft/onefuzz/issues/141
+            if (
+                "storage queue pop failed" in message
+                or "storage queue delete failed" in message
+            ) and entry.get("sdkVersion") == "rust:0.1.5":
                 continue
 
             if message is None:

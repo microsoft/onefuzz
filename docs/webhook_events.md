@@ -37,10 +37,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [proxy_created](#proxy_created)
 * [proxy_deleted](#proxy_deleted)
 * [proxy_failed](#proxy_failed)
+* [proxy_state_updated](#proxy_state_updated)
 * [regression_reported](#regression_reported)
 * [scaleset_created](#scaleset_created)
 * [scaleset_deleted](#scaleset_deleted)
 * [scaleset_failed](#scaleset_failed)
+* [scaleset_state_updated](#scaleset_state_updated)
 * [task_created](#task_created)
 * [task_failed](#task_failed)
 * [task_heartbeat](#task_heartbeat)
@@ -84,7 +86,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "BlobRef": {
             "properties": {
@@ -108,6 +109,24 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "BlobRef",
             "type": "object"
+        },
+        "ContainerType": {
+            "description": "An enumeration.",
+            "enum": [
+                "analysis",
+                "coverage",
+                "crashes",
+                "inputs",
+                "no_repro",
+                "readonly_inputs",
+                "reports",
+                "setup",
+                "tools",
+                "unique_inputs",
+                "unique_reports",
+                "regression_reports"
+            ],
+            "title": "ContainerType"
         },
         "Report": {
             "properties": {
@@ -202,6 +221,331 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "Report",
             "type": "object"
+        },
+        "StatsFormat": {
+            "description": "An enumeration.",
+            "enum": [
+                "AFL"
+            ],
+            "title": "StatsFormat"
+        },
+        "TaskConfig": {
+            "properties": {
+                "colocate": {
+                    "title": "Colocate",
+                    "type": "boolean"
+                },
+                "containers": {
+                    "items": {
+                        "$ref": "#/definitions/TaskContainers"
+                    },
+                    "title": "Containers",
+                    "type": "array"
+                },
+                "debug": {
+                    "items": {
+                        "$ref": "#/definitions/TaskDebugFlag"
+                    },
+                    "type": "array"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "pool": {
+                    "$ref": "#/definitions/TaskPool"
+                },
+                "prereq_tasks": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Prereq Tasks",
+                    "type": "array"
+                },
+                "tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Tags",
+                    "type": "object"
+                },
+                "task": {
+                    "$ref": "#/definitions/TaskDetails"
+                },
+                "vm": {
+                    "$ref": "#/definitions/TaskVm"
+                }
+            },
+            "required": [
+                "job_id",
+                "task",
+                "containers",
+                "tags"
+            ],
+            "title": "TaskConfig",
+            "type": "object"
+        },
+        "TaskContainers": {
+            "properties": {
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "name"
+            ],
+            "title": "TaskContainers",
+            "type": "object"
+        },
+        "TaskDebugFlag": {
+            "description": "An enumeration.",
+            "enum": [
+                "keep_node_on_failure",
+                "keep_node_on_completion"
+            ],
+            "title": "TaskDebugFlag"
+        },
+        "TaskDetails": {
+            "properties": {
+                "analyzer_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Env",
+                    "type": "object"
+                },
+                "analyzer_exe": {
+                    "title": "Analyzer Exe",
+                    "type": "string"
+                },
+                "analyzer_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Options",
+                    "type": "array"
+                },
+                "check_asan_log": {
+                    "title": "Check Asan Log",
+                    "type": "boolean"
+                },
+                "check_debugger": {
+                    "default": true,
+                    "title": "Check Debugger",
+                    "type": "boolean"
+                },
+                "check_fuzzer_help": {
+                    "title": "Check Fuzzer Help",
+                    "type": "boolean"
+                },
+                "check_retry_count": {
+                    "title": "Check Retry Count",
+                    "type": "integer"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                },
+                "ensemble_sync_delay": {
+                    "title": "Ensemble Sync Delay",
+                    "type": "integer"
+                },
+                "expect_crash_on_failure": {
+                    "title": "Expect Crash On Failure",
+                    "type": "boolean"
+                },
+                "generator_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Generator Env",
+                    "type": "object"
+                },
+                "generator_exe": {
+                    "title": "Generator Exe",
+                    "type": "string"
+                },
+                "generator_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Generator Options",
+                    "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
+                },
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "rename_output": {
+                    "title": "Rename Output",
+                    "type": "boolean"
+                },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
+                "stats_file": {
+                    "title": "Stats File",
+                    "type": "string"
+                },
+                "stats_format": {
+                    "$ref": "#/definitions/StatsFormat"
+                },
+                "supervisor_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Env",
+                    "type": "object"
+                },
+                "supervisor_exe": {
+                    "title": "Supervisor Exe",
+                    "type": "string"
+                },
+                "supervisor_input_marker": {
+                    "title": "Supervisor Input Marker",
+                    "type": "string"
+                },
+                "supervisor_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Options",
+                    "type": "array"
+                },
+                "target_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Target Env",
+                    "type": "object"
+                },
+                "target_exe": {
+                    "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Target Options",
+                    "type": "array"
+                },
+                "target_options_merge": {
+                    "title": "Target Options Merge",
+                    "type": "boolean"
+                },
+                "target_timeout": {
+                    "title": "Target Timeout",
+                    "type": "integer"
+                },
+                "target_workers": {
+                    "title": "Target Workers",
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/TaskType"
+                },
+                "wait_for_files": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "duration"
+            ],
+            "title": "TaskDetails",
+            "type": "object"
+        },
+        "TaskPool": {
+            "properties": {
+                "count": {
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "count",
+                "pool_name"
+            ],
+            "title": "TaskPool",
+            "type": "object"
+        },
+        "TaskType": {
+            "description": "An enumeration.",
+            "enum": [
+                "libfuzzer_fuzz",
+                "libfuzzer_coverage",
+                "libfuzzer_crash_report",
+                "libfuzzer_merge",
+                "libfuzzer_regression",
+                "generic_analysis",
+                "generic_supervisor",
+                "generic_merge",
+                "generic_generator",
+                "generic_crash_report",
+                "generic_regression"
+            ],
+            "title": "TaskType"
+        },
+        "TaskVm": {
+            "properties": {
+                "count": {
+                    "default": 1,
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "sku": {
+                    "title": "Sku",
+                    "type": "string"
+                },
+                "spot_instances": {
+                    "default": false,
+                    "title": "Spot Instances",
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "region",
+                "sku",
+                "image"
+            ],
+            "title": "TaskVm",
+            "type": "object"
         }
     },
     "properties": {
@@ -215,6 +559,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "report": {
             "$ref": "#/definitions/Report"
+        },
+        "task_config": {
+            "$ref": "#/definitions/TaskConfig"
         }
     },
     "required": [
@@ -242,7 +589,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "container": {
             "title": "Container",
@@ -282,7 +628,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "JobConfig": {
             "properties": {
@@ -391,7 +736,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -573,7 +917,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -614,7 +957,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -655,7 +997,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -697,7 +1038,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "NodeState": {
             "description": "An enumeration.",
@@ -790,7 +1130,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Architecture": {
             "description": "An enumeration.",
@@ -898,7 +1237,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "pool_name": {
             "title": "Pool Name",
@@ -919,6 +1257,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -927,8 +1266,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -948,6 +1291,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -956,8 +1300,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -983,6 +1331,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "example error message"
         ]
     },
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -991,7 +1340,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -1046,6 +1394,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error": {
             "$ref": "#/definitions/Error"
         },
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1056,6 +1409,61 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error"
     ],
     "title": "EventProxyFailed",
+    "type": "object"
+}
+```
+
+### proxy_state_updated
+
+#### Example
+
+```json
+{
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
+    "region": "eastus",
+    "state": "init"
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "VmState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "extensions_launch",
+                "extensions_failed",
+                "vm_allocation_failed",
+                "running",
+                "stopping",
+                "stopped"
+            ],
+            "title": "VmState"
+        }
+    },
+    "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
+        "region": {
+            "title": "Region",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/VmState"
+        }
+    },
+    "required": [
+        "region",
+        "proxy_id",
+        "state"
+    ],
+    "title": "EventProxyStateUpdated",
     "type": "object"
 }
 ```
@@ -1125,7 +1533,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "BlobRef": {
             "properties": {
@@ -1149,6 +1556,24 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "BlobRef",
             "type": "object"
+        },
+        "ContainerType": {
+            "description": "An enumeration.",
+            "enum": [
+                "analysis",
+                "coverage",
+                "crashes",
+                "inputs",
+                "no_repro",
+                "readonly_inputs",
+                "reports",
+                "setup",
+                "tools",
+                "unique_inputs",
+                "unique_reports",
+                "regression_reports"
+            ],
+            "title": "ContainerType"
         },
         "CrashTestResult": {
             "properties": {
@@ -1312,6 +1737,331 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "Report",
             "type": "object"
+        },
+        "StatsFormat": {
+            "description": "An enumeration.",
+            "enum": [
+                "AFL"
+            ],
+            "title": "StatsFormat"
+        },
+        "TaskConfig": {
+            "properties": {
+                "colocate": {
+                    "title": "Colocate",
+                    "type": "boolean"
+                },
+                "containers": {
+                    "items": {
+                        "$ref": "#/definitions/TaskContainers"
+                    },
+                    "title": "Containers",
+                    "type": "array"
+                },
+                "debug": {
+                    "items": {
+                        "$ref": "#/definitions/TaskDebugFlag"
+                    },
+                    "type": "array"
+                },
+                "job_id": {
+                    "format": "uuid",
+                    "title": "Job Id",
+                    "type": "string"
+                },
+                "pool": {
+                    "$ref": "#/definitions/TaskPool"
+                },
+                "prereq_tasks": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Prereq Tasks",
+                    "type": "array"
+                },
+                "tags": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Tags",
+                    "type": "object"
+                },
+                "task": {
+                    "$ref": "#/definitions/TaskDetails"
+                },
+                "vm": {
+                    "$ref": "#/definitions/TaskVm"
+                }
+            },
+            "required": [
+                "job_id",
+                "task",
+                "containers",
+                "tags"
+            ],
+            "title": "TaskConfig",
+            "type": "object"
+        },
+        "TaskContainers": {
+            "properties": {
+                "name": {
+                    "title": "Name",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "name"
+            ],
+            "title": "TaskContainers",
+            "type": "object"
+        },
+        "TaskDebugFlag": {
+            "description": "An enumeration.",
+            "enum": [
+                "keep_node_on_failure",
+                "keep_node_on_completion"
+            ],
+            "title": "TaskDebugFlag"
+        },
+        "TaskDetails": {
+            "properties": {
+                "analyzer_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Env",
+                    "type": "object"
+                },
+                "analyzer_exe": {
+                    "title": "Analyzer Exe",
+                    "type": "string"
+                },
+                "analyzer_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Analyzer Options",
+                    "type": "array"
+                },
+                "check_asan_log": {
+                    "title": "Check Asan Log",
+                    "type": "boolean"
+                },
+                "check_debugger": {
+                    "default": true,
+                    "title": "Check Debugger",
+                    "type": "boolean"
+                },
+                "check_fuzzer_help": {
+                    "title": "Check Fuzzer Help",
+                    "type": "boolean"
+                },
+                "check_retry_count": {
+                    "title": "Check Retry Count",
+                    "type": "integer"
+                },
+                "duration": {
+                    "title": "Duration",
+                    "type": "integer"
+                },
+                "ensemble_sync_delay": {
+                    "title": "Ensemble Sync Delay",
+                    "type": "integer"
+                },
+                "expect_crash_on_failure": {
+                    "title": "Expect Crash On Failure",
+                    "type": "boolean"
+                },
+                "generator_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Generator Env",
+                    "type": "object"
+                },
+                "generator_exe": {
+                    "title": "Generator Exe",
+                    "type": "string"
+                },
+                "generator_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Generator Options",
+                    "type": "array"
+                },
+                "minimized_stack_depth": {
+                    "title": "Minimized Stack Depth",
+                    "type": "integer"
+                },
+                "preserve_existing_outputs": {
+                    "title": "Preserve Existing Outputs",
+                    "type": "boolean"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "rename_output": {
+                    "title": "Rename Output",
+                    "type": "boolean"
+                },
+                "report_list": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Report List",
+                    "type": "array"
+                },
+                "stats_file": {
+                    "title": "Stats File",
+                    "type": "string"
+                },
+                "stats_format": {
+                    "$ref": "#/definitions/StatsFormat"
+                },
+                "supervisor_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Env",
+                    "type": "object"
+                },
+                "supervisor_exe": {
+                    "title": "Supervisor Exe",
+                    "type": "string"
+                },
+                "supervisor_input_marker": {
+                    "title": "Supervisor Input Marker",
+                    "type": "string"
+                },
+                "supervisor_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Supervisor Options",
+                    "type": "array"
+                },
+                "target_env": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "title": "Target Env",
+                    "type": "object"
+                },
+                "target_exe": {
+                    "title": "Target Exe",
+                    "type": "string"
+                },
+                "target_options": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Target Options",
+                    "type": "array"
+                },
+                "target_options_merge": {
+                    "title": "Target Options Merge",
+                    "type": "boolean"
+                },
+                "target_timeout": {
+                    "title": "Target Timeout",
+                    "type": "integer"
+                },
+                "target_workers": {
+                    "title": "Target Workers",
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/TaskType"
+                },
+                "wait_for_files": {
+                    "$ref": "#/definitions/ContainerType"
+                }
+            },
+            "required": [
+                "type",
+                "duration"
+            ],
+            "title": "TaskDetails",
+            "type": "object"
+        },
+        "TaskPool": {
+            "properties": {
+                "count": {
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "count",
+                "pool_name"
+            ],
+            "title": "TaskPool",
+            "type": "object"
+        },
+        "TaskType": {
+            "description": "An enumeration.",
+            "enum": [
+                "libfuzzer_fuzz",
+                "libfuzzer_coverage",
+                "libfuzzer_crash_report",
+                "libfuzzer_merge",
+                "libfuzzer_regression",
+                "generic_analysis",
+                "generic_supervisor",
+                "generic_merge",
+                "generic_generator",
+                "generic_crash_report",
+                "generic_regression"
+            ],
+            "title": "TaskType"
+        },
+        "TaskVm": {
+            "properties": {
+                "count": {
+                    "default": 1,
+                    "title": "Count",
+                    "type": "integer"
+                },
+                "image": {
+                    "title": "Image",
+                    "type": "string"
+                },
+                "reboot_after_setup": {
+                    "title": "Reboot After Setup",
+                    "type": "boolean"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "sku": {
+                    "title": "Sku",
+                    "type": "string"
+                },
+                "spot_instances": {
+                    "default": false,
+                    "title": "Spot Instances",
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "region",
+                "sku",
+                "image"
+            ],
+            "title": "TaskVm",
+            "type": "object"
         }
     },
     "properties": {
@@ -1325,6 +2075,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "regression_report": {
             "$ref": "#/definitions/RegressionReport"
+        },
+        "task_config": {
+            "$ref": "#/definitions/TaskConfig"
         }
     },
     "required": [
@@ -1356,7 +2109,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "image": {
             "title": "Image",
@@ -1412,7 +2164,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "pool_name": {
             "title": "Pool Name",
@@ -1454,7 +2205,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -1529,6 +2279,61 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
+### scaleset_state_updated
+
+#### Example
+
+```json
+{
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "state": "init"
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "ScalesetState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "setup",
+                "resize",
+                "running",
+                "shutdown",
+                "halt",
+                "creation_failed"
+            ],
+            "title": "ScalesetState"
+        }
+    },
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/ScalesetState"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "state"
+    ],
+    "title": "EventScalesetStateUpdated",
+    "type": "object"
+}
+```
+
 ### task_created
 
 #### Example
@@ -1575,7 +2380,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -2022,7 +2826,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -2510,7 +3313,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -2924,7 +3726,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -3365,7 +4166,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -3764,7 +4564,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Architecture": {
             "description": "An enumeration.",
@@ -3921,7 +4720,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "ErrorCode"
         },
         "EventCrashReported": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -3933,6 +4731,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "report": {
                     "$ref": "#/definitions/Report"
+                },
+                "task_config": {
+                    "$ref": "#/definitions/TaskConfig"
                 }
             },
             "required": [
@@ -3944,7 +4745,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventFileAdded": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -3963,7 +4763,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventJobCreated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/JobConfig"
@@ -3985,7 +4784,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventJobStopped": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/JobConfig"
@@ -4014,7 +4812,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeCreated": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4039,7 +4836,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4064,7 +4860,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeHeartbeat": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4089,7 +4884,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeStateUpdated": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4132,7 +4926,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventPoolCreated": {
-            "additionalProperties": false,
             "properties": {
                 "arch": {
                     "$ref": "#/definitions/Architecture"
@@ -4162,7 +4955,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventPoolDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "pool_name": {
                     "title": "Pool Name",
@@ -4176,8 +4968,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyCreated": {
-            "additionalProperties": false,
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4190,8 +4986,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyDeleted": {
-            "additionalProperties": false,
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4204,10 +5004,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyFailed": {
-            "additionalProperties": false,
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Error"
+                },
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
                 },
                 "region": {
                     "title": "Region",
@@ -4221,8 +5025,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventProxyFailed",
             "type": "object"
         },
+        "EventProxyStateUpdated": {
+            "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/VmState"
+                }
+            },
+            "required": [
+                "region",
+                "proxy_id",
+                "state"
+            ],
+            "title": "EventProxyStateUpdated",
+            "type": "object"
+        },
         "EventRegressionReported": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4234,6 +5060,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "regression_report": {
                     "$ref": "#/definitions/RegressionReport"
+                },
+                "task_config": {
+                    "$ref": "#/definitions/TaskConfig"
                 }
             },
             "required": [
@@ -4245,7 +5074,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetCreated": {
-            "additionalProperties": false,
             "properties": {
                 "image": {
                     "title": "Image",
@@ -4285,7 +5113,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "pool_name": {
                     "title": "Pool Name",
@@ -4305,7 +5132,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetFailed": {
-            "additionalProperties": false,
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Error"
@@ -4328,8 +5154,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventScalesetFailed",
             "type": "object"
         },
+        "EventScalesetStateUpdated": {
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/ScalesetState"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "state"
+            ],
+            "title": "EventScalesetStateUpdated",
+            "type": "object"
+        },
         "EventTaskCreated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -4357,7 +5205,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskFailed": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -4389,7 +5236,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskHeartbeat": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -4414,7 +5260,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskStateUpdated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -4448,7 +5293,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskStopped": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -4489,9 +5333,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "proxy_created",
                 "proxy_deleted",
                 "proxy_failed",
+                "proxy_state_updated",
                 "scaleset_created",
                 "scaleset_deleted",
                 "scaleset_failed",
+                "scaleset_state_updated",
                 "task_created",
                 "task_failed",
                 "task_state_updated",
@@ -4726,6 +5572,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "Report",
             "type": "object"
+        },
+        "ScalesetState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "setup",
+                "resize",
+                "running",
+                "shutdown",
+                "halt",
+                "creation_failed"
+            ],
+            "title": "ScalesetState"
         },
         "StatsFormat": {
             "description": "An enumeration.",
@@ -5086,6 +5945,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "title": "UserInfo",
             "type": "object"
+        },
+        "VmState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "extensions_launch",
+                "extensions_failed",
+                "vm_allocation_failed",
+                "running",
+                "stopping",
+                "stopped"
+            ],
+            "title": "VmState"
         }
     },
     "properties": {
@@ -5128,6 +6000,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventProxyDeleted"
                 },
                 {
+                    "$ref": "#/definitions/EventProxyStateUpdated"
+                },
+                {
                     "$ref": "#/definitions/EventScalesetFailed"
                 },
                 {
@@ -5135,6 +6010,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventScalesetDeleted"
+                },
+                {
+                    "$ref": "#/definitions/EventScalesetStateUpdated"
                 },
                 {
                     "$ref": "#/definitions/EventTaskFailed"

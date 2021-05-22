@@ -114,6 +114,7 @@ pub async fn run_cmd<S: ::std::hash::BuildHasher>(
 
     let mut cmd = Command::new(program);
     cmd.env_remove("RUST_LOG")
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .args(argv)
@@ -164,7 +165,7 @@ async fn wait_process(context: &str, process: Child, stopped: Option<&Notify>) -
 
     debug!("child exited. {}:{:?}", context, output.status);
     if let Some(stopped) = stopped {
-        stopped.notify();
+        stopped.notify_one();
     }
 
     if output.status.success() {

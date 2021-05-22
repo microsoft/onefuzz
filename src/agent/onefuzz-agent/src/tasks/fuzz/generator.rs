@@ -7,7 +7,6 @@ use crate::tasks::{
     utils::{self, default_bool_true},
 };
 use anyhow::{Context, Result};
-use futures::stream::StreamExt;
 use onefuzz::{
     expand::Expand,
     fs::set_executable,
@@ -65,7 +64,7 @@ impl GeneratorTask {
         self.config.crashes.init().await?;
         if let Some(tools) = &self.config.tools {
             tools.init_pull().await?;
-            set_executable(&tools.path).await?;
+            set_executable(&tools.local_path).await?;
         }
 
         let hb_client = self.config.common.init_heartbeat().await?;
@@ -105,7 +104,7 @@ impl GeneratorTask {
         loop {
             for corpus_dir in &self.config.readonly_inputs {
                 heartbeat_client.alive();
-                let corpus_dir = &corpus_dir.path;
+                let corpus_dir = &corpus_dir.local_path;
                 let generated_inputs = tempdir()?;
                 let generated_inputs_path = generated_inputs.path();
 
@@ -122,9 +121,7 @@ impl GeneratorTask {
         tester: &Tester<'_>,
     ) -> Result<()> {
         let mut read_dir = fs::read_dir(generated_inputs).await?;
-        while let Some(file) = read_dir.next().await {
-            let file = file?;
-
+        while let Some(file) = read_dir.next_entry().await? {
             debug!("testing input: {:?}", file);
 
             let destination_file = if self.config.rename_output {
@@ -134,7 +131,7 @@ impl GeneratorTask {
                 file.file_name()
             };
 
-            let destination_file = self.config.crashes.path.join(destination_file);
+            let destination_file = self.config.crashes.local_path.join(destination_file);
             if tester.is_crash(file.path()).await? {
                 fs::rename(file.path(), &destination_file).await?;
                 debug!("crash found {}", destination_file.display());
@@ -151,6 +148,7 @@ impl GeneratorTask {
         utils::reset_tmp_dir(&output_dir).await?;
         let (mut generator, generator_path) = {
             let expand = Expand::new()
+                .setup_dir(&self.config.common.setup_dir)
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
                 .generator_exe(&self.config.generator_exe)
@@ -165,7 +163,7 @@ impl GeneratorTask {
                     tester.instance_telemetry_key(&key)
                 })
                 .set_optional_ref(&self.config.tools, |expand, tools| {
-                    expand.tools_dir(&tools.path)
+                    expand.tools_dir(&tools.local_path)
                 });
 
             let generator_path = expand.evaluate_value(&self.config.generator_exe)?;
@@ -243,16 +241,22 @@ mod tests {
             generator_exe: String::from("{tools_dir}/radamsa"),
             generator_options,
             readonly_inputs: vec![SyncedDir {
-                path: readonly_inputs_local,
-                url: BlobContainerUrl::parse(Url::from_directory_path(inputs).unwrap())?,
+                local_path: readonly_inputs_local,
+                remote_path: Some(BlobContainerUrl::parse(
+                    Url::from_directory_path(inputs).unwrap(),
+                )?),
             }],
             crashes: SyncedDir {
-                path: crashes_local,
-                url: BlobContainerUrl::parse(Url::from_directory_path(crashes).unwrap())?,
+                local_path: crashes_local,
+                remote_path: Some(BlobContainerUrl::parse(
+                    Url::from_directory_path(crashes).unwrap(),
+                )?),
             },
             tools: Some(SyncedDir {
-                path: tools_local,
-                url: BlobContainerUrl::parse(Url::from_directory_path(radamsa_dir).unwrap())?,
+                local_path: tools_local,
+                remote_path: Some(BlobContainerUrl::parse(
+                    Url::from_directory_path(radamsa_dir).unwrap(),
+                )?),
             }),
             target_exe: Default::default(),
             target_env: Default::default(),

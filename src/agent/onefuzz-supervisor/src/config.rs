@@ -134,7 +134,6 @@ impl StaticConfig {
         .into();
 
         Ok(Self {
-            instance_id,
             credentials,
             pool_name,
             onefuzz_url,
@@ -142,6 +141,7 @@ impl StaticConfig {
             instance_telemetry_key,
             microsoft_telemetry_key,
             heartbeat_queue,
+            instance_id,
         })
     }
 
@@ -237,7 +237,8 @@ impl Registration {
                 .bearer_auth(token.secret().expose_ref())
                 .body("")
                 .send_retry_default()
-                .await?;
+                .await
+                .context("Registration.create")?;
 
             let status_code = response.status();
 
@@ -299,9 +300,11 @@ impl Registration {
             .get(url)
             .bearer_auth(token.secret().expose_ref())
             .send_retry_default()
-            .await?
+            .await
+            .context("Registration.renew")?
             .error_for_status_with_body()
-            .await?;
+            .await
+            .context("Registration.renew request body")?;
 
         self.dynamic_config = response.json().await?;
         self.dynamic_config.save().await?;

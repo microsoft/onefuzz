@@ -37,7 +37,7 @@ from onefuzztypes.enums import (
 )
 from onefuzztypes.models import Error, SecretData
 from onefuzztypes.primitives import Container, PoolName, Region
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing_extensions import Protocol
 
 from .azure.table import get_client
@@ -76,6 +76,9 @@ class HasState(Protocol):
     # the JobState,TaskState,etc enums.
     state: Any
 
+    def get_keys(self) -> Tuple[KEY, KEY]:
+        ...
+
 
 def process_state_update(obj: HasState) -> None:
     """
@@ -87,15 +90,16 @@ def process_state_update(obj: HasState) -> None:
     if func is None:
         return
 
-    get_keys = getattr(obj, "get_keys", None)
-    if get_keys is not None:
-        logging.info("processing state update: %s - %s", get_keys(), obj.state.name)
+    keys = obj.get_keys()
 
+    logging.info(
+        "processing state update: %s - %s - %s", type(obj), keys, obj.state.name
+    )
     func()
 
 
 def process_state_updates(obj: HasState, max_updates: int = 5) -> None:
-    """ process through the state machine for an object """
+    """process through the state machine for an object"""
 
     for _ in range(max_updates):
         state = obj.state
@@ -219,8 +223,9 @@ class ModelMixin(BaseModel):
         return result
 
 
+# NOTE: if you want to include Timestamp in a model that uses ORMMixin,
+# it must be maintained as part of the model.
 class ORMMixin(ModelMixin):
-    Timestamp: Optional[datetime] = Field(alias="Timestamp")
     etag: Optional[str]
 
     @classmethod
@@ -257,7 +262,7 @@ class ORMMixin(ModelMixin):
         return None
 
     def export_exclude(self) -> Optional[MappingIntStrAny]:
-        return {"etag": ..., "Timestamp": ...}
+        return {"etag": ...}
 
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {}

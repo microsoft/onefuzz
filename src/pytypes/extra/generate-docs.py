@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+import sys
 from typing import List, Optional
 from uuid import UUID
 
@@ -12,8 +13,10 @@ from onefuzztypes.enums import (
     ContainerType,
     ErrorCode,
     NodeState,
+    ScalesetState,
     TaskState,
     TaskType,
+    VmState,
 )
 from onefuzztypes.events import (
     Event,
@@ -31,10 +34,12 @@ from onefuzztypes.events import (
     EventProxyCreated,
     EventProxyDeleted,
     EventProxyFailed,
+    EventProxyStateUpdated,
     EventRegressionReported,
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
+    EventScalesetStateUpdated,
     EventTaskCreated,
     EventTaskFailed,
     EventTaskHeartbeat,
@@ -63,17 +68,23 @@ EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 ZERO_SHA256 = "0" * len(EMPTY_SHA256)
 
 
-def layer(depth: int, title: str, content: Optional[str] = None) -> None:
-    print(f"{'#' * depth} {title}\n")
+def layer(depth: int, title: str, content: Optional[str] = None) -> str:
+    result = f"{'#' * depth} {title}\n\n"
     if content is not None:
-        print(f"{content}\n")
+        result += f"{content}\n\n"
+    return result
 
 
-def typed(depth: int, title: str, content: str, data_type: str) -> None:
-    print(f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n")
+def typed(depth: int, title: str, content: str, data_type: str) -> str:
+    return f"{'#' * depth} {title}\n\n```{data_type}\n{content}\n```\n\n"
 
 
 def main() -> None:
+    if len(sys.argv) < 2:
+        print(f"usage: {__file__} [OUTPUT_FILE]")
+        sys.exit(1)
+    filename = sys.argv[1]
+
     task_config = TaskConfig(
         job_id=UUID(int=0),
         task=TaskDetails(
@@ -147,11 +158,17 @@ def main() -> None:
             state=TaskState.init,
             config=task_config,
         ),
-        EventProxyCreated(region=Region("eastus")),
-        EventProxyDeleted(region=Region("eastus")),
+        EventProxyCreated(region=Region("eastus"), proxy_id=UUID(int=0)),
+        EventProxyDeleted(region=Region("eastus"), proxy_id=UUID(int=0)),
         EventProxyFailed(
             region=Region("eastus"),
+            proxy_id=UUID(int=0),
             error=Error(code=ErrorCode.PROXY_FAILED, errors=["example error message"]),
+        ),
+        EventProxyStateUpdated(
+            region=Region("eastus"),
+            proxy_id=UUID(int=0),
+            state=VmState.init,
         ),
         EventPoolCreated(
             pool_name=PoolName("example"),
@@ -176,6 +193,11 @@ def main() -> None:
             ),
         ),
         EventScalesetDeleted(scaleset_id=UUID(int=0), pool_name=PoolName("example")),
+        EventScalesetStateUpdated(
+            scaleset_id=UUID(int=0),
+            pool_name=PoolName("example"),
+            state=ScalesetState.init,
+        ),
         EventJobCreated(
             job_id=UUID(int=0),
             config=JobConfig(
@@ -257,42 +279,53 @@ def main() -> None:
         instance_name="example",
     )
 
-    layer(
+    result = ""
+    result += layer(
         1,
         "Webhook Events",
         "This document describes the basic webhook event subscriptions "
         "available in OneFuzz",
     )
-    layer(
+    result += layer(
         2,
         "Payload",
         "Each event will be submitted via HTTP POST to the user provided URL.",
     )
 
-    typed(
-        3, "Example", message.json(indent=4, exclude_none=True, sort_keys=True), "json"
+    result += typed(
+        3,
+        "Example",
+        message.json(indent=4, exclude_none=True, sort_keys=True),
+        "json",
     )
-    layer(2, "Event Types (EventType)")
+    result += layer(2, "Event Types (EventType)")
 
     event_map = {get_event_type(x).name: x for x in examples}
 
     for name in sorted(event_map.keys()):
-        print(f"* [{name}](#{name})")
+        result += f"* [{name}](#{name})\n"
 
-    print()
+    result += "\n"
 
     for name in sorted(event_map.keys()):
         example = event_map[name]
-        layer(3, name)
-        typed(
+        result += layer(3, name)
+        result += typed(
             4,
             "Example",
             example.json(indent=4, exclude_none=True, sort_keys=True),
             "json",
         )
-        typed(4, "Schema", example.schema_json(indent=4, sort_keys=True), "json")
+        result += typed(
+            4, "Schema", example.schema_json(indent=4, sort_keys=True), "json"
+        )
 
-    typed(2, "Full Event Schema", message.schema_json(indent=4, sort_keys=True), "json")
+    result += typed(
+        2, "Full Event Schema", message.schema_json(indent=4, sort_keys=True), "json"
+    )
+
+    with open(filename, "w", newline="\n", encoding="utf8") as handle:
+        handle.write(result)
 
 
 if __name__ == "__main__":

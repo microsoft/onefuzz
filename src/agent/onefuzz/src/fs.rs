@@ -7,6 +7,7 @@ use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
 };
+use tokio_stream::wrappers::ReadDirStream;
 
 use std::process::Stdio;
 use tokio::fs;
@@ -41,7 +42,7 @@ pub async fn list_files(path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
         .await
         .with_context(|| format!("unable to list files: {}", path.display()))?;
 
-    let mut files = paths
+    let mut files = ReadDirStream::new(paths)
         .filter_map(|x| async {
             match x {
                 Ok(x) => {
@@ -181,6 +182,7 @@ pub async fn sync_impl(
 ) -> Result<()> {
     let mut cmd = Command::new("rsync");
     cmd.kill_on_drop(true)
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .arg(if recursive { "-zhr" } else { "-zh" });
@@ -221,6 +223,7 @@ pub async fn sync_impl(
 ) -> Result<()> {
     let mut cmd = Command::new("robocopy");
     cmd.kill_on_drop(true)
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .arg(&src)
@@ -296,7 +299,7 @@ pub async fn copy(src: SyncPath, dst: SyncPath, recur: bool) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use tempfile::tempdir;
-    use tokio::{fs, stream::StreamExt};
+    use tokio::fs;
 
     use super::*;
 
@@ -304,7 +307,7 @@ mod tests {
         let mut len = 0;
         let mut entries = fs::read_dir(dir).await.unwrap();
 
-        while entries.next().await.is_some() {
+        while entries.next_entry().await.unwrap().is_some() {
             len += 1;
         }
 

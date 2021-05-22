@@ -204,7 +204,7 @@ class Builder:
     def parse_param(
         self, name: str, param: inspect.Parameter, help_doc: Optional[str] = None
     ) -> Tuple[List[str], Dict[str, Any]]:
-        """ Parse a single parameter """
+        """Parse a single parameter"""
 
         default = param.default
         annotation = param.annotation
@@ -303,6 +303,13 @@ class Builder:
             ) -> None:
                 if values is None:
                     return
+
+                for arg in values:
+                    if "=" not in arg:
+                        raise argparse.ArgumentTypeError(
+                            "unable to parse value as a key=value pair: %s" % repr(arg)
+                        )
+
                 as_dict: Dict[str, str] = {
                     key_arg(k): val_arg(v) for k, v in (x.split("=", 1) for x in values)
                 }
@@ -416,7 +423,7 @@ class Builder:
     def parse_instance(
         self, inst: Callable, subparser: argparse._SubParsersAction
     ) -> None:
-        """ Expose every non-private callable in a class instance """
+        """Expose every non-private callable in a class instance"""
         for (name, func) in self.get_children(inst, is_callable=True):
             sub = subparser.add_parser(name, help=self.get_help(func))
             add_base(sub)

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::{http::ResponseExt, jitter::delay_with_jitter};
 use reqwest::{Client, Url};
@@ -24,9 +24,11 @@ pub async fn download_input(input_url: Url, dst: impl AsRef<Path>) -> Result<Pat
         let resp = Client::new()
             .get(input_url)
             .send_retry_default()
-            .await?
+            .await
+            .context("download_input")?
             .error_for_status_with_body()
-            .await?;
+            .await
+            .context("download_input status body")?;
 
         let body = resp.bytes().await?;
         let mut body = body.as_ref();

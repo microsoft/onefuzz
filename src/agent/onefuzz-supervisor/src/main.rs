@@ -104,13 +104,13 @@ fn run(opt: RunOpt) -> Result<()> {
 
     let config = config?;
 
-    let mut rt = tokio::runtime::Runtime::new()?;
+    let rt = tokio::runtime::Runtime::new()?;
     let result = rt.block_on(run_agent(config));
 
     if let Err(err) = &result {
-        error!("error running supervisor agent: {}", err);
+        error!("error running supervisor agent: {:?}", err);
         if let Err(err) = failure::save_failure(err) {
-            error!("unable to save failure log: {}", err);
+            error!("unable to save failure log: {:?}", err);
         }
     }
 

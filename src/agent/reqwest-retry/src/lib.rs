@@ -4,7 +4,7 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use backoff::{self, future::retry_notify, ExponentialBackoff};
-use onefuzz_telemetry::warn;
+use onefuzz_telemetry::debug;
 use reqwest::{Response, StatusCode};
 use std::{
     sync::atomic::{AtomicUsize, Ordering},
@@ -113,10 +113,10 @@ where
         |err: Result<Response, anyhow::Error>, dur| match err {
             Ok(response) => {
                 if let Err(err) = response.error_for_status() {
-                    warn!("request attempt failed after {:?}: {:?}", dur, err)
+                    debug!("request attempt failed after {:?}: {:?}", dur, err)
                 }
             }
-            err => warn!("request attempt failed after {:?}: {:?}", dur, err),
+            err => debug!("request attempt failed after {:?}: {:?}", dur, err),
         },
     )
     .await;

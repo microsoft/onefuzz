@@ -8,12 +8,14 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::upper_case_acronyms)]
+
 /// This module defines a wrapper around dbghelp apis so they can be used in a thread safe manner
 /// as well as providing a more Rust like api.
 use std::{
     cmp,
     ffi::{OsStr, OsString},
     mem::{size_of, MaybeUninit},
+    num::NonZeroU64,
     path::{Path, PathBuf},
     sync::Once,
 };
@@ -26,13 +28,17 @@ use winapi::{
         basetsd::{DWORD64, PDWORD64},
         guiddef::GUID,
         minwindef::{BOOL, DWORD, FALSE, LPVOID, MAX_PATH, PDWORD, TRUE, ULONG, WORD},
+        ntdef::{PCWSTR, PWSTR},
         winerror::{ERROR_ALREADY_EXISTS, ERROR_SUCCESS},
     },
     um::{
         dbghelp::{
-            AddrModeFlat, StackWalkEx, SymCleanup, SymFromNameW, SymFunctionTableAccess64,
-            SymGetModuleBase64, SymInitializeW, SymLoadModuleExW, IMAGEHLP_LINEW64,
-            PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW, SYM_STKWALK_DEFAULT,
+            AddrModeFlat, StackWalkEx, SymCleanup, SymFindFileInPathW, SymFromNameW,
+            SymFunctionTableAccess64, SymGetModuleBase64, SymInitializeW, SymLoadModuleExW,
+            IMAGEHLP_LINEW64, INLINE_FRAME_CONTEXT_IGNORE, INLINE_FRAME_CONTEXT_INIT,
+            PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW, SYMOPT_DEBUG,
+            SYMOPT_DEFERRED_LOADS, SYMOPT_FAIL_CRITICAL_ERRORS, SYMOPT_NO_PROMPTS,
+            SYM_STKWALK_DEFAULT,
         },
         errhandlingapi::GetLastError,
         handleapi::CloseHandle,
@@ -51,6 +57,14 @@ use winapi::{
 
 // We use 4096 based on C4503 - the documented VC++ warning that a name is truncated.
 const MAX_SYM_NAME: usize = 4096;
+
+// Arbitrary practical choice, but must not exceed `u32::MAX`.
+const MAX_SYM_SEARCH_PATH_LEN: usize = 8192;
+
+/// For `flags` parameter of `SymFindFileInPath`.
+///
+/// Missing from `winapi-rs`.
+const SSRVOPT_DWORD: DWORD = 0x0002;
 
 // Ideally this would be a function, but it would require returning a large stack
 // allocated object **and** an interior pointer to the object, so we use a macro instead.
@@ -76,12 +90,6 @@ macro_rules! init_sym_info {
         symbol_info_ptr
     }};
 }
-
-// Missing from winapi-rs - see https://github.com/retep998/winapi-rs/pull/864
-const SYMOPT_DEBUG: DWORD = 0x80000000;
-const SYMOPT_DEFERRED_LOADS: DWORD = 0x00000004;
-const SYMOPT_FAIL_CRITICAL_ERRORS: DWORD = 0x00000200;
-const SYMOPT_NO_PROMPTS: DWORD = 0x00080000;
 
 /// We use dbghlp Sym apis to walk a stack. dbghlp apis are documented as not being thread safe,
 /// so we provide a lock around our use of these apis.
@@ -213,6 +221,8 @@ extern "system" {
         qwAddr: DWORD64,
         ModuleInfo: PIMAGEHLP_MODULEW64,
     ) -> BOOL;
+    pub fn SymGetSearchPathW(hProcess: HANDLE, SearchPath: PWSTR, SearchPathLength: DWORD) -> BOOL;
+    pub fn SymSetSearchPathW(hProcess: HANDLE, SearchPath: PCWSTR) -> BOOL;
 }
 
 #[repr(C, align(8))]
@@ -410,9 +420,9 @@ impl ModuleInfo {
 
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub struct SymInfo {
-    symbol: String,
-    address: u64,
-    displacement: u64,
+    pub symbol: String,
+    pub address: u64,
+    pub displacement: u64,
 }
 
 impl SymInfo {
@@ -516,10 +526,20 @@ impl DebugHelpGuard {
         }
     }
 
+    pub fn get_module_base(&self, process_handle: HANDLE, addr: DWORD64) -> Result<NonZeroU64> {
+        if let Some(base) = NonZeroU64::new(unsafe { SymGetModuleBase64(process_handle, addr) }) {
+            Ok(base)
+        } else {
+            let last_error = std::io::Error::last_os_error();
+            Err(last_error.into())
+        }
+    }
+
     pub fn stackwalk_ex<F: FnMut(&STACKFRAME_EX) -> bool>(
         &self,
         process_handle: HANDLE,
         thread_handle: HANDLE,
+        walk_inline_frames: bool,
         mut f: F,
     ) -> Result<()> {
         let mut frame_context = get_thread_frame(process_handle, thread_handle)?;
@@ -531,6 +551,11 @@ impl DebugHelpGuard {
         frame.AddrStack.Mode = AddrModeFlat;
         frame.AddrFrame.Offset = frame_context.frame_pointer();
         frame.AddrFrame.Mode = AddrModeFlat;
+        frame.InlineFrameContext = if walk_inline_frames {
+            INLINE_FRAME_CONTEXT_INIT
+        } else {
+            INLINE_FRAME_CONTEXT_IGNORE
+        };
 
         loop {
             let success = unsafe {
@@ -669,6 +694,94 @@ impl DebugHelpGuard {
             address: sym_info_ptr.Address,
             displacement: 0,
         })
+    }
+
+    /// Look for a filesystem path to a PDB file using the symbol handler's
+    /// current search path.
+    ///
+    /// This method is effectively a specialization of `SymFindFileInPathW`.
+    ///
+    /// Note: `file_name` may be a full path, but only the file name is used.
+    pub fn find_pdb_file_in_path(
+        &self,
+        process_handle: HANDLE,
+        file_name: impl AsRef<Path>,
+        pdb_signature: u32,
+        pdb_age: u32,
+    ) -> Result<PathBuf> {
+        let file_name = win_util::string::to_wstring(file_name);
+
+        // Must be at least `MAX_PATH` characters in length.
+        let mut found_file_data = Vec::<u16>::with_capacity(MAX_PATH);
+
+        // Inherit search path used in `SymInitializeW()`. When that is also set
+        // to `NULL`, the default search path is used.
+        let search_path = std::ptr::null_mut();
+
+        // See: https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-symfindfileinpathw#remarks
+        let id = pdb_signature as *mut _;
+        let two = pdb_age;
+        let three = 0;
+
+        // Assert that we are passing a DWORD signature in `id`.
+        let flags = SSRVOPT_DWORD;
+
+        check_winapi(|| unsafe {
+            SymFindFileInPathW(
+                process_handle,
+                search_path,
+                file_name.as_ptr(),
+                id,
+                two,
+                three,
+                flags,
+                found_file_data.as_mut_ptr(),
+                None,
+                std::ptr::null_mut(),
+            )
+        })?;
+
+        // Safety: `found_file_data` must contain at least one NUL byte.
+        //
+        // We zero-initialize `found_file_data`, and assume that `SymFindFileInPathW`
+        // only succeeds if it wrote a NUL-terminated wide string.
+        let found_file =
+            unsafe { win_util::string::os_string_from_wide_ptr(found_file_data.as_ptr()) };
+
+        Ok(found_file.into())
+    }
+
+    pub fn sym_get_search_path(&self, process_handle: HANDLE) -> Result<OsString> {
+        let mut search_path_data = Vec::<u16>::with_capacity(MAX_SYM_SEARCH_PATH_LEN);
+        let search_path_len = MAX_SYM_SEARCH_PATH_LEN as u32;
+        check_winapi(|| unsafe {
+            SymGetSearchPathW(
+                process_handle,
+                search_path_data.as_mut_ptr(),
+                search_path_len,
+            )
+        })?;
+
+        // Safety: `search_path_data` must contain at least one NUL byte.
+        //
+        // We zero-initialize `search_path_data`, and assume that `SymGetSearchPathW`
+        // only succeeds if it wrote a NUL-terminated wide string.
+        let search_path =
+            unsafe { win_util::string::os_string_from_wide_ptr(search_path_data.as_ptr()) };
+
+        Ok(search_path)
+    }
+
+    pub fn sym_set_search_path(
+        &self,
+        process_handle: HANDLE,
+        search_path: impl AsRef<OsStr>,
+    ) -> Result<()> {
+        let mut search_path = win_util::string::to_wstring(search_path.as_ref());
+
+        check_winapi(|| unsafe { SymSetSearchPathW(process_handle, search_path.as_mut_ptr()) })?;
+
+        Ok(())
     }
 }
 

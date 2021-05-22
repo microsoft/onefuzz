@@ -65,14 +65,20 @@ from data_migration import migrate
 from registration import (
     OnefuzzAppRole,
     add_application_password,
-    assign_scaleset_role,
+    assign_app_role,
     authorize_application,
+    get_graph_client,
     register_application,
     set_app_audience,
     update_pool_registration,
 )
 
-USER_IMPERSONATION = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
+# Found by manually assigning the User.Read permission to application
+# registration in the admin portal. The values are in the manifest under
+# the section "requiredResourceAccess"
+USER_READ_PERMISSION = "e1fe6dd8-ba31-4d61-89e7-88639da4683d"
+MICROSOFT_GRAPH_APP_ID = "00000003-0000-0000-c000-000000000000"
+
 ONEFUZZ_CLI_APP = "72f1562a-8c0c-41ea-beb9-fa2b71c80134"
 ONEFUZZ_CLI_AUTHORITY = (
     "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
@@ -122,7 +128,9 @@ class Client:
         log_service_principal: bool,
         multi_tenant_domain: str,
         upgrade: bool,
+        subscription_id: Optional[str],
     ):
+        self.subscription_id = subscription_id
         self.resource_group = resource_group
         self.arm_template = arm_template
         self.location = location
@@ -171,11 +179,16 @@ class Client:
             self.workbook_data = json.load(f)
 
     def get_subscription_id(self) -> str:
+        if self.subscription_id:
+            return self.subscription_id
         profile = get_cli_profile()
-        return cast(str, profile.get_subscription_id())
+        self.subscription_id = cast(str, profile.get_subscription_id())
+        return self.subscription_id
 
     def get_location_display_name(self) -> str:
-        location_client = get_client_from_cli_profile(SubscriptionClient)
+        location_client = get_client_from_cli_profile(
+            SubscriptionClient, subscription_id=self.get_subscription_id()
+        )
         locations = location_client.subscriptions.list_locations(
             self.get_subscription_id()
         )
@@ -194,7 +207,9 @@ class Client:
         with open(self.arm_template, "r") as handle:
             arm = json.load(handle)
 
-        client = get_client_from_cli_profile(ResourceManagementClient)
+        client = get_client_from_cli_profile(
+            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        )
         providers = {x.namespace: x for x in client.providers.list()}
 
         unsupported = []
@@ -233,7 +248,7 @@ class Client:
             sys.exit(1)
 
     def create_password(self, object_id: UUID) -> Tuple[str, str]:
-        return add_application_password(object_id)
+        return add_application_password(object_id, self.get_subscription_id())
 
     def setup_rbac(self) -> None:
         """
@@ -245,7 +260,9 @@ class Client:
             logger.info("using existing client application")
             return
 
-        client = get_client_from_cli_profile(GraphRbacManagementClient)
+        client = get_client_from_cli_profile(
+            GraphRbacManagementClient, subscription_id=self.get_subscription_id()
+        )
         logger.info("checking if RBAC already exists")
 
         try:
@@ -298,9 +315,9 @@ class Client:
                 required_resource_access=[
                     RequiredResourceAccess(
                         resource_access=[
-                            ResourceAccess(id=USER_IMPERSONATION, type="Scope")
+                            ResourceAccess(id=USER_READ_PERMISSION, type="Scope")
                         ],
-                        resource_app_id="00000002-0000-0000-c000-000000000000",
+                        resource_app_id=MICROSOFT_GRAPH_APP_ID,
                     )
                 ],
                 app_roles=app_roles,
@@ -400,7 +417,10 @@ class Client:
                 "subscription, creating a new one"
             )
             app_info = register_application(
-                "onefuzz-cli", self.application_name, OnefuzzAppRole.CliClient
+                "onefuzz-cli",
+                self.application_name,
+                OnefuzzAppRole.CliClient,
+                self.get_subscription_id(),
             )
             if self.multi_tenant_domain:
                 authority = COMMON_AUTHORITY
@@ -412,7 +432,20 @@ class Client:
             }
 
         else:
-            authorize_application(uuid.UUID(ONEFUZZ_CLI_APP), app.app_id)
+            onefuzz_cli_app = cli_app[0]
+            authorize_application(uuid.UUID(onefuzz_cli_app.app_id), app.app_id)
+            if self.multi_tenant_domain:
+                authority = COMMON_AUTHORITY
+            else:
+                onefuzz_client = get_graph_client(self.get_subscription_id())
+                authority = (
+                    "https://login.microsoftonline.com/%s"
+                    % onefuzz_client.config.tenant_id
+                )
+            self.cli_config = {
+                "client_id": onefuzz_cli_app.app_id,
+                "authority": authority,
+            }
 
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password
@@ -429,7 +462,9 @@ class Client:
         with open(self.arm_template, "r") as template_handle:
             template = json.load(template_handle)
 
-        client = get_client_from_cli_profile(ResourceManagementClient)
+        client = get_client_from_cli_profile(
+            ResourceManagementClient, subscription_id=self.get_subscription_id()
+        )
         client.resource_groups.create_or_update(
             self.resource_group, {"location": self.location}
         )
@@ -509,9 +544,11 @@ class Client:
             logger.info("Upgrading: skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
-        assign_scaleset_role(
+        assign_app_role(
             self.application_name,
             self.results["deploy"]["scaleset-identity"]["value"],
+            self.get_subscription_id(),
+            OnefuzzAppRole.ManagedNode,
         )
 
     def apply_migrations(self) -> None:
@@ -548,7 +585,9 @@ class Client:
         logger.info("creating eventgrid subscription")
         src_resource_id = self.results["deploy"]["fuzz-storage"]["value"]
         dst_resource_id = self.results["deploy"]["func-storage"]["value"]
-        client = get_client_from_cli_profile(StorageManagementClient)
+        client = get_client_from_cli_profile(
+            StorageManagementClient, subscription_id=self.get_subscription_id()
+        )
         event_subscription_info = EventSubscription(
             destination=StorageQueueEventSubscriptionDestination(
                 resource_id=dst_resource_id, queue_name="file-changes"
@@ -565,7 +604,9 @@ class Client:
             ),
         )
 
-        client = get_client_from_cli_profile(EventGridManagementClient)
+        client = get_client_from_cli_profile(
+            EventGridManagementClient, subscription_id=self.get_subscription_id()
+        )
         result = client.event_subscriptions.create_or_update(
             src_resource_id, "onefuzz1", event_subscription_info
         ).result()
@@ -639,7 +680,8 @@ class Client:
         )
 
         app_insight_client = get_client_from_cli_profile(
-            ApplicationInsightsManagementClient
+            ApplicationInsightsManagementClient,
+            subscription_id=self.get_subscription_id(),
         )
 
         to_delete = []
@@ -829,7 +871,7 @@ class Client:
     def update_registration(self) -> None:
         if not self.create_registration:
             return
-        update_pool_registration(self.application_name)
+        update_pool_registration(self.application_name, self.get_subscription_id())
 
     def done(self) -> None:
         logger.info(TELEMETRY_NOTICE)
@@ -865,11 +907,14 @@ def arg_file(arg: str) -> str:
 
 
 def main() -> None:
-    states = [
+    rbac_only_states = [
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
+    ]
+
+    full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
@@ -925,8 +970,8 @@ def main() -> None:
     parser.add_argument("--client_secret")
     parser.add_argument(
         "--start_at",
-        default=states[0][0],
-        choices=[x[0] for x in states],
+        default=full_deployment_states[0][0],
+        choices=[x[0] for x in full_deployment_states],
         help=(
             "Debug deployments by starting at a specific state.  "
             "NOT FOR PRODUCTION USE.  (default: %(default)s)"
@@ -967,6 +1012,16 @@ def main() -> None:
         default=None,
         help="enable multi-tenant authentication with this tenant domain",
     )
+    parser.add_argument(
+        "--subscription_id",
+        type=str,
+    )
+    parser.add_argument(
+        "--rbac_only",
+        action="store_true",
+        help="execute only the steps required to create the rbac resources",
+    )
+
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -992,6 +1047,7 @@ def main() -> None:
         log_service_principal=args.log_service_principal,
         multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
+        subscription_id=args.subscription_id,
     )
     if args.verbose:
         level = logging.DEBUG
@@ -1001,6 +1057,15 @@ def main() -> None:
     logging.basicConfig(level=level)
 
     logging.getLogger("deploy").setLevel(logging.INFO)
+
+    if args.rbac_only:
+        logger.warning(
+            "'rbac_only' specified. The deployment will execute "
+            "only the steps required to create the rbac resources"
+        )
+        states = rbac_only_states
+    else:
+        states = full_deployment_states
 
     if args.start_at != states[0][0]:
         logger.warning(

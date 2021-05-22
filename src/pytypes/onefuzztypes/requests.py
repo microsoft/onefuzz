@@ -176,7 +176,7 @@ class ScalesetCreate(BaseRequest):
     region: Optional[Region]
     size: int
     spot_instances: bool
-    ephemeral_os_disks: bool
+    ephemeral_os_disks: bool = Field(default=False)
     tags: Dict[str, str]
 
     @validator("size", allow_reuse=True)

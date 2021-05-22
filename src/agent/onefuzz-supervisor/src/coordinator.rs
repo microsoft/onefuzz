@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
@@ -25,6 +25,7 @@ pub enum NodeCommand {
     AddSshKey(SshKeyInfo),
     StopTask(StopTask),
     Stop {},
+    StopIfFree {},
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -192,13 +193,13 @@ impl Coordinator {
     /// If the request fails due to an expired access token, we will retry once
     /// with a fresh one.
     pub async fn poll_commands(&mut self) -> Result<Option<NodeCommand>> {
-        let response = self.send_with_auth_retry(RequestType::PollCommands).await?;
+        let response = self.send(RequestType::PollCommands).await?;
         let data = response.bytes().await?;
         let pending: PendingNodeCommand = serde_json::from_slice(&data)?;
 
         if let Some(envelope) = pending.envelope {
             let request = RequestType::ClaimCommand(envelope.message_id);
-            self.send_with_auth_retry(request).await?;
+            self.send(request).await?;
 
             Ok(Some(envelope.command))
         } else {
@@ -212,14 +213,14 @@ impl Coordinator {
             machine_id: self.registration.machine_id,
         };
         let request = RequestType::EmitEvent(&envelope);
-        self.send_with_auth_retry(request).await?;
+        self.send(request).await?;
 
         Ok(())
     }
 
     async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
         let request = RequestType::CanSchedule(work_set);
-        let response = self.send_with_auth_retry(request).await?;
+        let response = self.send(request).await?;
 
         let can_schedule: CanSchedule = response.json().await?;
 
@@ -229,10 +230,7 @@ impl Coordinator {
     // The lifetime is needed by an argument type. We can't make it anonymous,
     // as clippy suggests, because `'_` is not allowed in this binding site.
     #[allow(clippy::needless_lifetimes)]
-    async fn send_with_auth_retry<'a>(
-        &mut self,
-        request_type: RequestType<'a>,
-    ) -> Result<Response> {
+    async fn send<'a>(&mut self, request_type: RequestType<'a>) -> Result<Response> {
         let request = self.get_request_builder(request_type.clone());
         let mut response = request
             .send_retry(
@@ -243,7 +241,8 @@ impl Coordinator {
                 DEFAULT_RETRY_PERIOD,
                 MAX_RETRY_ATTEMPTS,
             )
-            .await?;
+            .await
+            .context("Coordinator.send")?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
             debug!("access token expired, renewing");
@@ -255,12 +254,18 @@ impl Coordinator {
 
             // And try one more time.
             let request = self.get_request_builder(request_type);
-            response = request.send_retry_default().await?;
+            response = request
+                .send_retry_default()
+                .await
+                .context("Coordinator.send after refreshing access token")?;
         };
 
         // We've retried if we got a `401 Unauthorized`. If it happens again, we
         // really want to bail this time.
-        let response = response.error_for_status_with_body().await?;
+        let response = response
+            .error_for_status_with_body()
+            .await
+            .context("Coordinator.send status body")?;
 
         Ok(response)
     }

@@ -8,9 +8,17 @@ from enum import Enum
 from typing import List, Optional, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Field
 
-from .enums import OS, Architecture, NodeState, TaskState, TaskType
+from .enums import (
+    OS,
+    Architecture,
+    NodeState,
+    ScalesetState,
+    TaskState,
+    TaskType,
+    VmState,
+)
 from .models import (
     AutoScaleConfig,
     Error,
@@ -25,8 +33,7 @@ from .responses import BaseResponse
 
 
 class BaseEvent(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    pass
 
 
 class EventTaskStopped(BaseEvent):
@@ -122,15 +129,24 @@ class EventPoolCreated(BaseEvent):
 
 class EventProxyCreated(BaseEvent):
     region: Region
+    proxy_id: Optional[UUID]
 
 
 class EventProxyDeleted(BaseEvent):
     region: Region
+    proxy_id: Optional[UUID]
 
 
 class EventProxyFailed(BaseEvent):
     region: Region
+    proxy_id: Optional[UUID]
     error: Error
+
+
+class EventProxyStateUpdated(BaseEvent):
+    region: Region
+    proxy_id: UUID
+    state: VmState
 
 
 class EventNodeCreated(BaseEvent):
@@ -151,6 +167,12 @@ class EventNodeDeleted(BaseEvent):
     pool_name: PoolName
 
 
+class EventScalesetStateUpdated(BaseEvent):
+    scaleset_id: UUID
+    pool_name: PoolName
+    state: ScalesetState
+
+
 class EventNodeStateUpdated(BaseEvent):
     machine_id: UUID
     scaleset_id: Optional[UUID]
@@ -162,12 +184,14 @@ class EventCrashReported(BaseEvent):
     report: Report
     container: Container
     filename: str
+    task_config: Optional[TaskConfig]
 
 
 class EventRegressionReported(BaseEvent):
     regression_report: RegressionReport
     container: Container
     filename: str
+    task_config: Optional[TaskConfig]
 
 
 class EventFileAdded(BaseEvent):
@@ -188,9 +212,11 @@ Event = Union[
     EventProxyFailed,
     EventProxyCreated,
     EventProxyDeleted,
+    EventProxyStateUpdated,
     EventScalesetFailed,
     EventScalesetCreated,
     EventScalesetDeleted,
+    EventScalesetStateUpdated,
     EventTaskFailed,
     EventTaskStateUpdated,
     EventTaskCreated,
@@ -214,9 +240,11 @@ class EventType(Enum):
     proxy_created = "proxy_created"
     proxy_deleted = "proxy_deleted"
     proxy_failed = "proxy_failed"
+    proxy_state_updated = "proxy_state_updated"
     scaleset_created = "scaleset_created"
     scaleset_deleted = "scaleset_deleted"
     scaleset_failed = "scaleset_failed"
+    scaleset_state_updated = "scaleset_state_updated"
     task_created = "task_created"
     task_failed = "task_failed"
     task_state_updated = "task_state_updated"
@@ -241,9 +269,11 @@ EventTypeMap = {
     EventType.proxy_created: EventProxyCreated,
     EventType.proxy_deleted: EventProxyDeleted,
     EventType.proxy_failed: EventProxyFailed,
+    EventType.proxy_state_updated: EventProxyStateUpdated,
     EventType.scaleset_created: EventScalesetCreated,
     EventType.scaleset_deleted: EventScalesetDeleted,
     EventType.scaleset_failed: EventScalesetFailed,
+    EventType.scaleset_state_updated: EventScalesetStateUpdated,
     EventType.task_created: EventTaskCreated,
     EventType.task_failed: EventTaskFailed,
     EventType.task_state_updated: EventTaskStateUpdated,

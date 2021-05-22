@@ -6,7 +6,7 @@
 import json
 import logging
 from queue import Empty, Queue
-from typing import List, Optional, Set
+from typing import Optional
 
 from onefuzztypes.events import Event, EventMessage, EventType, get_event_type
 from onefuzztypes.models import UserInfo
@@ -37,53 +37,38 @@ def get_events() -> Optional[str]:
 
 def log_event(event: Event, event_type: EventType) -> None:
     scrubbed_event = filter_event(event, event_type)
-    logging.info("sending event: %s - %s", event_type, scrubbed_event)
+    logging.info(
+        "sending event: %s - %s", event_type, scrubbed_event.json(exclude_none=True)
+    )
 
 
-def filter_event(event: Event, event_type: EventType) -> Event:
-
+def filter_event(event: Event, event_type: EventType) -> BaseModel:
     clone_event = event.copy(deep=True)
-    filter_event_recurs(clone_event)
+    filtered_event = filter_event_recurse(clone_event)
+    return filtered_event
 
-    return clone_event
 
+def filter_event_recurse(entry: BaseModel) -> BaseModel:
 
-def filter_event_recurs(clone_event: BaseModel, visited: Set[int] = set()) -> BaseModel:
-
-    if id(clone_event) in visited:
-        return clone_event
-
-    visited.add(id(clone_event))
-
-    for field in clone_event.__fields__:
-        field_data = getattr(clone_event, field)
+    for field in entry.__fields__:
+        field_data = getattr(entry, field)
 
         if isinstance(field_data, UserInfo):
-
             field_data = None
-
-        elif isinstance(field_data, List):
-
-            if len(field_data) > 0 and not isinstance(field_data[0], BaseModel):
-                continue
-            for data in field_data:
-                filter_event_recurs(data, visited)
-
+        elif isinstance(field_data, list):
+            for (i, value) in enumerate(field_data):
+                if isinstance(value, BaseModel):
+                    field_data[i] = filter_event_recurse(value)
         elif isinstance(field_data, dict):
+            for (key, value) in field_data.items():
+                if isinstance(value, BaseModel):
+                    field_data[key] = filter_event_recurse(value)
+        elif isinstance(field_data, BaseModel):
+            field_data = filter_event_recurse(field_data)
 
-            for key in field_data:
-                if not isinstance(field_data[key], BaseModel):
-                    continue
-                filter_event_recurs(field_data[key], visited)
+        setattr(entry, field, field_data)
 
-        else:
-
-            if isinstance(field_data, BaseModel):
-                filter_event_recurs(field_data, visited)
-
-        setattr(clone_event, field, field_data)
-
-    return clone_event
+    return entry
 
 
 def send_event(event: Event) -> None:
