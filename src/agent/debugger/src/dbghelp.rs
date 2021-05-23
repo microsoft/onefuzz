@@ -750,10 +750,8 @@ impl DebugHelpGuard {
                 unsafe { win_util::string::os_string_from_wide_ptr(found_file_data.as_ptr()) };
 
             Ok(Some(found_file.into()))
-
         } else {
             Ok(None)
-
         }
     }
 
