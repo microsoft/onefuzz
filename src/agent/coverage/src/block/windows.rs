@@ -106,7 +106,7 @@ impl<'c> Recorder<'c> {
     pub fn on_create_process(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) -> Result<()> {
         log::debug!("process created: {}", module.path().display());
 
-        // TODO: we should avoid loading symbols if the module is in the cache.
+        // Not necessary for PDB search, but enables use of other `dbghelp` APIs.
         if let Err(err) = dbg.target().maybe_sym_initialize() {
             log::error!(
                 "unable to initialize symbol handler for new process {}: {:?}",
@@ -120,8 +120,6 @@ impl<'c> Recorder<'c> {
 
     pub fn on_load_dll(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) -> Result<()> {
         log::debug!("DLL loaded: {}", module.path().display());
-
-        // TODO: we should load symbols if the module is not in the cache (see on_create_process).
 
         self.insert_module(dbg, module)
     }
@@ -170,7 +168,12 @@ impl<'c> Recorder<'c> {
             return Ok(());
         }
 
-        match self.cache.fetch(&path, dbg.target().process_handle()) {
+        // Do not pass the debuggee's actual process handle here. Any passed handle is
+        // used as the symbol handler context within the cache's PDB search. Instead, use
+        // the default internal pseudo-handle for "static" `dbghelp` usage. This lets us
+        // query `dbghelp` immediately upon observing the `CREATE_PROCESS_DEBUG_EVENT`,
+        // before we would be able to for a running debuggee.
+        match self.cache.fetch(&path, None) {
             Ok(Some(info)) => {
                 let new = self.coverage.insert(&path, info.blocks.iter().copied());
 
