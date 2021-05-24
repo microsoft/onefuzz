@@ -36,10 +36,18 @@ def generic_extensions(
     if monitor and ScalesetExtension.DependencyAgent in extension_list:
         extensions.append(monitor)
     geneva = geneva_extension(region, vm_os)
-    if geneva and ScalesetExtension.GenevaMonitoring in extension_list:
+    if (
+        geneva
+        and ScalesetExtension.GenevaMonitoring in extension_list
+        and vm_os == OS.windows
+    ):
         extensions.append(geneva)
     keyvault = keyvault_extension(region, vm_os)
-    if keyvault and ScalesetExtension.KeyvaultExtension in extension_list:
+    if (
+        keyvault
+        and ScalesetExtension.KeyvaultExtension in extension_list
+        and vm_os == OS.windows
+    ):
         extensions.append(keyvault)
 
     return extensions
