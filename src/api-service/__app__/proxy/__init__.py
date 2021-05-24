@@ -9,7 +9,7 @@ import azure.functions as func
 from onefuzztypes.enums import ErrorCode, VmState
 from onefuzztypes.models import Error
 from onefuzztypes.requests import ProxyCreate, ProxyDelete, ProxyGet, ProxyReset
-from onefuzztypes.responses import BoolResult, ProxyGetResult
+from onefuzztypes.responses import BoolResult, ProxyGetResult, ProxyInfo, ProxyList
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.events import get_events
@@ -36,26 +36,37 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ProxyGet")
 
-    scaleset = Scaleset.get_by_id(request.scaleset_id)
-    if isinstance(scaleset, Error):
-        return not_ok(scaleset, context="ProxyGet")
+    if (
+        request.scaleset_id is not None
+        and request.machine_id is not None
+        and request.dst_port is not None
+    ):
+        scaleset = Scaleset.get_by_id(request.scaleset_id)
+        if isinstance(scaleset, Error):
+            return not_ok(scaleset, context="ProxyGet")
 
-    proxy = Proxy.get_or_create(scaleset.region)
-    forwards = ProxyForward.search_forward(
-        scaleset_id=request.scaleset_id,
-        machine_id=request.machine_id,
-        dst_port=request.dst_port,
-    )
-    if not forwards:
-        return not_ok(
-            Error(
-                code=ErrorCode.INVALID_REQUEST,
-                errors=["no forwards for scaleset and node"],
-            ),
-            context="debug_proxy get",
+        proxy = Proxy.get_or_create(scaleset.region)
+        forwards = ProxyForward.search_forward(
+            scaleset_id=request.scaleset_id,
+            machine_id=request.machine_id,
+            dst_port=request.dst_port,
         )
+        if not forwards:
+            return not_ok(
+                Error(
+                    code=ErrorCode.INVALID_REQUEST,
+                    errors=["no forwards for scaleset and node"],
+                ),
+                context="debug_proxy get",
+            )
 
-    return ok(get_result(forwards[0], proxy))
+        return ok(get_result(forwards[0], proxy))
+    else:
+        proxies = [
+            ProxyInfo(region=x.region, proxy_id=x.proxy_id, state=x.state)
+            for x in Proxy.search()
+        ]
+        return ok(ProxyList(proxies=proxies))
 
 
 def post(req: func.HttpRequest) -> func.HttpResponse:
