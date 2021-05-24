@@ -24,6 +24,9 @@ struct Opt {
 
     #[structopt(short, long, default_value = "5")]
     timeout: u64,
+
+    #[structopt(long)]
+    modoff: bool,
 }
 
 impl Opt {
@@ -51,14 +54,19 @@ fn main() -> Result<()> {
         let cmd = input_command(&opt.cmd, input);
         let coverage = record(&mut cache, filter.clone(), cmd, opt.timeout)?;
 
-        println!("input = {}", input.display());
-        print_stats(&coverage);
-        println!();
+        log::info!("input = {}", input.display());
+        if !opt.modoff {
+            print_stats(&coverage);
+        }
 
         total.merge_max(&coverage);
     }
 
-    print_stats(&total);
+    if opt.modoff {
+        print_modoff(&total);
+    } else {
+        print_stats(&total);
+    }
 
     Ok(())
 }
@@ -100,7 +108,7 @@ fn record(
     recorder.record(cmd)?;
 
     let elapsed = now.elapsed();
-    println!("recorded in {:?}", elapsed);
+    log::info!("recorded in {:?}", elapsed);
 
     Ok(recorder.into_coverage())
 }
@@ -123,7 +131,7 @@ fn record(
     handler.run(cmd)?;
 
     let elapsed = now.elapsed();
-    println!("recorded in {:?}", elapsed);
+    log::info!("recorded in {:?}", elapsed);
 
     Ok(recorder.into_coverage())
 }
@@ -133,12 +141,22 @@ fn print_stats(coverage: &Coverage) {
         let covered = c.covered_blocks();
         let known = c.known_blocks();
         let percent = 100.0 * (covered as f64) / (known as f64);
-        println!(
+        log::info!(
             "{} = {} / {} ({:.2}%)",
             m.name_lossy(),
             covered,
             known,
             percent
         );
+    }
+}
+
+fn print_modoff(coverage: &Coverage) {
+    for (m, c) in coverage.iter() {
+        for (_, b) in &c.blocks {
+            if b.count > 0 {
+                println!("{}+{:x}", m.name_lossy(), b.offset);
+            }
+        }
     }
 }
