@@ -58,6 +58,9 @@ impl CommonConfig {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "task_type")]
 pub enum Config {
+    #[serde(alias = "coverage")]
+    Coverage(coverage::generic::Config),
+
     #[serde(alias = "libfuzzer_fuzz")]
     LibFuzzerFuzz(fuzz::libfuzzer_fuzz::Config),
 
@@ -75,9 +78,6 @@ pub enum Config {
 
     #[serde(alias = "generic_analysis")]
     GenericAnalysis(analysis::generic::Config),
-
-    #[serde(alias = "generic_coverage")]
-    GenericCoverage(coverage::generic::Config),
 
     #[serde(alias = "generic_generator")]
     GenericGenerator(fuzz::generator::Config),
@@ -109,13 +109,13 @@ impl Config {
 
     fn common_mut(&mut self) -> &mut CommonConfig {
         match self {
+            Config::Coverage(c) => &mut c.common,
             Config::LibFuzzerFuzz(c) => &mut c.common,
             Config::LibFuzzerMerge(c) => &mut c.common,
             Config::LibFuzzerReport(c) => &mut c.common,
             Config::LibFuzzerCoverage(c) => &mut c.common,
             Config::LibFuzzerRegression(c) => &mut c.common,
             Config::GenericAnalysis(c) => &mut c.common,
-            Config::GenericCoverage(c) => &mut c.common,
             Config::GenericMerge(c) => &mut c.common,
             Config::GenericReport(c) => &mut c.common,
             Config::GenericSupervisor(c) => &mut c.common,
@@ -126,13 +126,13 @@ impl Config {
 
     pub fn common(&self) -> &CommonConfig {
         match self {
+            Config::Coverage(c) => &c.common,
             Config::LibFuzzerFuzz(c) => &c.common,
             Config::LibFuzzerMerge(c) => &c.common,
             Config::LibFuzzerReport(c) => &c.common,
             Config::LibFuzzerCoverage(c) => &c.common,
             Config::LibFuzzerRegression(c) => &c.common,
             Config::GenericAnalysis(c) => &c.common,
-            Config::GenericCoverage(c) => &c.common,
             Config::GenericMerge(c) => &c.common,
             Config::GenericReport(c) => &c.common,
             Config::GenericSupervisor(c) => &c.common,
@@ -143,13 +143,13 @@ impl Config {
 
     pub fn report_event(&self) {
         let event_type = match self {
+            Config::Coverage(_) => "coverage",
             Config::LibFuzzerFuzz(_) => "libfuzzer_fuzz",
             Config::LibFuzzerMerge(_) => "libfuzzer_merge",
             Config::LibFuzzerReport(_) => "libfuzzer_crash_report",
             Config::LibFuzzerCoverage(_) => "libfuzzer_coverage",
             Config::LibFuzzerRegression(_) => "libfuzzer_regression",
             Config::GenericAnalysis(_) => "generic_analysis",
-            Config::GenericCoverage(_) => "generic_coverage",
             Config::GenericMerge(_) => "generic_merge",
             Config::GenericReport(_) => "generic_crash_report",
             Config::GenericSupervisor(_) => "generic_supervisor",
@@ -186,6 +186,7 @@ impl Config {
         self.report_event();
 
         match self {
+            Config::Coverage(config) => coverage::generic::CoverageTask::new(config).run().await,
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
                     .run()
@@ -203,9 +204,7 @@ impl Config {
             }
             Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
             Config::GenericAnalysis(config) => analysis::generic::run(config).await,
-            Config::GenericCoverage(config) => {
-                coverage::generic::CoverageTask::new(config).run().await
-            }
+
             Config::GenericGenerator(config) => {
                 fuzz::generator::GeneratorTask::new(config).run().await
             }

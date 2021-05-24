@@ -496,13 +496,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
                 "libfuzzer_regression",
                 "generic_analysis",
-                "generic_coverage",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
@@ -838,13 +838,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
                 "libfuzzer_regression",
                 "generic_analysis",
-                "generic_coverage",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
@@ -2013,13 +2013,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
                 "libfuzzer_regression",
                 "generic_analysis",
-                "generic_coverage",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
@@ -2675,13 +2675,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
                 "libfuzzer_regression",
                 "generic_analysis",
-                "generic_coverage",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
@@ -3169,13 +3169,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
                 "libfuzzer_regression",
                 "generic_analysis",
-                "generic_coverage",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
@@ -3608,13 +3608,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
                 "libfuzzer_regression",
                 "generic_analysis",
-                "generic_coverage",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
@@ -4035,13 +4035,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
                 "libfuzzer_regression",
                 "generic_analysis",
-                "generic_coverage",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
@@ -4461,13 +4461,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
                 "libfuzzer_regression",
                 "generic_analysis",
-                "generic_coverage",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",
@@ -5876,13 +5876,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
                 "libfuzzer_merge",
                 "libfuzzer_regression",
                 "generic_analysis",
-                "generic_coverage",
                 "generic_supervisor",
                 "generic_merge",
                 "generic_generator",

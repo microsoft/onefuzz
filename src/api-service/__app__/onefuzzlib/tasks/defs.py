@@ -14,6 +14,39 @@ from onefuzztypes.models import ContainerDefinition, TaskDefinition, VmDefinitio
 
 # all tasks are required to have a 'setup' container
 TASK_DEFINITIONS = {
+    TaskType.coverage: TaskDefinition(
+        features=[
+            TaskFeature.target_exe,
+            TaskFeature.target_env,
+            TaskFeature.target_options,
+        ],
+        vm=VmDefinition(compare=Compare.Equal, value=1),
+        containers=[
+            ContainerDefinition(
+                type=ContainerType.setup,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.readonly_inputs,
+                compare=Compare.AtLeast,
+                value=1,
+                permissions=[ContainerPermission.Read, ContainerPermission.List],
+            ),
+            ContainerDefinition(
+                type=ContainerType.coverage,
+                compare=Compare.Equal,
+                value=1,
+                permissions=[
+                    ContainerPermission.List,
+                    ContainerPermission.Read,
+                    ContainerPermission.Write,
+                ],
+            ),
+        ],
+        monitor_queue=ContainerType.readonly_inputs,
+    ),
     TaskType.generic_analysis: TaskDefinition(
         features=[
             TaskFeature.target_exe,
@@ -210,39 +243,6 @@ TASK_DEFINITIONS = {
             ),
         ],
         monitor_queue=None,
-    ),
-    TaskType.generic_coverage: TaskDefinition(
-        features=[
-            TaskFeature.target_exe,
-            TaskFeature.target_env,
-            TaskFeature.target_options,
-        ],
-        vm=VmDefinition(compare=Compare.Equal, value=1),
-        containers=[
-            ContainerDefinition(
-                type=ContainerType.setup,
-                compare=Compare.Equal,
-                value=1,
-                permissions=[ContainerPermission.Read, ContainerPermission.List],
-            ),
-            ContainerDefinition(
-                type=ContainerType.readonly_inputs,
-                compare=Compare.AtLeast,
-                value=1,
-                permissions=[ContainerPermission.Read, ContainerPermission.List],
-            ),
-            ContainerDefinition(
-                type=ContainerType.coverage,
-                compare=Compare.Equal,
-                value=1,
-                permissions=[
-                    ContainerPermission.List,
-                    ContainerPermission.Read,
-                    ContainerPermission.Write,
-                ],
-            ),
-        ],
-        monitor_queue=ContainerType.readonly_inputs,
     ),
     TaskType.generic_supervisor: TaskDefinition(
         features=[
