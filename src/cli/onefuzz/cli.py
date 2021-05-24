@@ -524,7 +524,11 @@ def execute_api(api: Any, api_types: List[Any], version: str) -> int:
     builder = Builder(api_types)
     builder.add_version(version)
     builder.parse_api(api)
-    args = builder.parse_args()
+    try:
+        args = builder.parse_args()
+    except argparse.ArgumentTypeError as err:
+        LOGGER.error("unable to parse arguments: %s", err)
+        return 1
 
     if args.verbose == 0:
         logging.basicConfig(level=logging.WARNING)
