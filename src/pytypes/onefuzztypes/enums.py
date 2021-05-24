@@ -330,6 +330,7 @@ class ScalesetExtension(Enum):
     DependencyAgent = "DependencyAgent"
     CustomScriptExtension = "CustomScriptExtension"
     GenevaMonitoring = "GenevaMonitoring"
+    KeyvaultExtension = "KeyvaultExtension"
 
 
 class Architecture(Enum):

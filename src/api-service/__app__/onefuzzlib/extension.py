@@ -38,6 +38,9 @@ def generic_extensions(
     geneva = geneva_extension(region, vm_os)
     if geneva and ScalesetExtension.GenevaMonitoring in extension_list:
         extensions.append(geneva)
+    keyvault = keyvault_extension(region, vm_os)
+    if keyvault and ScalesetExtension.KeyvaultExtension in extension_list:
+        extensions.append(keyvault)
 
     return extensions
 
@@ -81,6 +84,27 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
         "enableAutomaticUpgrade": True,
         "settings": {},
         "protectedSettings": {},
+    }
+
+
+def keyvault_extension(region: Region, vm_os: OS) -> Extension:
+    return {
+        "name": "KVVMExtensionForWindows",
+        "location": region,
+        "publisher": "Microsoft.Azure.KeyVault",
+        "type": "KeyVaultForWindows",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+            "secretsManagementSettings": {
+                "pollingIntervalInS": "3600",
+                "certificateStoreName": "MY",
+                "linkOnRenewal": false,
+                "certificateStoreLocation": "LocalMachine",
+                "requireInitialSync": true,
+                "observedCertificates": "https://azure-policy-test-kv.vault.azure.net/certificates/Geneva-Test-Cert",
+            }
+        },
     }
 
 
