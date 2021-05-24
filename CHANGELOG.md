@@ -7,14 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 2.18.0
 ### Added
 * Agent: Added `setup_dir` [configuration value expansion](docs/command-replacements.md) for generator tasks. [#901](https://github.com/microsoft/onefuzz/pull/901)
-* CLI: Enable specifying alternate tenant configuration via commandline arguments. [#900](https://github.com/microsoft/onefuzz/pull/900)
+* CLI: Enable specifying alternate tenant configuration via command line arguments. [#900](https://github.com/microsoft/onefuzz/pull/900)
 * CLI/Service: Proxy status is now available via `onefuzz scaleset_proxy list` command. [#905](https://github.com/microsoft/onefuzz/pull/905)
 
 ### Changes
 * Deployment: Moved to using Microsoft Graph `User.Read` rather than Azure AD Graph. [#894](https://github.com/microsoft/onefuzz/pull/894)
-* Service: Tasks are not stopped on nodes before task related storage queues are deleted. [#801](https://github.com/microsoft/onefuzz/pull/801)
+* Service: Tasks are now stopped on nodes before task related storage queues are deleted. [#801](https://github.com/microsoft/onefuzz/pull/801)
 * Proxy: Proxies are automatically deployed and always available based on regions with active fuzzing scalesets. [#839](https://github.com/microsoft/onefuzz/pull/839), [#908](https://github.com/microsoft/onefuzz/pull/908), [#907](https://github.com/microsoft/onefuzz/pull/907), [#909](https://github.com/microsoft/onefuzz/pull/909), [#904](https://github.com/microsoft/onefuzz/pull/904)
-* CLI: Added explainations to errors generated when parsing Key/Value based arguments. [#910](https://github.com/microsoft/onefuzz/pull/910), [#911](https://github.com/microsoft/onefuzz/pull/911)
+* CLI: Added explanations to errors generated when parsing arguments whose values are key/value pairs. [#910](https://github.com/microsoft/onefuzz/pull/910), [#911](https://github.com/microsoft/onefuzz/pull/911)
 * Agent: Continued development related to upcoming features. [#913](https://github.com/microsoft/onefuzz/pull/913), [#918](https://github.com/microsoft/onefuzz/pull/918)
 * Service: Updated first-party Python libraries [#903](https://github.com/microsoft/onefuzz/pull/903)
 
