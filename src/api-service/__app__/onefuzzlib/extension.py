@@ -96,7 +96,7 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
 
 
 def keyvault_extension(region: Region, vm_os: OS) -> Extension:
-    keyvault = "https://azure-policy-test-kv.vault.azure.net/certificates/"
+    keyvault = "https://azure-policy-test-kv.vault.azure.net/secrets/"
     cert = "Geneva-Test-Cert"
     uri = keyvault + cert
     return {
