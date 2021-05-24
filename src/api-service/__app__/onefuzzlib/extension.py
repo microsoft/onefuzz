@@ -116,10 +116,6 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
                 "observedCertificates": [uri],
             }
         },
-        "authenticationSettings": {
-            "msiEndpoint": "http://169.254.169.254/metadata/identity",
-            "msiClientId": "c7373ae5-91c2-4165-8ab6-7381d6e75619",
-        },
     }
 
 
