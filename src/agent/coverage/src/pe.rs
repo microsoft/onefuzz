@@ -227,10 +227,13 @@ pub fn process_module(
     let pdb_path = crate::pdb::find_pdb_path(pe_path.as_ref(), pe, target_handle)
         .with_context(|| format!("searching for PDB for PE: {}", pe_path.as_ref().display()))?;
 
-    log::info!("found PDB: {}", pdb_path.display());
-
-    process_pdb(data, pe, functions_only, &pdb_path)
-        .with_context(|| format!("processing PDB: {}", pdb_path.display()))
+    if let Some(pdb_path) = pdb_path {
+        log::info!("found PDB: {}", pdb_path.display());
+        process_pdb(data, pe, functions_only, &pdb_path)
+            .with_context(|| format!("processing PDB: {}", pdb_path.display()))
+    } else {
+        anyhow::bail!("PDB not found for PE: {}", pe_path.as_ref().display())
+    }
 }
 
 fn process_pdb(data: &[u8], pe: &PE, functions_only: bool, pdb_path: &Path) -> Result<FixedBitSet> {
