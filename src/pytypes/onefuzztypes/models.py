@@ -433,6 +433,7 @@ class ProxyConfig(BaseModel):
     url: str
     notification: str
     region: Region
+    proxy_id: UUID
     forwards: List[Forward]
     instance_telemetry_key: Optional[str]
     microsoft_telemetry_key: Optional[str]
@@ -441,6 +442,7 @@ class ProxyConfig(BaseModel):
 
 class ProxyHeartbeat(BaseModel):
     region: Region
+    proxy_id: UUID
     forwards: List[Forward]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 

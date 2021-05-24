@@ -21,7 +21,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             logging.error(
                 PROXY_LOG_PREFIX + "alive check failed, stopping: %s", proxy.region
             )
-            proxy.state = VmState.stopping
+            proxy.set_state(VmState.stopping)
             proxy.save()
         else:
             proxy.save_proxy_config()

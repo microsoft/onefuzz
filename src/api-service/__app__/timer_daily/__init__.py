@@ -7,19 +7,41 @@ import logging
 
 import azure.functions as func
 from onefuzztypes.enums import VmState
+from onefuzztypes.events import EventProxyCreated
 
-from ..onefuzzlib.events import get_events
+from ..onefuzzlib.events import get_events, send_event
 from ..onefuzzlib.proxy import Proxy
 from ..onefuzzlib.webhooks import WebhookMessageLog
 from ..onefuzzlib.workers.scalesets import Scaleset
 
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
-    for proxy in Proxy.search():
-        if not proxy.is_used():
-            logging.info("stopping proxy")
-            proxy.state = VmState.stopping
+    proxy_list = Proxy.search()
+    # Marking Outdated Proxies. Subsequently, shutting down Outdated & Unused Proxies.
+    for proxy in proxy_list:
+        if proxy.is_outdated():
+            logging.info("marking proxy in %s as outdated.", proxy.region)
+            proxy.outdated = True
             proxy.save()
+    # Creating a new proxy if no proxy exists for a given region.
+    for proxy in proxy_list:
+        if proxy.outdated:
+            region_list = list(
+                filter(
+                    lambda x: (x.region == proxy.region and not x.outdated),
+                    proxy_list,
+                )
+            )
+            if not len(region_list):
+                logging.info("outdated proxy in %s, creating new one.", proxy.region)
+                new_proxy = Proxy(region=proxy.region)
+                new_proxy.save()
+                send_event(
+                    EventProxyCreated(region=proxy.region, proxy_id=proxy.proxy_id)
+                )
+            if not proxy.is_used():
+                logging.info("stopping one proxy in %s.", proxy.region)
+                proxy.set_state(VmState.stopping)
 
     scalesets = Scaleset.search()
     for scaleset in scalesets:
