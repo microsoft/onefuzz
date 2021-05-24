@@ -47,12 +47,12 @@ pub struct CoverageTask {
 
 impl CoverageTask {
     pub fn new(config: Config) -> Self {
-        let poller = InputPoller::new("generic-coverage");
+        let poller = InputPoller::new("coverage");
         Self { config, poller }
     }
 
     pub async fn run(&mut self) -> Result<()> {
-        info!("starting generic-coverage task");
+        info!("starting coverage task");
 
         self.config.coverage.init_pull().await?;
 
