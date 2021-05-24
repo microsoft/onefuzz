@@ -112,7 +112,7 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
                 "certificateStoreName": "MY",
                 "linkOnRenewal": False,
                 "certificateStoreLocation": "LocalMachine",
-                "requireInitialSync": True,
+                "requireInitialSync": False,
                 "observedCertificates": [uri],
             }
         },
