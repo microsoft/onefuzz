@@ -9,7 +9,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use coverage::block::CommandBlockCov;
 use coverage::cache::ModuleCache;
-use coverage::code::CmdFilter;
+use coverage::code::{CmdFilter, CmdFilterDef};
 use onefuzz::expand::Expand;
 use onefuzz::syncdir::SyncedDir;
 use serde::de::DeserializeOwned;
@@ -31,6 +31,8 @@ pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
+
+    pub coverage_filter: Option<String>,
 
     pub input_queue: Option<QueueClient>,
     pub readonly_inputs: Vec<SyncedDir>,
@@ -61,8 +63,9 @@ impl CoverageTask {
         let coverage_file = self.config.coverage.local_path.join(COVERAGE_FILE);
         let coverage = deserialize_or_default(coverage_file).await?;
 
+        let filter = self.load_filter().await?;
         let heartbeat = self.config.common.init_heartbeat().await?;
-        let mut context = TaskContext::new(cache, &self.config, coverage, heartbeat);
+        let mut context = TaskContext::new(cache, &self.config, coverage, filter, heartbeat);
 
         context.heartbeat.alive();
 
@@ -103,6 +106,24 @@ impl CoverageTask {
 
         Ok(())
     }
+
+    async fn load_filter(&self) -> Result<CmdFilter> {
+        let raw_filter_path = if let Some(raw_path) = &self.config.coverage_filter {
+            raw_path
+        } else {
+            return Ok(CmdFilter::default());
+        };
+
+        // Ensure users can locate the filter relative to the setup container.
+        let expand = Expand::new().setup_dir(&self.config.common.setup_dir);
+        let filter_path = expand.evaluate_value(raw_filter_path)?;
+
+        let data = fs::read(&filter_path).await?;
+        let def: CmdFilterDef = serde_json::from_slice(&data)?;
+        let filter = CmdFilter::new(def)?;
+
+        Ok(filter)
+    }
 }
 
 async fn deserialize_or_default<T>(path: impl AsRef<Path>) -> Result<T>
@@ -130,6 +151,7 @@ struct TaskContext<'a> {
 
     config: &'a Config,
     coverage: CommandBlockCov,
+    filter: CmdFilter,
     heartbeat: Option<TaskHeartbeatClient>,
 }
 
@@ -138,6 +160,7 @@ impl<'a> TaskContext<'a> {
         cache: ModuleCache,
         config: &'a Config,
         coverage: CommandBlockCov,
+        filter: CmdFilter,
         heartbeat: Option<TaskHeartbeatClient>,
     ) -> Self {
         let cache = Some(cache);
@@ -146,6 +169,7 @@ impl<'a> TaskContext<'a> {
             cache,
             config,
             coverage,
+            filter,
             heartbeat,
         }
     }
@@ -161,8 +185,9 @@ impl<'a> TaskContext<'a> {
         // Invariant: `self.cache` must be present on method enter and exit.
         let cache = self.cache.take().expect("module cache not present");
 
+        let filter = self.filter.clone();
         let cmd = self.command_for_input(input)?;
-        let recorded = spawn_blocking(move || record_os_impl(cache, cmd)).await??;
+        let recorded = spawn_blocking(move || record_os_impl(cache, cmd, filter)).await??;
 
         // Maintain invariant.
         self.cache = Some(recorded.cache);
@@ -253,10 +278,10 @@ struct Recorded {
 }
 
 #[cfg(target_os = "linux")]
-fn record_os_impl(mut cache: ModuleCache, cmd: Command) -> Result<Recorded> {
+fn record_os_impl(mut cache: ModuleCache, cmd: Command, filter: CmdFilter) -> Result<Recorded> {
     use coverage::block::linux::Recorder;
 
-    let mut recorder = Recorder::new(&mut cache, CmdFilter::default());
+    let mut recorder = Recorder::new(&mut cache, filter);
     recorder.record(cmd)?;
     let coverage = recorder.into_coverage();
 
@@ -264,10 +289,10 @@ fn record_os_impl(mut cache: ModuleCache, cmd: Command) -> Result<Recorded> {
 }
 
 #[cfg(target_os = "windows")]
-fn record_os_impl(mut cache: ModuleCache, cmd: Command) -> Result<Recorded> {
+fn record_os_impl(mut cache: ModuleCache, cmd: Command, filter: CmdFilter) -> Result<Recorded> {
     use coverage::block::windows::{Recorder, RecorderEventHandler};
 
-    let mut recorder = Recorder::new(&mut cache, CmdFilter::default());
+    let mut recorder = Recorder::new(&mut cache, filter);
     let timeout = std::time::Duration::from_secs(5);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
     handler.run(cmd)?;
