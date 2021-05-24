@@ -88,21 +88,24 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
 
 
 def keyvault_extension(region: Region, vm_os: OS) -> Extension:
+    keyvault = "https://azure-policy-test-kv.vault.azure.net/certificates/"
+    cert = "Geneva-Test-Cert"
+    uri = keyvault + cert
     return {
         "name": "KVVMExtensionForWindows",
         "location": region,
         "publisher": "Microsoft.Azure.KeyVault",
         "type": "KeyVaultForWindows",
         "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": true,
+        "autoUpgradeMinorVersion": True,
         "settings": {
             "secretsManagementSettings": {
                 "pollingIntervalInS": "3600",
                 "certificateStoreName": "MY",
-                "linkOnRenewal": false,
+                "linkOnRenewal": False,
                 "certificateStoreLocation": "LocalMachine",
-                "requireInitialSync": true,
-                "observedCertificates": "https://azure-policy-test-kv.vault.azure.net/certificates/Geneva-Test-Cert",
+                "requireInitialSync": True,
+                "observedCertificates": uri,
             }
         },
     }
