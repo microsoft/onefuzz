@@ -1469,8 +1469,8 @@ class ScalesetProxy(Endpoint):
         )
 
     def list(self) -> List[responses.ProxyInfo]:
-        return self._req_model_list(
-            "GET", responses.ProxyInfo, data=requests.ProxyGet()
+        return self._req_model(
+            "GET", responses.ProxyList, data=requests.ProxyGet()
         )
 
 
