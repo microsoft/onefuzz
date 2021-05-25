@@ -12,6 +12,7 @@ use coverage::cache::ModuleCache;
 use coverage::code::{CmdFilter, CmdFilterDef};
 use onefuzz::expand::Expand;
 use onefuzz::syncdir::SyncedDir;
+use onefuzz_telemetry::{Event::coverage_data, EventData};
 use serde::de::DeserializeOwned;
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
@@ -250,7 +251,6 @@ impl<'a> TaskContext<'a> {
     }
 
     pub async fn report_coverage_stats(&self) -> Result<()> {
-        use onefuzz_telemetry::{Event::coverage_data, EventData};
         use EventData::*;
 
         let s = CoverageStats::new(&self.coverage);
