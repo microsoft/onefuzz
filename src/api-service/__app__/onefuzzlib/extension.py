@@ -132,6 +132,7 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
                 },
             },
         }
+    raise NotImplementedError("unsupported os: %s" % vm_os)
 
 
 def dependency_extension(region: Region, vm_os: OS) -> Optional[Extension]:
