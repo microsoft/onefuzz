@@ -708,7 +708,7 @@ impl DebugHelpGuard {
         file_name: impl AsRef<Path>,
         pdb_signature: u32,
         pdb_age: u32,
-    ) -> Result<PathBuf> {
+    ) -> Result<Option<PathBuf>> {
         let file_name = win_util::string::to_wstring(file_name);
 
         // Must be at least `MAX_PATH` characters in length.
@@ -726,7 +726,7 @@ impl DebugHelpGuard {
         // Assert that we are passing a DWORD signature in `id`.
         let flags = SSRVOPT_DWORD;
 
-        check_winapi(|| unsafe {
+        let result = check_winapi(|| unsafe {
             SymFindFileInPathW(
                 process_handle,
                 search_path,
@@ -739,16 +739,20 @@ impl DebugHelpGuard {
                 None,
                 std::ptr::null_mut(),
             )
-        })?;
+        });
 
-        // Safety: `found_file_data` must contain at least one NUL byte.
-        //
-        // We zero-initialize `found_file_data`, and assume that `SymFindFileInPathW`
-        // only succeeds if it wrote a NUL-terminated wide string.
-        let found_file =
-            unsafe { win_util::string::os_string_from_wide_ptr(found_file_data.as_ptr()) };
+        if result.is_ok() {
+            // Safety: `found_file_data` must contain at least one NUL byte.
+            //
+            // We zero-initialize `found_file_data`, and assume that `SymFindFileInPathW`
+            // only succeeds if it wrote a NUL-terminated wide string.
+            let found_file =
+                unsafe { win_util::string::os_string_from_wide_ptr(found_file_data.as_ptr()) };
 
-        Ok(found_file.into())
+            Ok(Some(found_file.into()))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn sym_get_search_path(&self, process_handle: HANDLE) -> Result<OsString> {

@@ -3,7 +3,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import json
 import os
 from typing import Any, List
 from uuid import UUID
@@ -131,19 +130,7 @@ def get_scaleset_principal_id() -> UUID:
         credential=get_identity(), subscription_id=get_subscription()
     )
     uid = client.resources.get_by_id(get_scaleset_identity_resource_path(), api_version)
-
-    # workaround issue from azure-mgmt-resource, where properties is now a str
-    # instead of an obj.
-    # https://github.com/Azure/azure-sdk-for-python/pull/18686/files
-    if isinstance(uid.properties, str):
-        as_str = uid.properties
-        if as_str.startswith("{'"):
-            as_str = as_str.replace("'", '"')
-        prop = json.loads(as_str)
-    else:
-        prop = uid.properties
-
-    return UUID(prop["principalId"])
+    return UUID(uid.properties["principalId"])
 
 
 @cached

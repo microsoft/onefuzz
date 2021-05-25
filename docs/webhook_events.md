@@ -37,6 +37,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [proxy_created](#proxy_created)
 * [proxy_deleted](#proxy_deleted)
 * [proxy_failed](#proxy_failed)
+* [proxy_state_updated](#proxy_state_updated)
 * [regression_reported](#regression_reported)
 * [scaleset_created](#scaleset_created)
 * [scaleset_deleted](#scaleset_deleted)
@@ -1261,6 +1262,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1270,6 +1272,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1289,6 +1296,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1298,6 +1306,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1323,6 +1336,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "example error message"
         ]
     },
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1385,6 +1399,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error": {
             "$ref": "#/definitions/Error"
         },
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1395,6 +1414,61 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error"
     ],
     "title": "EventProxyFailed",
+    "type": "object"
+}
+```
+
+### proxy_state_updated
+
+#### Example
+
+```json
+{
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
+    "region": "eastus",
+    "state": "init"
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "VmState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "extensions_launch",
+                "extensions_failed",
+                "vm_allocation_failed",
+                "running",
+                "stopping",
+                "stopped"
+            ],
+            "title": "VmState"
+        }
+    },
+    "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
+        "region": {
+            "title": "Region",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/VmState"
+        }
+    },
+    "required": [
+        "region",
+        "proxy_id",
+        "state"
+    ],
+    "title": "EventProxyStateUpdated",
     "type": "object"
 }
 ```
@@ -4925,6 +4999,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "EventProxyCreated": {
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4938,6 +5017,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "EventProxyDeleted": {
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4954,6 +5038,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "error": {
                     "$ref": "#/definitions/Error"
                 },
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4964,6 +5053,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "error"
             ],
             "title": "EventProxyFailed",
+            "type": "object"
+        },
+        "EventProxyStateUpdated": {
+            "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/VmState"
+                }
+            },
+            "required": [
+                "region",
+                "proxy_id",
+                "state"
+            ],
+            "title": "EventProxyStateUpdated",
             "type": "object"
         },
         "EventRegressionReported": {
@@ -5251,6 +5363,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "proxy_created",
                 "proxy_deleted",
                 "proxy_failed",
+                "proxy_state_updated",
                 "scaleset_created",
                 "scaleset_deleted",
                 "scaleset_failed",
@@ -5866,6 +5979,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "title": "UserInfo",
             "type": "object"
+        },
+        "VmState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "extensions_launch",
+                "extensions_failed",
+                "vm_allocation_failed",
+                "running",
+                "stopping",
+                "stopped"
+            ],
+            "title": "VmState"
         }
     },
     "properties": {
@@ -5906,6 +6032,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventProxyDeleted"
+                },
+                {
+                    "$ref": "#/definitions/EventProxyStateUpdated"
                 },
                 {
                     "$ref": "#/definitions/EventScalesetFailed"
