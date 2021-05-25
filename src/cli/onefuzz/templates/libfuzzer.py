@@ -229,7 +229,7 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
-        coverage_filter: Optional[str] = None,
+        coverage_filter: Optional[File] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -289,6 +289,13 @@ class Libfuzzer(Command):
         helper.wait_on(wait_for_files, wait_for_running)
 
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
+
+        if coverage_filter:
+            coverage_filter_blob_name: Optional[str] = helper.setup_relative_blob_name(
+                coverage_filter, setup_dir
+            )
+        else:
+            coverage_filter_blob_name = None
 
         self._create_tasks(
             job=helper.job,
