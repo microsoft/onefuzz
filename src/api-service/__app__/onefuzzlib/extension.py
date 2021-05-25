@@ -115,6 +115,7 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
             },
         }
     elif vm_os == OS.linux:
+        cert_path = "/var/lib/waagent/Microsoft.Azure.KeyVault"
         return {
             "name": "KVVMExtensionForLinux",
             "publisher": "Microsoft.Azure.KeyVault",
@@ -124,7 +125,7 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
             "settings": {
                 "secretsManagementSettings": {
                     "pollingIntervalInS": "3600",
-                    "certificateStoreLocation": "/var/lib/waagent/Microsoft.Azure.KeyVault",
+                    "certificateStoreLocation": cert_path,
                     "observedCertificates": [uri],
                 },
             },
