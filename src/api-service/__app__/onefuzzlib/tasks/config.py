@@ -361,6 +361,9 @@ def build_task_config(
             else True
         )
 
+    if TaskFeature.coverage_filter in definition.features:
+        config.coverage_filter = task_config.task.coverage_filter
+
     return config
 
 
