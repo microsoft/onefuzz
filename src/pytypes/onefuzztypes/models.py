@@ -407,6 +407,7 @@ class TaskUnitConfig(BaseModel):
     ensemble_sync_delay: Optional[int]
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
+    coverage_filter: Optional[str]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes
