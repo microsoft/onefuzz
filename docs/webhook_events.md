@@ -349,6 +349,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -1866,6 +1870,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -2528,6 +2536,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -3022,6 +3034,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -3461,6 +3477,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -3873,6 +3893,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "check_retry_count": {
                     "title": "Check Retry Count",
                     "type": "integer"
+                },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
                 },
                 "duration": {
                     "title": "Duration",
@@ -4313,6 +4337,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "check_retry_count": {
                     "title": "Check Retry Count",
                     "type": "integer"
+                },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
                 },
                 "duration": {
                     "title": "Duration",
@@ -5714,6 +5742,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "check_retry_count": {
                     "title": "Check Retry Count",
                     "type": "integer"
+                },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
                 },
                 "duration": {
                     "title": "Duration",
