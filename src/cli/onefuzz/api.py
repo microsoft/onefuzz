@@ -849,6 +849,7 @@ class Tasks(Endpoint):
         colocate: bool = False,
         report_list: Optional[List[str]] = None,
         minimized_stack_depth: Optional[int] = None,
+        coverage_filter: Optional[str] = None,
     ) -> models.Task:
         """
         Create a task
@@ -914,6 +915,7 @@ class Tasks(Endpoint):
                 report_list=report_list,
                 preserve_existing_outputs=preserve_existing_outputs,
                 minimized_stack_depth=minimized_stack_depth,
+                coverage_filter=coverage_filter,
             ),
         )
 

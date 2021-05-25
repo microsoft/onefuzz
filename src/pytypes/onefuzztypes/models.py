@@ -172,6 +172,7 @@ class TaskDetails(BaseModel):
     preserve_existing_outputs: Optional[bool]
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
+    coverage_filter: Optional[str]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:

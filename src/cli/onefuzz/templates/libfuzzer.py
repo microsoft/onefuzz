@@ -60,6 +60,7 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
+        coverage_filter: Optional[str] = None,
     ) -> None:
 
         regression_containers = [
@@ -131,10 +132,10 @@ class Libfuzzer(Command):
             (ContainerType.coverage, containers[ContainerType.coverage]),
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
         ]
-        self.logger.info("creating libfuzzer_coverage task")
+        self.logger.info("creating coverage task")
         self.onefuzz.tasks.create(
             job.job_id,
-            TaskType.libfuzzer_coverage,
+            TaskType.coverage,
             target_exe,
             coverage_containers,
             pool_name=pool_name,
@@ -148,6 +149,7 @@ class Libfuzzer(Command):
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
+            coverage_filter=coverage_filter,
         )
 
         report_containers = [
@@ -212,6 +214,7 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
+        coverage_filter: Optional[str] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -293,6 +296,7 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
             minimized_stack_depth=minimized_stack_depth,
+            coverage_filter=coverage_filter,
         )
 
         self.logger.info("done creating tasks")
