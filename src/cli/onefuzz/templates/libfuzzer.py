@@ -270,7 +270,7 @@ class Libfuzzer(Command):
             helper.upload_inputs(inputs)
         helper.wait_on(wait_for_files, wait_for_running)
 
-        target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
+        target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
         self._create_tasks(
             job=helper.job,
@@ -378,7 +378,7 @@ class Libfuzzer(Command):
             helper.upload_inputs(inputs)
         helper.wait_on(wait_for_files, wait_for_running)
 
-        target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
+        target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
         merge_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
@@ -619,7 +619,7 @@ class Libfuzzer(Command):
 
         helper.create_containers()
 
-        target_exe_blob_name = helper.target_exe_blob_name(target_exe, None)
+        target_exe_blob_name = helper.setup_relative_blob_name(target_exe, None)
 
         wrapper_name = File(target_exe_blob_name + "-wrapper.sh")
 
@@ -627,7 +627,7 @@ class Libfuzzer(Command):
             if sysroot:
                 setup_path = File(os.path.join(tempdir, "setup.sh"))
                 with open(setup_path, "w", newline="\n") as handle:
-                    sysroot_filename = helper.target_exe_blob_name(sysroot, None)
+                    sysroot_filename = helper.setup_relative_blob_name(sysroot, None)
                     handle.write(
                         "#!/bin/bash\n"
                         "set -ex\n"
