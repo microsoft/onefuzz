@@ -584,13 +584,13 @@ class TestOnefuzz:
                     self.logger.info("repro succeeded: %s", job.config.name)
                 else:
                     self.logger.error("repro failed: %s - %s", job.config.name, result)
-                    success = False
+                    self.success = False
             except Exception as err:
                 self.logger.error("repro failed: %s - %s", job.config.name, err)
-                success = False
+                self.success = False
             self.delete_repro(repro)
             del repros[job.job_id]
-        return success
+        return self.success
 
     def get_jobs(self) -> List[Job]:
         jobs = self.of.jobs.list(job_state=None)
