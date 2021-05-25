@@ -156,7 +156,7 @@ def main() -> None:
     of.tasks.create(
         helper.job.job_id,
         TaskType.generic_crash_report,
-        helper.target_exe_blob_name(args.target_exe, args.setup_dir),
+        helper.setup_relative_blob_name(args.target_exe, args.setup_dir),
         containers,
         pool_name=args.pool_name,
         duration=args.duration,
@@ -201,7 +201,7 @@ def main() -> None:
     of.tasks.create(
         helper.job.job_id,
         TaskType.generic_generator,
-        helper.target_exe_blob_name(args.target_exe, args.setup_dir),
+        helper.setup_relative_blob_name(args.target_exe, args.setup_dir),
         containers,
         pool_name=args.pool_name,
         target_options=target_command,
