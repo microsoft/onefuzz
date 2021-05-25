@@ -99,24 +99,40 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
     keyvault = "https://azure-policy-test-kv.vault.azure.net/certificates/"
     cert = "Geneva-Test-Cert"
     uri = keyvault + cert
-    return {
-        "name": "KVVMExtensionForWindows",
-        "location": region,
-        "publisher": "Microsoft.Azure.KeyVault",
-        "type": "KeyVaultForWindows",
-        "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": True,
-        "settings": {
-            "secretsManagementSettings": {
-                "pollingIntervalInS": "3600",
-                "certificateStoreName": "MY",
-                "linkOnRenewal": False,
-                "certificateStoreLocation": "LocalMachine",
-                "requireInitialSync": True,
-                "observedCertificates": [uri],
-            }
-        },
-    }
+    if vm_os == OS.windows:
+        return {
+            "name": "KVVMExtensionForWindows",
+            "location": region,
+            "publisher": "Microsoft.Azure.KeyVault",
+            "type": "KeyVaultForWindows",
+            "typeHandlerVersion": "1.0",
+            "autoUpgradeMinorVersion": True,
+            "settings": {
+                "secretsManagementSettings": {
+                    "pollingIntervalInS": "3600",
+                    "certificateStoreName": "MY",
+                    "linkOnRenewal": False,
+                    "certificateStoreLocation": "LocalMachine",
+                    "requireInitialSync": True,
+                    "observedCertificates": [uri],
+                }
+            },
+        }
+    elif vm_os == OS.linux:
+        return {
+            "name": "KVVMExtensionForLinux",
+            "publisher": "Microsoft.Azure.KeyVault",
+            "type": "KeyVaultForLinux",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": True,
+            "settings": {
+                "secretsManagementSettings": {
+                    "pollingIntervalInS": "3600",
+                    "certificateStoreLocation": "/var/lib/waagent/Microsoft.Azure.KeyVault",
+                    "observedCertificates": [uri],
+                },
+            },
+        }
 
 
 def dependency_extension(region: Region, vm_os: OS) -> Optional[Extension]:
