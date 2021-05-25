@@ -205,8 +205,7 @@ impl<'a> TaskContext<'a> {
             .target_options(&self.config.target_options)
             .task_id(&self.config.common.task_id);
 
-        let target_exe = expand.evaluate_value(&self.config.target_exe)?;
-        let mut cmd = Command::new(target_exe);
+        let mut cmd = Command::new(&self.config.target_exe);
 
         let target_options = expand.evaluate(&self.config.target_options)?;
         cmd.args(target_options);
