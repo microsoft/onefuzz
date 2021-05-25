@@ -239,7 +239,7 @@ class Regression(Command):
         helper.setup_notifications(notification_config)
 
         helper.upload_setup(setup_dir, target_exe)
-        target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
+        target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
         self.logger.info("creating regression task")
         task = self.onefuzz.tasks.create(

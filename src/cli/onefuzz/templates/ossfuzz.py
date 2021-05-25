@@ -236,7 +236,7 @@ class OssFuzz(Command):
             # All fuzzers are copied to the setup container root.
             #
             # Cast because `glob()` returns `str`.
-            fuzzer_blob_name = helper.target_exe_blob_name(fuzzer, None)
+            fuzzer_blob_name = helper.setup_relative_blob_name(fuzzer, None)
 
             self.onefuzz.template.libfuzzer._create_tasks(
                 job=base_helper.job,
