@@ -133,6 +133,21 @@ class Libfuzzer(Command):
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
         ]
         self.logger.info("creating coverage task")
+
+        # The `coverage` task is not libFuzzer-aware, so invocations of the target fuzzer
+        # against an input do not automatically add an `{input}` specifier to the command
+        # args. That means on the VM, the fuzzer will get run in fuzzing mode each time we
+        # try to test an input.
+        #
+        # We cannot require `{input}` occur in `target_options`, since that would break
+        # the current assumptions of the libFuzzer-aware tasks, as well as be a breaking
+        # API change.
+        #
+        # For now, locally extend the `target_options` for this task only, to ensure that
+        # test case invocations work as expected.
+        coverage_target_options = target_options or []
+        coverage_target_options.append("{input}")
+
         self.onefuzz.tasks.create(
             job.job_id,
             TaskType.coverage,
@@ -142,7 +157,7 @@ class Libfuzzer(Command):
             duration=duration,
             vm_count=1,
             reboot_after_setup=reboot_after_setup,
-            target_options=target_options,
+            target_options=coverage_target_options,
             target_env=target_env,
             tags=tags,
             prereq_tasks=prereq_tasks,
