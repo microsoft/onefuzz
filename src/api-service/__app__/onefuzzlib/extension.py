@@ -43,11 +43,7 @@ def generic_extensions(
     ):
         extensions.append(geneva)
     keyvault = keyvault_extension(region, vm_os)
-    if (
-        keyvault
-        and ScalesetExtension.KeyvaultExtension in extension_list
-        and vm_os == OS.windows
-    ):
+    if keyvault and ScalesetExtension.KeyvaultExtension in extension_list:
         extensions.append(keyvault)
 
     return extensions
