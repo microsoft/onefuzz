@@ -120,6 +120,7 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
         location = cert_path + extension
         return {
             "name": "KVVMExtensionForLinux",
+            "location": region,
             "publisher": "Microsoft.Azure.KeyVault",
             "type": "KeyVaultForLinux",
             "typeHandlerVersion": "2.0",
