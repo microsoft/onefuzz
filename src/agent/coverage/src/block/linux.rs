@@ -28,7 +28,6 @@ pub struct Recorder<'c> {
     filter: CmdFilter,
     images: Option<Images>,
     tracer: Ptracer,
-    tracee: Tracee,
 }
 
 impl<'c> Recorder<'c> {
@@ -43,9 +42,6 @@ impl<'c> Recorder<'c> {
 
         let timer = Timer::new(timeout, move || child.kill());
 
-        // Continue the tracee process until the return from its initial `execve()`.
-        let tracee = continue_to_init_execve(&mut tracer)?;
-
         let recorder = Recorder {
             breakpoints: Breakpoints::default(),
             cache,
@@ -54,7 +50,6 @@ impl<'c> Recorder<'c> {
             filter,
             images: None,
             tracer,
-            tracee,
         };
 
         let coverage = recorder.wait()?;
@@ -67,7 +62,8 @@ impl<'c> Recorder<'c> {
     fn wait(mut self) -> Result<CommandBlockCov> {
         use pete::ptracer::Options;
 
-        let mut tracee = self.tracee;
+        // Continue the tracee process until the return from its initial `execve()`.
+        let mut tracee = continue_to_init_execve(&mut self.tracer)?;
 
         // Do not follow forks.
         //
