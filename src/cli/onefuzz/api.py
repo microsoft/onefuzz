@@ -564,6 +564,16 @@ class LiveRepro(Endpoint):
         )
         return self.onefuzz.tasks.create_with_config(task_config)
 
+    def _get_task_checked(self, task_id: UUID) -> models.Task:
+        task = self.onefuzz.tasks.get(task_id)
+
+        if task.error:
+            raise Exception("task failed: %s" % task.error.json())
+
+        if task.state in enums.TaskState.shutting_down():
+            raise Exception("task stopped")
+        return task
+
     def connect(
         self,
         task_id: UUID_EXPANSION,
@@ -581,11 +591,7 @@ class LiveRepro(Endpoint):
         )
 
         def missing_node() -> Tuple[bool, str, models.Task]:
-            task = self.onefuzz.tasks.get(task_id_expanded)
-
-            if task.error:
-                raise Exception("task failed: %s" % task.error.json())
-
+            task = self._get_task_checked(task_id_expanded)
             return (
                 bool(task.nodes),
                 "waiting task to be assigned to node",
@@ -614,25 +620,17 @@ class LiveRepro(Endpoint):
             self.onefuzz.nodes.add_ssh_key(node_id, public_key=handle.read())
 
         def wait_for_key() -> Tuple[bool, str, models.Node]:
-            task = self.onefuzz.tasks.get(task_id_expanded)
-            if task.error:
-                raise Exception("task failed: %s" % task.error.json())
+            self._get_task_checked(task_id_expanded)
             node = self.onefuzz.nodes.get(node_id)
             return (not bool(node.messages), "waiting for node to add ssh key", node)
 
         node = wait(wait_for_key)
-
-        task = self.onefuzz.tasks.get(task.task_id)
-        if task.error:
-            raise Exception("task failed: %s" % task.error)
+        pool = self.onefuzz.pools.get(node.pool_name)
 
         def missing_ip() -> Tuple[bool, str, responses.ProxyGetResult]:
+            self._get_task_checked(task_id_expanded)
             if node.scaleset_id is None:
                 raise Exception("node got assigned to unmanaged node")
-
-            task = self.onefuzz.tasks.get(task_id_expanded)
-            if task.error:
-                raise Exception("task failed: %s" % task.error.json())
 
             proxy = self.onefuzz.scaleset_proxy.get(
                 node.scaleset_id, node.machine_id, 22
@@ -642,8 +640,6 @@ class LiveRepro(Endpoint):
         proxy = wait(missing_ip)
         if not proxy.ip:
             raise Exception("missing ip")
-
-        pool = self.onefuzz.pools.get(node.pool_name)
 
         cmd = {enums.OS.linux: self._dbg_linux, enums.OS.windows: self._dbg_windows}
         return cmd[pool.os](
