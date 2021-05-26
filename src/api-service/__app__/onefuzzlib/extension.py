@@ -91,6 +91,36 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
     }
 
 
+def azmon_extension(region: Region, vm_os: OS) -> Extension:
+    return {
+        "publisher": "Microsoft.Azure.Monitor",
+        "type": "AzureMonitorLinuxAgent",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": True,
+        "settings": {},
+        "protectedsettings": {
+            "configVersion": "1.1",
+            "moniker": "edgsecfuzzingpmeprod",
+            "namespace": "yourNamespace",
+            "certificateKey": "",
+            "certificate": "",
+            "monitoringGCSEnvironment": "DiagnosticsProd",
+            "monitoringGCSAccount": "edgsecfuzzingpmeprod",
+            "monitoringGCSRegion": "westus2",
+        },
+    }
+
+
+def azsec_extension(region: Region, vm_os: OS) -> Extension:
+    return {
+        "publisher": "Microsoft.Azure.Security.Monitoring",
+        "type": "AzureSecurityLinuxAgent",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": True,
+        "settings": {"enableGenevaUpload": True},
+    }
+
+
 def keyvault_extension(region: Region, vm_os: OS) -> Extension:
     keyvault = "https://azure-policy-test-kv.vault.azure.net/secrets/"
     cert = "Geneva-Test-Cert"
