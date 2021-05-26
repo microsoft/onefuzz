@@ -10,7 +10,7 @@ use tokio::{fs, io::AsyncWriteExt, process::Command};
 use std::{env, path::PathBuf};
 
 #[cfg(target_os = "windows")]
-use tokio::sync::OnceCell;
+use tokio::sync::{OnceCell, SetError};
 
 #[cfg(target_os = "linux")]
 use users::{get_user_by_name, os::unix::UserExt};
@@ -53,72 +53,79 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
             .await?;
     }
 
-    if SET_PERMISSION_ONCE.set(()).is_ok() {
-        debug!("removing Authenticated Users permissions from administrators_authorized_keys");
-        let result = Command::new("icacls.exe")
-            .arg(&admin_auth_keys_path)
-            .arg("/remove")
-            .arg("NT AUTHORITY/Authenticated Users")
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .context("icacls failed to start")?
-            .wait_with_output()
-            .await
-            .context("icalcs failed to run")?;
-        if !result.status.success() {
-            bail!(
-                "removing 'NT AUTHORITY/Authenticated Users' permissions to '{}' failed: {:?}",
-                admin_auth_keys_path.display(),
-                result
-            );
-        }
+    match SET_PERMISSION_ONCE.set(()) {
+        Ok(_) => {
+            debug!("removing Authenticated Users permissions from administrators_authorized_keys");
+            let result = Command::new("icacls.exe")
+                .arg(&admin_auth_keys_path)
+                .arg("/remove")
+                .arg("NT AUTHORITY/Authenticated Users")
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .context("icacls failed to start")?
+                .wait_with_output()
+                .await
+                .context("icalcs failed to run")?;
+            if !result.status.success() {
+                bail!(
+                    "removing 'NT AUTHORITY/Authenticated Users' permissions to '{}' failed: {:?}",
+                    admin_auth_keys_path.display(),
+                    result
+                );
+            }
 
-        debug!("removing inheritance");
-        let result = Command::new("icacls.exe")
-            .arg(&admin_auth_keys_path)
-            .arg("/inheritance:r")
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .context("icacls failed to start")?
-            .wait_with_output()
-            .await
-            .context("icacls failed to run")?;
-        if !result.status.success() {
-            bail!(
-                "removing permission inheretence to '{}' failed: {:?}",
-                admin_auth_keys_path.display(),
-                result
-            );
-        }
+            debug!("removing inheritance");
+            let result = Command::new("icacls.exe")
+                .arg(&admin_auth_keys_path)
+                .arg("/inheritance:r")
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .context("icacls failed to start")?
+                .wait_with_output()
+                .await
+                .context("icacls failed to run")?;
+            if !result.status.success() {
+                bail!(
+                    "removing permission inheretence to '{}' failed: {:?}",
+                    admin_auth_keys_path.display(),
+                    result
+                );
+            }
 
-        debug!("copying ACL from ssh_host_dsa_key");
-        let result = Command::new("powershell.exe")
-            .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
-            .arg(format!(
-                "Get-Acl \"{}\" | Set-Acl \"{}\"",
-                host_key_path.display(),
-                admin_auth_keys_path.display(),
-            ))
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .context("Powershell Get-ACL | Set-ACL failed to start")?
-            .wait_with_output()
-            .await
-            .context("Powershell Get-ACL | Set-ACL failed to run")?;
-        if !result.status.success() {
-            bail!(
-                "copying ACL from '{}' to '{}' permissions failed: {:?}",
-                host_key_path.display(),
-                admin_auth_keys_path.display(),
-                result
-            );
+            debug!("copying ACL from ssh_host_dsa_key");
+            let result = Command::new("powershell.exe")
+                .args(&["-ExecutionPolicy", "Unrestricted", "-Command"])
+                .arg(format!(
+                    "Get-Acl \"{}\" | Set-Acl \"{}\"",
+                    host_key_path.display(),
+                    admin_auth_keys_path.display(),
+                ))
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .context("Powershell Get-ACL | Set-ACL failed to start")?
+                .wait_with_output()
+                .await
+                .context("Powershell Get-ACL | Set-ACL failed to run")?;
+            if !result.status.success() {
+                bail!(
+                    "copying ACL from '{}' to '{}' permissions failed: {:?}",
+                    host_key_path.display(),
+                    admin_auth_keys_path.display(),
+                    result
+                );
+            }
         }
+        Err(SetError::InitializingError(())) => {
+            bail!("add_ssh_key must not be called concurrently");
+        }
+        // do nothing if already initialized
+        Err(SetError::AlreadyInitializedError(())) => {}
     }
 
     info!("ssh key written: {}", admin_auth_keys_path.display());
