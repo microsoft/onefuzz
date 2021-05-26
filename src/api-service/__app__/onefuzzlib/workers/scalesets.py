@@ -377,7 +377,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if dead_nodes:
             logging.info(
                 SCALESET_LOG_PREFIX
-                + "marking with expired heartbeats for reimage. "
+                + "reimaging nodes with expired heartbeats. "
                 + "scaleset_id:%s nodes:%s",
                 self.scaleset_id,
                 ",".join(str(x.machine_id) for x in dead_nodes),
