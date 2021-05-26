@@ -282,9 +282,8 @@ struct Recorded {
 fn record_os_impl(mut cache: ModuleCache, cmd: Command, filter: CmdFilter) -> Result<Recorded> {
     use coverage::block::linux::Recorder;
 
-    let mut recorder = Recorder::new(&mut cache, filter);
-    recorder.record(cmd)?;
-    let coverage = recorder.into_coverage();
+    let timeout = std::time::Duration::from_secs(5);
+    let coverage = Recorder::record(cmd, timeout, &mut cache, filter)?;
 
     Ok(Recorded { cache, coverage })
 }
