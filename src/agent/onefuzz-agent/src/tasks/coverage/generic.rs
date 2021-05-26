@@ -4,6 +4,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::time::Duration;
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
@@ -27,11 +28,14 @@ use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
 const COVERAGE_FILE: &str = "coverage.json";
 const MODULE_CACHE_FILE: &str = "module-cache.json";
 
+const DEFAULT_TARGET_TIMEOUT: Duration = Duration::from_secs(5);
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub target_exe: PathBuf,
     pub target_env: HashMap<String, String>,
     pub target_options: Vec<String>,
+    pub target_timeout: Option<u64>,
 
     pub coverage_filter: Option<String>,
 
@@ -41,6 +45,14 @@ pub struct Config {
 
     #[serde(flatten)]
     pub common: CommonConfig,
+}
+
+impl Config {
+    pub fn timeout(&self) -> Duration {
+        self.target_timeout
+            .map(Duration::from_secs)
+            .unwrap_or(DEFAULT_TARGET_TIMEOUT)
+    }
 }
 
 pub struct CoverageTask {
@@ -188,7 +200,9 @@ impl<'a> TaskContext<'a> {
 
         let filter = self.filter.clone();
         let cmd = self.command_for_input(input)?;
-        let recorded = spawn_blocking(move || record_os_impl(cache, cmd, filter)).await??;
+        let timeout = self.config.timeout();
+        let recorded =
+            spawn_blocking(move || record_os_impl(cmd, timeout, cache, filter)).await??;
 
         // Maintain invariant.
         self.cache = Some(recorded.cache);
@@ -279,21 +293,29 @@ struct Recorded {
 }
 
 #[cfg(target_os = "linux")]
-fn record_os_impl(mut cache: ModuleCache, cmd: Command, filter: CmdFilter) -> Result<Recorded> {
+fn record_os_impl(
+    cmd: Command,
+    timeout: Duration,
+    mut cache: ModuleCache,
+    filter: CmdFilter,
+) -> Result<Recorded> {
     use coverage::block::linux::Recorder;
 
-    let timeout = std::time::Duration::from_secs(5);
     let coverage = Recorder::record(cmd, timeout, &mut cache, filter)?;
 
     Ok(Recorded { cache, coverage })
 }
 
 #[cfg(target_os = "windows")]
-fn record_os_impl(mut cache: ModuleCache, cmd: Command, filter: CmdFilter) -> Result<Recorded> {
+fn record_os_impl(
+    cmd: Command,
+    timeout: Duration,
+    mut cache: ModuleCache,
+    filter: CmdFilter,
+) -> Result<Recorded> {
     use coverage::block::windows::{Recorder, RecorderEventHandler};
 
     let mut recorder = Recorder::new(&mut cache, filter);
-    let timeout = std::time::Duration::from_secs(5);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
     handler.run(cmd)?;
     let coverage = recorder.into_coverage();
