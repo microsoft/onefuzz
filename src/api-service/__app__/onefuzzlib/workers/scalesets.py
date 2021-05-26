@@ -374,9 +374,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     to_reimage.append(node)
 
         dead_nodes = Node.get_dead_nodes(self.scaleset_id, NODE_EXPIRATION_TIME)
-        for node in dead_nodes:
-            node.set_halt()
-            to_reimage.append(node)
+        if dead_nodes:
+            logging.info(
+                SCALESET_LOG_PREFIX
+                + "marking with expired heartbeats for reimage. "
+                + "scaleset_id:%s nodes:%s",
+                self.scaleset_id,
+                ",".join(str(x.machine_id) for x in dead_nodes),
+            )
+            for node in dead_nodes:
+                if node not in to_reimage:
+                    to_reimage.append(node)
 
         # Perform operations until they fail due to scaleset getting locked
         try:
