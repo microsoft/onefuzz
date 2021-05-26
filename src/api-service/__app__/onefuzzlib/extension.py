@@ -74,7 +74,7 @@ def monitor_extension(region: Region, vm_os: OS) -> Extension:
             "settings": {"workspaceId": settings["id"]},
             "protectedSettings": {"workspaceKey": settings["key"]},
         }
-    raise NotImplementedError("unsupported os: %s" % vm_os)
+    raise NotImplementedError("unsupported os : %s" % vm_os)
 
 
 def geneva_extension(region: Region, vm_os: OS) -> Extension:
