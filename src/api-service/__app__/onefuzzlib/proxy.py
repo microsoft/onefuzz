@@ -165,7 +165,9 @@ class Proxy(ORMMixin):
             self.stopped()
 
     def stopped(self) -> None:
+        self.set_state(VmState.stopped)
         logging.info(PROXY_LOG_PREFIX + "removing proxy: %s", self.region)
+        send_event(EventProxyDeleted(region=self.region, proxy_id=self.proxy_id))
         self.delete()
 
     def is_outdated(self) -> bool:
@@ -302,10 +304,6 @@ class Proxy(ORMMixin):
         proxy.save()
         send_event(EventProxyCreated(region=region, proxy_id=proxy.proxy_id))
         return proxy
-
-    def delete(self) -> None:
-        super().delete()
-        send_event(EventProxyDeleted(region=self.region, proxy_id=self.proxy_id))
 
     def set_state(self, state: VmState) -> None:
         if self.state == state:
