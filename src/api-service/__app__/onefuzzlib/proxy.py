@@ -165,8 +165,7 @@ class Proxy(ORMMixin):
             self.stopped()
 
     def stopped(self) -> None:
-        if self.state != VmState.stopped:
-            self.set_state(VmState.stopped)
+        self.set_state(VmState.stopped)
         logging.info(PROXY_LOG_PREFIX + "removing proxy: %s", self.region)
         send_event(EventProxyDeleted(region=self.region, proxy_id=self.proxy_id))
         self.delete()
