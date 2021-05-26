@@ -41,7 +41,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             )
             process_state_updates(proxy)
 
-        if proxy.is_outdated():
+        if proxy.state != VmState.stopped and proxy.is_outdated():
             proxy.outdated = True
             proxy.save()
 
