@@ -405,7 +405,7 @@ fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
     anyhow::bail!("did not see initial execve() in tracee while recording coverage");
 }
 
-const MAX_POLL_PERIOD: Duration = Duration::from_millis(100);
+const MAX_POLL_PERIOD: Duration = Duration::from_millis(500);
 
 pub struct Timer {
     sender: mpsc::Sender<()>,
