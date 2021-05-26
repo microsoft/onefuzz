@@ -195,6 +195,11 @@ class Task(BASE_TASK, ORMMixin):
             )
             return
 
+        if self.state not in TaskState.has_started():
+            self.mark_failed(
+                Error(code=ErrorCode.TASK_FAILED, errors=["task never started"])
+            )
+
         self.set_state(TaskState.stopping)
 
     def mark_failed(
