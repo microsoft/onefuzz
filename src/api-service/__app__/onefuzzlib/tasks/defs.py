@@ -19,6 +19,7 @@ TASK_DEFINITIONS = {
             TaskFeature.target_exe,
             TaskFeature.target_env,
             TaskFeature.target_options,
+            TaskFeature.target_timeout,
             TaskFeature.coverage_filter,
         ],
         vm=VmDefinition(compare=Compare.Equal, value=1),

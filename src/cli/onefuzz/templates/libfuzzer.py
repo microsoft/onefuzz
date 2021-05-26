@@ -74,6 +74,12 @@ class Libfuzzer(Command):
             ),
         ]
 
+        # We don't really need a separate timeout for crash reporting, and we could just
+        # use `target_timeout`. But `crash_report_timeout` was introduced first, so we
+        # can't remove it without a breaking change. Since both timeouts may be present,
+        # prefer the more task-specific timeout.
+        effective_crash_report_timeout = crash_report_timeout or target_timeout
+
         self.logger.info("creating libfuzzer_regression task")
         regression_task = self.onefuzz.tasks.create(
             job.job_id,
@@ -87,7 +93,7 @@ class Libfuzzer(Command):
             target_options=target_options,
             target_env=target_env,
             tags=tags,
-            target_timeout=crash_report_timeout,
+            target_timeout=effective_crash_report_timeout,
             check_retry_count=check_retry_count,
             check_fuzzer_help=check_fuzzer_help,
             debug=debug,
@@ -149,6 +155,13 @@ class Libfuzzer(Command):
         coverage_target_options = target_options or []
         coverage_target_options.append("{input}")
 
+        # Opposite precedence to `effective_crash_report_timeout`.
+        #
+        # If the user specified a timeout for crash reporting but not a general target
+        # timeout, consider that to be a better (more target-aware) default than the
+        # default in the agent.
+        coverage_timeout = target_timeout or crash_report_timeout
+
         self.onefuzz.tasks.create(
             job.job_id,
             TaskType.coverage,
@@ -160,7 +173,7 @@ class Libfuzzer(Command):
             reboot_after_setup=reboot_after_setup,
             target_options=coverage_target_options,
             target_env=target_env,
-            target_timeout=target_timeout,
+            target_timeout=coverage_timeout,
             tags=tags,
             prereq_tasks=prereq_tasks,
             debug=debug,
@@ -191,7 +204,7 @@ class Libfuzzer(Command):
             target_env=target_env,
             tags=tags,
             prereq_tasks=prereq_tasks,
-            target_timeout=target_timeout or crash_report_timeout,
+            target_timeout=effective_crash_report_timeout,
             check_retry_count=check_retry_count,
             check_fuzzer_help=check_fuzzer_help,
             debug=debug,
