@@ -40,7 +40,7 @@ impl<'c> Recorder<'c> {
         let mut tracer = Ptracer::new();
         let mut child = tracer.spawn(cmd)?;
 
-        let timer = Timer::new(timeout, move || child.kill());
+        let _timer = Timer::new(timeout, move || child.kill());
 
         let recorder = Recorder {
             breakpoints: Breakpoints::default(),
@@ -53,8 +53,6 @@ impl<'c> Recorder<'c> {
         };
 
         let coverage = recorder.wait()?;
-
-        timer.cancel();
 
         Ok(coverage)
     }
@@ -409,7 +407,7 @@ fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
 
 const MAX_POLL_PERIOD: Duration = Duration::from_millis(100);
 
-struct Timer {
+pub struct Timer {
     sender: mpsc::Sender<()>,
     _handle: thread::JoinHandle<()>,
 }
