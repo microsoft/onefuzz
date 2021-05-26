@@ -42,6 +42,16 @@ def generic_extensions(
         and vm_os == OS.windows
     ):
         extensions.append(geneva)
+    azmon = azmon_extension(region, vm_os)
+    azsec = azsec_extension(region, vm_os)
+    if (
+        azmon
+        and azsec
+        and ScalesetExtension.GenevaMonitoring in extension_list
+        and vm_os == OS.linux
+    ):
+        extensions.append(azmon)
+        extensions.append(azsec)
     keyvault = keyvault_extension(region, vm_os)
     if keyvault and ScalesetExtension.KeyvaultExtension in extension_list:
         extensions.append(keyvault)
@@ -94,6 +104,7 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
 def azmon_extension(region: Region, vm_os: OS) -> Extension:
     return {
         "publisher": "Microsoft.Azure.Monitor",
+        "location": region,
         "type": "AzureMonitorLinuxAgent",
         "typeHandlerVersion": "1.0",
         "autoUpgradeMinorVersion": True,
@@ -114,6 +125,7 @@ def azmon_extension(region: Region, vm_os: OS) -> Extension:
 def azsec_extension(region: Region, vm_os: OS) -> Extension:
     return {
         "publisher": "Microsoft.Azure.Security.Monitoring",
+        "location": region,
         "type": "AzureSecurityLinuxAgent",
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": True,
