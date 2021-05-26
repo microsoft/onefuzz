@@ -19,7 +19,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     expired_tasks = Task.search_expired()
     for task in expired_tasks:
         logging.info("stopping expired task: %s", task.job_id)
-        task.stopping()
+        task.mark_stopping()
 
     expired_jobs = Job.search_expired()
     for job in expired_jobs:
