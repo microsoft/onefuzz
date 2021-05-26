@@ -33,12 +33,10 @@ class Top:
         self,
         onefuzz: "Onefuzz",
         logger: logging.Logger,
-        show_details: bool,
         job_filter: JobFilter,
     ):
         self.onefuzz = onefuzz
         self.logger = logger
-        self.show_details = show_details
 
         self.cache = TopCache(onefuzz, job_filter)
         self.queue: PriorityQueue = PriorityQueue()
@@ -97,7 +95,7 @@ class Top:
         error: Optional[Exception] = None
         try:
             self.logger.info("rendering")
-            render(self.cache, self.show_details)
+            render(self.cache)
             client.stop()
         except Exception as err:
             error = err
