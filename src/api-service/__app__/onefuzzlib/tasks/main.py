@@ -195,6 +195,13 @@ class Task(BASE_TASK, ORMMixin):
             )
             return
 
+        if self.state in [TaskState.waiting, TaskState.scheduled]:
+            self.mark_failed(
+                Error(
+                    code=ErrorCode.TASK_FAILED, errors=["scheduled task never started"]
+                )
+            )
+
         self.set_state(TaskState.stopping)
 
     def mark_failed(
