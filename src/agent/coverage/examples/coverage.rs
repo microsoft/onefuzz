@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use std::{process::Command, process::Stdio};
 
 use anyhow::Result;
@@ -22,7 +22,7 @@ struct Opt {
     #[structopt(min_values = 2)]
     cmd: Vec<String>,
 
-    #[structopt(short, long, default_value = "5")]
+    #[structopt(short, long, long_help = "Timeout in ms", default_value = "5000")]
     timeout: u64,
 
     #[structopt(long)]
@@ -49,10 +49,11 @@ fn main() -> Result<()> {
 
     let mut cache = ModuleCache::default();
     let mut total = Coverage::default();
+    let timeout = Duration::from_millis(opt.timeout);
 
     for input in &opt.inputs {
         let cmd = input_command(&opt.cmd, input);
-        let coverage = record(&mut cache, filter.clone(), cmd, opt.timeout)?;
+        let coverage = record(&mut cache, filter.clone(), cmd, timeout)?;
 
         log::info!("input = {}", input.display());
         if !opt.modoff {
@@ -98,19 +99,18 @@ fn record(
     cache: &mut ModuleCache,
     filter: CmdFilter,
     cmd: Command,
-    _timeout: u64,
+    timeout: Duration,
 ) -> Result<Coverage> {
     use coverage::block::linux::Recorder;
 
     let now = Instant::now();
 
-    let mut recorder = Recorder::new(cache, filter.clone());
-    recorder.record(cmd)?;
+    let coverage = Recorder::record(cmd, timeout, cache, filter.clone())?;
 
     let elapsed = now.elapsed();
     log::info!("recorded in {:?}", elapsed);
 
-    Ok(recorder.into_coverage())
+    Ok(coverage)
 }
 
 #[cfg(target_os = "windows")]
@@ -118,11 +118,10 @@ fn record(
     cache: &mut ModuleCache,
     filter: CmdFilter,
     cmd: Command,
-    timeout: u64,
+    timeout: Duration,
 ) -> Result<Coverage> {
     use coverage::block::windows::{Recorder, RecorderEventHandler};
 
-    let timeout = std::time::Duration::from_secs(timeout);
     let mut recorder = Recorder::new(cache, filter);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
 
