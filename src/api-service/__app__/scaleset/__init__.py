@@ -95,6 +95,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         ephemeral_os_disks=request.ephemeral_os_disks,
         tags=request.tags,
         extensions=request.extensions,
+        cert_key=request.cert_key,
+        cert=request.cert,
     )
     # don't return auths during create, only 'get' with include_auth
     scaleset.auth = None

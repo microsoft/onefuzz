@@ -469,7 +469,7 @@ def repro_extensions(
         ]
 
     base_extension = agent_config(region, repro_os, AgentMode.repro, urls=urls)
-    extensions = generic_extensions(region, DEFAULT_EXTENSIONS, repro_os)
+    extensions = generic_extensions(region, DEFAULT_EXTENSIONS, repro_os, "", "")
     extensions += [base_extension]
     return extensions
 
@@ -491,6 +491,6 @@ def proxy_manager_extensions(region: Region, proxy_id: UUID) -> List[Extension]:
     ]
 
     base_extension = agent_config(region, OS.linux, AgentMode.proxy, urls=urls)
-    extensions = generic_extensions(region, DEFAULT_EXTENSIONS, OS.linux)
+    extensions = generic_extensions(region, DEFAULT_EXTENSIONS, OS.linux, "", "")
     extensions += [base_extension]
     return extensions

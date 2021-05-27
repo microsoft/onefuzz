@@ -77,6 +77,8 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
             ephemeral_os_disks=autoscale_config.ephemeral_os_disks,
             tags={"pool": pool.name},
             extensions=[],
+            cert_key="",
+            cert="",
         )
         nodes_needed -= max_nodes_scaleset
 
