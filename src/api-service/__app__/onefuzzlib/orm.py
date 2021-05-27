@@ -228,21 +228,23 @@ B = TypeVar("B", bound=BaseModel)
 def hide_secrets(data: B, hider: Callable[[SecretData], SecretData]) -> B:
     for field in data.__fields__:
         field_data = getattr(data, field)
+
         if isinstance(field_data, SecretData):
-            setattr(data, field, hider(field_data))
+            field_data = hider(field_data)
         elif isinstance(field_data, list):
             if len(field_data) > 0:
                 if not isinstance(field_data[0], BaseModel):
                     continue
-            setattr(data, field, [hide_secrets(x, hider) for x in field_data])
+            field_data = [hide_secrets(x, hider) for x in field_data]
         elif isinstance(field_data, dict):
             for key in field_data:
                 if not isinstance(field_data[key], BaseModel):
                     continue
                 field_data[key] = hide_secrets(field_data[key], hider)
-            setattr(data, field, field_data)
         elif isinstance(field_data, BaseModel):
-            setattr(data, field, hide_secrets(field_data, hider))
+            field_data = hide_secrets(field_data, hider)
+
+        setattr(data, field, field_data)
 
     return data
 
