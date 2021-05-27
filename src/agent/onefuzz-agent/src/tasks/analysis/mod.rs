@@ -2,3 +2,4 @@
 // Licensed under the MIT License.
 
 pub mod generic;
+pub mod single;

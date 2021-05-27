@@ -4,7 +4,6 @@
 pub mod analysis;
 pub mod config;
 pub mod coverage;
-pub mod crash_reproduction;
 pub mod fuzz;
 pub mod generic;
 pub mod heartbeat;

@@ -551,7 +551,7 @@ class LiveRepro(Endpoint):
             tags=tags,
             task=models.TaskDetails(
                 duration=duration,
-                type=enums.TaskType.crash_reproduction,
+                type=enums.TaskType.analysis_single,
                 input_file=report.input_blob.name,
                 target_exe=task.config.task.target_exe,
                 target_options=task.config.task.target_options,
@@ -601,7 +601,7 @@ class LiveRepro(Endpoint):
         if task.error:
             raise Exception("task failed: %s" % task.error.json())
 
-        if task.config.task.type != enums.TaskType.crash_reproduction:
+        if task.config.task.type != enums.TaskType.analysis_single:
             raise Exception("invalid task type")
 
         if not task.nodes:

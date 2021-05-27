@@ -545,7 +545,7 @@ TASK_DEFINITIONS = {
             ),
         ],
     ),
-    TaskType.crash_reproduction: TaskDefinition(
+    TaskType.analysis_single: TaskDefinition(
         features=[
             TaskFeature.analyzer_exe,
             TaskFeature.analyzer_env,

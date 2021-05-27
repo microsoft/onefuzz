@@ -3,7 +3,7 @@
 
 #![allow(clippy::large_enum_variant)]
 use crate::tasks::{
-    analysis, coverage, crash_reproduction, fuzz,
+    analysis, coverage, fuzz,
     heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
     merge, regression, report,
 };
@@ -91,8 +91,8 @@ pub enum Config {
     #[serde(alias = "generic_regression")]
     GenericRegression(regression::generic::Config),
 
-    #[serde(alias = "crash_reproduction")]
-    CrashReproduction(crash_reproduction::generic::Config),
+    #[serde(alias = "analysis_single")]
+    AnalysisSingle(analysis::single::Config),
 }
 
 impl Config {
@@ -120,7 +120,7 @@ impl Config {
             Config::GenericSupervisor(c) => &mut c.common,
             Config::GenericGenerator(c) => &mut c.common,
             Config::GenericRegression(c) => &mut c.common,
-            Config::CrashReproduction(c) => &mut c.common,
+            Config::AnalysisSingle(c) => &mut c.common,
         }
     }
 
@@ -137,7 +137,7 @@ impl Config {
             Config::GenericSupervisor(c) => &c.common,
             Config::GenericGenerator(c) => &c.common,
             Config::GenericRegression(c) => &c.common,
-            Config::CrashReproduction(c) => &c.common,
+            Config::AnalysisSingle(c) => &c.common,
         }
     }
 
@@ -154,7 +154,7 @@ impl Config {
             Config::GenericSupervisor(_) => "generic_supervisor",
             Config::GenericGenerator(_) => "generic_generator",
             Config::GenericRegression(_) => "generic_regression",
-            Config::CrashReproduction(_) => "crash_reproduction",
+            Config::AnalysisSingle(_) => "analysis_single",
         };
 
         match self {
@@ -162,6 +162,9 @@ impl Config {
                 event!(task_start; EventData::Type = event_type, EventData::ToolName = c.generator_exe.clone());
             }
             Config::GenericAnalysis(c) => {
+                event!(task_start; EventData::Type = event_type, EventData::ToolName = c.analyzer_exe.clone());
+            }
+            Config::AnalysisSingle(c) => {
                 event!(task_start; EventData::Type = event_type, EventData::ToolName = c.analyzer_exe.clone());
             }
             _ => {
@@ -221,7 +224,7 @@ impl Config {
                     .run()
                     .await
             }
-            Config::CrashReproduction(config) => crash_reproduction::generic::run(config).await,
+            Config::AnalysisSingle(config) => analysis::single::run(config).await,
         }
     }
 }
