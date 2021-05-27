@@ -46,13 +46,12 @@ def column_config(fields: Optional[List[str]]) -> List[Union[int, str]]:
 
 
 class TopView(Frame):
-    def __init__(self, screen: Any, cache: TopCache, show_details: bool):
+    def __init__(self, screen: Any, cache: TopCache):
 
         super(TopView, self).__init__(
             screen, screen.height, screen.width, has_border=True, can_scroll=False
         )
         self.cache = cache
-        self.show_details = show_details
         self.set_theme("monochrome")
         self.palette["title"] = (
             Screen.COLOUR_BLACK,
@@ -95,9 +94,6 @@ class TopView(Frame):
         }
 
         for name in ["status", "pools", "jobs", "tasks", "messages"]:
-            if name == "messages" and not self.show_details:
-                continue
-
             titles = dimensions[name].get("setup")
 
             if titles:
@@ -171,9 +167,7 @@ class TopView(Frame):
         self.render_base("pools", self.cache.render_pools())
         self.render_base("jobs", self.cache.render_jobs())
         self.render_base("tasks", self.cache.render_tasks())
-
-        if self.show_details:
-            self.render_base("messages", self.cache.messages)
+        self.render_base("messages", self.cache.messages)
 
         super(TopView, self).update(frame_no)
 
@@ -182,16 +176,16 @@ class TopView(Frame):
         return 25
 
 
-def render(data: TopCache, show_details: bool) -> None:
+def render(data: TopCache) -> None:
     while True:
         try:
             Screen.wrapper(
-                lambda screen, data_ref, show_details: screen.play(
-                    [Scene([TopView(screen, data_ref, show_details)], -1)],
+                lambda screen, data_ref: screen.play(
+                    [Scene([TopView(screen, data_ref)], -1)],
                     stop_on_resize=True,
                 ),
                 catch_interrupt=True,
-                arguments=[data, show_details],
+                arguments=[data],
             )
             return
         except ResizeScreenError:

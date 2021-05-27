@@ -102,7 +102,9 @@ impl ModuleInfo {
         let pe = goblin::pe::PE::parse(&data)?;
         let module = ModuleIndex::index_pe(path.clone(), &pe);
 
-        let pdb_path = crate::pdb::find_pdb_path(path.as_ref(), &pe, handle)?;
+        let pdb_path = crate::pdb::find_pdb_path(path.as_ref(), &pe, handle)?
+            .ok_or_else(|| anyhow::format_err!("could not find PDB for module: {}", path))?;
+
         let pdb = std::fs::File::open(&pdb_path)?;
         let mut pdb = pdb::PDB::open(pdb)?;
 

@@ -307,28 +307,30 @@ class JobHelper:
             wait_for_stopped=self.wait_for_stopped,
         )
 
-    def target_exe_blob_name(
-        self, target_exe: File, setup_dir: Optional[Directory]
+    def setup_relative_blob_name(
+        self, local_file: File, setup_dir: Optional[Directory]
     ) -> str:
-        # The target executable must end up in the setup container, and the
-        # `target_exe` value passed to the tasks must be the name of the target
-        # exe _as a blob_ in the setup container.
+        # The local file must end up as a remote blob in the setup container. The blob
+        # name, which is a virtual `setup`-relative path, must be passed to the tasks as a
+        # value relative to the local copy of the setup directory.
         if setup_dir:
-            # If the user set a `setup_dir`, then `target_exe` must occur inside
-            # of it. When we upload the `setup_dir`, the blob name agrees with
-            # the `setup_dir`-relative path of the target.
-            resolved = os.path.relpath(target_exe, setup_dir)
-            if resolved.startswith("..") or resolved == target_exe:
+            # If we have a `setup_dir`, then `local_file` must occur inside of it. When we
+            # upload the `setup_dir`, the blob name will match the `setup_dir`-relative
+            # path to the file.
+            resolved = os.path.relpath(local_file, setup_dir)
+
+            if resolved.startswith("..") or resolved == local_file:
                 raise ValueError(
-                    "target_exe (%s) is not within the setup directory (%s)"
-                    % (target_exe, setup_dir)
+                    "local file (%s) is not within the setup directory (%s)"
+                    % (local_file, setup_dir)
                 )
+
             return resolved
         else:
-            # If no `setup_dir` was given, we will upload `target_exe` to the
-            # root of the setup container created for the user. In that case,
-            # the `target_exe` name is just the filename of `target_exe`.
-            return os.path.basename(target_exe)
+            # If no `setup_dir` was given, we will upload the file at `local_file` to the
+            # root of the setup container created for the user. In that case, the future,
+            # setup-relative path to `local_file` is just the filename of `local_file`.
+            return os.path.basename(local_file)
 
     def add_tags(self, tags: Optional[Dict[str, str]]) -> None:
         if tags:

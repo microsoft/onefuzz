@@ -299,8 +299,8 @@ class Node(BASE_NODE, ORMMixin):
             return False
 
         if self.could_shrink_scaleset():
-            self.set_halt()
             logging.info("node scheduled to shrink.  machine_id:%s", self.machine_id)
+            self.set_halt()
             return False
 
         if self.scaleset_id:
@@ -396,8 +396,9 @@ class Node(BASE_NODE, ORMMixin):
 
     def set_halt(self) -> None:
         """Tell the node to stop everything."""
-        self.set_shutdown()
-        self.stop()
+        logging.info("setting halt: %s", self.machine_id)
+        self.delete_requested = True
+        self.stop(done=True)
         self.set_state(NodeState.halt)
 
     @classmethod

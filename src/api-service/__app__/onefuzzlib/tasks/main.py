@@ -24,7 +24,6 @@ from ..azure.queue import create_queue, delete_queue
 from ..azure.storage import StorageType
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
-from ..proxy_forward import ProxyForward
 from ..workers.nodes import Node, NodeTasks
 from ..workers.pools import Pool
 from ..workers.scalesets import Scaleset
@@ -124,7 +123,6 @@ class Task(BASE_TASK, ORMMixin):
 
     def stopping(self) -> None:
         logging.info("stopping task: %s:%s", self.job_id, self.task_id)
-        ProxyForward.remove_forward(self.task_id)
         Node.stop_task(self.task_id)
         if not NodeTasks.get_nodes_by_task_id(self.task_id):
             self.stopped()
@@ -178,6 +176,11 @@ class Task(BASE_TASK, ORMMixin):
                 "ignoring post-task stop calls to stop %s:%s", self.job_id, self.task_id
             )
             return
+
+        if self.state not in TaskState.has_started():
+            self.mark_failed(
+                Error(code=ErrorCode.TASK_FAILED, errors=["task never started"])
+            )
 
         self.set_state(TaskState.stopping)
 
