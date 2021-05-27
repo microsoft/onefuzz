@@ -5,8 +5,11 @@ use crate::tasks::{config::CommonConfig, heartbeat::HeartbeatSender};
 use anyhow::{Context, Result};
 use onefuzz::{expand::Expand, fs::set_executable, process::monitor_process, syncdir::SyncedDir};
 use serde::Deserialize;
+use std::time::Duration;
 use std::{collections::HashMap, path::PathBuf, process::Stdio};
 use tokio::process::Command;
+
+const INITIAL_DELAY: Duration = Duration::from_millis(1);
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -42,7 +45,7 @@ pub async fn run(config: Config) -> Result<()> {
 }
 
 pub async fn run_tool(config: &Config) -> Result<()> {
-    let heartbeat = config.common.init_heartbeat().await?;
+    let heartbeat = config.common.init_heartbeat(Some(INITIAL_DELAY)).await?;
     let expand = Expand::new()
         .target_exe(&config.target_exe)
         .target_options(&config.target_options)
@@ -84,7 +87,6 @@ pub async fn run_tool(config: &Config) -> Result<()> {
         .context("expanding analyzer_exe failed")?;
 
     loop {
-        heartbeat.alive();
         let mut cmd = Command::new(&analyzer_path);
         cmd.kill_on_drop(true)
             .env_remove("RUST_LOG")
@@ -109,6 +111,8 @@ pub async fn run_tool(config: &Config) -> Result<()> {
         let output = cmd
             .spawn()
             .with_context(|| format!("analyzer failed to start: {}", analyzer_path))?;
+
+        heartbeat.alive();
 
         // while we monitor the runtime of the debugger, we don't fail the task if
         // the debugger exits non-zero. This frequently happens during normal use of
