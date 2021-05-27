@@ -574,7 +574,9 @@ class TestOnefuzz:
                 repro_id: UUID = (
                     repro.vm_id if isinstance(repro, Repro) else repro.task_id
                 )
-                self.logger.info("connecting to repo: %s - %s", job.config.name, repro_id)
+                self.logger.info(
+                    "connecting to repo: %s - %s", job.config.name, repro_id
+                )
                 result = self.of.repro.connect(
                     repro_id,
                     debug_command=commands[repro.os][0],

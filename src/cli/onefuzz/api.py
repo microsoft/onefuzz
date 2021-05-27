@@ -640,6 +640,16 @@ class LiveRepro(Endpoint):
         if not proxy.ip:
             raise Exception("missing ip")
 
+        def waiting_for_heartbeat() -> Tuple[bool, str, models.Task]:
+            task = self._get_task_checked(task_id_expanded)
+            return (
+                task.heartbeat is None,
+                "waiting for task heartbeat",
+                task,
+            )
+
+        task = wait(waiting_for_heartbeat)
+
         cmd = {enums.OS.linux: self._dbg_linux, enums.OS.windows: self._dbg_windows}
         result = cmd[pool.os](
             proxy.ip,
