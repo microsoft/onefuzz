@@ -109,6 +109,7 @@ def azmon_extension(
     region: Region, vm_os: OS, cert_key: Optional[str], cert: Optional[str]
 ) -> Extension:
     return {
+        "name": "AzureMonitorLinuxAgent",
         "publisher": "Microsoft.Azure.Monitor",
         "location": region,
         "type": "AzureMonitorLinuxAgent",
@@ -130,6 +131,7 @@ def azmon_extension(
 
 def azsec_extension(region: Region, vm_os: OS) -> Extension:
     return {
+        "name": "AzureSecurityLinuxAgent",
         "publisher": "Microsoft.Azure.Security.Monitoring",
         "location": region,
         "type": "AzureSecurityLinuxAgent",
