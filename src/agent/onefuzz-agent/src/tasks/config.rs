@@ -15,8 +15,7 @@ use onefuzz_telemetry::{
 };
 use reqwest::Url;
 use serde::{self, Deserialize};
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc, time::Duration};
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
@@ -44,10 +43,14 @@ pub struct CommonConfig {
 }
 
 impl CommonConfig {
-    pub async fn init_heartbeat(&self) -> Result<Option<TaskHeartbeatClient>> {
+    pub async fn init_heartbeat(
+        &self,
+        initial_delay: Option<Duration>,
+    ) -> Result<Option<TaskHeartbeatClient>> {
         match &self.heartbeat_queue {
             Some(url) => {
-                let hb = init_task_heartbeat(url.clone(), self.task_id, self.job_id).await?;
+                let hb = init_task_heartbeat(url.clone(), self.task_id, self.job_id, initial_delay)
+                    .await?;
                 Ok(Some(hb))
             }
             None => Ok(None),

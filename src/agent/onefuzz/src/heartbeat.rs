@@ -73,6 +73,7 @@ where
     pub fn init_heartbeat<F, Fut>(
         context: TContext,
         queue_url: Url,
+        initial_delay: Option<Duration>,
         heartbeat_period: Option<Duration>,
         flush: F,
     ) -> Result<HeartbeatClient<TContext, T>>
@@ -83,6 +84,7 @@ where
         TContext: Send + Sync + 'static,
     {
         let heartbeat_period = heartbeat_period.unwrap_or(DEFAULT_HEARTBEAT_PERIOD);
+        let initial_delay = initial_delay.unwrap_or(DEFAULT_HEARTBEAT_PERIOD);
 
         let context = Arc::new(HeartbeatContext {
             state: context,
@@ -93,7 +95,7 @@ where
 
         let flush_context = context.clone();
         let heartbeat_process = task::spawn(async move {
-            random_delay(heartbeat_period).await;
+            random_delay(initial_delay).await;
             flush(flush_context.clone()).await;
             while !flush_context.cancelled.is_notified(heartbeat_period).await {
                 flush(flush_context.clone()).await;
