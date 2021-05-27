@@ -116,19 +116,7 @@ def azmon_extension(
         "typeHandlerVersion": "1.0",
         "autoUpgradeMinorVersion": True,
         "settings": {},
-        "protectedsettings": {
-            "tenant": "f699b6f9",
-            "role": "83ba03a3",
-            "roleInstance": "%COMPUTERNAME%",
-            "configVersion": "1.0",
-            "moniker": "edgsecfuzzingpmeprod",
-            "namespace": "linuxpmeprod ",
-            "certificateKey": cert_key,
-            "certificate": cert,
-            "monitoringGCSEnvironment": "DiagnosticsProd",
-            "monitoringGCSAccount": "edgsecfuzzingpmeprod",
-            "monitoringGCSRegion": "westus2",
-        },
+        "protectedsettings": {},
     }
 
 
