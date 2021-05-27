@@ -520,8 +520,6 @@ class LiveRepro(Endpoint):
                     analyzer_options = [
                         "-server",
                         "tcp:port=1337",
-                        "-c",
-                        "g",
                         "{target_exe}",
                         "{input}",
                     ]

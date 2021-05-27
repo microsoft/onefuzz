@@ -565,7 +565,7 @@ class TestOnefuzz:
         self.success = True
 
         commands: Dict[OS, Tuple[str, str]] = {
-            OS.windows: ("r rip", r"^rip=[a-f0-9]{16}"),
+            OS.windows: ("g; r rip", r"^rip=[a-f0-9]{16}"),
             OS.linux: ("info reg rip", r"^rip\s+0x[a-f0-9]+\s+0x[a-f0-9]+"),
         }
 
