@@ -231,18 +231,18 @@ def hide_secrets(data: B, hider: Callable[[SecretData], SecretData]) -> B:
 
         if isinstance(field_data, SecretData):
             field_data = hider(field_data)
+        elif isinstance(field_data, BaseModel):
+            field_data = hide_secrets(field_data, hider)
         elif isinstance(field_data, list):
-            if len(field_data) > 0:
-                if not isinstance(field_data[0], BaseModel):
-                    continue
-            field_data = [hide_secrets(x, hider) for x in field_data]
+            field_data = [
+                hide_secrets(x, hider) if isinstance(x, BaseModel) else x
+                for x in field_data
+            ]
         elif isinstance(field_data, dict):
             for key in field_data:
                 if not isinstance(field_data[key], BaseModel):
                     continue
                 field_data[key] = hide_secrets(field_data[key], hider)
-        elif isinstance(field_data, BaseModel):
-            field_data = hide_secrets(field_data, hider)
 
         setattr(data, field, field_data)
 
