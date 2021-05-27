@@ -565,7 +565,7 @@ class TestOnefuzz:
         self.success = True
 
         commands: Dict[OS, Tuple[str, str]] = {
-            OS.windows: ("g; r rip", r"^rip=[a-f0-9]{16}"),
+            OS.windows: ("g\r\nr rip", r"^rip=[a-f0-9]{16}"),
             OS.linux: ("info reg rip", r"^rip\s+0x[a-f0-9]+\s+0x[a-f0-9]+"),
         }
 
@@ -574,7 +574,7 @@ class TestOnefuzz:
                 repro_id: UUID = (
                     repro.vm_id if isinstance(repro, Repro) else repro.task_id
                 )
-                self.logger.info("connecting to repo: %s", job.config.name)
+                self.logger.info("connecting to repo: %s - %s", job.config.name, repro_id)
                 result = self.of.repro.connect(
                     repro_id,
                     debug_command=commands[repro.os][0],
