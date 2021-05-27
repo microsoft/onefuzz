@@ -583,6 +583,7 @@ class LiveRepro(Endpoint):
         ),
         private_key_path: Optional[primitives.File] = None,
         debug_command: Optional[str] = None,
+        stop_after_use: bool = False,
     ) -> Optional[str]:
         task_id_expanded: UUID = self._disambiguate_uuid(
             "task_id",
@@ -642,12 +643,15 @@ class LiveRepro(Endpoint):
             raise Exception("missing ip")
 
         cmd = {enums.OS.linux: self._dbg_linux, enums.OS.windows: self._dbg_windows}
-        return cmd[pool.os](
+        result = cmd[pool.os](
             proxy.ip,
             proxy.forward.src_port,
             private_key_path=private_key_path,
             debug_command=debug_command,
         )
+        if stop_after_use:
+            self.onefuzz.tasks.delete(task_id_expanded)
+        return result
 
     def create_and_connect(
         self,
@@ -665,6 +669,7 @@ class LiveRepro(Endpoint):
         analyzer_env: Optional[Dict[str, str]] = {"ASAN_OPTIONS": "abort_on_error=1"},
         analyzer_exe: Optional[str] = None,
         analyzer_options: Optional[List[str]] = None,
+        stop_after_use: bool = False,
     ) -> Optional[str]:
 
         task = self.create(
@@ -683,6 +688,7 @@ class LiveRepro(Endpoint):
             public_key_path=public_key_path,
             private_key_path=private_key_path,
             debug_command=debug_command,
+            stop_after_use=stop_after_use,
         )
 
     def _dbg_linux(
