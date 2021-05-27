@@ -117,9 +117,9 @@ def azmon_extension(
         "autoUpgradeMinorVersion": True,
         "settings": {},
         "protectedsettings": {
-            "monitoringTenant": "f699b6f9",
-            "monitoringRole": "83ba03a3",
-            "monitoringRoleInstance": "%COMPUTERNAME%",
+            "tenant": "f699b6f9",
+            "role": "83ba03a3",
+            "roleInstance": "%COMPUTERNAME%",
             "configVersion": "1.0",
             "moniker": "edgsecfuzzingpmeprod",
             "namespace": "linuxpmeprod ",
