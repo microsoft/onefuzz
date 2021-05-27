@@ -105,7 +105,9 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
     }
 
 
-def azmon_extension(region: Region, vm_os: OS, cert_key: str, cert: str) -> Extension:
+def azmon_extension(
+    region: Region, vm_os: OS, cert_key: Optional[str], cert: Optional[str]
+) -> Extension:
     return {
         "publisher": "Microsoft.Azure.Monitor",
         "location": region,
