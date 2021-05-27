@@ -116,7 +116,10 @@ def azmon_extension(
         "typeHandlerVersion": "1.0",
         "autoUpgradeMinorVersion": True,
         "settings": {},
-        "protectedsettings": {},
+        "protectedsettings": {
+            "certificateKey": cert_key,
+            "certificate": cert,
+        },
     }
 
 
