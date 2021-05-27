@@ -15,7 +15,6 @@ from typing import (
     List,
     Mapping,
     Optional,
-    Set,
     Tuple,
     Type,
     TypeVar,
@@ -223,6 +222,31 @@ class ModelMixin(BaseModel):
         return result
 
 
+B = TypeVar("B", bound=BaseModel)
+
+
+def hide_secrets(data: B, hider: Callable[[SecretData], SecretData]) -> B:
+    for field in data.__fields__:
+        field_data = getattr(data, field)
+        if isinstance(field_data, SecretData):
+            setattr(data, field, hider(field_data))
+        elif isinstance(field_data, list):
+            if len(field_data) > 0:
+                if not isinstance(field_data[0], BaseModel):
+                    continue
+            setattr(data, field, [hide_secrets(x, hider) for x in field_data])
+        elif isinstance(field_data, dict):
+            for key in field_data:
+                if not isinstance(field_data[key], BaseModel):
+                    continue
+                field_data[key] = hide_secrets(field_data[key], hider)
+            setattr(data, field, field_data)
+        elif isinstance(field_data, BaseModel):
+            setattr(data, field, hide_secrets(field_data, hider))
+
+    return data
+
+
 # NOTE: if you want to include Timestamp in a model that uses ORMMixin,
 # it must be maintained as part of the model.
 class ORMMixin(ModelMixin):
@@ -281,38 +305,8 @@ class ORMMixin(ModelMixin):
 
         return (partition_key, row_key)
 
-    @classmethod
-    def hide_secrets(
-        cls,
-        model: BaseModel,
-        hider: Callable[["SecretData"], None],
-        visited: Set[int] = set(),
-    ) -> None:
-        if id(model) in visited:
-            return
-
-        visited.add(id(model))
-        for field in model.__fields__:
-            field_data = getattr(model, field)
-            if isinstance(field_data, SecretData):
-                hider(field_data)
-            elif isinstance(field_data, List):
-                if len(field_data) > 0:
-                    if not isinstance(field_data[0], BaseModel):
-                        continue
-                for data in field_data:
-                    cls.hide_secrets(data, hider, visited)
-            elif isinstance(field_data, dict):
-                for key in field_data:
-                    if not isinstance(field_data[key], BaseModel):
-                        continue
-                    cls.hide_secrets(field_data[key], hider, visited)
-            else:
-                if isinstance(field_data, BaseModel):
-                    cls.hide_secrets(field_data, hider, visited)
-
     def save(self, new: bool = False, require_etag: bool = False) -> Optional[Error]:
-        self.__class__.hide_secrets(self, save_to_keyvault)
+        self = hide_secrets(self, save_to_keyvault)
         # TODO: migrate to an inspect.signature() model
         raw = self.raw(by_alias=True, exclude_none=True, exclude=self.save_exclude())
         for key in raw:

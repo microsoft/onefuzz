@@ -18,9 +18,9 @@ from .azure.creds import get_keyvault_client
 A = TypeVar("A", bound=BaseModel)
 
 
-def save_to_keyvault(secret_data: SecretData) -> None:
+def save_to_keyvault(secret_data: SecretData) -> SecretData:
     if isinstance(secret_data.secret, SecretAddress):
-        return
+        return secret_data
 
     secret_name = str(uuid4())
     if isinstance(secret_data.secret, str):
@@ -32,6 +32,7 @@ def save_to_keyvault(secret_data: SecretData) -> None:
 
     kv = store_in_keyvault(get_keyvault_address(), secret_name, secret_value)
     secret_data.secret = SecretAddress(url=kv.id)
+    return secret_data
 
 
 def get_secret_string_value(self: SecretData[str]) -> str:
