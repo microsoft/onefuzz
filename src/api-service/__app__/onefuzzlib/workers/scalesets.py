@@ -250,6 +250,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.auth.password,
                 self.auth.public_key,
                 self.tags,
+                self.cert_key,
+                self.cert,
             )
             if isinstance(result, Error):
                 self.set_failed(result)

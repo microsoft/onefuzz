@@ -1282,6 +1282,8 @@ class Scaleset(Endpoint):
         ephemeral_os_disks: bool = False,
         tags: Optional[Dict[str, str]] = None,
         extensions: Optional[List[enums.ScalesetExtension]] = None,
+        cert_key: Optional[str] = None,
+        cert: Optional[str] = None,
     ) -> models.Scaleset:
         self.logger.debug("create scaleset")
 
@@ -1310,6 +1312,8 @@ class Scaleset(Endpoint):
                 ephemeral_os_disks=ephemeral_os_disks,
                 tags=tags,
                 extensions=extensions,
+                cert_key=cert_key,
+                cert=cert,
             ),
         )
 

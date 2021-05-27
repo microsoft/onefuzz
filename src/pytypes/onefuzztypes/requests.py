@@ -191,6 +191,8 @@ class ScalesetCreate(BaseRequest):
     ephemeral_os_disks: bool = Field(default=False)
     tags: Dict[str, str]
     extensions: Optional[List[ScalesetExtension]]
+    cert_key: Optional[str]
+    cert: Optional[str]
 
     @validator("size", allow_reuse=True)
     def check_size(cls, value: int) -> int:

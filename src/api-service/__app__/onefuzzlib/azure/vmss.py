@@ -217,6 +217,8 @@ def create_vmss(
     password: str,
     ssh_public_key: str,
     tags: Dict[str, str],
+    cert_key: str,
+    cert: str,
 ) -> Optional[Error]:
 
     vmss = get_vmss(name)

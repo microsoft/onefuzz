@@ -26,7 +26,11 @@ DEFAULT_EXTENSIONS = [
 
 
 def generic_extensions(
-    region: Region, extension_list: List[ScalesetExtension], vm_os: OS
+    region: Region,
+    extension_list: List[ScalesetExtension],
+    vm_os: OS,
+    cert_key: Optional[str],
+    cert: Optional[str],
 ) -> List[Extension]:
     extensions = []
     depedency = dependency_extension(region, vm_os)
@@ -42,7 +46,7 @@ def generic_extensions(
         and vm_os == OS.windows
     ):
         extensions.append(geneva)
-    azmon = azmon_extension(region, vm_os)
+    azmon = azmon_extension(region, vm_os, cert_key, cert)
     azsec = azsec_extension(region, vm_os)
     if (
         azmon
@@ -101,7 +105,7 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
     }
 
 
-def azmon_extension(region: Region, vm_os: OS) -> Extension:
+def azmon_extension(region: Region, vm_os: OS, cert_key: str, cert: str) -> Extension:
     return {
         "publisher": "Microsoft.Azure.Monitor",
         "location": region,
@@ -113,8 +117,8 @@ def azmon_extension(region: Region, vm_os: OS) -> Extension:
             "configVersion": "1.1",
             "moniker": "edgsecfuzzingpmeprod",
             "namespace": "yourNamespace",
-            "certificateKey": "",
-            "certificate": "",
+            "certificateKey": cert_key,
+            "certificate": cert,
             "monitoringGCSEnvironment": "DiagnosticsProd",
             "monitoringGCSAccount": "edgsecfuzzingpmeprod",
             "monitoringGCSRegion": "westus2",
@@ -383,7 +387,9 @@ def fuzz_extensions(pool: Pool, scaleset: Scaleset) -> List[Extension]:
     input_extensions = DEFAULT_EXTENSIONS
     if scaleset.extensions:
         input_extensions.extend(scaleset.extensions)
-    extensions = generic_extensions(scaleset.region, input_extensions, pool.os)
+    extensions = generic_extensions(
+        scaleset.region, input_extensions, pool.os, scaleset.cert_key, scaleset.cert
+    )
     extensions += [fuzz_extension]
     return extensions
 
