@@ -381,6 +381,7 @@ class Node(BASE_NODE, ORMMixin):
         logging.info("setting delete_requested: %s", self.machine_id)
         self.delete_requested = True
         self.save()
+        self.send_stop_if_free()
 
     def set_halt(self) -> None:
         """Tell the node to stop everything."""
