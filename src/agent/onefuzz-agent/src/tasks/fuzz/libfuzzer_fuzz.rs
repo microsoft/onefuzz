@@ -7,7 +7,7 @@ use arraydeque::{ArrayDeque, Wrapping};
 use futures::future::try_join_all;
 use onefuzz::{
     fs::list_files,
-    libfuzzer::{LibFuzzer, LibFuzzerLine},
+    libfuzzer::{LibFuzzer, LibFuzzerLineParser},
     process::ExitStatus,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     system,
@@ -17,11 +17,12 @@ use onefuzz_telemetry::{
     EventData,
 };
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
-    sync::mpsc,
+    select,
+    sync::{mpsc, Notify},
     task,
     time::{sleep, Duration},
 };
@@ -212,11 +213,12 @@ impl LibFuzzerFuzzTask {
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
         let running_id = running.id();
-
+        let notify = Arc::new(Notify::new());
         let sys_info = task::spawn(report_fuzzer_sys_info(
             worker_id,
             run_id,
             running_id.unwrap_or_default(),
+            notify.clone(),
         ));
 
         // Splitting borrow.
@@ -227,7 +229,7 @@ impl LibFuzzerFuzzTask {
         let mut stderr = BufReader::new(stderr);
 
         let mut libfuzzer_output: ArrayDeque<[_; LOGS_BUFFER_SIZE], Wrapping> = ArrayDeque::new();
-
+        let parser = LibFuzzerLineParser::new()?;
         loop {
             let mut buf = vec![];
             let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
@@ -236,14 +238,19 @@ impl LibFuzzerFuzzTask {
             }
             let line = String::from_utf8_lossy(&buf).to_string();
             if let Some(stats_sender) = stats_sender {
-                if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, &line) {
+                if let Err(err) =
+                    try_report_iter_update(stats_sender, worker_id, run_id, &line, &parser)
+                {
                     error!("could not parse fuzzing interation update: {}", err);
                 }
             }
             libfuzzer_output.push_back(line);
         }
 
-        let (exit_status, _) = tokio::join!(running.wait(), sys_info);
+        let exit_status = running.wait().await;
+        notify.notify_one();
+        let _ = sys_info.await;
+
         let exit_status: ExitStatus = exit_status?.into();
 
         let files = list_files(crash_dir.path()).await?;
@@ -310,8 +317,9 @@ fn try_report_iter_update(
     worker_id: usize,
     run_id: Uuid,
     line: &str,
+    parser: &LibFuzzerLineParser,
 ) -> Result<()> {
-    if let Some(line) = LibFuzzerLine::parse(line)? {
+    if let Some(line) = parser.parse(line)? {
         stats_sender.send(RuntimeStats {
             worker_id,
             run_id,
@@ -323,11 +331,23 @@ fn try_report_iter_update(
     Ok(())
 }
 
-async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
+async fn report_fuzzer_sys_info(
+    worker_id: usize,
+    run_id: Uuid,
+    fuzzer_pid: u32,
+    cancellation: Arc<Notify>,
+) -> Result<()> {
     // Allow for sampling CPU usage.
-    sleep(PROC_INFO_COLLECTION_DELAY).await;
-
+    let mut period = tokio::time::interval_at(
+        tokio::time::Instant::now() + PROC_INFO_COLLECTION_DELAY,
+        PROC_INFO_PERIOD,
+    );
     loop {
+        select! {
+            () = cancellation.notified() => break,
+            _ = period.tick() => (),
+        }
+
         // process doesn't exist
         if !system::refresh_process(fuzzer_pid)? {
             break;
@@ -348,8 +368,6 @@ async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32)
             // The process no longer exists.
             break;
         }
-
-        sleep(PROC_INFO_PERIOD).await;
     }
 
     Ok(())

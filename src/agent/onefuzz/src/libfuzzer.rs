@@ -288,6 +288,29 @@ impl<'a> LibFuzzer<'a> {
     }
 }
 
+pub struct LibFuzzerLineParser {
+    regex: regex::Regex,
+}
+
+impl LibFuzzerLineParser {
+    pub fn new() -> Result<Self> {
+        let regex = regex::Regex::new(r"#(\d+)\s*(?:pulse|INITED|NEW|REDUCE).*exec/s: (\d+)")?;
+        Ok(Self { regex })
+    }
+
+    pub fn parse(&self, line: &str) -> Result<Option<LibFuzzerLine>> {
+        let caps = match self.regex.captures(line) {
+            Some(caps) => caps,
+            None => return Ok(None),
+        };
+
+        let iters = caps[1].parse()?;
+        let execs_sec = caps[2].parse()?;
+
+        Ok(Some(LibFuzzerLine::new(line.to_string(), iters, execs_sec)))
+    }
+}
+
 pub struct LibFuzzerLine {
     _line: String,
     iters: u64,
@@ -301,20 +324,6 @@ impl LibFuzzerLine {
             _line: line,
             execs_sec,
         }
-    }
-
-    pub fn parse(line: &str) -> Result<Option<Self>> {
-        let re = regex::Regex::new(r"#(\d+)\s*(?:pulse|INITED|NEW|REDUCE).*exec/s: (\d+)")?;
-
-        let caps = match re.captures(line) {
-            Some(caps) => caps,
-            None => return Ok(None),
-        };
-
-        let iters = caps[1].parse()?;
-        let execs_sec = caps[2].parse()?;
-
-        Ok(Some(Self::new(line.to_string(), iters, execs_sec)))
     }
 
     pub fn iters(&self) -> u64 {
