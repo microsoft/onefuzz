@@ -342,8 +342,10 @@ mod tests {
     #[test]
     fn test_libfuzzer_line_pulse() {
         let line = r"#2097152        pulse  cov: 11 ft: 11 corp: 6/21b lim: 4096 exec/s: 699050 rss: 562Mb";
+        let parser = LibFuzzerLineParser::new().unwrap();
 
-        let parsed = LibFuzzerLine::parse(line)
+        let parsed = parser
+            .parse(line)
             .expect("parse error")
             .expect("no captures");
 
