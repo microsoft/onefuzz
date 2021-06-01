@@ -143,7 +143,7 @@ async fn poll_inputs(
     tmp_dir: OwnedDir,
     reports_dir: &Option<PathBuf>,
 ) -> Result<()> {
-    let heartbeat = config.common.init_heartbeat().await?;
+    let heartbeat = config.common.init_heartbeat(None).await?;
     if let Some(input_queue) = &config.input_queue {
         loop {
             heartbeat.alive();
