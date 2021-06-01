@@ -72,7 +72,9 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
     if !output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
-        let logfile = read_azcopy_log_file(temp_dir.path()).await?;
+        let logfile = read_azcopy_log_file(temp_dir.path())
+            .await
+            .unwrap_or_else(|e| format!("unable to read azcopy log file from: {:?}", e));
         anyhow::bail!(
             "azcopy {} failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?} log:{:?}",
             mode,
