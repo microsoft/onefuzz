@@ -88,7 +88,7 @@ impl LibFuzzerFuzzTask {
         self.init_directories().await?;
         self.verify().await?;
 
-        let hb_client = self.config.common.init_heartbeat().await?;
+        let hb_client = self.config.common.init_heartbeat(None).await?;
 
         // To be scheduled.
         let resync = self.continuous_sync_inputs();
