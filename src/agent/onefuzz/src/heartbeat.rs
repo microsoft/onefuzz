@@ -84,7 +84,6 @@ where
         TContext: Send + Sync + 'static,
     {
         let heartbeat_period = heartbeat_period.unwrap_or(DEFAULT_HEARTBEAT_PERIOD);
-        let initial_delay = initial_delay.unwrap_or(DEFAULT_HEARTBEAT_PERIOD);
 
         let context = Arc::new(HeartbeatContext {
             state: context,
