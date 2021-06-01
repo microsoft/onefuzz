@@ -547,6 +547,8 @@ def assign_app_role(
     except AuthenticationError:
         assign_app_role_manually(
             onefuzz_instance_name, application_name, subscription_id, app_role
+        )
+
 
 def set_app_audience(objectId: str, audience: str) -> None:
     # typical audience values: AzureADMyOrg, AzureADMultipleOrgs
