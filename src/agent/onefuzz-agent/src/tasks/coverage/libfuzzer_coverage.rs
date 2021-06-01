@@ -188,7 +188,7 @@ pub struct CoverageProcessor {
 
 impl CoverageProcessor {
     pub async fn new(config: Arc<Config>) -> Result<Self> {
-        let heartbeat_client = config.common.init_heartbeat().await?;
+        let heartbeat_client = config.common.init_heartbeat(None).await?;
         let total = TotalCoverage::new(config.coverage.local_path.join(TOTAL_COVERAGE));
         let recorder = CoverageRecorder::new(config.clone()).await?;
         let module_totals = BTreeMap::default();
