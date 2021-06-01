@@ -77,7 +77,7 @@ impl CoverageTask {
         let coverage = deserialize_or_default(coverage_file).await?;
 
         let filter = self.load_filter().await?;
-        let heartbeat = self.config.common.init_heartbeat().await?;
+        let heartbeat = self.config.common.init_heartbeat(None).await?;
         let mut context = TaskContext::new(cache, &self.config, coverage, filter, heartbeat);
 
         context.heartbeat.alive();
