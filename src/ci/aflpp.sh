@@ -12,8 +12,8 @@ sudo apt-get install -y llvm llvm-dev clang
 
 git clone https://github.com/AFLplusplus/AFLplusplus
 cd AFLplusplus
-# checkout v3.12c
-git checkout 2dac4e785fa9f27e8c59bb504cfa8942eba938be
+# checkout v3.13c
+git checkout 02294d368a29a0e748ab00c240d56c2c225b0941
 make
 (cd utils/libdislocator && make)
 (cd utils/aflpp_driver && make); cp utils/aflpp_driver/*.so .
