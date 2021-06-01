@@ -34,6 +34,8 @@ impl fmt::Display for Mode {
     }
 }
 
+// NOTE, this is intended to read a single file in a tempdir managed by the
+// caller, rather than the default AZCOPY log location.
 async fn read_azcopy_log_file(path: &Path) -> Result<String> {
     let mut entries = fs::read_dir(path).await?;
     // there should be only up to one file in azcopy_log dir
