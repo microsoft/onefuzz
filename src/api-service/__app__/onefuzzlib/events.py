@@ -81,7 +81,7 @@ def send_event(event: Event) -> None:
         instance_name=get_instance_name(),
     )
 
-    # work around odd bug with Event Message creation
+    # work around odd bug with Event Message creation.  See PR 939
     if event_message.event != event:
         event_message.event = event.copy(deep=True)
 
