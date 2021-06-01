@@ -70,7 +70,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
             input.init().await?;
             input.sync_pull().await?;
         }
-        let input_paths = config.inputs.iter().map(|i| &i.path).collect();
+        let input_paths = config.inputs.iter().map(|i| &i.local_path).collect();
         sync_and_merge(
             config.clone(),
             input_paths,
@@ -83,7 +83,7 @@ pub async fn spawn(config: Arc<Config>) -> Result<()> {
 }
 
 async fn process_message(config: Arc<Config>, input_queue: QueueClient) -> Result<()> {
-    let hb_client = config.common.init_heartbeat().await?;
+    let hb_client = config.common.init_heartbeat(None).await?;
     hb_client.alive();
     let tmp_dir = "./tmp";
     debug!("tmp dir reset");
@@ -166,7 +166,9 @@ pub async fn merge_inputs(
         &config.target_env,
         &config.common.setup_dir,
     );
-    merger.merge(&config.unique_inputs.path, &candidates).await
+    merger
+        .merge(&config.unique_inputs.local_path, &candidates)
+        .await
 }
 
 async fn try_delete_blob(input_url: Url) -> Result<()> {

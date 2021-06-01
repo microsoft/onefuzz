@@ -44,6 +44,7 @@ pub fn run(
         max_run_s,
         ignore_first_chance_exceptions,
         app_verifier_tests,
+        coverage::cache::ModuleCache::default(),
     )?;
 
     tester.set_appverifier(AppVerifierState::Enabled)?;

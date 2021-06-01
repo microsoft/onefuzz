@@ -20,14 +20,14 @@ def container_type_name(container_type: ContainerType) -> str:
 
 
 class TemplateSubmitHandler(Endpoint):
-    """ Submit Job Template """
+    """Submit Job Template"""
 
     _endpoint = "job_templates"
 
     def _process_containers(
         self, request: JobTemplateRequest, args: Dict[str, Any]
     ) -> None:
-        """ Create containers based on the argparse args """
+        """Create containers based on the argparse args"""
 
         for container in request.containers:
             directory_arg = container_type_name(container.type)
@@ -106,7 +106,7 @@ class TemplateSubmitHandler(Endpoint):
     def _convert_container_args(
         self, config: JobTemplateConfig, args: Dict[str, Any]
     ) -> List[TaskContainers]:
-        """ Convert the job template into a list of containers """
+        """Convert the job template into a list of containers"""
 
         containers = []
         container_names = args["container_names"]
@@ -124,7 +124,7 @@ class TemplateSubmitHandler(Endpoint):
     def _convert_args(
         self, config: JobTemplateConfig, args: Dict[str, Any]
     ) -> JobTemplateRequest:
-        """ convert arguments from argparse into a JobTemplateRequest """
+        """convert arguments from argparse into a JobTemplateRequest"""
 
         user_fields = {}
         for field in config.user_fields:
@@ -156,7 +156,7 @@ class TemplateSubmitHandler(Endpoint):
         *,
         wait_for_running: bool,
     ) -> Job:
-        """ Convert argparse args into a JobTemplateRequest and submit it """
+        """Convert argparse args into a JobTemplateRequest and submit it"""
         self.onefuzz.logger.debug("building: %s", config.name)
         request = self._convert_args(config, args)
         job = self._execute_request(config, request, args)

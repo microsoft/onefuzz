@@ -71,6 +71,15 @@ impl Scheduler {
                 };
                 *self = state.into();
             }
+            NodeCommand::StopIfFree {} => {
+                if let Scheduler::Free(_) = self {
+                    let cause = DoneCause::Stopped;
+                    let state = State {
+                        ctx: Done { cause },
+                    };
+                    *self = state.into();
+                }
+            }
         }
 
         Ok(())

@@ -13,6 +13,7 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
+    EventScalesetStateUpdated,
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Scaleset as BASE_SCALESET
@@ -141,8 +142,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             return
 
         self.error = error
-        self.state = ScalesetState.creation_failed
-        self.save()
+        self.set_state(ScalesetState.creation_failed)
 
         send_event(
             EventScalesetFailed(
@@ -184,11 +184,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.set_failed(error)
                 return
             else:
-                self.state = ScalesetState.setup
+                self.set_state(ScalesetState.setup)
         else:
-            self.state = ScalesetState.setup
-
-        self.save()
+            self.set_state(ScalesetState.setup)
 
     def setup(self) -> None:
         from .pools import Pool
@@ -269,7 +267,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.set_failed(identity_result)
                 return
             else:
-                self.state = ScalesetState.running
+                self.set_state(ScalesetState.running)
         self.save()
 
     def try_set_identity(self, vmss: Any) -> Optional[Error]:
@@ -376,9 +374,17 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     to_reimage.append(node)
 
         dead_nodes = Node.get_dead_nodes(self.scaleset_id, NODE_EXPIRATION_TIME)
-        for node in dead_nodes:
-            node.set_halt()
-            to_reimage.append(node)
+        if dead_nodes:
+            logging.info(
+                SCALESET_LOG_PREFIX
+                + "reimaging nodes with expired heartbeats. "
+                + "scaleset_id:%s nodes:%s",
+                self.scaleset_id,
+                ",".join(str(x.machine_id) for x in dead_nodes),
+            )
+            for node in dead_nodes:
+                if node not in to_reimage:
+                    to_reimage.append(node)
 
         # Perform operations until they fail due to scaleset getting locked
         try:
@@ -414,9 +420,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         node_count = len(Node.search_states(scaleset_id=self.scaleset_id))
         if node_count == self.size:
             logging.info(SCALESET_LOG_PREFIX + "resize finished: %s", self.scaleset_id)
-            self.state = ScalesetState.running
-            self.save()
-            return
+            self.set_state(ScalesetState.running)
         else:
             logging.info(
                 SCALESET_LOG_PREFIX
@@ -426,7 +430,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 node_count,
                 self.size,
             )
-            return
 
     def _resize_grow(self) -> None:
         try:
@@ -440,9 +443,18 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         return
 
     def _resize_shrink(self, to_remove: int) -> None:
+        logging.info(
+            SCALESET_LOG_PREFIX + "shrinking scaleset. scaleset_id:%s to_remove:%d",
+            self.scaleset_id,
+            to_remove,
+        )
         queue = ScalesetShrinkQueue(self.scaleset_id)
         for _ in range(to_remove):
             queue.add_entry()
+
+        nodes = Node.search_states(scaleset_id=self.scaleset_id)
+        for node in nodes:
+            node.send_stop_if_free()
 
     def resize(self) -> None:
         # no longer needing to resize
@@ -468,6 +480,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 SCALESET_LOG_PREFIX + "scaleset is unavailable. scaleset_id:%s",
                 self.scaleset_id,
             )
+            # if the scaleset is missing, this is an indication the scaleset
+            # was manually deleted, rather than having OneFuzz delete it.  As
+            # such, we should go thruogh the process of deleting it.
+            self.set_shutdown(now=True)
             return
 
         if size == self.size:
@@ -506,7 +522,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 machine_ids.append(node.machine_id)
 
         logging.info(
-            SCALESET_LOG_PREFIX + "deleting scaleset_id:%s machine_id:%s",
+            SCALESET_LOG_PREFIX + "deleting nodes scaleset_id:%s machine_id:%s",
             self.scaleset_id,
             machine_ids,
         )
@@ -564,10 +580,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if self.state in [ScalesetState.halt, ScalesetState.shutdown]:
             return
 
+        logging.info(
+            SCALESET_LOG_PREFIX + "scaleset set_shutdown: scaleset_id:%s now:%s",
+            self.scaleset_id,
+            now,
+        )
+
         if now:
-            self.state = ScalesetState.halt
+            self.set_state(ScalesetState.halt)
         else:
-            self.state = ScalesetState.shutdown
+            self.set_state(ScalesetState.shutdown)
 
         self.save()
 
@@ -721,6 +743,18 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         super().delete()
         send_event(
             EventScalesetDeleted(scaleset_id=self.scaleset_id, pool_name=self.pool_name)
+        )
+
+    def set_state(self, state: ScalesetState) -> None:
+        if self.state == state:
+            return
+
+        self.state = state
+        self.save()
+        send_event(
+            EventScalesetStateUpdated(
+                scaleset_id=self.scaleset_id, pool_name=self.pool_name, state=self.state
+            )
         )
 
 

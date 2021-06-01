@@ -15,7 +15,7 @@ from . import JobHelper
 
 
 class Radamsa(Command):
-    """ Pre-defined Radamsa job """
+    """Pre-defined Radamsa job"""
 
     def basic(
         self,
@@ -112,7 +112,7 @@ class Radamsa(Command):
         ):
             raise Exception("Radamsa requires at least one input file")
 
-        target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
+        target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
         tools = Container(
             "radamsa-linux" if helper.platform == OS.linux else "radamsa-win64"

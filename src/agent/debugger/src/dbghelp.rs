@@ -8,12 +8,14 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::upper_case_acronyms)]
+
 /// This module defines a wrapper around dbghelp apis so they can be used in a thread safe manner
 /// as well as providing a more Rust like api.
 use std::{
     cmp,
     ffi::{OsStr, OsString},
     mem::{size_of, MaybeUninit},
+    num::NonZeroU64,
     path::{Path, PathBuf},
     sync::Once,
 };
@@ -33,8 +35,9 @@ use winapi::{
         dbghelp::{
             AddrModeFlat, StackWalkEx, SymCleanup, SymFindFileInPathW, SymFromNameW,
             SymFunctionTableAccess64, SymGetModuleBase64, SymInitializeW, SymLoadModuleExW,
-            IMAGEHLP_LINEW64, PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW,
-            SYMOPT_DEBUG, SYMOPT_DEFERRED_LOADS, SYMOPT_FAIL_CRITICAL_ERRORS, SYMOPT_NO_PROMPTS,
+            IMAGEHLP_LINEW64, INLINE_FRAME_CONTEXT_IGNORE, INLINE_FRAME_CONTEXT_INIT,
+            PIMAGEHLP_LINEW64, PSYMBOL_INFOW, STACKFRAME_EX, SYMBOL_INFOW, SYMOPT_DEBUG,
+            SYMOPT_DEFERRED_LOADS, SYMOPT_FAIL_CRITICAL_ERRORS, SYMOPT_NO_PROMPTS,
             SYM_STKWALK_DEFAULT,
         },
         errhandlingapi::GetLastError,
@@ -417,9 +420,9 @@ impl ModuleInfo {
 
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub struct SymInfo {
-    symbol: String,
-    address: u64,
-    displacement: u64,
+    pub symbol: String,
+    pub address: u64,
+    pub displacement: u64,
 }
 
 impl SymInfo {
@@ -523,10 +526,20 @@ impl DebugHelpGuard {
         }
     }
 
+    pub fn get_module_base(&self, process_handle: HANDLE, addr: DWORD64) -> Result<NonZeroU64> {
+        if let Some(base) = NonZeroU64::new(unsafe { SymGetModuleBase64(process_handle, addr) }) {
+            Ok(base)
+        } else {
+            let last_error = std::io::Error::last_os_error();
+            Err(last_error.into())
+        }
+    }
+
     pub fn stackwalk_ex<F: FnMut(&STACKFRAME_EX) -> bool>(
         &self,
         process_handle: HANDLE,
         thread_handle: HANDLE,
+        walk_inline_frames: bool,
         mut f: F,
     ) -> Result<()> {
         let mut frame_context = get_thread_frame(process_handle, thread_handle)?;
@@ -538,6 +551,11 @@ impl DebugHelpGuard {
         frame.AddrStack.Mode = AddrModeFlat;
         frame.AddrFrame.Offset = frame_context.frame_pointer();
         frame.AddrFrame.Mode = AddrModeFlat;
+        frame.InlineFrameContext = if walk_inline_frames {
+            INLINE_FRAME_CONTEXT_INIT
+        } else {
+            INLINE_FRAME_CONTEXT_IGNORE
+        };
 
         loop {
             let success = unsafe {
@@ -690,7 +708,7 @@ impl DebugHelpGuard {
         file_name: impl AsRef<Path>,
         pdb_signature: u32,
         pdb_age: u32,
-    ) -> Result<PathBuf> {
+    ) -> Result<Option<PathBuf>> {
         let file_name = win_util::string::to_wstring(file_name);
 
         // Must be at least `MAX_PATH` characters in length.
@@ -708,7 +726,7 @@ impl DebugHelpGuard {
         // Assert that we are passing a DWORD signature in `id`.
         let flags = SSRVOPT_DWORD;
 
-        check_winapi(|| unsafe {
+        let result = check_winapi(|| unsafe {
             SymFindFileInPathW(
                 process_handle,
                 search_path,
@@ -721,16 +739,20 @@ impl DebugHelpGuard {
                 None,
                 std::ptr::null_mut(),
             )
-        })?;
+        });
 
-        // Safety: `found_file_data` must contain at least one NUL byte.
-        //
-        // We zero-initialize `found_file_data`, and assume that `SymFindFileInPathW`
-        // only succeeds if it wrote a NUL-terminated wide string.
-        let found_file =
-            unsafe { win_util::string::os_string_from_wide_ptr(found_file_data.as_ptr()) };
+        if result.is_ok() {
+            // Safety: `found_file_data` must contain at least one NUL byte.
+            //
+            // We zero-initialize `found_file_data`, and assume that `SymFindFileInPathW`
+            // only succeeds if it wrote a NUL-terminated wide string.
+            let found_file =
+                unsafe { win_util::string::os_string_from_wide_ptr(found_file_data.as_ptr()) };
 
-        Ok(found_file.into())
+            Ok(Some(found_file.into()))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn sym_get_search_path(&self, process_handle: HANDLE) -> Result<OsString> {

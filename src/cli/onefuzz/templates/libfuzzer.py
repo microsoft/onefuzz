@@ -24,10 +24,10 @@ class QemuArch(Enum):
 
 
 class Libfuzzer(Command):
-    """ Pre-defined Libfuzzer job """
+    """Pre-defined Libfuzzer job"""
 
     def _check_is_libfuzzer(self, target_exe: File) -> None:
-        """ Look for a magic string """
+        """Look for a magic string"""
         self.logger.debug(
             "checking %s for %s", repr(target_exe), repr(LIBFUZZER_MAGIC_STRING)
         )
@@ -58,7 +58,7 @@ class Libfuzzer(Command):
         colocate_all_tasks: bool = False,
         colocate_secondary_tasks: bool = True,
         check_fuzzer_help: bool = True,
-        expect_crash_on_failure: bool = True,
+        expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
     ) -> None:
 
@@ -270,7 +270,7 @@ class Libfuzzer(Command):
             helper.upload_inputs(inputs)
         helper.wait_on(wait_for_files, wait_for_running)
 
-        target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
+        target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
         self._create_tasks(
             job=helper.job,
@@ -378,7 +378,7 @@ class Libfuzzer(Command):
             helper.upload_inputs(inputs)
         helper.wait_on(wait_for_files, wait_for_running)
 
-        target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
+        target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
         merge_containers = [
             (ContainerType.setup, helper.containers[ContainerType.setup]),
@@ -443,7 +443,7 @@ class Libfuzzer(Command):
         debug: Optional[List[TaskDebugFlag]] = None,
         ensemble_sync_delay: Optional[int] = None,
         check_fuzzer_help: bool = True,
-        expect_crash_on_failure: bool = True,
+        expect_crash_on_failure: bool = False,
     ) -> Optional[Job]:
 
         """
@@ -619,7 +619,7 @@ class Libfuzzer(Command):
 
         helper.create_containers()
 
-        target_exe_blob_name = helper.target_exe_blob_name(target_exe, None)
+        target_exe_blob_name = helper.setup_relative_blob_name(target_exe, None)
 
         wrapper_name = File(target_exe_blob_name + "-wrapper.sh")
 
@@ -627,7 +627,7 @@ class Libfuzzer(Command):
             if sysroot:
                 setup_path = File(os.path.join(tempdir, "setup.sh"))
                 with open(setup_path, "w", newline="\n") as handle:
-                    sysroot_filename = helper.target_exe_blob_name(sysroot, None)
+                    sysroot_filename = helper.setup_relative_blob_name(sysroot, None)
                     handle.write(
                         "#!/bin/bash\n"
                         "set -ex\n"

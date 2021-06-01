@@ -68,7 +68,7 @@ impl ReportTask {
 
     pub async fn managed_run(&mut self) -> Result<()> {
         info!("Starting generic crash report task");
-        let heartbeat_client = self.config.common.init_heartbeat().await?;
+        let heartbeat_client = self.config.common.init_heartbeat(None).await?;
         let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
 
         info!("processing existing crashes");

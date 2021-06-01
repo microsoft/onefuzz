@@ -29,22 +29,24 @@ const DEFAULT_CONTINUOUS_SYNC_DELAY_SECONDS: u64 = 60;
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct SyncedDir {
-    pub path: PathBuf,
-    pub url: Option<BlobContainerUrl>,
+    #[serde(alias = "local_path", alias = "path")]
+    pub local_path: PathBuf,
+    #[serde(alias = "remote_path", alias = "url")]
+    pub remote_path: Option<BlobContainerUrl>,
 }
 
 impl SyncedDir {
     pub fn remote_url(&self) -> Result<BlobContainerUrl> {
-        let url = self.url.clone().unwrap_or(BlobContainerUrl::new(
-            Url::from_file_path(self.path.clone()).map_err(|_| anyhow!("invalid path"))?,
+        let url = self.remote_path.clone().unwrap_or(BlobContainerUrl::new(
+            Url::from_file_path(self.local_path.clone()).map_err(|_| anyhow!("invalid path"))?,
         )?);
         Ok(url)
     }
 
     pub async fn sync(&self, operation: SyncOperation, delete_dst: bool) -> Result<()> {
-        let dir = &self.path.join("");
+        let dir = &self.local_path.join("");
 
-        if let Some(dest) = self.url.clone().and_then(|u| u.as_file_path()) {
+        if let Some(dest) = self.remote_path.clone().and_then(|u| u.as_file_path()) {
             debug!("syncing {:?} {}", operation, dest.display());
             match operation {
                 SyncOperation::Push => {
@@ -64,7 +66,7 @@ impl SyncedDir {
                     .await
                 }
             }
-        } else if let Some(url) = self.url.clone().map(|u| u.url().clone()) {
+        } else if let Some(url) = self.remote_path.clone().and_then(|u| u.url().ok()) {
             let url = url.as_ref();
             debug!("syncing {:?} {}", operation, dir.display());
             match operation {
@@ -77,7 +79,7 @@ impl SyncedDir {
     }
 
     pub fn try_url(&self) -> Option<BlobContainerUrl> {
-        self.url.clone()
+        self.remote_path.clone()
     }
 
     pub async fn init_pull(&self) -> Result<()> {
@@ -86,20 +88,26 @@ impl SyncedDir {
     }
 
     pub async fn init(&self) -> Result<()> {
-        if let Some(remote_path) = self.url.clone().and_then(|u| u.as_file_path()) {
+        if let Some(remote_path) = self.remote_path.clone().and_then(|u| u.as_file_path()) {
             fs::create_dir_all(remote_path).await?;
         }
 
-        match fs::metadata(&self.path).await {
+        match fs::metadata(&self.local_path).await {
             Ok(m) => {
                 if m.is_dir() {
                     Ok(())
                 } else {
-                    anyhow::bail!("File with name '{}' already exists", self.path.display());
+                    anyhow::bail!(
+                        "File with name '{}' already exists",
+                        self.local_path.display()
+                    );
                 }
             }
-            Err(_) => fs::create_dir_all(&self.path).await.with_context(|| {
-                format!("unable to create local SyncedDir: {}", self.path.display())
+            Err(_) => fs::create_dir_all(&self.local_path).await.with_context(|| {
+                format!(
+                    "unable to create local SyncedDir: {}",
+                    self.local_path.display()
+                )
             }),
         }
     }
@@ -131,7 +139,7 @@ impl SyncedDir {
 
     // Conditionally upload a report, if it would not be a duplicate.
     pub async fn upload<T: Serialize>(&self, name: &str, data: &T) -> Result<bool> {
-        if let Some(url) = self.url.clone() {
+        if let Some(url) = self.remote_path.clone() {
             match url.as_file_path() {
                 Some(path) => {
                     let path = path.join(name);
@@ -167,7 +175,7 @@ impl SyncedDir {
                 }
             }
         } else {
-            let path = self.path.join(name);
+            let path = self.local_path.join(name);
             if !exists(&path).await? {
                 let data = serde_json::to_vec(&data)?;
                 fs::write(path, data).await?;
@@ -195,11 +203,19 @@ impl SyncedDir {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                if ignore_dotfiles && file_name.to_string_lossy().starts_with('.') {
+                let file_name_str = file_name.to_string_lossy();
+
+                // explicitly ignore azcopy temporary files
+                // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
+                if file_name_str.starts_with(".azDownload-") {
                     continue;
                 }
 
-                event!(event.clone(); EventData::Path = file_name.to_string_lossy());
+                if ignore_dotfiles && file_name_str.starts_with('.') {
+                    continue;
+                }
+
+                event!(event.clone(); EventData::Path = file_name_str);
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
@@ -217,17 +233,25 @@ impl SyncedDir {
                 }
             }
         } else {
-            let mut uploader = BlobUploader::new(url.url().clone());
+            let mut uploader = BlobUploader::new(url.url()?);
 
             while let Some(item) = monitor.next().await {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
-                if ignore_dotfiles && file_name.to_string_lossy().starts_with('.') {
+                let file_name_str = file_name.to_string_lossy();
+
+                // explicitly ignore azcopy temporary files
+                // https://github.com/Azure/azure-storage-azcopy/blob/main/ste/xfer-remoteToLocal-file.go#L35
+                if file_name_str.starts_with(".azDownload-") {
                     continue;
                 }
-                event!(event.clone(); EventData::Path = item.display().to_string());
 
+                if ignore_dotfiles && file_name_str.starts_with('.') {
+                    continue;
+                }
+
+                event!(event.clone(); EventData::Path = file_name_str);
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(
                         "Couldn't upload file.  path:{} dir:{} err:{}",
@@ -260,18 +284,21 @@ impl SyncedDir {
     /// to be initialized, but a user-supplied binary, (such as AFL) logically owns
     /// a directory, and may reset it.
     pub async fn monitor_results(&self, event: Event, ignore_dotfiles: bool) -> Result<()> {
-        if let Some(url) = self.url.clone() {
+        if let Some(url) = self.remote_path.clone() {
             loop {
-                debug!("waiting to monitor {}", self.path.display());
+                debug!("waiting to monitor {}", self.local_path.display());
 
-                while fs::metadata(&self.path).await.is_err() {
-                    debug!("dir {} not ready to monitor, delaying", self.path.display());
+                while fs::metadata(&self.local_path).await.is_err() {
+                    debug!(
+                        "dir {} not ready to monitor, delaying",
+                        self.local_path.display()
+                    );
                     delay_with_jitter(DELAY).await;
                 }
 
-                debug!("starting monitor for {}", self.path.display());
+                debug!("starting monitor for {}", self.local_path.display());
                 Self::file_monitor_event(
-                    self.path.clone(),
+                    self.local_path.clone(),
                     url.clone(),
                     event.clone(),
                     ignore_dotfiles,

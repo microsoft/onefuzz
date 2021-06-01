@@ -88,7 +88,7 @@ impl LibFuzzerFuzzTask {
         self.init_directories().await?;
         self.verify().await?;
 
-        let hb_client = self.config.common.init_heartbeat().await?;
+        let hb_client = self.config.common.init_heartbeat(None).await?;
 
         // To be scheduled.
         let resync = self.continuous_sync_inputs();
@@ -104,9 +104,12 @@ impl LibFuzzerFuzzTask {
     }
 
     pub async fn verify(&self) -> Result<()> {
-        let mut directories = vec![self.config.inputs.path.clone()];
+        let mut directories = vec![self.config.inputs.local_path.clone()];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
-            let mut dirs = readonly_inputs.iter().map(|x| x.path.clone()).collect();
+            let mut dirs = readonly_inputs
+                .iter()
+                .map(|x| x.local_path.clone())
+                .collect();
             directories.append(&mut dirs);
         }
 
@@ -136,7 +139,7 @@ impl LibFuzzerFuzzTask {
         let task_dir = self
             .config
             .inputs
-            .path
+            .local_path
             .parent()
             .ok_or_else(|| anyhow!("Invalid input path"))?;
         let temp_path = task_dir.join(".temp");
@@ -161,7 +164,12 @@ impl LibFuzzerFuzzTask {
 
             let mut entries = tokio::fs::read_dir(local_input_dir.path()).await?;
             while let Ok(Some(entry)) = entries.next_entry().await {
-                let destination_path = self.config.inputs.path.clone().join(entry.file_name());
+                let destination_path = self
+                    .config
+                    .inputs
+                    .local_path
+                    .clone()
+                    .join(entry.file_name());
                 tokio::fs::rename(&entry.path(), &destination_path)
                     .await
                     .with_context(|| {
@@ -189,9 +197,11 @@ impl LibFuzzerFuzzTask {
 
         debug!("starting fuzzer run, run_id = {}", run_id);
 
-        let mut inputs = vec![&self.config.inputs.path];
+        let mut inputs = vec![&self.config.inputs.local_path];
         if let Some(readonly_inputs) = &self.config.readonly_inputs {
-            readonly_inputs.iter().for_each(|d| inputs.push(&d.path));
+            readonly_inputs
+                .iter()
+                .for_each(|d| inputs.push(&d.local_path));
         }
 
         let fuzzer = LibFuzzer::new(
@@ -262,7 +272,7 @@ impl LibFuzzerFuzzTask {
 
         for file in &files {
             if let Some(filename) = file.file_name() {
-                let dest = self.config.crashes.path.join(filename);
+                let dest = self.config.crashes.local_path.join(filename);
                 if let Err(e) = tokio::fs::rename(file.clone(), dest.clone()).await {
                     if !dest.exists() {
                         bail!(e)

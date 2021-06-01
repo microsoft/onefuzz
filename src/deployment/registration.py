@@ -27,6 +27,7 @@ from azure.graphrbac.models import (
     RequiredResourceAccess,
     ResourceAccess,
     ServicePrincipal,
+    ServicePrincipalCreateParameters,
 )
 from functional import seq
 from msrest.serialization import TZ_UTC
@@ -151,7 +152,7 @@ def register_application(
 
 
 def create_application_credential(application_name: str, subscription_id: str) -> str:
-    """ Add a new password to the application registration """
+    """Add a new password to the application registration"""
 
     logger.info("creating application credential for '%s'" % application_name)
     client = get_graph_client(subscription_id)
@@ -168,7 +169,7 @@ def create_application_credential(application_name: str, subscription_id: str) -
 def create_application_registration(
     onefuzz_instance_name: str, name: str, approle: OnefuzzAppRole, subscription_id: str
 ) -> Application:
-    """ Create an application registration """
+    """Create an application registration"""
 
     client = get_graph_client(subscription_id)
     apps: List[Application] = list(
@@ -201,6 +202,16 @@ def create_application_registration(
 
     registered_app: Application = client.applications.create(params)
 
+    logger.info("creating service principal")
+    service_principal_params = ServicePrincipalCreateParameters(
+        account_enabled=True,
+        app_role_assignment_required=False,
+        service_principal_type="Application",
+        app_id=registered_app.app_id,
+    )
+
+    client.service_principals.create(service_principal_params)
+
     atttempts = 5
     while True:
         if atttempts < 0:
@@ -222,6 +233,9 @@ def create_application_registration(
             continue
 
     authorize_application(UUID(registered_app.app_id), UUID(app.app_id))
+    assign_app_role(
+        onefuzz_instance_name, name, subscription_id, OnefuzzAppRole.ManagedNode
+    )
     return registered_app
 
 
@@ -396,8 +410,11 @@ def update_pool_registration(onefuzz_instance_name: str, subscription_id: str) -
     )
 
 
-def assign_scaleset_role_manually(
-    onefuzz_instance_name: str, scaleset_name: str, subscription_id: str
+def assign_app_role_manually(
+    onefuzz_instance_name: str,
+    application_name: str,
+    subscription_id: str,
+    app_role: OnefuzzAppRole,
 ) -> None:
 
     client = get_graph_client(subscription_id)
@@ -420,7 +437,7 @@ def assign_scaleset_role_manually(
     onefuzz_service_principal = onefuzz_service_principals[0]
 
     scaleset_service_principals: List[ServicePrincipal] = list(
-        client.service_principals.list(filter="displayName eq '%s'" % scaleset_name)
+        client.service_principals.list(filter="displayName eq '%s'" % application_name)
     )
 
     if not scaleset_service_principals:
@@ -429,7 +446,7 @@ def assign_scaleset_role_manually(
 
     scaleset_service_principal.app_roles
     app_roles: List[AppRole] = [
-        role for role in app.app_roles if role.value == OnefuzzAppRole.ManagedNode.value
+        role for role in app.app_roles if role.value == app_role.value
     ]
 
     if not app_roles:
@@ -456,12 +473,15 @@ def assign_scaleset_role_manually(
     )
 
 
-def assign_scaleset_role(
-    onefuzz_instance_name: str, scaleset_name: str, subscription_id: str
+def assign_app_role(
+    onefuzz_instance_name: str,
+    application_name: str,
+    subscription_id: str,
+    app_role: OnefuzzAppRole,
 ) -> None:
     """
-    Allows the nodes in the scaleset to access the service by assigning
-    their managed identity to the ManagedNode Role
+    Allows the application to access the service by assigning
+    their managed identity to the provided App Role
     """
     try:
         onefuzz_service_appId = query_microsoft_graph(
@@ -472,11 +492,9 @@ def assign_scaleset_role(
                 "$select": "appId",
             },
         )
-
         if len(onefuzz_service_appId["value"]) == 0:
             raise Exception("onefuzz app registration not found")
         appId = onefuzz_service_appId["value"][0]["appId"]
-
         onefuzz_service_principals = query_microsoft_graph(
             method="GET",
             resource="servicePrincipals",
@@ -486,28 +504,25 @@ def assign_scaleset_role(
         if len(onefuzz_service_principals["value"]) == 0:
             raise Exception("onefuzz app service principal not found")
         onefuzz_service_principal = onefuzz_service_principals["value"][0]
-
         scaleset_service_principals = query_microsoft_graph(
             method="GET",
             resource="servicePrincipals",
-            params={"$filter": "displayName eq '%s'" % scaleset_name},
+            params={"$filter": "displayName eq '%s'" % application_name},
         )
         if len(scaleset_service_principals["value"]) == 0:
             raise Exception("scaleset service principal not found")
         scaleset_service_principal = scaleset_service_principals["value"][0]
-
         managed_node_role = (
             seq(onefuzz_service_principal["appRoles"])
-            .filter(lambda x: x["value"] == OnefuzzAppRole.ManagedNode.value)
+            .filter(lambda x: x["value"] == app_role.value)
             .head_option()
         )
 
         if not managed_node_role:
             raise Exception(
-                "ManagedNode role not found in the OneFuzz application "
+                f"{app_role.value} role not found in the OneFuzz application "
                 "registration. Please redeploy the instance"
             )
-
         assignments = query_microsoft_graph(
             method="GET",
             resource="servicePrincipals/%s/appRoleAssignments"
@@ -530,8 +545,8 @@ def assign_scaleset_role(
                 },
             )
     except (adal.AdalError, AuthenticationError):
-        assign_scaleset_role_manually(
-            onefuzz_instance_name, scaleset_name, subscription_id
+        assign_app_role_manually(
+            onefuzz_instance_name, application_name, subscription_id, app_role
         )
 
 
@@ -623,8 +638,11 @@ def main() -> None:
             args.subscription_id,
         )
     elif args.command == "assign_scaleset_role":
-        assign_scaleset_role(
-            onefuzz_instance_name, args.scaleset_name, args.subscription_id
+        assign_app_role(
+            onefuzz_instance_name,
+            args.scaleset_name,
+            args.subscription_id,
+            OnefuzzAppRole.ManagedNode,
         )
     else:
         raise Exception("invalid arguments")

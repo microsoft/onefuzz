@@ -341,11 +341,11 @@ def repro_extensions(
     return extensions
 
 
-def proxy_manager_extensions(region: Region) -> List[Extension]:
+def proxy_manager_extensions(region: Region, proxy_id: UUID) -> List[Extension]:
     urls = [
         get_file_sas_url(
             Container("proxy-configs"),
-            "%s/config.json" % region,
+            "%s/%s/config.json" % (region, proxy_id),
             StorageType.config,
             read=True,
         ),

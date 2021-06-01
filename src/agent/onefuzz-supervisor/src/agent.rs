@@ -13,6 +13,8 @@ use crate::setup::*;
 use crate::work::IWorkQueue;
 use crate::worker::IWorkerRunner;
 
+const PENDING_COMMANDS_DELAY: time::Duration = time::Duration::from_secs(10);
+
 pub struct Agent {
     coordinator: Box<dyn ICoordinator>,
     reboot: Box<dyn IReboot>,
@@ -50,7 +52,7 @@ impl Agent {
     }
 
     pub async fn run(&mut self) -> Result<()> {
-        let mut delay = command_delay();
+        let mut instant = time::Instant::now();
 
         // Tell the service that the agent has started.
         //
@@ -68,9 +70,9 @@ impl Agent {
 
         loop {
             self.heartbeat.alive();
-            if delay.is_elapsed() {
+            if instant.elapsed() >= PENDING_COMMANDS_DELAY {
                 self.execute_pending_commands().await?;
-                delay = command_delay();
+                instant = time::Instant::now();
             }
 
             let done = self.update().await?;
@@ -268,7 +270,7 @@ impl Agent {
         let cmd = self.coordinator.poll_commands().await?;
 
         if let Some(cmd) = cmd {
-            debug!("agent received node command: {:?}", cmd);
+            info!("agent received node command: {:?}", cmd);
             self.scheduler()?.execute_command(cmd).await?;
         }
 
@@ -283,11 +285,6 @@ impl Agent {
     fn scheduler(&mut self) -> Result<&mut Scheduler> {
         self.scheduler.as_mut().ok_or_else(scheduler_error)
     }
-}
-
-fn command_delay() -> time::Sleep {
-    let delay = time::Duration::from_secs(10);
-    time::sleep(delay)
 }
 
 // The agent owns a `Scheduler`, which it must consume when driving its state

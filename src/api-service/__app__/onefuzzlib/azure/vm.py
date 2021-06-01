@@ -14,7 +14,7 @@ from msrestazure.azure_exceptions import CloudError
 from onefuzztypes.enums import OS, ErrorCode
 from onefuzztypes.models import Authentication, Error
 from onefuzztypes.primitives import Extension, Region
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from .compute import get_compute_client
 from .creds import get_base_resource_group
@@ -215,6 +215,15 @@ class VM(BaseModel):
     sku: str
     image: str
     auth: Authentication
+
+    @validator("name", allow_reuse=True)
+    def check_name(cls, value: Union[UUID, str]) -> Union[UUID, str]:
+        if isinstance(value, str):
+            if len(value) > 40:
+                # Azure truncates resources if the names are longer than 40
+                # bytes
+                raise ValueError("VM name too long")
+        return value
 
     def is_deleted(self) -> bool:
         # A VM is considered deleted once all of it's resources including disks,

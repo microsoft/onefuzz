@@ -16,7 +16,12 @@ from onefuzztypes.events import (
 )
 from onefuzztypes.models import Error
 from onefuzztypes.models import Node as BASE_NODE
-from onefuzztypes.models import NodeAssignment, NodeCommand, NodeCommandAddSshKey
+from onefuzztypes.models import (
+    NodeAssignment,
+    NodeCommand,
+    NodeCommandAddSshKey,
+    NodeCommandStopIfFree,
+)
 from onefuzztypes.models import NodeTasks as BASE_NODE_TASK
 from onefuzztypes.models import Result, StopNodeCommand, StopTaskNodeCommand
 from onefuzztypes.primitives import PoolName
@@ -26,6 +31,7 @@ from ..__version__ import __version__
 from ..azure.vmss import get_instance_id
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
+from ..versions import is_minimum_version
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -157,7 +163,7 @@ class Node(BASE_NODE, ORMMixin):
         return ("pool_name", "machine_id")
 
     def save_exclude(self) -> Optional[MappingIntStrAny]:
-        return {"tasks": ...}
+        return {"tasks": ..., "messages": ...}
 
     def telemetry_include(self) -> Optional[MappingIntStrAny]:
         return {
@@ -217,7 +223,7 @@ class Node(BASE_NODE, ORMMixin):
             "node: stopping busy node with all tasks complete: %s",
             self.machine_id,
         )
-        self.stop()
+        self.stop(done=True)
         return True
 
     def mark_tasks_stopped_early(self, error: Optional[Error] = None) -> None:
@@ -233,6 +239,8 @@ class Node(BASE_NODE, ORMMixin):
             task = Task.get_by_task_id(entry.task_id)
             if isinstance(task, Task):
                 task.mark_failed(error)
+            if not self.debug_keep_node:
+                entry.delete()
 
     def could_shrink_scaleset(self) -> bool:
         from .scalesets import ScalesetShrinkQueue
@@ -253,7 +261,7 @@ class Node(BASE_NODE, ORMMixin):
                 self.version,
                 __version__,
             )
-            self.stop()
+            self.stop(done=True)
             return False
 
         if self.state in NodeState.ready_for_reset():
@@ -267,7 +275,7 @@ class Node(BASE_NODE, ORMMixin):
                 "can_schedule is set to be deleted.  machine_id:%s",
                 self.machine_id,
             )
-            self.stop()
+            self.stop(done=True)
             return False
 
         if self.reimage_requested:
@@ -275,12 +283,12 @@ class Node(BASE_NODE, ORMMixin):
                 "can_schedule is set to be reimaged.  machine_id:%s",
                 self.machine_id,
             )
-            self.stop()
+            self.stop(done=True)
             return False
 
         if self.could_shrink_scaleset():
-            self.set_halt()
             logging.info("node scheduled to shrink.  machine_id:%s", self.machine_id)
+            self.set_halt()
             return False
 
         if self.scaleset_id:
@@ -338,6 +346,11 @@ class Node(BASE_NODE, ORMMixin):
         if not self.reimage_requested and not self.delete_requested:
             logging.info("setting reimage_requested: %s", self.machine_id)
             self.reimage_requested = True
+
+        # if we're going to reimage, make sure the node doesn't pick up new work
+        # too.
+        self.send_stop_if_free()
+
         self.save()
 
     def add_ssh_public_key(self, public_key: str) -> Result[None]:
@@ -355,6 +368,10 @@ class Node(BASE_NODE, ORMMixin):
         )
         return None
 
+    def send_stop_if_free(self) -> None:
+        if is_minimum_version(version=self.version, minimum="2.16.1"):
+            self.send_message(NodeCommand(stop_if_free=NodeCommandStopIfFree()))
+
     def stop(self, done: bool = False) -> None:
         self.to_reimage(done=done)
         self.send_message(NodeCommand(stop=StopNodeCommand()))
@@ -364,11 +381,13 @@ class Node(BASE_NODE, ORMMixin):
         logging.info("setting delete_requested: %s", self.machine_id)
         self.delete_requested = True
         self.save()
+        self.send_stop_if_free()
 
     def set_halt(self) -> None:
-        """ Tell the node to stop everything. """
-        self.set_shutdown()
-        self.stop()
+        """Tell the node to stop everything."""
+        logging.info("setting halt: %s", self.machine_id)
+        self.delete_requested = True
+        self.stop(done=True)
         self.set_state(NodeState.halt)
 
     @classmethod

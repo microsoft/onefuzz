@@ -28,7 +28,7 @@ uuid = { version = "0.8", features = ["guid"] }
 win-util = { path = "../win-util" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-pdb = "0.6"
+pdb = "0.7"
 winapi = "0.3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
@@ -37,5 +37,5 @@ procfs = "0.9"
 
 [dev-dependencies]
 env_logger = "0.8"
-serde_json = "1.0"
+serde_json = { version = "1.0", features = ["preserve_order"] }
 structopt = "0.3"

@@ -62,13 +62,13 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     // setup tools
     if let Some(tools) = &config.tools {
         tools.init_pull().await?;
-        set_executable(&tools.path).await?;
+        set_executable(&tools.local_path).await?;
     }
 
     // setup crashes
     let crashes = SyncedDir {
-        path: runtime_dir.path().join("crashes"),
-        url: config.crashes.url.clone(),
+        local_path: runtime_dir.path().join("crashes"),
+        remote_path: config.crashes.remote_path.clone(),
     };
     crashes.init().await?;
     let monitor_crashes = crashes.monitor_results(new_result, false);
@@ -92,8 +92,8 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     );
 
     let inputs = SyncedDir {
-        path: runtime_dir.path().join("inputs"),
-        url: config.inputs.url.clone(),
+        local_path: runtime_dir.path().join("inputs"),
+        remote_path: config.inputs.remote_path.clone(),
     };
 
     inputs.init().await?;
@@ -105,7 +105,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         let delay = std::time::Duration::from_secs(10);
         loop {
             dir.sync_pull().await?;
-            if has_files(&dir.path).await? {
+            if has_files(&dir.local_path).await? {
                 break;
             }
             delay_with_jitter(delay).await;
@@ -126,7 +126,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     let stopped = Notify::new();
     let monitor_supervisor =
         monitor_process(process, "supervisor".to_string(), true, Some(&stopped));
-    let hb = config.common.init_heartbeat().await?;
+    let hb = config.common.init_heartbeat(None).await?;
 
     let heartbeat_process = heartbeat_process(&stopped, hb);
 
@@ -177,13 +177,15 @@ async fn start_supervisor(
         .supervisor_exe(&config.supervisor_exe)
         .supervisor_options(&config.supervisor_options)
         .runtime_dir(&runtime_dir)
-        .crashes(&crashes.path)
-        .input_corpus(&inputs.path)
+        .crashes(&crashes.local_path)
+        .input_corpus(&inputs.local_path)
         .reports_dir(&reports_dir)
         .setup_dir(&config.common.setup_dir)
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
-        .set_optional_ref(&config.tools, |expand, tools| expand.tools_dir(&tools.path))
+        .set_optional_ref(&config.tools, |expand, tools| {
+            expand.tools_dir(&tools.local_path)
+        })
         .set_optional_ref(&config.target_exe, |expand, target_exe| {
             expand.target_exe(target_exe)
         })
@@ -200,11 +202,15 @@ async fn start_supervisor(
             tester.instance_telemetry_key(&key)
         })
         .set_optional_ref(
-            &config.crashes.url.clone().and_then(|u| u.account()),
+            &config.crashes.remote_path.clone().and_then(|u| u.account()),
             |tester, account| tester.crashes_account(account),
         )
         .set_optional_ref(
-            &config.crashes.url.clone().and_then(|u| u.container()),
+            &config
+                .crashes
+                .remote_path
+                .clone()
+                .and_then(|u| u.container()),
             |tester, container| tester.crashes_container(container),
         );
 
@@ -286,21 +292,21 @@ mod tests {
         let crashes_local = tempfile::tempdir().unwrap().path().into();
         let corpus_dir_local = tempfile::tempdir().unwrap().path().into();
         let crashes = SyncedDir {
-            path: crashes_local,
-            url: Some(
+            local_path: crashes_local,
+            remote_path: Some(
                 BlobContainerUrl::parse(Url::from_directory_path(fault_dir_temp).unwrap()).unwrap(),
             ),
         };
 
         let corpus_dir_temp = tempfile::tempdir().unwrap();
         let corpus_dir = SyncedDir {
-            path: corpus_dir_local,
-            url: Some(
+            local_path: corpus_dir_local,
+            remote_path: Some(
                 BlobContainerUrl::parse(Url::from_directory_path(corpus_dir_temp).unwrap())
                     .unwrap(),
             ),
         };
-        let seed_file_name = corpus_dir.path.join("seed.txt");
+        let seed_file_name = corpus_dir.local_path.join("seed.txt");
         tokio::fs::write(seed_file_name, "xyz").await.unwrap();
 
         let target_options = Some(vec!["{input}".to_owned()]);
@@ -349,7 +355,7 @@ mod tests {
         let notify = Notify::new();
         let _fuzzing_monitor =
             monitor_process(process, "supervisor".to_string(), false, Some(&notify));
-        let stat_output = crashes.path.join("fuzzer_stats");
+        let stat_output = crashes.local_path.join("fuzzer_stats");
         let start = Instant::now();
         loop {
             if has_stats(&stat_output).await {

@@ -37,10 +37,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [proxy_created](#proxy_created)
 * [proxy_deleted](#proxy_deleted)
 * [proxy_failed](#proxy_failed)
+* [proxy_state_updated](#proxy_state_updated)
 * [regression_reported](#regression_reported)
 * [scaleset_created](#scaleset_created)
 * [scaleset_deleted](#scaleset_deleted)
 * [scaleset_failed](#scaleset_failed)
+* [scaleset_state_updated](#scaleset_state_updated)
 * [task_created](#task_created)
 * [task_failed](#task_failed)
 * [task_heartbeat](#task_heartbeat)
@@ -84,7 +86,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "BlobRef": {
             "properties": {
@@ -588,7 +589,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "container": {
             "title": "Container",
@@ -628,7 +628,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "JobConfig": {
             "properties": {
@@ -737,7 +736,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -918,7 +916,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -959,7 +956,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -1000,7 +996,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "machine_id": {
             "format": "uuid",
@@ -1042,7 +1037,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "NodeState": {
             "description": "An enumeration.",
@@ -1135,7 +1129,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Architecture": {
             "description": "An enumeration.",
@@ -1243,7 +1236,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "pool_name": {
             "title": "Pool Name",
@@ -1264,6 +1256,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1272,8 +1265,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1293,6 +1290,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1301,8 +1299,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1328,6 +1330,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "example error message"
         ]
     },
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
     "region": "eastus"
 }
 ```
@@ -1336,7 +1339,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -1391,6 +1393,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error": {
             "$ref": "#/definitions/Error"
         },
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
         "region": {
             "title": "Region",
             "type": "string"
@@ -1401,6 +1408,61 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error"
     ],
     "title": "EventProxyFailed",
+    "type": "object"
+}
+```
+
+### proxy_state_updated
+
+#### Example
+
+```json
+{
+    "proxy_id": "00000000-0000-0000-0000-000000000000",
+    "region": "eastus",
+    "state": "init"
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "VmState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "extensions_launch",
+                "extensions_failed",
+                "vm_allocation_failed",
+                "running",
+                "stopping",
+                "stopped"
+            ],
+            "title": "VmState"
+        }
+    },
+    "properties": {
+        "proxy_id": {
+            "format": "uuid",
+            "title": "Proxy Id",
+            "type": "string"
+        },
+        "region": {
+            "title": "Region",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/VmState"
+        }
+    },
+    "required": [
+        "region",
+        "proxy_id",
+        "state"
+    ],
+    "title": "EventProxyStateUpdated",
     "type": "object"
 }
 ```
@@ -1470,7 +1532,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "BlobRef": {
             "properties": {
@@ -2047,7 +2108,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "image": {
             "title": "Image",
@@ -2103,7 +2163,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "properties": {
         "pool_name": {
             "title": "Pool Name",
@@ -2145,7 +2204,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Error": {
             "properties": {
@@ -2220,6 +2278,61 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
+### scaleset_state_updated
+
+#### Example
+
+```json
+{
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "state": "init"
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "ScalesetState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "setup",
+                "resize",
+                "running",
+                "shutdown",
+                "halt",
+                "creation_failed"
+            ],
+            "title": "ScalesetState"
+        }
+    },
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
+        "state": {
+            "$ref": "#/definitions/ScalesetState"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "state"
+    ],
+    "title": "EventScalesetStateUpdated",
+    "type": "object"
+}
+```
+
 ### task_created
 
 #### Example
@@ -2266,7 +2379,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -2712,7 +2824,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -3199,7 +3310,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -3612,7 +3722,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -4052,7 +4161,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "ContainerType": {
             "description": "An enumeration.",
@@ -4450,7 +4558,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 ```json
 {
-    "additionalProperties": false,
     "definitions": {
         "Architecture": {
             "description": "An enumeration.",
@@ -4607,7 +4714,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "ErrorCode"
         },
         "EventCrashReported": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4633,7 +4739,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventFileAdded": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4652,7 +4757,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventJobCreated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/JobConfig"
@@ -4674,7 +4778,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventJobStopped": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/JobConfig"
@@ -4703,7 +4806,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeCreated": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4728,7 +4830,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4753,7 +4854,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeHeartbeat": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4778,7 +4878,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventNodeStateUpdated": {
-            "additionalProperties": false,
             "properties": {
                 "machine_id": {
                     "format": "uuid",
@@ -4821,7 +4920,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventPoolCreated": {
-            "additionalProperties": false,
             "properties": {
                 "arch": {
                     "$ref": "#/definitions/Architecture"
@@ -4851,7 +4949,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventPoolDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "pool_name": {
                     "title": "Pool Name",
@@ -4865,8 +4962,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyCreated": {
-            "additionalProperties": false,
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4879,8 +4980,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyDeleted": {
-            "additionalProperties": false,
             "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
                 "region": {
                     "title": "Region",
                     "type": "string"
@@ -4893,10 +4998,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventProxyFailed": {
-            "additionalProperties": false,
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Error"
+                },
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
                 },
                 "region": {
                     "title": "Region",
@@ -4910,8 +5019,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventProxyFailed",
             "type": "object"
         },
+        "EventProxyStateUpdated": {
+            "properties": {
+                "proxy_id": {
+                    "format": "uuid",
+                    "title": "Proxy Id",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/VmState"
+                }
+            },
+            "required": [
+                "region",
+                "proxy_id",
+                "state"
+            ],
+            "title": "EventProxyStateUpdated",
+            "type": "object"
+        },
         "EventRegressionReported": {
-            "additionalProperties": false,
             "properties": {
                 "container": {
                     "title": "Container",
@@ -4937,7 +5068,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetCreated": {
-            "additionalProperties": false,
             "properties": {
                 "image": {
                     "title": "Image",
@@ -4977,7 +5107,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetDeleted": {
-            "additionalProperties": false,
             "properties": {
                 "pool_name": {
                     "title": "Pool Name",
@@ -4997,7 +5126,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventScalesetFailed": {
-            "additionalProperties": false,
             "properties": {
                 "error": {
                     "$ref": "#/definitions/Error"
@@ -5020,8 +5148,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventScalesetFailed",
             "type": "object"
         },
+        "EventScalesetStateUpdated": {
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/ScalesetState"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "state"
+            ],
+            "title": "EventScalesetStateUpdated",
+            "type": "object"
+        },
         "EventTaskCreated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5049,7 +5199,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskFailed": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5081,7 +5230,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskHeartbeat": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5106,7 +5254,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskStateUpdated": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5140,7 +5287,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "type": "object"
         },
         "EventTaskStopped": {
-            "additionalProperties": false,
             "properties": {
                 "config": {
                     "$ref": "#/definitions/TaskConfig"
@@ -5181,9 +5327,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "proxy_created",
                 "proxy_deleted",
                 "proxy_failed",
+                "proxy_state_updated",
                 "scaleset_created",
                 "scaleset_deleted",
                 "scaleset_failed",
+                "scaleset_state_updated",
                 "task_created",
                 "task_failed",
                 "task_state_updated",
@@ -5418,6 +5566,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "Report",
             "type": "object"
+        },
+        "ScalesetState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "setup",
+                "resize",
+                "running",
+                "shutdown",
+                "halt",
+                "creation_failed"
+            ],
+            "title": "ScalesetState"
         },
         "StatsFormat": {
             "description": "An enumeration.",
@@ -5777,6 +5938,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             },
             "title": "UserInfo",
             "type": "object"
+        },
+        "VmState": {
+            "description": "An enumeration.",
+            "enum": [
+                "init",
+                "extensions_launch",
+                "extensions_failed",
+                "vm_allocation_failed",
+                "running",
+                "stopping",
+                "stopped"
+            ],
+            "title": "VmState"
         }
     },
     "properties": {
@@ -5819,6 +5993,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventProxyDeleted"
                 },
                 {
+                    "$ref": "#/definitions/EventProxyStateUpdated"
+                },
+                {
                     "$ref": "#/definitions/EventScalesetFailed"
                 },
                 {
@@ -5826,6 +6003,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventScalesetDeleted"
+                },
+                {
+                    "$ref": "#/definitions/EventScalesetStateUpdated"
                 },
                 {
                     "$ref": "#/definitions/EventTaskFailed"

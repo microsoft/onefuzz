@@ -23,7 +23,7 @@ VM_COUNT = 1
 
 
 class OssFuzz(Command):
-    """ OssFuzz style jobs """
+    """OssFuzz style jobs"""
 
     def _containers(self, project: str, build: str, platform: OS) -> Dict[str, str]:
         guid = self.onefuzz.utils.namespaced_guid(
@@ -236,7 +236,7 @@ class OssFuzz(Command):
             # All fuzzers are copied to the setup container root.
             #
             # Cast because `glob()` returns `str`.
-            fuzzer_blob_name = helper.target_exe_blob_name(fuzzer, None)
+            fuzzer_blob_name = helper.setup_relative_blob_name(fuzzer, None)
 
             self.onefuzz.template.libfuzzer._create_tasks(
                 job=base_helper.job,

@@ -65,14 +65,20 @@ from data_migration import migrate
 from registration import (
     OnefuzzAppRole,
     add_application_password,
-    assign_scaleset_role,
+    assign_app_role,
     authorize_application,
+    get_graph_client,
     register_application,
     set_app_audience,
     update_pool_registration,
 )
 
-USER_IMPERSONATION = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
+# Found by manually assigning the User.Read permission to application
+# registration in the admin portal. The values are in the manifest under
+# the section "requiredResourceAccess"
+USER_READ_PERMISSION = "e1fe6dd8-ba31-4d61-89e7-88639da4683d"
+MICROSOFT_GRAPH_APP_ID = "00000003-0000-0000-c000-000000000000"
+
 ONEFUZZ_CLI_APP = "72f1562a-8c0c-41ea-beb9-fa2b71c80134"
 ONEFUZZ_CLI_AUTHORITY = (
     "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47"
@@ -309,9 +315,9 @@ class Client:
                 required_resource_access=[
                     RequiredResourceAccess(
                         resource_access=[
-                            ResourceAccess(id=USER_IMPERSONATION, type="Scope")
+                            ResourceAccess(id=USER_READ_PERMISSION, type="Scope")
                         ],
-                        resource_app_id="00000002-0000-0000-c000-000000000000",
+                        resource_app_id=MICROSOFT_GRAPH_APP_ID,
                     )
                 ],
                 app_roles=app_roles,
@@ -426,7 +432,20 @@ class Client:
             }
 
         else:
-            authorize_application(uuid.UUID(ONEFUZZ_CLI_APP), app.app_id)
+            onefuzz_cli_app = cli_app[0]
+            authorize_application(uuid.UUID(onefuzz_cli_app.app_id), app.app_id)
+            if self.multi_tenant_domain:
+                authority = COMMON_AUTHORITY
+            else:
+                onefuzz_client = get_graph_client(self.get_subscription_id())
+                authority = (
+                    "https://login.microsoftonline.com/%s"
+                    % onefuzz_client.config.tenant_id
+                )
+            self.cli_config = {
+                "client_id": onefuzz_cli_app.app_id,
+                "authority": authority,
+            }
 
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password
@@ -525,10 +544,11 @@ class Client:
             logger.info("Upgrading: skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
-        assign_scaleset_role(
+        assign_app_role(
             self.application_name,
             self.results["deploy"]["scaleset-identity"]["value"],
             self.get_subscription_id(),
+            OnefuzzAppRole.ManagedNode,
         )
 
     def apply_migrations(self) -> None:
@@ -887,11 +907,14 @@ def arg_file(arg: str) -> str:
 
 
 def main() -> None:
-    states = [
+    rbac_only_states = [
         ("check_region", Client.check_region),
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
+    ]
+
+    full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
@@ -947,8 +970,8 @@ def main() -> None:
     parser.add_argument("--client_secret")
     parser.add_argument(
         "--start_at",
-        default=states[0][0],
-        choices=[x[0] for x in states],
+        default=full_deployment_states[0][0],
+        choices=[x[0] for x in full_deployment_states],
         help=(
             "Debug deployments by starting at a specific state.  "
             "NOT FOR PRODUCTION USE.  (default: %(default)s)"
@@ -993,6 +1016,12 @@ def main() -> None:
         "--subscription_id",
         type=str,
     )
+    parser.add_argument(
+        "--rbac_only",
+        action="store_true",
+        help="execute only the steps required to create the rbac resources",
+    )
+
     args = parser.parse_args()
 
     if shutil.which("func") is None:
@@ -1028,6 +1057,15 @@ def main() -> None:
     logging.basicConfig(level=level)
 
     logging.getLogger("deploy").setLevel(logging.INFO)
+
+    if args.rbac_only:
+        logger.warning(
+            "'rbac_only' specified. The deployment will execute "
+            "only the steps required to create the rbac resources"
+        )
+        states = rbac_only_states
+    else:
+        states = full_deployment_states
 
     if args.start_at != states[0][0]:
         logger.warning(

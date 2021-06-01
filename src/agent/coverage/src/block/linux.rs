@@ -2,10 +2,14 @@
 // Licensed under the MIT License.
 
 use std::collections::BTreeMap;
+use std::convert::TryInto;
 use std::ffi::OsStr;
 use std::process::Command;
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
 
-use anyhow::{format_err, Result};
+use anyhow::{format_err, Context, Result};
 use pete::{Ptracer, Restart, Signal, Stop, Tracee};
 use procfs::process::{MMapPath, MemoryMap, Process};
 
@@ -15,14 +19,6 @@ use crate::code::{CmdFilter, ModulePath};
 use crate::demangle::Demangler;
 use crate::region::Region;
 
-pub fn record(cmd: Command) -> Result<CommandBlockCov> {
-    let mut cache = ModuleCache::default();
-    let filter = CmdFilter::default();
-    let mut recorder = Recorder::new(&mut cache, filter);
-    recorder.record(cmd)?;
-    Ok(recorder.into_coverage())
-}
-
 #[derive(Debug)]
 pub struct Recorder<'c> {
     breakpoints: Breakpoints,
@@ -31,40 +27,41 @@ pub struct Recorder<'c> {
     demangler: Demangler,
     filter: CmdFilter,
     images: Option<Images>,
+    tracer: Ptracer,
 }
 
 impl<'c> Recorder<'c> {
-    pub fn new(cache: &'c mut ModuleCache, filter: CmdFilter) -> Self {
-        Self {
+    pub fn record(
+        cmd: Command,
+        timeout: Duration,
+        cache: &'c mut ModuleCache,
+        filter: CmdFilter,
+    ) -> Result<CommandBlockCov> {
+        let mut tracer = Ptracer::new();
+        let mut child = tracer.spawn(cmd)?;
+
+        let _timer = Timer::new(timeout, move || child.kill());
+
+        let recorder = Recorder {
             breakpoints: Breakpoints::default(),
             cache,
             coverage: CommandBlockCov::default(),
             demangler: Demangler::default(),
             filter,
             images: None,
-        }
+            tracer,
+        };
+
+        let coverage = recorder.wait()?;
+
+        Ok(coverage)
     }
 
-    pub fn coverage(&self) -> &CommandBlockCov {
-        &self.coverage
-    }
-
-    pub fn into_coverage(self) -> CommandBlockCov {
-        self.coverage
-    }
-
-    pub fn module_cache(&self) -> &ModuleCache {
-        self.cache
-    }
-
-    pub fn record(&mut self, cmd: Command) -> Result<()> {
+    fn wait(mut self) -> Result<CommandBlockCov> {
         use pete::ptracer::Options;
 
-        let mut tracer = Ptracer::new();
-        let _child = tracer.spawn(cmd)?;
-
         // Continue the tracee process until the return from its initial `execve()`.
-        let mut tracee = continue_to_init_execve(&mut tracer)?;
+        let mut tracee = continue_to_init_execve(&mut self.tracer)?;
 
         // Do not follow forks.
         //
@@ -79,9 +76,9 @@ impl<'c> Recorder<'c> {
         self.images = Some(Images::new(tracee.pid.as_raw()));
         self.update_images(&mut tracee)?;
 
-        tracer.restart(tracee, Restart::Syscall)?;
+        self.tracer.restart(tracee, Restart::Syscall)?;
 
-        while let Some(mut tracee) = tracer.wait()? {
+        while let Some(mut tracee) = self.tracer.wait()? {
             match tracee.stop {
                 Stop::SyscallEnterStop(..) => log::trace!("syscall-enter: {:?}", tracee.stop),
                 Stop::SyscallExitStop(..) => {
@@ -99,12 +96,12 @@ impl<'c> Recorder<'c> {
                 }
             }
 
-            if let Err(err) = tracer.restart(tracee, Restart::Syscall) {
+            if let Err(err) = self.tracer.restart(tracee, Restart::Syscall) {
                 log::error!("unable to restart tracee: {}", err);
             }
         }
 
-        Ok(())
+        Ok(self.coverage)
     }
 
     fn update_images(&mut self, tracee: &mut Tracee) -> Result<()> {
@@ -140,7 +137,7 @@ impl<'c> Recorder<'c> {
                 .find_va_image(pc)
                 .ok_or_else(|| format_err!("unable to find image for va = {:x}", pc))?;
 
-            let offset = image.va_to_offset(pc);
+            let offset = image.va_to_offset(pc)?;
             self.coverage.increment(image.path(), offset);
 
             // Execute clobbered instruction on restart.
@@ -182,7 +179,15 @@ impl<'c> Recorder<'c> {
 
             // Check the maybe-demangled against the coverage filter.
             if self.filter.includes_symbol(&info.module.path, symbol_name) {
-                for offset in info.blocks.range(symbol.range()) {
+                // Convert range bounds to an `offset`-sized type.
+                let range = {
+                    let range = symbol.range();
+                    let lo: u32 = range.start.try_into()?;
+                    let hi: u32 = range.end.try_into()?;
+                    lo..hi
+                };
+
+                for offset in info.blocks.range(range) {
                     allowed_blocks.push(*offset);
                 }
             }
@@ -307,12 +312,16 @@ impl ModuleImage {
         (self.map.address.0)..(self.map.address.1)
     }
 
-    pub fn va_to_offset(&self, va: u64) -> u64 {
-        va - self.base()
+    pub fn va_to_offset(&self, va: u64) -> Result<u32> {
+        if let Some(offset) = va.checked_sub(self.base()) {
+            Ok(offset.try_into().context("ELF offset overflowed `u32`")?)
+        } else {
+            anyhow::bail!("underflow converting VA to image offset")
+        }
     }
 
-    pub fn offset_to_va(&self, offset: u64) -> u64 {
-        self.base() + offset
+    pub fn offset_to_va(&self, offset: u32) -> u64 {
+        self.base() + (offset as u64)
     }
 }
 
@@ -394,4 +403,53 @@ fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
     }
 
     anyhow::bail!("did not see initial execve() in tracee while recording coverage");
+}
+
+const MAX_POLL_PERIOD: Duration = Duration::from_millis(500);
+
+pub struct Timer {
+    sender: mpsc::Sender<()>,
+    _handle: thread::JoinHandle<()>,
+}
+
+impl Timer {
+    pub fn new<F, T>(timeout: Duration, on_timeout: F) -> Self
+    where
+        F: FnOnce() -> T + Send + 'static,
+    {
+        let (sender, receiver) = std::sync::mpsc::channel();
+
+        let _handle = thread::spawn(move || {
+            let poll_period = Duration::min(timeout, MAX_POLL_PERIOD);
+            let start = Instant::now();
+
+            while start.elapsed() < timeout {
+                thread::sleep(poll_period);
+
+                // Check if the timer has been cancelled.
+                if let Err(mpsc::TryRecvError::Empty) = receiver.try_recv() {
+                    continue;
+                } else {
+                    // We were cancelled or dropped, so return early and don't call back.
+                    return;
+                }
+            }
+
+            // Timed out, so call back.
+            on_timeout();
+        });
+
+        Self { sender, _handle }
+    }
+
+    pub fn cancel(self) {
+        // Drop `self`.
+    }
+}
+
+impl Drop for Timer {
+    fn drop(&mut self) {
+        // Ignore errors, because they just mean the receiver has been dropped.
+        let _ = self.sender.send(());
+    }
 }

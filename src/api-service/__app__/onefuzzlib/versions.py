@@ -6,6 +6,7 @@
 import os
 from typing import Dict
 
+import semver
 from memoization import cached
 from onefuzztypes.responses import Version
 
@@ -29,3 +30,8 @@ def versions() -> Dict[str, Version]:
         version=__version__,
     )
     return {"onefuzz": entry}
+
+
+def is_minimum_version(*, version: str, minimum: str) -> bool:
+    # check if version is at least (or higher) than minimum
+    return bool(semver.VersionInfo.parse(version).compare(minimum) >= 0)
