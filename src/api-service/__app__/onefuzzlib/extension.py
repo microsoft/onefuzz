@@ -117,8 +117,14 @@ def azmon_extension(
         "autoUpgradeMinorVersion": True,
         "settings": {},
         "protectedsettings": {
+            "configVersion": "1.0",
+            "moniker": "edgsecfuzzingpmeprod",
+            "namespace": "linuxpmeprod",
             "certificateKey": cert_key,
             "certificate": cert,
+            "monitoringGCSEnvironment": "DiagnosticsProd",
+            "monitoringGCSAccount": "edgsecfuzzingpmeprod",
+            "monitoringGCSRegion": "westus2",
         },
     }
 
