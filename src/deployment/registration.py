@@ -319,7 +319,7 @@ def add_application_password_impl(
             body=password_request,
         )
         return (str(key), password["secretText"])
-    except (adal.AdalError, AuthenticationError):
+    except AuthenticationError:
         return add_application_password_legacy(app_object_id, subscription_id)
 
 
@@ -377,7 +377,7 @@ def authorize_application(
                 }
             },
         )
-    except (adal.AdalError, AuthenticationError):
+    except AuthenticationError:
         logger.warning("*** Browse to: %s", FIX_URL % onefuzz_app_id)
         logger.warning("*** Then add the client application %s", registration_app_id)
 
@@ -544,11 +544,9 @@ def assign_app_role(
                     "appRoleId": managed_node_role["id"],
                 },
             )
-    except (adal.AdalError, AuthenticationError):
+    except AuthenticationError:
         assign_app_role_manually(
             onefuzz_instance_name, application_name, subscription_id, app_role
-        )
-
 
 def set_app_audience(objectId: str, audience: str) -> None:
     # typical audience values: AzureADMyOrg, AzureADMultipleOrgs
