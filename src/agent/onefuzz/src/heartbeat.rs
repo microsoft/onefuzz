@@ -11,7 +11,7 @@ use std::{
     time::Duration,
 };
 use storage_queue::QueueClient;
-use tokio::{sync::Notify, task, task::JoinHandle};
+use tokio::{sync::Notify, task, task::JoinHandle, time::sleep};
 
 const DEFAULT_HEARTBEAT_PERIOD: Duration = Duration::from_secs(60 * 5);
 
@@ -73,6 +73,7 @@ where
     pub fn init_heartbeat<F, Fut>(
         context: TContext,
         queue_url: Url,
+        initial_delay: Option<Duration>,
         heartbeat_period: Option<Duration>,
         flush: F,
     ) -> Result<HeartbeatClient<TContext, T>>
@@ -93,7 +94,11 @@ where
 
         let flush_context = context.clone();
         let heartbeat_process = task::spawn(async move {
-            random_delay(heartbeat_period).await;
+            if let Some(initial_delay) = initial_delay {
+                sleep(initial_delay).await;
+            } else {
+                random_delay(heartbeat_period).await;
+            }
             flush(flush_context.clone()).await;
             while !flush_context.cancelled.is_notified(heartbeat_period).await {
                 flush(flush_context.clone()).await;

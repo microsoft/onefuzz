@@ -67,7 +67,7 @@ impl GeneratorTask {
             set_executable(&tools.local_path).await?;
         }
 
-        let hb_client = self.config.common.init_heartbeat().await?;
+        let hb_client = self.config.common.init_heartbeat(None).await?;
 
         for dir in &self.config.readonly_inputs {
             dir.init_pull().await?;

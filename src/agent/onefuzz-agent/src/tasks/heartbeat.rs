@@ -6,6 +6,7 @@ use crate::onefuzz::machine_id::{get_machine_id, get_machine_name};
 use anyhow::Result;
 use reqwest::Url;
 use serde::{self, Deserialize, Serialize};
+use std::time::Duration;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize, Hash, Eq, PartialEq, Clone)]
@@ -38,6 +39,7 @@ pub async fn init_task_heartbeat(
     queue_url: Url,
     task_id: Uuid,
     job_id: Uuid,
+    initial_delay: Option<Duration>,
 ) -> Result<TaskHeartbeatClient> {
     let machine_id = get_machine_id().await?;
     let machine_name = get_machine_name().await?;
@@ -49,6 +51,7 @@ pub async fn init_task_heartbeat(
             machine_name,
         },
         queue_url,
+        initial_delay,
         None,
         |context| async move {
             let task_id = context.state.task_id;
