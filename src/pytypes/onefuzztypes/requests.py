@@ -3,10 +3,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import AnyHttpUrl, BaseModel, Field, validator
+from pydantic import AnyHttpUrl, BaseModel, Field, root_validator, validator
 
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
@@ -107,9 +107,20 @@ class PoolStop(BaseRequest):
 
 
 class ProxyGet(BaseRequest):
-    scaleset_id: UUID
-    machine_id: UUID
-    dst_port: int
+    scaleset_id: Optional[UUID]
+    machine_id: Optional[UUID]
+    dst_port: Optional[int]
+
+    @root_validator()
+    def check_proxy_get(cls, value: Any) -> Any:
+        check_keys = ["scaleset_id", "machine_id", "dst_port"]
+        included = [x in value for x in check_keys]
+        if any(included) and not all(included):
+            raise ValueError(
+                "ProxyGet must provide all or none of the following: %s"
+                % ", ".join(check_keys)
+            )
+        return value
 
 
 class ProxyCreate(BaseRequest):

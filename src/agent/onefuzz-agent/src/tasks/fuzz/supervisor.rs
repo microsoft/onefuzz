@@ -126,7 +126,7 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     let stopped = Notify::new();
     let monitor_supervisor =
         monitor_process(process, "supervisor".to_string(), true, Some(&stopped));
-    let hb = config.common.init_heartbeat().await?;
+    let hb = config.common.init_heartbeat(None).await?;
 
     let heartbeat_process = heartbeat_process(&stopped, hb);
 

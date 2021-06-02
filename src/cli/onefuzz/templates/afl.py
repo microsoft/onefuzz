@@ -116,7 +116,7 @@ class AFL(Command):
         ):
             raise Exception("AFL requires at least one input")
 
-        target_exe_blob_name = helper.target_exe_blob_name(target_exe, setup_dir)
+        target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
         if afl_container is None:
             afl_container = Container(

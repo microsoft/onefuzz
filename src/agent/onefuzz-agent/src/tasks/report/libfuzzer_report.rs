@@ -175,7 +175,7 @@ pub struct AsanProcessor {
 
 impl AsanProcessor {
     pub async fn new(config: Arc<Config>) -> Result<Self> {
-        let heartbeat_client = config.common.init_heartbeat().await?;
+        let heartbeat_client = config.common.init_heartbeat(None).await?;
 
         Ok(Self {
             config,

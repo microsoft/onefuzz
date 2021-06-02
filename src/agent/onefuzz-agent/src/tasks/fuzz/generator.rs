@@ -67,7 +67,7 @@ impl GeneratorTask {
             set_executable(&tools.local_path).await?;
         }
 
-        let hb_client = self.config.common.init_heartbeat().await?;
+        let hb_client = self.config.common.init_heartbeat(None).await?;
 
         for dir in &self.config.readonly_inputs {
             dir.init_pull().await?;
@@ -148,6 +148,7 @@ impl GeneratorTask {
         utils::reset_tmp_dir(&output_dir).await?;
         let (mut generator, generator_path) = {
             let expand = Expand::new()
+                .setup_dir(&self.config.common.setup_dir)
                 .generated_inputs(&output_dir)
                 .input_corpus(&corpus_dir)
                 .generator_exe(&self.config.generator_exe)

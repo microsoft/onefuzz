@@ -1468,6 +1468,9 @@ class ScalesetProxy(Endpoint):
             ),
         )
 
+    def list(self) -> responses.ProxyList:
+        return self._req_model("GET", responses.ProxyList, data=requests.ProxyGet())
+
 
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
@@ -1525,9 +1528,22 @@ class Onefuzz:
 
         self.__setup__()
 
-    def __setup__(self, endpoint: Optional[str] = None) -> None:
+    def __setup__(
+        self,
+        endpoint: Optional[str] = None,
+        client_id: Optional[str] = None,
+        authority: Optional[str] = None,
+        tenant_domain: Optional[str] = None,
+    ) -> None:
+
         if endpoint:
             self._backend.config.endpoint = endpoint
+        if authority is not None:
+            self._backend.config.authority = authority
+        if client_id is not None:
+            self._backend.config.client_id = client_id
+        if tenant_domain is not None:
+            self._backend.config.tenant_domain = tenant_domain
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates._load_cache()

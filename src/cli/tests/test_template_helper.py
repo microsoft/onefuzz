@@ -63,10 +63,10 @@ class TestHelper(unittest.TestCase):
                 values[(filename, Directory("c:\\unused\\"))] = expected
 
         for (args, expected) in values.items():
-            self.assertEqual(helper.target_exe_blob_name(*args), expected)
+            self.assertEqual(helper.setup_relative_blob_name(*args), expected)
 
         with self.assertRaises(ValueError):
-            helper.target_exe_blob_name(
+            helper.setup_relative_blob_name(
                 File("dir/filename.txt"), Directory("other_dir")
             )
 
