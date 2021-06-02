@@ -3,11 +3,16 @@
 
 use anyhow::{Context, Result};
 use backoff::{self, future::retry_notify, ExponentialBackoff};
-use std::ffi::OsStr;
-use std::fmt;
-use std::process::Stdio;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::Duration;
+use std::{
+    ffi::OsStr,
+    fmt,
+    path::Path,
+    process::Stdio,
+    sync::atomic::{AtomicUsize, Ordering},
+    time::Duration,
+};
+use tempfile::tempdir;
+use tokio::fs;
 use tokio::process::Command;
 
 const RETRY_INTERVAL: Duration = Duration::from_secs(5);
@@ -29,15 +34,35 @@ impl fmt::Display for Mode {
     }
 }
 
+// NOTE, this is intended to read a single file in a tempdir managed by the
+// caller, rather than the default AZCOPY log location.
+async fn read_azcopy_log_file(path: &Path) -> Result<String> {
+    let mut entries = fs::read_dir(path).await?;
+    // there should be only up to one file in azcopy_log dir
+    if let Some(file) = entries.next_entry().await? {
+        fs::read_to_string(file.path())
+            .await
+            .with_context(|| format!("unable to read file: {}", file.path().display()))
+    } else {
+        bail!("no log file in path: {}", path.display());
+    }
+}
+
 async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
+    let temp_dir = tempdir()?;
+
+    // https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-configure#change-the-location-of-log-files
     let mut cmd = Command::new("azcopy");
     cmd.kill_on_drop(true)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .env("AZCOPY_LOG_LOCATION", temp_dir.path())
         .arg(mode.to_string())
         .arg(&src)
         .arg(&dst)
+        .arg("--log-level")
+        .arg("ERROR")
         .args(args);
 
     let output = cmd
@@ -49,13 +74,17 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
     if !output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
+        let logfile = read_azcopy_log_file(temp_dir.path())
+            .await
+            .unwrap_or_else(|e| format!("unable to read azcopy log file from: {:?}", e));
         anyhow::bail!(
-            "azcopy {} failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?}",
+            "azcopy {} failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?} log:{:?}",
             mode,
             src,
             dst,
             stdout,
-            stderr
+            stderr,
+            logfile,
         );
     }
 
