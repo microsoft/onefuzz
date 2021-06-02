@@ -30,6 +30,7 @@ from pydantic import BaseModel
 from six.moves import input  # workaround for static analysis
 
 from .__version__ import __version__
+from .azcopy import azcopy_sync
 from .backend import Backend, BackendConfig, ContainerWrapper, wait
 from .ssh import build_ssh_command, ssh_connect, temp_file
 
@@ -969,6 +970,33 @@ class JobContainers(Endpoint):
         for container in containers:
             results[container] = self.onefuzz.containers.files.list(container).files
         return results
+
+    def download(
+        self, job_id: UUID_EXPANSION, *, output: Optional[primitives.Directory] = None
+    ) -> None:
+        to_download = {}
+        tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
+        if not tasks:
+            raise Exception("no tasks with job_id:%s" % job_id)
+
+        for task in tasks:
+            for container in task.config.containers:
+                info = self.onefuzz.containers.get(container.name)
+                name = os.path.join(container.type.name, container.name)
+                to_download[name] = info.sas_url
+
+        if output is None:
+            output = primitives.Directory(os.getcwd())
+
+        for name in to_download:
+            outdir = os.path.join(output, name)
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+            self.logger.info("downloading: %s", name)
+            # security note: the src for azcopy comes from the server which is
+            # trusted in this context, while the destination is provided by the
+            # user
+            azcopy_sync(to_download[name], outdir)
 
 
 class JobTasks(Endpoint):
