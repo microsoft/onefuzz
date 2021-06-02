@@ -7,7 +7,7 @@ use arraydeque::{ArrayDeque, Wrapping};
 use futures::future::try_join_all;
 use onefuzz::{
     fs::list_files,
-    libfuzzer::{LibFuzzer, LibFuzzerLineParser},
+    libfuzzer::{LibFuzzer, LibFuzzerLine},
     process::ExitStatus,
     syncdir::{continuous_sync, SyncOperation::Pull, SyncedDir},
     system,
@@ -229,7 +229,6 @@ impl LibFuzzerFuzzTask {
         let mut stderr = BufReader::new(stderr);
 
         let mut libfuzzer_output: ArrayDeque<[_; LOGS_BUFFER_SIZE], Wrapping> = ArrayDeque::new();
-        let parser = LibFuzzerLineParser::new()?;
         loop {
             let mut buf = vec![];
             let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
@@ -238,9 +237,7 @@ impl LibFuzzerFuzzTask {
             }
             let line = String::from_utf8_lossy(&buf).to_string();
             if let Some(stats_sender) = stats_sender {
-                if let Err(err) =
-                    try_report_iter_update(stats_sender, worker_id, run_id, &line, &parser)
-                {
+                if let Err(err) = try_report_iter_update(stats_sender, worker_id, run_id, &line) {
                     error!("could not parse fuzzing interation update: {}", err);
                 }
             }
@@ -317,9 +314,8 @@ fn try_report_iter_update(
     worker_id: usize,
     run_id: Uuid,
     line: &str,
-    parser: &LibFuzzerLineParser,
 ) -> Result<()> {
-    if let Some(line) = parser.parse(line)? {
+    if let Some(line) = LibFuzzerLine::parse(line)? {
         stats_sender.send(RuntimeStats {
             worker_id,
             run_id,

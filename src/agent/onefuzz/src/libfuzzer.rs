@@ -21,6 +21,13 @@ use tokio::process::{Child, Command};
 
 const DEFAULT_MAX_TOTAL_SECONDS: i32 = 10 * 60;
 
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref LIBFUZZERLINEREGEX: regex::Regex =
+        regex::Regex::new(r"#(\d+)\s*(?:pulse|INITED|NEW|REDUCE).*exec/s: (\d+)").unwrap();
+}
+
 #[derive(Debug)]
 pub struct LibFuzzerMergeOutput {
     pub added_files_count: i32,
@@ -288,29 +295,6 @@ impl<'a> LibFuzzer<'a> {
     }
 }
 
-pub struct LibFuzzerLineParser {
-    regex: regex::Regex,
-}
-
-impl LibFuzzerLineParser {
-    pub fn new() -> Result<Self> {
-        let regex = regex::Regex::new(r"#(\d+)\s*(?:pulse|INITED|NEW|REDUCE).*exec/s: (\d+)")?;
-        Ok(Self { regex })
-    }
-
-    pub fn parse(&self, line: &str) -> Result<Option<LibFuzzerLine>> {
-        let caps = match self.regex.captures(line) {
-            Some(caps) => caps,
-            None => return Ok(None),
-        };
-
-        let iters = caps[1].parse()?;
-        let execs_sec = caps[2].parse()?;
-
-        Ok(Some(LibFuzzerLine::new(line.to_string(), iters, execs_sec)))
-    }
-}
-
 pub struct LibFuzzerLine {
     _line: String,
     iters: u64,
@@ -318,6 +302,18 @@ pub struct LibFuzzerLine {
 }
 
 impl LibFuzzerLine {
+    pub fn parse(line: &str) -> Result<Option<Self>> {
+        let caps = match LIBFUZZERLINEREGEX.captures(line) {
+            Some(caps) => caps,
+            None => return Ok(None),
+        };
+
+        let iters = caps[1].parse()?;
+        let execs_sec = caps[2].parse()?;
+
+        Ok(Some(Self::new(line.to_string(), iters, execs_sec)))
+    }
+
     pub fn new(line: String, iters: u64, execs_sec: f64) -> Self {
         Self {
             iters,
@@ -342,10 +338,8 @@ mod tests {
     #[test]
     fn test_libfuzzer_line_pulse() {
         let line = r"#2097152        pulse  cov: 11 ft: 11 corp: 6/21b lim: 4096 exec/s: 699050 rss: 562Mb";
-        let parser = LibFuzzerLineParser::new().unwrap();
 
-        let parsed = parser
-            .parse(line)
+        let parsed = LibFuzzerLine::parse(line)
             .expect("parse error")
             .expect("no captures");
 
