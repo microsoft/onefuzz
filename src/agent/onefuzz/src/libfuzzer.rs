@@ -302,6 +302,14 @@ pub struct LibFuzzerLine {
 }
 
 impl LibFuzzerLine {
+    pub fn new(line: String, iters: u64, execs_sec: f64) -> Self {
+        Self {
+            iters,
+            _line: line,
+            execs_sec,
+        }
+    }
+
     pub fn parse(line: &str) -> Result<Option<Self>> {
         let caps = match LIBFUZZERLINEREGEX.captures(line) {
             Some(caps) => caps,
@@ -312,14 +320,6 @@ impl LibFuzzerLine {
         let execs_sec = caps[2].parse()?;
 
         Ok(Some(Self::new(line.to_string(), iters, execs_sec)))
-    }
-
-    pub fn new(line: String, iters: u64, execs_sec: f64) -> Self {
-        Self {
-            iters,
-            _line: line,
-            execs_sec,
-        }
     }
 
     pub fn iters(&self) -> u64 {
