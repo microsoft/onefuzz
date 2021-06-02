@@ -10,8 +10,9 @@ pub fn failure_path() -> Result<PathBuf> {
 }
 
 pub fn save_failure(err: &Error) -> Result<()> {
+    error!("saving failure: {:?}", err);
     let path = failure_path()?;
-    let message = format!("{}", err);
+    let message = format!("{:?}", err);
     fs::write(&path, message)
         .with_context(|| format!("unable to write failure log: {}", path.display()))
 }

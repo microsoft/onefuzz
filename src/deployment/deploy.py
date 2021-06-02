@@ -347,7 +347,7 @@ class Client:
                             not in str(err)
                         ):
                             raise err
-                    logging.warning(
+                    logger.warning(
                         "creating service principal failed with an error that occurs "
                         "due to AAD race conditions"
                     )
@@ -533,7 +533,7 @@ class Client:
                     "PrincipalNotFound" in as_repr
                     and "does not exist in the directory" in as_repr
                 ):
-                    logging.info("application principal not available in AAD yet")
+                    logger.info("application principal not available in AAD yet")
         if error:
             raise error
         else:

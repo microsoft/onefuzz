@@ -82,7 +82,7 @@ impl GenericRegressionTask {
 
     pub async fn run(&self) -> Result<()> {
         info!("Starting generic regression task");
-        let heartbeat_client = self.config.common.init_heartbeat().await?;
+        let heartbeat_client = self.config.common.init_heartbeat(None).await?;
 
         let mut report_dirs = vec![];
         for dir in vec![
