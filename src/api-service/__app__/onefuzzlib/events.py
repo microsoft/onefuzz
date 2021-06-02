@@ -24,7 +24,7 @@ def get_events() -> Optional[str]:
     for _ in range(5):
         try:
             event = EVENTS.get(block=False)
-            events.append(json.loads(event.json(exclude_none=True)))
+            events.append(json.loads(event))
             EVENTS.task_done()
         except Empty:
             break
@@ -36,13 +36,13 @@ def get_events() -> Optional[str]:
 
 
 def log_event(event: Event, event_type: EventType) -> None:
-    scrubbed_event = filter_event(event, event_type)
+    scrubbed_event = filter_event(event)
     logging.info(
         "sending event: %s - %s", event_type, scrubbed_event.json(exclude_none=True)
     )
 
 
-def filter_event(event: Event, event_type: EventType) -> BaseModel:
+def filter_event(event: Event) -> BaseModel:
     clone_event = event.copy(deep=True)
     filtered_event = filter_event_recurse(clone_event)
     return filtered_event
@@ -73,12 +73,18 @@ def filter_event_recurse(entry: BaseModel) -> BaseModel:
 
 def send_event(event: Event) -> None:
     event_type = get_event_type(event)
-    log_event(event, event_type)
+
     event_message = EventMessage(
         event_type=event_type,
-        event=event,
+        event=event.copy(deep=True),
         instance_id=get_instance_id(),
         instance_name=get_instance_name(),
     )
-    EVENTS.put(event_message)
+
+    # work around odd bug with Event Message creation.  See PR 939
+    if event_message.event != event:
+        event_message.event = event.copy(deep=True)
+
+    EVENTS.put(event_message.json())
     Webhook.send_event(event_message)
+    log_event(event, event_type)
