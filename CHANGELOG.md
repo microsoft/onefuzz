@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI: Added `onefuzz jobs containers download` command. [#953](https://github.com/microsoft/onefuzz/pull/953)
 
 ### Changed
-* Agent/Service: Agents scheduled to shutdown no longer wait for work prior to shutting down.  [#940](https://github.com/microsoft/onefuzz/pull/940)
+* Agent/Service: Agents scheduled to shut down no longer wait for work prior to shutting down.  [#940](https://github.com/microsoft/onefuzz/pull/940)
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#942](https://github.com/microsoft/onefuzz/pull/942)
 * Agent: Continued deveopment related to upcoming features. [#937](https://github.com/microsoft/onefuzz/pull/937), [#929](https://github.com/microsoft/onefuzz/pull/929), [#919](https://github.com/microsoft/onefuzz/pull/919)
 * CLI: Message details are now always shown in `onefuzz status top`.  [#933](https://github.com/microsoft/onefuzz/pull/933)
