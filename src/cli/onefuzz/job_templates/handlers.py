@@ -11,7 +11,6 @@ from onefuzztypes.job_templates import JobTemplateConfig, JobTemplateRequest
 from onefuzztypes.models import Job, TaskContainers
 
 from ..api import Endpoint
-from ..templates import _build_container_name
 from .job_monitor import JobMonitor
 
 
@@ -75,13 +74,12 @@ class TemplateSubmitHandler(Endpoint):
                     raise TypeError
                 if not isinstance(request.user_fields["build"], str):
                     raise TypeError
-                container_name = _build_container_name(
-                    self.onefuzz,
-                    container_type,
-                    request.user_fields["project"],
-                    request.user_fields["name"],
-                    request.user_fields["build"],
-                    config.os,
+                container_name = self.onefuzz.utils.build_container_name(
+                    container_type=container_type,
+                    project=request.user_fields["project"],
+                    name=request.user_fields["name"],
+                    build=request.user_fields["build"],
+                    platform=config.os,
                 )
                 request.containers.append(
                     TaskContainers(name=container_name, type=container_type)
