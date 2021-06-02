@@ -5,7 +5,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -91,7 +91,7 @@ class EventTaskHeartbeat(BaseEvent):
     config: TaskConfig
 
 
-class EventPing(BaseResponse):
+class EventPing(BaseEvent, BaseResponse):
     ping_id: UUID
 
 
@@ -300,3 +300,22 @@ class EventMessage(BaseEvent):
     event: Event
     instance_id: UUID
     instance_name: str
+
+
+# because Pydantic does not yet have discriminated union types yet, parse events
+# by hand.  https://github.com/samuelcolvin/pydantic/issues/619
+def parse_event_message(data: Dict[str, Any]) -> EventMessage:
+    instance_id = UUID(data["instance_id"])
+    instance_name = data["instance_name"]
+    event_id = UUID(data["event_id"])
+    event_type = EventType[data["event_type"]]
+    # mypy incorrectly identifies this as having not supported parse_obj yet
+    event = EventTypeMap[event_type].parse_obj(data["event"])  # type: ignore
+
+    return EventMessage(
+        event_id=event_id,
+        event_type=event_type,
+        event=event,
+        instance_id=instance_id,
+        instance_name=instance_name,
+    )
