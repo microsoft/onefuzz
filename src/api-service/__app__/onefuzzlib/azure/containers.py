@@ -10,7 +10,7 @@ import urllib.parse
 from typing import Dict, Optional, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
-from azure.core.exceptions import ResourceExistsError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import (
     BlobClient,
     BlobSasPermissions,
@@ -146,12 +146,16 @@ def create_container(
 
 def delete_container(container: Container, storage_type: StorageType) -> bool:
     accounts = get_accounts(storage_type)
+    deleted = False
     for account in accounts:
         service = get_blob_service(account)
-        if bool(service.delete_container(container)):
-            return True
+        try:
+            service.delete_container(container)
+            deleted = True
+        except ResourceNotFoundError:
+            pass
 
-    return False
+    return deleted
 
 
 def get_container_sas_url_service(
