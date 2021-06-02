@@ -1017,14 +1017,10 @@ class JobContainers(Endpoint):
             self.logger.info("not removing: %s", container_name)
 
         for container_name in to_delete:
-            try:
-                self.onefuzz.containers.get(container_name)
-                self.onefuzz.containers.delete(container_name)
+            if self.onefuzz.containers.delete(container_name).result:
                 self.logger.info("removed container: %s", container_name)
-            except Exception as err:
-                self.logger.error(
-                    "error removing container %s: %s", container_name, err
-                )
+            else:
+                self.logger.info("container already removed: %s", container_name)
 
 
 class JobTasks(Endpoint):
