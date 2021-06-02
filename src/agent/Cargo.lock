@@ -1475,7 +1475,6 @@ dependencies = [
  "base64",
  "bytes 1.0.1",
  "cpp_demangle",
- "crossbeam-epoch",
  "debugger",
  "dunce",
  "futures",
