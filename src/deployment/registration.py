@@ -12,7 +12,6 @@ from enum import Enum
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
-import adal  # type: ignore
 import requests
 from azure.cli.core.azclierror import AuthenticationError
 from azure.common.client_factory import get_client_from_cli_profile
