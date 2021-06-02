@@ -22,7 +22,6 @@ from onefuzztypes.primitives import Container, Directory
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
-from .azcopy import azcopy_sync
 from .backend import wait
 from .rdp import rdp_connect
 from .ssh import ssh_connect
@@ -337,26 +336,7 @@ class DebugJob(Command):
     def download_files(self, job_id: UUID_EXPANSION, output: Directory) -> None:
         """Download the containers by container type for each task in the specified job"""
 
-        to_download = {}
-        tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
-        if not tasks:
-            raise Exception("no tasks with job_id:%s" % job_id)
-
-        for task in tasks:
-            for container in task.config.containers:
-                info = self.onefuzz.containers.get(container.name)
-                name = os.path.join(container.type.name, container.name)
-                to_download[name] = info.sas_url
-
-        for name in to_download:
-            outdir = os.path.join(output, name)
-            if not os.path.exists(outdir):
-                os.makedirs(outdir)
-            self.logger.info("downloading: %s", name)
-            # security note: the src for azcopy comes from the server which is
-            # trusted in this context, while the destination is provided by the
-            # user
-            azcopy_sync(to_download[name], outdir)
+        self.onefuzz.jobs.containers.download(job_id, output=output)
 
 
 class DebugLog(Command):
