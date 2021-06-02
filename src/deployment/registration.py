@@ -12,8 +12,8 @@ from enum import Enum
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 from uuid import UUID, uuid4
 
-import adal  # type: ignore
 import requests
+from azure.cli.core.azclierror import AuthenticationError
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
@@ -251,10 +251,10 @@ def add_application_password(
     while count < tries:
         count += 1
         if count > 1:
-            logging.info("retrying app password creation")
+            logger.info("retrying app password creation")
         try:
             password = add_application_password_impl(app_object_id, subscription_id)
-            logging.info("app password created")
+            logger.info("app password created")
             return password
         except GraphQueryError as err:
             error = err
@@ -264,9 +264,9 @@ def add_application_password(
             #   azure/cli/command_modules/util/tests/
             #   latest/test_rest.py#L191-L192
             if "Request_ResourceNotFound" in repr(err):
-                logging.info("app unavailable in AAD, unable to create password yet")
+                logger.info("app unavailable in AAD, unable to create password yet")
             else:
-                logging.warning("unable to create app password: %s", err.message)
+                logger.warning("unable to create app password: %s", err.message)
         time.sleep(wait_duration)
     if error:
         raise error
@@ -318,7 +318,7 @@ def add_application_password_impl(
             body=password_request,
         )
         return (str(key), password["secretText"])
-    except adal.AdalError:
+    except AuthenticationError:
         return add_application_password_legacy(app_object_id, subscription_id)
 
 
@@ -376,7 +376,7 @@ def authorize_application(
                 }
             },
         )
-    except adal.AdalError:
+    except AuthenticationError:
         logger.warning("*** Browse to: %s", FIX_URL % onefuzz_app_id)
         logger.warning("*** Then add the client application %s", registration_app_id)
 
@@ -543,7 +543,7 @@ def assign_app_role(
                     "appRoleId": managed_node_role["id"],
                 },
             )
-    except adal.AdalError:
+    except AuthenticationError:
         assign_app_role_manually(
             onefuzz_instance_name, application_name, subscription_id, app_role
         )

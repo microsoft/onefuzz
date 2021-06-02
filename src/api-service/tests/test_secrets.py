@@ -22,20 +22,21 @@ from onefuzztypes.models import (
 )
 from onefuzztypes.primitives import Container
 
-from __app__.onefuzzlib.orm import ORMMixin
+from __app__.onefuzzlib.orm import hide_secrets
 
 
 class TestSecret(unittest.TestCase):
     def test_hide(self) -> None:
-        def hider(secret_data: SecretData) -> None:
+        def hider(secret_data: SecretData) -> SecretData:
             if not isinstance(secret_data.secret, SecretAddress):
                 secret_data.secret = SecretAddress(url="blah blah")
+            return secret_data
 
         notification = Notification(
             container=Container("data"),
             config=TeamsTemplate(url=SecretData(secret="http://test")),
         )
-        ORMMixin.hide_secrets(notification, hider)
+        notification = hide_secrets(notification, hider)
 
         if isinstance(notification.config, TeamsTemplate):
             self.assertIsInstance(notification.config.url, SecretData)
@@ -44,9 +45,10 @@ class TestSecret(unittest.TestCase):
             self.fail(f"Invalid config type {type(notification.config)}")
 
     def test_hide_nested_list(self) -> None:
-        def hider(secret_data: SecretData) -> None:
+        def hider(secret_data: SecretData) -> SecretData:
             if not isinstance(secret_data.secret, SecretAddress):
                 secret_data.secret = SecretAddress(url="blah blah")
+            return secret_data
 
         job_template_index = JobTemplateIndex(
             name="test",
@@ -65,7 +67,7 @@ class TestSecret(unittest.TestCase):
                 user_fields=[],
             ),
         )
-        ORMMixin.hide_secrets(job_template_index, hider)
+        job_template_index = hide_secrets(job_template_index, hider)
         notification = job_template_index.template.notifications[0].notification
         if isinstance(notification.config, TeamsTemplate):
             self.assertIsInstance(notification.config.url, SecretData)

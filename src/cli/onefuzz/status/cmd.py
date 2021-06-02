@@ -113,12 +113,11 @@ class Status(Command):
     def top(
         self,
         *,
-        show_details: bool = False,
         job_id: Optional[List[UUID]] = None,
         project: Optional[List[str]] = None,
         name: Optional[List[str]] = None,
     ) -> None:
         """Onefuzz Top"""
         job_filter = JobFilter(job_id=job_id, project=project, name=name)
-        top = Top(self.onefuzz, self.logger, show_details, job_filter)
+        top = Top(self.onefuzz, self.logger, job_filter)
         top.run()

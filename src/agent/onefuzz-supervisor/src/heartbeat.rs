@@ -39,6 +39,7 @@ pub async fn init_agent_heartbeat(queue_url: Url) -> Result<AgentHeartbeatClient
         },
         queue_url,
         None,
+        None,
         |context| async move {
             let data = HeartbeatClient::drain_current_messages(context.clone());
             let _ = context
