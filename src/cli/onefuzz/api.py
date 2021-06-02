@@ -970,6 +970,61 @@ class JobContainers(Endpoint):
             results[container] = self.onefuzz.containers.files.list(container).files
         return results
 
+    def delete(
+        self,
+        job_id: UUID_EXPANSION,
+        *,
+        only_job_specific: bool = True,
+        dryrun: bool = False,
+    ) -> None:
+        SAFE_TO_REMOVE = [
+            enums.ContainerType.crashes,
+            enums.ContainerType.setup,
+            enums.ContainerType.inputs,
+            enums.ContainerType.reports,
+            enums.ContainerType.unique_inputs,
+            enums.ContainerType.unique_reports,
+            enums.ContainerType.no_repro,
+            enums.ContainerType.analysis,
+            enums.ContainerType.coverage,
+            enums.ContainerType.readonly_inputs,
+            enums.ContainerType.regression_reports,
+        ]
+
+        job = self.onefuzz.jobs.get(job_id)
+        containers = set()
+        to_delete = set()
+        for task in self.onefuzz.jobs.tasks.list(job_id=job.job_id):
+            for container in task.config.containers:
+                containers.add(container.name)
+                if container.type not in SAFE_TO_REMOVE:
+                    continue
+                elif not only_job_specific:
+                    to_delete.add(container.name)
+                elif only_job_specific and (
+                    self.onefuzz.utils.build_container_name(
+                        container_type=container.type,
+                        project=job.config.project,
+                        name=job.config.name,
+                        build=job.config.build,
+                        platform=task.os,
+                    )
+                    == container.name
+                ):
+                    to_delete.add(container.name)
+
+        to_keep = containers - to_delete
+        for container_name in to_keep:
+            self.logger.info("not removing: %s", container_name)
+
+        for container_name in to_delete:
+            if dryrun:
+                self.logger.info("container would be deleted: %s", container_name)
+            elif self.onefuzz.containers.delete(container_name).result:
+                self.logger.info("removed container: %s", container_name)
+            else:
+                self.logger.info("container already removed: %s", container_name)
+
 
 class JobTasks(Endpoint):
     """Interact with tasks within a job"""
@@ -1494,6 +1549,39 @@ class Utils(Command):
         if platform is not None:
             identifiers.append(platform)
         return uuid.uuid5(ONEFUZZ_GUID_NAMESPACE, ":".join(identifiers))
+
+    def build_container_name(
+        self,
+        *,
+        container_type: enums.ContainerType,
+        project: str,
+        name: str,
+        build: str,
+        platform: enums.OS,
+    ) -> primitives.Container:
+        if container_type in [enums.ContainerType.setup, enums.ContainerType.coverage]:
+            guid = self.namespaced_guid(
+                project,
+                name,
+                build=build,
+                platform=platform.name,
+            )
+        elif container_type == enums.ContainerType.regression_reports:
+            guid = self.namespaced_guid(
+                project,
+                name,
+                build=build,
+            )
+        else:
+            guid = self.namespaced_guid(project, name)
+
+        return primitives.Container(
+            "oft-%s-%s"
+            % (
+                container_type.name.replace("_", "-"),
+                guid.hex,
+            )
+        )
 
 
 class Onefuzz:
