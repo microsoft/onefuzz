@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.19.0
+### Added
+* Agent/Supervisor: Added azcopy log recording upon azcopy failure. [#945](https://github.com/microsoft/onefuzz/pull/945)
+* CLI: Added `onefuzz jobs containers delete` command.  [#949](https://github.com/microsoft/onefuzz/pull/949)
+* CLI: Added `onefuzz jobs containers download` command. [#953](https://github.com/microsoft/onefuzz/pull/953)
+
+### Changed
+* Agent/Service: Agents scheduled to shutdown no longer wait for work prior to shutting down.  [#940](https://github.com/microsoft/onefuzz/pull/940)
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#942](https://github.com/microsoft/onefuzz/pull/942)
+* Agent: Continued deveopment related to upcoming features. [#937](https://github.com/microsoft/onefuzz/pull/937), [#929](https://github.com/microsoft/onefuzz/pull/929), [#919](https://github.com/microsoft/onefuzz/pull/919)
+* CLI: Message details are now always shown in `onefuzz status top`.  [#933](https://github.com/microsoft/onefuzz/pull/933)
+* CLI: Renamed template helper methods for uploading task setup files. [#926](https://github.com/microsoft/onefuzz/pull/926)
+* Contrib: Updated multiple third-party Python dependencies.  [#950](https://github.com/microsoft/onefuzz/pull/950)
+* Service: Tasks that are stopped without ever having started are now marked as failed.  [#935](https://github.com/microsoft/onefuzz/pull/935)
+* Supervisor: Added increased context when recording supervisor failures. [#931](https://github.com/microsoft/onefuzz/pull/931)
+
+### Fixed
+* CLI/Service: Worked around a third-party dependency issue in handling Python Unions in Events.  [#939](https://github.com/microsoft/onefuzz/pull/939)
+* Deployment: Fixed an authentication issue during deployment. [#947](https://github.com/microsoft/onefuzz/pull/947), [#954](https://github.com/microsoft/onefuzz/pull/954)
+* Deployment: Fixed an issue limiting application creation logs.  [#952](https://github.com/microsoft/onefuzz/pull/952)
+* Service: Fixed an issue deleting nodes with expired heartbeats. [#930](https://github.com/microsoft/onefuzz/pull/930)
+* Service: Fixed an issue deleting nonexistent containers.  [#948](https://github.com/microsoft/onefuzz/pull/948)
+* Service: Fixed an issue deleting proxies.  [#932](https://github.com/microsoft/onefuzz/pull/932)
+* Service: Fixed an issue that prevented automatic migration of notification secrets to Azure KeyVault in some cases. [#936](https://github.com/microsoft/onefuzz/pull/936)
+* Supervisor: Fixed an issue adding multiple SSH keys to Windows VMs. [#928](https://github.com/microsoft/onefuzz/pull/928)
+
 ## 2.18.0
 ### Added
 * Agent: Added `setup_dir` [configuration value expansion](docs/command-replacements.md) for generator tasks. [#901](https://github.com/microsoft/onefuzz/pull/901)
