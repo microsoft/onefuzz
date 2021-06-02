@@ -970,7 +970,13 @@ class JobContainers(Endpoint):
             results[container] = self.onefuzz.containers.files.list(container).files
         return results
 
-    def delete(self, job_id: UUID_EXPANSION, *, only_job_specific: bool = True) -> None:
+    def delete(
+        self,
+        job_id: UUID_EXPANSION,
+        *,
+        only_job_specific: bool = True,
+        dryrun: bool = False,
+    ) -> None:
         SAFE_TO_REMOVE = [
             enums.ContainerType.crashes,
             enums.ContainerType.setup,
@@ -986,12 +992,13 @@ class JobContainers(Endpoint):
         ]
 
         job = self.onefuzz.jobs.get(job_id)
+        containers = set()
         to_delete = set()
-        to_keep = set()
         for task in self.onefuzz.jobs.tasks.list(job_id=job.job_id):
             for container in task.config.containers:
+                containers.add(container.name)
                 if container.type not in SAFE_TO_REMOVE:
-                    to_keep.add(container.name)
+                    continue
                 elif not only_job_specific:
                     to_delete.add(container.name)
                 elif only_job_specific and (
@@ -1005,19 +1012,15 @@ class JobContainers(Endpoint):
                     == container.name
                 ):
                     to_delete.add(container.name)
-                else:
-                    to_keep.add(container.name)
 
+        to_keep = containers - to_delete
         for container_name in to_keep:
-            # in some cases, a single container get used for more than one
-            # context.  As such, they might be "not deleted" for one task as not
-            # having the expected container name, but "deleted" for another.
-            if container_name in to_delete:
-                continue
             self.logger.info("not removing: %s", container_name)
 
         for container_name in to_delete:
-            if self.onefuzz.containers.delete(container_name).result:
+            if dryrun:
+                self.logger.info("container would be deleted: %s", container_name)
+            elif self.onefuzz.containers.delete(container_name).result:
                 self.logger.info("removed container: %s", container_name)
             else:
                 self.logger.info("container already removed: %s", container_name)
