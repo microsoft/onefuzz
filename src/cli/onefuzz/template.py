@@ -6,8 +6,6 @@
 import logging
 from typing import Optional
 
-from onefuzztypes.enums import ContainerType
-
 from .api import Command, Onefuzz
 from .templates.afl import AFL
 from .templates.libfuzzer import Libfuzzer
@@ -35,19 +33,6 @@ class Template(Command):
         delete_containers: bool = False,
         stop_notifications: bool = False,
     ) -> None:
-        SAFE_TO_REMOVE = [
-            ContainerType.crashes,
-            ContainerType.setup,
-            ContainerType.inputs,
-            ContainerType.reports,
-            ContainerType.unique_inputs,
-            ContainerType.unique_reports,
-            ContainerType.no_repro,
-            ContainerType.analysis,
-            ContainerType.coverage,
-            ContainerType.readonly_inputs,
-        ]
-
         msg = ["project:%s" % project, "name:%s" % name]
         if build is not None:
             msg.append("build:%s" % build)
@@ -68,22 +53,14 @@ class Template(Command):
                 self.logger.info("stopping job: %s", job.job_id)
                 self.onefuzz.jobs.delete(job.job_id)
 
+            if delete_containers:
+                self.onefuzz.jobs.containers.delete(job.job_id)
+
             tasks = self.onefuzz.tasks.list(job_id=job.job_id)
             for task in tasks:
                 if task.state not in ["stopped"]:
                     self.logger.info("stopping task: %s", task.task_id)
                     self.onefuzz.tasks.delete(task.task_id)
-
-                if delete_containers:
-                    to_remove = []
-                    for container in task.config.containers:
-                        if container.type not in SAFE_TO_REMOVE:
-                            self.logger.info("not removing: %s", container)
-                            continue
-                        to_remove.append(container.name)
-                    for container_name in to_remove:
-                        if self.onefuzz.containers.delete(container_name).result:
-                            self.logger.info("removed container: %s", container_name)
 
                 if stop_notifications:
                     notifications = self.onefuzz.notifications.list()
