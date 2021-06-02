@@ -251,10 +251,10 @@ def add_application_password(
     while count < tries:
         count += 1
         if count > 1:
-            logging.info("retrying app password creation")
+            logger.info("retrying app password creation")
         try:
             password = add_application_password_impl(app_object_id, subscription_id)
-            logging.info("app password created")
+            logger.info("app password created")
             return password
         except GraphQueryError as err:
             error = err
@@ -264,9 +264,9 @@ def add_application_password(
             #   azure/cli/command_modules/util/tests/
             #   latest/test_rest.py#L191-L192
             if "Request_ResourceNotFound" in repr(err):
-                logging.info("app unavailable in AAD, unable to create password yet")
+                logger.info("app unavailable in AAD, unable to create password yet")
             else:
-                logging.warning("unable to create app password: %s", err.message)
+                logger.warning("unable to create app password: %s", err.message)
         time.sleep(wait_duration)
     if error:
         raise error
