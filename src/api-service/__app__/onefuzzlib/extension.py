@@ -108,6 +108,7 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
 def azmon_extension(
     region: Region, vm_os: OS, cert_key: Optional[str], cert: Optional[str]
 ) -> Extension:
+    auth_id = "airseccosinetest.geneva.keyvault.airaspcerts.cloudapp.net"
     return {
         "name": "AzureMonitorLinuxAgent",
         "publisher": "Microsoft.Azure.Monitor",
@@ -125,6 +126,8 @@ def azmon_extension(
             "monitoringGCSEnvironment": "DiagnosticsProd",
             "monitoringGCSAccount": "edgsecfuzzingpmeprod",
             "monitoringGCSRegion": "westus2",
+            "monitoringGCSAuthId": auth_id,
+            "monitoringGCSAuthIdType": "AuthKeyVault",
         },
     }
 
