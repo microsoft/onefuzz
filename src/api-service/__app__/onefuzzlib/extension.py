@@ -167,7 +167,7 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
         }
     elif vm_os == OS.linux:
         cert_path = "/var/lib/waagent/"
-        extension = "Microsoft.Azure.KeyVault"
+        extension = "Microsoft.Azure.KeyVault.Store"
         location = cert_path + extension
         return {
             "name": "KVVMExtensionForLinux",
