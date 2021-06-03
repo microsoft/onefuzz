@@ -17,6 +17,7 @@ async-trait = "0.1"
 atexit = { path = "../atexit" }
 backoff = { version = "0.3", features = ["tokio"] }
 clap = "2.33"
+coverage = { path = "../coverage" }
 crossterm = "0.18"
 env_logger = "0.8"
 flume = "0.10.4"
