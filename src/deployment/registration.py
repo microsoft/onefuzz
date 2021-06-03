@@ -94,7 +94,7 @@ def retry(
     while count < tries:
         count += 1
         if count > 1:
-            logger.info(f"retrying {description}")
+            logger.info(f"retrying '{description}'")
         try:
             return operation()
         except GraphQueryError as err:
@@ -105,14 +105,14 @@ def retry(
             #   azure/cli/command_modules/util/tests/
             #   latest/test_rest.py#L191-L192
             if "Request_ResourceNotFound" in repr(err):
-                logger.info(f"Failed {description} missing required resource")
+                logger.info(f"failed '{description}' missing required resource")
             else:
-                logger.warning(f"Failed {description}: {err.message}")
+                logger.warning(f"failed '{description}': {err.message}")
         time.sleep(wait_duration)
     if error:
         raise error
     else:
-        raise Exception(f"Failed {description}")
+        raise Exception(f"failed '{description}'")
 
 
 def get_graph_client(subscription_id: str) -> GraphRbacManagementClient:
