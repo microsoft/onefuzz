@@ -9,7 +9,7 @@ import time
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar
 from uuid import UUID, uuid4
 
 import requests
@@ -79,6 +79,40 @@ def query_microsoft_graph(
             % (response.status_code, error_text),
             response.status_code,
         )
+
+
+OperationResult = TypeVar("OperationResult")
+
+
+def retry(
+    operation: Callable[[], OperationResult],
+    description: str,
+    tries: int = 10,
+    wait_duration: int = 10,
+) -> OperationResult:
+    count = 0
+    while count < tries:
+        count += 1
+        if count > 1:
+            logger.info(f"retrying {description}")
+        try:
+            return operation()
+        except GraphQueryError as err:
+            error = err
+            # modeled after AZ-CLI's handling of missing application
+            # See: https://github.com/Azure/azure-cli/blob/
+            #   e015d5bcba0c2d21dc42189daa43dc1eb82d2485/src/azure-cli/
+            #   azure/cli/command_modules/util/tests/
+            #   latest/test_rest.py#L191-L192
+            if "Request_ResourceNotFound" in repr(err):
+                logger.info(f"Failed {description} missing required resource")
+            else:
+                logger.warning(f"Failed {description}: {err.message}")
+        time.sleep(wait_duration)
+    if error:
+        raise error
+    else:
+        raise Exception(f"Failed {description}")
 
 
 def get_graph_client(subscription_id: str) -> GraphRbacManagementClient:
@@ -241,37 +275,14 @@ def create_application_registration(
 def add_application_password(
     app_object_id: UUID, subscription_id: str
 ) -> Tuple[str, str]:
+    def create_password() -> Tuple[str, str]:
+        password = add_application_password_impl(app_object_id, subscription_id)
+        logger.info("app password created")
+        return password
+
     # Work-around the race condition where the app is created but passwords cannot
     # be created yet.
-
-    error: Optional[GraphQueryError] = None
-    count = 0
-    tries = 10
-    wait_duration = 10
-    while count < tries:
-        count += 1
-        if count > 1:
-            logger.info("retrying app password creation")
-        try:
-            password = add_application_password_impl(app_object_id, subscription_id)
-            logger.info("app password created")
-            return password
-        except GraphQueryError as err:
-            error = err
-            # modeled after AZ-CLI's handling of missing application
-            # See: https://github.com/Azure/azure-cli/blob/
-            #   e015d5bcba0c2d21dc42189daa43dc1eb82d2485/src/azure-cli/
-            #   azure/cli/command_modules/util/tests/
-            #   latest/test_rest.py#L191-L192
-            if "Request_ResourceNotFound" in repr(err):
-                logger.info("app unavailable in AAD, unable to create password yet")
-            else:
-                logger.warning("unable to create app password: %s", err.message)
-        time.sleep(wait_duration)
-    if error:
-        raise error
-    else:
-        raise Exception("unable to create password")
+    return retry(create_password, "create password")
 
 
 def add_application_password_legacy(
@@ -367,15 +378,20 @@ def authorize_application(
             .map(lambda data: {"appId": data[0], "delegatedPermissionIds": data[1]})
         )
 
-        query_microsoft_graph(
-            method="PATCH",
-            resource="applications/%s" % onefuzz_app["id"],
-            body={
-                "api": {
-                    "preAuthorizedApplications": preAuthorizedApplications.to_list()
-                }
-            },
-        )
+        onefuzz_app_id = onefuzz_app["id"]
+
+        def add_preauthorized_app() -> None:
+            query_microsoft_graph(
+                method="PATCH",
+                resource="applications/%s" % onefuzz_app_id,
+                body={
+                    "api": {
+                        "preAuthorizedApplications": preAuthorizedApplications.to_list()
+                    }
+                },
+            )
+
+        retry(add_preauthorized_app, "authorize application")
     except AuthenticationError:
         logger.warning("*** Browse to: %s", FIX_URL % onefuzz_app_id)
         logger.warning("*** Then add the client application %s", registration_app_id)
