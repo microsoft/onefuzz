@@ -1525,6 +1525,7 @@ dependencies = [
  "atexit",
  "backoff",
  "clap",
+ "coverage",
  "crossterm",
  "env_logger",
  "flume",

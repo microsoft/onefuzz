@@ -193,13 +193,39 @@ impl Coordinator {
     /// If the request fails due to an expired access token, we will retry once
     /// with a fresh one.
     pub async fn poll_commands(&mut self) -> Result<Option<NodeCommand>> {
-        let response = self.send(RequestType::PollCommands).await?;
-        let data = response.bytes().await?;
-        let pending: PendingNodeCommand = serde_json::from_slice(&data)?;
+        let request = PollCommandsRequest {
+            machine_id: self.registration.machine_id,
+        };
+
+        let url = self.registration.dynamic_config.commands_url.clone();
+        let request = self
+            .client
+            .get(url)
+            .bearer_auth(self.token.secret().expose_ref())
+            .json(&request);
+
+        let pending: PendingNodeCommand = self
+            .send_request(request)
+            .await
+            .context("PollCommands")?
+            .json()
+            .await
+            .context("parsing PollCommands response")?;
 
         if let Some(envelope) = pending.envelope {
-            let request = RequestType::ClaimCommand(envelope.message_id);
-            self.send(request).await?;
+            let request = ClaimNodeCommandRequest {
+                machine_id: self.registration.machine_id,
+                message_id: envelope.message_id,
+            };
+
+            let url = self.registration.dynamic_config.commands_url.clone();
+            let request = self
+                .client
+                .delete(url)
+                .bearer_auth(self.token.secret().expose_ref())
+                .json(&request);
+
+            self.send_request(request).await.context("ClaimCommand")?;
 
             Ok(Some(envelope.command))
         } else {
@@ -212,27 +238,55 @@ impl Coordinator {
             event,
             machine_id: self.registration.machine_id,
         };
-        let request = RequestType::EmitEvent(&envelope);
-        self.send(request).await?;
+
+        let url = self.registration.dynamic_config.events_url.clone();
+        let request = self
+            .client
+            .post(url)
+            .bearer_auth(self.token.secret().expose_ref())
+            .json(&envelope);
+
+        self.send_request(request).await.context("EmitEvent")?;
 
         Ok(())
     }
 
     async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
-        let request = RequestType::CanSchedule(work_set);
-        let response = self.send(request).await?;
+        // Temporary: assume one work unit per work set.
+        //
+        // In the future, we will probably want the same behavior, but we will
+        // need to make sure that other the work units in the set have their states
+        // updated if necessary.
+        let task_id = work_set.work_units[0].task_id;
+        let envelope = CanScheduleRequest {
+            machine_id: self.registration.machine_id,
+            task_id,
+        };
 
-        let can_schedule: CanSchedule = response.json().await?;
+        debug!("checking if able to schedule task ID = {}", task_id);
 
+        let mut url = self.registration.config.onefuzz_url.clone();
+        url.set_path("/api/agents/can_schedule");
+        let request = self
+            .client
+            .post(url)
+            .bearer_auth(self.token.secret().expose_ref())
+            .json(&envelope);
+
+        let can_schedule: CanSchedule = self
+            .send_request(request)
+            .await
+            .context("CanSchedule")?
+            .json()
+            .await
+            .context("parsing CanSchedule response")?;
         Ok(can_schedule)
     }
 
-    // The lifetime is needed by an argument type. We can't make it anonymous,
-    // as clippy suggests, because `'_` is not allowed in this binding site.
-    #[allow(clippy::needless_lifetimes)]
-    async fn send<'a>(&mut self, request_type: RequestType<'a>) -> Result<Response> {
-        let request = self.get_request_builder(request_type.clone());
+    async fn send_request(&mut self, request: RequestBuilder) -> Result<Response> {
         let mut response = request
+            .try_clone()
+            .ok_or_else(|| anyhow!("unable to clone request"))?
             .send_retry(
                 |code| match code {
                     StatusCode::UNAUTHORIZED => RetryCheck::Fail,
@@ -253,7 +307,6 @@ impl Coordinator {
             debug!("retrying request after refreshing access token");
 
             // And try one more time.
-            let request = self.get_request_builder(request_type);
             response = request
                 .send_retry_default()
                 .await
@@ -269,95 +322,6 @@ impl Coordinator {
 
         Ok(response)
     }
-
-    fn get_request_builder(&self, request_type: RequestType<'_>) -> RequestBuilder {
-        match request_type {
-            RequestType::PollCommands => self.poll_commands_request(),
-            RequestType::ClaimCommand(message_id) => self.claim_command_request(message_id),
-            RequestType::EmitEvent(event) => self.emit_event_request(event),
-            RequestType::CanSchedule(work_set) => self.can_schedule_request(work_set),
-        }
-    }
-
-    fn poll_commands_request(&self) -> RequestBuilder {
-        let request = PollCommandsRequest {
-            machine_id: self.registration.machine_id,
-        };
-
-        let url = self.registration.dynamic_config.commands_url.clone();
-        let request_builder = self
-            .client
-            .get(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(&request);
-
-        request_builder
-    }
-
-    fn claim_command_request(&self, message_id: String) -> RequestBuilder {
-        let request = ClaimNodeCommandRequest {
-            machine_id: self.registration.machine_id,
-            message_id,
-        };
-
-        let url = self.registration.dynamic_config.commands_url.clone();
-        let request_builder = self
-            .client
-            .delete(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(&request);
-
-        request_builder
-    }
-
-    fn emit_event_request(&self, event: &NodeEventEnvelope) -> RequestBuilder {
-        let url = self.registration.dynamic_config.events_url.clone();
-        let request_builder = self
-            .client
-            .post(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(event);
-
-        request_builder
-    }
-
-    fn can_schedule_request(&self, work_set: &WorkSet) -> RequestBuilder {
-        // Temporary: assume one work unit per work set.
-        //
-        // In the future, we will probably want the same behavior, but we will
-        // need to make sure that other the work units in the set have their states
-        // updated if necessary.
-        let task_id = work_set.work_units[0].task_id;
-        let can_schedule = CanScheduleRequest {
-            machine_id: self.registration.machine_id,
-            task_id,
-        };
-
-        debug!("checking if able to schedule task ID = {}", task_id);
-
-        let mut url = self.registration.config.onefuzz_url.clone();
-        url.set_path("/api/agents/can_schedule");
-        let request_builder = self
-            .client
-            .post(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(&can_schedule);
-
-        request_builder
-    }
-}
-
-// Enum to thunk creation of requests.
-//
-// The upstream `Request` type is not `Clone`, so we can't retry a request
-// without rebuilding it. We use this enum to dispatch to a private method,
-// avoiding borrowck conflicts that occur when capturing `self`.
-#[derive(Clone, Debug, Eq, PartialEq)]
-enum RequestType<'a> {
-    PollCommands,
-    ClaimCommand(String),
-    EmitEvent(&'a NodeEventEnvelope),
-    CanSchedule(&'a WorkSet),
 }
 
 #[cfg(test)]
