@@ -6,12 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.20.0
 ### Added
-* Agent: Added a `coverage` task that enables coverage analysis for uninstrumented targets on Linux and Windows. [#763](https://github.com/microsoft/onefuzz/pull/763)
+* Agent: Added a new `coverage` task that enables coverage analysis for both uninstrumented and Sancov targets on Linux and Windows. [#763](https://github.com/microsoft/onefuzz/pull/763)
 
 ### Changed
 * Agent: Improved performance of the libFuzzer fuzzing tasks. [#941](https://github.com/microsoft/onefuzz/pull/941)
 * CLI: Changed the `libfuzzer basic` job template to use the new `coverage` task.  [#763](https://github.com/microsoft/onefuzz/pull/763)
-* Deployment: Added automatic retry when authorizing newly created applications during deployment.  [#959](https://github.com/microsoft/onefuzz/pull/959)
+* Deployment: Added automatic retry when authorizing newly-created applications during deployment.  [#959](https://github.com/microsoft/onefuzz/pull/959)
 * Supervisor: Simplified the service coordination logic and added increased context upon failure. [#963](https://github.com/microsoft/onefuzz/pull/963)
 
 ## 2.19.0
