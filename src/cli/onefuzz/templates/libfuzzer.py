@@ -50,6 +50,7 @@ class Libfuzzer(Command):
         target_workers: Optional[int] = None,
         target_options: Optional[List[str]] = None,
         target_env: Optional[Dict[str, str]] = None,
+        target_timeout: Optional[int] = None,
         tags: Optional[Dict[str, str]] = None,
         check_retry_count: Optional[int] = None,
         crash_report_timeout: Optional[int] = None,
@@ -60,6 +61,7 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
+        coverage_filter: Optional[str] = None,
     ) -> None:
 
         regression_containers = [
@@ -71,6 +73,12 @@ class Libfuzzer(Command):
                 containers[ContainerType.regression_reports],
             ),
         ]
+
+        # We don't really need a separate timeout for crash reporting, and we could just
+        # use `target_timeout`. But `crash_report_timeout` was introduced first, so we
+        # can't remove it without a breaking change. Since both timeouts may be present,
+        # prefer the more task-specific timeout.
+        effective_crash_report_timeout = crash_report_timeout or target_timeout
 
         self.logger.info("creating libfuzzer_regression task")
         regression_task = self.onefuzz.tasks.create(
@@ -85,7 +93,7 @@ class Libfuzzer(Command):
             target_options=target_options,
             target_env=target_env,
             tags=tags,
-            target_timeout=crash_report_timeout,
+            target_timeout=effective_crash_report_timeout,
             check_retry_count=check_retry_count,
             check_fuzzer_help=check_fuzzer_help,
             debug=debug,
@@ -131,23 +139,47 @@ class Libfuzzer(Command):
             (ContainerType.coverage, containers[ContainerType.coverage]),
             (ContainerType.readonly_inputs, containers[ContainerType.inputs]),
         ]
-        self.logger.info("creating libfuzzer_coverage task")
+        self.logger.info("creating coverage task")
+
+        # The `coverage` task is not libFuzzer-aware, so invocations of the target fuzzer
+        # against an input do not automatically add an `{input}` specifier to the command
+        # args. That means on the VM, the fuzzer will get run in fuzzing mode each time we
+        # try to test an input.
+        #
+        # We cannot require `{input}` occur in `target_options`, since that would break
+        # the current assumptions of the libFuzzer-aware tasks, as well as be a breaking
+        # API change.
+        #
+        # For now, locally extend the `target_options` for this task only, to ensure that
+        # test case invocations work as expected.
+        coverage_target_options = target_options or []
+        coverage_target_options.append("{input}")
+
+        # Opposite precedence to `effective_crash_report_timeout`.
+        #
+        # If the user specified a timeout for crash reporting but not a general target
+        # timeout, consider that to be a better (more target-aware) default than the
+        # default in the agent.
+        coverage_timeout = target_timeout or crash_report_timeout
+
         self.onefuzz.tasks.create(
             job.job_id,
-            TaskType.libfuzzer_coverage,
+            TaskType.coverage,
             target_exe,
             coverage_containers,
             pool_name=pool_name,
             duration=duration,
             vm_count=1,
             reboot_after_setup=reboot_after_setup,
-            target_options=target_options,
+            target_options=coverage_target_options,
             target_env=target_env,
+            target_timeout=coverage_timeout,
             tags=tags,
             prereq_tasks=prereq_tasks,
             debug=debug,
             colocate=colocate_all_tasks or colocate_secondary_tasks,
             check_fuzzer_help=check_fuzzer_help,
+            coverage_filter=coverage_filter,
         )
 
         report_containers = [
@@ -172,7 +204,7 @@ class Libfuzzer(Command):
             target_env=target_env,
             tags=tags,
             prereq_tasks=prereq_tasks,
-            target_timeout=crash_report_timeout,
+            target_timeout=effective_crash_report_timeout,
             check_retry_count=check_retry_count,
             check_fuzzer_help=check_fuzzer_help,
             debug=debug,
@@ -196,6 +228,7 @@ class Libfuzzer(Command):
         target_workers: Optional[int] = None,
         target_options: Optional[List[str]] = None,
         target_env: Optional[Dict[str, str]] = None,
+        target_timeout: Optional[int] = None,
         check_retry_count: Optional[int] = None,
         crash_report_timeout: Optional[int] = None,
         tags: Optional[Dict[str, str]] = None,
@@ -212,6 +245,7 @@ class Libfuzzer(Command):
         check_fuzzer_help: bool = True,
         expect_crash_on_failure: bool = False,
         minimized_stack_depth: Optional[int] = None,
+        coverage_filter: Optional[File] = None,
     ) -> Optional[Job]:
         """
         Basic libfuzzer job
@@ -272,6 +306,13 @@ class Libfuzzer(Command):
 
         target_exe_blob_name = helper.setup_relative_blob_name(target_exe, setup_dir)
 
+        if coverage_filter:
+            coverage_filter_blob_name: Optional[str] = helper.setup_relative_blob_name(
+                coverage_filter, setup_dir
+            )
+        else:
+            coverage_filter_blob_name = None
+
         self._create_tasks(
             job=helper.job,
             containers=helper.containers,
@@ -293,6 +334,7 @@ class Libfuzzer(Command):
             check_fuzzer_help=check_fuzzer_help,
             expect_crash_on_failure=expect_crash_on_failure,
             minimized_stack_depth=minimized_stack_depth,
+            coverage_filter=coverage_filter_blob_name,
         )
 
         self.logger.info("done creating tasks")

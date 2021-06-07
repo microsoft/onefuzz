@@ -15,8 +15,7 @@ use onefuzz_telemetry::{
 };
 use reqwest::Url;
 use serde::{self, Deserialize};
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc, time::Duration};
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
@@ -44,10 +43,14 @@ pub struct CommonConfig {
 }
 
 impl CommonConfig {
-    pub async fn init_heartbeat(&self) -> Result<Option<TaskHeartbeatClient>> {
+    pub async fn init_heartbeat(
+        &self,
+        initial_delay: Option<Duration>,
+    ) -> Result<Option<TaskHeartbeatClient>> {
         match &self.heartbeat_queue {
             Some(url) => {
-                let hb = init_task_heartbeat(url.clone(), self.task_id, self.job_id).await?;
+                let hb = init_task_heartbeat(url.clone(), self.task_id, self.job_id, initial_delay)
+                    .await?;
                 Ok(Some(hb))
             }
             None => Ok(None),
@@ -58,6 +61,9 @@ impl CommonConfig {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "task_type")]
 pub enum Config {
+    #[serde(alias = "coverage")]
+    Coverage(coverage::generic::Config),
+
     #[serde(alias = "libfuzzer_fuzz")]
     LibFuzzerFuzz(fuzz::libfuzzer_fuzz::Config),
 
@@ -106,6 +112,7 @@ impl Config {
 
     fn common_mut(&mut self) -> &mut CommonConfig {
         match self {
+            Config::Coverage(c) => &mut c.common,
             Config::LibFuzzerFuzz(c) => &mut c.common,
             Config::LibFuzzerMerge(c) => &mut c.common,
             Config::LibFuzzerReport(c) => &mut c.common,
@@ -122,6 +129,7 @@ impl Config {
 
     pub fn common(&self) -> &CommonConfig {
         match self {
+            Config::Coverage(c) => &c.common,
             Config::LibFuzzerFuzz(c) => &c.common,
             Config::LibFuzzerMerge(c) => &c.common,
             Config::LibFuzzerReport(c) => &c.common,
@@ -138,6 +146,7 @@ impl Config {
 
     pub fn report_event(&self) {
         let event_type = match self {
+            Config::Coverage(_) => "coverage",
             Config::LibFuzzerFuzz(_) => "libfuzzer_fuzz",
             Config::LibFuzzerMerge(_) => "libfuzzer_merge",
             Config::LibFuzzerReport(_) => "libfuzzer_crash_report",
@@ -180,6 +189,7 @@ impl Config {
         self.report_event();
 
         match self {
+            Config::Coverage(config) => coverage::generic::CoverageTask::new(config).run().await,
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
                     .run()
@@ -197,6 +207,7 @@ impl Config {
             }
             Config::LibFuzzerMerge(config) => merge::libfuzzer_merge::spawn(Arc::new(config)).await,
             Config::GenericAnalysis(config) => analysis::generic::run(config).await,
+
             Config::GenericGenerator(config) => {
                 fuzz::generator::GeneratorTask::new(config).run().await
             }
