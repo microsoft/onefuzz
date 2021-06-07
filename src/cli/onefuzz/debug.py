@@ -8,7 +8,7 @@ import logging
 import os
 import tempfile
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -17,8 +17,8 @@ from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
 from azure.common.client_factory import get_azure_cli_credentials
 from onefuzztypes.enums import ContainerType, TaskType
-from onefuzztypes.models import BlobRef, NodeAssignment, Report, Task
-from onefuzztypes.primitives import Container, Directory
+from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
+from onefuzztypes.primitives import Container, Directory, PoolName
 
 from onefuzz.api import UUID_EXPANSION, Command, Onefuzz
 
@@ -337,6 +337,70 @@ class DebugJob(Command):
         """Download the containers by container type for each task in the specified job"""
 
         self.onefuzz.jobs.containers.download(job_id, output=output)
+
+    def rerun(
+        self,
+        job_id: UUID_EXPANSION,
+        *,
+        duration: Optional[int] = None,
+        pool_name: Optional[PoolName] = None,
+    ) -> Job:
+        """rerun a given job"""
+
+        existing_job = self.onefuzz.jobs.get(job_id)
+        job_config = existing_job.config
+        if duration is not None:
+            job_config.duration = duration
+        existing_tasks = self.onefuzz.jobs.tasks.list(existing_job.job_id)
+
+        configs: Dict[UUID, TaskConfig] = {}
+        todo: Set[UUID] = set()
+        new_task_ids: Dict[UUID, UUID] = {}
+
+        for task in existing_tasks:
+            config = TaskConfig.parse_obj(json.loads(task.config.json()))
+            if pool_name is not None and config.pool is not None:
+                config.pool.pool_name = pool_name
+            configs[task.task_id] = config
+            todo.add(task.task_id)
+
+        job = self.onefuzz.jobs.create_with_config(existing_job.config)
+
+        while todo:
+            added: Set[UUID] = set()
+
+            for task_id in todo:
+                config = configs[task_id]
+                config.job_id = job.job_id
+                if config.prereq_tasks:
+                    if set(config.prereq_tasks).issubset(new_task_ids.keys()):
+                        config.prereq_tasks = [
+                            new_task_ids[x] for x in config.prereq_tasks
+                        ]
+                        task = self.onefuzz.tasks.create_with_config(config)
+                        self.logger.info(
+                            "created task: %s - %s",
+                            task.task_id,
+                            task.config.task.type.name,
+                        )
+                        new_task_ids[task_id] = task.task_id
+                        added.add(task_id)
+                else:
+                    task = self.onefuzz.tasks.create_with_config(config)
+                    self.logger.info(
+                        "created task: %s - %s",
+                        task.task_id,
+                        task.config.task.type.name,
+                    )
+                    new_task_ids[task_id] = task.task_id
+                    added.add(task_id)
+
+            if added:
+                todo -= added
+            else:
+                raise Exception(f"unable to resolve task prereqs for: {todo}")
+
+        return job
 
 
 class DebugLog(Command):

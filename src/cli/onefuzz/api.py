@@ -12,7 +12,7 @@ import subprocess  # nosec
 import uuid
 from enum import Enum
 from shutil import which
-from typing import Callable, Dict, List, Optional, Set, Tuple, Type, TypeVar
+from typing import Callable, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 import semver
@@ -1130,70 +1130,6 @@ class Jobs(Endpoint):
         return self._req_model_list(
             "GET", models.Job, data=requests.JobSearch(state=job_state)
         )
-
-    def rerun(
-        self,
-        job_id: UUID_EXPANSION,
-        *,
-        duration: Optional[int] = None,
-        pool_name: Optional[primitives.PoolName] = None,
-    ) -> models.Job:
-        """rerun a given job"""
-
-        existing_job = self.get(job_id)
-        job_config = existing_job.config
-        if duration is not None:
-            job_config.duration = duration
-        existing_tasks = self.onefuzz.jobs.tasks.list(existing_job.job_id)
-
-        configs: Dict[UUID, models.TaskConfig] = {}
-        todo: Set[UUID] = set()
-        new_task_ids: Dict[UUID, UUID] = {}
-
-        for task in existing_tasks:
-            config = models.TaskConfig.parse_obj(json.loads(task.config.json()))
-            if pool_name is not None and config.pool is not None:
-                config.pool.pool_name = pool_name
-            configs[task.task_id] = config
-            todo.add(task.task_id)
-
-        job = self.create_with_config(existing_job.config)
-
-        while todo:
-            added: Set[UUID] = set()
-
-            for task_id in todo:
-                config = configs[task_id]
-                config.job_id = job.job_id
-                if config.prereq_tasks:
-                    if set(config.prereq_tasks).issubset(new_task_ids.keys()):
-                        config.prereq_tasks = [
-                            new_task_ids[x] for x in config.prereq_tasks
-                        ]
-                        task = self.onefuzz.tasks.create_with_config(config)
-                        self.logger.info(
-                            "created task: %s - %s",
-                            task.task_id,
-                            task.config.task.type.name,
-                        )
-                        new_task_ids[task_id] = task.task_id
-                        added.add(task_id)
-                else:
-                    task = self.onefuzz.tasks.create_with_config(config)
-                    self.logger.info(
-                        "created task: %s - %s",
-                        task.task_id,
-                        task.config.task.type.name,
-                    )
-                    new_task_ids[task_id] = task.task_id
-                    added.add(task_id)
-
-            if added:
-                todo -= added
-            else:
-                raise Exception(f"unable to resolve task prereqs for: {todo}")
-
-        return job
 
 
 class Pool(Endpoint):
