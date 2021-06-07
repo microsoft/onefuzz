@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.20.0
+### Added
+* Agent: Added a `coverage` task that enables coverage analysis for uninstrumented targets on Linux and Windows. [#763](https://github.com/microsoft/onefuzz/pull/763)
+
+### Changed
+* Agent: Improved performance of the libFuzzer fuzzing tasks. [#941](https://github.com/microsoft/onefuzz/pull/941)
+* CLI: Changed the `libfuzzer basic` job template to use the new `coverage` task.  [#763](https://github.com/microsoft/onefuzz/pull/763)
+* Deployment: Added automatic retry when authorizing newly created applications during deployment.  [#959](https://github.com/microsoft/onefuzz/pull/959)
+* Supervisor: Simplified the service coordination logic and added increased context upon failure. [#963](https://github.com/microsoft/onefuzz/pull/963)
+
 ## 2.19.0
 ### Added
 * Agent/Supervisor: Added azcopy log recording upon azcopy failure. [#945](https://github.com/microsoft/onefuzz/pull/945)
