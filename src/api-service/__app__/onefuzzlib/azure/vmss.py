@@ -81,9 +81,17 @@ def resize_vmss(name: UUID, capacity: int) -> None:
     resource_group = get_base_resource_group()
     logging.info("updating VM count - name: %s vm_count: %d", name, capacity)
     compute_client = get_compute_client()
-    compute_client.virtual_machine_scale_sets.begin_update(
-        resource_group, str(name), {"sku": {"capacity": capacity}}
-    )
+    try:
+        compute_client.virtual_machine_scale_sets.begin_update(
+            resource_group, str(name), {"sku": {"capacity": capacity}}
+        )
+    except ResourceExistsError as err:
+        logging.error(
+            "unable to resize scaleset. name:%s vm_count:%d - err:%s",
+            name,
+            capacity,
+            err,
+        )
 
 
 def get_vmss_size(name: UUID) -> Optional[int]:
