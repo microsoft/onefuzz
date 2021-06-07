@@ -264,6 +264,13 @@ class Node(BASE_NODE, ORMMixin):
             self.stop(done=True)
             return False
 
+        if self.is_too_old():
+            logging.info(
+                "can_schedule node is too old.  machine_id:%s", self.machine_id
+            )
+            self.stop(done=True)
+            return False
+
         if self.state in NodeState.ready_for_reset():
             logging.info(
                 "can_schedule node is set for reset.  machine_id:%s", self.machine_id
@@ -331,6 +338,13 @@ class Node(BASE_NODE, ORMMixin):
 
     def is_outdated(self) -> bool:
         return self.version != __version__
+
+    def is_too_old(self) -> bool:
+        return (
+            self.scaleset_id is not None
+            and self.timestamp is not None
+            and self.timestamp < datetime.datetime.utcnow() - NODE_REIMAGE_TIME
+        )
 
     def send_message(self, message: NodeCommand) -> None:
         NodeMessage(
@@ -423,6 +437,14 @@ class Node(BASE_NODE, ORMMixin):
             },
             raw_unchecked_filter=time_filter,
         ):
+            if node.debug_keep_node:
+                logging.info(
+                    "removing debug_keep_node for expired node. "
+                    "scaleset_id:%s machine_id:%s",
+                    node.scaleset_id,
+                    node.machine_id,
+                )
+                node.debug_keep_node = False
             node.to_reimage()
 
     def set_state(self, state: NodeState) -> None:
