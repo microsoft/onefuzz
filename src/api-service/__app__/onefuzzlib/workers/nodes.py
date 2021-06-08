@@ -343,7 +343,8 @@ class Node(BASE_NODE, ORMMixin):
         return (
             self.scaleset_id is not None
             and self.timestamp is not None
-            and self.timestamp < datetime.datetime.utcnow() - NODE_REIMAGE_TIME
+            and self.timestamp
+            < datetime.datetime.now(datetime.timezone.utc) - NODE_REIMAGE_TIME
         )
 
     def send_message(self, message: NodeCommand) -> None:
