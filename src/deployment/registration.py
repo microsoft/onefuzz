@@ -5,15 +5,13 @@
 
 import argparse
 import logging
-from re import S, sub
 import time
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar
+from re import S, sub
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar, cast
 from uuid import UUID, uuid4
-
-# https://github.com/microsoftgraph/msgraph-sdk-python-core
 
 import requests
 from azure.cli.core.azclierror import AuthenticationError
@@ -29,6 +27,9 @@ from azure.graphrbac.models import (
 )
 from functional import seq
 from msrest.serialization import TZ_UTC
+
+# https://github.com/microsoftgraph/msgraph-sdk-python-core
+
 
 FIX_URL = (
     "https://ms.portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/"
@@ -54,8 +55,7 @@ def query_microsoft_graph(
 ) -> Any:
     profile = get_cli_profile()
     (token_type, access_token, _), _, _ = profile.get_raw_token(
-        resource="https://graph.microsoft.com",
-        subscription=subscription
+        resource="https://graph.microsoft.com", subscription=subscription
     )
     url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
     headers = {
@@ -81,13 +81,12 @@ def query_microsoft_graph(
             response.status_code,
         )
 
-def get_tenant_id(subscription_id: Optional[str]=None) -> str:
+
+def get_tenant_id(subscription_id: Optional[str] = None) -> str:
     result = query_microsoft_graph(
-                method="GET",
-                resource="organization",
-                subscription=subscription_id
-            )
-    result["value"]["id"]
+        method="GET", resource="organization", subscription=subscription_id
+    )
+    return cast(str, result["value"]["id"])
 
 
 OperationResult = TypeVar("OperationResult")
@@ -151,7 +150,9 @@ def register_application(
 ) -> ApplicationInfo:
     logger.info("retrieving the application registration %s" % registration_name)
 
-    app = get_application(display_name=registration_name, subscription_id=subscription_id)
+    app = get_application(
+        display_name=registration_name, subscription_id=subscription_id
+    )
 
     if not app:
         logger.info("No existing registration found. creating a new one")
@@ -161,25 +162,30 @@ def register_application(
     else:
         logger.info(
             "Found existing application objectId '%s' - appid '%s'"
-            % (app.object_id, app["appId"] )
+            % (app.object_id, app["appId"])
         )
 
-    onefuzz_app = get_application(display_name=onefuzz_instance_name, subscription_id=subscription_id)
+    onefuzz_app = get_application(
+        display_name=onefuzz_instance_name, subscription_id=subscription_id
+    )
 
-    if not(onefuzz_app):
+    if not (onefuzz_app):
         raise Exception("onefuzz app not found")
 
-    pre_authorized_applications = onefuzz_app["apiApplication"]["preAuthorizedApplications"]
+    pre_authorized_applications = onefuzz_app["apiApplication"][
+        "preAuthorizedApplications"
+    ]
 
     if app["appId"] not in [app["appId"] for app in pre_authorized_applications]:
         authorize_application(UUID(app["appId"]), UUID(onefuzz_app["appId"]))
 
     password = create_application_credential(registration_name, subscription_id)
+    tenant_id = get_tenant_id(subscription_id=subscription_id)
 
     return ApplicationInfo(
         client_id=app.app_id,
         client_secret=password,
-        authority=("https://login.microsoftonline.com/%s" % client.config.tenant_id),
+        authority=("https://login.microsoftonline.com/%s" % tenant_id),
     )
 
 
@@ -201,42 +207,43 @@ def create_application_registration(
 ) -> Application:
     """Create an application registration"""
 
-    app = get_application(display_name=onefuzz_instance_name, subscription_id=subscription_id)
+    app = get_application(
+        display_name=onefuzz_instance_name, subscription_id=subscription_id
+    )
 
     if not app:
         raise Exception("onefuzz app registration not found")
 
     resource_access = [
-        { "id": "guid", "type": "string" }
+        {"id": "guid", "type": "string"}
         for role in app["appRoles"]
         if role["value"] == approle.value
     ]
 
-
     params = {
-            "isDeviceOnlyAuthSupported": True,
-            "appRoles": [{"@odata.type": "microsoft.graph.appRole"}],
-            "displayName": name,
-            "publicClient": {
-                "redirectUris": ["https://%s.azurewebsites.net" % onefuzz_instance_name]
-            },
-            "requiredResourceAccess": (
-                [
-                    {
-                        "resourceAccess": resource_access,
-                        "resourceAppId":app["appId"],
-                    }
-                ]
-                if len(resource_access) > 0
-                else []
-            ),
-        }
+        "isDeviceOnlyAuthSupported": True,
+        "appRoles": [{"@odata.type": "microsoft.graph.appRole"}],
+        "displayName": name,
+        "publicClient": {
+            "redirectUris": ["https://%s.azurewebsites.net" % onefuzz_instance_name]
+        },
+        "requiredResourceAccess": (
+            [
+                {
+                    "resourceAccess": resource_access,
+                    "resourceAppId": app["appId"],
+                }
+            ]
+            if len(resource_access) > 0
+            else []
+        ),
+    }
 
-    registered_app:Dict = query_microsoft_graph(
+    registered_app: Dict = query_microsoft_graph(
         method="POST",
         resource="applications",
         body=params,
-        subscription=subscription_id
+        subscription=subscription_id,
     )
 
     logger.info("creating service principal")
@@ -244,24 +251,28 @@ def create_application_registration(
         account_enabled=True,
         app_role_assignment_required=False,
         service_principal_type="Application",
-        app_id=registered_app.app_id,
+        app_id=registered_app["appId"],
     )
 
     service_principal_params = {
-            "accountEnabled": True,
-            "appRoleAssignmentRequired": False,
-            "servicePrincipalType": "Application",
-            "appId": registered_app["appId"],
-        }
+        "accountEnabled": True,
+        "appRoleAssignmentRequired": False,
+        "servicePrincipalType": "Application",
+        "appId": registered_app["appId"],
+    }
 
     query_microsoft_graph(
-            method="POST",
-            resource="applications/servicePrincipals",
-            body=service_principal_params,
-            subscription=subscription_id
-        )
+        method="POST",
+        resource="applications/servicePrincipals",
+        body=service_principal_params,
+        subscription=subscription_id,
+    )
 
-    authorize_application(UUID(registered_app["appId"]), UUID(app["appId"]), subscription_id)
+    authorize_application(
+        UUID(registered_app["appId"]),
+        UUID(app["appId"]),
+        subscription_id=subscription_id,
+    )
     assign_app_role(
         onefuzz_instance_name, name, subscription_id, OnefuzzAppRole.ManagedNode
     )
@@ -323,14 +334,18 @@ def add_application_password_impl(
             method="POST",
             resource="applications/%s/addPassword" % app_object_id,
             body=password_request,
-            subscription=subscription_id
+            subscription=subscription_id,
         )
         return (str(key), password["secretText"])
     except AuthenticationError:
         return add_application_password_legacy(app_object_id, subscription_id)
 
 
-def get_application(app_id: Optional[UUID]=None, display_name: Optional[str]=None, subscription_id: Optional[str] = None) -> Optional[Any]:
+def get_application(
+    app_id: Optional[UUID] = None,
+    display_name: Optional[str] = None,
+    subscription_id: Optional[str] = None,
+) -> Optional[Any]:
     filters = []
     if app_id:
         filters.append("appId eq '%s'" % app_id)
@@ -342,8 +357,10 @@ def get_application(app_id: Optional[UUID]=None, display_name: Optional[str]=Non
     apps: Dict = query_microsoft_graph(
         method="GET",
         resource="applications",
-        params=filter_str,
-        subscription=subscription_id
+        params={
+            "$filter": filter_str,
+        },
+        subscription=subscription_id,
     )
     if len(apps["value"]) == 0:
         return None
@@ -355,10 +372,10 @@ def authorize_application(
     registration_app_id: UUID,
     onefuzz_app_id: UUID,
     permissions: List[str] = ["user_impersonation"],
-    subscription_id: Optional[str] = None
+    subscription_id: Optional[str] = None,
 ) -> None:
     try:
-        onefuzz_app = get_application(app_id = onefuzz_app_id)
+        onefuzz_app = get_application(app_id=onefuzz_app_id)
         if onefuzz_app is None:
             logger.error("Application '%s' not found", onefuzz_app_id)
             return
@@ -396,7 +413,7 @@ def authorize_application(
                         "preAuthorizedApplications": preAuthorizedApplications.to_list()
                     }
                 },
-                subscription=subscription_id
+                subscription=subscription_id,
             )
 
         retry(add_preauthorized_app, "authorize application")
@@ -514,7 +531,7 @@ def assign_app_role(
                 "$filter": "displayName eq '%s'" % onefuzz_instance_name,
                 "$select": "appId",
             },
-            subscription=subscription_id
+            subscription=subscription_id,
         )
         if len(onefuzz_service_appId["value"]) == 0:
             raise Exception("onefuzz app registration not found")
@@ -523,7 +540,7 @@ def assign_app_role(
             method="GET",
             resource="servicePrincipals",
             params={"$filter": "appId eq '%s'" % appId},
-            subscription=subscription_id
+            subscription=subscription_id,
         )
 
         if len(onefuzz_service_principals["value"]) == 0:
@@ -533,7 +550,7 @@ def assign_app_role(
             method="GET",
             resource="servicePrincipals",
             params={"$filter": "displayName eq '%s'" % application_name},
-            subscription=subscription_id
+            subscription=subscription_id,
         )
         if len(scaleset_service_principals["value"]) == 0:
             raise Exception("scaleset service principal not found")
@@ -553,7 +570,7 @@ def assign_app_role(
             method="GET",
             resource="servicePrincipals/%s/appRoleAssignments"
             % scaleset_service_principal["id"],
-            subscription=subscription_id
+            subscription=subscription_id,
         )
 
         # check if the role is already assigned
@@ -570,7 +587,7 @@ def assign_app_role(
                     "resourceId": onefuzz_service_principal["id"],
                     "appRoleId": managed_node_role["id"],
                 },
-                subscription=subscription_id
+                subscription=subscription_id,
             )
     except AuthenticationError:
         assign_app_role_manually(
@@ -578,7 +595,9 @@ def assign_app_role(
         )
 
 
-def set_app_audience(objectId: str, audience: str, subscription_id: Optional[str]=None) -> None:
+def set_app_audience(
+    objectId: str, audience: str, subscription_id: Optional[str] = None
+) -> None:
     # typical audience values: AzureADMyOrg, AzureADMultipleOrgs
     http_body = {"signInAudience": audience}
     try:
@@ -586,7 +605,7 @@ def set_app_audience(objectId: str, audience: str, subscription_id: Optional[str
             method="PATCH",
             resource="applications/%s" % objectId,
             body=http_body,
-            subscription=subscription_id
+            subscription=subscription_id,
         )
     except GraphQueryError:
         query = (

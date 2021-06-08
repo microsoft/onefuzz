@@ -389,12 +389,20 @@ class Client:
             client.applications.patch(
                 app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
             )
-            set_app_audience(app.object_id, "AzureADMultipleOrgs", subscription_id=self.get_subscription_id())
+            set_app_audience(
+                app.object_id,
+                "AzureADMultipleOrgs",
+                subscription_id=self.get_subscription_id(),
+            )
         elif (
             not self.multi_tenant_domain
             and app.sign_in_audience == "AzureADMultipleOrgs"
         ):
-            set_app_audience(app.object_id, "AzureADMyOrg", subscription_id=self.get_subscription_id())
+            set_app_audience(
+                app.object_id,
+                "AzureADMyOrg",
+                subscription_id=self.get_subscription_id(),
+            )
             url = "https://%s.azurewebsites.net" % self.application_name
             client.applications.patch(
                 app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
@@ -439,10 +447,7 @@ class Client:
             else:
 
                 tenant_id = get_tenant_id(self.get_subscription_id())
-                authority = (
-                    "https://login.microsoftonline.com/%s"
-                    % tenant_id
-                )
+                authority = "https://login.microsoftonline.com/%s" % tenant_id
             self.cli_config = {
                 "client_id": onefuzz_cli_app.app_id,
                 "authority": authority,
