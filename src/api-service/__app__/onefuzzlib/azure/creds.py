@@ -4,13 +4,16 @@
 # Licensed under the MIT License.
 
 import os
-from typing import Any, List
+import urllib.parse
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+import requests
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import CheckGroupMembershipParameters
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
+from azure.mgmt import subscription
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from memoization import cached
@@ -101,13 +104,47 @@ def get_graph_client() -> GraphRbacManagementClient:
     return GraphRbacManagementClient(get_msi(), get_subscription())
 
 
-def is_member_of(group_id: str, member_id: str) -> bool:
-    client = get_graph_client()
-    return bool(
-        client.groups.is_member_of(
-            CheckGroupMembershipParameters(group_id=group_id, member_id=member_id)
-        ).value
+def query_microsoft_graph(
+    method: str,
+    resource: str,
+    params: Optional[Dict] = None,
+    body: Optional[Dict] = None,
+) -> Any:
+    auth = get_msi()
+    access_token = auth.token["access_token"]
+    token_type = auth.token["token_type"]
+
+    url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
+    headers = {
+        "Authorization": "%s %s" % (token_type, access_token),
+        "Content-Type": "application/json",
+    }
+    response = requests.request(
+        method=method, url=url, headers=headers, params=params, json=body
     )
+
+    response.status_code
+
+    if 200 <= response.status_code < 300:
+        try:
+            return response.json()
+        except ValueError:
+            return None
+    else:
+        error_text = str(response.content, encoding="utf-8", errors="backslashreplace")
+        raise Exception(
+            "request did not succeed: HTTP %s - %s"
+            % (response.status_code, error_text),
+            response.status_code,
+        )
+
+
+def is_member_of(group_id: str, member_id: str) -> bool:
+    body = {"groupIds": [group_id]}
+    response = query_microsoft_graph(
+        method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
+    )
+    return group_id in response["value"]
 
 
 @cached

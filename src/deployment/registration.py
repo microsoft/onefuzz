@@ -22,12 +22,8 @@ from azure.common.credentials import get_cli_profile
 from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
     Application,
-    ApplicationCreateParameters,
-    ApplicationUpdateParameters,
     AppRole,
     PasswordCredential,
-    RequiredResourceAccess,
-    ResourceAccess,
     ServicePrincipal,
     ServicePrincipalCreateParameters,
 )
@@ -84,6 +80,14 @@ def query_microsoft_graph(
             % (response.status_code, error_text),
             response.status_code,
         )
+
+def get_tenant_id(subscription_id: Optional[str]=None) -> str:
+    result = query_microsoft_graph(
+                method="GET",
+                resource="organization",
+                subscription=subscription_id
+            )
+    result["value"]["id"]
 
 
 OperationResult = TypeVar("OperationResult")

@@ -67,7 +67,7 @@ from registration import (
     add_application_password,
     assign_app_role,
     authorize_application,
-    get_graph_client,
+    get_tenant_id,
     register_application,
     set_app_audience,
     update_pool_registration,
@@ -437,10 +437,11 @@ class Client:
             if self.multi_tenant_domain:
                 authority = COMMON_AUTHORITY
             else:
-                onefuzz_client = get_graph_client(self.get_subscription_id())
+
+                tenant_id = get_tenant_id(self.get_subscription_id())
                 authority = (
                     "https://login.microsoftonline.com/%s"
-                    % onefuzz_client.config.tenant_id
+                    % tenant_id
                 )
             self.cli_config = {
                 "client_id": onefuzz_cli_app.app_id,
