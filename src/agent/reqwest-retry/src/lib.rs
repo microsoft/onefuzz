@@ -180,9 +180,7 @@ pub fn is_auth_failure(response: &Result<Response>) -> bool {
         Err(error) => {
             if let Some(error) = error.downcast_ref::<reqwest::Error>() {
                 if let Some(status) = error.status() {
-                    if status == StatusCode::UNAUTHORIZED {
-                        return true;
-                    }
+                    return status == StatusCode::UNAUTHORIZED;
                 }
             }
         }
