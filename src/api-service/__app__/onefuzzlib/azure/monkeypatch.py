@@ -47,7 +47,7 @@ def reduce_logging() -> None:
         "adal-python",
     ]
 
-    for name in logging.Logger.manager.loggerDict:  # type: ignore
+    for name in logging.Logger.manager.loggerDict:
         logger = logging.getLogger(name)
         for prefix in to_quiet:
             if logger.name.startswith(prefix):
