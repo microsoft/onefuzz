@@ -10,10 +10,8 @@ from uuid import UUID
 
 import requests
 from azure.graphrbac import GraphRbacManagementClient
-from azure.graphrbac.models import CheckGroupMembershipParameters
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-from azure.mgmt import subscription
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from memoization import cached
