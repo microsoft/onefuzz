@@ -175,15 +175,23 @@ impl SendRetry for reqwest::RequestBuilder {
 #[cfg(test)]
 mod test {
     use super::*;
-    use wiremock::{MockServer, Mock, ResponseTemplate};
     use wiremock::matchers::path;
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     async fn build_server() -> Result<MockServer> {
         let server = MockServer::start().await;
-        server.register(Mock::given(path("/200")).respond_with(ResponseTemplate::new(200))).await;
-        server.register(Mock::given(path("/400")).respond_with(ResponseTemplate::new(400))).await;
-        server.register(Mock::given(path("/401")).respond_with(ResponseTemplate::new(401))).await;
-        server.register(Mock::given(path("/404")).respond_with(ResponseTemplate::new(404))).await;
+        server
+            .register(Mock::given(path("/200")).respond_with(ResponseTemplate::new(200)))
+            .await;
+        server
+            .register(Mock::given(path("/400")).respond_with(ResponseTemplate::new(400)))
+            .await;
+        server
+            .register(Mock::given(path("/401")).respond_with(ResponseTemplate::new(401)))
+            .await;
+        server
+            .register(Mock::given(path("/404")).respond_with(ResponseTemplate::new(404)))
+            .await;
         Ok(server)
     }
 
