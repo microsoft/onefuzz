@@ -175,6 +175,17 @@ impl SendRetry for reqwest::RequestBuilder {
 #[cfg(test)]
 mod test {
     use super::*;
+    use wiremock::{MockServer, Mock, ResponseTemplate};
+    use wiremock::matchers::path;
+
+    async fn build_server() -> Result<MockServer> {
+        let server = MockServer::start().await;
+        server.register(Mock::given(path("/200")).respond_with(ResponseTemplate::new(200))).await;
+        server.register(Mock::given(path("/400")).respond_with(ResponseTemplate::new(400))).await;
+        server.register(Mock::given(path("/401")).respond_with(ResponseTemplate::new(401))).await;
+        server.register(Mock::given(path("/404")).respond_with(ResponseTemplate::new(404))).await;
+        Ok(server)
+    }
 
     fn always_fail(_: StatusCode) -> RetryCheck {
         RetryCheck::Fail
@@ -189,8 +200,9 @@ mod test {
 
     #[tokio::test]
     async fn retry_success() -> Result<()> {
+        let server = build_server().await?;
         reqwest::Client::new()
-            .get("https://httpstat.us/200")
+            .get(format!("{}/200", &server.uri()))
             .send_retry_default()
             .await?
             .error_for_status()?;
@@ -199,15 +211,15 @@ mod test {
 
     #[tokio::test]
     async fn retry_socket_failure() -> Result<()> {
-        let invalid_url = "http://127.0.0.1:81/test.txt";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/404", &server.uri()))
             .send_retry(always_retry, Duration::from_millis(1), 3)
             .await;
 
         match resp {
-            Ok(_) => {
-                anyhow::bail!("response should have failed: {}", invalid_url);
+            Ok(result) => {
+                anyhow::bail!("response should have failed: {:?}", result);
             }
             Err(err) => {
                 let as_text = format!("{:?}", err);
@@ -220,9 +232,9 @@ mod test {
 
     #[tokio::test]
     async fn retry_fail_normal() -> Result<()> {
-        let invalid_url = "https://httpstat.us/400";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/400", &server.uri()))
             .send_retry(always_retry, Duration::from_millis(1), 3)
             .await;
 
@@ -241,9 +253,9 @@ mod test {
 
     #[tokio::test]
     async fn retry_fail_fast() -> Result<()> {
-        let invalid_url = "https://httpstat.us/400";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/400", &server.uri()))
             .send_retry(always_fail, Duration::from_millis(1), 3)
             .await;
 
@@ -255,9 +267,9 @@ mod test {
 
     #[tokio::test]
     async fn retry_400_success() -> Result<()> {
-        let invalid_url = "https://httpstat.us/400";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/400", &server.uri()))
             .send_retry(succeed_400, Duration::from_millis(1), 3)
             .await?;
 
@@ -267,9 +279,9 @@ mod test {
 
     #[tokio::test]
     async fn retry_400_with_retry() -> Result<()> {
-        let invalid_url = "https://httpstat.us/401";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/401", &server.uri()))
             .send_retry(succeed_400, Duration::from_millis(1), 3)
             .await;
 
