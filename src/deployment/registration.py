@@ -86,7 +86,7 @@ def get_tenant_id(subscription_id: Optional[str] = None) -> str:
     result = query_microsoft_graph(
         method="GET", resource="organization", subscription=subscription_id
     )
-    return cast(str, result["value"]["id"])
+    return cast(str, result["value"][0]["id"])
 
 
 OperationResult = TypeVar("OperationResult")
