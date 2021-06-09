@@ -81,6 +81,7 @@ class TaskFeature(Enum):
     report_list = "report_list"
     minimized_stack_depth = "minimized_stack_depth"
     input_file = "input_file"
+    coverage_filter = "coverage_filter"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -148,6 +149,7 @@ class TaskState(Enum):
 
 
 class TaskType(Enum):
+    coverage = "coverage"
     libfuzzer_fuzz = "libfuzzer_fuzz"
     libfuzzer_coverage = "libfuzzer_coverage"
     libfuzzer_crash_report = "libfuzzer_crash_report"

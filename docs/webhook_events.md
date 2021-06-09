@@ -349,6 +349,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -500,6 +504,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -842,6 +847,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -1870,6 +1876,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -2021,6 +2031,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -2536,6 +2547,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -2687,6 +2702,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3034,6 +3050,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -3185,6 +3205,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3477,6 +3498,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -3628,6 +3653,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3894,6 +3920,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -4059,6 +4089,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -4338,6 +4369,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -4489,6 +4524,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -5743,6 +5779,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -5908,6 +5948,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",

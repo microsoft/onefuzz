@@ -8,7 +8,7 @@ import logging
 import os
 import tempfile
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -17,12 +17,11 @@ from azure.applicationinsights import ApplicationInsightsDataClient
 from azure.applicationinsights.models import QueryBody
 from azure.common.client_factory import get_azure_cli_credentials
 from onefuzztypes.enums import ContainerType, TaskType
-from onefuzztypes.models import BlobRef, NodeAssignment, Report, Task
-from onefuzztypes.primitives import Container, Directory
+from onefuzztypes.models import BlobRef, Job, NodeAssignment, Report, Task, TaskConfig
+from onefuzztypes.primitives import Container, Directory, PoolName
 
 from onefuzz.api import UUID_EXPANSION, Command, LiveRepro, Onefuzz
 
-from .azcopy import azcopy_sync
 from .backend import wait
 from .rdp import rdp_connect
 from .ssh import ssh_connect
@@ -352,26 +351,71 @@ class DebugJob(Command):
     def download_files(self, job_id: UUID_EXPANSION, output: Directory) -> None:
         """Download the containers by container type for each task in the specified job"""
 
-        to_download = {}
-        tasks = self.onefuzz.tasks.list(job_id=job_id, state=None)
-        if not tasks:
-            raise Exception("no tasks with job_id:%s" % job_id)
+        self.onefuzz.jobs.containers.download(job_id, output=output)
 
-        for task in tasks:
-            for container in task.config.containers:
-                info = self.onefuzz.containers.get(container.name)
-                name = os.path.join(container.type.name, container.name)
-                to_download[name] = info.sas_url
+    def rerun(
+        self,
+        job_id: UUID_EXPANSION,
+        *,
+        duration: Optional[int] = None,
+        pool_name: Optional[PoolName] = None,
+    ) -> Job:
+        """rerun a given job"""
 
-        for name in to_download:
-            outdir = os.path.join(output, name)
-            if not os.path.exists(outdir):
-                os.makedirs(outdir)
-            self.logger.info("downloading: %s", name)
-            # security note: the src for azcopy comes from the server which is
-            # trusted in this context, while the destination is provided by the
-            # user
-            azcopy_sync(to_download[name], outdir)
+        existing_job = self.onefuzz.jobs.get(job_id)
+        job_config = existing_job.config
+        if duration is not None:
+            job_config.duration = duration
+        existing_tasks = self.onefuzz.jobs.tasks.list(existing_job.job_id)
+
+        configs: Dict[UUID, TaskConfig] = {}
+        todo: Set[UUID] = set()
+        new_task_ids: Dict[UUID, UUID] = {}
+
+        for task in existing_tasks:
+            config = TaskConfig.parse_obj(json.loads(task.config.json()))
+            if pool_name is not None and config.pool is not None:
+                config.pool.pool_name = pool_name
+            configs[task.task_id] = config
+            todo.add(task.task_id)
+
+        job = self.onefuzz.jobs.create_with_config(existing_job.config)
+
+        while todo:
+            added: Set[UUID] = set()
+
+            for task_id in todo:
+                config = configs[task_id]
+                config.job_id = job.job_id
+                if config.prereq_tasks:
+                    if set(config.prereq_tasks).issubset(new_task_ids.keys()):
+                        config.prereq_tasks = [
+                            new_task_ids[x] for x in config.prereq_tasks
+                        ]
+                        task = self.onefuzz.tasks.create_with_config(config)
+                        self.logger.info(
+                            "created task: %s - %s",
+                            task.task_id,
+                            task.config.task.type.name,
+                        )
+                        new_task_ids[task_id] = task.task_id
+                        added.add(task_id)
+                else:
+                    task = self.onefuzz.tasks.create_with_config(config)
+                    self.logger.info(
+                        "created task: %s - %s",
+                        task.task_id,
+                        task.config.task.type.name,
+                    )
+                    new_task_ids[task_id] = task.task_id
+                    added.add(task_id)
+
+            if added:
+                todo -= added
+            else:
+                raise Exception(f"unable to resolve task prereqs for: {todo}")
+
+        return job
 
 
 class DebugLog(Command):

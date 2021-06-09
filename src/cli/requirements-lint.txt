@@ -5,3 +5,5 @@ isort
 vulture
 black
 bandit
+types-requests
+types-six

@@ -364,6 +364,12 @@ def build_task_config(
     if TaskFeature.input_file in definition.features:
         config.input_file = task_config.task.input_file
 
+    if TaskFeature.coverage_filter in definition.features:
+        coverage_filter = task_config.task.coverage_filter
+
+        if coverage_filter is not None:
+            config.coverage_filter = "setup/%s" % coverage_filter
+
     return config
 
 

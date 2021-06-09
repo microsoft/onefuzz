@@ -25,39 +25,6 @@ class StoppedEarly(Exception):
     pass
 
 
-def _build_container_name(
-    onefuzz: "Onefuzz",
-    container_type: ContainerType,
-    project: str,
-    name: str,
-    build: str,
-    platform: OS,
-) -> Container:
-    if container_type in [ContainerType.setup, ContainerType.coverage]:
-        guid = onefuzz.utils.namespaced_guid(
-            project,
-            name,
-            build=build,
-            platform=platform.name,
-        )
-    elif container_type == ContainerType.regression_reports:
-        guid = onefuzz.utils.namespaced_guid(
-            project,
-            name,
-            build=build,
-        )
-    else:
-        guid = onefuzz.utils.namespaced_guid(project, name)
-
-    return Container(
-        "oft-%s-%s"
-        % (
-            container_type.name.replace("_", "-"),
-            guid.hex,
-        )
-    )
-
-
 class JobHelper:
     def __init__(
         self,
@@ -115,13 +82,12 @@ class JobHelper:
         """
 
         for container_type in types:
-            self.containers[container_type] = _build_container_name(
-                self.onefuzz,
-                container_type,
-                self.project,
-                self.name,
-                self.build,
-                self.platform,
+            self.containers[container_type] = self.onefuzz.utils.build_container_name(
+                container_type=container_type,
+                project=self.project,
+                name=self.name,
+                build=self.build,
+                platform=self.platform,
             )
 
     def get_unique_container_name(self, container_type: ContainerType) -> Container:

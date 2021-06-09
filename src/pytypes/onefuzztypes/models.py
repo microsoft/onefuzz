@@ -173,6 +173,7 @@ class TaskDetails(BaseModel):
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     input_file: Optional[str]
+    coverage_filter: Optional[str]
 
     @validator("check_retry_count", allow_reuse=True)
     def validate_check_retry_count(cls, value: int) -> int:
@@ -408,6 +409,7 @@ class TaskUnitConfig(BaseModel):
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     input_file: Optional[str]
+    coverage_filter: Optional[str]
 
     # from here forwards are Container definitions.  These need to be inline
     # with TaskDefinitions and ContainerTypes

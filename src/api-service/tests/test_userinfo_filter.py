@@ -8,7 +8,7 @@ import unittest
 from uuid import uuid4
 
 from onefuzztypes.enums import ContainerType, TaskType
-from onefuzztypes.events import EventTaskCreated, get_event_type
+from onefuzztypes.events import EventTaskCreated
 from onefuzztypes.models import (
     TaskConfig,
     TaskContainers,
@@ -65,9 +65,7 @@ class TestUserInfoFilter(unittest.TestCase):
             user_info=None,
         )
 
-        test_event_type = get_event_type(test_event)
-
-        scrubbed_test_event = filter_event(test_event, test_event_type)
+        scrubbed_test_event = filter_event(test_event)
 
         self.assertEqual(scrubbed_test_event, control_test_event)
 
