@@ -173,6 +173,7 @@ impl SendRetry for reqwest::RequestBuilder {
 }
 
 pub fn is_auth_failure(response: &Result<Response>) -> bool {
+    // Check both cases to support `error_for_status()`.
     match response {
         Ok(response) => {
             return response.status() == StatusCode::UNAUTHORIZED;
