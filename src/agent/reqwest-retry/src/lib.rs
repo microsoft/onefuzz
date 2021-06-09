@@ -172,6 +172,23 @@ impl SendRetry for reqwest::RequestBuilder {
     }
 }
 
+pub fn is_auth_failure(response: &Result<Response>) -> bool {
+    // Check both cases to support `error_for_status()`.
+    match response {
+        Ok(response) => {
+            return response.status() == StatusCode::UNAUTHORIZED;
+        }
+        Err(error) => {
+            if let Some(error) = error.downcast_ref::<reqwest::Error>() {
+                if let Some(status) = error.status() {
+                    return status == StatusCode::UNAUTHORIZED;
+                }
+            }
+        }
+    }
+    false
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -296,6 +313,40 @@ mod test {
         assert!(resp.is_err(), "{:?}", resp);
         let as_text = format!("{:?}", resp);
         assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_auth_failure() -> Result<()> {
+        let server = build_server().await?;
+
+        let auth_pass = reqwest::Client::new()
+            .get(format!("{}/200", &server.uri()))
+            .send_retry(
+                |code| match code {
+                    StatusCode::UNAUTHORIZED => RetryCheck::Fail,
+                    _ => RetryCheck::Retry,
+                },
+                DEFAULT_RETRY_PERIOD,
+                MAX_RETRY_ATTEMPTS,
+            )
+            .await;
+
+        let auth_fail = reqwest::Client::new()
+            .get(format!("{}/401", &server.uri()))
+            .send_retry(
+                |code| match code {
+                    StatusCode::UNAUTHORIZED => RetryCheck::Fail,
+                    _ => RetryCheck::Retry,
+                },
+                DEFAULT_RETRY_PERIOD,
+                MAX_RETRY_ATTEMPTS,
+            )
+            .await;
+
+        assert!(!is_auth_failure(&auth_pass));
+        assert!(is_auth_failure(&auth_fail));
+
         Ok(())
     }
 }
