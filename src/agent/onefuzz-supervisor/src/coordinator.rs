@@ -5,7 +5,9 @@ use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
-use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
+use reqwest_retry::{
+    is_auth_failure, RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS,
+};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -296,9 +298,9 @@ impl Coordinator {
                 MAX_RETRY_ATTEMPTS,
             )
             .await
-            .context("Coordinator.send")?;
+            .context("Coordinator.send");
 
-        if response.status() == StatusCode::UNAUTHORIZED {
+        if is_auth_failure(&response) {
             debug!("access token expired, renewing");
 
             // If we didn't succeed due to authorization, refresh our token,
@@ -310,8 +312,10 @@ impl Coordinator {
             response = request
                 .send_retry_default()
                 .await
-                .context("Coordinator.send after refreshing access token")?;
+                .context("Coordinator.send after refreshing access token");
         };
+
+        let response = response.context("non-status error after ensuring valid access token")?;
 
         // We've retried if we got a `401 Unauthorized`. If it happens again, we
         // really want to bail this time.
