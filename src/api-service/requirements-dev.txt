@@ -5,3 +5,6 @@ isort
 vulture
 black
 bandit
+types-jwt
+types-requests
+types-Jinja2
