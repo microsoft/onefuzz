@@ -191,23 +191,35 @@ impl<'a> TaskContext<'a> {
     pub async fn record_input(&mut self, input: &Path) -> Result<()> {
         let attempts = MAX_COVERAGE_RECORDING_ATTEMPTS;
 
-        for _ in 0..attempts {
-            if let Err(err) = self.try_record_input(input).await {
-                warn!(
-                    "error recording coverage for input = {}: {:?}",
-                    input.display(),
-                    err
-                );
+        for attempt in 1..=attempts {
+            let result = self.try_record_input(input).await;
+
+            if let Err(err) = &result {
+                // Recording failed, check if we can retry.
+                if attempt < attempts {
+                    // We will retry, but warn to capture the error if we succeed.
+                    warn!(
+                        "error recording coverage for input = {}: {:?}",
+                        input.display(),
+                        err
+                    );
+                } else {
+                    // Final attempt, do not retry.
+                    return result.with_context(|| {
+                        format_err!(
+                            "failed to record coverage for input = {} after {} attempts",
+                            input.display(),
+                            attempts
+                        )
+                    });
+                }
             } else {
-                return Ok(());
+                // We successfully recorded the coverage for `input`, so stop.
+                break;
             }
         }
 
-        anyhow::bail!(
-            "failed to record coverage for input = {} after {} attempts",
-            input.display(),
-            attempts
-        )
+        Ok(())
     }
 
     async fn try_record_input(&mut self, input: &Path) -> Result<()> {
