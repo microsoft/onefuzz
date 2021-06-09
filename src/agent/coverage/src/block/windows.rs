@@ -129,7 +129,9 @@ impl<'c> Recorder<'c> {
             if log::max_level() == log::Level::Trace {
                 let name = breakpoint.module.name().to_string_lossy();
                 let offset = breakpoint.offset;
-                let pc = dbg.read_program_counter().context("reading PC on breakpoint")?;
+                let pc = dbg
+                    .read_program_counter()
+                    .context("reading PC on breakpoint")?;
 
                 if let Ok(sym) = dbg.get_symbol(pc) {
                     log::trace!(
@@ -182,7 +184,8 @@ impl<'c> Recorder<'c> {
                 }
 
                 self.breakpoints
-                    .set(dbg, module, info.blocks.iter().copied()).context("setting breakpoints for module")?;
+                    .set(dbg, module, info.blocks.iter().copied())
+                    .context("setting breakpoints for module")?;
 
                 log::debug!("set {} breakpoints for module {}", info.blocks.len(), path);
             }
@@ -238,7 +241,11 @@ struct Breakpoints {
 
 impl Breakpoints {
     pub fn get(&self, id: BreakpointId) -> Option<BreakpointData<'_>> {
-        let (module_index, offset) = self.registered.get(&id).copied().context("looking up breakpoint")?;
+        let (module_index, offset) = self
+            .registered
+            .get(&id)
+            .copied()
+            .context("looking up breakpoint")?;
         let module = self.modules.get(module_index)?;
         Some(BreakpointData { module, offset })
     }
