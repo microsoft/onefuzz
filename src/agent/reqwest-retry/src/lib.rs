@@ -173,11 +173,16 @@ impl SendRetry for reqwest::RequestBuilder {
 }
 
 pub fn is_auth_failure(response: &Result<Response>) -> bool {
-    if let Err(error) = response {
-        if let Some(error) = error.downcast_ref::<reqwest::Error>() {
-            if let Some(status) = error.status() {
-                if status == StatusCode::UNAUTHORIZED {
-                    return true;
+    match response {
+        Ok(response) => {
+            return response.status() == StatusCode::UNAUTHORIZED;
+        }
+        Err(error) => {
+            if let Some(error) = error.downcast_ref::<reqwest::Error>() {
+                if let Some(status) = error.status() {
+                    if status == StatusCode::UNAUTHORIZED {
+                        return true;
+                    }
                 }
             }
         }
