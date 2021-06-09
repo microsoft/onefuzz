@@ -13,7 +13,7 @@ use coverage::cache::ModuleCache;
 use coverage::code::{CmdFilter, CmdFilterDef};
 use onefuzz::expand::Expand;
 use onefuzz::syncdir::SyncedDir;
-use onefuzz_telemetry::{Event::coverage_data, EventData};
+use onefuzz_telemetry::{warn, Event::coverage_data, EventData};
 use serde::de::DeserializeOwned;
 use storage_queue::{Message, QueueClient};
 use tokio::fs;
@@ -25,6 +25,7 @@ use crate::tasks::config::CommonConfig;
 use crate::tasks::generic::input_poller::{CallbackImpl, InputPoller, Processor};
 use crate::tasks::heartbeat::{HeartbeatSender, TaskHeartbeatClient};
 
+const MAX_COVERAGE_RECORDING_ATTEMPTS: usize = 2;
 const COVERAGE_FILE: &str = "coverage.json";
 const MODULE_CACHE_FILE: &str = "module-cache.json";
 
@@ -188,6 +189,28 @@ impl<'a> TaskContext<'a> {
     }
 
     pub async fn record_input(&mut self, input: &Path) -> Result<()> {
+        let attempts = MAX_COVERAGE_RECORDING_ATTEMPTS;
+
+        for _ in 0..attempts {
+            if let Err(err) = self.try_record_input(input).await {
+                warn!(
+                    "error recording coverage for input = {}: {:?}",
+                    input.display(),
+                    err
+                );
+            } else {
+                return Ok(());
+            }
+        }
+
+        anyhow::bail!(
+            "failed to record coverage for input = {} after {} attempts",
+            input.display(),
+            attempts
+        )
+    }
+
+    async fn try_record_input(&mut self, input: &Path) -> Result<()> {
         let coverage = self.record_impl(input).await?;
         self.coverage.merge_max(&coverage);
 
