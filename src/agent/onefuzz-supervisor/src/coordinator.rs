@@ -315,7 +315,7 @@ impl Coordinator {
                 .context("Coordinator.send after refreshing access token");
         };
 
-        let response = response?;
+        let response = response.context("non-status error after ensuring valid access token")?;
 
         // We've retried if we got a `401 Unauthorized`. If it happens again, we
         // really want to bail this time.
