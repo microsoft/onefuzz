@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.21.0
+### Added
+* CLI: Added `onefuzz debug job rerun` command. [#960](https://github.com/microsoft/onefuzz/pull/960)
+
+### Changed
+* Agent: Added increased context when recording coverage errors. [#979](https://github.com/microsoft/onefuzz/pull/979)
+* Agent: The coverage task now retries an input in the case of coverage recording failure. [#978](https://github.com/microsoft/onefuzz/pull/978)
+* Service: Nodes with the `debug_keep_node` flag will now be reimaged once the node is 7 days old. [#968](https://github.com/microsoft/onefuzz/pull/968)
+* Service: Updates to scalesets can now be requested while the node is in the `resize` state.  [#969](https://github.com/microsoft/onefuzz/pull/969)
+
+### Fixed
+* Service: Fixed an issue reimaging nodes that previously failed to reimage as expected. [#970](https://github.com/microsoft/onefuzz/pull/970)
+* Service: Fixed an issue resizing scalesets that exceed Azure VM quotas. [#967](https://github.com/microsoft/onefuzz/pull/967)
+* Supervisor: Fixed an issue with refreshing service authentication tokens. [#976](https://github.com/microsoft/onefuzz/pull/976)
+
 ## 2.20.0
 ### Added
 * Agent: Added a new `coverage` task that enables coverage analysis for both uninstrumented and Sancov targets on Linux and Windows. [#763](https://github.com/microsoft/onefuzz/pull/763)
