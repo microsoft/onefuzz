@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use std::process::Command;
 use std::time::{Duration, Instant};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use debugger::{BreakpointId, BreakpointType, DebugEventHandler, Debugger, ModuleLoadInfo};
 
 use crate::block::CommandBlockCov;
@@ -50,8 +50,8 @@ impl<'r, 'c> RecorderEventHandler<'r, 'c> {
     }
 
     pub fn run(&mut self, cmd: Command) -> Result<()> {
-        let (mut dbg, _child) = Debugger::init(cmd, self)?;
-        dbg.run(self)?;
+        let (mut dbg, _child) = Debugger::init(cmd, self).context("initializing debugger")?;
+        dbg.run(self).context("running debuggee")?;
         Ok(())
     }
 
@@ -129,7 +129,9 @@ impl<'c> Recorder<'c> {
             if log::max_level() == log::Level::Trace {
                 let name = breakpoint.module.name().to_string_lossy();
                 let offset = breakpoint.offset;
-                let pc = dbg.read_program_counter()?;
+                let pc = dbg
+                    .read_program_counter()
+                    .context("reading PC on breakpoint")?;
 
                 if let Ok(sym) = dbg.get_symbol(pc) {
                     log::trace!(
@@ -161,7 +163,7 @@ impl<'c> Recorder<'c> {
     }
 
     fn insert_module(&mut self, dbg: &mut Debugger, module: &ModuleLoadInfo) -> Result<()> {
-        let path = ModulePath::new(module.path().to_owned())?;
+        let path = ModulePath::new(module.path().to_owned()).context("parsing module path")?;
 
         if !self.filter.includes_module(&path) {
             log::debug!("skipping module: {}", path);
@@ -182,7 +184,8 @@ impl<'c> Recorder<'c> {
                 }
 
                 self.breakpoints
-                    .set(dbg, module, info.blocks.iter().copied())?;
+                    .set(dbg, module, info.blocks.iter().copied())
+                    .context("setting breakpoints for module")?;
 
                 log::debug!("set {} breakpoints for module {}", info.blocks.len(), path);
             }
