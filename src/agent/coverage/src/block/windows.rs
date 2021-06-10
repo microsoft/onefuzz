@@ -244,8 +244,7 @@ impl Breakpoints {
         let (module_index, offset) = self
             .registered
             .get(&id)
-            .copied()
-            .context("looking up breakpoint")?;
+            .copied()?;
         let module = self.modules.get(module_index)?;
         Some(BreakpointData { module, offset })
     }
