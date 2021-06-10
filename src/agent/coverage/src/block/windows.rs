@@ -241,10 +241,7 @@ struct Breakpoints {
 
 impl Breakpoints {
     pub fn get(&self, id: BreakpointId) -> Option<BreakpointData<'_>> {
-        let (module_index, offset) = self
-            .registered
-            .get(&id)
-            .copied()?;
+        let (module_index, offset) = self.registered.get(&id).copied()?;
         let module = self.modules.get(module_index)?;
         Some(BreakpointData { module, offset })
     }
