@@ -5,16 +5,17 @@
 #
 # Original project licensed under the MIT License.
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
 
-from pydantic.error_wrappers import ErrorList
 from pydantic.fields import ModelField
-from pydantic.types import ModelOrDc
 from pydantic.typing import get_origin
 
-ValidateReturn = Tuple[Optional[Any], Optional[ErrorList]]
-LocStr = Union[Tuple[Union[int, str], ...], str]
+if TYPE_CHECKING:
+    from pydantic.error_wrappers import ErrorList
+    from pydantic.types import ModelOrDc
 
+    ValidateReturn = Tuple[Optional[Any], Optional[ErrorList]]
+    LocStr = Union[Tuple[Union[int, str], ...], str]
 
 orig = ModelField._validate_singleton
 
@@ -25,7 +26,7 @@ def wrapper(
     values: Dict[str, Any],
     loc: "LocStr",
     cls: Optional["ModelOrDc"],
-) -> ValidateReturn:
+) -> "ValidateReturn":
     if self.sub_fields:
         if get_origin(self.type_) is Union:
             for field in self.sub_fields:
