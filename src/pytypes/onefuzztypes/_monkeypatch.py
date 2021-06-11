@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 upstream_validate_singleton = ModelField._validate_singleton
 
 
-# this is a direct port of the funcionality from the PR discussed above, though
+# this is a direct port of the functionality from the PR discussed above, though
 # *all* unions are considered "smart" for our purposes.
 def wrap_validate_singleton(
     self: ModelField,
