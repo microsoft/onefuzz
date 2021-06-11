@@ -449,7 +449,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         for node in nodes:
             node.send_stop_if_free()
 
-    def check_scaleset_size(self) -> None:
+    def sync_scaleset_size(self) -> None:
+        # If our understanding of size is out of sync with Azure, resize the
+        # scaleset to match our understanding.
         if self.state != ScalesetState.running:
             return
 

@@ -26,7 +26,7 @@ def process_scaleset(scaleset: Scaleset) -> None:
         logging.debug("scaleset needed cleanup: %s", scaleset.scaleset_id)
         return
 
-    scaleset.check_scaleset_size()
+    scaleset.sync_scaleset_size()
 
     process_state_updates(scaleset)
 
