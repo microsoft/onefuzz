@@ -5,22 +5,21 @@
 #
 # Original project licensed under the MIT License.
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from pydantic.fields import ModelField
 from pydantic.typing import get_origin
 
 if TYPE_CHECKING:
-    from pydantic.error_wrappers import ErrorList
+    from pydantic.fields import LocStr, ValidateReturn
     from pydantic.types import ModelOrDc
 
-    ValidateReturn = Tuple[Optional[Any], Optional[ErrorList]]
-    LocStr = Union[Tuple[Union[int, str], ...], str]
-
-orig = ModelField._validate_singleton
+upstream_validate_singleton = ModelField._validate_singleton
 
 
-def wrapper(
+# this is a direct port of the funcionality from the PR discussed above, though
+# *all* unions are considered "smart" for our purposes.
+def wrap_validate_singleton(
     self: ModelField,
     v: Any,
     values: Dict[str, Any],
@@ -39,12 +38,15 @@ def wrapper(
                 except TypeError:
                     pass
 
-    return orig(self, v, values, loc, cls)
+    return upstream_validate_singleton(self, v, values, loc, cls)
 
 
-ModelField._validate_singleton = wrapper  # type: ignore
+ModelField._validate_singleton = wrap_validate_singleton  # type: ignore
 
 
+# this should be included in any file that defines a pydantic model that uses a
+# Union and calls to it should be removed when Pydantic's smart union support
+# lands
 def _check_hotfix() -> None:
-    if ModelField._validate_singleton != wrapper:
+    if ModelField._validate_singleton != wrap_validate_singleton:
         raise Exception("pydantic Union hotfix not applied")
