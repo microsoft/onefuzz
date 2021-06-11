@@ -6,6 +6,7 @@
 import unittest
 
 from onefuzztypes.models import TeamsTemplate
+
 from onefuzz.backend import serialize
 
 
@@ -14,6 +15,7 @@ class TestSerialize(unittest.TestCase):
         base = TeamsTemplate(url="https://contoso.com")
         converted = serialize(base)
         self.assertEqual(converted, {"url": "https://contoso.com"})
+
 
 if __name__ == "__main__":
     unittest.main()
