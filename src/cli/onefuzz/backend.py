@@ -379,7 +379,6 @@ def serialize(data: Any) -> Any:
     if data is None:
         return data
     if isinstance(data, SecretData) and not isinstance(data.secret, SecretAddress):
-        print(type(data.secret))
         return serialize(data.secret)
     if isinstance(data, BaseModel):
         return {serialize(a): serialize(b) for (a, b) in data.dict().items()}
