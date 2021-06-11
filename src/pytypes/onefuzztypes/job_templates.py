@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator, validator
 
+from ._monkeypatch import _check_hotfix
 from .enums import OS, ContainerType, UserFieldOperation, UserFieldType
 from .models import JobConfig, NotificationConfig, TaskConfig, TaskContainers
 from .primitives import File
@@ -184,3 +185,6 @@ class JobTemplateGet(BaseRequest):
 
 class JobTemplateRequestParameters(BaseRequest):
     user_fields: TemplateUserFields
+
+
+_check_hotfix()

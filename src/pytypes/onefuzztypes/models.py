@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, root_validator, validator
 from pydantic.dataclasses import dataclass
 
+from ._monkeypatch import _check_hotfix
 from .consts import ONE_HOUR, SEVEN_DAYS
 from .enums import (
     OS,
@@ -842,3 +843,6 @@ class Task(BaseModel):
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
     user_info: Optional[UserInfo]
+
+
+_check_hotfix()

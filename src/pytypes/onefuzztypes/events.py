@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
+from ._monkeypatch import _check_hotfix
 from .enums import (
     OS,
     Architecture,
@@ -319,3 +320,6 @@ def parse_event_message(data: Dict[str, Any]) -> EventMessage:
         instance_id=instance_id,
         instance_name=instance_name,
     )
+
+
+_check_hotfix()
