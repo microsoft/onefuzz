@@ -148,4 +148,4 @@ INFO:onefuzz:new files found
 
 ## See Also
 * [afl-unicorn](https://github.com/Battelle/afl-unicorn) - AFL-based application fuzzing using [Unicorn](https://www.unicorn-engine.org/)
-* [TriforceAFL] (https://github.com/nccgroup/TriforceAFL) - AFL-based full-system fuzzing using a fork of [QEMU](https://qemu.readthedocs.io/)
+* [TriforceAFL](https://github.com/nccgroup/TriforceAFL) - AFL-based full-system fuzzing using a fork of [QEMU](https://qemu.readthedocs.io/)
