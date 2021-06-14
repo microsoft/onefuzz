@@ -449,6 +449,34 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         for node in nodes:
             node.send_stop_if_free()
 
+    def sync_scaleset_size(self) -> None:
+        # If our understanding of size is out of sync with Azure, resize the
+        # scaleset to match our understanding.
+        if self.state != ScalesetState.running:
+            return
+
+        size = get_vmss_size(self.scaleset_id)
+        if size is None:
+            logging.info(
+                SCALESET_LOG_PREFIX + "scaleset is unavailable. scaleset_id:%s",
+                self.scaleset_id,
+            )
+            # if the scaleset is missing, this is an indication the scaleset
+            # was manually deleted, rather than having OneFuzz delete it.  As
+            # such, we should go thruogh the process of deleting it.
+            self.set_shutdown(now=True)
+            return
+
+        if size != self.size:
+            logging.info(
+                SCALESET_LOG_PREFIX + "unexpected scaleset size, resizing.  "
+                "scaleset_id:%s expected:%d actual:%d",
+                self.scaleset_id,
+                self.size,
+                size,
+            )
+            self.set_state(ScalesetState.resize)
+
     def resize(self) -> None:
         # no longer needing to resize
         if self.state != ScalesetState.resize:
