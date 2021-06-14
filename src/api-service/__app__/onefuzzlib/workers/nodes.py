@@ -232,7 +232,10 @@ class Node(BASE_NODE, ORMMixin):
         if error is None:
             error = Error(
                 code=ErrorCode.TASK_FAILED,
-                errors=["node reimaged during task execution"],
+                errors=[
+                    "node reimaged during task execution.  machine_id:%s"
+                    % self.machine_id
+                ],
             )
 
         for entry in NodeTasks.get_by_machine_id(self.machine_id):
