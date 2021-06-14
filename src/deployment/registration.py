@@ -28,7 +28,6 @@ from azure.graphrbac.models import (
 from functional import seq
 from msrest.serialization import TZ_UTC
 
-
 FIX_URL = (
     "https://ms.portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/"
     "ApplicationMenuBlade/ProtectAnAPI/appId/%s/isMSAApp/"
