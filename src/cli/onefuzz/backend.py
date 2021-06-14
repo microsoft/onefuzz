@@ -30,7 +30,6 @@ from uuid import UUID
 import msal
 import requests
 from azure.storage.blob import ContainerClient
-from onefuzztypes.models import SecretAddress, SecretData
 from pydantic import BaseModel, Field
 from tenacity import Future as tenacity_future
 from tenacity import Retrying, retry
@@ -378,8 +377,6 @@ def container_file_path(container_url: str, blob_name: str) -> str:
 def serialize(data: Any) -> Any:
     if data is None:
         return data
-    if isinstance(data, SecretData) and not isinstance(data.secret, SecretAddress):
-        return serialize(data.secret)
     if isinstance(data, BaseModel):
         return {serialize(a): serialize(b) for (a, b) in data.dict().items()}
     if isinstance(data, dict):
