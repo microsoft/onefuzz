@@ -17,6 +17,11 @@ pub fn system_info() -> Result<SystemInfo> {
     Ok(s.system_info())
 }
 
+pub fn processes() -> Result<Vec<ProcInfo>> {
+    let mut s = SYSTEM.write().map_err(|e| format_err!("{}", e))?;
+    Ok(s.processes())
+}
+
 pub fn proc_info(pid: u32) -> Result<Option<ProcInfo>> {
     let s = SYSTEM.read().map_err(|e| format_err!("{}", e))?;
     Ok(s.proc_info(pid))
@@ -95,6 +100,30 @@ impl System {
             load_avg_15min,
             cpu_usage,
         }
+    }
+
+    pub fn processes(&mut self) -> Vec<ProcInfo> {
+        self.system.refresh_processes();
+
+        let mut results = vec![];
+        for (pid, pi) in self.system.get_processes() {
+            let pid = *pid as u32;
+            let name = pi.name().into();
+            let status = format!("{}", pi.status());
+            let cpu_usage = pi.cpu_usage();
+            let memory_kb = pi.memory();
+            let virtual_memory_kb = pi.virtual_memory();
+
+            results.push(ProcInfo {
+                name,
+                pid,
+                status,
+                cpu_usage,
+                memory_kb,
+                virtual_memory_kb,
+            });
+        }
+        results
     }
 
     pub fn proc_info(&self, pid: u32) -> Option<ProcInfo> {

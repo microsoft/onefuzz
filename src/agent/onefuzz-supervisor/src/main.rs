@@ -15,7 +15,7 @@ extern crate onefuzz;
 
 use crate::{
     config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,
-    work::WorkSet, worker::WorkerEvent,
+    monitor::monitor_processes, work::WorkSet, worker::WorkerEvent,
 };
 use std::path::PathBuf;
 
@@ -36,6 +36,7 @@ pub mod debug;
 pub mod done;
 pub mod failure;
 pub mod heartbeat;
+pub mod monitor;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
@@ -226,7 +227,10 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 
     info!("running agent");
 
-    agent.run().await?;
+    let agent_handle = agent.run();
+    let monitor_handle = monitor_processes();
+
+    tokio::try_join!(agent_handle, monitor_handle)?;
 
     info!("supervisor agent finished");
 
