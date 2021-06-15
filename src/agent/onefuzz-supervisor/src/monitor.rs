@@ -9,7 +9,7 @@ pub async fn monitor_processes() -> Result<()> {
     loop {
         let mut processes = processes()?;
         processes.sort_by(|x, y| y.memory_kb.cmp(&x.memory_kb));
-        processes.truncate(10);
+        // processes.truncate(10);
         for process in processes {
             info!("process info {:?}", process)
         }
