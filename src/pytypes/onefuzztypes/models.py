@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union, get_args
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
@@ -61,9 +61,9 @@ class SecretData(Generic[T]):
     secret: Union[T, SecretAddress]
 
     def __init__(self, secret: Union[T, SecretAddress]):
-        if isinstance(secret, dict):
+        try:
             self.secret = SecretAddress.parse_obj(secret)
-        else:
+        except Exception:
             self.secret = secret
 
     def __str__(self) -> str:
@@ -519,7 +519,7 @@ class GithubIssueTemplate(BaseModel):
             try:
                 return SecretData(GithubAuth.parse_obj(v))
             except Exception:
-                return SecretData(secret=v["secret"])
+                return SecretData(GithubAuth.parse_obj(v["secret"]))
         else:
             raise TypeError(f"invalid datatype {type(v)}")
 
