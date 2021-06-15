@@ -3,12 +3,12 @@
 
 #![allow(clippy::single_match)]
 
-use std::{num::NonZeroU64, path::Path};
+use std::{io, num::NonZeroU64, path::Path};
 
 use anyhow::Result;
 use log::{debug, error, trace};
 use rand::{thread_rng, Rng};
-use win_util::{last_os_error, process};
+use win_util::process;
 use winapi::{
     shared::minwindef::{DWORD, LPCVOID},
     um::{
@@ -31,13 +31,22 @@ pub(crate) enum StepState {
     SingleStep,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ThreadState {
+    Running,
+    Suspended,
+    Exited,
+}
+
 struct ThreadInfo {
     #[allow(unused)]
     id: u32,
     handle: HANDLE,
-    suspended: bool,
+    state: ThreadState,
     wow64: bool,
 }
+
+const SUSPEND_RESUME_ERROR_CODE: DWORD = -1i32 as DWORD;
 
 impl ThreadInfo {
     fn new(id: u32, handle: HANDLE, wow64: bool) -> Self {
@@ -45,41 +54,65 @@ impl ThreadInfo {
             id,
             handle,
             wow64,
-            suspended: false,
+            state: ThreadState::Running,
         }
     }
 
-    fn resume_thread(&mut self) -> Result<()> {
-        if !self.suspended {
-            return Ok(());
+    fn resume_thread(&mut self) -> Result<ThreadState> {
+        // If we think the thread state is `Running`, we could skip this call. In that
+        // case, it is a no-op, so call anyway to detect not-yet-reported thread exits.
+        let prev_suspend_count = unsafe { ResumeThread(self.handle) };
+
+        match prev_suspend_count {
+             SUSPEND_RESUME_ERROR_CODE => {
+                let os_error = io::Error::last_os_error();
+
+                if os_error.kind() == io::ErrorKind::PermissionDenied {
+                    self.state = ThreadState::Exited;
+                } else {
+                    return Err(os_error.into());
+                }
+            },
+            0 => {
+                // Thread was running, and is still running.
+                self.state = ThreadState::Running;
+            },
+            1 => {
+                // Was suspended, now running.
+                self.state = ThreadState::Running;
+            },
+            _ => {
+                // Previous suspend count > 1. Was suspended, still is.
+                self.state = ThreadState::Suspended;
+            },
         }
 
-        let suspend_count = unsafe { ResumeThread(self.handle) };
-        if suspend_count == (-1i32 as DWORD) {
-            Err(last_os_error())
-        } else {
-            self.suspended = false;
-            Ok(())
-        }
+        Ok(self.state)
     }
 
-    fn suspend_thread(&mut self) -> Result<()> {
-        if self.suspended {
-            return Ok(());
-        }
-
+    fn suspend_thread(&mut self) -> Result<ThreadState> {
         let suspend_count = if self.wow64 {
             unsafe { Wow64SuspendThread(self.handle) }
         } else {
             unsafe { SuspendThread(self.handle) }
         };
 
-        if suspend_count == (-1i32 as DWORD) {
-            Err(last_os_error())
-        } else {
-            self.suspended = true;
-            Ok(())
+        match suspend_count {
+            SUSPEND_RESUME_ERROR_CODE => {
+                let os_error = io::Error::last_os_error();
+
+                if os_error.kind() == io::ErrorKind::PermissionDenied {
+                    self.state = ThreadState::Exited;
+                } else {
+                    return Err(os_error.into());
+                }
+            },
+            _ => {
+                self.state = ThreadState::Suspended;
+            },
         }
+
+        Ok(self.state)
     }
 }
 
