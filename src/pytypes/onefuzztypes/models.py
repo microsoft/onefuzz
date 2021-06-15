@@ -511,15 +511,12 @@ class GithubIssueTemplate(BaseModel):
     # validator needed for backward compatibility
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
-        if isinstance(v, str):
+        if isinstance(v, GithubAuth):
             return SecretData(secret=v)
         elif isinstance(v, SecretData):
             return v
         elif isinstance(v, dict):
-            try:
-                return SecretData(GithubAuth.parse_obj(v))
-            except Exception:
-                return SecretData(GithubAuth.parse_obj(v["secret"]))
+            return SecretData(GithubAuth.parse_obj(v["secret"]))
         else:
             raise TypeError(f"invalid datatype {type(v)}")
 
