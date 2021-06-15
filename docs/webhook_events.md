@@ -180,6 +180,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Minimized Stack",
                     "type": "array"
                 },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
+                },
                 "minimized_stack_function_names": {
                     "items": {
                         "type": "string"
@@ -1700,6 +1711,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Minimized Stack",
                     "type": "array"
+                },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
                 },
                 "minimized_stack_function_names": {
                     "items": {
@@ -5560,6 +5582,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Minimized Stack",
                     "type": "array"
+                },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
                 },
                 "minimized_stack_function_names": {
                     "items": {

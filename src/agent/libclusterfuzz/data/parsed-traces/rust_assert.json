@@ -244,15 +244,6 @@
       "source_file_line": 45
     },
     {
-      "line": "#9 0x5586679065f3 in rust_fuzzer_test_input libra/testsuite/libra-fuzzer/fuzz/google-oss-fuzz/fuzzer_builder.rs:14:4",
-      "address": 94035751495155,
-      "function_name": "rust_fuzzer_test_input",
-      "function_offset": 4,
-      "source_file_name": "fuzzer_builder.rs",
-      "source_file_path": "libra/testsuite/libra-fuzzer/fuzz/google-oss-fuzz/fuzzer_builder.rs",
-      "source_file_line": 14
-    },
-    {
       "line": "#10 0x55866cbe9e86 in __rust_maybe_catch_panic /rustc/b8cedc00407a4c56a3bda1ed605c6fc166655447/src/libpanic_unwind/lib.rs:86:7",
       "address": 94035838410374,
       "function_name": "__rust_maybe_catch_panic",
@@ -274,15 +265,19 @@
   "minimized_stack": [
     "#7 0x55866847004f in libra_config::utils::get_available_port::h7d7baacfb554bae8 libra/config/src/utils.rs:27:4",
     "#8 0x558668cd1fbd in libra_json_rpc::fuzzing::fuzzer::hde487212e06dd4fd libra/json-rpc/src/fuzzing.rs:45:15",
-    "#9 0x5586679065f3 in rust_fuzzer_test_input libra/testsuite/libra-fuzzer/fuzz/google-oss-fuzz/fuzzer_builder.rs:14:4",
     "#10 0x55866cbe9e86 in __rust_maybe_catch_panic /rustc/b8cedc00407a4c56a3bda1ed605c6fc166655447/src/libpanic_unwind/lib.rs:86:7",
     "#13 0x558668255b41 in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs:25:21"
   ],
   "minimized_stack_function_names": [
     "libra_config::utils::get_available_port::h7d7baacfb554bae8",
     "libra_json_rpc::fuzzing::fuzzer::hde487212e06dd4fd",
-    "rust_fuzzer_test_input",
     "__rust_maybe_catch_panic",
     "lib.rs"
+  ],
+  "minimized_stack_function_lines": [
+    "libra_config::utils::get_available_port::h7d7baacfb554bae8 utils.rs:27:4",
+    "libra_json_rpc::fuzzing::fuzzer::hde487212e06dd4fd fuzzing.rs:45:15",
+    "__rust_maybe_catch_panic lib.rs:86:7",
+    "lib.rs lib.rs:25:21"
   ]
 }

@@ -404,6 +404,25 @@
     "v8::Shell::RunMain",
     "v8::Shell::Main"
   ],
+  "minimized_stack_function_lines": [
+    "v8::internal::__RT_impl_Runtime_AbortJS(v8::internal::Arguments, v8::internal::Isolate*) runtime-test.cc:702:3",
+    "v8::internal::Runtime_AbortJS(int, v8::internal::Object**, v8::internal::Isolate*) runtime-test.cc:692:1",
+    "v8::internal::Simulator::DoRuntimeCall(v8::internal::Instruction*) simulator-arm64.cc:490:11",
+    "v8::internal::Simulator::ExecuteInstruction() simulator-arm64.h:779:5",
+    "Run simulator-arm64.cc:390:5",
+    "v8::internal::Simulator::CheckPCSComplianceAndRun() simulator-arm64.cc:188",
+    "v8::internal::Simulator::CallImpl(unsigned long, v8::internal::Simulator::CallArgument*) simulator-arm64.cc:157:3",
+    "Call<v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, v8::internal::Object *, int, v8::internal::Object ***> simulator-arm64.h:725:5",
+    "Call simulator.h:107",
+    "v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, bool, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Handle<v8::internal::Object>, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) execution.cc:154",
+    "v8::internal::(anonymous namespace)::CallInternal(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*, v8::internal::Execution::MessageHandling, v8::internal::Execution::Target) execution.cc:190:10",
+    "v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) execution.cc:201:10",
+    "v8::Script::Run(v8::Local<v8::Context>) api.cc:2110:7",
+    "v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) d8.cc:534:28",
+    "v8::SourceGroup::Execute(v8::Isolate*) d8.cc:2480:10",
+    "v8::Shell::RunMain(v8::Isolate*, int, char**, bool) d8.cc:2948:34",
+    "v8::Shell::Main(int, char**) d8.cc:3498:16"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

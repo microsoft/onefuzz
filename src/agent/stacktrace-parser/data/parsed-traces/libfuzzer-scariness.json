@@ -111,6 +111,9 @@
   "minimized_stack_function_names": [
     "simple.c"
   ],
+  "minimized_stack_function_lines": [
+    "simple.c simple.c:58:32"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

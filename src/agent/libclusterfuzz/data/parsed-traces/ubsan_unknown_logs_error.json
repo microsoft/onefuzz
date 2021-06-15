@@ -80,5 +80,10 @@
     "a",
     "b",
     "c"
+  ],
+  "minimized_stack_function_lines": [
+    "a file:1234:1",
+    "b file:1234:1",
+    "c file:1234:1"
   ]
 }

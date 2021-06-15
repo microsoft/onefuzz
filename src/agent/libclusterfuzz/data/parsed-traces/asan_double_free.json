@@ -173,6 +173,14 @@
     "CPDF_Document::~CPDF_Document",
     "RenderPdf"
   ],
+  "minimized_stack_function_lines": [
+    "clear cpdf_countedobject.h:23:5",
+    "CPDF_DocPageData::Clear(int) fpdf_page_doc.cpp:60",
+    "CPDF_DocPageData::~CPDF_DocPageData() fpdf_page_doc.cpp:36:3",
+    "CPDF_Document::~CPDF_Document() cpdf_document.cpp:422:3",
+    "CPDF_Document::~CPDF_Document() cpdf_document.cpp:421:33",
+    "RenderPdf(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, char const*, unsigned long, Options const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) pdfium_test.cc:794:3"
+  ],
   "scariness_score": 42,
   "scariness_description": "double-free"
 }
