@@ -74,13 +74,18 @@ pub struct LibFuzzerFuzzTask {
 }
 
 fn get_stats() -> Result<String> {
+    onefuzz::system::refresh()?;
+    let sysinfo = onefuzz::system::system_info()?;
     let mut processes = onefuzz::system::processes()?;
     processes.sort_by(|x, y| y.memory_kb.cmp(&x.memory_kb));
-    let mut result = vec![String::from("process stats: ")];
+    let mut result = vec![
+        format!("sysinfo:{:?}", sysinfo),
+        String::from("process stats:"),
+    ];
     for process in processes {
         result.push(format!("{:?}:{}", process.name, process.memory_kb));
     }
-    Ok(result.join(""))
+    Ok(result.join(" "))
 }
 
 impl LibFuzzerFuzzTask {
