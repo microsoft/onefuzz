@@ -104,6 +104,7 @@ pub struct Target {
     sym_initialize_state: SymInitalizeState,
     exited: bool,
 
+    // Map of thread ID to thread info.
     thread_info: fnv::FnvHashMap<DWORD, ThreadInfo>,
 
     // We cache the current thread context for possible repeated queries and modifications.
@@ -118,7 +119,7 @@ pub struct Target {
     // Breakpoints that are not yet resolved to a virtual address, so either an RVA or symbol.
     unresolved_breakpoints: Vec<UnresolvedBreakpoint>,
 
-    // Map of thread to stepping state (e.g. breakpoint address to restore breakpoints)
+    // Map of thread ID to stepping state (e.g. breakpoint address to restore breakpoints)
     single_step: fnv::FnvHashMap<DWORD, StepState>,
 
     // When stepping after hitting a breakpoint, we need to restore the breakpoint.
