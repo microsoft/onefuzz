@@ -101,7 +101,7 @@ class TestSecret(unittest.TestCase):
             + "/../../../contrib/onefuzz-job-github-actions/github-issues.json"
         ) as json_file:
             b = json.load(json_file)
-            b["container"] = "bmc"
+            b["container"] = "testing"
             c = NotificationCreate.parse_obj(b)
             d = c.json()
             e = json.loads(d)
@@ -111,7 +111,7 @@ class TestSecret(unittest.TestCase):
         a = """
             {
                 "config" : {"url": "http://test"},
-                "container": "bmc"
+                "container": "testing"
                 }
 
         """  # noqa
@@ -128,7 +128,7 @@ class TestSecret(unittest.TestCase):
             + "/../../../contrib/onefuzz-job-azure-devops-pipeline/ado-work-items.json"  # noqa
         ) as json_file:
             b = json.load(json_file)
-            b["container"] = "bmc"
+            b["container"] = "testing"
             c = NotificationCreate.parse_obj(b)
             d = c.json()
             e = json.loads(d)
