@@ -94,32 +94,32 @@ class TestSecret(unittest.TestCase):
 
     def test_roundtrip(self) -> None:
         a = """
-            {
-                "config": {
-                    "auth": {
-                        "user": "INSERT_YOUR_USERNAME_HERE",
-                        "personal_access_token": "INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE"
-                    },
-                    "organization": "contoso",
-                    "repository": "sample-project",
-                    "title": "{{ report.executable }} - {{report.crash_site}}",
-                    "body": "",
-                    "unique_search": {
-                        "author": null,
-                        "state": null,
-                        "field_match": ["title"],
-                        "string": "{{ report.executable }}"
-                    },
-                    "assignees": [],
-                    "labels": ["bug", "{{ report.crash_type }}"],
-                    "on_duplicate": {
-                        "comment": "",
-                        "labels": ["{{ report.crash_type }}"],
-                        "reopen": true
-                    }
+        {
+            "config": {
+                "auth": {
+                    "user": "INSERT_YOUR_USERNAME_HERE",
+                    "personal_access_token": "INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE"
                 },
-                "container": "bmc"
+                "organization": "contoso",
+                "repository": "sample-project",
+                "title": "{{ report.executable }} - {{report.crash_site}}",
+                "body": "",
+                "unique_search": {
+                    "author": null,
+                    "state": null,
+                    "field_match": ["title"],
+                    "string": "{{ report.executable }}"
+                },
+                "assignees": [],
+                "labels": ["bug", "{{ report.crash_type }}"],
+                "on_duplicate": {
+                    "comment": "",
+                    "labels": ["{{ report.crash_type }}"],
+                    "reopen": true
                 }
+            },
+            "container": "bmc"
+            }
 
         """
         b = json.loads(a)
