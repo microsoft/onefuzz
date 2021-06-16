@@ -173,7 +173,8 @@ def on_worker_event_running(
 
     if task.state in TaskState.shutting_down():
         logging.info(
-            "ignoring task start from node.  machine_id:%s %s:%s (state: %s)",
+            "ignoring task start from node. "
+            "machine_id:%s job_id:%s task_id:%s (state: %s)",
             machine_id,
             task.job_id,
             task.task_id,
@@ -182,7 +183,7 @@ def on_worker_event_running(
         return None
 
     logging.info(
-        "task started on node.  machine_id:%s %s:%s",
+        "task started on node.  machine_id:%s job_id%s task_id:%s",
         machine_id,
         task.job_id,
         task.task_id,
