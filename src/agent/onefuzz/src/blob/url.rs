@@ -151,7 +151,8 @@ impl BlobContainerUrl {
     pub fn url(&self) -> Result<Url> {
         match self {
             Self::BlobContainer(url) => Ok(url.clone()),
-            Self::Path(p) => Ok(Url::from_file_path(p).map_err(|_| anyhow!("invalid path"))?),
+            Self::Path(p) => Ok(Url::from_file_path(p)
+                .map_err(|err| anyhow!("invalid path.  path:{} error:{:?}", p.display(), err))?),
         }
     }
 
