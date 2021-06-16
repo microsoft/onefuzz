@@ -48,7 +48,7 @@
     },
     "variables": {
         "autoscale_name": "[concat('onefuzz-autoscale-', uniquestring(resourceGroup().id))]",
-        "diagnosticsLogsRetentionInDays": 90,
+        "diagnosticsLogsRetentionInDays": 30,
         "monitorAccountName": "[concat('logs-wb-', uniquestring(resourceGroup().id))]",
         "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
         "signalr-name": "[concat('onefuzz-', uniquestring(resourceGroup().id))]",
