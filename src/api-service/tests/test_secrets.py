@@ -94,8 +94,10 @@ class TestSecret(unittest.TestCase):
             self.fail(f"Invalid config type {type(notification.config)}")
 
     def test_roundtrip_github_issue(self) -> None:
+        current_path = pathlib.Path(__file__).parent.absolute()
         with open(
-            f"{pathlib.Path(__file__).parent.absolute()}/../../../contrib/onefuzz-job-github-actions/github-issues.json"
+            f"{current_path}"
+            + "/../../../contrib/onefuzz-job-github-actions/github-issues.json"
         ) as json_file:
             b = json.load(json_file)
             b["container"] = "bmc"
@@ -119,8 +121,10 @@ class TestSecret(unittest.TestCase):
         NotificationCreate.parse_obj(e)
 
     def test_roundtrip_ado(self) -> None:
+        current_path = pathlib.Path(__file__).parent.absolute()
         with open(
-            f"{pathlib.Path(__file__).parent.absolute()}/../../../contrib/onefuzz-job-azure-devops-pipeline/ado-work-items.json"
+            f"{current_path}"
+            + "/../../../contrib/onefuzz-job-azure-devops-pipeline/ado-work-items.json"  # noqa
         ) as json_file:
             b = json.load(json_file)
             b["container"] = "bmc"
