@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import requests
-from azure.graphrbac import GraphRbacManagementClient
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 from azure.mgmt.resource import ResourceManagementClient
@@ -95,11 +94,6 @@ def get_regions() -> List[Region]:
     client = SubscriptionClient(credential=get_identity())
     locations = client.subscriptions.list_locations(subscription)
     return sorted([Region(x.name) for x in locations])
-
-
-@cached
-def get_graph_client() -> GraphRbacManagementClient:
-    return GraphRbacManagementClient(get_msi(), get_subscription())
 
 
 def query_microsoft_graph(

@@ -23,7 +23,6 @@ from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.core.exceptions import ResourceExistsError
 from azure.cosmosdb.table.tableservice import TableService
-from azure.graphrbac import GraphRbacManagementClient
 from azure.graphrbac.models import (
     Application,
     ApplicationCreateParameters,
@@ -68,9 +67,11 @@ from registration import (
     assign_app_role,
     authorize_application,
     get_tenant_id,
+    query_microsoft_graph,
     register_application,
     set_app_audience,
     update_pool_registration,
+    get_application
 )
 
 # Found by manually assigning the User.Read permission to application
@@ -260,43 +261,34 @@ class Client:
             logger.info("using existing client application")
             return
 
-        client = get_client_from_cli_profile(
-            GraphRbacManagementClient, subscription_id=self.get_subscription_id()
-        )
-        logger.info("checking if RBAC already exists")
 
-        try:
-            existing = list(
-                client.applications.list(
-                    filter="displayName eq '%s'" % self.application_name
-                )
-            )
-        except GraphErrorException:
-            logger.error("unable to query RBAC. Provide client_id and client_secret")
-            sys.exit(1)
+        app = get_application(
+            display_name=self.application_name, subscription_id=self.get_subscription_id()
+        )
+
 
         app_roles = [
-            AppRole(
-                allowed_member_types=["Application"],
-                display_name=OnefuzzAppRole.CliClient.value,
-                id=str(uuid.uuid4()),
-                is_enabled=True,
-                description="Allows access from the CLI.",
-                value=OnefuzzAppRole.CliClient.value,
-            ),
-            AppRole(
-                allowed_member_types=["Application"],
-                display_name=OnefuzzAppRole.ManagedNode.value,
-                id=str(uuid.uuid4()),
-                is_enabled=True,
-                description="Allow access from a lab machine.",
-                value=OnefuzzAppRole.ManagedNode.value,
-            ),
+            {
+                "allowedMemberTypes": ["Application"],
+                "description": "Allows access from the CLI.",
+                "displayName": OnefuzzAppRole.CliClient.value,
+                "id": str(uuid.uuid4()),
+                "isEnabled": True,
+                "value": OnefuzzAppRole.CliClient.value
+            },
+            {
+                "allowedMemberTypes": ["Application"],
+                "description": "Allow access from a lab machine.",
+                "displayName": OnefuzzAppRole.ManagedNode.value,
+                "id": str(uuid.uuid4()),
+                "isEnabled": True,
+                "value": OnefuzzAppRole.ManagedNode.value,
+            }
         ]
 
-        app: Optional[Application] = None
+        # app: Optional[Application] = None
 
-        if not existing:
+        if not app:
             logger.info("creating Application registration")
 
             if self.multi_tenant_domain:
@@ -307,37 +299,49 @@ class Client:
             else:
                 url = "https://%s.azurewebsites.net" % self.application_name
 
-            params = ApplicationCreateParameters(
-                display_name=self.application_name,
-                identifier_uris=[url],
-                reply_urls=[url + "/.auth/login/aad/callback"],
-                optional_claims=OptionalClaims(id_token=[], access_token=[]),
-                required_resource_access=[
-                    RequiredResourceAccess(
-                        resource_access=[
-                            ResourceAccess(id=USER_READ_PERMISSION, type="Scope")
-                        ],
-                        resource_app_id=MICROSOFT_GRAPH_APP_ID,
-                    )
-                ],
-                app_roles=app_roles,
-            )
+            params = {
+                "displayName": self.application_name,
+                "identifierUris": [url],
+                "appRoles": app_roles,
+                "requiredResourceAccess":
+                    [
+                        {
+                            "resourceAccess": {
+                                "id": USER_READ_PERMISSION,
+                                "type": "Scope"
+                            },
+                            "resourceAppId": MICROSOFT_GRAPH_APP_ID,
+                        }
+                    ],
+                }
 
-            app = client.applications.create(params)
+
+            app:Dict = query_microsoft_graph(
+                    method="POST",
+                    resource="applications",
+                    body=params,
+                    subscription=self.get_subscription_id(),
+                )
 
             logger.info("creating service principal")
-            service_principal_params = ServicePrincipalCreateParameters(
-                account_enabled=True,
-                app_role_assignment_required=False,
-                service_principal_type="Application",
-                app_id=app.app_id,
-            )
+
+            service_principal_params = {
+                "accountEnabled": True,
+                "appRoleAssignmentRequired": False,
+                "servicePrincipalType": "Application",
+                "appId": app["appId"],
+            }
 
             def try_sp_create() -> None:
                 error: Optional[Exception] = None
                 for _ in range(10):
                     try:
-                        client.service_principals.create(service_principal_params)
+                        query_microsoft_graph(
+                            method="POST",
+                            resource="applications/servicePrincipals",
+                            body=service_principal_params,
+                            subscription=self.get_subscription_id(),
+                        )
                         return
                     except GraphErrorException as err:
                         # work around timing issue when creating service principal
@@ -360,25 +364,36 @@ class Client:
             try_sp_create()
 
         else:
-            app = existing[0]
-            existing_role_values = [app_role.value for app_role in app.app_roles]
+
+            existing_role_values = [app_role["value"] for app_role in app["appRoles"]]
             has_missing_roles = any(
-                [role.value not in existing_role_values for role in app_roles]
+                [role["value"] not in existing_role_values for role in app_roles]
             )
 
             if has_missing_roles:
                 # disabling the existing app role first to allow the update
                 # this is a requirement to update the application roles
-                for role in app.app_roles:
-                    role.is_enabled = False
+                for role in app["appRoles"]:
+                    role["isEnabled"] = False
 
-                client.applications.patch(
-                    app.object_id, ApplicationUpdateParameters(app_roles=app.app_roles)
+
+                query_microsoft_graph(
+                    method="PATCH",
+                    resource=f"applications/{app['id']}",
+                    body={
+                        "appRoles": app["AppRoles"]
+                    },
+                    subscription=self.get_subscription_id(),
                 )
 
                 # overriding the list of app roles
-                client.applications.patch(
-                    app.object_id, ApplicationUpdateParameters(app_roles=app_roles)
+                query_microsoft_graph(
+                    method="PATCH",
+                    resource=f"applications/{app['id']}",
+                    body={
+                        "appRoles": app_roles
+                    },
+                    subscription=self.get_subscription_id(),
                 )
 
         if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
@@ -386,9 +401,15 @@ class Client:
                 self.multi_tenant_domain,
                 self.application_name,
             )
-            client.applications.patch(
-                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+            query_microsoft_graph(
+                    method="PATCH",
+                    resource=f"applications/{app['id']}",
+                    body={
+                        "identifierUris": [url]
+                    },
+                    subscription=self.get_subscription_id(),
             )
+
             set_app_audience(
                 app.object_id,
                 "AzureADMultipleOrgs",
@@ -404,22 +425,24 @@ class Client:
                 subscription_id=self.get_subscription_id(),
             )
             url = "https://%s.azurewebsites.net" % self.application_name
-            client.applications.patch(
-                app.object_id, ApplicationUpdateParameters(identifier_uris=[url])
+            query_microsoft_graph(
+                    method="PATCH",
+                    resource=f"applications/{app['id']}",
+                    body={
+                        "identifierUris": [url]
+                    },
+                    subscription=self.get_subscription_id(),
             )
         else:
             logger.debug("No change to App Registration signInAudence setting")
 
-            creds = list(client.applications.list_password_credentials(app.object_id))
-            client.applications.update_password_credentials(app.object_id, creds)
 
         (password_id, password) = self.create_password(app.object_id)
 
-        cli_app = list(
-            client.applications.list(filter="appId eq '%s'" % ONEFUZZ_CLI_APP)
-        )
 
-        if len(cli_app) == 0:
+        cli_app = get_application(app_id=ONEFUZZ_CLI_APP, subscription_id=self.get_subscription_id())
+
+        if not cli_app:
             logger.info(
                 "Could not find the default CLI application under the current "
                 "subscription, creating a new one"
@@ -440,8 +463,8 @@ class Client:
             }
 
         else:
-            onefuzz_cli_app = cli_app[0]
-            authorize_application(uuid.UUID(onefuzz_cli_app.app_id), app.app_id)
+            onefuzz_cli_app = cli_app
+            authorize_application(uuid.UUID(onefuzz_cli_app["appId"]), app["appId"])
             if self.multi_tenant_domain:
                 authority = COMMON_AUTHORITY
             else:
@@ -449,18 +472,18 @@ class Client:
                 tenant_id = get_tenant_id(self.get_subscription_id())
                 authority = "https://login.microsoftonline.com/%s" % tenant_id
             self.cli_config = {
-                "client_id": onefuzz_cli_app.app_id,
+                "client_id": onefuzz_cli_app["appId"],
                 "authority": authority,
             }
 
-        self.results["client_id"] = app.app_id
+        self.results["client_id"] = app["appId"]
         self.results["client_secret"] = password
 
         # Log `client_secret` for consumption by CI.
         if self.log_service_principal:
-            logger.info("client_id: %s client_secret: %s", app.app_id, password)
+            logger.info("client_id: %s client_secret: %s", app["appId"], password)
         else:
-            logger.debug("client_id: %s client_secret: %s", app.app_id, password)
+            logger.debug("client_id: %s client_secret: %s", app["appId"], password)
 
     def deploy_template(self) -> None:
         logger.info("deploying arm template: %s", self.arm_template)
