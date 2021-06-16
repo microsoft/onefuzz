@@ -4,9 +4,10 @@
 # Licensed under the MIT License.
 
 import json
-import unittest
 import pathlib
+import unittest
 
+from __app__.onefuzzlib.orm import hide_secrets
 from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.job_templates import (
     JobTemplate,
@@ -23,8 +24,6 @@ from onefuzztypes.models import (
 )
 from onefuzztypes.primitives import Container
 from onefuzztypes.requests import NotificationCreate
-
-from __app__.onefuzzlib.orm import hide_secrets
 
 
 class TestSecret(unittest.TestCase):
@@ -95,14 +94,15 @@ class TestSecret(unittest.TestCase):
             self.fail(f"Invalid config type {type(notification.config)}")
 
     def test_roundtrip_github_issue(self) -> None:
-        with open(f"{pathlib.Path(__file__).parent.absolute()}/../../../contrib/onefuzz-job-github-actions/github-issues.json") as json_file:
+        with open(
+            f"{pathlib.Path(__file__).parent.absolute()}/../../../contrib/onefuzz-job-github-actions/github-issues.json"
+        ) as json_file:
             b = json.load(json_file)
             b["container"] = "bmc"
             c = NotificationCreate.parse_obj(b)
             d = c.json()
             e = json.loads(d)
             NotificationCreate.parse_obj(e)
-
 
     def test_roundtrip_team_issue(self) -> None:
         a = """
@@ -118,9 +118,10 @@ class TestSecret(unittest.TestCase):
         e = json.loads(d)
         NotificationCreate.parse_obj(e)
 
-
     def test_roundtrip_ado(self) -> None:
-        with open(f"{pathlib.Path(__file__).parent.absolute()}/../../../contrib/onefuzz-job-azure-devops-pipeline/ado-work-items.json") as json_file:
+        with open(
+            f"{pathlib.Path(__file__).parent.absolute()}/../../../contrib/onefuzz-job-azure-devops-pipeline/ado-work-items.json"
+        ) as json_file:
             b = json.load(json_file)
             b["container"] = "bmc"
             c = NotificationCreate.parse_obj(b)
