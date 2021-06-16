@@ -310,7 +310,7 @@ class Client:
                 ],
             }
 
-            app: Dict = query_microsoft_graph(
+            app = query_microsoft_graph(
                 method="POST",
                 resource="applications",
                 body=params,
@@ -424,7 +424,7 @@ class Client:
         (password_id, password) = self.create_password(app.object_id)
 
         cli_app = get_application(
-            app_id=ONEFUZZ_CLI_APP, subscription_id=self.get_subscription_id()
+            app_id=uuid.UUID(ONEFUZZ_CLI_APP), subscription_id=self.get_subscription_id()
         )
 
         if not cli_app:
