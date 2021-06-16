@@ -109,8 +109,9 @@ impl LibFuzzerFuzzTask {
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
         let report_stats = report_runtime_stats(stats_receiver, hb_client);
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
-        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)
-            .with_context(|| get_stats().unwrap_or(String::from("unable to get process stats")))?;
+        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats).with_context(
+            || get_stats().unwrap_or_else(|_| String::from("unable to get process stats")),
+        )?;
 
         Ok(())
     }
