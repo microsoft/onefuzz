@@ -58,20 +58,19 @@ from azure.storage.blob import (
     generate_container_sas,
 )
 from azure.storage.queue import QueueServiceClient
-from msrest.serialization import TZ_UTC
-
 from data_migration import migrate
+from msrest.serialization import TZ_UTC
 from registration import (
     OnefuzzAppRole,
     add_application_password,
     assign_app_role,
     authorize_application,
+    get_application,
     get_tenant_id,
     query_microsoft_graph,
     register_application,
     set_app_audience,
     update_pool_registration,
-    get_application,
 )
 
 # Found by manually assigning the User.Read permission to application
