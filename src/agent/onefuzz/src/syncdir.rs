@@ -38,7 +38,13 @@ pub struct SyncedDir {
 impl SyncedDir {
     pub fn remote_url(&self) -> Result<BlobContainerUrl> {
         let url = self.remote_path.clone().unwrap_or(BlobContainerUrl::new(
-            Url::from_file_path(self.local_path.clone()).map_err(|_| anyhow!("invalid path"))?,
+            Url::from_file_path(self.local_path.clone()).map_err(|err| {
+                anyhow!(
+                    "invalid path: {} error:{:?}",
+                    self.local_path.display(),
+                    err
+                )
+            })?,
         )?);
         Ok(url)
     }
@@ -89,7 +95,9 @@ impl SyncedDir {
 
     pub async fn init(&self) -> Result<()> {
         if let Some(remote_path) = self.remote_path.clone().and_then(|u| u.as_file_path()) {
-            fs::create_dir_all(remote_path).await?;
+            fs::create_dir_all(&remote_path).await.with_context(|| {
+                format!("unable to create directory: {}", remote_path.display())
+            })?;
         }
 
         match fs::metadata(&self.local_path).await {
