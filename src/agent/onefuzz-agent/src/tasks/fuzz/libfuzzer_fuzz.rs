@@ -73,6 +73,16 @@ pub struct LibFuzzerFuzzTask {
     config: Config,
 }
 
+fn get_stats() -> Result<String> {
+    let mut processes = onefuzz::system::processes()?;
+    processes.sort_by(|x, y| y.memory_kb.cmp(&x.memory_kb));
+    let mut result = vec![String::from("process stats: ")];
+    for process in processes {
+        result.push(format!("{:?}:{}", process.name, process.memory_kb));
+    }
+    Ok(result.join(""))
+}
+
 impl LibFuzzerFuzzTask {
     pub fn new(config: Config) -> Result<Self> {
         Ok(Self { config })
@@ -99,7 +109,8 @@ impl LibFuzzerFuzzTask {
         let (stats_sender, stats_receiver) = mpsc::unbounded_channel();
         let report_stats = report_runtime_stats(stats_receiver, hb_client);
         let fuzzers = self.run_fuzzers(Some(&stats_sender));
-        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)?;
+        futures::try_join!(resync, new_inputs, new_crashes, fuzzers, report_stats)
+            .with_context(|| get_stats().unwrap_or(String::from("unable to get process stats")))?;
 
         Ok(())
     }
