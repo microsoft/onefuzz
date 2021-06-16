@@ -516,7 +516,10 @@ class GithubIssueTemplate(BaseModel):
         elif isinstance(v, SecretData):
             return v
         elif isinstance(v, dict):
-            return SecretData(GithubAuth.parse_obj(v["secret"]))
+            try:
+                return SecretData(GithubAuth.parse_obj(v))
+            except Exception:
+                return SecretData(GithubAuth.parse_obj(v["secret"]))
         else:
             raise TypeError(f"invalid datatype {type(v)}")
 

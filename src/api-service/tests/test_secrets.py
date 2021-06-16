@@ -14,12 +14,9 @@ from onefuzztypes.job_templates import (
     JobTemplateNotification,
 )
 from onefuzztypes.models import (
-    GithubAuth,
-    GithubIssueTemplate,
     JobConfig,
     Notification,
     NotificationConfig,
-    NotificationTemplate,
     SecretAddress,
     SecretData,
     TeamsTemplate,
@@ -95,34 +92,13 @@ class TestSecret(unittest.TestCase):
         else:
             self.fail(f"Invalid config type {type(notification.config)}")
 
-    def test_read_secret2(self) -> None:
-        json_data = """
+    def test_roundtrip(self) -> None:
+        a = """
             {
-                "notification_id": "b52b24d1-eec6-46c9-b06a-818a997da43c",
-                "container": "data",
-                "config" : {"url": {"secret": "http://test" }}
-            }
-            """
-        data = json.loads(json_data)
-        notification = Notification.parse_obj(data)
-        self.assertIsInstance(notification.config, TeamsTemplate)
-        if isinstance(notification.config, TeamsTemplate):
-            self.assertIsInstance(notification.config.url, SecretData)
-            self.assertIsInstance(notification.config.url.secret, str)
-        else:
-            self.fail(f"Invalid config type {type(notification.config)}")
-
-    def test_read_secret3(self) -> None:
-        json_data = """
-            {
-                "notification_id": "b52b24d1-eec6-46c9-b06a-818a997da43c",
-                "container": "data",
-                 "config": {
+                "config": {
                     "auth": {
-                        "secret": {
-                            "user": "INSERT_YOUR_USERNAME_HERE",
-                            "personal_access_token": "INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE"
-                        }
+                        "user": "INSERT_YOUR_USERNAME_HERE",
+                        "personal_access_token": "INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE"
                     },
                     "organization": "contoso",
                     "repository": "sample-project",
@@ -141,14 +117,13 @@ class TestSecret(unittest.TestCase):
                         "labels": ["{{ report.crash_type }}"],
                         "reopen": true
                     }
+                },
+                "container": "bmc"
                 }
-            }
-            """
-        data = json.loads(json_data)
-        notification = Notification.parse_obj(data)
-        self.assertIsInstance(notification.config, GithubIssueTemplate)
-        if isinstance(notification.config, GithubIssueTemplate):
-            self.assertIsInstance(notification.config.auth, SecretData)
-            self.assertIsInstance(notification.config.auth.secret, GithubAuth)
-        else:
-            self.fail(f"Invalid config type {type(notification.config)}")
+
+        """
+        b = json.loads(a)
+        c = NotificationCreate.parse_obj(b)
+        d = c.json()
+        e = json.loads(d)
+        NotificationCreate.parse_obj(e)
