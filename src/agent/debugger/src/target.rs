@@ -33,7 +33,7 @@ pub(crate) enum StepState {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ThreadState {
-    Running,
+    Runnable,
     Suspended,
     Exited,
 }
@@ -54,7 +54,7 @@ impl ThreadInfo {
             id,
             handle,
             wow64,
-            state: ThreadState::Running,
+            state: ThreadState::Runnable,
         }
     }
 
@@ -75,11 +75,11 @@ impl ThreadInfo {
             }
             0 => {
                 // Thread was running, and is still running.
-                self.state = ThreadState::Running;
+                self.state = ThreadState::Runnable;
             }
             1 => {
                 // Was suspended, now running.
-                self.state = ThreadState::Running;
+                self.state = ThreadState::Runnable;
             }
             _ => {
                 // Previous suspend count > 1. Was suspended, still is.
