@@ -10,12 +10,13 @@ use crate::{
     uploader::BlobUploader,
 };
 use anyhow::{Context, Result};
+use dunce::canonicalize;
 use futures::stream::StreamExt;
 use onefuzz_telemetry::{Event, EventData};
 use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
 use serde::{Deserialize, Serialize};
-use std::{path::PathBuf, str, time::Duration};
+use std::{env::current_dir, path::PathBuf, str, time::Duration};
 use tokio::fs;
 
 #[derive(Debug, Clone, Copy)]
@@ -37,15 +38,31 @@ pub struct SyncedDir {
 
 impl SyncedDir {
     pub fn remote_url(&self) -> Result<BlobContainerUrl> {
-        let url = self.remote_path.clone().unwrap_or(BlobContainerUrl::new(
-            Url::from_file_path(self.local_path.clone()).map_err(|err| {
-                anyhow!(
-                    "invalid path: {} error:{:?}",
-                    self.local_path.display(),
-                    err
-                )
-            })?,
-        )?);
+        let url = match &self.remote_path {
+            Some(url) => url.clone(),
+            None => {
+                let url = if self.local_path.is_absolute() {
+                    Url::from_file_path(self.local_path.clone()).map_err(|err| {
+                        anyhow!(
+                            "invalid path: {} error: {:?}",
+                            self.local_path.display(),
+                            err
+                        )
+                    })?
+                } else {
+                    let absolute = current_dir()
+                        .context("unable to get current directory")?
+                        .join(&self.local_path);
+                    let canonicalized = canonicalize(&absolute).with_context(|| {
+                        format!("unable to canonicalize path: {}", absolute.display())
+                    })?;
+                    Url::from_file_path(&canonicalized).map_err(|err| {
+                        anyhow!("invalid path: {} error: {:?}", canonicalized.display(), err)
+                    })?
+                };
+                BlobContainerUrl::new(url.clone()).with_context(|| format!("unable to create BlobContainerUrl: {}", url))?
+            }
+        };
         Ok(url)
     }
 
