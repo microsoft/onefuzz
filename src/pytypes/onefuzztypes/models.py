@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union, get_args
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
