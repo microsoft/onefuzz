@@ -5,6 +5,7 @@
 
 import json
 import unittest
+import pathlib
 
 from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.job_templates import (
@@ -93,32 +94,20 @@ class TestSecret(unittest.TestCase):
         else:
             self.fail(f"Invalid config type {type(notification.config)}")
 
-    def test_roundtrip(self) -> None:
+    def test_roundtrip_github_issue(self) -> None:
+        with open(f"{pathlib.Path(__file__).parent.absolute()}/../../../contrib/onefuzz-job-github-actions/github-issues.json") as json_file:
+            b = json.load(json_file)
+            b["container"] = "bmc"
+            c = NotificationCreate.parse_obj(b)
+            d = c.json()
+            e = json.loads(d)
+            NotificationCreate.parse_obj(e)
+
+
+    def test_roundtrip_team_issue(self) -> None:
         a = """
             {
-                "config": {
-                    "auth": {
-                        "user": "INSERT_YOUR_USERNAME_HERE",
-                        "personal_access_token": "INSERT_YOUR_PERSONAL_ACCESS_TOKEN_HERE"
-                    },
-                    "organization": "contoso",
-                    "repository": "sample-project",
-                    "title": "{{ report.executable }} - {{report.crash_site}}",
-                    "body": "",
-                    "unique_search": {
-                        "author": null,
-                        "state": null,
-                        "field_match": ["title"],
-                        "string": "{{ report.executable }}"
-                    },
-                    "assignees": [],
-                    "labels": ["bug", "{{ report.crash_type }}"],
-                    "on_duplicate": {
-                        "comment": "",
-                        "labels": ["{{ report.crash_type }}"],
-                        "reopen": true
-                    }
-                },
+                "config" : {"url": "http://test"},
                 "container": "bmc"
                 }
 
@@ -128,3 +117,13 @@ class TestSecret(unittest.TestCase):
         d = c.json()
         e = json.loads(d)
         NotificationCreate.parse_obj(e)
+
+
+    def test_roundtrip_ado(self) -> None:
+        with open(f"{pathlib.Path(__file__).parent.absolute()}/../../../contrib/onefuzz-job-azure-devops-pipeline/ado-work-items.json") as json_file:
+            b = json.load(json_file)
+            b["container"] = "bmc"
+            c = NotificationCreate.parse_obj(b)
+            d = c.json()
+            e = json.loads(d)
+            NotificationCreate.parse_obj(e)
