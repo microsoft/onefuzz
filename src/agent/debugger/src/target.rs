@@ -64,7 +64,7 @@ impl ThreadInfo {
         let prev_suspend_count = unsafe { ResumeThread(self.handle) };
 
         match prev_suspend_count {
-             SUSPEND_RESUME_ERROR_CODE => {
+            SUSPEND_RESUME_ERROR_CODE => {
                 let os_error = io::Error::last_os_error();
 
                 if os_error.kind() == io::ErrorKind::PermissionDenied {
@@ -72,19 +72,19 @@ impl ThreadInfo {
                 } else {
                     return Err(os_error.into());
                 }
-            },
+            }
             0 => {
                 // Thread was running, and is still running.
                 self.state = ThreadState::Running;
-            },
+            }
             1 => {
                 // Was suspended, now running.
                 self.state = ThreadState::Running;
-            },
+            }
             _ => {
                 // Previous suspend count > 1. Was suspended, still is.
                 self.state = ThreadState::Suspended;
-            },
+            }
         }
 
         Ok(self.state)
@@ -106,10 +106,10 @@ impl ThreadInfo {
                 } else {
                     return Err(os_error.into());
                 }
-            },
+            }
             _ => {
                 self.state = ThreadState::Suspended;
-            },
+            }
         }
 
         Ok(self.state)
