@@ -424,7 +424,8 @@ class Client:
         (password_id, password) = self.create_password(app.object_id)
 
         cli_app = get_application(
-            app_id=uuid.UUID(ONEFUZZ_CLI_APP), subscription_id=self.get_subscription_id()
+            app_id=uuid.UUID(ONEFUZZ_CLI_APP),
+            subscription_id=self.get_subscription_id(),
         )
 
         if not cli_app:
