@@ -71,7 +71,7 @@ from registration import (
     register_application,
     set_app_audience,
     update_pool_registration,
-    get_application
+    get_application,
 )
 
 # Found by manually assigning the User.Read permission to application
@@ -261,11 +261,10 @@ class Client:
             logger.info("using existing client application")
             return
 
-
         app = get_application(
-            display_name=self.application_name, subscription_id=self.get_subscription_id()
+            display_name=self.application_name,
+            subscription_id=self.get_subscription_id(),
         )
-
 
         app_roles = [
             {
@@ -274,7 +273,7 @@ class Client:
                 "displayName": OnefuzzAppRole.CliClient.value,
                 "id": str(uuid.uuid4()),
                 "isEnabled": True,
-                "value": OnefuzzAppRole.CliClient.value
+                "value": OnefuzzAppRole.CliClient.value,
             },
             {
                 "allowedMemberTypes": ["Application"],
@@ -283,7 +282,7 @@ class Client:
                 "id": str(uuid.uuid4()),
                 "isEnabled": True,
                 "value": OnefuzzAppRole.ManagedNode.value,
-            }
+            },
         ]
 
         # app: Optional[Application] = None
@@ -303,25 +302,20 @@ class Client:
                 "displayName": self.application_name,
                 "identifierUris": [url],
                 "appRoles": app_roles,
-                "requiredResourceAccess":
-                    [
-                        {
-                            "resourceAccess": {
-                                "id": USER_READ_PERMISSION,
-                                "type": "Scope"
-                            },
-                            "resourceAppId": MICROSOFT_GRAPH_APP_ID,
-                        }
-                    ],
-                }
+                "requiredResourceAccess": [
+                    {
+                        "resourceAccess": {"id": USER_READ_PERMISSION, "type": "Scope"},
+                        "resourceAppId": MICROSOFT_GRAPH_APP_ID,
+                    }
+                ],
+            }
 
-
-            app:Dict = query_microsoft_graph(
-                    method="POST",
-                    resource="applications",
-                    body=params,
-                    subscription=self.get_subscription_id(),
-                )
+            app: Dict = query_microsoft_graph(
+                method="POST",
+                resource="applications",
+                body=params,
+                subscription=self.get_subscription_id(),
+            )
 
             logger.info("creating service principal")
 
@@ -376,13 +370,10 @@ class Client:
                 for role in app["appRoles"]:
                     role["isEnabled"] = False
 
-
                 query_microsoft_graph(
                     method="PATCH",
                     resource=f"applications/{app['id']}",
-                    body={
-                        "appRoles": app["AppRoles"]
-                    },
+                    body={"appRoles": app["AppRoles"]},
                     subscription=self.get_subscription_id(),
                 )
 
@@ -390,9 +381,7 @@ class Client:
                 query_microsoft_graph(
                     method="PATCH",
                     resource=f"applications/{app['id']}",
-                    body={
-                        "appRoles": app_roles
-                    },
+                    body={"appRoles": app_roles},
                     subscription=self.get_subscription_id(),
                 )
 
@@ -402,12 +391,10 @@ class Client:
                 self.application_name,
             )
             query_microsoft_graph(
-                    method="PATCH",
-                    resource=f"applications/{app['id']}",
-                    body={
-                        "identifierUris": [url]
-                    },
-                    subscription=self.get_subscription_id(),
+                method="PATCH",
+                resource=f"applications/{app['id']}",
+                body={"identifierUris": [url]},
+                subscription=self.get_subscription_id(),
             )
 
             set_app_audience(
@@ -426,21 +413,19 @@ class Client:
             )
             url = "https://%s.azurewebsites.net" % self.application_name
             query_microsoft_graph(
-                    method="PATCH",
-                    resource=f"applications/{app['id']}",
-                    body={
-                        "identifierUris": [url]
-                    },
-                    subscription=self.get_subscription_id(),
+                method="PATCH",
+                resource=f"applications/{app['id']}",
+                body={"identifierUris": [url]},
+                subscription=self.get_subscription_id(),
             )
         else:
             logger.debug("No change to App Registration signInAudence setting")
 
-
         (password_id, password) = self.create_password(app.object_id)
 
-
-        cli_app = get_application(app_id=ONEFUZZ_CLI_APP, subscription_id=self.get_subscription_id())
+        cli_app = get_application(
+            app_id=ONEFUZZ_CLI_APP, subscription_id=self.get_subscription_id()
+        )
 
         if not cli_app:
             logger.info(

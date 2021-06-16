@@ -273,7 +273,6 @@ def add_application_password(
     return retry(create_password, "create password")
 
 
-
 def add_application_password_impl(
     app_object_id: UUID, subscription_id: str
 ) -> Tuple[str, str]:
@@ -288,7 +287,6 @@ def add_application_password_impl(
             ),
         }
     }
-
 
     password: Dict = query_microsoft_graph(
         method="POST",
@@ -406,6 +404,7 @@ def update_pool_registration(onefuzz_instance_name: str, subscription_id: str) -
         OnefuzzAppRole.ManagedNode,
         subscription_id,
     )
+
 
 def assign_app_role(
     onefuzz_instance_name: str,
