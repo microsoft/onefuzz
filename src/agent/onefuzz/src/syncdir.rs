@@ -356,3 +356,28 @@ pub async fn continuous_sync(
         delay_with_jitter(delay).await;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::SyncedDir;
+    use anyhow::{anyhow, Result};
+    use dunce::canonicalize;
+    use std::env::current_dir;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_synceddir_relative_remote_url() -> Result<()> {
+        let path = PathBuf::from("Cargo.toml");
+        let expected = canonicalize(current_dir()?.join(&path))?;
+        let dir = SyncedDir {
+            local_path: path.clone(),
+            remote_path: None,
+        };
+        let blob_path = dir
+            .remote_url()?
+            .as_file_path()
+            .ok_or(anyhow!("as_file_path failed"))?;
+        assert_eq!(expected, blob_path);
+        Ok(())
+    }
+}
