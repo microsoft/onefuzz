@@ -7,7 +7,6 @@ import json
 import pathlib
 import unittest
 
-from __app__.onefuzzlib.orm import hide_secrets
 from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.job_templates import (
     JobTemplate,
@@ -24,6 +23,8 @@ from onefuzztypes.models import (
 )
 from onefuzztypes.primitives import Container
 from onefuzztypes.requests import NotificationCreate
+
+from __app__.onefuzzlib.orm import hide_secrets
 
 
 class TestSecret(unittest.TestCase):
