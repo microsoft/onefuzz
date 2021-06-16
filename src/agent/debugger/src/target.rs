@@ -68,17 +68,23 @@ impl ThreadInfo {
                 let os_error = io::Error::last_os_error();
 
                 if os_error.kind() == io::ErrorKind::PermissionDenied {
+                    // Assume, as a debugger, we always have the `THREAD_SUSPEND_RESUME`
+                    // access right, and thus we should interpret this error to mean that
+                    // the thread has exited.
+                    //
+                    // This means we are observing a race between OS-level thread exit and
+                    // the (pending) debug event.
                     self.state = ThreadState::Exited;
                 } else {
                     return Err(os_error.into());
                 }
             }
             0 => {
-                // Thread was running, and is still running.
+                // No-op: thread was runnable, and is still runnable.
                 self.state = ThreadState::Runnable;
             }
             1 => {
-                // Was suspended, now running.
+                // Was suspended, now runnable.
                 self.state = ThreadState::Runnable;
             }
             _ => {
@@ -91,23 +97,26 @@ impl ThreadInfo {
     }
 
     fn suspend_thread(&mut self) -> Result<ThreadState> {
-        let suspend_count = if self.wow64 {
+        let prev_suspend_count = if self.wow64 {
             unsafe { Wow64SuspendThread(self.handle) }
         } else {
             unsafe { SuspendThread(self.handle) }
         };
 
-        match suspend_count {
+        match prev_suspend_count {
             SUSPEND_RESUME_ERROR_CODE => {
                 let os_error = io::Error::last_os_error();
 
                 if os_error.kind() == io::ErrorKind::PermissionDenied {
+                    // See comment on similar case in `resume_thread()`.
                     self.state = ThreadState::Exited;
                 } else {
                     return Err(os_error.into());
                 }
             }
             _ => {
+                // Suspend count was incremented. Even if the matched value is 0, it means
+                // the current suspend count is 1, and the thread is suspended.
                 self.state = ThreadState::Suspended;
             }
         }
