@@ -121,7 +121,7 @@ class TestSecret(unittest.TestCase):
                 "container": "bmc"
                 }
 
-        """ # noqa
+        """  # noqa
         b = json.loads(a)
         c = NotificationCreate.parse_obj(b)
         d = c.json()
