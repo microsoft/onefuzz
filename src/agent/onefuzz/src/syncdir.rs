@@ -60,7 +60,8 @@ impl SyncedDir {
                         anyhow!("invalid path: {} error: {:?}", canonicalized.display(), err)
                     })?
                 };
-                BlobContainerUrl::new(url.clone()).with_context(|| format!("unable to create BlobContainerUrl: {}", url))?
+                BlobContainerUrl::new(url.clone())
+                    .with_context(|| format!("unable to create BlobContainerUrl: {}", url))?
             }
         };
         Ok(url)
