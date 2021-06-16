@@ -62,8 +62,10 @@ impl ThreadInfo {
     }
 
     fn resume_thread(&mut self) -> Result<ThreadState> {
-        // If we think the thread state is `Running`, we could skip this call. In that
-        // case, it is a no-op, so call anyway to detect not-yet-reported thread exits.
+        if self.state == ThreadState::Runnable {
+            return Ok(self.state);
+        }
+
         let prev_suspend_count = unsafe { ResumeThread(self.handle) };
 
         match prev_suspend_count {
@@ -94,6 +96,10 @@ impl ThreadInfo {
     }
 
     fn suspend_thread(&mut self) -> Result<ThreadState> {
+        if self.state == ThreadState::Suspended {
+            return Ok(self.state);
+        }
+
         let prev_suspend_count = if self.wow64 {
             unsafe { Wow64SuspendThread(self.handle) }
         } else {
