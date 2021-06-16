@@ -58,8 +58,9 @@ from azure.storage.blob import (
     generate_container_sas,
 )
 from azure.storage.queue import QueueServiceClient
-from data_migration import migrate
 from msrest.serialization import TZ_UTC
+
+from data_migration import migrate
 from registration import (
     OnefuzzAppRole,
     add_application_password,
