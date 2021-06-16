@@ -5,12 +5,15 @@
 
 use std::{io, num::NonZeroU64, path::Path};
 
-use anyhow::Result;
+use anyhow::{format_err, Result};
 use log::{debug, error, trace};
 use rand::{thread_rng, Rng};
 use win_util::process;
 use winapi::{
-    shared::minwindef::{DWORD, LPCVOID},
+    shared::{
+        minwindef::{DWORD, LPCVOID},
+        winerror::ERROR_ACCESS_DENIED,
+    },
     um::{
         processthreadsapi::{ResumeThread, SuspendThread},
         winbase::Wow64SuspendThread,
@@ -67,13 +70,7 @@ impl ThreadInfo {
             SUSPEND_RESUME_ERROR_CODE => {
                 let os_error = io::Error::last_os_error();
 
-                if os_error.kind() == io::ErrorKind::PermissionDenied {
-                    // Assume, as a debugger, we always have the `THREAD_SUSPEND_RESUME`
-                    // access right, and thus we should interpret this error to mean that
-                    // the thread has exited.
-                    //
-                    // This means we are observing a race between OS-level thread exit and
-                    // the (pending) debug event.
+                if Self::is_os_error_from_exited_thread(&os_error)? {
                     self.state = ThreadState::Exited;
                 } else {
                     return Err(os_error.into());
@@ -107,8 +104,7 @@ impl ThreadInfo {
             SUSPEND_RESUME_ERROR_CODE => {
                 let os_error = io::Error::last_os_error();
 
-                if os_error.kind() == io::ErrorKind::PermissionDenied {
-                    // See comment on similar case in `resume_thread()`.
+                if Self::is_os_error_from_exited_thread(&os_error)? {
                     self.state = ThreadState::Exited;
                 } else {
                     return Err(os_error.into());
@@ -122,6 +118,27 @@ impl ThreadInfo {
         }
 
         Ok(self.state)
+    }
+
+    fn is_os_error_from_exited_thread(os_error: &io::Error) -> Result<bool> {
+        let raw_os_error = os_error
+            .raw_os_error()
+            .ok_or_else(|| format_err!("OS error missing raw error"))?;
+
+        let exited = match raw_os_error as DWORD {
+            ERROR_ACCESS_DENIED => {
+                // Assume, as a debugger, we always have the `THREAD_SUSPEND_RESUME`
+                // access right, and thus we should interpret this error to mean that
+                // the thread has exited.
+                //
+                // This means we are observing a race between OS-level thread exit and
+                // the (pending) debug event.
+                true
+            }
+            _ => false,
+        };
+
+        Ok(exited)
     }
 }
 
