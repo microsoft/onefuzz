@@ -1,7 +1,6 @@
 azure-cli-core==2.23.0
 azure-cli==2.23.0
 azure-cosmosdb-table==1.0.6
-azure-graphrbac==0.60.0
 azure-mgmt-eventgrid==3.0.0rc9
 azure-mgmt-resource==12.1.0
 azure-mgmt-storage==17.1.0

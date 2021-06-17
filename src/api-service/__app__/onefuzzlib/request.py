@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
 from uuid import UUID
 
 from azure.functions import HttpRequest, HttpResponse
-from azure.graphrbac.models import GraphErrorException
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.responses import BaseResponse
@@ -35,7 +34,7 @@ def check_access(req: HttpRequest) -> Optional[Error]:
     member_id = req.headers["x-ms-client-principal-id"]
     try:
         result = is_member_of(group_id, member_id)
-    except GraphErrorException:
+    except Exception:
         return Error(
             code=ErrorCode.UNAUTHORIZED, errors=["unable to interact with graph"]
         )

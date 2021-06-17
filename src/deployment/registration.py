@@ -15,7 +15,6 @@ from uuid import UUID, uuid4
 import requests
 from azure.cli.core.azclierror import AuthenticationError
 from azure.common.credentials import get_cli_profile
-from azure.graphrbac.models import Application
 from functional import seq
 from msrest.serialization import TZ_UTC
 
@@ -186,7 +185,7 @@ def create_application_credential(application_name: str, subscription_id: str) -
 
 def create_application_registration(
     onefuzz_instance_name: str, name: str, approle: OnefuzzAppRole, subscription_id: str
-) -> Application:
+) -> Any:
     """Create an application registration"""
 
     app = get_application(
