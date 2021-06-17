@@ -9,21 +9,13 @@ import time
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from re import S, sub
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TypeVar, cast
 from uuid import UUID, uuid4
 
 import requests
 from azure.cli.core.azclierror import AuthenticationError
-from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
-from azure.graphrbac.models import (
-    Application,
-    AppRole,
-    PasswordCredential,
-    ServicePrincipal,
-    ServicePrincipalCreateParameters,
-)
+from azure.graphrbac.models import Application
 from functional import seq
 from msrest.serialization import TZ_UTC
 
@@ -150,7 +142,7 @@ def register_application(
     else:
         logger.info(
             "Found existing application objectId '%s' - appid '%s'"
-            % (app.object_id, app["appId"])
+            % (app["id"], app["appId"])
         )
 
     onefuzz_app = get_application(
@@ -171,7 +163,7 @@ def register_application(
     tenant_id = get_tenant_id(subscription_id=subscription_id)
 
     return ApplicationInfo(
-        client_id=app.app_id,
+        client_id=app["id"],
         client_secret=password,
         authority=("https://login.microsoftonline.com/%s" % tenant_id),
     )
@@ -186,7 +178,9 @@ def create_application_credential(application_name: str, subscription_id: str) -
     if not app:
         raise Exception("app not found")
 
-    (_, password) = add_application_password(app["objectId"], subscription_id)
+    (_, password) = add_application_password(
+        f"{application_name}_password", app["objectId"], subscription_id
+    )
     return str(password)
 
 
@@ -244,7 +238,7 @@ def create_application_registration(
 
     query_microsoft_graph(
         method="POST",
-        resource="applications/servicePrincipals",
+        resource="servicePrincipals",
         body=service_principal_params,
         subscription=subscription_id,
     )
@@ -261,10 +255,12 @@ def create_application_registration(
 
 
 def add_application_password(
-    app_object_id: UUID, subscription_id: str
+    password_name: str, app_object_id: UUID, subscription_id: str
 ) -> Tuple[str, str]:
     def create_password() -> Tuple[str, str]:
-        password = add_application_password_impl(app_object_id, subscription_id)
+        password = add_application_password_impl(
+            password_name, app_object_id, subscription_id
+        )
         logger.info("app password created")
         return password
 
@@ -274,8 +270,28 @@ def add_application_password(
 
 
 def add_application_password_impl(
-    app_object_id: UUID, subscription_id: str
+    password_name: str, app_object_id: UUID, subscription_id: str
 ) -> Tuple[str, str]:
+
+    app = query_microsoft_graph(
+        method="GET",
+        resource="applications/%s" % app_object_id,
+        subscription=subscription_id,
+    )
+
+    passwords = [
+        x for x in app["passwordCredentials"] if x["displayName"] == password_name
+    ]
+
+    if len(passwords) > 0:
+        key_id = passwords[0]["keyId"]
+        query_microsoft_graph(
+            method="POST",
+            resource="applications/%s/removePassword" % app_object_id,
+            body={"keyId": key_id},
+            subscription=subscription_id,
+        )
+
     key = uuid4()
     password_request = {
         "passwordCredential": {

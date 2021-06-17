@@ -23,17 +23,7 @@ from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.core.exceptions import ResourceExistsError
 from azure.cosmosdb.table.tableservice import TableService
-from azure.graphrbac.models import (
-    Application,
-    ApplicationCreateParameters,
-    ApplicationUpdateParameters,
-    AppRole,
-    GraphErrorException,
-    OptionalClaims,
-    RequiredResourceAccess,
-    ResourceAccess,
-    ServicePrincipalCreateParameters,
-)
+from azure.graphrbac.models import GraphErrorException
 from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
 from azure.mgmt.applicationinsights.models import (
     ApplicationInsightsComponentExportRequest,
@@ -249,7 +239,9 @@ class Client:
             sys.exit(1)
 
     def create_password(self, object_id: UUID) -> Tuple[str, str]:
-        return add_application_password(object_id, self.get_subscription_id())
+        return add_application_password(
+            "cli_password", object_id, self.get_subscription_id()
+        )
 
     def setup_rbac(self) -> None:
         """
@@ -301,10 +293,14 @@ class Client:
             params = {
                 "displayName": self.application_name,
                 "identifierUris": [url],
+                "signInAudience": "AzureADMyOrg",
                 "appRoles": app_roles,
+                "web": {"redirectUris": [f"{url}/.auth/login/aad/callback"]},
                 "requiredResourceAccess": [
                     {
-                        "resourceAccess": {"id": USER_READ_PERMISSION, "type": "Scope"},
+                        "resourceAccess": [
+                            {"id": USER_READ_PERMISSION, "type": "Scope"}
+                        ],
                         "resourceAppId": MICROSOFT_GRAPH_APP_ID,
                     }
                 ],
@@ -332,7 +328,7 @@ class Client:
                     try:
                         query_microsoft_graph(
                             method="POST",
-                            resource="applications/servicePrincipals",
+                            resource="servicePrincipals",
                             body=service_principal_params,
                             subscription=self.get_subscription_id(),
                         )
@@ -385,7 +381,7 @@ class Client:
                     subscription=self.get_subscription_id(),
                 )
 
-        if self.multi_tenant_domain and app.sign_in_audience == "AzureADMyOrg":
+        if self.multi_tenant_domain and app["signInAudience"] == "AzureADMyOrg":
             url = "https://%s/%s" % (
                 self.multi_tenant_domain,
                 self.application_name,
@@ -398,16 +394,16 @@ class Client:
             )
 
             set_app_audience(
-                app.object_id,
+                app["id"],
                 "AzureADMultipleOrgs",
                 subscription_id=self.get_subscription_id(),
             )
         elif (
             not self.multi_tenant_domain
-            and app.sign_in_audience == "AzureADMultipleOrgs"
+            and app["signInAudience"] == "AzureADMultipleOrgs"
         ):
             set_app_audience(
-                app.object_id,
+                app["id"],
                 "AzureADMyOrg",
                 subscription_id=self.get_subscription_id(),
             )
@@ -421,7 +417,7 @@ class Client:
         else:
             logger.debug("No change to App Registration signInAudence setting")
 
-        (password_id, password) = self.create_password(app.object_id)
+        (password_id, password) = self.create_password(app["id"])
 
         cli_app = get_application(
             app_id=uuid.UUID(ONEFUZZ_CLI_APP),
