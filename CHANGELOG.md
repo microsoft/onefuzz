@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.22.0
+### Changed
+* Service: Update log node and task related messages to ease debugging. [#988](https://github.com/microsoft/onefuzz/pull/988)
+* Agent: Changed the log level for `azcopy` retry notification to DEBUG. [#986](https://github.com/microsoft/onefuzz/pull/986)
+* Agent: Updated stack minimization regular expressions from libclusterfuzz. [#992](https://github.com/microsoft/onefuzz/pull/992)
+* Agent: Added more context to synchronized directory errors.  [#995](https://github.com/microsoft/onefuzz/pull/995)
+* Deployment: Reduced the Application Insights log retention duration to 30 days.  [#997](https://github.com/microsoft/onefuzz/pull/997)
+* Agent: Improved tracking of threads during win32 debugging.  [#1000](https://github.com/microsoft/onefuzz/pull/1000)
+
+### Fixed
+* Agent: Fixed an issue using relative paths with synchronized directories.  [#996](https://github.com/microsoft/onefuzz/pull/996)
+* Service: Fixed an issue creating GitHub Issues notifications [#990](https://github.com/microsoft/onefuzz/pull/990)
+* CLI/Service: Fixed an issue handling Unions in the `onefuzztypes` library [#982](https://github.com/microsoft/onefuzz/pull/982)
+* Service: Fixed an issue handling manually resized scalesets [#984](https://github.com/microsoft/onefuzz/pull/984)
+
 ## 2.21.0
 ### Added
 * CLI: Added `onefuzz debug job rerun` command. [#960](https://github.com/microsoft/onefuzz/pull/960)
