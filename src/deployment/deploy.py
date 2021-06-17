@@ -287,13 +287,15 @@ class Client:
                     self.multi_tenant_domain,
                     self.application_name,
                 )
+                signInAudience = "AzureADMultipleOrgs"
             else:
                 url = "https://%s.azurewebsites.net" % self.application_name
+                signInAudience = "AzureADMyOrg"
 
             params = {
                 "displayName": self.application_name,
                 "identifierUris": [url],
-                "signInAudience": "AzureADMyOrg",
+                "signInAudience": signInAudience,
                 "appRoles": app_roles,
                 "web": {"redirectUris": [f"{url}/.auth/login/aad/callback"]},
                 "requiredResourceAccess": [
