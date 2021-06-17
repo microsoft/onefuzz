@@ -23,7 +23,6 @@ from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.credentials import get_cli_profile
 from azure.core.exceptions import ResourceExistsError
 from azure.cosmosdb.table.tableservice import TableService
-from azure.graphrbac.models import GraphErrorException
 from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
 from azure.mgmt.applicationinsights.models import (
     ApplicationInsightsComponentExportRequest,
@@ -52,6 +51,7 @@ from msrest.serialization import TZ_UTC
 
 from data_migration import migrate
 from registration import (
+    GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
     assign_app_role,
@@ -297,6 +297,20 @@ class Client:
                 "identifierUris": [url],
                 "signInAudience": signInAudience,
                 "appRoles": app_roles,
+                "api": {
+                    "oauth2PermissionScopes": [
+                        {
+                            "adminConsentDescription": f"Allow the application to access {self.application_name} on behalf of the signed-in user.",
+                            "adminConsentDisplayName": f"Access {self.application_name}",
+                            "id": str(uuid.uuid4()),
+                            "isEnabled": True,
+                            "type": "User",
+                            "userConsentDescription": f"Allow the application to access {self.application_name} on your behalf.",
+                            "userConsentDisplayName": f"Access {self.application_name}",
+                            "value": "user_impersonation",
+                        }
+                    ]
+                },
                 "web": {"redirectUris": [f"{url}/.auth/login/aad/callback"]},
                 "requiredResourceAccess": [
                     {
@@ -335,7 +349,7 @@ class Client:
                             subscription=self.get_subscription_id(),
                         )
                         return
-                    except GraphErrorException as err:
+                    except GraphQueryError as err:
                         # work around timing issue when creating service principal
                         # https://github.com/Azure/azure-cli/issues/14767
                         if (
