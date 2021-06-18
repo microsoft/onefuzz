@@ -560,7 +560,7 @@ impl Target {
             }
 
             // Now pick a random thread to resume.
-            let idx = thread_rng().gen_range(0, self.single_step.len());
+            let idx = thread_rng().gen_range(0..self.single_step.len());
             let (handle, step_state) = self.single_step.iter().nth(idx).unwrap();
             let thread_info = self.thread_info.get_mut(handle).unwrap();
 

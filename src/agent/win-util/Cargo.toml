@@ -12,7 +12,7 @@ log = "0.4"
 os_pipe = "0.9"
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.8"
+winreg = "0.9"
 
 [dependencies.winapi]
 version = "0.3"

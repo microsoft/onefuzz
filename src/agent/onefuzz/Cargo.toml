@@ -11,32 +11,32 @@ anyhow = "1.0"
 appinsights = "0.1"
 async-trait = "0.1"
 base64 = "0.13"
-bytes = "1.0.1"
+bytes = "1.0"
 dunce = "1.0"
-futures = "0.3.14"
-futures-util = "0.3.14"
+futures = "0.3"
+futures-util = "0.3"
 hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 notify = "4.0"
 regex = "1.4"
-reqwest = { version = "0.11.3", features = ["json", "stream"] }
+reqwest = { version = "0.11", features = ["json", "stream"] }
 sha2 = "0.9"
 url = { version = "2.2", features = ["serde"] }
 serde = "1.0"
 serde_json = "1.0"
-rand = "0.7"
+rand = "0.8"
 serde_derive = "1.0"
-sysinfo = "0.16"
-tokio = { version = "1.5.0", features = ["full"] }
-tokio-stream = { version = "0.1.5", features = ["fs", "time", "tokio-util"] }
-tokio-util = { version = "0.6.6", features = ["full"] }
+sysinfo = "0.18"
+tokio = { version = "1.7", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["fs", "time", "tokio-util"] }
+tokio-util = { version = "0.6", features = ["full"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
 urlparse = "0.7"
 ring = "0.16"
 storage-queue = { path = "../storage-queue" }
-strum = "0.20"
-strum_macros = "0.20"
+strum = "0.21"
+strum_macros = "0.21"
 tempfile = "3.2"
 process_control = "3.0"
 reqwest-retry = { path = "../reqwest-retry"}
@@ -45,7 +45,7 @@ stacktrace-parser = { path = "../stacktrace-parser" }
 backoff = { version = "0.3", features = ["tokio"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winreg = "0.8"
+winreg = "0.9"
 input-tester = { path = "../input-tester" }
 debugger = { path = "../debugger" }
 

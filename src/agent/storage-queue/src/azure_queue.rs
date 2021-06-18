@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 use anyhow::{Context, Result};
-use bytes::buf::BufExt;
+use bytes::Buf;
 use reqwest::{Client, Url};
 use reqwest_retry::SendRetry;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
