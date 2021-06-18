@@ -37,7 +37,8 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
 
-const COOLOFF_PERIOD: Duration = Duration::from_secs(5);
+// Period for minimum duration between launches of libFuzzer
+const COOLOFF_PERIOD: Duration = Duration::from_secs(10);
 
 /// Maximum number of log message to safe in case of libFuzzer failing,
 /// arbitrarily chosen
@@ -187,8 +188,9 @@ impl LibFuzzerFuzzTask {
 
             // if libFuzzer is exiting rapidly, give some breathing room to allow the
             // handles to be reaped.
-            if instant.elapsed() < COOLOFF_PERIOD {
-                sleep(COOLOFF_PERIOD).await;
+            let runtime = instant.elapsed();
+            if runtime < COOLOFF_PERIOD {
+                sleep(COOLOFF_PERIOD - runtime).await;
             }
         }
     }
