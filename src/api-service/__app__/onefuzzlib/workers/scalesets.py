@@ -372,12 +372,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
                     node.set_halt()
                     to_delete.append(node)
-                elif node.reimage_queued:
-                    # reset the reimage_queued flag, in case it's not done
-                    # reimaging during the next cleanup_nodes cycle
-                    node.reimage_queued = False
-                    node.save()
-                else:
+                elif not node.reimage_queued:
                     # only add nodes that are not already set to reschedule
                     to_reimage.append(node)
 
@@ -391,6 +386,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 ",".join(str(x.machine_id) for x in dead_nodes),
             )
             for node in dead_nodes:
+                if node.reimage_queued:
+                    node.reimage_queued = False
+                    node.save()
                 if node not in to_reimage:
                     to_reimage.append(node)
 

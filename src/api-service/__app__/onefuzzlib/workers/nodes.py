@@ -258,7 +258,8 @@ class Node(BASE_NODE, ORMMixin):
 
         if self.is_outdated():
             logging.info(
-                "can_schedule agent and service versions differ, stopping node. "
+                "can_process_new_work agent and service versions differ, "
+                "stopping node. "
                 "machine_id:%s agent_version:%s service_version: %s",
                 self.machine_id,
                 self.version,
@@ -269,20 +270,25 @@ class Node(BASE_NODE, ORMMixin):
 
         if self.is_too_old():
             logging.info(
-                "can_schedule node is too old.  machine_id:%s", self.machine_id
+                "can_process_new_work node is too old.  machine_id:%s", self.machine_id
             )
             self.stop(done=True)
             return False
 
         if self.state in NodeState.ready_for_reset():
             logging.info(
-                "can_schedule node is set for reset.  machine_id:%s", self.machine_id
+                "can_process_new_work node is set for reset.  machine_id:%s",
+                self.machine_id,
             )
+            return False
+
+        if self.reimage_queued:
+            logging.info("can_process_new_work reimage_queued is set. machine_id:%s")
             return False
 
         if self.delete_requested:
             logging.info(
-                "can_schedule is set to be deleted.  machine_id:%s",
+                "can_process_new_work is set to be deleted.  machine_id:%s",
                 self.machine_id,
             )
             self.stop(done=True)
@@ -290,14 +296,17 @@ class Node(BASE_NODE, ORMMixin):
 
         if self.reimage_requested:
             logging.info(
-                "can_schedule is set to be reimaged.  machine_id:%s",
+                "can_process_new_work is set to be reimaged.  machine_id:%s",
                 self.machine_id,
             )
             self.stop(done=True)
             return False
 
         if self.could_shrink_scaleset():
-            logging.info("node scheduled to shrink.  machine_id:%s", self.machine_id)
+            logging.info(
+                "can_process_new_work node scheduled to shrink.  machine_id:%s",
+                self.machine_id,
+            )
             self.set_halt()
             return False
 
@@ -305,7 +314,8 @@ class Node(BASE_NODE, ORMMixin):
             scaleset = Scaleset.get_by_id(self.scaleset_id)
             if isinstance(scaleset, Error):
                 logging.info(
-                    "can_schedule - invalid scaleset.  scaleset_id:%s machine_id:%s",
+                    "can_process_new_work invalid scaleset.  "
+                    "scaleset_id:%s machine_id:%s",
                     self.scaleset_id,
                     self.machine_id,
                 )
@@ -313,7 +323,7 @@ class Node(BASE_NODE, ORMMixin):
 
             if scaleset.state not in ScalesetState.available():
                 logging.info(
-                    "can_schedule - scaleset not available for work. "
+                    "can_process_new_work scaleset not available for work. "
                     "scaleset_id:%s machine_id:%s",
                     self.scaleset_id,
                     self.machine_id,
