@@ -15,12 +15,12 @@ bincode = "1.3"
 cpp_demangle = "0.3"
 debugger = { path = "../debugger" }
 dunce = "1.0"
-fixedbitset = "0.3"
-goblin = "0.2"
+fixedbitset = "0.4"
+goblin = "0.4"
 iced-x86 = { version = "1.1", features = ["decoder", "op_code_info", "instr_info", "masm"] }
 log = "0.4"
-memmap2 = "0.2"
-msvc-demangler = "0.8"
+memmap2 = "0.3"
+msvc-demangler = "0.9"
 regex = "1.4"
 rustc-demangle = "0.1"
 serde = { version = "1.0", features = ["derive"] }
