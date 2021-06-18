@@ -34,9 +34,10 @@ def check_access(req: HttpRequest) -> Optional[Error]:
     member_id = req.headers["x-ms-client-principal-id"]
     try:
         result = is_member_of(group_id, member_id)
-    except Exception:
+    except Exception as e:
         return Error(
-            code=ErrorCode.UNAUTHORIZED, errors=["unable to interact with graph"]
+            code=ErrorCode.UNAUTHORIZED,
+            errors=["unable to interact with graph", str(e)],
         )
     if not result:
         logging.error("unauthorized access: %s is not in %s", member_id, group_id)

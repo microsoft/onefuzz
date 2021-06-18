@@ -14,7 +14,7 @@ from azure.keyvault.secrets import SecretClient
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from memoization import cached
-from msrestazure.azure_active_directory import MSIAuthentication
+from msrestazure.azure_active_directory import AZURE_PUBLIC_CLOUD, MSIAuthentication
 from msrestazure.tools import parse_resource_id
 from onefuzztypes.primitives import Container, Region
 
@@ -22,10 +22,12 @@ from .monkeypatch import allow_more_workers, reduce_logging
 
 
 @cached
-def get_msi() -> MSIAuthentication:
+def get_ms_graph_msi() -> MSIAuthentication:
     allow_more_workers()
     reduce_logging()
-    return MSIAuthentication()
+    return MSIAuthentication(
+        resource=AZURE_PUBLIC_CLOUD.endpoints.microsoft_graph_resource_id
+    )
 
 
 @cached
@@ -102,7 +104,7 @@ def query_microsoft_graph(
     params: Optional[Dict] = None,
     body: Optional[Dict] = None,
 ) -> Any:
-    auth = get_msi()
+    auth = get_ms_graph_msi()
     access_token = auth.token["access_token"]
     token_type = auth.token["token_type"]
 
