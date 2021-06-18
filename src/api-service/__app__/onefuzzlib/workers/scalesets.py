@@ -372,8 +372,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
                     node.set_halt()
                     to_delete.append(node)
-                elif not node.reimage_queued:
-                    # only add nodes that are not already set to reschedule
+                else:
                     to_reimage.append(node)
 
         dead_nodes = Node.get_dead_nodes(self.scaleset_id, NODE_EXPIRATION_TIME)
@@ -386,9 +385,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 ",".join(str(x.machine_id) for x in dead_nodes),
             )
             for node in dead_nodes:
-                if node.reimage_queued:
-                    node.reimage_queued = False
-                    node.save()
                 if node not in to_reimage:
                     to_reimage.append(node)
 
@@ -549,6 +545,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             machine_ids,
         )
         delete_vmss_nodes(self.scaleset_id, machine_ids)
+        for node in nodes:
+            if node.machine_id in machine_ids:
+                node.delete()
 
     def reimage_nodes(self, nodes: List[Node]) -> None:
         if not nodes:
@@ -600,9 +599,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 "unable to reimage nodes: %s:%s - %s"
                 % (self.scaleset_id, machine_ids, result)
             )
+
         for node in nodes:
-            node.reimage_queued = True
-            node.save()
+            if node.machine_id in machine_ids:
+                node.delete()
 
     def set_shutdown(self, now: bool) -> None:
         if self.state in [ScalesetState.halt, ScalesetState.shutdown]:

@@ -43,10 +43,6 @@ NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
 
 
 class Node(BASE_NODE, ORMMixin):
-    # should only be set by Scaleset.reimage_nodes
-    # should only be unset during agent_registration POST
-    reimage_queued: bool = Field(default=False)
-
     @classmethod
     def create(
         cls,
@@ -275,15 +271,20 @@ class Node(BASE_NODE, ORMMixin):
             self.stop(done=True)
             return False
 
+        if self.state not in NodeState.can_process_new_work():
+            logging.info(
+                "can_process_new_work node not in appropriate state for new work"
+                "machine_id:%s state:%S",
+                self.machine_id,
+                self.state.name,
+            )
+            return False
+
         if self.state in NodeState.ready_for_reset():
             logging.info(
                 "can_process_new_work node is set for reset.  machine_id:%s",
                 self.machine_id,
             )
-            return False
-
-        if self.reimage_queued:
-            logging.info("can_process_new_work reimage_queued is set. machine_id:%s")
             return False
 
         if self.delete_requested:
