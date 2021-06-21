@@ -511,11 +511,11 @@ class GithubIssueTemplate(BaseModel):
     # validator needed for backward compatibility
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
-        def try_parse_GithubAuth(x) -> Optional[GithubAuth]:
+        def try_parse_GithubAuth(x: dict) -> Optional[GithubAuth]:
             try:
                 return GithubAuth.parse_obj(x)
             except Exception:
-                None
+                return None
 
         if isinstance(v, GithubAuth):
             return SecretData(secret=v)
