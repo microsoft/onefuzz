@@ -6,6 +6,7 @@
 import json
 import pathlib
 import unittest
+from typing import cast
 
 from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.job_templates import (
@@ -105,8 +106,9 @@ class TestSecret(unittest.TestCase):
             self.assertIsInstance(
                 notification1.config, GithubIssueTemplate, "invalid config type"
             )
+            notification1_config = cast(GithubIssueTemplate, notification1.config)
             self.assertIsInstance(
-                notification1.config.auth.secret, GithubAuth, "Invalid secret type"
+                notification1_config.auth.secret, GithubAuth, "Invalid secret type"
             )
 
             notification2 = NotificationCreate.parse_obj(
@@ -115,8 +117,9 @@ class TestSecret(unittest.TestCase):
             self.assertIsInstance(
                 notification2.config, GithubIssueTemplate, "invalid config type"
             )
+            notification2_config = cast(GithubIssueTemplate, notification2.config)
             self.assertIsInstance(
-                notification2.config.auth.secret, GithubAuth, "Invalid secret type"
+                notification2_config.auth.secret, GithubAuth, "Invalid secret type"
             )
 
             hide_secrets(notification2, hider)
@@ -127,8 +130,9 @@ class TestSecret(unittest.TestCase):
             self.assertIsInstance(
                 notification3.config, GithubIssueTemplate, "invalid config type"
             )
+            notification3_config = cast(GithubIssueTemplate, notification3.config)
             self.assertIsInstance(
-                notification2.config.auth.secret, SecretAddress, "Invalid secret type"
+                notification3_config.auth.secret, SecretAddress, "Invalid secret type"
             )
 
     def test_roundtrip_team_issue(self) -> None:
@@ -145,16 +149,18 @@ class TestSecret(unittest.TestCase):
         self.assertIsInstance(
             notification1.config, TeamsTemplate, "invalid config type"
         )
+        notification1_config = cast(TeamsTemplate, notification1.config)
         self.assertIsInstance(
-            notification1.config.url.secret, str, "Invalid secret type"
+            notification1_config.url.secret, str, "Invalid secret type"
         )
 
         notification2 = NotificationCreate.parse_obj(json.loads(notification1.json()))
         self.assertIsInstance(
             notification2.config, TeamsTemplate, "invalid config type"
         )
+        notification2_config = cast(TeamsTemplate, notification2.config)
         self.assertIsInstance(
-            notification2.config.url.secret, str, "Invalid secret type"
+            notification2_config.url.secret, str, "Invalid secret type"
         )
 
         hide_secrets(notification2, hider)
@@ -163,8 +169,9 @@ class TestSecret(unittest.TestCase):
         self.assertIsInstance(
             notification3.config, TeamsTemplate, "invalid config type"
         )
+        notification3_config = cast(TeamsTemplate, notification3.config)
         self.assertIsInstance(
-            notification3.config.url.secret, SecretAddress, "Invalid secret type"
+            notification3_config.url.secret, SecretAddress, "Invalid secret type"
         )
 
     def test_roundtrip_ado(self) -> None:
@@ -179,8 +186,9 @@ class TestSecret(unittest.TestCase):
             self.assertIsInstance(
                 notification1.config, ADOTemplate, "invalid config type"
             )
+            notification1_config = cast(ADOTemplate, notification1.config)
             self.assertIsInstance(
-                notification1.config.auth_token.secret, str, "Invalid secret type"
+                notification1_config.auth_token.secret, str, "Invalid secret type"
             )
 
             notification2 = NotificationCreate.parse_obj(
@@ -189,8 +197,9 @@ class TestSecret(unittest.TestCase):
             self.assertIsInstance(
                 notification2.config, ADOTemplate, "invalid config type"
             )
+            notification2_config = cast(ADOTemplate, notification2.config)
             self.assertIsInstance(
-                notification2.config.auth_token.secret, str, "Invalid secret type"
+                notification2_config.auth_token.secret, str, "Invalid secret type"
             )
 
             hide_secrets(notification2, hider)
@@ -201,8 +210,9 @@ class TestSecret(unittest.TestCase):
             self.assertIsInstance(
                 notification3.config, ADOTemplate, "invalid config type"
             )
+            notification3_config = cast(ADOTemplate, notification3.config)
             self.assertIsInstance(
-                notification3.config.auth_token.secret,
+                notification3_config.auth_token.secret,
                 SecretAddress,
                 "Invalid secret type",
             )
