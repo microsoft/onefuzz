@@ -695,6 +695,8 @@ class DebugNotification(Command):
             asan_log="fake asan log",
             task_id=task_id,
             job_id=task.job_id,
+            minimized_stack=[],
+            minimized_stack_function_names=[]
         )
 
         with tempfile.TemporaryDirectory() as tempdir:
