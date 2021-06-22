@@ -122,9 +122,9 @@ class TestSecret(unittest.TestCase):
             notification3 = NotificationCreate.parse_obj(
                 json.loads(notification2.json())
             )
-            assert isinstance(notification2.config, GithubIssueTemplate)
+            assert isinstance(notification3.config, GithubIssueTemplate)
             self.assertIsInstance(
-                notification2.config.auth.secret, SecretAddress, "Invalid secret type"
+                notification3.config.auth.secret, SecretAddress, "Invalid secret type"
             )
 
     def test_roundtrip_team_issue(self) -> None:
