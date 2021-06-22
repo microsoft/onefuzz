@@ -103,23 +103,19 @@ class TestSecret(unittest.TestCase):
             notification_dict = json.load(json_file)
             notification_dict["container"] = "testing"
             notification1 = NotificationCreate.parse_obj(notification_dict)
+
+            assert isinstance(notification1.config, GithubIssueTemplate)
             self.assertIsInstance(
-                notification1.config, GithubIssueTemplate, "invalid config type"
-            )
-            notification1_config = cast(GithubIssueTemplate, notification1.config)
-            self.assertIsInstance(
-                notification1_config.auth.secret, GithubAuth, "Invalid secret type"
+                notification1.config.auth.secret, GithubAuth, "Invalid secret type"
             )
 
             notification2 = NotificationCreate.parse_obj(
                 json.loads(notification1.json())
             )
+
+            assert isinstance(notification2.config, GithubIssueTemplate)
             self.assertIsInstance(
-                notification2.config, GithubIssueTemplate, "invalid config type"
-            )
-            notification2_config = cast(GithubIssueTemplate, notification2.config)
-            self.assertIsInstance(
-                notification2_config.auth.secret, GithubAuth, "Invalid secret type"
+                notification2.config.auth.secret, GithubAuth, "Invalid secret type"
             )
 
             hide_secrets(notification2, hider)
@@ -127,12 +123,9 @@ class TestSecret(unittest.TestCase):
             notification3 = NotificationCreate.parse_obj(
                 json.loads(notification2.json())
             )
+            assert isinstance(notification2.config, GithubIssueTemplate)
             self.assertIsInstance(
-                notification3.config, GithubIssueTemplate, "invalid config type"
-            )
-            notification3_config = cast(GithubIssueTemplate, notification3.config)
-            self.assertIsInstance(
-                notification3_config.auth.secret, SecretAddress, "Invalid secret type"
+                notification2.config.auth.secret, SecretAddress, "Invalid secret type"
             )
 
     def test_roundtrip_team_issue(self) -> None:
@@ -146,32 +139,24 @@ class TestSecret(unittest.TestCase):
         notification_dict = json.loads(a)
         notification_dict["container"] = "testing"
         notification1 = NotificationCreate.parse_obj(notification_dict)
+
+        assert isinstance(notification1.config, TeamsTemplate)
         self.assertIsInstance(
-            notification1.config, TeamsTemplate, "invalid config type"
-        )
-        notification1_config = cast(TeamsTemplate, notification1.config)
-        self.assertIsInstance(
-            notification1_config.url.secret, str, "Invalid secret type"
+            notification1.config.url.secret, str, "Invalid secret type"
         )
 
         notification2 = NotificationCreate.parse_obj(json.loads(notification1.json()))
+        assert isinstance(notification2.config, TeamsTemplate)
         self.assertIsInstance(
-            notification2.config, TeamsTemplate, "invalid config type"
-        )
-        notification2_config = cast(TeamsTemplate, notification2.config)
-        self.assertIsInstance(
-            notification2_config.url.secret, str, "Invalid secret type"
+            notification2.config.url.secret, str, "Invalid secret type"
         )
 
         hide_secrets(notification2, hider)
 
         notification3 = NotificationCreate.parse_obj(json.loads(notification2.json()))
+        assert isinstance(notification3.config, TeamsTemplate)
         self.assertIsInstance(
-            notification3.config, TeamsTemplate, "invalid config type"
-        )
-        notification3_config = cast(TeamsTemplate, notification3.config)
-        self.assertIsInstance(
-            notification3_config.url.secret, SecretAddress, "Invalid secret type"
+            notification3.config.url.secret, SecretAddress, "Invalid secret type"
         )
 
     def test_roundtrip_ado(self) -> None:
@@ -183,23 +168,17 @@ class TestSecret(unittest.TestCase):
             notification_dict = json.load(json_file)
             notification_dict["container"] = "testing"
             notification1 = NotificationCreate.parse_obj(notification_dict)
+            assert isinstance(notification1.config, ADOTemplate)
             self.assertIsInstance(
-                notification1.config, ADOTemplate, "invalid config type"
-            )
-            notification1_config = cast(ADOTemplate, notification1.config)
-            self.assertIsInstance(
-                notification1_config.auth_token.secret, str, "Invalid secret type"
+                notification1.config.auth_token.secret, str, "Invalid secret type"
             )
 
             notification2 = NotificationCreate.parse_obj(
                 json.loads(notification1.json())
             )
+            assert isinstance(notification2.config, ADOTemplate)
             self.assertIsInstance(
-                notification2.config, ADOTemplate, "invalid config type"
-            )
-            notification2_config = cast(ADOTemplate, notification2.config)
-            self.assertIsInstance(
-                notification2_config.auth_token.secret, str, "Invalid secret type"
+                notification2.config.auth_token.secret, str, "Invalid secret type"
             )
 
             hide_secrets(notification2, hider)
@@ -207,12 +186,9 @@ class TestSecret(unittest.TestCase):
             notification3 = NotificationCreate.parse_obj(
                 json.loads(notification2.json())
             )
+            assert isinstance(notification3.config, ADOTemplate)
             self.assertIsInstance(
-                notification3.config, ADOTemplate, "invalid config type"
-            )
-            notification3_config = cast(ADOTemplate, notification3.config)
-            self.assertIsInstance(
-                notification3_config.auth_token.secret,
+                notification3.config.auth_token.secret,
                 SecretAddress,
                 "Invalid secret type",
             )
