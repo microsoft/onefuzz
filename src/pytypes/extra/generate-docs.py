@@ -20,9 +20,9 @@ from onefuzztypes.enums import (
 )
 from onefuzztypes.events import (
     Event,
-    EventInstanceConfigUpdated,
     EventCrashReported,
     EventFileAdded,
+    EventInstanceConfigUpdated,
     EventJobCreated,
     EventJobStopped,
     EventNodeCreated,
@@ -54,6 +54,7 @@ from onefuzztypes.models import (
     BlobRef,
     CrashTestResult,
     Error,
+    InstanceConfig,
     JobConfig,
     RegressionReport,
     Report,
@@ -61,7 +62,6 @@ from onefuzztypes.models import (
     TaskContainers,
     TaskDetails,
     UserInfo,
-    InstanceConfig,
 )
 from onefuzztypes.primitives import Container, PoolName, Region
 from onefuzztypes.webhooks import WebhookMessage
@@ -254,7 +254,7 @@ def main() -> None:
         EventFileAdded(container=Container("container-name"), filename="example.txt"),
         EventNodeHeartbeat(machine_id=UUID(int=0), pool_name=PoolName("example")),
         EventTaskHeartbeat(task_id=UUID(int=0), job_id=UUID(int=0), config=task_config),
-        EventInstanceConfigUpdated(config=InstanceConfig(admins=[UUID(int=0)]))
+        EventInstanceConfigUpdated(config=InstanceConfig(admins=[UUID(int=0)])),
     ]
 
     # works around `mypy` not handling that Union has `__args__`
