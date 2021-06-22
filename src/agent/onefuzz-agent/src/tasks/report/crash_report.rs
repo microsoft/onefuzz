@@ -11,7 +11,7 @@ use onefuzz_telemetry::{
     },
     EventData,
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use stacktrace_parser::CrashLog;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
@@ -33,11 +33,13 @@ pub struct CrashReport {
     pub call_stack_sha256: String,
 
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(deserialize_with = "deserialize_null_default")]
     pub minimized_stack: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub minimized_stack_sha256: Option<String>,
 
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(deserialize_with = "deserialize_null_default")]
     pub minimized_stack_function_names: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub minimized_stack_function_names_sha256: Option<String>,
@@ -54,6 +56,15 @@ pub struct CrashReport {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scariness_description: Option<String>,
+}
+
+fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Default + Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    let value = Option::deserialize(deserializer)?;
+    Ok(value.unwrap_or_default())
 }
 
 #[derive(Debug, Deserialize, Serialize)]
