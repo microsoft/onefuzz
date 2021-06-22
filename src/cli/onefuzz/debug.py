@@ -696,7 +696,7 @@ class DebugNotification(Command):
             task_id=task_id,
             job_id=task.job_id,
             minimized_stack=[],
-            minimized_stack_function_names=[]
+            minimized_stack_function_names=[],
         )
 
         with tempfile.TemporaryDirectory() as tempdir:
