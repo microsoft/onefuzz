@@ -6,7 +6,6 @@
 import json
 import pathlib
 import unittest
-from typing import cast
 
 from onefuzztypes.enums import OS, ContainerType
 from onefuzztypes.job_templates import (
@@ -125,7 +124,7 @@ class TestSecret(unittest.TestCase):
             )
             assert isinstance(notification2.config, GithubIssueTemplate)
             self.assertIsInstance(
-                notification2.config.auth.secret, SecretAddress, "Invalid secret type"
+                notification3.config.auth.secret, SecretAddress, "Invalid secret type"
             )
 
     def test_roundtrip_team_issue(self) -> None:
