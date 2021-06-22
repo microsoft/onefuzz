@@ -106,6 +106,7 @@ where
     // Currently this assumes `sizeof(uintptr_t) ==  8` for the target PE.
     fn provide_from_pcs_table(&mut self, pcs_table: SancovTable) -> Result<BTreeSet<u32>> {
         // Read the PE directly to extract the PCs from the PC table.
+        let parse_options = goblin::pe::options::ParseOptions::default();
         let pe_alignment = self
             .pe
             .header
@@ -117,6 +118,7 @@ where
             pcs_table.offset as usize,
             &self.pe.sections,
             pe_alignment,
+            &parse_options,
         );
         let pe_offset =
             pe_offset.ok_or_else(|| format_err!("could not find file offset for sancov table"))?;
@@ -223,6 +225,7 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
     }
 
     pub fn visit_procedure_symbol(&mut self, proc: &ProcedureSymbol) -> Result<()> {
+        let parse_options = goblin::pe::options::ParseOptions::default();
         let alignment = self
             .pe
             .header
@@ -238,8 +241,9 @@ impl<'d, 'p> SancovInlineAccessVisitor<'d, 'p> {
             .0
             .try_into()?;
 
-        let file_offset = goblin::pe::utils::find_offset(rva, &self.pe.sections, alignment)
-            .ok_or_else(|| format_err!("unable to find PE offset for RVA"))?;
+        let file_offset =
+            goblin::pe::utils::find_offset(rva, &self.pe.sections, alignment, &parse_options)
+                .ok_or_else(|| format_err!("unable to find PE offset for RVA"))?;
 
         let range = file_offset..(file_offset + proc.len as usize);
 
