@@ -61,9 +61,9 @@ class SecretData(Generic[T]):
     secret: Union[T, SecretAddress]
 
     def __init__(self, secret: Union[T, SecretAddress]):
-        if isinstance(secret, dict):
+        try:
             self.secret = SecretAddress.parse_obj(secret)
-        else:
+        except Exception:
             self.secret = secret
 
     def __str__(self) -> str:
@@ -513,7 +513,7 @@ class GithubIssueTemplate(BaseModel):
     # validator needed for backward compatibility
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
-        if isinstance(v, str):
+        if isinstance(v, GithubAuth):
             return SecretData(secret=v)
         elif isinstance(v, SecretData):
             return v
@@ -521,7 +521,7 @@ class GithubIssueTemplate(BaseModel):
             try:
                 return SecretData(GithubAuth.parse_obj(v))
             except Exception:
-                return SecretData(secret=v["secret"])
+                return SecretData(GithubAuth.parse_obj(v["secret"]))
         else:
             raise TypeError(f"invalid datatype {type(v)}")
 

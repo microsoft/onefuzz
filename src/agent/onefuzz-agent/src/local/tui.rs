@@ -14,7 +14,7 @@ use onefuzz::utils::try_wait_all_join_handles;
 use onefuzz_telemetry::{self, EventData};
 use std::{
     collections::HashMap,
-    io::{self, Stdout, Write},
+    io::{self, Stdout},
     iter::once,
     mem::{discriminant, Discriminant},
     path::PathBuf,

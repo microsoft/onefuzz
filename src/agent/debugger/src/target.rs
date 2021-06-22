@@ -3,14 +3,17 @@
 
 #![allow(clippy::single_match)]
 
-use std::{num::NonZeroU64, path::Path};
+use std::{io, num::NonZeroU64, path::Path};
 
-use anyhow::Result;
+use anyhow::{format_err, Result};
 use log::{debug, error, trace};
 use rand::{thread_rng, Rng};
-use win_util::{last_os_error, process};
+use win_util::process;
 use winapi::{
-    shared::minwindef::{DWORD, LPCVOID},
+    shared::{
+        minwindef::{DWORD, LPCVOID},
+        winerror::ERROR_ACCESS_DENIED,
+    },
     um::{
         processthreadsapi::{ResumeThread, SuspendThread},
         winbase::Wow64SuspendThread,
@@ -31,13 +34,22 @@ pub(crate) enum StepState {
     SingleStep,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ThreadState {
+    Runnable,
+    Suspended,
+    Exited,
+}
+
 struct ThreadInfo {
     #[allow(unused)]
     id: u32,
     handle: HANDLE,
-    suspended: bool,
+    state: ThreadState,
     wow64: bool,
 }
+
+const SUSPEND_RESUME_ERROR_CODE: DWORD = -1i32 as DWORD;
 
 impl ThreadInfo {
     fn new(id: u32, handle: HANDLE, wow64: bool) -> Self {
@@ -45,41 +57,94 @@ impl ThreadInfo {
             id,
             handle,
             wow64,
-            suspended: false,
+            state: ThreadState::Runnable,
         }
     }
 
-    fn resume_thread(&mut self) -> Result<()> {
-        if !self.suspended {
-            return Ok(());
+    fn resume_thread(&mut self) -> Result<ThreadState> {
+        if self.state == ThreadState::Runnable {
+            return Ok(self.state);
         }
 
-        let suspend_count = unsafe { ResumeThread(self.handle) };
-        if suspend_count == (-1i32 as DWORD) {
-            Err(last_os_error())
-        } else {
-            self.suspended = false;
-            Ok(())
+        let prev_suspend_count = unsafe { ResumeThread(self.handle) };
+
+        match prev_suspend_count {
+            SUSPEND_RESUME_ERROR_CODE => {
+                let os_error = io::Error::last_os_error();
+
+                if Self::is_os_error_from_exited_thread(&os_error)? {
+                    self.state = ThreadState::Exited;
+                } else {
+                    return Err(os_error.into());
+                }
+            }
+            0 => {
+                // No-op: thread was runnable, and is still runnable.
+                self.state = ThreadState::Runnable;
+            }
+            1 => {
+                // Was suspended, now runnable.
+                self.state = ThreadState::Runnable;
+            }
+            _ => {
+                // Previous suspend count > 1. Was suspended, still is.
+                self.state = ThreadState::Suspended;
+            }
         }
+
+        Ok(self.state)
     }
 
-    fn suspend_thread(&mut self) -> Result<()> {
-        if self.suspended {
-            return Ok(());
+    fn suspend_thread(&mut self) -> Result<ThreadState> {
+        if self.state == ThreadState::Suspended {
+            return Ok(self.state);
         }
 
-        let suspend_count = if self.wow64 {
+        let prev_suspend_count = if self.wow64 {
             unsafe { Wow64SuspendThread(self.handle) }
         } else {
             unsafe { SuspendThread(self.handle) }
         };
 
-        if suspend_count == (-1i32 as DWORD) {
-            Err(last_os_error())
-        } else {
-            self.suspended = true;
-            Ok(())
+        match prev_suspend_count {
+            SUSPEND_RESUME_ERROR_CODE => {
+                let os_error = io::Error::last_os_error();
+
+                if Self::is_os_error_from_exited_thread(&os_error)? {
+                    self.state = ThreadState::Exited;
+                } else {
+                    return Err(os_error.into());
+                }
+            }
+            _ => {
+                // Suspend count was incremented. Even if the matched value is 0, it means
+                // the current suspend count is 1, and the thread is suspended.
+                self.state = ThreadState::Suspended;
+            }
         }
+
+        Ok(self.state)
+    }
+
+    fn is_os_error_from_exited_thread(os_error: &io::Error) -> Result<bool> {
+        let raw_os_error = os_error
+            .raw_os_error()
+            .ok_or_else(|| format_err!("OS error missing raw error"))?;
+
+        let exited = match raw_os_error as DWORD {
+            ERROR_ACCESS_DENIED => {
+                // Assume, as a debugger, we always have the `THREAD_SUSPEND_RESUME`
+                // access right, and thus we should interpret this error to mean that
+                // the thread has exited.
+                //
+                // This means we are observing a race between OS-level thread exit and
+                // the (pending) debug event.
+                true
+            }
+            _ => false,
+        };
+
+        Ok(exited)
     }
 }
 
@@ -104,6 +169,7 @@ pub struct Target {
     sym_initialize_state: SymInitalizeState,
     exited: bool,
 
+    // Map of thread ID to thread info.
     thread_info: fnv::FnvHashMap<DWORD, ThreadInfo>,
 
     // We cache the current thread context for possible repeated queries and modifications.
@@ -118,7 +184,7 @@ pub struct Target {
     // Breakpoints that are not yet resolved to a virtual address, so either an RVA or symbol.
     unresolved_breakpoints: Vec<UnresolvedBreakpoint>,
 
-    // Map of thread to stepping state (e.g. breakpoint address to restore breakpoints)
+    // Map of thread ID to stepping state (e.g. breakpoint address to restore breakpoints)
     single_step: fnv::FnvHashMap<DWORD, StepState>,
 
     // When stepping after hitting a breakpoint, we need to restore the breakpoint.
@@ -494,7 +560,7 @@ impl Target {
             }
 
             // Now pick a random thread to resume.
-            let idx = thread_rng().gen_range(0, self.single_step.len());
+            let idx = thread_rng().gen_range(0..self.single_step.len());
             let (handle, step_state) = self.single_step.iter().nth(idx).unwrap();
             let thread_info = self.thread_info.get_mut(handle).unwrap();
 

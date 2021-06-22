@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import json
+import pathlib
 import unittest
 
 from onefuzztypes.enums import OS, ContainerType
@@ -21,6 +22,7 @@ from onefuzztypes.models import (
     TeamsTemplate,
 )
 from onefuzztypes.primitives import Container
+from onefuzztypes.requests import NotificationCreate
 
 from __app__.onefuzzlib.orm import hide_secrets
 
@@ -91,3 +93,43 @@ class TestSecret(unittest.TestCase):
             self.assertIsInstance(notification.config.url.secret, SecretAddress)
         else:
             self.fail(f"Invalid config type {type(notification.config)}")
+
+    def test_roundtrip_github_issue(self) -> None:
+        current_path = pathlib.Path(__file__).parent.absolute()
+        with open(
+            f"{current_path}"
+            + "/../../../contrib/onefuzz-job-github-actions/github-issues.json"
+        ) as json_file:
+            b = json.load(json_file)
+            b["container"] = "testing"
+            c = NotificationCreate.parse_obj(b)
+            d = c.json()
+            e = json.loads(d)
+            NotificationCreate.parse_obj(e)
+
+    def test_roundtrip_team_issue(self) -> None:
+        a = """
+            {
+                "config" : {"url": "http://test"},
+                "container": "testing"
+                }
+
+        """  # noqa
+        b = json.loads(a)
+        c = NotificationCreate.parse_obj(b)
+        d = c.json()
+        e = json.loads(d)
+        NotificationCreate.parse_obj(e)
+
+    def test_roundtrip_ado(self) -> None:
+        current_path = pathlib.Path(__file__).parent.absolute()
+        with open(
+            f"{current_path}"
+            + "/../../../contrib/onefuzz-job-azure-devops-pipeline/ado-work-items.json"  # noqa
+        ) as json_file:
+            b = json.load(json_file)
+            b["container"] = "testing"
+            c = NotificationCreate.parse_obj(b)
+            d = c.json()
+            e = json.loads(d)
+            NotificationCreate.parse_obj(e)

@@ -8,11 +8,11 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 fnv = "1.0"
-goblin = "0.2"
+goblin = "0.4"
 iced-x86 = "1.1"
 log = "0.4"
-memmap2 = "0.2"
-rand = "0.7"
+memmap2 = "0.3"
+rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 win-util = { path = "../win-util" }
 
