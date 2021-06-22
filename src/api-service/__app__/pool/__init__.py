@@ -21,6 +21,7 @@ from ..onefuzzlib.azure.creds import (
 from ..onefuzzlib.azure.queue import get_queue_sas
 from ..onefuzzlib.azure.storage import StorageType
 from ..onefuzzlib.azure.vmss import list_available_skus
+from ..onefuzzlib.config import InstanceConfig
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
@@ -78,6 +79,16 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="PoolCreate")
 
+    instance_config = InstanceConfig.fetch()
+    if instance_config.allow_pool_modification:
+        return not_ok(
+            Error(
+                code=ErrorCode.UNAUTHORIZED,
+                errors=["modifying pools has been disabled"],
+            ),
+            context="PoolCreate",
+        )
+
     pool = Pool.get_by_name(request.name)
     if isinstance(pool, Pool):
         return not_ok(
@@ -129,6 +140,16 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     request = parse_request(PoolStop, req)
     if isinstance(request, Error):
         return not_ok(request, context="PoolDelete")
+
+    instance_config = InstanceConfig.fetch()
+    if instance_config.allow_pool_modification:
+        return not_ok(
+            Error(
+                code=ErrorCode.UNAUTHORIZED,
+                errors=["modifying pools has been disabled"],
+            ),
+            context="PoolDelete",
+        )
 
     pool = Pool.get_by_name(request.name)
     if isinstance(pool, Error):

@@ -845,4 +845,10 @@ class Task(BaseModel):
     user_info: Optional[UserInfo]
 
 
+class InstanceConfig(BaseModel):
+    admins: Optional[List[UUID]] = None
+    allow_pool_modification: bool = Field(default=True)
+    allow_scaleset_modification: bool = Field(default=True)
+
+
 _check_hotfix()
