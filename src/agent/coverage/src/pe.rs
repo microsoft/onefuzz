@@ -157,6 +157,8 @@ fn find_blocks(
         _ => anyhow::bail!("Unsupported architecture {}", machine),
     };
 
+    let parse_options = goblin::pe::options::ParseOptions::default();
+
     for proc in proc_data {
         if let Some(rva) = proc.offset.to_rva(address_map) {
             blocks.insert(rva.0 as usize);
@@ -165,9 +167,12 @@ fn find_blocks(
                 continue;
             }
 
-            if let Some(file_offset) =
-                goblin::pe::utils::find_offset(rva.0 as usize, &pe.sections, file_alignment)
-            {
+            if let Some(file_offset) = goblin::pe::utils::find_offset(
+                rva.0 as usize,
+                &pe.sections,
+                file_alignment,
+                &parse_options,
+            ) {
                 // VC++ includes jump tables with the code length which we must exclude
                 // from disassembly. We use the minimum address of a jump table since
                 // the tables are placed consecutively after the actual code.
