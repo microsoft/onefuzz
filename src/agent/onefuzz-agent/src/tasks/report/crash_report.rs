@@ -11,7 +11,7 @@ use onefuzz_telemetry::{
     },
     EventData,
 };
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use stacktrace_parser::CrashLog;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
