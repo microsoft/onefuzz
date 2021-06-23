@@ -400,6 +400,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     ],
                 )
                 node.mark_tasks_stopped_early(error=error)
+                node.to_reimage(done=True)
                 if node not in to_reimage:
                     to_reimage.append(node)
 
