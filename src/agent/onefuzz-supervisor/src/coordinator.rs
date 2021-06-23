@@ -310,6 +310,7 @@ impl Coordinator {
 
             // And try one more time.
             response = request
+                .bearer_auth(self.token.secret().expose_ref())
                 .send_retry_default()
                 .await
                 .context("Coordinator.send after refreshing access token");
