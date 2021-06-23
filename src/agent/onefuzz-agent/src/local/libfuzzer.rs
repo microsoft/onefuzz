@@ -3,11 +3,11 @@
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::{
-    coverage::libfuzzer_coverage::CoverageTask,
     local::{
         common::COVERAGE_DIR,
         libfuzzer_coverage::{build_coverage_config, build_shared_args as build_coverage_args},
     },
+    tasks::coverage::libfuzzer_coverage::CoverageTask,
 };
 use crate::{
     local::{
