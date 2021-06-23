@@ -847,8 +847,8 @@ class Task(BaseModel):
 
 class InstanceConfig(BaseModel):
     admins: Optional[List[UUID]] = None
-    allow_pool_modification: bool = Field(default=True)
-    allow_scaleset_modification: bool = Field(default=True)
+    allow_pool_modification: bool = Field(default=False)
+    allow_scaleset_modification: bool = Field(default=False)
 
 
 _check_hotfix()
