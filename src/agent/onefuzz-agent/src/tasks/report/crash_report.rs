@@ -280,3 +280,57 @@ pub async fn monitor_reports(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+
+    use std::io::Write;
+
+    use super::{parse_report_file, CrashTestResult};
+    use anyhow::Result;
+    use tempfile::NamedTempFile;
+
+    #[tokio::test]
+    async fn test_parse_debug_report() -> Result<()> {
+        let json_str = br###"
+            {
+                "input_url": null,
+                "input_blob": {
+                    "account": "fuzz27ee6imdmr5gy",
+                    "container": "oft-crashes-cecbd958a1f257688f9768edaaf6c94d",
+                    "name": "fake-crash-sample"
+                },
+                "executable": "fuzz.exe",
+                "crash_type": "fake crash report",
+                "crash_site": "fake crash site",
+                "call_stack": ["#0 fake", "#1 call", "#2 stack"],
+                "call_stack_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+                "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "asan_log": "fake asan log",
+                "task_id": "91fb6329-0aa2-4c09-afaf-26340286a9c6",
+                "job_id": "447c2a03-5216-42ea-88e5-16cbb5dc6fc0",
+                "scariness_score": null,
+                "scariness_description": null,
+                "minimized_stack": null,
+                "minimized_stack_sha256": null,
+                "minimized_stack_function_names": null,
+                "minimized_stack_function_names_sha256": null
+            }"###;
+
+        let json_file = NamedTempFile::new()?;
+
+        json_file.as_file().write_all(json_str)?;
+
+        let report = parse_report_file(json_file.path().to_path_buf()).await?;
+
+        match report {
+            CrashTestResult::CrashReport(report) => {
+                assert_eq!(report.minimized_stack_function_names.len(), 0);
+                assert_eq!(report.minimized_stack.len(), 0);
+            }
+            CrashTestResult::NoRepro(norepro) => assert!(false, "invalid report type"),
+        }
+
+        Ok(())
+    }
+}
