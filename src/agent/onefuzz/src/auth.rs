@@ -206,6 +206,7 @@ impl ManagedIdentityCredentials {
     }
 
     pub async fn access_token(&self) -> Result<AccessToken> {
+        info!("requesting new access token: {}", self.url());
         let response = reqwest::Client::new()
             .get(self.url())
             .header("Metadata", "true")

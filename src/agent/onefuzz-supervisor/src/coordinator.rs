@@ -265,6 +265,11 @@ impl Coordinator {
             task_id,
         };
 
+        info!("BMC TO-REMOVE: {:?}", self.token.secret());
+        info!("BMC TO_REMOVE before sending can-schedule, refreshing access token");
+        self.token = self.registration.config.credentials.access_token().await?;
+        info!("BMC TO-REMOVE: {:?}", self.token.secret());
+
         debug!("checking if able to schedule task ID = {}", task_id);
 
         let mut url = self.registration.config.onefuzz_url.clone();
@@ -305,6 +310,7 @@ impl Coordinator {
 
             // If we didn't succeed due to authorization, refresh our token,
             self.token = self.registration.config.credentials.access_token().await?;
+            info!("BMC TO-REMOVE: {:?}", self.token.secret());
 
             debug!("retrying request after refreshing access token");
 
