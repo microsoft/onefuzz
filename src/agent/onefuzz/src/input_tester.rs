@@ -10,8 +10,10 @@ use crate::{
     process::run_cmd,
 };
 use anyhow::{Error, Result};
+#[cfg(target_family = "unix")]
+use nix::sys::signal::{kill, Signal};
 use stacktrace_parser::{CrashLog, StackEntry};
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 use std::process::Stdio;
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
@@ -125,7 +127,7 @@ impl<'a> Tester<'a> {
         }
     }
 
-    #[cfg(target_os = "windows")]
+    #[cfg(target_family = "windows")]
     async fn test_input_debugger(
         &self,
         argv: Vec<String>,
@@ -192,6 +194,15 @@ impl<'a> Tester<'a> {
         Ok(crash)
     }
 
+    #[cfg(target_os = "macos")]
+    async fn test_input_debugger(
+        &self,
+        _args: Vec<String>,
+        _env: HashMap<String, String>,
+    ) -> Result<Option<CrashLog>> {
+        bail!("running application under a debugger is not supported on darwin");
+    }
+
     #[cfg(target_os = "linux")]
     async fn test_input_debugger(
         &self,
@@ -225,7 +236,6 @@ impl<'a> Tester<'a> {
 
         let timeout = tokio::time::timeout(self.timeout, triage).await;
         let crash = if timeout.is_err() {
-            use nix::sys::signal::{kill, Signal};
             // Yes. Try to kill the target process, if hung.
             kill(target_pid, Signal::SIGKILL)?;
             bail!("process timed out");

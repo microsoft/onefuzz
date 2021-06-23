@@ -2,8 +2,10 @@
 // Licensed under the MIT License.
 
 #![allow(clippy::large_enum_variant)]
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+use crate::tasks::coverage;
 use crate::tasks::{
-    analysis, coverage, fuzz,
+    analysis, fuzz,
     heartbeat::{init_task_heartbeat, TaskHeartbeatClient},
     merge, regression, report,
 };
@@ -61,6 +63,7 @@ impl CommonConfig {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "task_type")]
 pub enum Config {
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[serde(alias = "coverage")]
     Coverage(coverage::generic::Config),
 
@@ -73,6 +76,7 @@ pub enum Config {
     #[serde(alias = "libfuzzer_merge")]
     LibFuzzerMerge(merge::libfuzzer_merge::Config),
 
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     #[serde(alias = "libfuzzer_coverage")]
     LibFuzzerCoverage(coverage::libfuzzer_coverage::Config),
 
@@ -112,10 +116,12 @@ impl Config {
 
     fn common_mut(&mut self) -> &mut CommonConfig {
         match self {
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(c) => &mut c.common,
             Config::LibFuzzerFuzz(c) => &mut c.common,
             Config::LibFuzzerMerge(c) => &mut c.common,
             Config::LibFuzzerReport(c) => &mut c.common,
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::LibFuzzerCoverage(c) => &mut c.common,
             Config::LibFuzzerRegression(c) => &mut c.common,
             Config::GenericAnalysis(c) => &mut c.common,
@@ -129,10 +135,12 @@ impl Config {
 
     pub fn common(&self) -> &CommonConfig {
         match self {
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(c) => &c.common,
             Config::LibFuzzerFuzz(c) => &c.common,
             Config::LibFuzzerMerge(c) => &c.common,
             Config::LibFuzzerReport(c) => &c.common,
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::LibFuzzerCoverage(c) => &c.common,
             Config::LibFuzzerRegression(c) => &c.common,
             Config::GenericAnalysis(c) => &c.common,
@@ -146,10 +154,12 @@ impl Config {
 
     pub fn report_event(&self) {
         let event_type = match self {
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(_) => "coverage",
             Config::LibFuzzerFuzz(_) => "libfuzzer_fuzz",
             Config::LibFuzzerMerge(_) => "libfuzzer_merge",
             Config::LibFuzzerReport(_) => "libfuzzer_crash_report",
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::LibFuzzerCoverage(_) => "libfuzzer_coverage",
             Config::LibFuzzerRegression(_) => "libfuzzer_regression",
             Config::GenericAnalysis(_) => "generic_analysis",
@@ -189,6 +199,7 @@ impl Config {
         self.report_event();
 
         match self {
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::Coverage(config) => coverage::generic::CoverageTask::new(config).run().await,
             Config::LibFuzzerFuzz(config) => {
                 fuzz::libfuzzer_fuzz::LibFuzzerFuzzTask::new(config)?
@@ -200,6 +211,7 @@ impl Config {
                     .managed_run()
                     .await
             }
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Config::LibFuzzerCoverage(config) => {
                 coverage::libfuzzer_coverage::CoverageTask::new(config)
                     .managed_run()

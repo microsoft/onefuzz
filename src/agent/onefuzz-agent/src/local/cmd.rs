@@ -1,18 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::time::Duration;
-
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+use crate::local::libfuzzer_coverage;
+use crate::local::{
+    common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
+    libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge, libfuzzer_regression,
+    libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
+};
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 use crossterm::tty::IsTty;
+use std::time::Duration;
 use tokio::{select, time::timeout};
-
-use crate::local::{
-    common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
-    libfuzzer, libfuzzer_coverage, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge,
-    libfuzzer_regression, libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
-};
 
 const RADAMSA: &str = "radamsa";
 const LIBFUZZER: &str = "libfuzzer";
@@ -42,6 +42,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
             (RADAMSA, Some(sub)) => radamsa::run(sub, event_sender).await,
             (LIBFUZZER, Some(sub)) => libfuzzer::run(sub, event_sender).await,
             (LIBFUZZER_FUZZ, Some(sub)) => libfuzzer_fuzz::run(sub, event_sender).await,
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             (LIBFUZZER_COVERAGE, Some(sub)) => libfuzzer_coverage::run(sub, event_sender).await,
             (LIBFUZZER_CRASH_REPORT, Some(sub)) => {
                 libfuzzer_crash_report::run(sub, event_sender).await
@@ -84,7 +85,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
 }
 
 pub fn args(name: &str) -> App<'static, 'static> {
-    SubCommand::with_name(name)
+    let cmd = SubCommand::with_name(name)
         .about("pre-release local fuzzing")
         .arg(
             Arg::with_name(TIMEOUT)
@@ -95,9 +96,6 @@ pub fn args(name: &str) -> App<'static, 'static> {
         .subcommand(add_common_config(radamsa::args(RADAMSA)))
         .subcommand(add_common_config(libfuzzer::args(LIBFUZZER)))
         .subcommand(add_common_config(libfuzzer_fuzz::args(LIBFUZZER_FUZZ)))
-        .subcommand(add_common_config(libfuzzer_coverage::args(
-            LIBFUZZER_COVERAGE,
-        )))
         .subcommand(add_common_config(libfuzzer_merge::args(LIBFUZZER_MERGE)))
         .subcommand(add_common_config(libfuzzer_regression::args(
             LIBFUZZER_REGRESSION,
@@ -115,5 +113,12 @@ pub fn args(name: &str) -> App<'static, 'static> {
         .subcommand(add_common_config(test_input::args(GENERIC_TEST_INPUT)))
         .subcommand(add_common_config(libfuzzer_test_input::args(
             LIBFUZZER_TEST_INPUT,
-        )))
+        )));
+
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    let cmd = cmd.subcommand(add_common_config(libfuzzer_coverage::args(
+        LIBFUZZER_COVERAGE,
+    )));
+
+    cmd
 }
