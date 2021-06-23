@@ -391,6 +391,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 ",".join(str(x.machine_id) for x in dead_nodes),
             )
             for node in dead_nodes:
+                error = Error(
+                    code=ErrorCode.TASK_FAILED,
+                    errors=[
+                        "node reimaged due to expired heartbeat",
+                        f"scaleset_id:{node.scaleset_id} machine_id:{node.machine_id}",
+                        f"last heartbeat:{node.heartbeat}",
+                    ],
+                )
+                node.mark_tasks_stopped_early(error=error)
+                node.to_reimage(done=True)
                 if node not in to_reimage:
                     to_reimage.append(node)
 
