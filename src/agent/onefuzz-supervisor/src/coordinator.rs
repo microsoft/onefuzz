@@ -200,11 +200,7 @@ impl Coordinator {
         };
 
         let url = self.registration.dynamic_config.commands_url.clone();
-        let request = self
-            .client
-            .get(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(&request);
+        let request = self.client.get(url).json(&request);
 
         let pending: PendingNodeCommand = self
             .send_request(request)
@@ -221,11 +217,7 @@ impl Coordinator {
             };
 
             let url = self.registration.dynamic_config.commands_url.clone();
-            let request = self
-                .client
-                .delete(url)
-                .bearer_auth(self.token.secret().expose_ref())
-                .json(&request);
+            let request = self.client.delete(url).json(&request);
 
             self.send_request(request).await.context("ClaimCommand")?;
 
@@ -242,11 +234,7 @@ impl Coordinator {
         };
 
         let url = self.registration.dynamic_config.events_url.clone();
-        let request = self
-            .client
-            .post(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(&envelope);
+        let request = self.client.post(url).json(&envelope);
 
         self.send_request(request).await.context("EmitEvent")?;
 
@@ -269,11 +257,7 @@ impl Coordinator {
 
         let mut url = self.registration.config.onefuzz_url.clone();
         url.set_path("/api/agents/can_schedule");
-        let request = self
-            .client
-            .post(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(&envelope);
+        let request = self.client.post(url).json(&envelope);
 
         let can_schedule: CanSchedule = self
             .send_request(request)
@@ -289,6 +273,7 @@ impl Coordinator {
         let mut response = request
             .try_clone()
             .ok_or_else(|| anyhow!("unable to clone request"))?
+            .bearer_auth(self.token.secret().expose_ref())
             .send_retry(
                 |code| match code {
                     StatusCode::UNAUTHORIZED => RetryCheck::Fail,
