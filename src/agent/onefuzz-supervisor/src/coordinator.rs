@@ -265,10 +265,10 @@ impl Coordinator {
             task_id,
         };
 
-        info!("BMC TO-REMOVE: {:?}", self.token.secret().expose());
+        info!("BMC TO-REMOVE: {:?}", self.token.secret().expose_ref());
         info!("BMC TO-REMOVE before sending can-schedule, refreshing access token");
         self.token = self.registration.config.credentials.access_token().await?;
-        info!("BMC TO-REMOVE: {:?}", self.token.secret().expose());
+        info!("BMC TO-REMOVE: {:?}", self.token.secret().expose_ref());
 
         debug!("checking if able to schedule task ID = {}", task_id);
 
