@@ -10,15 +10,18 @@ use crate::{
     process::run_cmd,
 };
 use anyhow::{Error, Result};
-#[cfg(target_family = "unix")]
+#[cfg(target_os = "linux")]
 use nix::sys::signal::{kill, Signal};
-use stacktrace_parser::{CrashLog, StackEntry};
-#[cfg(target_family = "unix")]
+use stacktrace_parser::CrashLog;
+#[cfg(any(target_os = "linux", target_family = "windows"))]
+use stacktrace_parser::StackEntry;
+#[cfg(target_os = "linux")]
 use std::process::Stdio;
 use std::{collections::HashMap, path::Path, time::Duration};
 use tempfile::tempdir;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(5);
+#[cfg(any(target_os = "linux", target_family = "windows"))]
 const CRASH_SITE_UNAVAILABLE: &str = "<crash site unavailable>";
 
 pub struct Tester<'a> {

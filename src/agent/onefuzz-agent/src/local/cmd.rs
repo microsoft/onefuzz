@@ -18,6 +18,7 @@ const RADAMSA: &str = "radamsa";
 const LIBFUZZER: &str = "libfuzzer";
 const LIBFUZZER_FUZZ: &str = "libfuzzer-fuzz";
 const LIBFUZZER_CRASH_REPORT: &str = "libfuzzer-crash-report";
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 const LIBFUZZER_COVERAGE: &str = "libfuzzer-coverage";
 const LIBFUZZER_MERGE: &str = "libfuzzer-merge";
 const LIBFUZZER_TEST_INPUT: &str = "libfuzzer-test-input";
