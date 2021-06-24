@@ -41,8 +41,15 @@ cargo fmt -- --check
 # RUSTSEC-2021-0065: a dependency anymap is no longer maintained
 cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2019-0036 --ignore RUSTSEC-2021-0065
 cargo-license -j > data/licenses.json
-cargo build --release --locked
+
+# on OSX, we only build the agent for now
+if [[ "$OSTYPE" == "darwin*" ]]; then
+    cargo build --release --locked --manifest-path ./onefuzz-agent/Cargo.toml
+else
+    cargo build --release --locked
+fi
 cargo clippy --release -- -D warnings
+
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
 cargo test --release --workspace
@@ -54,7 +61,9 @@ cargo test --release --workspace
 cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
 cp target/release/onefuzz-agent* ../../artifacts/agent
-cp target/release/onefuzz-supervisor* ../../artifacts/agent
+if exists target/release/onefuzz-supervisor*; then
+    cp target/release/onefuzz-supervisor* ../../artifacts/agent
+fi
 
 if exists target/release/*.pdb; then
     for file in target/release/*.pdb; do
