@@ -43,11 +43,7 @@ cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --i
 cargo-license -j > data/licenses.json
 
 # on OSX, we only build the agent for now
-if [[ "$OSTYPE" == "darwin*" ]]; then
-    cargo build --release --locked --manifest-path ./onefuzz-agent/Cargo.toml
-else
-    cargo build --release --locked
-fi
+cargo build --release --locked
 cargo clippy --release -- -D warnings
 
 # export RUST_LOG=trace
@@ -61,9 +57,7 @@ cargo test --release --workspace
 cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
 cp target/release/onefuzz-agent* ../../artifacts/agent
-if exists target/release/onefuzz-supervisor*; then
-    cp target/release/onefuzz-supervisor* ../../artifacts/agent
-fi
+cp target/release/onefuzz-supervisor* ../../artifacts/agent
 
 if exists target/release/*.pdb; then
     for file in target/release/*.pdb; do
