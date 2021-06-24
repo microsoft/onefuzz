@@ -109,11 +109,10 @@ impl<'a> LibFuzzer<'a> {
         }
 
         // check if a max_time is already set
-        if self
+        if !self
             .options
             .iter()
-            .find(|o| o.starts_with("-max_total_time"))
-            .is_none()
+            .any(|o| o.starts_with("-max_total_time"))
         {
             cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
         }
