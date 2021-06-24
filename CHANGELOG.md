@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.23.0
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1018](https://github.com/microsoft/onefuzz/pull/1018), [#1009](https://github.com/microsoft/onefuzz/pull/1009), [#1004](https://github.com/microsoft/onefuzz/pull/1004)
+* Service: Tasks running on nodes without recent heartbeats are now marked as failed due to heartbeat issues.  [#1015](https://github.com/microsoft/onefuzz/pull/1015)
+* Service: Updated multiple first-party Python dependencies. [#1012](https://github.com/microsoft/onefuzz/pull/1012)
+
+### Fixed
+* Agent: Fixed an issue where `libfuzzer_fuzz` tasks on Windows that found crashes too rapidly were unable recover handles. [#1002](https://github.com/microsoft/onefuzz/pull/1002)
+* Agent: Fixed an issue with the regression tasks after using the `onefuzz debug notification` commands. [#1011](https://github.com/microsoft/onefuzz/pull/1011)
+* Deployment: Fixed a configuration issue reducing log retention durations.  [#1007](https://github.com/microsoft/onefuzz/pull/1007)
+* Service: Fixed an issue creating GitHub Issues notifications. [#1008](https://github.com/microsoft/onefuzz/pull/1008)
+* Service: Fixed an issue handling reimaging nodes that took an excessive amount of time. [#1005](https://github.com/microsoft/onefuzz/pull/1005)
+
 ## 2.22.0
 ### Changed
 * Service: Update node and task-related log messages to ease debugging. [#988](https://github.com/microsoft/onefuzz/pull/988)
