@@ -5,6 +5,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
+  ACTIONS_CACHE_KEY_DATE: 2021-06-25-01
 
 jobs:
   agent:
@@ -19,7 +20,7 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-2021-06-25-01
+        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
         restore-keys: |
            rust-${{ runner.os }}
     - name: Install Rust Prereqs
@@ -32,7 +33,7 @@ jobs:
         path: |
           sccache
           src/agent/target
-        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-2021-06-25-01
+        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
         restore-keys: |
            agent-${{ runner.os }}
     - name: Linux Prereqs
@@ -186,7 +187,7 @@ jobs:
         path: |
           sccache
           src/proxy-manager/target
-        key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-2021-06-25-01
+        key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
         restore-keys: |
            proxy-${{ runner.os }}
     - run: src/ci/proxy.sh
