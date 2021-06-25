@@ -537,7 +537,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             return
 
-        machine_ids = []
+        machine_ids = set()
         for node in nodes:
             if node.debug_keep_node:
                 logging.warning(
@@ -547,7 +547,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     node.machine_id,
                 )
             else:
-                machine_ids.append(node.machine_id)
+                machine_ids.add(node.machine_id)
 
         logging.info(
             SCALESET_LOG_PREFIX + "deleting nodes scaleset_id:%s machine_id:%s",
@@ -585,7 +585,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             return
 
-        machine_ids = []
+        machine_ids = set()
         for node in nodes:
             if node.debug_keep_node:
                 logging.warning(
@@ -595,7 +595,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     node.machine_id,
                 )
             else:
-                machine_ids.append(node.machine_id)
+                machine_ids.add(node.machine_id)
 
         if not machine_ids:
             logging.info(
