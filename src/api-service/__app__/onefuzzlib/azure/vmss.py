@@ -153,6 +153,7 @@ def check_can_update(name: UUID) -> Any:
 
 def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
     check_can_update(name)
+    # Azure requires VM IDs be unique
     vm_ids = list(set(vm_ids))
 
     resource_group = get_base_resource_group()
@@ -178,6 +179,7 @@ def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
 
 def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
     check_can_update(name)
+    # Azure requires VM IDs to be unique
     vm_ids = list(set(vm_ids))
 
     resource_group = get_base_resource_group()
