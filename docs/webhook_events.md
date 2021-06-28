@@ -624,8 +624,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "admins": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "allow_pool_modification": false,
-        "allow_scaleset_modification": false
+        "allow_pool_modification": true
     }
 }
 ```
@@ -646,13 +645,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "array"
                 },
                 "allow_pool_modification": {
-                    "default": false,
+                    "default": true,
                     "title": "Allow Pool Modification",
-                    "type": "boolean"
-                },
-                "allow_scaleset_modification": {
-                    "default": false,
-                    "title": "Allow Scaleset Modification",
                     "type": "boolean"
                 }
             },
@@ -5464,13 +5458,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "array"
                 },
                 "allow_pool_modification": {
-                    "default": false,
+                    "default": true,
                     "title": "Allow Pool Modification",
-                    "type": "boolean"
-                },
-                "allow_scaleset_modification": {
-                    "default": false,
-                    "title": "Allow Scaleset Modification",
                     "type": "boolean"
                 }
             },

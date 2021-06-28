@@ -9,10 +9,9 @@ from onefuzztypes.models import Error
 from onefuzztypes.requests import InstanceConfigUpdate
 
 from ..onefuzzlib.config import InstanceConfig
-from ..onefuzzlib.endpoint_authorization import call_if_user
+from ..onefuzzlib.endpoint_authorization import call_if_user, can_modify_config
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
-from ..onefuzzlib.user_credentials import parse_jwt_token
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
@@ -26,27 +25,16 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
 
     config = InstanceConfig.fetch()
 
-    user_info = parse_jwt_token(req)
-    if isinstance(user_info, Error):
-        return not_ok(user_info, context="missing user info")
-
-    if config.admins:
-        if not user_info.object_id:
-            return not_ok(
-                Error(
-                    code=ErrorCode.INVALID_PERMISSION,
-                    errors=["unauthorized (missing object_id)"],
-                ),
-                context="instance_config_update",
-            )
-
-        if user_info.object_id not in config.admins:
-            return not_ok(
-                Error(code=ErrorCode.INVALID_PERMISSION, errors=["unauthorized"]),
-                context="instance_config_update",
-            )
+    if not can_modify_config(req, config):
+        return not_ok(
+            Error(code=ErrorCode.INVALID_PERMISSION, errors=["unauthorized"]),
+            context="instance_config_update",
+        )
 
     for field in config.__fields__:
+        if field == "admins" and config.admins is None:
+            continue
+
         if hasattr(request.config, field):
             setattr(config, field, getattr(request.config, field))
 

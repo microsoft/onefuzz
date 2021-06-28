@@ -13,6 +13,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, UserInfo
 
 from .azure.creds import get_scaleset_principal_id
+from .config import InstanceConfig
 from .request import not_ok
 from .user_credentials import parse_jwt_token
 from .workers.pools import Pool
@@ -41,6 +42,38 @@ def is_agent(token_data: UserInfo) -> bool:
         return True
 
     return False
+
+
+def can_modify_config(req: func.HttpRequest, config: InstanceConfig) -> bool:
+    user_info = parse_jwt_token(req)
+    if not isinstance(user_info, UserInfo):
+        False
+
+    # make mypy happy
+    assert isinstance(user_info, UserInfo)
+
+    if config.admins is None:
+        return True
+
+    return user_info.object_id in config.admins
+
+
+def can_modify_pools(req: func.HttpRequest) -> bool:
+    user_info = parse_jwt_token(req)
+    if not isinstance(user_info, UserInfo):
+        False
+
+    # make mypy happy
+    assert isinstance(user_info, UserInfo)
+
+    config = InstanceConfig.fetch()
+    if config.allow_pool_modification:
+        return True
+
+    if config.admins is None:
+        return False
+
+    return user_info.object_id in config.admins
 
 
 def is_user(token_data: UserInfo) -> bool:
