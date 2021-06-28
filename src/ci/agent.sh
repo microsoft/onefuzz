@@ -41,11 +41,8 @@ cargo fmt -- --check
 # RUSTSEC-2021-0065: a dependency anymap is no longer maintained
 cargo audit --deny warnings --deny unmaintained --deny unsound --deny yanked --ignore RUSTSEC-2020-0016 --ignore RUSTSEC-2020-0036 --ignore RUSTSEC-2019-0036 --ignore RUSTSEC-2021-0065
 cargo-license -j > data/licenses.json
-
-# on OSX, we only build the agent for now
 cargo build --release --locked
 cargo clippy --release -- -D warnings
-
 # export RUST_LOG=trace
 export RUST_BACKTRACE=full
 cargo test --release --workspace
