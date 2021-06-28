@@ -94,6 +94,16 @@ fn input_command(argv: &[String], input: &Path) -> Command {
     cmd
 }
 
+#[cfg(target_os = "macos")]
+fn record(
+    _cache: &mut ModuleCache,
+    _filter: CmdFilter,
+    _cmd: Command,
+    _timeout: Duration,
+) -> Result<Coverage> {
+    unimplemented!("coverage recording is not supported on osx");
+}
+
 #[cfg(target_os = "linux")]
 fn record(
     cache: &mut ModuleCache,
