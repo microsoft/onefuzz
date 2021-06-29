@@ -47,10 +47,7 @@ def is_agent(token_data: UserInfo) -> bool:
 def can_modify_config(req: func.HttpRequest, config: InstanceConfig) -> bool:
     user_info = parse_jwt_token(req)
     if not isinstance(user_info, UserInfo):
-        False
-
-    # make mypy happy
-    assert isinstance(user_info, UserInfo)
+        return False
 
     if config.admins is None:
         return True
@@ -61,10 +58,7 @@ def can_modify_config(req: func.HttpRequest, config: InstanceConfig) -> bool:
 def can_modify_pools(req: func.HttpRequest) -> bool:
     user_info = parse_jwt_token(req)
     if not isinstance(user_info, UserInfo):
-        False
-
-    # make mypy happy
-    assert isinstance(user_info, UserInfo)
+        return False
 
     config = InstanceConfig.fetch()
     if config.allow_pool_modification:
