@@ -564,7 +564,8 @@ class Client:
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         table_service = TableService(account_name=name, account_key=key)
-        update_admins(table_service, self.application_name, self.admins)
+        if self.admins:
+            update_admins(table_service, self.application_name, self.admins)
 
     def create_queues(self) -> None:
         logger.info("creating eventgrid destination queue")
