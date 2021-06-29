@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Iterator, List, Optional, Union
+from typing import Any, Iterator, List, Optional, Union
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
@@ -210,7 +210,7 @@ class ADO:
             self.create_new()
 
 
-def is_transient(err: any) -> bool:
+def is_transient(err: Any) -> bool:
     error_codes = [
         # "TF401349: An unexpected error has occurred, please verify your request and try again." # noqa: E501
         "TF401349",
