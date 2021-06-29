@@ -201,7 +201,6 @@ class ADO:
         for work_item in self.existing_work_items():
             self.update_existing(work_item)
             seen = True
-            break
 
         if not seen:
             self.create_new()
@@ -233,12 +232,13 @@ def notify_ado(
     try:
         ado = ADO(container, filename, config, report)
         ado.process()
-    except (
-        AzureDevOpsAuthenticationError,
-        AzureDevOpsClientRequestError,
-        AzureDevOpsClientError,
-        AzureDevOpsServiceError,
-    ) as err:
+    except AzureDevOpsAuthenticationError as err:
+        fail_task(report, err)
+    except AzureDevOpsClientRequestError as err:
+        fail_task(report, err)
+    except AzureDevOpsClientError as err:
+        fail_task(report, err)
+    except AzureDevOpsServiceError as err:
         fail_task(report, err)
     except ValueError as err:
         fail_task(report, err)
