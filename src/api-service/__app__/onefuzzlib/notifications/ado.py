@@ -215,7 +215,7 @@ def notify_ado(
     container: Container,
     filename: str,
     report: Union[Report, RegressionReport],
-    fail_task_on_error: bool,
+    fail_task_on_transient_error: bool,
 ) -> None:
     if isinstance(report, RegressionReport):
         logging.info(
@@ -244,7 +244,7 @@ def notify_ado(
         AzureDevOpsClientRequestError,
         ValueError,
     ) as err:
-        if fail_task_on_error or (
+        if fail_task_on_transient_error or (
             "please verify your request and try again" not in str(err)
         ):
             fail_task(report, err)

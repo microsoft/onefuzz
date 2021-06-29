@@ -18,12 +18,12 @@ from ..onefuzzlib.notifications.main import new_files
 MAX_DEQUEUE_COUNT = 5
 
 
-def file_added(event: Dict, fail_task_on_error: bool) -> None:
+def file_added(event: Dict, fail_task_on_transient_error: bool) -> None:
     parts = event["data"]["url"].split("/")[3:]
     container = parts[0]
     path = "/".join(parts[1:])
     logging.info("file added container: %s - path: %s", container, path)
-    new_files(container, path, fail_task_on_error)
+    new_files(container, path, fail_task_on_transient_error)
 
 
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
