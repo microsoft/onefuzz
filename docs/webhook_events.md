@@ -624,7 +624,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "admins": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "allow_pool_modification": true
+        "allow_pool_management": true
     }
 }
 ```
@@ -644,7 +644,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Admins",
                     "type": "array"
                 },
-                "allow_pool_modification": {
+                "allow_pool_management": {
                     "default": true,
                     "title": "Allow Pool Modification",
                     "type": "boolean"
@@ -5457,7 +5457,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Admins",
                     "type": "array"
                 },
-                "allow_pool_modification": {
+                "allow_pool_management": {
                     "default": true,
                     "title": "Allow Pool Modification",
                     "type": "boolean"

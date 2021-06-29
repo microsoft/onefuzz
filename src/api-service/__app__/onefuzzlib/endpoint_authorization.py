@@ -61,7 +61,7 @@ def can_modify_pools(req: func.HttpRequest) -> bool:
         return False
 
     config = InstanceConfig.fetch()
-    if config.allow_pool_modification:
+    if config.allow_pool_management:
         return True
 
     if config.admins is None:

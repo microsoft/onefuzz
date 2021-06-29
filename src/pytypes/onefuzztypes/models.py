@@ -862,7 +862,7 @@ class InstanceConfig(BaseModel):
     admins: Optional[List[UUID]] = None
 
     # if set, only admins can manage pools or scalesets
-    allow_pool_modification: bool = Field(default=True)
+    allow_pool_management: bool = Field(default=True)
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
