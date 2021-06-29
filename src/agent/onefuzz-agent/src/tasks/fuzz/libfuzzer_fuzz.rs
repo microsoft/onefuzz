@@ -24,7 +24,7 @@ use tokio::{
     select,
     sync::{mpsc, Notify},
     task,
-    time::{sleep, Duration},
+    time::{sleep, Duration, Instant},
 };
 use uuid::Uuid;
 
@@ -36,6 +36,9 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
+
+// Period for minimum duration between launches of libFuzzer
+const COOLOFF_PERIOD: Duration = Duration::from_secs(10);
 
 /// Maximum number of log message to safe in case of libFuzzer failing,
 /// arbitrarily chosen
@@ -160,6 +163,7 @@ impl LibFuzzerFuzzTask {
     ) -> Result<()> {
         let local_input_dir = self.create_local_temp_dir().await?;
         loop {
+            let instant = Instant::now();
             self.run_fuzzer(&local_input_dir.path(), worker_id, stats_sender)
                 .await?;
 
@@ -180,6 +184,13 @@ impl LibFuzzerFuzzTask {
                             destination_path.display()
                         )
                     })?;
+            }
+
+            // if libFuzzer is exiting rapidly, give some breathing room to allow the
+            // handles to be reaped.
+            let runtime = instant.elapsed();
+            if runtime < COOLOFF_PERIOD {
+                sleep(COOLOFF_PERIOD - runtime).await;
             }
         }
     }
@@ -335,7 +346,7 @@ async fn report_fuzzer_sys_info(
 ) -> Result<()> {
     // Allow for sampling CPU usage.
     let mut period = tokio::time::interval_at(
-        tokio::time::Instant::now() + PROC_INFO_COLLECTION_DELAY,
+        Instant::now() + PROC_INFO_COLLECTION_DELAY,
         PROC_INFO_PERIOD,
     );
     loop {

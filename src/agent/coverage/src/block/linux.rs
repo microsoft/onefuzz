@@ -350,9 +350,8 @@ impl LoadEvents {
         let loaded: Vec<_> = new
             .iter()
             .filter(|(nva, n)| {
-                old.iter()
-                    .find(|(iva, i)| nva == iva && n.path() == i.path())
-                    .is_none()
+                !old.iter()
+                    .any(|(iva, i)| *nva == iva && n.path() == i.path())
             })
             .map(|(va, i)| (*va, i.clone()))
             .collect();
@@ -361,9 +360,8 @@ impl LoadEvents {
         let unloaded: Vec<_> = old
             .iter()
             .filter(|(iva, i)| {
-                new.iter()
-                    .find(|(nva, n)| nva == iva && n.path() == i.path())
-                    .is_none()
+                !new.iter()
+                    .any(|(nva, n)| nva == *iva && n.path() == i.path())
             })
             .map(|(va, i)| (*va, i.clone()))
             .collect();

@@ -19,7 +19,6 @@ pub async fn download_input(input_url: Url, dst: impl AsRef<Path>) -> Result<Pat
             .to_file_path()
             .map_err(|_| anyhow!("Invalid file Url"))?;
         fs::copy(&input_file_path, &file_path).await?;
-        Ok(file_path)
     } else {
         let resp = Client::new()
             .get(input_url)
@@ -41,9 +40,8 @@ pub async fn download_input(input_url: Url, dst: impl AsRef<Path>) -> Result<Pat
         let mut writer = io::BufWriter::new(file);
 
         io::copy(&mut body, &mut writer).await?;
-
-        Ok(file_path)
     }
+    Ok(file_path)
 }
 
 pub async fn reset_tmp_dir(tmp_dir: impl AsRef<Path>) -> Result<()> {

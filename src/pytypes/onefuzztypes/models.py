@@ -61,9 +61,9 @@ class SecretData(Generic[T]):
     secret: Union[T, SecretAddress]
 
     def __init__(self, secret: Union[T, SecretAddress]):
-        if isinstance(secret, dict):
+        try:
             self.secret = SecretAddress.parse_obj(secret)
-        else:
+        except Exception:
             self.secret = secret
 
     def __str__(self) -> str:
@@ -495,15 +495,15 @@ class GithubIssueSearch(BaseModel):
 
 
 class GithubAuth(BaseModel):
-    user: str
-    personal_access_token: str
+    user: str = Field(min_length=1)
+    personal_access_token: str = Field(min_length=1)
 
 
 class GithubIssueTemplate(BaseModel):
     auth: SecretData[GithubAuth]
-    organization: str
-    repository: str
-    title: str
+    organization: str = Field(min_length=1)
+    repository: str = Field(min_length=1)
+    title: str = Field(min_length=1)
     body: str
     unique_search: GithubIssueSearch
     assignees: List[str]
@@ -513,15 +513,26 @@ class GithubIssueTemplate(BaseModel):
     # validator needed for backward compatibility
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
-        if isinstance(v, str):
+        def try_parse_GithubAuth(x: dict) -> Optional[GithubAuth]:
+            try:
+                return GithubAuth.parse_obj(x)
+            except Exception:
+                return None
+
+        if isinstance(v, GithubAuth):
             return SecretData(secret=v)
         elif isinstance(v, SecretData):
             return v
         elif isinstance(v, dict):
-            try:
-                return SecretData(GithubAuth.parse_obj(v))
-            except Exception:
-                return SecretData(secret=v["secret"])
+            githubAuth = try_parse_GithubAuth(v)
+            if githubAuth:
+                return SecretData(secret=githubAuth)
+
+            githubAuth = try_parse_GithubAuth(v["secret"])
+            if githubAuth:
+                return SecretData(secret=githubAuth)
+
+            return SecretData(secret=v["secret"])
         else:
             raise TypeError(f"invalid datatype {type(v)}")
 

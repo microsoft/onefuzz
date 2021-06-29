@@ -366,6 +366,10 @@ class NodeState(Enum):
         # from the agent.
         return [cls.done, cls.shutdown, cls.halt]
 
+    @classmethod
+    def can_process_new_work(cls) -> List["NodeState"]:
+        return [cls.free]
+
 
 class GithubIssueState(Enum):
     open = "open"
