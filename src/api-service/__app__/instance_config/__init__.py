@@ -31,13 +31,7 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
             context="instance_config_update",
         )
 
-    for field in config.__fields__:
-        if field == "admins" and config.admins is None:
-            continue
-
-        if hasattr(request.config, field):
-            setattr(config, field, getattr(request.config, field))
-
+    config.update(request.config)
     config.save()
     return ok(config)
 

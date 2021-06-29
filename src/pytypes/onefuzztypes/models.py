@@ -857,8 +857,27 @@ class Task(BaseModel):
 
 
 class InstanceConfig(BaseModel):
+    # initial set of admins can only be set during deployment.
+    # if admins are set, only admins can update instance configs.
     admins: Optional[List[UUID]] = None
+
+    # if set, only admins can manage pools or scalesets
     allow_pool_modification: bool = Field(default=True)
+
+    def update(self, config: "InstanceConfig") -> None:
+        for field in config.__fields__:
+            # If no admins are set, then ignore setting admins
+            if field == "admins" and self.admins is None:
+                continue
+
+            if hasattr(self, field):
+                setattr(self, field, getattr(config, field))
+
+    @validator("admins", allow_reuse=True)
+    def check_admins(cls, value: Optional[List[UUID]]) -> Optional[List[UUID]]:
+        if value is not None and len(value) == 0:
+            raise ValueError("admins must be None or at least UUID")
+        return value
 
 
 _check_hotfix()
