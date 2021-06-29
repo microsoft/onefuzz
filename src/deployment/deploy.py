@@ -1032,10 +1032,10 @@ def main() -> None:
         help="execute only the steps required to create the rbac resources",
     )
     parser.add_argument(
-        "--admins",
+        "--set_admins",
         type=UUID,
         nargs="*",
-        help="list of administrator OIDs",
+        help="set the list of administrators (by OID in AAD)",
     )
 
     args = parser.parse_args()
@@ -1064,7 +1064,7 @@ def main() -> None:
         multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
-        admins=args.admins,
+        admins=args.set_admins,
     )
     if args.verbose:
         level = logging.DEBUG
