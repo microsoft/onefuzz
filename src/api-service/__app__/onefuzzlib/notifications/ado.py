@@ -234,11 +234,11 @@ def notify_ado(
         ado.process()
     except AzureDevOpsAuthenticationError as err:
         fail_task(report, err)
-    except AzureDevOpsClientRequestError as err:
-        fail_task(report, err)
     except AzureDevOpsClientError as err:
         fail_task(report, err)
     except AzureDevOpsServiceError as err:
+        fail_task(report, err)
+    except AzureDevOpsClientRequestError as err:
         fail_task(report, err)
     except ValueError as err:
         fail_task(report, err)
