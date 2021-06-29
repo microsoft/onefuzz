@@ -244,9 +244,8 @@ def notify_ado(
         AzureDevOpsClientRequestError,
         ValueError,
     ) as err:
-        if fail_task_on_transient_error or (
-            "please verify your request and try again" not in str(err)
-        ):
-            fail_task(report, err)
-        else:
+        is_transient = "please verify your request and try again" in str(err)
+        if not fail_task_on_transient_error and is_transient:
             raise AdoNotificationException("ADO notification failed") from err
+        else:
+            fail_task(report, err)
