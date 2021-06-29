@@ -203,7 +203,7 @@ impl<'a> Tester<'a> {
         _args: Vec<String>,
         _env: HashMap<String, String>,
     ) -> Result<Option<CrashLog>> {
-        bail!("running application under a debugger is not supported on darwin");
+        bail!("running application under a debugger is not supported on macOS");
     }
 
     #[cfg(target_os = "linux")]

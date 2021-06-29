@@ -101,7 +101,7 @@ fn record(
     _cmd: Command,
     _timeout: Duration,
 ) -> Result<Coverage> {
-    unimplemented!("coverage recording is not supported on osx");
+    unimplemented!("coverage recording is not supported on macOS");
 }
 
 #[cfg(target_os = "linux")]
