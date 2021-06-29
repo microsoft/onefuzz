@@ -52,6 +52,7 @@ jobs:
         os:
         - ubuntu-18.04
         - windows-2019
+        - macos-10.15
   azcopy:
     runs-on: ubuntu-18.04
     steps:
