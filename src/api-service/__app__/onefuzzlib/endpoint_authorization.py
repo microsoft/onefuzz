@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Callable
+from typing import Callable, Optional
 from uuid import UUID
 
 import azure.functions as func
@@ -55,19 +55,22 @@ def can_modify_config(req: func.HttpRequest, config: InstanceConfig) -> bool:
     return user_info.object_id in config.admins
 
 
-def can_modify_pools(req: func.HttpRequest) -> bool:
+def check_can_manage_pools(req: func.HttpRequest) -> Optional[Error]:
     user_info = parse_jwt_token(req)
-    if not isinstance(user_info, UserInfo):
-        return False
+    if isinstance(user_info, Error):
+        return user_info
 
     config = InstanceConfig.fetch()
     if config.allow_pool_management:
-        return True
+        return None
 
     if config.admins is None:
-        return False
+        return Error(code=ErrorCode.UNAUTHORIZED, errors=["pool modification disabled"])
 
-    return user_info.object_id in config.admins
+    if user_info.object_id in config.admins:
+        return None
+
+    return Error(code=ErrorCode.UNAUTHORIZED, errors=["not authorized to manage pools"])
 
 
 def is_user(token_data: UserInfo) -> bool:

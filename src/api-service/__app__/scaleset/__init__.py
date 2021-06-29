@@ -16,7 +16,7 @@ from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.azure.creds import get_base_region, get_regions
 from ..onefuzzlib.azure.vmss import list_available_skus
-from ..onefuzzlib.endpoint_authorization import call_if_user, can_modify_pools
+from ..onefuzzlib.endpoint_authorization import call_if_user, check_can_manage_pools
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.pools import Pool
@@ -48,14 +48,9 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetCreate")
 
-    if not can_modify_pools(req):
-        return not_ok(
-            Error(
-                code=ErrorCode.UNAUTHORIZED,
-                errors=["modifying scalesets has been disabled"],
-            ),
-            context="ScalesetCreate",
-        )
+    answer = check_can_manage_pools(req)
+    if isinstance(answer, Error):
+        return not_ok(answer, context="ScalesetCreate")
 
     # Verify the pool exists
     pool = Pool.get_by_name(request.pool_name)
@@ -114,14 +109,9 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetDelete")
 
-    if not can_modify_pools(req):
-        return not_ok(
-            Error(
-                code=ErrorCode.UNAUTHORIZED,
-                errors=["modifying scalesets has been disabled"],
-            ),
-            context="ScalesetDelete",
-        )
+    answer = check_can_manage_pools(req)
+    if isinstance(answer, Error):
+        return not_ok(answer, context="ScalesetDelete")
 
     scaleset = Scaleset.get_by_id(request.scaleset_id)
     if isinstance(scaleset, Error):
@@ -136,14 +126,9 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="ScalesetUpdate")
 
-    if not can_modify_pools(req):
-        return not_ok(
-            Error(
-                code=ErrorCode.UNAUTHORIZED,
-                errors=["modifying scalesets has been disabled"],
-            ),
-            context="ScalesetUpdate",
-        )
+    answer = check_can_manage_pools(req)
+    if isinstance(answer, Error):
+        return not_ok(answer, context="ScalesetUpdate")
 
     scaleset = Scaleset.get_by_id(request.scaleset_id)
     if isinstance(scaleset, Error):
