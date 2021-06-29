@@ -22,10 +22,6 @@ from ..secrets import get_secret_obj
 from .common import Render, fail_task
 
 
-class GithubNotificationException(Exception):
-    pass
-
-
 class GithubIssue:
     def __init__(
         self,
@@ -117,7 +113,6 @@ def github_issue(
     container: Container,
     filename: str,
     report: Optional[Union[Report, RegressionReport]],
-    fail_task_on_transient_error: bool,
 ) -> None:
     if report is None:
         return
@@ -134,7 +129,4 @@ def github_issue(
         handler = GithubIssue(config, container, filename, report)
         handler.process()
     except (GitHubException, ValueError) as err:
-        if fail_task_on_transient_error:
-            fail_task(report, err)
-        else:
-            raise GithubNotificationException("Github notification failed") from err
+        fail_task(report, err)

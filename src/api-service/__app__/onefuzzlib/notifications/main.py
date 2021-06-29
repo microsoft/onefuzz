@@ -160,7 +160,7 @@ def new_files(
                 )
 
             if isinstance(notification.config, GithubIssueTemplate):
-                github_issue(notification.config, container, filename, report, True)
+                github_issue(notification.config, container, filename, report)
 
     for (task, containers) in get_queue_tasks():
         if container in containers:
