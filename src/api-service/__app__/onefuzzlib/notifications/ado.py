@@ -244,8 +244,21 @@ def notify_ado(
         AzureDevOpsClientRequestError,
         ValueError,
     ) as err:
-        is_transient = "please verify your request and try again" in str(err)
-        if not fail_task_on_transient_error and is_transient:
+
+        def is_transient(err: any) -> bool:
+            error_codes = [
+                # "TF401349: An unexpected error has occurred, please verify your request and try again."
+                "TF401349",
+                # TF26071: This work item has been changed by someone else since you opened it. You will need to refresh it and discard your changes.
+                "TF26071",
+            ]
+            error_str = str(err)
+            for code in error_codes:
+                if code in error_str:
+                    return True
+            return False
+
+        if not fail_task_on_transient_error and is_transient(err):
             raise AdoNotificationException("ADO notification failed") from err
         else:
             fail_task(report, err)
