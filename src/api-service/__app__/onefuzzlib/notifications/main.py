@@ -127,7 +127,7 @@ def get_queue_tasks() -> Sequence[Tuple[Task, Sequence[str]]]:
     return results
 
 
-def new_files(container: Container, filename: str) -> None:
+def new_files(container: Container, filename: str, fail_task_on_error: bool) -> None:
     notifications = get_notifications(container)
 
     report = get_report_or_regression(
@@ -149,10 +149,12 @@ def new_files(container: Container, filename: str) -> None:
                 continue
 
             if isinstance(notification.config, ADOTemplate):
-                notify_ado(notification.config, container, filename, report)
+                notify_ado(
+                    notification.config, container, filename, report, fail_task_on_error
+                )
 
             if isinstance(notification.config, GithubIssueTemplate):
-                github_issue(notification.config, container, filename, report)
+                github_issue(notification.config, container, filename, report, True)
 
     for (task, containers) in get_queue_tasks():
         if container in containers:

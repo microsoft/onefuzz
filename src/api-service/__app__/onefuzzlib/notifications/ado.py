@@ -31,6 +31,10 @@ from ..secrets import get_secret_string_value
 from .common import Render, fail_task
 
 
+class AdoNotificationException(Exception):
+    pass
+
+
 @cached(ttl=60)
 def get_ado_client(base_url: str, token: str) -> WorkItemTrackingClient:
     connection = Connection(base_url=base_url, creds=BasicAuthentication("PAT", token))
@@ -211,6 +215,7 @@ def notify_ado(
     container: Container,
     filename: str,
     report: Union[Report, RegressionReport],
+    fail_task_on_error: bool,
 ) -> None:
     if isinstance(report, RegressionReport):
         logging.info(
@@ -232,13 +237,16 @@ def notify_ado(
     try:
         ado = ADO(container, filename, config, report)
         ado.process()
-    except AzureDevOpsAuthenticationError as err:
-        fail_task(report, err)
-    except AzureDevOpsClientError as err:
-        fail_task(report, err)
-    except AzureDevOpsServiceError as err:
-        fail_task(report, err)
-    except AzureDevOpsClientRequestError as err:
-        fail_task(report, err)
-    except ValueError as err:
-        fail_task(report, err)
+    except (
+        AzureDevOpsAuthenticationError,
+        AzureDevOpsClientError,
+        AzureDevOpsServiceError,
+        AzureDevOpsClientRequestError,
+        ValueError,
+    ) as err:
+        if fail_task_on_error or (
+            "please verify your request and try again" not in str(err)
+        ):
+            fail_task(report, err)
+        else:
+            raise AdoNotificationException("ADO notification failed") from err
