@@ -876,7 +876,7 @@ class InstanceConfig(BaseModel):
     @validator("admins", allow_reuse=True)
     def check_admins(cls, value: Optional[List[UUID]]) -> Optional[List[UUID]]:
         if value is not None and len(value) == 0:
-            raise ValueError("admins must be None or at least UUID")
+            raise ValueError("admins must be None or contain at least one UUID")
         return value
 
 
