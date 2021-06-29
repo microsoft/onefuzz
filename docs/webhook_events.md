@@ -646,7 +646,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "allow_pool_management": {
                     "default": true,
-                    "title": "Allow Pool Modification",
+                    "title": "Allow Pool Management",
                     "type": "boolean"
                 }
             },
@@ -5459,7 +5459,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 "allow_pool_management": {
                     "default": true,
-                    "title": "Allow Pool Modification",
+                    "title": "Allow Pool Management",
                     "type": "boolean"
                 }
             },
