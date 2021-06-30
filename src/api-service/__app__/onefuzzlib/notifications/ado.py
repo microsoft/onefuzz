@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Any, Iterator, List, Optional, Union
+from typing import Iterator, List, Optional, Union
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
@@ -260,6 +260,8 @@ def notify_ado(
     ) as err:
 
         if not fail_task_on_transient_error and is_transient(err):
-            raise AdoNotificationException("ADO notification failed") from err
+            raise AdoNotificationException(
+                "transient ADO notification failure"
+            ) from err
         else:
             fail_task(report, err)
