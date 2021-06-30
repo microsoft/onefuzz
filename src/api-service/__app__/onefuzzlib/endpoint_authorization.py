@@ -60,6 +60,17 @@ def check_can_manage_pools(req: func.HttpRequest) -> Optional[Error]:
     if isinstance(user_info, Error):
         return user_info
 
+    # When there are no admins in the `admins` list, all users are considered
+    # admins.  However, allow_pool_modification is still useful to protect from
+    # mistakes.
+    #
+    # To make changes while still protecting against accidental changes to
+    # pools, do the follwoing:
+    #
+    # 1. set allow_pool_management to True
+    # 2. make the change
+    # 3. set allow_pool_management to False
+
     config = InstanceConfig.fetch()
     if config.allow_pool_management:
         return None
