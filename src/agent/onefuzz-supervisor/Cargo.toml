@@ -26,5 +26,5 @@ clap = "2.33"
 reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 
-[target.'cfg(target_os = "linux")'.dependencies]
+[target.'cfg(target_family = "unix")'.dependencies]
 users = "0.11"
