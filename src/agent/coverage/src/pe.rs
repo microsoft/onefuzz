@@ -161,7 +161,9 @@ fn find_blocks(
 
     for proc in proc_data {
         if let Some(rva) = proc.offset.to_rva(address_map) {
-            blocks.try_insert(rva.0 as usize)?;
+            blocks
+                .try_insert(rva.0 as usize)
+                .context("inserting block for procedure offset")?;
 
             if functions_only {
                 continue;
@@ -191,14 +193,18 @@ fn find_blocks(
 
                     for label in &table.labels {
                         if let Some(rva) = label.to_rva(address_map) {
-                            blocks.try_insert(rva.0 as usize)?;
+                            blocks
+                                .try_insert(rva.0 as usize)
+                                .context("inserting block for offset from label")?;
                         }
                     }
                 }
 
                 for label in &proc.extra_labels {
                     if let Some(rva) = label.to_rva(address_map) {
-                        blocks.try_insert(rva.0 as usize)?;
+                        blocks
+                            .try_insert(rva.0 as usize)
+                            .context("inserting block for offset from extra labels")?;
                     }
                 }
 

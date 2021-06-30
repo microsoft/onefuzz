@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use fixedbitset::FixedBitSet;
 use iced_x86::{Decoder, DecoderOptions, FlowControl, Instruction, OpKind};
 
@@ -14,8 +14,10 @@ fn process_near_branch(instruction: &Instruction, blocks: &mut FixedBitSet) -> R
         OpKind::NearBranch64 => {
             // Note we do not check if the branch takes us to another function, e.g.
             // with a tail call.
-            //
-            blocks.try_insert(instruction.near_branch_target() as usize)?;
+            let off = instruction.near_branch_target() as usize;
+            blocks
+                .try_insert(off)
+                .context("inserting block for near branch target")?;
         }
         OpKind::FarBranch16 => {}
         OpKind::FarBranch32 => {}
@@ -45,7 +47,11 @@ pub fn find_blocks(
             FlowControl::Next => {}
             FlowControl::ConditionalBranch => {
                 process_near_branch(&instruction, blocks)?;
-                blocks.try_insert(instruction.next_ip() as usize)?;
+
+                let off = instruction.next_ip() as usize;
+                blocks
+                    .try_insert(off)
+                    .context("inserting block for next PC after conditional branch")?;
             }
             FlowControl::UnconditionalBranch => {
                 process_near_branch(&instruction, blocks)?;
