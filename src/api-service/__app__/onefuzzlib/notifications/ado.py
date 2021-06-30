@@ -210,7 +210,7 @@ class ADO:
             self.create_new()
 
 
-def is_transient(err: Any) -> bool:
+def is_transient(err: Exception) -> bool:
     error_codes = [
         # "TF401349: An unexpected error has occurred, please verify your request and try again." # noqa: E501
         "TF401349",
