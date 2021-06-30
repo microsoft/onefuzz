@@ -7,15 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 2.24.0
 ### Added
 * CLI/Service: Added instance configuration that can be managed via `onefuzz instance_config`.  [#1010](https://github.com/microsoft/onefuzz/pull/1010)
-* Service: Added automatic retry for notifications of Azure Devops Work Item updates.  [#1026](https://github.com/microsoft/onefuzz/pull/1026)
-* CLI/Service: Added GitHub Issues integration configuration verification. [#1019](https://github.com/microsoft/onefuzz/pull/1019)
+* Service: Added automatic retry for Azure Devops notifications.  [#1026](https://github.com/microsoft/onefuzz/pull/1026)
+* CLI/Service: Added validation to GitHub Issues integration configuration. [#1019](https://github.com/microsoft/onefuzz/pull/1019)
 
 ### Changed
 * Agent/Supervisor/Proxy: Moved to `rustls` to enable running the Agent and Supervisor on Ubuntu 20.04.  [#1029](https://github.com/microsoft/onefuzz/pull/1029)
-* Agent: Continued deveopment related to upcoming features.  [#1016](https://github.com/microsoft/onefuzz/pull/1016)
+* Agent: Continued development related to upcoming features.  [#1016](https://github.com/microsoft/onefuzz/pull/1016)
 
 ### Fixed
-* Agent: Fixed an issue handling invalid data during coverage collection.  [#1032](https://github.com/microsoft/onefuzz/pull/1032), [#1033](https://github.com/microsoft/onefuzz/pull/1033)
+* Agent: Fixed an issue handling invalid data during coverage collection.  [#1032](https://github.com/microsoft/onefuzz/pull/1032)
+* Agent: Fixed retry logic on coverage recording failures [#1033](https://github.com/microsoft/onefuzz/pull/1033)
 
 ## 2.23.1
 ### Fixed
