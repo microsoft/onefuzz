@@ -23,6 +23,7 @@ from .enums import (
 from .models import (
     AutoScaleConfig,
     Error,
+    InstanceConfig,
     JobConfig,
     RegressionReport,
     Report,
@@ -200,6 +201,10 @@ class EventFileAdded(BaseEvent):
     filename: str
 
 
+class EventInstanceConfigUpdated(BaseEvent):
+    config: InstanceConfig
+
+
 Event = Union[
     EventJobCreated,
     EventJobStopped,
@@ -226,6 +231,7 @@ Event = Union[
     EventCrashReported,
     EventRegressionReported,
     EventFileAdded,
+    EventInstanceConfigUpdated,
 ]
 
 
@@ -255,6 +261,7 @@ class EventType(Enum):
     file_added = "file_added"
     task_heartbeat = "task_heartbeat"
     node_heartbeat = "node_heartbeat"
+    instance_config_updated = "instance_config_updated"
 
 
 EventTypeMap = {
@@ -283,6 +290,7 @@ EventTypeMap = {
     EventType.crash_reported: EventCrashReported,
     EventType.regression_reported: EventRegressionReported,
     EventType.file_added: EventFileAdded,
+    EventType.instance_config_updated: EventInstanceConfigUpdated,
 }
 
 
