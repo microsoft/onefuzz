@@ -11,7 +11,8 @@ z3 = ["z3-sys"]
 intel_instructions = ["iced-x86"]
 
 [dependencies]
-appinsights = "0.1"
+# appinsights = { version = "0.1", features = ["rustls"], default-features = false}
+appinsights = { git = "https://github.com/dmolokanov/appinsights-rs", rev = "0af6ec83bad1c050160f5258ab08e9834596ce20", features=["rustls"], default-features = false }
 log = "0.4"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 serde = { version = "1.0", features = ["derive"] }
