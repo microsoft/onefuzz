@@ -1558,6 +1558,8 @@ class ScalesetProxy(Endpoint):
 
 
 class InstanceConfigCmd(Endpoint):
+    """Interact with Instance Configuration"""
+
     endpoint = "instance_config"
 
     def get(self) -> models.InstanceConfig:
