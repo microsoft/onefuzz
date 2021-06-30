@@ -20,7 +20,7 @@ from .enums import (
     TaskState,
 )
 from .events import EventType
-from .models import AutoScaleConfig, NotificationConfig
+from .models import AutoScaleConfig, InstanceConfig, NotificationConfig
 from .primitives import Container, PoolName, Region
 
 
@@ -251,6 +251,10 @@ class WebhookUpdate(BaseModel):
 class NodeAddSshKey(BaseModel):
     machine_id: UUID
     public_key: str
+
+
+class InstanceConfigUpdate(BaseModel):
+    config: InstanceConfig
 
 
 _check_hotfix()
