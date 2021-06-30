@@ -44,15 +44,34 @@ def is_agent(token_data: UserInfo) -> bool:
     return False
 
 
+def can_modify_config_impl(config: InstanceConfig, user_info: UserInfo) -> bool:
+    if config.admins is None:
+        return True
+
+    return user_info.object_id in config.admins
+
+
 def can_modify_config(req: func.HttpRequest, config: InstanceConfig) -> bool:
     user_info = parse_jwt_token(req)
     if not isinstance(user_info, UserInfo):
         return False
 
-    if config.admins is None:
-        return True
+    return can_modify_config_impl(config, user_info)
 
-    return user_info.object_id in config.admins
+
+def check_can_manage_pools_impl(
+    config: InstanceConfig, user_info: UserInfo
+) -> Optional[Error]:
+    if config.allow_pool_management:
+        return None
+
+    if config.admins is None:
+        return Error(code=ErrorCode.UNAUTHORIZED, errors=["pool modification disabled"])
+
+    if user_info.object_id in config.admins:
+        return None
+
+    return Error(code=ErrorCode.UNAUTHORIZED, errors=["not authorized to manage pools"])
 
 
 def check_can_manage_pools(req: func.HttpRequest) -> Optional[Error]:
@@ -72,16 +91,8 @@ def check_can_manage_pools(req: func.HttpRequest) -> Optional[Error]:
     # 3. set `allow_pool_management` to `False`
 
     config = InstanceConfig.fetch()
-    if config.allow_pool_management:
-        return None
 
-    if config.admins is None:
-        return Error(code=ErrorCode.UNAUTHORIZED, errors=["pool modification disabled"])
-
-    if user_info.object_id in config.admins:
-        return None
-
-    return Error(code=ErrorCode.UNAUTHORIZED, errors=["not authorized to manage pools"])
+    return check_can_manage_pools_impl(config, user_info)
 
 
 def is_user(token_data: UserInfo) -> bool:
