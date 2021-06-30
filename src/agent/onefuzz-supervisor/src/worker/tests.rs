@@ -227,7 +227,7 @@ async fn test_worker_done() {
     assert_eq!(events, vec![]);
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 #[test]
 fn test_redirected_child() {
     use std::iter::repeat;
@@ -260,7 +260,7 @@ sys.stderr.write('C' * 65536 + 'D' * 4000)";
     assert_eq!(captured.stderr, stderr);
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 #[test]
 fn test_redirected_child() {
     use std::iter::repeat;

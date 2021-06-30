@@ -66,7 +66,7 @@ pub async fn list_files(path: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 pub async fn set_executable(path: impl AsRef<Path>) -> Result<()> {
     let path = path.as_ref();
 
@@ -173,7 +173,7 @@ impl OwnedDir {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 pub async fn sync_impl(
     src: impl AsRef<OsStr>,
     dst: impl AsRef<OsStr>,
@@ -214,7 +214,7 @@ pub async fn sync_impl(
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 pub async fn sync_impl(
     src: impl AsRef<OsStr>,
     dst: impl AsRef<OsStr>,
