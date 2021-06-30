@@ -4,6 +4,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
@@ -160,9 +161,7 @@ where
 }
 
 struct TaskContext<'a> {
-    // Optional only to enable temporary move into blocking thread.
-    cache: Option<ModuleCache>,
-
+    cache: Arc<Mutex<ModuleCache>>,
     config: &'a Config,
     coverage: CommandBlockCov,
     filter: CmdFilter,
@@ -177,7 +176,7 @@ impl<'a> TaskContext<'a> {
         filter: CmdFilter,
         heartbeat: Option<TaskHeartbeatClient>,
     ) -> Self {
-        let cache = Some(cache);
+        let cache = Arc::new(Mutex::new(cache));
 
         Self {
             cache,
@@ -230,19 +229,19 @@ impl<'a> TaskContext<'a> {
     }
 
     async fn record_impl(&mut self, input: &Path) -> Result<CommandBlockCov> {
-        // Invariant: `self.cache` must be present on method enter and exit.
-        let cache = self.cache.take().expect("module cache not present");
-
+        let cache = Arc::clone(&self.cache);
         let filter = self.filter.clone();
         let cmd = self.command_for_input(input)?;
         let timeout = self.config.timeout();
-        let recorded =
-            spawn_blocking(move || record_os_impl(cmd, timeout, cache, filter)).await??;
+        let coverage = spawn_blocking(move || {
+            let mut cache = cache
+                .lock()
+                .map_err(|_| format_err!("module cache mutex lock was poisoned"))?;
+            record_os_impl(cmd, timeout, &mut cache, filter)
+        })
+        .await??;
 
-        // Maintain invariant.
-        self.cache = Some(recorded.cache);
-
-        Ok(recorded.coverage)
+        Ok(coverage)
     }
 
     fn command_for_input(&self, input: &Path) -> Result<Command> {
@@ -322,40 +321,35 @@ impl<'a> TaskContext<'a> {
     }
 }
 
-struct Recorded {
-    pub cache: ModuleCache,
-    pub coverage: CommandBlockCov,
-}
-
 #[cfg(target_os = "linux")]
 fn record_os_impl(
     cmd: Command,
     timeout: Duration,
-    mut cache: ModuleCache,
+    cache: &mut ModuleCache,
     filter: CmdFilter,
-) -> Result<Recorded> {
+) -> Result<CommandBlockCov> {
     use coverage::block::linux::Recorder;
 
-    let coverage = Recorder::record(cmd, timeout, &mut cache, filter)?;
+    let coverage = Recorder::record(cmd, timeout, cache, filter)?;
 
-    Ok(Recorded { cache, coverage })
+    Ok(coverage)
 }
 
 #[cfg(target_os = "windows")]
 fn record_os_impl(
     cmd: Command,
     timeout: Duration,
-    mut cache: ModuleCache,
+    cache: &mut ModuleCache,
     filter: CmdFilter,
-) -> Result<Recorded> {
+) -> Result<CommandBlockCov> {
     use coverage::block::windows::{Recorder, RecorderEventHandler};
 
-    let mut recorder = Recorder::new(&mut cache, filter);
+    let mut recorder = Recorder::new(cache, filter);
     let mut handler = RecorderEventHandler::new(&mut recorder, timeout);
     handler.run(cmd)?;
     let coverage = recorder.into_coverage();
 
-    Ok(Recorded { cache, coverage })
+    Ok(coverage)
 }
 
 #[async_trait]
