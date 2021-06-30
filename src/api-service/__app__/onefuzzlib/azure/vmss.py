@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Set, Union, cast
 from uuid import UUID
 
 from azure.core.exceptions import (
@@ -151,18 +151,18 @@ def check_can_update(name: UUID) -> Any:
     return vmss
 
 
-def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
+def reimage_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
     check_can_update(name)
 
     resource_group = get_base_resource_group()
     logging.info("reimaging scaleset VM - name: %s vm_ids:%s", name, vm_ids)
     compute_client = get_compute_client()
 
-    instance_ids = []
+    instance_ids = set()
     machine_to_id = list_instance_ids(name)
     for vm_id in vm_ids:
         if vm_id in machine_to_id:
-            instance_ids.append(machine_to_id[vm_id])
+            instance_ids.add(machine_to_id[vm_id])
         else:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
@@ -170,23 +170,23 @@ def reimage_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
         compute_client.virtual_machine_scale_sets.begin_reimage_all(
             resource_group,
             str(name),
-            VirtualMachineScaleSetVMInstanceIDs(instance_ids=instance_ids),
+            VirtualMachineScaleSetVMInstanceIDs(instance_ids=list(instance_ids)),
         )
     return None
 
 
-def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
+def delete_vmss_nodes(name: UUID, vm_ids: Set[UUID]) -> Optional[Error]:
     check_can_update(name)
 
     resource_group = get_base_resource_group()
     logging.info("deleting scaleset VM - name: %s vm_ids:%s", name, vm_ids)
     compute_client = get_compute_client()
 
-    instance_ids = []
+    instance_ids = set()
     machine_to_id = list_instance_ids(name)
     for vm_id in vm_ids:
         if vm_id in machine_to_id:
-            instance_ids.append(machine_to_id[vm_id])
+            instance_ids.add(machine_to_id[vm_id])
         else:
             logging.info("unable to find vm_id for %s:%s", name, vm_id)
 
@@ -194,7 +194,9 @@ def delete_vmss_nodes(name: UUID, vm_ids: List[UUID]) -> Optional[Error]:
         compute_client.virtual_machine_scale_sets.begin_delete_instances(
             resource_group,
             str(name),
-            VirtualMachineScaleSetVMInstanceRequiredIDs(instance_ids=instance_ids),
+            VirtualMachineScaleSetVMInstanceRequiredIDs(
+                instance_ids=list(instance_ids)
+            ),
         )
     return None
 

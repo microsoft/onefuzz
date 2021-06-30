@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.23.1
+### Fixed
+* Service: Fixed an issue preventing deletion or reimaging of nodes in some cases. [#1023](https://github.com/microsoft/onefuzz/pull/1023)
+
+## 2.23.0
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1018](https://github.com/microsoft/onefuzz/pull/1018), [#1009](https://github.com/microsoft/onefuzz/pull/1009), [#1004](https://github.com/microsoft/onefuzz/pull/1004)
+* Service: Tasks running on nodes without recent heartbeats are now marked as failed due to heartbeat issues.  [#1015](https://github.com/microsoft/onefuzz/pull/1015)
+* Service: Updated multiple first-party Python dependencies. [#1012](https://github.com/microsoft/onefuzz/pull/1012)
+
+### Fixed
+* Agent: Fixed an issue where `libfuzzer_fuzz` tasks on Windows that found crashes too rapidly were unable recover handles. [#1002](https://github.com/microsoft/onefuzz/pull/1002)
+* Agent: Fixed an issue with the regression tasks after using the `onefuzz debug notification` commands. [#1011](https://github.com/microsoft/onefuzz/pull/1011)
+* Deployment: Fixed a configuration issue reducing log retention durations.  [#1007](https://github.com/microsoft/onefuzz/pull/1007)
+* Service: Fixed an issue creating GitHub Issues notifications. [#1008](https://github.com/microsoft/onefuzz/pull/1008)
+* Service: Fixed an issue handling reimaging nodes that took an excessive amount of time. [#1005](https://github.com/microsoft/onefuzz/pull/1005)
+
+## 2.22.0
+### Changed
+* Service: Update node and task-related log messages to ease debugging. [#988](https://github.com/microsoft/onefuzz/pull/988)
+* Agent: Changed the log level for `azcopy` retry notification to `DEBUG`. [#986](https://github.com/microsoft/onefuzz/pull/986)
+* Agent: Updated stack minimization regular expressions from `libclusterfuzz`. [#992](https://github.com/microsoft/onefuzz/pull/992)
+* Agent: Added more context to synchronized directory errors.  [#995](https://github.com/microsoft/onefuzz/pull/995)
+* Deployment: Reduced the Application Insights log retention duration to 30 days.  [#997](https://github.com/microsoft/onefuzz/pull/997)
+* Agent: Improved tracking of threads during win32 debugging.  [#1000](https://github.com/microsoft/onefuzz/pull/1000)
+
+### Fixed
+* Agent: Fixed an issue using relative paths with synchronized directories.  [#996](https://github.com/microsoft/onefuzz/pull/996)
+* Service: Fixed an issue creating GitHub Issues notifications [#990](https://github.com/microsoft/onefuzz/pull/990)
+* CLI/Service: Fixed an issue handling `Union` fields in the `onefuzztypes` library [#982](https://github.com/microsoft/onefuzz/pull/982)
+* Service: Fixed an issue handling manually-resized scalesets [#984](https://github.com/microsoft/onefuzz/pull/984)
+
 ## 2.21.0
 ### Added
 * CLI: Added `onefuzz debug job rerun` command. [#960](https://github.com/microsoft/onefuzz/pull/960)
