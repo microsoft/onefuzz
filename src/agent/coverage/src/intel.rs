@@ -1,10 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use anyhow::Result;
 use fixedbitset::FixedBitSet;
 use iced_x86::{Decoder, DecoderOptions, FlowControl, Instruction, OpKind};
 
-fn process_near_branch(instruction: &Instruction, blocks: &mut FixedBitSet) {
+use crate::pe::TryInsert;
+
+fn process_near_branch(instruction: &Instruction, blocks: &mut FixedBitSet) -> Result<()> {
     match instruction.op0_kind() {
         OpKind::NearBranch16 => {}
         OpKind::NearBranch32 => {}
@@ -12,15 +15,22 @@ fn process_near_branch(instruction: &Instruction, blocks: &mut FixedBitSet) {
             // Note we do not check if the branch takes us to another function, e.g.
             // with a tail call.
             //
-            blocks.insert(instruction.near_branch_target() as usize);
+            blocks.try_insert(instruction.near_branch_target() as usize)?;
         }
         OpKind::FarBranch16 => {}
         OpKind::FarBranch32 => {}
         _ => {}
     }
+
+    Ok(())
 }
 
-pub fn find_blocks(bitness: u32, bytes: &[u8], func_rva: u32, blocks: &mut FixedBitSet) {
+pub fn find_blocks(
+    bitness: u32,
+    bytes: &[u8],
+    func_rva: u32,
+    blocks: &mut FixedBitSet,
+) -> Result<()> {
     // We *could* maybe pass `DecoderOptions::AMD_BRANCHES | DecoderOptions::JMPE` because
     // we only care about control flow here, but it's not clear we'll ever see those instructions
     // and we don't need precise coverage so it doesn't matter too much.
@@ -34,11 +44,11 @@ pub fn find_blocks(bitness: u32, bytes: &[u8], func_rva: u32, blocks: &mut Fixed
         match instruction.flow_control() {
             FlowControl::Next => {}
             FlowControl::ConditionalBranch => {
-                process_near_branch(&instruction, blocks);
-                blocks.insert(instruction.next_ip() as usize);
+                process_near_branch(&instruction, blocks)?;
+                blocks.try_insert(instruction.next_ip() as usize)?;
             }
             FlowControl::UnconditionalBranch => {
-                process_near_branch(&instruction, blocks);
+                process_near_branch(&instruction, blocks)?;
             }
             FlowControl::IndirectBranch => {}
             FlowControl::Return => {}
@@ -49,4 +59,6 @@ pub fn find_blocks(bitness: u32, bytes: &[u8], func_rva: u32, blocks: &mut Fixed
             FlowControl::Exception => {}
         }
     }
+
+    Ok(())
 }

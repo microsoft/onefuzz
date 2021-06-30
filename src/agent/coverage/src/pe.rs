@@ -214,7 +214,7 @@ fn find_blocks(
                     &data[file_offset..file_offset + (code_len as usize)],
                     rva.0,
                     blocks,
-                );
+                )?;
             }
         }
     }
@@ -290,7 +290,7 @@ pub fn process_image(
     process_module(path, &mmap, &pe, functions_only, handle)
 }
 
-trait TryInsert {
+pub(crate) trait TryInsert {
     fn try_insert(&mut self, bit: usize) -> Result<()>;
 }
 
