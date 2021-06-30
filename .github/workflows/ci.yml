@@ -52,6 +52,7 @@ jobs:
         os:
         - ubuntu-18.04
         - windows-2019
+        - macos-10.15
   azcopy:
     runs-on: ubuntu-18.04
     steps:
@@ -324,12 +325,12 @@ jobs:
               cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
               cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
           fi
-          cp artifacts/agent/onefuzz-supervisor.exe src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz-agent.exe src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz_supervisor.pdb src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz_agent.pdb src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz-supervisor src/deployment/tools/linux/
-          cp artifacts/agent/onefuzz-agent src/deployment/tools/linux/
+          cp artifacts/agent-MINGW*/onefuzz-supervisor.exe src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz-agent.exe src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz_supervisor.pdb src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz_agent.pdb src/deployment/tools/win64/
+          cp artifacts/agent-Linux/onefuzz-supervisor src/deployment/tools/linux/
+          cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
           cp -r artifacts/third-party src/deployment

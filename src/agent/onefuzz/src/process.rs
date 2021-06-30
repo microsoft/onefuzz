@@ -60,7 +60,7 @@ pub struct ExitStatus {
 }
 
 impl From<std::process::ExitStatus> for ExitStatus {
-    #[cfg(target_os = "windows")]
+    #[cfg(target_family = "windows")]
     fn from(status: std::process::ExitStatus) -> Self {
         Self {
             code: status.code(),
@@ -69,7 +69,7 @@ impl From<std::process::ExitStatus> for ExitStatus {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(target_family = "unix")]
     fn from(status: std::process::ExitStatus) -> Self {
         use std::os::unix::process::ExitStatusExt;
 
@@ -82,7 +82,7 @@ impl From<std::process::ExitStatus> for ExitStatus {
 }
 
 impl From<process_control::ExitStatus> for ExitStatus {
-    #[cfg(target_os = "windows")]
+    #[cfg(target_family = "windows")]
     fn from(status: process_control::ExitStatus) -> Self {
         Self {
             code: status.code().map(|s| s as i32),
@@ -91,7 +91,7 @@ impl From<process_control::ExitStatus> for ExitStatus {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(target_family = "unix")]
     fn from(status: process_control::ExitStatus) -> Self {
         Self {
             code: status.code().map(|s| s as i32),
