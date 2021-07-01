@@ -1,0 +1,376 @@
+{
+  "text": "INFO: Running with entropic power schedule (0xFF, 100).\nINFO: Seed: 3597413507\nINFO: Loaded 1 modules   (619877 inline 8-bit counters): 619877 [0x55575a64b74a, 0x55575a6e2caf),\nINFO: Loaded 1 PC tables (619877 PCs): 619877 [0x55575a6e2cb0,0x55575b058300),\n/mnt/scratch0/clusterfuzz/bot/builds/clusterfuzz-builds_wasmtime_9d7f296cb3c934976ab46f0ee760a3a07ef3344a/revisions/spectests: Running 1 inputs 100 time(s) each.\nRunning: /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases/c176653beef72c715138c432ebcf9db9819c383ddba3f64de5a9ba5ed7caec4f\nthread '<unnamed>' panicked at 'called `Result::unwrap()` on an `Err` value: failed directive on wasmtime/crates/fuzzing/../../tests/spec_testsuite/table.wast:11:1\nCaused by:\n    expected module to fail to build', wasmtime/crates/fuzzing/src/oracles.rs:427:10\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n==147652== ERROR: libFuzzer: deadly signal\n    #0 0x55575517a9a1 in __sanitizer_print_stack_trace /rustc/llvm/src/llvm-project/compiler-rt/lib/asan/asan_stack.cpp:86:3\n    #1 0x5557592e76d8 in fuzzer::PrintStackTrace() /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerUtil.cpp:210:5\n    #2 0x5557592cad53 in fuzzer::Fuzzer::CrashCallback() /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:233:3\n    #3 0x7f24f76cd38f in libpthread.so.0\n    #4 0x7f24f6e1a437 in raise /build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54\n    #5 0x7f24f6e1c039 in abort /build/glibc-e6zv40/glibc-2.23/stdlib/abort.c:89\n    #6 0x555759384a49 in std::sys::unix::abort_internal::h411dc3861a5cb281 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys/unix/mod.rs:205:14\n    #7 0x5557550f30b8 in std::process::abort::hd257d0bc0ddb140c /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/process.rs:1814:5\n    #8 0x55575931d25e in libfuzzer_sys::initialize::_$u7b$$u7b$closure$u7d$$u7d$::h8a22640c22e97ee8 /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs:51:9\n    #9 0x555759374acf in std::panicking::rust_panic_with_hook::h70db735e3a6e70cb /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs:595:17\n    #10 0x5557593746a6 in std::panicking::begin_panic_handler::_$u7b$$u7b$closure$u7d$$u7d$::h777c71c8e5a7e25c /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs:497:13\n    #11 0x555759370b2b in std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys_common/backtrace.rs:141:18\n    #12 0x555759374608 in rust_begin_unwind /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs:493:5\n    #13 0x5557550f5250 in core::panicking::panic_fmt::h5322a082d19786c3 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/panicking.rs:92:14\n    #14 0x5557550f5142 in core::result::unwrap_failed::hbee7d9f7831678f0 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/option.rs:1329:5\n    #15 0x55575538c673 in core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395 /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:1037:23\n    #16 0x55575538c673 in wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4 wasmtime/crates/fuzzing/src/oracles.rs:425:5\n    #17 0x5557551ae1d2 in rust_fuzzer_test_input wasmtime/fuzz/fuzz_targets/spectests.rs:8:5\n    #18 0x55575931d2a0 in __rust_try\n    #19 0x55575931ceff in std::panicking::try::h88270102441d9383 /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panicking.rs:343:19\n    #20 0x55575931ceff in std::panic::catch_unwind::h3f9fd73d7e24a8da /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panic.rs:431:14\n    #21 0x55575931ceff in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs:25:22\n    #22 0x5557592cc4f3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15\n    #23 0x5557592b6352 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6\n    #24 0x5557592bc19a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9\n    #25 0x5557592e7eb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10\n    #26 0x7f24f6e0583f in __libc_start_main /build/glibc-e6zv40/glibc-2.23/csu/libc-start.c:291\n    #27 0x5557550f65c8 in _start\nNOTE: libFuzzer has rudimentary signal handlers.\n      Combine libFuzzer with AddressSanitizer or similar for better crash reports.\nSUMMARY: libFuzzer: deadly signal\n\n",
+  "sanitizer": "libFuzzer",
+  "summary": "libFuzzer: deadly signal",
+  "fault_type": "deadly signal",
+  "call_stack": [
+    "#0 0x55575517a9a1 in __sanitizer_print_stack_trace /rustc/llvm/src/llvm-project/compiler-rt/lib/asan/asan_stack.cpp:86:3",
+    "#1 0x5557592e76d8 in fuzzer::PrintStackTrace() /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerUtil.cpp:210:5",
+    "#2 0x5557592cad53 in fuzzer::Fuzzer::CrashCallback() /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:233:3",
+    "#3 0x7f24f76cd38f in libpthread.so.0",
+    "#4 0x7f24f6e1a437 in raise /build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+    "#5 0x7f24f6e1c039 in abort /build/glibc-e6zv40/glibc-2.23/stdlib/abort.c:89",
+    "#6 0x555759384a49 in std::sys::unix::abort_internal::h411dc3861a5cb281 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys/unix/mod.rs:205:14",
+    "#7 0x5557550f30b8 in std::process::abort::hd257d0bc0ddb140c /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/process.rs:1814:5",
+    "#8 0x55575931d25e in libfuzzer_sys::initialize::_$u7b$$u7b$closure$u7d$$u7d$::h8a22640c22e97ee8 /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs:51:9",
+    "#9 0x555759374acf in std::panicking::rust_panic_with_hook::h70db735e3a6e70cb /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs:595:17",
+    "#10 0x5557593746a6 in std::panicking::begin_panic_handler::_$u7b$$u7b$closure$u7d$$u7d$::h777c71c8e5a7e25c /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs:497:13",
+    "#11 0x555759370b2b in std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys_common/backtrace.rs:141:18",
+    "#12 0x555759374608 in rust_begin_unwind /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs:493:5",
+    "#13 0x5557550f5250 in core::panicking::panic_fmt::h5322a082d19786c3 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/panicking.rs:92:14",
+    "#14 0x5557550f5142 in core::result::unwrap_failed::hbee7d9f7831678f0 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/option.rs:1329:5",
+    "#15 0x55575538c673 in core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395 /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:1037:23",
+    "#16 0x55575538c673 in wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4 wasmtime/crates/fuzzing/src/oracles.rs:425:5",
+    "#17 0x5557551ae1d2 in rust_fuzzer_test_input wasmtime/fuzz/fuzz_targets/spectests.rs:8:5",
+    "#18 0x55575931d2a0 in __rust_try",
+    "#19 0x55575931ceff in std::panicking::try::h88270102441d9383 /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panicking.rs:343:19",
+    "#20 0x55575931ceff in std::panic::catch_unwind::h3f9fd73d7e24a8da /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panic.rs:431:14",
+    "#21 0x55575931ceff in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs:25:22",
+    "#22 0x5557592cc4f3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15",
+    "#23 0x5557592b6352 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6",
+    "#24 0x5557592bc19a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9",
+    "#25 0x5557592e7eb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10",
+    "#26 0x7f24f6e0583f in __libc_start_main /build/glibc-e6zv40/glibc-2.23/csu/libc-start.c:291",
+    "#27 0x5557550f65c8 in _start"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0x55575517a9a1 in __sanitizer_print_stack_trace /rustc/llvm/src/llvm-project/compiler-rt/lib/asan/asan_stack.cpp:86:3",
+      "address": 93833578129825,
+      "function_name": "__sanitizer_print_stack_trace",
+      "function_offset": 3,
+      "source_file_name": "asan_stack.cpp",
+      "source_file_path": "/rustc/llvm/src/llvm-project/compiler-rt/lib/asan/asan_stack.cpp",
+      "source_file_line": 86
+    },
+    {
+      "line": "#1 0x5557592e76d8 in fuzzer::PrintStackTrace() /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerUtil.cpp:210:5",
+      "address": 93833646733016,
+      "function_name": "fuzzer::PrintStackTrace()",
+      "function_offset": 5,
+      "source_file_name": "FuzzerUtil.cpp",
+      "source_file_path": "/src/llvm-project/compiler-rt/lib/fuzzer/FuzzerUtil.cpp",
+      "source_file_line": 210
+    },
+    {
+      "line": "#2 0x5557592cad53 in fuzzer::Fuzzer::CrashCallback() /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:233:3",
+      "address": 93833646615891,
+      "function_name": "fuzzer::Fuzzer::CrashCallback()",
+      "function_offset": 3,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 233
+    },
+    {
+      "line": "#3 0x7f24f76cd38f in libpthread.so.0",
+      "address": 139796746654607,
+      "module_path": "libpthread.so.0"
+    },
+    {
+      "line": "#4 0x7f24f6e1a437 in raise /build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c:54",
+      "address": 139796737532983,
+      "function_name": "raise",
+      "source_file_name": "raise.c",
+      "source_file_path": "/build/glibc-e6zv40/glibc-2.23/sysdeps/unix/sysv/linux/raise.c",
+      "source_file_line": 54
+    },
+    {
+      "line": "#5 0x7f24f6e1c039 in abort /build/glibc-e6zv40/glibc-2.23/stdlib/abort.c:89",
+      "address": 139796737540153,
+      "function_name": "abort",
+      "source_file_name": "abort.c",
+      "source_file_path": "/build/glibc-e6zv40/glibc-2.23/stdlib/abort.c",
+      "source_file_line": 89
+    },
+    {
+      "line": "#6 0x555759384a49 in std::sys::unix::abort_internal::h411dc3861a5cb281 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys/unix/mod.rs:205:14",
+      "address": 93833647376969,
+      "function_name": "std::sys::unix::abort_internal::h411dc3861a5cb281",
+      "function_offset": 14,
+      "source_file_name": "mod.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys/unix/mod.rs",
+      "source_file_line": 205
+    },
+    {
+      "line": "#7 0x5557550f30b8 in std::process::abort::hd257d0bc0ddb140c /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/process.rs:1814:5",
+      "address": 93833577574584,
+      "function_name": "std::process::abort::hd257d0bc0ddb140c",
+      "function_offset": 5,
+      "source_file_name": "process.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/process.rs",
+      "source_file_line": 1814
+    },
+    {
+      "line": "#8 0x55575931d25e in libfuzzer_sys::initialize::_$u7b$$u7b$closure$u7d$$u7d$::h8a22640c22e97ee8 /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs:51:9",
+      "address": 93833646953054,
+      "function_name": "libfuzzer_sys::initialize::_$u7b$$u7b$closure$u7d$$u7d$::h8a22640c22e97ee8",
+      "function_offset": 9,
+      "source_file_name": "lib.rs",
+      "source_file_path": "/rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs",
+      "source_file_line": 51
+    },
+    {
+      "line": "#9 0x555759374acf in std::panicking::rust_panic_with_hook::h70db735e3a6e70cb /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs:595:17",
+      "address": 93833647311567,
+      "function_name": "std::panicking::rust_panic_with_hook::h70db735e3a6e70cb",
+      "function_offset": 17,
+      "source_file_name": "panicking.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs",
+      "source_file_line": 595
+    },
+    {
+      "line": "#10 0x5557593746a6 in std::panicking::begin_panic_handler::_$u7b$$u7b$closure$u7d$$u7d$::h777c71c8e5a7e25c /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs:497:13",
+      "address": 93833647310502,
+      "function_name": "std::panicking::begin_panic_handler::_$u7b$$u7b$closure$u7d$$u7d$::h777c71c8e5a7e25c",
+      "function_offset": 13,
+      "source_file_name": "panicking.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs",
+      "source_file_line": 497
+    },
+    {
+      "line": "#11 0x555759370b2b in std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys_common/backtrace.rs:141:18",
+      "address": 93833647295275,
+      "function_name": "std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554",
+      "function_offset": 18,
+      "source_file_name": "backtrace.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys_common/backtrace.rs",
+      "source_file_line": 141
+    },
+    {
+      "line": "#12 0x555759374608 in rust_begin_unwind /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs:493:5",
+      "address": 93833647310344,
+      "function_name": "rust_begin_unwind",
+      "function_offset": 5,
+      "source_file_name": "panicking.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/panicking.rs",
+      "source_file_line": 493
+    },
+    {
+      "line": "#13 0x5557550f5250 in core::panicking::panic_fmt::h5322a082d19786c3 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/panicking.rs:92:14",
+      "address": 93833577583184,
+      "function_name": "core::panicking::panic_fmt::h5322a082d19786c3",
+      "function_offset": 14,
+      "source_file_name": "panicking.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/panicking.rs",
+      "source_file_line": 92
+    },
+    {
+      "line": "#14 0x5557550f5142 in core::result::unwrap_failed::hbee7d9f7831678f0 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/option.rs:1329:5",
+      "address": 93833577582914,
+      "function_name": "core::result::unwrap_failed::hbee7d9f7831678f0",
+      "function_offset": 5,
+      "source_file_name": "option.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/option.rs",
+      "source_file_line": 1329
+    },
+    {
+      "line": "#15 0x55575538c673 in core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395 /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:1037:23",
+      "address": 93833580299891,
+      "function_name": "core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395",
+      "function_offset": 23,
+      "source_file_name": "result.rs",
+      "source_file_path": "/rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs",
+      "source_file_line": 1037
+    },
+    {
+      "line": "#16 0x55575538c673 in wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4 wasmtime/crates/fuzzing/src/oracles.rs:425:5",
+      "address": 93833580299891,
+      "function_name": "wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4",
+      "function_offset": 5,
+      "source_file_name": "oracles.rs",
+      "source_file_path": "wasmtime/crates/fuzzing/src/oracles.rs",
+      "source_file_line": 425
+    },
+    {
+      "line": "#17 0x5557551ae1d2 in rust_fuzzer_test_input wasmtime/fuzz/fuzz_targets/spectests.rs:8:5",
+      "address": 93833578340818,
+      "function_name": "rust_fuzzer_test_input",
+      "function_offset": 5,
+      "source_file_name": "spectests.rs",
+      "source_file_path": "wasmtime/fuzz/fuzz_targets/spectests.rs",
+      "source_file_line": 8
+    },
+    {
+      "line": "#18 0x55575931d2a0 in __rust_try",
+      "address": 93833646953120,
+      "function_name": "__rust_try"
+    },
+    {
+      "line": "#19 0x55575931ceff in std::panicking::try::h88270102441d9383 /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panicking.rs:343:19",
+      "address": 93833646952191,
+      "function_name": "std::panicking::try::h88270102441d9383",
+      "function_offset": 19,
+      "source_file_name": "panicking.rs",
+      "source_file_path": "/rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panicking.rs",
+      "source_file_line": 343
+    },
+    {
+      "line": "#20 0x55575931ceff in std::panic::catch_unwind::h3f9fd73d7e24a8da /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panic.rs:431:14",
+      "address": 93833646952191,
+      "function_name": "std::panic::catch_unwind::h3f9fd73d7e24a8da",
+      "function_offset": 14,
+      "source_file_name": "panic.rs",
+      "source_file_path": "/rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/panic.rs",
+      "source_file_line": 431
+    },
+    {
+      "line": "#21 0x55575931ceff in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs:25:22",
+      "address": 93833646952191,
+      "function_name": "LLVMFuzzerTestOneInput",
+      "function_offset": 22,
+      "source_file_name": "lib.rs",
+      "source_file_path": "/rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs",
+      "source_file_line": 25
+    },
+    {
+      "line": "#22 0x5557592cc4f3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15",
+      "address": 93833646621939,
+      "function_name": "fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)",
+      "function_offset": 15,
+      "source_file_name": "FuzzerLoop.cpp",
+      "source_file_path": "/src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp",
+      "source_file_line": 599
+    },
+    {
+      "line": "#23 0x5557592b6352 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6",
+      "address": 93833646531410,
+      "function_name": "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
+      "function_offset": 6,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 323
+    },
+    {
+      "line": "#24 0x5557592bc19a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9",
+      "address": 93833646555546,
+      "function_name": "fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long))",
+      "function_offset": 9,
+      "source_file_name": "FuzzerDriver.cpp",
+      "source_file_path": "/src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp",
+      "source_file_line": 856
+    },
+    {
+      "line": "#25 0x5557592e7eb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10",
+      "address": 93833646735026,
+      "function_name": "main",
+      "function_offset": 10,
+      "source_file_name": "FuzzerMain.cpp",
+      "source_file_path": "/src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp",
+      "source_file_line": 20
+    },
+    {
+      "line": "#26 0x7f24f6e0583f in __libc_start_main /build/glibc-e6zv40/glibc-2.23/csu/libc-start.c:291",
+      "address": 139796737447999,
+      "function_name": "__libc_start_main",
+      "source_file_name": "libc-start.c",
+      "source_file_path": "/build/glibc-e6zv40/glibc-2.23/csu/libc-start.c",
+      "source_file_line": 291
+    },
+    {
+      "line": "#27 0x5557550f65c8 in _start",
+      "address": 93833577588168,
+      "function_name": "_start"
+    }
+  ],
+  "full_stack_names": [
+    "__sanitizer_print_stack_trace",
+    "fuzzer::PrintStackTrace",
+    "fuzzer::Fuzzer::CrashCallback",
+    "raise",
+    "abort",
+    "std::sys::unix::abort_internal::h411dc3861a5cb281",
+    "std::process::abort::hd257d0bc0ddb140c",
+    "libfuzzer_sys::initialize::_$u7b$$u7b$closure$u7d$$u7d$::h8a22640c22e97ee8",
+    "std::panicking::rust_panic_with_hook::h70db735e3a6e70cb",
+    "std::panicking::begin_panic_handler::_$u7b$$u7b$closure$u7d$$u7d$::h777c71c8e5a7e25c",
+    "std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554",
+    "rust_begin_unwind",
+    "core::panicking::panic_fmt::h5322a082d19786c3",
+    "core::result::unwrap_failed::hbee7d9f7831678f0",
+    "core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395",
+    "wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4",
+    "rust_fuzzer_test_input",
+    "__rust_try",
+    "std::panicking::try::h88270102441d9383",
+    "std::panic::catch_unwind::h3f9fd73d7e24a8da",
+    "LLVMFuzzerTestOneInput",
+    "fuzzer::Fuzzer::ExecuteCallback",
+    "fuzzer::RunOneTest",
+    "fuzzer::FuzzerDriver",
+    "main",
+    "__libc_start_main",
+    "_start"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#11 0x555759370b2b in std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys_common/backtrace.rs:141:18",
+      "address": 93833647295275,
+      "function_name": "std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554",
+      "function_offset": 18,
+      "source_file_name": "backtrace.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys_common/backtrace.rs",
+      "source_file_line": 141
+    },
+    {
+      "line": "#13 0x5557550f5250 in core::panicking::panic_fmt::h5322a082d19786c3 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/panicking.rs:92:14",
+      "address": 93833577583184,
+      "function_name": "core::panicking::panic_fmt::h5322a082d19786c3",
+      "function_offset": 14,
+      "source_file_name": "panicking.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/panicking.rs",
+      "source_file_line": 92
+    },
+    {
+      "line": "#14 0x5557550f5142 in core::result::unwrap_failed::hbee7d9f7831678f0 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/option.rs:1329:5",
+      "address": 93833577582914,
+      "function_name": "core::result::unwrap_failed::hbee7d9f7831678f0",
+      "function_offset": 5,
+      "source_file_name": "option.rs",
+      "source_file_path": "/rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/option.rs",
+      "source_file_line": 1329
+    },
+    {
+      "line": "#15 0x55575538c673 in core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395 /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:1037:23",
+      "address": 93833580299891,
+      "function_name": "core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395",
+      "function_offset": 23,
+      "source_file_name": "result.rs",
+      "source_file_path": "/rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs",
+      "source_file_line": 1037
+    },
+    {
+      "line": "#16 0x55575538c673 in wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4 wasmtime/crates/fuzzing/src/oracles.rs:425:5",
+      "address": 93833580299891,
+      "function_name": "wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4",
+      "function_offset": 5,
+      "source_file_name": "oracles.rs",
+      "source_file_path": "wasmtime/crates/fuzzing/src/oracles.rs",
+      "source_file_line": 425
+    },
+    {
+      "line": "#21 0x55575931ceff in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs:25:22",
+      "address": 93833646952191,
+      "function_name": "lib.rs",
+      "function_offset": 22,
+      "source_file_name": "lib.rs",
+      "source_file_path": "/rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs",
+      "source_file_line": 25
+    }
+  ],
+  "minimized_stack": [
+    "#11 0x555759370b2b in std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/std/src/sys_common/backtrace.rs:141:18",
+    "#13 0x5557550f5250 in core::panicking::panic_fmt::h5322a082d19786c3 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/panicking.rs:92:14",
+    "#14 0x5557550f5142 in core::result::unwrap_failed::hbee7d9f7831678f0 /rustc/673d0db5e393e9c64897005b470bfeb6d5aec61b/library/core/src/option.rs:1329:5",
+    "#15 0x55575538c673 in core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395 /rust/rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:1037:23",
+    "#16 0x55575538c673 in wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4 wasmtime/crates/fuzzing/src/oracles.rs:425:5",
+    "#21 0x55575931ceff in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.4.0/src/lib.rs:25:22"
+  ],
+  "minimized_stack_function_names": [
+    "std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554",
+    "core::panicking::panic_fmt::h5322a082d19786c3",
+    "core::result::unwrap_failed::hbee7d9f7831678f0",
+    "core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395",
+    "wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4",
+    "lib.rs"
+  ]
+}
