@@ -644,7 +644,7 @@ class LiveRepro(Endpoint):
         def waiting_for_heartbeat() -> Tuple[bool, str, models.Task]:
             task = self._get_task_checked(task_id_expanded)
             return (
-                task.heartbeat is None,
+                task.heartbeat is not None,
                 "waiting for task heartbeat",
                 task,
             )
