@@ -5,6 +5,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
+  ACTIONS_CACHE_KEY_DATE: 2021-06-30-01
 
 jobs:
   agent:
@@ -19,7 +20,7 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-2020-11
+        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
         restore-keys: |
            rust-${{ runner.os }}
     - name: Install Rust Prereqs
@@ -32,7 +33,7 @@ jobs:
         path: |
           sccache
           src/agent/target
-        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-2021-05-14-01
+        key: agent-${{ runner.os }}-${{ hashFiles('src/agent/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
         restore-keys: |
            agent-${{ runner.os }}
     - name: Linux Prereqs
@@ -51,6 +52,7 @@ jobs:
         os:
         - ubuntu-18.04
         - windows-2019
+        - macos-10.15
   azcopy:
     runs-on: ubuntu-18.04
     steps:
@@ -173,7 +175,7 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-2020-09
+        key: rust-${{ runner.os }}-2020-06-25-01
         restore-keys: |
            rust-${{ runner.os }}
     - name: Install Rust Prereqs
@@ -186,7 +188,7 @@ jobs:
         path: |
           sccache
           src/proxy-manager/target
-        key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}
+        key: proxy-${{ runner.os }}-${{ hashFiles('src/proxy-manager/Cargo.lock') }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
         restore-keys: |
            proxy-${{ runner.os }}
     - run: src/ci/proxy.sh
@@ -306,7 +308,7 @@ jobs:
         set -ex
         cd src/deployment
         python -m pip install --upgrade pip
-        pip install mypy isort black
+        pip install mypy isort black types-requests
         mypy .
         isort --profile black . --check
         black . --check
@@ -323,12 +325,12 @@ jobs:
               cp artifacts/azcopy/azcopy artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/linux
               cp artifacts/azcopy/azcopy.exe artifacts/azcopy/ThirdPartyNotice.txt src/deployment/tools/win64
           fi
-          cp artifacts/agent/onefuzz-supervisor.exe src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz-agent.exe src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz_supervisor.pdb src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz_agent.pdb src/deployment/tools/win64/
-          cp artifacts/agent/onefuzz-supervisor src/deployment/tools/linux/
-          cp artifacts/agent/onefuzz-agent src/deployment/tools/linux/
+          cp artifacts/agent-MINGW*/onefuzz-supervisor.exe src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz-agent.exe src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz_supervisor.pdb src/deployment/tools/win64/
+          cp artifacts/agent-MINGW*/onefuzz_agent.pdb src/deployment/tools/win64/
+          cp artifacts/agent-Linux/onefuzz-supervisor src/deployment/tools/linux/
+          cp artifacts/agent-Linux/onefuzz-agent src/deployment/tools/linux/
           cp artifacts/proxy/onefuzz-proxy-manager src/deployment/tools/linux/
           cp artifacts/service/api-service.zip src/deployment
           cp -r artifacts/third-party src/deployment

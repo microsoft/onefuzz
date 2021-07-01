@@ -411,15 +411,6 @@
       "source_file_line": 451
     },
     {
-      "line": "#19 0x55fcb921f598 in rust_fuzzer_test_input mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs:28:12",
-      "address": 94543926130072,
-      "function_name": "rust_fuzzer_test_input",
-      "function_offset": 12,
-      "source_file_name": "avif.rs",
-      "source_file_path": "mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs",
-      "source_file_line": 28
-    },
-    {
       "line": "#23 0x55fcb941e0df in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs:25:22",
       "address": 94543928221919,
       "function_name": "lib.rs",
@@ -439,7 +430,6 @@
     "#16 0x55fcb9396625 in mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785 mp4parse-rust/mp4parse_capi/src/lib.rs:482:5",
     "#17 0x55fcb9395c07 in mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730 mp4parse-rust/mp4parse_capi/src/lib.rs:467:15",
     "#18 0x55fcb9395c07 in mp4parse_avif_new mp4parse-rust/mp4parse_capi/src/lib.rs:451:5",
-    "#19 0x55fcb921f598 in rust_fuzzer_test_input mp4parse-rust/mp4parse_capi/fuzz/fuzz_targets/avif.rs:28:12",
     "#23 0x55fcb941e0df in LLVMFuzzerTestOneInput /rust/registry/src/github.com-1ecc6299db9ec823/libfuzzer-sys-0.3.2/src/lib.rs:25:22"
   ],
   "minimized_stack_function_names": [
@@ -452,7 +442,6 @@
     "mp4parse_capi::mp4parse_new_common_safe::h0ca2c54532ffc785",
     "mp4parse_capi::mp4parse_new_common::h5bcbdbc95c2c6730",
     "mp4parse_avif_new",
-    "rust_fuzzer_test_input",
     "lib.rs"
   ]
 }

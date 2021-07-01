@@ -8,7 +8,7 @@ use tokio::fs;
 pub use stacktrace_parser::CrashLog;
 const ASAN_LOG_TRUNCATE_SIZE: usize = 4096;
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 pub fn add_asan_log_env<S: BuildHasher>(env: &mut HashMap<String, String, S>, asan_dir: &Path) {
     let asan_path = asan_dir.join("asan-log");
     let asan_path_as_str = asan_path.to_string_lossy();
@@ -35,7 +35,7 @@ pub fn add_asan_log_env<S: BuildHasher>(env: &mut HashMap<String, String, S>, as
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 pub fn add_asan_log_env<S: BuildHasher>(env: &mut HashMap<String, String, S>, asan_dir: &Path) {
     let asan_path = asan_dir.join("asan-log");
     let asan_path_as_str = asan_path.to_string_lossy();

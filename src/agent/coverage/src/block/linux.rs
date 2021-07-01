@@ -71,21 +71,28 @@ impl<'c> Recorder<'c> {
         options.remove(Options::PTRACE_O_TRACEFORK);
         options.remove(Options::PTRACE_O_TRACEVFORK);
         options.remove(Options::PTRACE_O_TRACEEXEC);
-        tracee.set_options(options)?;
+        tracee
+            .set_options(options)
+            .context("setting tracee options")?;
 
         self.images = Some(Images::new(tracee.pid.as_raw()));
-        self.update_images(&mut tracee)?;
+        self.update_images(&mut tracee)
+            .context("initial update of module images")?;
 
-        self.tracer.restart(tracee, Restart::Syscall)?;
+        self.tracer
+            .restart(tracee, Restart::Syscall)
+            .context("initial tracer restart")?;
 
-        while let Some(mut tracee) = self.tracer.wait()? {
+        while let Some(mut tracee) = self.tracer.wait().context("main tracing loop")? {
             match tracee.stop {
                 Stop::SyscallEnterStop(..) => log::trace!("syscall-enter: {:?}", tracee.stop),
                 Stop::SyscallExitStop(..) => {
-                    self.update_images(&mut tracee)?;
+                    self.update_images(&mut tracee)
+                        .context("updating module images after syscall-stop")?;
                 }
                 Stop::SignalDeliveryStop(_pid, Signal::SIGTRAP) => {
-                    self.on_breakpoint(&mut tracee)?;
+                    self.on_breakpoint(&mut tracee)
+                        .context("calling breakpoint handler")?;
                 }
                 Stop::Clone(pid, tid) => {
                     // Only seen when the `VM_CLONE` flag is set, as of Linux 4.15.
@@ -113,7 +120,8 @@ impl<'c> Recorder<'c> {
 
         for (_base, image) in &events.loaded {
             if self.filter.includes_module(image.path()) {
-                self.on_module_load(tracee, image)?;
+                self.on_module_load(tracee, image)
+                    .context("module load callback")?;
             }
         }
 
@@ -137,12 +145,16 @@ impl<'c> Recorder<'c> {
                 .find_va_image(pc)
                 .ok_or_else(|| format_err!("unable to find image for va = {:x}", pc))?;
 
-            let offset = image.va_to_offset(pc)?;
+            let offset = image
+                .va_to_offset(pc)
+                .context("converting PC to module offset")?;
             self.coverage.increment(image.path(), offset);
 
             // Execute clobbered instruction on restart.
             regs.rip = pc;
-            tracee.set_registers(regs)?;
+            tracee
+                .set_registers(regs)
+                .context("resetting PC in breakpoint handler")?;
         } else {
             // Assume the tracee concurrently executed an `int3` that we restored
             // in another handler.
@@ -151,7 +163,9 @@ impl<'c> Recorder<'c> {
             // clearing, but making their value a state.
             log::debug!("no breakpoint at {:x}, assuming race", pc);
             regs.rip = pc;
-            tracee.set_registers(regs)?;
+            tracee
+                .set_registers(regs)
+                .context("resetting PC after ignoring spurious breakpoint")?;
         }
 
         Ok(())
@@ -233,11 +247,11 @@ impl Images {
     }
 
     pub fn update(&mut self) -> Result<LoadEvents> {
-        let proc = Process::new(self.pid)?;
+        let proc = Process::new(self.pid).context("getting procinfo")?;
 
         let mut new = BTreeMap::default();
 
-        for map in proc.maps()? {
+        for map in proc.maps().context("getting maps for process")? {
             if let Ok(image) = ModuleImage::new(map) {
                 new.insert(image.base(), image);
             }
@@ -336,9 +350,8 @@ impl LoadEvents {
         let loaded: Vec<_> = new
             .iter()
             .filter(|(nva, n)| {
-                old.iter()
-                    .find(|(iva, i)| nva == iva && n.path() == i.path())
-                    .is_none()
+                !old.iter()
+                    .any(|(iva, i)| *nva == iva && n.path() == i.path())
             })
             .map(|(va, i)| (*va, i.clone()))
             .collect();
@@ -347,9 +360,8 @@ impl LoadEvents {
         let unloaded: Vec<_> = old
             .iter()
             .filter(|(iva, i)| {
-                new.iter()
-                    .find(|(nva, n)| nva == iva && n.path() == i.path())
-                    .is_none()
+                !new.iter()
+                    .any(|(nva, n)| nva == *iva && n.path() == i.path())
             })
             .map(|(va, i)| (*va, i.clone()))
             .collect();
@@ -374,7 +386,9 @@ impl Breakpoints {
         let mut data = [0u8];
         tracee.read_memory_mut(va, &mut data)?;
         self.saved.insert(va, data[0]);
-        tracee.write_memory(va, &[0xcc])?;
+        tracee
+            .write_memory(va, &[0xcc])
+            .context("setting breakpoint, writing int3")?;
 
         Ok(())
     }
@@ -383,7 +397,9 @@ impl Breakpoints {
         let data = self.saved.remove(&va);
 
         let cleared = if let Some(data) = data {
-            tracee.write_memory(va, &[data])?;
+            tracee
+                .write_memory(va, &[data])
+                .context("clearing breakpoint, restoring byte")?;
             true
         } else {
             false
@@ -399,7 +415,9 @@ fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
             return Ok(tracee);
         }
 
-        tracer.restart(tracee, Restart::Continue)?;
+        tracer
+            .restart(tracee, Restart::Continue)
+            .context("restarting tracee pre-execve()")?;
     }
 
     anyhow::bail!("did not see initial execve() in tracee while recording coverage");

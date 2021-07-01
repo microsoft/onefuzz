@@ -850,6 +850,7 @@ class Tasks(Endpoint):
         colocate: bool = False,
         report_list: Optional[List[str]] = None,
         minimized_stack_depth: Optional[int] = None,
+        coverage_filter: Optional[str] = None,
     ) -> models.Task:
         """
         Create a task
@@ -915,6 +916,7 @@ class Tasks(Endpoint):
                 report_list=report_list,
                 preserve_existing_outputs=preserve_existing_outputs,
                 minimized_stack_depth=minimized_stack_depth,
+                coverage_filter=coverage_filter,
             ),
         )
 
@@ -1561,6 +1563,22 @@ class ScalesetProxy(Endpoint):
         return self._req_model("GET", responses.ProxyList, data=requests.ProxyGet())
 
 
+class InstanceConfigCmd(Endpoint):
+    """Interact with Instance Configuration"""
+
+    endpoint = "instance_config"
+
+    def get(self) -> models.InstanceConfig:
+        return self._req_model("GET", models.InstanceConfig)
+
+    def update(self, config: models.InstanceConfig) -> models.InstanceConfig:
+        return self._req_model(
+            "POST",
+            models.InstanceConfig,
+            data=requests.InstanceConfigUpdate(config=config),
+        )
+
+
 class Command:
     def __init__(self, onefuzz: "Onefuzz", logger: logging.Logger):
         self.onefuzz = onefuzz
@@ -1638,6 +1656,7 @@ class Onefuzz:
         self.scalesets = Scaleset(self)
         self.nodes = Node(self)
         self.webhooks = Webhooks(self)
+        self.instance_config = InstanceConfigCmd(self)
 
         if self._backend.is_feature_enabled(PreviewFeature.job_templates.name):
             self.job_templates = JobTemplates(self)

@@ -17,13 +17,14 @@ use onefuzz_telemetry::{
     EventData,
 };
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tempfile::{tempdir_in, TempDir};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
-    sync::mpsc,
+    select,
+    sync::{mpsc, Notify},
     task,
-    time::{sleep, Duration},
+    time::{sleep, Duration, Instant},
 };
 use uuid::Uuid;
 
@@ -35,6 +36,9 @@ const PROC_INFO_PERIOD: Duration = Duration::from_secs(30);
 
 // Period of reporting fuzzer-generated runtime stats.
 const RUNTIME_STATS_PERIOD: Duration = Duration::from_secs(60);
+
+// Period for minimum duration between launches of libFuzzer
+const COOLOFF_PERIOD: Duration = Duration::from_secs(10);
 
 /// Maximum number of log message to safe in case of libFuzzer failing,
 /// arbitrarily chosen
@@ -159,6 +163,7 @@ impl LibFuzzerFuzzTask {
     ) -> Result<()> {
         let local_input_dir = self.create_local_temp_dir().await?;
         loop {
+            let instant = Instant::now();
             self.run_fuzzer(&local_input_dir.path(), worker_id, stats_sender)
                 .await?;
 
@@ -179,6 +184,13 @@ impl LibFuzzerFuzzTask {
                             destination_path.display()
                         )
                     })?;
+            }
+
+            // if libFuzzer is exiting rapidly, give some breathing room to allow the
+            // handles to be reaped.
+            let runtime = instant.elapsed();
+            if runtime < COOLOFF_PERIOD {
+                sleep(COOLOFF_PERIOD - runtime).await;
             }
         }
     }
@@ -212,11 +224,12 @@ impl LibFuzzerFuzzTask {
         );
         let mut running = fuzzer.fuzz(crash_dir.path(), local_inputs, &inputs)?;
         let running_id = running.id();
-
+        let notify = Arc::new(Notify::new());
         let sys_info = task::spawn(report_fuzzer_sys_info(
             worker_id,
             run_id,
             running_id.unwrap_or_default(),
+            notify.clone(),
         ));
 
         // Splitting borrow.
@@ -227,7 +240,6 @@ impl LibFuzzerFuzzTask {
         let mut stderr = BufReader::new(stderr);
 
         let mut libfuzzer_output: ArrayDeque<[_; LOGS_BUFFER_SIZE], Wrapping> = ArrayDeque::new();
-
         loop {
             let mut buf = vec![];
             let bytes_read = stderr.read_until(b'\n', &mut buf).await?;
@@ -243,7 +255,10 @@ impl LibFuzzerFuzzTask {
             libfuzzer_output.push_back(line);
         }
 
-        let (exit_status, _) = tokio::join!(running.wait(), sys_info);
+        let exit_status = running.wait().await;
+        notify.notify_one();
+        let _ = sys_info.await;
+
         let exit_status: ExitStatus = exit_status?.into();
 
         let files = list_files(crash_dir.path()).await?;
@@ -323,11 +338,23 @@ fn try_report_iter_update(
     Ok(())
 }
 
-async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32) -> Result<()> {
+async fn report_fuzzer_sys_info(
+    worker_id: usize,
+    run_id: Uuid,
+    fuzzer_pid: u32,
+    cancellation: Arc<Notify>,
+) -> Result<()> {
     // Allow for sampling CPU usage.
-    sleep(PROC_INFO_COLLECTION_DELAY).await;
-
+    let mut period = tokio::time::interval_at(
+        Instant::now() + PROC_INFO_COLLECTION_DELAY,
+        PROC_INFO_PERIOD,
+    );
     loop {
+        select! {
+            () = cancellation.notified() => break,
+            _ = period.tick() => (),
+        }
+
         // process doesn't exist
         if !system::refresh_process(fuzzer_pid)? {
             break;
@@ -348,8 +375,6 @@ async fn report_fuzzer_sys_info(worker_id: usize, run_id: Uuid, fuzzer_pid: u32)
             // The process no longer exists.
             break;
         }
-
-        sleep(PROC_INFO_PERIOD).await;
     }
 
     Ok(())
