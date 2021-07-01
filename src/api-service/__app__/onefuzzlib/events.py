@@ -30,9 +30,7 @@ def get_events() -> Optional[str]:
             break
 
     if events:
-        event_str = json.dumps({"target": "events", "arguments": events})
-        logging.info("signalr events: %s", event_str)
-        return event_str
+        return json.dumps({"target": "events", "arguments": events})
     else:
         return None
 
