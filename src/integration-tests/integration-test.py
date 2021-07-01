@@ -24,7 +24,7 @@ import re
 import sys
 from enum import Enum
 from shutil import which
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple
 from uuid import UUID, uuid4
 
 import requests
@@ -32,7 +32,7 @@ from onefuzz.api import Command, LiveRepro, Onefuzz
 from onefuzz.backend import ContainerWrapper, wait
 from onefuzz.cli import execute_api
 from onefuzztypes.enums import OS, ContainerType, TaskState
-from onefuzztypes.models import Job, Pool, Repro, Scaleset, Task
+from onefuzztypes.models import Job, Pool, Scaleset, Task
 from onefuzztypes.primitives import Container, Directory, File, PoolName, Region
 from pydantic import BaseModel, Field
 
@@ -513,27 +513,34 @@ class TestOnefuzz:
                     return (container.name, files.files[0])
         return None
 
-    def launch_repro(self) -> Tuple[bool, Dict[UUID, Tuple[Job, Union[Repro, Task]]]]:
+    def check_repro(self) -> bool:
         # launch repro for one report from all succeessful jobs
         has_cdb = bool(which("cdb.exe"))
         has_gdb = bool(which("gdb"))
 
         jobs = self.get_jobs()
+        success = True
+        commands: Dict[OS, Tuple[str, str]] = {
+            OS.windows: ("g\r\nr rip", r"^rip=[a-f0-9]{16}"),
+            OS.linux: ("info reg rip", r"^rip\s+0x[a-f0-9]+\s+0x[a-f0-9]+"),
+        }
 
-        result = True
-        repros = {}
+        pools = {x.os: x.name for x in self.get_pools()}
+
         for job in jobs:
             if not TARGETS[job.config.name].test_repro:
                 self.logger.info("not testing repro for %s", job.config.name)
                 continue
 
-            if TARGETS[job.config.name].os == OS.linux and not has_gdb:
+            target_os = TARGETS[job.config.name].os
+
+            if target_os == OS.linux and not has_gdb:
                 self.logger.warning(
                     "skipping repro for %s, missing gdb", job.config.name
                 )
                 continue
 
-            if TARGETS[job.config.name].os == OS.windows and not has_cdb:
+            if target_os == OS.windows and not has_cdb:
                 self.logger.warning(
                     "skipping repro for %s, missing cdb", job.config.name
                 )
@@ -544,57 +551,38 @@ class TestOnefuzz:
                 self.logger.error(
                     "target does not include crash reports: %s", job.config.name
                 )
-                result = False
+                continue
+
+            self.logger.info("launching repro: %s", job.config.name)
+            (container, path) = report
+
+            if isinstance(self.of.repro, LiveRepro):
+                result = self.of.repro.create_and_connect(
+                    container,
+                    path,
+                    pool_name=pools[target_os],
+                    duration=1,
+                    debug_command=commands[target_os][0],
+                    stop_after_use=True,
+                )
             else:
-                self.logger.info("launching repro: %s", job.config.name)
-                (container, path) = report
-                repro = self.of.repro.create(container, path, duration=1)
-                repros[job.job_id] = (job, repro)
-
-        return (result, repros)
-
-    def delete_repro(self, repro: Union[Repro, Task]) -> None:
-        if isinstance(repro, Task):
-            self.of.tasks.delete(repro.task_id)
-        elif isinstance(self.of.repro, LiveRepro):
-            raise Exception("invalid repro & self.of.repro instances")
-        else:
-            self.of.repro.delete(repro.vm_id)
-
-    def check_repro(self, repros: Dict[UUID, Tuple[Job, Union[Repro, Task]]]) -> bool:
-        self.logger.info("checking repros")
-        self.success = True
-
-        commands: Dict[OS, Tuple[str, str]] = {
-            OS.windows: ("g\r\nr rip", r"^rip=[a-f0-9]{16}"),
-            OS.linux: ("info reg rip", r"^rip\s+0x[a-f0-9]+\s+0x[a-f0-9]+"),
-        }
-
-        for (job, repro) in list(repros.values()):
-            try:
-                repro_id: UUID = (
-                    repro.vm_id if isinstance(repro, Repro) else repro.task_id
+                result = self.of.repro.create_and_connect(
+                    container,
+                    path,
+                    duration=1,
+                    debug_command=commands[target_os][0],
+                    delete_after_use=True,
                 )
-                self.logger.info(
-                    "connecting to repo: %s - %s", job.config.name, repro_id
-                )
-                result = self.of.repro.connect(
-                    repro_id,
-                    debug_command=commands[repro.os][0],
-                )
-                if result is not None and re.search(
-                    commands[repro.os][1], result, re.MULTILINE
-                ):
-                    self.logger.info("repro succeeded: %s", job.config.name)
-                else:
-                    self.logger.error("repro failed: %s - %s", job.config.name, result)
-                    self.success = False
-            except Exception as err:
-                self.logger.error("repro failed: %s - %s", job.config.name, err)
-                self.success = False
-            self.delete_repro(repro)
-            del repros[job.job_id]
-        return self.success
+
+            if result is not None and re.search(
+                commands[target_os][1], result, re.MULTILINE
+            ):
+                self.logger.info("repro succeeded: %s", job.config.name)
+            else:
+                self.logger.error("repro failed: %s - %s", job.config.name, result)
+                success = False
+
+        return success
 
     def get_jobs(self) -> List[Job]:
         jobs = self.of.jobs.list(job_state=None)
@@ -794,9 +782,9 @@ class Run(Command):
     def check_repros(self, test_id: UUID, *, endpoint: Optional[str]) -> None:
         self.onefuzz.__setup__(endpoint=endpoint)
         tester = TestOnefuzz(self.onefuzz, self.logger, test_id)
-        launch_result, repros = tester.launch_repro()
-        result = tester.check_repro(repros)
-        if not (result and launch_result):
+
+        result = tester.check_repro()
+        if not result:
             raise Exception("repros failed")
 
     def launch(
