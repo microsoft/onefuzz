@@ -75,7 +75,9 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
                 );
             }
 
-            if result.stdout.to_string().contains("NT AUTHORITY\\SYSTEM") {
+            let stdout = String::from_utf8_lossy(&result.stdout).to_string();
+
+            if stdout.contains("NT AUTHORITY\\SYSTEM") {
                 let result = Command::new("icacls.exe")
                     .arg(&admin_auth_keys_path)
                     .arg("/remove")
