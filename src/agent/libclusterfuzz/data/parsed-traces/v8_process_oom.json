@@ -1,0 +1,478 @@
+{
+  "text": "[Environment] ASAN_OPTIONS=alloc_dealloc_mismatch=0:allocator_may_return_null=1:allow_user_segv_handler=1:check_malloc_usable_size=0:detect_leaks=1:detect_odr_violation=0:detect_stack_use_after_return=1:external_symbolizer_path=/mnt/scratch0/clusterfuzz/resources/platform/linux/llvm-symbolizer:fast_unwind_on_fatal=1:handle_abort=1:handle_segv=1:handle_sigbus=1:handle_sigfpe=1:handle_sigill=1:handle_sigtrap=1:max_uar_stack_size_log=16:print_scariness=1:print_summary=1:print_suppressions=0:redzone=32:strict_memcmp=0:symbolize=1:symbolize_inline_frames=false:use_sigaltstack=1\n[Command line] /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/d8 --random-seed=-1614433762 --fuzzing --fuzzing --disable-abortjs --disable-in-process-stack-traces --future --no-untrusted-code-mitigations --stress-scavenge=100 --no-enable-sse4_1 --no-wasm-generic-wrapper --turbo-stress-instruction-scheduling --fuzzing /mnt/scratch0/clusterfuzz/bot/inputs/fuzzer-testcases-disk/fuzz-27.js\n+----------------------------------------Debug Build Stacktrace----------------------------------------+\n#\n# Fatal error in ../../src/base/small-vector.h, line 162\n# Fatal process out of memory: base::SmallVector::Grow\n#\n#\n#\n#FailureMessage Object: 0xedd6f820\n==== C stack trace ===============================\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/d8(backtrace+0x59) [0x56668d69]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8_libbase.so(v8::base::debug::StackTrace::StackTrace()+0x27) [0xf0613df7]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8_libplatform.so(+0x4667e) [0xf057667e]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8_libbase.so(V8_Fatal(char const*, int, char const*, ...)+0x200) [0xf05e2790]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x4e8bb5a) [0xf54aeb5a]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow()+0x1e) [0xf54ae92e]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>(v8::internal::Vector<unsigned char const>, v8::internal::FixedArray, int, int)+0x10b4) [0xf5443234]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(v8::internal::CompiledReplacement::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, int, int)+0x667) [0xf5440e27]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x4e71641) [0xf5494641]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x4e5c7c0) [0xf547f7c0]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(v8::internal::Runtime_RegExpReplaceRT(int, unsigned int*, v8::internal::Isolate*)+0x1ef) [0xf547dd8f]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x179e863) [0xf1dc1863]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x19c9632) [0xf1fec632]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x175ab61) [0xf1d7db61]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x14df2e2) [0xf1b022e2]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x14d7f58) [0xf1afaf58]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x14d7d85) [0xf1afad85]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(+0x29e775b) [0xf300a75b]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*)+0x27a) [0xf3007afa]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so(v8::Script::Run(v8::Local<v8::Context>)+0xbf2) [0xf22fcb52]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/d8(v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue)+0xdf1) [0x5670fa01]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/d8(v8::SourceGroup::Execute(v8::Isolate*)+0x67a) [0x5676d22a]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/d8(v8::Shell::RunMain(v8::Isolate*, bool)+0x444) [0x56779904]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/d8(v8::Shell::Main(int, char**)+0x2cd1) [0x56782001]\n    /mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/d8(main+0x1f) [0x56783bbf]\n    /lib/i386-linux-gnu/libc.so.6(__libc_start_main+0xf7) [0xef032637]\nAddressSanitizer:DEADLYSIGNAL\n=================================================================\n==1939064==ERROR: AddressSanitizer: TRAP on unknown address 0x00000000 (pc 0xf060e8f5 bp 0xff948ff8 sp 0xff948ff0 T0)\nSCARINESS: 10 (signal)\n    #0 0xf060e8f5 in v8::base::OS::Abort() src/base/platform/platform-posix.cc:502:5\n    #1 0xf05e27b7 in V8_Fatal(char const*, int, char const*, ...) src/base/logging.cc:167:3\n    #2 0xf54aeb59 in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow(unsigned int) src/base/small-vector.h:162:7\n    #3 0xf54ae92d in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow() src/base/small-vector.h:148:34\n    #4 0xf5443233 in bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>(v8::internal::Vector<unsigned char const>, v8::internal::FixedArray, int, int) src/base/small-vector.h:112:52\n    #5 0xf5440e26 in v8::internal::CompiledReplacement::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, int, int) src/runtime/runtime-regexp.cc:345:11\n    #6 0xf5494640 in v8::internal::(anonymous namespace)::RegExpReplace(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::String>) src/runtime/runtime-regexp.cc:632:52\n    #7 0xf547f7bf in v8::internal::__RT_impl_Runtime_RegExpReplaceRT(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1812:5\n    #8 0xf547dd8e in v8::internal::Runtime_RegExpReplaceRT(int, unsigned int*, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1786:1\n    #9 0xf1dc1862 in Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x179e862)\n    #10 0xf1fec631 in Builtins_RegExpReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x19c9631)\n    #11 0xf1d7db60 in Builtins_StringPrototypeReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x175ab60)\n    #12 0xf1b022e1 in Builtins_InterpreterEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14df2e1)\n    #13 0xf1afaf57 in Builtins_JSEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7f57)\n    #14 0xf1afad84 in Builtins_JSEntry (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7d84)\n    #15 0xf300a75a in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/simulator.h:144:12\n    #16 0xf3007af9 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution/execution.cc:466:10\n    #17 0xf22fcb51 in v8::Script::Run(v8::Local<v8::Context>) src/api/api.cc:1947:7\n    #18 0x5670fa00 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8/d8.cc:717:28\n    #19 0x5676d229 in v8::SourceGroup::Execute(v8::Isolate*) src/d8/d8.cc:3592:10\n    #20 0x56779903 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:4245:39\n    #21 0x56782000 in v8::Shell::Main(int, char**) src/d8/d8.cc:4967:18\n    #22 0x56783bbe in main src/d8/d8.cc:5052:43\n    #23 0xef032636 in __libc_start_main (/lib/i386-linux-gnu/libc.so.6+0x18636)\nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: TRAP src/base/platform/platform-posix.cc:502:5 in v8::base::OS::Abort()\n==1939064==ABORTING\n",
+  "sanitizer": "AddressSanitizer",
+  "summary": "AddressSanitizer: TRAP src/base/platform/platform-posix.cc:502:5 in v8::base::OS::Abort()",
+  "fault_type": "TRAP",
+  "call_stack": [
+    "#0 0xf060e8f5 in v8::base::OS::Abort() src/base/platform/platform-posix.cc:502:5",
+    "#1 0xf05e27b7 in V8_Fatal(char const*, int, char const*, ...) src/base/logging.cc:167:3",
+    "#2 0xf54aeb59 in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow(unsigned int) src/base/small-vector.h:162:7",
+    "#3 0xf54ae92d in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow() src/base/small-vector.h:148:34",
+    "#4 0xf5443233 in bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>(v8::internal::Vector<unsigned char const>, v8::internal::FixedArray, int, int) src/base/small-vector.h:112:52",
+    "#5 0xf5440e26 in v8::internal::CompiledReplacement::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, int, int) src/runtime/runtime-regexp.cc:345:11",
+    "#6 0xf5494640 in v8::internal::(anonymous namespace)::RegExpReplace(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::String>) src/runtime/runtime-regexp.cc:632:52",
+    "#7 0xf547f7bf in v8::internal::__RT_impl_Runtime_RegExpReplaceRT(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1812:5",
+    "#8 0xf547dd8e in v8::internal::Runtime_RegExpReplaceRT(int, unsigned int*, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1786:1",
+    "#9 0xf1dc1862 in Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x179e862)",
+    "#10 0xf1fec631 in Builtins_RegExpReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x19c9631)",
+    "#11 0xf1d7db60 in Builtins_StringPrototypeReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x175ab60)",
+    "#12 0xf1b022e1 in Builtins_InterpreterEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14df2e1)",
+    "#13 0xf1afaf57 in Builtins_JSEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7f57)",
+    "#14 0xf1afad84 in Builtins_JSEntry (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7d84)",
+    "#15 0xf300a75a in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/simulator.h:144:12",
+    "#16 0xf3007af9 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution/execution.cc:466:10",
+    "#17 0xf22fcb51 in v8::Script::Run(v8::Local<v8::Context>) src/api/api.cc:1947:7",
+    "#18 0x5670fa00 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8/d8.cc:717:28",
+    "#19 0x5676d229 in v8::SourceGroup::Execute(v8::Isolate*) src/d8/d8.cc:3592:10",
+    "#20 0x56779903 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:4245:39",
+    "#21 0x56782000 in v8::Shell::Main(int, char**) src/d8/d8.cc:4967:18",
+    "#22 0x56783bbe in main src/d8/d8.cc:5052:43",
+    "#23 0xef032636 in __libc_start_main (/lib/i386-linux-gnu/libc.so.6+0x18636)"
+  ],
+  "full_stack_details": [
+    {
+      "line": "#0 0xf060e8f5 in v8::base::OS::Abort() src/base/platform/platform-posix.cc:502:5",
+      "address": 4032882933,
+      "function_name": "v8::base::OS::Abort()",
+      "function_offset": 5,
+      "source_file_name": "platform-posix.cc",
+      "source_file_path": "src/base/platform/platform-posix.cc",
+      "source_file_line": 502
+    },
+    {
+      "line": "#1 0xf05e27b7 in V8_Fatal(char const*, int, char const*, ...) src/base/logging.cc:167:3",
+      "address": 4032702391,
+      "function_name": "V8_Fatal(char const*, int, char const*, ...)",
+      "function_offset": 3,
+      "source_file_name": "logging.cc",
+      "source_file_path": "src/base/logging.cc",
+      "source_file_line": 167
+    },
+    {
+      "line": "#2 0xf54aeb59 in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow(unsigned int) src/base/small-vector.h:162:7",
+      "address": 4115327833,
+      "function_name": "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow(unsigned int)",
+      "function_offset": 7,
+      "source_file_name": "small-vector.h",
+      "source_file_path": "src/base/small-vector.h",
+      "source_file_line": 162
+    },
+    {
+      "line": "#3 0xf54ae92d in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow() src/base/small-vector.h:148:34",
+      "address": 4115327277,
+      "function_name": "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow()",
+      "function_offset": 34,
+      "source_file_name": "small-vector.h",
+      "source_file_path": "src/base/small-vector.h",
+      "source_file_line": 148
+    },
+    {
+      "line": "#4 0xf5443233 in bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>(v8::internal::Vector<unsigned char const>, v8::internal::FixedArray, int, int) src/base/small-vector.h:112:52",
+      "address": 4114887219,
+      "function_name": "bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>(v8::internal::Vector<unsigned char const>, v8::internal::FixedArray, int, int)",
+      "function_offset": 52,
+      "source_file_name": "small-vector.h",
+      "source_file_path": "src/base/small-vector.h",
+      "source_file_line": 112
+    },
+    {
+      "line": "#5 0xf5440e26 in v8::internal::CompiledReplacement::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, int, int) src/runtime/runtime-regexp.cc:345:11",
+      "address": 4114877990,
+      "function_name": "v8::internal::CompiledReplacement::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, int, int)",
+      "function_offset": 11,
+      "source_file_name": "runtime-regexp.cc",
+      "source_file_path": "src/runtime/runtime-regexp.cc",
+      "source_file_line": 345
+    },
+    {
+      "line": "#6 0xf5494640 in v8::internal::(anonymous namespace)::RegExpReplace(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::String>) src/runtime/runtime-regexp.cc:632:52",
+      "address": 4115220032,
+      "function_name": "v8::internal::(anonymous namespace)::RegExpReplace(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::String>)",
+      "function_offset": 52,
+      "source_file_name": "runtime-regexp.cc",
+      "source_file_path": "src/runtime/runtime-regexp.cc",
+      "source_file_line": 632
+    },
+    {
+      "line": "#7 0xf547f7bf in v8::internal::__RT_impl_Runtime_RegExpReplaceRT(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1812:5",
+      "address": 4115134399,
+      "function_name": "v8::internal::__RT_impl_Runtime_RegExpReplaceRT(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*)",
+      "function_offset": 5,
+      "source_file_name": "runtime-regexp.cc",
+      "source_file_path": "src/runtime/runtime-regexp.cc",
+      "source_file_line": 1812
+    },
+    {
+      "line": "#8 0xf547dd8e in v8::internal::Runtime_RegExpReplaceRT(int, unsigned int*, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1786:1",
+      "address": 4115127694,
+      "function_name": "v8::internal::Runtime_RegExpReplaceRT(int, unsigned int*, v8::internal::Isolate*)",
+      "function_offset": 1,
+      "source_file_name": "runtime-regexp.cc",
+      "source_file_path": "src/runtime/runtime-regexp.cc",
+      "source_file_line": 1786
+    },
+    {
+      "line": "#9 0xf1dc1862 in Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x179e862)",
+      "address": 4057733218,
+      "function_name": "Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 24766562
+    },
+    {
+      "line": "#10 0xf1fec631 in Builtins_RegExpReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x19c9631)",
+      "address": 4060005937,
+      "function_name": "Builtins_RegExpReplace",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 27039281
+    },
+    {
+      "line": "#11 0xf1d7db60 in Builtins_StringPrototypeReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x175ab60)",
+      "address": 4057455456,
+      "function_name": "Builtins_StringPrototypeReplace",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 24488800
+    },
+    {
+      "line": "#12 0xf1b022e1 in Builtins_InterpreterEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14df2e1)",
+      "address": 4054852321,
+      "function_name": "Builtins_InterpreterEntryTrampoline",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 21885665
+    },
+    {
+      "line": "#13 0xf1afaf57 in Builtins_JSEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7f57)",
+      "address": 4054822743,
+      "function_name": "Builtins_JSEntryTrampoline",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 21856087
+    },
+    {
+      "line": "#14 0xf1afad84 in Builtins_JSEntry (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7d84)",
+      "address": 4054822276,
+      "function_name": "Builtins_JSEntry",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 21855620
+    },
+    {
+      "line": "#15 0xf300a75a in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/simulator.h:144:12",
+      "address": 4076906330,
+      "function_name": "v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&)",
+      "function_offset": 12,
+      "source_file_name": "simulator.h",
+      "source_file_path": "src/execution/simulator.h",
+      "source_file_line": 144
+    },
+    {
+      "line": "#16 0xf3007af9 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution/execution.cc:466:10",
+      "address": 4076894969,
+      "function_name": "v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*)",
+      "function_offset": 10,
+      "source_file_name": "execution.cc",
+      "source_file_path": "src/execution/execution.cc",
+      "source_file_line": 466
+    },
+    {
+      "line": "#17 0xf22fcb51 in v8::Script::Run(v8::Local<v8::Context>) src/api/api.cc:1947:7",
+      "address": 4063218513,
+      "function_name": "v8::Script::Run(v8::Local<v8::Context>)",
+      "function_offset": 7,
+      "source_file_name": "api.cc",
+      "source_file_path": "src/api/api.cc",
+      "source_file_line": 1947
+    },
+    {
+      "line": "#18 0x5670fa00 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8/d8.cc:717:28",
+      "address": 1450244608,
+      "function_name": "v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue)",
+      "function_offset": 28,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8/d8.cc",
+      "source_file_line": 717
+    },
+    {
+      "line": "#19 0x5676d229 in v8::SourceGroup::Execute(v8::Isolate*) src/d8/d8.cc:3592:10",
+      "address": 1450627625,
+      "function_name": "v8::SourceGroup::Execute(v8::Isolate*)",
+      "function_offset": 10,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8/d8.cc",
+      "source_file_line": 3592
+    },
+    {
+      "line": "#20 0x56779903 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:4245:39",
+      "address": 1450678531,
+      "function_name": "v8::Shell::RunMain(v8::Isolate*, bool)",
+      "function_offset": 39,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8/d8.cc",
+      "source_file_line": 4245
+    },
+    {
+      "line": "#21 0x56782000 in v8::Shell::Main(int, char**) src/d8/d8.cc:4967:18",
+      "address": 1450713088,
+      "function_name": "v8::Shell::Main(int, char**)",
+      "function_offset": 18,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8/d8.cc",
+      "source_file_line": 4967
+    },
+    {
+      "line": "#22 0x56783bbe in main src/d8/d8.cc:5052:43",
+      "address": 1450720190,
+      "function_name": "main",
+      "function_offset": 43,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8/d8.cc",
+      "source_file_line": 5052
+    },
+    {
+      "line": "#23 0xef032636 in __libc_start_main (/lib/i386-linux-gnu/libc.so.6+0x18636)",
+      "address": 4009961014,
+      "function_name": "__libc_start_main",
+      "module_path": "/lib/i386-linux-gnu/libc.so.6",
+      "module_offset": 99894
+    }
+  ],
+  "full_stack_names": [
+    "v8::base::OS::Abort",
+    "V8_Fatal",
+    "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow",
+    "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow",
+    "bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>",
+    "v8::internal::CompiledReplacement::Compile",
+    "v8::internal::",
+    "v8::internal::__RT_impl_Runtime_RegExpReplaceRT",
+    "v8::internal::Runtime_RegExpReplaceRT",
+    "Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit",
+    "Builtins_RegExpReplace",
+    "Builtins_StringPrototypeReplace",
+    "Builtins_InterpreterEntryTrampoline",
+    "Builtins_JSEntryTrampoline",
+    "Builtins_JSEntry",
+    "v8::internal::",
+    "v8::internal::Execution::Call",
+    "v8::Script::Run",
+    "v8::Shell::ExecuteString",
+    "v8::SourceGroup::Execute",
+    "v8::Shell::RunMain",
+    "v8::Shell::Main",
+    "main",
+    "__libc_start_main"
+  ],
+  "minimized_stack_details": [
+    {
+      "line": "#2 0xf54aeb59 in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow(unsigned int) src/base/small-vector.h:162:7",
+      "address": 4115327833,
+      "function_name": "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow(unsigned int)",
+      "function_offset": 7,
+      "source_file_name": "small-vector.h",
+      "source_file_path": "src/base/small-vector.h",
+      "source_file_line": 162
+    },
+    {
+      "line": "#3 0xf54ae92d in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow() src/base/small-vector.h:148:34",
+      "address": 4115327277,
+      "function_name": "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow()",
+      "function_offset": 34,
+      "source_file_name": "small-vector.h",
+      "source_file_path": "src/base/small-vector.h",
+      "source_file_line": 148
+    },
+    {
+      "line": "#4 0xf5443233 in bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>(v8::internal::Vector<unsigned char const>, v8::internal::FixedArray, int, int) src/base/small-vector.h:112:52",
+      "address": 4114887219,
+      "function_name": "bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>(v8::internal::Vector<unsigned char const>, v8::internal::FixedArray, int, int)",
+      "function_offset": 52,
+      "source_file_name": "small-vector.h",
+      "source_file_path": "src/base/small-vector.h",
+      "source_file_line": 112
+    },
+    {
+      "line": "#5 0xf5440e26 in v8::internal::CompiledReplacement::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, int, int) src/runtime/runtime-regexp.cc:345:11",
+      "address": 4114877990,
+      "function_name": "v8::internal::CompiledReplacement::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, int, int)",
+      "function_offset": 11,
+      "source_file_name": "runtime-regexp.cc",
+      "source_file_path": "src/runtime/runtime-regexp.cc",
+      "source_file_line": 345
+    },
+    {
+      "line": "#6 0xf5494640 in v8::internal::(anonymous namespace)::RegExpReplace(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::String>) src/runtime/runtime-regexp.cc:632:52",
+      "address": 4115220032,
+      "function_name": "v8::internal::(anonymous namespace)::RegExpReplace(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::String>)",
+      "function_offset": 52,
+      "source_file_name": "runtime-regexp.cc",
+      "source_file_path": "src/runtime/runtime-regexp.cc",
+      "source_file_line": 632
+    },
+    {
+      "line": "#7 0xf547f7bf in v8::internal::__RT_impl_Runtime_RegExpReplaceRT(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1812:5",
+      "address": 4115134399,
+      "function_name": "v8::internal::__RT_impl_Runtime_RegExpReplaceRT(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*)",
+      "function_offset": 5,
+      "source_file_name": "runtime-regexp.cc",
+      "source_file_path": "src/runtime/runtime-regexp.cc",
+      "source_file_line": 1812
+    },
+    {
+      "line": "#8 0xf547dd8e in v8::internal::Runtime_RegExpReplaceRT(int, unsigned int*, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1786:1",
+      "address": 4115127694,
+      "function_name": "v8::internal::Runtime_RegExpReplaceRT(int, unsigned int*, v8::internal::Isolate*)",
+      "function_offset": 1,
+      "source_file_name": "runtime-regexp.cc",
+      "source_file_path": "src/runtime/runtime-regexp.cc",
+      "source_file_line": 1786
+    },
+    {
+      "line": "#9 0xf1dc1862 in Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x179e862)",
+      "address": 4057733218,
+      "function_name": "Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 24766562
+    },
+    {
+      "line": "#10 0xf1fec631 in Builtins_RegExpReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x19c9631)",
+      "address": 4060005937,
+      "function_name": "Builtins_RegExpReplace",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 27039281
+    },
+    {
+      "line": "#11 0xf1d7db60 in Builtins_StringPrototypeReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x175ab60)",
+      "address": 4057455456,
+      "function_name": "Builtins_StringPrototypeReplace",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 24488800
+    },
+    {
+      "line": "#12 0xf1b022e1 in Builtins_InterpreterEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14df2e1)",
+      "address": 4054852321,
+      "function_name": "Builtins_InterpreterEntryTrampoline",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 21885665
+    },
+    {
+      "line": "#13 0xf1afaf57 in Builtins_JSEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7f57)",
+      "address": 4054822743,
+      "function_name": "Builtins_JSEntryTrampoline",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 21856087
+    },
+    {
+      "line": "#14 0xf1afad84 in Builtins_JSEntry (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7d84)",
+      "address": 4054822276,
+      "function_name": "Builtins_JSEntry",
+      "module_path": "/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so",
+      "module_offset": 21855620
+    },
+    {
+      "line": "#15 0xf300a75a in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/simulator.h:144:12",
+      "address": 4076906330,
+      "function_name": "v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&)",
+      "function_offset": 12,
+      "source_file_name": "simulator.h",
+      "source_file_path": "src/execution/simulator.h",
+      "source_file_line": 144
+    },
+    {
+      "line": "#16 0xf3007af9 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution/execution.cc:466:10",
+      "address": 4076894969,
+      "function_name": "v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*)",
+      "function_offset": 10,
+      "source_file_name": "execution.cc",
+      "source_file_path": "src/execution/execution.cc",
+      "source_file_line": 466
+    },
+    {
+      "line": "#17 0xf22fcb51 in v8::Script::Run(v8::Local<v8::Context>) src/api/api.cc:1947:7",
+      "address": 4063218513,
+      "function_name": "v8::Script::Run(v8::Local<v8::Context>)",
+      "function_offset": 7,
+      "source_file_name": "api.cc",
+      "source_file_path": "src/api/api.cc",
+      "source_file_line": 1947
+    },
+    {
+      "line": "#18 0x5670fa00 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8/d8.cc:717:28",
+      "address": 1450244608,
+      "function_name": "v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue)",
+      "function_offset": 28,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8/d8.cc",
+      "source_file_line": 717
+    },
+    {
+      "line": "#19 0x5676d229 in v8::SourceGroup::Execute(v8::Isolate*) src/d8/d8.cc:3592:10",
+      "address": 1450627625,
+      "function_name": "v8::SourceGroup::Execute(v8::Isolate*)",
+      "function_offset": 10,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8/d8.cc",
+      "source_file_line": 3592
+    },
+    {
+      "line": "#20 0x56779903 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:4245:39",
+      "address": 1450678531,
+      "function_name": "v8::Shell::RunMain(v8::Isolate*, bool)",
+      "function_offset": 39,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8/d8.cc",
+      "source_file_line": 4245
+    },
+    {
+      "line": "#21 0x56782000 in v8::Shell::Main(int, char**) src/d8/d8.cc:4967:18",
+      "address": 1450713088,
+      "function_name": "v8::Shell::Main(int, char**)",
+      "function_offset": 18,
+      "source_file_name": "d8.cc",
+      "source_file_path": "src/d8/d8.cc",
+      "source_file_line": 4967
+    }
+  ],
+  "minimized_stack": [
+    "#2 0xf54aeb59 in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow(unsigned int) src/base/small-vector.h:162:7",
+    "#3 0xf54ae92d in v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow() src/base/small-vector.h:148:34",
+    "#4 0xf5443233 in bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>(v8::internal::Vector<unsigned char const>, v8::internal::FixedArray, int, int) src/base/small-vector.h:112:52",
+    "#5 0xf5440e26 in v8::internal::CompiledReplacement::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, int, int) src/runtime/runtime-regexp.cc:345:11",
+    "#6 0xf5494640 in v8::internal::(anonymous namespace)::RegExpReplace(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::String>) src/runtime/runtime-regexp.cc:632:52",
+    "#7 0xf547f7bf in v8::internal::__RT_impl_Runtime_RegExpReplaceRT(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1812:5",
+    "#8 0xf547dd8e in v8::internal::Runtime_RegExpReplaceRT(int, unsigned int*, v8::internal::Isolate*) src/runtime/runtime-regexp.cc:1786:1",
+    "#9 0xf1dc1862 in Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x179e862)",
+    "#10 0xf1fec631 in Builtins_RegExpReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x19c9631)",
+    "#11 0xf1d7db60 in Builtins_StringPrototypeReplace (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x175ab60)",
+    "#12 0xf1b022e1 in Builtins_InterpreterEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14df2e1)",
+    "#13 0xf1afaf57 in Builtins_JSEntryTrampoline (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7f57)",
+    "#14 0xf1afad84 in Builtins_JSEntry (/mnt/scratch0/clusterfuzz/bot/builds/v8-asan_linux32-debug_4b8d2476f1dfb5046c7aba7b6c92fb41b8ab7e80/revisions/d8-asan-linux32-debug-v8-component-74452/libv8.so+0x14d7d84)",
+    "#15 0xf300a75a in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/simulator.h:144:12",
+    "#16 0xf3007af9 in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) src/execution/execution.cc:466:10",
+    "#17 0xf22fcb51 in v8::Script::Run(v8::Local<v8::Context>) src/api/api.cc:1947:7",
+    "#18 0x5670fa00 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) src/d8/d8.cc:717:28",
+    "#19 0x5676d229 in v8::SourceGroup::Execute(v8::Isolate*) src/d8/d8.cc:3592:10",
+    "#20 0x56779903 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:4245:39",
+    "#21 0x56782000 in v8::Shell::Main(int, char**) src/d8/d8.cc:4967:18"
+  ],
+  "minimized_stack_function_names": [
+    "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow",
+    "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow",
+    "bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>",
+    "v8::internal::CompiledReplacement::Compile",
+    "v8::internal::",
+    "v8::internal::__RT_impl_Runtime_RegExpReplaceRT",
+    "v8::internal::Runtime_RegExpReplaceRT",
+    "Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit",
+    "Builtins_RegExpReplace",
+    "Builtins_StringPrototypeReplace",
+    "Builtins_InterpreterEntryTrampoline",
+    "Builtins_JSEntryTrampoline",
+    "Builtins_JSEntry",
+    "v8::internal::",
+    "v8::internal::Execution::Call",
+    "v8::Script::Run",
+    "v8::Shell::ExecuteString",
+    "v8::SourceGroup::Execute",
+    "v8::Shell::RunMain",
+    "v8::Shell::Main"
+  ],
+  "scariness_score": 10,
+  "scariness_description": "signal"
+}
