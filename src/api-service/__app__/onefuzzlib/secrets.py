@@ -5,7 +5,7 @@
 
 
 import os
-from typing import Tuple, Type, TypeVar, cast
+from typing import Tuple, Type, TypeVar
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -38,7 +38,7 @@ def save_to_keyvault(secret_data: SecretData) -> SecretData:
 def get_secret_string_value(self: SecretData[str]) -> str:
     if isinstance(self.secret, SecretAddress):
         secret = get_secret(self.secret.url)
-        return cast(str, secret.value)
+        return secret.value
     else:
         return self.secret
 
@@ -79,4 +79,4 @@ def get_secret_obj(secret_url: str, model: Type[A]) -> A:
 def delete_secret(secret_url: str) -> None:
     (vault_url, secret_name) = parse_secret_url(secret_url)
     keyvault_client = get_keyvault_client(vault_url)
-    keyvault_client.begin_delete_secret(secret_name).wait()
+    keyvault_client.begin_delete_secret(secret_name)

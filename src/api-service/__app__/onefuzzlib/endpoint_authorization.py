@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Callable
+from typing import Callable, Optional
 from uuid import UUID
 
 import azure.functions as func
@@ -13,6 +13,7 @@ from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, UserInfo
 
 from .azure.creds import get_scaleset_principal_id
+from .config import InstanceConfig
 from .request import not_ok
 from .user_credentials import parse_jwt_token
 from .workers.pools import Pool
@@ -41,6 +42,57 @@ def is_agent(token_data: UserInfo) -> bool:
         return True
 
     return False
+
+
+def can_modify_config_impl(config: InstanceConfig, user_info: UserInfo) -> bool:
+    if config.admins is None:
+        return True
+
+    return user_info.object_id in config.admins
+
+
+def can_modify_config(req: func.HttpRequest, config: InstanceConfig) -> bool:
+    user_info = parse_jwt_token(req)
+    if not isinstance(user_info, UserInfo):
+        return False
+
+    return can_modify_config_impl(config, user_info)
+
+
+def check_can_manage_pools_impl(
+    config: InstanceConfig, user_info: UserInfo
+) -> Optional[Error]:
+    if config.allow_pool_management:
+        return None
+
+    if config.admins is None:
+        return Error(code=ErrorCode.UNAUTHORIZED, errors=["pool modification disabled"])
+
+    if user_info.object_id in config.admins:
+        return None
+
+    return Error(code=ErrorCode.UNAUTHORIZED, errors=["not authorized to manage pools"])
+
+
+def check_can_manage_pools(req: func.HttpRequest) -> Optional[Error]:
+    user_info = parse_jwt_token(req)
+    if isinstance(user_info, Error):
+        return user_info
+
+    # When there are no admins in the `admins` list, all users are considered
+    # admins.  However, `allow_pool_management` is still useful to protect from
+    # mistakes.
+    #
+    # To make changes while still protecting against accidental changes to
+    # pools, do the following:
+    #
+    # 1. set `allow_pool_management` to `True`
+    # 2. make the change
+    # 3. set `allow_pool_management` to `False`
+
+    config = InstanceConfig.fetch()
+
+    return check_can_manage_pools_impl(config, user_info)
 
 
 def is_user(token_data: UserInfo) -> bool:

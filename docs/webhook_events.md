@@ -25,6 +25,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 * [crash_reported](#crash_reported)
 * [file_added](#file_added)
+* [instance_config_updated](#instance_config_updated)
 * [job_created](#job_created)
 * [job_stopped](#job_stopped)
 * [node_created](#node_created)
@@ -620,6 +621,59 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "filename"
     ],
     "title": "EventFileAdded",
+    "type": "object"
+}
+```
+
+### instance_config_updated
+
+#### Example
+
+```json
+{
+    "config": {
+        "admins": [
+            "00000000-0000-0000-0000-000000000000"
+        ],
+        "allow_pool_management": true
+    }
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "InstanceConfig": {
+            "properties": {
+                "admins": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Admins",
+                    "type": "array"
+                },
+                "allow_pool_management": {
+                    "default": true,
+                    "title": "Allow Pool Management",
+                    "type": "boolean"
+                }
+            },
+            "title": "InstanceConfig",
+            "type": "object"
+        }
+    },
+    "properties": {
+        "config": {
+            "$ref": "#/definitions/InstanceConfig"
+        }
+    },
+    "required": [
+        "config"
+    ],
+    "title": "EventInstanceConfigUpdated",
     "type": "object"
 }
 ```
@@ -4814,6 +4868,18 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventFileAdded",
             "type": "object"
         },
+        "EventInstanceConfigUpdated": {
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/InstanceConfig"
+                }
+            },
+            "required": [
+                "config"
+            ],
+            "title": "EventInstanceConfigUpdated",
+            "type": "object"
+        },
         "EventJobCreated": {
             "properties": {
                 "config": {
@@ -5398,9 +5464,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "regression_reported",
                 "file_added",
                 "task_heartbeat",
-                "node_heartbeat"
+                "node_heartbeat",
+                "instance_config_updated"
             ],
             "title": "EventType"
+        },
+        "InstanceConfig": {
+            "properties": {
+                "admins": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Admins",
+                    "type": "array"
+                },
+                "allow_pool_management": {
+                    "default": true,
+                    "title": "Allow Pool Management",
+                    "type": "boolean"
+                }
+            },
+            "title": "InstanceConfig",
+            "type": "object"
         },
         "JobConfig": {
             "properties": {
@@ -6104,6 +6190,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventFileAdded"
+                },
+                {
+                    "$ref": "#/definitions/EventInstanceConfigUpdated"
                 }
             ],
             "title": "Event"

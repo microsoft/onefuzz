@@ -495,15 +495,15 @@ class GithubIssueSearch(BaseModel):
 
 
 class GithubAuth(BaseModel):
-    user: str
-    personal_access_token: str
+    user: str = Field(min_length=1)
+    personal_access_token: str = Field(min_length=1)
 
 
 class GithubIssueTemplate(BaseModel):
     auth: SecretData[GithubAuth]
-    organization: str
-    repository: str
-    title: str
+    organization: str = Field(min_length=1)
+    repository: str = Field(min_length=1)
+    title: str = Field(min_length=1)
     body: str
     unique_search: GithubIssueSearch
     assignees: List[str]
@@ -513,15 +513,26 @@ class GithubIssueTemplate(BaseModel):
     # validator needed for backward compatibility
     @validator("auth", pre=True, always=True)
     def validate_auth(cls, v: Any) -> SecretData:
+        def try_parse_GithubAuth(x: dict) -> Optional[GithubAuth]:
+            try:
+                return GithubAuth.parse_obj(x)
+            except Exception:
+                return None
+
         if isinstance(v, GithubAuth):
             return SecretData(secret=v)
         elif isinstance(v, SecretData):
             return v
         elif isinstance(v, dict):
-            try:
-                return SecretData(GithubAuth.parse_obj(v))
-            except Exception:
-                return SecretData(GithubAuth.parse_obj(v["secret"]))
+            githubAuth = try_parse_GithubAuth(v)
+            if githubAuth:
+                return SecretData(secret=githubAuth)
+
+            githubAuth = try_parse_GithubAuth(v["secret"])
+            if githubAuth:
+                return SecretData(secret=githubAuth)
+
+            return SecretData(secret=v["secret"])
         else:
             raise TypeError(f"invalid datatype {type(v)}")
 
@@ -845,6 +856,30 @@ class Task(BaseModel):
     events: Optional[List[TaskEventSummary]]
     nodes: Optional[List[NodeAssignment]]
     user_info: Optional[UserInfo]
+
+
+class InstanceConfig(BaseModel):
+    # initial set of admins can only be set during deployment.
+    # if admins are set, only admins can update instance configs.
+    admins: Optional[List[UUID]] = None
+
+    # if set, only admins can manage pools or scalesets
+    allow_pool_management: bool = Field(default=True)
+
+    def update(self, config: "InstanceConfig") -> None:
+        for field in config.__fields__:
+            # If no admins are set, then ignore setting admins
+            if field == "admins" and self.admins is None:
+                continue
+
+            if hasattr(self, field):
+                setattr(self, field, getattr(config, field))
+
+    @validator("admins", allow_reuse=True)
+    def check_admins(cls, value: Optional[List[UUID]]) -> Optional[List[UUID]]:
+        if value is not None and len(value) == 0:
+            raise ValueError("admins must be None or contain at least one UUID")
+        return value
 
 
 _check_hotfix()
