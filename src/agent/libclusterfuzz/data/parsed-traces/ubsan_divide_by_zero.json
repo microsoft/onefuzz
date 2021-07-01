@@ -284,5 +284,16 @@
     "avcodec_send_packet",
     "compat_decode",
     "target_dec_fuzzer.c"
+  ],
+  "minimized_stack_function_lines": [
+    "mpeg_decode_postinit mpeg12dec.c:1245:49",
+    "decode_chunks mpeg12dec.c:2536:23",
+    "mpeg_decode_frame mpeg12dec.c:2826:11",
+    "decode_simple_internal decode.c:414:15",
+    "decode_simple_receive_frame decode.c:617:15",
+    "decode_receive_frame_internal decode.c:635:15",
+    "avcodec_send_packet decode.c:675:15",
+    "compat_decode decode.c:730:15",
+    "target_dec_fuzzer.c target_dec_fuzzer.c:213:23"
   ]
 }

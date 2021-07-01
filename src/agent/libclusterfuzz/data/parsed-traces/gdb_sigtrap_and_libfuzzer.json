@@ -128,5 +128,12 @@
     "LoadBL1FromUsb30 ",
     "Main ",
     "GPIO_SetPudBits "
+  ],
+  "minimized_stack_function_lines": [
+    "xymodem_trnasfer (target_addr=0x2022000, max_sz=<optimized out>, prot_type=1) at protocol_xymodem.c:362",
+    "LoadImageFromUsb30 (uTargetAddr=<optimized out>, uSizeLimit=<optimized out>, req_type=3239010) at usbdev_api.c:267",
+    "LoadBL1FromUsb30 () at usbdev_api.c:225",
+    "Main () at main.c:94",
+    "GPIO_SetPudBits (SFR_Address=<optimized out>, base=<optimized out>, mask=<optimized out>, value=<optimized out>) at gpio.c:38"
   ]
 }

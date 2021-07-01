@@ -346,6 +346,18 @@
     "SfntlyWrapper::SubsetFont",
     "subset_font_fuzzer.cc"
   ],
+  "minimized_stack_function_lines": [
+    "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__recommend(unsigned long) const vector:1010:15",
+    "std::__1::vector<sfntly::Ptr<sfntly::IndexSubTable::Builder>, std::__1::allocator<sfntly::Ptr<sfntly::IndexSubTable::Builder> > >::__append(unsigned long) vector:1087:57",
+    "sfntly::BitmapSizeTable::Builder::Initialize(sfntly::ReadableFontData*) bitmap_size_table.cc:465:23",
+    "sfntly::BitmapSizeTable::Builder::GetIndexSubTableBuilders() bitmap_size_table.cc:454:5",
+    "(anonymous namespace)::InitializeBitmapBuilder(sfntly::EbdtTable::Builder*, sfntly::EblcTable::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) subsetter_impl.cc:324:24",
+    "sfntly::SetupBitmapBuilders(sfntly::Font*, sfntly::Font::Builder*, std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&) subsetter_impl.cc:607:8",
+    "sfntly::SubsetterImpl::Subset(std::__1::set<int, std::__1::less<int>, std::__1::allocator<int> > const&, sfntly::GlyphTable*, sfntly::LocaTable*) subsetter_impl.cc:776:22",
+    "sfntly::SubsetterImpl::SubsetFont(unsigned int const*, unsigned long, unsigned char**) subsetter_impl.cc:685:19",
+    "SfntlyWrapper::SubsetFont(char const*, unsigned char const*, unsigned long, unsigned int const*, unsigned long, unsigned char**) font_subsetter.cc:38:20",
+    "subset_font_fuzzer.cc subset_font_fuzzer.cc:35:3"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

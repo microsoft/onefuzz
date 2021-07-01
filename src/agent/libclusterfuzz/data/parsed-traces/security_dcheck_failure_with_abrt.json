@@ -188,6 +188,15 @@
     "innerHTMLAttributeSetter",
     "blink::V8Element::innerHTMLAttributeSetterCallback"
   ],
+  "minimized_stack_function_lines": [
+    "blink::SVGElement::RemovedFrom(blink::ContainerNode*) SVGElement.cpp:441:3",
+    "blink::ContainerNode::NotifyNodeRemoved(blink::Node&) ContainerNode.cpp:842:10",
+    "blink::ContainerNode::RemoveChildren(blink::SubtreeModificationAction) ContainerNode.cpp:721:9",
+    "blink::ReplaceChildrenWithFragment(blink::ContainerNode*, blink::DocumentFragment*, blink::ExceptionState&) Serialization.cpp:706:19",
+    "blink::Element::setInnerHTML(WTF::String const&, blink::ExceptionState&) Element.cpp:2914:5",
+    "innerHTMLAttributeSetter V8Element.cpp:337:9",
+    "blink::V8Element::innerHTMLAttributeSetterCallback(v8::FunctionCallbackInfo<v8::Value> const&) V8Element.cpp:2139"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }
