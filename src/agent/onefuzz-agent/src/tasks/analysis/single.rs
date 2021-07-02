@@ -38,7 +38,7 @@ pub async fn run(config: Config) -> Result<()> {
         tools.init_pull().await.context("unable to sync tools")?;
         set_executable(&tools.local_path)
             .await
-            .context("to set tools as executable")?;
+            .context("unable to set tools as executable")?;
     }
 
     run_tool(&config).await
