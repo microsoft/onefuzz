@@ -552,6 +552,31 @@
     "begin_parse_string",
     "finish_lithdr_notidx_v"
   ],
+  "minimized_stack_function_lines": [
+    "grpc_is_binary_header validate_metadata.c:103:15",
+    "is_binary_literal_header hpack_parser.c:1542:10",
+    "parse_value_string_with_literal_key hpack_parser.c:1582:52",
+    "begin_parse_string hpack_parser.c:1529:10",
+    "finish_lithdr_notidx_v hpack_parser.c:944:10",
+    "begin_parse_string hpack_parser.c:1521:12",
+    "begin_parse_string hpack_parser.c:1521:12",
+    "finish_lithdr_notidx_v hpack_parser.c:944:10",
+    "begin_parse_string hpack_parser.c:1521:12",
+    "begin_parse_string hpack_parser.c:1521:12",
+    "finish_lithdr_notidx_v hpack_parser.c:944:10",
+    "begin_parse_string hpack_parser.c:1529:10",
+    "begin_parse_string hpack_parser.c:1529:10",
+    "finish_lithdr_notidx_v hpack_parser.c:944:10",
+    "begin_parse_string hpack_parser.c:1521:12",
+    "begin_parse_string hpack_parser.c:1521:12",
+    "finish_lithdr_notidx_v hpack_parser.c:944:10",
+    "begin_parse_string hpack_parser.c:1521:12",
+    "begin_parse_string hpack_parser.c:1521:12",
+    "finish_lithdr_notidx_v hpack_parser.c:944:10",
+    "begin_parse_string hpack_parser.c:1529:10",
+    "begin_parse_string hpack_parser.c:1529:10",
+    "finish_lithdr_notidx_v hpack_parser.c:944:10"
+  ],
   "scariness_score": 10,
   "scariness_description": "stack-overflow"
 }

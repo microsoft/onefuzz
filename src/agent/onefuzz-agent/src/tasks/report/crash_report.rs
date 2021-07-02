@@ -41,6 +41,11 @@ pub struct CrashReport {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub minimized_stack_function_names_sha256: Option<String>,
 
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub minimized_stack_function_lines: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub minimized_stack_function_lines_sha256: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub asan_log: Option<String>,
 
@@ -189,6 +194,13 @@ impl CrashReport {
             Some(crash_log.minimized_stack_sha256(minimized_stack_depth))
         };
 
+        let minimized_stack_function_lines_sha256 =
+            if crash_log.minimized_stack_function_lines.is_empty() {
+                None
+            } else {
+                Some(crash_log.minimized_stack_function_lines_sha256(minimized_stack_depth))
+            };
+
         let minimized_stack_function_names_sha256 =
             if crash_log.minimized_stack_function_names.is_empty() {
                 None
@@ -206,6 +218,8 @@ impl CrashReport {
             minimized_stack_sha256,
             minimized_stack_function_names: Some(crash_log.minimized_stack_function_names),
             minimized_stack_function_names_sha256,
+            minimized_stack_function_lines: crash_log.minimized_stack_function_lines,
+            minimized_stack_function_lines_sha256,
             call_stack: crash_log.call_stack,
             asan_log: crash_log.text,
             scariness_score: crash_log.scariness_score,

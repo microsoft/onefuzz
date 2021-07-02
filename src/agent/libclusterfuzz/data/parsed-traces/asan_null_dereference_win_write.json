@@ -562,6 +562,33 @@
     "ChromeMain",
     "MainDllLoader::Launch"
   ],
+  "minimized_stack_function_lines": [
+    "blink::SVGEnumerationBase::calculateAnimatedValue SVGEnumeration.cpp:90",
+    "blink::SVGAnimateElement::calculateAnimatedValue SVGAnimateElement.cpp:378",
+    "blink::SVGAnimationElement::updateAnimation SVGAnimationElement.cpp:617",
+    "blink::SMILTimeContainer::updateAnimations SMILTimeContainer.cpp:485",
+    "blink::SMILTimeContainer::updateAnimationsAndScheduleFrameIfNeeded SMILTimeContainer.cpp:414",
+    "blink::SMILTimeContainer::wakeupTimerFired SMILTimeContainer.cpp:289",
+    "blink::TaskRunnerTimer<blink::EventHandler>::fired Timer.h:144",
+    "blink::TimerBase::runInternal Timer.cpp:174",
+    "base::debug::TaskAnnotator::RunTask task_annotator.cc:57",
+    "blink::scheduler::TaskQueueManager::ProcessTaskFromWorkQueue task_queue_manager.cc:533",
+    "blink::scheduler::TaskQueueManager::DoWork task_queue_manager.cc:331",
+    "base::internal::Invoker<base::internal::BindState<void (content::WebMediaPlayerMS::*)(bool) __attribute__((thiscall)),base::WeakPtr<content::WebMediaPlayerMS>,bool>,void ()>::Run bind_internal.h:340",
+    "base::debug::TaskAnnotator::RunTask task_annotator.cc:57",
+    "base::MessageLoop::RunTask message_loop.cc:423",
+    "base::MessageLoop::DeferOrRunPendingTask message_loop.cc:434",
+    "base::MessageLoop::DoWork message_loop.cc:527",
+    "base::MessagePumpDefault::Run message_pump_default.cc:33",
+    "base::MessageLoop::RunHandler message_loop.cc:387",
+    "base::RunLoop::Run run_loop.cc:37",
+    "content::RendererMain renderer_main.cc:200",
+    "content::RunNamedProcessTypeMain content_main_runner.cc:491",
+    "content::ContentMainRunnerImpl::Run content_main_runner.cc:836",
+    "content::ContentMain content_main.cc:20",
+    "ChromeMain chrome_main.cc:121",
+    "MainDllLoader::Launch main_dll_loader_win.cc:201"
+  ],
   "scariness_score": 10,
   "scariness_description": "null-deref"
 }

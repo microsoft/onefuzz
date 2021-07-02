@@ -140,6 +140,9 @@
   "minimized_stack_function_names": [
     "deflate_set_dictionary_fuzzer.cc"
   ],
+  "minimized_stack_function_lines": [
+    "deflate_set_dictionary_fuzzer.cc deflate_set_dictionary_fuzzer.cc:35:5"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

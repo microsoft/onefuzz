@@ -269,5 +269,16 @@
     "safe_browsing::dmg::ReadStream::ReadExact",
     "safe_browsing::dmg::HFSBTreeIterator::Init",
     "hfs_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "__libcpp_allocate new:259:10",
+    "allocate memory:1799",
+    "allocate memory:1548",
+    "std::__1::__split_buffer<unsigned char, std::__1::allocator<unsigned char>&>::__split_buffer(unsigned long, unsigned long, std::__1::allocator<unsigned char>&) __split_buffer:311",
+    "std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append(unsigned long) vector:1047:53",
+    "safe_browsing::dmg::HFSForkReadStream::Read(unsigned char*, unsigned long, unsigned long*) hfs.cc:381:28",
+    "safe_browsing::dmg::ReadStream::ReadExact(unsigned char*, unsigned long) read_stream.cc:20:10",
+    "safe_browsing::dmg::HFSBTreeIterator::Init(safe_browsing::dmg::ReadStream*) hfs.cc:486:17",
+    "hfs_fuzzer.cc hfs_fuzzer.cc:19:21"
   ]
 }

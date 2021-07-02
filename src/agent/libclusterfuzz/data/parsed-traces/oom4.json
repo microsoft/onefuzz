@@ -255,5 +255,15 @@
     "CJPX_Decoder::Init",
     "CCodec_JpxModule::CreateDecoder",
     "pdf_jpx_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "opj_j2k_update_image_data j2k.c:9184:50",
+    "opj_j2k_decode_tiles j2k.c:10734:15",
+    "opj_j2k_exec j2k.c:8090:33",
+    "opj_j2k_decode j2k.c:11019:11",
+    "opj_decode openjpeg.c:483:16",
+    "CJPX_Decoder::Init(unsigned char const*, unsigned int) fx_codec_jpx_opj.cpp:526:11",
+    "CCodec_JpxModule::CreateDecoder(unsigned char const*, unsigned int, CPDF_ColorSpace*) fx_codec_jpx_opj.cpp:652:19",
+    "pdf_jpx_fuzzer.cc pdf_jpx_fuzzer.cc:23:16"
   ]
 }

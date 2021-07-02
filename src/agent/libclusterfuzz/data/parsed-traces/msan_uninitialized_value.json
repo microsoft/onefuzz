@@ -212,5 +212,16 @@
     "IPC::internal::ChannelReader::DispatchInputData",
     "IPC::internal::ChannelReader::ProcessIncomingMessages",
     "IPC::ChannelPosix::OnFileCanReadWithoutBlocking"
+  ],
+  "minimized_stack_function_lines": [
+    "content::BrowserMessageFilter::Send(IPC::Message*) browser_message_filter.cc:144:12",
+    "ChromeNetBenchmarkingMessageFilter::OnMessageReceived(IPC::Message const&) ipc_message_utils.h:904:5",
+    "content::BrowserMessageFilter::Internal::OnMessageReceived(IPC::Message const&) browser_message_filter.cc:89:15",
+    "IPC::MessageFilterRouter::TryFilters(IPC::Message const&) message_filter_router.cc:18:9",
+    "IPC::ChannelProxy::Context::TryFilters(IPC::Message const&) ipc_channel_proxy.cc:75:7",
+    "IPC::ChannelProxy::Context::OnMessageReceived(IPC::Message const&) ipc_channel_proxy.cc:92:8",
+    "IPC::internal::ChannelReader::DispatchInputData(char const*, int) ipc_channel_reader.cc:96:9",
+    "IPC::internal::ChannelReader::ProcessIncomingMessages() ipc_channel_reader.cc:32:10",
+    "IPC::ChannelPosix::OnFileCanReadWithoutBlocking(int) ipc_channel_posix.cc:708:10"
   ]
 }

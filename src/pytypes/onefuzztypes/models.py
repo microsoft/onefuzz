@@ -258,6 +258,8 @@ class Report(BaseModel):
     minimized_stack_sha256: Optional[str]
     minimized_stack_function_names: Optional[List[str]]
     minimized_stack_function_names_sha256: Optional[str]
+    minimized_stack_function_lines: Optional[List[str]]
+    minimized_stack_function_lines_sha256: Optional[str]
 
 
 class NoReproReport(BaseModel):
