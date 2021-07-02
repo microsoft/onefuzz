@@ -616,7 +616,7 @@ class Client:
         client = get_client_from_cli_profile(
             EventGridManagementClient, subscription_id=self.get_subscription_id()
         )
-        result = client.event_subscriptions.create_or_update(
+        result = client.event_subscriptions.begin_create_or_update(
             src_resource_id, "onefuzz1", event_subscription_info
         ).result()
         if result.provisioning_state != "Succeeded":
