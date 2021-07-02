@@ -185,6 +185,15 @@
     "v8::internal::Builtin_Impl_HandleApiCall",
     "v8::internal::Builtin_HandleApiCall"
   ],
+  "minimized_stack_function_lines": [
+    "blink::PluginInfo::GetMimeClassInfo PluginData.cpp:56",
+    "blink::DOMPlugin::item DOMPlugin.cpp:54",
+    "blink::V8Plugin::itemMethodCallback V8Plugin.cpp:177",
+    "v8::internal::FunctionCallbackArguments::Call api-arguments.cc:25",
+    "v8::internal::`anonymous namespace'::HandleApiCallHelper<0> builtins-api.cc:112",
+    "v8::internal::Builtin_Impl_HandleApiCall builtins-api.cc:142",
+    "v8::internal::Builtin_HandleApiCall builtins-api.cc:130"
+  ],
   "scariness_score": 20,
   "scariness_description": "wild-addr-read"
 }

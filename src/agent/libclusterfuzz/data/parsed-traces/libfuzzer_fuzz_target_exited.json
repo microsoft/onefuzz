@@ -112,5 +112,8 @@
   ],
   "minimized_stack_function_names": [
     "clearsilver_fuzzer_file.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "clearsilver_fuzzer_file.cc clearsilver_fuzzer_file.cc:4:16"
   ]
 }

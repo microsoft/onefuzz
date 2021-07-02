@@ -132,6 +132,11 @@
     "GetHandleVerifier+0x306c7",
     "GetHandleVerifier+0x4b480"
   ],
+  "minimized_stack_function_lines": [
+    "GetHandleVerifier+0x31e95",
+    "GetHandleVerifier+0x306c7",
+    "GetHandleVerifier+0x4b480"
+  ],
   "scariness_score": 10,
   "scariness_description": "null-deref"
 }

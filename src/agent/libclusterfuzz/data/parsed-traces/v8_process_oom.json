@@ -473,6 +473,28 @@
     "v8::Shell::RunMain",
     "v8::Shell::Main"
   ],
+  "minimized_stack_function_lines": [
+    "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow(unsigned int) small-vector.h:162:7",
+    "v8::base::SmallVector<v8::internal::CompiledReplacement::ReplacementPart, 8u>::Grow() small-vector.h:148:34",
+    "bool v8::internal::CompiledReplacement::ParseReplacementPattern<unsigned char const>(v8::internal::Vector<unsigned char const>, v8::internal::FixedArray, int, int) small-vector.h:112:52",
+    "v8::internal::CompiledReplacement::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, int, int) runtime-regexp.cc:345:11",
+    "v8::internal::(anonymous namespace)::RegExpReplace(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSRegExp>, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::String>) runtime-regexp.cc:632:52",
+    "v8::internal::__RT_impl_Runtime_RegExpReplaceRT(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) runtime-regexp.cc:1812:5",
+    "v8::internal::Runtime_RegExpReplaceRT(int, unsigned int*, v8::internal::Isolate*) runtime-regexp.cc:1786:1",
+    "Builtins_CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit",
+    "Builtins_RegExpReplace",
+    "Builtins_StringPrototypeReplace",
+    "Builtins_InterpreterEntryTrampoline",
+    "Builtins_JSEntryTrampoline",
+    "Builtins_JSEntry",
+    "v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) simulator.h:144:12",
+    "v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, int, v8::internal::Handle<v8::internal::Object>*) execution.cc:466:10",
+    "v8::Script::Run(v8::Local<v8::Context>) api.cc:1947:7",
+    "v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::Value>, v8::Shell::PrintResult, v8::Shell::ReportExceptions, v8::Shell::ProcessMessageQueue) d8.cc:717:28",
+    "v8::SourceGroup::Execute(v8::Isolate*) d8.cc:3592:10",
+    "v8::Shell::RunMain(v8::Isolate*, bool) d8.cc:4245:39",
+    "v8::Shell::Main(int, char**) d8.cc:4967:18"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

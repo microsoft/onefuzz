@@ -448,6 +448,27 @@
     "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
     "v8::internal::Builtin_Impl_HandleApiCall"
   ],
+  "minimized_stack_function_lines": [
+    "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::TextIteratorAlgorithm(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::TextIteratorBehavior const&) text_iterator.cc:207:3",
+    "blink::TextIteratorAlgorithm<blink::EditingAlgorithm<blink::FlatTreeTraversal> >::RangeLength(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&, blink::TextIteratorBehavior const&) text_iterator.cc:908:40",
+    "blink::TextOffsetMapping::ComputeTextOffset(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&) const text_offset_mapping.cc:104:10",
+    "NextWordPositionInternal visible_units_word.cc:92:47",
+    "blink::NextWordPosition(blink::PositionTemplate<blink::EditingAlgorithm<blink::FlatTreeTraversal> > const&) visible_units_word.cc:184",
+    "NextWordPosition visible_units_word.cc:195:7",
+    "blink::NextWordPosition(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) visible_units_word.cc:203",
+    "blink::SelectionModifier::NextWordPositionForPlatform(blink::VisiblePositionTemplate<blink::EditingAlgorithm<blink::NodeTraversal> > const&) selection_modifier.cc:234:7",
+    "blink::SelectionModifier::ModifyExtendingForwardInternal(blink::TextGranularity) selection_modifier.cc:315:14",
+    "blink::SelectionModifier::ModifyExtendingForward(blink::TextGranularity) selection_modifier.cc:346:31",
+    "blink::SelectionModifier::ComputeModifyPosition(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity) selection_modifier.cc:619:16",
+    "blink::SelectionModifier::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity) selection_modifier.cc:648:7",
+    "blink::FrameSelection::Modify(blink::SelectionModifyAlteration, blink::SelectionModifyDirection, blink::TextGranularity, blink::SetSelectionBy) frame_selection.cc:350:26",
+    "blink::DOMSelection::modify(WTF::String const&, WTF::String const&, WTF::String const&) dom_selection.cc:457:27",
+    "modifyMethod v8_selection.cc:466:9",
+    "blink::V8Selection::modifyMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) v8_selection.cc:666",
+    "v8::internal::FunctionCallbackArguments::Call(v8::internal::CallHandlerInfo*) api-arguments-inl.h:93:3",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) builtins-api.cc:107:36",
+    "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) builtins-api.cc:137:5"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

@@ -187,5 +187,12 @@
     "courgette::Disassembler::CreateProgram",
     "courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler",
     "courgette_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "courgette::DisassemblerWin32::ParseRelocs(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >*) disassembler_win32.cc:241:44",
+    "courgette::DisassemblerWin32::ExtractAbs32Locations() disassembler_win32.cc:369:8",
+    "courgette::Disassembler::CreateProgram(bool) disassembler.cc:59:17",
+    "courgette::CourgetteFlow::CreateAssemblyProgramFromDisassembler(courgette::CourgetteFlow::Group, bool) courgette_flow.cc:116:33",
+    "courgette_fuzzer.cc courgette_fuzzer.cc:17:8"
   ]
 }

@@ -218,5 +218,15 @@
     "gl::init::InitializeGLOneOffImplementation",
     "gpu::",
     "__cxx_global_var_init"
+  ],
+  "minimized_stack_function_lines": [
+    "gl::GetGLProcAddress(char const*) gl_implementation.cc:138:18",
+    "gl::DriverGL::InitializeStaticBindings() gl_bindings_autogen_gl.cc:78:42",
+    "gl::InitializeStaticGLBindingsGL() gl_gl_api_implementation.cc:381:15",
+    "gl::init::(anonymous namespace)::InitializeStaticEGLInternal() gl_initializer_x11.cc:118:3",
+    "gl::init::InitializeStaticGLBindings(gl::GLImplementation) gl_initializer_x11.cc:169:14",
+    "gl::init::InitializeGLOneOffImplementation(gl::GLImplementation, bool, bool, bool) gl_factory.cc:65:7",
+    "gpu::(anonymous namespace)::CommandBufferSetup::CommandBufferSetup() fuzzer_main.cc:105:5",
+    "__cxx_global_var_init fuzzer_main.cc:317:35"
   ]
 }

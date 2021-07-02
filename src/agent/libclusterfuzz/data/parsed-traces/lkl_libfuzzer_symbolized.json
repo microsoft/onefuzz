@@ -388,5 +388,22 @@
     "device_add",
     "hid_add_device",
     "uhid_device_add_worker"
+  ],
+  "minimized_stack_function_lines": [
+    "__hidinput_change_resolution_multipliers hid-input.c:0:31",
+    "hidinput_connect hid-input.c:1615:7",
+    "hid_connect hid-core.c:1931:48",
+    "hid_hw_start hid-core.c:2035:11",
+    "hid_generic_probe hid-generic.c:67:9",
+    "hid_device_probe hid-core.c:2263:10",
+    "really_probe dd.c:566:13",
+    "__device_attach_driver dd.c:745:9",
+    "bus_for_each_drv bus.c:430:11",
+    "__device_attach dd.c:918:9",
+    "device_initial_probe dd.c:966:1",
+    "bus_probe_device bus.c:492:19",
+    "device_add core.c:2820:6",
+    "hid_add_device hid-core.c:2419:8",
+    "uhid_device_add_worker uhid.c:62:8"
   ]
 }

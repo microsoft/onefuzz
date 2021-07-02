@@ -167,5 +167,10 @@
     "v8::internal::wasm::fuzzer::InterpretAndExecuteModule",
     "v8::internal::wasm::fuzzer::WasmExecutionFuzzer::FuzzWasmModule",
     "wasm-compile.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "v8::internal::wasm::fuzzer::InterpretAndExecuteModule(v8::internal::Isolate*, v8::internal::Handle<v8::internal::WasmModuleObject>) wasm-fuzzer-common.cc:101:5",
+    "v8::internal::wasm::fuzzer::WasmExecutionFuzzer::FuzzWasmModule(v8::internal::Vector<unsigned char const>, bool) wasm-fuzzer-common.cc:401:3",
+    "wasm-compile.cc wasm-compile.cc:1710:23"
   ]
 }

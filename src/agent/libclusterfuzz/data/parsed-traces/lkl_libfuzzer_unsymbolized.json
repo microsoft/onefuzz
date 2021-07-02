@@ -72,5 +72,8 @@
   ],
   "minimized_stack_function_names": [
     "lkl_panic_blink"
+  ],
+  "minimized_stack_function_lines": [
+    "lkl_panic_blink setup.c;:2"
   ]
 }

@@ -372,5 +372,13 @@
     "core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395",
     "wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4",
     "lib.rs"
+  ],
+  "minimized_stack_function_lines": [
+    "std::sys_common::backtrace::__rust_end_short_backtrace::h3e9bf30168899554 backtrace.rs:141:18",
+    "core::panicking::panic_fmt::h5322a082d19786c3 panicking.rs:92:14",
+    "core::result::unwrap_failed::hbee7d9f7831678f0 option.rs:1329:5",
+    "core::result::Result$LT$T$C$E$GT$::unwrap::hca82303565f74395 result.rs:1037:23",
+    "wasmtime_fuzzing::oracles::spectest::ha380505b8ea313d4 oracles.rs:425:5",
+    "lib.rs lib.rs:25:22"
   ]
 }
