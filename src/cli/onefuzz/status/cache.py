@@ -25,7 +25,6 @@ from onefuzztypes.events import (
     EventTaskFailed,
     EventTaskStateUpdated,
     EventTaskStopped,
-    EventType,
     parse_event_message,
 )
 from onefuzztypes.models import (
@@ -40,7 +39,7 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import Container, PoolName
 from pydantic import BaseModel
 
-MESSAGE = Tuple[datetime, EventType, str]
+MESSAGE = Tuple[datetime, str, str]
 
 MINUTES = 60
 HOURS = 60 * MINUTES
@@ -187,7 +186,7 @@ class TopCache:
         messages += [
             (
                 datetime.now(),
-                message.event_type,
+                message.event_type.name,
                 json.dumps(message_obj, sort_keys=True),
             )
         ]
