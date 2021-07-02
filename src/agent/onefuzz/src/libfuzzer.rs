@@ -21,6 +21,13 @@ use tokio::process::{Child, Command};
 
 const DEFAULT_MAX_TOTAL_SECONDS: i32 = 10 * 60;
 
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref LIBFUZZERLINEREGEX: regex::Regex =
+        regex::Regex::new(r"#(\d+)\s*(?:pulse|INITED|NEW|REDUCE).*exec/s: (\d+)").unwrap();
+}
+
 #[derive(Debug)]
 pub struct LibFuzzerMergeOutput {
     pub added_files_count: i32,
@@ -102,11 +109,10 @@ impl<'a> LibFuzzer<'a> {
         }
 
         // check if a max_time is already set
-        if self
+        if !self
             .options
             .iter()
-            .find(|o| o.starts_with("-max_total_time"))
-            .is_none()
+            .any(|o| o.starts_with("-max_total_time"))
         {
             cmd.arg(format!("-max_total_time={}", DEFAULT_MAX_TOTAL_SECONDS));
         }
@@ -304,9 +310,7 @@ impl LibFuzzerLine {
     }
 
     pub fn parse(line: &str) -> Result<Option<Self>> {
-        let re = regex::Regex::new(r"#(\d+)\s*(?:pulse|INITED|NEW|REDUCE).*exec/s: (\d+)")?;
-
-        let caps = match re.captures(line) {
+        let caps = match LIBFUZZERLINEREGEX.captures(line) {
             Some(caps) => caps,
             None => return Ok(None),
         };

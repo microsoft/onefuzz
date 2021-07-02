@@ -127,6 +127,12 @@
     "base::internal::LeakyLazyInstanceTraits<url::",
     "base::LazyInstance<url::"
   ],
+  "minimized_stack_function_lines": [
+    "url::(anonymous namespace)::UIDNAWrapper::UIDNAWrapper() url_canon_icu.cc:104:7",
+    "base::DefaultLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) lazy_instance.h:69:27",
+    "base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UIDNAWrapper>::New(void*) lazy_instance.h:98:12",
+    "base::LazyInstance<url::(anonymous namespace)::UIDNAWrapper, base::internal::LeakyLazyInstanceTraits<url::(anonymous namespace)::UI"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

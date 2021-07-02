@@ -25,6 +25,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 * [crash_reported](#crash_reported)
 * [file_added](#file_added)
+* [instance_config_updated](#instance_config_updated)
 * [job_created](#job_created)
 * [job_stopped](#job_stopped)
 * [node_created](#node_created)
@@ -179,6 +180,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Minimized Stack",
                     "type": "array"
+                },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
                 },
                 "minimized_stack_function_names": {
                     "items": {
@@ -349,6 +361,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -496,6 +512,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -604,6 +621,59 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "filename"
     ],
     "title": "EventFileAdded",
+    "type": "object"
+}
+```
+
+### instance_config_updated
+
+#### Example
+
+```json
+{
+    "config": {
+        "admins": [
+            "00000000-0000-0000-0000-000000000000"
+        ],
+        "allow_pool_management": true
+    }
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "InstanceConfig": {
+            "properties": {
+                "admins": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Admins",
+                    "type": "array"
+                },
+                "allow_pool_management": {
+                    "default": true,
+                    "title": "Allow Pool Management",
+                    "type": "boolean"
+                }
+            },
+            "title": "InstanceConfig",
+            "type": "object"
+        }
+    },
+    "properties": {
+        "config": {
+            "$ref": "#/definitions/InstanceConfig"
+        }
+    },
+    "required": [
+        "config"
+    ],
+    "title": "EventInstanceConfigUpdated",
     "type": "object"
 }
 ```
@@ -837,6 +907,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -1695,6 +1766,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Minimized Stack",
                     "type": "array"
                 },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
+                },
                 "minimized_stack_function_names": {
                     "items": {
                         "type": "string"
@@ -1864,6 +1946,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -2011,6 +2097,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -2525,6 +2612,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -2672,6 +2763,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3018,6 +3110,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -3165,6 +3261,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3456,6 +3553,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -3603,6 +3704,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -3868,6 +3970,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -4029,6 +4135,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -4307,6 +4414,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -4454,6 +4565,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -4754,6 +4866,18 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "filename"
             ],
             "title": "EventFileAdded",
+            "type": "object"
+        },
+        "EventInstanceConfigUpdated": {
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/InstanceConfig"
+                }
+            },
+            "required": [
+                "config"
+            ],
+            "title": "EventInstanceConfigUpdated",
             "type": "object"
         },
         "EventJobCreated": {
@@ -5340,9 +5464,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "regression_reported",
                 "file_added",
                 "task_heartbeat",
-                "node_heartbeat"
+                "node_heartbeat",
+                "instance_config_updated"
             ],
             "title": "EventType"
+        },
+        "InstanceConfig": {
+            "properties": {
+                "admins": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Admins",
+                    "type": "array"
+                },
+                "allow_pool_management": {
+                    "default": true,
+                    "title": "Allow Pool Management",
+                    "type": "boolean"
+                }
+            },
+            "title": "InstanceConfig",
+            "type": "object"
         },
         "JobConfig": {
             "properties": {
@@ -5524,6 +5668,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Minimized Stack",
                     "type": "array"
+                },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
                 },
                 "minimized_stack_function_names": {
                     "items": {
@@ -5707,6 +5862,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
+                "coverage_filter": {
+                    "title": "Coverage Filter",
+                    "type": "string"
+                },
                 "duration": {
                     "title": "Duration",
                     "type": "integer"
@@ -5868,6 +6027,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "TaskType": {
             "description": "An enumeration.",
             "enum": [
+                "coverage",
                 "libfuzzer_fuzz",
                 "libfuzzer_coverage",
                 "libfuzzer_crash_report",
@@ -6030,6 +6190,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventFileAdded"
+                },
+                {
+                    "$ref": "#/definitions/EventInstanceConfigUpdated"
                 }
             ],
             "title": "Event"

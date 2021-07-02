@@ -7,7 +7,7 @@ To create work items upon finding crashes, this pipeline uses a [GitHub Personal
 ## Configuration
 This example uses [Encrypted Secrets](https://docs.github.com/en/actions/reference/encrypted-secrets) to configure the workflow:
 * `onefuzz_endpoint`: The Onefuzz Instance.  This should be the URL for the instance, such as `https://onefuzz-playground.azurewebsites.net`.
-* `onefuzz_client_id`: The Client ID for the [service principal]((https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals).
+* `onefuzz_client_id`: The Client ID for the [service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals).
 * `onefuzz_client_secret`: The Client Secret for the [service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals).
 * `onefuzz_pat`: The [GitHub Personal Access Token](https://github.com/settings/tokens).
 

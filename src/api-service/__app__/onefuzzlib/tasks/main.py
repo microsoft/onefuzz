@@ -236,7 +236,9 @@ class Task(BASE_TASK, ORMMixin):
                     task.mark_failed(
                         Error(
                             code=ErrorCode.TASK_FAILED,
-                            errors=["prerequisite task failed"],
+                            errors=[
+                                "prerequisite task failed.  task_id:%s" % self.task_id
+                            ],
                         ),
                         tasks_in_job,
                     )

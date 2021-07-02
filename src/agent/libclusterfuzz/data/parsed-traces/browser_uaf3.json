@@ -328,6 +328,21 @@
     "content::ContentMain",
     "ChromeMain"
   ],
+  "minimized_stack_function_lines": [
+    "base::(anonymous namespace)::CreateThread(unsigned long, bool, base::PlatformThread::Delegate*, base::PlatformThreadHandle*, base::ThreadPriority) platform_thread_posix.cc:120:13",
+    "base::internal::SchedulerWorker::Start(base::SchedulerWorkerObserver*) scheduler_worker.cc:79:3",
+    "ForEachWorker<(lambda at ../../base/task/task_scheduler/scheduler_worker_pool_impl.cc:186:37)> scheduler_worker_pool_impl.cc:152",
+    "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::FlushImpl() scheduler_worker_pool_impl.cc:186",
+    "base::internal::SchedulerWorkerPoolImpl::ScopedWorkersExecutor::~ScopedWorkersExecutor() scheduler_worker_pool_impl.cc:105:30",
+    "base::internal::SchedulerWorkerPoolImpl::Start(base::SchedulerWorkerPoolParams const&, int, scoped_refptr<base::TaskRunner>, base::SchedulerWorkerObserver*, base::internal::SchedulerWorkerPoolImpl::WorkerEnvironment, base::Optional<base::TimeDelta>) scheduler_worker_pool_impl.cc:435:1",
+    "base::internal::TaskSchedulerImpl::Start(base::TaskScheduler::InitParams const&, base::SchedulerWorkerObserver*) task_scheduler_impl.cc:142:21",
+    "content::StartBrowserTaskScheduler() startup_helper.cc:95:39",
+    "content::ContentMainRunnerImpl::RunServiceManager(content::MainFunctionParams&, bool) content_main_runner_impl.cc:924:7",
+    "content::ContentMainRunnerImpl::Run(bool) content_main_runner_impl.cc:878:12",
+    "service_manager::Main(service_manager::MainParams const&) main.cc:415:29",
+    "content::ContentMain(content::ContentMainParams const&) content_main.cc:19:10",
+    "ChromeMain chrome_main.cc:103:12"
+  ],
   "scariness_score": 45,
   "scariness_description": "4-byte-read-heap-use-after-free"
 }

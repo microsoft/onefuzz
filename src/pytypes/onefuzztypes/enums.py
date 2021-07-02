@@ -80,6 +80,7 @@ class TaskFeature(Enum):
     expect_crash_on_failure = "expect_crash_on_failure"
     report_list = "report_list"
     minimized_stack_depth = "minimized_stack_depth"
+    coverage_filter = "coverage_filter"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -147,6 +148,7 @@ class TaskState(Enum):
 
 
 class TaskType(Enum):
+    coverage = "coverage"
     libfuzzer_fuzz = "libfuzzer_fuzz"
     libfuzzer_coverage = "libfuzzer_coverage"
     libfuzzer_crash_report = "libfuzzer_crash_report"
@@ -361,6 +363,10 @@ class NodeState(Enum):
         # If Node is in one of these states, ignore updates
         # from the agent.
         return [cls.done, cls.shutdown, cls.halt]
+
+    @classmethod
+    def can_process_new_work(cls) -> List["NodeState"]:
+        return [cls.free]
 
 
 class GithubIssueState(Enum):

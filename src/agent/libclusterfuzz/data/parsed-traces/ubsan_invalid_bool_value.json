@@ -171,5 +171,11 @@
     "parse_data",
     "tsm_vte_input",
     "libtsm_fuzzer.c"
+  ],
+  "minimized_stack_function_lines": [
+    "tsm_screen_tab_left tsm-screen.c:1321:8",
+    "parse_data tsm-vte.c:0:3",
+    "tsm_vte_input tsm-vte.c:0:4",
+    "libtsm_fuzzer.c libtsm_fuzzer.c:44:3"
   ]
 }

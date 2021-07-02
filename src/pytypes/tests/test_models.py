@@ -6,8 +6,8 @@
 import unittest
 
 from onefuzztypes.models import Scaleset, SecretData, TeamsTemplate
-from onefuzztypes.requests import NotificationCreate
 from onefuzztypes.primitives import PoolName, Region
+from onefuzztypes.requests import NotificationCreate
 from pydantic import ValidationError
 
 

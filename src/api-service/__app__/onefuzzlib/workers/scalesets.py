@@ -298,6 +298,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     # result = 'did I modify the scaleset in azure'
     def cleanup_nodes(self) -> bool:
+        logging.info(
+            SCALESET_LOG_PREFIX + "cleaning up nodes. scaleset_id:%s", self.scaleset_id
+        )
         if self.state == ScalesetState.halt:
             logging.info(
                 SCALESET_LOG_PREFIX + "halting scaleset scaleset_id:%s",
@@ -369,8 +372,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 if ScalesetShrinkQueue(self.scaleset_id).should_shrink():
                     node.set_halt()
                     to_delete.append(node)
-                elif not node.reimage_queued:
-                    # only add nodes that are not already set to reschedule
+                else:
                     to_reimage.append(node)
 
         dead_nodes = Node.get_dead_nodes(self.scaleset_id, NODE_EXPIRATION_TIME)
@@ -383,28 +385,23 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 ",".join(str(x.machine_id) for x in dead_nodes),
             )
             for node in dead_nodes:
+                error = Error(
+                    code=ErrorCode.TASK_FAILED,
+                    errors=[
+                        "node reimaged due to expired heartbeat",
+                        f"scaleset_id:{node.scaleset_id} machine_id:{node.machine_id}",
+                        f"last heartbeat:{node.heartbeat}",
+                    ],
+                )
+                node.mark_tasks_stopped_early(error=error)
+                node.to_reimage(done=True)
                 if node not in to_reimage:
                     to_reimage.append(node)
 
         # Perform operations until they fail due to scaleset getting locked
         try:
-            if to_delete:
-                logging.info(
-                    SCALESET_LOG_PREFIX + "deleting nodes. scaleset_id:%s count:%d",
-                    self.scaleset_id,
-                    len(to_delete),
-                )
-                self.delete_nodes(to_delete)
-                for node in to_delete:
-                    node.set_halt()
-
-            if to_reimage:
-                logging.info(
-                    SCALESET_LOG_PREFIX + "reimaging nodes: scaleset_id:%s count:%d",
-                    self.scaleset_id,
-                    len(to_reimage),
-                )
-                self.reimage_nodes(to_reimage)
+            self.delete_nodes(to_delete)
+            self.reimage_nodes(to_reimage)
         except UnableToUpdate:
             logging.info(
                 SCALESET_LOG_PREFIX
@@ -456,6 +453,34 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         for node in nodes:
             node.send_stop_if_free()
 
+    def sync_scaleset_size(self) -> None:
+        # If our understanding of size is out of sync with Azure, resize the
+        # scaleset to match our understanding.
+        if self.state != ScalesetState.running:
+            return
+
+        size = get_vmss_size(self.scaleset_id)
+        if size is None:
+            logging.info(
+                SCALESET_LOG_PREFIX + "scaleset is unavailable. scaleset_id:%s",
+                self.scaleset_id,
+            )
+            # if the scaleset is missing, this is an indication the scaleset
+            # was manually deleted, rather than having OneFuzz delete it.  As
+            # such, we should go thruogh the process of deleting it.
+            self.set_shutdown(now=True)
+            return
+
+        if size != self.size:
+            logging.info(
+                SCALESET_LOG_PREFIX + "unexpected scaleset size, resizing.  "
+                "scaleset_id:%s expected:%d actual:%d",
+                self.scaleset_id,
+                self.size,
+                size,
+            )
+            self.set_state(ScalesetState.resize)
+
     def resize(self) -> None:
         # no longer needing to resize
         if self.state != ScalesetState.resize:
@@ -501,6 +526,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             return
 
+        for node in nodes:
+            node.set_halt()
+
         if self.state == ScalesetState.halt:
             logging.info(
                 SCALESET_LOG_PREFIX
@@ -509,7 +537,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             return
 
-        machine_ids = []
+        machine_ids = set()
         for node in nodes:
             if node.debug_keep_node:
                 logging.warning(
@@ -519,7 +547,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     node.machine_id,
                 )
             else:
-                machine_ids.append(node.machine_id)
+                machine_ids.add(node.machine_id)
 
         logging.info(
             SCALESET_LOG_PREFIX + "deleting nodes scaleset_id:%s machine_id:%s",
@@ -527,6 +555,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             machine_ids,
         )
         delete_vmss_nodes(self.scaleset_id, machine_ids)
+        for node in nodes:
+            if node.machine_id in machine_ids:
+                node.delete()
 
     def reimage_nodes(self, nodes: List[Node]) -> None:
         if not nodes:
@@ -554,7 +585,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             return
 
-        machine_ids = []
+        machine_ids = set()
         for node in nodes:
             if node.debug_keep_node:
                 logging.warning(
@@ -564,7 +595,13 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     node.machine_id,
                 )
             else:
-                machine_ids.append(node.machine_id)
+                machine_ids.add(node.machine_id)
+
+        if not machine_ids:
+            logging.info(
+                SCALESET_LOG_PREFIX + "no nodes to reimage: %s", self.scaleset_id
+            )
+            return
 
         result = reimage_vmss_nodes(self.scaleset_id, machine_ids)
         if isinstance(result, Error):
@@ -572,9 +609,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 "unable to reimage nodes: %s:%s - %s"
                 % (self.scaleset_id, machine_ids, result)
             )
+
         for node in nodes:
-            node.reimage_queued = True
-            node.save()
+            if node.machine_id in machine_ids:
+                node.delete()
 
     def set_shutdown(self, now: bool) -> None:
         if self.state in [ScalesetState.halt, ScalesetState.shutdown]:

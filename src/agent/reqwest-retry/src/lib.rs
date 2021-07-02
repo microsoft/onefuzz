@@ -172,9 +172,45 @@ impl SendRetry for reqwest::RequestBuilder {
     }
 }
 
+pub fn is_auth_failure(response: &Result<Response>) -> bool {
+    // Check both cases to support `error_for_status()`.
+    match response {
+        Ok(response) => {
+            return response.status() == StatusCode::UNAUTHORIZED;
+        }
+        Err(error) => {
+            if let Some(error) = error.downcast_ref::<reqwest::Error>() {
+                if let Some(status) = error.status() {
+                    return status == StatusCode::UNAUTHORIZED;
+                }
+            }
+        }
+    }
+    false
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+    use wiremock::matchers::path;
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    async fn build_server() -> Result<MockServer> {
+        let server = MockServer::start().await;
+        server
+            .register(Mock::given(path("/200")).respond_with(ResponseTemplate::new(200)))
+            .await;
+        server
+            .register(Mock::given(path("/400")).respond_with(ResponseTemplate::new(400)))
+            .await;
+        server
+            .register(Mock::given(path("/401")).respond_with(ResponseTemplate::new(401)))
+            .await;
+        server
+            .register(Mock::given(path("/404")).respond_with(ResponseTemplate::new(404)))
+            .await;
+        Ok(server)
+    }
 
     fn always_fail(_: StatusCode) -> RetryCheck {
         RetryCheck::Fail
@@ -189,8 +225,9 @@ mod test {
 
     #[tokio::test]
     async fn retry_success() -> Result<()> {
+        let server = build_server().await?;
         reqwest::Client::new()
-            .get("https://httpstat.us/200")
+            .get(format!("{}/200", &server.uri()))
             .send_retry_default()
             .await?
             .error_for_status()?;
@@ -199,15 +236,15 @@ mod test {
 
     #[tokio::test]
     async fn retry_socket_failure() -> Result<()> {
-        let invalid_url = "http://127.0.0.1:81/test.txt";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/404", &server.uri()))
             .send_retry(always_retry, Duration::from_millis(1), 3)
             .await;
 
         match resp {
-            Ok(_) => {
-                anyhow::bail!("response should have failed: {}", invalid_url);
+            Ok(result) => {
+                anyhow::bail!("response should have failed: {:?}", result);
             }
             Err(err) => {
                 let as_text = format!("{:?}", err);
@@ -220,9 +257,9 @@ mod test {
 
     #[tokio::test]
     async fn retry_fail_normal() -> Result<()> {
-        let invalid_url = "https://httpstat.us/400";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/400", &server.uri()))
             .send_retry(always_retry, Duration::from_millis(1), 3)
             .await;
 
@@ -241,9 +278,9 @@ mod test {
 
     #[tokio::test]
     async fn retry_fail_fast() -> Result<()> {
-        let invalid_url = "https://httpstat.us/400";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/400", &server.uri()))
             .send_retry(always_fail, Duration::from_millis(1), 3)
             .await;
 
@@ -255,9 +292,9 @@ mod test {
 
     #[tokio::test]
     async fn retry_400_success() -> Result<()> {
-        let invalid_url = "https://httpstat.us/400";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/400", &server.uri()))
             .send_retry(succeed_400, Duration::from_millis(1), 3)
             .await?;
 
@@ -267,15 +304,49 @@ mod test {
 
     #[tokio::test]
     async fn retry_400_with_retry() -> Result<()> {
-        let invalid_url = "https://httpstat.us/401";
+        let server = build_server().await?;
         let resp = reqwest::Client::new()
-            .get(invalid_url)
+            .get(format!("{}/401", &server.uri()))
             .send_retry(succeed_400, Duration::from_millis(1), 3)
             .await;
 
         assert!(resp.is_err(), "{:?}", resp);
         let as_text = format!("{:?}", resp);
         assert!(as_text.contains("request attempt 4 failed"), "{}", as_text);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_auth_failure() -> Result<()> {
+        let server = build_server().await?;
+
+        let auth_pass = reqwest::Client::new()
+            .get(format!("{}/200", &server.uri()))
+            .send_retry(
+                |code| match code {
+                    StatusCode::UNAUTHORIZED => RetryCheck::Fail,
+                    _ => RetryCheck::Retry,
+                },
+                DEFAULT_RETRY_PERIOD,
+                MAX_RETRY_ATTEMPTS,
+            )
+            .await;
+
+        let auth_fail = reqwest::Client::new()
+            .get(format!("{}/401", &server.uri()))
+            .send_retry(
+                |code| match code {
+                    StatusCode::UNAUTHORIZED => RetryCheck::Fail,
+                    _ => RetryCheck::Retry,
+                },
+                DEFAULT_RETRY_PERIOD,
+                MAX_RETRY_ATTEMPTS,
+            )
+            .await;
+
+        assert!(!is_auth_failure(&auth_pass));
+        assert!(is_auth_failure(&auth_fail));
+
         Ok(())
     }
 }

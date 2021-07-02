@@ -41,5 +41,8 @@
   ],
   "minimized_stack_function_names": [
     "pepper::AutoBuffer::AllocateBuffer"
+  ],
+  "minimized_stack_function_lines": [
+    "pepper::AutoBuffer::AllocateBuffer(unsigned long) pep_auto_buffer.cpp:69"
   ]
 }

@@ -32,15 +32,19 @@ pub struct CrashReport {
     pub call_stack: Vec<String>,
     pub call_stack_sha256: String,
 
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub minimized_stack: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub minimized_stack: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub minimized_stack_sha256: Option<String>,
-
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub minimized_stack_function_names: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub minimized_stack_function_names: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub minimized_stack_function_names_sha256: Option<String>,
+
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub minimized_stack_function_lines: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub minimized_stack_function_lines_sha256: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub asan_log: Option<String>,
@@ -190,6 +194,13 @@ impl CrashReport {
             Some(crash_log.minimized_stack_sha256(minimized_stack_depth))
         };
 
+        let minimized_stack_function_lines_sha256 =
+            if crash_log.minimized_stack_function_lines.is_empty() {
+                None
+            } else {
+                Some(crash_log.minimized_stack_function_lines_sha256(minimized_stack_depth))
+            };
+
         let minimized_stack_function_names_sha256 =
             if crash_log.minimized_stack_function_names.is_empty() {
                 None
@@ -203,10 +214,12 @@ impl CrashReport {
             crash_type: crash_log.fault_type,
             crash_site: crash_log.summary,
             call_stack_sha256,
-            minimized_stack: crash_log.minimized_stack,
+            minimized_stack: Some(crash_log.minimized_stack),
             minimized_stack_sha256,
-            minimized_stack_function_names: crash_log.minimized_stack_function_names,
+            minimized_stack_function_names: Some(crash_log.minimized_stack_function_names),
             minimized_stack_function_names_sha256,
+            minimized_stack_function_lines: crash_log.minimized_stack_function_lines,
+            minimized_stack_function_lines_sha256,
             call_stack: crash_log.call_stack,
             asan_log: crash_log.text,
             scariness_score: crash_log.scariness_score,

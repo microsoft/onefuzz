@@ -213,6 +213,16 @@
     "v8::internal::Builtin_Impl_HandleApiCall",
     "v8::internal::Builtin_HandleApiCall"
   ],
+  "minimized_stack_function_lines": [
+    "v8::internal::Vector<unsigned char const>::Vector(unsigned char const*, int) vector.h:24:5",
+    "v8::internal::wasm::ModuleWireBytes::ModuleWireBytes(unsigned char const*, unsigned char const*) wasm-module.h:219:9",
+    "v8::(anonymous namespace)::GetFirstArgumentAsBytes(v8::FunctionCallbackInfo<v8::Value> const&, v8::internal::wasm::ErrorThrower*) wasm-js.cc:155:10",
+    "v8::(anonymous namespace)::WebAssemblyValidate(v8::FunctionCallbackInfo<v8::Value> const&) wasm-js.cc:201:16",
+    "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) api-arguments.cc:25:3",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, v8::internal::BuiltinArguments) builtins-api.cc:111:36",
+    "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::BuiltinArguments, v8::internal::Isolate*) builtins-api.cc:140:5",
+    "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) builtins-api.cc:128:1"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

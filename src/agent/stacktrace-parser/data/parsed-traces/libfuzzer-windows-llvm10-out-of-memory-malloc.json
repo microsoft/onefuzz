@@ -180,5 +180,8 @@
   ],
   "minimized_stack_function_names": [
     "LLVMFuzzerTestOneInput"
+  ],
+  "minimized_stack_function_lines": [
+    "LLVMFuzzerTestOneInput"
   ]
 }

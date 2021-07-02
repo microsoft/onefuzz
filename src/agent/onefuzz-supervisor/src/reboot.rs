@@ -81,7 +81,7 @@ impl Reboot {
         Ok(Some(ctx))
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(target_family = "unix")]
     pub fn invoke(&mut self) -> Result<()> {
         info!("invoking local reboot command");
 
@@ -90,7 +90,7 @@ impl Reboot {
         self.wait_for_reboot()
     }
 
-    #[cfg(target_os = "windows")]
+    #[cfg(target_family = "windows")]
     pub fn invoke(&mut self) -> Result<()> {
         info!("invoking local reboot command");
 

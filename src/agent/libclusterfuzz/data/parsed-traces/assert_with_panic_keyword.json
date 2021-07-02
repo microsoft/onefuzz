@@ -294,6 +294,17 @@
     "Envoy::Server::TestOneProtoInput",
     "config_fuzz_test.cc"
   ],
+  "minimized_stack_function_lines": [
+    "Envoy::Upstream::ClusterManagerImpl::ClusterManagerImpl(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) cluster_manager_impl.cc:259:7",
+    "Envoy::Upstream::ValidationClusterManager::ValidationClusterManager(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Upstream::ClusterManagerFactory&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Event::Dispatcher&, Envoy::Server::Admin&) cluster_manager.cc:41:7",
+    "Envoy::Upstream::ValidationClusterManagerFactory::clusterManagerFromProto(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Stats::Store&, Envoy::ThreadLocal::Instance&, Envoy::Runtime::Loader&, Envoy::Runtime::RandomGenerator&, Envoy::LocalInfo::LocalInfo const&, Envoy::AccessLog::AccessLogManager&, Envoy::Server::Admin&) cluster_manager.cc:21:32",
+    "Envoy::Server::Configuration::MainImpl::initialize(envoy::config::bootstrap::v2::Bootstrap const&, Envoy::Server::Instance&, Envoy::Upstream::ClusterManagerFactory&) configuration_impl.cc:57:46",
+    "Envoy::Server::ValidationInstance::initialize(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) server.cc:93:16",
+    "Envoy::Server::ValidationInstance::ValidationInstance(Envoy::Server::Options&, Envoy::Event::TimeSystem&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Stats::IsolatedStoreImpl&, Envoy::Thread::BasicLockable&, Envoy::Server::ComponentFactory&) server.cc:49:5",
+    "Envoy::Server::validateConfig(Envoy::Server::Options&, std::__1::shared_ptr<Envoy::Network::Address::Instance const>, Envoy::Server::ComponentFactory&) server.cc:27:24",
+    "Envoy::Server::TestOneProtoInput(envoy::config::bootstrap::v2::Bootstrap const&) config_fuzz_test.cc:29:5",
+    "config_fuzz_test.cc config_fuzz_test.cc:16:1"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

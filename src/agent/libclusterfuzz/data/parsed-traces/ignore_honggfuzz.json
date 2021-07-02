@@ -241,6 +241,17 @@
     "HonggfuzzRunFromFile",
     "HonggfuzzMain"
   ],
+  "minimized_stack_function_lines": [
+    "HF_strcmp memorycmp.c:17:26",
+    "__wrap_strcmp memorycmp.c:146:12",
+    "function1 file1.c:486:12",
+    "function2 file2.c:349:12",
+    "function3 file3.c:906:21",
+    "fuzzer.cc fuzzer.cc:10:16",
+    "HonggfuzzRunOneInput persistent.c:60:15",
+    "HonggfuzzRunFromFile persistent.c:99:5",
+    "HonggfuzzMain persistent.c:109:16"
+  ],
   "scariness_score": 20,
   "scariness_description": "wild-addr-read"
 }
