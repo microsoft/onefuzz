@@ -514,7 +514,7 @@ class Client:
             count += 1
 
             try:
-                result = client.deployments.create_or_update(
+                result = client.deployments.begin_create_or_update(
                     self.resource_group, gen_guid(), deployment
                 ).result()
                 if result.properties.provisioning_state != "Succeeded":
