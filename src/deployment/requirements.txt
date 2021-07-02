@@ -10,3 +10,4 @@ azure-storage-queue==12.1.3
 pyfunctional==1.4.2
 pyopenssl==19.1.0
 adal~=1.2.5
+idna==2.10
