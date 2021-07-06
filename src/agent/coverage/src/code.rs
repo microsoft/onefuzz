@@ -128,20 +128,12 @@ impl ModuleIndex {
             }
 
             if sym.is_function() {
-                let name = match elf.strtab.get(sym.st_name) {
+                let name = match elf.strtab.get_at(sym.st_name) {
                     None => {
                         log::error!("symbol not found in symbol string table: {:?}", sym);
                         continue;
                     }
-                    Some(Err(err)) => {
-                        log::error!(
-                            "unable to parse symbol name: sym = {:?}, err = {}",
-                            sym,
-                            err
-                        );
-                        continue;
-                    }
-                    Some(Ok(name)) => name.to_owned(),
+                    Some(name) => name.to_owned(),
                 };
 
                 // For executables and shared objects, `st_value` contains the VA of the symbol.
