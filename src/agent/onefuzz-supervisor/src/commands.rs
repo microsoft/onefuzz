@@ -74,7 +74,6 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
                     admin_auth_keys_path.display(),
                     result
                 );
-                }
             }
 
             let stdout = String::from_utf8_lossy(&result.stdout).to_string();
