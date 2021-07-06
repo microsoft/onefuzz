@@ -65,7 +65,7 @@ impl TriageCommand {
                 Stop::Exiting { exit_code } => {
                     exit_status = Some(ExitStatus::Exited(exit_code));
                 }
-                Stop::Signaling { signal, ..} => {
+                Stop::Signaling { signal, .. } => {
                     exit_status = Some(ExitStatus::Signaled(signal));
                 }
                 _ => {}
