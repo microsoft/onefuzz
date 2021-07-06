@@ -57,6 +57,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
         Ok(_) => {
             debug!("removing Authenticated Users permissions from administrators_authorized_keys");
 
+            let admins = "NT AUTHORITY\\Authenticated Users";
             let result = Command::new("icacls.exe")
                 .arg(&admin_auth_keys_path)
                 .stdin(Stdio::null())
@@ -73,15 +74,16 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
                     admin_auth_keys_path.display(),
                     result
                 );
+                }
             }
 
             let stdout = String::from_utf8_lossy(&result.stdout).to_string();
 
-            if stdout.contains("NT AUTHORITY\\SYSTEM") {
+            if stdout.contains(&admins) {
                 let result = Command::new("icacls.exe")
                     .arg(&admin_auth_keys_path)
                     .arg("/remove")
-                    .arg("NT AUTHORITY/Authenticated Users")
+                    .arg(&admins)
                     .stdin(Stdio::null())
                     .stdout(Stdio::piped())
                     .stderr(Stdio::piped())
@@ -92,10 +94,11 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
                     .context("icalcs remove failed to run")?;
                 if !result.status.success() {
                     warn!(
-                    "removing 'NT AUTHORITY/Authenticated Users' permissions to '{}' failed: {:?}",
-                    admin_auth_keys_path.display(),
-                    result
-                );
+                        "removing {:?} permissions to '{}' failed: {:?}",
+                        admins,
+                        admin_auth_keys_path.display(),
+                        result
+                    );
                 }
             }
 
