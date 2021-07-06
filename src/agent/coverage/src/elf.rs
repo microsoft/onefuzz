@@ -36,8 +36,8 @@ impl<'d, 'e> ElfContext<'d, 'e> {
         let name = self
             .elf
             .strtab
-            .get(sym.st_name)
-            .ok_or_else(|| format_err!("symbol index out of bounds: {}", sym.st_name))??
+            .get_at(sym.st_name)
+            .ok_or_else(|| format_err!("symbol index out of bounds: {}", sym.st_name))?
             .to_owned();
 
         Ok(name)
