@@ -167,5 +167,11 @@
     "boom_intermediate",
     "boom",
     "wasm-code.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "boom_internal() wasm-code.cc:76:7",
+    "boom_intermediate() wasm-code.cc:83:14",
+    "boom() wasm-code.cc:87:7",
+    "wasm-code.cc wasm-code.cc:100:6"
   ]
 }

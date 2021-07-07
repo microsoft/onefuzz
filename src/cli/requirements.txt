@@ -11,7 +11,11 @@ azure-storage-blob~=12.8
 azure-applicationinsights==0.1.0
 tenacity==6.3.1
 docstring_parser==0.7.3
-azure-cli-core==2.22.1
+azure-cli-core==2.25.0
+# urllib3[secure] needs to be specifically stated for azure-cli-core
+urllib3[secure]>=1.26.5
+# iDNA needs to be specifically stated for azure-cli-core
+idna<3,>=2.5
 # cryptography needs to be pinned to the version used by azure-cli-core
 cryptography<3.4,>=3.2
 # PyJWT needs to be pinned to the version used by azure-cli-core

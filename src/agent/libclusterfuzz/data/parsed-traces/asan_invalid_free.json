@@ -186,6 +186,12 @@
     "gnutls_x509_crt_print",
     "gnutls_x509_parser_fuzzer.cc"
   ],
+  "minimized_stack_function_lines": [
+    "_gnutls_buffer_append_printf str.c:331:2",
+    "print_cert output.c:1398:4",
+    "gnutls_x509_crt_print output.c:1905:3",
+    "gnutls_x509_parser_fuzzer.cc gnutls_x509_parser_fuzzer.cc:40:15"
+  ],
   "scariness_score": 40,
   "scariness_description": "bad-free"
 }

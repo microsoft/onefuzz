@@ -314,5 +314,17 @@
     "xmlDoRead",
     "xmlReadMemory",
     "libxml2_xml_read_memory_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "xmlNewDocElementContent valid.c:952:34",
+    "xmlParseElementMixedContentDecl parser.c:6262:11",
+    "xmlParseElementContentDecl parser.c:6677:16",
+    "xmlParseElementDecl parser.c:6745:12",
+    "xmlParseMarkupDecl parser.c:6997:4",
+    "xmlParseInternalSubset parser.c:8473:6",
+    "xmlParseDocument parser.c:10921:6",
+    "xmlDoRead parser.c:15432:5",
+    "xmlReadMemory parser.c:15518:13",
+    "libxml2_xml_read_memory_fuzzer.cc libxml2_xml_read_memory_fuzzer.cc:17:18"
   ]
 }

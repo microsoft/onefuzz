@@ -3,6 +3,7 @@
 
 pub mod analysis;
 pub mod config;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 pub mod coverage;
 pub mod fuzz;
 pub mod generic;

@@ -25,7 +25,7 @@ if [ "${GITHUB_REF}" != "" ]; then
     fi
 fi
 
-mkdir -p artifacts/agent
+mkdir -p artifacts/agent-$(uname)
 
 cd src/agent
 
@@ -53,11 +53,11 @@ cargo test --release --workspace
 # TODO: once Salvo is integrated, this can get deleted
 cargo build --release --manifest-path ./onefuzz-telemetry/Cargo.toml --all-features
 
-cp target/release/onefuzz-agent* ../../artifacts/agent
-cp target/release/onefuzz-supervisor* ../../artifacts/agent
+cp target/release/onefuzz-agent* ../../artifacts/agent-$(uname)
+cp target/release/onefuzz-supervisor* ../../artifacts/agent-$(uname)
 
 if exists target/release/*.pdb; then
     for file in target/release/*.pdb; do
-        cp ${file} ../../artifacts/agent
+        cp ${file} ../../artifacts/agent-$(uname)
     done
 fi

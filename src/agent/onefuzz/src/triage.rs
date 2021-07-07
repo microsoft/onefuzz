@@ -54,24 +54,21 @@ impl TriageCommand {
         let mut exit_status = None;
 
         while let Some(tracee) = self.tracer.wait()? {
-            if let Stop::SignalDeliveryStop(pid, signal) = tracee.stop {
-                if CRASH_SIGNALS.contains(&signal) {
-                    // Can unwrap due to signal-delivery-stop.
-                    let siginfo = tracee.siginfo()?.unwrap();
-                    crashes.push(Crash::new(pid, signal, siginfo)?);
+            match tracee.stop {
+                Stop::SignalDelivery { signal } => {
+                    if CRASH_SIGNALS.contains(&signal) {
+                        // Can unwrap due to signal-delivery-stop.
+                        let siginfo = tracee.siginfo()?.unwrap();
+                        crashes.push(Crash::new(self.pid, signal, siginfo)?);
+                    }
                 }
-            }
-
-            if let Stop::Exiting(pid, exit_code) = tracee.stop {
-                if pid == self.pid {
+                Stop::Exiting { exit_code } => {
                     exit_status = Some(ExitStatus::Exited(exit_code));
                 }
-            }
-
-            if let Stop::Signaling(pid, signal, _core_dump) = tracee.stop {
-                if pid == self.pid {
+                Stop::Signaling { signal, .. } => {
                     exit_status = Some(ExitStatus::Signaled(signal));
                 }
+                _ => {}
             }
 
             self.tracer.restart(tracee, Restart::Continue)?;
@@ -369,7 +366,7 @@ mod se {
 
 fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
     while let Some(tracee) = tracer.wait()? {
-        if let Stop::SyscallExitStop(..) = &tracee.stop {
+        if let Stop::SyscallExit = &tracee.stop {
             return Ok(tracee);
         }
 
