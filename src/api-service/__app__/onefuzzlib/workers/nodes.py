@@ -253,10 +253,10 @@ class Node(BASE_NODE, ORMMixin):
     def could_shrink_scaleset(self) -> bool:
         if self.scaleset_id and ShrinkQueue(self.scaleset_id).should_shrink():
             return True
-        
+
         if self.pool_id and ShrinkQueue(self.pool_id).should_shrink():
             return True
-        
+
         return False
 
     def can_process_new_work(self) -> bool:
