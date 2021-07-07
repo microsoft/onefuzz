@@ -40,6 +40,7 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
+    EventScalesetResizeScheduled,
     EventScalesetStateUpdated,
     EventTaskCreated,
     EventTaskFailed,
@@ -199,6 +200,9 @@ def main() -> None:
             scaleset_id=UUID(int=0),
             pool_name=PoolName("example"),
             state=ScalesetState.init,
+        ),
+        EventScalesetResizeScheduled(
+            scaleset_id=UUID(int=0), pool_name=PoolName("example"), size=0
         ),
         EventJobCreated(
             job_id=UUID(int=0),

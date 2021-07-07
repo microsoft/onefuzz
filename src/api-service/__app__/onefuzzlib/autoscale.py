@@ -35,12 +35,11 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], nodes_needed: int) -> None:
             if scaleset.size < max_size:
                 current_size = scaleset.size
                 if nodes_needed <= max_size - current_size:
-                    scaleset.size = current_size + nodes_needed
+                    scaleset.set_size(current_size + nodes_needed)
                     nodes_needed = 0
                 else:
-                    scaleset.size = max_size
+                    scaleset.set_size(max_size)
                     nodes_needed = nodes_needed - (max_size - current_size)
-                scaleset.set_state(ScalesetState.resize)
 
             else:
                 continue
@@ -112,7 +111,7 @@ def scale_down(scalesets: List[Scaleset], nodes_to_remove: int) -> None:
                 continue
 
             # Resize of VMSS needed
-            scaleset.size = scaleset.size - max_nodes_remove
+            scaleset.set_size(scaleset.size - max_nodes_remove)
             nodes_to_remove = nodes_to_remove - max_nodes_remove
             scaleset.set_state(ScalesetState.resize)
 

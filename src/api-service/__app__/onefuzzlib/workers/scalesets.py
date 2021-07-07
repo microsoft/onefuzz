@@ -13,6 +13,7 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
+    EventScalesetResizeScheduled,
     EventScalesetStateUpdated,
 )
 from onefuzztypes.models import Error
@@ -481,6 +482,14 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             )
             self.set_state(ScalesetState.resize)
 
+    def set_size(self, size: int) -> None:
+        # ensure we always stay within max_size boundaries
+        size = min(size, self.max_size())
+        if self.size != size:
+            self.size = size
+            self.set_state(ScalesetState.resize)
+            self.save()
+
     def resize(self) -> None:
         # no longer needing to resize
         if self.state != ScalesetState.resize:
@@ -789,11 +798,22 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
         self.state = state
         self.save()
-        send_event(
-            EventScalesetStateUpdated(
-                scaleset_id=self.scaleset_id, pool_name=self.pool_name, state=self.state
+        if self.state == ScalesetState.resize:
+            send_event(
+                EventScalesetResizeScheduled(
+                    scaleset_id=self.scaleset_id,
+                    pool_name=self.pool_name,
+                    size=self.size,
+                )
             )
-        )
+        else:
+            send_event(
+                EventScalesetStateUpdated(
+                    scaleset_id=self.scaleset_id,
+                    pool_name=self.pool_name,
+                    state=self.state,
+                )
+            )
 
 
 class ShrinkEntry(BaseModel):
