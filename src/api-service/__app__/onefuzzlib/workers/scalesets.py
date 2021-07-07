@@ -795,7 +795,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     def delete(self) -> None:
         super().delete()
-        ShrinkQueue(self.scaleset_id).delete()
         send_event(
             EventScalesetDeleted(scaleset_id=self.scaleset_id, pool_name=self.pool_name)
         )
