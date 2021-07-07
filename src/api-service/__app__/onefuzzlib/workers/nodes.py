@@ -50,7 +50,6 @@ class Node(BASE_NODE, ORMMixin):
         *,
         pool_id: UUID,
         pool_name: PoolName,
-        pool_id: UUID,
         machine_id: UUID,
         scaleset_id: Optional[UUID],
         version: str,
@@ -59,7 +58,6 @@ class Node(BASE_NODE, ORMMixin):
         node = cls(
             pool_id=pool_id,
             pool_name=pool_name,
-            pool_id=pool_id,
             machine_id=machine_id,
             scaleset_id=scaleset_id,
             version=version,
@@ -92,8 +90,6 @@ class Node(BASE_NODE, ORMMixin):
             query["pool_id"] = [pool_id]
         if scaleset_id:
             query["scaleset_id"] = [scaleset_id]
-        if pool_id:
-            query["pool_id"] = [pool_id]
         if states:
             query["state"] = states
         if pool_name:
