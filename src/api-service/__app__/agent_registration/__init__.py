@@ -102,7 +102,8 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
         node.delete()
 
     node = Node.create(
-        pool_name=registration_request.pool_name,
+        pool_id=pool.pool_id,
+        pool_name=pool.name,
         machine_id=registration_request.machine_id,
         scaleset_id=registration_request.scaleset_id,
         version=registration_request.version,
