@@ -805,4 +805,3 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                     state=self.state,
                 )
             )
-        )
