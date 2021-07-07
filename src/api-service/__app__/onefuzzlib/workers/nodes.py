@@ -48,6 +48,7 @@ class Node(BASE_NODE, ORMMixin):
     def create(
         cls,
         *,
+        pool_id: UUID,
         pool_name: PoolName,
         pool_id: UUID,
         machine_id: UUID,
@@ -56,6 +57,7 @@ class Node(BASE_NODE, ORMMixin):
         new: bool = False,
     ) -> "Node":
         node = cls(
+            pool_id=pool_id,
             pool_name=pool_name,
             pool_id=pool_id,
             machine_id=machine_id,
@@ -86,6 +88,8 @@ class Node(BASE_NODE, ORMMixin):
         pool_name: Optional[PoolName] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
+        if pool_id:
+            query["pool_id"] = [pool_id]
         if scaleset_id:
             query["scaleset_id"] = [scaleset_id]
         if pool_id:
