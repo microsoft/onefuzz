@@ -115,7 +115,7 @@ class Pool(BASE_POOL, ORMMixin):
         worksets = self.peek_work_queue()
 
         for workset in worksets:
-            # only include work units with real work
+            # only include work units with work
             if not workset.work_units:
                 continue
 
@@ -225,6 +225,7 @@ class Pool(BASE_POOL, ORMMixin):
         nodes = Node.search(query={"pool_name": [self.name]})
         if not scalesets and not nodes:
             delete_queue(self.get_pool_queue(), StorageType.corpus)
+            ShrinkQueue(self.pool_id).delete()
             logging.info("pool stopped, deleting: %s", self.name)
             self.state = PoolState.halt
             self.delete()
