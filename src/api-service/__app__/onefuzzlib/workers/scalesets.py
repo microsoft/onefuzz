@@ -438,8 +438,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             to_remove,
         )
         queue = ShrinkQueue(self.scaleset_id)
-        for _ in range(to_remove):
-            queue.add_entry()
+        queue.set_size(to_remove)
 
         nodes = Node.search_states(scaleset_id=self.scaleset_id)
         for node in nodes:
