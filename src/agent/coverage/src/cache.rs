@@ -3,6 +3,7 @@
 
 use std::collections::{BTreeSet, HashMap};
 
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 

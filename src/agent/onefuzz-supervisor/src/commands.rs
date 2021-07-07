@@ -6,23 +6,23 @@ use onefuzz::{auth::Secret, machine_id::get_scaleset_name};
 use std::process::Stdio;
 use tokio::{fs, io::AsyncWriteExt, process::Command};
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 use std::{env, path::PathBuf};
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 use tokio::sync::{OnceCell, SetError};
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 use users::{get_user_by_name, os::unix::UserExt};
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 const ONEFUZZ_SERVICE_USER: &str = "onefuzz";
 
 // On Windows, removing permissions that have already been removed fails.  As
 // such, this needs to happen once and only once.  NOTE: SSH keys are added as
 // node commands, which are processed serially.  As such, this should never get
 // called concurrently.
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 static SET_PERMISSION_ONCE: OnceCell<()> = OnceCell::const_new();
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -30,7 +30,7 @@ pub struct SshKeyInfo {
     pub public_key: Secret<String>,
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(target_family = "windows")]
 pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     if get_scaleset_name().await?.is_none() {
         warn!("adding ssh keys only supported on managed nodes");
@@ -56,10 +56,10 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     match SET_PERMISSION_ONCE.set(()) {
         Ok(_) => {
             debug!("removing Authenticated Users permissions from administrators_authorized_keys");
+
+            let admins = "NT AUTHORITY\\Authenticated Users";
             let result = Command::new("icacls.exe")
                 .arg(&admin_auth_keys_path)
-                .arg("/remove")
-                .arg("NT AUTHORITY/Authenticated Users")
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
@@ -70,10 +70,35 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
                 .context("icalcs failed to run")?;
             if !result.status.success() {
                 bail!(
-                    "removing 'NT AUTHORITY/Authenticated Users' permissions to '{}' failed: {:?}",
+                    "checking permissions failed: '{}' failed: {:?}",
                     admin_auth_keys_path.display(),
                     result
                 );
+            }
+
+            let stdout = String::from_utf8_lossy(&result.stdout).to_string();
+
+            if stdout.contains(&admins) {
+                let result = Command::new("icacls.exe")
+                    .arg(&admin_auth_keys_path)
+                    .arg("/remove")
+                    .arg(&admins)
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .context("icacls remove failed to start")?
+                    .wait_with_output()
+                    .await
+                    .context("icalcs remove failed to run")?;
+                if !result.status.success() {
+                    warn!(
+                        "removing {:?} permissions to '{}' failed: {:?}",
+                        admins,
+                        admin_auth_keys_path.display(),
+                        result
+                    );
+                }
             }
 
             debug!("removing inheritance");
@@ -133,7 +158,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_family = "unix")]
 pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
     if get_scaleset_name().await?.is_none() {
         warn!("adding ssh keys only supported on managed nodes");

@@ -5,7 +5,7 @@
 
 use std::{fs::File, path::Path};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use fixedbitset::FixedBitSet;
 use goblin::pe::PE;
 use memmap2::Mmap;
@@ -161,7 +161,9 @@ fn find_blocks(
 
     for proc in proc_data {
         if let Some(rva) = proc.offset.to_rva(address_map) {
-            blocks.insert(rva.0 as usize);
+            blocks
+                .try_insert(rva.0 as usize)
+                .context("inserting block for procedure offset")?;
 
             if functions_only {
                 continue;
@@ -191,14 +193,18 @@ fn find_blocks(
 
                     for label in &table.labels {
                         if let Some(rva) = label.to_rva(address_map) {
-                            blocks.insert(rva.0 as usize)
+                            blocks
+                                .try_insert(rva.0 as usize)
+                                .context("inserting block for offset from label")?;
                         }
                     }
                 }
 
                 for label in &proc.extra_labels {
                     if let Some(rva) = label.to_rva(address_map) {
-                        blocks.insert(rva.0 as usize)
+                        blocks
+                            .try_insert(rva.0 as usize)
+                            .context("inserting block for offset from extra labels")?;
                     }
                 }
 
@@ -214,7 +220,7 @@ fn find_blocks(
                     &data[file_offset..file_offset + (code_len as usize)],
                     rva.0,
                     blocks,
-                );
+                )?;
             }
         }
     }
@@ -288,4 +294,57 @@ pub fn process_image(
     let pe = PE::parse(&mmap)?;
 
     process_module(path, &mmap, &pe, functions_only, handle)
+}
+
+pub(crate) trait TryInsert {
+    fn try_insert(&mut self, bit: usize) -> Result<()>;
+}
+
+impl TryInsert for FixedBitSet {
+    fn try_insert(&mut self, bit: usize) -> Result<()> {
+        if bit < self.len() {
+            self.insert(bit);
+        } else {
+            bail!("bit index {} exceeds bitset length {}", bit, self.len())
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Result;
+    use fixedbitset::FixedBitSet;
+
+    use super::TryInsert;
+
+    #[test]
+    fn test_fixedbitset_try_insert() -> Result<()> {
+        let capacity = 8;
+        let in_bounds = 4;
+        let out_of_bounds = 123;
+
+        let mut bitset = FixedBitSet::with_capacity(capacity);
+
+        // Inserts when in-bounds.
+        assert!(!bitset.contains(0));
+        bitset.try_insert(0)?;
+        assert!(bitset.contains(0));
+
+        assert!(!bitset.contains(in_bounds));
+        bitset.try_insert(in_bounds)?;
+        assert!(bitset.contains(in_bounds));
+
+        // Errors when out of bounds.
+        assert!(!bitset.contains(capacity));
+        assert!(bitset.try_insert(capacity).is_err());
+        assert!(!bitset.contains(capacity));
+
+        assert!(!bitset.contains(out_of_bounds));
+        assert!(bitset.try_insert(out_of_bounds).is_err());
+        assert!(!bitset.contains(out_of_bounds));
+
+        Ok(())
+    }
 }

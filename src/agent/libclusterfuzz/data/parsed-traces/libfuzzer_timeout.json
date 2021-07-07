@@ -458,5 +458,22 @@
     "RenderPage",
     "RenderPdf",
     "pdfium_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "CFX_ImageTransformer::Continue(IFX_Pause*) fx_dib_transform.cpp:549:30",
+    "CFX_DIBSource::TransformTo(CFX_Matrix const*, int&, int&, unsigned int, FX_RECT const*) const fx_dib_transform.cpp:307:15",
+    "CPDF_Type3Cache::RenderGlyph(CPDF_Type3Glyphs*, unsigned int, CFX_Matrix const*, float, float) fpdf_render_text.cpp:209:31",
+    "CPDF_Type3Cache::LoadGlyph(unsigned int, CFX_Matrix const*, float, float) fpdf_render_text.cpp:79:7",
+    "CPDF_RenderStatus::ProcessType3Text(CPDF_TextObject const*, CFX_Matrix const*) fpdf_render_text.cpp:472:44",
+    "CPDF_RenderStatus::ProcessText(CPDF_TextObject const*, CFX_Matrix const*, CFX_PathData*) fpdf_render_text.cpp:234:12",
+    "CPDF_RenderStatus::ProcessObjectNoClip(CPDF_PageObject const*, CFX_Matrix const*) fpdf_render.cpp:325:14",
+    "CPDF_RenderStatus::ContinueSingleObject(CPDF_PageObject const*, CFX_Matrix const*, IFX_Pause*) fpdf_render.cpp:293:3",
+    "CPDF_ProgressiveRenderer::Continue(IFX_Pause*) fpdf_render.cpp:1026:30",
+    "CPDF_ProgressiveRenderer::Start(IFX_Pause*) fpdf_render.cpp:987:3",
+    "FPDF_RenderPage_Retail(CRenderContext*, void*, int, int, int, int, int, int, int, IFSDK_PAUSE_Adapter*) fpdfview.cpp:884:26",
+    "FPDF_RenderPageBitmap fpdfview.cpp:620:3",
+    "RenderPage(void* const&, void* const&, int) pdfium_fuzzer.cc:72:5",
+    "RenderPdf(char const*, unsigned long) pdfium_fuzzer.cc:164:5",
+    "pdfium_fuzzer.cc pdfium_fuzzer.cc:220:3"
   ]
 }

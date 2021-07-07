@@ -91,5 +91,8 @@
   ],
   "minimized_stack_function_names": [
     "fuzz.c"
+  ],
+  "minimized_stack_function_lines": [
+    "fuzz.c fuzz.c:45:51"
   ]
 }

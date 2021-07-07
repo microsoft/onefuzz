@@ -32,6 +32,7 @@ from ..azure.vmss import get_instance_id
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..versions import is_minimum_version
+from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -47,6 +48,7 @@ class Node(BASE_NODE, ORMMixin):
     def create(
         cls,
         *,
+        pool_id: UUID,
         pool_name: PoolName,
         machine_id: UUID,
         scaleset_id: Optional[UUID],
@@ -54,6 +56,7 @@ class Node(BASE_NODE, ORMMixin):
         new: bool = False,
     ) -> "Node":
         node = cls(
+            pool_id=pool_id,
             pool_name=pool_name,
             machine_id=machine_id,
             scaleset_id=scaleset_id,
@@ -77,11 +80,14 @@ class Node(BASE_NODE, ORMMixin):
     def search_states(
         cls,
         *,
+        pool_id: Optional[UUID] = None,
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
         pool_name: Optional[PoolName] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
+        if pool_id:
+            query["pool_id"] = [pool_id]
         if scaleset_id:
             query["scaleset_id"] = [scaleset_id]
         if states:
@@ -94,6 +100,7 @@ class Node(BASE_NODE, ORMMixin):
     def search_outdated(
         cls,
         *,
+        pool_id: Optional[UUID] = None,
         scaleset_id: Optional[UUID] = None,
         states: Optional[List[NodeState]] = None,
         pool_name: Optional[PoolName] = None,
@@ -101,6 +108,8 @@ class Node(BASE_NODE, ORMMixin):
         num_results: Optional[int] = None,
     ) -> List["Node"]:
         query: QueryFilter = {}
+        if pool_id:
+            query["pool_id"] = [pool_id]
         if scaleset_id:
             query["scaleset_id"] = [scaleset_id]
         if states:
@@ -242,9 +251,7 @@ class Node(BASE_NODE, ORMMixin):
                 entry.delete()
 
     def could_shrink_scaleset(self) -> bool:
-        from .scalesets import ScalesetShrinkQueue
-
-        if self.scaleset_id and ScalesetShrinkQueue(self.scaleset_id).should_shrink():
+        if self.scaleset_id and ShrinkQueue(self.scaleset_id).should_shrink():
             return True
         return False
 
