@@ -28,5 +28,8 @@
   ],
   "minimized_stack_function_names": [
     "foo_function"
+  ],
+  "minimized_stack_function_lines": [
+    "foo_function(unsigned char const*, unsigned long) ../../out/default/../../examples/fuzzer/toy.cc:12 <<application>>+0xacf4c"
   ]
 }

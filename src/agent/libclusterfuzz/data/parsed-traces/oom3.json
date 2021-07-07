@@ -124,5 +124,11 @@
     "v8::internal::JSArrayBuffer::SetupAllocatingData",
     "v8::internal::",
     "v8::internal::Builtin_Impl_ArrayBufferConstructor"
+  ],
+  "minimized_stack_function_lines": [
+    "AllocateMemoryWithFlags array_buffer_contents.cc:111",
+    "v8::internal::JSArrayBuffer::SetupAllocatingData(v8::internal::Handle<v8::internal::JSArrayBuffer>, v8::internal::Isolate*, unsigned long, bool, v8::internal::SharedFlag) v8/src/objects.cc",
+    "v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, bool) builtins-arraybuffer.cc:43:8",
+    "v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) builtins-arraybuffer.cc:76:12"
   ]
 }

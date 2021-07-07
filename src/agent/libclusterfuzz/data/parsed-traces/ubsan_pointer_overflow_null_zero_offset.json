@@ -319,5 +319,18 @@
     "CFX_Font::LoadEmbedded",
     "FPDFText_LoadFont",
     "pdf_font_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "cff_subfont_load cffload.c:2060:51",
+    "cff_font_load cffload.c:2374:13",
+    "cff_face_init cffobjs.c:615:15",
+    "open_face ftobjs.c:1403:15",
+    "ft_open_face_internal ftobjs.c:2475:19",
+    "FT_New_Memory_Face ftobjs.c:1493:12",
+    "CFX_Face::New(FT_LibraryRec_*, fxcrt::RetainPtr<fxcrt::Retainable> const&, pdfium::span<unsigned char const>, long) cfx_face.cpp:15:7",
+    "CFX_FontMgr::NewFixedFace(fxcrt::RetainPtr<CFX_FontMgr::FontDesc> const&, pdfium::span<unsigned char const>, int) cfx_fontmgr.cpp:151:7",
+    "CFX_Font::LoadEmbedded(pdfium::span<unsigned char const>, bool) cfx_font.cpp:386:47",
+    "FPDFText_LoadFont fpdf_edittext.cpp:493:15",
+    "pdf_font_fuzzer.cc pdf_font_fuzzer.cc:22:23"
   ]
 }

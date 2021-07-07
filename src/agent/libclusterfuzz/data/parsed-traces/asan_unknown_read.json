@@ -583,5 +583,32 @@
     "content::ContentMainRunnerImpl::Run",
     "content::ContentMain",
     "ChromeMain"
+  ],
+  "minimized_stack_function_lines": [
+    "content::NavigationEntryImpl::site_instance() const navigation_entry_impl.h:224",
+    "content::NavigationControllerImpl::ClassifyNavigation(content::RenderFrameHostImpl*, FrameHostMsg_DidCommitProvisionalLoad_Params const&) const navigation_controller_impl.cc:1058:9",
+    "content::NavigationControllerImpl::RendererDidNavigate(content::RenderFrameHostImpl*, FrameHostMsg_DidCommitProvisionalLoad_Params const&, content::LoadCommittedDetails*) navigation_controller_impl.cc:866:19",
+    "content::NavigatorImpl::DidNavigate(content::RenderFrameHostImpl*, FrameHostMsg_DidCommitProvisionalLoad_Params const&) navigator_impl.cc:523:23",
+    "content::RenderFrameHostImpl::OnDidCommitProvisionalLoad(IPC::Message const&) render_frame_host_impl.cc:1083:3",
+    "content::RenderFrameHostImpl::OnMessageReceived(IPC::Message const&) render_frame_host_impl.cc:521:5",
+    "content::RenderProcessHostImpl::OnMessageReceived(IPC::Message const&) render_process_host_impl.cc:1803:10",
+    "IPC::ChannelProxy::Context::OnDispatchMessage(IPC::Message const&) ipc_channel_proxy.cc:293:3",
+    "void base::internal::InvokeHelper<false, void, base::internal::RunnableAdapter<void (IPC::ChannelProxy::Context::*)(IPC::Message const&)> >::MakeItSo<IPC::ChannelProxy::Context*, IPC::Message const&>(base::internal::RunnableAdapter<void (IPC::ChannelProxy::Context::*)(IPC::Message const&)>, IPC::ChannelProxy::Context*&&, IPC::Message const&) bind_internal.h:301:5",
+    "base::internal::Invoker<base::IndexSequence<0ul, 1ul>, base::internal::BindState<base::internal::RunnableAdapter<void (IPC::ChannelProxy::Context::*)(IPC::Message const&)>, void (IPC::ChannelProxy::Context*, IPC::Message const&), IPC::ChannelProxy::Context*, IPC::Message const&>, base::internal::InvokeHelper<false, void, base::internal::RunnableAdapter<void (IPC::ChannelProxy::Context::*)(IPC::Message const&)> >, void ()>::Run(base::internal::BindStateBase*) bind_internal.h:352:12",
+    "base::debug::TaskAnnotator::RunTask(char const*, base::PendingTask const&) task_annotator.cc:51:3",
+    "base::MessageLoop::RunTask(base::PendingTask const&) message_loop.cc:476:3",
+    "base::MessageLoop::DeferOrRunPendingTask(base::PendingTask const&) message_loop.cc:485:5",
+    "base::MessageLoop::DoWork() message_loop.cc:597:13",
+    "base::MessagePumpGlib::Run(base::MessagePump::Delegate*) message_pump_glib.cc:313:31",
+    "base::MessageLoop::RunHandler() message_loop.cc:440:3",
+    "base::RunLoop::Run() run_loop.cc:35:3",
+    "ChromeBrowserMainParts::MainMessageLoopRun(int*) chrome_browser_main.cc:1820:3",
+    "content::BrowserMainLoop::RunMainMessageLoopParts() browser_main_loop.cc:958:21",
+    "content::BrowserMainRunnerImpl::Run() browser_main_runner.cc:152:5",
+    "content::BrowserMain(content::MainFunctionParams const&) browser_main.cc:44:15",
+    "content::RunNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams const&, content::ContentMainDelegate*) content_main_runner.cc:398:14",
+    "content::ContentMainRunnerImpl::Run() content_main_runner.cc:769:12",
+    "content::ContentMain(content::ContentMainParams const&) content_main.cc:19:15",
+    "ChromeMain chrome_main.cc:84:12"
   ]
 }

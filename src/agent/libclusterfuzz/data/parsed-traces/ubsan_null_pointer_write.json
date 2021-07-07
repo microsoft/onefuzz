@@ -196,5 +196,12 @@
     "OGRShapeLayer::GetNextFeature",
     "OGR_L_GetNextFeature",
     "shape_fuzzer.cpp"
+  ],
+  "minimized_stack_function_lines": [
+    "SHPReadOGRObject(SHPInfo*, int, tagSHPObject*) shape2ogr.cpp:184:49",
+    "SHPReadOGRFeature(SHPInfo*, DBFInfo*, OGRFeatureDefn*, int, tagSHPObject*, char const*) shape2ogr.cpp:1217:26",
+    "OGRShapeLayer::GetNextFeature() ogrshapelayer.cpp:843:33",
+    "OGR_L_GetNextFeature ogrlayer.cpp:549:48",
+    "shape_fuzzer.cpp shape_fuzzer.cpp:53:32"
   ]
 }

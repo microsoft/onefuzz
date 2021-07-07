@@ -130,5 +130,8 @@
   ],
   "minimized_stack_function_names": [
     "python_fuzzer_impl.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "python_fuzzer_impl.cc python_fuzzer_impl.cc:111:5"
   ]
 }

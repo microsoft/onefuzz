@@ -88,5 +88,8 @@
   ],
   "minimized_stack_function_names": [
     "main"
+  ],
+  "minimized_stack_function_lines": [
+    "main FuzzerMain.cpp:21:10"
   ]
 }

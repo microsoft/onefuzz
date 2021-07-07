@@ -119,5 +119,8 @@
   ],
   "minimized_stack_function_names": [
     "fuzzer::RunOneTest"
+  ],
+  "minimized_stack_function_lines": [
+    "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) FuzzerDriver.cpp:292:6"
   ]
 }

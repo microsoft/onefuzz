@@ -127,6 +127,10 @@
     "v8::internal::`anonymous namespace'::GenerateSourceString",
     "regexp-builtins.cc"
   ],
+  "minimized_stack_function_lines": [
+    "v8::internal::`anonymous namespace'::GenerateSourceString regexp-builtins.cc:294:25",
+    "regexp-builtins.cc regexp-builtins.cc:442:3"
+  ],
   "scariness_score": 27,
   "scariness_description": "1-byte-read-stack-buffer-overflow"
 }
