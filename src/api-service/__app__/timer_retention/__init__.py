@@ -45,11 +45,3 @@ def main(mytimer: func.TimerRequest) -> None:
         logging.info(notification)
         logging.info(notification.config.ado_fields["System.AssignedTo"])
         logging.info(notification.timestamp)
-        # notification_timestamp = notification.timestamp
-        # if notification_timestamp < (
-        #         datetime.datetime.now(tz=datetime.timezone.utc) - RETENTION_POLICY
-        #     ):
-        #     logging.info("Found notification %s older than 18 months. Scrubbing user_info.", notification.notification_id)
-        #     logging.info(notification.config.ado_fields)
-        # notification.config.ado_fields = "noreply@microsoft.com"
-        # notification.save()
