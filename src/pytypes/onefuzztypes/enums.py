@@ -305,6 +305,13 @@ class ScalesetState(Enum):
     creation_failed = "creation_failed"
 
     @classmethod
+    def can_update(cls) -> List["ScalesetState"]:
+        """
+        set of states that indicate the scaleset can be updated
+        """
+        return [cls.running, cls.resize]
+
+    @classmethod
     def needs_work(cls) -> List["ScalesetState"]:
         """
         set of states that indicate work is needed during eventing
@@ -380,6 +387,10 @@ class NodeState(Enum):
     @classmethod
     def in_use(cls) -> List["NodeState"]:
         return [cls.setting_up, cls.rebooting, cls.ready, cls.busy, cls.done]
+
+    @classmethod
+    def can_process_new_work(cls) -> List["NodeState"]:
+        return [cls.free]
 
 
 class GithubIssueState(Enum):

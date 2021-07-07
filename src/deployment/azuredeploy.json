@@ -48,7 +48,7 @@
     },
     "variables": {
         "autoscale_name": "[concat('onefuzz-autoscale-', uniquestring(resourceGroup().id))]",
-        "diagnosticsLogsRetentionInDays": 90,
+        "log_retention": 30,
         "monitorAccountName": "[concat('logs-wb-', uniquestring(resourceGroup().id))]",
         "scaleset_identity": "[concat(parameters('name'), '-scalesetid')]",
         "signalr-name": "[concat('onefuzz-', uniquestring(resourceGroup().id))]",
@@ -173,7 +173,7 @@
                             "azureBlobStorage": {
                                 "level": "[parameters('diagnosticsLogsLevel')]",
                                 "sasUrl": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNameFunc'))).primaryEndpoints.blob, 'app-logs', '?', listAccountSas(variables('storageAccountNameFunc'), '2018-02-01', variables('storage_account_sas')).accountSasToken)]",
-                                "retentionInDays": "[variables('diagnosticsLogsRetentionInDays')]"
+                                "retentionInDays": "[variables('log_retention')]"
                             }
                         }
                     }
@@ -390,7 +390,8 @@
             "kind": "",
             "properties": {
                 "ApplicationId": "[parameters('name')]",
-                "Application_Type": "other"
+                "Application_Type": "other",
+                "RetentionInDays": "[variables('log_retention')]"
             },
             "tags": {
                 "OWNER": "[parameters('owner')]"
@@ -424,7 +425,7 @@
                 "sku": {
                     "name": "PerGB2018"
                 },
-                "retentionInDays": 120,
+                "retentionInDays": "[variables('log_retention')]",
                 "features": {
                     "searchVersion": 1,
                     "legacy": 0,

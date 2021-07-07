@@ -311,5 +311,20 @@
     "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::",
     "v8::internal::Builtin_Impl_HandleApiCall",
     "v8::internal::Builtin_HandleApiCall"
+  ],
+  "minimized_stack_function_lines": [
+    "blink::InputTypeView::element() const InputTypeView.h:129:48",
+    "blink::TextFieldInputType::didSetValueByUserEdit(blink::TextFieldInputType::ValueChangeState) TextFieldInputType.cpp:502:10",
+    "blink::TextFieldInputType::subtreeHasChanged() TextFieldInputType.cpp:497:5",
+    "blink::HTMLInputElement::subtreeHasChanged() HTMLInputElement.cpp:525:5",
+    "blink::HTMLTextFormControlElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&) HTMLTextFormControlElement.cpp:240:5",
+    "blink::HTMLInputElement::setRangeText(WTF::String const&, unsigned int, unsigned int, WTF::String const&, blink::ExceptionState&) HTMLInputElement.cpp:1827:5",
+    "blink::HTMLInputElementV8Internal::setRangeText2Method(v8::FunctionCallbackInfo<v8::Value> const&) V8HTMLInputElement.cpp:1868:5",
+    "blink::HTMLInputElementV8Internal::setRangeTextMethod(v8::FunctionCallbackInfo<v8::Value> const&) V8HTMLInputElement.cpp:1887:13",
+    "blink::HTMLInputElementV8Internal::setRangeTextMethodCallback(v8::FunctionCallbackInfo<v8::Value> const&) V8HTMLInputElement.cpp:1918:5",
+    "v8::internal::FunctionCallbackArguments::Call(void (*)(v8::FunctionCallbackInfo<v8::Value> const&)) arguments.cc:33:3",
+    "v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<false>(v8::internal::Isolate*, v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>) builtins.cc:1979:34",
+    "v8::internal::Builtin_Impl_HandleApiCall(v8::internal::(anonymous namespace)::BuiltinArguments<(v8::internal::BuiltinExtraArguments)1>, v8::internal::Isolate*) builtins.cc:2003:3",
+    "v8::internal::Builtin_HandleApiCall(int, v8::internal::Object**, v8::internal::Isolate*) builtins.cc:2000:1"
   ]
 }

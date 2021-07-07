@@ -349,5 +349,19 @@
     "DecodeAndParse",
     "net::ParseFtpDirectoryListing",
     "ftp_directory_listing_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "AbbreviatedMonthsMap ftp_util.cc:198:5",
+    "get singleton.h:248",
+    "GetInstance ftp_util.cc:135",
+    "net::FtpUtil::AbbreviatedMonthToNumber(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, int*) ftp_util.cc:223",
+    "net::FtpUtil::LsDateListingToTime(std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > const&, base::Time const&, base::Time*) ftp_util.cc:234:8",
+    "DetectColumnOffsetSizeAndModificationTime ftp_directory_listing_parser_ls.cc:85:9",
+    "net::ParseFtpDirectoryListingLs(std::__1::vector<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> >, std::__1::allocator<std::__1::basic_string<unsigned short, base::string16_char_traits, std::__1::allocator<unsigned short> > > > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) ftp_directory_listing_parser_ls.cc:158",
+    "Run callback.h:396:12",
+    "ParseListing ftp_directory_listing_parser.cc:71",
+    "DecodeAndParse ftp_directory_listing_parser.cc:101",
+    "net::ParseFtpDirectoryListing(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, base::Time const&, std::__1::vector<net::FtpDirectoryListingEntry, std::__1::allocator<net::FtpDirectoryListingEntry> >*) ftp_directory_listing_parser.cc:129",
+    "ftp_directory_listing_fuzzer.cc ftp_directory_listing_fuzzer.cc:16:3"
   ]
 }

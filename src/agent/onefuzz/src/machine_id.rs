@@ -6,8 +6,12 @@ use anyhow::{Context, Result};
 use reqwest_retry::SendRetry;
 #[cfg(target_os = "linux")]
 use std::path::Path;
+#[cfg(target_os = "macos")]
+use std::process::Stdio;
 use std::time::Duration;
 use tokio::fs;
+#[cfg(target_os = "macos")]
+use tokio::process::Command;
 use uuid::Uuid;
 
 // https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#tracking-vm-running-on-azure
@@ -110,6 +114,42 @@ pub async fn get_os_machine_id() -> Result<Uuid> {
     };
     let guid: String = crypt.get_value("MachineGuid")?;
     Ok(Uuid::parse_str(&guid)?)
+}
+
+#[cfg(target_os = "macos")]
+pub async fn get_os_machine_id() -> Result<Uuid> {
+    // getting the machine ID can be done through mach APIs, but for
+    // simplicity, this uses a method originally used in
+    // `cpp_client_telemetry`.
+    // ref: https://github.com/microsoft/cpp_client_telemetry/commit/41315d1b77dcf7a419332b96ea4c7cab43760853
+
+    let output = Command::new("ioreg")
+        .args(&["-d2", "-c", "IOPlatformExpertDevice"])
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .await
+        .context("ioreg failed to run")?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    for line in stdout.split('\n') {
+        // "IOPlatformUUID" = "GUID_HERE"
+        if line.contains("IOPlatformUUID") {
+            let quoted = line.split(" = ").last().ok_or_else(|| {
+                anyhow!("unable to find machine_id from IOPlatformUUID: {}", line)
+            })?;
+            let unquoted = quoted.trim_matches('"');
+            let machine_id = Uuid::parse_str(unquoted).with_context(|| {
+                format!("unable to parse UUID: {} (from line: {}", unquoted, line)
+            })?;
+            return Ok(machine_id);
+        }
+    }
+    bail!(
+        "No matching IOPlatformUUID in `ioreg -rd1 -c IOPlatformExpertDevice` command: {:?}",
+        stdout
+    );
 }
 
 async fn get_machine_id_impl() -> Result<Uuid> {

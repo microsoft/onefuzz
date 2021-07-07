@@ -5,7 +5,9 @@ use anyhow::{Context, Result};
 use downcast_rs::Downcast;
 use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
-use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
+use reqwest_retry::{
+    is_auth_failure, RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS,
+};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -198,11 +200,7 @@ impl Coordinator {
         };
 
         let url = self.registration.dynamic_config.commands_url.clone();
-        let request = self
-            .client
-            .get(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(&request);
+        let request = self.client.get(url).json(&request);
 
         let pending: PendingNodeCommand = self
             .send_request(request)
@@ -219,11 +217,7 @@ impl Coordinator {
             };
 
             let url = self.registration.dynamic_config.commands_url.clone();
-            let request = self
-                .client
-                .delete(url)
-                .bearer_auth(self.token.secret().expose_ref())
-                .json(&request);
+            let request = self.client.delete(url).json(&request);
 
             self.send_request(request).await.context("ClaimCommand")?;
 
@@ -240,11 +234,7 @@ impl Coordinator {
         };
 
         let url = self.registration.dynamic_config.events_url.clone();
-        let request = self
-            .client
-            .post(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(&envelope);
+        let request = self.client.post(url).json(&envelope);
 
         self.send_request(request).await.context("EmitEvent")?;
 
@@ -267,11 +257,7 @@ impl Coordinator {
 
         let mut url = self.registration.config.onefuzz_url.clone();
         url.set_path("/api/agents/can_schedule");
-        let request = self
-            .client
-            .post(url)
-            .bearer_auth(self.token.secret().expose_ref())
-            .json(&envelope);
+        let request = self.client.post(url).json(&envelope);
 
         let can_schedule: CanSchedule = self
             .send_request(request)
@@ -287,6 +273,7 @@ impl Coordinator {
         let mut response = request
             .try_clone()
             .ok_or_else(|| anyhow!("unable to clone request"))?
+            .bearer_auth(self.token.secret().expose_ref())
             .send_retry(
                 |code| match code {
                     StatusCode::UNAUTHORIZED => RetryCheck::Fail,
@@ -296,9 +283,9 @@ impl Coordinator {
                 MAX_RETRY_ATTEMPTS,
             )
             .await
-            .context("Coordinator.send")?;
+            .context("Coordinator.send");
 
-        if response.status() == StatusCode::UNAUTHORIZED {
+        if is_auth_failure(&response) {
             debug!("access token expired, renewing");
 
             // If we didn't succeed due to authorization, refresh our token,
@@ -308,10 +295,13 @@ impl Coordinator {
 
             // And try one more time.
             response = request
+                .bearer_auth(self.token.secret().expose_ref())
                 .send_retry_default()
                 .await
-                .context("Coordinator.send after refreshing access token")?;
+                .context("Coordinator.send after refreshing access token");
         };
+
+        let response = response.context("non-status error after ensuring valid access token")?;
 
         // We've retried if we got a `401 Unauthorized`. If it happens again, we
         // really want to bail this time.

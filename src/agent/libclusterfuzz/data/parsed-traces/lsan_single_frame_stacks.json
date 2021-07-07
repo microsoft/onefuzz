@@ -34,5 +34,8 @@
   ],
   "minimized_stack_function_names": [
     "f"
+  ],
+  "minimized_stack_function_lines": [
+    "f(unsigned long) blah.h:88"
   ]
 }

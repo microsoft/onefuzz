@@ -293,5 +293,15 @@
     "base::internal::JSONParser::Parse",
     "base::JSONReader::ReadAndReturnError",
     "json_reader_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>,   std::__1::allocator<char> > >::operator[](unsigned long) const string_piece.h:223:5",
+    "base::internal::JSONParser::ConsumeStringRaw(base::internal::JSONParser::StringBuilder*) json_parser.cc:515:15",
+    "base::internal::JSONParser::ConsumeString() json_parser.cc:453:8",
+    "base::internal::JSONParser::ParseToken(base::internal::JSONParser::Token) json_parser.cc:320:14",
+    "base::internal::JSONParser::ParseNextToken() json_parser.cc:310:10",
+    "base::internal::JSONParser::Parse(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >) json_parser.cc:100:24",
+    "base::JSONReader::ReadAndReturnError(base::BasicStringPiece<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > >, int, int*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, int*, int*) json_reader.cc:68:33",
+    "json_reader_fuzzer.cc json_reader_fuzzer.cc:24:3"
   ]
 }

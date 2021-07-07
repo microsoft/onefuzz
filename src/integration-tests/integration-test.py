@@ -345,10 +345,11 @@ class TestOnefuzz:
         # check if the task itself has an error
         if task.error is not None:
             self.logger.error(
-                "task failed: %s - %s (%s)",
+                "task failed: %s - %s (%s) - %s",
                 job.config.name,
                 task.config.task.type.name,
                 task.error,
+                task.task_id,
             )
             return TaskTestState.failed
 

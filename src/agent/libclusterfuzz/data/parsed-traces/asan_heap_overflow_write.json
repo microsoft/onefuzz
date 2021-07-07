@@ -590,5 +590,33 @@
     "content::ContentMain",
     "ChromeMain",
     "MainDllLoader::Launch"
+  ],
+  "minimized_stack_function_lines": [
+    "blink::TimerBase::stop Timer.cpp:73",
+    "blink::HTMLInputElement::onSearch HTMLInputElement.cpp:1487",
+    "blink::internal::CallClosureTask::performTask webthread_base.cc:26",
+    "blink::MainThreadTaskRunner::perform MainThreadTaskRunner.cpp:105",
+    "blink::MainThreadTask::run MainThreadTaskRunner.cpp:61",
+    "scheduler::WebTaskRunnerImpl::runTask web_task_runner_impl.cc:49",
+    "base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>::Run bind_internal.h:157",
+    "base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >::MakeItSo bind_internal.h:297",
+    "base::internal::Invoker<base::IndexSequence<0>,base::internal::BindState<base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,void __cdecl(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >),base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,base::internal::TypeList<base::internal::UnwrapTraits<base::internal::PassedWrapper<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > > >,base::internal::InvokeHelper<0,void,base::internal::RunnableAdapter<void (__cdecl*)(scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> >)>,base::internal::TypeList<scoped_ptr<blink::WebTaskRunner::Task,std::default_delete<blink::WebTaskRunner::Task> > > >,void __cdecl(void)>::Run bind_internal.h:347",
+    "base::debug::TaskAnnotator::RunTask callback.h:394",
+    "scheduler::TaskQueueManager::ProcessTaskFromWorkQueue task_queue_manager.cc:264",
+    "scheduler::TaskQueueManager::DoWork task_queue_manager.cc:180",
+    "base::internal::Invoker<base::IndexSequence<0,1,2>,base::internal::BindState<base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,void __cdecl(scheduler::TaskQueueManager *,base::TimeTicks,bool),base::WeakPtr<scheduler::TaskQueueManager>,base::TimeTicks,bool>,base::internal::TypeList<base::internal::UnwrapTraits<base::WeakPtr<scheduler::TaskQueueManager> >,base::internal::UnwrapTraits<base::TimeTicks>,base::internal::UnwrapTraits<bool> >,base::internal::InvokeHelper<1,void,base::internal::RunnableAdapter<void (__thiscall scheduler::TaskQueueManager::*)(base::TimeTicks,bool)>,base::internal::TypeList<base::WeakPtr<scheduler::TaskQueueManager> const &,base::TimeTicks const &,bool const &> >,void __cdecl(void)>::Run bind_internal.h:178",
+    "base::debug::TaskAnnotator::RunTask callback.h:394",
+    "base::MessageLoop::RunTask message_loop.cc:488",
+    "base::MessageLoop::DoWork message_loop.cc:497",
+    "base::MessagePumpDefault::Run message_pump_default.cc:33",
+    "base::MessageLoop::RunHandler message_loop.cc:452",
+    "base::RunLoop::Run run_loop.cc:56",
+    "base::MessageLoop::Run message_loop.cc:290",
+    "content::RendererMain renderer_main.cc:232",
+    "content::RunNamedProcessTypeMain content_main_runner.cc:383",
+    "content::ContentMainRunnerImpl::Run content_main_runner.cc:795",
+    "content::ContentMain content_main.cc:19",
+    "ChromeMain chrome_main.cc:67",
+    "MainDllLoader::Launch main_dll_loader_win.cc:285"
   ]
 }

@@ -227,5 +227,12 @@
     "ast_resolve",
     "g_variant_parse",
     "fuzz_variant_text.c"
+  ],
+  "minimized_stack_function_lines": [
+    "ast_array_get_pattern gvariant-parser.c:709:15",
+    "array_get_pattern gvariant-parser.c:889:13",
+    "ast_resolve gvariant-parser.c:595:13",
+    "g_variant_parse gvariant-parser.c:2395:18",
+    "fuzz_variant_text.c fuzz_variant_text.c:12:13"
   ]
 }

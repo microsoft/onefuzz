@@ -246,6 +246,17 @@
     "stress_main",
     "chewing_default_fuzzer.c"
   ],
+  "minimized_stack_function_lines": [
+    "DuplicateRecordAndInsertInterval tree.c:860:5",
+    "DoDpPhrasing tree.c:977:19",
+    "Phrasing tree.c:1019:9",
+    "CallPhrasing chewingutil.c:746:5",
+    "chewing_handle_Default chewingio.c:1601:9",
+    "chewing_handle_Space chewingio.c:811:16",
+    "type_single_keystroke testhelper.c:174:13",
+    "stress_main stress.c:222:7",
+    "chewing_default_fuzzer.c chewing_default_fuzzer.c:12:3"
+  ],
   "scariness_score": 10,
   "scariness_description": "signal"
 }

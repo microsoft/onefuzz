@@ -228,6 +228,15 @@
     "rawspeed::AbstractParallelizedDecompressor::decompressOne",
     "FujiDecompressor.cpp"
   ],
+  "minimized_stack_function_lines": [
+    "void rawspeed::FujiDecompressor::copy_line<rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&>(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int, rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const::$_7&) const FujiDecompressor.cpp:0:7",
+    "rawspeed::FujiDecompressor::copy_line_to_xtrans(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&, int) const FujiDecompressor.cpp:215",
+    "rawspeed::FujiDecompressor::fuji_decode_strip(rawspeed::FujiDecompressor::fuji_compressed_block*, rawspeed::FujiDecompressor::FujiStrip const&) const FujiDecompressor.cpp:729:7",
+    "rawspeed::FujiDecompressor::decompressThreaded(rawspeed::RawDecompressorThread const*) const FujiDecompressor.cpp:779:5",
+    "rawspeed::RawDecompressorThread::start_routine(void*) AbstractParallelizedDecompressor.h:67:22",
+    "rawspeed::AbstractParallelizedDecompressor::decompressOne(unsigned int) const AbstractParallelizedDecompressor.cpp:39:3",
+    "FujiDecompressor.cpp FujiDecompressor.cpp:47:7"
+  ],
   "scariness_score": 13,
   "scariness_description": "8-byte-read-unknown-crash"
 }
