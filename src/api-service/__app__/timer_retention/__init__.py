@@ -2,7 +2,6 @@ import datetime
 import logging
 
 import azure.functions as func
-from onefuzztypes.enums import JobState
 
 from ..onefuzzlib.jobs import Job
 from ..onefuzzlib.notifications.main import Notification
@@ -12,9 +11,6 @@ RETENTION_POLICY = datetime.timedelta(days=(18))
 
 
 def main(mytimer: func.TimerRequest) -> None:
-    utc_timestamp = (
-        datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
-    )
 
     for job in Job.search():
         logging.info("Retention Timer Job Search")
