@@ -18,11 +18,13 @@ def main(mytimer: func.TimerRequest) -> None:
         if job_timestamp is not None and job_timestamp < (
             datetime.datetime.now(tz=datetime.timezone.utc) - RETENTION_POLICY
         ):
-            logging.info(
-                "Found job %s older than 18 months. Scrubbing user_info.", job.job_id
-            )
-            job.user_info.upn = "noreply@microsoft.com"
-            job.save()
+            if job.user_info is not None:
+                logging.info(
+                    "Found job %s older than 18 months. Scrubbing user_info.",
+                    job.job_id,
+                )
+                job.user_info.upn = "noreply@microsoft.com"
+                job.save()
 
     for task in Task.search():
         logging.info("Retention Timer Task Search")
@@ -30,11 +32,13 @@ def main(mytimer: func.TimerRequest) -> None:
         if task_timestamp is not None and task_timestamp < (
             datetime.datetime.now(tz=datetime.timezone.utc) - RETENTION_POLICY
         ):
-            logging.info(
-                "Found task %s older than 18 months. Scrubbing user_info.", task.task_id
-            )
-            task.user_info.upn = "noreply@microsoft.com"
-            task.save()
+            if task.user_info is not None:
+                logging.info(
+                    "Found task %s older than 18 months. Scrubbing user_info.",
+                    task.task_id,
+                )
+                task.user_info.upn = "noreply@microsoft.com"
+                task.save()
 
     for notification in Notification.search():
         logging.info("Retention Timer Notification Search")
