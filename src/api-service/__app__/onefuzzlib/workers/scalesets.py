@@ -421,7 +421,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if pool.autoscale and self.state == ScalesetState.running:
             ground_truth_size = get_vmss_size(self.scaleset_id)
             if ground_truth_size is not None and ground_truth_size != self.size:
-                self.set_new_size(ground_truth_size)
+                self.set_size(ground_truth_size)
 
         return bool(to_reimage) or bool(to_delete)
 
@@ -814,18 +814,6 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 "scaleset_id:%s",
                 self.scaleset_id,
             )
-
-    def set_new_size(self, size: int) -> None:
-        # ensure we always stay within max_size boundaries
-        self.size = min(size, self.max_size())
-        self.state = ScalesetState.resize
-        self.save()
-
-        send_event(
-            EventScalesetResizeScheduled(
-                scaleset_id=self.scaleset_id, pool_name=self.pool_name, size=self.size
-            )
-        )
 
     @classmethod
     def key_fields(cls) -> Tuple[str, str]:

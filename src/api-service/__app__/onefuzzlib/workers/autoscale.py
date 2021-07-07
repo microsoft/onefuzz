@@ -63,7 +63,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
                     scaleset.size,
                     scaleset_to_add,
                 )
-                scaleset.set_new_size(scaleset.size + scaleset_to_add)
+                scaleset.set_size(scaleset.size + scaleset_to_add)
                 to_add -= scaleset_to_add
 
     region = config.region or get_base_region()
