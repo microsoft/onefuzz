@@ -256,9 +256,6 @@ def main() -> None:
             report=report,
         ),
         EventFileAdded(container=Container("container-name"), filename="example.txt"),
-        EventScalesetResizeScheduled(
-            scaleset_id=UUID(int=0), pool_name=PoolName("example"), size=0
-        ),
         EventNodeHeartbeat(machine_id=UUID(int=0), pool_name=PoolName("example")),
         EventTaskHeartbeat(task_id=UUID(int=0), job_id=UUID(int=0), config=task_config),
         EventInstanceConfigUpdated(config=InstanceConfig(admins=[UUID(int=0)])),
