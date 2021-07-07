@@ -134,23 +134,21 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(scaleset, Error):
         return not_ok(scaleset, context="ScalesetUpdate")
 
-    if scaleset.state not in [ScalesetState.running, ScalesetState.resize]:
+    if scaleset.state not in ScalesetState.can_update():
         return not_ok(
             Error(
                 code=ErrorCode.INVALID_REQUEST,
                 errors=[
-                    "scaleset state must be 'running' or "
-                    "'resize' state to modify scaleset"
+                    "scaleset must be in the following states to update: "
+                    + ",".join(x.name for x in ScalesetState.can_update())
                 ],
             ),
             context="ScalesetUpdate",
         )
 
     if request.size is not None:
-        scaleset.size = request.size
-        scaleset.set_state(ScalesetState.resize)
+        scaleset.set_size(request.size)
 
-    scaleset.save()
     scaleset.auth = None
     return ok(scaleset)
 

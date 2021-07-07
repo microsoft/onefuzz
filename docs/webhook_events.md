@@ -43,6 +43,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [scaleset_created](#scaleset_created)
 * [scaleset_deleted](#scaleset_deleted)
 * [scaleset_failed](#scaleset_failed)
+* [scaleset_resize_scheduled](#scaleset_resize_scheduled)
 * [scaleset_state_updated](#scaleset_state_updated)
 * [task_created](#task_created)
 * [task_failed](#task_failed)
@@ -2361,6 +2362,47 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "error"
     ],
     "title": "EventScalesetFailed",
+    "type": "object"
+}
+```
+
+### scaleset_resize_scheduled
+
+#### Example
+
+```json
+{
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "size": 0
+}
+```
+
+#### Schema
+
+```json
+{
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
+        "size": {
+            "title": "Size",
+            "type": "integer"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "size"
+    ],
+    "title": "EventScalesetResizeScheduled",
     "type": "object"
 }
 ```
@@ -5272,6 +5314,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventScalesetFailed",
             "type": "object"
         },
+        "EventScalesetResizeScheduled": {
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "size": {
+                    "title": "Size",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "size"
+            ],
+            "title": "EventScalesetResizeScheduled",
+            "type": "object"
+        },
         "EventScalesetStateUpdated": {
             "properties": {
                 "pool_name": {
@@ -5456,6 +5522,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "scaleset_deleted",
                 "scaleset_failed",
                 "scaleset_state_updated",
+                "scaleset_resize_scheduled",
                 "task_created",
                 "task_failed",
                 "task_state_updated",
@@ -6166,6 +6233,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventScalesetStateUpdated"
+                },
+                {
+                    "$ref": "#/definitions/EventScalesetResizeScheduled"
                 },
                 {
                     "$ref": "#/definitions/EventTaskFailed"
