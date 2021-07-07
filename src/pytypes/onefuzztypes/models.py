@@ -541,6 +541,7 @@ NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
 
 
 class Notification(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     container: Container
     notification_id: UUID = Field(default_factory=uuid4)
     config: NotificationTemplate
