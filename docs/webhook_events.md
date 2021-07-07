@@ -5509,7 +5509,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "scaleset_created",
                 "scaleset_deleted",
                 "scaleset_failed",
-                "scaleset_resize_scheduled",
                 "scaleset_state_updated",
                 "scaleset_resize_scheduled",
                 "task_created",
@@ -6219,9 +6218,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventScalesetDeleted"
-                },
-                {
-                    "$ref": "#/definitions/EventScalesetResizeScheduled"
                 },
                 {
                     "$ref": "#/definitions/EventScalesetStateUpdated"
