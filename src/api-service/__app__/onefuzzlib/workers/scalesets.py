@@ -291,6 +291,8 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     # result = 'did I modify the scaleset in azure'
     def cleanup_nodes(self) -> bool:
+        from .pools import Pool
+
         logging.info(
             SCALESET_LOG_PREFIX + "cleaning up nodes. scaleset_id:%s", self.scaleset_id
         )
@@ -300,6 +302,16 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 self.scaleset_id,
             )
             self.halt()
+            return True
+
+        pool = Pool.get_by_name(self.pool_name)
+        if isinstance(pool, Error):
+            logging.error(
+                "unable to find pool during cleanup: %s - %s",
+                self.scaleset_id,
+                pool,
+            )
+            self.set_failed(pool)
             return True
 
         Node.reimage_long_lived_nodes(self.scaleset_id)
@@ -346,6 +358,7 @@ class Scaleset(BASE_SCALESET, ORMMixin):
             # Note, using `new=True` makes it such that if a node already has
             # checked in, this won't overwrite it.
             Node.create(
+                pool_id=pool.pool_id,
                 pool_name=self.pool_name,
                 machine_id=machine_id,
                 scaleset_id=self.scaleset_id,
