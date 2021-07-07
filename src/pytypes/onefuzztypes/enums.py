@@ -330,22 +330,6 @@ class ScalesetState(Enum):
         unavailable = [cls.halt, cls.init, cls.setup]
         return [x for x in cls if x not in unavailable]
 
-    @classmethod
-    def can_resize(cls) -> List["ScalesetState"]:
-        """
-        set of states that indicate the scaleset can be resized
-        """
-        return [cls.running, cls.resize]
-
-    @classmethod
-    def modifying(cls) -> List["ScalesetState"]:
-        """set of states that indicate scaleset is resizing"""
-        return [
-            cls.halt,
-            cls.init,
-            cls.setup,
-        ]
-
 
 class Architecture(Enum):
     x86_64 = "x86_64"

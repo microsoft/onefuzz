@@ -51,7 +51,7 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
         if to_add <= 0:
             break
 
-        if scaleset.state in ScalesetState.can_resize():
+        if scaleset.state in ScalesetState.can_update():
             scaleset_max_size = scaleset.max_size()
             if scaleset.size < scaleset_max_size:
                 scaleset_to_add = min(to_add, scaleset_max_size - scaleset.size)
