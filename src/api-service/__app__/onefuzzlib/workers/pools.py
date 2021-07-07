@@ -245,5 +245,4 @@ class Pool(BASE_POOL, ORMMixin):
 
     def delete(self) -> None:
         super().delete()
-        ShrinkQueue(self.pool_id).delete()
         send_event(EventPoolDeleted(pool_name=self.name))
