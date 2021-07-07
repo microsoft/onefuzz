@@ -605,9 +605,10 @@ class AutoScaleConfig(BaseModel):
 
     @root_validator()
     def check_data(cls, values: Any) -> Any:
-        if values['min_size'] <= values['max_size']:
+        if values["min_size"] <= values["max_size"]:
             raise ValueError("The pool min_size is greater than max_size")
         return values
+
 
 class Pool(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
