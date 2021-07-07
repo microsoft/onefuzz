@@ -15,7 +15,7 @@ def main(mytimer: func.TimerRequest) -> None:
     for job in Job.search():
         logging.info("Retention Timer Job Search")
         job_timestamp = job.timestamp
-        if job_timestamp < (
+        if job_timestamp is not None and job_timestamp < (
             datetime.datetime.now(tz=datetime.timezone.utc) - RETENTION_POLICY
         ):
             logging.info(
@@ -27,7 +27,7 @@ def main(mytimer: func.TimerRequest) -> None:
     for task in Task.search():
         logging.info("Retention Timer Task Search")
         task_timestamp = task.timestamp
-        if task_timestamp < (
+        if task_timestamp is not None and task_timestamp < (
             datetime.datetime.now(tz=datetime.timezone.utc) - RETENTION_POLICY
         ):
             logging.info(
