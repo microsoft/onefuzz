@@ -1233,14 +1233,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": 1000,
                     "maximum": 1000,
                     "minimum": 0,
-                    "title": "maximum size of the pool",
+                    "title": "Max Size",
                     "type": "integer"
                 },
                 "min_size": {
                     "default": 0,
                     "maximum": 1000,
                     "minimum": 0,
-                    "title": "minimum size of the pool",
+                    "title": "Min Size",
                     "type": "integer"
                 },
                 "region": {
@@ -4780,14 +4780,14 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": 1000,
                     "maximum": 1000,
                     "minimum": 0,
-                    "title": "maximum size of the pool",
+                    "title": "Max Size",
                     "type": "integer"
                 },
                 "min_size": {
                     "default": 0,
                     "maximum": 1000,
                     "minimum": 0,
-                    "title": "minimum size of the pool",
+                    "title": "Min Size",
                     "type": "integer"
                 },
                 "region": {

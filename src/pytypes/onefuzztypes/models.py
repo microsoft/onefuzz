@@ -595,8 +595,8 @@ class NodeTasks(BaseModel):
 
 class AutoScaleConfig(BaseModel):
     image: str
-    max_size: int = Field(default=1000, le=1000, ge=0, title="maximum size of the pool")
-    min_size: int = Field(default=0, le=1000, ge=0, title="minimum size of the pool")
+    max_size: int = Field(default=1000, le=1000, ge=0)
+    min_size: int = Field(default=0, le=1000, ge=0)
     region: Optional[Region]
     scaleset_size: int = Field(default=0, description="unused")
     spot_instances: bool = Field(default=False)
