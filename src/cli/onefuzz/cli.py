@@ -158,8 +158,8 @@ class Builder:
             int: {"type": int},
             UUID: {"type": UUID},
             Container: {"type": str},
-            PoolName: {"type": str},
             Region: {"type": str},
+            PoolName: {"type": str},
             File: {"type": arg_file},
             Directory: {"type": arg_dir},
         }
