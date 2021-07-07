@@ -598,14 +598,14 @@ class AutoScaleConfig(BaseModel):
     max_size: int = Field(default=1000, le=1000, ge=0)
     min_size: int = Field(default=0, le=1000, ge=0)
     region: Optional[Region]
-    scaleset_size: int = Field(default=0, description="unused")
+    scaleset_size: int = Field(default=1, description="unused")
     spot_instances: bool = Field(default=False)
     ephemeral_os_disks: bool = Field(default=False)
     vm_sku: str
 
     @root_validator()
     def check_data(cls, values: Any) -> Any:
-        if values["min_size"] <= values["max_size"]:
+        if values["min_size"] > values["max_size"]:
             raise ValueError("The pool min_size is greater than max_size")
         return values
 
