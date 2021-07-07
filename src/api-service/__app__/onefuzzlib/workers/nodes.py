@@ -32,6 +32,7 @@ from ..azure.vmss import get_instance_id
 from ..events import send_event
 from ..orm import MappingIntStrAny, ORMMixin, QueryFilter
 from ..versions import is_minimum_version
+from .shrink_queue import ShrinkQueue
 
 NODE_EXPIRATION_TIME: datetime.timedelta = datetime.timedelta(hours=1)
 NODE_REIMAGE_TIME: datetime.timedelta = datetime.timedelta(days=7)
@@ -242,9 +243,7 @@ class Node(BASE_NODE, ORMMixin):
                 entry.delete()
 
     def could_shrink_scaleset(self) -> bool:
-        from .scalesets import ScalesetShrinkQueue
-
-        if self.scaleset_id and ScalesetShrinkQueue(self.scaleset_id).should_shrink():
+        if self.scaleset_id and ShrinkQueue(self.scaleset_id).should_shrink():
             return True
         return False
 
