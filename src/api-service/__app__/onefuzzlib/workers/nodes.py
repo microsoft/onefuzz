@@ -434,8 +434,10 @@ class Node(BASE_NODE, ORMMixin):
     def get_dead_nodes(
         cls, scaleset_id: UUID, expiration_period: datetime.timedelta
     ) -> List["Node"]:
-        time_filter = "heartbeat lt datetime'%s'" % (
-            (datetime.datetime.utcnow() - expiration_period).isoformat()
+        min_date = (datetime.datetime.utcnow() - expiration_period).isoformat()
+        time_filter = "heartbeat lt datetime'%s' or Timestamp lt datetime'%s'" % (
+            min_date,
+            min_date,
         )
         return cls.search(
             query={"scaleset_id": [scaleset_id]},
