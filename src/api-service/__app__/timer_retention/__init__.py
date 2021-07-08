@@ -3,6 +3,7 @@ import logging
 
 import azure.functions as func
 
+from ..onefuzzlib.events import get_events
 from ..onefuzzlib.jobs import Job
 from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.tasks.main import Task
@@ -10,7 +11,7 @@ from ..onefuzzlib.tasks.main import Task
 RETENTION_POLICY = datetime.timedelta(days=(18))
 
 
-def main(mytimer: func.TimerRequest) -> None:
+def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
 
     for job in Job.search():
         logging.info("Retention Timer Job Search")
@@ -45,3 +46,7 @@ def main(mytimer: func.TimerRequest) -> None:
         logging.info(notification)
         # logging.info(notification.config.ado_fields["System.AssignedTo"])
         logging.info(notification.timestamp)
+
+    events = get_events()
+    if events:
+        dashboard.set(events)
