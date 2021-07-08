@@ -125,23 +125,6 @@ def send_message(
             pass
 
 
-def delete_messages(
-    name: QueueNameType, storage_type: StorageType, messages: List[str]
-) -> None:
-    queue = get_queue(name, storage_type)
-    if not queue:
-        return
-
-    done = []
-    for message in messages:
-        try:
-            queue.delete_message(message)
-            done.append(message)
-        except ResourceNotFoundError:
-            logging.debug("queue message already deleted: %s - %s", name, message)
-    logging.debug("queue messages deleted: %s", done)
-
-
 def remove_first_message(name: QueueNameType, storage_type: StorageType) -> bool:
     queue = get_queue(name, storage_type)
     if queue:

@@ -112,7 +112,7 @@ def shutdown_empty_scalesets(pool: Pool, scalesets: List[Scaleset]) -> None:
                 pool.name,
                 scaleset.scaleset_id,
             )
-            scaleset.halt()
+            scaleset.set_state(ScalesetState.shutdown)
 
 
 def scale_down(pool: Pool, scalesets: List[Scaleset], to_remove: int) -> None:
