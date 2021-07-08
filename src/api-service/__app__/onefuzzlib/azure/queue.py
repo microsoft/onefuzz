@@ -191,7 +191,7 @@ def peek_queue(
     return result
 
 
-def decode_message(message: QueueMessage, object_type: Type[A]) -> Optional[A]:
+def decode_message(message: QueueMessage, object_type: Type[A]) -> A:
     decoded = base64.b64decode(message.content)
     raw = json.loads(decoded)
     return object_type.parse_obj(raw)

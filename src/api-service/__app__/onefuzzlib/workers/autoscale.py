@@ -156,10 +156,6 @@ def clear_synthetic_worksets(pool: Pool) -> None:
     keeping = []
     for message in client.receive_messages():
         decoded = decode_message(message, WorkSet)
-        if not decoded:
-            logging.warning(AUTOSCALE_LOG_PREFIX + "decode workset failed: %s", message)
-            continue
-
         if decoded.work_units:
             keeping.append(message)
             ignored += 1
