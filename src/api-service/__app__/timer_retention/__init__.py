@@ -43,5 +43,5 @@ def main(mytimer: func.TimerRequest) -> None:
     for notification in Notification.search():
         logging.info("Retention Timer Notification Search")
         logging.info(notification)
-        logging.info(notification.config.ado_fields["System.AssignedTo"])
+        # logging.info(notification.config.ado_fields["System.AssignedTo"])
         logging.info(notification.timestamp)
