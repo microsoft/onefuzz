@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.25.0
+### Added
+* Agent: Added `minimized_stack_function_lines` and `minimized_stack_function_lines_sha256` to crash reports.  [#993](https://github.com/microsoft/onefuzz/pull/993)
+* CLI/Service: Added `timestamp` to `Notification` objects.  [#1043](https://github.com/microsoft/onefuzz/pull/1043)
+* Service: Added the [scaleset\_resize\_scheduled](docs/webhook_events.md#scaleset_resize_scheduled) event.  [#1047](https://github.com/microsoft/onefuzz/pull/1047)
+* Service: Added `pool_id` to `Node` objects. [#1049](https://github.com/microsoft/onefuzz/pull/1049)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1040](https://github.com/microsoft/onefuzz/pull/1040), [#1052](https://github.com/microsoft/onefuzz/pull/1052)
+* CLI/Deployment/Service: Updated multiple first-party and third-party Python dependencies.  [#922](https://github.com/microsoft/onefuzz/pull/922), [#1045](https://github.com/microsoft/onefuzz/pull/1045)
+* CLI/Service: Moved to using Pydantic built-in size validation for types. [#1048](https://github.com/microsoft/onefuzz/pull/1048)
+* Service: Continued development related to upcoming features.  [#1046](https://github.com/microsoft/onefuzz/pull/1046), [#1050](https://github.com/microsoft/onefuzz/pull/1050)
+
+### Fixed
+* CLI: Fixed an issue handling column sorting in `onefuzz status top`.  [#1037](https://github.com/microsoft/onefuzz/pull/1037)
+* Service: Fixed an issue adding SSH keys to Windows VMs.  [#1038](https://github.com/microsoft/onefuzz/pull/1038)
+
 ## 2.24.0
 ### Added
 * CLI/Service: Added instance configuration that can be managed via `onefuzz instance_config`.  [#1010](https://github.com/microsoft/onefuzz/pull/1010)
