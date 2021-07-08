@@ -378,6 +378,9 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 if ShrinkQueue(self.scaleset_id).should_shrink():
                     node.set_halt()
                     to_delete.append(node)
+                elif ShrinkQueue(pool.pool_id).should_shrink():
+                    node.set_halt()
+                    to_delete.append(node)
                 else:
                     to_reimage.append(node)
 
