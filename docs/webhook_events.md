@@ -1248,7 +1248,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "scaleset_size": {
-                    "default": 0,
+                    "default": 1,
                     "description": "unused",
                     "title": "Scaleset Size",
                     "type": "integer"
@@ -4795,7 +4795,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "scaleset_size": {
-                    "default": 0,
+                    "default": 1,
                     "description": "unused",
                     "title": "Scaleset Size",
                     "type": "integer"
