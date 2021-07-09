@@ -196,5 +196,10 @@
     "Json::OurReader::parse",
     "Json::OurCharReader::parse",
     "json_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "Json::OurReader::parse(char const*, char const*, Json::Value&, bool) json_reader.cpp:1062:10",
+    "Json::OurCharReader::parse(char const*, char const*, Json::Value*, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >*) json_reader.cpp:1899:23",
+    "json_fuzzer.cc json_fuzzer.cc:39:24"
   ]
 }

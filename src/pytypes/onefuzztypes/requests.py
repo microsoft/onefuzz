@@ -6,7 +6,7 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import AnyHttpUrl, BaseModel, Field, root_validator, validator
+from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 
 from ._monkeypatch import _check_hotfix
 from .consts import ONE_HOUR, SEVEN_DAYS
@@ -20,7 +20,7 @@ from .enums import (
     TaskState,
 )
 from .events import EventType
-from .models import AutoScaleConfig, NotificationConfig
+from .models import AutoScaleConfig, InstanceConfig, NotificationConfig
 from .primitives import Container, PoolName, Region
 
 
@@ -58,13 +58,7 @@ class TaskSearch(BaseRequest):
 
 
 class TaskResize(TaskGet):
-    count: int
-
-    @validator("count", allow_reuse=True)
-    def check_count(cls, value: int) -> int:
-        if value <= 0:
-            raise ValueError("invalid count")
-        return value
+    count: int = Field(ge=1)
 
 
 class NodeCommandGet(BaseRequest):
@@ -128,13 +122,7 @@ class ProxyCreate(BaseRequest):
     scaleset_id: UUID
     machine_id: UUID
     dst_port: int
-    duration: int
-
-    @validator("duration", allow_reuse=True)
-    def check_duration(cls, value: int) -> int:
-        if value < ONE_HOUR or value > SEVEN_DAYS:
-            raise ValueError("invalid duration")
-        return value
+    duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
 
 
 class ProxyDelete(BaseRequest):
@@ -172,13 +160,7 @@ class ScalesetStop(BaseRequest):
 
 class ScalesetUpdate(BaseRequest):
     scaleset_id: UUID
-    size: Optional[int]
-
-    @validator("size", allow_reuse=True)
-    def check_optional_size(cls, value: Optional[int]) -> Optional[int]:
-        if value is not None and value < 0:
-            raise ValueError("invalid size")
-        return value
+    size: Optional[int] = Field(ge=1)
 
 
 class ScalesetCreate(BaseRequest):
@@ -186,16 +168,10 @@ class ScalesetCreate(BaseRequest):
     vm_sku: str
     image: str
     region: Optional[Region]
-    size: int
+    size: int = Field(ge=1)
     spot_instances: bool
     ephemeral_os_disks: bool = Field(default=False)
     tags: Dict[str, str]
-
-    @validator("size", allow_reuse=True)
-    def check_size(cls, value: int) -> int:
-        if value <= 0:
-            raise ValueError("invalid size")
-        return value
 
 
 class ContainerGet(BaseRequest):
@@ -251,6 +227,10 @@ class WebhookUpdate(BaseModel):
 class NodeAddSshKey(BaseModel):
     machine_id: UUID
     public_key: str
+
+
+class InstanceConfigUpdate(BaseModel):
+    config: InstanceConfig
 
 
 _check_hotfix()

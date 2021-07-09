@@ -22,6 +22,7 @@ from onefuzztypes.events import (
     Event,
     EventCrashReported,
     EventFileAdded,
+    EventInstanceConfigUpdated,
     EventJobCreated,
     EventJobStopped,
     EventNodeCreated,
@@ -39,6 +40,7 @@ from onefuzztypes.events import (
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetFailed,
+    EventScalesetResizeScheduled,
     EventScalesetStateUpdated,
     EventTaskCreated,
     EventTaskFailed,
@@ -53,6 +55,7 @@ from onefuzztypes.models import (
     BlobRef,
     CrashTestResult,
     Error,
+    InstanceConfig,
     JobConfig,
     RegressionReport,
     Report,
@@ -198,6 +201,9 @@ def main() -> None:
             pool_name=PoolName("example"),
             state=ScalesetState.init,
         ),
+        EventScalesetResizeScheduled(
+            scaleset_id=UUID(int=0), pool_name=PoolName("example"), size=0
+        ),
         EventJobCreated(
             job_id=UUID(int=0),
             config=JobConfig(
@@ -252,6 +258,7 @@ def main() -> None:
         EventFileAdded(container=Container("container-name"), filename="example.txt"),
         EventNodeHeartbeat(machine_id=UUID(int=0), pool_name=PoolName("example")),
         EventTaskHeartbeat(task_id=UUID(int=0), job_id=UUID(int=0), config=task_config),
+        EventInstanceConfigUpdated(config=InstanceConfig(admins=[UUID(int=0)])),
     ]
 
     # works around `mypy` not handling that Union has `__args__`

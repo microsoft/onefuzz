@@ -25,6 +25,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 
 * [crash_reported](#crash_reported)
 * [file_added](#file_added)
+* [instance_config_updated](#instance_config_updated)
 * [job_created](#job_created)
 * [job_stopped](#job_stopped)
 * [node_created](#node_created)
@@ -42,6 +43,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
 * [scaleset_created](#scaleset_created)
 * [scaleset_deleted](#scaleset_deleted)
 * [scaleset_failed](#scaleset_failed)
+* [scaleset_resize_scheduled](#scaleset_resize_scheduled)
 * [scaleset_state_updated](#scaleset_state_updated)
 * [task_created](#task_created)
 * [task_failed](#task_failed)
@@ -179,6 +181,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Minimized Stack",
                     "type": "array"
+                },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
                 },
                 "minimized_stack_function_names": {
                     "items": {
@@ -346,6 +359,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
@@ -354,6 +368,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -458,6 +474,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -519,6 +536,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -613,6 +631,59 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
+### instance_config_updated
+
+#### Example
+
+```json
+{
+    "config": {
+        "admins": [
+            "00000000-0000-0000-0000-000000000000"
+        ],
+        "allow_pool_management": true
+    }
+}
+```
+
+#### Schema
+
+```json
+{
+    "definitions": {
+        "InstanceConfig": {
+            "properties": {
+                "admins": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Admins",
+                    "type": "array"
+                },
+                "allow_pool_management": {
+                    "default": true,
+                    "title": "Allow Pool Management",
+                    "type": "boolean"
+                }
+            },
+            "title": "InstanceConfig",
+            "type": "object"
+        }
+    },
+    "properties": {
+        "config": {
+            "$ref": "#/definitions/InstanceConfig"
+        }
+    },
+    "required": [
+        "config"
+    ],
+    "title": "EventInstanceConfigUpdated",
+    "type": "object"
+}
+```
+
 ### job_created
 
 #### Example
@@ -641,6 +712,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -797,6 +870,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -1155,11 +1230,16 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "max_size": {
+                    "default": 1000,
+                    "maximum": 1000,
+                    "minimum": 0,
                     "title": "Max Size",
                     "type": "integer"
                 },
                 "min_size": {
                     "default": 0,
+                    "maximum": 1000,
+                    "minimum": 0,
                     "title": "Min Size",
                     "type": "integer"
                 },
@@ -1701,6 +1781,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Minimized Stack",
                     "type": "array"
                 },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
+                },
                 "minimized_stack_function_names": {
                     "items": {
                         "type": "string"
@@ -1867,6 +1958,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
@@ -1875,6 +1967,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -1979,6 +2073,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -2040,6 +2135,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -2289,6 +2385,47 @@ Each event will be submitted via HTTP POST to the user provided URL.
 }
 ```
 
+### scaleset_resize_scheduled
+
+#### Example
+
+```json
+{
+    "pool_name": "example",
+    "scaleset_id": "00000000-0000-0000-0000-000000000000",
+    "size": 0
+}
+```
+
+#### Schema
+
+```json
+{
+    "properties": {
+        "pool_name": {
+            "title": "Pool Name",
+            "type": "string"
+        },
+        "scaleset_id": {
+            "format": "uuid",
+            "title": "Scaleset Id",
+            "type": "string"
+        },
+        "size": {
+            "title": "Size",
+            "type": "integer"
+        }
+    },
+    "required": [
+        "scaleset_id",
+        "pool_name",
+        "size"
+    ],
+    "title": "EventScalesetResizeScheduled",
+    "type": "object"
+}
+```
+
 ### scaleset_state_updated
 
 #### Example
@@ -2533,6 +2670,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
@@ -2541,6 +2679,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -2645,6 +2785,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -2706,6 +2847,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -3031,6 +3173,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
@@ -3039,6 +3182,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -3143,6 +3288,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -3204,6 +3350,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -3474,6 +3621,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
@@ -3482,6 +3630,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -3586,6 +3736,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -3647,6 +3798,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -3891,6 +4043,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
@@ -3899,6 +4052,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -4003,6 +4158,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -4078,6 +4234,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -4335,6 +4492,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
@@ -4343,6 +4501,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -4447,6 +4607,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -4508,6 +4669,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -4614,11 +4776,16 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "max_size": {
+                    "default": 1000,
+                    "maximum": 1000,
+                    "minimum": 0,
                     "title": "Max Size",
                     "type": "integer"
                 },
                 "min_size": {
                     "default": 0,
+                    "maximum": 1000,
+                    "minimum": 0,
                     "title": "Min Size",
                     "type": "integer"
                 },
@@ -4790,6 +4957,18 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "filename"
             ],
             "title": "EventFileAdded",
+            "type": "object"
+        },
+        "EventInstanceConfigUpdated": {
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/InstanceConfig"
+                }
+            },
+            "required": [
+                "config"
+            ],
+            "title": "EventInstanceConfigUpdated",
             "type": "object"
         },
         "EventJobCreated": {
@@ -5184,6 +5363,30 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "EventScalesetFailed",
             "type": "object"
         },
+        "EventScalesetResizeScheduled": {
+            "properties": {
+                "pool_name": {
+                    "title": "Pool Name",
+                    "type": "string"
+                },
+                "scaleset_id": {
+                    "format": "uuid",
+                    "title": "Scaleset Id",
+                    "type": "string"
+                },
+                "size": {
+                    "title": "Size",
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "scaleset_id",
+                "pool_name",
+                "size"
+            ],
+            "title": "EventScalesetResizeScheduled",
+            "type": "object"
+        },
         "EventScalesetStateUpdated": {
             "properties": {
                 "pool_name": {
@@ -5368,6 +5571,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "scaleset_deleted",
                 "scaleset_failed",
                 "scaleset_state_updated",
+                "scaleset_resize_scheduled",
                 "task_created",
                 "task_failed",
                 "task_state_updated",
@@ -5376,9 +5580,29 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "regression_reported",
                 "file_added",
                 "task_heartbeat",
-                "node_heartbeat"
+                "node_heartbeat",
+                "instance_config_updated"
             ],
             "title": "EventType"
+        },
+        "InstanceConfig": {
+            "properties": {
+                "admins": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Admins",
+                    "type": "array"
+                },
+                "allow_pool_management": {
+                    "default": true,
+                    "title": "Allow Pool Management",
+                    "type": "boolean"
+                }
+            },
+            "title": "InstanceConfig",
+            "type": "object"
         },
         "JobConfig": {
             "properties": {
@@ -5387,6 +5611,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -5560,6 +5786,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Minimized Stack",
                     "type": "array"
+                },
+                "minimized_stack_function_lines": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Minimized Stack Function Lines",
+                    "type": "array"
+                },
+                "minimized_stack_function_lines_sha256": {
+                    "title": "Minimized Stack Function Lines Sha256",
+                    "type": "string"
                 },
                 "minimized_stack_function_names": {
                     "items": {
@@ -5740,6 +5977,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "check_retry_count": {
+                    "minimum": 0,
                     "title": "Check Retry Count",
                     "type": "integer"
                 },
@@ -5748,6 +5986,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "string"
                 },
                 "duration": {
+                    "maximum": 168,
+                    "minimum": 1,
                     "title": "Duration",
                     "type": "integer"
                 },
@@ -5852,6 +6092,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "type": "boolean"
                 },
                 "target_timeout": {
+                    "minimum": 1,
                     "title": "Target Timeout",
                     "type": "integer"
                 },
@@ -5927,6 +6168,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "properties": {
                 "count": {
                     "default": 1,
+                    "minimum": 0,
                     "title": "Count",
                     "type": "integer"
                 },
@@ -6049,6 +6291,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "$ref": "#/definitions/EventScalesetStateUpdated"
                 },
                 {
+                    "$ref": "#/definitions/EventScalesetResizeScheduled"
+                },
+                {
                     "$ref": "#/definitions/EventTaskFailed"
                 },
                 {
@@ -6071,6 +6316,9 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 },
                 {
                     "$ref": "#/definitions/EventFileAdded"
+                },
+                {
+                    "$ref": "#/definitions/EventInstanceConfigUpdated"
                 }
             ],
             "title": "Event"

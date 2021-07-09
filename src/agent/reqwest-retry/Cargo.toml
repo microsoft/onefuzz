@@ -11,8 +11,8 @@ async-trait = "0.1"
 backoff = { version = "0.3", features = ["tokio"] }
 log = "0.4"
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
-reqwest = { version = "0.11", features = ["json", "stream"] }
+reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features=false }
 
 [dev-dependencies]
-tokio = { version = "1.7", features = ["macros"] }
+tokio = { version = "1.8", features = ["macros"] }
 wiremock = "0.5"

@@ -174,5 +174,14 @@
     "__pthread_start",
     "__start_thread",
     "__bionic_clone"
+  ],
+  "minimized_stack_function_lines": [
+    "_JavaVM::AttachCurrentThread(_JNIEnv**, void*) jni.h:1060",
+    "javaAttachThread AndroidRuntime.cpp:1131",
+    "android::AndroidRuntime::javaThreadShell(void*) AndroidRuntime.cpp:1169",
+    "thread_data_t::trampoline(thread_data_t const*) Threads.cpp:99:16",
+    "__pthread_start(void*) pthread_create.cpp:198:18",
+    "__start_thread clone.cpp:41:16",
+    "__bionic_clone __bionic_clone.S:54"
   ]
 }

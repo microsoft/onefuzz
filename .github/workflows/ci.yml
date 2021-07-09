@@ -5,7 +5,7 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_DIR: ${{github.workspace}}/sccache/
   SCCACHE_CACHE_SIZE: 1G
-  ACTIONS_CACHE_KEY_DATE: 2021-06-25-01
+  ACTIONS_CACHE_KEY_DATE: 2021-07-08-01
 
 jobs:
   agent:
@@ -171,11 +171,10 @@ jobs:
       id: cache-rust-prereqs
       with:
         path: |
-          sccache
           ~/.cargo/registry
           ~/.cargo/git
           ~/.cargo/bin
-        key: rust-${{ runner.os }}-2020-06-25-01
+        key: rust-${{ runner.os }}-${{ env.ACTIONS_CACHE_KEY_DATE }}
         restore-keys: |
            rust-${{ runner.os }}
     - name: Install Rust Prereqs

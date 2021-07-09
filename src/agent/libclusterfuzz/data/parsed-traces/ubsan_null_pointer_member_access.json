@@ -240,5 +240,14 @@
     "xmlFAParseRegExp",
     "xmlRegexpCompile",
     "libxml2_xml_regexp_compile_fuzzer.cc"
+  ],
+  "minimized_stack_function_lines": [
+    "xmlFAParseCharClassEsc xmlregexp.c:4883:14",
+    "xmlFAParseAtom xmlregexp.c:5299:2",
+    "xmlFAParsePiece xmlregexp.c:5316:11",
+    "xmlFAParseBranch xmlregexp.c:5342:11",
+    "xmlFAParseRegExp xmlregexp.c:5377:5",
+    "xmlRegexpCompile xmlregexp.c:5473:5",
+    "libxml2_xml_regexp_compile_fuzzer.cc libxml2_xml_regexp_compile_fuzzer.cc:29:20"
   ]
 }

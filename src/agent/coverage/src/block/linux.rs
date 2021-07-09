@@ -85,18 +85,20 @@ impl<'c> Recorder<'c> {
 
         while let Some(mut tracee) = self.tracer.wait().context("main tracing loop")? {
             match tracee.stop {
-                Stop::SyscallEnterStop(..) => log::trace!("syscall-enter: {:?}", tracee.stop),
-                Stop::SyscallExitStop(..) => {
+                Stop::SyscallEnter => log::trace!("syscall-enter: {:?}", tracee.stop),
+                Stop::SyscallExit => {
                     self.update_images(&mut tracee)
                         .context("updating module images after syscall-stop")?;
                 }
-                Stop::SignalDeliveryStop(_pid, Signal::SIGTRAP) => {
+                Stop::SignalDelivery {
+                    signal: Signal::SIGTRAP,
+                } => {
                     self.on_breakpoint(&mut tracee)
                         .context("calling breakpoint handler")?;
                 }
-                Stop::Clone(pid, tid) => {
+                Stop::Clone { new: pid } => {
                     // Only seen when the `VM_CLONE` flag is set, as of Linux 4.15.
-                    log::info!("new thread: {} -> {}", pid, tid);
+                    log::info!("new thread: {}", pid);
                 }
                 _ => {
                     log::debug!("stop: {:?}", tracee.stop);
@@ -411,7 +413,7 @@ impl Breakpoints {
 
 fn continue_to_init_execve(tracer: &mut Ptracer) -> Result<Tracee> {
     while let Some(tracee) = tracer.wait()? {
-        if let Stop::SyscallExitStop(..) = &tracee.stop {
+        if let Stop::SyscallExit = &tracee.stop {
             return Ok(tracee);
         }
 

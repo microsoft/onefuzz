@@ -111,6 +111,9 @@
   "minimized_stack_function_names": [
     "simple.c"
   ],
+  "minimized_stack_function_lines": [
+    "simple.c simple.c:28:69"
+  ],
   "scariness_score": 51,
   "scariness_description": "4-byte-write-stack-buffer-underflow"
 }

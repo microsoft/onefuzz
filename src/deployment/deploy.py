@@ -63,6 +63,7 @@ from registration import (
     set_app_audience,
     update_pool_registration,
 )
+from set_admins import update_admins
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
@@ -120,6 +121,7 @@ class Client:
         multi_tenant_domain: str,
         upgrade: bool,
         subscription_id: Optional[str],
+        admins: List[UUID]
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -149,6 +151,7 @@ class Client:
         self.migrations = migrations
         self.export_appinsights = export_appinsights
         self.log_service_principal = log_service_principal
+        self.admins = admins
 
         machine = platform.machine()
         system = platform.system()
@@ -538,7 +541,7 @@ class Client:
             count += 1
 
             try:
-                result = client.deployments.create_or_update(
+                result = client.deployments.begin_create_or_update(
                     self.resource_group, gen_guid(), deployment
                 ).result()
                 if result.properties.provisioning_state != "Succeeded":
@@ -579,11 +582,17 @@ class Client:
         )
 
     def apply_migrations(self) -> None:
-        self.results["deploy"]["func-storage"]["value"]
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
+
+    def set_admins(self) -> None:
+        name = self.results["deploy"]["func-name"]["value"]
+        key = self.results["deploy"]["func-key"]["value"]
+        table_service = TableService(account_name=name, account_key=key)
+        if self.admins:
+            update_admins(table_service, self.application_name, self.admins)
 
     def create_queues(self) -> None:
         logger.info("creating eventgrid destination queue")
@@ -634,7 +643,7 @@ class Client:
         client = get_client_from_cli_profile(
             EventGridManagementClient, subscription_id=self.get_subscription_id()
         )
-        result = client.event_subscriptions.create_or_update(
+        result = client.event_subscriptions.begin_create_or_update(
             src_resource_id, "onefuzz1", event_subscription_info
         ).result()
         if result.provisioning_state != "Succeeded":
@@ -943,6 +952,7 @@ def main() -> None:
 
     full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
+        ("set_admins", Client.set_admins),
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
         ("tools", Client.upload_tools),
@@ -1048,6 +1058,12 @@ def main() -> None:
         action="store_true",
         help="execute only the steps required to create the rbac resources",
     )
+    parser.add_argument(
+        "--set_admins",
+        type=UUID,
+        nargs="*",
+        help="set the list of administrators (by OID in AAD)",
+    )
 
     args = parser.parse_args()
 
@@ -1075,6 +1091,7 @@ def main() -> None:
         multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
+        admins=args.set_admins,
     )
     if args.verbose:
         level = logging.DEBUG

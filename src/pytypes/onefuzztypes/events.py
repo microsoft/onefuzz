@@ -23,6 +23,7 @@ from .enums import (
 from .models import (
     AutoScaleConfig,
     Error,
+    InstanceConfig,
     JobConfig,
     RegressionReport,
     Report,
@@ -116,6 +117,12 @@ class EventScalesetDeleted(BaseEvent):
     pool_name: PoolName
 
 
+class EventScalesetResizeScheduled(BaseEvent):
+    scaleset_id: UUID
+    pool_name: PoolName
+    size: int
+
+
 class EventPoolDeleted(BaseEvent):
     pool_name: PoolName
 
@@ -200,6 +207,10 @@ class EventFileAdded(BaseEvent):
     filename: str
 
 
+class EventInstanceConfigUpdated(BaseEvent):
+    config: InstanceConfig
+
+
 Event = Union[
     EventJobCreated,
     EventJobStopped,
@@ -218,6 +229,7 @@ Event = Union[
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetStateUpdated,
+    EventScalesetResizeScheduled,
     EventTaskFailed,
     EventTaskStateUpdated,
     EventTaskCreated,
@@ -226,6 +238,7 @@ Event = Union[
     EventCrashReported,
     EventRegressionReported,
     EventFileAdded,
+    EventInstanceConfigUpdated,
 ]
 
 
@@ -246,6 +259,7 @@ class EventType(Enum):
     scaleset_deleted = "scaleset_deleted"
     scaleset_failed = "scaleset_failed"
     scaleset_state_updated = "scaleset_state_updated"
+    scaleset_resize_scheduled = "scaleset_resize_scheduled"
     task_created = "task_created"
     task_failed = "task_failed"
     task_state_updated = "task_state_updated"
@@ -255,6 +269,7 @@ class EventType(Enum):
     file_added = "file_added"
     task_heartbeat = "task_heartbeat"
     node_heartbeat = "node_heartbeat"
+    instance_config_updated = "instance_config_updated"
 
 
 EventTypeMap = {
@@ -275,6 +290,7 @@ EventTypeMap = {
     EventType.scaleset_deleted: EventScalesetDeleted,
     EventType.scaleset_failed: EventScalesetFailed,
     EventType.scaleset_state_updated: EventScalesetStateUpdated,
+    EventType.scaleset_resize_scheduled: EventScalesetResizeScheduled,
     EventType.task_created: EventTaskCreated,
     EventType.task_failed: EventTaskFailed,
     EventType.task_state_updated: EventTaskStateUpdated,
@@ -283,6 +299,7 @@ EventTypeMap = {
     EventType.crash_reported: EventCrashReported,
     EventType.regression_reported: EventRegressionReported,
     EventType.file_added: EventFileAdded,
+    EventType.instance_config_updated: EventInstanceConfigUpdated,
 }
 
 

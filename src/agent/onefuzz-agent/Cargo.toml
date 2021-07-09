@@ -12,7 +12,6 @@ integration_test=[]
 [dependencies]
 anyhow = "1.0"
 arraydeque = "0.4"
-appinsights = "0.1"
 async-trait = "0.1"
 atexit = { path = "../atexit" }
 backoff = { version = "0.3", features = ["tokio"] }
@@ -26,7 +25,7 @@ hex = "0.4"
 lazy_static = "1.4"
 log = "0.4"
 num_cpus = "1.13"
-reqwest = { version = "0.11", features = ["json", "stream"] }
+reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features=false }
 serde = "1.0"
 serde_json = "1.0"
 onefuzz = { path = "../onefuzz" }
@@ -37,7 +36,7 @@ stacktrace-parser = { path = "../stacktrace-parser" }
 storage-queue = { path = "../storage-queue" }
 tempfile = "3.2"
 thiserror = "1.0"
-tokio = { version = "1.7", features = ["full"] }
+tokio = { version = "1.8", features = ["full"] }
 tokio-util = { version = "0.6", features = ["full"] }
 tokio-stream = "0.1"
 tui = { version = "0.15", default-features = false, features = ['crossterm'] }
