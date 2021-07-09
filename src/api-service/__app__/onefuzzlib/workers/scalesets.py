@@ -388,16 +388,20 @@ class Scaleset(BASE_SCALESET, ORMMixin):
         if dead_nodes:
             logging.info(
                 SCALESET_LOG_PREFIX
-                + "reimaging nodes with expired heartbeats. "
+                + "reimaging uninitialized nodes or nodes with expired heartbeats. "
                 + "scaleset_id:%s nodes:%s",
                 self.scaleset_id,
                 ",".join(str(x.machine_id) for x in dead_nodes),
             )
             for node in dead_nodes:
+                if node.heartbeat:
+                    error_message = "node reimaged due to expired heartbeat"
+                else:
+                    error_message = "node reimaged due to never receiving a heartbeat"
                 error = Error(
                     code=ErrorCode.TASK_FAILED,
                     errors=[
-                        "node reimaged due to expired heartbeat",
+                        error_message,
                         f"scaleset_id:{node.scaleset_id} machine_id:{node.machine_id}",
                         f"last heartbeat:{node.heartbeat}",
                     ],
