@@ -7,12 +7,12 @@
 # the maximum size of a scaleset for testing.
 
 import logging
-import os
 from typing import List, Tuple
 
 from onefuzztypes.enums import NodeState, ScalesetState
 from onefuzztypes.models import WorkSet
 from onefuzztypes.primitives import Container
+from pydantic import BaseModel, Field
 
 from ..azure.containers import get_container_sas_url
 from ..azure.creds import get_base_region
@@ -33,6 +33,52 @@ def set_shrink_queues(pool: Pool, scalesets: List[Scaleset], size: int) -> None:
     ShrinkQueue(pool.pool_id).set_size(size)
 
 
+class Change(BaseModel):
+    scalesets: List[Scaleset]
+    current_size: int
+    change_size: int
+
+
+class ScalesetChange(BaseModel):
+    # scaleset -> new size
+    existing: List[Tuple[Scaleset, int]] = Field(default_factory=list)
+    # size of each new scaleset
+    new_scalesets: List[int] = Field(default_factory=list)
+
+
+def calc_scaleset_growth(
+    pool: Pool, scalesets: List[Scaleset], to_add: int
+) -> ScalesetChange:
+    config = pool.autoscale
+    if not config:
+        raise Exception(f"scaling up a non-autoscaling pool: {pool.name}")
+    base_size = Scaleset.scaleset_max_size(config.image)
+
+    changes = ScalesetChange()
+
+    for scaleset in sorted(scalesets, key=lambda x: x.scaleset_id):
+        if to_add <= 0:
+            break
+
+        if scaleset.state not in ScalesetState.can_update():
+            continue
+
+        scaleset_max_size = scaleset.max_size()
+        if scaleset.size >= scaleset_max_size:
+            continue
+
+        scaleset_to_add = min(to_add, scaleset_max_size - scaleset.size)
+        changes.existing.append((scaleset, scaleset.size + scaleset_to_add))
+        to_add -= scaleset_to_add
+
+    while to_add > 0:
+        scaleset_size = min(base_size, to_add)
+        changes.new_scalesets.append(scaleset_size)
+        to_add -= scaleset_size
+
+    return changes
+
+
 def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
     logging.info(
         AUTOSCALE_LOG_PREFIX + "scale up - pool:%s to_add:%d scalesets:%s",
@@ -44,58 +90,40 @@ def scale_up(pool: Pool, scalesets: List[Scaleset], to_add: int) -> None:
     config = pool.autoscale
     if not config:
         raise Exception(f"scaling up a non-autoscaling pool: {pool.name}")
+    region = config.region or get_base_region()
 
     set_shrink_queues(pool, scalesets, 0)
 
-    for scaleset in sorted(scalesets, key=lambda x: x.scaleset_id):
-        if to_add <= 0:
-            break
-
-        if scaleset.state in ScalesetState.can_update():
-            scaleset_max_size = scaleset.max_size()
-            if scaleset.size < scaleset_max_size:
-                scaleset_to_add = min(to_add, scaleset_max_size - scaleset.size)
-                logging.info(
-                    AUTOSCALE_LOG_PREFIX + "adding to scaleset: "
-                    "pool:%s scaleset:%s existing_size:%d adding:%d",
-                    pool.name,
-                    scaleset.scaleset_id,
-                    scaleset.size,
-                    scaleset_to_add,
-                )
-                scaleset.set_size(scaleset.size + scaleset_to_add)
-                to_add -= scaleset_to_add
-
-    region = config.region or get_base_region()
-    base_size = Scaleset.scaleset_max_size(config.image)
-
-    alternate_max_size = os.environ.get("ONEFUZZ_SCALESET_MAX_SIZE")
-    if alternate_max_size is not None:
-        base_size = min(base_size, int(alternate_max_size))
-
-    while to_add > 0:
-        scaleset_size = min(base_size, to_add)
+    changes = calc_scaleset_growth(pool, scalesets, to_add)
+    for (scaleset, new_size) in changes.existing:
         logging.info(
-            AUTOSCALE_LOG_PREFIX + "adding scaleset.  pool:%s size:%s",
+            AUTOSCALE_LOG_PREFIX
+            + "scale up scaleset - pool:%s scaleset:%s "
+            + "from:%d to:%d",
             pool.name,
-            scaleset_size,
+            scaleset.scaleset_id,
+            scaleset.size,
+            new_size,
         )
+        scaleset.set_size(new_size)
+
+    for size in changes.new_scalesets:
         scaleset = Scaleset.create(
             pool_name=pool.name,
             vm_sku=config.vm_sku,
             image=config.image,
             region=region,
-            size=scaleset_size,
+            size=size,
             spot_instances=config.spot_instances,
             ephemeral_os_disks=config.ephemeral_os_disks,
             tags={"pool": pool.name},
         )
         logging.info(
-            AUTOSCALE_LOG_PREFIX + "added pool:%s scaleset:%s",
+            AUTOSCALE_LOG_PREFIX + "added pool:%s scaleset:%s size:%d",
             pool.name,
             scaleset.scaleset_id,
+            scaleset.size,
         )
-        to_add -= scaleset_size
 
 
 def shutdown_empty_scalesets(pool: Pool, scalesets: List[Scaleset]) -> None:
@@ -185,11 +213,12 @@ def needed_nodes(pool: Pool) -> Tuple[int, int]:
     return (scheduled_worksets, from_nodes)
 
 
-def autoscale_pool(pool: Pool) -> None:
+def calculate_change(
+    pool: Pool, scalesets: List[Scaleset], scheduled_worksets: int, in_use_nodes: int
+) -> Change:
     if not pool.autoscale:
-        return
+        raise Exception(f"scaling up a non-autoscaling pool: {pool.name}")
 
-    scheduled_worksets, in_use_nodes = needed_nodes(pool)
     node_need_estimate = scheduled_worksets + in_use_nodes
 
     new_size = node_need_estimate
@@ -198,7 +227,6 @@ def autoscale_pool(pool: Pool) -> None:
     if pool.autoscale.max_size is not None:
         new_size = min(new_size, pool.autoscale.max_size)
 
-    scalesets = Scaleset.search_by_pool(pool.name)
     current_size = 0
     for scaleset in scalesets:
         valid_auto_scale_states = ScalesetState.include_autoscale_count()
@@ -213,7 +241,7 @@ def autoscale_pool(pool: Pool) -> None:
                 pool.name,
                 unable_to_autoscale,
             )
-            return
+            return Change(scalesets=[], change_size=0, current_size=0)
         current_size += scaleset.size
 
     logging.info(
@@ -226,12 +254,29 @@ def autoscale_pool(pool: Pool) -> None:
         scheduled_worksets,
     )
 
-    if new_size > current_size:
+    return Change(
+        scalesets=scalesets,
+        current_size=current_size,
+        change_size=new_size - current_size,
+    )
+
+
+def autoscale_pool(pool: Pool) -> None:
+    if not pool.autoscale:
+        return
+
+    scalesets = Scaleset.search_by_pool(pool.name)
+
+    scheduled_worksets, in_use_nodes = needed_nodes(pool)
+
+    change = calculate_change(pool, scalesets, scheduled_worksets, in_use_nodes)
+
+    if change.change_size > 0:
         clear_synthetic_worksets(pool)
-        scale_up(pool, scalesets, new_size - current_size)
-    elif current_size > new_size:
+        scale_up(pool, change.scalesets, change.change_size)
+    elif change.change_size < 0:
         clear_synthetic_worksets(pool)
-        scale_down(pool, scalesets, current_size - new_size)
-        shutdown_empty_scalesets(pool, scalesets)
+        scale_down(pool, change.scalesets, abs(change.change_size))
+        shutdown_empty_scalesets(pool, change.scalesets)
     else:
-        shutdown_empty_scalesets(pool, scalesets)
+        shutdown_empty_scalesets(pool, change.scalesets)
