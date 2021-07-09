@@ -121,7 +121,7 @@ class Client:
         multi_tenant_domain: str,
         upgrade: bool,
         subscription_id: Optional[str],
-        admins: List[UUID]
+        admins: List[UUID],
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
