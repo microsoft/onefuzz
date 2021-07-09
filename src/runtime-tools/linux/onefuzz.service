@@ -1,12 +1,14 @@
 # onefuzz systemd startup script
 [Unit]
 Description=onefuzz
+StartLimitIntervalSec=20
+StartLimitBurst=10
 
 [Service]
 Type=simple
 ExecStart=/bin/bash /onefuzz/tools/linux/run.sh
-StartLimitInterval=0
 Restart=always
+RestartSec=1
 
 [Install]
 WantedBy=default.target
