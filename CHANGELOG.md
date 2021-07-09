@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.25.1
 ### Fixed
-* Service: Fixed an issue recovering nodes that fail setup correctly.  [#1054](https://github.com/microsoft/onefuzz/pull/1054)
+* Service: Fixed an issue detecting and reimaging failed nodes.  [#1054](https://github.com/microsoft/onefuzz/pull/1054)
 * Service: Fixed an issue with the supervisor restarting too quickly.  [#1055](https://github.com/microsoft/onefuzz/pull/1055)
 
 ## 2.25.0
