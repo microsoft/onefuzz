@@ -212,7 +212,6 @@ def agent_config(
             "publisher": "Microsoft.Compute",
             "location": region,
             "force_update_tag": uuid4(),
-            "enable_automatic_upgrade": True,
             "type_handler_version": "1.9",
             "auto_upgrade_minor_version": True,
             "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
@@ -250,7 +249,6 @@ def agent_config(
             "location": region,
             "autoUpgradeMinorVersion": True,
             "force_update_tag": uuid4(),
-            "enable_automatic_upgrade": True,
             "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
             "protectedSettings": {},
         }
