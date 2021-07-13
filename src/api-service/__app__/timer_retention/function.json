@@ -3,7 +3,7 @@
     {
       "direction": "in",
       "name": "mytimer",
-      "schedule": "00:00:05",
+      "schedule": "00:01:00",
       "type": "timerTrigger"
     },
     {
