@@ -15,7 +15,7 @@ extern crate onefuzz;
 
 use crate::{
     config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,
-    work::WorkSet, worker::WorkerEvent,
+    logpanic::set_panic_handler, work::WorkSet, worker::WorkerEvent,
 };
 use std::path::PathBuf;
 
@@ -36,6 +36,7 @@ pub mod debug;
 pub mod done;
 pub mod failure;
 pub mod heartbeat;
+pub mod logpanic;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
@@ -60,6 +61,8 @@ fn main() -> Result<()> {
     env_logger::init();
 
     let opt = Opt::from_args();
+
+    set_panic_handler();
 
     match opt {
         Opt::Run(opt) => run(opt)?,
