@@ -1,7 +1,6 @@
 use crate::failure::save_failure;
 use backtrace::Backtrace;
-use std::panic;
-use std::sync::Once;
+use std::{panic, sync::Once};
 
 fn panic_hook(info: &panic::PanicInfo) {
     let err = anyhow!("supervisor panicked: {}\n{:?}", info, Backtrace::new());

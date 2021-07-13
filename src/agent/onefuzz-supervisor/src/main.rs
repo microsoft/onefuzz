@@ -15,7 +15,7 @@ extern crate onefuzz;
 
 use crate::{
     config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,
-    logpanic::set_panic_handler, work::WorkSet, worker::WorkerEvent,
+    panic::set_panic_handler, work::WorkSet, worker::WorkerEvent,
 };
 use std::path::PathBuf;
 
@@ -36,7 +36,7 @@ pub mod debug;
 pub mod done;
 pub mod failure;
 pub mod heartbeat;
-pub mod logpanic;
+pub mod panic;
 pub mod reboot;
 pub mod scheduler;
 pub mod setup;
