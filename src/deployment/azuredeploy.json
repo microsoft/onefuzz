@@ -751,7 +751,7 @@
             "name": "[guid(concat(resourceGroup().id, '-user_managed_idenity_read_blob'))]",
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Storage Blob Data Reader'))]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('scaleset_identity')), '2018-02-01', 'Full').properties.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('scaleset_identity')), '2018-11-30', 'Full').properties.principalId]"
             },
             "DependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameFunc'))]"
