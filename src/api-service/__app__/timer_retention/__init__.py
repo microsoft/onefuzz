@@ -18,7 +18,8 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
 
     time_filter = f"Timestamp lt datetime'{time_retained.isoformat()}'"
 
-    # You have to do notification before task, because editing the upn for tasks will change the timestamp
+    # You have to do notification before task, 
+    # because editing the upn for tasks will change the timestamp
     for notification in Notification.search(raw_unchecked_filter=time_filter):
         logging.info("Retention Timer Notification Search")
         logging.info(
