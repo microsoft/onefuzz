@@ -11,7 +11,12 @@ from onefuzztypes.enums import OS, AgentMode
 from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
 from onefuzztypes.primitives import Container, Extension, Region
 
-from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
+from .azure.containers import (
+    get_container_sas_url,
+    get_file_sas_url,
+    get_file_url,
+    save_blob,
+)
 from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
@@ -94,9 +99,7 @@ def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
     save_blob(
         Container("vm-scripts"), filename, sep.join(commands) + sep, StorageType.config
     )
-    return get_file_sas_url(
-        Container("vm-scripts"), filename, StorageType.config, read=True
-    )
+    return get_file_url(Container("vm-scripts"), filename, StorageType.config)
 
 
 def build_pool_config(pool: Pool) -> str:
@@ -126,12 +129,7 @@ def build_pool_config(pool: Pool) -> str:
         StorageType.config,
     )
 
-    return get_file_sas_url(
-        Container("vm-scripts"),
-        filename,
-        StorageType.config,
-        read=True,
-    )
+    return get_file_url(Container("vm-scripts"), filename, StorageType.config)
 
 
 def update_managed_scripts() -> None:
@@ -177,29 +175,25 @@ def agent_config(
 
     if vm_os == OS.windows:
         urls += [
-            get_file_sas_url(
+            get_file_url(
                 Container("vm-scripts"),
                 "managed.ps1",
                 StorageType.config,
-                read=True,
             ),
-            get_file_sas_url(
+            get_file_url(
                 Container("tools"),
                 "win64/azcopy.exe",
                 StorageType.config,
-                read=True,
             ),
-            get_file_sas_url(
+            get_file_url(
                 Container("tools"),
                 "win64/setup.ps1",
                 StorageType.config,
-                read=True,
             ),
-            get_file_sas_url(
+            get_file_url(
                 Container("tools"),
                 "win64/onefuzz.ps1",
                 StorageType.config,
-                read=True,
             ),
         ]
         to_execute_cmd = (
@@ -213,29 +207,30 @@ def agent_config(
             "location": region,
             "type_handler_version": "1.9",
             "auto_upgrade_minor_version": True,
-            "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
+            "settings": {
+                "commandToExecute": to_execute_cmd,
+                "fileUris": urls,
+                "managedIdentity": {},
+            },
             "protectedSettings": {},
         }
         return extension
     elif vm_os == OS.linux:
         urls += [
-            get_file_sas_url(
+            get_file_url(
                 Container("vm-scripts"),
                 "managed.sh",
                 StorageType.config,
-                read=True,
             ),
-            get_file_sas_url(
+            get_file_url(
                 Container("tools"),
                 "linux/azcopy",
                 StorageType.config,
-                read=True,
             ),
-            get_file_sas_url(
+            get_file_url(
                 Container("tools"),
                 "linux/setup.sh",
                 StorageType.config,
-                read=True,
             ),
         ]
         to_execute_cmd = "sh setup.sh %s" % (mode.name)
@@ -247,7 +242,11 @@ def agent_config(
             "typeHandlerVersion": "2.1",
             "location": region,
             "autoUpgradeMinorVersion": True,
-            "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
+            "settings": {
+                "commandToExecute": to_execute_cmd,
+                "fileUris": urls,
+                "managedIdentity": {},
+            },
             "protectedSettings": {},
         }
         return extension
@@ -321,17 +320,15 @@ def repro_extensions(
 
     for repro_file in repro_files:
         urls += [
-            get_file_sas_url(
+            get_file_url(
                 Container("repro-scripts"),
                 repro_file,
                 StorageType.config,
-                read=True,
             ),
-            get_file_sas_url(
+            get_file_url(
                 Container("task-configs"),
                 "%s/%s" % (repro_id, script_name),
                 StorageType.config,
-                read=True,
             ),
         ]
 
