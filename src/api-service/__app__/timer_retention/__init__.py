@@ -22,7 +22,8 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     for notification in Notification.search(raw_unchecked_filter=time_filter):
         logging.info("Retention Timer Notification Search")
         logging.info(
-            "Found notification %s older than 18 months. Checking related tasks.",
+            "Found notification %s older than 18 months. "
+            + "Checking related tasks.",
             notification.notification_id,
         )
         container = notification.container
@@ -63,7 +64,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             #     "Found job %s older than 18 months. Scrubbing user_info.",
             #     job.job_id,
             # )
-            job.user_info.upn = "None"
+            job.user_info.upn = None
             job.save()
 
     for task in Task.search(raw_unchecked_filter=time_filter):
@@ -73,7 +74,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             #     "Found task %s older than 18 months. Scrubbing user_info.",
             #     task.task_id,
             # )
-            task.user_info.upn = "None"
+            task.user_info.upn = None
             task.save()
 
     for repro in Repro.search(raw_unchecked_filter=time_filter):
@@ -81,11 +82,12 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         logging.info(repro)
         if repro.user_info is not None:
             logging.info(
-                "Found repro entry for task %s on node %s that is older than 18 months. Scrubbing user_info.",
+                "Found repro entry for task %s on node %s that is older "
+                + "than 18 months. Scrubbing user_info.",
                 repro.task_id,
                 repro.vm_id,
             )
-            repro.user_info.upn = "None"
+            repro.user_info.upn = None
             repro.save()
 
     events = get_events()
