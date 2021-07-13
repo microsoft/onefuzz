@@ -747,7 +747,7 @@
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2018-11-30",
+            "apiVersion": "2017-09-01",
             "name": "[guid(concat(resourceGroup().id, '-user_managed_idenity_read_blob'))]",
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('Storage Blob Data Reader'))]",
