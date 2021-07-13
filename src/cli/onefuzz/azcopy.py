@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess  # nosec
 
+
 def find_azcopy() -> str:
     azcopy = os.environ.get("AZCOPY")
 
@@ -17,6 +18,7 @@ def find_azcopy() -> str:
         )
 
     return azcopy
+
 
 def azcopy_sync(src: str, dst: str) -> None:
     """Expose azcopy for uploading/downloading files"""
