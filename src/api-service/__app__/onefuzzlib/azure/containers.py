@@ -222,7 +222,8 @@ def get_file_url(container: Container, name: str, storage_type: StorageType) -> 
     if not client:
         raise Exception("unable to find container: %s - %s" % (container, storage_type))
 
-    return f"{get_url(client.account_name)}/{container}/{name}"
+    # get_url has a trailing '/'
+    return f"{get_url(client.account_name)}{container}/{name}"
 
 
 def get_file_sas_url(

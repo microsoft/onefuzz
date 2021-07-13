@@ -129,7 +129,7 @@ def build_pool_config(pool: Pool) -> str:
         StorageType.config,
     )
 
-    return get_file_url(Container("vm-scripts"), filename, StorageType.config)
+    return config_url(Container("vm-scripts"), filename, False)
 
 
 def update_managed_scripts() -> None:
@@ -165,8 +165,20 @@ def update_managed_scripts() -> None:
     )
 
 
+def config_url(container: Container, filename: str, with_sas: bool) -> str:
+    if with_sas:
+        return get_file_sas_url(container, filename, StorageType.config, read=True)
+    else:
+        return get_file_url(container, filename, StorageType.config)
+
+
 def agent_config(
-    region: Region, vm_os: OS, mode: AgentMode, *, urls: Optional[List[str]] = None
+    region: Region,
+    vm_os: OS,
+    mode: AgentMode,
+    *,
+    urls: Optional[List[str]] = None,
+    with_sas: bool = False,
 ) -> Extension:
     update_managed_scripts()
 
@@ -175,25 +187,17 @@ def agent_config(
 
     if vm_os == OS.windows:
         urls += [
-            get_file_url(
-                Container("vm-scripts"),
-                "managed.ps1",
-                StorageType.config,
-            ),
-            get_file_url(
-                Container("tools"),
-                "win64/azcopy.exe",
-                StorageType.config,
-            ),
-            get_file_url(
+            config_url(Container("vm-scripts"), "managed.ps1", with_sas),
+            config_url(Container("tools"), "win64/azcopy.exe", with_sas),
+            config_url(
                 Container("tools"),
                 "win64/setup.ps1",
-                StorageType.config,
+                with_sas,
             ),
-            get_file_url(
+            config_url(
                 Container("tools"),
                 "win64/onefuzz.ps1",
-                StorageType.config,
+                with_sas,
             ),
         ]
         to_execute_cmd = (
@@ -210,27 +214,28 @@ def agent_config(
             "settings": {
                 "commandToExecute": to_execute_cmd,
                 "fileUris": urls,
+            },
+            "protectedSettings": {
                 "managedIdentity": {},
             },
-            "protectedSettings": {},
         }
         return extension
     elif vm_os == OS.linux:
         urls += [
-            get_file_url(
+            config_url(
                 Container("vm-scripts"),
                 "managed.sh",
-                StorageType.config,
+                with_sas,
             ),
-            get_file_url(
+            config_url(
                 Container("tools"),
                 "linux/azcopy",
-                StorageType.config,
+                with_sas,
             ),
-            get_file_url(
+            config_url(
                 Container("tools"),
                 "linux/setup.sh",
-                StorageType.config,
+                with_sas,
             ),
         ]
         to_execute_cmd = "sh setup.sh %s" % (mode.name)
@@ -245,9 +250,10 @@ def agent_config(
             "settings": {
                 "commandToExecute": to_execute_cmd,
                 "fileUris": urls,
+            },
+            "protectedSettings": {
                 "managedIdentity": {},
             },
-            "protectedSettings": {},
         }
         return extension
 
@@ -320,19 +326,23 @@ def repro_extensions(
 
     for repro_file in repro_files:
         urls += [
-            get_file_url(
+            get_file_sas_url(
                 Container("repro-scripts"),
                 repro_file,
                 StorageType.config,
+                read=True,
             ),
-            get_file_url(
+            get_file_sas_url(
                 Container("task-configs"),
                 "%s/%s" % (repro_id, script_name),
                 StorageType.config,
+                read=True,
             ),
         ]
 
-    base_extension = agent_config(region, repro_os, AgentMode.repro, urls=urls)
+    base_extension = agent_config(
+        region, repro_os, AgentMode.repro, urls=urls, with_sas=True
+    )
     extensions = generic_extensions(region, repro_os)
     extensions += [base_extension]
     return extensions
@@ -354,7 +364,9 @@ def proxy_manager_extensions(region: Region, proxy_id: UUID) -> List[Extension]:
         ),
     ]
 
-    base_extension = agent_config(region, OS.linux, AgentMode.proxy, urls=urls)
+    base_extension = agent_config(
+        region, OS.linux, AgentMode.proxy, urls=urls, with_sas=True
+    )
     extensions = generic_extensions(region, OS.linux)
     extensions += [base_extension]
     return extensions
