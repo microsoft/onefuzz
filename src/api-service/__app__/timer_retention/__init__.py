@@ -23,7 +23,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     for notification in Notification.search(raw_unchecked_filter=time_filter):
         logging.info("Retention Timer Notification Search")
         logging.info(
-            "Found notification %s older than 18 months. " + "Checking related tasks.",
+            "Found notification %s older than 18 months. Checking related tasks.",
             notification.notification_id,
         )
         container = notification.container
