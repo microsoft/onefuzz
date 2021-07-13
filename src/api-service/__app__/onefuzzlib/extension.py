@@ -5,7 +5,7 @@
 
 import os
 from typing import List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from onefuzztypes.enums import OS, AgentMode
 from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
@@ -211,6 +211,7 @@ def agent_config(
             "type": "CustomScriptExtension",
             "publisher": "Microsoft.Compute",
             "location": region,
+            "force_update_tag": uuid4(),
             "type_handler_version": "1.9",
             "auto_upgrade_minor_version": True,
             "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
@@ -247,6 +248,7 @@ def agent_config(
             "typeHandlerVersion": "2.1",
             "location": region,
             "autoUpgradeMinorVersion": True,
+            "force_update_tag": uuid4(),
             "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
             "protectedSettings": {},
         }
