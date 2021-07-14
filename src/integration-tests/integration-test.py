@@ -68,6 +68,7 @@ class Integration(BaseModel):
     disable_check_debugger: Optional[bool] = Field(default=False)
     reboot_after_setup: Optional[bool] = Field(default=False)
     test_repro: Optional[bool] = Field(default=True)
+    target_options: Optional[List[str]]
 
 
 TARGETS: Dict[str, Integration] = {
@@ -89,6 +90,19 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
         },
         reboot_after_setup=True,
+    ),
+    "linux-libfuzzer-with-options": Integration(
+        template=TemplateType.libfuzzer,
+        os=OS.linux,
+        target_exe="fuzz.exe",
+        inputs="seeds",
+        wait_for_files={
+            ContainerType.unique_reports: 1,
+            ContainerType.coverage: 1,
+            ContainerType.inputs: 2,
+        },
+        reboot_after_setup=True,
+        target_options=["-runs=1000"],
     ),
     "linux-libfuzzer-dlopen": Integration(
         template=TemplateType.libfuzzer,
@@ -263,6 +277,7 @@ class TestOnefuzz:
                     duration=duration,
                     vm_count=1,
                     reboot_after_setup=config.reboot_after_setup or False,
+                    target_options=config.target_options,
                 )
             elif config.template == TemplateType.libfuzzer_dotnet:
                 if setup is None:
@@ -277,6 +292,7 @@ class TestOnefuzz:
                     setup_dir=setup,
                     duration=duration,
                     vm_count=1,
+                    target_options=config.target_options,
                 )
             elif config.template == TemplateType.libfuzzer_qemu_user:
                 job = self.of.template.libfuzzer.qemu_user(
@@ -288,6 +304,7 @@ class TestOnefuzz:
                     target_exe=target_exe,
                     duration=duration,
                     vm_count=1,
+                    target_options=config.target_options,
                 )
             elif config.template == TemplateType.radamsa:
                 job = self.of.template.radamsa.basic(
@@ -314,6 +331,7 @@ class TestOnefuzz:
                     setup_dir=setup,
                     duration=duration,
                     vm_count=1,
+                    target_options=config.target_options,
                 )
             else:
                 raise NotImplementedError
