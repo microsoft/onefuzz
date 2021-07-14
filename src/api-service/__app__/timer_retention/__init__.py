@@ -9,7 +9,7 @@ from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.tasks.main import Task
 
-RETENTION_POLICY = datetime.timedelta(minutes=(18))
+RETENTION_POLICY = datetime.timedelta(minutes=(5))
 
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
@@ -31,14 +31,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         timestamp_list = []
         logging.info("Notification Container %s", container)
         for task in Task.search():
-            # logging.info(task.config)
-            # logging.info(task.config.containers)
-            # logging.info(type(task.config.containers))
-            # logging.info(str(task.config.containers))
             container_str = str(task.config.containers)
-            # logging.info("break")
-            # logging.info("Container List: %s", container_str)
-            # logging.info((container in container_str))
             if container in container_str:
                 logging.info("Container List: %s", container_str)
                 task_list.append(task.task_id)
@@ -54,6 +47,8 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
                 for dt in timestamp_list
                 if isinstance(dt, datetime.datetime) and dt < now
             )
+            logging.info("Youngest time: %s", youngest)
+            logging.info("time_retained: %s", time_retained)
             if youngest < time_retained:
                 logging.info("Deleting Notification")
                 notification.delete()
