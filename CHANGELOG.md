@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.26.1
+### Fixed
+* CLI: Fixed an issue handling long running requests.  [#1068](https://github.com/microsoft/onefuzz/pull/1068)
+* CLI/Service: Fixed an issue related to upcoming features.  [#1067](https://github.com/microsoft/onefuzz/pull/1067)
+* CLI: Fixed an issue handling `target_options` for libfuzzer jobs.  [#1066](https://github.com/microsoft/onefuzz/pull/1066)
+
 ## 2.26.0
 ### Added
 * Supervisor: Added a `panic` handler to record supervisor failures. [#1062](https://github.com/microsoft/onefuzz/pull/1062)
