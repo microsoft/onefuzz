@@ -212,6 +212,7 @@ def update_extensions(name: UUID, extensions: List[Any]) -> None:
         str(name),
         {"virtual_machine_profile": {"extension_profile": {"extensions": extensions}}},
     )
+    logging.info("VM extensions updated: %s", name)
 
 
 def create_vmss(
