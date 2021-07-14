@@ -357,8 +357,10 @@ jobs:
           cp integration-test.py artifacts/
 
           mkdir -p artifacts/linux-libfuzzer
+          mkdir -p artifacts/linux-libfuzzer-with-options
           (cd libfuzzer ; make )
           cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer
+          cp -r libfuzzer/fuzz.exe libfuzzer/seeds artifacts/linux-libfuzzer-with-options
 
           mkdir -p artifacts/linux-libfuzzer-regression
           (cd libfuzzer-regression ; make )
