@@ -1225,20 +1225,26 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Ephemeral Os Disks",
                     "type": "boolean"
                 },
+                "extra_available_size": {
+                    "description": "number of unused but available nodes",
+                    "minimum": 0,
+                    "title": "Extra Available Size",
+                    "type": "integer"
+                },
                 "image": {
                     "title": "Image",
                     "type": "string"
                 },
                 "max_size": {
                     "default": 1000,
-                    "maximum": 1000,
+                    "description": "maximum size of the pool",
                     "minimum": 0,
                     "title": "Max Size",
                     "type": "integer"
                 },
                 "min_size": {
                     "default": 0,
-                    "maximum": 1000,
+                    "description": "minimum size of the pool",
                     "minimum": 0,
                     "title": "Min Size",
                     "type": "integer"
@@ -4772,20 +4778,26 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Ephemeral Os Disks",
                     "type": "boolean"
                 },
+                "extra_available_size": {
+                    "description": "number of unused but available nodes",
+                    "minimum": 0,
+                    "title": "Extra Available Size",
+                    "type": "integer"
+                },
                 "image": {
                     "title": "Image",
                     "type": "string"
                 },
                 "max_size": {
                     "default": 1000,
-                    "maximum": 1000,
+                    "description": "maximum size of the pool",
                     "minimum": 0,
                     "title": "Max Size",
                     "type": "integer"
                 },
                 "min_size": {
                     "default": 0,
-                    "maximum": 1000,
+                    "description": "minimum size of the pool",
                     "minimum": 0,
                     "title": "Min Size",
                     "type": "integer"

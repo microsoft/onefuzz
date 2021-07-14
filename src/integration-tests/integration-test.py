@@ -223,7 +223,7 @@ class TestOnefuzz:
             name = PoolName(f"testpool-{entry.name}-{self.test_id}")
             self.logger.info("creating pool: %s:%s", entry.name, name)
             self.pools[entry] = self.of.pools.create_autoscale(
-                name, entry, region=region
+                name, entry, region=region, extra_available_size=5
             )
 
     def launch(
