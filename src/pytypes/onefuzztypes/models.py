@@ -595,8 +595,11 @@ class NodeTasks(BaseModel):
 
 class AutoScaleConfig(BaseModel):
     image: str
-    max_size: int = Field(default=1000, le=1000, ge=0)  # max size of pool
-    min_size: int = Field(default=0, le=1000, ge=0)  # min size of pool
+    max_size: int = Field(default=1000, ge=0, description="maximum size of the pool")
+    min_size: int = Field(default=0, ge=0, description="minimum size of the pool")
+    extra_available_size: Optional[int] = Field(
+        ge=0, description="number of unused but available nodes"
+    )
     region: Optional[Region]
     scaleset_size: int = Field(default=1, description="unused")
     spot_instances: bool = Field(default=False)
@@ -607,6 +610,7 @@ class AutoScaleConfig(BaseModel):
     def check_data(cls, values: Any) -> Any:
         if values["min_size"] > values["max_size"]:
             raise ValueError("The pool min_size is greater than max_size")
+
         return values
 
 

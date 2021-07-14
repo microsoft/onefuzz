@@ -177,78 +177,30 @@ class TestAutoscale(unittest.TestCase):
         )
 
         # no scalesets, but need work
-        change = calculate_change(
-            pool, scalesets=[], scheduled_worksets=0, in_use_nodes=0
-        )
+        change = calculate_change(pool, [], 0)
         self.assertEqual(change.change_size, 0)
 
-        change = calculate_change(
-            pool, scalesets=[], scheduled_worksets=10, in_use_nodes=0
-        )
+        change = calculate_change(pool, [], 10)
         self.assertEqual(change.change_size, 10)
 
-        # 3 unused node, 0 used nodes, 10 upcoming jobs
-        change = calculate_change(
-            pool,
-            scalesets=[scaleset_1, scaleset_2],
-            scheduled_worksets=10,
-            in_use_nodes=0,
-        )
+        # start with 3, end with 10
+        change = calculate_change(pool, [scaleset_1, scaleset_2], 10)
         self.assertEqual(change.change_size, 7)
 
-        # 2 unused node, 1 used nodes, 10 upcoming jobs
-        change = calculate_change(
-            pool,
-            scalesets=[scaleset_1, scaleset_2],
-            scheduled_worksets=10,
-            in_use_nodes=1,
-        )
-        self.assertEqual(change.change_size, 8)
-
-        # 2 unused node, 1 used nodes, 0 upcoming jobs
-        change = calculate_change(
-            pool,
-            scalesets=[scaleset_1, scaleset_2],
-            scheduled_worksets=0,
-            in_use_nodes=1,
-        )
+        # start with 3, end with 1
+        change = calculate_change(pool, [scaleset_1, scaleset_2], 1)
         self.assertEqual(change.change_size, -2)
 
-        # 2 unused node, 1 used nodes, 0 upcoming jobs
-        change = calculate_change(
-            pool,
-            scalesets=[scaleset_1, scaleset_2],
-            scheduled_worksets=0,
-            in_use_nodes=1,
-        )
-        self.assertEqual(change.change_size, -2)
-
-        # now set the minimum size
+        # verify min_size
         pool.autoscale.min_size = 5
 
-        # min size needs 3 more nodes
-        change = calculate_change(
-            pool,
-            scalesets=[scaleset_1, scaleset_2],
-            scheduled_worksets=0,
-            in_use_nodes=0,
-        )
+        change = calculate_change(pool, [scaleset_1, scaleset_2], 0)
         self.assertEqual(change.change_size, 2)
 
-        change = calculate_change(
-            pool,
-            scalesets=[scaleset_1, scaleset_2],
-            scheduled_worksets=10,
-            in_use_nodes=0,
-        )
+        change = calculate_change(pool, [scaleset_1, scaleset_2], 10)
         self.assertEqual(change.change_size, 7)
 
-        # now set the minimum size
+        # verify max_size
         pool.autoscale.max_size = 6
-        change = calculate_change(
-            pool,
-            scalesets=[scaleset_1, scaleset_2],
-            scheduled_worksets=100,
-            in_use_nodes=0,
-        )
+        change = calculate_change(pool, [scaleset_1, scaleset_2], 100)
         self.assertEqual(change.change_size, 3)

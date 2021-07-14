@@ -201,7 +201,10 @@ def clear_synthetic_worksets(pool: Pool) -> None:
     )
 
 
-def needed_nodes(pool: Pool) -> Tuple[int, int]:
+def needed_nodes(pool: Pool) -> int:
+    if not pool.autoscale:
+        raise Exception(f"scaling up a non-autoscaling pool: {pool.name}")
+
     # NOTE: queue peek only returns the first 30 objects.
     workset_queue = pool.peek_work_queue()
     # only count worksets with work
@@ -210,20 +213,20 @@ def needed_nodes(pool: Pool) -> Tuple[int, int]:
     nodes = Node.search_states(pool_name=pool.name, states=NodeState.in_use())
     from_nodes = len(nodes)
 
-    return (scheduled_worksets, from_nodes)
+    node_count = scheduled_worksets + from_nodes
+    if pool.autoscale.extra_available_size:
+        node_count += pool.autoscale.extra_available_size
+
+    return node_count
 
 
-def calculate_change(
-    pool: Pool, scalesets: List[Scaleset], scheduled_worksets: int, in_use_nodes: int
-) -> Change:
+def calculate_change(pool: Pool, scalesets: List[Scaleset], new_size: int) -> Change:
     if not pool.autoscale:
         raise Exception(f"scaling up a non-autoscaling pool: {pool.name}")
 
-    node_need_estimate = scheduled_worksets + in_use_nodes
-
-    new_size = node_need_estimate
     if pool.autoscale.min_size is not None:
-        new_size = max(node_need_estimate, pool.autoscale.min_size)
+        new_size = max(new_size, pool.autoscale.min_size)
+
     if pool.autoscale.max_size is not None:
         new_size = min(new_size, pool.autoscale.max_size)
 
@@ -245,13 +248,10 @@ def calculate_change(
         current_size += scaleset.size
 
     logging.info(
-        AUTOSCALE_LOG_PREFIX + "status - pool:%s current_size: %d new_size: %d "
-        "(in-use nodes: %d, scheduled worksets: %d)",
+        AUTOSCALE_LOG_PREFIX + "status - pool:%s current_size: %d new_size: %d",
         pool.name,
         current_size,
         new_size,
-        in_use_nodes,
-        scheduled_worksets,
     )
 
     return Change(
@@ -267,9 +267,9 @@ def autoscale_pool(pool: Pool) -> None:
 
     scalesets = Scaleset.search_by_pool(pool.name)
 
-    scheduled_worksets, in_use_nodes = needed_nodes(pool)
+    node_count = needed_nodes(pool)
 
-    change = calculate_change(pool, scalesets, scheduled_worksets, in_use_nodes)
+    change = calculate_change(pool, scalesets, node_count)
 
     if change.change_size > 0:
         clear_synthetic_worksets(pool)
