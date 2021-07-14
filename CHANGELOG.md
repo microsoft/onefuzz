@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.26.0
+### Added
+* Supervisor: Added a `panic` handler to record supervisor failures. [#1062](https://github.com/microsoft/onefuzz/pull/1062)
+
+### Changed
+* Agent: Added more context to file upload errors.  [#1063](https://github.com/microsoft/onefuzz/pull/1063)
+* CLI: Made errors identifying `azcopy` more clear. [#1061](https://github.com/microsoft/onefuzz/pull/1061)
+
+### Fixed
+* Service: Fixed an issue where VM scaleset instances that lasted longer than 30 days would sometimes not setup script updates.  [#1060](https://github.com/microsoft/onefuzz/pull/1060)
+* Service: Fixed an issue where VM setup script updates were not always pushed.  [#1059](https://github.com/microsoft/onefuzz/pull/1059)
+
 ## 2.25.1
 ### Fixed
 * Service: Fixed an issue detecting and reimaging failed nodes.  [#1054](https://github.com/microsoft/onefuzz/pull/1054)
