@@ -49,7 +49,11 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         logging.info(timestamp_list)
         now = datetime.datetime.now(tz=datetime.timezone.utc)
         if len(timestamp_list) != 0:
-            youngest = max(dt for dt in timestamp_list if dt < now)
+            youngest = max(
+                dt
+                for dt in timestamp_list
+                if isinstance(dt, datetime.datetime) and dt < now
+            )
             if youngest < time_retained:
                 logging.info("Deleting Notification")
                 notification.delete()
