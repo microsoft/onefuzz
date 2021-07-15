@@ -6,9 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.26.1
 ### Fixed
-* CLI: Fixed an issue handling long running requests.  [#1068](https://github.com/microsoft/onefuzz/pull/1068)
+* CLI: Fixed an issue handling long-running requests.  [#1068](https://github.com/microsoft/onefuzz/pull/1068)
 * CLI/Service: Fixed an issue related to upcoming features.  [#1067](https://github.com/microsoft/onefuzz/pull/1067)
-* CLI: Fixed an issue handling `target_options` for libfuzzer jobs.  [#1066](https://github.com/microsoft/onefuzz/pull/1066)
+* CLI: Fixed an issue handling `target_options` for libFuzzer jobs.  [#1066](https://github.com/microsoft/onefuzz/pull/1066)
 
 ## 2.26.0
 ### Added
