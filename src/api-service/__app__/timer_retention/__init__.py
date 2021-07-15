@@ -66,10 +66,10 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     ):
         logging.info("Retention Timer Task Search")
         if task.user_info is not None:
-            # logging.info(
-            #     "Found task %s older than 18 months. Scrubbing user_info.",
-            #     task.task_id,
-            # )
+            logging.info(
+                "Found task %s older than 18 months. Scrubbing user_info.",
+                task.task_id,
+            )
             task.user_info.upn = None
             task.save()
 
