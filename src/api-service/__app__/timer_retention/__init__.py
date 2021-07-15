@@ -42,12 +42,16 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
                 for dt in timestamp_list
                 if isinstance(dt, datetime.datetime) and dt < now
             )
+            logging.info("Youngest: %s", youngest)
+            logging.info("Timestamp_list ")
+            logging.info(timestamp_list)
             if youngest < time_retained:
                 logging.info(
                     "All related tasks are older than 18 months."
-                    + " Deleting Notification."
+                    + " Deleting Notification %s.",
+                    notification.notification_id,
                 )
-                notification.delete()
+                # notification.delete()
 
     for job in Job.search(
         query={"state": ["stopped"]}, raw_unchecked_filter=time_filter
