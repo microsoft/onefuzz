@@ -9,10 +9,10 @@ from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.tasks.main import Task
 
-RETENTION_POLICY = datetime.timedelta(days=(18 * 30))
+RETENTION_POLICY = datetime.timedelta(minutes=(5))
 
 
-def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
 
     time_retained = datetime.datetime.now(tz=datetime.timezone.utc) - RETENTION_POLICY
 
@@ -57,7 +57,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         query={"state": ["stopped"]}, raw_unchecked_filter=time_filter
     ):
         logging.info("Retention Timer Job Search")
-        if job.user_info is not None:
+        if job.user_info is not None and job.user_info.upn is not None:
             logging.info(
                 "Found job %s older than 18 months. Scrubbing user_info.",
                 job.job_id,
@@ -69,7 +69,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         query={"state": ["stopped"]}, raw_unchecked_filter=time_filter
     ):
         logging.info("Retention Timer Task Search")
-        if task.user_info is not None:
+        if task.user_info is not None and task.user_info.upn is not None:
             logging.info(
                 "Found task %s older than 18 months. Scrubbing user_info.",
                 task.task_id,
@@ -80,7 +80,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     for repro in Repro.search(raw_unchecked_filter=time_filter):
         logging.info("Retention Timer Repro Search")
         logging.info(repro)
-        if repro.user_info is not None:
+        if repro.user_info is not None and repro.user_info.upn is not None:
             logging.info(
                 "Found repro entry for task %s on node %s that is older "
                 + "than 18 months. Scrubbing user_info.",
