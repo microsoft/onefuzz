@@ -45,7 +45,7 @@ def main() -> None:
         args.build,
         args.duration,
         pool_name=args.pool_name,
-        target_exe=args.target_exe,
+        target_exe=args.target_coverage_exe,
     )
 
     helper.define_containers(
