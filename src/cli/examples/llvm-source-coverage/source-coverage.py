@@ -17,14 +17,6 @@ from onefuzz.api import Onefuzz
 from onefuzz.templates import JobHelper
 
 
-def add_setup_script(of: Onefuzz, container: Container) -> None:
-    with tempfile.TemporaryDirectory() as tmpdir:
-        setup = os.path.join(tmpdir, "setup.sh")
-        with open(setup, "w") as handle:
-            handle.write(SETUP)
-        of.containers.files.upload_file(container, setup)
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -32,6 +24,9 @@ def main() -> None:
     parser.add_argument("setup_dir", type=str, help="Target setup directory")
     parser.add_argument(
         "target_exe", type=str, help="Target executable within setup directory with coverage instrumentation"
+    )
+    parser.add_argument(
+        "target_coverage_exe", type=str, help="Target executable within setup directory with coverage instrumentation"
     )
     parser.add_argument("project", type=str, help="Name of project")
     parser.add_argument("name", type=str, help="Name of target")
@@ -48,6 +43,8 @@ def main() -> None:
     logging.basicConfig(level=logging.WARNING)
     of.logger.setLevel(logging.INFO)
 
+    job = of.template.libfuzzer.basic(args.project, args.name, args.build, args.pool_name, target_exe=args.target_exe, setup_dir=args.setup_dir, duration=args.duration)
+
     helper = JobHelper(
         of,
         of.logger,
@@ -57,6 +54,7 @@ def main() -> None:
         args.duration,
         pool_name=args.pool_name,
         target_exe=args.target_exe,
+        job=job,
     )
 
     helper.define_containers(
@@ -65,12 +63,8 @@ def main() -> None:
         ContainerType.inputs,
         ContainerType.tools,
     )
-
     helper.create_containers()
-    helper.upload_setup(args.setup_dir, args.target_exe)
-    if args.inputs:
-        helper.upload_inputs(args.inputs)
-
+    
     of.containers.files.upload_file(
         helper.containers[ContainerType.tools], f"{args.tools}/source-coverage.sh"
     )
@@ -84,18 +78,18 @@ def main() -> None:
     ]
 
     of.logger.info("Creating generic_analysis task")
-    task = of.tasks.create(
+    of.tasks.create(
         helper.job.job_id,
         TaskType.generic_analysis,
-        helper.setup_relative_blob_name(args.target_exe, args.setup_dir),
+        helper.setup_relative_blob_name(args.target_coverage_exe, args.setup_dir),
         containers,
         pool_name=args.pool_name,
         duration=args.duration,
         analyzer_exe="{tools_dir}/source-coverage.sh",
         analyzer_options=["{target_exe}", "{output_dir}", "{input}"],
     )
-    print(f"job:{task.job_id} task:{task.task_id}")
 
+    print(f"job:{job.json(indent=4)}")
 
 if __name__ == "__main__":
     main()

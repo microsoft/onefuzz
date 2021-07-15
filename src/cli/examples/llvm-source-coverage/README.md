@@ -24,85 +24,101 @@ Makefile  simple.c
 clang -g3 -fsanitize=fuzzer -fsanitize=address simple.c -o fuzz.exe
 clang -g3 -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping simple.c -o fuzz-coverage.exe 
 ❯ cd ..
-❯ # submit our basic job
-❯ onefuzz template libfuzzer basic sample-coverage sample 1 linux --target_exe ./setup/fuzz.exe --setup_dir ./setup/
+❯ # submit our basic job with an additional analysis task
+❯ ./source-coverage.py setup/ setup/fuzz.exe ./setup/fuzz-coverage.exe coverage-exapmle 1 1 linux-1 ./tools/
 INFO:onefuzz:creating libfuzzer from template
 INFO:onefuzz:creating job (runtime: 24 hours)
-INFO:onefuzz:created job: d8b60d3c-0199-44f7-9604-6a17431d667d
-INFO:onefuzz:using container: oft-setup-a0fc368219775dcda2d92aadaf3ba91e
-INFO:onefuzz:using container: oft-inputs-aa8a8556b8005803a9c752f1f3bb0132
-INFO:onefuzz:using container: oft-crashes-aa8a8556b8005803a9c752f1f3bb0132
-INFO:onefuzz:using container: oft-reports-aa8a8556b8005803a9c752f1f3bb0132
-INFO:onefuzz:using container: oft-unique-reports-aa8a8556b8005803a9c752f1f3bb0132
-INFO:onefuzz:using container: oft-unique-inputs-aa8a8556b8005803a9c752f1f3bb0132
-INFO:onefuzz:using container: oft-no-repro-aa8a8556b8005803a9c752f1f3bb0132
-INFO:onefuzz:using container: oft-coverage-a0fc368219775dcda2d92aadaf3ba91e
-INFO:onefuzz:using container: oft-regression-reports-a266651f3b0c5ed6a9767d1cf110179f
-INFO:onefuzz:uploading setup dir `./setup/`
+INFO:onefuzz:created job: 61bc5c7c-d24f-4ebc-9bac-bec8fe040ade
+INFO:onefuzz:using container: oft-setup-d1100b49a03c5a9483f140cee0676b87
+INFO:onefuzz:using container: oft-inputs-6f3b76e7e841532bb7714375f564d483
+INFO:onefuzz:using container: oft-crashes-6f3b76e7e841532bb7714375f564d483
+INFO:onefuzz:using container: oft-reports-6f3b76e7e841532bb7714375f564d483
+INFO:onefuzz:using container: oft-unique-reports-6f3b76e7e841532bb7714375f564d483
+INFO:onefuzz:using container: oft-unique-inputs-6f3b76e7e841532bb7714375f564d483
+INFO:onefuzz:using container: oft-no-repro-6f3b76e7e841532bb7714375f564d483
+INFO:onefuzz:using container: oft-coverage-d1100b49a03c5a9483f140cee0676b87
+INFO:onefuzz:using container: oft-regression-reports-06bdcba10b5f5e45bdb38ed924856426
+INFO:onefuzz:uploading setup dir `setup/`
 INFO:onefuzz:creating libfuzzer_regression task
 INFO:onefuzz:creating libfuzzer task
 INFO:onefuzz:creating coverage task
 INFO:onefuzz:creating libfuzzer_crash_report task
 INFO:onefuzz:done creating tasks
-{
-    "config": {
-        "build": "1",
-        "duration": 24,
-        "name": "sample",
-        "project": "sample-coverage"
-    },                                                                                                                                                         "job_id": "d8b60d3c-0199-44f7-9604-6a17431d667d",
+INFO:onefuzz:using container: oft-setup-d1100b49a03c5a9483f140cee0676b87
+INFO:onefuzz:using container: oft-analysis-6f3b76e7e841532bb7714375f564d483
+INFO:onefuzz:using container: oft-inputs-6f3b76e7e841532bb7714375f564d483
+INFO:onefuzz:using container: oft-tools-6f3b76e7e841532bb7714375f564d483
+INFO:onefuzz:Creating generic_analysis task
+job:{
+    "timestamp": null,
+    "job_id": "61bc5c7c-d24f-4ebc-9bac-bec8fe040ade",
     "state": "init",
+    "config": {
+        "project": "coverage-example",
+        "name": "1",
+        "build": "1",
+        "duration": 24
+    },
+    "error": null,
+    "end_time": null,
+    "task_info": null,
     "user_info": {
         "application_id": "00000000-0000-0000-0000-000000000000",
         "object_id": "00000000-0000-0000-0000-000000000000",
         "upn": "example@contoso.com"
     }
 }
-❯ # submit our analysis job
-❯ python source-coverage.py ./setup/ ./setup/fuzz-coverage.exe sample-coverage sample 1 linux ./tools/
-INFO:onefuzz:creating job (runtime: 24 hours)
-INFO:onefuzz:created job: 89267599-b5e1-4acf-a04e-350f1da968c7
-INFO:onefuzz:using container: oft-setup-a0fc368219775dcda2d92aadaf3ba91e
-INFO:onefuzz:using container: oft-analysis-aa8a8556b8005803a9c752f1f3bb0132
-INFO:onefuzz:using container: oft-inputs-aa8a8556b8005803a9c752f1f3bb0132
-INFO:onefuzz:using container: oft-tools-aa8a8556b8005803a9c752f1f3bb0132
-INFO:onefuzz:uploading setup dir `./setup/`
-INFO:onefuzz:Creating generic_crash_report task
-job:aa1d70aa-a562-4bde-be8d-dba982459352 task:d6f488a5-f95b-44a3-a149-cee7e951bfd9
-❯ # a little while later, check on the status of our coverage task
-❯ onefuzz status job aa1d
-job: aa1d70aa-a562-4bde-be8d-dba982459352
-project:sample-coverage name:sample build:1
+❯ # a little while later, check on the status of our job
+❯ onefuzz
+job: 61bc5c7c-d24f-4ebc-9bac-bec8fe040ade
+project:coverage-example name:1 build:1
 
 tasks:
-d6f488a5 target:fuzz-coverage.exe state:running type:generic_analysis
+50e1b076 target:fuzz-coverage.exe state:running type:generic_analysis
+63880445 target:fuzz.exe state:stopped type:libfuzzer_regression
+77fb6177 target:fuzz.exe state:running type:coverage
+a8e3338c target:fuzz.exe state:running type:libfuzzer_crash_report
+aae7ba1b target:fuzz.exe state:running type:libfuzzer_fuzz
 
 containers:
-setup           count:4     name:oft-setup-a0fc368219775dcda2d92aadaf3ba91e
-analysis        count:8     name:oft-analysis-aa8a8556b8005803a9c752f1f3bb0132
-tools           count:1     name:oft-tools-aa8a8556b8005803a9c752f1f3bb0132
-crashes         count:6     name:oft-inputs-aa8a8556b8005803a9c752f1f3bb0132
+setup           count:4     name:oft-setup-d1100b49a03c5a9483f140cee0676b87
+analysis        count:14    name:oft-analysis-6f3b76e7e841532bb7714375f564d483
+tools           count:1     name:oft-tools-6f3b76e7e841532bb7714375f564d483
+crashes         count:11    name:oft-inputs-6f3b76e7e841532bb7714375f564d483
+crashes         count:4     name:oft-crashes-6f3b76e7e841532bb7714375f564d483
+unique_reports  count:3     name:oft-unique-reports-6f3b76e7e841532bb7714375f564d483
+regression_reports count:0     name:oft-regression-reports-06bdcba10b5f5e45bdb38ed924856426
+coverage        count:1     name:oft-coverage-d1100b49a03c5a9483f140cee0676b87
+readonly_inputs count:11    name:oft-inputs-6f3b76e7e841532bb7714375f564d483
+reports         count:4     name:oft-reports-6f3b76e7e841532bb7714375f564d483
+no_repro        count:0     name:oft-no-repro-6f3b76e7e841532bb7714375f564d483
+inputs          count:11    name:oft-inputs-6f3b76e7e841532bb7714375f564d483
 ❯ # lets check on the results of the analysis thus far
-❯ onefuzz containers files list oft-analysis-aa8a8556b8005803a9c752f1f3bb0132
+❯ onefuzz containers files list oft-analysis-6f3b76e7e841532bb7714375f564d483
 {
     "files": [
         "coverage.lcov",
         "coverage.profdata",
         "coverage.report",
-        "inputs/0e757fc99306b1e8460e487b00bd6903b9dab51b4e965856713fab88e96ade65.profraw",
+        "inputs/06a7e66b4ddb9d43b9007e20f351c8076a2f5c5c13ec6d683e1307eeee472f7a.profraw",
+        "inputs/075de2b906dbd7066da008cab735bee896370154603579a50122f9b88545bd45.profraw",
+        "inputs/0fc4f9bfb1e6850b77e130904c0d5f8d0bfabe9a658efee7c4c41ad0015bff22.profraw",
         "inputs/15dab3cc1c78958bc8c6d959cf708c2062e8327d3db873c2629b243c7e1a1759.profraw",
-        "inputs/27ecd0a598e76f8a2fd264d427df0a119903e8eae384e478902541756f089dd1.profraw",
-        "inputs/34db310aad0a9797e717399db5f54c89e34070f380d9b89f0ae5be0c362231de.profraw",
-        "inputs/50868f20258bbc9cce0da2719e8654c108733dd2f663b8737c574ec0ead93eb3.profraw",
-        "inputs/66a0b53312c1d72c6bdc384d5a7e06a470c8a118c9599f59efe112a66cf85c37.profraw"
+        "inputs/3ebe1b59762a1c8020c1efe3747dd07f0e30617ed60b4e6a5bee16b6ea421dd0.profraw",
+        "inputs/594e519ae499312b29433b7dd8a97ff068defcba9755b6d5d00e84c524d67b06.profraw",
+        "inputs/75558b9c2275acb05f57066ce1199be864c7affffece0b952edac02e785bbc9f.profraw",
+        "inputs/bc9b8634ef85180578a9b501c901ce394ccd9087096fa4f298e4fc3752e60804.profraw",
+        "inputs/c6b27b6743b120d83d5cc1d37b0f51acddcb69ff544763e7552efb7b575bac38.profraw",
+        "inputs/c8bc644c4ddaaeafdb76142b72577e1f923b6797d87d254025f2fdf2b8225540.profraw",
+        "inputs/e5e1b99e66064d2e9414a37158465eb4fdc1a8120b9fa8e10e9301b5fc25bc98.profraw"
     ]
 }
 ❯ # this parses the report and checks that it's an coverage json report as we expect
-❯ 1f containers files get oft-analysis-aa8a8556b8005803a9c752f1f3bb0132 coverage.report | jq .type
+❯ 1f containers files get oft-analysis-6f3b76e7e841532bb7714375f564d483 coverage.report | jq .type
 "llvm.coverage.json.export"
 ❯ # now let's inspect the merged lcov file
-❯ 1f containers files get oft-analysis-aa8a8556b8005803a9c752f1f3bb0132 coverage.lcov |head -n 10
-SF:/home/bcaswell/projects/onefuzz/onefuzz/src/cli/examples/llvm-source-coverage/setup/simple.c
+❯ 1f containers files get oft-analysis-6f3b76e7e841532bb7714375f564d483 coverage.lcov |head -n 10
+SF:/home/USERNAME/onefuzz/src/cli/examples/llvm-source-coverage/setup/simple.c
 FN:8,LLVMFuzzerTestOneInput
 FNDA:6,LLVMFuzzerTestOneInput
 FNF:1
