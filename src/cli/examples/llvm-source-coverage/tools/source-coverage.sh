@@ -27,7 +27,7 @@ for file in $@; do
     RAW=${RESULTS}/inputs/${SHA}.profraw
 
     if [ -f ${RAW} ]; then
-    	continue
+        continue
     fi
     
     LLVM_PROFILE_FILE=${RAW} ${FUZZER} ${file}
@@ -37,10 +37,10 @@ for file in $@; do
     fi
 
     if [ -f ${MERGED} ]; then
-            ${PROF_TOOL} merge -output ${MERGED}.tmp ${RAW} ${MERGED}
-    	mv ${MERGED}.tmp ${MERGED}
+        ${PROF_TOOL} merge -output ${MERGED}.tmp ${RAW} ${MERGED}
+        mv ${MERGED}.tmp ${MERGED}
     else 
-            ${PROF_TOOL} merge -output ${MERGED} ${RAW}
+        ${PROF_TOOL} merge -output ${MERGED} ${RAW}
     fi
 
     ${COV_TOOL} export ${FUZZER} -instr-profile=${MERGED} > ${REPORT}
