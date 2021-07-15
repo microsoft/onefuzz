@@ -56,7 +56,9 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         # logging.info(notification.config.ado_fields["System.AssignedTo"])
         # logging.info(notification)
 
-    for job in Job.search(raw_unchecked_filter=time_filter):
+    for job in Job.search(
+        query={"state": ["stopped"]}, raw_unchecked_filter=time_filter
+    ):
         logging.info("Retention Timer Job Search")
         if job.user_info is not None:
             # logging.info(
@@ -66,7 +68,9 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             job.user_info.upn = None
             job.save()
 
-    for task in Task.search(raw_unchecked_filter=time_filter):
+    for task in Task.search(
+        query={"state": ["stopped"]}, raw_unchecked_filter=time_filter
+    ):
         logging.info("Retention Timer Task Search")
         if task.user_info is not None:
             # logging.info(
