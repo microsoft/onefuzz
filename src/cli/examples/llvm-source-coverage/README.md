@@ -7,7 +7,7 @@ Running an application compiled with [LLVM's source-based code coverage](https:/
 This example demonstrates using `generic_analysis` and the LLVM source coverage tools to provide source-based coverage on every input for a job.
 
 * [source-coverage-libfuzzer.py](source-coverage-libfuzzer.py): A wrapper that will launch a standard libfuzzer basic job *with* a source-based coverage task.  (used below)
-* [source-coverage.py]: A wrapper that will launch a new job comprised of a source-based coverage task
+* [source-coverage.py](source-coverage.py): A wrapper that will launch a new job comprised of a source-based coverage task
 * [setup](setup): a basic libfuzzer target that builds with and without source coverage enabled
 * [tools/source-coverage.sh](tools/source-coverage.sh): a script that wraps llvm-profdata and llvm-cov to perform the source analysis
 
