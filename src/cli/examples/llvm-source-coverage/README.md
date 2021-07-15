@@ -59,8 +59,8 @@ INFO:onefuzz:done creating tasks
     }
 }
 ❯ # submit our analysis job
-❯ python source-coverage.py ./setup/ ./setup/fuzz-coverage.exe sample-coverage sample 1 linux ./tools/ --duration 24
-INFO:onefuzz:creating job (runtime: 1 hours)
+❯ python source-coverage.py ./setup/ ./setup/fuzz-coverage.exe sample-coverage sample 1 linux ./tools/
+INFO:onefuzz:creating job (runtime: 24 hours)
 INFO:onefuzz:created job: 89267599-b5e1-4acf-a04e-350f1da968c7
 INFO:onefuzz:using container: oft-setup-a0fc368219775dcda2d92aadaf3ba91e
 INFO:onefuzz:using container: oft-analysis-aa8a8556b8005803a9c752f1f3bb0132
