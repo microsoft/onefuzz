@@ -25,7 +25,7 @@ clang -g3 -fsanitize=fuzzer -fsanitize=address simple.c -o fuzz.exe
 clang -g3 -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping simple.c -o fuzz-coverage.exe 
 ❯ cd ..
 ❯ # submit our basic job with an additional analysis task
-❯ ./source-coverage.py setup/ setup/fuzz.exe ./setup/fuzz-coverage.exe coverage-exapmle 1 1 linux-1 ./tools/
+❯ ./source-coverage.py setup/ setup/fuzz.exe ./setup/fuzz-coverage.exe coverage-example 1 1 linux-1 ./tools/
 INFO:onefuzz:creating libfuzzer from template
 INFO:onefuzz:creating job (runtime: 24 hours)
 INFO:onefuzz:created job: 61bc5c7c-d24f-4ebc-9bac-bec8fe040ade
