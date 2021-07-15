@@ -6,9 +6,10 @@
 import argparse
 import logging
 
+from onefuzztypes.enums import ContainerType, TaskType
+
 from onefuzz.api import Onefuzz
 from onefuzz.templates import JobHelper
-from onefuzztypes.enums import ContainerType, TaskType
 
 
 def main() -> None:
