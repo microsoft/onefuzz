@@ -4,11 +4,7 @@
 # Licensed under the MIT License.
 
 import argparse
-import json
 import logging
-import os
-import tempfile
-from typing import Optional
 
 from onefuzz.api import Onefuzz
 from onefuzz.templates import JobHelper

@@ -7,7 +7,6 @@ import argparse
 import logging
 
 from onefuzz.api import Onefuzz
-from onefuzz.cli import Directory
 from onefuzz.templates import JobHelper
 from onefuzztypes.enums import ContainerType, TaskType
 
@@ -16,7 +15,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument("setup_dir", type=Directory, help="Target setup directory")
+    parser.add_argument("setup_dir", type=str, help="Target setup directory")
     parser.add_argument(
         "target_exe",
         type=str,
@@ -31,7 +30,7 @@ def main() -> None:
     parser.add_argument("name", type=str, help="Name of target")
     parser.add_argument("build", type=str, help="Target build version.")
     parser.add_argument("pool_name", type=str, help="VM pool to use")
-    parser.add_argument("tools", type=Directory, help="tools directory")
+    parser.add_argument("tools", type=str, help="tools directory")
     parser.add_argument(
         "--duration", type=int, default=24, help="Hours to run the fuzzing task"
     )
