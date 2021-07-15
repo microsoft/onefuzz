@@ -6,6 +6,8 @@ Running an application compiled with [LLVM's source-based code coverage](https:/
 
 This example demonstrates using `generic_analysis` and the LLVM source coverage tools to provide source-based coverage on every input for a job.
 
+* [source-coverage-libfuzzer.py](source-coverage-libfuzzer.py): A wrapper that will launch a standard libfuzzer basic job *with* a source-based coverage task.  (used below)
+* [source-coverage.py]: A wrapper that will launch a new job comprised of a source-based coverage task
 * [setup](setup): a basic libfuzzer target that builds with and without source coverage enabled
 * [tools/source-coverage.sh](tools/source-coverage.sh): a script that wraps llvm-profdata and llvm-cov to perform the source analysis
 
@@ -25,7 +27,7 @@ clang -g3 -fsanitize=fuzzer -fsanitize=address simple.c -o fuzz.exe
 clang -g3 -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping simple.c -o fuzz-coverage.exe 
 ❯ cd ..
 ❯ # submit our basic job with an additional analysis task
-❯ ./source-coverage.py setup/ setup/fuzz.exe ./setup/fuzz-coverage.exe coverage-example 1 1 linux-1 ./tools/
+❯ ./source-coverage-libfuzzer.py setup/ setup/fuzz.exe ./setup/fuzz-coverage.exe coverage-example 1 1 linux-1 ./tools/
 INFO:onefuzz:creating libfuzzer from template
 INFO:onefuzz:creating job (runtime: 24 hours)
 INFO:onefuzz:created job: 61bc5c7c-d24f-4ebc-9bac-bec8fe040ade

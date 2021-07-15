@@ -4,13 +4,10 @@
 # Licensed under the MIT License.
 
 import argparse
-import json
 import logging
-import os
-import tempfile
-from typing import Optional
 
 from onefuzz.api import Onefuzz
+from onefuzz.cli import Directory
 from onefuzz.templates import JobHelper
 from onefuzztypes.enums import ContainerType, TaskType
 
@@ -19,7 +16,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument("setup_dir", type=str, help="Target setup directory")
+    parser.add_argument("setup_dir", type=Directory, help="Target setup directory")
+    parser.add_argument(
+        "target_exe",
+        type=str,
+        help="Target executable within setup directory without coverage instrumentation",
+    )
     parser.add_argument(
         "target_coverage_exe",
         type=str,
@@ -29,7 +31,7 @@ def main() -> None:
     parser.add_argument("name", type=str, help="Name of target")
     parser.add_argument("build", type=str, help="Target build version.")
     parser.add_argument("pool_name", type=str, help="VM pool to use")
-    parser.add_argument("tools", type=str, help="tools directory")
+    parser.add_argument("tools", type=Directory, help="tools directory")
     parser.add_argument(
         "--duration", type=int, default=24, help="Hours to run the fuzzing task"
     )
@@ -40,6 +42,17 @@ def main() -> None:
     logging.basicConfig(level=logging.WARNING)
     of.logger.setLevel(logging.INFO)
 
+    job = of.template.libfuzzer.basic(
+        args.project,
+        args.name,
+        args.build,
+        args.pool_name,
+        target_exe=args.target_exe,
+        setup_dir=args.setup_dir,
+        duration=args.duration,
+        inputs=args.inputs,
+    )
+
     helper = JobHelper(
         of,
         of.logger,
@@ -49,6 +62,7 @@ def main() -> None:
         args.duration,
         pool_name=args.pool_name,
         target_exe=args.target_exe,
+        job=job,
     )
 
     helper.define_containers(
@@ -58,10 +72,6 @@ def main() -> None:
         ContainerType.tools,
     )
     helper.create_containers()
-    helper.upload_setup(args.setup_dir, args.target_coverage_exe)
-
-    if args.inputs:
-        helper.upload_inputs(args.inputs)
 
     of.containers.files.upload_file(
         helper.containers[ContainerType.tools], f"{args.tools}/source-coverage.sh"
