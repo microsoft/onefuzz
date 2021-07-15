@@ -9,7 +9,7 @@ from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.tasks.main import Task
 
-RETENTION_POLICY = datetime.timedelta(minutes=(5))
+RETENTION_POLICY = datetime.timedelta(minutes=(10))
 
 
 def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
@@ -30,7 +30,7 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
         task_list = []
         timestamp_list = []
         logging.info("Notification Container %s", container)
-        for task in Task.search():
+        for task in Task.search(query={"state": ["stopped"]}):
             container_str = str(task.config.containers)
             if container in container_str:
                 logging.info("Container List: %s", container_str)
