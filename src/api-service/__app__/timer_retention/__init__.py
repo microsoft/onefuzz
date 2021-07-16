@@ -10,8 +10,8 @@ from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.tasks.main import Task
 
-RETENTION_POLICY = datetime.timedelta(minutes=(5))
-SEARCH_EXTENT = datetime.timedelta(minutes=(120))
+RETENTION_POLICY = datetime.timedelta(days=(18 * 30))
+SEARCH_EXTENT = datetime.timedelta(days=(20 * 30))
 
 
 def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
