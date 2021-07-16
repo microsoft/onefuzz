@@ -112,6 +112,7 @@ pub async fn run(config: Config) -> Result<()> {
 
 async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<()> {
     if let Some(crashes) = &config.crashes {
+        info!("processing initial inputs");
         crashes.init_pull().await?;
         let mut count: u64 = 0;
         let mut read_dir = fs::read_dir(&crashes.local_path).await?;
@@ -119,6 +120,11 @@ async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<
             debug!("Processing file {:?}", file);
             run_tool(file.path(), &config, &reports_dir).await?;
             count += 1;
+
+            // sync the analysis container after every 10 inputs
+            if count % 10 == 0 {
+                config.analysis.sync_push().await?;
+            }
         }
         info!("processed {} initial inputs", count);
         config.analysis.sync_push().await?;
@@ -143,6 +149,7 @@ async fn poll_inputs(
     tmp_dir: OwnedDir,
     reports_dir: &Option<PathBuf>,
 ) -> Result<()> {
+    info!("polling for new inputs");
     let heartbeat = config.common.init_heartbeat(None).await?;
     if let Some(input_queue) = &config.input_queue {
         loop {
