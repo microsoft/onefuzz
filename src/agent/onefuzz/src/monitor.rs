@@ -2,16 +2,13 @@
 // Licensed under the MIT License.
 
 use std::path::PathBuf;
-use std::sync::{
-    self,
-    mpsc::Receiver as SyncReceiver,
-};
-use std::thread::{self, JoinHandle};
+use std::sync::{self, mpsc::Receiver as SyncReceiver};
 use std::time::Duration;
 
 use anyhow::Result;
 use notify::{DebouncedEvent, Watcher};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
+use tokio::task::{self, JoinHandle};
 
 pub struct DirectoryMonitor {
     dir: PathBuf,
@@ -94,7 +91,7 @@ fn into_async<T: Send + 'static>(
 ) -> (UnboundedReceiver<T>, JoinHandle<()>) {
     let (sender, receiver) = unbounded_channel();
 
-    let handle = thread::spawn(move || {
+    let handle = task::spawn_blocking(move || {
         while let Ok(msg) = sync_receiver.recv() {
             if sender.send(msg).is_err() {
                 // The async receiver is closed. We can't do anything else, so
