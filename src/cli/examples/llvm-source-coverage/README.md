@@ -1,15 +1,15 @@
-# Performing Source-Coverage using Analysis Tasks
+# Collecting Source Coverage using Analysis Tasks
 
-The `generic_analysis` task can be used to perform user-defined analysis for every input.  
+The `generic_analysis` task can be used to perform a user-defined analysis of a target executable for every test input from some storage container.  
 
 Running an application compiled with [LLVM's source-based code coverage](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html) with each input can be used to generate source based coverage information.
 
 This example demonstrates using `generic_analysis` and the LLVM source coverage tools to provide source-based coverage on every input for a job.
 
-* [source-coverage-libfuzzer.py](source-coverage-libfuzzer.py): A wrapper that will launch a standard libfuzzer basic job *with* a source-based coverage task.  (used below)
+* [source-coverage-libfuzzer.py](source-coverage-libfuzzer.py): A wrapper that will launch a standard `libfuzzer basic` job *with* a source-based coverage task.  (used below)
 * [source-coverage.py](source-coverage.py): A wrapper that will launch a new job comprised of a source-based coverage task
-* [setup](setup): a basic libfuzzer target that builds with and without source coverage enabled
-* [tools/source-coverage.sh](tools/source-coverage.sh): a script that wraps llvm-profdata and llvm-cov to perform the source analysis
+* [setup](setup): a basic libFuzzer target that builds with and without source coverage enabled
+* [tools/source-coverage.sh](tools/source-coverage.sh): a script that wraps `llvm-profdata` and `llvm-cov` to perform the source analysis
 
 This example generates the following data in the `analysis` container:
 * inputs/`SHA256_OF_INPUT`.profraw: the "raw" coverage data for each input analyzed
