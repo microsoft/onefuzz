@@ -1,19 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::{path::PathBuf, pin::Pin, sync::mpsc, time::Duration};
+use std::path::PathBuf;
+use std::sync::{self, mpsc::{Receiver as SyncReceiver, RecvError}};
+use std::thread::{self, JoinHandle};
+use std::time::Duration;
 
 use anyhow::Result;
-use futures::{
-    stream::{FusedStream, Stream},
-    task::{self, Poll},
-};
 use notify::{DebouncedEvent, Watcher};
-use std::sync::mpsc::TryRecvError;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
 pub struct DirectoryMonitor {
     dir: PathBuf,
-    rx: mpsc::Receiver<DebouncedEvent>,
+    notify_events: UnboundedReceiver<DebouncedEvent>,
     watcher: notify::RecommendedWatcher,
     terminated: bool,
 }
@@ -21,13 +20,17 @@ pub struct DirectoryMonitor {
 impl DirectoryMonitor {
     pub fn new(dir: impl Into<PathBuf>) -> Self {
         let dir = dir.into();
-        let (tx, rx) = mpsc::channel();
+        let (notify_sender, notify_receiver) = sync::mpsc::channel();
         let delay = Duration::from_millis(100);
-        let watcher = notify::watcher(tx, delay).unwrap();
+        let watcher = notify::watcher(notify_sender, delay).unwrap();
+
+        // We can drop the thread handle, and it will continue to run until it
+        // errors or we drop the async receiver.
+        let (notify_events, _handle) = into_async(notify_receiver);
 
         Self {
             dir,
-            rx,
+            notify_events,
             watcher,
             terminated: false,
         }
@@ -49,48 +52,58 @@ impl DirectoryMonitor {
         Ok(())
     }
 
-    pub fn poll_file(&mut self) -> Poll<Option<PathBuf>> {
-        match self.rx.try_recv() {
-            Ok(DebouncedEvent::Create(path)) => Poll::Ready(Some(path)),
-            Ok(DebouncedEvent::Remove(path)) => {
-                if path == self.dir {
-                    // The directory we were watching was removed; we're done.
-                    self.stop().ok();
-                    Poll::Ready(None)
-                } else {
-                    // Some file _inside_ the watched directory was removed.
-                    Poll::Pending
+    pub async fn next_file(&mut self) -> Option<PathBuf> {
+        loop {
+            let event = self.notify_events.recv().await;
+
+            if event.is_none() {
+                // Make sure we stop our `Watcher` if we return early.
+                let _ = self.stop();
+            }
+
+            match event? {
+                DebouncedEvent::Create(path) => {
+                    return Some(path);
+                },
+                DebouncedEvent::Remove(path) => {
+                    if path == self.dir {
+                        // The directory we were watching was removed; we're done.
+                        let _ = self.stop();
+                        return None;
+                    } else {
+                        // Some file _inside_ the watched directory was removed. Ignore.
+                    }
                 }
-            }
-            Ok(_evt) => {
-                // Filesystem event we can ignore.
-                Poll::Pending
-            }
-            Err(TryRecvError::Empty) => {
-                // Nothing to read, but sender still connected.
-                Poll::Pending
-            }
-            Err(TryRecvError::Disconnected) => {
-                // We'll never receive any more events; whatever happened, we're done.
-                self.stop().ok();
-                Poll::Ready(None)
+                _event => {
+                    // Other filesystem event. Ignore.
+                }
             }
         }
     }
 }
 
-impl Stream for DirectoryMonitor {
-    type Item = PathBuf;
+fn into_async<T: Send + 'static>(sync_receiver: SyncReceiver<T>) -> (UnboundedReceiver<T>, JoinHandle<()>) {
+    let (sender, receiver) = unbounded_channel();
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Option<Self::Item>> {
-        let poll = self.poll_file();
-        cx.waker().wake_by_ref();
-        poll
-    }
-}
+    let handle = thread::spawn(move || {
+        loop {
+            match sync_receiver.recv() {
+                Ok(msg) => {
+                    if sender.send(msg).is_err() {
+                        // The async receiver is closed. We can't do anything else, so
+                        // drop this message and the sync receiver.
+                        break;
+                    }
+                }
+                Err(RecvError) => {
+                    // We'll never receive any more events.
+                    //
+                    // Exit the loop, which will drop our `sender` and hang up.
+                    break;
+                }
+            }
+        }
+    });
 
-impl FusedStream for DirectoryMonitor {
-    fn is_terminated(&self) -> bool {
-        self.terminated
-    }
+    (receiver, handle)
 }

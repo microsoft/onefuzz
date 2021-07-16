@@ -4,11 +4,9 @@ use anyhow::Result;
 use backoff::{future::retry, Error as BackoffError, ExponentialBackoff};
 use clap::{App, Arg, ArgMatches};
 use flume::Sender;
-use onefuzz::jitter::delay_with_jitter;
 use onefuzz::{blob::url::BlobContainerUrl, monitor::DirectoryMonitor, syncdir::SyncedDir};
 use path_absolutize::Absolutize;
 use reqwest::Url;
-use std::task::Poll;
 use std::{
     collections::HashMap,
     env::current_dir,
@@ -275,17 +273,12 @@ impl DirectoryMonitorQueue {
         let handle: tokio::task::JoinHandle<Result<()>> = tokio::spawn(async move {
             let mut monitor = DirectoryMonitor::new(directory_path_clone.clone());
             monitor.start()?;
-            loop {
-                match monitor.poll_file() {
-                    Poll::Ready(Some(file_path)) => {
-                        let file_url = Url::from_file_path(file_path)
-                            .map_err(|_| anyhow!("invalid file path"))?;
-                        queue.enqueue(file_url).await?;
-                    }
-                    Poll::Ready(None) => break,
-                    Poll::Pending => delay_with_jitter(Duration::from_secs(1)).await,
-                }
+
+            while let Some(file_path) = monitor.next_file().await {
+                let file_url = Url::from_file_path(file_path).map_err(|_| anyhow!("invalid file path"))?;
+                queue.enqueue(file_url).await?;
             }
+
             Ok(())
         });
 

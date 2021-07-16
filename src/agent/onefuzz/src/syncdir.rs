@@ -11,7 +11,6 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use dunce::canonicalize;
-use futures::stream::StreamExt;
 use onefuzz_telemetry::{Event, EventData};
 use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
@@ -219,13 +218,14 @@ impl SyncedDir {
         ignore_dotfiles: bool,
     ) -> Result<()> {
         debug!("monitoring {}", path.display());
+
         let mut monitor = DirectoryMonitor::new(path.clone());
         monitor.start()?;
 
         if let Some(path) = url.as_file_path() {
             fs::create_dir_all(&path).await?;
 
-            while let Some(item) = monitor.next().await {
+            while let Some(item) = monitor.next_file().await {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
@@ -261,7 +261,7 @@ impl SyncedDir {
         } else {
             let mut uploader = BlobUploader::new(url.url()?);
 
-            while let Some(item) = monitor.next().await {
+            while let Some(item) = monitor.next_file().await {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
