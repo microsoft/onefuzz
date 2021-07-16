@@ -275,7 +275,8 @@ impl DirectoryMonitorQueue {
             monitor.start()?;
 
             while let Some(file_path) = monitor.next_file().await {
-                let file_url = Url::from_file_path(file_path).map_err(|_| anyhow!("invalid file path"))?;
+                let file_url =
+                    Url::from_file_path(file_path).map_err(|_| anyhow!("invalid file path"))?;
                 queue.enqueue(file_url).await?;
             }
 

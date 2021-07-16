@@ -2,7 +2,10 @@
 // Licensed under the MIT License.
 
 use std::path::PathBuf;
-use std::sync::{self, mpsc::{Receiver as SyncReceiver, RecvError}};
+use std::sync::{
+    self,
+    mpsc::{Receiver as SyncReceiver, RecvError},
+};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
@@ -64,7 +67,7 @@ impl DirectoryMonitor {
             match event? {
                 DebouncedEvent::Create(path) => {
                     return Some(path);
-                },
+                }
                 DebouncedEvent::Remove(path) => {
                     if path == self.dir {
                         // The directory we were watching was removed; we're done.
@@ -82,7 +85,9 @@ impl DirectoryMonitor {
     }
 }
 
-fn into_async<T: Send + 'static>(sync_receiver: SyncReceiver<T>) -> (UnboundedReceiver<T>, JoinHandle<()>) {
+fn into_async<T: Send + 'static>(
+    sync_receiver: SyncReceiver<T>,
+) -> (UnboundedReceiver<T>, JoinHandle<()>) {
     let (sender, receiver) = unbounded_channel();
 
     let handle = thread::spawn(move || {
