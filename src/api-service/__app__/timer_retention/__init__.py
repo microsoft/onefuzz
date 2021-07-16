@@ -11,7 +11,7 @@ from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.tasks.main import Task
 
 RETENTION_POLICY = datetime.timedelta(minutes=(5))
-SEARCH_EXTENT = datetime.timedelta(minutes=(15))
+SEARCH_EXTENT = datetime.timedelta(minutes=(120))
 
 
 def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
@@ -22,23 +22,20 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
     time_retained_newer = now - SEARCH_EXTENT
 
     time_filter = (
-        f"Timestamp lt datetime'{time_retained_older.isoformat()}' and "
-        f"Timestamp gt datetime'{time_retained_newer.isoformat()}'"
+        f"Timestamp lt datetime'{time_retained_older.isoformat()}' "
+        f"and Timestamp gt datetime'{time_retained_newer.isoformat()}'"
     )
-    time_filter_newer = f"Timestamp gt datetime'{time_retained_older.isoformat()}"
+    time_filter_newer = f"Timestamp gt datetime'{time_retained_older.isoformat()}'"
 
     # Collecting 'still relevant' task containers.
-    used_containers = []
-    for task in Task.search(
-        raw_unchecked_filter=f"Timestamp gt datetime'{time_filter_newer.isoformat()}'"
-    ):
-        task_containers = [x.name for x in task.config.containers]
-        used_containers.extend(task_containers)
+    used_containers = {}
+    for task in Task.search(raw_unchecked_filter=time_filter_newer):
+        task_containers = {x.name for x in task.config.containers}
+        used_containers.update(task_containers)
 
     # You have to do notification before task,
     # because editing the upn for tasks will change the timestamp
     for notification in Notification.search(raw_unchecked_filter=time_filter):
-        logging.info("Retention Timer Notification Search")
         logging.info(
             "Found notification %s older than 18 months. Checking related tasks.",
             notification.notification_id,
@@ -55,7 +52,6 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
     for job in Job.search(
         query={"state": [JobState.stopped]}, raw_unchecked_filter=time_filter
     ):
-        logging.info("Retention Timer Job Search")
         if job.user_info is not None and job.user_info.upn is not None:
             logging.info(
                 "Found job %s older than 18 months. Scrubbing user_info.",
@@ -67,7 +63,6 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
     for task in Task.search(
         query={"state": [TaskState.stopped]}, raw_unchecked_filter=time_filter
     ):
-        logging.info("Retention Timer Task Search")
         if task.user_info is not None and task.user_info.upn is not None:
             logging.info(
                 "Found task %s older than 18 months. Scrubbing user_info.",
@@ -77,8 +72,6 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
             task.save()
 
     for repro in Repro.search(raw_unchecked_filter=time_filter):
-        logging.info("Retention Timer Repro Search")
-        logging.info(repro)
         if repro.user_info is not None and repro.user_info.upn is not None:
             logging.info(
                 "Found repro entry for task %s on node %s that is older "
