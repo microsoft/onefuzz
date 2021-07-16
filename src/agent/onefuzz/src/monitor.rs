@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 use std::sync::{
     self,
-    mpsc::{Receiver as SyncReceiver, RecvError},
+    mpsc::Receiver as SyncReceiver,
 };
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
@@ -91,21 +91,11 @@ fn into_async<T: Send + 'static>(
     let (sender, receiver) = unbounded_channel();
 
     let handle = thread::spawn(move || {
-        loop {
-            match sync_receiver.recv() {
-                Ok(msg) => {
-                    if sender.send(msg).is_err() {
-                        // The async receiver is closed. We can't do anything else, so
-                        // drop this message and the sync receiver.
-                        break;
-                    }
-                }
-                Err(RecvError) => {
-                    // We'll never receive any more events.
-                    //
-                    // Exit the loop, which will drop our `sender` and hang up.
-                    break;
-                }
+        while let Ok(msg) = sync_receiver.recv() {
+            if sender.send(msg).is_err() {
+                // The async receiver is closed. We can't do anything else, so
+                // drop this message and the sync receiver.
+                break;
             }
         }
     });
