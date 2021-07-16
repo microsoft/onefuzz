@@ -30,11 +30,16 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
         task_list = []
         timestamp_list = []
         logging.info("Notification Container %s", container)
-        for task in Task.search(query={"state": ["stopped"]}):
+        for task in Task.search():
             container_str = str(task.config.containers)
             if container in container_str:
-                task_list.append(task.task_id)
-                timestamp_list.append(task.timestamp)
+                # Need to make sure there isn't a task still using the container.
+                if task.state == "stopped":
+                    task_list.append(task.task_id)
+                    timestamp_list.append(task.timestamp)
+                else:
+                    timestamp_list = []
+                    break
         now = datetime.datetime.now(tz=datetime.timezone.utc)
         if len(timestamp_list) != 0:
             youngest = max(
