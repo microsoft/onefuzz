@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.27.0
+### Changed
+* Agent: Batch processing results are now saved after every 10 executions.  [#1076](https://github.com/microsoft/onefuzz/pull/1076)
+* Service: Optimized `file_added` event queueing by avoiding unnecessary Azure queries.  [#1075](https://github.com/microsoft/onefuzz/pull/1075)
+* Agent: Optimized directory change monitoring.  [#1078](https://github.com/microsoft/onefuzz/pull/1078)
+* Supervisor: Optimized agent monitoring.  [#1080](https://github.com/microsoft/onefuzz/pull/1080)
+
+
 ## 2.26.1
 ### Fixed
 * CLI: Fixed an issue handling long-running requests.  [#1068](https://github.com/microsoft/onefuzz/pull/1068)
