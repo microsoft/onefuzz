@@ -2,6 +2,7 @@ import datetime
 import logging
 
 import azure.functions as func
+from onefuzztypes.enums import JobState, TaskState
 
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.jobs import Job
@@ -27,17 +28,21 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
             notification.notification_id,
         )
         container = notification.container
-        task_list = []
         timestamp_list = []
-        logging.info("Notification Container %s", container)
         for task in Task.search():
             container_str = str(task.config.containers)
             if container in container_str:
                 # Need to make sure there isn't a task still using the container.
-                if task.state == "stopped":
-                    task_list.append(task.task_id)
+                if task.state == TaskState.stopped:
                     timestamp_list.append(task.timestamp)
                 else:
+                    logging.info(
+                        "Inside else. Task id: %s Task state: %s",
+                        task.task_id,
+                        task.state,
+                    )
+                    logging.info("container: %s", container)
+                    logging.info("container_str: %s", container_str)
                     timestamp_list = []
                     break
         now = datetime.datetime.now(tz=datetime.timezone.utc)
@@ -59,7 +64,7 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
                 # notification.delete()
 
     for job in Job.search(
-        query={"state": ["stopped"]}, raw_unchecked_filter=time_filter
+        query={"state": [JobState.stopped]}, raw_unchecked_filter=time_filter
     ):
         logging.info("Retention Timer Job Search")
         if job.user_info is not None and job.user_info.upn is not None:
@@ -71,7 +76,7 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
             job.save()
 
     for task in Task.search(
-        query={"state": ["stopped"]}, raw_unchecked_filter=time_filter
+        query={"state": [TaskState.stopped]}, raw_unchecked_filter=time_filter
     ):
         logging.info("Retention Timer Task Search")
         if task.user_info is not None and task.user_info.upn is not None:
