@@ -15,7 +15,9 @@ RETENTION_POLICY = datetime.timedelta(minutes=(5))
 
 def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
 
-    time_retained = datetime.datetime.now(tz=datetime.timezone.utc) - RETENTION_POLICY
+    now = datetime.datetime.now(tz=datetime.timezone.utc)
+
+    time_retained = now - RETENTION_POLICY
 
     time_filter = f"Timestamp lt datetime'{time_retained.isoformat()}'"
 
@@ -36,32 +38,22 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
                 if task.state == TaskState.stopped:
                     timestamp_list.append(task.timestamp)
                 else:
-                    logging.info(
-                        "Inside else. Task id: %s Task state: %s",
-                        task.task_id,
-                        task.state,
-                    )
-                    logging.info("container: %s", container)
-                    logging.info("container_str: %s", container_str)
                     timestamp_list = []
                     break
-        now = datetime.datetime.now(tz=datetime.timezone.utc)
+
         if len(timestamp_list) != 0:
             youngest = max(
                 dt
                 for dt in timestamp_list
                 if isinstance(dt, datetime.datetime) and dt < now
             )
-            logging.info("Youngest: %s", youngest)
-            logging.info("Timestamp_list ")
-            logging.info(timestamp_list)
             if youngest < time_retained:
                 logging.info(
                     "All related tasks are older than 18 months."
                     + " Deleting Notification %s.",
                     notification.notification_id,
                 )
-                # notification.delete()
+                notification.delete()
 
     for job in Job.search(
         query={"state": [JobState.stopped]}, raw_unchecked_filter=time_filter
