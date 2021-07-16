@@ -14,6 +14,7 @@ use crate::work::IWorkQueue;
 use crate::worker::IWorkerRunner;
 
 const PENDING_COMMANDS_DELAY: time::Duration = time::Duration::from_secs(10);
+const BUSY_DELAY: time::Duration = time::Duration::from_secs(1);
 
 pub struct Agent {
     coordinator: Box<dyn ICoordinator>,
@@ -231,6 +232,15 @@ impl Agent {
     async fn busy(&mut self, state: State<Busy>) -> Result<Scheduler> {
         self.emit_state_update_if_changed(StateUpdateEvent::Busy)
             .await?;
+
+        // Without this sleep, the `Agent.run` loop turns into an extremely tight loop calling
+        // `wait4` of the running agents.  This sleep adds a small window to allow the rest of the
+        // system to work.  Emperical testing shows this has a significant reduction in CPU use.
+        //
+        // TODO: The worker_runner monitoring needs to be turned into something event driven.  Once
+        // that is done, this sleep should be removed.
+        time::sleep(BUSY_DELAY).await;
+
         let mut events = vec![];
         let updated = state
             .update(&mut events, self.worker_runner.as_mut())

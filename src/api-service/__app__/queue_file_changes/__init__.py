@@ -29,10 +29,11 @@ def file_added(event: Dict, fail_task_on_transient_error: bool) -> None:
 def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
     event = json.loads(msg.get_body())
     last_try = msg.dequeue_count == MAX_DEQUEUE_COUNT
-    if event["topic"] not in corpus_accounts():
+    # check type first before calling Azure APIs
+    if event["eventType"] != "Microsoft.Storage.BlobCreated":
         return
 
-    if event["eventType"] != "Microsoft.Storage.BlobCreated":
+    if event["topic"] not in corpus_accounts():
         return
 
     file_added(event, last_try)
