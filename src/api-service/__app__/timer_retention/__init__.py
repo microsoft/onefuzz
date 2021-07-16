@@ -11,15 +11,29 @@ from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.tasks.main import Task
 
 RETENTION_POLICY = datetime.timedelta(minutes=(5))
+SEARCH_EXTENT = datetime.timedelta(minutes=(15))
 
 
 def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
 
     now = datetime.datetime.now(tz=datetime.timezone.utc)
 
-    time_retained = now - RETENTION_POLICY
+    time_retained_older = now - RETENTION_POLICY
+    time_retained_newer = now - SEARCH_EXTENT
 
-    time_filter = f"Timestamp lt datetime'{time_retained.isoformat()}'"
+    time_filter = (
+        f"Timestamp lt datetime'{time_retained_older.isoformat()}' and "
+        f"Timestamp gt datetime'{time_retained_newer.isoformat()}'"
+    )
+    time_filter_newer = f"Timestamp gt datetime'{time_retained_older.isoformat()}"
+
+    # Collecting 'still relevant' task containers.
+    used_containers = []
+    for task in Task.search(
+        raw_unchecked_filter=f"Timestamp gt datetime'{time_filter_newer.isoformat()}'"
+    ):
+        task_containers = [x.name for x in task.config.containers]
+        used_containers.extend(task_containers)
 
     # You have to do notification before task,
     # because editing the upn for tasks will change the timestamp
@@ -30,30 +44,13 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
             notification.notification_id,
         )
         container = notification.container
-        timestamp_list = []
-        for task in Task.search():
-            container_str = str(task.config.containers)
-            if container in container_str:
-                # Need to make sure there isn't a task still using the container.
-                if task.state == TaskState.stopped:
-                    timestamp_list.append(task.timestamp)
-                else:
-                    timestamp_list = []
-                    break
-
-        if len(timestamp_list) != 0:
-            youngest = max(
-                dt
-                for dt in timestamp_list
-                if isinstance(dt, datetime.datetime) and dt < now
+        if container not in used_containers:
+            logging.info(
+                "All related tasks are older than 18 months."
+                + " Deleting Notification %s.",
+                notification.notification_id,
             )
-            if youngest < time_retained:
-                logging.info(
-                    "All related tasks are older than 18 months."
-                    + " Deleting Notification %s.",
-                    notification.notification_id,
-                )
-                notification.delete()
+            notification.delete()
 
     for job in Job.search(
         query={"state": [JobState.stopped]}, raw_unchecked_filter=time_filter
