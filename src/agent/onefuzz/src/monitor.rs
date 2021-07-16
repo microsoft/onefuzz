@@ -2,10 +2,7 @@
 // Licensed under the MIT License.
 
 use std::path::PathBuf;
-use std::sync::{
-    self,
-    mpsc::Receiver as SyncReceiver,
-};
+use std::sync::{self, mpsc::Receiver as SyncReceiver};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
