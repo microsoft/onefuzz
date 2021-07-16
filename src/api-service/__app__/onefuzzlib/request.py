@@ -6,11 +6,13 @@
 import json
 import logging
 import os
-from typing import List, TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
-from uuid import UUID
+import urllib
 import uuid
+from typing import TYPE_CHECKING, List, Optional, Sequence, Type, TypeVar, Union
+from uuid import UUID
 
 from azure.functions import HttpRequest, HttpResponse
+from memoization import cached
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.responses import BaseResponse
@@ -20,9 +22,6 @@ from pydantic.tools import parse_obj_as
 from .azure.creds import is_member_of
 from .orm import ModelMixin
 from .request_auth import RequestAuthorization
-
-from memoization import cached
-import urllib
 
 # We don't actually use these types at runtime at this time.  Rather,
 # these are used in a bound TypeVar.  MyPy suggests to only import these
@@ -67,29 +66,27 @@ def check_access2(req: HttpRequest) -> Optional[Error]:
 
     path = urllib.parse.urlparse(req.url).path
     rule = rules.get_matching_rules(path)
-    if not rule:
-        return None
-    else:
-        member_id = req.headers["x-ms-client-principal-id"]
 
-        try:
-            result = is_member_of(rule.allowed_groups_ids, member_id)
-        except Exception as e:
-            return Error(
-                code=ErrorCode.UNAUTHORIZED,
-                errors=["unable to interact with graph", str(e)],
-            )
-        if not result:
-            logging.error(
-                "unauthorized access: %s is not authorized to access in %s",
-                member_id,
-                req.url,
-            )
-            return Error(
-                code=ErrorCode.UNAUTHORIZED,
-                errors=["not approved to use this instance of onefuzz"],
-            )
-        return None
+    member_id = req.headers["x-ms-client-principal-id"]
+
+    try:
+        result = is_member_of(rule.allowed_groups_ids, member_id)
+    except Exception as e:
+        return Error(
+            code=ErrorCode.UNAUTHORIZED,
+            errors=["unable to interact with graph", str(e)],
+        )
+    if not result:
+        logging.error(
+            "unauthorized access: %s is not authorized to access in %s",
+            member_id,
+            req.url,
+        )
+        return Error(
+            code=ErrorCode.UNAUTHORIZED,
+            errors=["not approved to use this instance of onefuzz"],
+        )
+    return None
 
 
 def check_access(req: HttpRequest) -> Optional[Error]:

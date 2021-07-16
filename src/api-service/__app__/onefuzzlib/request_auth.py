@@ -1,6 +1,6 @@
+import uuid
 from typing import Dict, List, Optional
 from uuid import UUID
-import uuid
 
 
 class RequestAuthorization:
@@ -53,23 +53,21 @@ class RequestAuthorization:
 
         current_node.rules = rules
 
-    def get_matching_rules(self, path: str) -> Optional[Rules]:
+    def get_matching_rules(self, path: str) -> Rules:
         segments = path.split("/")
-        if len(segments) == 0:
-            return None
-
         current_node = self.root
         current_segment_index = 0
 
         while current_segment_index < len(segments):
             current_segment = segments[current_segment_index]
-            if (current_segment in current_node.children) or (
-                "*" in current_node.children
-            ):
+            if current_segment in current_node.children:
                 current_node = current_node.children[current_segment]
-                current_segment_index = current_segment_index + 1
+            elif "*" in current_node.children:
+                current_node = current_node.children["*"]
             else:
                 break
+
+            current_segment_index = current_segment_index + 1
 
         return current_node.rules
 
@@ -84,14 +82,18 @@ class TestRequestAuthorization(unittest.TestCase):
         guid2 = uuid.uuid4()
 
         request_trie = RequestAuthorization()
-        request_trie.add_url("a/b/c", RequestAuthorization.Rules(allowed_groups_ids=[guid1]))
-        request_trie.add_url("b/*/c", RequestAuthorization.Rules(allowed_groups_ids=[guid2]))
+        request_trie.add_url(
+            "a/b/c", RequestAuthorization.Rules(allowed_groups_ids=[guid1])
+        )
+        request_trie.add_url(
+            "b/*/c", RequestAuthorization.Rules(allowed_groups_ids=[guid2])
+        )
 
         rules = request_trie.get_matching_rules("a/b/c")
-        if rules:
-            self.assertNotEqual(len(rules.allowed_groups_ids), 0, "empty allowed groups")
-            self.assertEqual(rules.allowed_groups_ids[0], guid1)
-        else:
-            self.fail("no rule found")
+
+        self.assertNotEqual(
+            len(rules.allowed_groups_ids), 0, "empty allowed groups"
+        )
+        self.assertEqual(rules.allowed_groups_ids[0], guid1)
 
         # permission
