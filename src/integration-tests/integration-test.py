@@ -102,7 +102,7 @@ TARGETS: Dict[str, Integration] = {
             ContainerType.inputs: 2,
         },
         reboot_after_setup=True,
-        target_options=["-runs=1000"],
+        target_options=["-runs=10000000"],
     ),
     "linux-libfuzzer-dlopen": Integration(
         template=TemplateType.libfuzzer,
