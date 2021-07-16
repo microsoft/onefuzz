@@ -160,6 +160,7 @@ impl CoverageTask {
             })?;
         let mut seen_inputs = false;
 
+        let mut count = 0;
         loop {
             let input = match corpus.next_entry().await {
                 Ok(Some(input)) => input,
@@ -172,6 +173,12 @@ impl CoverageTask {
 
             processor.test_input(&input.path()).await?;
             seen_inputs = true;
+            count += 1;
+
+            // sync the coverage container after every 10 inputs
+            if count % 10 == 0 {
+                self.config.coverage.sync_push().await?;
+            }
         }
 
         Ok(seen_inputs)
