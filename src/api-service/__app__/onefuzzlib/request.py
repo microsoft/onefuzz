@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from pydantic import BaseModel  # noqa: F401
 
 
+#  todo add top level rule
 class RuleDefinition(BaseModel):
     methods: List[str]
     endpoint: str

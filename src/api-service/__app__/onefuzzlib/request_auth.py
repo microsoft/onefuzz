@@ -1,5 +1,4 @@
-import uuid
-from typing import Dict, List, Optional
+from typing import Dict, List
 from uuid import UUID
 
 
@@ -70,30 +69,3 @@ class RequestAuthorization:
             current_segment_index = current_segment_index + 1
 
         return current_node.rules
-
-
-import unittest
-
-
-class TestRequestAuthorization(unittest.TestCase):
-    def test(self) -> None:
-
-        guid1 = uuid.uuid4()
-        guid2 = uuid.uuid4()
-
-        request_trie = RequestAuthorization()
-        request_trie.add_url(
-            "a/b/c", RequestAuthorization.Rules(allowed_groups_ids=[guid1])
-        )
-        request_trie.add_url(
-            "b/*/c", RequestAuthorization.Rules(allowed_groups_ids=[guid2])
-        )
-
-        rules = request_trie.get_matching_rules("a/b/c")
-
-        self.assertNotEqual(
-            len(rules.allowed_groups_ids), 0, "empty allowed groups"
-        )
-        self.assertEqual(rules.allowed_groups_ids[0], guid1)
-
-        # permission
