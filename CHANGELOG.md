@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.27.0
+### Changed
+* Agent: Batch processing results are now saved after every 10 executions.  [#1076](https://github.com/microsoft/onefuzz/pull/1076)
+* Service: File change events now check the event type prior to making calls to Azure.  [#1075](https://github.com/microsoft/onefuzz/pull/1075)
+
 ## 2.26.1
 ### Fixed
 * CLI: Fixed an issue handling long-running requests.  [#1068](https://github.com/microsoft/onefuzz/pull/1068)
