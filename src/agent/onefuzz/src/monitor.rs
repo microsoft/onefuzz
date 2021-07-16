@@ -85,6 +85,10 @@ impl DirectoryMonitor {
     }
 }
 
+/// Convert a `Receiver` from a `std::sync::mpsc` channel into an async receiver.
+///
+/// The returned `JoinHandle` does _not_ need to be held by callers. The associated task
+/// will continue to run (detached) if dropped.
 fn into_async<T: Send + 'static>(
     sync_receiver: SyncReceiver<T>,
 ) -> (UnboundedReceiver<T>, JoinHandle<()>) {
@@ -94,14 +98,14 @@ fn into_async<T: Send + 'static>(
         while let Ok(msg) = sync_receiver.recv() {
             if sender.send(msg).is_err() {
                 // The async receiver is closed. We can't do anything else, so
-                // drop this message and the sync receiver.
+                // drop this message (and the sync receiver).
                 break;
             }
         }
 
         // We'll never receive any more events.
         //
-        // Drop our `Sender` and hang up.
+        // Drop our `Receiver` and hang up.
     });
 
     (receiver, handle)
