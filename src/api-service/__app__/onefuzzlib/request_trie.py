@@ -1,35 +1,30 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from uuid import UUID
 import uuid
 
 
-class Permissions:
-    allowed_groups_ids: List[UUID]
-    allowed_members_ids: List[UUID]
+class RequestAuthorization:
+    class Rules:
+        allowed_groups_ids: List[UUID]
 
-    def __init__(self, allowed_groups_ids: List[UUID] = [], allowed_members_ids: List[UUID] = []) -> None:
-        self.allowed_groups_ids = allowed_groups_ids
-        self.allowed_members_ids = allowed_members_ids
+        def __init__(self, allowed_groups_ids: List[UUID] = []) -> None:
+            self.allowed_groups_ids = allowed_groups_ids
 
-class RequestTrieNode:
-    permissions: Permissions
-    children: Dict[str, "RequestTrieNode"]
+    class Node:
+        rules: "RequestAuthorization.Rules"
+        children: Dict[str, "RequestAuthorization.Node"]
 
-    def __init__(self) -> None:
-        self.permissions = Permissions()
-        self.children = {}
-        pass
+        def __init__(self) -> None:
+            self.rules = RequestAuthorization.Rules()
+            self.children = {}
+            pass
 
-
-class RequestTrie:
-    root: RequestTrieNode
+    root: Node
 
     def __init__(self) -> None:
-        self.root = RequestTrieNode()
+        self.root = RequestAuthorization.Node()
 
-    def add_url(
-        self, path: str, permissions: Permissions
-    ):
+    def add_url(self, path: str, rules: Rules) -> None:
         segments = path.split("/")
         if len(segments) == 0:
             return
@@ -52,17 +47,16 @@ class RequestTrie:
 
         while current_segment_index < len(segments):
             current_segment = segments[current_segment_index]
-            current_node.children[current_segment] = RequestTrieNode()
+            current_node.children[current_segment] = RequestAuthorization.Node()
             current_node = current_node.children[current_segment]
-            current_segment_index = current_segment_index+1
+            current_segment_index = current_segment_index + 1
 
-        current_node.permissions = permissions
+        current_node.rules = rules
 
-
-    def get_matching_rules(self, path: str) -> Permissions:
+    def get_matching_rules(self, path: str) -> Optional[Rules]:
         segments = path.split("/")
         if len(segments) == 0:
-            return Permissions()
+            return None
 
         current_node = self.root
         current_segment_index = 0
@@ -77,28 +71,27 @@ class RequestTrie:
             else:
                 break
 
-        return current_node.permissions
-
-
+        return current_node.rules
 
 
 import unittest
-class TestRequestTrie(unittest.TestCase):
+
+
+class TestRequestAuthorization(unittest.TestCase):
     def test(self) -> None:
 
         guid1 = uuid.uuid4()
         guid2 = uuid.uuid4()
 
-        request_trie = RequestTrie()
-        request_trie.add_url("a/b/c", Permissions(allowed_groups_ids=[guid1]))
-        request_trie.add_url("b/*/c", Permissions(allowed_groups_ids=[guid2]))
+        request_trie = RequestAuthorization()
+        request_trie.add_url("a/b/c", RequestAuthorization.Rules(allowed_groups_ids=[guid1]))
+        request_trie.add_url("b/*/c", RequestAuthorization.Rules(allowed_groups_ids=[guid2]))
 
-        permissions = request_trie.get_matching_rules("a/b/c")
-        self.assertNotEqual(len(permissions.allowed_groups_ids), 0, "empty allowed groups")
-        self.assertEqual(permissions.allowed_groups_ids[0], guid1)
-
+        rules = request_trie.get_matching_rules("a/b/c")
+        if rules:
+            self.assertNotEqual(len(rules.allowed_groups_ids), 0, "empty allowed groups")
+            self.assertEqual(rules.allowed_groups_ids[0], guid1)
+        else:
+            self.fail("no rule found")
 
         # permission
-
-
-

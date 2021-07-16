@@ -133,8 +133,8 @@ def query_microsoft_graph(
         )
 
 
-def is_member_of(group_id: str, member_id: str) -> bool:
-    body = {"groupIds": [group_id]}
+def is_member_of(group_ids: List[str], member_id: str) -> bool:
+    body = {"groupIds": group_ids}
     response = query_microsoft_graph(
         method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
     )
