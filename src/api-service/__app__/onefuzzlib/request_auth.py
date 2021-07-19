@@ -3,6 +3,10 @@ from uuid import UUID
 
 
 class RequestAuthorization:
+    """
+    Stores the rules associated with a the request paths
+    """
+
     class Rules:
         allowed_groups_ids: List[UUID]
 
