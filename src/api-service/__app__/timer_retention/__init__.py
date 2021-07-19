@@ -1,5 +1,6 @@
 import datetime
 import logging
+from typing import Set
 
 import azure.functions as func
 from onefuzztypes.enums import JobState, TaskState
@@ -28,7 +29,7 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
     time_filter_newer = f"Timestamp gt datetime'{time_retained_older.isoformat()}'"
 
     # Collecting 'still relevant' task containers.
-    used_containers = {}
+    used_containers: Set[str] = {}
     for task in Task.search(raw_unchecked_filter=time_filter_newer):
         task_containers = {x.name for x in task.config.containers}
         used_containers.update(task_containers)
