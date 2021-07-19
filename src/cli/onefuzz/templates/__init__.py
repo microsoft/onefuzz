@@ -123,8 +123,8 @@ class JobHelper:
             return
 
         config_dict = json.loads(config.json())
-        for entry in self.onefuzz.notifications.list():
-            if entry.container == container and entry.config == config_dict:
+        for entry in self.onefuzz.notifications.list(container=[container]):
+            if entry.config == config_dict:
                 self.logger.debug(
                     "notification already exists: %s", entry.notification_id
                 )

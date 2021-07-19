@@ -43,6 +43,10 @@ class NotificationCreate(BaseRequest, NotificationConfig):
     container: Container
 
 
+class NotificationSearch(BaseRequest):
+    container: Optional[List[Container]]
+
+
 class NotificationGet(BaseRequest):
     notification_id: UUID
 

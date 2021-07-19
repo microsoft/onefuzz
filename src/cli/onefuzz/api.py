@@ -766,11 +766,17 @@ class Notifications(Endpoint):
             data=requests.NotificationGet(notification_id=notification_id_expanded),
         )
 
-    def list(self) -> List[models.Notification]:
+    def list(
+        self, *, container: Optional[List[primitives.Container]] = None
+    ) -> List[models.Notification]:
         """List notification integrations"""
 
         self.logger.debug("listing notification integrations")
-        return self._req_model_list("GET", models.Notification)
+        return self._req_model_list(
+            "GET",
+            models.Notification,
+            data=requests.NotificationSearch(container=container),
+        )
 
 
 class Tasks(Endpoint):
