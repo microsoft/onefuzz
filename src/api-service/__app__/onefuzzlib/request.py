@@ -19,7 +19,7 @@ from pydantic import BaseModel  # noqa: F401
 from pydantic import ValidationError
 from pydantic.tools import parse_obj_as
 
-from .azure.creds import is_member_of
+from .azure.creds import is_member_of, is_member_of_test
 from .orm import ModelMixin
 from .request_auth import RequestAuthorization
 
@@ -55,10 +55,11 @@ def get_rules() -> Optional[RequestAuthorization]:
     return request_auth
 
 
+Testing = True
 # todo:
 #   - check the verb
 #
-def check_access2(req: HttpRequest) -> Optional[Error]:
+def check_access(req: HttpRequest) -> Optional[Error]:
     rules = get_rules()
 
     if not rules:
@@ -70,7 +71,10 @@ def check_access2(req: HttpRequest) -> Optional[Error]:
     member_id = UUID(req.headers["x-ms-client-principal-id"])
 
     try:
-        result = is_member_of(rule.allowed_groups_ids, member_id)
+        if Testing:
+            result = is_member_of_test(rule.allowed_groups_ids, member_id)
+        else:
+            result = is_member_of(rule.allowed_groups_ids, member_id)
     except Exception as e:
         return Error(
             code=ErrorCode.UNAUTHORIZED,
@@ -89,7 +93,7 @@ def check_access2(req: HttpRequest) -> Optional[Error]:
     return None
 
 
-def check_access(req: HttpRequest) -> Optional[Error]:
+def check_access_(req: HttpRequest) -> Optional[Error]:
     if "ONEFUZZ_AAD_GROUP_ID" not in os.environ:
         return None
 

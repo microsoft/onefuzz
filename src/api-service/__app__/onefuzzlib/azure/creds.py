@@ -133,6 +133,29 @@ def query_microsoft_graph(
         )
 
 
+######## FOR TESTING PURPOSE ONLY ############
+def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
+    from pydantic import BaseModel
+    from pydantic.tools import parse_obj_as
+
+    class GroupMemebership(BaseModel):
+        principal_id: UUID
+        groups: List[UUID]
+
+    if os.environ["TEST_MSGRAPH_AAD"]:
+        data = parse_obj_as(List[GroupMemebership], os.environ["TEST_MSGRAPH_AAD"])
+        for membership in data:
+            if membership.principal_id == member_id:
+                for group_id in group_ids:
+                    if group_id not in membership.groups:
+                        return False
+                return True
+        return False
+
+
+#########################################
+
+
 def is_member_of(group_ids: List[UUID], member_id: UUID) -> bool:
     body = {"groupIds": group_ids}
     response = query_microsoft_graph(
