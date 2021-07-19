@@ -150,7 +150,7 @@ def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
                     if group_id not in membership.groups:
                         return False
                 return True
-        return False
+    return False
 
 
 # ########################################
