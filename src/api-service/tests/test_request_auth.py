@@ -48,7 +48,7 @@ class TestRequestAuthorization(unittest.TestCase):
                 "a/b/c", RequestAuthorization.Rules(allowed_groups_ids=[])
             )
             self.fail("this is expected to fail")
-        except:
+        except Exception:
             pass
 
     # The most specific rules takes priority over the ones containing a wildcard
