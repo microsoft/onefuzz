@@ -286,6 +286,11 @@ impl<'a> TaskContext<'a> {
                     if entry.file_type().await?.is_file() {
                         self.record_input(&entry.path()).await?;
                         count += 1;
+
+                        // make sure we save & sync coverage every 10 inputs
+                        if count % 10 == 0 {
+                            self.save_and_sync_coverage().await?;
+                        }
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
                     }
