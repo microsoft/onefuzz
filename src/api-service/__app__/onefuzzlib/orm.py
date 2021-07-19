@@ -40,7 +40,7 @@ from pydantic import BaseModel
 from typing_extensions import Protocol
 
 from .azure.table import get_client
-from .secrets import save_to_keyvault
+from .secrets import delete_secret_data, save_to_keyvault
 from .telemetry import track_event_filtered
 from .updates import queue_update
 
@@ -249,6 +249,26 @@ def hide_secrets(data: B, hider: Callable[[SecretData], SecretData]) -> B:
     return data
 
 
+def delete_secrets(data: B, deleter: Callable[[SecretData], None]) -> None:
+    for field in data.__fields__:
+        field_data = getattr(data, field)
+        if isinstance(field_data, SecretData):
+            deleter(field_data)
+        elif isinstance(field_data, BaseModel):
+            delete_secrets(field_data, deleter)
+        elif isinstance(field_data, list):
+            for entry in field_data:
+                if isinstance(entry, BaseModel):
+                    delete_secrets(entry, deleter)
+                elif isinstance(entry, SecretData):
+                    deleter(field_data)
+        elif isinstance(field_data, dict):
+            for value in field_data.values():
+                if isinstance(value, BaseModel):
+                    delete_secrets(value, deleter)
+                elif isinstance(value, SecretData):
+                    deleter(field_data)
+
 # NOTE: if you want to include Timestamp in a model that uses ORMMixin,
 # it must be maintained as part of the model.
 class ORMMixin(ModelMixin):
@@ -362,6 +382,8 @@ class ORMMixin(ModelMixin):
 
     def delete(self) -> None:
         partition_key, row_key = self.get_keys()
+
+        delete_secrets(self, delete_secret_data)
 
         client = get_client()
         try:

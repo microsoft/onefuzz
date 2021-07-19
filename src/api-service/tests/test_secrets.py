@@ -7,7 +7,10 @@ import json
 import pathlib
 import unittest
 
+from typing import List, Dict
+from pydantic import BaseModel
 from onefuzztypes.enums import OS, ContainerType
+from onefuzztypes.models import SecretData
 from onefuzztypes.job_templates import (
     JobTemplate,
     JobTemplateIndex,
@@ -27,7 +30,7 @@ from onefuzztypes.models import (
 from onefuzztypes.primitives import Container
 from onefuzztypes.requests import NotificationCreate
 
-from __app__.onefuzzlib.orm import hide_secrets
+from __app__.onefuzzlib.orm import hide_secrets, delete_secrets
 
 
 def hider(secret_data: SecretData) -> SecretData:
@@ -36,7 +39,72 @@ def hider(secret_data: SecretData) -> SecretData:
     return secret_data
 
 
+class WithSecret(BaseModel):
+    a: SecretData[str]
+
+
+class WithList(BaseModel):
+    a: List[WithSecret]
+
+
+class WithDict(BaseModel):
+    a: Dict[str, SecretData[str]]
+    b: Dict[str, WithSecret]
+
+
+class Nested(BaseModel):
+    a: WithSecret
+    b: WithDict
+    c: WithList
+
+
 class TestSecret(unittest.TestCase):
+    def test_delete(self) -> None:
+        self.count = 0
+
+        def deleter(secret_data: SecretData) -> None:
+            self.count += 1
+
+        delete_secrets(WithSecret(a=SecretData("a")), deleter)
+        self.assertEqual(self.count, 1)
+
+        delete_secrets(
+            WithList(
+                a=[
+                    WithSecret(a=SecretData("a")),
+                    WithSecret(a=SecretData("b")),
+                ]
+            ),
+            deleter,
+        )
+        self.assertEqual(self.count, 3)
+
+        delete_secrets(
+            WithDict(
+                a={"a": SecretData("a"), "b": SecretData("b")},
+                b={
+                    "a": WithSecret(a=SecretData("a")),
+                    "b": WithSecret(a=SecretData("a")),
+                },
+            ),
+            deleter,
+        )
+        self.assertEqual(self.count, 7)
+
+        delete_secrets(
+            Nested(
+                a=WithSecret(a=SecretData("a")),
+                b=WithDict(
+                    a={"a": SecretData("a")}, b={"a": WithSecret(a=SecretData("a"))}
+                ),
+                c=WithList(
+                    a=[WithSecret(a=SecretData("a")), WithSecret(a=SecretData("b"))]
+                ),
+            ),
+            deleter,
+        )
+        self.assertEqual(self.count, 12)
+
     def test_hide(self) -> None:
         notification = Notification(
             container=Container("data"),
