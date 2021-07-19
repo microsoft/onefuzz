@@ -261,13 +261,14 @@ def delete_secrets(data: B, deleter: Callable[[SecretData], None]) -> None:
                 if isinstance(entry, BaseModel):
                     delete_secrets(entry, deleter)
                 elif isinstance(entry, SecretData):
-                    deleter(field_data)
+                    deleter(entry)
         elif isinstance(field_data, dict):
             for value in field_data.values():
                 if isinstance(value, BaseModel):
                     delete_secrets(value, deleter)
                 elif isinstance(value, SecretData):
-                    deleter(field_data)
+                    deleter(value)
+
 
 # NOTE: if you want to include Timestamp in a model that uses ORMMixin,
 # it must be maintained as part of the model.

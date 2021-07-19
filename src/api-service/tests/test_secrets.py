@@ -6,11 +6,9 @@
 import json
 import pathlib
 import unittest
+from typing import Dict, List
 
-from typing import List, Dict
-from pydantic import BaseModel
 from onefuzztypes.enums import OS, ContainerType
-from onefuzztypes.models import SecretData
 from onefuzztypes.job_templates import (
     JobTemplate,
     JobTemplateIndex,
@@ -29,8 +27,9 @@ from onefuzztypes.models import (
 )
 from onefuzztypes.primitives import Container
 from onefuzztypes.requests import NotificationCreate
+from pydantic import BaseModel
 
-from __app__.onefuzzlib.orm import hide_secrets, delete_secrets
+from __app__.onefuzzlib.orm import delete_secrets, hide_secrets
 
 
 def hider(secret_data: SecretData) -> SecretData:
