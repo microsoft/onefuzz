@@ -16,6 +16,7 @@ from memoization import cached
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
 from onefuzztypes.responses import BaseResponse
+from pydantic import BaseModel  # noqa: F401
 from pydantic import ValidationError
 from pydantic.tools import parse_obj_as
 
@@ -28,7 +29,6 @@ from .request_auth import RequestAuthorization
 # types during type checking.
 if TYPE_CHECKING:
     from onefuzztypes.requests import BaseRequest  # noqa: F401
-    from pydantic import BaseModel  # noqa: F401
 
 
 #  todo add top level rule
