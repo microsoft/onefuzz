@@ -138,7 +138,11 @@ def is_member_of(group_ids: List[str], member_id: str) -> bool:
     response = query_microsoft_graph(
         method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
     )
-    return group_id in response["value"]
+    for group_id in group_ids:
+        if group_id not in response["value"]:
+            return False
+
+    return True
 
 
 @cached
