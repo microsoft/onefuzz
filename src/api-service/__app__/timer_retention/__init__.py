@@ -1,6 +1,5 @@
 import datetime
 import logging
-from typing import Set
 
 import azure.functions as func
 from onefuzztypes.enums import JobState, TaskState
