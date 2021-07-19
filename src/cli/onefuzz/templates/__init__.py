@@ -3,7 +3,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import json
 import os
 import tempfile
 import zipfile
@@ -118,17 +117,6 @@ class JobHelper:
             container = self.containers[ContainerType.unique_reports]
         else:
             container = self.containers[ContainerType.reports]
-
-        if not container:
-            return
-
-        config_dict = json.loads(config.json())
-        for entry in self.onefuzz.notifications.list(container=[container]):
-            if entry.config == config_dict:
-                self.logger.debug(
-                    "notification already exists: %s", entry.notification_id
-                )
-                return
 
         self.logger.info("creating notification config for %s", container)
         self.onefuzz.notifications.create(container, config)

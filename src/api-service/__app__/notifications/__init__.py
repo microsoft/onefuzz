@@ -39,7 +39,11 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="notification create")
 
-    entry = Notification.create(container=request.container, config=request.config)
+    entry = Notification.create(
+        container=request.container,
+        config=request.config,
+        replace_existing=request.replace_existing,
+    )
     if isinstance(entry, Error):
         return not_ok(entry, context="notification create")
 

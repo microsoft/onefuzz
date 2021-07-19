@@ -41,6 +41,7 @@ class JobSearch(BaseRequest):
 
 class NotificationCreate(BaseRequest, NotificationConfig):
     container: Container
+    replace_existing: bool = Field(default=True)
 
 
 class NotificationSearch(BaseRequest):
