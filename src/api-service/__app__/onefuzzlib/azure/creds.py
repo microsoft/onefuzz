@@ -133,7 +133,7 @@ def query_microsoft_graph(
         )
 
 
-######## FOR TESTING PURPOSE ONLY ############
+# FOR TESTING PURPOSE ONLY ############
 def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
     from pydantic import BaseModel
     from pydantic.tools import parse_obj_as
@@ -151,9 +151,7 @@ def is_member_of_test(group_ids: List[UUID], member_id: UUID) -> bool:
                         return False
                 return True
         return False
-
-
-#########################################
+# ########################################
 
 
 def is_member_of(group_ids: List[UUID], member_id: UUID) -> bool:
