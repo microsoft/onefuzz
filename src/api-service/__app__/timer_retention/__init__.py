@@ -29,7 +29,7 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
     time_filter_newer = f"Timestamp gt datetime'{time_retained_older.isoformat()}'"
 
     # Collecting 'still relevant' task containers.
-    used_containers: Set[str] = {}
+    used_containers = set()
     for task in Task.search(raw_unchecked_filter=time_filter_newer):
         task_containers = {x.name for x in task.config.containers}
         used_containers.update(task_containers)
