@@ -133,13 +133,14 @@ def query_microsoft_graph(
         )
 
 
-def is_member_of(group_ids: List[str], member_id: str) -> bool:
+def is_member_of(group_ids: List[UUID], member_id: UUID) -> bool:
     body = {"groupIds": group_ids}
     response = query_microsoft_graph(
         method="POST", resource=f"users/{member_id}/checkMemberGroups", body=body
     )
+    result = map(UUID, response["value"])
     for group_id in group_ids:
-        if group_id not in response["value"]:
+        if group_id not in result:
             return False
 
     return True

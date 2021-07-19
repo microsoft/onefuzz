@@ -52,7 +52,7 @@ def get_rules() -> Optional[RequestAuthorization]:
             RequestAuthorization.Rules(allowed_groups_ids=rule.allowed_groups),
         )
 
-    request_auth
+    return request_auth
 
 
 # todo:
@@ -67,7 +67,7 @@ def check_access2(req: HttpRequest) -> Optional[Error]:
     path = urllib.parse.urlparse(req.url).path
     rule = rules.get_matching_rules(path)
 
-    member_id = req.headers["x-ms-client-principal-id"]
+    member_id = UUID(req.headers["x-ms-client-principal-id"])
 
     try:
         result = is_member_of(rule.allowed_groups_ids, member_id)
@@ -93,7 +93,7 @@ def check_access(req: HttpRequest) -> Optional[Error]:
     if "ONEFUZZ_AAD_GROUP_ID" not in os.environ:
         return None
 
-    group_id = os.environ["ONEFUZZ_AAD_GROUP_ID"]
+    group_id = UUID(os.environ["ONEFUZZ_AAD_GROUP_ID"])
     member_id = req.headers["x-ms-client-principal-id"]
     try:
         result = is_member_of([group_id], member_id)

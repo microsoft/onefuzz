@@ -22,7 +22,7 @@ class TestRequestAuthorization(unittest.TestCase):
 
         self.assertEqual(len(rules2.allowed_groups_ids), 0, "expected nothing")
 
-    def test_wildcard(self):
+    def test_wildcard(self) -> None:
         guid1 = uuid.uuid4()
 
         request_trie = RequestAuthorization()
@@ -35,7 +35,7 @@ class TestRequestAuthorization(unittest.TestCase):
         self.assertNotEqual(len(rules.allowed_groups_ids), 0, "empty allowed groups")
         self.assertEqual(rules.allowed_groups_ids[0], guid1)
 
-    def test_adding_rule_on_same_path(self):
+    def test_adding_rule_on_same_path(self) -> None:
         guid1 = uuid.uuid4()
 
         request_trie = RequestAuthorization()
@@ -52,7 +52,7 @@ class TestRequestAuthorization(unittest.TestCase):
             pass
 
     # The most specific rules takes priority over the ones containing a wildcard
-    def test_priority(self):
+    def test_priority(self) -> None:
         guid1 = uuid.uuid4()
         guid2 = uuid.uuid4()
 
@@ -76,7 +76,7 @@ class TestRequestAuthorization(unittest.TestCase):
     # if a path has no specific rule. it inherits from the parents
     # /a/b/c inherint from a/b
     # todo test the wildcard behavior
-    def test_inherit_rule(self):
+    def test_inherit_rule(self) -> None:
         guid1 = uuid.uuid4()
         guid2 = uuid.uuid4()
 
@@ -100,7 +100,7 @@ class TestRequestAuthorization(unittest.TestCase):
         )
 
     # the lowest level rule override the parent rules
-    def test_override_rule(self):
+    def test_override_rule(self) -> None:
         guid1 = uuid.uuid4()
         guid2 = uuid.uuid4()
 
