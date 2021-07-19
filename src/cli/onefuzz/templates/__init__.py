@@ -119,7 +119,7 @@ class JobHelper:
             container = self.containers[ContainerType.reports]
 
         self.logger.info("creating notification config for %s", container)
-        self.onefuzz.notifications.create(container, config)
+        self.onefuzz.notifications.create(container, config, replace_existing=True)
 
     def upload_setup(
         self,
