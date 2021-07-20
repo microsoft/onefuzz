@@ -151,9 +151,7 @@ def register_application(
     if not (onefuzz_app):
         raise Exception("onefuzz app not found")
 
-    pre_authorized_applications = onefuzz_app["api"][
-        "preAuthorizedApplications"
-    ]
+    pre_authorized_applications = onefuzz_app["api"]["preAuthorizedApplications"]
 
     if app["appId"] not in [app["appId"] for app in pre_authorized_applications]:
         authorize_application(UUID(app["appId"]), UUID(onefuzz_app["appId"]))
