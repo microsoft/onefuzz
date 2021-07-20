@@ -9,7 +9,7 @@ use crate::{
     expand::Expand,
     process::run_cmd,
 };
-use anyhow::{Error, Result};
+use anyhow::{Context, Error, Result};
 #[cfg(target_os = "linux")]
 use nix::sys::signal::{kill, Signal};
 use stacktrace_parser::CrashLog;
@@ -364,7 +364,9 @@ impl<'a> Tester<'a> {
             // 3. if we have an ASAN log to STDERR
             if crash_log.is_none() {
                 crash_log = if let Some(asan_dir) = &asan_dir {
-                    check_asan_path(asan_dir.path()).await?
+                    check_asan_path(asan_dir.path())
+                        .await
+                        .context("parsing ASAN logs failed")?
                 } else {
                     None
                 };
@@ -372,7 +374,9 @@ impl<'a> Tester<'a> {
 
             if crash_log.is_none() && self.check_asan_stderr {
                 if let Some(output) = output {
-                    crash_log = check_asan_string(output.stderr).await?;
+                    crash_log = check_asan_string(output.stderr)
+                        .await
+                        .context("parsing STDERR as ASAN failed")?;
                 }
             }
 
@@ -385,7 +389,11 @@ impl<'a> Tester<'a> {
     }
 
     pub async fn is_crash(&self, input_file: impl AsRef<Path>) -> Result<bool> {
-        let test_result = self.test_input(input_file).await?;
+        let input_file = input_file.as_ref();
+        let test_result = self
+            .test_input(input_file)
+            .await
+            .with_context(|| format!("testing input failed: {}", input_file.display()))?;
         Ok(test_result.crash_log.is_some())
     }
 }
