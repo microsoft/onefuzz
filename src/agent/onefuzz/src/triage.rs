@@ -285,7 +285,7 @@ impl From<u64> for Address {
 
 // Find the module-relative address of `addr`, if it exists.
 fn find_module_rva(addr: u64, maps: &[MapRange]) -> Option<Rva> {
-    let mapping = find_mapping(addr, &maps)?;
+    let mapping = find_mapping(addr, maps)?;
 
     // Offset into the mapped image of some object file, but _not_
     // the file itself.

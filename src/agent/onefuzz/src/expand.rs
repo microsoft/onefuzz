@@ -325,7 +325,7 @@ impl<'a> Expand<'a> {
                 Ok(arg)
             }
             ExpandedValue::Scalar(v) => {
-                arg = arg.replace(fmtstr, &v);
+                arg = arg.replace(fmtstr, v);
                 Ok(arg)
             }
             ExpandedValue::List(value) => {
@@ -335,7 +335,7 @@ impl<'a> Expand<'a> {
                 Ok(arg)
             }
             ExpandedValue::Mapping(func) => {
-                if let Some(value) = func(self, &fmtstr) {
+                if let Some(value) = func(self, fmtstr) {
                     let arg = self.replace_value(fmtstr, arg, &value)?;
                     Ok(arg)
                 } else {
