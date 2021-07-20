@@ -151,7 +151,7 @@ def register_application(
     if not (onefuzz_app):
         raise Exception("onefuzz app not found")
 
-    pre_authorized_applications = onefuzz_app["apiApplication"][
+    pre_authorized_applications = onefuzz_app["api"][
         "preAuthorizedApplications"
     ]
 
