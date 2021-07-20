@@ -44,6 +44,8 @@ _ACCESSTOKENCACHE_UMASK = 0o077
 ONEFUZZ_BASE_PATH = os.path.join("~", ".cache", "onefuzz")
 DEFAULT_CONFIG_PATH = os.path.join(ONEFUZZ_BASE_PATH, "config.json")
 DEFAULT_TOKEN_PATH = os.path.join(ONEFUZZ_BASE_PATH, "access_token.json")
+REQUEST_CONNECT_TIMEOUT = 30.0
+REQUEST_READ_TIMEOUT = 120.0
 
 LOGGER = logging.getLogger("nsv-backend")
 
@@ -253,7 +255,7 @@ class Backend:
                     headers=headers,
                     json=json_data,
                     params=params,
-                    timeout=(30.0, 30.0),
+                    timeout=(REQUEST_CONNECT_TIMEOUT, REQUEST_READ_TIMEOUT),
                 )
 
                 if response.status_code not in retry_codes:
