@@ -106,8 +106,10 @@ impl SyncedDir {
     }
 
     pub async fn init_pull(&self) -> Result<()> {
-        self.init().await?;
-        self.sync(SyncOperation::Pull, false).await
+        self.init().await.context("init failed")?;
+        self.sync(SyncOperation::Pull, false)
+            .await
+            .context("pull failed")
     }
 
     pub async fn init(&self) -> Result<()> {
@@ -138,11 +140,15 @@ impl SyncedDir {
     }
 
     pub async fn sync_pull(&self) -> Result<()> {
-        self.sync(SyncOperation::Pull, false).await
+        self.sync(SyncOperation::Pull, false)
+            .await
+            .context("sync pull failed")
     }
 
     pub async fn sync_push(&self) -> Result<()> {
-        self.sync(SyncOperation::Push, false).await
+        self.sync(SyncOperation::Push, false)
+            .await
+            .context("sync push failed")
     }
 
     pub async fn continuous_sync(
