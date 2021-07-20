@@ -61,7 +61,12 @@ impl GeneratorTask {
     }
 
     pub async fn run(&self) -> Result<()> {
-        self.config.crashes.init().await?;
+        self.config.crashes.init().await.with_context(|| {
+            format!(
+                "creating crashes directory failed: {}",
+                self.config.crashes.local_path.display()
+            )
+        })?;
         if let Some(tools) = &self.config.tools {
             tools.init_pull().await?;
             set_executable(&tools.local_path).await?;
@@ -125,7 +130,7 @@ impl GeneratorTask {
     ) -> Result<()> {
         let mut read_dir = fs::read_dir(generated_inputs).await?;
         while let Some(file) = read_dir.next_entry().await? {
-            debug!("testing input: {:?}", file);
+            debug!("testing input: {}", file.path().display());
 
             let destination_file = if self.config.rename_output {
                 let hash = sha256::digest_file(file.path()).await?;

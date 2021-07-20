@@ -8,7 +8,7 @@ use crate::tasks::{
     heartbeat::{HeartbeatSender, TaskHeartbeatClient},
     utils::default_bool_true,
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use onefuzz::{blob::BlobUrl, input_tester::Tester, sha256, syncdir::SyncedDir};
 use reqwest::Url;
@@ -71,16 +71,26 @@ impl ReportTask {
         let heartbeat_client = self.config.common.init_heartbeat(None).await?;
         let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
 
+        for entry in [&self.config.reports, &self.config.unique_reports, &self.config.no_repro] {
+            if let Some(entry) = entry {
+                tokio::fs::create_dir_all(&entry.local_path).await?;
+            }
+        }
+
         info!("processing existing crashes");
         if let Some(crashes) = &self.config.crashes {
-            self.poller.batch_process(&mut processor, crashes).await?;
+            self.poller
+                .batch_process(&mut processor, &crashes)
+                .await
+                .context("batch processing failed")?;
         }
 
         info!("processing crashes from queue");
         if self.config.check_queue {
             if let Some(queue) = &self.config.input_queue {
-                let callback = CallbackImpl::new(queue.clone(), processor)?;
-                self.poller.run(callback).await?;
+                let callback = CallbackImpl::new(queue.clone(), processor)
+                    .context("processing from queue failed")?;
+                self.poller.run(callback).await.context("poller failed")?;
             }
         }
         Ok(())
@@ -188,9 +198,7 @@ impl<'a> GenericReportProcessor<'a> {
             check_debugger: self.config.check_debugger,
             minimized_stack_depth: self.config.minimized_stack_depth,
         };
-        let result = test_input(args).await?;
-
-        Ok(result)
+        test_input(args).await.context("test input failed")
     }
 }
 
@@ -198,7 +206,10 @@ impl<'a> GenericReportProcessor<'a> {
 impl<'a> Processor for GenericReportProcessor<'a> {
     async fn process(&mut self, url: Option<Url>, input: &Path) -> Result<()> {
         debug!("generating crash report for: {}", input.display());
-        let report = self.test_input(url, input).await?;
+        let report = self
+            .test_input(url, input)
+            .await
+            .context("test input failed")?;
         report
             .save(
                 &self.config.unique_reports,
@@ -206,5 +217,6 @@ impl<'a> Processor for GenericReportProcessor<'a> {
                 &self.config.no_repro,
             )
             .await
+            .context("saving report failed")
     }
 }
