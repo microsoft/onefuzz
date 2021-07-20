@@ -151,9 +151,7 @@ def register_application(
     if not (onefuzz_app):
         raise Exception("onefuzz app not found")
 
-    pre_authorized_applications = onefuzz_app["apiApplication"][
-        "preAuthorizedApplications"
-    ]
+    pre_authorized_applications = onefuzz_app["api"]["preAuthorizedApplications"]
 
     if app["appId"] not in [app["appId"] for app in pre_authorized_applications]:
         authorize_application(UUID(app["appId"]), UUID(onefuzz_app["appId"]))
@@ -178,7 +176,7 @@ def create_application_credential(application_name: str, subscription_id: str) -
         raise Exception("app not found")
 
     (_, password) = add_application_password(
-        f"{application_name}_password", app["objectId"], subscription_id
+        f"{application_name}_password", app["id"], subscription_id
     )
     return str(password)
 
