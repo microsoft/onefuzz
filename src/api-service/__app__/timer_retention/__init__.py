@@ -42,7 +42,9 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
         )
         container = notification.container
         if container not in used_containers:
-            logging.info("deleting unused notification: %s", notification.notification_id)
+            logging.info(
+                "Deleting unused notification: %s", notification.notification_id
+            )
             notification.delete()
 
     for job in Job.search(
