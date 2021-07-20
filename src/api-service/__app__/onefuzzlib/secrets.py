@@ -82,6 +82,6 @@ def delete_secret(secret_url: str) -> None:
     keyvault_client.begin_delete_secret(secret_name)
 
 
-def delete_secret_data(data: SecretData) -> None:
+def delete_remote_secret_data(data: SecretData) -> None:
     if isinstance(data.secret, SecretAddress):
         delete_secret(data.secret.url)

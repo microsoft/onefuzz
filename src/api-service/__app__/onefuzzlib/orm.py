@@ -40,7 +40,7 @@ from pydantic import BaseModel
 from typing_extensions import Protocol
 
 from .azure.table import get_client
-from .secrets import delete_secret_data, save_to_keyvault
+from .secrets import delete_remote_secret_data, save_to_keyvault
 from .telemetry import track_event_filtered
 from .updates import queue_update
 
@@ -384,7 +384,7 @@ class ORMMixin(ModelMixin):
     def delete(self) -> None:
         partition_key, row_key = self.get_keys()
 
-        delete_secrets(self, delete_secret_data)
+        delete_secrets(self, delete_remote_secret_data)
 
         client = get_client()
         try:
