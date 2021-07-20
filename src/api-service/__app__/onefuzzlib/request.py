@@ -17,7 +17,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.responses import BaseResponse
 from pydantic import BaseModel  # noqa: F401
 from pydantic import ValidationError
-from pydantic.tools import parse_obj_as
+from pydantic.tools import parse_obj_as, parse_raw_as
 
 from .azure.creds import is_member_of, is_member_of_test
 from .orm import ModelMixin
@@ -39,12 +39,11 @@ class RuleDefinition(BaseModel):
 
 @cached
 def get_rules() -> Optional[RequestAuthorization]:
-    # todo: move to instacewide configuration
-    rules_data = os.environ["ONEFUZZ_AAD_GROUP_RULES"]
-    if not rules_data:
+    # todo: move to instancewide configuration
+    rules_data = os.environ.get("ONEFUZZ_AAD_GROUP_RULES")
+    if rules_data is None:
         return None
-
-    rules = parse_obj_as(List[RuleDefinition], rules_data)
+    rules = parse_raw_as(List[RuleDefinition], rules_data)
     request_auth = RequestAuthorization()
     for rule in rules:
         request_auth.add_url(
