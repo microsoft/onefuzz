@@ -696,7 +696,7 @@ class Notifications(Endpoint):
         container: primitives.Container,
         config: models.NotificationConfig,
         *,
-        replace_existing: bool = True,
+        replace_existing: bool = False,
     ) -> models.Notification:
         """Create a notification based on a config file"""
 
