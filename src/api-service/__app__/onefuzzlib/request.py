@@ -17,7 +17,7 @@ from onefuzztypes.models import Error
 from onefuzztypes.responses import BaseResponse
 from pydantic import BaseModel  # noqa: F401
 from pydantic import ValidationError
-from pydantic.tools import parse_obj_as, parse_raw_as
+from pydantic.tools import parse_raw_as
 
 from .azure.creds import is_member_of, is_member_of_test
 from .orm import ModelMixin

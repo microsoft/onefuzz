@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List
 from uuid import UUID
 
 from memoization.memoization import cached
@@ -32,7 +32,8 @@ class RequestAuthorization:
         self.root = RequestAuthorization.Node()
 
     def add_url(self, methods: List[str], path: str, rules: Rules) -> None:
-        methods = map(lambda m: m.upper(), methods)
+        methods = list(map(lambda m: m.upper(), methods))
+
         segments = path.split("/")
         if len(segments) == 0:
             return
@@ -47,7 +48,6 @@ class RequestAuthorization:
                 current_segment_index = current_segment_index + 1
             else:
                 break
-
         # we found a node matching this exact path
         # This means that there is an existing rule causing a conflict
         if current_segment_index == len(segments):

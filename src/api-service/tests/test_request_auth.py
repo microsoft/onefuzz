@@ -106,7 +106,7 @@ class TestRequestAuthorization(unittest.TestCase):
 
         rules = request_trie.get_matching_rules("post", "a/b/c/d")
         self.assertEqual(
-            rules.allowed_groups_ids[0], guid3, "expected to inherit rule of post a/b/c"
+            rules.allowed_groups_ids[0], guid3, "expected to inherit rule of post a/b"
         )
 
     # the lowest level rule override the parent rules
