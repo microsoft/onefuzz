@@ -692,11 +692,17 @@ class Notifications(Endpoint):
     endpoint = "notifications"
 
     def create(
-        self, container: primitives.Container, config: models.NotificationConfig
+        self,
+        container: primitives.Container,
+        config: models.NotificationConfig,
+        *,
+        replace_existing: bool = False,
     ) -> models.Notification:
         """Create a notification based on a config file"""
 
-        config = requests.NotificationCreate(container=container, config=config.config)
+        config = requests.NotificationCreate(
+            container=container, config=config.config, replace_existing=replace_existing
+        )
         return self._req_model("POST", models.Notification, data=config)
 
     def create_teams(
@@ -766,11 +772,17 @@ class Notifications(Endpoint):
             data=requests.NotificationGet(notification_id=notification_id_expanded),
         )
 
-    def list(self) -> List[models.Notification]:
+    def list(
+        self, *, container: Optional[List[primitives.Container]] = None
+    ) -> List[models.Notification]:
         """List notification integrations"""
 
         self.logger.debug("listing notification integrations")
-        return self._req_model_list("GET", models.Notification)
+        return self._req_model_list(
+            "GET",
+            models.Notification,
+            data=requests.NotificationSearch(container=container),
+        )
 
 
 class Tasks(Endpoint):
