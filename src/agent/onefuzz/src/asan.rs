@@ -79,7 +79,7 @@ pub async fn check_asan_path(asan_dir: &Path) -> Result<Option<CrashLog>> {
                 asan_text.truncate(ASAN_LOG_TRUNCATE_SIZE);
                 asan_text.push_str("...<truncated>");
             }
-            format_err!("unable to parse asan log {}: {:?}")
+            format_err!("unable to parse asan log: {:?}", asan_text)
         })?;
         return Ok(Some(asan));
     }
