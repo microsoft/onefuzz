@@ -302,10 +302,10 @@ impl<'a> Tester<'a> {
             let expand = Expand::new()
                 .input_path(input_file)
                 .target_exe(&self.exe_path)
-                .target_options(&self.arguments)
+                .target_options(self.arguments)
                 .setup_dir(&self.setup_dir);
 
-            let argv = expand.evaluate(&self.arguments)?;
+            let argv = expand.evaluate(self.arguments)?;
             let mut env: HashMap<String, String> = HashMap::new();
             for (k, v) in self.environ {
                 env.insert(k.clone(), expand.evaluate_value(v)?);
@@ -314,15 +314,15 @@ impl<'a> Tester<'a> {
             let setup_dir = &self.setup_dir.to_path_buf();
             if self.add_setup_to_path {
                 let new_path = match env.get(PATH) {
-                    Some(v) => update_path(v.clone().into(), &setup_dir)?,
-                    None => get_path_with_directory(PATH, &setup_dir)?,
+                    Some(v) => update_path(v.clone().into(), setup_dir)?,
+                    None => get_path_with_directory(PATH, setup_dir)?,
                 };
                 env.insert(PATH.to_string(), new_path.to_string_lossy().to_string());
             }
             if self.add_setup_to_ld_library_path {
                 let new_path = match env.get(LD_LIBRARY_PATH) {
-                    Some(v) => update_path(v.clone().into(), &setup_dir)?,
-                    None => get_path_with_directory(LD_LIBRARY_PATH, &setup_dir)?,
+                    Some(v) => update_path(v.clone().into(), setup_dir)?,
+                    None => get_path_with_directory(LD_LIBRARY_PATH, setup_dir)?,
                 };
                 env.insert(
                     LD_LIBRARY_PATH.to_string(),
@@ -348,7 +348,7 @@ impl<'a> Tester<'a> {
                     Err(error) => (None, Some(error), None),
                 }
             } else {
-                match run_cmd(&self.exe_path, argv.clone(), &env, self.timeout).await {
+                match run_cmd(self.exe_path, argv.clone(), &env, self.timeout).await {
                     Ok(output) => (None, None, Some(output)),
                     Err(error) => (None, Some(error), None),
                 }

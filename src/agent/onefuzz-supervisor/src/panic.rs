@@ -14,7 +14,7 @@ pub fn set_panic_handler() {
     SET_HOOK.call_once(move || {
         let old_hook = panic::take_hook();
         panic::set_hook(Box::new(move |info| {
-            panic_hook(&info);
+            panic_hook(info);
             old_hook(info);
         }));
     });

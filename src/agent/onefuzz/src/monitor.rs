@@ -14,7 +14,6 @@ pub struct DirectoryMonitor {
     dir: PathBuf,
     notify_events: UnboundedReceiver<DebouncedEvent>,
     watcher: notify::RecommendedWatcher,
-    terminated: bool,
 }
 
 impl DirectoryMonitor {
@@ -32,7 +31,6 @@ impl DirectoryMonitor {
             dir,
             notify_events,
             watcher,
-            terminated: false,
         }
     }
 
@@ -47,7 +45,6 @@ impl DirectoryMonitor {
     }
 
     pub fn stop(&mut self) -> Result<()> {
-        self.terminated = true;
         self.watcher.unwatch(self.dir.clone())?;
         Ok(())
     }
