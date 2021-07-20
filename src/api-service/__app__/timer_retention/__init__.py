@@ -36,7 +36,7 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
     # You have to do notification before task,
     # because editing the upn for tasks will change the timestamp
     for notification in Notification.search(raw_unchecked_filter=time_filter):
-        logging.info(
+        logging.debug(
             "Found notification %s older than 18 months. Checking related tasks.",
             notification.notification_id,
         )
