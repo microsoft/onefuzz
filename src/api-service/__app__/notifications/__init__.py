@@ -7,16 +7,29 @@ import logging
 
 import azure.functions as func
 from onefuzztypes.models import Error
-from onefuzztypes.requests import NotificationCreate, NotificationGet
+from onefuzztypes.requests import (
+    NotificationCreate,
+    NotificationGet,
+    NotificationSearch,
+)
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.events import get_events
 from ..onefuzzlib.notifications.main import Notification
-from ..onefuzzlib.request import not_ok, ok, parse_request
+from ..onefuzzlib.request import not_ok, ok, parse_request, parse_uri
 
 
 def get(req: func.HttpRequest) -> func.HttpResponse:
-    entries = Notification.search()
+    logging.info("notification search")
+    request = parse_uri(NotificationSearch, req)
+    if isinstance(request, Error):
+        return not_ok(request, context="notification search")
+
+    if request.container:
+        entries = Notification.search(query={"container": request.container})
+    else:
+        entries = Notification.search()
+
     return ok(entries)
 
 
@@ -26,7 +39,11 @@ def post(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(request, Error):
         return not_ok(request, context="notification create")
 
-    entry = Notification.create(container=request.container, config=request.config)
+    entry = Notification.create(
+        container=request.container,
+        config=request.config,
+        replace_existing=request.replace_existing,
+    )
     if isinstance(entry, Error):
         return not_ok(entry, context="notification create")
 
