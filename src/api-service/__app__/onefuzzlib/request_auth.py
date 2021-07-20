@@ -1,8 +1,6 @@
 from typing import Dict, List
 from uuid import UUID
 
-from memoization.memoization import cached
-
 
 class RequestAuthorization:
     """
@@ -64,7 +62,6 @@ class RequestAuthorization:
         for method in methods:
             current_node.rules[method] = rules
 
-    @cached
     def get_matching_rules(self, method: str, path: str) -> Rules:
         method = method.upper()
         segments = path.split("/")
