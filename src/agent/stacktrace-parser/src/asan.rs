@@ -151,13 +151,13 @@ pub(crate) fn parse_summary_base(text: &str) -> Option<(String, String, String)>
 }
 
 pub(crate) fn parse_summary(text: &str) -> Result<(String, String, String)> {
-    if let Some((summary, sanitizer, fault_type)) = parse_summary_base(&text) {
+    if let Some((summary, sanitizer, fault_type)) = parse_summary_base(text) {
         return Ok((summary, sanitizer, fault_type));
     }
-    if let Some((summary, sanitizer, fault_type)) = parse_asan_abort_error(&text) {
+    if let Some((summary, sanitizer, fault_type)) = parse_asan_abort_error(text) {
         return Ok((summary, sanitizer, fault_type));
     }
-    if let Some((summary, sanitizer, fault_type)) = parse_asan_runtime_error(&text) {
+    if let Some((summary, sanitizer, fault_type)) = parse_asan_runtime_error(text) {
         return Ok((summary, sanitizer, fault_type));
     }
 

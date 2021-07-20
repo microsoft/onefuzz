@@ -164,10 +164,10 @@ impl GeneratorTask {
                 .task_id(&self.config.common.task_id)
                 .set_optional_ref(
                     &self.config.common.microsoft_telemetry_key,
-                    |tester, key| tester.microsoft_telemetry_key(&key),
+                    |tester, key| tester.microsoft_telemetry_key(key),
                 )
                 .set_optional_ref(&self.config.common.instance_telemetry_key, |tester, key| {
-                    tester.instance_telemetry_key(&key)
+                    tester.instance_telemetry_key(key)
                 })
                 .set_optional_ref(&self.config.tools, |expand, tools| {
                     expand.tools_dir(&tools.local_path)
