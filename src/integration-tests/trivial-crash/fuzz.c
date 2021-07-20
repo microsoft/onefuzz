@@ -26,7 +26,9 @@ int check(const char *data, size_t len)
   {
     if (buf[i] != buf[buflen - 1 - i])
     {
-      printf("not palindrome\n");
+      printf("not palindrome: ");
+      printf(buf);
+      printf("\n");
       break;
     }
   }
