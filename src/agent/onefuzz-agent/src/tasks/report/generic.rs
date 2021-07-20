@@ -71,6 +71,7 @@ impl ReportTask {
         let heartbeat_client = self.config.common.init_heartbeat(None).await?;
         let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
 
+        #[allow(clippy::manual_flatten)]
         for entry in [
             &self.config.reports,
             &self.config.unique_reports,
