@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-use crate::local::libfuzzer_coverage;
 use crate::local::{
-    common::add_common_config, coverage, generic_analysis, generic_crash_report, generic_generator,
+    common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
     libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge, libfuzzer_regression,
     libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
 };
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+use crate::local::{coverage, libfuzzer_coverage};
 use anyhow::{Context, Result};
 use clap::{App, Arg, SubCommand};
 use crossterm::tty::IsTty;
