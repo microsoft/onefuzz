@@ -69,7 +69,10 @@ pub async fn check_asan_path(asan_dir: &Path) -> Result<Option<CrashLog>> {
     let mut entries = fs::read_dir(asan_dir).await?;
     // there should be only up to one file in asan_dir
     if let Some(file) = entries.next_entry().await? {
-        let mut asan_text = fs::read_to_string(file.path()).await?;
+        let asan_bytes = fs::read(file.path())
+            .await
+            .with_context(|| format!("unable to read ASAN log: {}", file.path().display()))?;
+        let mut asan_text = String::from_utf8_lossy(&asan_bytes).to_string();
 
         let asan = CrashLog::parse(asan_text.clone()).with_context(|| {
             if asan_text.len() > ASAN_LOG_TRUNCATE_SIZE {
