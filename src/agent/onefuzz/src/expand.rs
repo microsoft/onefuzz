@@ -124,7 +124,7 @@ impl<'a> Expand<'a> {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
                 let stem = file.file_stem()?;
-                let name_as_str = String::from(stem.to_str()?);
+                let name_as_str = stem.to_string_lossy().to_string();
                 Some(ExpandedValue::Scalar(name_as_str))
             }
             _ => None,
@@ -136,7 +136,7 @@ impl<'a> Expand<'a> {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
                 let name = file.file_name()?;
-                let name_as_str = String::from(name.to_str()?);
+                let name_as_str = name.to_string_lossy().to_string();
                 Some(ExpandedValue::Scalar(name_as_str))
             }
             _ => None,
