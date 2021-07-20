@@ -52,9 +52,9 @@ pub fn build_coverage_config(
         target_env,
         target_options,
         target_timeout,
+        coverage_filter,
         input_queue,
         readonly_inputs,
-        coverage_filter,
         coverage,
         common,
     };
