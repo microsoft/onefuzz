@@ -1619,6 +1619,8 @@ dependencies = [
  "serde_json",
  "stacktrace-parser",
  "storage-queue",
+ "strum",
+ "strum_macros",
  "tempfile",
  "thiserror",
  "tokio",

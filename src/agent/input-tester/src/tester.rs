@@ -387,7 +387,7 @@ impl Tester {
                 let mut logs_dir = PathBuf::from(&copied_file);
                 logs_dir.set_file_name(format!(
                     "{}-logs",
-                    logs_dir.file_stem().unwrap().to_str().unwrap()
+                    logs_dir.file_stem().unwrap().to_string_lossy()
                 ));
                 self.create_test_failure_artifacts(&logs_dir, &result, &copied_file)?;
                 Ok(Some(new_test_result(
