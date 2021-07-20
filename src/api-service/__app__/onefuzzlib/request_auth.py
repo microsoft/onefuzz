@@ -1,5 +1,7 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from uuid import UUID
+
+from memoization.memoization import cached
 
 
 class RequestAuthorization:
@@ -14,11 +16,13 @@ class RequestAuthorization:
             self.allowed_groups_ids = allowed_groups_ids
 
     class Node:
-        rules: "RequestAuthorization.Rules"
+        # http method -> rules
+        rules: Dict[str, "RequestAuthorization.Rules"]
+        # path -> node
         children: Dict[str, "RequestAuthorization.Node"]
 
         def __init__(self) -> None:
-            self.rules = RequestAuthorization.Rules()
+            self.rules = {}
             self.children = {}
             pass
 
@@ -27,7 +31,8 @@ class RequestAuthorization:
     def __init__(self) -> None:
         self.root = RequestAuthorization.Node()
 
-    def add_url(self, path: str, rules: Rules) -> None:
+    def add_url(self, methods: List[str], path: str, rules: Rules) -> None:
+        methods = map(lambda m: m.upper(), methods)
         segments = path.split("/")
         if len(segments) == 0:
             return
@@ -46,7 +51,9 @@ class RequestAuthorization:
         # we found a node matching this exact path
         # This means that there is an existing rule causing a conflict
         if current_segment_index == len(segments):
-            raise Exception(f"Conflicting path {path}")
+            for method in methods:
+                if method in current_node.rules:
+                    raise Exception(f"Conflicting rules on {method} {path}")
 
         while current_segment_index < len(segments):
             current_segment = segments[current_segment_index]
@@ -54,11 +61,20 @@ class RequestAuthorization:
             current_node = current_node.children[current_segment]
             current_segment_index = current_segment_index + 1
 
-        current_node.rules = rules
+        for method in methods:
+            current_node.rules[method] = rules
 
-    def get_matching_rules(self, path: str) -> Rules:
+    @cached
+    def get_matching_rules(self, method: str, path: str) -> Rules:
+        method = method.upper()
         segments = path.split("/")
         current_node = self.root
+
+        if method in current_node.rules:
+            current_rule = current_node.rules[method]
+        else:
+            current_rule = RequestAuthorization.Rules()
+
         current_segment_index = 0
 
         while current_segment_index < len(segments):
@@ -70,6 +86,8 @@ class RequestAuthorization:
             else:
                 break
 
+            if method in current_node.rules:
+                current_rule = current_node.rules[method]
             current_segment_index = current_segment_index + 1
 
-        return current_node.rules
+        return current_rule

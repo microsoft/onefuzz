@@ -47,6 +47,7 @@ def get_rules() -> Optional[RequestAuthorization]:
     request_auth = RequestAuthorization()
     for rule in rules:
         request_auth.add_url(
+            rule.methods,
             rule.endpoint,
             RequestAuthorization.Rules(allowed_groups_ids=rule.allowed_groups),
         )
@@ -55,9 +56,6 @@ def get_rules() -> Optional[RequestAuthorization]:
 
 
 Testing = True
-# todo:
-#   - check the verb
-#
 
 
 def check_access(req: HttpRequest) -> Optional[Error]:
@@ -67,7 +65,7 @@ def check_access(req: HttpRequest) -> Optional[Error]:
         return None
 
     path = urllib.parse.urlparse(req.url).path
-    rule = rules.get_matching_rules(path)
+    rule = rules.get_matching_rules(req.method, path)
 
     member_id = UUID(req.headers["x-ms-client-principal-id"])
 
