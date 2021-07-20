@@ -71,7 +71,11 @@ impl ReportTask {
         let heartbeat_client = self.config.common.init_heartbeat(None).await?;
         let mut processor = GenericReportProcessor::new(&self.config, heartbeat_client);
 
-        for entry in [&self.config.reports, &self.config.unique_reports, &self.config.no_repro] {
+        for entry in [
+            &self.config.reports,
+            &self.config.unique_reports,
+            &self.config.no_repro,
+        ] {
             if let Some(entry) = entry {
                 tokio::fs::create_dir_all(&entry.local_path).await?;
             }
