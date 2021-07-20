@@ -109,8 +109,11 @@ impl GeneratorTask {
                 let generated_inputs_path = generated_inputs.path();
 
                 self.generate_inputs(corpus_dir, &generated_inputs_path)
-                    .await?;
-                self.test_inputs(&generated_inputs_path, &tester).await?;
+                    .await
+                    .context("generate inputs failed")?;
+                self.test_inputs(&generated_inputs_path, &tester)
+                    .await
+                    .context("test inputs failed")?;
             }
         }
     }
@@ -132,7 +135,11 @@ impl GeneratorTask {
             };
 
             let destination_file = self.config.crashes.local_path.join(destination_file);
-            if tester.is_crash(file.path()).await? {
+            if tester
+                .is_crash(file.path())
+                .await
+                .with_context(|| format!("testing input failed: {}", file.path().display()))?
+            {
                 fs::rename(file.path(), &destination_file).await?;
                 debug!("crash found {}", destination_file.display());
             }
@@ -157,10 +164,10 @@ impl GeneratorTask {
                 .task_id(&self.config.common.task_id)
                 .set_optional_ref(
                     &self.config.common.microsoft_telemetry_key,
-                    |tester, key| tester.microsoft_telemetry_key(&key),
+                    |tester, key| tester.microsoft_telemetry_key(key),
                 )
                 .set_optional_ref(&self.config.common.instance_telemetry_key, |tester, key| {
-                    tester.instance_telemetry_key(&key)
+                    tester.instance_telemetry_key(key)
                 })
                 .set_optional_ref(&self.config.tools, |expand, tools| {
                     expand.tools_dir(&tools.local_path)
@@ -190,7 +197,9 @@ impl GeneratorTask {
         let output = generator
             .spawn()
             .with_context(|| format!("generator failed to start: {}", generator_path))?;
-        monitor_process(output, "generator".to_string(), true, None).await?;
+        monitor_process(output, "generator".to_string(), true, None)
+            .await
+            .with_context(|| format!("generator failed to run: {}", generator_path))?;
 
         Ok(())
     }

@@ -179,7 +179,7 @@ async fn start_supervisor(
         .runtime_dir(&runtime_dir)
         .crashes(&crashes.local_path)
         .input_corpus(&inputs.local_path)
-        .reports_dir(&reports_dir)
+        .reports_dir(reports_dir)
         .setup_dir(&config.common.setup_dir)
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
@@ -196,10 +196,10 @@ async fn start_supervisor(
             expand.target_options(target_options)
         })
         .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
-            tester.microsoft_telemetry_key(&key)
+            tester.microsoft_telemetry_key(key)
         })
         .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
-            tester.instance_telemetry_key(&key)
+            tester.instance_telemetry_key(key)
         })
         .set_optional_ref(
             &config.crashes.remote_path.clone().and_then(|u| u.account()),
