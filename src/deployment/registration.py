@@ -176,7 +176,7 @@ def create_application_credential(application_name: str, subscription_id: str) -
         raise Exception("app not found")
 
     (_, password) = add_application_password(
-        f"{application_name}_password", app["objectId"], subscription_id
+        f"{application_name}_password", app["id"], subscription_id
     )
     return str(password)
 
