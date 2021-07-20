@@ -55,7 +55,7 @@ pub fn args(name: &'static str) -> App<'static, 'static> {
     let mut app = SubCommand::with_name(name).about("run a local generator & crash reporting job");
 
     let mut used = HashSet::new();
-    for args in &[build_fuzz_args(), build_crash_args()] {
+    for args in [build_fuzz_args(), build_crash_args()] {
         for arg in args {
             if used.contains(arg.b.name) {
                 continue;

@@ -138,7 +138,7 @@ pub fn args(name: &'static str) -> App<'static, 'static> {
 
     let mut used = HashSet::new();
 
-    for args in &[
+    for args in [
         build_fuzz_args(),
         build_crash_args(),
         build_analysis_args(false),
