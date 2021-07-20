@@ -21,6 +21,7 @@ use tokio::{select, time::timeout};
 #[strum(serialize_all = "kebab-case")]
 enum Commands {
     Radamsa,
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     Coverage,
     LibfuzzerFuzz,
     LibfuzzerMerge,
@@ -58,6 +59,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     let event_sender = terminal.as_ref().map(|t| t.task_events.clone());
     let command_run = tokio::spawn(async move {
         match command {
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::Coverage => coverage::run(&sub_args, event_sender).await,
             Commands::Radamsa => radamsa::run(&sub_args, event_sender).await,
             Commands::LibfuzzerCrashReport => {
@@ -117,6 +119,7 @@ pub fn args(name: &str) -> App<'static, 'static> {
 
     for subcommand in Commands::iter() {
         let app = match subcommand {
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
             Commands::Coverage => coverage::args(subcommand.into()),
             Commands::Radamsa => radamsa::args(subcommand.into()),
             Commands::LibfuzzerCrashReport => libfuzzer_crash_report::args(subcommand.into()),
