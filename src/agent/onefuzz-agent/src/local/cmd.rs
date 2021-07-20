@@ -4,7 +4,7 @@
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::local::libfuzzer_coverage;
 use crate::local::{
-    common::add_common_config, generic_analysis, generic_crash_report, generic_generator,
+    common::add_common_config, coverage, generic_analysis, generic_crash_report, generic_generator,
     libfuzzer, libfuzzer_crash_report, libfuzzer_fuzz, libfuzzer_merge, libfuzzer_regression,
     libfuzzer_test_input, radamsa, test_input, tui::TerminalUi,
 };
@@ -21,6 +21,7 @@ use tokio::{select, time::timeout};
 #[strum(serialize_all = "kebab-case")]
 enum Commands {
     Radamsa,
+    Coverage,
     LibfuzzerFuzz,
     LibfuzzerMerge,
     LibfuzzerCrashReport,
@@ -57,6 +58,7 @@ pub async fn run(args: clap::ArgMatches<'static>) -> Result<()> {
     let event_sender = terminal.as_ref().map(|t| t.task_events.clone());
     let command_run = tokio::spawn(async move {
         match command {
+            Commands::Coverage => coverage::run(&sub_args, event_sender).await,
             Commands::Radamsa => radamsa::run(&sub_args, event_sender).await,
             Commands::LibfuzzerCrashReport => {
                 libfuzzer_crash_report::run(&sub_args, event_sender).await
@@ -115,6 +117,7 @@ pub fn args(name: &str) -> App<'static, 'static> {
 
     for subcommand in Commands::iter() {
         let app = match subcommand {
+            Commands::Coverage => coverage::args(subcommand.into()),
             Commands::Radamsa => radamsa::args(subcommand.into()),
             Commands::LibfuzzerCrashReport => libfuzzer_crash_report::args(subcommand.into()),
             Commands::LibfuzzerFuzz => libfuzzer_fuzz::args(subcommand.into()),

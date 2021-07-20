@@ -3,6 +3,7 @@
 
 pub mod cmd;
 pub mod common;
+pub mod coverage;
 pub mod generic_analysis;
 pub mod generic_crash_report;
 pub mod generic_generator;
