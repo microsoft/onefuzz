@@ -292,10 +292,8 @@ impl Agent {
                 error!("error polling the service for commands: {:?}", err);
             }
             PollCommandResult::ClaimFailed(err) => {
-                if let Some(last_command) = &self.last_poll_command {
-                    if matches!(last_command, PollCommandResult::ClaimFailed(..)) {
-                        bail!("repeated command claim attempt failures: {:?}", err);
-                    }
+                if matches!(self.last_poll_command, Some(PollCommandResult::ClaimFailed(..))) {
+                    bail!("repeated command claim attempt failures: {:?}", err);
                 }
                 error!("error polling the service for commands: {:?}", err);
             }
