@@ -26,7 +26,7 @@ fn edit_exclusion_list<F: Fn(RegKey) -> ::core::result::Result<(), std::io::Erro
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
 
     // We want to set both the 32 and 64 bit registries.
-    for flags in &[0, KEY_WOW64_32KEY] {
+    for flags in [0, KEY_WOW64_32KEY] {
         let exclusion_list = hklm
             .open_subkey_with_flags(AEDEBUG_EXCLUSION_LIST, KEY_SET_VALUE | flags)
             .context("Opening AeDebug\\AutoExclusionList")?;

@@ -240,13 +240,14 @@ def notify_ado(
         )
         return
 
-    logging.info(
-        "notify ado: job_id:%s task_id:%s container:%s filename:%s",
+    notification_info = (
+        "job_id:%s task_id:%s container:%s filename:%s",
         report.job_id,
         report.task_id,
         container,
         filename,
     )
+    logging.info("notify ado: %s", notification_info)
 
     try:
         ado = ADO(container, filename, config, report)
@@ -261,7 +262,7 @@ def notify_ado(
 
         if not fail_task_on_transient_error and is_transient(err):
             raise AdoNotificationException(
-                "transient ADO notification failure"
+                f"transient ADO notification failure {notification_info}"
             ) from err
         else:
             fail_task(report, err)

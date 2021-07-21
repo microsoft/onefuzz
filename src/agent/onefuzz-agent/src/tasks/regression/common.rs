@@ -40,7 +40,7 @@ pub async fn run(
         crashes,
         report_dirs,
         report_list,
-        &regression_reports,
+        regression_reports,
         &heartbeat_client,
     )
     .await
@@ -50,7 +50,7 @@ pub async fn run(
         handle_inputs(
             handler,
             readonly_inputs,
-            &regression_reports,
+            regression_reports,
             &heartbeat_client,
         )
         .await
