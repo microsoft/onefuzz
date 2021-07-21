@@ -298,7 +298,7 @@ impl Agent {
                 ) {
                     bail!("repeated command claim attempt failures: {:?}", err);
                 }
-                error!("error polling the service for commands: {:?}", err);
+                error!("error claiming command from the service: {:?}", err);
             }
         }
 
