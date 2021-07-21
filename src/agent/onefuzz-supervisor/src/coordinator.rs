@@ -212,11 +212,11 @@ impl Coordinator {
             .send_request(request)
             .await
             .context("PollCommands")
-            .map_err(|e| PollCommandError::RequestFailed(e))?
+            .map_err(PollCommandError::RequestFailed)?
             .json()
             .await
             .context("parsing PollCommands response")
-            .map_err(|e| PollCommandError::RequestParseFailed(e))?;
+            .map_err(PollCommandError::RequestParseFailed)?;
 
         if let Some(envelope) = pending.envelope {
             let request = ClaimNodeCommandRequest {
@@ -230,7 +230,7 @@ impl Coordinator {
             self.send_request(request)
                 .await
                 .context("ClaimCommand")
-                .map_err(|e| PollCommandError::ClaimFailed(e))?;
+                .map_err(PollCommandError::ClaimFailed)?;
 
             Ok(Some(envelope.command))
         } else {
