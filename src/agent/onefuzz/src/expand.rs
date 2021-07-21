@@ -48,7 +48,7 @@ pub enum PlaceHolder {
 }
 
 impl PlaceHolder {
-    fn get_string(&self) -> String {
+    pub fn get_string(&self) -> String {
         match self {
             Self::Input => "{input}",
             Self::Crashes => "{crashes}",
