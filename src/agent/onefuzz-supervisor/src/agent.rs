@@ -289,6 +289,8 @@ impl Agent {
                 self.scheduler()?.execute_command(&cmd).await?;
             }
             Err(PollCommandError::RequestFailed(err)) => {
+                // If we failed to request commands, this could be the service
+                // could be down.  Log it, but keep going.
                 error!("error polling the service for commands: {:?}", err);
             }
             Err(PollCommandError::RequestParseFailed(err)) => {
