@@ -48,7 +48,7 @@ pub enum PlaceHolder {
 }
 
 impl PlaceHolder {
-    fn get_string(&self) -> String {
+    pub fn get_string(&self) -> String {
         match self {
             Self::Input => "{input}",
             Self::Crashes => "{crashes}",
@@ -467,6 +467,15 @@ mod tests {
 
         assert!(Expand::new().evaluate(&my_args).is_err());
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_expand_in_string() -> Result<()> {
+        let result = Expand::new()
+            .input_path("src/lib.rs")
+            .evaluate_value("a {input} b")?;
+        assert!(result.contains("lib.rs"));
         Ok(())
     }
 }
