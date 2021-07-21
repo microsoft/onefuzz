@@ -277,11 +277,17 @@ impl Agent {
     }
 
     async fn execute_pending_commands(&mut self) -> Result<()> {
-        let cmd = self.coordinator.poll_commands().await?;
+        let result = self.coordinator.poll_commands().await?;
 
-        if let Some(cmd) = cmd {
-            info!("agent received node command: {:?}", cmd);
-            self.scheduler()?.execute_command(cmd).await?;
+        match result {
+            PollCommandResult::Command(cmd) => {
+                info!("agent received node command: {:?}", cmd);
+                self.scheduler()?.execute_command(cmd).await?;
+            }
+            PollCommandResult::Unavailable(err) => {
+                error!("error polling the service for commands: {:?}", err);
+            }
+            PollCommandResult::None => {}
         }
 
         Ok(())

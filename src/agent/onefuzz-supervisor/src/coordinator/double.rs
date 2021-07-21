@@ -11,8 +11,11 @@ pub struct CoordinatorDouble {
 
 #[async_trait]
 impl ICoordinator for CoordinatorDouble {
-    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>> {
-        Ok(self.commands.pop())
+    async fn poll_commands(&mut self) -> Result<PollCommandResult> {
+        match self.commands.pop() {
+            Some(x) => Ok(PollCommandResult::Command(x)),
+            None => Ok(PollCommandResult::None),
+        }
     }
 
     async fn emit_event(&mut self, event: NodeEvent) -> Result<()> {

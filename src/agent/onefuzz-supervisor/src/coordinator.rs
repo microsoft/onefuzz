@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Error, Result};
 use downcast_rs::Downcast;
 use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
@@ -148,7 +148,7 @@ pub struct TaskInfo {
 
 #[async_trait]
 pub trait ICoordinator: Downcast {
-    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>>;
+    async fn poll_commands(&mut self) -> Result<PollCommandResult>;
 
     async fn emit_event(&mut self, event: NodeEvent) -> Result<()>;
 
@@ -159,7 +159,7 @@ impl_downcast!(ICoordinator);
 
 #[async_trait]
 impl ICoordinator for Coordinator {
-    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>> {
+    async fn poll_commands(&mut self) -> Result<PollCommandResult> {
         self.poll_commands().await
     }
 
@@ -170,6 +170,12 @@ impl ICoordinator for Coordinator {
     async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
         self.can_schedule(work_set).await
     }
+}
+
+pub enum PollCommandResult {
+    Unavailable(Error),
+    None,
+    Command(NodeCommand),
 }
 
 pub struct Coordinator {
@@ -194,7 +200,7 @@ impl Coordinator {
     ///
     /// If the request fails due to an expired access token, we will retry once
     /// with a fresh one.
-    pub async fn poll_commands(&mut self) -> Result<Option<NodeCommand>> {
+    pub async fn poll_commands(&mut self) -> Result<PollCommandResult> {
         let request = PollCommandsRequest {
             machine_id: self.registration.machine_id,
         };
@@ -209,8 +215,7 @@ impl Coordinator {
         // outages.  Given poll_commands runs on a 10 second cycle, this should
         // provide eventual recovery.
         if let Err(response) = response {
-            error!("error polling the service for commands: {:?}", response);
-            return Ok(None);
+            return Ok(PollCommandResult::Unavailable(response));
         }
 
         let pending: PendingNodeCommand = response?
@@ -232,13 +237,12 @@ impl Coordinator {
             // similar polling available commands, this treats issues claiming
             // commands as `no commands available`
             if let Err(response) = response {
-                error!("error claiming command from the service: {:?}", response);
-                return Ok(None);
+                return Ok(PollCommandResult::Unavailable(response));
             }
 
-            Ok(Some(envelope.command))
+            Ok(PollCommandResult::Command(envelope.command))
         } else {
-            Ok(None)
+            Ok(PollCommandResult::None)
         }
     }
 
