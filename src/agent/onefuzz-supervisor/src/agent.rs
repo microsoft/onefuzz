@@ -25,6 +25,7 @@ pub struct Agent {
     worker_runner: Box<dyn IWorkerRunner>,
     heartbeat: Option<AgentHeartbeatClient>,
     previous_state: NodeState,
+    last_poll_command: Option<PollCommandResult>,
 }
 
 impl Agent {
@@ -39,6 +40,7 @@ impl Agent {
     ) -> Self {
         let scheduler = Some(scheduler);
         let previous_state = NodeState::Init;
+        let last_poll_command = None;
 
         Self {
             coordinator,
@@ -49,6 +51,7 @@ impl Agent {
             worker_runner,
             heartbeat,
             previous_state,
+            last_poll_command,
         }
     }
 
@@ -279,16 +282,26 @@ impl Agent {
     async fn execute_pending_commands(&mut self) -> Result<()> {
         let result = self.coordinator.poll_commands().await?;
 
-        match result {
+        match &result {
+            PollCommandResult::None => {}
             PollCommandResult::Command(cmd) => {
                 info!("agent received node command: {:?}", cmd);
                 self.scheduler()?.execute_command(cmd).await?;
             }
-            PollCommandResult::Unavailable(err) => {
+            PollCommandResult::RequestFailed(err) => {
                 error!("error polling the service for commands: {:?}", err);
             }
-            PollCommandResult::None => {}
+            PollCommandResult::ClaimFailed(err) => {
+                if let Some(last_command) = &self.last_poll_command {
+                    if matches!(last_command, PollCommandResult::ClaimFailed(..)) {
+                        bail!("repeated command claim attempt failures: {:?}", err);
+                    }
+                }
+                error!("error polling the service for commands: {:?}", err);
+            }
         }
+
+        self.last_poll_command = Some(result);
 
         Ok(())
     }

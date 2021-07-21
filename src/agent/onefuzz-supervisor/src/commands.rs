@@ -159,7 +159,7 @@ pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
 }
 
 #[cfg(target_family = "unix")]
-pub async fn add_ssh_key(key_info: SshKeyInfo) -> Result<()> {
+pub async fn add_ssh_key(key_info: &SshKeyInfo) -> Result<()> {
     if get_scaleset_name().await?.is_none() {
         warn!("adding ssh keys only supported on managed nodes");
         return Ok(());

@@ -173,9 +173,10 @@ impl ICoordinator for Coordinator {
 }
 
 pub enum PollCommandResult {
-    Unavailable(Error),
     None,
     Command(NodeCommand),
+    RequestFailed(Error),
+    ClaimFailed(Error),
 }
 
 pub struct Coordinator {
@@ -215,7 +216,7 @@ impl Coordinator {
         // outages.  Given poll_commands runs on a 10 second cycle, this should
         // provide eventual recovery.
         if let Err(response) = response {
-            return Ok(PollCommandResult::Unavailable(response));
+            return Ok(PollCommandResult::RequestFailed(response));
         }
 
         let pending: PendingNodeCommand = response?
@@ -237,7 +238,7 @@ impl Coordinator {
             // similar polling available commands, this treats issues claiming
             // commands as `no commands available`
             if let Err(response) = response {
-                return Ok(PollCommandResult::Unavailable(response));
+                return Ok(PollCommandResult::ClaimFailed(response));
             }
 
             Ok(PollCommandResult::Command(envelope.command))
