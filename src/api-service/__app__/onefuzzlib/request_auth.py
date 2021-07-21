@@ -1,5 +1,12 @@
 from typing import Dict, List
 from uuid import UUID
+from pydantic import BaseModel, parse_raw_as
+
+
+class RuleDefinition(BaseModel):
+    methods: List[str]
+    endpoint: str
+    allowed_groups: List[UUID]
 
 
 class RequestAuthorization:
@@ -29,7 +36,7 @@ class RequestAuthorization:
     def __init__(self) -> None:
         self.root = RequestAuthorization.Node()
 
-    def add_url(self, methods: List[str], path: str, rules: Rules) -> None:
+    def __add_url__(self, methods: List[str], path: str, rules: Rules) -> None:
         methods = list(map(lambda m: m.upper(), methods))
 
         segments = path.split("/")
@@ -86,5 +93,21 @@ class RequestAuthorization:
             if method in current_node.rules:
                 current_rule = current_node.rules[method]
             current_segment_index = current_segment_index + 1
-
         return current_rule
+
+    @classmethod
+    def parse_rules(cls, rules_data: str) -> "RequestAuthorization":
+        rules = parse_raw_as(List[RuleDefinition], rules_data)
+        return cls.build(rules)
+
+    @classmethod
+    def build(cls, rules: List[RuleDefinition]) -> "RequestAuthorization":
+        request_auth = RequestAuthorization()
+        for rule in rules:
+            request_auth.__add_url__(
+                rule.methods,
+                rule.endpoint,
+                RequestAuthorization.Rules(allowed_groups_ids=rule.allowed_groups),
+            )
+
+        return request_auth
