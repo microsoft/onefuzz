@@ -6,8 +6,7 @@
 import functools
 import logging
 import os
-from collections import Callable
-from typing import Any, List, TypeVar, cast
+from typing import Any, Callable, List, TypeVar, cast
 from uuid import UUID
 
 from azure.core.exceptions import ClientAuthenticationError
