@@ -225,10 +225,7 @@ impl Coordinator {
             };
 
             let url = self.registration.dynamic_config.commands_url.clone();
-            let request = self
-                .client
-                .delete(url)
-                .json(&request);
+            let request = self.client.delete(url).json(&request);
 
             self.send_request(request)
                 .await
