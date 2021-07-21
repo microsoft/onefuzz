@@ -292,7 +292,10 @@ impl Agent {
                 error!("error polling the service for commands: {:?}", err);
             }
             PollCommandResult::ClaimFailed(err) => {
-                if matches!(self.last_poll_command, Some(PollCommandResult::ClaimFailed(..))) {
+                if matches!(
+                    self.last_poll_command,
+                    Some(PollCommandResult::ClaimFailed(..))
+                ) {
                     bail!("repeated command claim attempt failures: {:?}", err);
                 }
                 error!("error polling the service for commands: {:?}", err);
