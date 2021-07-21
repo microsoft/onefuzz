@@ -130,8 +130,18 @@ pub(crate) fn parse_asan_runtime_error(text: &str) -> Option<(String, String, St
     Some((summary.into(), sanitizer.into(), fault_type.into()))
 }
 
+pub(crate) fn parse_asan_abort_error_warn_invert(text: &str) -> Option<(String, String, String)> {
+    let pattern = r"==\d+==\s*(?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): (?:ERROR|WARNING): (?P<fault_type>ABRT|access-violation|deadly signal|use-of-uninitialized-value|stack-overflow|unexpected format specifier)[^\n]*)";
+    let re = Regex::new(pattern).ok()?;
+    let captures = re.captures(text)?;
+    let summary = captures.name("summary")?.as_str().trim();
+    let sanitizer = captures.name("sanitizer")?.as_str().trim();
+    let fault_type = captures.name("fault_type")?.as_str().trim();
+    Some((summary.into(), sanitizer.into(), fault_type.into()))
+}
+
 pub(crate) fn parse_asan_abort_error(text: &str) -> Option<(String, String, String)> {
-    let pattern = r"==\d+==\s*(ERROR|WARNING): (?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): (?P<fault_type>ABRT|access-violation|deadly signal|use-of-uninitialized-value|stack-overflow)[^\n]*)";
+    let pattern = r"==\d+==\s*(ERROR|WARNING): (?P<summary>(?P<sanitizer>\w+Sanitizer|libFuzzer): (?P<fault_type>ABRT|access-violation|deadly signal|use-of-uninitialized-value|stack-overflow|unexpected format specifier)[^\n]*)";
     let re = Regex::new(pattern).ok()?;
     let captures = re.captures(text)?;
     let summary = captures.name("summary")?.as_str().trim();
@@ -151,14 +161,15 @@ pub(crate) fn parse_summary_base(text: &str) -> Option<(String, String, String)>
 }
 
 pub(crate) fn parse_summary(text: &str) -> Result<(String, String, String)> {
-    if let Some((summary, sanitizer, fault_type)) = parse_summary_base(text) {
-        return Ok((summary, sanitizer, fault_type));
-    }
-    if let Some((summary, sanitizer, fault_type)) = parse_asan_abort_error(text) {
-        return Ok((summary, sanitizer, fault_type));
-    }
-    if let Some((summary, sanitizer, fault_type)) = parse_asan_runtime_error(text) {
-        return Ok((summary, sanitizer, fault_type));
+    for func in [
+        parse_summary_base,
+        parse_asan_abort_error,
+        parse_asan_abort_error_warn_invert,
+        parse_asan_runtime_error,
+    ] {
+        if let Some((summary, sanitizer, fault_type)) = func(text) {
+            return Ok((summary, sanitizer, fault_type));
+        }
     }
 
     bail!("unable to parse crash log summary")

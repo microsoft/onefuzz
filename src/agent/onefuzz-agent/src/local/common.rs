@@ -34,6 +34,9 @@ pub const CHECK_FUZZER_HELP: &str = "check_fuzzer_help";
 pub const DISABLE_CHECK_DEBUGGER: &str = "disable_check_debugger";
 pub const REGRESSION_REPORTS_DIR: &str = "regression_reports_dir";
 
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub const COVERAGE_FILTER: &str = "coverage_filter";
+
 pub const TARGET_EXE: &str = "target_exe";
 pub const TARGET_ENV: &str = "target_env";
 pub const TARGET_OPTIONS: &str = "target_options";

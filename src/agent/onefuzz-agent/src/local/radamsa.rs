@@ -9,7 +9,7 @@ use crate::{
     },
     tasks::{config::CommonConfig, fuzz::generator::GeneratorTask, report::generic::ReportTask},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{App, SubCommand};
 use flume::Sender;
 use onefuzz::utils::try_wait_all_join_handles;
@@ -24,12 +24,23 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
         .crashes
         .remote_url()?
         .as_file_path()
-        .expect("invalid crash dir remote location");
+        .ok_or_else(|| format_err!("invalid crash directory"))?;
+
+    tokio::fs::create_dir_all(&crash_dir)
+        .await
+        .with_context(|| {
+            format!(
+                "unable to create crashes directory: {}",
+                crash_dir.display()
+            )
+        })?;
 
     let fuzzer = GeneratorTask::new(fuzz_config);
     let fuzz_task = spawn(async move { fuzzer.run().await });
 
-    let crash_report_input_monitor = DirectoryMonitorQueue::start_monitoring(crash_dir).await?;
+    let crash_report_input_monitor = DirectoryMonitorQueue::start_monitoring(crash_dir)
+        .await
+        .context("directory monitor failed")?;
     let report_config = build_report_config(
         args,
         Some(crash_report_input_monitor.queue_client),
