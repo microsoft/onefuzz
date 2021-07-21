@@ -148,7 +148,7 @@ pub struct TaskInfo {
 
 #[async_trait]
 pub trait ICoordinator: Downcast {
-    async fn poll_commands(&mut self) -> Result<PollCommandResult>;
+    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError>;
 
     async fn emit_event(&mut self, event: NodeEvent) -> Result<()>;
 
@@ -159,7 +159,7 @@ impl_downcast!(ICoordinator);
 
 #[async_trait]
 impl ICoordinator for Coordinator {
-    async fn poll_commands(&mut self) -> Result<PollCommandResult> {
+    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError> {
         self.poll_commands().await
     }
 
@@ -172,10 +172,9 @@ impl ICoordinator for Coordinator {
     }
 }
 
-pub enum PollCommandResult {
-    None,
-    Command(NodeCommand),
+pub enum PollCommandError {
     RequestFailed(Error),
+    RequestParseFailed(Error),
     ClaimFailed(Error),
 }
 
@@ -201,7 +200,7 @@ impl Coordinator {
     ///
     /// If the request fails due to an expired access token, we will retry once
     /// with a fresh one.
-    pub async fn poll_commands(&mut self) -> Result<PollCommandResult> {
+    pub async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError> {
         let request = PollCommandsRequest {
             machine_id: self.registration.machine_id,
         };
@@ -209,20 +208,15 @@ impl Coordinator {
         let url = self.registration.dynamic_config.commands_url.clone();
         let request = self.client.get(url).json(&request);
 
-        let response = self.send_request(request).await.context("PollCommands");
-
-        // Treat communication issues with the service as `no commands
-        // available`.  This adds resiliency to the supervisor during longer
-        // outages.  Given poll_commands runs on a 10 second cycle, this should
-        // provide eventual recovery.
-        if let Err(response) = response {
-            return Ok(PollCommandResult::RequestFailed(response));
-        }
-
-        let pending: PendingNodeCommand = response?
+        let pending: PendingNodeCommand = self
+            .send_request(request)
+            .await
+            .context("PollCommands")
+            .map_err(|e| PollCommandError::RequestFailed(e))?
             .json()
             .await
-            .context("parsing PollCommands response")?;
+            .context("parsing PollCommands response")
+            .map_err(|e| PollCommandError::RequestParseFailed(e))?;
 
         if let Some(envelope) = pending.envelope {
             let request = ClaimNodeCommandRequest {
@@ -231,19 +225,19 @@ impl Coordinator {
             };
 
             let url = self.registration.dynamic_config.commands_url.clone();
-            let request = self.client.delete(url).json(&request);
+            let request = self
+                .client
+                .delete(url)
+                .json(&request);
 
-            let response = self.send_request(request).await.context("ClaimCommand");
+            self.send_request(request)
+                .await
+                .context("ClaimCommand")
+                .map_err(|e| PollCommandError::ClaimFailed(e))?;
 
-            // similar polling available commands, this treats issues claiming
-            // commands as `no commands available`
-            if let Err(response) = response {
-                return Ok(PollCommandResult::ClaimFailed(response));
-            }
-
-            Ok(PollCommandResult::Command(envelope.command))
+            Ok(Some(envelope.command))
         } else {
-            Ok(PollCommandResult::None)
+            Ok(None)
         }
     }
 

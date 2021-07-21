@@ -25,7 +25,7 @@ pub struct Agent {
     worker_runner: Box<dyn IWorkerRunner>,
     heartbeat: Option<AgentHeartbeatClient>,
     previous_state: NodeState,
-    last_poll_command: Option<PollCommandResult>,
+    last_poll_command: Result<Option<NodeCommand>, PollCommandError>,
 }
 
 impl Agent {
@@ -40,7 +40,7 @@ impl Agent {
     ) -> Self {
         let scheduler = Some(scheduler);
         let previous_state = NodeState::Init;
-        let last_poll_command = None;
+        let last_poll_command = Ok(None);
 
         Self {
             coordinator,
@@ -280,21 +280,29 @@ impl Agent {
     }
 
     async fn execute_pending_commands(&mut self) -> Result<()> {
-        let result = self.coordinator.poll_commands().await?;
+        let result = self.coordinator.poll_commands().await;
 
         match &result {
-            PollCommandResult::None => {}
-            PollCommandResult::Command(cmd) => {
+            Ok(None) => {}
+            Ok(Some(cmd)) => {
                 info!("agent received node command: {:?}", cmd);
-                self.scheduler()?.execute_command(cmd).await?;
+                self.scheduler()?.execute_command(&cmd).await?;
             }
-            PollCommandResult::RequestFailed(err) => {
+            Err(PollCommandError::RequestFailed(err)) => {
                 error!("error polling the service for commands: {:?}", err);
             }
-            PollCommandResult::ClaimFailed(err) => {
+            Err(PollCommandError::RequestParseFailed(err)) => {
+                bail!("poll commands failed: {:?}", err);
+            }
+            Err(PollCommandError::ClaimFailed(err)) => {
+                // If we failed to claim two commands in a row, it means the
+                // service is up (since we received the commands we're trying to
+                // claim), but something else is going wrong, consistently. This
+                // is suspicious, and less likely to be a transient service or
+                // networking error, so bail.
                 if matches!(
                     self.last_poll_command,
-                    Some(PollCommandResult::ClaimFailed(..))
+                    Err(PollCommandError::ClaimFailed(..))
                 ) {
                     bail!("repeated command claim attempt failures: {:?}", err);
                 }
@@ -302,7 +310,7 @@ impl Agent {
             }
         }
 
-        self.last_poll_command = Some(result);
+        self.last_poll_command = result;
 
         Ok(())
     }
