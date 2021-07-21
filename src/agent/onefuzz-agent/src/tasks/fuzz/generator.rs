@@ -61,7 +61,12 @@ impl GeneratorTask {
     }
 
     pub async fn run(&self) -> Result<()> {
-        self.config.crashes.init().await?;
+        self.config.crashes.init().await.with_context(|| {
+            format!(
+                "creating crashes directory failed: {}",
+                self.config.crashes.local_path.display()
+            )
+        })?;
         if let Some(tools) = &self.config.tools {
             tools.init_pull().await?;
             set_executable(&tools.local_path).await?;
@@ -125,7 +130,7 @@ impl GeneratorTask {
     ) -> Result<()> {
         let mut read_dir = fs::read_dir(generated_inputs).await?;
         while let Some(file) = read_dir.next_entry().await? {
-            debug!("testing input: {:?}", file);
+            debug!("testing input: {}", file.path().display());
 
             let destination_file = if self.config.rename_output {
                 let hash = sha256::digest_file(file.path()).await?;
@@ -164,10 +169,10 @@ impl GeneratorTask {
                 .task_id(&self.config.common.task_id)
                 .set_optional_ref(
                     &self.config.common.microsoft_telemetry_key,
-                    |tester, key| tester.microsoft_telemetry_key(&key),
+                    |tester, key| tester.microsoft_telemetry_key(key),
                 )
                 .set_optional_ref(&self.config.common.instance_telemetry_key, |tester, key| {
-                    tester.instance_telemetry_key(&key)
+                    tester.instance_telemetry_key(key)
                 })
                 .set_optional_ref(&self.config.tools, |expand, tools| {
                     expand.tools_dir(&tools.local_path)

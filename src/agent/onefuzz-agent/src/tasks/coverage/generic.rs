@@ -188,6 +188,7 @@ impl<'a> TaskContext<'a> {
     }
 
     pub async fn record_input(&mut self, input: &Path) -> Result<()> {
+        debug!("recording coverage for {}", input.display());
         let attempts = MAX_COVERAGE_RECORDING_ATTEMPTS;
 
         for attempt in 1..=attempts {
