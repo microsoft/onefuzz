@@ -249,6 +249,7 @@ def hide_secrets(data: B, hider: Callable[[SecretData], SecretData]) -> B:
     return data
 
 
+# NOTE: the actual deletion must come from the `deleter` callback function
 def delete_secrets(data: B, deleter: Callable[[SecretData], None]) -> None:
     for field in data.__fields__:
         field_data = getattr(data, field)
