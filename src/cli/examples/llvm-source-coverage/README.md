@@ -4,7 +4,7 @@ The `generic_analysis` task can be used to perform a user-defined analysis of a 
 
 Running an application compiled with [LLVM's source-based code coverage](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html) with each input can be used to generate source based coverage information.
 
-This example demonstrates using `generic_analysis` and the LLVM source coverage tools to provide source-based coverage on every input for a job.
+This example demonstrates using `generic_analysis` and the LLVM source coverage tools to provide source-based coverage on every input for a job.  For more information, see [Custom Analysis Tasks](../../../../docs/custom-analysis.md)
 
 * [source-coverage-libfuzzer.py](source-coverage-libfuzzer.py): A wrapper that will launch a standard `libfuzzer basic` job *with* a source-based coverage task.  (used below)
 * [source-coverage.py](source-coverage.py): A wrapper that will launch a new job comprised of a source-based coverage task
