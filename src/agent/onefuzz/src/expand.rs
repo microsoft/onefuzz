@@ -469,4 +469,11 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_expand_in_string() -> Result<()> {
+        let result = Expand::new().input_path("src/lib.rs").evaluate_value("a {input} b")?;
+        assert!(result.contains("src/lib.rs"));
+        Ok(())
+    }
 }
