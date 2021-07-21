@@ -205,11 +205,11 @@ impl Coordinator {
         let response = self.send_request(request).await.context("PollCommands");
 
         // Treat communication issues with the service as `no commands
-        // available`.  This adds resilency to the supervisor during longer
+        // available`.  This adds resiliency to the supervisor during longer
         // outages.  Given poll_commands runs on a 10 second cycle, this should
         // provide eventual recovery.
         if let Err(response) = response {
-            error!("error polling the serivce for commands: {:?}", response);
+            error!("error polling the service for commands: {:?}", response);
             return Ok(None);
         }
 
