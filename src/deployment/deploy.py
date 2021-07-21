@@ -315,12 +315,12 @@ class Client:
                     ]
                 },
                 "web": {
-                        "implicitGrantSettings": {
-                            "enableAccessTokenIssuance": False,
-                            "enableIdTokenIssuance": True
-                        },
-                        "redirectUris": [f"{url}/.auth/login/aad/callback"]
+                    "implicitGrantSettings": {
+                        "enableAccessTokenIssuance": False,
+                        "enableIdTokenIssuance": True,
                     },
+                    "redirectUris": [f"{url}/.auth/login/aad/callback"],
+                },
                 "requiredResourceAccess": [
                     {
                         "resourceAccess": [
