@@ -10,7 +10,7 @@ class RuleDefinition(BaseModel):
     allowed_groups: List[UUID]
 
 
-class RequestAuthorization:
+class RequestAccess:
     """
     Stores the rules associated with a the request paths
     """
@@ -23,9 +23,9 @@ class RequestAuthorization:
 
     class Node:
         # http method -> rules
-        rules: Dict[str, "RequestAuthorization.Rules"]
+        rules: Dict[str, "RequestAccess.Rules"]
         # path -> node
-        children: Dict[str, "RequestAuthorization.Node"]
+        children: Dict[str, "RequestAccess.Node"]
 
         def __init__(self) -> None:
             self.rules = {}
@@ -35,7 +35,7 @@ class RequestAuthorization:
     root: Node
 
     def __init__(self) -> None:
-        self.root = RequestAuthorization.Node()
+        self.root = RequestAccess.Node()
 
     def __add_url__(self, methods: List[str], path: str, rules: Rules) -> None:
         methods = list(map(lambda m: m.upper(), methods))
@@ -63,7 +63,7 @@ class RequestAuthorization:
 
         while current_segment_index < len(segments):
             current_segment = segments[current_segment_index]
-            current_node.children[current_segment] = RequestAuthorization.Node()
+            current_node.children[current_segment] = RequestAccess.Node()
             current_node = current_node.children[current_segment]
             current_segment_index = current_segment_index + 1
 
@@ -78,7 +78,7 @@ class RequestAuthorization:
         if method in current_node.rules:
             current_rule = current_node.rules[method]
         else:
-            current_rule = RequestAuthorization.Rules()
+            current_rule = RequestAccess.Rules()
 
         current_segment_index = 0
 
@@ -97,18 +97,18 @@ class RequestAuthorization:
         return current_rule
 
     @classmethod
-    def parse_rules(cls, rules_data: str) -> "RequestAuthorization":
+    def parse_rules(cls, rules_data: str) -> "RequestAccess":
         rules = parse_raw_as(List[RuleDefinition], rules_data)
         return cls.build(rules)
 
     @classmethod
-    def build(cls, rules: List[RuleDefinition]) -> "RequestAuthorization":
-        request_auth = RequestAuthorization()
+    def build(cls, rules: List[RuleDefinition]) -> "RequestAccess":
+        request_access = RequestAccess()
         for rule in rules:
-            request_auth.__add_url__(
+            request_access.__add_url__(
                 rule.methods,
                 rule.endpoint,
-                RequestAuthorization.Rules(allowed_groups_ids=rule.allowed_groups),
+                RequestAccess.Rules(allowed_groups_ids=rule.allowed_groups),
             )
 
-        return request_auth
+        return request_access

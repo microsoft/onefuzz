@@ -20,7 +20,7 @@ from pydantic import ValidationError
 
 from .azure.creds import is_member_of, is_member_of_test
 from .orm import ModelMixin
-from .request_auth import RequestAuthorization
+from .request_access import RequestAccess
 
 # We don't actually use these types at runtime at this time.  Rather,
 # these are used in a bound TypeVar.  MyPy suggests to only import these
@@ -30,13 +30,13 @@ if TYPE_CHECKING:
 
 
 @cached
-def get_rules() -> Optional[RequestAuthorization]:
+def get_rules() -> Optional[RequestAccess]:
     # todo: move to instancewide configuration
     rules_data = os.environ.get("ONEFUZZ_AAD_GROUP_RULES")
     if rules_data is None:
         return None
 
-    return RequestAuthorization.parse_rules(rules_data)
+    return RequestAccess.parse_rules(rules_data)
 
 
 Testing = True
