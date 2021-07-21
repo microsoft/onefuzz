@@ -31,8 +31,7 @@ import msal
 import requests
 from azure.storage.blob import ContainerClient
 from pydantic import BaseModel, Field
-from tenacity import Future as tenacity_future
-from tenacity import Retrying, retry
+from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
@@ -283,12 +282,12 @@ class Backend:
         return response.json()
 
 
-def before_sleep(
-    retry_object: Retrying, sleep: float, last_result: tenacity_future
-) -> None:
-    name = retry_object.fn.__name__ if retry_object.fn else "blob function"
+def before_sleep(retry_state: RetryCallState) -> None:
+    name = retry_state.fn.__name__ if retry_state.fn else "blob function"
 
-    why = getattr(last_result, "_exception")
+    why: Optional[BaseException] = None
+    if retry_state.outcome is not None:
+        why = retry_state.outcome.exception()
     if why:
         LOGGER.warning("%s failed with %s, retrying ...", name, repr(why))
     else:
