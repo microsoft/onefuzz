@@ -475,7 +475,7 @@ mod tests {
         let result = Expand::new()
             .input_path("src/lib.rs")
             .evaluate_value("a {input} b")?;
-        assert!(result.contains("src/lib.rs"));
+        assert!(result.contains("lib.rs"));
         Ok(())
     }
 }
