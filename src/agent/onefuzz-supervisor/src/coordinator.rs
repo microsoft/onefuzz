@@ -202,10 +202,18 @@ impl Coordinator {
         let url = self.registration.dynamic_config.commands_url.clone();
         let request = self.client.get(url).json(&request);
 
-        let pending: PendingNodeCommand = self
-            .send_request(request)
-            .await
-            .context("PollCommands")?
+        let response = self.send_request(request).await.context("PollCommands");
+
+        // Treat communication issues with the service as `no commands
+        // available`.  This adds resilency to the supervisor during longer
+        // outages.  Given poll_commands runs on a 10 second cycle, this should
+        // provide eventual recovery.
+        if let Err(response) = response {
+            error!("error polling the serivce for commands: {:?}", response);
+            return Ok(None);
+        }
+
+        let pending: PendingNodeCommand = response?
             .json()
             .await
             .context("parsing PollCommands response")?;
@@ -219,7 +227,14 @@ impl Coordinator {
             let url = self.registration.dynamic_config.commands_url.clone();
             let request = self.client.delete(url).json(&request);
 
-            self.send_request(request).await.context("ClaimCommand")?;
+            let response = self.send_request(request).await.context("ClaimCommand");
+
+            // similar polling available commands, this treats issues claiming
+            // commands as `no commands available`
+            if let Err(response) = response {
+                error!("error claiming command from the service: {:?}", response);
+                return Ok(None);
+            }
 
             Ok(Some(envelope.command))
         } else {
