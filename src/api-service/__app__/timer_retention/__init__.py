@@ -9,7 +9,6 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import JobState, TaskState
 
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.jobs import Job
 from ..onefuzzlib.notifications.main import Notification
 from ..onefuzzlib.repro import Repro
@@ -19,7 +18,7 @@ RETENTION_POLICY = datetime.timedelta(days=(18 * 30))
 SEARCH_EXTENT = datetime.timedelta(days=(20 * 30))
 
 
-def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
 
     now = datetime.datetime.now(tz=datetime.timezone.utc)
 
@@ -73,7 +72,3 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             logging.info("removing PII from repro: %s", repro.vm_id)
             repro.user_info.upn = None
             repro.save()
-
-    events = get_events()
-    if events:
-        dashboard.set(events)
