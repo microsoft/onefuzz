@@ -14,12 +14,11 @@ from ..onefuzzlib.azure.creds import (
     get_instance_id,
     get_subscription,
 )
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import ok
 from ..onefuzzlib.versions import versions
 
 
-def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     response = ok(
         Info(
             resource_group=get_base_resource_group(),
@@ -31,9 +30,5 @@ def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
             insights_instrumentation_key=get_insights_instrumentation_key(),
         )
     )
-
-    events = get_events()
-    if events:
-        dashboard.set(events)
 
     return response

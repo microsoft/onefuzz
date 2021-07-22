@@ -10,7 +10,6 @@ from typing import Dict
 import azure.functions as func
 
 from ..onefuzzlib.azure.storage import corpus_accounts
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.notifications.main import new_files
 
 # The number of time the function will be retried if an error occurs
@@ -26,7 +25,7 @@ def file_added(event: Dict, fail_task_on_transient_error: bool) -> None:
     new_files(container, path, fail_task_on_transient_error)
 
 
-def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
+def main(msg: func.QueueMessage) -> None:
     event = json.loads(msg.get_body())
     last_try = msg.dequeue_count == MAX_DEQUEUE_COUNT
     # check type first before calling Azure APIs
@@ -37,7 +36,3 @@ def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
         return
 
     file_added(event, last_try)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)
