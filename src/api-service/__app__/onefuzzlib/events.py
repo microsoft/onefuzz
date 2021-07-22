@@ -26,10 +26,6 @@ def queue_signalr_event(event_message: EventMessage) -> None:
     send_message("signalr-events", message, StorageType.config)
 
 
-def get_events() -> Optional[str]:
-    return None
-
-
 def log_event(event: Event, event_type: EventType) -> None:
     scrubbed_event = filter_event(event)
     logging.info(
