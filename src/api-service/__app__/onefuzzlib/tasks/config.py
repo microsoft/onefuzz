@@ -129,8 +129,8 @@ def target_uses_input(config: TaskConfig) -> bool:
             if "{input}" in option:
                 return True
     if config.task.target_env is not None:
-        for (key, value) in config.task.target_env.items():
-            if "{input}" in key or "{input}" in value:
+        for value in config.task.target_env.values():
+            if "{input}" in value:
                 return True
 
     return False
