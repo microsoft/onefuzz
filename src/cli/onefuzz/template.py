@@ -63,17 +63,16 @@ class Template(Command):
                     self.onefuzz.tasks.delete(task.task_id)
 
                 if stop_notifications:
-                    notifications = self.onefuzz.notifications.list()
-                    for container in task.config.containers:
-                        for notification in notifications:
-                            if container.name == notification.container:
-                                self.logger.info(
-                                    "removing notification: %s",
-                                    notification.notification_id,
-                                )
-                                self.onefuzz.notifications.delete(
-                                    notification.notification_id
-                                )
+                    container_names = [x.name for x in task.config.containers]
+                    notifications = self.onefuzz.notifications.list(
+                        container=container_names
+                    )
+                    for notification in notifications:
+                        self.logger.info(
+                            "removing notification: %s",
+                            notification.notification_id,
+                        )
+                        self.onefuzz.notifications.delete(notification.notification_id)
 
 
 Template.stop.__doc__ = "stop a template job"

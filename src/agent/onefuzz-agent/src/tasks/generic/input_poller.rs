@@ -3,7 +3,7 @@
 
 use std::{fmt, path::PathBuf};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz::{blob::BlobUrl, jitter::delay_with_jitter, syncdir::SyncedDir};
 use reqwest::Url;
 use tempfile::{tempdir, TempDir};
@@ -124,14 +124,21 @@ impl<M> InputPoller<M> {
         to_process: &SyncedDir,
     ) -> Result<()> {
         self.batch_dir = Some(to_process.clone());
-        to_process.init_pull().await?;
+        to_process
+            .init_pull()
+            .await
+            .with_context(|| format!("pulling to_process {}", to_process.local_path.display()))?;
         info!(
             "batch processing directory: {} - {}",
             self.name,
             to_process.local_path.display()
         );
 
-        let mut read_dir = fs::read_dir(&to_process.local_path).await?;
+        let mut read_dir = fs::read_dir(&to_process.local_path)
+            .await
+            .with_context(|| {
+                format!("read directory failed: {}", to_process.local_path.display())
+            })?;
         while let Some(file) = read_dir.next_entry().await? {
             let path = file.path();
             info!(
@@ -150,7 +157,10 @@ impl<M> InputPoller<M> {
             };
             let url = to_process.try_url().map(|x| x.blob(blob_name).url());
 
-            processor.process(url, &path).await?;
+            processor
+                .process(url, &path)
+                .await
+                .with_context(|| format!("process input failed: {}", path.display()))?;
         }
         Ok(())
     }

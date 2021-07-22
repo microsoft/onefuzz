@@ -4,13 +4,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.28.0
+### Added
+* CLI: Added the ability to remove existing container notifications upon creating a notification integration.  [#1084](https://github.com/microsoft/onefuzz/pull/1084)
+* CLI/Documentation: Added an example `generic_analysis` task that demonstrates collecting LLVM source-based coverage.  [#1072](https://github.com/microsoft/onefuzz/pull/1072)
+* Supervisor: Added service-interaction resiliency for node commands.  [#1098](https://github.com/microsoft/onefuzz/pull/1098)
+
+### Changed
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1089](https://github.com/microsoft/onefuzz/pull/1089)
+* Agent: Added more context to errors in generator tasks.  [#1094](https://github.com/microsoft/onefuzz/pull/1094)
+* Agent: Added support for ASAN runtime identification of format string bugs.  [#1093](https://github.com/microsoft/onefuzz/pull/1093)
+* Agent: Added verification that `{input}` is provided to the application under test via `target_env` or `target_options`.  [#1097](https://github.com/microsoft/onefuzz/pull/1097)
+* Agent: Continued development related to upcoming features.  [#1090](https://github.com/microsoft/onefuzz/pull/1090), [#1091](https://github.com/microsoft/onefuzz/pull/1091)
+* CLI/Service: Updated multiple first-party and third-party Python dependencies.  [#1086](https://github.com/microsoft/onefuzz/pull/1086)
+* CLI: Changed job templates to replace existing notifications for the unique report container.  [#1084](https://github.com/microsoft/onefuzz/pull/1084)
+* Service: Added more context to Azure DevOps errors.  [#1082](https://github.com/microsoft/onefuzz/pull/1082)
+* Service: Notification secrets are now deleted from Azure KeyVault upon notification deletion.  [#1085](https://github.com/microsoft/onefuzz/pull/1085)
+
+### Fixed
+* Agent: Fixed an issue logging ASAN output upon ASAN log parse errors.  [#1092](https://github.com/microsoft/onefuzz/pull/1092)
+* Agent: Fixed issues handling non-UTF8 output from applications under test.  [#1088](https://github.com/microsoft/onefuzz/pull/1088)
+
 ## 2.27.0
 ### Changed
 * Agent: Batch processing results are now saved after every 10 executions.  [#1076](https://github.com/microsoft/onefuzz/pull/1076)
 * Service: Optimized `file_added` event queueing by avoiding unnecessary Azure queries.  [#1075](https://github.com/microsoft/onefuzz/pull/1075)
 * Agent: Optimized directory change monitoring.  [#1078](https://github.com/microsoft/onefuzz/pull/1078)
 * Supervisor: Optimized agent monitoring.  [#1080](https://github.com/microsoft/onefuzz/pull/1080)
-
 
 ## 2.26.1
 ### Fixed
