@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import List, Optional
+from typing import List
 
 from onefuzztypes.events import Event, EventMessage, EventType, get_event_type
 from onefuzztypes.models import UserInfo
