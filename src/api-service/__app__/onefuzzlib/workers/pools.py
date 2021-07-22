@@ -227,7 +227,6 @@ class Pool(BASE_POOL, ORMMixin):
             delete_queue(self.get_pool_queue(), StorageType.corpus)
             ShrinkQueue(self.pool_id).delete()
             logging.info("pool stopped, deleting: %s", self.name)
-            self.state = PoolState.halt
             self.delete()
             return
 
