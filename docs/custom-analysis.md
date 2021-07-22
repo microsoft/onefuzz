@@ -26,3 +26,4 @@ template for any Windows targets.
 See also:
 
 * [Command Replacements](command-replacements.md)
+* [Example to collect LLVM Source-Based Coverage using custom analysis](../src/cli/examples/llvm-source-coverage/README.md)

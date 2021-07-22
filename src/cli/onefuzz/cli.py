@@ -190,7 +190,7 @@ class Builder:
         sig = inspect.signature(func)
 
         arg_docs = {}
-        docs = parse_docstring(func.__doc__)
+        docs = parse_docstring(func.__doc__ or "")
         for opt in docs.params:
             if opt.description:
                 arg_docs[opt.arg_name] = opt.description

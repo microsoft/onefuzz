@@ -48,7 +48,7 @@ pub enum PlaceHolder {
 }
 
 impl PlaceHolder {
-    fn get_string(&self) -> String {
+    pub fn get_string(&self) -> String {
         match self {
             Self::Input => "{input}",
             Self::Crashes => "{crashes}",
@@ -124,7 +124,7 @@ impl<'a> Expand<'a> {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
                 let stem = file.file_stem()?;
-                let name_as_str = String::from(stem.to_str()?);
+                let name_as_str = stem.to_string_lossy().to_string();
                 Some(ExpandedValue::Scalar(name_as_str))
             }
             _ => None,
@@ -136,7 +136,7 @@ impl<'a> Expand<'a> {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
                 let name = file.file_name()?;
-                let name_as_str = String::from(name.to_str()?);
+                let name_as_str = name.to_string_lossy().to_string();
                 Some(ExpandedValue::Scalar(name_as_str))
             }
             _ => None,
@@ -325,7 +325,7 @@ impl<'a> Expand<'a> {
                 Ok(arg)
             }
             ExpandedValue::Scalar(v) => {
-                arg = arg.replace(fmtstr, &v);
+                arg = arg.replace(fmtstr, v);
                 Ok(arg)
             }
             ExpandedValue::List(value) => {
@@ -335,7 +335,7 @@ impl<'a> Expand<'a> {
                 Ok(arg)
             }
             ExpandedValue::Mapping(func) => {
-                if let Some(value) = func(self, &fmtstr) {
+                if let Some(value) = func(self, fmtstr) {
                     let arg = self.replace_value(fmtstr, arg, &value)?;
                     Ok(arg)
                 } else {
@@ -467,6 +467,15 @@ mod tests {
 
         assert!(Expand::new().evaluate(&my_args).is_err());
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_expand_in_string() -> Result<()> {
+        let result = Expand::new()
+            .input_path("src/lib.rs")
+            .evaluate_value("a {input} b")?;
+        assert!(result.contains("lib.rs"));
         Ok(())
     }
 }

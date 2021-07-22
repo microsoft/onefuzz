@@ -273,7 +273,7 @@ impl Images {
             }
 
             if image.region().contains(&va) {
-                return Some(&image);
+                return Some(image);
             }
         }
 
