@@ -3,9 +3,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import json
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from onefuzztypes.events import Event, EventMessage, EventType, get_event_type
 from onefuzztypes.models import UserInfo
@@ -17,9 +16,13 @@ from .azure.storage import StorageType
 from .webhooks import Webhook
 
 
+class SignalREvent(BaseModel):
+    target: str
+    arguments: List[EventMessage]
+
+
 def queue_signalr_event(event_message: EventMessage) -> None:
-    event = json.loads(event_message.json())
-    message = json.dumps({"target": "events", "arguments": [event]}).encode()
+    message = SignalREvent(target="events", arguments=[event_message]).json().encode()
     send_message("signalr-events", message, StorageType.config)
 
 
