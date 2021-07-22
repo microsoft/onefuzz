@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import json
 import logging
 from typing import Optional
 
@@ -17,7 +18,9 @@ from .webhooks import Webhook
 
 
 def queue_signalr_event(event_message: EventMessage) -> None:
-    send_message("signalr-events", event_message.json().encode(), StorageType.config)
+    event = json.loads(event_message.json())
+    message = json.dumps({"target": "events", "arguments": [event]}).encode()
+    send_message("signalr-events", message, StorageType.config)
 
 
 def get_events() -> Optional[str]:
