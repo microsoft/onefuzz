@@ -2,7 +2,7 @@
   "bindings": [
     {
       "direction": "in",
-      "name": "mytimer1",
+      "name": "mytimer",
       "schedule": "20:00:00",
       "type": "timerTrigger"
     },

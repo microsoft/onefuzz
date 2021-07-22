@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+#
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import datetime
 import logging
 
@@ -14,7 +19,7 @@ RETENTION_POLICY = datetime.timedelta(days=(18 * 30))
 SEARCH_EXTENT = datetime.timedelta(days=(20 * 30))
 
 
-def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
 
     now = datetime.datetime.now(tz=datetime.timezone.utc)
 
@@ -28,22 +33,22 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
     time_filter_newer = f"Timestamp gt datetime'{time_retained_older.isoformat()}'"
 
     # Collecting 'still relevant' task containers.
+    # NOTE: This must be done before potentially modifying tasks otherwise
+    # the task timestamps will not be useful.
     used_containers = set()
     for task in Task.search(raw_unchecked_filter=time_filter_newer):
         task_containers = {x.name for x in task.config.containers}
         used_containers.update(task_containers)
 
-    # You have to do notification before task,
-    # because editing the upn for tasks will change the timestamp
     for notification in Notification.search(raw_unchecked_filter=time_filter):
         logging.debug(
-            "Found notification %s older than 18 months. Checking related tasks.",
+            "checking expired notification for removal: %s",
             notification.notification_id,
         )
         container = notification.container
         if container not in used_containers:
             logging.info(
-                "Deleting unused notification: %s", notification.notification_id
+                "deleting expired notification: %s", notification.notification_id
             )
             notification.delete()
 
@@ -51,10 +56,7 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
         query={"state": [JobState.stopped]}, raw_unchecked_filter=time_filter
     ):
         if job.user_info is not None and job.user_info.upn is not None:
-            logging.info(
-                "Found job %s older than 18 months. Scrubbing user_info.",
-                job.job_id,
-            )
+            logging.info("removing PII from job: %s", job.job_id)
             job.user_info.upn = None
             job.save()
 
@@ -62,21 +64,13 @@ def main(mytimer1: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa
         query={"state": [TaskState.stopped]}, raw_unchecked_filter=time_filter
     ):
         if task.user_info is not None and task.user_info.upn is not None:
-            logging.info(
-                "Found task %s older than 18 months. Scrubbing user_info.",
-                task.task_id,
-            )
+            logging.info("removing PII from task: %s", task.task_id)
             task.user_info.upn = None
             task.save()
 
     for repro in Repro.search(raw_unchecked_filter=time_filter):
         if repro.user_info is not None and repro.user_info.upn is not None:
-            logging.info(
-                "Found repro entry for task %s on node %s that is older "
-                + "than 18 months. Scrubbing user_info.",
-                repro.task_id,
-                repro.vm_id,
-            )
+            logging.info("removing PII from repro: %s", repro.vm_id)
             repro.user_info.upn = None
             repro.save()
 
