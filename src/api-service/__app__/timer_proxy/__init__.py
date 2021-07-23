@@ -8,13 +8,12 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import VmState
 
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.proxy import PROXY_LOG_PREFIX, Proxy
 from ..onefuzzlib.workers.scalesets import Scaleset
 
 
-def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     proxies = Proxy.search()
     for proxy in proxies:
         if proxy.state in VmState.available():
@@ -51,7 +50,3 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     for region in regions:
         if all(x.outdated for x in proxies if x.region == region):
             Proxy.get_or_create(region)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)

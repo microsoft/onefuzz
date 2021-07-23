@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import List, Optional
+from typing import List
 
 from onefuzztypes.events import Event, EventMessage, EventType, get_event_type
 from onefuzztypes.models import UserInfo
@@ -24,10 +24,6 @@ class SignalREvent(BaseModel):
 def queue_signalr_event(event_message: EventMessage) -> None:
     message = SignalREvent(target="events", arguments=[event_message]).json().encode()
     send_message("signalr-events", message, StorageType.config)
-
-
-def get_events() -> Optional[str]:
-    return None
 
 
 def log_event(event: Event, event_type: EventType) -> None:
