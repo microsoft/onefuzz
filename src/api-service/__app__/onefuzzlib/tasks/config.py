@@ -124,6 +124,19 @@ def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
         LOGGER.warning(err)
 
 
+def target_uses_input(config: TaskConfig) -> bool:
+    if config.task.target_options is not None:
+        for option in config.task.target_options:
+            if "{input}" in option:
+                return True
+    if config.task.target_env is not None:
+        for value in config.task.target_env.values():
+            if "{input}" in value:
+                return True
+
+    return False
+
+
 def check_config(config: TaskConfig) -> None:
     if config.task.type not in TASK_DEFINITIONS:
         raise TaskConfigError("unsupported task type: %s" % config.task.type.name)
@@ -142,6 +155,12 @@ def check_config(config: TaskConfig) -> None:
         err = "missing supervisor_exe"
         LOGGER.error(err)
         raise TaskConfigError("missing supervisor_exe")
+
+    if (
+        TaskFeature.target_must_use_input in definition.features
+        and not target_uses_input(config)
+    ):
+        raise TaskConfigError("{input} must be used in target_env or target_options")
 
     if config.vm:
         err = "specifying task config vm is no longer supported"

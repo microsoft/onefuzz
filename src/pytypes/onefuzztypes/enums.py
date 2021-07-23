@@ -81,6 +81,7 @@ class TaskFeature(Enum):
     report_list = "report_list"
     minimized_stack_depth = "minimized_stack_depth"
     coverage_filter = "coverage_filter"
+    target_must_use_input = "target_must_use_input"
 
 
 # Permissions for an Azure Blob Storage Container.
