@@ -104,13 +104,15 @@ def query_microsoft_graph(
     params: Optional[Dict] = None,
     body: Optional[Dict] = None,
 ) -> Any:
-    auth = get_ms_graph_msi()
-    access_token = auth.token["access_token"]
-    token_type = auth.token["token_type"]
+    cred = get_identity()
+    access_token = cred.get_token("https://graph.microsoft.com/.default")
+    # auth = get_ms_graph_msi()
+    # access_token = auth.token["access_token"]
+    token_type = "Bearer"
 
     url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
     headers = {
-        "Authorization": "%s %s" % (token_type, access_token),
+        "Authorization": "%s %s" % (token_type , access_token.token ),
         "Content-Type": "application/json",
     }
     response = requests.request(
