@@ -11,13 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Service: SignalR events are routed through an Azure Storage Queue to prevent SignalR outages from impacting the entire service.  [#1100](https://github.com/microsoft/onefuzz/pull/1100), [#1102](https://github.com/microsoft/onefuzz/pull/1102)
-* Service: Pools and Scalesets set to `shutdown` can now be set to `halt`.  [#1104](https://github.com/microsoft/onefuzz/pull/1104)
 * Service: Functionality used prior to 1.0.0 for assigning tasks to VMs rather than Pools is no longer supported.  [#1105](https://github.com/microsoft/onefuzz/pull/1105)
 * Service: The `coverage` and `generic_generator` tasks now verify `{input}` is used in `target_env` or `target_options`.  [#1106](https://github.com/microsoft/onefuzz/pull/1106)
 
 ### Fixed
 * Service: Fixed an issue reimaging old nodes with `debug_keep_node` set.  [#1103](https://github.com/microsoft/onefuzz/pull/1103)
 * Service: Fixed an issue authenticating to Azure services.  [#1099](https://github.com/microsoft/onefuzz/pull/1099)
+* Service: Fixed an issue preventing Pools and Scalesets set to `shutdown` from being set to `halt`.  [#1104](https://github.com/microsoft/onefuzz/pull/1104)
 
 ## 2.28.0
 ### Added
