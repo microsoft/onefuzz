@@ -160,7 +160,7 @@ def register_application(
     tenant_id = get_tenant_id(subscription_id=subscription_id)
 
     return ApplicationInfo(
-        client_id=app["id"],
+        client_id=app["appId"],
         client_secret=password,
         authority=("https://login.microsoftonline.com/%s" % tenant_id),
     )
@@ -194,7 +194,7 @@ def create_application_registration(
         raise Exception("onefuzz app registration not found")
 
     resource_access = [
-        {"id": "guid", "type": "string"}
+        {"id": role["id"], "type": "Scope"}
         for role in app["appRoles"]
         if role["value"] == approle.value
     ]
@@ -205,6 +205,7 @@ def create_application_registration(
         "publicClient": {
             "redirectUris": ["https://%s.azurewebsites.net" % onefuzz_instance_name]
         },
+        "isFallbackPublicClient": True,
         "requiredResourceAccess": (
             [
                 {
