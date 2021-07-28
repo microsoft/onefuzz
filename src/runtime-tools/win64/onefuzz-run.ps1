@@ -14,13 +14,13 @@ catch {
 
 log "onefuzz: starting"
 
-$runid = [guid]::NewGuid().toString()
 
 Set-Location C:\onefuzz
 Enable-SSH
 $config = Get-OnefuzzConfig
 
 while ($true) {
+    $runid = [guid]::NewGuid().toString()
     switch ($config.mode) {
         "fuzz" {
             log "onefuzz: fuzzing"
@@ -35,6 +35,9 @@ while ($true) {
             exit 1
         }
     }
+
+    get-eventlog -logname "application" -message *onefuzz* | format-table -autosize -wrap | out-file c:\onefuzz\logs\onefuzz-eventlog.log
+
     log "onefuzz unexpectedly exited, restarting after delay"
     Start-Sleep -Seconds 30
 }
