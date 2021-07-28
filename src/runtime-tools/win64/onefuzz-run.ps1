@@ -14,6 +14,8 @@ catch {
 
 log "onefuzz: starting"
 
+$runid = [guid]::NewGuid().toString()
+
 Set-Location C:\onefuzz
 Enable-SSH
 $config = Get-OnefuzzConfig
