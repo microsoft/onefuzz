@@ -27,6 +27,10 @@ pub fn onefuzz_etc() -> Result<PathBuf> {
     Ok(onefuzz_root()?.join("etc"))
 }
 
+pub fn onefuzz_logs() -> Result<PathBuf> {
+    Ok(onefuzz_root()?.join("logs"))
+}
+
 pub async fn has_files(path: impl AsRef<Path>) -> Result<bool> {
     let path = path.as_ref();
     let mut paths = fs::read_dir(&path)

@@ -141,9 +141,19 @@ async fn check_existing_worksets(coordinator: &mut coordinator::Coordinator) -> 
     // failed, then exit as a failure.
 
     if let Some(work) = WorkSet::load_from_fs_context().await? {
+        warn!("onefuzz-supervisor unexpectedly identified an existing workset on start");
         let failure = match failure::read_failure() {
             Ok(value) => format!("onefuzz-supervisor failed: {}", value),
-            Err(_) => "onefuzz-supervisor failed".into(),
+            Err(failure_err) => {
+                warn!("unable to read failure: {:?}", failure_err);
+                let logs = failure::read_logs().unwrap_or_else(|logs_err| {
+                    format!(
+                        "unable to read failure message or logs: {:?} {:?}",
+                        failure_err, logs_err
+                    )
+                });
+                format!("onefuzz-supervisor failed: {}", logs)
+            }
         };
 
         for unit in &work.work_units {

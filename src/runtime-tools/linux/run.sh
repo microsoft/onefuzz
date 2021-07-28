@@ -19,6 +19,7 @@ echo core | sudo tee /proc/sys/kernel/core_pattern
 echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
 # set core dumping to default behavior
 echo 1 | sudo tee /proc/sys/fs/suid_dumpable
+RUNID=$(uuidgen)
 
 cd /onefuzz
 MODE=$(cat /onefuzz/etc/mode)
@@ -31,7 +32,7 @@ case ${MODE} in
     "fuzz")
         logger "onefuzz: starting fuzzing"
         echo fuzzing
-        onefuzz-supervisor run --config /onefuzz/config.json
+        onefuzz-supervisor run --config /onefuzz/config.json > /onefuzz/logs/onefuzz-supervisor-${RUNID}.log 2> /onefuzz/logs/onefuzz-supervisor-${RUNID}.err
     ;;
     "repro")
         logger "onefuzz: starting repro"

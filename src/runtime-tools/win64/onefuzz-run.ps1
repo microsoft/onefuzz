@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-Start-Transcript -Path c:\onefuzz-run.log
+Start-Transcript -Append -Path c:\onefuzz-run.log
 
 $basedir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
@@ -22,7 +22,7 @@ while ($true) {
     switch ($config.mode) {
         "fuzz" {
             log "onefuzz: fuzzing"
-            Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList "run --config config.json" -WindowStyle Hidden -Wait
+            Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList "run --config config.json" -WindowStyle Hidden -Wait -redirectstandardoutput c:\onefuzz\logs\onefuzz-supervisor-$runid.log -redirectstandarderror c:\onefuzz\logs\onefuzz-supervisor-$runid.err
         }
         "repro" {
             log "onefuzz: starting repro"

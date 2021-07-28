@@ -33,6 +33,7 @@ function Init-Setup {
   mkdir setup -Force
   mkdir tools -Force
   mkdir instance-specific-setup -Force
+  mkdir logs -Force
 }
 
 function Install-OnefuzzSetup {
