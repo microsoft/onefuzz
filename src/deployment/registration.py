@@ -425,7 +425,7 @@ def assign_app_role(
     application_id: str,
     role_names: List[str],
     subscription_id: str,
-):
+) -> None:
     application_registration = query_microsoft_graph(
         method="GET",
         resource="applications",
