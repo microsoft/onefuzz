@@ -17,15 +17,18 @@ use crate::{
     config::StaticConfig, coordinator::StateUpdateEvent, heartbeat::init_agent_heartbeat,
     panic::set_panic_handler, work::WorkSet, worker::WorkerEvent,
 };
+use std::fs::OpenOptions;
 use std::path::PathBuf;
+use std::process::{Command, Stdio};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use onefuzz::{
     machine_id::{get_machine_id, get_scaleset_name},
     process::ExitStatus,
 };
 use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use structopt::StructOpt;
+use std::io::{self, Write};
 
 pub mod agent;
 pub mod buffer;
@@ -55,6 +58,9 @@ enum Opt {
 struct RunOpt {
     #[structopt(short, long = "--config", parse(from_os_str))]
     config_path: Option<PathBuf>,
+    /// re-executes as a child process, redirecting stdout and stderr to a file
+    #[structopt(short, long = "--redirect-output", parse(from_os_str))]
+    redirect_output: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -84,12 +90,50 @@ fn version() {
 }
 
 fn licenses() -> Result<()> {
-    use std::io::{self, Write};
     io::stdout().write_all(include_bytes!("../../data/licenses.json"))?;
     Ok(())
 }
 
+fn redirect(opt: RunOpt) -> Result<()> {
+    let log_path = opt
+        .redirect_output
+        .expect("redirect should only be called with log_path");
+    info!("redirecting output: {}", log_path.display());
+
+    let stdout = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_path)
+        .context("unable to open log file")?;
+    let stderr = stdout.try_clone().context("unable to clone log handle")?;
+
+    let mut cmd = Command::new(std::env::current_exe()?);
+    cmd.stdout(Stdio::from(stdout)).stderr(Stdio::from(stderr)).arg("run");
+    if let Some(path) = opt.config_path {
+        cmd.arg("--config").arg(path);
+    }
+
+    let exit_status: ExitStatus = cmd
+        .spawn()
+        .context("unable to start child onefuzz-supervisor")?
+        .wait()
+        .context("unable to get exit status")?
+        .into();
+
+    if !exit_status.success {
+        let mut log = OpenOptions::new().append(true).open(log_path).context("unable to open log file")?;
+        log.write_fmt(format_args!("onefuzz-supervisor child failed: {:?}", exit_status))?;
+        bail!("onefuzz-supervisor child failed: {:?}", exit_status);
+    }
+
+    Ok(())
+}
+
 fn run(opt: RunOpt) -> Result<()> {
+    if opt.redirect_output.is_some() {
+        return redirect(opt);
+    }
+
     if done::is_agent_done()? {
         debug!(
             "agent is done, remove lock ({}) to continue",

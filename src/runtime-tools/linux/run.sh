@@ -32,7 +32,7 @@ case ${MODE} in
     "fuzz")
         logger "onefuzz: starting fuzzing"
         echo fuzzing
-        onefuzz-supervisor run --config /onefuzz/config.json > /onefuzz/logs/onefuzz-supervisor-${RUNID}.log 2> /onefuzz/logs/onefuzz-supervisor-${RUNID}.err
+        onefuzz-supervisor run --config /onefuzz/config.json --redirect-output /onefuzz/logs/onefuzz-supervisor-${RUNID}.log
     ;;
     "repro")
         logger "onefuzz: starting repro"

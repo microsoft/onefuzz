@@ -24,7 +24,7 @@ while ($true) {
     switch ($config.mode) {
         "fuzz" {
             log "onefuzz: fuzzing"
-            Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList "run --config config.json" -WindowStyle Hidden -Wait -redirectstandardoutput c:\onefuzz\logs\onefuzz-supervisor-$runid.log -redirectstandarderror c:\onefuzz\logs\onefuzz-supervisor-$runid.err
+            Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList "run --config config.json --redirect-output c:\onefuzz\logs\onefuzz-supervisor-" + $runid + ".txt" -WindowStyle Hidden -Wait 
         }
         "repro" {
             log "onefuzz: starting repro"
