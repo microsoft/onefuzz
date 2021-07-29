@@ -17,7 +17,7 @@ from azure.keyvault.secrets import SecretClient
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from memoization import cached
-from msrestazure.azure_active_directory import AZURE_PUBLIC_CLOUD, MSIAuthentication
+from msrestazure.azure_active_directory import MSIAuthentication
 from msrestazure.tools import parse_resource_id
 from onefuzztypes.primitives import Container, Region
 
