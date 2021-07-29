@@ -18,6 +18,7 @@ from ..azure.containers import blob_exists, container_exists, get_container_sas_
 from ..azure.creds import get_instance_id
 from ..azure.queue import get_queue_sas
 from ..azure.storage import StorageType
+from ..workers.pools import Pool
 from .defs import TASK_DEFINITIONS
 
 LOGGER = logging.getLogger("onefuzz")
@@ -123,6 +124,19 @@ def check_target_exe(config: TaskConfig, definition: TaskDefinition) -> None:
         LOGGER.warning(err)
 
 
+def target_uses_input(config: TaskConfig) -> bool:
+    if config.task.target_options is not None:
+        for option in config.task.target_options:
+            if "{input}" in option:
+                return True
+    if config.task.target_env is not None:
+        for value in config.task.target_env.values():
+            if "{input}" in value:
+                return True
+
+    return False
+
+
 def check_config(config: TaskConfig) -> None:
     if config.task.type not in TASK_DEFINITIONS:
         raise TaskConfigError("unsupported task type: %s" % config.task.type.name)
@@ -142,26 +156,31 @@ def check_config(config: TaskConfig) -> None:
         LOGGER.error(err)
         raise TaskConfigError("missing supervisor_exe")
 
+    if (
+        TaskFeature.target_must_use_input in definition.features
+        and not target_uses_input(config)
+    ):
+        raise TaskConfigError("{input} must be used in target_env or target_options")
+
     if config.vm:
-        if not check_val(definition.vm.compare, definition.vm.value, config.vm.count):
-            err = "invalid vm count: expected %s %d, got %s" % (
-                definition.vm.compare,
-                definition.vm.value,
-                config.vm.count,
-            )
-            LOGGER.error(err)
-            raise TaskConfigError(err)
-    elif config.pool:
-        if not check_val(definition.vm.compare, definition.vm.value, config.pool.count):
-            err = "invalid vm count: expected %s %d, got %s" % (
-                definition.vm.compare,
-                definition.vm.value,
-                config.pool.count,
-            )
-            LOGGER.error(err)
-            raise TaskConfigError(err)
-    else:
-        raise TaskConfigError("either the vm or pool must be specified")
+        err = "specifying task config vm is no longer supported"
+        raise TaskConfigError(err)
+
+    if not config.pool:
+        raise TaskConfigError("pool must be specified")
+
+    if not check_val(definition.vm.compare, definition.vm.value, config.pool.count):
+        err = "invalid vm count: expected %s %d, got %s" % (
+            definition.vm.compare,
+            definition.vm.value,
+            config.pool.count,
+        )
+        LOGGER.error(err)
+        raise TaskConfigError(err)
+
+    pool = Pool.get_by_name(config.pool.pool_name)
+    if not isinstance(pool, Pool):
+        raise TaskConfigError(f"invalid pool: {config.pool.pool_name}")
 
     check_target_exe(config, definition)
 

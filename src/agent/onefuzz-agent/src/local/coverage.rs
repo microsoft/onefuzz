@@ -88,6 +88,7 @@ pub fn build_shared_args(local_job: bool) -> Vec<Arg<'static, 'static>> {
             .multiple(true),
         Arg::with_name(TARGET_OPTIONS)
             .long(TARGET_OPTIONS)
+            .default_value("{input}")
             .takes_value(true)
             .value_delimiter(" ")
             .help("Use a quoted string with space separation to denote multiple arguments"),

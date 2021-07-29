@@ -1,0 +1,18 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "name": "msg",
+      "type": "queueTrigger",
+      "direction": "in",
+      "queueName": "signalr-events",
+      "connection": "AzureWebJobsStorage"
+    },
+    {
+      "type": "signalR",
+      "direction": "out",
+      "name": "dashboard",
+      "hubName": "dashboard"
+    }
+  ]
+}

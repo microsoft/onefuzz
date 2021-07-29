@@ -631,6 +631,7 @@ class Client:
             "proxy",
             "update-queue",
             "webhooks",
+            "signalr-events",
         ]:
             try:
                 client.create_queue(queue)

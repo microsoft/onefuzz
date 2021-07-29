@@ -635,21 +635,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
                 node.delete()
 
     def set_shutdown(self, now: bool) -> None:
-        if self.state in [ScalesetState.halt, ScalesetState.shutdown]:
-            return
-
-        logging.info(
-            SCALESET_LOG_PREFIX + "scaleset set_shutdown: scaleset_id:%s now:%s",
-            self.scaleset_id,
-            now,
-        )
-
         if now:
             self.set_state(ScalesetState.halt)
         else:
             self.set_state(ScalesetState.shutdown)
-
-        self.save()
 
     def shutdown(self) -> None:
         size = get_vmss_size(self.scaleset_id)
@@ -805,6 +794,10 @@ class Scaleset(BASE_SCALESET, ORMMixin):
 
     def set_state(self, state: ScalesetState) -> None:
         if self.state == state:
+            return
+
+        # scalesets should never leave the `halt` state
+        if self.state == ScalesetState.halt:
             return
 
         self.state = state

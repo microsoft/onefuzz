@@ -456,12 +456,9 @@ class Node(BASE_NODE, ORMMixin):
         time_filter = "Timestamp lt datetime'%s'" % (
             (datetime.datetime.utcnow() - NODE_REIMAGE_TIME).isoformat()
         )
-        # skip any nodes already marked for reimage/deletion
         for node in cls.search(
             query={
                 "scaleset_id": [scaleset_id],
-                "reimage_requested": [False],
-                "delete_requested": [False],
             },
             raw_unchecked_filter=time_filter,
         ):

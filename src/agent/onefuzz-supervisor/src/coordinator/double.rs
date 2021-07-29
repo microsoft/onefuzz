@@ -11,7 +11,7 @@ pub struct CoordinatorDouble {
 
 #[async_trait]
 impl ICoordinator for CoordinatorDouble {
-    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>> {
+    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError> {
         Ok(self.commands.pop())
     }
 

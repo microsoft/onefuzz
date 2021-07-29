@@ -14,12 +14,6 @@
       "type": "http",
       "direction": "out",
       "name": "$return"
-    },
-    {
-      "type": "signalR",
-      "direction": "out",
-      "name": "dashboard",
-      "hubName": "dashboard"
     }
   ]
 }
