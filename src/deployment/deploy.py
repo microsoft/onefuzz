@@ -54,6 +54,7 @@ from registration import (
     GraphQueryError,
     OnefuzzAppRole,
     add_application_password,
+    assign_instance_app_role,
     assign_app_role,
     authorize_application,
     get_application,
@@ -580,11 +581,24 @@ class Client:
             logger.info("Upgrading: skipping assignment of the managed identity role")
             return
         logger.info("assigning the user managed identity role")
-        assign_app_role(
+        assign_instance_app_role(
             self.application_name,
             self.results["deploy"]["scaleset-identity"]["value"],
             self.get_subscription_id(),
             OnefuzzAppRole.ManagedNode,
+        )
+
+    def assign_app_permissions(self) -> None:
+        if self.upgrade:
+            logger.info("Upgrading: skipping assignment of msgraph permissions")
+            return
+        logger.info("assigning msgraph permissions")
+
+        assign_app_role(
+            principal_id=self.results["deploy"]["webapp-identity"]["value"],
+            application_id=MICROSOFT_GRAPH_APP_ID,
+            role_names=["GroupMember.Read.All"],
+            subscription_id=self.get_subscription_id(),
         )
 
     def apply_migrations(self) -> None:
@@ -954,6 +968,7 @@ def main() -> None:
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
+        ("assign_app_permissions", Client.assign_app_permissions),
     ]
 
     full_deployment_states = rbac_only_states + [
