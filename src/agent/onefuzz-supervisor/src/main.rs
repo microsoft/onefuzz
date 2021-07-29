@@ -27,8 +27,8 @@ use onefuzz::{
     process::ExitStatus,
 };
 use onefuzz_telemetry::{self as telemetry, EventData, Role};
-use structopt::StructOpt;
 use std::io::{self, Write};
+use structopt::StructOpt;
 
 pub mod agent;
 pub mod buffer;
@@ -108,7 +108,9 @@ fn redirect(opt: RunOpt) -> Result<()> {
     let stderr = stdout.try_clone().context("unable to clone log handle")?;
 
     let mut cmd = Command::new(std::env::current_exe()?);
-    cmd.stdout(Stdio::from(stdout)).stderr(Stdio::from(stderr)).arg("run");
+    cmd.stdout(Stdio::from(stdout))
+        .stderr(Stdio::from(stderr))
+        .arg("run");
     if let Some(path) = opt.config_path {
         cmd.arg("--config").arg(path);
     }
@@ -121,8 +123,14 @@ fn redirect(opt: RunOpt) -> Result<()> {
         .into();
 
     if !exit_status.success {
-        let mut log = OpenOptions::new().append(true).open(log_path).context("unable to open log file")?;
-        log.write_fmt(format_args!("onefuzz-supervisor child failed: {:?}", exit_status))?;
+        let mut log = OpenOptions::new()
+            .append(true)
+            .open(log_path)
+            .context("unable to open log file")?;
+        log.write_fmt(format_args!(
+            "onefuzz-supervisor child failed: {:?}",
+            exit_status
+        ))?;
         bail!("onefuzz-supervisor child failed: {:?}", exit_status);
     }
 
