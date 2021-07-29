@@ -26,10 +26,10 @@ from typing import (
 )
 from urllib.parse import urlparse, urlunparse
 from uuid import UUID
-from azure.common.credentials import get_cli_profile
 
 import msal
 import requests
+from azure.common.credentials import get_cli_profile
 from azure.storage.blob import ContainerClient
 from pydantic import BaseModel, Field
 from tenacity import RetryCallState, retry
