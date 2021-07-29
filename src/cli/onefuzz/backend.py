@@ -29,6 +29,7 @@ from uuid import UUID
 
 import msal
 import requests
+from azure.common.credentials import get_cli_profile
 from azure.storage.blob import ContainerClient
 from pydantic import BaseModel, Field
 from tenacity import RetryCallState, retry
@@ -185,7 +186,13 @@ class Backend:
                 token_cache=self.token_cache,
             )
 
-        accounts = self.app.get_accounts()
+        profile = get_cli_profile()
+        current_user = profile.get_current_account_user()
+        if current_user:
+            accounts = self.app.get_accounts(current_user)
+        else:
+            accounts = self.app.get_accounts()
+
         if accounts:
             access_token = self.app.acquire_token_silent(scopes, account=accounts[0])
             if access_token:
