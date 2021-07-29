@@ -107,11 +107,10 @@ def query_microsoft_graph(
 ) -> Any:
     cred = get_identity()
     access_token = cred.get_token("https://graph.microsoft.com/.default")
-    token_type = "Bearer"
 
     url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
     headers = {
-        "Authorization": "%s %s" % (token_type, access_token.token),
+        "Authorization": "Bearer %s" % access_token.token,
         "Content-Type": "application/json",
     }
     response = requests.request(
