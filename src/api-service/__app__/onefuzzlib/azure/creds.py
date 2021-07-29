@@ -25,12 +25,10 @@ from .monkeypatch import allow_more_workers, reduce_logging
 
 
 @cached
-def get_ms_graph_msi() -> MSIAuthentication:
+def get_msi() -> MSIAuthentication:
     allow_more_workers()
     reduce_logging()
-    return MSIAuthentication(
-        resource=AZURE_PUBLIC_CLOUD.endpoints.microsoft_graph_resource_id
-    )
+    return MSIAuthentication()
 
 
 @cached
@@ -109,8 +107,6 @@ def query_microsoft_graph(
 ) -> Any:
     cred = get_identity()
     access_token = cred.get_token("https://graph.microsoft.com/.default")
-    # auth = get_ms_graph_msi()
-    # access_token = auth.token["access_token"]
     token_type = "Bearer"
 
     url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
