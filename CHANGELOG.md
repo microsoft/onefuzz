@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.29.1
+### Changed
+
+### Fixed
+* Agent: Fixed an issue with the "Premium" storage account utilities.  [#1111](https://github.com/microsoft/onefuzz/pull/1111)
+* Agent: Addressed a rate-limiting issue when using `azcopy` from a large number of VMs with numbers cores.  [#1112](https://github.com/microsoft/onefuzz/pull/1112)
+
 ## 2.29.0
 ### Added
 * Service: PII is now removed from Jobs, Tasks, and Repros after 18 months.  [#1051](https://github.com/microsoft/onefuzz/pull/1051)
