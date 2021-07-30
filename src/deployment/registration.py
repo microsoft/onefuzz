@@ -246,9 +246,7 @@ def create_application_registration(
         UUID(app["appId"]),
         subscription_id=subscription_id,
     )
-    assign_instance_app_role(
-        onefuzz_instance_name, name, subscription_id, approle
-    )
+    assign_instance_app_role(onefuzz_instance_name, name, subscription_id, approle)
     return registered_app
 
 
