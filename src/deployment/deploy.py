@@ -597,7 +597,7 @@ class Client:
         assign_app_role(
             principal_id=self.results["deploy"]["webapp-identity"]["value"],
             application_id=MICROSOFT_GRAPH_APP_ID,
-            role_names=["GroupMember.Read.All"],
+            role_names=["GroupMember.Read.All", "User.Read.All"],
             subscription_id=self.get_subscription_id(),
         )
 

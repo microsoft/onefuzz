@@ -247,7 +247,7 @@ def create_application_registration(
         subscription_id=subscription_id,
     )
     assign_instance_app_role(
-        onefuzz_instance_name, name, subscription_id, OnefuzzAppRole.ManagedNode
+        onefuzz_instance_name, name, subscription_id, approle
     )
     return registered_app
 
@@ -290,10 +290,9 @@ def add_application_password_impl(
             subscription=subscription_id,
         )
 
-    key = uuid4()
     password_request = {
         "passwordCredential": {
-            "displayName": "%s" % key,
+            "displayName": "%s" % password_name,
             "startDateTime": "%s" % datetime.now(TZ_UTC).strftime("%Y-%m-%dT%H:%M.%fZ"),
             "endDateTime": "%s"
             % (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
@@ -308,7 +307,7 @@ def add_application_password_impl(
         body=password_request,
         subscription=subscription_id,
     )
-    return (str(key), password["secretText"])
+    return (password_name, password["secretText"])
 
 
 def get_application(
@@ -428,17 +427,20 @@ def assign_app_role(
 ) -> None:
     application_registration = query_microsoft_graph(
         method="GET",
-        resource="applications",
+        resource="servicePrincipals",
         params={
-            "$filter": f"displayName eq '{application_id}'",
-            "$select": "appId",
+            "$filter": f"appId eq '{application_id}'",
         },
         subscription=subscription_id,
     )
+    if len(application_registration["value"]) == 0:
+        raise Exception(f"appid '{application_id}' was not found:")
+    app = application_registration["value"][0]
 
-    roles = seq(application_registration["appRoles"]).find(
-        lambda role: role["value"] in role_names
+    roles = (
+        seq(app["appRoles"]).filter(lambda role: role["value"] in role_names).to_list()
     )
+
     if len(roles) < len(role_names):
         existing_roles = [role["value"] for role in roles]
         missing_roles = [
@@ -466,7 +468,7 @@ def assign_app_role(
                 resource=f"servicePrincipals/{principal_id}/appRoleAssignedTo",
                 body={
                     "principalId": principal_id,
-                    "resourceId": application_registration["id"],
+                    "resourceId": app["id"],
                     "appRoleId": app_role_id,
                 },
                 subscription=subscription_id,
