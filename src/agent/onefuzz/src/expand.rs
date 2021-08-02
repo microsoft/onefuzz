@@ -32,6 +32,7 @@ pub enum PlaceHolder {
     InputFileName,
     RuntimeDir,
     ToolsDir,
+    CoverageDir,
     GeneratorExe,
     GeneratorOptions,
     SupervisorExe,
@@ -63,6 +64,7 @@ impl PlaceHolder {
             Self::InputFileName => "{input_file_name}",
             Self::RuntimeDir => "{runtime_dir}",
             Self::ToolsDir => "{tools_dir}",
+            Self::CoverageDir => "{coverage_dir}",
             Self::GeneratorExe => "{generator_exe}",
             Self::GeneratorOptions => "{generator_options}",
             Self::SupervisorExe => "{supervisor_exe}",
@@ -265,6 +267,12 @@ impl<'a> Expand<'a> {
         let arg = arg.as_ref();
         let path = String::from(arg.to_string_lossy());
         self.set_value(PlaceHolder::SetupDir, ExpandedValue::Path(path))
+    }
+
+    pub fn coverage_dir(self, arg: impl AsRef<Path>) -> Self {
+        let arg = arg.as_ref();
+        let path = String::from(arg.to_string_lossy());
+        self.set_value(PlaceHolder::CoverageDir, ExpandedValue::Path(path))
     }
 
     pub fn task_id(self, arg: &Uuid) -> Self {
