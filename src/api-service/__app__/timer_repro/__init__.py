@@ -8,12 +8,11 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import VmState
 
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.repro import Repro
 
 
-def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     expired = Repro.search_expired()
     for repro in expired:
         logging.info("stopping repro: %s", repro.vm_id)
@@ -27,7 +26,3 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             continue
         logging.info("update repro: %s", repro.vm_id)
         process_state_updates(repro)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)

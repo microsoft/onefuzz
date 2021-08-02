@@ -160,7 +160,7 @@ def register_application(
     tenant_id = get_tenant_id(subscription_id=subscription_id)
 
     return ApplicationInfo(
-        client_id=app["id"],
+        client_id=app["appId"],
         client_secret=password,
         authority=("https://login.microsoftonline.com/%s" % tenant_id),
     )
@@ -194,7 +194,7 @@ def create_application_registration(
         raise Exception("onefuzz app registration not found")
 
     resource_access = [
-        {"id": "guid", "type": "string"}
+        {"id": role["id"], "type": "Scope"}
         for role in app["appRoles"]
         if role["value"] == approle.value
     ]
@@ -205,6 +205,7 @@ def create_application_registration(
         "publicClient": {
             "redirectUris": ["https://%s.azurewebsites.net" % onefuzz_instance_name]
         },
+        "isFallbackPublicClient": True,
         "requiredResourceAccess": (
             [
                 {
@@ -245,9 +246,7 @@ def create_application_registration(
         UUID(app["appId"]),
         subscription_id=subscription_id,
     )
-    assign_app_role(
-        onefuzz_instance_name, name, subscription_id, OnefuzzAppRole.ManagedNode
-    )
+    assign_instance_app_role(onefuzz_instance_name, name, subscription_id, approle)
     return registered_app
 
 
@@ -289,10 +288,9 @@ def add_application_password_impl(
             subscription=subscription_id,
         )
 
-    key = uuid4()
     password_request = {
         "passwordCredential": {
-            "displayName": "%s" % key,
+            "displayName": "%s" % password_name,
             "startDateTime": "%s" % datetime.now(TZ_UTC).strftime("%Y-%m-%dT%H:%M.%fZ"),
             "endDateTime": "%s"
             % (datetime.now(TZ_UTC) + timedelta(days=365)).strftime(
@@ -307,7 +305,7 @@ def add_application_password_impl(
         body=password_request,
         subscription=subscription_id,
     )
-    return (str(key), password["secretText"])
+    return (password_name, password["secretText"])
 
 
 def get_application(
@@ -420,6 +418,62 @@ def update_pool_registration(onefuzz_instance_name: str, subscription_id: str) -
 
 
 def assign_app_role(
+    principal_id: str,
+    application_id: str,
+    role_names: List[str],
+    subscription_id: str,
+) -> None:
+    application_registration = query_microsoft_graph(
+        method="GET",
+        resource="servicePrincipals",
+        params={
+            "$filter": f"appId eq '{application_id}'",
+        },
+        subscription=subscription_id,
+    )
+    if len(application_registration["value"]) == 0:
+        raise Exception(f"appid '{application_id}' was not found:")
+    app = application_registration["value"][0]
+
+    roles = (
+        seq(app["appRoles"]).filter(lambda role: role["value"] in role_names).to_list()
+    )
+
+    if len(roles) < len(role_names):
+        existing_roles = [role["value"] for role in roles]
+        missing_roles = [
+            role_name for role_name in role_names if role_name not in existing_roles
+        ]
+        raise Exception(
+            f"The following roles could not be found in appId '{application_id}': {missing_roles}"
+        )
+
+    expected_role_ids = [role["id"] for role in roles]
+    assignments = query_microsoft_graph(
+        method="GET",
+        resource=f"servicePrincipals/{principal_id}/appRoleAssignments",
+        subscription=subscription_id,
+    )
+    assigned_role_ids = [assignment["appRoleId"] for assignment in assignments["value"]]
+    missing_assignments = [
+        id for id in expected_role_ids if id not in assigned_role_ids
+    ]
+
+    if missing_assignments:
+        for app_role_id in missing_assignments:
+            query_microsoft_graph(
+                method="POST",
+                resource=f"servicePrincipals/{principal_id}/appRoleAssignedTo",
+                body={
+                    "principalId": principal_id,
+                    "resourceId": app["id"],
+                    "appRoleId": app_role_id,
+                },
+                subscription=subscription_id,
+            )
+
+
+def assign_instance_app_role(
     onefuzz_instance_name: str,
     application_name: str,
     subscription_id: str,
@@ -588,7 +642,7 @@ def main() -> None:
             args.subscription_id,
         )
     elif args.command == "assign_scaleset_role":
-        assign_app_role(
+        assign_instance_app_role(
             onefuzz_instance_name,
             args.scaleset_name,
             args.subscription_id,

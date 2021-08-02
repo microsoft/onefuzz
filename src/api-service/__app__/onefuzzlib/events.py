@@ -3,36 +3,27 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import json
 import logging
-from queue import Empty, Queue
-from typing import Optional
+from typing import List
 
 from onefuzztypes.events import Event, EventMessage, EventType, get_event_type
 from onefuzztypes.models import UserInfo
 from pydantic import BaseModel
 
 from .azure.creds import get_instance_id, get_instance_name
+from .azure.queue import send_message
+from .azure.storage import StorageType
 from .webhooks import Webhook
 
-EVENTS: Queue = Queue()
+
+class SignalREvent(BaseModel):
+    target: str
+    arguments: List[EventMessage]
 
 
-def get_events() -> Optional[str]:
-    events = []
-
-    for _ in range(5):
-        try:
-            event = EVENTS.get(block=False)
-            events.append(json.loads(event))
-            EVENTS.task_done()
-        except Empty:
-            break
-
-    if events:
-        return json.dumps({"target": "events", "arguments": events})
-    else:
-        return None
+def queue_signalr_event(event_message: EventMessage) -> None:
+    message = SignalREvent(target="events", arguments=[event_message]).json().encode()
+    send_message("signalr-events", message, StorageType.config)
 
 
 def log_event(event: Event, event_type: EventType) -> None:
@@ -85,6 +76,6 @@ def send_event(event: Event) -> None:
     if event_message.event != event:
         event_message.event = event.copy(deep=True)
 
-    EVENTS.put(event_message.json())
+    queue_signalr_event(event_message)
     Webhook.send_event(event_message)
     log_event(event, event_type)

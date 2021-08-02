@@ -3,18 +3,21 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import functools
+import logging
 import os
 import urllib.parse
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 from uuid import UUID
 
 import requests
+from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from memoization import cached
-from msrestazure.azure_active_directory import AZURE_PUBLIC_CLOUD, MSIAuthentication
+from msrestazure.azure_active_directory import MSIAuthentication
 from msrestazure.tools import parse_resource_id
 from onefuzztypes.primitives import Container, Region
 
@@ -22,12 +25,10 @@ from .monkeypatch import allow_more_workers, reduce_logging
 
 
 @cached
-def get_ms_graph_msi() -> MSIAuthentication:
+def get_msi() -> MSIAuthentication:
     allow_more_workers()
     reduce_logging()
-    return MSIAuthentication(
-        resource=AZURE_PUBLIC_CLOUD.endpoints.microsoft_graph_resource_id
-    )
+    return MSIAuthentication()
 
 
 @cached
@@ -104,13 +105,12 @@ def query_microsoft_graph(
     params: Optional[Dict] = None,
     body: Optional[Dict] = None,
 ) -> Any:
-    auth = get_ms_graph_msi()
-    access_token = auth.token["access_token"]
-    token_type = auth.token["token_type"]
+    cred = get_identity()
+    access_token = cred.get_token("https://graph.microsoft.com/.default")
 
     url = urllib.parse.urljoin("https://graph.microsoft.com/v1.0/", resource)
     headers = {
-        "Authorization": "%s %s" % (token_type, access_token),
+        "Authorization": "Bearer %s" % access_token.token,
         "Content-Type": "application/json",
     }
     response = requests.request(
@@ -198,3 +198,48 @@ def get_scaleset_principal_id() -> UUID:
 @cached
 def get_keyvault_client(vault_url: str) -> SecretClient:
     return SecretClient(vault_url=vault_url, credential=DefaultAzureCredential())
+
+
+def clear_azure_client_cache() -> None:
+    # clears the memoization of the Azure clients.
+
+    from .compute import get_compute_client
+    from .containers import get_blob_service
+    from .network_mgmt_client import get_network_client
+    from .storage import get_mgmt_client
+
+    # currently memoization.cache does not project the wrapped function's types.
+    # As a workaround, CI comments out the `cached` wrapper, then runs the type
+    # validation.  This enables calling the wrapper's clear_cache if it's not
+    # disabled.
+    for func in [
+        get_msi,
+        get_identity,
+        get_compute_client,
+        get_blob_service,
+        get_network_client,
+        get_mgmt_client,
+    ]:
+        clear_func = getattr(func, "clear_cache", None)
+        if clear_func is not None:
+            clear_func()
+
+
+T = TypeVar("T", bound=Callable[..., Any])
+
+
+class retry_on_auth_failure:
+    def __call__(self, func: T) -> T:
+        @functools.wraps(func)
+        def decorated(*args, **kwargs):  # type: ignore
+            try:
+                return func(*args, **kwargs)
+            except ClientAuthenticationError as err:
+                logging.warning(
+                    "clearing authentication cache after auth failure: %s", err
+                )
+
+            clear_azure_client_cache()
+            return func(*args, **kwargs)
+
+        return cast(T, decorated)

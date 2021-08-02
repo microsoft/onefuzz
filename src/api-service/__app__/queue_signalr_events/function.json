@@ -5,8 +5,14 @@
       "name": "msg",
       "type": "queueTrigger",
       "direction": "in",
-      "queueName": "webhooks",
+      "queueName": "signalr-events",
       "connection": "AzureWebJobsStorage"
+    },
+    {
+      "type": "signalR",
+      "direction": "out",
+      "name": "dashboard",
+      "hubName": "dashboard"
     }
   ]
 }

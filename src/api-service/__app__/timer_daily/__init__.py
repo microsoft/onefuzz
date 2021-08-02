@@ -7,12 +7,11 @@ import logging
 
 import azure.functions as func
 
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.webhooks import WebhookMessageLog
 from ..onefuzzlib.workers.scalesets import Scaleset
 
 
-def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     scalesets = Scaleset.search()
     for scaleset in scalesets:
         logging.info("updating scaleset configs: %s", scaleset.scaleset_id)
@@ -27,7 +26,3 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
             log_entry.event_id,
         )
         log_entry.delete()
-
-    events = get_events()
-    if events:
-        dashboard.set(events)

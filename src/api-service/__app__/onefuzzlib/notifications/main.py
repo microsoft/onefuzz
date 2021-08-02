@@ -72,7 +72,7 @@ class Notification(models.Notification, ORMMixin):
             existing = cls.search(query={"container": [container]})
             for entry in existing:
                 logging.info(
-                    "replacing existing notification: %s",
+                    "replacing existing notification: %s - %s",
                     entry.notification_id,
                     container,
                 )
