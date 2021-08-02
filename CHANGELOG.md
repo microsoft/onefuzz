@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1116](https://github.com/microsoft/onefuzz/pull/1116)
 
 ### Fixed
-* Service: Fixed an error replacing notifications for a container.  [#1115](https://github.com/microsoft/onefuzz/pull/1115)
+* Service: Fixed an error when replacing notifications for a container. [#1115](https://github.com/microsoft/onefuzz/pull/1115)
 * Service: Fixed Python 3.9 compatability issues.  [#1117](https://github.com/microsoft/onefuzz/pull/1117)
 * Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1118](https://github.com/microsoft/onefuzz/pull/1118)
 
