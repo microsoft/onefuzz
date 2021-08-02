@@ -17,7 +17,7 @@ from ..tasks.main import Task
 
 
 def markdown_escape(data: str) -> str:
-    values = "\\*_{}[]()#+-.!"
+    values = r"\\*_{}[]()#+-.!"  # noqa: P103
     for value in values:
         data = data.replace(value, "\\" + value)
     data = data.replace("`", "``")

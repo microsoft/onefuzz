@@ -85,7 +85,7 @@ impl ReportTask {
         info!("processing existing crashes");
         if let Some(crashes) = &self.config.crashes {
             self.poller
-                .batch_process(&mut processor, &crashes)
+                .batch_process(&mut processor, crashes)
                 .await
                 .context("batch processing failed")?;
         }

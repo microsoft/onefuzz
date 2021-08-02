@@ -75,7 +75,7 @@ def create_storage(resource_group: str, account_name: str, location: str) -> str
     )
 
     client = get_client_from_cli_profile(StorageManagementClient)
-    account = client.storage_accounts.create(
+    account = client.storage_accounts.begin_create(
         resource_group, account_name, params
     ).result()
     if account.provisioning_state != "Succeeded":

@@ -24,6 +24,7 @@ from .storage import StorageType, get_primary_account, get_storage_account_name_
 QueueNameType = Union[str, UUID]
 
 DEFAULT_TTL = -1
+DEFAULT_DURATION = datetime.timedelta(days=30)
 
 
 @cached(ttl=60)
@@ -48,8 +49,10 @@ def get_queue_sas(
     add: bool = False,
     update: bool = False,
     process: bool = False,
-    duration: datetime.timedelta = datetime.timedelta(days=30),
+    duration: Optional[datetime.timedelta] = None,
 ) -> str:
+    if duration is None:
+        duration = DEFAULT_DURATION
     account_id = get_primary_account(storage_type)
     logging.debug("getting queue sas %s (account_id: %s)", queue, account_id)
     name, key = get_storage_account_name_key(account_id)
