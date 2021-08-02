@@ -286,7 +286,7 @@ impl Agent {
             Ok(None) => {}
             Ok(Some(cmd)) => {
                 info!("agent received node command: {:?}", cmd);
-                self.scheduler()?.execute_command(&cmd).await?;
+                self.scheduler()?.execute_command(cmd).await?;
             }
             Err(PollCommandError::RequestFailed(err)) => {
                 // If we failed to request commands, this could be the service
