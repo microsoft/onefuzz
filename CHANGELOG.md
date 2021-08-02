@@ -4,9 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 2.29.1
+## 2.30.0
 ### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1116](https://github.com/microsoft/onefuzz/pull/1116)
 
+### Fixed
+* Service: Fixed an error replacing notifications for a container.  [#1115](https://github.com/microsoft/onefuzz/pull/1115)
+* Service: Fixed Python 3.9 compatability issues.  [#1117](https://github.com/microsoft/onefuzz/pull/1117)
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1118](https://github.com/microsoft/onefuzz/pull/1118)
+
+## 2.29.1
 ### Fixed
 * Agent: Fixed an issue with the "Premium" storage account utilities.  [#1111](https://github.com/microsoft/onefuzz/pull/1111)
 * Agent: Addressed a rate-limiting issue when using `azcopy` from a large number of VMs with numbers cores.  [#1112](https://github.com/microsoft/onefuzz/pull/1112)
