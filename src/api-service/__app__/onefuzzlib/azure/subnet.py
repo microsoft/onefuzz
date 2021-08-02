@@ -66,6 +66,6 @@ def create_virtual_network(
             resource_group, name, params
         )
     except (CloudError, ResourceNotFoundError) as err:
-        return Error(code=ErrorCode.UNABLE_TO_CREATE_NETWORK, errors=[str(err.message)])
+        return Error(code=ErrorCode.UNABLE_TO_CREATE_NETWORK, errors=[str(err)])
 
     return None
