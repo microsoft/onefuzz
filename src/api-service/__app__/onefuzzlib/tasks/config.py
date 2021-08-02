@@ -262,7 +262,7 @@ def build_task_config(
                         read=ContainerPermission.Read in container_def.permissions,
                         write=ContainerPermission.Write in container_def.permissions,
                         delete=ContainerPermission.Delete in container_def.permissions,
-                        list=ContainerPermission.List in container_def.permissions,
+                        list_=ContainerPermission.List in container_def.permissions,
                     ),
                 }
             )
