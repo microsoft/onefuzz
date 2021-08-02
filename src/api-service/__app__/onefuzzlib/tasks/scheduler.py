@@ -199,7 +199,7 @@ def build_work_set(tasks: List[Task]) -> Optional[Tuple[BucketConfig, WorkSet]]:
 
     if bucket_config:
         setup_url = get_container_sas_url(
-            bucket_config.setup_container, StorageType.corpus, read=True, list=True
+            bucket_config.setup_container, StorageType.corpus, read=True, list_=True
         )
 
         work_set = WorkSet(

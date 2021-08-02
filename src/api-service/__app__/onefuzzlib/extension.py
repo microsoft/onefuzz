@@ -140,13 +140,13 @@ def update_managed_scripts() -> None:
                 Container("instance-specific-setup"),
                 StorageType.config,
                 read=True,
-                list=True,
+                list_=True,
             )
         ),
         "azcopy sync '%s' tools"
         % (
             get_container_sas_url(
-                Container("tools"), StorageType.config, read=True, list=True
+                Container("tools"), StorageType.config, read=True, list_=True
             )
         ),
     ]
@@ -291,7 +291,7 @@ def repro_extensions(
             "azcopy sync '%s' ./setup"
             % (
                 get_container_sas_url(
-                    setup_container, StorageType.corpus, read=True, list=True
+                    setup_container, StorageType.corpus, read=True, list_=True
                 )
             ),
         ]
