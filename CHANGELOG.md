@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Service: Fixed an error when replacing notifications for a container. [#1115](https://github.com/microsoft/onefuzz/pull/1115)
-* Service: Fixed Python 3.9 compatability issues.  [#1117](https://github.com/microsoft/onefuzz/pull/1117)
+* Service: Fixed Python 3.9 compatibility issues.  [#1117](https://github.com/microsoft/onefuzz/pull/1117)
 * Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1118](https://github.com/microsoft/onefuzz/pull/1118)
 
 ## 2.29.1
