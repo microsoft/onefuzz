@@ -969,7 +969,8 @@ def main() -> None:
         ("rbac", Client.setup_rbac),
         ("arm", Client.deploy_template),
         ("assign_scaleset_identity_role", Client.assign_scaleset_identity_role),
-        ("assign_app_permissions", Client.assign_app_permissions),
+        # this operation seems to require admin privileges
+        # ("assign_app_permissions", Client.assign_app_permissions),
     ]
 
     full_deployment_states = rbac_only_states + [
