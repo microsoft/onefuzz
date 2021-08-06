@@ -65,8 +65,8 @@ pub fn configure_machine_wide_app_debug_settings(application_path: impl AsRef<Pa
     // This is a machine-wide setting, not process specific.
     wer::disable_wer_ui()?;
 
-    wer::add_exclusion(&exe_name)?;
-    aedebug::add_exclusion(&exe_name)?;
+    wer::add_exclusion(exe_name)?;
+    aedebug::add_exclusion(exe_name)?;
 
     Ok(())
 }

@@ -263,7 +263,7 @@ impl Tester {
             .context("Writing markdown summary for crash/timeout.")?;
 
         // Create a batch file to help reproduce the bug with the settings we used.
-        self.create_repro_bat(&log_dir, &result.input_path, &deduped_input_path)?;
+        self.create_repro_bat(log_dir, &result.input_path, deduped_input_path)?;
 
         Ok(())
     }
@@ -389,7 +389,7 @@ impl Tester {
                     "{}-logs",
                     logs_dir.file_stem().unwrap().to_string_lossy()
                 ));
-                self.create_test_failure_artifacts(&logs_dir, &result, &copied_file)?;
+                self.create_test_failure_artifacts(&logs_dir, result, &copied_file)?;
                 Ok(Some(new_test_result(
                     result.debugger_result.clone(),
                     &result.input_path,
