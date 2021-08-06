@@ -161,6 +161,7 @@ def new_files(
     for (task, containers) in get_queue_tasks():
         if container in containers:
             logging.info("queuing input %s %s %s", container, filename, task.task_id)
+            print("[otel]queuing input %s %s %s", container, filename, task.task_id)
             url = get_file_sas_url(
                 container, filename, StorageType.corpus, read=True, delete=True
             )

@@ -116,6 +116,7 @@ def send_message(
     time_to_live: int = DEFAULT_TTL,
 ) -> None:
     queue = get_queue(name, storage_type)
+    print("[otel] sending message to queue:%s", name)
     if queue:
         try:
             queue.send_message(
