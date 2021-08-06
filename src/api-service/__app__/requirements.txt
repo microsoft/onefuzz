@@ -23,8 +23,8 @@ azure-storage-queue==12.1.6
 jinja2~=2.11.3
 msrestazure~=0.6.3
 opencensus-ext-azure~=1.0.2
-opentelemetry-api
-opentelemetry-sdk
+opentelemetry-api==1.4.1
+opentelemetry-sdk==1.4.1
 pydantic==1.8.2 --no-binary=pydantic
 PyJWT>=2.1.0
 requests~=2.25.1
