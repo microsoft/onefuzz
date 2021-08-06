@@ -47,7 +47,7 @@ def get(req: func.HttpRequest) -> func.HttpResponse:
                 read=True,
                 write=True,
                 delete=True,
-                list=True,
+                list_=True,
             ),
             metadata=metadata,
         )

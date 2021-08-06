@@ -15,7 +15,10 @@ use onefuzz::{
     fs::{has_files, set_executable, OwnedDir},
     jitter::delay_with_jitter,
     process::monitor_process,
-    syncdir::{SyncOperation::Pull, SyncedDir},
+    syncdir::{
+        SyncOperation::{Pull, Push},
+        SyncedDir,
+    },
 };
 use onefuzz_telemetry::Event::{new_coverage, new_result};
 use serde::Deserialize;
@@ -49,6 +52,7 @@ pub struct SupervisorConfig {
     pub reports: Option<SyncedDir>,
     pub unique_reports: Option<SyncedDir>,
     pub no_repro: Option<SyncedDir>,
+    pub coverage: Option<SyncedDir>,
     #[serde(flatten)]
     pub common: CommonConfig,
 }
@@ -72,6 +76,12 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
     };
     crashes.init().await?;
     let monitor_crashes = crashes.monitor_results(new_result, false);
+
+    // setup coverage
+    if let Some(coverage) = &config.coverage {
+        coverage.init_pull().await?;
+    }
+    let monitor_coverage_future = monitor_coverage(&config.coverage, config.ensemble_sync_delay);
 
     // setup reports
     let reports_dir = tempdir()?;
@@ -151,8 +161,19 @@ pub async fn spawn(config: SupervisorConfig) -> Result<(), Error> {
         monitor_inputs,
         continuous_sync_task,
         monitor_reports_future,
+        monitor_coverage_future,
     )?;
 
+    Ok(())
+}
+
+async fn monitor_coverage(
+    coverage: &Option<SyncedDir>,
+    ensemble_sync_delay: Option<u64>,
+) -> Result<()> {
+    if let Some(coverage) = coverage {
+        coverage.continuous_sync(Push, ensemble_sync_delay).await?;
+    }
     Ok(())
 }
 
@@ -185,6 +206,9 @@ async fn start_supervisor(
         .task_id(&config.common.task_id)
         .set_optional_ref(&config.tools, |expand, tools| {
             expand.tools_dir(&tools.local_path)
+        })
+        .set_optional_ref(&config.coverage, |expand, coverage| {
+            expand.coverage_dir(&coverage.local_path)
         })
         .set_optional_ref(&config.target_exe, |expand, target_exe| {
             expand.target_exe(target_exe)
@@ -345,6 +369,7 @@ mod tests {
             reports: None,
             unique_reports: None,
             no_repro: None,
+            coverage: None,
             common: CommonConfig::default(),
         };
 

@@ -121,7 +121,7 @@ pub async fn update(data: &ConfigData) -> Result<()> {
         if !path.is_file() {
             info!("adding service {}", file_name);
             tokio::fs::write(&path, content).await?;
-            start_service(&file_name).await?;
+            start_service(file_name).await?;
         }
     }
 
