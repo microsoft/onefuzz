@@ -20,11 +20,10 @@ Enable-SSH
 $config = Get-OnefuzzConfig
 
 while ($true) {
-    $runid = [guid]::NewGuid().toString()
     switch ($config.mode) {
         "fuzz" {
             log "onefuzz: fuzzing"
-            $arglist = "run --config config.json --redirect-output c:\onefuzz\logs\onefuzz-supervisor-" + $runid + ".txt"
+            $arglist = "run --config config.json --redirect-output c:\onefuzz\logs\"
 
             Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList $arglist -WindowStyle Hidden -Wait
         }

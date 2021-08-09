@@ -29,6 +29,7 @@ use onefuzz::{
 use onefuzz_telemetry::{self as telemetry, EventData, Role};
 use std::io::{self, Write};
 use structopt::StructOpt;
+use uuid::Uuid;
 
 pub mod agent;
 pub mod buffer;
@@ -58,7 +59,8 @@ enum Opt {
 struct RunOpt {
     #[structopt(short, long = "--config", parse(from_os_str))]
     config_path: Option<PathBuf>,
-    /// re-executes as a child process, redirecting stdout and stderr to a file
+    /// re-executes as a child process, recording stdout/stderr to files in
+    /// the specified directory
     #[structopt(short, long = "--redirect-output", parse(from_os_str))]
     redirect_output: Option<PathBuf>,
 }
@@ -98,14 +100,34 @@ fn redirect(opt: RunOpt) -> Result<()> {
     let log_path = opt
         .redirect_output
         .expect("redirect should only be called with log_path");
-    info!("redirecting output: {}", log_path.display());
+
+    if !log_path.is_dir() {
+        bail!("log path must be a directory: {}", log_path.display());
+    }
+
+    let run_id = Uuid::new_v4();
+
+    let stdout_path = log_path.join(format!("{}-stdout.txt", run_id));
+    let stderr_path = log_path.join(format!("{}-stdout.txt", run_id));
+    let failure_path = log_path.join(format!("{}-failure.txt", run_id));
+
+    info!(
+        "saving output to files: {} {} {}",
+        stdout_path.display(),
+        stderr_path.display(),
+        failure_path.display()
+    );
 
     let stdout = OpenOptions::new()
         .create(true)
         .append(true)
-        .open(&log_path)
+        .open(&stdout_path)
         .context("unable to open log file")?;
-    let stderr = stdout.try_clone().context("unable to clone log handle")?;
+    let stderr = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&stderr_path)
+        .context("unable to open log file")?;
 
     let mut cmd = Command::new(std::env::current_exe()?);
     cmd.stdout(Stdio::from(stdout))
@@ -124,8 +146,9 @@ fn redirect(opt: RunOpt) -> Result<()> {
 
     if !exit_status.success {
         let mut log = OpenOptions::new()
+            .create(true)
             .append(true)
-            .open(log_path)
+            .open(failure_path)
             .context("unable to open log file")?;
         log.write_fmt(format_args!(
             "onefuzz-supervisor child failed: {:?}",
