@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-Start-Transcript -Path c:\onefuzz-run.log
+Start-Transcript -Append -Path c:\onefuzz-run.log
 
 $basedir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
@@ -14,6 +14,7 @@ catch {
 
 log "onefuzz: starting"
 
+
 Set-Location C:\onefuzz
 Enable-SSH
 $config = Get-OnefuzzConfig
@@ -22,7 +23,9 @@ while ($true) {
     switch ($config.mode) {
         "fuzz" {
             log "onefuzz: fuzzing"
-            Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList "run --config config.json" -WindowStyle Hidden -Wait
+            $arglist = "run --config config.json --redirect-output c:\onefuzz\logs\"
+
+            Start-Process "c:\onefuzz\tools\win64\onefuzz-supervisor.exe" -ArgumentList $arglist -WindowStyle Hidden -Wait
         }
         "repro" {
             log "onefuzz: starting repro"
@@ -33,6 +36,9 @@ while ($true) {
             exit 1
         }
     }
+
+    get-eventlog -logname "application" -message *onefuzz* | format-table -autosize -wrap | out-file c:\onefuzz\logs\onefuzz-eventlog.log
+
     log "onefuzz unexpectedly exited, restarting after delay"
     Start-Sleep -Seconds 30
 }
