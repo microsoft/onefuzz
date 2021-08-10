@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import logging
 from typing import List, Optional
 from uuid import UUID
 
@@ -69,7 +70,7 @@ def parse_jwt_token(request: func.HttpRequest) -> Result[UserInfo]:
 
     tenants = get_allowed_tenants()
     if token["iss"] not in tenants:
-        logging.error("issuer not from allowed tenant: %s - %s", token['iss'], tenants)
+        logging.error("issuer not from allowed tenant: %s - %s", token["iss"], tenants)
         return Error(code=ErrorCode.INVALID_REQUEST, errors=["unauthorized AAD issuer"])
 
     application_id = UUID(token["appid"]) if "appid" in token else None
