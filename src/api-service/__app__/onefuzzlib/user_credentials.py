@@ -45,7 +45,7 @@ def get_auth_token(request: func.HttpRequest) -> Optional[str]:
 @cached(ttl=60)
 def get_allowed_tenants() -> List[str]:
     config = InstanceConfig.fetch()
-    entries = [f"https://sts.windows.net/{x}" for x in config.allowed_aad_tenants]
+    entries = [f"https://sts.windows.net/{x}/" for x in config.allowed_aad_tenants]
     return entries
 
 
@@ -67,7 +67,9 @@ def parse_jwt_token(request: func.HttpRequest) -> Result[UserInfo]:
             code=ErrorCode.INVALID_REQUEST, errors=["missing issuer from token"]
         )
 
-    if token["iss"] not in get_allowed_tenants():
+    tenants = get_allowed_tenants()
+    if token["iss"] not in tenants:
+        logging.error("issuer not from allowed tenant: %s - %s", token['iss'], tenants)
         return Error(code=ErrorCode.INVALID_REQUEST, errors=["unauthorized AAD issuer"])
 
     application_id = UUID(token["appid"]) if "appid" in token else None
