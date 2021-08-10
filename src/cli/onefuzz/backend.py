@@ -260,6 +260,20 @@ class Backend:
                 if response.status_code not in retry_codes:
                     break
 
+                if response.status_code == 401:
+                    try:
+                        as_json = json.loads(response.content)
+                        if (
+                            isinstance(as_json, dict)
+                            and "code" in as_json
+                            and "errors" in as_json
+                        ):
+                            raise Exception(
+                                f"request failed: application error - {as_json['code']} {as_json['errors']}"
+                            )
+                    except json.decoder.JSONDecodeError:
+                        pass
+
                 LOGGER.info("request bad status code: %s", response.status_code)
             except requests.exceptions.ConnectionError as err:
                 LOGGER.info("request connection error: %s", err)
