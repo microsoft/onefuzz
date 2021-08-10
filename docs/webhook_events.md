@@ -641,7 +641,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "admins": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "allow_pool_management": true
+        "allow_pool_management": true,
+        "proxy_vm_sku": "Standard_B2s"
     }
 }
 ```
@@ -665,6 +666,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": true,
                     "title": "Allow Pool Management",
                     "type": "boolean"
+                },
+                "proxy_vm_sku": {
+                    "default": "Standard_B2s",
+                    "title": "Proxy Vm Sku",
+                    "type": "string"
                 }
             },
             "title": "InstanceConfig",
@@ -5599,6 +5605,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": true,
                     "title": "Allow Pool Management",
                     "type": "boolean"
+                },
+                "proxy_vm_sku": {
+                    "default": "Standard_B2s",
+                    "title": "Proxy Vm Sku",
+                    "type": "string"
                 }
             },
             "title": "InstanceConfig",
