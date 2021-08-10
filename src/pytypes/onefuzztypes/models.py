@@ -802,6 +802,8 @@ class InstanceConfig(BaseModel):
     # if set, only admins can manage pools or scalesets
     allow_pool_management: bool = Field(default=True)
 
+    proxy_vm_sku: str = Field(default="Standard_B2s")
+
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
             # If no admins are set, then ignore setting admins

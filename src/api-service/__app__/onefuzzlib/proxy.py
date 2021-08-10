@@ -36,12 +36,12 @@ from .azure.ip import get_public_ip
 from .azure.queue import get_queue_sas
 from .azure.storage import StorageType
 from .azure.vm import VM
+from .config import InstanceConfig
 from .events import send_event
 from .extension import proxy_manager_extensions
 from .orm import ORMMixin, QueryFilter
 from .proxy_forward import ProxyForward
 
-PROXY_SKU = "Standard_B2s"
 PROXY_IMAGE = "Canonical:UbuntuServer:18.04-LTS:latest"
 PROXY_LOG_PREFIX = "scaleset-proxy: "
 PROXY_LIFESPAN = datetime.timedelta(days=7)
@@ -69,10 +69,11 @@ class Proxy(ORMMixin):
         return ("region", "proxy_id")
 
     def get_vm(self) -> VM:
+        sku = InstanceConfig.fetch().proxy_vm_sku
         vm = VM(
             name="proxy-%s" % base58.b58encode(self.proxy_id.bytes).decode(),
             region=self.region,
-            sku=PROXY_SKU,
+            sku=sku,
             image=PROXY_IMAGE,
             auth=self.auth,
         )
