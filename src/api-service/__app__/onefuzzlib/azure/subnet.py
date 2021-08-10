@@ -55,8 +55,8 @@ def create_virtual_network(
     network_client = get_network_client()
     params = {
         "location": location,
-        "address_space": {"address_prefixes": ["10.0.0.0/8"]},
-        "subnets": [{"name": name, "address_prefix": "10.0.0.0/16"}],
+        "address_space": {"address_prefixes": ["172.16.0.0/12"]},
+        "subnets": [{"name": name, "address_prefix": "172.16.0.0/12"}],
     }
     if "ONEFUZZ_OWNER" in os.environ:
         params["tags"] = {"OWNER": os.environ["ONEFUZZ_OWNER"]}
