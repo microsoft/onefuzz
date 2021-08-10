@@ -13,9 +13,18 @@ import azure.functions as func
 # https://docs.microsoft.com/en-us/azure/azure-signalr/signalr-concept-internals
 
 
-def main(req: func.HttpRequest, connectionInfoJson: str) -> func.HttpResponse:
+
+def post(req: func.HttpRequest, connectionInfoJson: str) -> func.HttpResponse:
     return func.HttpResponse(
         connectionInfoJson,
         status_code=200,
         headers={"Content-type": "application/json"},
     )
+
+
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    methods = {"POST": post}
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    return result
