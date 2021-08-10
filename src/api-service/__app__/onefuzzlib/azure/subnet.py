@@ -46,7 +46,7 @@ def create_virtual_network(
     resource_group: str, name: str, location: str
 ) -> Optional[Error]:
     logging.info(
-        "creating subnet - resource group: %s name: %s location: %s",
+        "creating subnet -  resource group: %s name: %s location: %s",
         resource_group,
         name,
         location,
