@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2018"
 license = "MIT"
 
+[features]
+# Feature to gate tests that depend on binary artifacts, should be removed when
+# #1143 is resolved.
+binary-tests = []
+
 [dependencies]
 log = "0.4"
 nom = "6"

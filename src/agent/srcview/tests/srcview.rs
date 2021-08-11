@@ -1,6 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+// tests depends on example.pdb
+// $ sha256sum example.pdb
+// ecc4214d687c97e9c8afd0c84b4b75383eaa0a237f8a8ca5049478f63b2c98b9  example.pdb
+
 use std::env;
 use std::path::PathBuf;
 
@@ -17,6 +21,7 @@ fn test_srcview() -> SrcView {
 }
 
 #[test]
+#[cfg_attr(not(feature = "binary-tests"), ignore)]
 fn modoff() {
     let srcview = test_srcview();
 
@@ -34,6 +39,7 @@ fn modoff() {
 }
 
 #[test]
+#[cfg_attr(not(feature = "binary-tests"), ignore)]
 fn symbol() {
     let srcview = test_srcview();
 
@@ -56,6 +62,7 @@ fn symbol() {
 }
 
 #[test]
+#[cfg_attr(not(feature = "binary-tests"), ignore)]
 fn path() {
     let srcview = test_srcview();
 
