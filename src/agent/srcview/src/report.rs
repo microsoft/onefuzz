@@ -405,7 +405,7 @@ impl Report {
                 ew.write(
                     XmlEvent::start_element("class")
                         .attr("name", &display_path)
-                        .attr("filename",  &display_path)
+                        .attr("filename", &display_path)
                         .attr(
                             "line-rate",
                             &format!(
