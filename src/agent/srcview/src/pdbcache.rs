@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};

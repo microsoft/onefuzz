@@ -27,7 +27,7 @@ See [`azure-pipelines.yml`](azure-pipelines.yml).
 
 Install [Coverage Gutters](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters),
 then place a file named `coverage.xml` at a location such that the relative
-file paths match your repo. Note that this is a fille you should generate
+file paths match your repo. Note that this is a file you should generate
 yourself, and that the `coverage.xml` included in this repo will probably not
 help you. From there, navigate to any file you expect to see coverage in. If
 the paths and coverage file correctly line up, you should see red or green bars

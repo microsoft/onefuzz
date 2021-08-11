@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 //! # srcview
 //!
 //! srcview is a crate for converting module+offset (modoff) coverage traces to source and line

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 use std::{env, fs, process};
 
 use srcview::{ModOff, SrcView};
