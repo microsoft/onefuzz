@@ -1,0 +1,14 @@
+[package]
+name = "srcview"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4"
+nom = "6"
+pdb = "0.7"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+xml-rs = "0.8"
