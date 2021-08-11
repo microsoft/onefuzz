@@ -18,7 +18,7 @@ backoff = { version = "0.3", features = ["tokio"] }
 clap = "2.33"
 coverage = { path = "../coverage" }
 crossterm = "0.20"
-env_logger = "0.8"
+env_logger = "0.9"
 flume = "0.10"
 futures = "0.3"
 hex = "0.4"
