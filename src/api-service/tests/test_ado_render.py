@@ -8,6 +8,7 @@ import json
 import os
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from onefuzztypes.enums import OS, TaskType
 from onefuzztypes.models import ADOTemplate, JobConfig, Report, TaskConfig, TaskDetails
@@ -18,10 +19,17 @@ from __app__.onefuzzlib.notifications.ado import ADO
 from __app__.onefuzzlib.notifications.common import Render
 from __app__.onefuzzlib.tasks.main import Task
 
-os.environ["ONEFUZZ_INSTANCE_NAME"] = "contoso-test"
-
 
 class TestReportParse(unittest.TestCase):
+    def setUp(self):
+        self.env_patch = patch.dict(
+            "os.environ", {"ONEFUZZ_INSTANCE_NAME": "contoso-test"}
+        )
+        self.env_patch.start()
+
+    def tearDown(self):
+        self.env_patch.stop()
+
     def test_sample(self) -> None:
         expected_path = Path(__file__).parent / "data" / "ado-rendered.json"
         with open(expected_path, "r") as handle:
@@ -34,8 +42,6 @@ class TestReportParse(unittest.TestCase):
         ado_path = Path(__file__).parent / "data" / "ado-config.json"
         with open(ado_path, "r") as handle:
             ado_raw = json.load(handle)
-
-        print(ado_raw)
 
         report = Report.parse_obj(report_raw)
         config = ADOTemplate.parse_obj(ado_raw)
@@ -56,6 +62,7 @@ class TestReportParse(unittest.TestCase):
             job_id=job.job_id,
             os=OS.linux,
         )
+
         renderer = Render(
             container,
             filename,
