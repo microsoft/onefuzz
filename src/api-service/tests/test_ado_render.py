@@ -4,20 +4,19 @@
 # Licensed under the MIT License.
 
 
-import os
 import json
+import os
 import unittest
 from pathlib import Path
 
-from onefuzztypes.models import Report, ADOTemplate, TaskConfig, JobConfig, TaskDetails
-from onefuzztypes.primitives import Container
 from onefuzztypes.enums import OS, TaskType
+from onefuzztypes.models import ADOTemplate, JobConfig, Report, TaskConfig, TaskDetails
+from onefuzztypes.primitives import Container
 
+from __app__.onefuzzlib.jobs import Job
 from __app__.onefuzzlib.notifications.ado import ADO
 from __app__.onefuzzlib.notifications.common import Render
 from __app__.onefuzzlib.tasks.main import Task
-from __app__.onefuzzlib.jobs import Job
-
 
 os.environ["ONEFUZZ_INSTANCE_NAME"] = "contoso-test"
 
@@ -25,9 +24,9 @@ os.environ["ONEFUZZ_INSTANCE_NAME"] = "contoso-test"
 class TestReportParse(unittest.TestCase):
     def test_sample(self) -> None:
         expected_path = Path(__file__).parent / "data" / "ado-rendered.json"
-        with open(expected_path , "r") as handle:
+        with open(expected_path, "r") as handle:
             expected_document = json.load(handle)
-        
+
         report_path = Path(__file__).parent / "data" / "crash-report-with-html.json"
         with open(report_path, "r") as handle:
             report_raw = json.load(handle)

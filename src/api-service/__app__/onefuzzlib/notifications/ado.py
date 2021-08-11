@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Iterator, List, Optional, Union, Tuple
+from typing import Iterator, List, Optional, Tuple, Union
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
