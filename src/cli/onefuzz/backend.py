@@ -60,6 +60,31 @@ def _temporary_umask(new_umask: int) -> Generator[None, None, None]:
             os.umask(prev_umask)
 
 
+def check_msal_error(value: Dict[str, Any], expected: List[str]) -> None:
+    if "error" in value:
+        if "error_description" in value:
+            raise Exception(
+                "error: %s\n%s" % (value["error"], value["error_description"])
+            )
+
+        raise Exception("error: %s" % (value["error"]))
+    for entry in expected:
+        if entry not in value:
+            raise Exception("interactive login missing value: %s - %s" % (entry, value))
+
+
+def check_application_error(response: requests.Response) -> None:
+    if response.status_code == 401:
+        try:
+            as_json = json.loads(response.content)
+            if isinstance(as_json, dict) and "code" in as_json and "errors" in as_json:
+                raise Exception(
+                    f"request failed: application error - {as_json['code']} {as_json['errors']}"
+                )
+        except json.decoder.JSONDecodeError:
+            pass
+
+
 class BackendConfig(BaseModel):
     authority: str
     client_id: str
@@ -191,20 +216,6 @@ class Backend:
             if access_token:
                 return access_token
 
-        def check_msal_error(value: Dict[str, Any], expected: List[str]) -> None:
-            if "error" in value:
-                if "error_description" in value:
-                    raise Exception(
-                        "error: %s\n%s" % (value["error"], value["error_description"])
-                    )
-
-                raise Exception("error: %s" % (value["error"]))
-            for entry in expected:
-                if entry not in value:
-                    raise Exception(
-                        "interactive login missing value: %s - %s" % (entry, value)
-                    )
-
         LOGGER.info("Attempting interactive device login")
         print("Please login", flush=True)
 
@@ -219,21 +230,6 @@ class Backend:
         print("Login succeeded", flush=True)
         self.save_cache()
         return access_token
-
-    def check_application_error(self, response: requests.Response) -> None:
-        if response.status_code == 401:
-            try:
-                as_json = json.loads(response.content)
-                if (
-                    isinstance(as_json, dict)
-                    and "code" in as_json
-                    and "errors" in as_json
-                ):
-                    raise Exception(
-                        f"request failed: application error - {as_json['code']} {as_json['errors']}"
-                    )
-            except json.decoder.JSONDecodeError:
-                pass
 
     def request(
         self,
@@ -275,7 +271,7 @@ class Backend:
                 if response.status_code not in retry_codes:
                     break
 
-                self.check_application_error(response)
+                check_application_error(response)
 
                 LOGGER.info("request bad status code: %s", response.status_code)
             except requests.exceptions.ConnectionError as err:
