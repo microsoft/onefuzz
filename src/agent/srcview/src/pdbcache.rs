@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
+use anyhow::Result;
 use log::*;
 use pdb::{FallibleIterator, SymbolData, PDB};
 use serde::{Deserialize, Serialize};
@@ -20,7 +21,7 @@ pub struct PdbCache {
 }
 
 impl PdbCache {
-    pub fn new<P: AsRef<Path>>(pdb: P) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new<P: AsRef<Path>>(pdb: P) -> Result<Self> {
         let mut offset_to_line: BTreeMap<usize, SrcLine> = BTreeMap::new();
         let mut symbol_to_lines: BTreeMap<String, Vec<SrcLine>> = BTreeMap::new();
         let mut path_to_symbols: BTreeMap<PathBuf, Vec<String>> = BTreeMap::new();

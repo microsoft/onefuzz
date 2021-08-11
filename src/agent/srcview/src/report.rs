@@ -6,6 +6,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use anyhow::Result;
 use regex::Regex;
 use xml::writer::{EmitterConfig, XmlEvent};
 
@@ -79,7 +80,7 @@ impl Report {
         coverage: &[SrcLine],
         srcview: &SrcView,
         include_regex: Option<&str>,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    ) -> Result<Self> {
         let include = include_regex.map(|f| Regex::new(f)).transpose()?;
         let filecov = Self::compute_filecov(coverage, srcview, &include);
 
@@ -332,10 +333,7 @@ impl Report {
     ///
     /// println!("{}", xml);
     /// ```
-    pub fn cobertura(
-        &self,
-        filter_regex: Option<&str>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub fn cobertura(&self, filter_regex: Option<&str>) -> Result<String> {
         let filter = filter_regex.map(|f| Regex::new(f)).transpose()?;
 
         let mut backing: Vec<u8> = Vec::new();
