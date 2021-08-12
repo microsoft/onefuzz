@@ -4,56 +4,72 @@
 #[macro_use]
 extern crate clap;
 
-use anyhow::{Context, Result};
-use env_logger;
+use anyhow::{format_err, Context, Result};
 use srcview::{ModOff, Report, SrcLine, SrcView};
 use std::fs::{self};
 use std::io::{stdout, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 enum Opt {
-    DumpSrcloc(SrcLocOpt),
-    DumpPdbPaths(PdbPathsOpt),
-    DumpModoffs(ModOffOpt),
-    DumpCobertuna(DumpCobertunaOpt),
+    Srcloc(SrcLocOpt),
+    PdbPaths(PdbPathsOpt),
+    Cobertuna(CobertunaOpt),
     Licenses,
     Version,
 }
 
-#[derive(StructOpt, Debug)]
-struct ModOffOpt {
-    modoff_path: PathBuf,
-}
-
+/// Print the file paths in the provided PDB
 #[derive(StructOpt, Debug)]
 struct PdbPathsOpt {
     pdb_path: PathBuf,
 }
 
+/// Print modoffset file with file and source lines
 #[derive(StructOpt, Debug)]
 struct SrcLocOpt {
     pdb_path: PathBuf,
     modoff_path: PathBuf,
+    #[structopt(long)]
+    module_name: Option<String>,
 }
 
+/// Generate a Cobertuna XML coverage report
+///
+/// Example:
+///   srcview cobertuna ./res/example.pdb res/example.txt
+///             --include-regex "E:\\\\1f\\\\coverage\\\\"
+///             --filter-regex "E:\\\\1f\\\\coverage\\\\"
+///             --module-name example.exe
+///
+/// In this example, only files that live in E:\1f\coverage are included and
+/// E:\1f\coverage is removed from the filenames in the resulting XML report.
 #[derive(StructOpt, Debug)]
-struct DumpCobertunaOpt {
+struct CobertunaOpt {
     pdb_path: PathBuf,
     modoff_path: PathBuf,
+    #[structopt(long)]
+    module_name: Option<String>,
+
+    /// regular expression that will be applied against the file paths from the
+    /// srcview
+    #[structopt(long)]
+    include_regex: Option<String>,
+
+    /// search and replace regular expression that is applied to all file
+    /// paths that will appear in the output report
+    #[structopt(long)]
+    filter_regex: Option<String>,
 }
 
 fn main() -> Result<()> {
-    env_logger::init();
-
     let opt = Opt::from_args();
 
     match opt {
-        Opt::DumpSrcloc(opts) => dump_srcloc(opts)?,
-        Opt::DumpPdbPaths(opts) => dump_pdb_paths(opts)?,
-        Opt::DumpModoffs(opts) => dump_mod_offs(opts)?,
-        Opt::DumpCobertuna(opts) => dump_cobertura(opts)?,
+        Opt::Srcloc(opts) => srcloc(opts)?,
+        Opt::PdbPaths(opts) => pdb_paths(opts)?,
+        Opt::Cobertuna(opts) => cobertura(opts)?,
         Opt::Licenses => licenses()?,
         Opt::Version => version(),
     };
@@ -70,25 +86,57 @@ fn licenses() -> Result<()> {
     Ok(())
 }
 
-fn dump_srcloc(opts: SrcLocOpt) -> Result<()> {
+fn add_common_extensions(srcview: &mut SrcView, pdb_path: &Path) -> Result<()> {
+    let pdb_file_name = pdb_path.file_name().ok_or_else(|| {
+        format_err!(
+            "unable to identify file name from path: {}",
+            pdb_path.display()
+        )
+    })?;
+
+    let stem = Path::new(pdb_file_name)
+        .file_stem()
+        .ok_or_else(|| {
+            format_err!(
+                "unable to identify file stem from path: {}",
+                pdb_path.display()
+            )
+        })?
+        .to_string_lossy();
+
+    // add module without extension
+    srcview.insert(&stem, &pdb_path)?;
+    // add common module extensions
+    for ext in ["sys", "exe", "dll"] {
+        srcview.insert(&format!("{}.{}", stem, ext), pdb_path)?;
+    }
+    Ok(())
+}
+
+fn srcloc(opts: SrcLocOpt) -> Result<()> {
     let modoff_data = fs::read_to_string(&opts.modoff_path)
         .with_context(|| format!("unable to read modoff_path: {}", opts.modoff_path.display()))?;
     let modoffs = ModOff::parse(&modoff_data)?;
     let mut srcview = SrcView::new();
-    srcview.insert("example.exe", &opts.pdb_path)?;
+
+    if let Some(module_name) = &opts.module_name {
+        srcview.insert(module_name, &opts.pdb_path)?;
+    } else {
+        add_common_extensions(&mut srcview, &opts.pdb_path)?;
+    }
 
     for modoff in &modoffs {
         print!(" +{:04x} ", modoff.offset);
-        match srcview.modoff(&modoff) {
+        match srcview.modoff(modoff) {
             Some(srcloc) => println!("{}", srcloc),
-            None => println!(""),
+            None => println!(),
         }
     }
 
     Ok(())
 }
 
-fn dump_pdb_paths(opts: PdbPathsOpt) -> Result<()> {
+fn pdb_paths(opts: PdbPathsOpt) -> Result<()> {
     let mut srcview = SrcView::new();
     srcview.insert(&opts.pdb_path.to_string_lossy().to_string(), &opts.pdb_path)?;
 
@@ -98,40 +146,21 @@ fn dump_pdb_paths(opts: PdbPathsOpt) -> Result<()> {
     Ok(())
 }
 
-fn dump_mod_offs(opts: ModOffOpt) -> Result<()> {
-    let modoff = fs::read_to_string(&opts.modoff_path)?;
-    println!("{:#?}", ModOff::parse(&modoff).unwrap());
-    Ok(())
-}
-
-fn dump_cobertura(opts: DumpCobertunaOpt) -> Result<()> {
+fn cobertura(opts: CobertunaOpt) -> Result<()> {
     // read our modoff file and parse it to a vector
     let modoff_data = fs::read_to_string(&opts.modoff_path)?;
     let modoffs = ModOff::parse(&modoff_data)?;
 
-    // create all the likely module base names -- do we care about mixed case
-    // here?
-    let bare = opts
-        .pdb_path
-        .file_stem()
-        .expect("unable to identify file stem")
-        .to_string_lossy();
-    let exe = format!("{}.exe", bare);
-    let dll = format!("{}.dll", bare);
-    let sys = format!("{}.sys", bare);
-
     // create our new SrcView and insert our only pdb into it
     // we don't know what the modoff module will be, so create a mapping from
     // all likely names to the pdb
-
     let mut srcview = SrcView::new();
 
-    // in theory we could refcount the pdbcache's to save resources here, but
-    // Im not sure thats necesary...
-    srcview.insert(&bare, &opts.pdb_path)?;
-    srcview.insert(&exe, &opts.pdb_path)?;
-    srcview.insert(&dll, &opts.pdb_path)?;
-    srcview.insert(&sys, &opts.pdb_path)?;
+    if let Some(module_name) = &opts.module_name {
+        srcview.insert(module_name, &opts.pdb_path)?;
+    } else {
+        add_common_extensions(&mut srcview, &opts.pdb_path)?;
+    }
 
     // Convert our ModOffs to SrcLine so we can draw it
     let coverage: Vec<SrcLine> = modoffs
@@ -140,10 +169,10 @@ fn dump_cobertura(opts: DumpCobertunaOpt) -> Result<()> {
         .collect();
 
     // Generate our report, filtering on our example path
-    let r = Report::new(&coverage, &srcview, Some(r"E:\\1f\\coverage\\example"))?;
+    let r = Report::new(&coverage, &srcview, opts.include_regex.as_deref())?;
 
     // Format it as cobertura and display it
-    let formatted = r.cobertura(Some(r"E:\\1f\\coverage\\"))?;
+    let formatted = r.cobertura(opts.filter_regex.as_deref())?;
     println!("{}", formatted);
 
     Ok(())
