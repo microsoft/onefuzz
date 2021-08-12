@@ -15,7 +15,7 @@ from ..onefuzzlib.repro import Repro
 from ..onefuzzlib.tasks.main import Task
 
 RETENTION_POLICY = datetime.timedelta(minutes=(20))
-SEARCH_EXTENT = datetime.timedelta(minutes=(120))
+SEARCH_EXTENT = datetime.timedelta(minutes=(121))
 
 
 def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
