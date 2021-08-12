@@ -1,9 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#[macro_use]
-extern crate clap;
-
 use anyhow::{format_err, Context, Result};
 use srcview::{ModOff, Report, SrcLine, SrcView};
 use std::fs::{self};
@@ -16,8 +13,8 @@ enum Opt {
     Srcloc(SrcLocOpt),
     PdbPaths(PdbPathsOpt),
     Cobertuna(CobertunaOpt),
+    /// Print 3rd-party license information
     Licenses,
-    Version,
 }
 
 /// Print the file paths in the provided PDB
@@ -71,14 +68,9 @@ fn main() -> Result<()> {
         Opt::PdbPaths(opts) => pdb_paths(opts)?,
         Opt::Cobertuna(opts) => cobertura(opts)?,
         Opt::Licenses => licenses()?,
-        Opt::Version => version(),
     };
 
     Ok(())
-}
-
-fn version() {
-    println!("{}", crate_version!());
 }
 
 fn licenses() -> Result<()> {

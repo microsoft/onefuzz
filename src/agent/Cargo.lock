@@ -2550,7 +2550,6 @@ name = "srcview"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap",
  "env_logger 0.9.0",
  "log",
  "nom 6.1.2",
