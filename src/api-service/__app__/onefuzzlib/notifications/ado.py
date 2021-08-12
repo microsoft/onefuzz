@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 import logging
-from typing import Iterator, List, Optional, Union
+from typing import Iterator, List, Optional, Tuple, Union
 
 from azure.devops.connection import Connection
 from azure.devops.credentials import BasicAuthentication
@@ -60,12 +60,19 @@ class ADO:
         filename: str,
         config: ADOTemplate,
         report: Report,
+        *,
+        renderer: Optional[Render] = None,
     ):
         self.config = config
-        self.renderer = Render(container, filename, report)
+        if renderer:
+            self.renderer = renderer
+        else:
+            self.renderer = Render(container, filename, report)
+        self.project = self.render(self.config.project)
+
+    def connect(self) -> None:
         auth_token = get_secret_string_value(self.config.auth_token)
         self.client = get_ado_client(self.config.base_url, auth_token)
-        self.project = self.render(self.config.project)
 
     def render(self, template: str) -> str:
         return self.renderer.render(template)
@@ -169,9 +176,8 @@ class ADO:
         if document:
             self.client.update_work_item(document, item.id, project=self.project)
 
-    def create_new(self) -> None:
+    def render_new(self) -> Tuple[str, List[JsonPatchOperation]]:
         task_type = self.render(self.config.type)
-
         document = []
         if "System.Tags" not in self.config.ado_fields:
             document.append(
@@ -187,6 +193,10 @@ class ADO:
             document.append(
                 JsonPatchOperation(op="Add", path="/fields/%s" % field, value=value)
             )
+        return (task_type, document)
+
+    def create_new(self) -> None:
+        task_type, document = self.render_new()
 
         entry = self.client.create_work_item(
             document=document, project=self.project, type=task_type
