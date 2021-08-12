@@ -20,13 +20,13 @@ from __app__.onefuzzlib.tasks.main import Task
 
 
 class TestReportParse(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.env_patch = patch.dict(
             "os.environ", {"ONEFUZZ_INSTANCE_NAME": "contoso-test"}
         )
         self.env_patch.start()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.env_patch.stop()
 
     def test_sample(self) -> None:
