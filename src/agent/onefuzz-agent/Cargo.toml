@@ -18,7 +18,7 @@ backoff = { version = "0.3", features = ["tokio"] }
 clap = "2.33"
 coverage = { path = "../coverage" }
 crossterm = "0.20"
-env_logger = "0.8"
+env_logger = "0.9"
 flume = "0.10"
 futures = "0.3"
 hex = "0.4"
@@ -41,6 +41,6 @@ thiserror = "1.0"
 tokio = { version = "1.8", features = ["full"] }
 tokio-util = { version = "0.6", features = ["full"] }
 tokio-stream = "0.1"
-tui = { version = "0.15", default-features = false, features = ['crossterm'] }
+tui = { version = "0.16", default-features = false, features = ['crossterm'] }
 url = { version = "2.2", features = ["serde"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
