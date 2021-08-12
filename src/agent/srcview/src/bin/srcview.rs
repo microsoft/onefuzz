@@ -12,7 +12,7 @@ use structopt::StructOpt;
 enum Opt {
     Srcloc(SrcLocOpt),
     PdbPaths(PdbPathsOpt),
-    Cobertuna(CobertunaOpt),
+    Cobertura(CoberturaOpt),
     /// Print 3rd-party license information
     Licenses,
 }
@@ -35,7 +35,7 @@ struct SrcLocOpt {
 /// Generate a Cobertura XML coverage report
 ///
 /// Example:
-///   srcview cobertuna ./res/example.pdb res/example.txt
+///   srcview cobertura ./res/example.pdb res/example.txt
 ///             --include-regex "E:\\\\1f\\\\coverage\\\\"
 ///             --filter-regex "E:\\\\1f\\\\coverage\\\\"
 ///             --module-name example.exe
@@ -43,7 +43,7 @@ struct SrcLocOpt {
 /// In this example, only files that live in E:\1f\coverage are included and
 /// E:\1f\coverage is removed from the filenames in the resulting XML report.
 #[derive(StructOpt, Debug)]
-struct CobertunaOpt {
+struct CoberturaOpt {
     pdb_path: PathBuf,
     modoff_path: PathBuf,
     #[structopt(long)]
@@ -140,7 +140,7 @@ fn pdb_paths(opts: PdbPathsOpt) -> Result<()> {
     Ok(())
 }
 
-fn cobertura(opts: CobertunaOpt) -> Result<()> {
+fn cobertura(opts: CoberturaOpt) -> Result<()> {
     // read our modoff file and parse it to a vector
     let modoff_data = fs::read_to_string(&opts.modoff_path)?;
     let modoffs = ModOff::parse(&modoff_data)?;
