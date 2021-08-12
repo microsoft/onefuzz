@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 use anyhow::{format_err, Context, Result};
-use env_logger;
 use srcview::{ModOff, Report, SrcLine, SrcView};
 use std::fs::{self};
 use std::io::{stdout, Write};
