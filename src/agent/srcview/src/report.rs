@@ -6,7 +6,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anyhow::{format_err, Result, Context};
+use anyhow::{format_err, Context, Result};
 use log::warn;
 use regex::Regex;
 use xml::writer::{EmitterConfig, XmlEvent};
@@ -354,7 +354,8 @@ impl Report {
         // xml-rs does not support DTD entries yet, but thankfully ADO's parser is loose
 
         let unixtime = SystemTime::now()
-            .duration_since(UNIX_EPOCH).context("system time before unix epoch")?
+            .duration_since(UNIX_EPOCH)
+            .context("system time before unix epoch")?
             .as_secs();
 
         ew.write(
