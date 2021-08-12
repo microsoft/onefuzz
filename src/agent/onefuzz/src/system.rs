@@ -68,20 +68,20 @@ impl System {
     pub fn system_info(&self) -> SystemInfo {
         let system = &self.system;
 
-        let total_memory_kib = system.get_total_memory();
-        let used_memory_kib = system.get_used_memory();
-        let free_memory_kib = system.get_free_memory();
-        let total_swap_kib = system.get_total_swap();
-        let used_swap_kib = system.get_used_swap();
-        let uptime = system.get_uptime();
+        let total_memory_kib = system.total_memory();
+        let used_memory_kib = system.used_memory();
+        let free_memory_kib = system.free_memory();
+        let total_swap_kib = system.total_swap();
+        let used_swap_kib = system.used_swap();
+        let uptime = system.uptime();
 
-        let load_avg = system.get_load_average();
+        let load_avg = system.load_average();
         let load_avg_1min = load_avg.one;
         let load_avg_5min = load_avg.five;
         let load_avg_15min = load_avg.fifteen;
 
-        let global_cpu = system.get_global_processor_info();
-        let cpu_usage = global_cpu.get_cpu_usage();
+        let global_cpu = system.global_processor_info();
+        let cpu_usage = global_cpu.cpu_usage();
 
         SystemInfo {
             total_memory_kib,
@@ -99,7 +99,7 @@ impl System {
 
     pub fn proc_info(&self, pid: u32) -> Option<ProcInfo> {
         let system = &self.system;
-        let pi = system.get_process(pid as Pid)?;
+        let pi = system.process(pid as Pid)?;
 
         let name = pi.name().into();
         let status = format!("{}", pi.status());
