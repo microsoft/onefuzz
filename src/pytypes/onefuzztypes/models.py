@@ -823,6 +823,9 @@ class InstanceConfig(BaseModel):
     # support for 3rd party JWT validation is anticipated in a future release.
     @root_validator()
     def check_instance_config(cls, values: Any) -> Any:
+        if "allowed_aad_tenants" not in values:
+            raise ValueError("missing allowed_aad_tenants")
+
         if not len(values["allowed_aad_tenants"]):
             raise ValueError("allowed_aad_tenants must not be empty")
         return values
