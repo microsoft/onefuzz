@@ -32,7 +32,7 @@ struct SrcLocOpt {
     module_name: Option<String>,
 }
 
-/// Generate a Cobertuna XML coverage report
+/// Generate a Cobertura XML coverage report
 ///
 /// Example:
 ///   srcview cobertuna ./res/example.pdb res/example.txt
@@ -68,7 +68,7 @@ fn main() -> Result<()> {
     match opt {
         Opt::Srcloc(opts) => srcloc(opts)?,
         Opt::PdbPaths(opts) => pdb_paths(opts)?,
-        Opt::Cobertuna(opts) => cobertura(opts)?,
+        Opt::Cobertura(opts) => cobertura(opts)?,
         Opt::Licenses => licenses()?,
     };
 
@@ -132,7 +132,7 @@ fn srcloc(opts: SrcLocOpt) -> Result<()> {
 
 fn pdb_paths(opts: PdbPathsOpt) -> Result<()> {
     let mut srcview = SrcView::new();
-    srcview.insert(&opts.pdb_path.to_string_lossy().to_string(), &opts.pdb_path)?;
+    srcview.insert(&*opts.pdb_path.to_string_lossy(), &opts.pdb_path)?;
 
     for path in srcview.paths() {
         println!("{}", path.display());

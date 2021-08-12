@@ -117,7 +117,7 @@ impl Report {
             let path_srclocs: Vec<SrcLine> = srcview
                 .path_lines(path)
                 .ok_or_else(|| {
-                    format_err!("unbale to find path lines in path: {}", path.display())
+                    format_err!("unable to find path lines in path: {}", path.display())
                 })?
                 .map(|line| SrcLine::new(path, line))
                 .collect();
@@ -256,7 +256,7 @@ impl Report {
         false
     }
 
-    // wrapper to allow eronomic filtering with an option
+    // wrapper to allow ergonomic filtering with an option
     fn filter_path<P: AsRef<Path> + fmt::Debug>(
         path: P,
         filter: &Option<Regex>,
