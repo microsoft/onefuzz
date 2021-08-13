@@ -802,6 +802,8 @@ class InstanceConfig(BaseModel):
     # if set, only admins can manage pools or scalesets
     allow_pool_management: bool = Field(default=True)
 
+    allowed_aad_tenants: List[UUID]
+
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
             # If no admins are set, then ignore setting admins
@@ -816,6 +818,17 @@ class InstanceConfig(BaseModel):
         if value is not None and len(value) == 0:
             raise ValueError("admins must be None or contain at least one UUID")
         return value
+
+    # At the moment, this only checks allowed_aad_tenants, however adding
+    # support for 3rd party JWT validation is anticipated in a future release.
+    @root_validator()
+    def check_instance_config(cls, values: Any) -> Any:
+        if "allowed_aad_tenants" not in values:
+            raise ValueError("missing allowed_aad_tenants")
+
+        if not len(values["allowed_aad_tenants"]):
+            raise ValueError("allowed_aad_tenants must not be empty")
+        return values
 
 
 _check_hotfix()
