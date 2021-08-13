@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CLI/Service: Updated third-party Python dependencies.  [#1124](https://github.com/microsoft/onefuzz/pull/1124)
 
 ### Fixed
-* Service: Fixed an issue in incomplete authorization in multi-tenant deployments.  CVE-TODO-TODO  [TODO](TODO)
+* Service: Fixed an issue with incomplete authorization in multi-tenant deployments.  CVE-2021-37705 [TODO](TODO)
 
 ## 2.30.0
 ### Changed
