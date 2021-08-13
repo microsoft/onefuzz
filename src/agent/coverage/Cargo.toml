@@ -32,7 +32,7 @@ pdb = "0.7"
 winapi = "0.3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-pete = "0.6"
+pete = "0.7"
 procfs = "0.9"
 
 [dev-dependencies]
