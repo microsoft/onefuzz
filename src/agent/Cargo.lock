@@ -1852,13 +1852,13 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "pete"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1474e6f7003457e70788bec53af2288e23447df7c30bdc6748b4f736689116fe"
+checksum = "53df4a56d46a8eaf305d99b6c52e461d1c76aef2099b65cfae43c4ecb0e4dd89"
 dependencies = [
  "libc",
  "memoffset",
- "nix 0.21.0",
+ "nix 0.22.0",
  "thiserror",
 ]
 
