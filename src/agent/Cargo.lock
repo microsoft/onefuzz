@@ -1636,7 +1636,7 @@ dependencies = [
  "input-tester",
  "lazy_static",
  "log",
- "nix 0.21.0",
+ "nix 0.22.0",
  "notify",
  "onefuzz-telemetry",
  "pete",
