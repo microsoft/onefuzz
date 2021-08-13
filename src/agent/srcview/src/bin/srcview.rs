@@ -3,7 +3,7 @@
 
 use anyhow::{format_err, Context, Result};
 use srcview::{ModOff, Report, SrcLine, SrcView};
-use std::fs::{self};
+use std::fs;
 use std::io::{stdout, Write};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
