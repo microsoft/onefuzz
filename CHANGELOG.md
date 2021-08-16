@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.31.0
+### Added
+* Supervisor: Added recording of STDOUT and STDERR of the supervisor to file.  [#1109](https://github.com/microsoft/onefuzz/pull/1109)
+* CLI/Service/Agent: Supervisor tasks can now optionally have a managed coverage container.  [#1123](https://github.com/microsoft/onefuzz/pull/1123)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1151](https://github.com/microsoft/onefuzz/pull/1151), [#1149](https://github.com/microsoft/onefuzz/pull/1149), [#1145](https://github.com/microsoft/onefuzz/pull/1145), [#1134](https://github.com/microsoft/onefuzz/pull/1134), [#1135](https://github.com/microsoft/onefuzz/pull/1135), [#1137](https://github.com/microsoft/onefuzz/pull/1137), [#1133](https://github.com/microsoft/onefuzz/pull/1133), [#1138](https://github.com/microsoft/onefuzz/pull/1138), [#1132](https://github.com/microsoft/onefuzz/pull/1132), [#1140](https://github.com/microsoft/onefuzz/pull/1140), 
+* Service: Enabled testing of the Azure Devops work item rendering.  [#1144](https://github.com/microsoft/onefuzz/pull/1144)
+* Agent: Continued development related to upcoming features.  [#1142](https://github.com/microsoft/onefuzz/pull/1142)
+* CLI: No longer retry service API requests that fail with service-level errors.  [#1129](https://github.com/microsoft/onefuzz/pull/1129)
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1125](https://github.com/microsoft/onefuzz/pull/1125)
+* CLI/Service: Updated third-party Python dependencies.  [#1124](https://github.com/microsoft/onefuzz/pull/1124)
+
+### Fixed
+* Service: Fixed an issue with incomplete authorization in multi-tenant deployments.  CVE-2021-37705 [#1153](https://github.com/microsoft/onefuzz/pull/1153)
+
 ## 2.30.0
 ### Changed
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1116](https://github.com/microsoft/onefuzz/pull/1116)
