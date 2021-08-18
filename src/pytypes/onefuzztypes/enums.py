@@ -81,6 +81,7 @@ class TaskFeature(Enum):
     report_list = "report_list"
     minimized_stack_depth = "minimized_stack_depth"
     coverage_filter = "coverage_filter"
+    target_must_use_input = "target_must_use_input"
 
 
 # Permissions for an Azure Blob Storage Container.
@@ -303,6 +304,13 @@ class ScalesetState(Enum):
     shutdown = "shutdown"
     halt = "halt"
     creation_failed = "creation_failed"
+
+    @classmethod
+    def can_update(cls) -> List["ScalesetState"]:
+        """
+        set of states that indicate the scaleset can be updated
+        """
+        return [cls.running, cls.resize]
 
     @classmethod
     def needs_work(cls) -> List["ScalesetState"]:

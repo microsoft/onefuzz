@@ -259,7 +259,7 @@ fn process_pdb(data: &[u8], pe: &PE, functions_only: bool, pdb_path: &Path) -> R
         &proc_sym_info[..],
         &mut blocks,
         &address_map,
-        &pe,
+        pe,
         data,
         functions_only,
     )?;
@@ -274,7 +274,7 @@ fn process_pdb(data: &[u8], pe: &PE, functions_only: bool, pdb_path: &Path) -> R
                 &proc_sym_info[..],
                 &mut blocks,
                 &address_map,
-                &pe,
+                pe,
                 data,
                 functions_only,
             )?;

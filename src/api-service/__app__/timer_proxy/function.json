@@ -5,12 +5,6 @@
       "name": "mytimer",
       "schedule": "00:00:30",
       "type": "timerTrigger"
-    },
-    {
-      "type": "signalR",
-      "direction": "out",
-      "name": "dashboard",
-      "hubName": "dashboard"
     }
   ],
   "scriptFile": "__init__.py"

@@ -275,7 +275,7 @@ impl BreakpointCollection {
     }
 
     fn bulk_write_process_memory(&self, process_handle: HANDLE, buffer: &[u8]) -> Result<()> {
-        process::write_memory_slice(process_handle, self.min_breakpoint_addr as _, &buffer)?;
+        process::write_memory_slice(process_handle, self.min_breakpoint_addr as _, buffer)?;
         process::flush_instruction_cache(
             process_handle,
             self.min_breakpoint_addr as _,

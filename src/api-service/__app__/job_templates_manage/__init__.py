@@ -14,7 +14,6 @@ from onefuzztypes.models import Error
 from onefuzztypes.responses import BoolResult
 
 from ..onefuzzlib.endpoint_authorization import call_if_user
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.job_templates.templates import JobTemplateIndex
 from ..onefuzzlib.request import not_ok, ok, parse_request
 
@@ -62,13 +61,9 @@ def delete(req: func.HttpRequest) -> func.HttpResponse:
     return ok(BoolResult(result=entry is not None))
 
 
-def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     methods = {"GET": get, "POST": post, "DELETE": delete}
     method = methods[req.method]
     result = call_if_user(req, method)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)
 
     return result

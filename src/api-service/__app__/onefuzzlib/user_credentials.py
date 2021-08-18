@@ -3,13 +3,17 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-from typing import Optional
+import logging
+from typing import List, Optional
 from uuid import UUID
 
 import azure.functions as func
 import jwt
+from memoization import cached
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error, Result, UserInfo
+
+from .config import InstanceConfig
 
 
 def get_bearer_token(request: func.HttpRequest) -> Optional[str]:
@@ -39,6 +43,13 @@ def get_auth_token(request: func.HttpRequest) -> Optional[str]:
     return str(token_header)
 
 
+@cached(ttl=60)
+def get_allowed_tenants() -> List[str]:
+    config = InstanceConfig.fetch()
+    entries = [f"https://sts.windows.net/{x}/" for x in config.allowed_aad_tenants]
+    return entries
+
+
 def parse_jwt_token(request: func.HttpRequest) -> Result[UserInfo]:
     """Obtains the Access Token from the Authorization Header"""
     token_str = get_auth_token(request)
@@ -48,8 +59,19 @@ def parse_jwt_token(request: func.HttpRequest) -> Result[UserInfo]:
             errors=["unable to find authorization token"],
         )
 
-    # This token has already been verified by the azure authentication layer
-    token = jwt.decode(token_str, verify=False)
+    # The JWT token has already been verified by the azure authentication layer,
+    # but we need to verify the tenant is as we expect.
+    token = jwt.decode(token_str, options={"verify_signature": False})
+
+    if "iss" not in token:
+        return Error(
+            code=ErrorCode.INVALID_REQUEST, errors=["missing issuer from token"]
+        )
+
+    tenants = get_allowed_tenants()
+    if token["iss"] not in tenants:
+        logging.error("issuer not from allowed tenant: %s - %s", token["iss"], tenants)
+        return Error(code=ErrorCode.INVALID_REQUEST, errors=["unauthorized AAD issuer"])
 
     application_id = UUID(token["appid"]) if "appid" in token else None
     object_id = UUID(token["oid"]) if "oid" in token else None

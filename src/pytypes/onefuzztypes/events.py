@@ -117,6 +117,12 @@ class EventScalesetDeleted(BaseEvent):
     pool_name: PoolName
 
 
+class EventScalesetResizeScheduled(BaseEvent):
+    scaleset_id: UUID
+    pool_name: PoolName
+    size: int
+
+
 class EventPoolDeleted(BaseEvent):
     pool_name: PoolName
 
@@ -223,6 +229,7 @@ Event = Union[
     EventScalesetCreated,
     EventScalesetDeleted,
     EventScalesetStateUpdated,
+    EventScalesetResizeScheduled,
     EventTaskFailed,
     EventTaskStateUpdated,
     EventTaskCreated,
@@ -252,6 +259,7 @@ class EventType(Enum):
     scaleset_deleted = "scaleset_deleted"
     scaleset_failed = "scaleset_failed"
     scaleset_state_updated = "scaleset_state_updated"
+    scaleset_resize_scheduled = "scaleset_resize_scheduled"
     task_created = "task_created"
     task_failed = "task_failed"
     task_state_updated = "task_state_updated"
@@ -282,6 +290,7 @@ EventTypeMap = {
     EventType.scaleset_deleted: EventScalesetDeleted,
     EventType.scaleset_failed: EventScalesetFailed,
     EventType.scaleset_state_updated: EventScalesetStateUpdated,
+    EventType.scaleset_resize_scheduled: EventScalesetResizeScheduled,
     EventType.task_created: EventTaskCreated,
     EventType.task_failed: EventTaskFailed,
     EventType.task_state_updated: EventTaskStateUpdated,

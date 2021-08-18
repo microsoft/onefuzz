@@ -17,7 +17,6 @@ from onefuzztypes.responses import BoolResult
 from ..onefuzzlib.azure.creds import get_base_region, get_regions
 from ..onefuzzlib.azure.vmss import list_available_skus
 from ..onefuzzlib.endpoint_authorization import call_if_user, check_can_manage_pools
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.request import not_ok, ok, parse_request
 from ..onefuzzlib.workers.pools import Pool
 from ..onefuzzlib.workers.scalesets import Scaleset
@@ -137,34 +136,28 @@ def patch(req: func.HttpRequest) -> func.HttpResponse:
     if isinstance(scaleset, Error):
         return not_ok(scaleset, context="ScalesetUpdate")
 
-    if scaleset.state not in [ScalesetState.running, ScalesetState.resize]:
+    if scaleset.state not in ScalesetState.can_update():
         return not_ok(
             Error(
                 code=ErrorCode.INVALID_REQUEST,
                 errors=[
-                    "scaleset state must be 'running' or "
-                    "'resize' state to modify scaleset"
+                    "scaleset must be in the following states to update: "
+                    + ",".join(x.name for x in ScalesetState.can_update())
                 ],
             ),
             context="ScalesetUpdate",
         )
 
     if request.size is not None:
-        scaleset.size = request.size
-        scaleset.set_state(ScalesetState.resize)
+        scaleset.set_size(request.size)
 
-    scaleset.save()
     scaleset.auth = None
     return ok(scaleset)
 
 
-def main(req: func.HttpRequest, dashboard: func.Out[str]) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     methods = {"GET": get, "POST": post, "DELETE": delete, "PATCH": patch}
     method = methods[req.method]
     result = call_if_user(req, method)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)
 
     return result

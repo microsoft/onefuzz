@@ -11,7 +11,6 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use dunce::canonicalize;
-use futures::stream::StreamExt;
 use onefuzz_telemetry::{Event, EventData};
 use reqwest::{StatusCode, Url};
 use reqwest_retry::{RetryCheck, SendRetry, DEFAULT_RETRY_PERIOD, MAX_RETRY_ATTEMPTS};
@@ -107,8 +106,10 @@ impl SyncedDir {
     }
 
     pub async fn init_pull(&self) -> Result<()> {
-        self.init().await?;
-        self.sync(SyncOperation::Pull, false).await
+        self.init().await.context("init failed")?;
+        self.sync(SyncOperation::Pull, false)
+            .await
+            .context("pull failed")
     }
 
     pub async fn init(&self) -> Result<()> {
@@ -139,11 +140,15 @@ impl SyncedDir {
     }
 
     pub async fn sync_pull(&self) -> Result<()> {
-        self.sync(SyncOperation::Pull, false).await
+        self.sync(SyncOperation::Pull, false)
+            .await
+            .context("sync pull failed")
     }
 
     pub async fn sync_push(&self) -> Result<()> {
-        self.sync(SyncOperation::Push, false).await
+        self.sync(SyncOperation::Push, false)
+            .await
+            .context("sync push failed")
     }
 
     pub async fn continuous_sync(
@@ -219,13 +224,14 @@ impl SyncedDir {
         ignore_dotfiles: bool,
     ) -> Result<()> {
         debug!("monitoring {}", path.display());
+
         let mut monitor = DirectoryMonitor::new(path.clone());
         monitor.start()?;
 
         if let Some(path) = url.as_file_path() {
             fs::create_dir_all(&path).await?;
 
-            while let Some(item) = monitor.next().await {
+            while let Some(item) = monitor.next_file().await {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
@@ -245,7 +251,7 @@ impl SyncedDir {
                 let destination = path.join(file_name);
                 if let Err(err) = fs::copy(&item, &destination).await {
                     let error_message = format!(
-                        "Couldn't upload file.  path:{:?} dir:{:?} err:{}",
+                        "Couldn't upload file.  path:{:?} dir:{:?} err:{:?}",
                         item, destination, err
                     );
 
@@ -261,7 +267,7 @@ impl SyncedDir {
         } else {
             let mut uploader = BlobUploader::new(url.url()?);
 
-            while let Some(item) = monitor.next().await {
+            while let Some(item) = monitor.next_file().await {
                 let file_name = item
                     .file_name()
                     .ok_or_else(|| anyhow!("invalid file path"))?;
@@ -280,7 +286,7 @@ impl SyncedDir {
                 event!(event.clone(); EventData::Path = file_name_str);
                 if let Err(err) = uploader.upload(item.clone()).await {
                     let error_message = format!(
-                        "Couldn't upload file.  path:{} dir:{} err:{}",
+                        "Couldn't upload file.  path:{} dir:{} err:{:?}",
                         item.display(),
                         path.display(),
                         err

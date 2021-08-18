@@ -5,13 +5,18 @@
 
 import os
 from typing import List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from onefuzztypes.enums import OS, AgentMode, ScalesetExtension
 from onefuzztypes.models import AgentConfig, Pool, ReproConfig, Scaleset
 from onefuzztypes.primitives import Container, Extension, Region
 
-from .azure.containers import get_container_sas_url, get_file_sas_url, save_blob
+from .azure.containers import (
+    get_container_sas_url,
+    get_file_sas_url,
+    get_file_url,
+    save_blob,
+)
 from .azure.creds import get_instance_id, get_instance_url
 from .azure.monitor import get_monitor_settings
 from .azure.queue import get_queue_sas
@@ -225,9 +230,7 @@ def build_scaleset_script(pool: Pool, scaleset: Scaleset) -> str:
     save_blob(
         Container("vm-scripts"), filename, sep.join(commands) + sep, StorageType.config
     )
-    return get_file_sas_url(
-        Container("vm-scripts"), filename, StorageType.config, read=True
-    )
+    return get_file_url(Container("vm-scripts"), filename, StorageType.config)
 
 
 def build_pool_config(pool: Pool) -> str:
@@ -257,12 +260,7 @@ def build_pool_config(pool: Pool) -> str:
         StorageType.config,
     )
 
-    return get_file_sas_url(
-        Container("vm-scripts"),
-        filename,
-        StorageType.config,
-        read=True,
-    )
+    return config_url(Container("vm-scripts"), filename, False)
 
 
 def update_managed_scripts() -> None:
@@ -273,13 +271,13 @@ def update_managed_scripts() -> None:
                 Container("instance-specific-setup"),
                 StorageType.config,
                 read=True,
-                list=True,
+                list_=True,
             )
         ),
         "azcopy sync '%s' tools"
         % (
             get_container_sas_url(
-                Container("tools"), StorageType.config, read=True, list=True
+                Container("tools"), StorageType.config, read=True, list_=True
             )
         ),
     ]
@@ -298,8 +296,20 @@ def update_managed_scripts() -> None:
     )
 
 
+def config_url(container: Container, filename: str, with_sas: bool) -> str:
+    if with_sas:
+        return get_file_sas_url(container, filename, StorageType.config, read=True)
+    else:
+        return get_file_url(container, filename, StorageType.config)
+
+
 def agent_config(
-    region: Region, vm_os: OS, mode: AgentMode, *, urls: Optional[List[str]] = None
+    region: Region,
+    vm_os: OS,
+    mode: AgentMode,
+    *,
+    urls: Optional[List[str]] = None,
+    with_sas: bool = False,
 ) -> Extension:
     update_managed_scripts()
 
@@ -308,29 +318,17 @@ def agent_config(
 
     if vm_os == OS.windows:
         urls += [
-            get_file_sas_url(
-                Container("vm-scripts"),
-                "managed.ps1",
-                StorageType.config,
-                read=True,
-            ),
-            get_file_sas_url(
-                Container("tools"),
-                "win64/azcopy.exe",
-                StorageType.config,
-                read=True,
-            ),
-            get_file_sas_url(
+            config_url(Container("vm-scripts"), "managed.ps1", with_sas),
+            config_url(Container("tools"), "win64/azcopy.exe", with_sas),
+            config_url(
                 Container("tools"),
                 "win64/setup.ps1",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
-            get_file_sas_url(
+            config_url(
                 Container("tools"),
                 "win64/onefuzz.ps1",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
         ]
         to_execute_cmd = (
@@ -342,31 +340,34 @@ def agent_config(
             "type": "CustomScriptExtension",
             "publisher": "Microsoft.Compute",
             "location": region,
+            "force_update_tag": uuid4(),
             "type_handler_version": "1.9",
             "auto_upgrade_minor_version": True,
-            "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
-            "protectedSettings": {},
+            "settings": {
+                "commandToExecute": to_execute_cmd,
+                "fileUris": urls,
+            },
+            "protectedSettings": {
+                "managedIdentity": {},
+            },
         }
         return extension
     elif vm_os == OS.linux:
         urls += [
-            get_file_sas_url(
+            config_url(
                 Container("vm-scripts"),
                 "managed.sh",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
-            get_file_sas_url(
+            config_url(
                 Container("tools"),
                 "linux/azcopy",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
-            get_file_sas_url(
+            config_url(
                 Container("tools"),
                 "linux/setup.sh",
-                StorageType.config,
-                read=True,
+                with_sas,
             ),
         ]
         to_execute_cmd = "sh setup.sh %s" % (mode.name)
@@ -377,9 +378,15 @@ def agent_config(
             "type": "CustomScript",
             "typeHandlerVersion": "2.1",
             "location": region,
+            "force_update_tag": uuid4(),
             "autoUpgradeMinorVersion": True,
-            "settings": {"commandToExecute": to_execute_cmd, "fileUris": urls},
-            "protectedSettings": {},
+            "settings": {
+                "commandToExecute": to_execute_cmd,
+                "fileUris": urls,
+            },
+            "protectedSettings": {
+                "managedIdentity": {},
+            },
         }
         return extension
 
@@ -420,7 +427,7 @@ def repro_extensions(
             "azcopy sync '%s' ./setup"
             % (
                 get_container_sas_url(
-                    setup_container, StorageType.corpus, read=True, list=True
+                    setup_container, StorageType.corpus, read=True, list_=True
                 )
             ),
         ]
@@ -473,6 +480,7 @@ def repro_extensions(
 
     base_extension = agent_config(region, repro_os, AgentMode.repro, urls=urls)
     extensions = generic_extensions(region, DEFAULT_EXTENSIONS, repro_os, "", "")
+
     extensions += [base_extension]
     return extensions
 

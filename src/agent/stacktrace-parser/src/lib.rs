@@ -165,11 +165,11 @@ impl CrashLog {
         let stack_filter = get_stack_filter();
         let mut minimized_stack_details: Vec<StackEntry> = stack
             .iter()
-            .filter_map(|x| filter_funcs(x, &stack_filter))
+            .filter_map(|x| filter_funcs(x, stack_filter))
             .collect();
         // if we don't have a minimized stack, if one of these functions is on
         // the stack, use it
-        for entry in &[
+        for entry in [
             "LLVMFuzzerTestOneInput",
             "fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)",
             "main",
@@ -177,7 +177,7 @@ impl CrashLog {
             if !minimized_stack_details.is_empty() {
                 break;
             }
-            let value = Some(String::from(*entry));
+            let value = Some(entry.to_string());
             minimized_stack_details = stack
                 .iter()
                 .filter_map(|x| {
@@ -268,13 +268,13 @@ fn stack_function_lines(stack: &[StackEntry]) -> Vec<String> {
 
 fn parse_summary(text: &str) -> Result<(String, String, String)> {
     // eventually, this should be updated to support multiple callstack formats
-    asan::parse_summary(&text)
+    asan::parse_summary(text)
 }
 
 fn parse_scariness(text: &str) -> (Option<u32>, Option<String>) {
     // eventually, this should be updated to support multiple callstack formats,
     // including building this value
-    match asan::parse_scariness(&text) {
+    match asan::parse_scariness(text) {
         Some((x, y)) => (Some(x), Some(y)),
         None => (None, None),
     }
