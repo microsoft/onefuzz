@@ -797,6 +797,42 @@ class Task(BaseModel):
     nodes: Optional[List[NodeAssignment]]
     user_info: Optional[UserInfo]
 
+class WindowsKeyvaultExtensionConfig(BaseModel):
+    region: str
+    keyvault_name: str
+    cert_name: str
+
+class LinuxKeyvaultExtensionConfig(BaseModel):
+    region: str
+    keyvault_name: str
+    cert_name: str
+    cert_path: str
+    extension_store: str
+
+class AzureMonitorExtensionConfig(BaseModel):
+    region: str
+    config_version: str
+    moniker: str
+    namespace: str
+    monitoringGSEnvironment: str
+    monitoringGCSAccount: str
+    monitoringGCSRegion: Region
+    monitoringGCSAuthId: str
+    monitoringGCSAuthIdType: str
+
+class AzureSecurityExtensionConfig(BaseModel):
+    region: str
+
+class GenevaExtensionConfig(BaseModel):
+    region: str
+
+class AzureVmExtensionConfig(BaseModel):
+    windows_keyvault: Optional[WindowsKeyvaultExtensionConfig]
+    linux_keyvault: Optional[LinuxKeyvaultExtensionConfig]
+    azure_monitor: Optional[AzureMonitorExtensionConfig]
+    azsec_security: Optional[AzureSecurityExtensionConfig]
+    geneva: Optional[GenevaExtensionConfig]
+
 
 class InstanceConfig(BaseModel):
     # initial set of admins can only be set during deployment.
@@ -807,6 +843,8 @@ class InstanceConfig(BaseModel):
     allow_pool_management: bool = Field(default=True)
 
     allowed_aad_tenants: List[UUID]
+
+    extensions: AzureVmExtensionConfig = Field(default_factory=AzureVmExtensionConfig)
 
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
