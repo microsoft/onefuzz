@@ -398,7 +398,7 @@ def fuzz_extensions(pool: Pool, scaleset: Scaleset) -> List[Extension]:
     fuzz_extension = agent_config(scaleset.region, pool.os, AgentMode.fuzz, urls=urls)
     input_extensions = DEFAULT_EXTENSIONS
     instance_config = InstanceConfig.fetch()        
-    if instance_config.extensions:
+    if instance_config.extensions: 
         input_extensions.extend(instance_config.extensions)
     extensions = generic_extensions(
         scaleset.region, input_extensions, pool.os, scaleset.cert_key, scaleset.cert
