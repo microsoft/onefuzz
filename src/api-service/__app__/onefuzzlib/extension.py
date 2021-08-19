@@ -37,6 +37,7 @@ def generic_extensions(
     cert_key: Optional[str],
     cert: Optional[str],
 ) -> List[Extension]:
+    instance_config = InstanceConfig.fetch()
     extensions = []
     depedency = dependency_extension(region, vm_os)
     if depedency and ScalesetExtension.OMSExtension in extension_list:
@@ -44,15 +45,15 @@ def generic_extensions(
     monitor = monitor_extension(region, vm_os)
     if monitor and ScalesetExtension.DependencyAgent in extension_list:
         extensions.append(monitor)
-    geneva = geneva_extension(region, vm_os)
+    geneva = geneva_extension(instance_config, region, vm_os)
     if (
         geneva
         and ScalesetExtension.GenevaMonitoring in extension_list
         and vm_os == OS.windows
     ):
         extensions.append(geneva)
-    azmon = azmon_extension(region, vm_os, cert_key, cert)
-    azsec = azsec_extension(region, vm_os)
+    azmon = azmon_extension(instance_config, region, vm_os)
+    azsec = azsec_extension(instance_config, region, vm_os)
     if (
         azmon
         and azsec
@@ -61,7 +62,7 @@ def generic_extensions(
     ):
         extensions.append(azmon)
         extensions.append(azsec)
-    keyvault = keyvault_extension(region, vm_os)
+    keyvault = keyvault_extension(instance_config, region, vm_os)
     if keyvault and ScalesetExtension.KeyvaultExtension in extension_list:
         extensions.append(keyvault)
 
@@ -96,13 +97,15 @@ def monitor_extension(region: Region, vm_os: OS) -> Extension:
     raise NotImplementedError("unsupported os : %s" % vm_os)
 
 
-def geneva_extension(region: Region, vm_os: OS) -> Extension:
+def geneva_extension(
+    instance_config: InstanceConfig, region: Region, vm_os: OS
+) -> Extension:
     return {
         "name": "Microsoft.Azure.Geneva.GenevaMonitoring",
         "publisher": "Microsoft.Azure.Geneva",
         "type": "GenevaMonitoring",
         "typeHandlerVersion": "2.0",
-        "location": region,
+        "location": instance_config.extensions.GenevaExtensionConfig.region,
         "autoUpgradeMinorVersion": True,
         "enableAutomaticUpgrade": True,
         "settings": {},
@@ -111,35 +114,37 @@ def geneva_extension(region: Region, vm_os: OS) -> Extension:
 
 
 def azmon_extension(
-    region: Region, vm_os: OS, cert_key: Optional[str], cert: Optional[str]
+    instance_config: InstanceConfig, region: Region, vm_os: OS
 ) -> Extension:
-    auth_id = "airseccosinetest.geneva.keyvault.airaspcerts.cloudapp.net"
+    auth_id = instance_config.extensions.AzureMonitorExtensionConfig.monitoringGCSAuthId
     return {
         "name": "AzureMonitorLinuxAgent",
         "publisher": "Microsoft.Azure.Monitor",
-        "location": region,
+        "location": instance_config.extensions.AzureMonitorExtensionConfig.region,
         "type": "AzureMonitorLinuxAgent",
         "typeHandlerVersion": "1.0",
         "autoUpgradeMinorVersion": True,
         "settings": {},
         "protectedsettings": {
-            "configVersion": "1.0",
-            "moniker": "edgsecfuzzingpmeprod",
-            "namespace": "linuxpmeprod",
-            "monitoringGCSEnvironment": "DiagnosticsProd",
-            "monitoringGCSAccount": "edgsecfuzzingpmeprod",
-            "monitoringGCSRegion": "westus2",
+            "configVersion": instance_config.extensions.AzureMonitorExtensionConfig.config_version,
+            "moniker": instance_config.extensions.AzureMonitorExtensionConfig.moniker,
+            "namespace": instance_config.extensions.AzureMonitorExtensionConfig.namespace,
+            "monitoringGCSEnvironment": instance_config.extensions.AzureMonitorExtensionConfig.monitoringGSEnvironment,
+            "monitoringGCSAccount": instance_config.extensions.AzureMonitorExtensionConfig.monitoringGCSAccount,
+            "monitoringGCSRegion": instance_config.extensions.AzureMonitorExtensionConfig.monitoringGCSRegion,
             "monitoringGCSAuthId": auth_id,
-            "monitoringGCSAuthIdType": "AuthKeyVault",
+            "monitoringGCSAuthIdType": instance_config.extensions.AzureMonitorExtensionConfig.monitoringGCSAuthIdType,
         },
     }
 
 
-def azsec_extension(region: Region, vm_os: OS) -> Extension:
+def azsec_extension(
+    instance_config: InstanceConfig, region: Region, vm_os: OS
+) -> Extension:
     return {
         "name": "AzureSecurityLinuxAgent",
         "publisher": "Microsoft.Azure.Security.Monitoring",
-        "location": region,
+        "location": instance_config.extensions.AzureSecurityExtensionConfig.region,
         "type": "AzureSecurityLinuxAgent",
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": True,
@@ -147,14 +152,16 @@ def azsec_extension(region: Region, vm_os: OS) -> Extension:
     }
 
 
-def keyvault_extension(region: Region, vm_os: OS) -> Extension:
-    keyvault = "https://azure-policy-test-kv.vault.azure.net/secrets/"
-    cert = "Geneva-Test-Cert"
-    uri = keyvault + cert
+def keyvault_extension(
+    instance_config: InstanceConfig, region: Region, vm_os: OS
+) -> Extension:
+    # keyvault = "https://azure-policy-test-kv.vault.azure.net/secrets/"
+    # cert = "Geneva-Test-Cert"
+    uri = instance_config.extensions.LinuxKeyvaultExtensionConfig.uri
     if vm_os == OS.windows:
         return {
             "name": "KVVMExtensionForWindows",
-            "location": region,
+            "location": instance_config.extensions.WindowsKeyvaultExtensionConfig.region,
             "publisher": "Microsoft.Azure.KeyVault",
             "type": "KeyVaultForWindows",
             "typeHandlerVersion": "1.0",
@@ -176,7 +183,7 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
         location = cert_path + extension
         return {
             "name": "KVVMExtensionForLinux",
-            "location": region,
+            "location": instance_config.extensions.LinuxKeyvaultExtensionConfig.region,
             "publisher": "Microsoft.Azure.KeyVault",
             "type": "KeyVaultForLinux",
             "typeHandlerVersion": "2.0",
@@ -184,7 +191,7 @@ def keyvault_extension(region: Region, vm_os: OS) -> Extension:
             "settings": {
                 "secretsManagementSettings": {
                     "pollingIntervalInS": "3600",
-                    "certificateStoreLocation": location,
+                    "certificateStoreLocation": instance_config.extensions.LinuxKeyvaultExtensionConfig.location,
                     "observedCertificates": [uri],
                 },
             },
@@ -397,9 +404,8 @@ def fuzz_extensions(pool: Pool, scaleset: Scaleset) -> List[Extension]:
     urls = [build_pool_config(pool), build_scaleset_script(pool, scaleset)]
     fuzz_extension = agent_config(scaleset.region, pool.os, AgentMode.fuzz, urls=urls)
     input_extensions = DEFAULT_EXTENSIONS
-    instance_config = InstanceConfig.fetch()        
-    if instance_config.extensions: 
-        input_extensions.extend(instance_config.extensions)
+    if scaleset.extensions:
+        input_extensions.extend(scaleset.extensions)
     extensions = generic_extensions(
         scaleset.region, input_extensions, pool.os, scaleset.cert_key, scaleset.cert
     )
