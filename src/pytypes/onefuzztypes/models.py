@@ -797,10 +797,12 @@ class Task(BaseModel):
     nodes: Optional[List[NodeAssignment]]
     user_info: Optional[UserInfo]
 
+
 class WindowsKeyvaultExtensionConfig(BaseModel):
     region: str
     keyvault_name: str
     cert_name: str
+
 
 class LinuxKeyvaultExtensionConfig(BaseModel):
     region: str
@@ -808,6 +810,7 @@ class LinuxKeyvaultExtensionConfig(BaseModel):
     cert_name: str
     cert_path: str
     extension_store: str
+
 
 class AzureMonitorExtensionConfig(BaseModel):
     region: str
@@ -820,11 +823,14 @@ class AzureMonitorExtensionConfig(BaseModel):
     monitoringGCSAuthId: str
     monitoringGCSAuthIdType: str
 
+
 class AzureSecurityExtensionConfig(BaseModel):
     region: str
 
+
 class GenevaExtensionConfig(BaseModel):
     region: str
+
 
 class AzureVmExtensionConfig(BaseModel):
     windows_keyvault: Optional[WindowsKeyvaultExtensionConfig]
