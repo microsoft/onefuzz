@@ -2,11 +2,12 @@
 // Licensed under the MIT License.
 use std::{
     path::{Path, PathBuf},
-    process::{Child, ChildStderr, ChildStdout, Command, Stdio},
+    process::{ChildStderr, ChildStdout, Command, Stdio},
     thread::{self, JoinHandle},
 };
 
 use anyhow::{format_err, Context as AnyhowContext, Result};
+use command_group::{CommandGroup, GroupChild};
 use downcast_rs::Downcast;
 use onefuzz::process::{ExitStatus, Output};
 use tokio::fs;
@@ -242,7 +243,7 @@ impl IWorkerRunner for WorkerRunner {
 /// Child process with redirected output streams, tailed by two worker threads.
 struct RedirectedChild {
     /// The child process.
-    child: Child,
+    child: GroupChild,
 
     /// Worker threads which continuously read from the redirected streams.
     streams: Option<StreamReaderThreads>,
@@ -254,11 +255,11 @@ impl RedirectedChild {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
-        let mut child = cmd.spawn().context("onefuzz-agent failed to start")?;
+        let mut child = cmd.group_spawn().context("onefuzz-agent failed to start")?;
 
         // Guaranteed by the above.
-        let stderr = child.stderr.take().unwrap();
-        let stdout = child.stdout.take().unwrap();
+        let stderr = child.inner().stderr.take().unwrap();
+        let stdout = child.inner().stdout.take().unwrap();
         let streams = Some(StreamReaderThreads::new(stderr, stdout));
 
         Ok(Self { child, streams })

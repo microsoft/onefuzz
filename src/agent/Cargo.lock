@@ -317,6 +317,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "command-group"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "758ddf93da6b6b45c6e44a73d07362945b98814e8c9bb57a8c9353f921c18ba3"
+dependencies = [
+ "nix",
+ "winapi 0.3.9",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1688,6 +1698,7 @@ dependencies = [
  "async-trait",
  "backtrace",
  "clap",
+ "command-group",
  "downcast-rs",
  "env_logger 0.9.0",
  "futures",
