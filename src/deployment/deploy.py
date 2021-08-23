@@ -72,7 +72,7 @@ from registration import (
     set_app_audience,
     update_pool_registration,
 )
-from set_admins import update_admins
+from set_admins import update_admins, update_allowed_aad_tenants
 
 # Found by manually assigning the User.Read permission to application
 # registration in the admin portal. The values are in the manifest under
@@ -130,7 +130,8 @@ class Client:
         multi_tenant_domain: str,
         upgrade: bool,
         subscription_id: Optional[str],
-        admins: List[UUID]
+        admins: List[UUID],
+        allowed_aad_tenants: List[UUID],
     ):
         self.subscription_id = subscription_id
         self.resource_group = resource_group
@@ -161,6 +162,7 @@ class Client:
         self.export_appinsights = export_appinsights
         self.log_service_principal = log_service_principal
         self.admins = admins
+        self.allowed_aad_tenants = allowed_aad_tenants
 
         machine = platform.machine()
         system = platform.system()
@@ -560,12 +562,19 @@ class Client:
         table_service = TableService(account_name=name, account_key=key)
         migrate(table_service, self.migrations)
 
-    def set_admins(self) -> None:
+    def set_instance_config(self) -> None:
         name = self.results["deploy"]["func-name"]["value"]
         key = self.results["deploy"]["func-key"]["value"]
+        tenant = UUID(self.results["deploy"]["tenant_id"]["value"])
         table_service = TableService(account_name=name, account_key=key)
+
         if self.admins:
             update_admins(table_service, self.application_name, self.admins)
+
+        tenants = self.allowed_aad_tenants
+        if tenant not in tenants:
+            tenants.append(tenant)
+        update_allowed_aad_tenants(table_service, self.application_name, tenants)
 
     def create_queues(self) -> None:
         logger.info("creating eventgrid destination queue")
@@ -926,7 +935,7 @@ def main() -> None:
 
     full_deployment_states = rbac_only_states + [
         ("apply_migrations", Client.apply_migrations),
-        ("set_admins", Client.set_admins),
+        ("set_instance_config", Client.set_instance_config),
         ("queues", Client.create_queues),
         ("eventgrid", Client.create_eventgrid),
         ("tools", Client.upload_tools),
@@ -1038,6 +1047,12 @@ def main() -> None:
         nargs="*",
         help="set the list of administrators (by OID in AAD)",
     )
+    parser.add_argument(
+        "--allowed_aad_tenants",
+        type=UUID,
+        nargs="*",
+        help="Set additional AAD tenants beyond the tenant the app is deployed in",
+    )
 
     args = parser.parse_args()
 
@@ -1066,6 +1081,7 @@ def main() -> None:
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
         admins=args.set_admins,
+        allowed_aad_tenants=args.allowed_aad_tenants or [],
     )
     if args.verbose:
         level = logging.DEBUG
