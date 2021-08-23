@@ -4,7 +4,9 @@
 # Licensed under the MIT License.
 
 import argparse
+import json
 import logging
+import re
 import time
 import urllib.parse
 from datetime import datetime, timedelta
@@ -379,17 +381,28 @@ def authorize_application(
         )
 
         onefuzz_app_id = onefuzz_app["id"]
+        app_list = preAuthorizedApplications.to_list()
 
         def add_preauthorized_app() -> None:
-            query_microsoft_graph(
-                method="PATCH",
-                resource="applications/%s" % onefuzz_app_id,
-                body={
-                    "api": {
-                        "preAuthorizedApplications": preAuthorizedApplications.to_list()
-                    }
-                },
-            )
+            try:
+                query_microsoft_graph(
+                    method="PATCH",
+                    resource="applications/%s" % onefuzz_app_id,
+                    body={"api": {"preAuthorizedApplications": app_list}},
+                )
+            except GraphQueryError as e:
+                m = re.search(
+                    "Property PreAuthorizedApplication references applications (.*) that cannot be found.",
+                    e.message,
+                )
+                if m:
+                    invalid_app_id = m.group(1)
+                    if invalid_app_id:
+                        app_list = [
+                            app for app in app_list if app["appId"] != invalid_app_id
+                        ]
+
+                raise e
 
         retry(add_preauthorized_app, "authorize application")
     except AuthenticationError:
