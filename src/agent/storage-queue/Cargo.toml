@@ -20,7 +20,7 @@ reqwest-retry = { path = "../reqwest-retry" }
 serde = { version = "1.0", features = ["derive"]}
 serde_derive = "1.0"
 serde_json = "1.0"
-serde-xml-rs = "0.4"
-tokio = { version = "1.8" , features=["full"] }
+serde-xml-rs = "0.5"
+tokio = { version = "1.10" , features=["full"] }
 queue-file = "1.1"
 uuid = { version = "0.8", features = ["serde", "v4"] }

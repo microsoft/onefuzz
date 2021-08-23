@@ -9,6 +9,7 @@ members = [
     "onefuzz-supervisor",
     "onefuzz-telemetry",
     "reqwest-retry",
+    "srcview",
     "storage-queue",
     "win-util",
     "libclusterfuzz",

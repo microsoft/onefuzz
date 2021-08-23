@@ -1,0 +1,42 @@
+[
+  {
+    "op": "Add",
+    "path": "/fields/System.AssignedTo",
+    "value": "example@contoso.com"
+  },
+  {
+    "op": "Add",
+    "path": "/fields/System.Tags",
+    "value": "OneFuzz; OneFuzz-Pipeline; example@example.com;Onefuzz"
+  },
+  {
+    "op": "Add",
+    "path": "/fields/System.AreaPath",
+    "value": "MY\\AREA Path\\Here"
+  },
+  {
+    "op": "Add",
+    "path": "/fields/System.IterationPath",
+    "value": "MY\\ITERATION"
+  },
+  {
+    "op": "Add",
+    "path": "/fields/Microsoft.VSTS.Scheduling.StoryPoints",
+    "value": "1"
+  },
+  {
+    "op": "Add",
+    "path": "/fields/Microsoft.VSTS.Build.FoundIn",
+    "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "op": "Add",
+    "path": "/fields/System.Title",
+    "value": "[OneFuzz] - callfunc"
+  },
+  {
+    "op": "Add",
+    "path": "/fields/Microsoft.VSTS.TCM.ReproSteps",
+    "value": "This is the call stack. You may wish to confirm: <ul>  <li> test.exe.exe+0x2 </li>  <li> test.exe.exe+0x9 </li>  <li> test.exe.exe+0x3 </li>  <li> test.exe.exe+0xd </li>  <li> test.exe.exe+0x8 </li>  <li> test.exe.exe+0x8 </li>  <li> test.exe.exe+0x2 </li>  </ul>"
+  }
+]
