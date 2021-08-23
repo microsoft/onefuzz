@@ -91,10 +91,7 @@ def retry(
     wait_duration: int = 10,
 ) -> OperationResult:
     count = 0
-    while count < tries:
-        count += 1
-        if count > 1:
-            logger.info(f"retrying '{description}'")
+    while True:
         try:
             return operation()
         except GraphQueryError as err:
@@ -108,11 +105,18 @@ def retry(
                 logger.info(f"failed '{description}' missing required resource")
             else:
                 logger.warning(f"failed '{description}': {err.message}")
-        time.sleep(wait_duration)
-    if error:
-        raise error
-    else:
-        raise Exception(f"failed '{description}'")
+
+        count += 1
+        if count >= tries:
+            if error:
+                raise error
+            else:
+                raise Exception(f"failed '{description}'")
+        else:
+            logger.info(
+                f"waiting {wait_duration} seconds before retrying '{description}'"
+            )
+            time.sleep(wait_duration)
 
 
 def get_graph_client(subscription_id: str) -> GraphRbacManagementClient:
