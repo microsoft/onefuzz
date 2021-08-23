@@ -71,6 +71,7 @@ class MiniTask(BaseModel):
     pool: str
     end_time: Optional[datetime]
     containers: List[TaskContainers]
+    vm_count: int
 
 
 def fmt(data: Any) -> Any:
@@ -118,6 +119,7 @@ class TopCache:
         "Target",
         "Files",
         "Pool",
+        "VM Count",
         "End time",
     ]
     POOL_FIELDS = ["Name", "OS", "Arch", "Nodes"]
@@ -289,6 +291,7 @@ class TopCache:
             target=(task.config.task.target_exe or "").replace("setup/", "", 0),
             containers=task.config.containers,
             end_time=task.end_time,
+            vm_count=task.config.pool.count if task.config.pool else 0,
         )
 
     def task_created(self, event: EventTaskCreated) -> None:
@@ -300,6 +303,7 @@ class TopCache:
             target=(event.config.task.target_exe or "").replace("setup/", "", 0),
             containers=event.config.containers,
             state=TaskState.init,
+            vm_count=event.config.pool.count if event.config.pool else 0,
         )
 
     def task_state_updated(self, event: EventTaskStateUpdated) -> None:
@@ -335,6 +339,7 @@ class TopCache:
                 task.target,
                 files,
                 task.pool,
+                task.vm_count,
                 task.end_time,
             )
             results.append(entry)
