@@ -644,7 +644,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "allow_pool_management": true,
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
-        ]
+        ],
+        "proxy_vm_sku": "Standard_B2s"
     }
 }
 ```
@@ -676,6 +677,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Allowed Aad Tenants",
                     "type": "array"
+                },
+                "proxy_vm_sku": {
+                    "default": "Standard_B2s",
+                    "title": "Proxy Vm Sku",
+                    "type": "string"
                 }
             },
             "required": [
@@ -5621,6 +5627,11 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     },
                     "title": "Allowed Aad Tenants",
                     "type": "array"
+                },
+                "proxy_vm_sku": {
+                    "default": "Standard_B2s",
+                    "title": "Proxy Vm Sku",
+                    "type": "string"
                 }
             },
             "required": [
