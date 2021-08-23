@@ -1,0 +1,32 @@
+{
+  "base_url": "https://dev.azure.com/contoso",
+  "auth_token": "DO NOT PUT YOUR PAT HERE",
+  "type": "Bug",
+  "project": "Contoso",
+  "unique_fields": [
+    "Microsoft.VSTS.Build.FoundIn"
+  ],
+  "comment": "my comment",
+  "ado_fields": {
+    "System.AssignedTo": "example@contoso.com",
+    "System.Tags": "OneFuzz; OneFuzz-Pipeline; example@example.com",
+    "System.AreaPath": "MY\\AREA Path\\Here",
+    "System.IterationPath": "MY\\ITERATION",
+    "Microsoft.VSTS.Scheduling.StoryPoints": "1",
+    "Microsoft.VSTS.Build.FoundIn": "{{ report.input_sha256 }}",
+    "System.Title": "[OneFuzz] - {{ report.crash_site }}",
+    "Microsoft.VSTS.TCM.ReproSteps": "This is the call stack. You may wish to confirm: <ul> {% for item in report.call_stack %} <li> {{ item }} </li> {% endfor %} </ul>"
+  },
+  "on_duplicate": {
+    "comment": "DEDUPED!",
+    "set_state": {
+      "Resolved": "Active"
+    },
+    "ado_fields": {
+      "System.IterationPath": "MY\\ITERATION"
+    },
+    "increment": [
+      "Microsoft.VSTS.Scheduling.StoryPoints"
+    ]
+  }
+}

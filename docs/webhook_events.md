@@ -641,7 +641,10 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "admins": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "allow_pool_management": true
+        "allow_pool_management": true,
+        "allowed_aad_tenants": [
+            "00000000-0000-0000-0000-000000000000"
+        ]
     }
 }
 ```
@@ -665,8 +668,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": true,
                     "title": "Allow Pool Management",
                     "type": "boolean"
+                },
+                "allowed_aad_tenants": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Aad Tenants",
+                    "type": "array"
                 }
             },
+            "required": [
+                "allowed_aad_tenants"
+            ],
             "title": "InstanceConfig",
             "type": "object"
         }
@@ -5599,8 +5613,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "default": true,
                     "title": "Allow Pool Management",
                     "type": "boolean"
+                },
+                "allowed_aad_tenants": {
+                    "items": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "title": "Allowed Aad Tenants",
+                    "type": "array"
                 }
             },
+            "required": [
+                "allowed_aad_tenants"
+            ],
             "title": "InstanceConfig",
             "type": "object"
         },

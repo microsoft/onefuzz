@@ -826,6 +826,10 @@
             "type": "string",
 
             "value": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2018-02-01', 'Full').identity.principalId]"
-        }
+       },
+        "tenant_id": {
+            "type": "string",
+            "value": "[subscription().tenantId]"
+       }
     }
 }
