@@ -126,7 +126,6 @@ class Client:
         create_registration: bool,
         migrations: List[str],
         export_appinsights: bool,
-        log_service_principal: bool,
         multi_tenant_domain: str,
         upgrade: bool,
         subscription_id: Optional[str],
@@ -160,7 +159,6 @@ class Client:
         }
         self.migrations = migrations
         self.export_appinsights = export_appinsights
-        self.log_service_principal = log_service_principal
         self.admins = admins
         self.allowed_aad_tenants = allowed_aad_tenants
 
@@ -454,12 +452,6 @@ class Client:
 
         self.results["client_id"] = app.app_id
         self.results["client_secret"] = password
-
-        # Log `client_secret` for consumption by CI.
-        if self.log_service_principal:
-            logger.info("client_id: %s client_secret: %s", app.app_id, password)
-        else:
-            logger.debug("client_id: %s client_secret: %s", app.app_id, password)
 
     def deploy_template(self) -> None:
         logger.info("deploying arm template: %s", self.arm_template)
@@ -894,23 +886,27 @@ class Client:
 
     def done(self) -> None:
         logger.info(TELEMETRY_NOTICE)
-        client_secret_arg = (
-            ("--client_secret %s" % self.cli_config["client_secret"])
-            if "client_secret" in self.cli_config
-            else ""
-        )
-        multi_tenant_domain = ""
+
+        cmd: List[str] = [
+            "onefuzz",
+            "config",
+            "--endpoint",
+            f"https://{self.application_name}.azurewebsites.net",
+            "--authority",
+            str(self.cli_config["authority"]),
+            "--client_id",
+            str(self.cli_config["client_id"]),
+        ]
+
+        if "client_secret" in self.cli_config:
+            cmd += ["--client_secret", "YOUR_CLIENT_SECRET_HERE"]
+
         if self.multi_tenant_domain:
-            multi_tenant_domain = "--tenant_domain %s" % self.multi_tenant_domain
-        logger.info(
-            "Update your CLI config via: onefuzz config --endpoint "
-            "https://%s.azurewebsites.net --authority %s --client_id %s %s %s",
-            self.application_name,
-            self.cli_config["authority"],
-            self.cli_config["client_id"],
-            client_secret_arg,
-            multi_tenant_domain,
-        )
+            cmd += ["--tenant_domain", str(self.multi_tenant_domain)]
+
+        as_str = " ".join(cmd)
+
+        logger.info(f"Update your CLI config via: {as_str}")
 
 
 def arg_dir(arg: str) -> str:
@@ -1022,11 +1018,6 @@ def main() -> None:
         help="enable appinsight log export",
     )
     parser.add_argument(
-        "--log_service_principal",
-        action="store_true",
-        help="display service prinipal with info log level",
-    )
-    parser.add_argument(
         "--multi_tenant_domain",
         type=str,
         default=None,
@@ -1076,7 +1067,6 @@ def main() -> None:
         create_registration=args.create_pool_registration,
         migrations=args.apply_migrations,
         export_appinsights=args.export_appinsights,
-        log_service_principal=args.log_service_principal,
         multi_tenant_domain=args.multi_tenant_domain,
         upgrade=args.upgrade,
         subscription_id=args.subscription_id,
