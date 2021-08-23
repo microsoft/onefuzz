@@ -33,7 +33,7 @@ winapi = "0.3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 pete = "0.7"
-procfs = "0.9"
+procfs = "0.10"
 
 [dev-dependencies]
 env_logger = "0.9"
