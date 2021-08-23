@@ -119,30 +119,18 @@ class JobConfig(BaseModel):
     project: str
     name: str
     build: str
-    duration: int
-
-    @validator("duration", allow_reuse=True)
-    def check_duration(cls, value: int) -> int:
-        if value < ONE_HOUR or value > SEVEN_DAYS:
-            raise ValueError("invalid duration")
-        return value
+    duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
 
 
 class ReproConfig(BaseModel):
     container: Container
     path: str
-    duration: int
-
-    @validator("duration", allow_reuse=True)
-    def check_duration(cls, value: int) -> int:
-        if value < ONE_HOUR or value > SEVEN_DAYS:
-            raise ValueError("invalid duration")
-        return value
+    duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
 
 
 class TaskDetails(BaseModel):
     type: TaskType
-    duration: int
+    duration: int = Field(ge=ONE_HOUR, le=SEVEN_DAYS)
     target_exe: Optional[str]
     target_env: Optional[Dict[str, str]]
     target_options: Optional[List[str]]
@@ -150,7 +138,7 @@ class TaskDetails(BaseModel):
     target_options_merge: Optional[bool]
     check_asan_log: Optional[bool]
     check_debugger: Optional[bool] = Field(default=True)
-    check_retry_count: Optional[int]
+    check_retry_count: Optional[int] = Field(ge=0)
     check_fuzzer_help: Optional[bool]
     expect_crash_on_failure: Optional[bool]
     rename_output: Optional[bool]
@@ -168,33 +156,13 @@ class TaskDetails(BaseModel):
     stats_file: Optional[str]
     stats_format: Optional[StatsFormat]
     reboot_after_setup: Optional[bool]
-    target_timeout: Optional[int]
+    target_timeout: Optional[int] = Field(ge=1)
     ensemble_sync_delay: Optional[int]
     preserve_existing_outputs: Optional[bool]
     report_list: Optional[List[str]]
     minimized_stack_depth: Optional[int]
     input_file: Optional[str]
     coverage_filter: Optional[str]
-
-    @validator("check_retry_count", allow_reuse=True)
-    def validate_check_retry_count(cls, value: int) -> int:
-        if value is not None:
-            if value < 0:
-                raise ValueError("invalid check_retry_count")
-        return value
-
-    @validator("target_timeout", allow_reuse=True)
-    def check_target_timeout(cls, value: Optional[int]) -> Optional[int]:
-        if value is not None:
-            if value < 1:
-                raise ValueError("invalid target_timeout")
-        return value
-
-    @validator("duration", allow_reuse=True)
-    def check_duration(cls, value: int) -> int:
-        if value < ONE_HOUR or value > SEVEN_DAYS:
-            raise ValueError("invalid duration")
-        return value
 
 
 class TaskPool(BaseModel):
@@ -206,15 +174,9 @@ class TaskVm(BaseModel):
     region: Region
     sku: str
     image: str
-    count: int = Field(default=1)
+    count: int = Field(default=1, ge=0)
     spot_instances: bool = Field(default=False)
     reboot_after_setup: Optional[bool]
-
-    @validator("count", allow_reuse=True)
-    def check_count(cls, value: int) -> int:
-        if value <= 0:
-            raise ValueError("invalid count")
-        return value
 
 
 class TaskContainers(BaseModel):
@@ -543,6 +505,7 @@ NotificationTemplate = Union[ADOTemplate, TeamsTemplate, GithubIssueTemplate]
 
 
 class Notification(BaseModel):
+    timestamp: Optional[datetime] = Field(alias="Timestamp")
     container: Container
     notification_id: UUID = Field(default_factory=uuid4)
     config: NotificationTemplate
@@ -608,6 +571,7 @@ class NodeCommandEnvelope(BaseModel):
 class Node(BaseModel):
     timestamp: Optional[datetime] = Field(alias="Timestamp")
     pool_name: PoolName
+    pool_id: Optional[UUID]
     machine_id: UUID
     state: NodeState = Field(default=NodeState.init)
     scaleset_id: Optional[UUID] = None
@@ -633,41 +597,19 @@ class NodeTasks(BaseModel):
 
 class AutoScaleConfig(BaseModel):
     image: str
-    max_size: Optional[int]  # max size of pool
-    min_size: int = Field(default=0)  # min size of pool
+    max_size: int = Field(default=1000, le=1000, ge=0)  # max size of pool
+    min_size: int = Field(default=0, le=1000, ge=0)  # min size of pool
     region: Optional[Region]
     scaleset_size: int  # Individual scaleset size
     spot_instances: bool = Field(default=False)
     ephemeral_os_disks: bool = Field(default=False)
     vm_sku: str
 
-    @validator("scaleset_size", allow_reuse=True)
-    def check_scaleset_size(cls, value: int) -> int:
-        if value < 1 or value > 1000:
-            raise ValueError("invalid scaleset size")
-        return value
-
     @root_validator()
     def check_data(cls, values: Any) -> Any:
-        if (
-            "max_size" in values
-            and values.get("max_size")
-            and values.get("min_size") > values.get("max_size")
-        ):
+        if values["min_size"] > values["max_size"]:
             raise ValueError("The pool min_size is greater than max_size")
         return values
-
-    @validator("max_size", allow_reuse=True)
-    def check_max_size(cls, value: Optional[int]) -> Optional[int]:
-        if value and value < 1:
-            raise ValueError("Autoscale sizes are not defined properly")
-        return value
-
-    @validator("min_size", allow_reuse=True)
-    def check_min_size(cls, value: int) -> int:
-        if value < 0 or value > 1000:
-            raise ValueError("Invalid pool min_size")
-        return value
 
 
 class Pool(BaseModel):
@@ -707,7 +649,7 @@ class Scaleset(BaseModel):
     vm_sku: str
     image: str
     region: Region
-    size: int
+    size: int = Field(ge=0)
     spot_instances: bool
     ephemeral_os_disks: bool = Field(default=False)
     needs_config_update: bool = Field(default=False)
@@ -716,12 +658,6 @@ class Scaleset(BaseModel):
     client_id: Optional[UUID]
     client_object_id: Optional[UUID]
     tags: Dict[str, str] = Field(default_factory=lambda: {})
-
-    @validator("size", allow_reuse=True)
-    def check_size(cls, value: int) -> int:
-        if value < 0:
-            raise ValueError("Invalid scaleset size")
-        return value
 
 
 class NotificationConfig(BaseModel):
@@ -868,6 +804,8 @@ class InstanceConfig(BaseModel):
     # if set, only admins can manage pools or scalesets
     allow_pool_management: bool = Field(default=True)
 
+    allowed_aad_tenants: List[UUID]
+
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
             # If no admins are set, then ignore setting admins
@@ -882,6 +820,17 @@ class InstanceConfig(BaseModel):
         if value is not None and len(value) == 0:
             raise ValueError("admins must be None or contain at least one UUID")
         return value
+
+    # At the moment, this only checks allowed_aad_tenants, however adding
+    # support for 3rd party JWT validation is anticipated in a future release.
+    @root_validator()
+    def check_instance_config(cls, values: Any) -> Any:
+        if "allowed_aad_tenants" not in values:
+            raise ValueError("missing allowed_aad_tenants")
+
+        if not len(values["allowed_aad_tenants"]):
+            raise ValueError("allowed_aad_tenants must not be empty")
+        return values
 
 
 _check_hotfix()

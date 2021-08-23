@@ -112,13 +112,19 @@ pub async fn run(config: Config) -> Result<()> {
 
 async fn run_existing(config: &Config, reports_dir: &Option<PathBuf>) -> Result<()> {
     if let Some(crashes) = &config.crashes {
+        info!("processing initial inputs");
         crashes.init_pull().await?;
         let mut count: u64 = 0;
         let mut read_dir = fs::read_dir(&crashes.local_path).await?;
         while let Some(file) = read_dir.next_entry().await? {
             debug!("Processing file {:?}", file);
-            run_tool(file.path(), &config, &reports_dir).await?;
+            run_tool(file.path(), config, reports_dir).await?;
             count += 1;
+
+            // sync the analysis container after every 10 inputs
+            if count % 10 == 0 {
+                config.analysis.sync_push().await?;
+            }
         }
         info!("processed {} initial inputs", count);
         config.analysis.sync_push().await?;
@@ -143,6 +149,7 @@ async fn poll_inputs(
     tmp_dir: OwnedDir,
     reports_dir: &Option<PathBuf>,
 ) -> Result<()> {
+    info!("polling for new inputs");
     let heartbeat = config.common.init_heartbeat(None).await?;
     if let Some(input_queue) = &config.input_queue {
         loop {
@@ -151,10 +158,10 @@ async fn poll_inputs(
                 let input_url = message
                     .parse(|data| BlobUrl::parse(str::from_utf8(data)?))
                     .with_context(|| format!("unable to parse URL from queue: {:?}", message))?;
-                if !already_checked(&config, &input_url).await? {
+                if !already_checked(config, &input_url).await? {
                     let destination_path = _copy(input_url, &tmp_dir).await?;
 
-                    run_tool(destination_path, &config, &reports_dir).await?;
+                    run_tool(destination_path, config, reports_dir).await?;
                     config.analysis.sync_push().await?
                 }
                 message.delete().await?;
@@ -199,13 +206,13 @@ pub async fn run_tool(
         .job_id(&config.common.job_id)
         .task_id(&config.common.task_id)
         .set_optional_ref(&config.common.microsoft_telemetry_key, |tester, key| {
-            tester.microsoft_telemetry_key(&key)
+            tester.microsoft_telemetry_key(key)
         })
         .set_optional_ref(&config.common.instance_telemetry_key, |tester, key| {
-            tester.instance_telemetry_key(&key)
+            tester.instance_telemetry_key(key)
         })
-        .set_optional_ref(&reports_dir, |tester, reports_dir| {
-            tester.reports_dir(&reports_dir)
+        .set_optional_ref(reports_dir, |tester, reports_dir| {
+            tester.reports_dir(reports_dir)
         })
         .set_optional_ref(&config.crashes, |tester, crashes| {
             tester

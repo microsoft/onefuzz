@@ -12,7 +12,7 @@ use async_trait::async_trait;
 use coverage::block::CommandBlockCov;
 use coverage::cache::ModuleCache;
 use coverage::code::{CmdFilter, CmdFilterDef};
-use onefuzz::expand::Expand;
+use onefuzz::expand::{Expand, PlaceHolder};
 use onefuzz::syncdir::SyncedDir;
 use onefuzz_telemetry::{warn, Event::coverage_data, EventData};
 use serde::de::DeserializeOwned;
@@ -81,6 +81,10 @@ impl CoverageTask {
         let filter = self.load_filter().await?;
         let heartbeat = self.config.common.init_heartbeat(None).await?;
         let mut context = TaskContext::new(cache, &self.config, coverage, filter, heartbeat);
+
+        if !context.uses_input() {
+            bail!("input is not specified on the command line or arguments for the target");
+        }
 
         context.heartbeat.alive();
 
@@ -188,6 +192,7 @@ impl<'a> TaskContext<'a> {
     }
 
     pub async fn record_input(&mut self, input: &Path) -> Result<()> {
+        debug!("recording coverage for {}", input.display());
         let attempts = MAX_COVERAGE_RECORDING_ATTEMPTS;
 
         for attempt in 1..=attempts {
@@ -244,6 +249,23 @@ impl<'a> TaskContext<'a> {
         Ok(coverage)
     }
 
+    fn uses_input(&self) -> bool {
+        let input = PlaceHolder::Input.get_string();
+
+        for entry in &self.config.target_options {
+            if entry.contains(&input) {
+                return true;
+            }
+        }
+        for (k, v) in &self.config.target_env {
+            if k == &input || v.contains(&input) {
+                return true;
+            }
+        }
+
+        false
+    }
+
     fn command_for_input(&self, input: &Path) -> Result<Command> {
         let expand = Expand::new()
             .input_path(input)
@@ -286,6 +308,11 @@ impl<'a> TaskContext<'a> {
                     if entry.file_type().await?.is_file() {
                         self.record_input(&entry.path()).await?;
                         count += 1;
+
+                        // make sure we save & sync coverage every 10 inputs
+                        if count % 10 == 0 {
+                            self.save_and_sync_coverage().await?;
+                        }
                     } else {
                         warn!("skipping non-file dir entry: {}", entry.path().display());
                     }

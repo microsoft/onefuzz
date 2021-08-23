@@ -31,8 +31,7 @@ import msal
 import requests
 from azure.storage.blob import ContainerClient
 from pydantic import BaseModel, Field
-from tenacity import Future as tenacity_future
-from tenacity import Retrying, retry
+from tenacity import RetryCallState, retry
 from tenacity.retry import retry_if_exception_type
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random
@@ -44,6 +43,8 @@ _ACCESSTOKENCACHE_UMASK = 0o077
 ONEFUZZ_BASE_PATH = os.path.join("~", ".cache", "onefuzz")
 DEFAULT_CONFIG_PATH = os.path.join(ONEFUZZ_BASE_PATH, "config.json")
 DEFAULT_TOKEN_PATH = os.path.join(ONEFUZZ_BASE_PATH, "access_token.json")
+REQUEST_CONNECT_TIMEOUT = 30.0
+REQUEST_READ_TIMEOUT = 120.0
 
 LOGGER = logging.getLogger("nsv-backend")
 
@@ -57,6 +58,31 @@ def _temporary_umask(new_umask: int) -> Generator[None, None, None]:
     finally:
         if prev_umask is not None:
             os.umask(prev_umask)
+
+
+def check_msal_error(value: Dict[str, Any], expected: List[str]) -> None:
+    if "error" in value:
+        if "error_description" in value:
+            raise Exception(
+                "error: %s\n%s" % (value["error"], value["error_description"])
+            )
+
+        raise Exception("error: %s" % (value["error"]))
+    for entry in expected:
+        if entry not in value:
+            raise Exception("interactive login missing value: %s - %s" % (entry, value))
+
+
+def check_application_error(response: requests.Response) -> None:
+    if response.status_code == 401:
+        try:
+            as_json = json.loads(response.content)
+            if isinstance(as_json, dict) and "code" in as_json and "errors" in as_json:
+                raise Exception(
+                    f"request failed: application error - {as_json['code']} {as_json['errors']}"
+                )
+        except json.decoder.JSONDecodeError:
+            pass
 
 
 class BackendConfig(BaseModel):
@@ -190,20 +216,6 @@ class Backend:
             if access_token:
                 return access_token
 
-        def check_msal_error(value: Dict[str, Any], expected: List[str]) -> None:
-            if "error" in value:
-                if "error_description" in value:
-                    raise Exception(
-                        "error: %s\n%s" % (value["error"], value["error_description"])
-                    )
-
-                raise Exception("error: %s" % (value["error"]))
-            for entry in expected:
-                if entry not in value:
-                    raise Exception(
-                        "interactive login missing value: %s - %s" % (entry, value)
-                    )
-
         LOGGER.info("Attempting interactive device login")
         print("Please login", flush=True)
 
@@ -253,11 +265,13 @@ class Backend:
                     headers=headers,
                     json=json_data,
                     params=params,
-                    timeout=(30.0, 30.0),
+                    timeout=(REQUEST_CONNECT_TIMEOUT, REQUEST_READ_TIMEOUT),
                 )
 
                 if response.status_code not in retry_codes:
                     break
+
+                check_application_error(response)
 
                 LOGGER.info("request bad status code: %s", response.status_code)
             except requests.exceptions.ConnectionError as err:
@@ -281,12 +295,12 @@ class Backend:
         return response.json()
 
 
-def before_sleep(
-    retry_object: Retrying, sleep: float, last_result: tenacity_future
-) -> None:
-    name = retry_object.fn.__name__ if retry_object.fn else "blob function"
+def before_sleep(retry_state: RetryCallState) -> None:
+    name = retry_state.fn.__name__ if retry_state.fn else "blob function"
 
-    why = getattr(last_result, "_exception")
+    why: Optional[BaseException] = None
+    if retry_state.outcome is not None:
+        why = retry_state.outcome.exception()
     if why:
         LOGGER.warning("%s failed with %s, retrying ...", name, repr(why))
     else:

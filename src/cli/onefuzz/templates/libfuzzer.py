@@ -152,7 +152,7 @@ class Libfuzzer(Command):
         #
         # For now, locally extend the `target_options` for this task only, to ensure that
         # test case invocations work as expected.
-        coverage_target_options = target_options or []
+        coverage_target_options = target_options.copy() if target_options else []
         coverage_target_options.append("{input}")
 
         # Opposite precedence to `effective_crash_report_timeout`.

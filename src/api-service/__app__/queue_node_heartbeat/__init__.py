@@ -12,11 +12,11 @@ from onefuzztypes.events import EventNodeHeartbeat
 from onefuzztypes.models import NodeHeartbeatEntry
 from pydantic import ValidationError
 
-from ..onefuzzlib.events import get_events, send_event
+from ..onefuzzlib.events import send_event
 from ..onefuzzlib.workers.nodes import Node
 
 
-def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
+def main(msg: func.QueueMessage) -> None:
     body = msg.get_body()
     logging.info("heartbeat: %s", body)
     raw = json.loads(body)
@@ -37,7 +37,3 @@ def main(msg: func.QueueMessage, dashboard: func.Out[str]) -> None:
         )
     except ValidationError:
         logging.error("invalid node heartbeat: %s", raw)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)

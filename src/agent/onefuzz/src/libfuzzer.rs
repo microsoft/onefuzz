@@ -80,7 +80,7 @@ impl<'a> LibFuzzer<'a> {
 
         let expand = Expand::new()
             .target_exe(&self.exe)
-            .target_options(&self.options)
+            .target_options(self.options)
             .setup_dir(&self.setup_dir)
             .set_optional(corpus_dir, |tester, corpus_dir| {
                 tester.input_corpus(&corpus_dir)
@@ -141,7 +141,7 @@ impl<'a> LibFuzzer<'a> {
                         files.shuffle(&mut rng);
                     }
                     for file in files.iter().take(5) {
-                        self.check_input(&file).await.with_context(|| {
+                        self.check_input(file).await.with_context(|| {
                             format!("checking input corpus: {}", file.display())
                         })?;
                         seen_inputs = true;
@@ -243,7 +243,7 @@ impl<'a> LibFuzzer<'a> {
         let mut options = self.options.to_owned();
         options.push("{input}".to_string());
 
-        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, &self.env)
+        let mut tester = Tester::new(&self.setup_dir, &self.exe, &options, self.env)
             .check_asan_stderr(true)
             .check_retry_count(retry)
             .add_setup_to_path(true)
