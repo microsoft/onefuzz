@@ -205,9 +205,17 @@ impl Report {
 
             if let Some(root) = anc.last() {
                 // at this point we know we've computed this
-                if let Some(dircov) = self.dircov.get(root) {
-                    // we don't really care if we're overwriting it
-                    overall.insert(root.to_path_buf(), *dircov);
+                match self.dircov.get(root) {
+                    Some(dircov) => {
+                        // we don't really care if we're overwriting it
+                        overall.insert(root.to_path_buf(), *dircov);
+                    }
+                    None => {
+                        warn!(
+                            "unable to get root for path for directory stats.  root: {}",
+                            root.display()
+                        );
+                    }
                 }
             }
         }
