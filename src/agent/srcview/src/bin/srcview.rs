@@ -80,6 +80,11 @@ fn licenses() -> Result<()> {
     Ok(())
 }
 
+// In the case the user did not specify the module name of interest, this
+// utility function will guess at the module name based on the PDB path name.
+// 
+// This is a last-ditch effort to ensure the coverage report has something
+// consumable.
 fn add_common_extensions(srcview: &mut SrcView, pdb_path: &Path) -> Result<()> {
     let pdb_file_name = pdb_path.file_name().ok_or_else(|| {
         format_err!(
