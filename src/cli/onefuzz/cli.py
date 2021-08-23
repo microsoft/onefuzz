@@ -490,18 +490,33 @@ class Builder:
             level += 1
 
 
+def render(result: Any) -> Any:
+    """Convert arbitrary result streams into something filterable with jmespath"""
+    if isinstance(result, BaseModel):
+        return render(result.dict(exclude_none=True))
+    if isinstance(result, Model):
+        return render(result.as_dict())
+    if isinstance(result, list):
+        return [render(x) for x in result]
+    if isinstance(result, dict):
+        return {render(k): render(v) for (k, v) in result.items()}
+    if isinstance(result, Enum):
+        return result.name
+    if isinstance(result, UUID):
+        return str(result)
+    if isinstance(result, (int, float, str)):
+        return result
+
+    logging.debug(f"unable to render type f{type(result)}")
+
+    return result
+
+
 def output(result: Any, output_format: str, expression: Optional[Any]) -> None:
     if isinstance(result, bytes):
         sys.stdout.buffer.write(result)
     else:
-        if isinstance(result, list) and result and isinstance(result[0], BaseModel):
-            # cycling through json resolves all of the nested BaseModel objects
-            result = [json.loads(x.json(exclude_none=True)) for x in result]
-        if isinstance(result, BaseModel):
-            # cycling through json resolves all of the nested BaseModel objects
-            result = json.loads(result.json(exclude_none=True))
-        if isinstance(result, Model):
-            result = result.as_dict()
+        result = render(result)
         if expression is not None:
             result = expression.search(result)
         if result is not None:
