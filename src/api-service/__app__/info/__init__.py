@@ -14,11 +14,12 @@ from ..onefuzzlib.azure.creds import (
     get_instance_id,
     get_subscription,
 )
+from ..onefuzzlib.endpoint_authorization import call_if_user
 from ..onefuzzlib.request import ok
 from ..onefuzzlib.versions import versions
 
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def get(req: func.HttpRequest) -> func.HttpResponse:
     response = ok(
         Info(
             resource_group=get_base_resource_group(),
@@ -32,3 +33,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     )
 
     return response
+
+
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    methods = {"GET": get}
+    method = methods[req.method]
+    result = call_if_user(req, method)
+
+    return result

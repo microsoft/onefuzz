@@ -5,7 +5,7 @@
 
 import os
 import unittest
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from onefuzztypes.models import UserInfo
 
@@ -25,29 +25,41 @@ class TestAdmin(unittest.TestCase):
         user2 = uuid4()
 
         # no admins set
-        self.assertTrue(can_modify_config_impl(InstanceConfig(), UserInfo()))
+        self.assertTrue(
+            can_modify_config_impl(
+                InstanceConfig(allowed_aad_tenants=[UUID(int=0)]), UserInfo()
+            )
+        )
 
         # with oid, but no admin
         self.assertTrue(
-            can_modify_config_impl(InstanceConfig(), UserInfo(object_id=user1))
+            can_modify_config_impl(
+                InstanceConfig(allowed_aad_tenants=[UUID(int=0)]),
+                UserInfo(object_id=user1),
+            )
         )
 
         # is admin
         self.assertTrue(
             can_modify_config_impl(
-                InstanceConfig(admins=[user1]), UserInfo(object_id=user1)
+                InstanceConfig(allowed_aad_tenants=[UUID(int=0)], admins=[user1]),
+                UserInfo(object_id=user1),
             )
         )
 
         # no user oid set
         self.assertFalse(
-            can_modify_config_impl(InstanceConfig(admins=[user1]), UserInfo())
+            can_modify_config_impl(
+                InstanceConfig(allowed_aad_tenants=[UUID(int=0)], admins=[user1]),
+                UserInfo(),
+            )
         )
 
         # not an admin
         self.assertFalse(
             can_modify_config_impl(
-                InstanceConfig(admins=[user1]), UserInfo(object_id=user2)
+                InstanceConfig(allowed_aad_tenants=[UUID(int=0)], admins=[user1]),
+                UserInfo(object_id=user2),
             )
         )
 
@@ -58,21 +70,31 @@ class TestAdmin(unittest.TestCase):
         # by default, any can modify
         self.assertIsNone(
             check_can_manage_pools_impl(
-                InstanceConfig(allow_pool_management=True), UserInfo()
+                InstanceConfig(
+                    allowed_aad_tenants=[UUID(int=0)], allow_pool_management=True
+                ),
+                UserInfo(),
             )
         )
 
         # with oid, but no admin
         self.assertIsNone(
             check_can_manage_pools_impl(
-                InstanceConfig(allow_pool_management=True), UserInfo(object_id=user1)
+                InstanceConfig(
+                    allowed_aad_tenants=[UUID(int=0)], allow_pool_management=True
+                ),
+                UserInfo(object_id=user1),
             )
         )
 
         # is admin
         self.assertIsNone(
             check_can_manage_pools_impl(
-                InstanceConfig(allow_pool_management=False, admins=[user1]),
+                InstanceConfig(
+                    allowed_aad_tenants=[UUID(int=0)],
+                    allow_pool_management=False,
+                    admins=[user1],
+                ),
                 UserInfo(object_id=user1),
             )
         )
@@ -80,14 +102,23 @@ class TestAdmin(unittest.TestCase):
         # no user oid set
         self.assertIsNotNone(
             check_can_manage_pools_impl(
-                InstanceConfig(allow_pool_management=False, admins=[user1]), UserInfo()
+                InstanceConfig(
+                    allowed_aad_tenants=[UUID(int=0)],
+                    allow_pool_management=False,
+                    admins=[user1],
+                ),
+                UserInfo(),
             )
         )
 
         # not an admin
         self.assertIsNotNone(
             check_can_manage_pools_impl(
-                InstanceConfig(allow_pool_management=False, admins=[user1]),
+                InstanceConfig(
+                    allowed_aad_tenants=[UUID(int=0)],
+                    allow_pool_management=False,
+                    admins=[user1],
+                ),
                 UserInfo(object_id=user2),
             )
         )

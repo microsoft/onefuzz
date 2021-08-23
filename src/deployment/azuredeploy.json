@@ -821,6 +821,10 @@
         "scaleset-identity": {
             "type": "string",
             "value": "[variables('scaleset_identity')]"
+        },
+        "tenant_id": {
+            "type": "string",
+            "value": "[subscription().tenantId]"
         }
     }
 }
