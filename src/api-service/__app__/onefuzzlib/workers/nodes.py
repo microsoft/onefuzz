@@ -285,7 +285,7 @@ class Node(BASE_NODE, ORMMixin):
         if self.state not in NodeState.can_process_new_work():
             logging.info(
                 "can_process_new_work node not in appropriate state for new work"
-                "machine_id:%s state:%S",
+                "machine_id:%s state:%s",
                 self.machine_id,
                 self.state.name,
             )
