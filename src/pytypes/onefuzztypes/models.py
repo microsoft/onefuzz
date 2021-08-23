@@ -804,6 +804,7 @@ class InstanceConfig(BaseModel):
     # if set, only admins can manage pools or scalesets
     allow_pool_management: bool = Field(default=True)
 
+    proxy_vm_sku: str = Field(default="Standard_B2s")
     allowed_aad_tenants: List[UUID]
 
     def update(self, config: "InstanceConfig") -> None:
