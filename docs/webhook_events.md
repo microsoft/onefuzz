@@ -645,7 +645,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "proxy_vm_sku": "Standard_B2s"
+        "extensions": {}
     }
 }
 ```
@@ -655,6 +655,106 @@ Each event will be submitted via HTTP POST to the user provided URL.
 ```json
 {
     "definitions": {
+        "AzureMonitorExtensionConfig": {
+            "properties": {
+                "config_version": {
+                    "title": "Config Version",
+                    "type": "string"
+                },
+                "moniker": {
+                    "title": "Moniker",
+                    "type": "string"
+                },
+                "monitoringGCSAccount": {
+                    "title": "Monitoringgcsaccount",
+                    "type": "string"
+                },
+                "monitoringGCSAuthId": {
+                    "title": "Monitoringgcsauthid",
+                    "type": "string"
+                },
+                "monitoringGCSAuthIdType": {
+                    "title": "Monitoringgcsauthidtype",
+                    "type": "string"
+                },
+                "monitoringGCSRegion": {
+                    "title": "Monitoringgcsregion",
+                    "type": "string"
+                },
+                "monitoringGSEnvironment": {
+                    "title": "Monitoringgsenvironment",
+                    "type": "string"
+                },
+                "namespace": {
+                    "title": "Namespace",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region",
+                "config_version",
+                "moniker",
+                "namespace",
+                "monitoringGSEnvironment",
+                "monitoringGCSAccount",
+                "monitoringGCSRegion",
+                "monitoringGCSAuthId",
+                "monitoringGCSAuthIdType"
+            ],
+            "title": "AzureMonitorExtensionConfig",
+            "type": "object"
+        },
+        "AzureSecurityExtensionConfig": {
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ],
+            "title": "AzureSecurityExtensionConfig",
+            "type": "object"
+        },
+        "AzureVmExtensionConfig": {
+            "properties": {
+                "azure_monitor": {
+                    "$ref": "#/definitions/AzureMonitorExtensionConfig"
+                },
+                "azure_security": {
+                    "$ref": "#/definitions/AzureSecurityExtensionConfig"
+                },
+                "geneva": {
+                    "$ref": "#/definitions/GenevaExtensionConfig"
+                },
+                "linux_keyvault": {
+                    "$ref": "#/definitions/LinuxKeyvaultExtensionConfig"
+                },
+                "windows_keyvault": {
+                    "$ref": "#/definitions/WindowsKeyvaultExtensionConfig"
+                }
+            },
+            "title": "AzureVmExtensionConfig",
+            "type": "object"
+        },
+        "GenevaExtensionConfig": {
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ],
+            "title": "GenevaExtensionConfig",
+            "type": "object"
+        },
         "InstanceConfig": {
             "properties": {
                 "admins": {
@@ -678,16 +778,85 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Allowed Aad Tenants",
                     "type": "array"
                 },
-                "proxy_vm_sku": {
-                    "default": "Standard_B2s",
-                    "title": "Proxy Vm Sku",
-                    "type": "string"
+                "extensions": {
+                    "$ref": "#/definitions/AzureVmExtensionConfig"
                 }
             },
             "required": [
                 "allowed_aad_tenants"
             ],
             "title": "InstanceConfig",
+            "type": "object"
+        },
+        "LinuxKeyvaultExtensionConfig": {
+            "properties": {
+                "cert_name": {
+                    "title": "Cert Name",
+                    "type": "string"
+                },
+                "cert_path": {
+                    "title": "Cert Path",
+                    "type": "string"
+                },
+                "extension_store": {
+                    "title": "Extension Store",
+                    "type": "string"
+                },
+                "keyvault_name": {
+                    "title": "Keyvault Name",
+                    "type": "string"
+                },
+                "location": {
+                    "title": "Location",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "uri": {
+                    "title": "Uri",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region",
+                "keyvault_name",
+                "cert_name",
+                "cert_path",
+                "extension_store",
+                "uri",
+                "location"
+            ],
+            "title": "LinuxKeyvaultExtensionConfig",
+            "type": "object"
+        },
+        "WindowsKeyvaultExtensionConfig": {
+            "properties": {
+                "cert_name": {
+                    "title": "Cert Name",
+                    "type": "string"
+                },
+                "keyvault_name": {
+                    "title": "Keyvault Name",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "uri": {
+                    "title": "Uri",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region",
+                "keyvault_name",
+                "cert_name",
+                "uri"
+            ],
+            "title": "WindowsKeyvaultExtensionConfig",
             "type": "object"
         }
     },
@@ -4835,6 +5004,93 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "AutoScaleConfig",
             "type": "object"
         },
+        "AzureMonitorExtensionConfig": {
+            "properties": {
+                "config_version": {
+                    "title": "Config Version",
+                    "type": "string"
+                },
+                "moniker": {
+                    "title": "Moniker",
+                    "type": "string"
+                },
+                "monitoringGCSAccount": {
+                    "title": "Monitoringgcsaccount",
+                    "type": "string"
+                },
+                "monitoringGCSAuthId": {
+                    "title": "Monitoringgcsauthid",
+                    "type": "string"
+                },
+                "monitoringGCSAuthIdType": {
+                    "title": "Monitoringgcsauthidtype",
+                    "type": "string"
+                },
+                "monitoringGCSRegion": {
+                    "title": "Monitoringgcsregion",
+                    "type": "string"
+                },
+                "monitoringGSEnvironment": {
+                    "title": "Monitoringgsenvironment",
+                    "type": "string"
+                },
+                "namespace": {
+                    "title": "Namespace",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region",
+                "config_version",
+                "moniker",
+                "namespace",
+                "monitoringGSEnvironment",
+                "monitoringGCSAccount",
+                "monitoringGCSRegion",
+                "monitoringGCSAuthId",
+                "monitoringGCSAuthIdType"
+            ],
+            "title": "AzureMonitorExtensionConfig",
+            "type": "object"
+        },
+        "AzureSecurityExtensionConfig": {
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ],
+            "title": "AzureSecurityExtensionConfig",
+            "type": "object"
+        },
+        "AzureVmExtensionConfig": {
+            "properties": {
+                "azure_monitor": {
+                    "$ref": "#/definitions/AzureMonitorExtensionConfig"
+                },
+                "azure_security": {
+                    "$ref": "#/definitions/AzureSecurityExtensionConfig"
+                },
+                "geneva": {
+                    "$ref": "#/definitions/GenevaExtensionConfig"
+                },
+                "linux_keyvault": {
+                    "$ref": "#/definitions/LinuxKeyvaultExtensionConfig"
+                },
+                "windows_keyvault": {
+                    "$ref": "#/definitions/WindowsKeyvaultExtensionConfig"
+                }
+            },
+            "title": "AzureVmExtensionConfig",
+            "type": "object"
+        },
         "BlobRef": {
             "properties": {
                 "account": {
@@ -5605,6 +5861,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
             ],
             "title": "EventType"
         },
+        "GenevaExtensionConfig": {
+            "properties": {
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region"
+            ],
+            "title": "GenevaExtensionConfig",
+            "type": "object"
+        },
         "InstanceConfig": {
             "properties": {
                 "admins": {
@@ -5628,10 +5897,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Allowed Aad Tenants",
                     "type": "array"
                 },
-                "proxy_vm_sku": {
-                    "default": "Standard_B2s",
-                    "title": "Proxy Vm Sku",
-                    "type": "string"
+                "extensions": {
+                    "$ref": "#/definitions/AzureVmExtensionConfig"
                 }
             },
             "required": [
@@ -5689,6 +5956,49 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "task_type"
             ],
             "title": "JobTaskStopped",
+            "type": "object"
+        },
+        "LinuxKeyvaultExtensionConfig": {
+            "properties": {
+                "cert_name": {
+                    "title": "Cert Name",
+                    "type": "string"
+                },
+                "cert_path": {
+                    "title": "Cert Path",
+                    "type": "string"
+                },
+                "extension_store": {
+                    "title": "Extension Store",
+                    "type": "string"
+                },
+                "keyvault_name": {
+                    "title": "Keyvault Name",
+                    "type": "string"
+                },
+                "location": {
+                    "title": "Location",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "uri": {
+                    "title": "Uri",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region",
+                "keyvault_name",
+                "cert_name",
+                "cert_path",
+                "extension_store",
+                "uri",
+                "location"
+            ],
+            "title": "LinuxKeyvaultExtensionConfig",
             "type": "object"
         },
         "NoReproReport": {
@@ -6270,6 +6580,34 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "stopped"
             ],
             "title": "VmState"
+        },
+        "WindowsKeyvaultExtensionConfig": {
+            "properties": {
+                "cert_name": {
+                    "title": "Cert Name",
+                    "type": "string"
+                },
+                "keyvault_name": {
+                    "title": "Keyvault Name",
+                    "type": "string"
+                },
+                "region": {
+                    "title": "Region",
+                    "type": "string"
+                },
+                "uri": {
+                    "title": "Uri",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "region",
+                "keyvault_name",
+                "cert_name",
+                "uri"
+            ],
+            "title": "WindowsKeyvaultExtensionConfig",
+            "type": "object"
         }
     },
     "properties": {
