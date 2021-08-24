@@ -386,7 +386,7 @@ def authorize_application(
 
         onefuzz_app_id = onefuzz_app["id"]
 
-        def add_preauthorized_app(app_list: Any) -> None:
+        def add_preauthorized_app(app_list: List[Dict]) -> None:
             try:
                 query_microsoft_graph(
                     method="PATCH",
@@ -404,6 +404,9 @@ def authorize_application(
                     if invalid_app_id:
                         for app in app_list:
                             if app["appId"] == invalid_app_id:
+                                logger.warning(
+                                    f"removing invalid id {invalid_app_id} for the next request"
+                                )
                                 app_list.remove(app)
 
                 raise e
