@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 import argparse
-import json
 import logging
 import re
 import time
@@ -87,10 +86,11 @@ OperationResult = TypeVar("OperationResult")
 
 
 def retry(
-    operation: Callable[[], OperationResult],
+    operation: Callable[[Any], OperationResult],
     description: str,
     tries: int = 10,
     wait_duration: int = 10,
+    data: Any = None,
 ) -> OperationResult:
     count = 0
     while count < tries:
@@ -98,7 +98,7 @@ def retry(
         if count > 1:
             logger.info(f"retrying '{description}'")
         try:
-            return operation()
+            return operation(data)
         except GraphQueryError as err:
             error = err
             # modeled after AZ-CLI's handling of missing application
@@ -277,7 +277,7 @@ def create_application_registration(
 def add_application_password(
     app_object_id: UUID, subscription_id: str
 ) -> Tuple[str, str]:
-    def create_password() -> Tuple[str, str]:
+    def create_password(data: Any) -> Tuple[str, str]:
         password = add_application_password_impl(app_object_id, subscription_id)
         logger.info("app password created")
         return password
@@ -381,9 +381,8 @@ def authorize_application(
         )
 
         onefuzz_app_id = onefuzz_app["id"]
-        app_list = preAuthorizedApplications.to_list()
 
-        def add_preauthorized_app() -> None:
+        def add_preauthorized_app(app_list: Any) -> None:
             try:
                 query_microsoft_graph(
                     method="PATCH",
@@ -398,13 +397,17 @@ def authorize_application(
                 if m:
                     invalid_app_id = m.group(1)
                     if invalid_app_id:
-                        app_list = [
-                            app for app in app_list if app["appId"] != invalid_app_id
-                        ]
+                        for app in app_list:
+                            if app["appId"] == invalid_app_id:
+                                app_list.remove(app)
 
                 raise e
 
-        retry(add_preauthorized_app, "authorize application")
+        retry(
+            add_preauthorized_app,
+            "authorize application",
+            data=preAuthorizedApplications.to_list(),
+        )
     except AuthenticationError:
         logger.warning("*** Browse to: %s", FIX_URL % onefuzz_app_id)
         logger.warning("*** Then add the client application %s", registration_app_id)
