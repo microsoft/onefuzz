@@ -314,7 +314,7 @@ async fn run_agent(config: StaticConfig) -> Result<()> {
 
     info!("running agent");
 
-    agent.run().await?;
+    agent.run().await.context("agent.run")?;
 
     info!("supervisor agent finished");
 

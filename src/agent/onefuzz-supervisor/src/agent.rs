@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{Error, Result};
+use anyhow::{Context, Error, Result};
 use tokio::time;
 
 use crate::coordinator::*;
@@ -69,17 +69,22 @@ impl Agent {
         // state will be `Ready`.
         if let Some(Scheduler::Free(..)) = &self.scheduler {
             let event = StateUpdateEvent::Init.into();
-            self.coordinator.emit_event(event).await?;
+            self.coordinator
+                .emit_event(event)
+                .await
+                .context("agent.coordinator.emit_event")?;
         }
 
         loop {
             self.heartbeat.alive();
             if instant.elapsed() >= PENDING_COMMANDS_DELAY {
-                self.execute_pending_commands().await?;
+                self.execute_pending_commands()
+                    .await
+                    .context("execute pending commands")?;
                 instant = time::Instant::now();
             }
 
-            let done = self.update().await?;
+            let done = self.update().await.context("agent.update")?;
 
             if done {
                 debug!("agent done, exiting loop");
@@ -94,12 +99,15 @@ impl Agent {
         let last = self.scheduler.take().ok_or_else(scheduler_error)?;
         let previous_state = NodeState::from(&last);
         let (next, done) = match last {
-            Scheduler::Free(s) => (self.free(s).await?, false),
-            Scheduler::SettingUp(s) => (self.setting_up(s).await?, false),
-            Scheduler::PendingReboot(s) => (self.pending_reboot(s).await?, false),
-            Scheduler::Ready(s) => (self.ready(s).await?, false),
-            Scheduler::Busy(s) => (self.busy(s).await?, false),
-            Scheduler::Done(s) => (self.done(s).await?, true),
+            Scheduler::Free(s) => (self.free(s).await.context("free")?, false),
+            Scheduler::SettingUp(s) => (self.setting_up(s).await.context("setting_up")?, false),
+            Scheduler::PendingReboot(s) => (
+                self.pending_reboot(s).await.context("pending_reboot")?,
+                false,
+            ),
+            Scheduler::Ready(s) => (self.ready(s).await.context("ready")?, false),
+            Scheduler::Busy(s) => (self.busy(s).await.context("busy")?, false),
+            Scheduler::Done(s) => (self.done(s).await.context("done")?, true),
         };
         self.previous_state = previous_state;
         self.scheduler = Some(next);
@@ -126,12 +134,16 @@ impl Agent {
         self.emit_state_update_if_changed(StateUpdateEvent::Free)
             .await?;
 
-        let msg = self.work_queue.poll().await?;
+        let msg = self.work_queue.poll().await.context("work_queue.poll")?;
 
         let next = if let Some(msg) = msg {
             info!("received work set message: {:?}", msg);
 
-            let can_schedule = self.coordinator.can_schedule(&msg.work_set).await?;
+            let can_schedule = self
+                .coordinator
+                .can_schedule(&msg.work_set)
+                .await
+                .context("coordinator.can_schedule")?;
 
             if can_schedule.allowed {
                 info!("claiming work set: {:?}", msg.work_set);
@@ -202,7 +214,8 @@ impl Agent {
 
         let tasks = state.work_set().task_ids();
         self.emit_state_update_if_changed(StateUpdateEvent::SettingUp { tasks })
-            .await?;
+            .await
+            .context("emit_state_update_if_changed")?;
 
         let scheduler = match state.finish(self.setup_runner.as_mut()).await? {
             SetupDone::Ready(s) => s.into(),
@@ -216,11 +229,12 @@ impl Agent {
     async fn pending_reboot(&mut self, state: State<PendingReboot>) -> Result<Scheduler> {
         debug!("agent pending reboot");
         self.emit_state_update_if_changed(StateUpdateEvent::Rebooting)
-            .await?;
+            .await
+            .context("emit_state_update_if_changed")?;
 
         let ctx = state.reboot_context();
         self.reboot.save_context(ctx).await?;
-        self.reboot.invoke()?; // noreturn
+        self.reboot.invoke().context("reboot")?; // noreturn
 
         unreachable!()
     }
@@ -228,13 +242,15 @@ impl Agent {
     async fn ready(&mut self, state: State<Ready>) -> Result<Scheduler> {
         debug!("agent ready");
         self.emit_state_update_if_changed(StateUpdateEvent::Ready)
-            .await?;
-        Ok(state.run().await?.into())
+            .await
+            .context("emit_state_update_if_changed")?;
+        Ok(state.run().await.context("ready.run")?.into())
     }
 
     async fn busy(&mut self, state: State<Busy>) -> Result<Scheduler> {
         self.emit_state_update_if_changed(StateUpdateEvent::Busy)
-            .await?;
+            .await
+            .context("emit_state_update_if_changed")?;
 
         // Without this sleep, the `Agent.run` loop turns into an extremely tight loop calling
         // `wait4` of the running agents.  This sleep adds a small window to allow the rest of the
@@ -247,7 +263,8 @@ impl Agent {
         let mut events = vec![];
         let updated = state
             .update(&mut events, self.worker_runner.as_mut())
-            .await?;
+            .await
+            .context("state.update")?;
 
         for event in events {
             self.coordinator.emit_event(event.into()).await?;
@@ -258,7 +275,7 @@ impl Agent {
 
     async fn done(&mut self, state: State<Done>) -> Result<Scheduler> {
         debug!("agent done");
-        set_done_lock().await?;
+        set_done_lock().await.context("set_done_lock")?;
 
         let event = match state.cause() {
             DoneCause::SetupError {
@@ -274,7 +291,9 @@ impl Agent {
             },
         };
 
-        self.emit_state_update_if_changed(event).await?;
+        self.emit_state_update_if_changed(event)
+            .await
+            .context("emit_state_update_if_changed")?;
         // `Done` is a final state.
         Ok(state.into())
     }

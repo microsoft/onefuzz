@@ -120,7 +120,10 @@ impl<C: Context> State<C> {
 
 impl State<Ready> {
     pub async fn run(self, runner: &mut dyn IWorkerRunner) -> Result<State<Running>> {
-        let child = runner.run(&self.ctx.setup_dir, &self.work).await?;
+        let child = runner
+            .run(&self.ctx.setup_dir, &self.work)
+            .await
+            .context("runner.run")?;
 
         let state = State {
             ctx: Running { child },
@@ -133,7 +136,11 @@ impl State<Ready> {
 
 impl State<Running> {
     pub fn wait(mut self) -> Result<Waited> {
-        let waited = self.ctx.child.try_wait()?;
+        let waited = self
+            .ctx
+            .child
+            .try_wait()
+            .context("try_wait on worker runner")?;
 
         if let Some(output) = waited {
             let ctx = Done { output };
@@ -197,7 +204,7 @@ pub struct WorkerRunner;
 #[async_trait]
 impl IWorkerRunner for WorkerRunner {
     async fn run(&mut self, setup_dir: &Path, work: &WorkUnit) -> Result<Box<dyn IWorkerChild>> {
-        let working_dir = work.working_dir()?;
+        let working_dir = work.working_dir().context("work.working_dir")?;
 
         debug!("worker working dir = {}", working_dir.display());
 
@@ -236,7 +243,9 @@ impl IWorkerRunner for WorkerRunner {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
 
-        Ok(Box::new(RedirectedChild::spawn(cmd)?))
+        Ok(Box::new(
+            RedirectedChild::spawn(cmd).context("RedirectedChild::spawn")?,
+        ))
     }
 }
 
@@ -337,21 +346,22 @@ impl StreamReaderThreads {
 
 impl IWorkerChild for RedirectedChild {
     fn try_wait(&mut self) -> Result<Option<Output>> {
-        let output = if let Some(exit_status) = self.child.try_wait()? {
-            let exit_status = exit_status.into();
-            let streams = self.streams.take();
-            let streams = streams
-                .ok_or_else(|| format_err!("onefuzz-agent streams not captured"))?
-                .join()?;
+        let output =
+            if let Some(exit_status) = self.child.try_wait().context("try_wait agent process")? {
+                let exit_status = exit_status.into();
+                let streams = self.streams.take();
+                let streams = streams
+                    .ok_or_else(|| format_err!("onefuzz-agent streams not captured"))?
+                    .join()?;
 
-            Some(Output {
-                exit_status,
-                stderr: streams.stderr,
-                stdout: streams.stdout,
-            })
-        } else {
-            None
-        };
+                Some(Output {
+                    exit_status,
+                    stderr: streams.stderr,
+                    stdout: streams.stdout,
+                })
+            } else {
+                None
+            };
 
         Ok(output)
     }
