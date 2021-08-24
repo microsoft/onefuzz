@@ -391,7 +391,8 @@ def authorize_application(
                 )
             except GraphQueryError as e:
                 m = re.search(
-                    "Property PreAuthorizedApplication references applications (.*) that cannot be found.",
+                    "Property PreAuthorizedApplication references "
+                    "applications (.*) that cannot be found.",
                     e.message,
                 )
                 if m:
