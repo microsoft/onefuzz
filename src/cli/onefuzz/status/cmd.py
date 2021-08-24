@@ -22,7 +22,9 @@ def short(value: UUID) -> str:
 
 
 class PoolStatus(BaseModel):
+    # number of nodes in each node state
     node_state: Dict[NodeState, int]
+    # number of VMs used for each task
     tasks: Dict[UUID, int]
 
 
