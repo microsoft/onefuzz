@@ -54,7 +54,6 @@ pub struct ConfigData {
     pub url: Url,
     pub notification: Url,
     pub forwards: Vec<Forward>,
-    pub external_ip: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
