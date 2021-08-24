@@ -25,6 +25,7 @@ pub struct Agent {
     worker_runner: Box<dyn IWorkerRunner>,
     heartbeat: Option<AgentHeartbeatClient>,
     previous_state: NodeState,
+    last_poll_command: Result<Option<NodeCommand>, PollCommandError>,
 }
 
 impl Agent {
@@ -39,6 +40,7 @@ impl Agent {
     ) -> Self {
         let scheduler = Some(scheduler);
         let previous_state = NodeState::Init;
+        let last_poll_command = Ok(None);
 
         Self {
             coordinator,
@@ -49,6 +51,7 @@ impl Agent {
             worker_runner,
             heartbeat,
             previous_state,
+            last_poll_command,
         }
     }
 
@@ -277,12 +280,39 @@ impl Agent {
     }
 
     async fn execute_pending_commands(&mut self) -> Result<()> {
-        let cmd = self.coordinator.poll_commands().await?;
+        let result = self.coordinator.poll_commands().await;
 
-        if let Some(cmd) = cmd {
-            info!("agent received node command: {:?}", cmd);
-            self.scheduler()?.execute_command(cmd).await?;
+        match &result {
+            Ok(None) => {}
+            Ok(Some(cmd)) => {
+                info!("agent received node command: {:?}", cmd);
+                self.scheduler()?.execute_command(cmd).await?;
+            }
+            Err(PollCommandError::RequestFailed(err)) => {
+                // If we failed to request commands, this could be the service
+                // could be down.  Log it, but keep going.
+                error!("error polling the service for commands: {:?}", err);
+            }
+            Err(PollCommandError::RequestParseFailed(err)) => {
+                bail!("poll commands failed: {:?}", err);
+            }
+            Err(PollCommandError::ClaimFailed(err)) => {
+                // If we failed to claim two commands in a row, it means the
+                // service is up (since we received the commands we're trying to
+                // claim), but something else is going wrong, consistently. This
+                // is suspicious, and less likely to be a transient service or
+                // networking error, so bail.
+                if matches!(
+                    self.last_poll_command,
+                    Err(PollCommandError::ClaimFailed(..))
+                ) {
+                    bail!("repeated command claim attempt failures: {:?}", err);
+                }
+                error!("error claiming command from the service: {:?}", err);
+            }
         }
+
+        self.last_poll_command = result;
 
         Ok(())
     }

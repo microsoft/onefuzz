@@ -25,7 +25,7 @@ class InstanceConfig(BASE_CONFIG, ORMMixin):
     def fetch(cls) -> "InstanceConfig":
         entry = cls.get(get_instance_name())
         if entry is None:
-            entry = cls()
+            entry = cls(allowed_aad_tenants=[])
             entry.save()
         return entry
 

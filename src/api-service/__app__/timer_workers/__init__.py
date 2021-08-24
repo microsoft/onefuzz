@@ -8,7 +8,7 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import NodeState, PoolState
 
-from ..onefuzzlib.events import get_events
+from ..onefuzzlib.autoscale import autoscale_pool
 from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.workers.autoscale import autoscale_pool
 from ..onefuzzlib.workers.nodes import Node
@@ -31,7 +31,7 @@ def process_scaleset(scaleset: Scaleset) -> None:
     process_state_updates(scaleset)
 
 
-def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     # NOTE: Update pools first, such that scalesets impacted by pool updates
     # (such as shutdown or resize) happen during this iteration `timer_worker`
     # rather than the following iteration.
@@ -61,7 +61,3 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     scalesets = Scaleset.search()
     for scaleset in sorted(scalesets, key=lambda x: x.scaleset_id):
         process_scaleset(scaleset)
-
-    events = get_events()
-    if events:
-        dashboard.set(events)

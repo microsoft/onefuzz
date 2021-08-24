@@ -790,7 +790,7 @@ class TestOnefuzz:
             # which relate to azure-retry issues
             if (
                 message.startswith("Client-Request-ID=")
-                and "ResourceNotFound" in message
+                and ("ResourceNotFound" in message or "TableAlreadyExists" in message)
                 and entry.get("sdkVersion", "").startswith("azurefunctions")
             ):
                 continue

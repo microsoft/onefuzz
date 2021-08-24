@@ -8,14 +8,13 @@ import logging
 import azure.functions as func
 from onefuzztypes.enums import JobState, TaskState
 
-from ..onefuzzlib.events import get_events
 from ..onefuzzlib.jobs import Job
 from ..onefuzzlib.orm import process_state_updates
 from ..onefuzzlib.tasks.main import Task
 from ..onefuzzlib.tasks.scheduler import schedule_tasks
 
 
-def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa: F841
+def main(mytimer: func.TimerRequest) -> None:  # noqa: F841
     expired_tasks = Task.search_expired()
     for task in expired_tasks:
         logging.info(
@@ -41,7 +40,3 @@ def main(mytimer: func.TimerRequest, dashboard: func.Out[str]) -> None:  # noqa:
     schedule_tasks()
 
     Job.stop_never_started_jobs()
-
-    events = get_events()
-    if events:
-        dashboard.set(events)

@@ -27,7 +27,7 @@ pub async fn run(args: &clap::ArgMatches<'_>, event_sender: Option<Sender<UiEven
     let check_debugger = !args.is_present(DISABLE_CHECK_DEBUGGER);
 
     let config = TestInputArgs {
-        target_exe: &target_exe.as_path(),
+        target_exe: target_exe.as_path(),
         target_env: &target_env,
         target_options: &target_options,
         input_url: None,

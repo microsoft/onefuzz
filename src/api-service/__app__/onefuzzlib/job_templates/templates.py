@@ -87,7 +87,9 @@ class JobTemplateIndex(BASE_INDEX, ORMMixin):
             for task_container in request.containers:
                 if task_container.type == notification_config.container_type:
                     notification = Notification.create(
-                        task_container.name, notification_config.notification.config
+                        task_container.name,
+                        notification_config.notification.config,
+                        True,
                     )
                     if isinstance(notification, Error):
                         return notification

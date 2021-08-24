@@ -4,13 +4,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.31.0
+### Added
+* Supervisor: Added recording of STDOUT and STDERR of the supervisor to file.  [#1109](https://github.com/microsoft/onefuzz/pull/1109)
+* CLI/Service/Agent: Supervisor tasks can now optionally have a managed coverage container.  [#1123](https://github.com/microsoft/onefuzz/pull/1123)
+
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1151](https://github.com/microsoft/onefuzz/pull/1151), [#1149](https://github.com/microsoft/onefuzz/pull/1149), [#1145](https://github.com/microsoft/onefuzz/pull/1145), [#1134](https://github.com/microsoft/onefuzz/pull/1134), [#1135](https://github.com/microsoft/onefuzz/pull/1135), [#1137](https://github.com/microsoft/onefuzz/pull/1137), [#1133](https://github.com/microsoft/onefuzz/pull/1133), [#1138](https://github.com/microsoft/onefuzz/pull/1138), [#1132](https://github.com/microsoft/onefuzz/pull/1132), [#1140](https://github.com/microsoft/onefuzz/pull/1140), 
+* Service: Enabled testing of the Azure Devops work item rendering.  [#1144](https://github.com/microsoft/onefuzz/pull/1144)
+* Agent: Continued development related to upcoming features.  [#1142](https://github.com/microsoft/onefuzz/pull/1142)
+* CLI: No longer retry service API requests that fail with service-level errors.  [#1129](https://github.com/microsoft/onefuzz/pull/1129)
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1125](https://github.com/microsoft/onefuzz/pull/1125)
+* CLI/Service: Updated third-party Python dependencies.  [#1124](https://github.com/microsoft/onefuzz/pull/1124)
+
+### Fixed
+* Service: Fixed an issue with incomplete authorization in multi-tenant deployments.  CVE-2021-37705 [#1153](https://github.com/microsoft/onefuzz/pull/1153)
+
+## 2.30.0
+### Changed
+* Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1116](https://github.com/microsoft/onefuzz/pull/1116)
+
+### Fixed
+* Service: Fixed an error when replacing notifications for a container. [#1115](https://github.com/microsoft/onefuzz/pull/1115)
+* Service: Fixed Python 3.9 compatibility issues.  [#1117](https://github.com/microsoft/onefuzz/pull/1117)
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1118](https://github.com/microsoft/onefuzz/pull/1118)
+
+## 2.29.1
+### Fixed
+* Agent: Fixed an issue with the "Premium" storage account utilities.  [#1111](https://github.com/microsoft/onefuzz/pull/1111)
+* Agent: Addressed a rate-limiting issue when using `azcopy` from a large number of VMs with numbers cores.  [#1112](https://github.com/microsoft/onefuzz/pull/1112)
+
+## 2.29.0
+### Added
+* Service: PII is now removed from Jobs, Tasks, and Repros after 18 months.  [#1051](https://github.com/microsoft/onefuzz/pull/1051)
+* Service: Unused notifications are now removed after 18 months.  [#1051](https://github.com/microsoft/onefuzz/pull/1051)
+
+### Changed
+* Service: SignalR events are routed through an Azure Storage Queue to prevent SignalR outages from impacting the entire service.  [#1100](https://github.com/microsoft/onefuzz/pull/1100), [#1102](https://github.com/microsoft/onefuzz/pull/1102)
+* Service: Functionality used prior to 1.0.0 for assigning tasks to VMs rather than Pools is no longer supported.  [#1105](https://github.com/microsoft/onefuzz/pull/1105)
+* Service: The `coverage` and `generic_generator` tasks now verify `{input}` is used in `target_env` or `target_options`.  [#1106](https://github.com/microsoft/onefuzz/pull/1106)
+
+### Fixed
+* Service: Fixed an issue reimaging old nodes with `debug_keep_node` set.  [#1103](https://github.com/microsoft/onefuzz/pull/1103)
+* Service: Fixed an issue authenticating to Azure services.  [#1099](https://github.com/microsoft/onefuzz/pull/1099)
+* Service: Fixed an issue preventing Pools and Scalesets set to `shutdown` from being set to `halt`.  [#1104](https://github.com/microsoft/onefuzz/pull/1104)
+
+## 2.28.0
+### Added
+* CLI: Added the ability to remove existing container notifications upon creating a notification integration.  [#1084](https://github.com/microsoft/onefuzz/pull/1084)
+* CLI/Documentation: Added an example `generic_analysis` task that demonstrates collecting LLVM source-based coverage.  [#1072](https://github.com/microsoft/onefuzz/pull/1072)
+* Supervisor: Added service-interaction resiliency for node commands.  [#1098](https://github.com/microsoft/onefuzz/pull/1098)
+
+### Changed
+* Agent/Supervisor/Proxy: Addressed multiple new `cargo-clippy` warnings.  [#1089](https://github.com/microsoft/onefuzz/pull/1089)
+* Agent: Added more context to errors in generator tasks.  [#1094](https://github.com/microsoft/onefuzz/pull/1094)
+* Agent: Added support for ASAN runtime identification of format string bugs.  [#1093](https://github.com/microsoft/onefuzz/pull/1093)
+* Agent: Added verification that `{input}` is provided to the application under test via `target_env` or `target_options`.  [#1097](https://github.com/microsoft/onefuzz/pull/1097)
+* Agent: Continued development related to upcoming features.  [#1090](https://github.com/microsoft/onefuzz/pull/1090), [#1091](https://github.com/microsoft/onefuzz/pull/1091)
+* CLI/Service: Updated multiple first-party and third-party Python dependencies.  [#1086](https://github.com/microsoft/onefuzz/pull/1086)
+* CLI: Changed job templates to replace existing notifications for the unique report container.  [#1084](https://github.com/microsoft/onefuzz/pull/1084)
+* Service: Added more context to Azure DevOps errors.  [#1082](https://github.com/microsoft/onefuzz/pull/1082)
+* Service: Notification secrets are now deleted from Azure KeyVault upon notification deletion.  [#1085](https://github.com/microsoft/onefuzz/pull/1085)
+
+### Fixed
+* Agent: Fixed an issue logging ASAN output upon ASAN log parse errors.  [#1092](https://github.com/microsoft/onefuzz/pull/1092)
+* Agent: Fixed issues handling non-UTF8 output from applications under test.  [#1088](https://github.com/microsoft/onefuzz/pull/1088)
+
 ## 2.27.0
 ### Changed
 * Agent: Batch processing results are now saved after every 10 executions.  [#1076](https://github.com/microsoft/onefuzz/pull/1076)
 * Service: Optimized `file_added` event queueing by avoiding unnecessary Azure queries.  [#1075](https://github.com/microsoft/onefuzz/pull/1075)
 * Agent: Optimized directory change monitoring.  [#1078](https://github.com/microsoft/onefuzz/pull/1078)
 * Supervisor: Optimized agent monitoring.  [#1080](https://github.com/microsoft/onefuzz/pull/1080)
-
 
 ## 2.26.1
 ### Fixed

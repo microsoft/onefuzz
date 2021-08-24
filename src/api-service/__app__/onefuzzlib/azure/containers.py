@@ -140,7 +140,7 @@ def create_container(
         read=True,
         write=True,
         delete=True,
-        list=True,
+        list_=True,
     )
 
 
@@ -164,7 +164,7 @@ def get_container_sas_url_service(
     read: bool = False,
     write: bool = False,
     delete: bool = False,
-    list: bool = False,
+    list_: bool = False,
     delete_previous_version: bool = False,
     tag: bool = False,
 ) -> str:
@@ -180,7 +180,7 @@ def get_container_sas_url_service(
             read=read,
             write=write,
             delete=delete,
-            list=list,
+            list=list_,
             delete_previous_version=delete_previous_version,
             tag=tag,
         ),
@@ -202,7 +202,7 @@ def get_container_sas_url(
     read: bool = False,
     write: bool = False,
     delete: bool = False,
-    list: bool = False,
+    list_: bool = False,
 ) -> str:
     client = find_container(container, storage_type)
     if not client:
@@ -213,7 +213,7 @@ def get_container_sas_url(
         read=read,
         write=write,
         delete=delete,
-        list=list,
+        list_=list_,
     )
 
 

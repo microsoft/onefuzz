@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Error, Result};
 use downcast_rs::Downcast;
 use onefuzz::{auth::AccessToken, http::ResponseExt, process::Output};
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
@@ -148,7 +148,7 @@ pub struct TaskInfo {
 
 #[async_trait]
 pub trait ICoordinator: Downcast {
-    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>>;
+    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError>;
 
     async fn emit_event(&mut self, event: NodeEvent) -> Result<()>;
 
@@ -159,7 +159,7 @@ impl_downcast!(ICoordinator);
 
 #[async_trait]
 impl ICoordinator for Coordinator {
-    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>> {
+    async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError> {
         self.poll_commands().await
     }
 
@@ -170,6 +170,12 @@ impl ICoordinator for Coordinator {
     async fn can_schedule(&mut self, work_set: &WorkSet) -> Result<CanSchedule> {
         self.can_schedule(work_set).await
     }
+}
+
+pub enum PollCommandError {
+    RequestFailed(Error),
+    RequestParseFailed(Error),
+    ClaimFailed(Error),
 }
 
 pub struct Coordinator {
@@ -194,7 +200,7 @@ impl Coordinator {
     ///
     /// If the request fails due to an expired access token, we will retry once
     /// with a fresh one.
-    pub async fn poll_commands(&mut self) -> Result<Option<NodeCommand>> {
+    pub async fn poll_commands(&mut self) -> Result<Option<NodeCommand>, PollCommandError> {
         let request = PollCommandsRequest {
             machine_id: self.registration.machine_id,
         };
@@ -205,10 +211,12 @@ impl Coordinator {
         let pending: PendingNodeCommand = self
             .send_request(request)
             .await
-            .context("PollCommands")?
+            .context("PollCommands")
+            .map_err(PollCommandError::RequestFailed)?
             .json()
             .await
-            .context("parsing PollCommands response")?;
+            .context("parsing PollCommands response")
+            .map_err(PollCommandError::RequestParseFailed)?;
 
         if let Some(envelope) = pending.envelope {
             let request = ClaimNodeCommandRequest {
@@ -219,7 +227,10 @@ impl Coordinator {
             let url = self.registration.dynamic_config.commands_url.clone();
             let request = self.client.delete(url).json(&request);
 
-            self.send_request(request).await.context("ClaimCommand")?;
+            self.send_request(request)
+                .await
+                .context("ClaimCommand")
+                .map_err(PollCommandError::ClaimFailed)?;
 
             Ok(Some(envelope.command))
         } else {

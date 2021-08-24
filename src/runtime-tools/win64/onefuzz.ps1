@@ -14,6 +14,13 @@ function log ($message) {
   Write-Host -ForegroundColor Yellow $timestamp $message @args
 }
 
+function Setup-Silent-Notification {
+   # https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/registry-entries-for-silent-process-exit
+   log "installing registry key for silent termination notification of onefuzz-supervisor"
+   reg import c:\onefuzz\tools\win64\onefuzz-silent-exit.reg
+   log "done importing registry key"
+}
+
 function Uninstall-OneDrive {
   Stop-Process -Name OneDrive -Force -ErrorAction Ignore
   Stop-Process -Name FileCoAuth -Force -ErrorAction Ignore

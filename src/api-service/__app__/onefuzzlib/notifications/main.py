@@ -58,29 +58,25 @@ class Notification(models.Notification, ORMMixin):
         return notification
 
     @classmethod
-    def get_existing(
-        cls, container: Container, config: NotificationTemplate
-    ) -> Optional["Notification"]:
-        notifications = Notification.search(query={"container": [container]})
-        for notification in notifications:
-            if notification.config == config:
-                return notification
-        return None
-
-    @classmethod
     def key_fields(cls) -> Tuple[str, str]:
         return ("notification_id", "container")
 
     @classmethod
     def create(
-        cls, container: Container, config: NotificationTemplate
+        cls, container: Container, config: NotificationTemplate, replace_existing: bool
     ) -> Result["Notification"]:
         if not container_exists(container, StorageType.corpus):
             return Error(code=ErrorCode.INVALID_REQUEST, errors=["invalid container"])
 
-        existing = cls.get_existing(container, config)
-        if existing is not None:
-            return existing
+        if replace_existing:
+            existing = cls.search(query={"container": [container]})
+            for entry in existing:
+                logging.info(
+                    "replacing existing notification: %s - %s",
+                    entry.notification_id,
+                    container,
+                )
+                entry.delete()
 
         entry = cls(container=container, config=config)
         entry.save()
