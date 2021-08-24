@@ -17,7 +17,7 @@ from onefuzztypes.primitives import Container
 from .azure.auth import build_auth
 from .azure.containers import save_blob
 from .azure.creds import get_base_region
-from .azure.ip import get_public_ip
+from .azure.ip import get_public_private_ip
 from .azure.storage import StorageType
 from .azure.vm import VM
 from .extension import repro_extensions
@@ -125,7 +125,9 @@ class Repro(BASE_REPRO, ORMMixin):
             return
 
         if not self.ip:
-            self.ip = get_public_ip(vm_data.network_profile.network_interfaces[0].id)
+            self.ip = get_public_private_ip(
+                vm_data.network_profile.network_interfaces[0].id
+            )[0]
 
         extensions = repro_extensions(
             vm.region, self.os, self.vm_id, self.config, self.get_setup_container()

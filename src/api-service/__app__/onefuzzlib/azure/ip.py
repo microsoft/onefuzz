@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 from uuid import UUID
 
 from azure.core.exceptions import ResourceNotFoundError
@@ -132,22 +132,21 @@ def create_public_nic(resource_group: str, name: str, location: str) -> Optional
     return None
 
 
-def get_public_ip(resource_id: str) -> Optional[str]:
+def get_public_private_ip(resource_id: str) -> Tuple[Optional[str], Optional[str]]:
     logging.info("getting ip for %s", resource_id)
     network_client = get_network_client()
     resource = parse_resource_id(resource_id)
-    ip = (
-        network_client.network_interfaces.get(
-            resource["resource_group"], resource["name"]
-        )
-        .ip_configurations[0]
-        .public_ip_address
+
+    nic = network_client.network_interfaces.get(
+        resource["resource_group"], resource["name"]
     )
+    ip = nic.ip_configurations[0].public_ip_address
+    private_ip = nic.ip_configurations[0].private_ip_address
     resource = parse_resource_id(ip.id)
     ip = network_client.public_ip_addresses.get(
         resource["resource_group"], resource["name"]
     ).ip_address
     if ip is None:
-        return None
+        return None, private_ip
     else:
-        return str(ip)
+        return str(ip), private_ip

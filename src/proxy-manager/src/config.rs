@@ -37,6 +37,8 @@ pub enum ProxyError {
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Forward {
+    #[serde(default = "0.0.0.0")]
+    pub src_ip: String,
     pub src_port: u16,
     pub dst_ip: String,
     pub dst_port: u16,
@@ -52,6 +54,7 @@ pub struct ConfigData {
     pub url: Url,
     pub notification: Url,
     pub forwards: Vec<Forward>,
+    pub external_ip: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]

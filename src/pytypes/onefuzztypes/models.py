@@ -390,6 +390,7 @@ class TaskUnitConfig(BaseModel):
 
 
 class Forward(BaseModel):
+    src_ip: Optional[str]
     src_port: int
     dst_ip: str
     dst_port: int

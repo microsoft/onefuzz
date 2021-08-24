@@ -32,7 +32,7 @@ from .__version__ import __version__
 from .azure.auth import build_auth
 from .azure.containers import get_file_sas_url, save_blob
 from .azure.creds import get_instance_id
-from .azure.ip import get_public_ip
+from .azure.ip import get_public_private_ip
 from .azure.queue import get_queue_sas
 from .azure.storage import StorageType
 from .azure.vm import VM
@@ -59,6 +59,7 @@ class Proxy(ORMMixin):
     state: VmState = Field(default=VmState.init)
     auth: Authentication = Field(default_factory=build_auth)
     ip: Optional[str]
+    private_ip: Optional[str] = Field(desc="private IP of the Azure Network Interface")
     error: Optional[Error]
     version: str = Field(default=__version__)
     heartbeat: Optional[ProxyHeartbeat]
@@ -140,11 +141,14 @@ class Proxy(ORMMixin):
             self.set_provision_failed(vm_data)
             return
 
-        ip = get_public_ip(vm_data.network_profile.network_interfaces[0].id)
-        if ip is None:
+        ip, private_ip = get_public_private_ip(
+            vm_data.network_profile.network_interfaces[0].id
+        )
+        if ip is None or private_ip is None:
             self.save()
             return
         self.ip = ip
+        self.private_ip = private_ip
 
         extensions = proxy_manager_extensions(self.region, self.proxy_id)
         result = vm.add_extensions(extensions)
@@ -236,6 +240,9 @@ class Proxy(ORMMixin):
         return True
 
     def get_forwards(self) -> List[Forward]:
+        if self.private_ip is None:
+            raise Exception("unable to generate forwards, missing private_ip")
+
         forwards: List[Forward] = []
         for entry in ProxyForward.search_forward(
             region=self.region, proxy_id=self.proxy_id
@@ -245,6 +252,7 @@ class Proxy(ORMMixin):
             else:
                 forwards.append(
                     Forward(
+                        src_ip=self.private_ip,
                         src_port=entry.port,
                         dst_ip=entry.dst_ip,
                         dst_port=entry.dst_port,

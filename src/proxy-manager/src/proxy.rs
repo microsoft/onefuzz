@@ -12,18 +12,19 @@ const PROXY_PREFIX: &str = "onefuzz-proxy";
 fn build(data: &ConfigData) -> HashMap<String, String> {
     let mut results = HashMap::new();
 
+
     for entry in &data.forwards {
         let socket_filename = format!("{}-{}.socket", PROXY_PREFIX, entry.src_port);
         let service_filename = format!("{}-{}.service", PROXY_PREFIX, entry.src_port);
         let socket = format!(
             r##"
 [Socket]
-ListenStream=0.0.0.0:{}
+ListenStream={}:{}
 BindIPv6Only=both
 [Install]
 WantedBy=sockets.target
 "##,
-            entry.src_port
+            entry.src_ip, entry.src_port
         );
         let service = format!(
             r##"
