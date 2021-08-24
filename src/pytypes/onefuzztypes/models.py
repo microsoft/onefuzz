@@ -851,6 +851,8 @@ class InstanceConfig(BaseModel):
 
     extensions: AzureVmExtensionConfig = Field(default_factory=AzureVmExtensionConfig)
 
+    proxy_vm_sku: str = Field(default="Standard_B2s")
+
     def update(self, config: "InstanceConfig") -> None:
         for field in config.__fields__:
             # If no admins are set, then ignore setting admins
