@@ -490,18 +490,33 @@ class Builder:
             level += 1
 
 
+def normalize(result: Any) -> Any:
+    """Convert arbitrary result streams into something filterable with jmespath"""
+    if isinstance(result, BaseModel):
+        return normalize(result.dict(exclude_none=True))
+    if isinstance(result, Model):
+        return normalize(result.as_dict())
+    if isinstance(result, list):
+        return [normalize(x) for x in result]
+    if isinstance(result, dict):
+        return {normalize(k): normalize(v) for (k, v) in result.items()}
+    if isinstance(result, Enum):
+        return result.name
+    if isinstance(result, UUID):
+        return str(result)
+    if isinstance(result, (int, float, str)):
+        return result
+
+    logging.debug(f"unable to normalize type f{type(result)}")
+
+    return result
+
+
 def output(result: Any, output_format: str, expression: Optional[Any]) -> None:
     if isinstance(result, bytes):
         sys.stdout.buffer.write(result)
     else:
-        if isinstance(result, list) and result and isinstance(result[0], BaseModel):
-            # cycling through json resolves all of the nested BaseModel objects
-            result = [json.loads(x.json(exclude_none=True)) for x in result]
-        if isinstance(result, BaseModel):
-            # cycling through json resolves all of the nested BaseModel objects
-            result = json.loads(result.json(exclude_none=True))
-        if isinstance(result, Model):
-            result = result.as_dict()
+        result = normalize(result)
         if expression is not None:
             result = expression.search(result)
         if result is not None:
