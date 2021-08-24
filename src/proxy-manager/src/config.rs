@@ -35,9 +35,13 @@ pub enum ProxyError {
     },
 }
 
+fn default_src_ip() -> String {
+    "0.0.0.0".to_string()
+}
+
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Forward {
-    #[serde(default = "0.0.0.0")]
+    #[serde(default = "default_src_ip")]
     pub src_ip: String,
     pub src_port: u16,
     pub dst_ip: String,
