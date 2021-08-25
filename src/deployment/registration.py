@@ -406,6 +406,8 @@ def create_and_display_registration(
     registration_name: str,
     approle: OnefuzzAppRole,
     subscription_id: str,
+    *,
+    display_secret: bool = False,
 ) -> None:
     logger.info("Updating application registration")
     application_info = register_application(
@@ -414,10 +416,11 @@ def create_and_display_registration(
         approle=approle,
         subscription_id=subscription_id,
     )
-    logger.info("Registration complete")
-    logger.info("These generated credentials are valid for a year")
-    logger.info("client_id: %s" % application_info.client_id)
-    logger.info("client_secret: %s" % application_info.client_secret)
+    if display_secret:
+        print("Registration complete")
+        print("These generated credentials are valid for a year")
+        print(f"client_id: {application_info.client_id}")
+        print(f"client_secret: {application_info.client_secret}")
 
 
 def update_pool_registration(onefuzz_instance_name: str, subscription_id: str) -> None:
@@ -655,6 +658,7 @@ def main() -> None:
             registration_name,
             OnefuzzAppRole.CliClient,
             args.subscription_id,
+            display_secret=True,
         )
     elif args.command == "assign_scaleset_role":
         assign_app_role(
