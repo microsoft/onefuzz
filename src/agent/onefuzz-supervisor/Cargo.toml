@@ -26,7 +26,11 @@ clap = "2.33"
 reqwest-retry = { path = "../reqwest-retry" }
 onefuzz-telemetry = { path = "../onefuzz-telemetry" }
 backtrace = "0.3"
-command-group = "1.0"
+# command-group has an issue handling timeouts to GetQueuedCompletionStatus.
+# This rev is pinned to a hash of a PR that addresses this issue.  Once the PR,
+# or something like it, has been merged, update this to use a released version.
+# Ref: https://github.com/watchexec/command-group/pull/3
+command-group = { git = "https://github.com/bmc-msft/command-group", rev = "0a5a194a4688f91448b52a771dc2e91e82db2d49" }
 
 [target.'cfg(target_family = "unix")'.dependencies]
 users = "0.11"

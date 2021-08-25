@@ -319,8 +319,7 @@ dependencies = [
 [[package]]
 name = "command-group"
 version = "1.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "758ddf93da6b6b45c6e44a73d07362945b98814e8c9bb57a8c9353f921c18ba3"
+source = "git+https://github.com/bmc-msft/command-group?rev=0a5a194a4688f91448b52a771dc2e91e82db2d49#0a5a194a4688f91448b52a771dc2e91e82db2d49"
 dependencies = [
  "nix",
  "winapi 0.3.9",
