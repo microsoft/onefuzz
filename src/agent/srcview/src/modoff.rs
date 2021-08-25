@@ -149,49 +149,55 @@ impl ModOff {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use anyhow::Result;
 
     #[test]
-    fn parse_empty() {
+    fn parse_empty() -> Result<()> {
         let empty: Vec<ModOff> = Vec::new();
-        assert_eq!(empty, ModOff::parse("").unwrap());
+        assert_eq!(empty, ModOff::parse("")?);
+        Ok(())
     }
 
     #[test]
-    fn parse_good() {
+    fn parse_good() -> Result<()> {
         assert_eq!(
             vec![ModOff::new("foo.exe", 0x4141)],
-            ModOff::parse("foo.exe+4141").unwrap()
+            ModOff::parse("foo.exe+4141")?
         );
+        Ok(())
     }
 
     #[test]
-    fn parse_good_multiple_unix() {
+    fn parse_good_multiple_unix() -> Result<()> {
         assert_eq!(
             vec![
                 ModOff::new("foo.exe", 0x4141),
                 ModOff::new("foo.exe", 0x4242)
             ],
-            ModOff::parse("foo.exe+4141\nfoo.exe+4242").unwrap()
+            ModOff::parse("foo.exe+4141\nfoo.exe+4242")?
         );
+        Ok(())
     }
 
     #[test]
-    fn parse_good_multiple_windows() {
+    fn parse_good_multiple_windows() -> Result<()> {
         assert_eq!(
             vec![
                 ModOff::new("foo.exe", 0x4141),
                 ModOff::new("foo.exe", 0x4242),
             ],
-            ModOff::parse("foo.exe+4141\r\nfoo.exe+4242").unwrap()
+            ModOff::parse("foo.exe+4141\r\nfoo.exe+4242")?
         );
+        Ok(())
     }
 
     #[test]
-    fn parse_good_leading_0x() {
+    fn parse_good_leading_0x() -> Result<()> {
         assert_eq!(
             vec![ModOff::new("foo.exe", 0x4141)],
-            ModOff::parse("foo.exe+0x4141").unwrap()
+            ModOff::parse("foo.exe+0x4141")?
         );
+        Ok(())
     }
 
     #[test]
