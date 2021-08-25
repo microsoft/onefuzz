@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
+use anyhow::{format_err, Result};
 use log::*;
 use pdb::{FallibleIterator, SymbolData, PDB};
 use serde::{Deserialize, Serialize};
@@ -20,7 +21,7 @@ pub struct PdbCache {
 }
 
 impl PdbCache {
-    pub fn new<P: AsRef<Path>>(pdb: P) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new<P: AsRef<Path>>(pdb: P) -> Result<Self> {
         let mut offset_to_line: BTreeMap<usize, SrcLine> = BTreeMap::new();
         let mut symbol_to_lines: BTreeMap<String, Vec<SrcLine>> = BTreeMap::new();
         let mut path_to_symbols: BTreeMap<PathBuf, Vec<String>> = BTreeMap::new();
@@ -50,7 +51,10 @@ impl PdbCache {
                 if let Ok(SymbolData::Procedure(proc)) = symbol.parse() {
                     let mut lines = program.lines_at_offset(proc.offset);
                     while let Some(line_info) = lines.next()? {
-                        let rva = line_info.offset.to_rva(&address_map).expect("invalid rva");
+                        let rva = line_info
+                            .offset
+                            .to_rva(&address_map)
+                            .ok_or_else(|| format_err!("invalid RVA: {:?}", line_info))?;
                         let file_info = program.get_file_info(line_info.file_index)?;
                         let file_name = file_info.name.to_string_lossy(&string_table)?;
 

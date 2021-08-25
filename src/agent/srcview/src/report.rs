@@ -6,6 +6,8 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use anyhow::{format_err, Context, Result};
+use log::warn;
 use regex::Regex;
 use xml::writer::{EmitterConfig, XmlEvent};
 
@@ -79,9 +81,9 @@ impl Report {
         coverage: &[SrcLine],
         srcview: &SrcView,
         include_regex: Option<&str>,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    ) -> Result<Self> {
         let include = include_regex.map(|f| Regex::new(f)).transpose()?;
-        let filecov = Self::compute_filecov(coverage, srcview, &include);
+        let filecov = Self::compute_filecov(coverage, srcview, &include)?;
 
         // should this function take &[ModOff] and perform the conversion itself?
 
@@ -102,19 +104,21 @@ impl Report {
         coverage: &[SrcLine],
         srcview: &SrcView,
         include: &Option<Regex>,
-    ) -> BTreeMap<PathBuf, FileCov> {
+    ) -> Result<BTreeMap<PathBuf, FileCov>> {
         let uniq_cov: BTreeSet<SrcLine> = coverage.iter().cloned().collect();
 
         let mut filecov = BTreeMap::new();
 
         for path in srcview.paths() {
-            if !Self::relevant_path(path, include) {
+            if !Self::relevant_path(path, include)? {
                 continue;
             }
 
             let path_srclocs: Vec<SrcLine> = srcview
                 .path_lines(path)
-                .unwrap()
+                .ok_or_else(|| {
+                    format_err!("unable to find path lines in path: {}", path.display())
+                })?
                 .map(|line| SrcLine::new(path, line))
                 .collect();
 
@@ -135,8 +139,11 @@ impl Report {
 
             if let Some(path_symbols) = srcview.path_symbols(path) {
                 for symbol in path_symbols {
-                    let symbol_srclocs: BTreeSet<SrcLine> =
-                        srcview.symbol(&symbol).unwrap().cloned().collect();
+                    let symbol_srclocs: BTreeSet<SrcLine> = srcview
+                        .symbol(&symbol)
+                        .ok_or_else(|| format_err!("unable to resolve symbol: {}", symbol))?
+                        .cloned()
+                        .collect();
 
                     symbols.insert(symbol, symbol_srclocs);
                 }
@@ -152,7 +159,7 @@ impl Report {
             );
         }
 
-        filecov
+        Ok(filecov)
     }
 
     // should only be called from `new`, function to initialize directory coverage and overall
@@ -183,10 +190,10 @@ impl Report {
 
                 // get every file that matches this directory and total it
                 for file in self.filter_files(dir) {
-                    let cov = self.file(&file).unwrap();
-
-                    hits += cov.hits.len();
-                    lines += cov.lines.len();
+                    if let Some(cov) = self.file(&file) {
+                        hits += cov.hits.len();
+                        lines += cov.lines.len();
+                    }
                 }
 
                 self.dircov
@@ -198,10 +205,18 @@ impl Report {
 
             if let Some(root) = anc.last() {
                 // at this point we know we've computed this
-                let dircov = *self.dircov.get(root).unwrap();
-
-                // we don't really care if we're overwriting it
-                overall.insert(root.to_path_buf(), dircov);
+                match self.dircov.get(root) {
+                    Some(dircov) => {
+                        // we don't really care if we're overwriting it
+                        overall.insert(root.to_path_buf(), *dircov);
+                    }
+                    None => {
+                        warn!(
+                            "unable to get root for path for directory stats.  root: {}",
+                            root.display()
+                        );
+                    }
+                }
             }
         }
 
@@ -249,38 +264,42 @@ impl Report {
         false
     }
 
-    // wrapper to allow eronomic filtering with an option
-    fn filter_path<P: AsRef<Path> + fmt::Debug>(path: P, filter: &Option<Regex>) -> PathBuf {
+    // wrapper to allow ergonomic filtering with an option
+    fn filter_path<P: AsRef<Path> + fmt::Debug>(
+        path: P,
+        filter: &Option<Regex>,
+    ) -> Result<PathBuf> {
         match filter {
             Some(regex) => {
                 // we need our path as a string to regex it
-                let path_string = path
-                    .as_ref()
-                    .to_str()
-                    .unwrap_or_else(|| panic!("could not utf8 decode path: {:?}", path));
+                let path_string = path.as_ref().to_str().ok_or_else(|| {
+                    format_err!("could not utf8 decode path: {}", path.as_ref().display())
+                })?;
 
                 let filtered = regex.replace(path_string, "").into_owned();
 
-                PathBuf::from(filtered)
+                Ok(PathBuf::from(filtered))
             }
-            None => path.as_ref().to_path_buf(),
+            None => Ok(path.as_ref().to_path_buf()),
         }
     }
 
     // wrapper to allow ergonomic testing of our include regex inside an option against a
     // path
-    fn relevant_path<P: AsRef<Path> + fmt::Debug>(path: P, include: &Option<Regex>) -> bool {
+    fn relevant_path<P: AsRef<Path> + fmt::Debug>(
+        path: P,
+        include: &Option<Regex>,
+    ) -> Result<bool> {
         match include {
             Some(regex) => {
                 // we need our path as a string to regex it
-                let path_string = path
-                    .as_ref()
-                    .to_str()
-                    .unwrap_or_else(|| panic!("could not utf8 decode path: {:?}", path));
+                let path_string = path.as_ref().to_str().ok_or_else(|| {
+                    format_err!("could not utf8 decode path: {}", path.as_ref().display())
+                })?;
 
-                regex.is_match(path_string)
+                Ok(regex.is_match(path_string))
             }
-            None => true,
+            None => Ok(true),
         }
     }
 
@@ -332,10 +351,7 @@ impl Report {
     ///
     /// println!("{}", xml);
     /// ```
-    pub fn cobertura(
-        &self,
-        filter_regex: Option<&str>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    pub fn cobertura(&self, filter_regex: Option<&str>) -> Result<String> {
         let filter = filter_regex.map(|f| Regex::new(f)).transpose()?;
 
         let mut backing: Vec<u8> = Vec::new();
@@ -347,7 +363,7 @@ impl Report {
 
         let unixtime = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .expect("system time before unix epoch, wtf")
+            .context("system time before unix epoch")?
             .as_secs();
 
         ew.write(
@@ -380,7 +396,7 @@ impl Report {
                 continue;
             }
 
-            let display_dir = Self::filter_path(dir, &filter).display().to_string();
+            let display_dir = Self::filter_path(dir, &filter)?.display().to_string();
 
             ew.write(XmlEvent::start_element("package").attr("name", &display_dir))?;
             ew.write(XmlEvent::start_element("classes"))?;
@@ -390,9 +406,15 @@ impl Report {
             //
 
             for path in self.filter_files(dir) {
-                let display_path = Self::filter_path(path, &filter).display().to_string();
+                let display_path = Self::filter_path(path, &filter)?.display().to_string();
 
-                let filecov = self.file(path).unwrap();
+                let filecov = match self.file(path) {
+                    Some(filecov) => filecov,
+                    None => {
+                        warn!("unable to find coverage for path: {}", path.display());
+                        continue;
+                    }
+                };
 
                 let file_srclocs: BTreeSet<SrcLine> = filecov
                     .lines
