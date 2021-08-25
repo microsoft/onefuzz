@@ -127,7 +127,7 @@ class Repro(BASE_REPRO, ORMMixin):
         if not self.ip:
             self.ip = get_public_private_ip(
                 vm_data.network_profile.network_interfaces[0].id
-            )[0]
+            ).public_ip
 
         extensions = repro_extensions(
             vm.region, self.os, self.vm_id, self.config, self.get_setup_container()

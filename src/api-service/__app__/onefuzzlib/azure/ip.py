@@ -5,7 +5,7 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 from uuid import UUID
 
 from azure.core.exceptions import ResourceNotFoundError
@@ -13,6 +13,7 @@ from msrestazure.azure_exceptions import CloudError
 from msrestazure.tools import parse_resource_id
 from onefuzztypes.enums import ErrorCode
 from onefuzztypes.models import Error
+from pydantic import BaseModel
 
 from .creds import get_base_resource_group
 from .network_mgmt_client import get_network_client
@@ -132,7 +133,13 @@ def create_public_nic(resource_group: str, name: str, location: str) -> Optional
     return None
 
 
-def get_public_private_ip(resource_id: str) -> Tuple[Optional[str], Optional[str]]:
+# these will be None until the IPs are allocated by azure
+class ResourceIPs(BaseModel):
+    public_ip: Optional[str]
+    private_ip: Optional[str]
+
+
+def get_public_private_ip(resource_id: str) -> ResourceIPs:
     logging.info("getting ip for %s", resource_id)
     network_client = get_network_client()
     resource = parse_resource_id(resource_id)
@@ -143,10 +150,8 @@ def get_public_private_ip(resource_id: str) -> Tuple[Optional[str], Optional[str
     ip = nic.ip_configurations[0].public_ip_address
     private_ip = nic.ip_configurations[0].private_ip_address
     resource = parse_resource_id(ip.id)
-    ip = network_client.public_ip_addresses.get(
+    public_ip = network_client.public_ip_addresses.get(
         resource["resource_group"], resource["name"]
     ).ip_address
-    if ip is None:
-        return None, private_ip
-    else:
-        return str(ip), private_ip
+
+    return ResourceIPs(public_ip=public_ip, private_ip=private_ip)

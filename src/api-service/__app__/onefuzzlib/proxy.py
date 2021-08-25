@@ -141,14 +141,12 @@ class Proxy(ORMMixin):
             self.set_provision_failed(vm_data)
             return
 
-        ip, private_ip = get_public_private_ip(
-            vm_data.network_profile.network_interfaces[0].id
-        )
-        if ip is None or private_ip is None:
+        ips = get_public_private_ip(vm_data.network_profile.network_interfaces[0].id)
+        if ips.public_ip is None or ips.private_ip is None:
             self.save()
             return
-        self.ip = ip
-        self.private_ip = private_ip
+        self.ip = ips.public_ip
+        self.private_ip = ips.private_ip
 
         extensions = proxy_manager_extensions(self.region, self.proxy_id)
         result = vm.add_extensions(extensions)
