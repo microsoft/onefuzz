@@ -4,6 +4,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::{ModOff, PdbCache, SrcLine};
@@ -43,11 +44,7 @@ impl SrcView {
     ///
     /// // you can now query sv for info from example.exe...
     /// ```
-    pub fn insert<P: AsRef<Path>>(
-        &mut self,
-        module: &str,
-        pdb: P,
-    ) -> Result<Option<PdbCache>, Box<dyn std::error::Error>> {
+    pub fn insert<P: AsRef<Path>>(&mut self, module: &str, pdb: P) -> Result<Option<PdbCache>> {
         let cache = PdbCache::new(pdb)?;
         Ok(self.0.insert(module.to_owned(), cache))
     }
