@@ -210,19 +210,31 @@ def keyvault_extension(extensions: AzureVmExtensionConfig, vm_os: OS) -> Extensi
     # keyvault = "https://azure-policy-test-kv.vault.azure.net/secrets/"
     # cert = "Geneva-Test-Cert"
     windows_region = None
+    windows_keyvault = None
+    windows_cert_name = None
     windows_uri = None
     linux_region = None
+    linux_keyvault = None
+    linux_cert_name = None
+    linux_cert_path = None
+    linux_extension_store = None
     linux_uri = None
     cert_location = None
 
     if extensions.windows_keyvault:
         windows_region = extensions.windows_keyvault.region
-        windows_uri = extensions.windows_keyvault.uri
+        windows_keyvault = extensions.windows_keyvault.keyvault_name
+        windows_cert_name = extensions.windows_keyvault.cert_name
+        windows_uri = windows_keyvault + windows_cert_name
 
     if extensions.linux_keyvault:
         linux_region = extensions.linux_keyvault.region
-        linux_uri = extensions.linux_keyvault.uri
-        cert_location = extensions.linux_keyvault.location
+        linux_keyvault = extensions.linux_keyvault.keyvault_name
+        linux_cert_name = extensions.linux_keyvault.cert_name
+        linux_cert_path = extensions.linux_keyvault.cert_path
+        linux_extension_store = extensions.linux_keyvault.extension_store
+        linux_uri = linux_keyvault + linux_cert_name
+        cert_location = linux_cert_path + linux_extension_store
 
     if vm_os == OS.windows:
         return {

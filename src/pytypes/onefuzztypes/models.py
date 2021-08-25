@@ -798,7 +798,6 @@ class WindowsKeyvaultExtensionConfig(BaseModel):
     region: str
     keyvault_name: str
     cert_name: str
-    uri: str
 
 
 class LinuxKeyvaultExtensionConfig(BaseModel):
@@ -807,8 +806,6 @@ class LinuxKeyvaultExtensionConfig(BaseModel):
     cert_name: str
     cert_path: str
     extension_store: str
-    uri: str
-    location: str
 
 
 class AzureMonitorExtensionConfig(BaseModel):

@@ -812,16 +812,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Keyvault Name",
                     "type": "string"
                 },
-                "location": {
-                    "title": "Location",
-                    "type": "string"
-                },
                 "region": {
                     "title": "Region",
-                    "type": "string"
-                },
-                "uri": {
-                    "title": "Uri",
                     "type": "string"
                 }
             },
@@ -830,9 +822,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "keyvault_name",
                 "cert_name",
                 "cert_path",
-                "extension_store",
-                "uri",
-                "location"
+                "extension_store"
             ],
             "title": "LinuxKeyvaultExtensionConfig",
             "type": "object"
@@ -850,17 +840,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "region": {
                     "title": "Region",
                     "type": "string"
-                },
-                "uri": {
-                    "title": "Uri",
-                    "type": "string"
                 }
             },
             "required": [
                 "region",
                 "keyvault_name",
-                "cert_name",
-                "uri"
+                "cert_name"
             ],
             "title": "WindowsKeyvaultExtensionConfig",
             "type": "object"
@@ -5987,16 +5972,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Keyvault Name",
                     "type": "string"
                 },
-                "location": {
-                    "title": "Location",
-                    "type": "string"
-                },
                 "region": {
                     "title": "Region",
-                    "type": "string"
-                },
-                "uri": {
-                    "title": "Uri",
                     "type": "string"
                 }
             },
@@ -6005,9 +5982,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "keyvault_name",
                 "cert_name",
                 "cert_path",
-                "extension_store",
-                "uri",
-                "location"
+                "extension_store"
             ],
             "title": "LinuxKeyvaultExtensionConfig",
             "type": "object"
@@ -6605,17 +6580,12 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "region": {
                     "title": "Region",
                     "type": "string"
-                },
-                "uri": {
-                    "title": "Uri",
-                    "type": "string"
                 }
             },
             "required": [
                 "region",
                 "keyvault_name",
-                "cert_name",
-                "uri"
+                "cert_name"
             ],
             "title": "WindowsKeyvaultExtensionConfig",
             "type": "object"
