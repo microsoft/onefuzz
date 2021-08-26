@@ -46,8 +46,10 @@ def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
     if instance_config.extensions:
 
         if instance_config.extensions.keyvault:
-            keyvault = keyvault_extension(instance_config.extensions.keyvault, vm_os)
-            extensions.append(region, keyvault)
+            keyvault = keyvault_extension(
+                region, instance_config.extensions.keyvault, vm_os
+            )
+            extensions.append(keyvault)
 
         if instance_config.extensions.geneva and vm_os == OS.windows:
             geneva = geneva_extension(region)
