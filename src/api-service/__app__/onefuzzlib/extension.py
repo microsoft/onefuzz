@@ -43,21 +43,23 @@ def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
     if monitor:
         extensions.append(monitor)
 
-    if instance_config.extensions.keyvault:
-        keyvault = keyvault_extension(instance_config.extensions.keyvault, vm_os)
-        extensions.append(region, keyvault)
+    if instance_config.extensions:
 
-    if instance_config.extensions.geneva and vm_os == OS.windows:
-        geneva = geneva_extension(region)
-        extensions.append(geneva)
+        if instance_config.extensions.keyvault:
+            keyvault = keyvault_extension(instance_config.extensions.keyvault, vm_os)
+            extensions.append(region, keyvault)
 
-    if instance_config.extensions.azure_monitor and vm_os == OS.linux:
-        azmon = azmon_extension(region, instance_config.extensions.azure_monitor)
-        extensions.append(azmon)
+        if instance_config.extensions.geneva and vm_os == OS.windows:
+            geneva = geneva_extension(region)
+            extensions.append(geneva)
 
-    if instance_config.extensions.azure_security and vm_os == OS.linux:
-        azsec = azsec_extension(region)
-        extensions.append(azsec)
+        if instance_config.extensions.azure_monitor and vm_os == OS.linux:
+            azmon = azmon_extension(region, instance_config.extensions.azure_monitor)
+            extensions.append(azmon)
+
+        if instance_config.extensions.azure_security and vm_os == OS.linux:
+            azsec = azsec_extension(region)
+            extensions.append(azsec)
 
     return extensions
 
