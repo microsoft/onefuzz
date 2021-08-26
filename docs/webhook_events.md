@@ -645,7 +645,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
         "allowed_aad_tenants": [
             "00000000-0000-0000-0000-000000000000"
         ],
-        "extensions": {},
         "proxy_vm_sku": "Standard_B2s"
     }
 }
@@ -686,17 +685,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Monitoringgsenvironment",
                     "type": "string"
                 },
-                "namespace": {
-                    "title": "Namespace",
+                "name": {
+                    "title": "Name",
                     "type": "string"
                 },
-                "region": {
-                    "title": "Region",
+                "namespace": {
+                    "title": "Namespace",
                     "type": "string"
                 }
             },
             "required": [
-                "region",
+                "name",
                 "config_version",
                 "moniker",
                 "namespace",
@@ -711,13 +710,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "AzureSecurityExtensionConfig": {
             "properties": {
-                "region": {
-                    "title": "Region",
+                "name": {
+                    "title": "Name",
                     "type": "string"
                 }
             },
             "required": [
-                "region"
+                "name"
             ],
             "title": "AzureSecurityExtensionConfig",
             "type": "object"
@@ -733,11 +732,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "geneva": {
                     "$ref": "#/definitions/GenevaExtensionConfig"
                 },
-                "linux_keyvault": {
-                    "$ref": "#/definitions/LinuxKeyvaultExtensionConfig"
-                },
-                "windows_keyvault": {
-                    "$ref": "#/definitions/WindowsKeyvaultExtensionConfig"
+                "keyvault": {
+                    "$ref": "#/definitions/KeyvaultExtensionConfig"
                 }
             },
             "title": "AzureVmExtensionConfig",
@@ -745,13 +741,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "GenevaExtensionConfig": {
             "properties": {
-                "region": {
-                    "title": "Region",
+                "name": {
+                    "title": "Name",
                     "type": "string"
                 }
             },
             "required": [
-                "region"
+                "name"
             ],
             "title": "GenevaExtensionConfig",
             "type": "object"
@@ -794,7 +790,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "InstanceConfig",
             "type": "object"
         },
-        "LinuxKeyvaultExtensionConfig": {
+        "KeyvaultExtensionConfig": {
             "properties": {
                 "cert_name": {
                     "title": "Cert Name",
@@ -812,42 +808,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Keyvault Name",
                     "type": "string"
                 },
-                "region": {
-                    "title": "Region",
+                "name": {
+                    "title": "Name",
                     "type": "string"
                 }
             },
             "required": [
-                "region",
+                "name",
                 "keyvault_name",
                 "cert_name",
                 "cert_path",
                 "extension_store"
             ],
-            "title": "LinuxKeyvaultExtensionConfig",
-            "type": "object"
-        },
-        "WindowsKeyvaultExtensionConfig": {
-            "properties": {
-                "cert_name": {
-                    "title": "Cert Name",
-                    "type": "string"
-                },
-                "keyvault_name": {
-                    "title": "Keyvault Name",
-                    "type": "string"
-                },
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "region",
-                "keyvault_name",
-                "cert_name"
-            ],
-            "title": "WindowsKeyvaultExtensionConfig",
+            "title": "KeyvaultExtensionConfig",
             "type": "object"
         }
     },
@@ -5025,17 +4998,17 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Monitoringgsenvironment",
                     "type": "string"
                 },
-                "namespace": {
-                    "title": "Namespace",
+                "name": {
+                    "title": "Name",
                     "type": "string"
                 },
-                "region": {
-                    "title": "Region",
+                "namespace": {
+                    "title": "Namespace",
                     "type": "string"
                 }
             },
             "required": [
-                "region",
+                "name",
                 "config_version",
                 "moniker",
                 "namespace",
@@ -5050,13 +5023,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "AzureSecurityExtensionConfig": {
             "properties": {
-                "region": {
-                    "title": "Region",
+                "name": {
+                    "title": "Name",
                     "type": "string"
                 }
             },
             "required": [
-                "region"
+                "name"
             ],
             "title": "AzureSecurityExtensionConfig",
             "type": "object"
@@ -5072,11 +5045,8 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "geneva": {
                     "$ref": "#/definitions/GenevaExtensionConfig"
                 },
-                "linux_keyvault": {
-                    "$ref": "#/definitions/LinuxKeyvaultExtensionConfig"
-                },
-                "windows_keyvault": {
-                    "$ref": "#/definitions/WindowsKeyvaultExtensionConfig"
+                "keyvault": {
+                    "$ref": "#/definitions/KeyvaultExtensionConfig"
                 }
             },
             "title": "AzureVmExtensionConfig",
@@ -5854,13 +5824,13 @@ Each event will be submitted via HTTP POST to the user provided URL.
         },
         "GenevaExtensionConfig": {
             "properties": {
-                "region": {
-                    "title": "Region",
+                "name": {
+                    "title": "Name",
                     "type": "string"
                 }
             },
             "required": [
-                "region"
+                "name"
             ],
             "title": "GenevaExtensionConfig",
             "type": "object"
@@ -5954,7 +5924,7 @@ Each event will be submitted via HTTP POST to the user provided URL.
             "title": "JobTaskStopped",
             "type": "object"
         },
-        "LinuxKeyvaultExtensionConfig": {
+        "KeyvaultExtensionConfig": {
             "properties": {
                 "cert_name": {
                     "title": "Cert Name",
@@ -5972,19 +5942,19 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Keyvault Name",
                     "type": "string"
                 },
-                "region": {
-                    "title": "Region",
+                "name": {
+                    "title": "Name",
                     "type": "string"
                 }
             },
             "required": [
-                "region",
+                "name",
                 "keyvault_name",
                 "cert_name",
                 "cert_path",
                 "extension_store"
             ],
-            "title": "LinuxKeyvaultExtensionConfig",
+            "title": "KeyvaultExtensionConfig",
             "type": "object"
         },
         "NoReproReport": {
@@ -6566,29 +6536,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "stopped"
             ],
             "title": "VmState"
-        },
-        "WindowsKeyvaultExtensionConfig": {
-            "properties": {
-                "cert_name": {
-                    "title": "Cert Name",
-                    "type": "string"
-                },
-                "keyvault_name": {
-                    "title": "Keyvault Name",
-                    "type": "string"
-                },
-                "region": {
-                    "title": "Region",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "region",
-                "keyvault_name",
-                "cert_name"
-            ],
-            "title": "WindowsKeyvaultExtensionConfig",
-            "type": "object"
         }
     },
     "properties": {

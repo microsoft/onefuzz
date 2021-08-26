@@ -794,14 +794,8 @@ class Task(BaseModel):
     user_info: Optional[UserInfo]
 
 
-class WindowsKeyvaultExtensionConfig(BaseModel):
-    region: str
-    keyvault_name: str
-    cert_name: str
-
-
-class LinuxKeyvaultExtensionConfig(BaseModel):
-    region: str
+class KeyvaultExtensionConfig(BaseModel):
+    name: str
     keyvault_name: str
     cert_name: str
     cert_path: str
@@ -809,7 +803,7 @@ class LinuxKeyvaultExtensionConfig(BaseModel):
 
 
 class AzureMonitorExtensionConfig(BaseModel):
-    region: str
+    name: str
     config_version: str
     moniker: str
     namespace: str
@@ -821,16 +815,15 @@ class AzureMonitorExtensionConfig(BaseModel):
 
 
 class AzureSecurityExtensionConfig(BaseModel):
-    region: str
+    name: str
 
 
 class GenevaExtensionConfig(BaseModel):
-    region: str
+    name: str
 
 
 class AzureVmExtensionConfig(BaseModel):
-    windows_keyvault: Optional[WindowsKeyvaultExtensionConfig]
-    linux_keyvault: Optional[LinuxKeyvaultExtensionConfig]
+    keyvault: Optional[KeyvaultExtensionConfig]
     azure_monitor: Optional[AzureMonitorExtensionConfig]
     azure_security: Optional[AzureSecurityExtensionConfig]
     geneva: Optional[GenevaExtensionConfig]
@@ -846,7 +839,7 @@ class InstanceConfig(BaseModel):
 
     allowed_aad_tenants: List[UUID]
 
-    extensions: AzureVmExtensionConfig = Field(default_factory=AzureVmExtensionConfig)
+    extensions: Optional[AzureVmExtensionConfig]
 
     proxy_vm_sku: str = Field(default="Standard_B2s")
 

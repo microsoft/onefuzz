@@ -10,7 +10,8 @@ from uuid import UUID, uuid4
 from onefuzztypes.enums import OS, AgentMode
 from onefuzztypes.models import (
     AgentConfig,
-    AzureVmExtensionConfig,
+    AzureMonitorExtensionConfig,
+    KeyvaultExtensionConfig,
     Pool,
     ReproConfig,
     Scaleset,
@@ -37,36 +38,25 @@ def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
 
     dependency = dependency_extension(region, vm_os)
     monitor = monitor_extension(region, vm_os)
-
-    keyvault = None
-    if instance_config.extensions.windows_keyvault and vm_os == OS.windows:
-        keyvault = keyvault_extension(instance_config.extensions, vm_os)
-    if instance_config.extensions.linux_keyvault and vm_os == OS.linux:
-        keyvault = keyvault_extension(instance_config.extensions, vm_os)
-
-    geneva = None
-    if instance_config.extensions.geneva and vm_os == OS.windows:
-        geneva = geneva_extension(instance_config.extensions)
-
-    azmon = None
-    if instance_config.extensions.azure_monitor and vm_os == OS.linux:
-        azmon = azmon_extension(instance_config.extensions)
-
-    azsec = None
-    if instance_config.extensions.azure_security and vm_os == OS.linux:
-        azsec = azsec_extension(instance_config.extensions)
-
     if dependency:
         extensions.append(dependency)
     if monitor:
         extensions.append(monitor)
-    if keyvault:
+
+    if instance_config.extensions.keyvault:
+        keyvault = keyvault_extension(instance_config.extensions.keyvault, vm_os)
         extensions.append(keyvault)
-    if geneva:
+
+    if instance_config.extensions.geneva and vm_os == OS.windows:
+        geneva = geneva_extension(region)
         extensions.append(geneva)
-    if azmon:
+
+    if instance_config.extensions.azure_monitor and vm_os == OS.linux:
+        azmon = azmon_extension(instance_config.extensions.azure_monitor)
         extensions.append(azmon)
-    if azsec:
+
+    if instance_config.extensions.azure_security and vm_os == OS.linux:
+        azsec = azsec_extension(region)
         extensions.append(azsec)
 
     return extensions
@@ -124,12 +114,7 @@ def dependency_extension(region: Region, vm_os: OS) -> Optional[Extension]:
         return None
 
 
-def geneva_extension(extensions: AzureVmExtensionConfig) -> Extension:
-
-    region = None
-
-    if extensions.geneva:
-        region = extensions.geneva.region
+def geneva_extension(region: Region) -> Extension:
 
     return {
         "name": "Microsoft.Azure.Geneva.GenevaMonitoring",
@@ -144,33 +129,32 @@ def geneva_extension(extensions: AzureVmExtensionConfig) -> Extension:
     }
 
 
-def azmon_extension(extensions: AzureVmExtensionConfig) -> Extension:
+def azmon_extension(
+    region: Region, azure_monitor: AzureMonitorExtensionConfig
+) -> Extension:
 
-    location = None
     auth_id = None
     config_version = None
     moniker = None
     namespace = None
     environment = None
     account = None
-    gcs_region = None
     auth_id_type = None
 
-    if extensions.azure_monitor:
-        location = extensions.azure_monitor.region
-        auth_id = extensions.azure_monitor.monitoringGCSAuthId
-        config_version = extensions.azure_monitor.config_version
-        moniker = extensions.azure_monitor.moniker
-        namespace = extensions.azure_monitor.namespace
-        environment = extensions.azure_monitor.monitoringGSEnvironment
-        account = extensions.azure_monitor.monitoringGCSAccount
-        gcs_region = extensions.azure_monitor.monitoringGCSRegion
-        auth_id_type = extensions.azure_monitor.monitoringGCSAuthIdType
+    if azure_monitor:
+        auth_id = azure_monitor.monitoringGCSAuthId
+        config_version = azure_monitor.config_version
+        moniker = azure_monitor.moniker
+        namespace = azure_monitor.namespace
+        environment = azure_monitor.monitoringGSEnvironment
+        account = azure_monitor.monitoringGCSAccount
+        gcs_region = azure_monitor.monitoringGCSRegion
+        auth_id_type = azure_monitor.monitoringGCSAuthIdType
 
     return {
         "name": "AzureMonitorLinuxAgent",
         "publisher": "Microsoft.Azure.Monitor",
-        "location": location,
+        "location": region,
         "type": "AzureMonitorLinuxAgent",
         "typeHandlerVersion": "1.0",
         "autoUpgradeMinorVersion": True,
@@ -181,19 +165,14 @@ def azmon_extension(extensions: AzureVmExtensionConfig) -> Extension:
             "namespace": namespace,
             "monitoringGCSEnvironment": environment,
             "monitoringGCSAccount": account,
-            "monitoringGCSRegion": gcs_region,
+            "monitoringGCSRegion": region,
             "monitoringGCSAuthId": auth_id,
             "monitoringGCSAuthIdType": auth_id_type,
         },
     }
 
 
-def azsec_extension(extensions: AzureVmExtensionConfig) -> Extension:
-
-    region = None
-
-    if extensions.azure_security:
-        region = extensions.azure_security.region
+def azsec_extension(region: Region) -> Extension:
 
     return {
         "name": "AzureSecurityLinuxAgent",
@@ -206,40 +185,28 @@ def azsec_extension(extensions: AzureVmExtensionConfig) -> Extension:
     }
 
 
-def keyvault_extension(extensions: AzureVmExtensionConfig, vm_os: OS) -> Extension:
+def keyvault_extension(
+    region: Region, keyvault: KeyvaultExtensionConfig, vm_os: OS
+) -> Extension:
     # keyvault = "https://azure-policy-test-kv.vault.azure.net/secrets/"
     # cert = "Geneva-Test-Cert"
-    windows_region = None
-    windows_keyvault = None
-    windows_cert_name = None
-    windows_uri = None
-    linux_region = None
-    linux_keyvault = None
-    linux_cert_name = None
-    linux_cert_path = None
-    linux_extension_store = None
-    linux_uri = None
+
+    keyvault_name = None
+    cert_name = None
+    uri = None
+    cert_path = None
+    extension_store = None
     cert_location = None
 
-    if extensions.windows_keyvault:
-        windows_region = extensions.windows_keyvault.region
-        windows_keyvault = extensions.windows_keyvault.keyvault_name
-        windows_cert_name = extensions.windows_keyvault.cert_name
-        windows_uri = windows_keyvault + windows_cert_name
-
-    if extensions.linux_keyvault:
-        linux_region = extensions.linux_keyvault.region
-        linux_keyvault = extensions.linux_keyvault.keyvault_name
-        linux_cert_name = extensions.linux_keyvault.cert_name
-        linux_cert_path = extensions.linux_keyvault.cert_path
-        linux_extension_store = extensions.linux_keyvault.extension_store
-        linux_uri = linux_keyvault + linux_cert_name
-        cert_location = linux_cert_path + linux_extension_store
+    if keyvault:
+        keyvault_name = keyvault.keyvault_name
+        cert_name = keyvault.cert_name
+        uri = keyvault_name + cert_name
 
     if vm_os == OS.windows:
         return {
             "name": "KVVMExtensionForWindows",
-            "location": windows_region,
+            "location": region,
             "publisher": "Microsoft.Azure.KeyVault",
             "type": "KeyVaultForWindows",
             "typeHandlerVersion": "1.0",
@@ -251,17 +218,17 @@ def keyvault_extension(extensions: AzureVmExtensionConfig, vm_os: OS) -> Extensi
                     "linkOnRenewal": False,
                     "certificateStoreLocation": "LocalMachine",
                     "requireInitialSync": True,
-                    "observedCertificates": [windows_uri],
+                    "observedCertificates": [uri],
                 }
             },
         }
     elif vm_os == OS.linux:
-        # cert_path = "/var/lib/waagent/"
-        # extension = "Microsoft.Azure.KeyVault.Store"
-        # location = cert_path + extension
+        cert_path = keyvault.cert_path
+        extension_store = keyvault.extension_store
+        cert_location = cert_path + extension_store
         return {
             "name": "KVVMExtensionForLinux",
-            "location": linux_region,
+            "location": region,
             "publisher": "Microsoft.Azure.KeyVault",
             "type": "KeyVaultForLinux",
             "typeHandlerVersion": "2.0",
@@ -270,7 +237,7 @@ def keyvault_extension(extensions: AzureVmExtensionConfig, vm_os: OS) -> Extensi
                 "secretsManagementSettings": {
                     "pollingIntervalInS": "3600",
                     "certificateStoreLocation": cert_location,
-                    "observedCertificates": [linux_uri],
+                    "observedCertificates": [uri],
                 },
             },
         }
