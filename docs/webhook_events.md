@@ -677,10 +677,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Monitoringgcsauthidtype",
                     "type": "string"
                 },
-                "monitoringGCSRegion": {
-                    "title": "Monitoringgcsregion",
-                    "type": "string"
-                },
                 "monitoringGSEnvironment": {
                     "title": "Monitoringgsenvironment",
                     "type": "string"
@@ -701,7 +697,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "namespace",
                 "monitoringGSEnvironment",
                 "monitoringGCSAccount",
-                "monitoringGCSRegion",
                 "monitoringGCSAuthId",
                 "monitoringGCSAuthIdType"
             ],
@@ -4990,10 +4985,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                     "title": "Monitoringgcsauthidtype",
                     "type": "string"
                 },
-                "monitoringGCSRegion": {
-                    "title": "Monitoringgcsregion",
-                    "type": "string"
-                },
                 "monitoringGSEnvironment": {
                     "title": "Monitoringgsenvironment",
                     "type": "string"
@@ -5014,7 +5005,6 @@ Each event will be submitted via HTTP POST to the user provided URL.
                 "namespace",
                 "monitoringGSEnvironment",
                 "monitoringGCSAccount",
-                "monitoringGCSRegion",
                 "monitoringGCSAuthId",
                 "monitoringGCSAuthIdType"
             ],

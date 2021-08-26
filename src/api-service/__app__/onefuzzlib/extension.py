@@ -148,7 +148,6 @@ def azmon_extension(
         namespace = azure_monitor.namespace
         environment = azure_monitor.monitoringGSEnvironment
         account = azure_monitor.monitoringGCSAccount
-        gcs_region = azure_monitor.monitoringGCSRegion
         auth_id_type = azure_monitor.monitoringGCSAuthIdType
 
     return {

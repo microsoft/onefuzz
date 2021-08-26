@@ -809,7 +809,6 @@ class AzureMonitorExtensionConfig(BaseModel):
     namespace: str
     monitoringGSEnvironment: str
     monitoringGCSAccount: str
-    monitoringGCSRegion: Region
     monitoringGCSAuthId: str
     monitoringGCSAuthIdType: str
 
