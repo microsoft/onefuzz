@@ -1,11 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use std::{
-    ffi::{OsStr, OsString},
-    fmt,
-    path::PathBuf,
-};
+use std::{fmt, path::PathBuf};
 
 use anyhow::Result;
 use reqwest::Url;
@@ -215,14 +211,7 @@ impl fmt::Display for BlobContainerUrl {
     }
 }
 
-pub fn redact_query_sas_sig_osstr(value: &OsStr) -> OsString {
-    match value.to_str().map(Url::parse) {
-        Some(Ok(url)) => redact_query_sas_sig(&url).to_string().into(),
-        _ => value.to_owned(),
-    }
-}
-
-fn redact_query_sas_sig(url: &Url) -> Url {
+pub fn redact_query_sas_sig(url: &Url) -> Url {
     let mut redacted = url.clone();
     redacted.set_query(None);
 
