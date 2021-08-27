@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::blob::url::redact_query_sas_sig;
 use anyhow::{Context, Result};
 use backoff::{self, future::retry_notify, ExponentialBackoff};
 use std::{
-    ffi::OsStr,
+    ffi::{OsStr, OsString},
     fmt,
     path::Path,
     process::Stdio,
@@ -14,6 +15,7 @@ use std::{
 use tempfile::tempdir;
 use tokio::fs;
 use tokio::process::Command;
+use url::Url;
 
 const RETRY_INTERVAL: Duration = Duration::from_secs(5);
 const RETRY_COUNT: usize = 5;
@@ -48,6 +50,14 @@ async fn read_azcopy_log_file(path: &Path) -> Result<String> {
     }
 }
 
+// attempt to redact an azcopy argument if it could possibly be a SAS URL
+fn redact_azcopy_sas_arg(value: &OsStr) -> OsString {
+    match value.to_str().map(Url::parse) {
+        Some(Ok(url)) => redact_query_sas_sig(&url).to_string().into(),
+        _ => value.to_owned(),
+    }
+}
+
 async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
     let temp_dir = tempdir()?;
 
@@ -78,6 +88,10 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         let logfile = read_azcopy_log_file(temp_dir.path())
             .await
             .unwrap_or_else(|e| format!("unable to read azcopy log file from: {:?}", e));
+
+        let src = redact_azcopy_sas_arg(src);
+        let dst = redact_azcopy_sas_arg(dst);
+
         anyhow::bail!(
             "azcopy {} failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?} log:{:?}",
             mode,
