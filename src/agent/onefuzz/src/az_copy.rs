@@ -121,7 +121,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
     let failure_counter = AtomicUsize::new(0);
 
     let operation = || async {
-        let mut attempt_count = attempt_counter.fetch_add(1, Ordering::SeqCst);
+        let attempt_count = attempt_counter.fetch_add(1, Ordering::SeqCst);
         let mut failure_count = failure_counter.load(Ordering::SeqCst);
         let result = az_impl(mode, src, dst, args).await.with_context(|| {
             format!(
