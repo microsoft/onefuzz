@@ -34,14 +34,12 @@ from .reports import get_report
 
 def generic_extensions(region: Region, vm_os: OS) -> List[Extension]:
     instance_config = InstanceConfig.fetch()
-    extensions = []
+
+    extensions = [monitor_extension(region, vm_os)]
 
     dependency = dependency_extension(region, vm_os)
-    monitor = monitor_extension(region, vm_os)
     if dependency:
         extensions.append(dependency)
-    if monitor:
-        extensions.append(monitor)
 
     if instance_config.extensions:
 
@@ -137,22 +135,13 @@ def azmon_extension(
     region: Region, azure_monitor: AzureMonitorExtensionConfig
 ) -> Extension:
 
-    auth_id = None
-    config_version = None
-    moniker = None
-    namespace = None
-    environment = None
-    account = None
-    auth_id_type = None
-
-    if azure_monitor:
-        auth_id = azure_monitor.monitoringGCSAuthId
-        config_version = azure_monitor.config_version
-        moniker = azure_monitor.moniker
-        namespace = azure_monitor.namespace
-        environment = azure_monitor.monitoringGSEnvironment
-        account = azure_monitor.monitoringGCSAccount
-        auth_id_type = azure_monitor.monitoringGCSAuthIdType
+    auth_id = azure_monitor.monitoringGCSAuthId
+    config_version = azure_monitor.config_version
+    moniker = azure_monitor.moniker
+    namespace = azure_monitor.namespace
+    environment = azure_monitor.monitoringGSEnvironment
+    account = azure_monitor.monitoringGCSAccount
+    auth_id_type = azure_monitor.monitoringGCSAuthIdType
 
     return {
         "name": "AzureMonitorLinuxAgent",
@@ -191,20 +180,10 @@ def azsec_extension(region: Region) -> Extension:
 def keyvault_extension(
     region: Region, keyvault: KeyvaultExtensionConfig, vm_os: OS
 ) -> Extension:
-    # keyvault = "https://azure-policy-test-kv.vault.azure.net/secrets/"
-    # cert = "Geneva-Test-Cert"
 
-    keyvault_name = None
-    cert_name = None
-    uri = None
-    cert_path = None
-    extension_store = None
-    cert_location = None
-
-    if keyvault:
-        keyvault_name = keyvault.keyvault_name
-        cert_name = keyvault.cert_name
-        uri = keyvault_name + cert_name
+    keyvault_name = keyvault.keyvault_name
+    cert_name = keyvault.cert_name
+    uri = keyvault_name + cert_name
 
     if vm_os == OS.windows:
         return {
