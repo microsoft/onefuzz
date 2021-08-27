@@ -102,7 +102,7 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
 
 // Work around issues where azcopy fails with an error we should consider
 // "acceptable" to always retry on.
-fn should_retry_without_increment(err: anyhow::Error) -> bool {
+fn should_retry_without_attemtp_increment(err: anyhow::Error) -> bool {
     let as_string = format!("{:?}", err);
     for value in ALWAYS_RETRY_ERROR_STRINGS {
         if as_string.contains(value) {
@@ -123,7 +123,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
         match result {
             Ok(()) => Ok(()),
             Err(x) => {
-                if should_retry_without_increment(x) {
+                if should_retry_without_attempt_increment(x) {
                     debug!(
                         "azcopy failed with an error that always triggers a retry: {}",
                         value
