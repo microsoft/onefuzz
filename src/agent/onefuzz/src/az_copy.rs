@@ -113,13 +113,20 @@ fn should_retry_without_attempt_increment(err: &anyhow::Error) -> bool {
 }
 
 async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
-    let counter = AtomicUsize::new(0);
+    let attempt_counter = AtomicUsize::new(0);
+    let failure_counter = AtomicUsize::new(0);
 
     let operation = || async {
-        let mut attempt_count = counter.fetch_add(1, Ordering::SeqCst);
-        let result = az_impl(mode, src, dst, args)
-            .await
-            .with_context(|| format!("azcopy {} attempt {} failed", mode, attempt_count + 1));
+        let mut attempt_count = attempt_counter.fetch_add(1, Ordering::SeqCst);
+        let mut failure_count = failure_counter.load(Ordering::SeqCst);
+        let result = az_impl(mode, src, dst, args).await.with_context(|| {
+            format!(
+                "azcopy {} attempt {} failed.  (failure {}",
+                mode,
+                attempt_count + 1,
+                failure_count + 1
+            )
+        });
         match result {
             Ok(()) => Ok(()),
             Err(err) => {
@@ -128,10 +135,10 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
                         "azcopy failed with an error that always triggers a retry: {:?}",
                         err
                     );
-                    counter.fetch_sub(1, Ordering::SeqCst);
-                    attempt_count -= 1;
+                } else {
+                    failure_count = failure_counter.fetch_add(1, Ordering::SeqCst);
                 }
-                if attempt_count >= RETRY_COUNT {
+                if failure_count >= RETRY_COUNT {
                     Err(backoff::Error::Permanent(err))
                 } else {
                     Err(backoff::Error::Transient(err))
