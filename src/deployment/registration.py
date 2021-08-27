@@ -405,7 +405,8 @@ def authorize_application(
                         for app in app_list:
                             if app["appId"] == invalid_app_id:
                                 logger.warning(
-                                    f"removing invalid id {invalid_app_id} for the next request"
+                                    f"removing invalid id {invalid_app_id} "
+                                    "for the next request"
                                 )
                                 app_list.remove(app)
 
