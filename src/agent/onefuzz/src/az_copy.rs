@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+use crate::blob::url::redact_query_sas_sig_osstr;
 use anyhow::{Context, Result};
 use backoff::{self, future::retry_notify, ExponentialBackoff};
 use std::{
@@ -78,6 +79,10 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
         let logfile = read_azcopy_log_file(temp_dir.path())
             .await
             .unwrap_or_else(|e| format!("unable to read azcopy log file from: {:?}", e));
+
+        let src = redact_query_sas_sig_osstr(src);
+        let dst = redact_query_sas_sig_osstr(dst);
+
         anyhow::bail!(
             "azcopy {} failed src:{:?} dst:{:?} stdout:{:?} stderr:{:?} log:{:?}",
             mode,
