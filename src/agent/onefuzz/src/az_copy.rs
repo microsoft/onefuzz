@@ -102,7 +102,7 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
 
 // Work around issues where azcopy fails with an error we should consider
 // "acceptable" to always retry on.
-fn should_retry_without_attemtp_increment(err: anyhow::Error) -> bool {
+fn should_retry_without_attempt_increment(err: &anyhow::Error) -> bool {
     let as_string = format!("{:?}", err);
     for value in ALWAYS_RETRY_ERROR_STRINGS {
         if as_string.contains(value) {
@@ -122,19 +122,19 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
             .with_context(|| format!("azcopy {} attempt {} failed", mode, attempt_count + 1));
         match result {
             Ok(()) => Ok(()),
-            Err(x) => {
-                if should_retry_without_attempt_increment(x) {
+            Err(err) => {
+                if should_retry_without_attempt_increment(&err) {
                     debug!(
-                        "azcopy failed with an error that always triggers a retry: {}",
-                        value
+                        "azcopy failed with an error that always triggers a retry: {:?}",
+                        err
                     );
                     counter.fetch_sub(1, Ordering::SeqCst);
                     attempt_count -= 1;
                 }
                 if attempt_count >= RETRY_COUNT {
-                    Err(backoff::Error::Permanent(x))
+                    Err(backoff::Error::Permanent(err))
                 } else {
-                    Err(backoff::Error::Transient(x))
+                    Err(backoff::Error::Transient(err))
                 }
             }
         }
