@@ -795,7 +795,6 @@ class Task(BaseModel):
 
 
 class KeyvaultExtensionConfig(BaseModel):
-    name: str
     keyvault_name: str
     cert_name: str
     cert_path: str
@@ -803,7 +802,6 @@ class KeyvaultExtensionConfig(BaseModel):
 
 
 class AzureMonitorExtensionConfig(BaseModel):
-    name: str
     config_version: str
     moniker: str
     namespace: str
@@ -814,11 +812,11 @@ class AzureMonitorExtensionConfig(BaseModel):
 
 
 class AzureSecurityExtensionConfig(BaseModel):
-    name: str
+    pass
 
 
 class GenevaExtensionConfig(BaseModel):
-    name: str
+    pass
 
 
 class AzureVmExtensionConfig(BaseModel):
