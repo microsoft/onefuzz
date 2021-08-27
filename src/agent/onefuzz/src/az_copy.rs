@@ -100,6 +100,18 @@ async fn az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<
     Ok(())
 }
 
+// Work around issues where azcopy fails with an error we should consider
+// "acceptable" to always retry on.
+fn should_retry_without_increment(err: anyhow::Error) -> bool {
+    let as_string = format!("{:?}", err);
+    for value in ALWAYS_RETRY_ERROR_STRINGS {
+        if as_string.contains(value) {
+            return true;
+        }
+    }
+    false
+}
+
 async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> Result<()> {
     let counter = AtomicUsize::new(0);
 
@@ -111,18 +123,13 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
         match result {
             Ok(()) => Ok(()),
             Err(x) => {
-                let as_string = format!("{:?}", x);
-                // Work around issues where azcopy fails with an error we should consider
-                // "acceptable" to always retry on.
-                for value in ALWAYS_RETRY_ERROR_STRINGS {
-                    if as_string.contains(value) {
-                        debug!(
-                            "azcopy failed with an error that always triggers a retry: {}",
-                            value
-                        );
-                        counter.fetch_sub(1, Ordering::SeqCst);
-                        attempt_count -= 1;
-                    }
+                if should_retry_without_increment(x) {
+                    debug!(
+                        "azcopy failed with an error that always triggers a retry: {}",
+                        value
+                    );
+                    counter.fetch_sub(1, Ordering::SeqCst);
+                    attempt_count -= 1;
                 }
                 if attempt_count >= RETRY_COUNT {
                     Err(backoff::Error::Permanent(x))
