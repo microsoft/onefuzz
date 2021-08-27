@@ -7,7 +7,7 @@ import datetime
 import logging
 import os
 import urllib.parse
-from typing import Dict, Optional, Union, cast
+from typing import Dict, Optional, Tuple, Union, cast
 
 from azure.common import AzureHttpError, AzureMissingResourceHttpError
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
@@ -158,6 +158,27 @@ def delete_container(container: Container, storage_type: StorageType) -> bool:
     return deleted
 
 
+def sas_time_window(
+    *, days: int, hours: int, minutes: int
+) -> Tuple[datetime.datetime, datetime.datetime]:
+    # SAS URLs are valid 6 hours earlier, primarily to work around dev
+    # workstations having out-of-sync time.  Additionally, SAS URLs are stopped
+    # 15 minutes later than requested based on "Be careful with SAS start time"
+    # guidance.
+    # Ref: https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview
+    SAS_START_TIME_DELTA = datetime.timedelta(hours=6)
+    SAS_END_TIME_DELTA = datetime.timedelta(minutes=15)
+
+    now = datetime.datetime.utcnow()
+    start = now - SAS_START_TIME_DELTA
+    expiry = (
+        now
+        + datetime.timedelta(days=days, hours=hours, minutes=minutes)
+        + SAS_END_TIME_DELTA
+    )
+    return (start, expiry)
+
+
 def get_container_sas_url_service(
     client: ContainerClient,
     *,
@@ -175,10 +196,7 @@ def get_container_sas_url_service(
     container_name = client.container_name
     account_key = get_storage_account_name_key_by_name(account_name)
 
-    now = datetime.datetime.utcnow()
-    # start the SAS url 24 hours earlier, to avoid time sync issues
-    start = now - datetime.timedelta(days=1)
-    expiry = now + datetime.timedelta(days=days, hours=hours, minutes=minutes)
+    start, expiry = sas_time_window(days=days, hours=hours, minutes=minutes)
 
     sas = generate_container_sas(
         account_name,
@@ -256,10 +274,8 @@ def get_file_sas_url(
         raise Exception("unable to find container: %s - %s" % (container, storage_type))
 
     account_key = get_storage_account_name_key_by_name(client.account_name)
-    now = datetime.datetime.utcnow()
-    # start the SAS url 24 hours earlier, to avoid time sync issues
-    start = now - datetime.timedelta(days=1)
-    expiry = now + datetime.timedelta(days=days, hours=hours, minutes=minutes)
+    start, expiry = sas_time_window(days=days, hours=hours, minutes=minutes)
+
     permission = BlobSasPermissions(
         read=read,
         add=add,
