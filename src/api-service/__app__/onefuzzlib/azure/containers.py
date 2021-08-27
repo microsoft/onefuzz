@@ -167,10 +167,18 @@ def get_container_sas_url_service(
     list_: bool = False,
     delete_previous_version: bool = False,
     tag: bool = False,
+    days: int = 30,
+    hours: int = 0,
+    minutes: int = 0,
 ) -> str:
     account_name = client.account_name
     container_name = client.container_name
     account_key = get_storage_account_name_key_by_name(account_name)
+
+    now = datetime.datetime.utcnow()
+    # start the SAS url 24 hours earlier, to avoid time sync issues
+    start = now - datetime.timedelta(days=1)
+    expiry = now + datetime.timedelta(days=days, hours=hours, minutes=minutes)
 
     sas = generate_container_sas(
         account_name,
@@ -184,7 +192,8 @@ def get_container_sas_url_service(
             delete_previous_version=delete_previous_version,
             tag=tag,
         ),
-        expiry=datetime.datetime.utcnow() + datetime.timedelta(days=30),
+        start=start,
+        expiry=expiry,
     )
 
     with_sas = ContainerClient(
@@ -247,9 +256,10 @@ def get_file_sas_url(
         raise Exception("unable to find container: %s - %s" % (container, storage_type))
 
     account_key = get_storage_account_name_key_by_name(client.account_name)
-    expiry = datetime.datetime.utcnow() + datetime.timedelta(
-        days=days, hours=hours, minutes=minutes
-    )
+    now = datetime.datetime.utcnow()
+    # start the SAS url 24 hours earlier, to avoid time sync issues
+    start = now - datetime.timedelta(days=1)
+    expiry = now + datetime.timedelta(days=days, hours=hours, minutes=minutes)
     permission = BlobSasPermissions(
         read=read,
         add=add,
@@ -266,6 +276,7 @@ def get_file_sas_url(
         account_key=account_key,
         permission=permission,
         expiry=expiry,
+        start=start,
     )
 
     with_sas = BlobClient(
