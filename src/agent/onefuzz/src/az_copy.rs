@@ -106,6 +106,10 @@ fn should_retry_without_attempt_increment(err: &anyhow::Error) -> bool {
     let as_string = format!("{:?}", err);
     for value in ALWAYS_RETRY_ERROR_STRINGS {
         if as_string.contains(value) {
+            info!(
+                "azcopy failed with an error that always triggers a retry: {} - {:?}",
+                value, err
+            );
             return true;
         }
     }
@@ -121,7 +125,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
         let mut failure_count = failure_counter.load(Ordering::SeqCst);
         let result = az_impl(mode, src, dst, args).await.with_context(|| {
             format!(
-                "azcopy {} attempt {} failed.  (failure {}",
+                "azcopy {} attempt {} failed.  (failure {})",
                 mode,
                 attempt_count + 1,
                 failure_count + 1
@@ -130,12 +134,7 @@ async fn retry_az_impl(mode: Mode, src: &OsStr, dst: &OsStr, args: &[&str]) -> R
         match result {
             Ok(()) => Ok(()),
             Err(err) => {
-                if should_retry_without_attempt_increment(&err) {
-                    debug!(
-                        "azcopy failed with an error that always triggers a retry: {:?}",
-                        err
-                    );
-                } else {
+                if !should_retry_without_attempt_increment(&err) {
                     failure_count = failure_counter.fetch_add(1, Ordering::SeqCst);
                 }
                 if failure_count >= RETRY_COUNT {
