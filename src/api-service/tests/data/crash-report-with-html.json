@@ -1,0 +1,23 @@
+{
+	"call_stack": [
+		"test.exe.exe+0x2",
+		"test.exe.exe+0x9",
+		"test.exe.exe+0x3",
+		"test.exe.exe+0xd",
+		"test.exe.exe+0x8",
+		"test.exe.exe+0x8",
+		"test.exe.exe+0x2"
+	],
+	"call_stack_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+	"crash_site": "callfunc",
+	"crash_type": "customtype",
+	"executable": "test2.exe",
+	"input_blob": {
+		"account": "storageaccount1",
+		"container": "storagecontainer1",
+		"name": "%23A_B.exe.exe%2B0x0_a_b_c_0x5b1e7_a_515c01e.tar"
+	},
+	"input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+	"job_id": "581e0ba6-9757-47e5-a077-dba21e604961",
+	"task_id": "4a949007-b59f-4a47-8418-8a2c94b4aef1"
+}

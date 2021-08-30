@@ -33,6 +33,7 @@ function Init-Setup {
   mkdir setup -Force
   mkdir tools -Force
   mkdir instance-specific-setup -Force
+  mkdir logs -Force
 }
 
 function Install-OnefuzzSetup {
@@ -68,6 +69,7 @@ function Install-OnefuzzSetup {
   Enable-SSH
   Install-OnBoot
   Install-VCRedist
+  Setup-Silent-Notification
   log "onefuzz: setup done"
 }
 

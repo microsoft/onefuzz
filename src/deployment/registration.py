@@ -5,6 +5,7 @@
 
 import argparse
 import logging
+import re
 import time
 import urllib.parse
 from datetime import datetime, timedelta
@@ -80,18 +81,16 @@ OperationResult = TypeVar("OperationResult")
 
 
 def retry(
-    operation: Callable[[], OperationResult],
+    operation: Callable[[Any], OperationResult],
     description: str,
     tries: int = 10,
     wait_duration: int = 10,
+    data: Any = None,
 ) -> OperationResult:
     count = 0
-    while count < tries:
-        count += 1
-        if count > 1:
-            logger.info(f"retrying '{description}'")
+    while True:
         try:
-            return operation()
+            return operation(data)
         except GraphQueryError as err:
             error = err
             # modeled after AZ-CLI's handling of missing application
@@ -103,11 +102,18 @@ def retry(
                 logger.info(f"failed '{description}' missing required resource")
             else:
                 logger.warning(f"failed '{description}': {err.message}")
-        time.sleep(wait_duration)
-    if error:
-        raise error
-    else:
-        raise Exception(f"failed '{description}'")
+
+        count += 1
+        if count >= tries:
+            if error:
+                raise error
+            else:
+                raise Exception(f"failed '{description}'")
+        else:
+            logger.info(
+                f"waiting {wait_duration} seconds before retrying '{description}'"
+            )
+            time.sleep(wait_duration)
 
 
 class ApplicationInfo(NamedTuple):
@@ -253,7 +259,7 @@ def create_application_registration(
 def add_application_password(
     password_name: str, app_object_id: UUID, subscription_id: str
 ) -> Tuple[str, str]:
-    def create_password() -> Tuple[str, str]:
+    def create_password(data: Any) -> Tuple[str, str]:
         password = add_application_password_impl(
             password_name, app_object_id, subscription_id
         )
@@ -371,19 +377,38 @@ def authorize_application(
 
         onefuzz_app_id = onefuzz_app["id"]
 
-        def add_preauthorized_app() -> None:
-            query_microsoft_graph(
-                method="PATCH",
-                resource="applications/%s" % onefuzz_app_id,
-                body={
-                    "api": {
-                        "preAuthorizedApplications": preAuthorizedApplications.to_list()
-                    }
-                },
-                subscription=subscription_id,
-            )
+        def add_preauthorized_app(app_list: List[Dict]) -> None:
+            try:
+                query_microsoft_graph(
+                    method="PATCH",
+                    resource="applications/%s" % onefuzz_app_id,
+                    body={"api": {"preAuthorizedApplications": app_list}},
+                )
+            except GraphQueryError as e:
+                m = re.search(
+                    "Property PreAuthorizedApplication references "
+                    "applications (.*) that cannot be found.",
+                    e.message,
+                )
+                if m:
+                    invalid_app_id = m.group(1)
+                    if invalid_app_id:
+                        for app in app_list:
+                            if app["appId"] == invalid_app_id:
+                                logger.warning(
+                                    f"removing invalid id {invalid_app_id} "
+                                    "for the next request"
+                                )
+                                app_list.remove(app)
 
-        retry(add_preauthorized_app, "authorize application")
+                raise e
+
+        retry(
+            add_preauthorized_app,
+            "authorize application",
+            data=preAuthorizedApplications.to_list(),
+        )
+
     except AuthenticationError:
         logger.warning("*** Browse to: %s", FIX_URL % onefuzz_app_id)
         logger.warning("*** Then add the client application %s", registration_app_id)
@@ -394,6 +419,8 @@ def create_and_display_registration(
     registration_name: str,
     approle: OnefuzzAppRole,
     subscription_id: str,
+    *,
+    display_secret: bool = False,
 ) -> None:
     logger.info("Updating application registration")
     application_info = register_application(
@@ -402,10 +429,11 @@ def create_and_display_registration(
         approle=approle,
         subscription_id=subscription_id,
     )
-    logger.info("Registration complete")
-    logger.info("These generated credentials are valid for a year")
-    logger.info("client_id: %s" % application_info.client_id)
-    logger.info("client_secret: %s" % application_info.client_secret)
+    if display_secret:
+        print("Registration complete")
+        print("These generated credentials are valid for a year")
+        print(f"client_id: {application_info.client_id}")
+        print(f"client_secret: {application_info.client_secret}")
 
 
 def update_pool_registration(onefuzz_instance_name: str, subscription_id: str) -> None:
@@ -640,6 +668,7 @@ def main() -> None:
             registration_name,
             OnefuzzAppRole.CliClient,
             args.subscription_id,
+            display_secret=True,
         )
     elif args.command == "assign_scaleset_role":
         assign_instance_app_role(
