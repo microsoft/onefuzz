@@ -259,7 +259,7 @@ def create_application_registration(
 def add_application_password(
     password_name: str, app_object_id: UUID, subscription_id: str
 ) -> Tuple[str, str]:
-    def create_password() -> Tuple[str, str]:
+    def create_password(data: Any) -> Tuple[str, str]:
         password = add_application_password_impl(
             password_name, app_object_id, subscription_id
         )
