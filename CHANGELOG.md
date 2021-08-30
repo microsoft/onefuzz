@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Continued development related to upcoming features.  [#1146](https://github.com/microsoft/onefuzz/pull/1146)
 * Agent: Logs from `azcopy` failures now redact SAS urls.  [#1194](https://github.com/microsoft/onefuzz/pull/1194)
 * CLI: Added the number of VMs used in a task in `onefuzz status top`.  [#1169](https://github.com/microsoft/onefuzz/pull/1169)
-* Deployment: Application credentials during deployment are no longer logged.  [#1172](https://github.com/microsoft/onefuzz/pull/1172)
+* Deployment: Application credentials created during deployment are no longer logged.  [#1172](https://github.com/microsoft/onefuzz/pull/1172)
 * Deployment: Clarify logging when retrying AAD interactions.  [#1173](https://github.com/microsoft/onefuzz/pull/1173)
 * Deployment: Replaced custom Azure Storage Queue creation with ARM templates.  [#1193](https://github.com/microsoft/onefuzz/pull/1193)
 * Service: The acceptable duration for SAS URLs is now back-dated to avoid time synchronization issues.  [#1195](https://github.com/microsoft/onefuzz/pull/1195)
