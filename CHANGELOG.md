@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Agent: Changed `azcopy` calls to always retry when source files are modified mid-copy.  [#1196](https://github.com/microsoft/onefuzz/pull/1196)
 * Agent: Continued development related to upcoming features.  [#1146](https://github.com/microsoft/onefuzz/pull/1146)
 * Agent: SAS URLs are now redacted in logged `azcopy` failures.  [#1194](https://github.com/microsoft/onefuzz/pull/1194)
-* CLI: Include the number of VMs used per-task to `onefuzz status top`.  [#1169](https://github.com/microsoft/onefuzz/pull/1169)
+* CLI: Include the number of VMs used per-task in `onefuzz status top`.  [#1169](https://github.com/microsoft/onefuzz/pull/1169)
 * Deployment: Application credentials created during deployment are no longer logged.  [#1172](https://github.com/microsoft/onefuzz/pull/1172)
 * Deployment: Clarify logging when retrying AAD interactions.  [#1173](https://github.com/microsoft/onefuzz/pull/1173)
 * Deployment: Replaced custom Azure Storage Queue creation with ARM templates.  [#1193](https://github.com/microsoft/onefuzz/pull/1193)
