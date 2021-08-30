@@ -11,17 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Agent/Supervisor/Proxy: Updated multiple third-party Rust dependencies.  [#1152](https://github.com/microsoft/onefuzz/pull/1152), [#1155](https://github.com/microsoft/onefuzz/pull/1155), [#1156](https://github.com/microsoft/onefuzz/pull/1156), [#1157](https://github.com/microsoft/onefuzz/pull/1157), [#1158](https://github.com/microsoft/onefuzz/pull/1158), [#1163](https://github.com/microsoft/onefuzz/pull/1163), [#1164](https://github.com/microsoft/onefuzz/pull/1164), [#1165](https://github.com/microsoft/onefuzz/pull/1165), [#1166](https://github.com/microsoft/onefuzz/pull/1166), [#1176](https://github.com/microsoft/onefuzz/pull/1176), [#1177](https://github.com/microsoft/onefuzz/pull/1177), [#1178](https://github.com/microsoft/onefuzz/pull/1178), [#1179](https://github.com/microsoft/onefuzz/pull/1179), [#1181](https://github.com/microsoft/onefuzz/pull/1181), [#1182](https://github.com/microsoft/onefuzz/pull/1182), [#1183](https://github.com/microsoft/onefuzz/pull/1183), [#1185](https://github.com/microsoft/onefuzz/pull/1185), [#1186](https://github.com/microsoft/onefuzz/pull/1186), [#1191](https://github.com/microsoft/onefuzz/pull/1191), [#1198](https://github.com/microsoft/onefuzz/pull/1198), [#1199](https://github.com/microsoft/onefuzz/pull/1199), [#1200](https://github.com/microsoft/onefuzz/pull/1200), [#1201](https://github.com/microsoft/onefuzz/pull/1201), [#1202](https://github.com/microsoft/onefuzz/pull/1202), [#1203](https://github.com/microsoft/onefuzz/pull/1203), [#1204](https://github.com/microsoft/onefuzz/pull/1204), [#1205](https://github.com/microsoft/onefuzz/pull/1205)
-* Agent: Changed `azcopy` calls to always retry when copying files generates a "source modified during transfer" error.  [#1196](https://github.com/microsoft/onefuzz/pull/1196)
+* Agent: Changed `azcopy` calls to always retry when source files are modified mid-copy.  [#1196](https://github.com/microsoft/onefuzz/pull/1196)
 * Agent: Continued development related to upcoming features.  [#1146](https://github.com/microsoft/onefuzz/pull/1146)
-* Agent: Logs from `azcopy` failures now redact SAS urls.  [#1194](https://github.com/microsoft/onefuzz/pull/1194)
-* CLI: Added the number of VMs used in a task in `onefuzz status top`.  [#1169](https://github.com/microsoft/onefuzz/pull/1169)
+* Agent: SAS URLs are now redacted in logged `azcopy` failures.  [#1194](https://github.com/microsoft/onefuzz/pull/1194)
+* CLI: Include the number of VMs used per-task to `onefuzz status top`.  [#1169](https://github.com/microsoft/onefuzz/pull/1169)
 * Deployment: Application credentials created during deployment are no longer logged.  [#1172](https://github.com/microsoft/onefuzz/pull/1172)
 * Deployment: Clarify logging when retrying AAD interactions.  [#1173](https://github.com/microsoft/onefuzz/pull/1173)
 * Deployment: Replaced custom Azure Storage Queue creation with ARM templates.  [#1193](https://github.com/microsoft/onefuzz/pull/1193)
-* Service: The acceptable duration for SAS URLs is now back-dated to avoid time synchronization issues.  [#1195](https://github.com/microsoft/onefuzz/pull/1195)
+* Service: The validity period for SAS URLs is now back-dated to avoid time synchronization issues.  [#1195](https://github.com/microsoft/onefuzz/pull/1195)
 
 ### Fixed
-* Deployment: Invalid preauthorized applications are removed during application registration.  [#1175](https://github.com/microsoft/onefuzz/pull/1175)
+* Deployment: Invalid preauthorized application references are removed during application registration.  [#1175](https://github.com/microsoft/onefuzz/pull/1175)
 * Service: Fixed an issue logging node status.  [#1160](https://github.com/microsoft/onefuzz/pull/1160)
 
 ## 2.31.0
