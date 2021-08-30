@@ -496,7 +496,7 @@ def normalize(result: Any) -> Any:
         return normalize(result.dict(exclude_none=True))
     if isinstance(result, Model):
         return normalize(result.as_dict())
-    if isinstance(result, list):
+    if isinstance(result, (set, list)):
         return [normalize(x) for x in result]
     if isinstance(result, dict):
         return {normalize(k): normalize(v) for (k, v) in result.items()}
