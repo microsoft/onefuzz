@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-use crate::sha256::digest_file_blocking;
+use crate::{machine_id::get_machine_id, sha256::digest_file_blocking};
 use anyhow::{Context, Result};
 use onefuzz_telemetry::{InstanceTelemetryKey, MicrosoftTelemetryKey};
 use std::path::{Path, PathBuf};
@@ -41,6 +41,7 @@ pub enum PlaceHolder {
     ReportsDir,
     JobId,
     TaskId,
+    MachineId,
     CrashesContainer,
     CrashesAccount,
     MicrosoftTelemetryKey,
@@ -73,6 +74,7 @@ impl PlaceHolder {
             Self::ReportsDir => "{reports_dir}",
             Self::JobId => "{job_id}",
             Self::TaskId => "{task_id}",
+            Self::MachineId => "{machine_id}",
             Self::CrashesContainer => "{crashes_container}",
             Self::CrashesAccount => "{crashes_account}",
             Self::MicrosoftTelemetryKey => "{microsoft_telemetry_key}",
@@ -108,7 +110,27 @@ impl<'a> Expand<'a> {
             PlaceHolder::InputFileSha256.get_string(),
             ExpandedValue::Mapping(Box::new(Expand::input_file_sha256)),
         );
+        values.insert(
+            PlaceHolder::MachineId.get_string(),
+            ExpandedValue::Mapping(Box::new(Expand::machine_id)),
+        );
+
         Self { values }
+    }
+
+    // by making this a Mapping rather than when creating an Expand instance,
+    // users only pay for fetching the machine_id when it's used in expansion
+    fn machine_id(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let result = rt.block_on(get_machine_id());
+
+        match result {
+            Ok(machine_id) => {
+                let value = machine_id.to_hyphenated().to_string();
+                Some(ExpandedValue::Scalar(value))
+            }
+            Err(_) => None,
+        }
     }
 
     fn input_file_sha256(&self, _format_str: &str) -> Option<ExpandedValue<'a>> {
@@ -292,6 +314,7 @@ impl<'a> Expand<'a> {
             ExpandedValue::Scalar(value),
         )
     }
+
     pub fn instance_telemetry_key(self, arg: &InstanceTelemetryKey) -> Self {
         let value = arg.to_string();
         self.set_value(
@@ -391,6 +414,7 @@ mod tests {
     use super::Expand;
     use anyhow::{Context, Result};
     use std::path::Path;
+    use uuid::Uuid;
 
     #[test]
     fn test_expand_nested() -> Result<()> {
@@ -484,6 +508,15 @@ mod tests {
             .input_path("src/lib.rs")
             .evaluate_value("a {input} b")?;
         assert!(result.contains("lib.rs"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_expand_machine_id() -> Result<()> {
+        // verify {machine_id} expands to a UUID, but don't worry about the
+        // actual value of the UUID
+        let result = Expand::new().evaluate_value("{machine_id}")?;
+        Uuid::parse_str(&result)?;
         Ok(())
     }
 }
