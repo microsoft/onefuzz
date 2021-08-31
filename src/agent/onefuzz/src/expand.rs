@@ -115,7 +115,8 @@ impl<'a> Expand<'a> {
         let val = match self.values.get(&PlaceHolder::Input.get_string()) {
             Some(ExpandedValue::Path(fp)) => {
                 let file = PathBuf::from(fp);
-                digest_file_blocking(file).ok().map(ExpandedValue::Scalar)
+                let hash = digest_file_blocking(file)?;
+                Some(ExpandedValue::Scalar(hash))
             }
             _ => None,
         };
