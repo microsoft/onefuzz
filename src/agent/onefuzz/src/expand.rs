@@ -118,8 +118,10 @@ impl<'a> Expand<'a> {
         Self { values }
     }
 
-    // by making this a Mapping rather than when creating an Expand instance,
-    // users only pay for fetching the machine_id when it's used in expansion
+    // Note: this spawns it's own tokio runtime as it's not really workable to
+    // refactor the get_machine_id into a blockable version, however... as this
+    // is implemented as a ExpandedValue::Mapping, launching a tokio runtime
+    // occurs when users actively attempt to expand {machine_id}.
     fn machine_id(&self, _format_str: &str) -> Result<Option<ExpandedValue<'a>>> {
         let rt = tokio::runtime::Runtime::new()?;
         let machine_id = rt.block_on(get_machine_id())?;
